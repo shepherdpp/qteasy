@@ -16,11 +16,10 @@ import matplotlib.ticker as mtick
 
 import pandas as pd
 import numpy as np
-import warnings
 
 import qteasy
 from .history import get_history_panel
-from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, AVAILABLE_ASSET_TYPES, TIME_FREQ_STRINGS
+from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
@@ -170,6 +169,7 @@ class InterCandle:
     def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
         """
+        from qteasy import logger_core
         ap = []
         # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
         plot_data = self.data.iloc[idx_start:idx_start + idx_range]
@@ -209,16 +209,19 @@ class InterCandle:
         plot_type = self.plot_type
         if idx_range >= 350:
             plot_type = 'line'
-        mpf.plot(plot_data,
-                 ax=self.ax1,
-                 volume=self.ax2,
-                 ylabel=ylabel,
-                 addplot=ap,
-                 type=plot_type,
-                 style=self.style,
-                 datetime_format='%y/%m/%d',
-                 xrotation=0)
-        self.fig.show()
+        if not plot_data.empty:
+            mpf.plot(plot_data,
+                     ax=self.ax1,
+                     volume=self.ax2,
+                     ylabel=ylabel,
+                     addplot=ap,
+                     type=plot_type,
+                     style=self.style,
+                     datetime_format='%y/%m/%d',
+                     xrotation=0)
+            self.fig.show()
+        else:
+            logger_core.warning(f'plot data is empty, plot will not be refreshed!')
 
     def refresh_texts(self, display_data):
         """ 更新K线图上的价格文本
@@ -392,7 +395,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         K线图的终止日期
 
     :param stock_data: pd.DataFrame
-        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数
+        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
 
     :param freq: str
         K线图的时间频率，合法输入包括：
@@ -439,6 +442,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     :return:
         pd.DataFrame, 包含相应股票数据的DataFrame
     """
+    from qteasy import logger_core
     no_visual = False
     if not isinstance(plot_type, str):
         raise TypeError(f'plot type should be a string, got {type(plot_type)} instead.')
@@ -448,6 +452,8 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         plot_type = 'ohlc'
     elif plot_type.lower() in ['renko', 'r']:
         plot_type = 'renko'
+    elif plot_type.lower() in ['line', 'l']:
+        plot_type = 'line'
     elif plot_type.lower() in ['none', 'n']:
         plot_type = 'none'
         no_visual = True
@@ -465,7 +471,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
             code_matched = match_ts_code(stock)
             match_count = code_matched['count']
             if match_count == 0:
-                print(f'Sorry, can not find a matched ts_code with "{stock}"')
+                logger_core.warning(f'Can not find a matched ts_code with "{stock}", plotting will be canceled')
                 return
             elif match_count >= 1:
                 if asset_type is None:
@@ -479,15 +485,16 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
                     asset_type = matched_asset_types[0]
                 else:
                     if asset_type not in code_matched.keys():
-                        print(f'Sorry, can not find a matched ts_code with "{stock}" in asset type "{asset_type}"')
+                        logger_core.warning(f'can not find a matched ts_code with "{stock}" in asset type '
+                                            f'"{asset_type}", plotting will be canceled')
                         return
                     matched_codes.extend(code_matched[asset_type])
             else:
                 raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
             if len(matched_codes) > 1:
-                warnings.warn(f'More than one matching code is found with input ({stock}):\n'
-                              f'{code_matched}\n'
-                              f'\nonly the first will be used to plot.')
+                logger_core.warning(f'More than one matching code is found with input ({stock}):\n'
+                                    f'{code_matched}\n'
+                                    f'\nonly the first will be used to plot.')
         elif stock_part == 2:
             matched_codes.append(stock)
         else:
@@ -498,7 +505,9 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         stock = None
     else:
         stock = matched_codes[0]
-    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end, freq=freq,
+    if not interactive:
+        pass
+    return _mpf_plot(stock_data=stock_data, stock=stock, start=start, end=end, freq=freq,
                      asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, data_source=data_source,
                      **kwargs)
 
@@ -508,6 +517,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
               data_source=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
+    from qteasy import logger_core
     freq_info = '日K线'
     adj = 'none'
     adj_info = ''
@@ -570,7 +580,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
             print(f'{e}')
             return
         if daily.empty:
-            print(f'history data for {stock} can not be found!')
+            logger_core.warning(f'history data for {stock} can not be found!')
             return
     else:
         daily = stock_data
@@ -630,6 +640,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
                                 style=my_style,
                                 avg_type=avg_type,
                                 indicator=indicator)
+        logger_core.info(f'Creating plot with data starts {idx_start} to {idx_start + idx_range}')
         my_candle.refresh_texts(daily.iloc[idx_start + idx_range])
         my_candle.refresh_plot(idx_start, idx_range + 1)
         # 如果需要动态图表，需要传入特别的参数以进入交互模式
@@ -642,8 +653,6 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
 def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
-        TODO: 清洗数据：如果ohlc数据中包含少量异常数据时，填充异常数据，
-        TODO: 生成close或nav数据以便生成折线图
 
     :param stock: 股票代码
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数, OPT——期权
@@ -715,9 +724,9 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
         htypes = 'close,high,low,open,vol'
     # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
-    data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
-                             htypes=htypes, asset_type=asset_type,
-                             adj=adj, data_source=data_source).to_dataframe(share=stock)
+    data = get_history_panel(htypes=htypes, shares=stock, start=start_date, end=end_date, freq=freq,
+                             asset_type=asset_type, adj=adj, data_source=data_source,
+                             resample_method='none').slice_to_dataframe(share=stock)
     # 如果读取的是nav净值，将nav改为close，并填充open/high/low三列为NaN值
     is_out_fund = False
     if 'open' not in data.columns:
@@ -877,21 +886,21 @@ def _plot_loop_result(loop_results: dict, config):
             title_asset_pool = list_to_str_format(config.asset_pool[:3]) + '...'
         else:
             title_asset_pool = list_to_str_format(config.asset_pool)
-    fig.suptitle(f'Back Testing Result {title_asset_pool} - benchmark: {config.reference_asset}',
+    fig.suptitle(f'Back Testing Result {title_asset_pool} - benchmark: {config.benchmark_asset}',
                  fontsize=14,
                  fontweight=10)
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
-                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
-                          f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
+                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}       '
+                          f'  time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
                           f'  back test:{time_str_format(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.90, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
                          f'final value:', ha='right')
-    fig.text(0.23, 0.90, f'{loop_results["oper_count"].buy.sum()}     buys \n'
-                         f'{loop_results["oper_count"].sell.sum()}     sells\n'
+    fig.text(0.23, 0.90, f'{loop_results["oper_count"].buy.sum():.0f}     buys \n'
+                         f'{loop_results["oper_count"].sell.sum():.0f}     sells\n'
                          f'¥{loop_results["total_fee"]:13,.2f}\n'
                          f'¥{loop_results["total_invest"]:13,.2f}\n'
                          f'¥{loop_results["final_value"]:13,.2f}')
@@ -900,11 +909,11 @@ def _plot_loop_result(loop_results: dict, config):
                          f'Benchmark return:\n'
                          f'Avg annual ref return:\n'
                          f'Max drawdown:', ha='right')
-    fig.text(0.52, 0.90, f'{loop_results["rtn"]:.2%}    \n'
-                         f'{loop_results["annual_rtn"]: .2%}    \n'
-                         f'{loop_results["ref_rtn"]:.2%}    \n'
-                         f'{loop_results["ref_annual_rtn"]:.2%}\n'
-                         f'{loop_results["mdd"]:.1%}'
+    fig.text(0.52, 0.90, f'{loop_results["rtn"]:3.2%}    \n'
+                         f'{loop_results["annual_rtn"]:3.2%}    \n'
+                         f'{loop_results["ref_rtn"]:3.2%}    \n'
+                         f'{loop_results["ref_annual_rtn"]:3.2%}\n'
+                         f'{loop_results["mdd"]:3.1%}'
                          f' on {loop_results["valley_date"].date()}')
     fig.text(0.82, 0.90, f'alpha:\n'
                          f'Beta:\n'
@@ -917,7 +926,7 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["info"]:.3f}  \n'
                          f'{loop_results["volatility"]:.3f}')
 
-    # 绘制参考数据的收益率曲线图
+    # 绘制基准数据的收益率曲线图
     ax1.set_title('cum-return, benchmark and history operations')
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
@@ -998,38 +1007,38 @@ def _plot_loop_result(loop_results: dict, config):
     ax1.legend()
 
     # 绘制参考数据的收益率曲线图
-    ax2.set_title('benchmark and cumulative value in Logarithm scale')
+    ax2.set_title('Benchmark and Cumulative Return in Logarithm Scale')
     ax2.plot(looped_values.index, adjusted_bench_start, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
 
     # 绘制回测结果的收益率曲线图
     ax2.plot(looped_values.index, looped_values.value, linestyle='-',
              color=(0.8, 0.2, 0.0), alpha=0.85, label='Cum Value')
-    ax2.set_ylabel('Cumulative Value\n in logarithm scale')
+    ax2.set_ylabel('Cumulative Return\n in logarithm scale')
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax2.set_yscale('log')
     ax2.legend()
 
-    ax3.set_title('Rolling beta and alpha')
-    ax3.plot(looped_values.index, beta, label='beta')
-    ax3.plot(looped_values.index, alpha, label='alpha')
-    ax3.set_ylabel('rolling\nbeta/alpha')
-    ax3.legend()
+    ax3.set_title('Return Values')
+    ax3.bar(looped_values.index, ret)
+    ax3.set_ylabel('Return')
 
-    ax4.set_title('returns')
-    ax4.bar(looped_values.index, ret)
-    ax4.set_ylabel('return')
+    ax4.set_title('Portfolio Profitability Indicators - Sharp and Alpha')
+    ax4.plot(looped_values.index, sharp, label='sharp')
+    ax4.plot(looped_values.index, alpha, label='alpha')
+    ax4.set_ylabel('Profitability')
+    ax4.legend()
 
-    ax5.set_title('Rolling volatility and sharp')
+    ax5.set_title('Portfolio Risk Exposure - Volatility and Beta')
+    ax5.plot(looped_values.index, beta, label='beta')
     ax5.plot(looped_values.index, volatility, label='volatility')
-    ax5.plot(looped_values.index, sharp, label='sharp')
-    ax5.set_ylabel('Volatility\nsharp')
+    ax5.set_ylabel('Risk Exposure')
     ax5.legend()
 
     # 绘制underwater图（drawdown可视化图表）
-    ax6.set_title('underwater plot and 5 worst drawdowns')
+    ax6.set_title('Drawdown Analysis - 5 Worst Drawdowns in History')
     ax6.plot(underwater, label='underwater')
-    ax6.set_ylabel('underwater')
+    ax6.set_ylabel('Max Drawdown')
     ax6.set_xlabel('date')
     ax6.set_ylim(-1, 0)
     ax6.fill_between(looped_values.index, 0, underwater,
@@ -1065,7 +1074,7 @@ def _plot_loop_result(loop_results: dict, config):
     return_months = monthly_return_df.columns
     return_values = monthly_return_df.values
     c = ax7.imshow(return_values, cmap='RdYlGn')
-    ax7.set_title('monthly returns')
+    ax7.set_title('Monthly Return Heat Map')
     ax7.set_xticks(np.arange(len(return_months)))
     ax7.set_yticks(np.arange(len(return_years)))
     ax7.set_xticklabels(return_months, rotation=45)
@@ -1090,11 +1099,11 @@ def _plot_loop_result(loop_results: dict, config):
     ax8.set_yticks(np.arange(y_count))
     ax8.set_ylim(y_count - 0.5, -0.5)
     ax8.set_yticklabels(list(return_years))
-    ax8.set_title('Yearly returns')
+    ax8.set_title('Yearly Returns')
     ax8.grid(False)
 
     # 绘制月度收益率Histo直方图
-    ax9.set_title('monthly returns histo')
+    ax9.set_title('Monthly Return Histo')
     ax9.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
              label='monthly returns')
     ax9.grid(False)
@@ -1140,7 +1149,7 @@ def _plot_loop_result(loop_results: dict, config):
 
 
 # TODO: like _print_test_result, take the evaluate results on both opti and test hist data
-# TODO: and commit comparison base on these two data sets
+#  and commit comparison base on these two data sets
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
                       config=None):
@@ -1310,18 +1319,20 @@ def _plot_test_result(opti_eval_res: list,
             with pd.option_context('mode.use_inf_as_na', True):
                 opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
                 test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
+                opti_v = opti_indicator_df[name].fillna(np.nan)
+                test_v = test_indicator_df[name].fillna(np.nan)
                 if p_type == 0 or p_type == 'errorbar':
-                    max_v = opti_indicator_df[name].max()
-                    min_v = opti_indicator_df[name].min()
-                    mean = opti_indicator_df[name].mean()
-                    std = opti_indicator_df[name].std()
+                    max_v = np.nanmax(opti_v)
+                    min_v = np.nanmin(opti_v)
+                    mean = np.nanmean(opti_v)
+                    std = np.nanstd(opti_v)
                     ax.errorbar(1, mean, std, fmt='ok', lw=3)
                     ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
                                 label=opti_label)
-                    max_v = test_indicator_df[name].max()
-                    min_v = test_indicator_df[name].min()
-                    mean = test_indicator_df[name].mean()
-                    std = test_indicator_df[name].std()
+                    max_v = np.nanmax(test_v)
+                    min_v = np.nanmin(test_v)
+                    mean = np.nanmean(test_v)
+                    std = np.nanstd(test_v)
                     ax.errorbar(2, mean, std, fmt='ok', lw=3)
                     ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
                                 label=test_label)
@@ -1332,22 +1343,24 @@ def _plot_test_result(opti_eval_res: list,
                     ax.set_xlim(0.25, len(labels) + 0.75)
                     ax.legend()
                 elif p_type == 1 or p_type == 'scatter':
-                    ax.scatter(opti_indicator_df[name].fillna(np.nan),
-                               test_indicator_df[name].fillna(np.nan),
-                               label=name, marker='^', alpha=0.9)
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        ax.scatter(opti_v, test_v,
+                                   label=name, marker='^', alpha=0.9)
                     ax.set_title(opti_label)
                     ax.set_ylabel(test_label)
                     ax.legend()
                 elif p_type == 2 or p_type == 'histo':
-                    ax.hist(opti_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
-                            label=opti_label)
-                    ax.hist(test_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
-                            label=test_label)
+                    if not all(pd.isna(opti_v)):
+                        ax.hist(opti_v, bins=15, alpha=0.5,
+                                label=opti_label)
+                    if not all(pd.isna(test_v)):
+                        ax.hist(test_v, bins=15, alpha=0.5,
+                                label=test_label)
                     ax.legend()
                 elif p_type == 3 or p_type == 'violin':
-                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
-                                                     test_indicator_df[name].fillna(np.nan)]).T,
-                                           columns=[opti_label, test_label])
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                               columns=[opti_label, test_label])
                     ax.violinplot(data_df)
                     labels = ['opti', 'test']
                     ax.set_xticks(np.arange(1, len(labels) + 1))
@@ -1355,9 +1368,9 @@ def _plot_test_result(opti_eval_res: list,
                     ax.set_xlim(0.25, len(labels) + 0.75)
                     ax.legend()
                 else:
-                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
-                                                     test_indicator_df[name].fillna(np.nan)]).T,
-                                           columns=[opti_label, test_label])
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                               columns=[opti_label, test_label])
                     ax.boxplot(data_df)
                     labels = ['opti', 'test']
                     ax.set_xticks(np.arange(1, len(labels) + 1))
@@ -1371,7 +1384,8 @@ def _plot_test_result(opti_eval_res: list,
 def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, history_data=None):
     """打印实时信号生成模式的运行结果
     """
-    op_dates = op_list.hdates
+    op_dates = operator.op_signal_hdate
+    shares = operator.op_list_shares
     h_dates = history_data.hdates
     signal_type = operator.signal_type
     print(f'\n'
@@ -1386,31 +1400,32 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
           f'starts:     {h_dates[0]}\n'
           f'end:        {h_dates[-1]}')
     print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
-    print(f'Operation signals are generated on {op_dates[0]}\nends on {op_dates[-1]}\n'
-          f'Total signals generated: {len(op_dates)}.')
-    print(f'Operation signal for shares on {op_dates[-1].date()}\n')
+    # print(f'Operation signals are generated on {op_dates[0]}\nends on {op_dates[-1]}\n'
+    #       f'Total signals generated: {len(op_dates)}.')
+    print(f'Operation signal for shares on {op_dates.date()}\n')
     print(f'---------Current Operation Instructions------------\n'
           f'         signal type: {operator.signal_type}\n'
           f'signals: \n{op_list}\n'
           f'Today\'s operation signal as following:\n')
 
-    for share in op_list.shares:
-        print(f'------share {share}-----------:')
-        signal = op_list[:, share, op_list.hdates[-1]]
-        for price_type in range(op_list.htype_count):
+    for share_idx in range(len(shares)):
+        share = shares[share_idx]
+        print(f'------share: {share}-----------:')
+        signal = op_list
+        for price_type_idx in range(operator.bt_price_type_count):
             # 根据信号类型解析信号含义
-            current_signal = signal[price_type].squeeze()[-1]
+            current_signal = signal[price_type_idx]
             if signal_type == 'pt':  # 当信号类型为"PT"时，信号代表目标持仓仓位
                 print(f'Hold {current_signal * 100}% of total investment value!')
             if signal_type == 'ps':  # 当信号类型为"PS"时，信号代表资产买入卖出比例
-                if signal[price_type] > 0:
+                if signal[price_type_idx] > 0:
                     print(f'Buy in with {current_signal * 100}% of total investment value!')
-                elif signal[price_type] < 0:
+                elif signal[price_type_idx] < 0:
                     print(f'Sell out {-signal * 100}% of current on holding stock!')
             if signal_type == 'vs':  # 当信号类型为"PT"时，信号代表资产买入卖出数量
-                if signal[price_type] > 0:
+                if signal[price_type_idx] > 0:
                     print(f'Buy in with {current_signal} shares of total investment value!')
-                elif signal[price_type] < 0:
+                elif signal[price_type_idx] < 0:
                     print(f'Sell out {-signal} shares of current on holding stock!')
     print(f'\n      ===========END OF REPORT=============\n')
 
@@ -1487,7 +1502,7 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
 
 
 # TODO: like _plot_test_result, take the evaluate results on both opti and test hist data
-# TODO: and commit comparison base on these two data sets
+#  and commit comparison base on these two data sets
 def _print_test_result(result, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
@@ -1512,9 +1527,9 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
     print(f'investment starts on {first_res["loop_start"]}\nends on {first_res["loop_end"]}\n'
           f'Total looped periods: {result.years[0]:.1f} years.')
     print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
-    print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
-          f'Total reference return: {ref_rtn :.2%} \n'
-          f'Average Yearly reference return rate: {ref_annual_rtn:.2%}')
+    print(f'Reference index type is {config.benchmark_asset} at {config.benchmark_asset_type}\n'
+          f'Total Benchmark rtn: {ref_rtn :.2%} \n'
+          f'Average Yearly Benchmark rtn rate: {ref_annual_rtn:.2%}')
     print(f'statistical analysis of optimal strategy messages indicators: \n'
           f'total return:        {result.rtn.mean():.2%} ±'
           f' {result.rtn.std():.2%}\n'
@@ -1538,10 +1553,10 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                            header=["Strategy items",
                                    "Sell-outs",
                                    "Buy-ins",
-                                   "Total fee",
-                                   "Final value",
+                                   "ttl-fee",
+                                   "FV",
                                    "ROI",
-                                   "Reference return",
+                                   "Benchmark rtn",
                                    "MDD"],
                            formatters={'total_fee':   '{:,.2f}'.format,
                                        'final_value': '{:,.2f}'.format,

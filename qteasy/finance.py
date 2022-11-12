@@ -188,8 +188,9 @@ class Cost:
         cash_spent = np.zeros_like(prices)
         fees = np.zeros_like(prices)
         if self.buy_fix == 0.:
-            # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将小于buy_min的金额置0
-            cash_to_spend = np.where(cash_to_spend < self.buy_min, 0, cash_to_spend)
+            # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
+            # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
+            cash_to_spend = np.where(abs(cash_to_spend) < self.buy_min, 0, cash_to_spend)
             rates = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
             # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
             if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
@@ -271,7 +272,10 @@ class CashPlan:
 
         :return: pd.Timestamp
         """
-        return self.dates[0]
+        if self.dates:
+            return self.dates[0]
+        else:
+            return
 
     @property
     def last_day(self):
@@ -279,7 +283,10 @@ class CashPlan:
 
         :return: pd.Timestamp
         """
-        return self.dates[-1]
+        if self.dates:
+            return self.dates[-1]
+        else:
+            return
 
     @property
     def period(self):
@@ -287,7 +294,10 @@ class CashPlan:
 
         :return: int
         """
-        return (self.last_day - self.first_day).days
+        if self.dates:
+            return (self.last_day - self.first_day).days
+        else:
+            return 0
 
     @property
     def investment_count(self):

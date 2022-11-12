@@ -8,6 +8,7 @@
 #   HistoryPanel Class, and more history
 #   data manipulating functions.
 # ======================================
+import pdb
 
 import pandas as pd
 import numpy as np
@@ -90,8 +91,8 @@ class HistoryPanel():
         """
 
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
-        # TODO: 在生成HistoryPanel时传入的ndarray会被直接用于HistoryPanel，如果事后修改这个ndarray，HistoryPanel也会改变
-        # TODO: 应该考虑是否在创建HistoryPanel时生成ndarray的一个copy而不是使用其自身 。
+        #  在生成HistoryPanel时传入的ndarray会被直接用于HistoryPanel，如果事后修改这个ndarray，HistoryPanel也会改变
+        #  应该考虑是否在创建HistoryPanel时生成ndarray的一个copy而不是使用其自身 。
         if (not isinstance(values, np.ndarray)) and (values is not None):
             raise TypeError(f'input value type should be numpy ndarray, got {type(values)}')
 
@@ -227,12 +228,12 @@ class HistoryPanel():
     def hdates(self):
         """获取HistoryPanel的历史日期时间戳list"""
         # TODO: Maybe: 可以将返回值包装成一个pandas.Index对象，
-        # TODO: 这样有更多方便好用的方法和属性可用
-        # TODO: 例如
-        # TODO: return pd.Index(self._rows.keys())
-        # TODO: 这样就可以用 HP.hdates.date / HP.hdates.where()
-        # TODO: 等等方法和属性了
-        # TODO: shares 和 htypes 属性也可以如法炮制
+        #  这样有更多方便好用的方法和属性可用
+        #  例如
+        #  return pd.Index(self._rows.keys())
+        #  这样就可以用 HP.hdates.date / HP.hdates.where()
+        #  等等方法和属性了
+        #  shares 和 htypes 属性也可以如法炮制
         if self.is_empty:
             return 0
         else:
@@ -391,14 +392,14 @@ class HistoryPanel():
                 display_shares = self.shares[0:3]
             for share in display_shares:
                 res.append(f'\nshare {self.levels[share]}, label: {share}\n')
-                df = self.to_dataframe(share=share)
+                df = self.slice_to_dataframe(share=share)
                 res.append(df.__str__())
                 res.append('\n')
             if self.level_count > 7:
                 res.append('\n ...  \n')
                 for share in self.shares[-2:]:
                     res.append(f'\nshare {self.levels[share]}, label: {share}\n')
-                    df = self.to_dataframe(share=share)
+                    df = self.slice_to_dataframe(share=share)
                     res.append(df.__str__())
                     res.append('\n')
                 res.append('Only first 3 and last 3 shares are displayed\n')
@@ -692,11 +693,11 @@ class HistoryPanel():
             self._values = self.values.astype(dtype)
         return self
 
-    def to_dataframe(self,
-                     htype: (str, int) = None,
-                     share: (str, int) = None,
-                     dropna: bool = False,
-                     inf_as_na: bool = False) -> pd.DataFrame:
+    def slice_to_dataframe(self,
+                           htype: (str, int) = None,
+                           share: (str, int) = None,
+                           dropna: bool = False,
+                           inf_as_na: bool = False) -> pd.DataFrame:
         """ 将HistoryPanel对象中的指定片段转化为DataFrame
 
             指定htype或者share，将这个htype或share对应的数据切片转化为一个DataFrame。
@@ -755,6 +756,42 @@ class HistoryPanel():
 
         return res_df
 
+    # TODO: implement this method
+    def flatten_to_dataframe(self, multi_index=True):
+        """ 将一个HistoryPanel"展平"成为一个DataFrame
+            HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
+        例如：
+        HistoryPanel有2层，每层3列：
+        000300:
+        close,  open,   vol
+        12.3,   12.5,   1020010
+        12.6,   13.2,   1020020
+
+        000001：
+        close,  open,   vol
+        2.3,    2.5,    20010
+        2.6,    3.2,    20020
+
+        --> 转化为MultiIndex
+        000300                  000001
+        close,  open,   vol,    close,  open,   vol
+        12.3,   12.5,   1020010 2.3,    2.5,    20010
+        12.6,   13.2,   1020020 2.6,    3.2,    20020
+
+
+        :param multi_index:
+        :return:
+        """
+        raise NotImplementedError
+
+    # TODO: implement this method
+    def to_multi_index_dataframe(self):
+        """ 等同于HistoryPanel.flatten_to_dataframe(multi_index=True)
+
+        :return:
+        """
+        raise NotImplementedError
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
@@ -767,7 +804,8 @@ class HistoryPanel():
         :return:
             dict
         """
-        assert isinstance(by, str)
+        if not isinstance(by, str):
+            raise TypeError(f'by ({by}) should be a string, and either "shares" or "htypes", got {type(by)}')
         assert by.lower() in ['share', 'shares', 'htype', 'htypes']
 
         df_dict = {}
@@ -776,13 +814,17 @@ class HistoryPanel():
 
         if by.lower() in ['share', 'shares']:
             for share in self.shares:
-                df_dict[share] = self.to_dataframe(share=share)
+                df_dict[share] = self.slice_to_dataframe(share=share)
             return df_dict
 
         if by.lower() in ['htype', 'htypes']:
             for htype in self.htypes:
-                df_dict[htype] = self.to_dataframe(htype=htype)
+                df_dict[htype] = self.slice_to_dataframe(htype=htype)
             return df_dict
+
+    def unstack(self,  by: str = 'share') -> dict:
+        """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称"""
+        return self.to_df_dict(by=by)
 
     # TODO: implement this method
     def head(self, row_count=5):
@@ -876,7 +918,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     assert column_type in available_column_types, f'column_type should be a string in ["shares", "htypes"], ' \
                                                   f'got {type(column_type)} instead!'
     # TODO: Temp codes, implement this method when column_type is not given -- the column type should be infered
-    # TODO: by the input combination of shares and htypes
+    #  by the input combination of shares and htypes
     if column_type is None:
         if shares is None:
             htype_list = []
@@ -942,7 +984,29 @@ def dataframe_to_hp(df: pd.DataFrame,
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
-def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+def from_single_dataframe(df: pd.DataFrame,
+                          hdates=None,
+                          htypes=None,
+                          shares=None,
+                          column_type: str = None) -> HistoryPanel:
+    """ 函数dataframe_to_hp()的别称，等同于dataframe_to_hp()"""
+    return dataframe_to_hp(df=df,
+                           hdates=hdates,
+                           htypes=htypes,
+                           shares=shares,
+                           column_type=column_type)
+
+
+def from_multi_index_dataframe(df: pd.DataFrame):
+    """ 将一个含有multi-index的DataFrame转化为一个HistoryPanel
+
+    :param df:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
     """ 将多个dataframe组合成一个HistoryPanel.
 
     :param dfs: list, dict
@@ -951,9 +1015,9 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
         所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列
         （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。
 
-    :param stack_as: type str, 'shares' 或 'htypes'
-        堆叠方式。
-            组合的方式有两种，根据stack_as参数的值来确定采用哪一种组合方式：
+    :param dataframe_as: type str, 'shares' 或 'htypes'
+        每个dataframe代表的数据类型。
+            组合的方式有两种，根据dataframe_as参数的值来确定采用哪一种组合方式：
         stack_as == 'shares'，
             表示每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
             层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
@@ -998,8 +1062,8 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
     """
     assert isinstance(dfs, (list, dict)), \
         f'TypeError, dfs should be a list of or a dict whose values are pandas DataFrames, got {type(dfs)} instead.'
-    assert stack_as in ['shares', 'htypes'], \
-        f'InputError, valid input for stack_as can only be \'shaers\' or \'htypes\''
+    assert dataframe_as in ['shares', 'htypes'], \
+        f'InputError, valid input for dataframe_as can only be \'shaers\' or \'htypes\''
     if fill_value is None:
         fill_value = np.nan
     assert isinstance(fill_value, (int, float)), f'invalid fill value type {type(fill_value)}'
@@ -1013,10 +1077,10 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
     combined_shares = []
     combined_htypes = []
     # 检查输入参数是否正确
-    if stack_as == 'shares':
+    if dataframe_as == 'shares':
         axis_names = shares
         combined_axis_names = combined_shares
-    else:  # stack_as == 'htypes':
+    else:  # dataframe_as == 'htypes':
         axis_names = htypes
         combined_axis_names = combined_htypes
     # 根据叠放方式不同，需要检查的参数也不同
@@ -1037,7 +1101,7 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
         assert isinstance(df, pd.DataFrame), \
             f'InputError, dfs should be a list of pandas DataFrame, got {type(df)} instead.'
         combined_index.extend(df.rename(index=pd.to_datetime).index)
-        if stack_as == 'shares':
+        if dataframe_as == 'shares':
             combined_htypes.extend(df.columns)
         else:
             combined_shares.extend(df.columns)
@@ -1045,15 +1109,15 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
     # 合并htypes及shares，
     # 如果没有直接给出shares或htypes，使用他们的并集并排序
     # 如果直接给出了shares或htypes，直接使用并保持原始顺序
-    if (stack_as == 'shares') and (htypes is None):
+    if (dataframe_as == 'shares') and (htypes is None):
         combined_htypes = list(set(combined_htypes))
         combined_htypes.sort()
-    elif (stack_as == 'shares') and (htypes is not None):
+    elif (dataframe_as == 'shares') and (htypes is not None):
         combined_htypes = htypes
-    elif (stack_as == 'htypes') and (shares is None):
+    elif (dataframe_as == 'htypes') and (shares is None):
         combined_shares = list(set(combined_shares))
         combined_shares.sort()
-    elif (stack_as == 'htypes') and (shares is not None):
+    elif (dataframe_as == 'htypes') and (shares is not None):
         combined_shares = shares
     combined_index = list(set(combined_index))
     htype_count = len(combined_htypes)
@@ -1068,7 +1132,7 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
     for df_id in range(len(dfs)):
         extended_df = dfs[df_id].reindex(combined_index)
         for col_name, series in extended_df.iteritems():
-            if stack_as == 'shares':
+            if dataframe_as == 'shares':
                 if col_name not in combined_htypes_dict:
                     continue
                 res_values[df_id, :, combined_htypes_dict[col_name]] = series.values
@@ -1082,35 +1146,43 @@ def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, h
                         columns=combined_htypes)
 
 
+def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+    """ 函数stack_dataframes()的别称，等同于函数stack_dataframes()"""
+    return stack_dataframes(dfs=dfs,
+                            dataframe_as=dataframe_as,
+                            shares=shares,
+                            htypes=htypes,
+                            fill_value=fill_value)
+
+
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-def get_history_panel(shares,
-                      htypes,
-                      start=None,
-                      end=None,
-                      freq=None,
-                      asset_type: str = None,
-                      adj: str = None,
-                      data_source=None):
+def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asset_type: str = None, adj: str = None,
+                      data_source=None, drop_nan=True, resample_method='ffill', b_days_only=True, trade_time_only=True,
+                      **kwargs):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
-        TODO: 完善本函数的功能： 增加composite数据的获取
-        TODO: 完善函数的参数列表，增加默认参数
-        TODO: 完善函数的docstring
-
-
-        :param shares: [str, list]
-            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-            如以下两种输入方式皆合法且等效：
-             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
 
         :param htypes: [str, list]
             需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
             如以下两种输入方式皆合法且等效：
              - str:     'open, high, low, close'
              - list:    ['open', 'high', 'low', 'close']
+            特殊htypes的处理：
+            以下特殊htypes将被特殊处理"
+             - wt-000300.SH:
+                指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
+                获取的数据的htypes同样为wt-000300.SH型
+             - close-000300.SH:
+                给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
+                的参考数据
+
+        :param shares: [str, list]
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
 
         :param start: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
@@ -1137,9 +1209,126 @@ def get_history_panel(shares,
              - none / n: 不复权(默认值)
              - back / b: 后复权
              - forward / fw / f: 前复权
+
+        :param drop_nan: bool
+            是否保留全NaN的行
+
+        :param resample_method: str
+            如果数据需要升频或降频时，调整频率的方法
+            调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+            数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+            例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+            数据合并方法:
+            - 'last'/'close': 使用合并区间的最后一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'first'/'open': 使用合并区间的第一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'max'/'high': 使用合并区间的最大值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'min'/'low': 使用合并区间的最小值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+            - 'sum'/'total': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+            数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+            例如，填充下列数据(?表示插入的数据）
+                [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+            缺失数据的填充方法如下:
+            - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+            - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+            - 'nan': 使用NaN值填充缺失数据：
+                [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+            - 'zero': 使用0值填充缺失数据：
+                [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+
+        :param b_days_only: bool 默认True
+            是否强制转换自然日频率为工作日，即：
+            'D' -> 'B'
+            'W' -> 'W-FRI'
+            'M' -> 'BM'
+
+        :param trade_time_only: bool, 默认True
+            为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+
+        :param resample_method: str
+            处理数据频率更新时的方法
+
+        :param **kwargs:
+            用于生成trade_time_index的参数，包括：
+            :param include_start:   日期时间序列是否包含开始日期/时间
+            :param include_end:     日期时间序列是否包含结束日期/时间
+            :param start_am:        早晨交易时段的开始时间
+            :param end_am:          早晨交易时段的结束时间
+            :param include_start_am:早晨交易时段是否包括开始时间
+            :param include_end_am:  早晨交易时段是否包括结束时间
+            :param start_pm:        下午交易时段的开始时间
+            :param end_pm:          下午交易时段的结束时间
+            :param include_start_pm 下午交易时段是否包含开始时间
+            :param include_end_pm   下午交易时段是否包含结束时间
+
     :param data_source: DataSource Object
     :return:
     """
+    # 检查数据合法性：
+    # TODO: 应该考虑将这部分内容移到core.get_history_data()函数中去
+    from qteasy.utilfuncs import TIME_FREQ_STRINGS, AVAILABLE_ASSET_TYPES
+    if shares is None:
+        shares = ''
+
+    if not isinstance(shares, (str, list)):
+        raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
+    if isinstance(shares, list):
+        if not all(isinstance(item, str) for item in shares):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
+
+    if not isinstance(htypes, (str, list)):
+        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    if isinstance(htypes, list):
+        if not all(isinstance(item, str) for item in htypes):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
+
+    if (start is None) or (end is None):
+        raise KeyError(f'both start and end should be some type of datetime or like')
+    try:
+        start = pd.to_datetime(start)
+        end = pd.to_datetime(end)
+    except Exception:
+        raise Exception(f'both or one of start and end can not be converted to datetime format')
+
+    if not isinstance(freq, str):
+        raise TypeError(f'freq should be a string, got {type(freq)} instead')
+    if freq.upper() not in TIME_FREQ_STRINGS:
+        raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+    freq = freq.lower()
+
+    if not isinstance(asset_type, (str, list)):
+        raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+    if isinstance(asset_type, str):
+        asset_type = str_to_list(asset_type)
+    if not all(isinstance(item, str) for item in asset_type):
+        raise KeyError(f'not all items in asset type are strings')
+    if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
+        raise KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+    if any(item.upper() == 'ANY' for item in asset_type):
+        asset_type = AVAILABLE_ASSET_TYPES
+    asset_type = [item.upper() for item in asset_type]
+
+    if not isinstance(adj, str):
+        raise TypeError(f'adj type should be a string, got {type(adj)} instead')
+    if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
+        raise KeyError(f"invalid adj type ({adj}), which should be anyone of "
+                       f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
+    adj = adj.lower()
+
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
         ds = QT_DATA_SOURCE
@@ -1148,33 +1337,97 @@ def get_history_panel(shares,
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
-    if isinstance(htypes, str):
-        htypes = str_to_list(htypes)
-    normal_htypes = [itm for itm in htypes if itm.split('-')[0] != 'wt']
-    weight_indices = [itm.split('-')[1] for itm in htypes if itm not in normal_htypes]
+    htype_splits = [itm.split('-') for itm in htypes]
+    if shares:
+        # shares不为空时，生成各个shares的历史数据HistoryPanel
+        normal_htypes = [itm[0] for itm in htype_splits if len(itm) == 1]
+        weight_indices = [itm[1] for itm in htype_splits if (len(itm) > 1) and (itm[0] == 'wt')]
+        htype_code_pairs = {}
+        pure_ref_htypes = []
+    else:
+        # shares为空时，生成不属于任何shares的参考历史数据：
+        normal_htypes = []
+        weight_indices = []
+        htype_code_pairs = {itm[0]: itm[1] for itm in htype_splits if len(itm) > 1}
+        pure_ref_htypes = [itm[0] for itm in htype_splits if len(itm) == 1]
     # 获取常规类型的历史数据如量价数据和指标数据
-    if normal_htypes:
-        normal_dfs = ds.get_history_data(shares=shares,
-                                         htypes=normal_htypes,
-                                         start=start,
-                                         end=end,
-                                         freq=freq,
-                                         asset_type=asset_type,
-                                         adj=adj)
-    else:
-        normal_dfs = {}
+    normal_dfs = ds.get_history_data(
+            shares=shares,
+            htypes=normal_htypes,
+            start=start,
+            end=end,
+            freq=freq,
+            asset_type=asset_type,
+            adj=adj
+    ) if normal_htypes else {}
     # 获取指数成分权重数据
-    if weight_indices:
-        weight_dfs = ds.get_index_weights(index=weight_indices,
-                                          start=start,
-                                          end=end,
-                                          shares=shares)
+    weight_dfs = ds.get_index_weights(
+            index=weight_indices,
+            start=start,
+            end=end,
+            shares=shares
+    ) if weight_indices else {}
+    # 获取无share数据
+    reference_dfs = ds.get_history_data(
+            shares=list(htype_code_pairs.values()),
+            htypes=list(htype_code_pairs.keys()),
+            start=start,
+            end=end,
+            freq=freq,
+            asset_type=asset_type,
+            adj=adj
+    ) if htype_code_pairs else {}
+    pure_ref_dfs = ds.get_history_data(
+            shares=None,
+            htypes=pure_ref_htypes,
+            start=start,
+            end=end,
+            freq=freq,
+            asset_type=asset_type,
+            adj=adj
+    ) if pure_ref_htypes else {}
+    if shares:
+        # 合并两个hp，合并前整理字典的keys，使之与htypes的顺序一致，否则产生的historyPanel
+        # 的htypes顺序与输入不一致
+        if weight_dfs != {}:
+            normal_dfs.update(weight_dfs)
+        all_dfs = {htyp: normal_dfs[htyp] for htyp in htypes}
     else:
-        weight_dfs = {}
-    # 合并两个hp，合并前整理字典的keys，使之与htypes的顺序一致，否则产生的historyPanel
-    # 的htypes顺序与输入不一致
-    if weight_dfs != {}:
-        normal_dfs.update(weight_dfs)
-    all_dfs = {htyp: normal_dfs[htyp] for htyp in htypes}
-    result_hp = stack_dataframes(all_dfs, stack_as='htypes', htypes=htypes, shares=shares)
+        # 处理reference_data
+        new_reference_dfs = {}
+        if reference_dfs:
+            for htyp, df in reference_dfs.items():
+                code = htype_code_pairs[htyp]
+                code_type_pair = htyp + '-' + code
+                df = df.reindex(columns=[code])
+                df.columns=['none']
+                new_reference_dfs[code_type_pair] = df
+        if pure_ref_dfs:
+            new_reference_dfs.update(pure_ref_dfs)
+        all_dfs = {htyp: new_reference_dfs[htyp] for htyp in htypes}
+
+    # 处理所有的df，根据设定执行以下几个步骤：
+    #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
+    #  2，检查整行NaN值得情况，根据设定去掉或保留这些行
+    #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
+    for htyp in htypes:
+        if resample_method is not None:
+            from .database import _resample_data
+            all_dfs[htyp] = _resample_data(
+                    all_dfs[htyp],
+                    target_freq=freq,
+                    method=resample_method,
+                    forced_start=start,
+                    forced_end=end,
+                    b_days_only=b_days_only,
+                    trade_time_only=trade_time_only,
+                    **kwargs
+            )
+        if drop_nan:
+            all_dfs[htyp] = all_dfs[htyp].dropna(how='all')
+
+    if shares:
+        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
+    else:
+        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes)
     return result_hp

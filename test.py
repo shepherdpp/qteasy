@@ -10,6 +10,7 @@
 # ======================================
 import unittest
 
+import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -20,17 +21,17 @@ import itertools
 import datetime
 import logging
 
-from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR
+from qteasy import QT_CONFIG, QT_DATA_SOURCE, CashPlan
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
-from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match
+from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
-from qteasy.core import apply_loop
-from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
+from qteasy.core import apply_loop, process_loop_results
+from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL
 
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
@@ -72,12 +73,14 @@ from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, s
 from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
-from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffill_3d_data
+from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, get_built_in_table_schema
+from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
+from qteasy.database import get_main_freq
 
-from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
+from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
@@ -128,43 +131,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1.))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997.00897308, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 1))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
 
     def test_min_fee(self):
         """测试最低交易费用"""
@@ -179,43 +182,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33033.333)
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33033.333)
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33030)
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33030)
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), 32700)
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), 32700)
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
 
     def test_rate_with_min(self):
         """测试最低交易费用对其他交易费率参数的影响"""
@@ -230,43 +233,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 984.9305624, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32999.99967)
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.33333)
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32999.99967)
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.33333)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32996.7)
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.3)
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32996.7)
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.3)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32667.0)
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.0)
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32667.0)
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.0)
 
     def test_fixed_fee(self):
         """测试固定交易费用"""
@@ -281,30 +284,30 @@ class TestCost(unittest.TestCase):
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 0))
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
 
         print('\nselling result of fixed cost with fixed fee = 150 and moq=100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3300.]), True,
                       f'result incorrect, {test_fixed_fee_result[0]} does not equal to [0,0,-3400]')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 990., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
     def test_slipage(self):
         """测试交易滑点"""
@@ -325,20 +328,20 @@ class TestCost(unittest.TestCase):
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True,
                       f'{test_fixed_fee_result[0]} does not equal to [0, 0, -10000]')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33298.88855591,
-                               msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 34.44444409,
-                               msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33298.88855591,
+                                msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 34.44444409,
+                                msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
 
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 996.98909294, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
 
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
 
 
 class TestSpace(unittest.TestCase):
@@ -351,8 +354,8 @@ class TestSpace(unittest.TestCase):
         # pars_list = [[(0, 10), (0, 10)],
         #              [[0, 10], [0, 10]]]
         #
-        # types_list = ['discr',
-        #               ['discr', 'discr']]
+        # types_list = ['int',
+        #               ['int', 'int']]
         #
         # input_pars = itertools.product(pars_list, types_list)
         # for p in input_pars:
@@ -363,7 +366,7 @@ class TestSpace(unittest.TestCase):
         #     # print(s, t)
         #     self.assertIsInstance(s, qt.Space)
         #     self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-        #     self.assertEqual(t, ['discr', 'discr'], 'types incorrect')
+        #     self.assertEqual(t, ['int', 'int'], 'types incorrect')
         #
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
@@ -371,34 +374,27 @@ class TestSpace(unittest.TestCase):
         types_list = ['foo, bar',
                       ['foo', 'bar']]
 
+        # test invalid par types
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            # print(p)
-            s = Space(*p)
-            b = s.boes
-            t = s.types
-            # print(s, t)
-            self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-            self.assertEqual(t, ['enum', 'enum'], 'types incorrect')
+            self.assertRaises(KeyError, Space, *p)
 
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
 
-        types_list = [['discr', 'foobar']]
+        types_list = [['int', 'enumerate']]
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            # print(p)
             s = Space(*p)
             b = s.boes
             t = s.types
-            # print(s, t)
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-            self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
+            self.assertEqual(t, ['int', 'enum'], 'types incorrect')
 
         pars_list = [(0., 10), (0, 10)]
         s = Space(pars=pars_list, par_types=None)
-        self.assertEqual(s.types, ['conti', 'discr'])
+        self.assertEqual(s.types, ['float', 'int'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 11))
         self.assertEqual(s.shape, (np.inf, 11))
@@ -407,7 +403,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = [(0., 10), (0, 10)]
         s = Space(pars=pars_list, par_types='conti, enum')
-        self.assertEqual(s.types, ['conti', 'enum'])
+        self.assertEqual(s.types, ['float', 'enum'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 2))
         self.assertEqual(s.shape, (np.inf, 2))
@@ -416,7 +412,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = [(1, 2), (2, 3), (3, 4)]
         s = Space(pars=pars_list)
-        self.assertEqual(s.types, ['discr', 'discr', 'discr'])
+        self.assertEqual(s.types, ['int', 'int', 'int'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, (2, 2, 2))
         self.assertEqual(s.shape, (2, 2, 2))
@@ -455,7 +451,7 @@ class TestSpace(unittest.TestCase):
         :return:
         """
         pars_list = [(0, 10), (0, 10)]
-        types_list = ['discr', 'discr']
+        types_list = ['int', 'int']
         s = Space(pars=pars_list, par_types=types_list)
         extracted_int, count = s.extract(3, 'interval')
         extracted_int_list = list(extracted_int)
@@ -580,7 +576,7 @@ class TestSpace(unittest.TestCase):
             self.assertIsInstance(subspace, Space)
             self.assertTrue(subspace in s)
             self.assertEqual(subspace.dim, 6)
-            self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+            self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
             ext, count = subspace.extract(32)
             points = list(ext)
             self.assertGreaterEqual(count, 512)
@@ -595,7 +591,7 @@ class TestSpace(unittest.TestCase):
         # test axis object with conti type
         axis = Axis((0., 5))
         self.assertIsInstance(axis, Axis)
-        self.assertEqual(axis.axis_type, 'conti')
+        self.assertEqual(axis.axis_type, 'float')
         self.assertEqual(axis.axis_boe, (0., 5.))
         self.assertEqual(axis.count, np.inf)
         self.assertEqual(axis.size, 5.0)
@@ -608,7 +604,7 @@ class TestSpace(unittest.TestCase):
         # test axis object with discrete type
         axis = Axis((1, 5))
         self.assertIsInstance(axis, Axis)
-        self.assertEqual(axis.axis_type, 'discr')
+        self.assertEqual(axis.axis_type, 'int')
         self.assertEqual(axis.axis_boe, (1, 5))
         self.assertEqual(axis.count, 5)
         self.assertEqual(axis.size, 5)
@@ -636,7 +632,7 @@ class TestSpace(unittest.TestCase):
         # 生成一个space，指定space中的一个点以及distance，生成一个sub-space
         pars_list = [(0., 10), (0, 10)]
         s = Space(pars=pars_list, par_types=None)
-        self.assertEqual(s.types, ['conti', 'discr'])
+        self.assertEqual(s.types, ['float', 'int'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10., 11))
         self.assertEqual(s.shape, (np.inf, 11))
@@ -648,7 +644,7 @@ class TestSpace(unittest.TestCase):
         distance = 2
         subspace = s.from_point(p, distance)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['conti', 'discr'])
+        self.assertEqual(subspace.types, ['float', 'int'])
         self.assertEqual(subspace.dim, 2)
         self.assertEqual(subspace.size, (4.0, 5))
         self.assertEqual(subspace.shape, (np.inf, 5))
@@ -661,7 +657,7 @@ class TestSpace(unittest.TestCase):
         d = 10
         subspace = s.from_point(p, d)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
+        self.assertEqual(subspace.types, ['int', 'int', 'int', 'int', 'int', 'int'])
         self.assertEqual(subspace.dim, 6)
         self.assertEqual(subspace.volume, 65345616)
         self.assertEqual(subspace.size, (16, 21, 21, 21, 21, 21))
@@ -675,7 +671,7 @@ class TestSpace(unittest.TestCase):
         d = 10
         subspace = s.from_point(p, d)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+        self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
         self.assertEqual(subspace.dim, 6)
         self.assertEqual(subspace.volume, 48000000)
         self.assertEqual(subspace.size, (15.0, 20.0, 20.0, 20.0, 20.0, 20.0))
@@ -689,7 +685,7 @@ class TestSpace(unittest.TestCase):
         d = [10, 5, 5, 10, 10, 5]
         subspace = s.from_point(p, d)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+        self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
         self.assertEqual(subspace.dim, 6)
         self.assertEqual(subspace.volume, 6000000)
         self.assertEqual(subspace.size, (15.0, 10.0, 10.0, 20.0, 20.0, 10.0))
@@ -725,7 +721,12 @@ class TestCashPlan(unittest.TestCase):
         self.cp3.info()
         # test assersion errors
         self.assertRaises(AssertionError, qt.CashPlan, '2016-01-01', [10000, 10000])
+        self.assertRaises(AssertionError, qt.CashPlan, '', '')
+        self.assertRaises(AssertionError, qt.CashPlan, '', [])
         self.assertRaises(KeyError, qt.CashPlan, '2020-20-20', 10000)
+        # test empty cash plan
+        empty = CashPlan([], [])
+        print(empty)
 
     def test_properties(self):
         self.assertEqual(self.cp1.amounts, [20000, 10000], 'property wrong')
@@ -735,12 +736,26 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(self.cp1.period, 730)
         self.assertEqual(self.cp1.dates, [Timestamp('2010-01-01'), Timestamp('2012-01-01')])
         self.assertEqual(self.cp1.ir, 0.1)
-        self.assertAlmostEqual(self.cp1.closing_value, 34200)
-        self.assertAlmostEqual(self.cp2.closing_value, 10000)
-        self.assertAlmostEqual(self.cp3.closing_value, 220385.3483685)
+        self.assertAlmostEquals(self.cp1.closing_value, 34200)
+        self.assertAlmostEquals(self.cp2.closing_value, 10000)
+        self.assertAlmostEquals(self.cp3.closing_value, 220385.3483685)
         self.assertIsInstance(self.cp1.plan, pd.DataFrame)
         self.assertIsInstance(self.cp2.plan, pd.DataFrame)
         self.assertIsInstance(self.cp3.plan, pd.DataFrame)
+        # test empty cash plan
+        empty = CashPlan([], [])
+        self.assertEqual(empty.amounts, [], 'property wrong')
+        self.assertEqual(empty.first_day, None)
+        self.assertEqual(empty.last_day, None)
+        self.assertEqual(empty.investment_count, 0)
+        self.assertEqual(empty.total, 0)
+        self.assertEqual(empty.period, 0)
+        self.assertEqual(empty.dates, [])
+        self.assertEqual(empty.ir, 0.0)
+        self.assertAlmostEquals(empty.closing_value, 0)
+        self.assertAlmostEquals(empty.opening_value, 0)
+        self.assertIsInstance(empty.plan, pd.DataFrame)
+        self.assertTrue(empty.plan.empty)
 
     def test_operation(self):
         cp_self_add = self.cp1 + self.cp1
@@ -937,21 +952,21 @@ class TestCoreSubFuncs(unittest.TestCase):
                                     (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(sp.boes)
 
-    def test_get_stock_pool(self):
+    def test_filter_stocks(self):
         print(f'start test building stock pool function\n')
         ds = QT_DATA_SOURCE
         share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
                                                           'market', 'list_date', 'exchange']]
 
         print(f'\nselect all stocks by area')
-        stock_pool = qt.get_stock_pool(area='上海')
+        stock_pool = qt.filter_stock_codes(area='上海')
         print(f'{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "上海"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].eq('上海').all())
 
         print(f'\nselect all stocks by multiple areas')
-        stock_pool = qt.get_stock_pool(area='贵州,北京,天津')
+        stock_pool = qt.filter_stock_codes(area='贵州,北京,天津')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are in list of ["贵州", "北京", "天津"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -960,7 +975,7 @@ class TestCoreSubFuncs(unittest.TestCase):
                                                                                             '天津']).all())
 
         print(f'\nselect all stocks by area and industry')
-        stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
+        stock_pool = qt.filter_stock_codes(area='四川', industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "四川", and industry in ["银行", "金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
@@ -968,21 +983,21 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['四川']).all())
 
         print(f'\nselect all stocks by industry')
-        stock_pool = qt.get_stock_pool(industry='银行, 金融')
+        stock_pool = qt.filter_stock_codes(industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["银行", "金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
 
         print(f'\nselect all stocks by market')
-        stock_pool = qt.get_stock_pool(market='主板')
+        stock_pool = qt.filter_stock_codes(market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
 
         print(f'\nselect all stocks by market and list date')
-        stock_pool = qt.get_stock_pool(date='2000-01-01', market='主板')
+        stock_pool = qt.filter_stock_codes(date='2000-01-01', market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板", and list date after "2000-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -991,7 +1006,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by list date')
-        stock_pool = qt.get_stock_pool(date='1997-01-01')
+        stock_pool = qt.filter_stock_codes(date='1997-01-01')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all list date after "1997-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -999,7 +1014,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by exchange')
-        stock_pool = qt.get_stock_pool(exchange='SSE')
+        stock_pool = qt.filter_stock_codes(exchange='SSE')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are in "SSE"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1016,9 +1031,9 @@ class TestCoreSubFuncs(unittest.TestCase):
                      '山东', '河南', '山西', '江西', '青海', '湖北',
                      '内蒙', '海南', '重庆', '陕西', '福建', '广西',
                      '上海']
-        stock_pool = qt.get_stock_pool(date='19980101',
-                                       industry=industry_list,
-                                       area=area_list)
+        stock_pool = qt.filter_stock_codes(date='19980101',
+                                           industry=industry_list,
+                                           area=area_list)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are in\n{area_list} \nand \n{industry_list}'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1027,22 +1042,22 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(area_list).all())
 
-        self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
-        self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
-        self.assertRaises(KeyError, qt.get_stock_pool, markets='SSE')
+        self.assertRaises(KeyError, qt.filter_stock_codes, industry=25)
+        self.assertRaises(KeyError, qt.filter_stock_codes, share_name='000300.SH')
+        self.assertRaises(KeyError, qt.filter_stock_codes, markets='SSE')
 
         print(f'\nselect all stocks by index, with start and end dates:\n'
               f'all the "000300.SH" composite after 20180101')
-        stock_pool = qt.get_stock_pool(date='20200101',
-                                       index='000300.SH')
+        stock_pool = qt.filter_stock_codes(date='20200101',
+                                           index='000300.SH')
         print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
               f'more information of some fo the stocks\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
 
         print(f'\nprint out targets that can not be matched and return fuzzy results')
-        stock_pool = qt.get_stock_pool(industry='银行业, 多元金融, 房地产',
-                                       area='陕西省',
-                                       market='主要')
+        stock_pool = qt.filter_stock_codes(industry='银行业, 多元金融, 房地产',
+                                           area='陕西省',
+                                           market='主要')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["多元金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1062,6 +1077,101 @@ class TestCoreSubFuncs(unittest.TestCase):
         qt.find_history_data('open')
         qt.find_history_data('市盈率')
         qt.find_history_data('市?率*')
+        qt.find_history_data('市值')
+        qt.find_history_data('net_profit')
+        qt.find_history_data('净利润')
+
+    def test_get_history_data(self):
+        """ 测试get_history_data。大部份功能性测试在TestHistoryPanle.test_get_history_panel中完成
+        这里只关注参数自动完善功能以及包含完整shares和htypes输入的功能"""
+        print('test basic functions')
+        print('read data with all parameters and output dataframe grouped by htypes')
+        res = qt.get_history_data(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                  htypes='open, high, low, close',
+                                  start='20210101',
+                                  end='20210115',
+                                  freq='d',
+                                  asset_type='E',
+                                  adj='f',
+                                  group_by='htypes')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
+        self.assertEqual(list(res.keys()), ['open', 'high', 'low', 'close'])
+        first_df = res['open']
+        first_index = first_df.index
+        first_columns = first_df.columns
+        for df in res.values():
+            self.assertEqual(list(first_index), list(df.index))
+            self.assertEqual(list(first_columns), list(df.columns))
+
+        print('read data with all parameters and output dataframe grouped by shares')
+        res = qt.get_history_data(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                  htypes='open, high, low, close',
+                                  start='20210101',
+                                  end='20210115',
+                                  freq='d',
+                                  asset_type='E',
+                                  adj='f',
+                                  group_by='shares')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
+        self.assertEqual(list(res.keys()), ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_df = res['000002.SZ']
+        first_index = first_df.index
+        first_columns = first_df.columns
+        for df in res.values():
+            self.assertEqual(list(first_index), list(df.index))
+            self.assertEqual(list(first_columns), list(df.columns))
+
+        print('test function with missing parameters')
+        res = qt.get_history_data(htypes='open, high, low, close')
+        print(res)
+
+        res = qt.get_history_data(htypes='open, close, vol',
+                                  shares='000651.SZ, 513100.SH')
+        print(res)
+
+        print('test function with wrong parameters')
+        print('wrong share code')
+        res = qt.get_history_data(htypes='open, close, vol',
+                                  shares='missing_code, 513100.SH')
+        print(res)
+        print('wrong date')
+        self.assertRaises(ValueError,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          start='20220101',
+                          end='20210101'
+                          )
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          start='wrong_date',
+                          end='20210101'
+                          )
+        print('wrong freq')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          freq='wrong_freq'
+                          )
+        print('wrong asset_type')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          asset_type='wrong_type'
+                          )
+        print('wrong adj')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          adj='wrong_adj'
+                          )
 
 
 class TestEvaluations(unittest.TestCase):
@@ -1069,7 +1179,7 @@ class TestEvaluations(unittest.TestCase):
 
     # 以下手动计算结果在Excel文件中
     def setUp(self):
-        """用np.random生成测试用数据，使用cumsum()模拟股票走势"""
+        """生成模拟股票价格数据"""
         self.test_data1 = pd.DataFrame([5.34892759, 5.65768696, 5.79227076, 5.56266871, 5.88189632,
                                         6.24795001, 5.92755558, 6.38748165, 6.31331899, 5.86001665,
                                         5.61048472, 5.30696736, 5.40406792, 5.03180571, 5.37886353,
@@ -1360,88 +1470,91 @@ class TestEvaluations(unittest.TestCase):
         """
         pass
 
+    # noinspection PyTypeChecker
     def test_fv(self):
-        print(f'test with test data and empty DataFrame')
-        self.assertAlmostEqual(eval_fv(self.test_data1), 6.39245474)
-        self.assertAlmostEqual(eval_fv(self.test_data2), 10.05126375)
-        self.assertAlmostEqual(eval_fv(self.test_data3), 6.95068113)
-        self.assertAlmostEqual(eval_fv(self.test_data4), 8.86508591)
-        self.assertAlmostEqual(eval_fv(self.test_data5), 4.58627048)
-        self.assertAlmostEqual(eval_fv(self.test_data6), 4.10346795)
-        self.assertAlmostEqual(eval_fv(self.test_data7), 2.92532313)
-        self.assertAlmostEqual(eval_fv(pd.DataFrame()), -np.inf)
+        print(f'test with test arr and empty DataFrame')
+        self.assertAlmostEquals(eval_fv(self.test_data1), 6.39245474)
+        self.assertAlmostEquals(eval_fv(self.test_data2), 10.05126375)
+        self.assertAlmostEquals(eval_fv(self.test_data3), 6.95068113)
+        self.assertAlmostEquals(eval_fv(self.test_data4), 8.86508591)
+        self.assertAlmostEquals(eval_fv(self.test_data5), 4.58627048)
+        self.assertAlmostEquals(eval_fv(self.test_data6), 4.10346795)
+        self.assertAlmostEquals(eval_fv(self.test_data7), 2.92532313)
+        self.assertAlmostEquals(eval_fv(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(AssertionError, eval_fv, 15)
+        self.assertRaises(TypeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
 
+    # noinspection PyTypeChecker
     def test_max_drawdown(self):
-        print(f'test with test data and empty DataFrame')
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data1)[0], 0.264274308)
+        print(f'test with test arr and empty DataFrame')
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data1)[0], 0.264274308)
         self.assertEqual(eval_max_drawdown(self.test_data1)[1], 53)
         self.assertEqual(eval_max_drawdown(self.test_data1)[2], 86)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data1)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data2)[0], 0.334690849)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data2)[0], 0.334690849)
         self.assertEqual(eval_max_drawdown(self.test_data2)[1], 0)
         self.assertEqual(eval_max_drawdown(self.test_data2)[2], 10)
         self.assertEqual(eval_max_drawdown(self.test_data2)[3], 19)
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data3)[0], 0.244452899)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data3)[0], 0.244452899)
         self.assertEqual(eval_max_drawdown(self.test_data3)[1], 90)
         self.assertEqual(eval_max_drawdown(self.test_data3)[2], 99)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data3)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data4)[0], 0.201849684)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data4)[0], 0.201849684)
         self.assertEqual(eval_max_drawdown(self.test_data4)[1], 14)
         self.assertEqual(eval_max_drawdown(self.test_data4)[2], 50)
         self.assertEqual(eval_max_drawdown(self.test_data4)[3], 54)
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data5)[0], 0.534206456)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data5)[0], 0.534206456)
         self.assertEqual(eval_max_drawdown(self.test_data5)[1], 21)
         self.assertEqual(eval_max_drawdown(self.test_data5)[2], 60)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data5)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data6)[0], 0.670062689)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data6)[0], 0.670062689)
         self.assertEqual(eval_max_drawdown(self.test_data6)[1], 0)
         self.assertEqual(eval_max_drawdown(self.test_data6)[2], 70)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data6)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data7)[0], 0.783577449)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data7)[0], 0.783577449)
         self.assertEqual(eval_max_drawdown(self.test_data7)[1], 17)
         self.assertEqual(eval_max_drawdown(self.test_data7)[2], 51)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data7)[3]))
         self.assertEqual(eval_max_drawdown(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(AssertionError, eval_fv, 15)
+        self.assertRaises(TypeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
         # test max drawdown == 0:
         # TODO: investigate: how does divide by zero change?
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[1], 14)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[2], 50)
 
+    # noinspection PyTypeChecker
     def test_info_ratio(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
 
     def test_volatility(self):
-        self.assertAlmostEqual(eval_volatility(self.test_data1), 0.748646166)
-        self.assertAlmostEqual(eval_volatility(self.test_data2), 0.75527442)
-        self.assertAlmostEqual(eval_volatility(self.test_data3), 0.654188853)
-        self.assertAlmostEqual(eval_volatility(self.test_data4), 0.688375814)
-        self.assertAlmostEqual(eval_volatility(self.test_data5), 1.089989522)
-        self.assertAlmostEqual(eval_volatility(self.test_data6), 1.775419308)
-        self.assertAlmostEqual(eval_volatility(self.test_data7), 1.962758406)
-        self.assertAlmostEqual(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
-        self.assertAlmostEqual(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
-        self.assertAlmostEqual(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
-        self.assertAlmostEqual(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
-        self.assertAlmostEqual(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
-        self.assertAlmostEqual(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
-        self.assertAlmostEqual(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
+        self.assertAlmostEquals(eval_volatility(self.test_data1), 0.748646166)
+        self.assertAlmostEquals(eval_volatility(self.test_data2), 0.75527442)
+        self.assertAlmostEquals(eval_volatility(self.test_data3), 0.654188853)
+        self.assertAlmostEquals(eval_volatility(self.test_data4), 0.688375814)
+        self.assertAlmostEquals(eval_volatility(self.test_data5), 1.089989522)
+        self.assertAlmostEquals(eval_volatility(self.test_data6), 1.775419308)
+        self.assertAlmostEquals(eval_volatility(self.test_data7), 1.962758406)
+        self.assertAlmostEquals(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
+        self.assertAlmostEquals(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
+        self.assertAlmostEquals(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
+        self.assertAlmostEquals(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
+        self.assertAlmostEquals(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
+        self.assertAlmostEquals(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
+        self.assertAlmostEquals(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
         self.assertEqual(eval_volatility(pd.DataFrame()), -np.inf)
         self.assertRaises(AssertionError, eval_volatility, [1, 2, 3])
@@ -1549,17 +1662,18 @@ class TestEvaluations(unittest.TestCase):
                                         0.34160916, 0.33811193, 0.33822709, 0.3391685, 0.33883381])
         test_volatility = eval_volatility(self.long_data)
         test_volatility_roll = self.long_data['volatility'].values
-        self.assertAlmostEqual(test_volatility, np.nanmean(expected_volatility))
+        self.assertAlmostEqual = (test_volatility, np.nanmean(expected_volatility))
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
+    # noinspection PyCallingNonCallable
     def test_sharp(self):
-        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
-        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
-        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 1.573319618)
-        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 2.449630585)
-        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.578781892)
-        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.570048419)
-        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.347565045)
+        self.assertAlmostEquals(eval_sharp(self.test_data1, 0), 0.970116743)
+        self.assertAlmostEquals(eval_sharp(self.test_data2, 0), 2.654078559)
+        self.assertAlmostEquals(eval_sharp(self.test_data3, 0), 1.573319618)
+        self.assertAlmostEquals(eval_sharp(self.test_data4, 0), 2.449630585)
+        self.assertAlmostEquals(eval_sharp(self.test_data5, 0.002), 0.578781892)
+        self.assertAlmostEquals(eval_sharp(self.test_data6, 0.002), 0.570048419)
+        self.assertAlmostEquals(eval_sharp(self.test_data7, 0.002), 0.347565045)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1663,17 +1777,18 @@ class TestEvaluations(unittest.TestCase):
                                    1.53541187, 1.55148893, 1.52791909, 1.59902474, 1.70742124,
                                    1.84548298, 2.08064663, 1.98788139, 2.04559367, 2.05991876])
         test_sharp = eval_sharp(self.long_data, 0.015)
-        self.assertAlmostEqual(np.nanmean(expected_sharp), test_sharp)
+        expected = float(np.nanmean(expected_sharp))
+        self.assertAlmostEquals(expected, test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
     def test_beta(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
-        self.assertAlmostEqual(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
-        self.assertAlmostEqual(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
-        self.assertAlmostEqual(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
-        self.assertAlmostEqual(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
-        self.assertAlmostEqual(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
+        self.assertAlmostEquals(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
+        self.assertAlmostEquals(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
+        self.assertAlmostEquals(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
+        self.assertAlmostEquals(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
+        self.assertAlmostEquals(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
+        self.assertAlmostEquals(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
 
         self.assertRaises(TypeError, eval_beta, [1, 2, 3], reference, 'value')
         self.assertRaises(TypeError, eval_beta, self.test_data3, [1, 2, 3], 'value')
@@ -1782,17 +1897,18 @@ class TestEvaluations(unittest.TestCase):
                                   -0.10645088, -0.09982498, -0.10542734, -0.09631372, -0.08229695])
         test_beta_mean = eval_beta(self.long_data, self.long_bench, 'value')
         test_beta_roll = self.long_data['beta'].values
-        self.assertAlmostEqual(test_beta_mean, np.nanmean(expected_beta))
+        expected = float(np.nanmean(expected_beta))
+        self.assertAlmostEquals(test_beta_mean, expected)
         self.assertTrue(np.allclose(test_beta_roll, expected_beta, equal_nan=True))
 
     def test_alpha(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
-        self.assertAlmostEqual(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
-        self.assertAlmostEqual(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
-        self.assertAlmostEqual(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
-        self.assertAlmostEqual(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
-        self.assertAlmostEqual(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
+        self.assertAlmostEquals(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
+        self.assertAlmostEquals(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
+        self.assertAlmostEquals(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
+        self.assertAlmostEquals(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
+        self.assertAlmostEquals(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
+        self.assertAlmostEquals(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
 
         # 测试长数据的alpha计算
         expected_alpha = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1897,7 +2013,8 @@ class TestEvaluations(unittest.TestCase):
                                    0.75573056, 0.89501633, 0.8347253, 0.87964685, 0.89015835])
         test_alpha_mean = eval_alpha(self.long_data, 100, self.long_bench, 'value')
         test_alpha_roll = self.long_data['alpha'].values
-        self.assertAlmostEqual(test_alpha_mean, np.nanmean(expected_alpha))
+        expected = float(np.nanmean(expected_alpha))
+        self.assertAlmostEquals(test_alpha_mean, expected)
         self.assertTrue(np.allclose(test_alpha_roll, expected_alpha, equal_nan=True))
 
     def test_calmar(self):
@@ -1907,23 +2024,23 @@ class TestEvaluations(unittest.TestCase):
     def test_benchmark(self):
         reference = self.test_data1
         tr, yr = eval_benchmark(self.test_data2, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data3, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data4, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data5, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data6, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data7, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
 
     def test_evaluate(self):
         pass
@@ -2376,7 +2493,8 @@ class TestLoop(unittest.TestCase):
                             '2016/08/26', '2016/08/29', '2016/08/30', '2016/08/31', '2016/09/01',
                             '2016/09/02', '2016/09/05', '2016/09/06', '2016/09/07', '2016/09/08']
         self.multi_dates = [pd.Timestamp(date_text) for date_text in self.multi_dates]
-        # 操作的交易价格包括开盘价、最高价和收盘价
+
+        # 精心设计的模拟交易价格包括开盘价、最高价和收盘价
         self.multi_prices_open = np.array([[10.02, 9.88, 7.26],
                                            [10.00, 9.88, 7.00],
                                            [9.98, 9.89, 6.88],
@@ -2527,7 +2645,7 @@ class TestLoop(unittest.TestCase):
                                             [9.64, 11.01, 7.80],
                                             [9.65, 11.58, 7.97],
                                             [9.62, 11.80, 8.25]])
-        # 交易信号包括三组，分别作用与开盘价、最高价和收盘价
+        # 精心设计的多重交易信号，交易信号包括三组，分别作用于开盘价、最高价和收盘价
         # 此时的关键是股票交割期的处理，交割期不为0时，以交易日为单位交割
         self.multi_signals = []
         # multisignal的第一组信号为开盘价信号
@@ -2723,6 +2841,60 @@ class TestLoop(unittest.TestCase):
                              )
         )
 
+        # 将上面生成的数据转化成符合要求的交易信号HistoryPanel
+        self.pt_signal_hp = dataframe_to_hp(
+                pd.DataFrame(self.pt_signals, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.ps_signal_hp = dataframe_to_hp(
+                pd.DataFrame(self.ps_signals, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.vs_signal_hp = dataframe_to_hp(
+                pd.DataFrame(self.vs_signals, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.multi_signal_hp = stack_dataframes(
+                self.multi_signals,
+                dataframe_as='htypes',
+                htypes='open, high, close'
+        )
+        # 将生成的数据组装成符合要求的交易历史价格清单
+        self.history_list = dataframe_to_hp(
+                pd.DataFrame(self.prices, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        # 将生成的数据组装成符合要求的多重交易历史价格清单
+        self.multi_history_list = stack_dataframes(
+                self.multi_histories,
+                dataframe_as='htypes',
+                htypes='open, high, close'
+        )
+
+        # 精心设计的交易员Operator对象，承载交易信号后用于apply_loop的测试
+        self.op_pt_batch = qt.Operator(['all'], signal_type='pt', op_type='batch')
+        self.op_ps_batch = qt.Operator(['all'], signal_type='ps', op_type='batch')
+        self.op_vs_batch = qt.Operator(['all'], signal_type='vs', op_type='batch')
+        self.op_multi_batch = qt.Operator(['all'], signal_type='ps', op_type='batch')
+        # 不调用交易员Operator对象的create_signal()方法，直接设置相应交易员的交易信号列表
+        # 注意，正常情况下应该使用operator.assign_hist_data()来设置分配历史数据，同时使用
+        # operator.create_signal()方法来生成交易清单，这里直接设置的方法仅限测试时使用
+        self.op_pt_batch._op_list = self.pt_signal_hp.values
+        self.op_pt_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_pt_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_ps_batch._op_list = self.ps_signal_hp.values
+        self.op_ps_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_ps_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_vs_batch._op_list = self.vs_signal_hp.values
+        self.op_vs_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_vs_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_multi_batch._op_list = self.multi_signal_hp.values
+        self.op_multi_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.multi_dates,
+                                                                                range(len(self.multi_dates)))}
+        self.op_multi_batch._op_list_shares = {share: idx for share, idx in zip(self.multi_shares, range(3))}
+        self.op_multi_batch._op_list_price_types = {price: idx for price, idx in zip(['open', 'high', 'close'],
+                                                                                     range(3))}
+
         # 设置回测参数
         self.cash = qt.CashPlan(['2016/07/01', '2016/08/12', '2016/09/23'], [10000, 10000, 10000])
         self.rate = qt.Cost(buy_fix=0,
@@ -2739,32 +2911,6 @@ class TestLoop(unittest.TestCase):
                              buy_min=10,
                              sell_min=5,
                              slipage=0)
-        self.pt_signal_hp = dataframe_to_hp(
-                pd.DataFrame(self.pt_signals, index=self.dates, columns=self.shares),
-                htypes='close'
-        )
-        self.ps_signal_hp = dataframe_to_hp(
-                pd.DataFrame(self.ps_signals, index=self.dates, columns=self.shares),
-                htypes='close'
-        )
-        self.vs_signal_hp = dataframe_to_hp(
-                pd.DataFrame(self.vs_signals, index=self.dates, columns=self.shares),
-                htypes='close'
-        )
-        self.multi_signal_hp = stack_dataframes(
-                self.multi_signals,
-                stack_as='htypes',
-                htypes='open, high, close'
-        )
-        self.history_list = dataframe_to_hp(
-                pd.DataFrame(self.prices, index=self.dates, columns=self.shares),
-                htypes='close'
-        )
-        self.multi_history_list = stack_dataframes(
-                self.multi_histories,
-                stack_as='htypes',
-                htypes='open, high, close'
-        )
 
         # 模拟PT信号回测结果
         # PT信号，先卖后买，交割期为0
@@ -3487,104 +3633,105 @@ class TestLoop(unittest.TestCase):
         self.ps_res_bs21 = np.array(
                 [[0.000, 0.000, 0.000, 0.000, 555.556, 0.000, 0.000, 7500.000, 0.000, 10000.000],
                  [0.000, 0.000, 0.000, 0.000, 555.556, 0.000, 0.000, 7500.000, 0.000, 9916.667],
-                 [0.000, 0.000, 0.000, 0.000, 555.556, 208.333, 326.206, 5020.833, 0.000, 9761.111],
-                 [351.119, 421.646, 0.000, 0.000, 555.556, 208.333, 326.206, 1116.389, 0.000, 9645.961],
-                 [351.119, 421.646, 190.256, 0.000, 555.556, 208.333, 326.206, 151.793, 0.000, 9686.841],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 9813.932],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 9803.000],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 9605.334],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 9304.001],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 8870.741],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 8738.282],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 8780.664],
-                 [351.119, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 1810.126, 0.000, 9126.199],
-                 [234.196, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 2398.247, 0.000, 9199.746],
-                 [234.196, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 2398.247, 0.000, 9083.518],
-                 [234.196, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 2398.247, 0.000, 9380.932],
-                 [234.196, 421.646, 190.256, 0.000, 138.889, 208.333, 326.206, 2398.247, 0.000, 9581.266],
-                 [234.196, 421.646, 95.128, 0.000, 138.889, 208.333, 326.206, 2959.501, 0.000, 9927.154],
-                 [234.196, 421.646, 95.128, 0.000, 138.889, 208.333, 326.206, 2959.501, 0.000, 10059.283],
-                 [234.196, 421.646, 95.128, 0.000, 138.889, 208.333, 326.206, 2959.501, 0.000, 10281.669],
-                 [234.196, 421.646, 95.128, 0.000, 138.889, 208.333, 326.206, 2959.501, 0.000, 10093.263],
-                 [234.196, 421.646, 95.128, 0.000, 138.889, 208.333, 0.000, 4453.525, 0.000, 10026.289],
-                 [234.196, 421.646, 95.128, 0.000, 479.340, 208.333, 0.000, 2448.268, 0.000, 9870.523],
-                 [234.196, 421.646, 95.128, 0.000, 479.340, 208.333, 0.000, 2448.268, 0.000, 9606.437],
-                 [234.196, 421.646, 95.128, 0.000, 479.340, 208.333, 0.000, 2448.268, 0.000, 9818.691],
-                 [117.098, 421.646, 95.128, 272.237, 479.340, 208.333, 0.000, 1768.219, 0.000, 9726.556],
-                 [117.098, 421.646, 95.128, 272.237, 479.340, 208.333, 0.000, 1768.219, 0.000, 9964.547],
-                 [117.098, 421.646, 95.128, 272.237, 479.340, 208.333, 0.000, 1768.219, 0.000, 10053.449],
-                 [117.098, 421.646, 95.128, 272.237, 479.340, 208.333, 0.000, 1768.219, 0.000, 9917.440],
-                 [117.098, 421.646, 95.128, 272.237, 479.340, 208.333, 0.000, 1768.219, 0.000, 9889.495],
-                 [117.098, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 6189.948, 0.000, 20064.523],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 21124.484],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 20827.077],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 20396.124],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 19856.445],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 20714.156],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 19971.485],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 20733.948],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 20938.903],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 21660.772],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 21265.298],
-                 [708.171, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 2377.527, 0.000, 20684.378],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 0.000, 0.000, 21754.770],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 0.000, 0.000, 21775.215],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 1865.791, 0.000, 0.000, 0.000, 21801.488],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 932.896, 0.000, 1996.397, 0.000, 21235.427],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 932.896, 0.000, 1996.397, 0.000, 21466.714],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 932.896, 0.000, 1996.397, 0.000, 20717.431],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 932.896, 0.000, 1996.397, 0.000, 21294.450],
-                 [1055.763, 421.646, 729.561, 272.237, 0.000, 932.896, 0.000, 1996.397, 0.000, 22100.247],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 21802.552],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 21593.608],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 21840.028],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 22907.725],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 23325.945],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 22291.942],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 23053.050],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 23260.084],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 22176.244],
-                 [1055.763, 740.051, 729.561, 272.237, 0.000, 932.896, 0.000, 0.000, 0.000, 21859.297],
-                 [1055.763, 740.051, 729.561, 272.237, 1706.748, 932.896, 0.000, 5221.105, 0.000, 31769.617],
-                 [0.000, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 6313.462, 0.000, 31389.961],
-                 [0.000, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 6313.462, 0.000, 31327.498],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 32647.140],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 32170.095],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 32577.742],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 33905.444],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 35414.492],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 36082.120],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 35872.293],
-                 [962.418, 740.051, 729.561, 580.813, 1706.748, 2141.485, 0.000, 0.000, 0.000, 34558.132],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 33778.138],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 34213.578],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 35345.791],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 34288.014],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 34604.406],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 34806.850],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 34012.232],
-                 [962.418, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 9177.053, 0.000, 33681.345],
-                 [192.484, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 13958.345, 0.000, 33540.463],
-                 [192.484, 740.051, 729.561, 0.000, 1706.748, 0.000, 0.000, 13958.345, 0.000, 34574.280],
-                 [192.484, 1127.221, 729.561, 0.000, 1706.748, 0.000, 0.000, 10500.917, 0.000, 34516.781],
-                 [192.484, 1127.221, 729.561, 0.000, 1706.748, 0.000, 0.000, 10500.917, 0.000, 35134.412],
-                 [192.484, 1127.221, 729.561, 0.000, 1706.748, 0.000, 0.000, 10500.917, 0.000, 36266.530],
-                 [192.484, 1127.221, 729.561, 0.000, 1706.748, 0.000, 0.000, 10500.917, 0.000, 37864.376],
-                 [192.484, 1127.221, 729.561, 0.000, 1706.748, 0.000, 0.000, 10500.917, 0.000, 38642.633],
-                 [192.484, 1127.221, 729.561, 0.000, 1706.748, 0.000, 0.000, 10500.917, 0.000, 38454.227],
-                 [192.484, 1127.221, 729.561, 0.000, 0.000, 0.000, 1339.869, 15871.934, 0.000, 38982.227],
-                 [192.484, 1127.221, 729.561, 0.000, 0.000, 0.000, 1339.869, 15871.934, 0.000, 39016.154],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 38759.803],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 39217.182],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 39439.690],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 39454.081],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 39083.341],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 38968.694],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 39532.030],
-                 [192.484, 0.000, 729.561, 0.000, 0.000, 0.000, 1339.869, 27764.114, 0.000, 38675.507],
-                 [0.000, 0.000, 1560.697, 0.000, 0.000, 0.000, 1339.869, 23269.751, 0.000, 39013.741],
-                 [0.000, 0.000, 1560.697, 0.000, 0.000, 0.000, 1339.869, 23269.751, 0.000, 38497.668],
-                 [0.000, 0.000, 1560.697, 0.000, 0.000, 0.000, 1339.869, 23269.751, 0.000, 38042.410]])
+                 [0.000, 0.000, 0.000, 0.000, 555.556, 205.065, 321.089, 5059.722, 0.000, 9761.111],
+                 [346.982, 416.679, 0.000, 0.000, 555.556, 205.065, 321.089, 1201.278, 0.000, 9646.112],
+                 [346.982, 416.679, 191.037, 0.000, 555.556, 205.065, 321.089, 232.719, 0.000, 9685.586],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 9813.218],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 9803.129],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 9608.020],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 9311.573],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 8883.625],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 8751.390],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 8794.181],
+                 [346.982, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 1891.052, 0.000, 9136.570],
+                 [231.437, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 2472.244, 0.000, 9209.359],
+                 [231.437, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 2472.244, 0.000, 9093.829],
+                 [231.437, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 2472.244, 0.000, 9387.554],
+                 [231.437, 416.679, 191.037, 0.000, 138.889, 205.065, 321.089, 2472.244, 0.000, 9585.959],
+                 [231.437, 416.679, 95.519, 0.000, 138.889, 205.065, 321.089, 3035.804, 0.000, 9928.777],
+                 [231.437, 416.679, 95.519, 0.000, 138.889, 205.065, 321.089, 3035.804, 0.000, 10060.381],
+                 [231.437, 416.679, 95.519, 0.000, 138.889, 205.065, 321.089, 3035.804, 0.000, 10281.002],
+                 [231.437, 416.679, 95.519, 0.000, 138.889, 205.065, 321.089, 3035.804, 0.000, 10095.561],
+                 [231.437, 416.679, 95.519, 0.000, 138.889, 205.065, 0.000, 4506.393, 0.000, 10029.957],
+                 [231.437, 416.679, 95.519, 0.000, 474.224, 205.065, 0.000, 2531.270, 0.000, 9875.613],
+                 [231.437, 416.679, 95.519, 0.000, 474.224, 205.065, 0.000, 2531.270, 0.000, 9614.946],
+                 [231.437, 416.679, 95.519, 0.000, 474.224, 205.065, 0.000, 2531.270, 0.000, 9824.172],
+                 [115.719, 416.679, 95.519, 269.850, 474.224, 205.065, 0.000, 1854.799, 0.000, 9732.574],
+                 [115.719, 416.679, 95.519, 269.850, 474.224, 205.065, 0.000, 1854.799, 0.000, 9968.339],
+                 [115.719, 416.679, 95.519, 269.850, 474.224, 205.065, 0.000, 1854.799, 0.000, 10056.158],
+                 [115.719, 416.679, 95.519, 269.850, 474.224, 205.065, 0.000, 1854.799, 0.000, 9921.492],
+                 [115.719, 416.679, 95.519, 269.850, 474.224, 205.065, 0.000, 1854.799, 0.000, 9894.162],
+                 [115.719, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 6179.774, 0.000, 20067.937],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 21133.508],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20988.848],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20596.743],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 19910.773],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20776.707],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20051.797],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20725.388],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20828.880],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 21647.181],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 21310.169],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 20852.099],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 21912.395],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 21937.828],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 1877.393, 0.000, 0.000, 0.000, 21962.458],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 0.000, 2008.811, 0.000, 21389.402],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 0.000, 2008.811, 0.000, 21625.691],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 0.000, 2008.811, 0.000, 20873.039],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 0.000, 2008.811, 0.000, 21450.945],
+                 [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 0.000, 2008.811, 0.000, 22269.389],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 21969.533],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 21752.692],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 22000.609],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 23072.566],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 23487.520],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 22441.046],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 23201.270],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 23400.948],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 22306.201],
+                 [1073.823, 737.063, 735.644, 269.850, 0.000, 938.697, 0.000, 0.000, 0.000, 21989.591],
+                 [1073.823, 737.063, 735.644, 269.850, 1708.777, 938.697, 0.000, 5215.425, 0.000, 31897.164],
+                 [0.000, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 6421.463, 0.000, 31509.506],
+                 [0.000, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 6421.463, 0.000, 31451.789],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 32773.459],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 32287.032],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 32698.194],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 34031.518],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 35537.834],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 36212.649],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 36007.529],
+                 [978.881, 737.063, 735.644, 578.090, 1708.777, 2145.971, 0.000, 0.000, 0.000, 34691.380],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 33904.881],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 34341.610],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 35479.951],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 34418.445],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 34726.718],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 34935.041],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 34136.751],
+                 [978.881, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 9162.786, 0.000, 33804.157],
+                 [195.776, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 14025.870, 0.000, 33653.897],
+                 [195.776, 737.063, 735.644, 0.000, 1708.777, 0.000, 0.000, 14025.870, 0.000, 34689.876],
+                 [195.776, 1124.922, 735.644, 0.000, 1708.777, 0.000, 0.000, 10562.291, 0.000, 34635.784],
+                 [195.776, 1124.922, 735.644, 0.000, 1708.777, 0.000, 0.000, 10562.291, 0.000, 35253.275],
+                 [195.776, 1124.922, 735.644, 0.000, 1708.777, 0.000, 0.000, 10562.291, 0.000, 36388.105],
+                 [195.776, 1124.922, 735.644, 0.000, 1708.777, 0.000, 0.000, 10562.291, 0.000, 37987.420],
+                 [195.776, 1124.922, 735.644, 0.000, 1708.777, 0.000, 0.000, 10562.291, 0.000, 38762.210],
+                 [195.776, 1124.922, 735.644, 0.000, 1708.777, 0.000, 0.000, 10562.291, 0.000, 38574.054],
+                 [195.776, 1124.922, 735.644, 0.000, 0.000, 0.000, 1362.436, 15879.494, 0.000, 39101.916],
+                 [195.776, 1124.922, 735.644, 0.000, 0.000, 0.000, 1362.436, 15879.494, 0.000, 39132.559],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 38873.294],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 39336.659],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 39565.957],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 39583.432],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 39206.835],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 39092.655],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 39666.183],
+                 [195.776, 0.000, 735.644, 0.000, 0.000, 0.000, 1362.436, 27747.420, 0.000, 38798.075],
+                 [0.000, 0.000, 1576.838, 0.000, 0.000, 0.000, 1362.436, 23205.208, 0.000, 39143.556],
+                 [0.000, 0.000, 1576.838, 0.000, 0.000, 0.000, 1362.436, 23205.208, 0.000, 38617.878],
+                 [0.000, 0.000, 1576.838, 0.000, 0.000, 0.000, 1362.436, 23205.208, 0.000, 38156.170]]
+        )
         # 模拟VS信号回测结果
         # VS信号，先卖后买，交割期为0
         self.vs_res_sb00 = np.array(
@@ -4053,8 +4200,8 @@ class TestLoop(unittest.TestCase):
                  [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 23210.7311],
                  [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 24290.4375],
                  [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 24335.3279],
-                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 18317.3553],
-                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 18023.4660],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 24487.5764],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 24193.6872],
                  [259.4270, 559.9112, 0.0000, 15820.6915, 0.0000, 24390.0527],
                  [259.4270, 559.9112, 0.0000, 15820.6915, 0.0000, 24389.6421],
                  [259.4270, 559.9112, 0.0000, 15820.6915, 0.0000, 24483.5953],
@@ -4077,15 +4224,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4101,15 +4247,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4125,15 +4270,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4149,15 +4293,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4173,15 +4316,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4197,15 +4339,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4221,15 +4362,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
 
     def test_loop_step_pt_bs00(self):
@@ -4247,15 +4387,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4271,15 +4410,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4295,15 +4433,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4319,15 +4456,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4343,15 +4479,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4367,15 +4502,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4391,15 +4525,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
 
     def test_loop_step_ps_sb00(self):
@@ -4417,15 +4550,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4441,15 +4573,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4465,15 +4596,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4489,15 +4619,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4513,15 +4642,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4537,15 +4665,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4561,15 +4688,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
 
     def test_loop_step_ps_bs00(self):
@@ -4587,15 +4713,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4611,15 +4736,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4635,15 +4759,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4659,15 +4782,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4683,15 +4805,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4707,15 +4828,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4731,15 +4851,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
 
     def test_loop_step_vs_sb00(self):
@@ -4757,15 +4876,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7750)
+        self.assertAlmostEquals(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4781,15 +4899,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4805,15 +4922,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4829,15 +4945,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4853,15 +4968,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4877,15 +4991,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4901,15 +5014,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=True,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
 
     def test_loop_step_vs_bs00(self):
@@ -4927,15 +5039,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7750)
+        self.assertAlmostEquals(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4951,15 +5062,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4975,15 +5085,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4999,15 +5108,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5023,15 +5131,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5047,15 +5154,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5071,15 +5177,14 @@ class TestLoop(unittest.TestCase):
                                                      maximize_cash_usage=False,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
-                                                     moq_sell=0,
-                                                     trade_detail_log=True)
+                                                     moq_sell=0)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
 
     def test_loop_pt(self):
@@ -5092,49 +5197,67 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 0 days \n'
               'cash delivery delay = 0 day \n'
               'buy-sell sequence = sell first')
-        res = apply_loop(op_type=0,
-                         op_list=self.pt_signal_hp,
-                         history_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate,
-                         moq_buy=0,
-                         moq_sell=0,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate,
+                moq_buy=0,
+                moq_sell=0,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
-        # print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res, self.pt_res_bs00, 2))
+        # print(f'in test_loop:\nresult of loop test is \n{res}\ntarget is\n{self.pt_res_bs00}')
+        self.assertTrue(np.allclose(res, self.pt_res_bs00, atol=0.01))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
                           apply_loop,
-                          0,
-                          self.ps_signal_hp,
+                          self.op_pt_batch,
                           self.history_list,
+                          0,
+                          None,
                           self.cash,
                           self.rate,
                           0, 1,
-                          0,
+                          0, 0.1, 0.1, 0, 0,
                           False)
         self.assertRaises(AssertionError,
                           apply_loop,
-                          0,
-                          self.ps_signal_hp,
+                          self.op_pt_batch,
                           self.history_list,
+                          0,
+                          None,
                           self.cash,
                           self.rate,
                           1, 5,
-                          0,
+                          0, 0.1, 0.1, 0, 0,
                           False)
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_type=0,
-                         op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate2,
-                         moq_buy=100,
-                         moq_sell=1,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate2,
+                moq_buy=100,
+                moq_sell=1,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         # print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5149,10 +5272,9 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        res = apply_loop(
-                op_type=0,
-                op_list=self.pt_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5160,7 +5282,15 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                trade_log=False)
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5168,39 +5298,25 @@ class TestLoop(unittest.TestCase):
             print(np.around(res.values[i]))
             print(np.around(self.pt_res_bs21[i]))
             print()
-        self.assertTrue(np.allclose(res, self.pt_res_bs21, 3))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.pt_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
-                trade_log=False)
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5217,10 +5333,9 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 0 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        res = apply_loop(
-                op_type=0,
-                op_list=self.pt_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5229,7 +5344,14 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                trade_detail_log=True)
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5237,33 +5359,10 @@ class TestLoop(unittest.TestCase):
             print(np.around(res.values[i]))
             print(np.around(self.pt_res_sb20[i]))
             print()
-        self.assertTrue(np.allclose(res, self.pt_res_sb20, 3))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
-        print(f'test loop results with moq equal to 100')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+        self.assertTrue(np.allclose(res, self.pt_res_sb20, atol=0.01))
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5271,7 +5370,14 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                trade_detail_log=True)
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5279,49 +5385,44 @@ class TestLoop(unittest.TestCase):
         """ Test looping of PS Proportion Signal type of signals
 
         """
-        res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate,
-                         moq_buy=0,
-                         moq_sell=0,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate,
+                moq_buy=0,
+                moq_sell=0,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res, self.ps_res_bs00, 5))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.ps_res_bs00, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate2,
-                         moq_buy=100,
-                         moq_sell=1,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate2,
+                moq_buy=100,
+                moq_sell=1,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5336,10 +5437,9 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5347,47 +5447,43 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                trade_log=False)
+                max_cash_usage=False,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
         for i in range(len(res)):
             print(np.around(res.values[i]))
             print(np.around(self.ps_res_bs21[i]))
+            self.assertTrue(np.allclose(res.values[i], self.ps_res_bs21[i], atol=0.01))
             print()
-        self.assertTrue(np.allclose(res, self.ps_res_bs21, 3))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.ps_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
-                trade_log=False)
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5404,10 +5500,9 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5416,7 +5511,14 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                trade_detail_log=True)
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5424,33 +5526,11 @@ class TestLoop(unittest.TestCase):
             print(np.around(res.values[i]))
             print(np.around(self.ps_res_sb20[i]))
             print()
-        self.assertTrue(np.allclose(res, self.ps_res_sb20, 3))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.ps_res_sb20, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_ps_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5458,7 +5538,14 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                trade_detail_log=True)
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_ps_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5466,49 +5553,44 @@ class TestLoop(unittest.TestCase):
         """ Test looping of VS Volume Signal type of signals
 
         """
-        res = apply_loop(op_type=2,
-                         op_list=self.vs_signal_hp,
-                         history_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate,
-                         moq_buy=0,
-                         moq_sell=0,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_vs_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate,
+                moq_buy=0,
+                moq_sell=0,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_vs_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res, self.vs_res_bs00, 5))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.vs_res_bs00, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_type=2,
-                         op_list=self.vs_signal_hp,
-                         history_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate2,
-                         moq_buy=100,
-                         moq_sell=1,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_vs_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate2,
+                moq_buy=100,
+                moq_sell=1,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_vs_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5523,10 +5605,9 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        res = apply_loop(
-                op_type=2,
-                op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_vs_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5534,7 +5615,14 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                trade_detail_log=True)
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_vs_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5542,39 +5630,25 @@ class TestLoop(unittest.TestCase):
             print(np.around(res.values[i]))
             print(np.around(self.vs_res_bs21[i]))
             print()
-        self.assertTrue(np.allclose(res, self.vs_res_bs21, 3))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.vs_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.vs_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.vs_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_vs_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
-                trade_log=False)
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_vs_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5591,10 +5665,9 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        res = apply_loop(
-                op_type=2,
-                op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_vs_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5603,7 +5676,15 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                trade_log=False)
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_vs_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5611,33 +5692,11 @@ class TestLoop(unittest.TestCase):
             print(np.around(res.values[i]))
             print(np.around(self.vs_res_sb20[i]))
             print()
-        self.assertTrue(np.allclose(res, self.vs_res_sb20, 3))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.vs_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.vs_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.vs_res_sb20, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(
-                op_type=1,
-                op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_vs_batch,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5645,7 +5704,15 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                trade_log=False)
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_vs_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5653,126 +5720,171 @@ class TestLoop(unittest.TestCase):
         """ Test looping of PS Proportion Signal type of signals
 
         """
-        res = apply_loop(op_type=1,
-                         op_list=self.multi_signal_hp,
-                         history_list=self.multi_history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate,
-                         moq_buy=1,
-                         moq_sell=1,
-                         cash_delivery_period=0,
-                         stock_delivery_period=2,
-                         max_cash_usage=True,
-                         inflation_rate=0,
-                         trade_detail_log=True)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_multi_batch,
+                trade_price_list=self.multi_history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate,
+                moq_buy=0,
+                moq_sell=0,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
+                max_cash_usage=True,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0, 1, 2]
+        )
+        res = process_loop_results(
+                operator=self.op_multi_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
         for i in range(len(res)):
             print(np.around(res.values[i]))
             print(np.around(self.multi_res[i]))
+            self.assertTrue(np.allclose(res.values[i], self.multi_res[i]))
             print()
 
-        self.assertTrue(np.allclose(res, self.multi_res, 5))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          0,
-                          self.ps_signal_hp,
-                          self.history_list,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0,
-                          False)
+        self.assertTrue(np.allclose(res, self.multi_res, atol=0.1))
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_type=1,
-                         op_list=self.multi_signal_hp,
-                         history_list=self.multi_history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate2,
-                         moq_buy=100,
-                         moq_sell=1,
-                         cash_delivery_period=0,
-                         stock_delivery_period=2,
-                         max_cash_usage=False,
-                         inflation_rate=0,
-                         trade_detail_log=True)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_multi_batch,
+                trade_price_list=self.multi_history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate2,
+                moq_buy=100,
+                moq_sell=1,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
+                max_cash_usage=False,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_multi_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
 
-class TestStrategy(unittest.TestCase):
-    """ test all properties and methods of strategy base class"""
-
-    def setUp(self) -> None:
-        pass
-
-
-class TestLSStrategy(RollingTiming):
-    """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成
+class TestLSStrategy(RuleIterator):
+    """用于test测试的简单多空蒙板生成策略。基于RuleIterator策略模版，将下列策略循环应用到所有股票上
+        同时，针对不同股票策略参数可以不相同
 
     该策略有两个参数，N与Price
-    N用于计算OHLC价格平均值的N日简单移动平均，判断，当移动平均值大于等于Price时，状态为看多，否则为看空
+    如果给出的历史数据不包含参考数据时，策略逻辑如下：
+     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于Price时，状态为看多，否则为看空
+    如果给出参考数据时，策略逻辑变为：
+     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于当日参考数据时，状态为看多，否则为看空
+    如果给出交易结果数据时，策略逻辑变为：
+     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于上次交易价时，状态为看多，否则为看空
+
     """
 
     def __init__(self):
-        super().__init__(stg_name='test_LS',
-                         stg_text='test long/short strategy',
+        super().__init__(name='test_LS',
+                         description='test long/short strategy',
                          par_count=2,
                          par_types='discr, conti',
-                         par_bounds_or_enums=([1, 5], [2, 10]),
+                         par_range=([1, 5], [2, 10]),
                          data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        n, price = params
-        h = hist_data.T
-
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is not None:
+            n, price = pars
+        else:
+            n, price = self.pars
+        h = h.T
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
+        if r is not None:
+            # 处理参考数据生成信号并返回
+            ref_price = r[-1, 0]  # 当天的参考数据，r[-1
+            if ma[-1] < ref_price:
+                return 0
+            else:
+                return 1
+
+        if t is not None:
+            # 处理交易结果数据生成信号并返回
+            last_price = t[4]  # 获取最近的交易价格
+            if np.isnan(last_price):
+                return 1  # 生成第一次交易信号
+            if ma[-1] < last_price:
+                return 1
+            else:
+                return 0
+
         if ma[-1] < price:
             return 0
         else:
             return 1
 
 
-class TestSelStrategy(SimpleSelecting):
-    """用于Test测试的简单选股策略，基于Selecting策略生成
+class TestSelStrategy(GeneralStg):
+    """用于Test测试的通用交易策略，基于GeneralStrategy策略生成
 
     策略没有参数，选股周期为5D
-    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（OHLC平均股价）最高的两支，放入中选池，否则落选。
-    选股比例为平均分配
+    在每个选股周期内，按以下逻辑选择股票并设定多空状态：
+    当历史数据不含参考数据和交易结果数据时：
+     - 计算：今日变化率 = (今收-昨收)/平均股价(HLC平均股价)，
+     - 选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
+    当给出参考数据时，按下面逻辑设定多空：
+     - 计算：今日相对变化率 = (今收-昨收)/HLC平均股价/参考数据
+     - 选择相对变化率最高的两只股票，设定投资比率为50%，否则为0
+    当给出交易结果数据时，按下面逻辑设定多空：
+     - 计算：交易价差变化率 = (今收-昨收)/上期交易价格
+     - 选择交易价差变化率最高的两只股票，设定投资比率为50%，否则为0
     """
 
     def __init__(self):
-        super().__init__(stg_name='test_SEL',
-                         stg_text='test portfolio selection strategy',
+        super().__init__(name='test_SEL',
+                         description='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
-                         par_bounds_or_enums=(),
+                         par_range=(),
                          data_types='high, low, close',
                          data_freq='d',
                          sample_freq='10d',
-                         window_length=5)
+                         window_length=5,
+                         )
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        avg = np.nanmean(hist_data, axis=(1, 2))
-        dif = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))
+    def realize(self, h, r=None, t=None):
+        avg = np.nanmean(h, axis=(1, 2))
+        dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
+        if r is not None:
+            # calculate difper while r
+            ref_price = np.nanmean(r[:, 0])
+            difper = dif_no_nan / avg / ref_price
+            large2 = difper.argsort()[1:]
+            chosen = np.zeros_like(avg)
+            chosen[large2] = 0.5
+            return chosen
+
+        if t is not None:
+            # calculate difper while t
+            last_price = t[:, 4]
+            if np.all(np.isnan(last_price)):
+                return np.ones_like(avg) * 0.333
+            difper = dif_no_nan / last_price
+            large2 = difper.argsort()[1:]
+            chosen = np.zeros_like(avg)
+            chosen[large2] = 0.5
+            return chosen
+
         difper = dif_no_nan / avg
         large2 = difper.argsort()[1:]
         chosen = np.zeros_like(avg)
@@ -5780,7 +5892,7 @@ class TestSelStrategy(SimpleSelecting):
         return chosen
 
 
-class TestSelStrategyDiffTime(SimpleSelecting):
+class TestSelStrategyDiffTime(GeneralStg):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -5788,64 +5900,80 @@ class TestSelStrategyDiffTime(SimpleSelecting):
     选股比例为平均分配
     """
 
-    # TODO: This strategy is not working, find out why and improve
     def __init__(self):
-        super().__init__(stg_name='test_SEL',
-                         stg_text='test portfolio selection strategy',
+        super().__init__(name='test_SEL',
+                         description='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
-                         par_bounds_or_enums=(),
+                         par_range=(),
                          data_types='close, low, open',
                          data_freq='d',
                          sample_freq='w',
                          window_length=2)
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        avg = hist_data.mean(axis=1).squeeze()
-        difper = (hist_data[:, :, 0] - np.roll(hist_data[:, :, 0], 1))[:, -1] / avg
+    def realize(self, h, r=None, t=None):
+        avg = h.mean(axis=1).squeeze()
+        difper = (h[:, :, 0] - np.roll(h[:, :, 0], 1))[:, -1] / avg
         large2 = difper.argsort()[0:2]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
         return chosen
 
 
-class TestSigStrategy(SimpleTiming):
-    """用于Test测试的简单信号生成策略，基于SimpleTiming策略生成
+class TestSigStrategy(GeneralStg):
+    """用于Test测试的简单信号生成策略，基于GeneralStrategy策略生成
 
     策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2
     ratio是k线形状比例的阈值，定义为abs((C-O)/(H-L))。当这个比值小于ratio阈值时，判断该K线为十字交叉（其实还有丁字等多种情形，但这里做了
     简化处理。
-    信号生成的规则如下：
-    1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
-    2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
+    如果历史数据中没有给出参考数据，也没有给出交易结果数据时，信号生成的规则如下：
+     1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
+     2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
+    如果给出参考数据(参考数据包含两个种类type1与type2)时，信号生成的规则如下：
+     1，当某个K线出现十字交叉，且昨收与今收之差大于参考数据type1时，买入信号
+     2，当某个K线出现十字交叉，且昨收与今收之差小于参考数据type2时，卖出信号
+    如果给出交易结果数据时，信号生成的规则如下：
+     1，当某个K线出现十字交叉，且昨收与今收之差大于上期交易价格时，买入信号
+     2，当某个K线出现十字交叉，且昨收与今收之差小于上期交易价格时，卖出信号
     """
 
     def __init__(self):
-        super().__init__(stg_name='test_SIG',
-                         stg_text='test signal creation strategy',
-                         par_count=3,
-                         par_types='conti, conti, conti',
-                         par_bounds_or_enums=([2, 10], [0, 3], [0, 3]),
-                         data_types='close, open, high, low',
-                         window_length=2)
+        super().__init__(
+                name='test_SIG',
+                description='test signal creation strategy',
+                par_count=3,
+                par_types='conti, conti, conti',
+                par_range=([2, 10], [0, 3], [0, 3]),
+                data_types='close, open, high, low',
+                window_length=2
+        )
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        r, price1, price2 = params
-        h = hist_data.T
+    def realize(self, h, r=None, t=None):
+        max_ratio, price1, price2 = self.pars
+        ratio = np.abs((h[:, -1, 0] - h[:, -1, 1]) / (h[:, -1, 3] - h[:, -1, 2]))
+        diff = h[:, -1, 0] - h[:, -2, 0]
 
-        ratio = np.abs((h[0] - h[1]) / (h[3] - h[2]))
-        diff = h[0] - np.roll(h[0], 1)
+        if r is not None:
+            type1 = r[-1, 0]
+            type2 = r[-1, 1]
+            sig = np.where((ratio < max_ratio) & (diff > type1),
+                           1,
+                           np.where((ratio < max_ratio) & (diff < type2), -1, 0))
+            return sig
 
-        sig = np.where((ratio < r) & (diff > price1),
+        if t is not None:
+            pass
+
+        sig = np.where((ratio < max_ratio) & (diff > price1),
                        1,
-                       np.where((ratio < r) & (diff < price2), -1, 0))
+                       np.where((ratio < max_ratio) & (diff < price2), -1, 0))
 
         return sig
 
 
-class MyStg(qt.RollingTiming):
+class MyStg(qt.RuleIterator):
     """自定义双均线择时策略策略"""
 
     def __init__(self):
@@ -5864,22 +5992,22 @@ class MyStg(qt.RollingTiming):
         super().__init__(
                 pars=(20, 100, 0.01),
                 par_count=3,
-                par_types=['discr', 'discr', 'conti'],
-                par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 0.5)],
-                stg_name='CUSTOM ROLLING TIMING STRATEGY',
-                stg_text='Customized Rolling Timing Strategy for Testing',
+                par_types=['int', 'int', 'float'],
+                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
                 data_types='close',
                 window_length=200,
         )
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def _realize(self, hist_price, params):
+    def realize(self, h, r=None, t=None, pars=None):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = params
+        f, s, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_price.T
+        h = h.T
         # 计算长短均线的当前值
         s_ma = qt.sma(h[0], s)[-1]
         f_ma = qt.sma(h[0], f)[-1]
@@ -5897,7 +6025,7 @@ class MyStg(qt.RollingTiming):
             return -1
 
 
-class TestOperator(unittest.TestCase):
+class TestOperatorAndStrategy(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：
 
         1, Strategy 参数的设置
@@ -5908,7 +6036,7 @@ class TestOperator(unittest.TestCase):
     """
 
     def setUp(self):
-        """prepare data for Operator test"""
+        """prepare arr for Operator test"""
         print('start testing HistoryPanel object\n')
 
         # build up test data: a 4-type, 3-share, 50-day matrix of prices that contains nan values in some days
@@ -6029,6 +6157,108 @@ class TestOperator(unittest.TestCase):
                                [0.9, np.nan, np.nan],
                                [np.nan, np.nan, 0.1]])
 
+        # for reference history data
+        reference_data = np.array([[9.68],
+                                   [9.87],
+                                   [10],
+                                   [9.87],
+                                   [np.nan],
+                                   [9.82],
+                                   [6.85],
+                                   [10.03],
+                                   [10.06],
+                                   [9.58],
+                                   [10.11],
+                                   [5.91],
+                                   [9.75],
+                                   [10.06],
+                                   [6.23],
+                                   [10.04],
+                                   [10.06],
+                                   [6.27],
+                                   [10.24],
+                                   [10],
+                                   [10.24],
+                                   [9.86],
+                                   [5.69],
+                                   [10.12],
+                                   [10.03],
+                                   [6.25],
+                                   [9.94],
+                                   [9.83],
+                                   [9.77],
+                                   [10.64],
+                                   [6.06],
+                                   [9.93],
+                                   [5.69],
+                                   [5.46],
+                                   [10.24],
+                                   [9.88],
+                                   [7.43],
+                                   [7.72],
+                                   [8.16],
+                                   [10.37],
+                                   [8.7],
+                                   [11.02],
+                                   [np.nan],
+                                   [np.nan],
+                                   [9.55],
+                                   [10.87],
+                                   [11.01],
+                                   [9.64],
+                                   [7.97],
+                                   [8.25]])
+        reference_data2 = np.array([[0.03403, -0.00679],
+                                    [0.00822, -0.00270],
+                                    [0.03831, -0.04480],
+                                    [0.03389, -0.03428],
+                                    [0.00495, -0.03510],
+                                    [0.01980, -0.03766],
+                                    [0.02131, -0.03213],
+                                    [0.03938, -0.00722],
+                                    [0.01447, -0.02826],
+                                    [0.02945, -0.04790],
+                                    [0.02360, -0.04789],
+                                    [0.00619, -0.04531],
+                                    [0.04896, -0.04129],
+                                    [0.03516, -0.04309],
+                                    [0.03458, -0.03919],
+                                    [0.02444, -0.00516],
+                                    [0.02023, -0.02297],
+                                    [0.02938, -0.02868],
+                                    [0.03827, -0.00575],
+                                    [0.02168, -0.03163],
+                                    [0.01129, -0.04463],
+                                    [0.01640, -0.00991],
+                                    [0.01592, -0.04192],
+                                    [0.04553, -0.00682],
+                                    [0.00105, -0.04323],
+                                    [0.01473, -0.04458],
+                                    [0.04922, -0.00244],
+                                    [0.01109, -0.00762],
+                                    [0.04486, -0.01096],
+                                    [0.03808, -0.03854],
+                                    [0.04887, -0.04125],
+                                    [0.00573, -0.03636],
+                                    [0.02493, -0.01269],
+                                    [0.00295, -0.03817],
+                                    [0.03691, -0.02565],
+                                    [0.00501, -0.04381],
+                                    [0.02859, -0.03429],
+                                    [0.02525, -0.01701],
+                                    [0.02570, -0.01181],
+                                    [0.02488, -0.00623],
+                                    [0.02396, -0.04004],
+                                    [0.00127, -0.00818],
+                                    [0.02775, -0.03364],
+                                    [0.03757, -0.00792],
+                                    [0.04514, -0.00222],
+                                    [0.02610, -0.02855],
+                                    [0.04426, -0.03365],
+                                    [0.02742, -0.04061],
+                                    [0.02031, -0.01752],
+                                    [0.02251, -0.03796]])
+
         self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
                              '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
                              '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
@@ -6049,11 +6279,11 @@ class TestOperator(unittest.TestCase):
         self.sel_finance_tyeps = ['eps']
 
         self.test_data_3D = np.zeros((3, data_rows, 4))
-        self.test_data_2D = np.zeros((data_rows, 3))
-        self.test_data_2D2 = np.zeros((data_rows, 4))
         self.test_data_sel_finance = np.empty((3, data_rows, 1))
+        self.test_ref_data = np.zeros((1, data_rows, 1))
+        self.test_ref_data2 = np.zeros((1, data_rows, 2))
 
-        # Build up 3D data
+        # fill in 3D data
         self.test_data_3D[0, :, 0] = share1_close
         self.test_data_3D[0, :, 1] = share1_open
         self.test_data_3D[0, :, 2] = share1_high
@@ -6068,6 +6298,10 @@ class TestOperator(unittest.TestCase):
         self.test_data_3D[2, :, 1] = share3_open
         self.test_data_3D[2, :, 2] = share3_high
         self.test_data_3D[2, :, 3] = share3_low
+
+        # fill in reference data
+        self.test_ref_data[0, :, :] = reference_data
+        self.test_ref_data2[0, :, :] = reference_data2
 
         self.test_data_sel_finance[:, :, 0] = shares_eps.T
 
@@ -6105,18 +6339,27 @@ class TestOperator(unittest.TestCase):
     def test_repr(self):
         """ test basic representation of Opeartor class"""
         op = qt.Operator()
-        self.assertEqual(op.__repr__(), 'Operator()')
+        self.assertEqual(op.__repr__(), 'Operator([], \'pt\', \'batch\')')
 
         op = qt.Operator('macd, dma, trix, random, ndayavg')
-        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, ndayavg)')
-        self.assertEqual(op['dma'].__repr__(), 'Q-TIMING(DMA)')
-        self.assertEqual(op['macd'].__repr__(), 'R-TIMING(MACD)')
-        self.assertEqual(op['trix'].__repr__(), 'R-TIMING(TRIX)')
-        self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
+        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'pt\', \'batch\')')
+        self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA)')
+        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD)')
+        self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX)')
+        self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM)')
         self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
 
     def test_info(self):
         """Test information output of Operator"""
+        stg = qt.built_in.SelectingNDayRateChange()
+        print(f'test printing information of strategies, in verbose mode')
+        self.op[0].info()
+        stg.info()
+
+        print(f'test printing information of strategies, in simple mode')
+        self.op[0].info(verbose=False)
+        stg.info(verbose=False)
+
         print(f'test printing information of operator object')
         self.op.info()
 
@@ -6467,9 +6710,14 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.signal_type, 'ps')
         op = qt.Operator(signal_type='proportion signal')
         self.assertEqual(op.signal_type, 'ps')
-        print(f'"pt" will be the default type if wrong value is given')
-        op = qt.Operator(signal_type='wrong value')
-        self.assertEqual(op.signal_type, 'pt')
+        print(f'Error will be raised if Invalid signal type encountered')
+        self.assertRaises(
+                ValueError,
+                qt.Operator,
+                None,
+                'wrong value',
+                None
+        )
 
         print(f'test signal_type.setter')
         op.signal_type = 'ps'
@@ -6605,12 +6853,12 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
 
     def test_property_op_history_data(self):
-        """ Test this important function to get operation history data that shall be used in
+        """ Test this important function to get operation history arr that shall be used in
             signal generation
-            these data are stored in list of nd-arrays, each ndarray represents the data
+            these arr are stored in list of nd-arrays, each ndarray represents the arr
             that is needed for each and every strategy
         """
-        print(f'------- Test getting operation history data ---------')
+        print(f'------- Test getting operation history arr ---------')
         op = qt.Operator()
         self.assertIsInstance(op.strategy_blenders, dict)
         self.assertIsInstance(op.signal_type, str)
@@ -6647,7 +6895,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(len(osp[0]), 6)
         self.assertEqual(len(osp[1]), 6)
         self.assertEqual(osp[0], [(10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250)])
-        self.assertEqual(osp[1], ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
+        self.assertEqual(osp[1], ['int', 'int', 'int', 'int', 'int', 'int'])
 
     def test_property_opt_types(self):
         """ test property opt_tags"""
@@ -6759,102 +7007,102 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
 
         self.assertIsInstance(op, qt.Operator)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[1], qt.SelectingAll)
-        self.assertIsInstance(op.strategies[2], qt.RiconUrgent)
-        self.assertIsInstance(op[0], qt.TimingDMA)
-        self.assertIsInstance(op[1], qt.SelectingAll)
-        self.assertIsInstance(op[2], qt.RiconUrgent)
-        self.assertIsInstance(op['dma'], qt.TimingDMA)
-        self.assertIsInstance(op['all'], qt.SelectingAll)
-        self.assertIsInstance(op['urgent'], qt.RiconUrgent)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
+        self.assertIsInstance(op[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op[2], qt.built_in.SellRate)
+        self.assertIsInstance(op['dma'], qt.built_in.TimingDMA)
+        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
+        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
         self.assertEqual(op.strategy_count, 3)
         print(f'test adding strategies into existing op')
         print('test adding strategy by string')
         op.add_strategy('macd')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[3], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.TimingMACD)
         self.assertEqual(op.strategy_count, 4)
         op.add_strategy('random')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[4], qt.SelectingRandom)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
         self.assertEqual(op.strategy_count, 5)
         test_ls = TestLSStrategy()
         op.add_strategy(test_ls)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
         self.assertIsInstance(op.strategies[5], TestLSStrategy)
         self.assertEqual(op.strategy_count, 6)
         print(f'Test different instance of objects are added to operator')
         op.add_strategy('dma')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[6], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.TimingDMA)
         self.assertIsNot(op.strategies[0], op.strategies[6])
 
     def test_operator_add_strategies(self):
         """ etst adding multiple strategies to Operator"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         self.assertEqual(op.strategy_count, 3)
         print('test adding multiple strategies -- adding strategy by list of strings')
         op.add_strategies(['dma', 'macd'])
         self.assertEqual(op.strategy_count, 5)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[3], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[4], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by comma separated strings')
         op.add_strategies('dma, macd')
         self.assertEqual(op.strategy_count, 7)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[5], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[6], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[5], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by list of strategies')
-        op.add_strategies([qt.TimingDMA(), qt.TimingMACD()])
+        op.add_strategies([qt.built_in.TimingDMA(), qt.built_in.TimingMACD()])
         self.assertEqual(op.strategy_count, 9)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[7], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[8], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[7], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[8], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by list of strategy and str')
-        op.add_strategies(['DMA', qt.TimingMACD()])
+        op.add_strategies(['DMA', qt.built_in.TimingMACD()])
         self.assertEqual(op.strategy_count, 11)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[9], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[10], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[9], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[10], qt.built_in.TimingMACD)
         self.assertIsNot(op.strategies[0], op.strategies[9])
         self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
-        print('test adding fault data')
+        print('test adding fault arr')
         self.assertRaises(AssertionError, op.add_strategies, 123)
         self.assertRaises(AssertionError, op.add_strategies, None)
 
-    def test_opeartor_remove_strategy(self):
+    def test_operator_remove_strategy(self):
         """ test method remove strategy"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
         op.add_strategies(['DMA', TestLSStrategy()])
         self.assertEqual(op.strategy_count, 7)
         print('test removing strategies from Operator')
         op.remove_strategy('dma')
         self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['dma_1'])
         self.assertEqual(op.strategies[3], op['macd'])
         self.assertEqual(op.strategies[4], op['dma_2'])
         self.assertEqual(op.strategies[5], op['custom'])
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['macd'])
         self.assertEqual(op.strategies[3], op['dma_2'])
         self.assertEqual(op.strategies[4], op['custom'])
 
-    def test_opeartor_clear_strategies(self):
+    def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
         op.add_strategies(['DMA', TestLSStrategy()])
         self.assertEqual(op.strategy_count, 7)
@@ -6871,8 +7119,8 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
 
-    def test_operator_prepare_data(self):
-        """test processes that related to prepare data"""
+    def test_operator_assign_history_data(self):
+        """测试分配Operator运行所需历史数据"""
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
@@ -6883,8 +7131,9 @@ class TestOperator(unittest.TestCase):
         no_trade_cash = qt.CashPlan(dates='2016-07-08, 2016-07-30, 2016-08-11, 2016-09-03',
                                     amounts=[10000, 10000, 10000, 10000])
         # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
+        self.op.strategies[0].pars = None
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           hist_data=self.hp1,
                           cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
@@ -6902,10 +7151,84 @@ class TestOperator(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
         self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
-        self.op.prepare_data(hist_data=self.hp1,
-                             cash_plan=on_spot_cash)
+        self.op.assign_hist_data(hist_data=self.hp1,
+                                 cash_plan=on_spot_cash)
+        # test if all historical data related properties are set
+        self.assertIsInstance(self.op._op_list_shares, dict)
+        self.assertIsInstance(self.op._op_list_hdates, dict)
+        self.assertIsInstance(self.op._op_list_price_types, dict)
+
         self.assertIsInstance(self.op._op_history_data, dict)
         self.assertEqual(len(self.op._op_history_data), 3)
+        self.assertEqual(list(self.op._op_history_data.keys()), ['custom', 'custom_1', 'custom_2'])
+        self.assertIsInstance(self.op._op_hist_data_rolling_windows, dict)
+        self.assertEqual(len(self.op._op_hist_data_rolling_windows), 3)
+        self.assertEqual(list(self.op._op_hist_data_rolling_windows.keys()), ['custom', 'custom_1', 'custom_2'])
+        print(self.op._op_hist_data_rolling_windows)
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom'].shape, (45, 3, 5, 4))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_1'].shape, (45, 3, 5, 3))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (45, 3, 2, 4))
+
+        target_hist_data_rolling_window = np.array(
+                [[[10.04, 10.02, 10.07, 9.99],
+                  [10., 10., 10., 10.],
+                  [10., 9.98, 10., 9.97],
+                  [9.99, 9.97, 10., 9.97],
+                  [9.97, 9.99, 10.03, 9.97]],
+
+                 [[9.68, 9.88, 9.91, 9.63],
+                  [9.87, 9.88, 10.04, 9.84],
+                  [9.86, 9.89, 9.93, 9.81],
+                  [9.87, 9.75, 10.04, 9.74],
+                  [9.79, 9.74, 9.84, 9.67]],
+
+                 [[6.64, 7.26, 7.41, 6.53],
+                  [7.26, 7., 7.31, 6.87],
+                  [7.03, 6.88, 7.14, 6.83],
+                  [6.87, 6.91, 7., 6.7],
+                  [np.nan, np.nan, np.nan, np.nan]]]
+        )
+        target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom'][0],
+                                        target_hist_data_rolling_window,
+                                        equal_nan=True)
+        self.assertTrue(target_comparison)
+        target_hist_data_rolling_window = np.array(
+                [[[10.07, 9.99, 10.04],
+                  [10., 10., 10.],
+                  [10., 9.97, 10.],
+                  [10., 9.97, 9.99],
+                  [10.03, 9.97, 9.97]],
+
+                 [[9.91, 9.63, 9.68],
+                  [10.04, 9.84, 9.87],
+                  [9.93, 9.81, 9.86],
+                  [10.04, 9.74, 9.87],
+                  [9.84, 9.67, 9.79]],
+
+                 [[7.41, 6.53, 6.64],
+                  [7.31, 6.87, 7.26],
+                  [7.14, 6.83, 7.03],
+                  [7., 6.7, 6.87],
+                  [np.nan, np.nan, np.nan]]]
+        )
+        target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom_1'][0],
+                                        target_hist_data_rolling_window,
+                                        equal_nan=True)
+        self.assertTrue(target_comparison)
+        target_hist_data_rolling_window = np.array(
+                [[[9.99, 9.97, 10., 9.97],
+                  [9.97, 9.99, 10.03, 9.97]],
+
+                 [[9.87, 9.75, 10.04, 9.74],
+                  [9.79, 9.74, 9.84, 9.67]],
+
+                 [[6.87, 6.91, 7., 6.7],
+                  [np.nan, np.nan, np.nan, np.nan]]]
+        )
+        target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom_2'][0],
+                                        target_hist_data_rolling_window,
+                                        equal_nan=True)
+        self.assertTrue(target_comparison)
         # test if automatic strategy blenders are set
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['+', '2', '+', '1', '0']})
@@ -6914,12 +7237,12 @@ class TestOperator(unittest.TestCase):
         ric_hist_data = self.op._op_history_data['custom_2']
 
         print(f'in test_prepare_data in TestOperator:')
-        print('selecting history data:\n', sel_hist_data)
-        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
+        print('selecting history arr:\n', sel_hist_data)
+        print('originally passed arr in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
         self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
-        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
+        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, :, :], equal_nan=True))
 
         # raises Value Error if empty history panel is given
         empty_hp = qt.HistoryPanel()
@@ -6927,43 +7250,46 @@ class TestOperator(unittest.TestCase):
                                      columns=self.types,
                                      levels=self.shares,
                                      rows=self.date_indices)
-        too_many_shares = qt.HistoryPanel(values=np.random.randint(10, size=(5, 50, 4)))
-        too_many_types = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 5)))
+        too_many_shares = qt.HistoryPanel(values=np.random.randint(10, size=(5, 50, 4)),
+                                          columns=self.types,
+                                          rows=self.date_indices)
+        too_many_types = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 5)),
+                                         rows=self.date_indices)
         # raises Error when history panel is empty
         self.assertRaises(ValueError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           empty_hp,
                           on_spot_cash)
         # raises Error when first investment date is too early
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+        self.assertRaises(ValueError,
+                          self.op.assign_hist_data,
                           correct_hp,
                           early_cash)
         # raises Error when last investment date is too late
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+        self.assertRaises(ValueError,
+                          self.op.assign_hist_data,
                           correct_hp,
                           late_cash)
-        # raises Error when number of shares in history data does not fit
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
-                          too_many_shares,
-                          on_spot_cash)
+        # # raises Error when number of shares in history data does not fit
+        # self.assertRaises(AssertionError,
+        #                   self.op.assign_hist_data,
+        #                   too_many_shares,
+        #                   on_spot_cash)
         # raises Error when too early cash investment date
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+        self.assertRaises(ValueError,
+                          self.op.assign_hist_data,
                           correct_hp,
                           too_early_cash)
         # raises Error when number of d_types in history data does not fit
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+        self.assertRaises(KeyError,
+                          self.op.assign_hist_data,
                           too_many_types,
                           on_spot_cash)
 
         # test the effect of data type sequence in strategy definition
 
     def test_operator_generate(self):
-        """ Test signal generation process of operator objects
+        """ 测试operator对象生成完整交易信号
 
         :return:
         """
@@ -6985,8 +7311,8 @@ class TestOperator(unittest.TestCase):
         self.op.set_parameter(stg_id=1,
                               pars=())
         # self.a_to_sell.set_blender(blender='0+1+2')
-        self.op.prepare_data(hist_data=self.hp1,
-                             cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(hist_data=self.hp1,
+                                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
@@ -6995,17 +7321,18 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal(hist_data=self.hp1)
+        op_list = self.op.create_signal()
 
-        self.assertTrue(isinstance(op_list, HistoryPanel))
-        backtest_price_types = op_list.htypes
-        self.assertEqual(backtest_price_types[0], 'close')
+        self.assertTrue(isinstance(op_list, np.ndarray))
+        backtest_price_types = self.op.op_list_price_types
+        self.assertEqual(backtest_price_types, ['close'])
         self.assertEqual(op_list.shape, (3, 45, 1))
-        reduced_op_list = op_list.values.squeeze().T
+        reduced_op_list = op_list.squeeze().T
         print(f'op_list created, it is a 3 share/45 days/1 htype array, to make comparison happen, \n'
               f'it will be squeezed to a 2-d array to compare on share-wise:\n'
               f'{reduced_op_list}')
         target_op_values = np.array([[0.0, 0.0, 0.0],
+                                     [0.0, 0.0, 0.0],
                                      [0.0, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
@@ -7025,7 +7352,6 @@ class TestOperator(unittest.TestCase):
                                      [0.5, 0.5, 0.0],
                                      [0.5, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
-                                     [0.5, 0.5, 0.0],
                                      [0.0, 0.5, 0.0],
                                      [0.0, 0.5, 0.0],
                                      [0.0, 0.5, 0.0],
@@ -7074,23 +7400,24 @@ class TestOperator(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
         self.op.set_blender(blender='0 or 1', price_type='open')
-        self.op.prepare_data(hist_data=self.hp1,
-                             cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(hist_data=self.hp1,
+                                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0'],
                           'open':  ['or', '1', '0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal(hist_data=self.hp1)
+        op_list = self.op.create_signal()
 
-        self.assertTrue(isinstance(op_list, HistoryPanel))
-        signal_close = op_list['close'].squeeze().T
-        signal_open = op_list['open'].squeeze().T
+        self.assertTrue(isinstance(op_list, np.ndarray))
+        signal_close = op_list[:, :, 0].squeeze().T
+        signal_open = op_list[:, :, 1].squeeze().T
         self.assertEqual(signal_close.shape, (45, 3))
         self.assertEqual(signal_open.shape, (45, 3))
 
         target_op_close = np.array([[0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0],
                                     [0.0, 0.0, 0.0],
                                     [0.5, 0.0, 0.0],
                                     [0.5, 0.0, 0.0],
@@ -7110,7 +7437,6 @@ class TestOperator(unittest.TestCase):
                                     [0.5, 0.5, 0.0],
                                     [0.5, 0.0, 0.0],
                                     [0.5, 0.0, 0.0],
-                                    [0.5, 0.5, 0.0],
                                     [0.0, 0.5, 0.0],
                                     [0.0, 0.5, 0.0],
                                     [0.0, 0.5, 0.0],
@@ -7137,6 +7463,7 @@ class TestOperator(unittest.TestCase):
                                     [0.0, 0.5, 0.0]])
         target_op_open = np.array([[0.5, 0.5, 1.0],
                                    [0.5, 0.5, 1.0],
+                                   [0.5, 0.5, 1.0],
                                    [1.0, 0.5, 1.0],
                                    [1.0, 0.5, 1.0],
                                    [1.0, 0.5, 1.0],
@@ -7150,13 +7477,12 @@ class TestOperator(unittest.TestCase):
                                    [1.0, 1.0, 1.0],
                                    [1.0, 1.0, 1.0],
                                    [1.0, 1.0, 1.0],
-                                   [1.0, 1.0, 0.0],
-                                   [1.0, 1.0, 0.0],
-                                   [1.0, 1.0, 0.0],
+                                   [1.0, 1.0, 1.0],
+                                   [1.0, 1.0, 1.0],
+                                   [1.0, 1.0, 1.0],
                                    [1.0, 0.5, 0.0],
                                    [1.0, 0.5, 0.0],
-                                   [1.0, 1.0, 0.0],
-                                   [0.0, 1.0, 0.5],
+                                   [1.0, 1.0, 0.5],
                                    [0.0, 1.0, 0.5],
                                    [0.0, 1.0, 0.5],
                                    [0.0, 1.0, 0.5],
@@ -7165,7 +7491,7 @@ class TestOperator(unittest.TestCase):
                                    [0.0, 1.0, 0.5],
                                    [0.5, 1.0, 0.0],
                                    [0.5, 1.0, 0.0],
-                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 0.0],
                                    [0.5, 1.0, 1.0],
                                    [0.5, 1.0, 1.0],
                                    [0.5, 1.0, 1.0],
@@ -7197,14 +7523,21 @@ class TestOperator(unittest.TestCase):
         print('--Test two separate signal generation for different price types--')
         # 更多测试集合
 
+    def test_operator_generate_realtime(self):
+        """ 测试operator对象在实时模式下生成交易信号
+
+        :return:
+        """
+        pass
+
     def test_stg_parameter_setting(self):
         """ test setting parameters of strategies
         test the method set_parameters
 
         :return:
         """
-        op = qt.Operator(strategies='dma, all, urgent')
-        print(op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
+        op = qt.Operator(strategies='dma, all, sellrate')
+        print(op.strategies, '\n', [qt.built_in.TimingDMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
         # TODO: allow set_parameters to a list of strategies or str-listed strategies
         # TODO: allow set_parameters to all strategies of specific bt price type
@@ -7212,7 +7545,7 @@ class TestOperator(unittest.TestCase):
         op.set_parameter('dma',
                          pars=(5, 10, 5),
                          opt_tag=1,
-                         par_boes=((5, 10), (5, 15), (10, 15)),
+                         par_range=((5, 10), (5, 15), (10, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         op.set_parameter('all',
@@ -7225,13 +7558,13 @@ class TestOperator(unittest.TestCase):
                          pars=(9, -0.09),
                          window_length=10)
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(op.strategies[0].par_boes, ((5, 10), (5, 15), (10, 15)))
+        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (10, 15)))
         self.assertEqual(op.strategies[2].pars, (9, -0.09))
         self.assertEqual(op.op_data_freq, 'd')
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
-                          ['discr', 'discr', 'discr', 'discr', 'conti']))
+                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
+                          ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.max_window_length, 20)
         print(f'KeyError will be raised if wrong strategy id is given')
         self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
@@ -7254,8 +7587,8 @@ class TestOperator(unittest.TestCase):
                                             'open':  ['|', '2', '&', '1', '0']})
 
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
-                          ['discr', 'discr', 'discr', 'discr', 'conti']))
+                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
+                          ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
     def test_signal_blend(self):
@@ -7322,11 +7655,11 @@ class TestOperator(unittest.TestCase):
         blender = blender_parser("(0-1)/2 + 3")
         print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
         blender = blender_parser("0 + 1 / 2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, math.pi, 4], blender), 1.78539816)
+        self.assertAlmostEquals(signal_blend([1, math.pi, 4], blender), 1.78539816)
         blender = blender_parser("(0 + 1) / 2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7334,7 +7667,7 @@ class TestOperator(unittest.TestCase):
         blender = blender_parser("(0 + 1 * 2) / 3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
+        self.assertAlmostEquals(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
         blender = blender_parser("0 / 1 * 2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7342,11 +7675,11 @@ class TestOperator(unittest.TestCase):
         blender = blender_parser("(0 - 1 + 2) * 4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
+        self.assertAlmostEquals(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
         blender = blender_parser("0 * 1")
         print(f'RPN of notation: "0 * 1" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([math.pi, math.e], blender), 8.539734222673566)
+        self.assertAlmostEquals(signal_blend([math.pi, math.e], blender), 8.539734222673566)
 
         blender = blender_parser('abs(3-sqrt(2) /  cos(1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
@@ -7369,7 +7702,44 @@ class TestOperator(unittest.TestCase):
                                    'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
                                    '+', '5', '3', '2', '1', '1'])
 
-        # TODO: ndarray type of signals to be tested:
+    def test_tokenizer(self):
+        self.assertListEqual(_exp_to_token('1+1'),
+                             ['1', '+', '1'])
+        print(_exp_to_token('1+1'))
+        self.assertListEqual(_exp_to_token('1 & 1'),
+                             ['1', '&', '1'])
+        print(_exp_to_token('1&1'))
+        self.assertListEqual(_exp_to_token('1 and 1'),
+                             ['1', 'and', '1'])
+        print(_exp_to_token('1 and 1'))
+        self.assertListEqual(_exp_to_token('1 or 1'),
+                             ['1', 'or', '1'])
+        print(_exp_to_token('1 or 1'))
+        self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
+                             ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
+        print(_exp_to_token('(1 - 1 + -1) * pi'))
+        self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
+                             ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
+        print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
+        self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
+                             ['sin(', 'pi', ')', '+', '2.14'])
+        print(_exp_to_token('sin(pi) + 2.14'))
+        self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
+                             ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
+        print(_exp_to_token('(1-2)/3.0 + 0.0000'))
+        self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
+                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
+        print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
+        self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
+                             ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
+        print(_exp_to_token('(x + e * 10) / 10'))
+        self.assertListEqual(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
+                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12',
+                              ')'])
+        print(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
+        self.assertListEqual(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
+                             ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
+        print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
@@ -7378,50 +7748,50 @@ class TestOperator(unittest.TestCase):
         op.set_parameter('dma',
                          pars=(5, 10, 5),
                          opt_tag=1,
-                         par_boes=((5, 10), (5, 15), (10, 15)),
+                         par_range=((5, 10), (5, 15), (10, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
         op.set_opt_par((5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
 
         op.set_parameter('crossline',
-                         pars=(5, 10, 5, 'sell'),
+                         pars=(5, 10, 0.1),
                          opt_tag=1,
-                         par_boes=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 15), (0, 1)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.opt_tags, [1, 0, 1])
         op.set_opt_par((5, 12, 9, 8, 26, 9, 'buy'))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         op.set_opt_par((9, 200, 155, 8, 26, 9, 'buy', 5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
-                         pars=(5, 10, 5, 'sell'),
+                         pars=(5, 10, 5),
                          opt_tag=2,
-                         par_boes=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.opt_tags, [1, 0, 2])
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (5, 10, 5, 'sell'))
-        op.set_opt_par((5, 12, 9, (8, 26, 9, 'buy')))
+        self.assertEqual(op.strategies[2].pars, (5, 10, 5))
+        op.set_opt_par((5, 12, 9, (8, 26, 9)))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # Test Errors
         # Not enough values for parameter
@@ -7431,16 +7801,16 @@ class TestOperator(unittest.TestCase):
         self.assertRaises(AssertionError, op.set_opt_par, [5, 12, 9, 7, 15, 12, 'sell'])
 
     def test_stg_attribute_get_and_set(self):
-        self.stg = qt.TimingCrossline()
-        self.stg_type = 'R-TIMING'
+        self.stg = qt.built_in.TimingCrossline()
+        self.stg_type = 'RULE-ITER'
         self.stg_name = "CROSSLINE"
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '
-        self.pars = (35, 120, 10, 'buy')
-        self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
-        self.par_count = 4
-        self.par_types = ['discr', 'discr', 'conti', 'enum']
+        self.pars = (35, 120, 0.02)
+        self.par_boes = [(10, 250), (10, 250), (0, 1)]
+        self.par_count = 3
+        self.par_types = ['int', 'int', 'float']
         self.opt_tag = 0
         self.data_types = ['close']
         self.data_freq = 'd'
@@ -7448,31 +7818,31 @@ class TestOperator(unittest.TestCase):
         self.window_length = 270
 
         self.assertEqual(self.stg.stg_type, self.stg_type)
-        self.assertEqual(self.stg.stg_name, self.stg_name)
-        self.assertEqual(self.stg.stg_text, self.stg_text)
+        self.assertEqual(self.stg.name, self.stg_name)
+        self.assertEqual(self.stg.description, self.stg_text)
         self.assertEqual(self.stg.pars, self.pars)
         self.assertEqual(self.stg.par_types, self.par_types)
-        self.assertEqual(self.stg.par_boes, self.par_boes)
+        self.assertEqual(self.stg.par_range, self.par_boes)
         self.assertEqual(self.stg.par_count, self.par_count)
         self.assertEqual(self.stg.opt_tag, self.opt_tag)
         self.assertEqual(self.stg.data_freq, self.data_freq)
         self.assertEqual(self.stg.sample_freq, self.sample_freq)
         self.assertEqual(self.stg.data_types, self.data_types)
         self.assertEqual(self.stg.window_length, self.window_length)
-        self.stg.stg_name = 'NEW NAME'
-        self.stg.stg_text = 'NEW TEXT'
-        self.assertEqual(self.stg.stg_name, 'NEW NAME')
-        self.assertEqual(self.stg.stg_text, 'NEW TEXT')
-        self.stg.pars = (1, 2, 3, 4)
-        self.assertEqual(self.stg.pars, (1, 2, 3, 4))
+        self.stg.name = 'NEW NAME'
+        self.stg.description = 'NEW TEXT'
+        self.assertEqual(self.stg.name, 'NEW NAME')
+        self.assertEqual(self.stg.description, 'NEW TEXT')
+        self.stg.pars = (1, 2, 3)
+        self.assertEqual(self.stg.pars, (1, 2, 3))
         self.stg.par_count = 3
         self.assertEqual(self.stg.par_count, 3)
-        self.stg.par_boes = [(1, 10), (1, 10), (1, 10), (1, 10)]
-        self.assertEqual(self.stg.par_boes, [(1, 10), (1, 10), (1, 10), (1, 10)])
-        self.stg.par_types = ['conti', 'conti', 'discr', 'enum']
-        self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'enum'])
-        self.stg.par_types = 'conti, conti, discr, conti'
-        self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'conti'])
+        self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
+        self.assertEqual(self.stg.par_range, [(1, 10), (1, 10), (1, 10), (1, 10)])
+        self.stg.par_types = ['float', 'float', 'int', 'enum']
+        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'enum'])
+        self.stg.par_types = 'float, float, int, float'
+        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'float'])
         self.stg.data_types = 'close, open'
         self.assertEqual(self.stg.data_types, ['close', 'open'])
         self.stg.data_types = ['close', 'high', 'low']
@@ -7482,91 +7852,240 @@ class TestOperator(unittest.TestCase):
         self.stg.window_length = 300
         self.assertEqual(self.stg.window_length, 300)
 
-    def test_rolling_timing(self):
+    def test_rule_iterator(self):
+        """测试rule_iterator类型策略"""
         stg = TestLSStrategy()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, RuleIterator)
         stg_pars = {'000100': (5, 10),
                     '000200': (5, 10),
                     '000300': (5, 6)}
         stg.set_pars(stg_pars)
-        history_data = self.hp1.values
-        output = stg.generate(hist_data=history_data)
+        history_data = self.hp1.values[:, :-1]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+
+        # test strategy generate with only hist_data
+        print(f'test strategy generate with only hist_data')
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              data_idx=np.arange(len(history_data_rolling_window)))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        lsmask = np.array([[0., 0., 1.],
-                           [0., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 1., 1.],
-                           [1., 1., 1.],
-                           [1., 1., 1.],
-                           [1., 1., 0.],
-                           [1., 1., 0.],
-                           [1., 1., 0.],
-                           [1., 0., 0.],
-                           [1., 0., 0.],
-                           [1., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.]])
-        # TODO: Issue to be solved: the np.nan value are converted to 0 in the lsmask，这样做可能会有意想不到的后果
-        # TODO: 需要解决nan值的问题
+        lsmask = np.array([[0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0]])
         self.assertEqual(output.shape, lsmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {lsmask[i]}')
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
-    def test_sel_timing(self):
-        """ where is the timing strategy??"""
-        stg = TestSelStrategy()
-        stg_pars = ()
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['high, low, close', :, :]
-        seg_pos, seg_length, seg_count = stg._seg_periods(dates=self.hp1.hdates, freq=stg.sample_freq)
-        self.assertEqual(list(seg_pos), [0, 5, 11, 19, 26, 33, 41, 47, 49])
-        self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
-        self.assertEqual(seg_count, 8)
-
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        # test strategy generate with history data and reference_data
+        print(f'\ntest strategy generate with reference_data')
+        ref_data = self.test_ref_data[0, :, :]
+        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              ref_data=ref_rolling_window,
+                              data_idx=np.arange(len(history_data_rolling_window)))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        selmask = np.array([[0.5, 0.5, 0. ],
+        lsmask = np.array([[1.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 1.0]])
+        self.assertEqual(output.shape, lsmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {lsmask[i]}')
+        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+
+        # test strategy generate with trade_data
+        print(f'\ntest strategy generate with trade_data')
+        output = []
+        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
+        trade_data.fill(np.nan)
+        recent_prices = np.zeros(shape=(3,))
+        for step in range(len(history_data_rolling_window)):
+            output.append(
+                    stg.generate(
+                            hist_data=history_data_rolling_window,
+                            trade_data=trade_data,
+                            data_idx=step
+                    )
+            )
+            current_prices = history_data_rolling_window[step, :, -1, 0]
+            current_signals = output[-1]
+            recent_prices = np.where(current_signals == 1., current_prices, recent_prices)
+            trade_data[:, 4] = recent_prices
+        output = np.array(output, dtype='float')
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        lsmask = np.array([[1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0]])
+        self.assertEqual(output.shape, lsmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {lsmask[i]}')
+        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+
+    def test_general_strategy(self):
+        """ 测试第一种基础策略类General Strategy"""
+        # test strategy with only history data
+        stg = TestSelStrategy()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, GeneralStg)
+        stg_pars = ()
+        stg.set_pars(stg_pars)
+        history_data = self.hp1['high, low, close', :, :-1]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7574,21 +8093,21 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0. , 0.5, 0.5],
+                            [0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7596,28 +8115,188 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0. , 0.5, 0.5],
+                            [0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
-    def test_simple_timing(self):
-        stg = TestSigStrategy()
-        stg_pars = (0.2, 0.02, -0.02)
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['close, open, high, low', :, 3:50]
-        output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
+        # test strategy with history data and reference data
+        print(f'\ntest strategy generate with reference_data')
+        ref_data = self.test_ref_data[0, :, :]
+        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              ref_data=ref_rolling_window,
+                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
+        self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
+
+        # test strategy generate with trade_data
+        print(f'\ntest strategy generate with trade_data')
+        output = []
+        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
+        trade_data.fill(np.nan)
+        recent_prices = np.zeros(shape=(3,))
+        prev_signals = np.zeros(shape=(3,))
+        for step in range(len(history_data_rolling_window)):
+            output.append(
+                    stg.generate(
+                            hist_data=history_data_rolling_window,
+                            trade_data=trade_data,
+                            data_idx=step
+                    )
+            )
+            current_prices = history_data_rolling_window[step, :, -1, 2]
+            current_signals = output[-1]
+            recent_prices = np.where(current_signals != prev_signals, current_prices, recent_prices)
+            trade_data[:, 4] = recent_prices
+            prev_signals = current_signals
+        output = np.array(output, dtype='float')
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.33333, 0.33333, 0.33333],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0, 0.5],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0, 0.5],
+                            [0.5, 0, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0, 0.5],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5]])
+        self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, atol=0.001, equal_nan=True))
+
+    def test_general_strategy2(self):
+        """ 测试第二种general strategy通用策略类型"""
+        # test strategy with only historical data
+        stg = TestSigStrategy()
+        stg_pars = (0.2, 0.02, -0.02)
+        stg.set_pars(stg_pars)
+        history_data = self.hp1['close, open, high, low', :, 4:50]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+
+        # test generate signal in real time mode:
+        output = []
+        for step in [0, 3, 5, 7, 10]:
+            output.append(stg.generate(hist_data=history_data_rolling_window, data_idx=step))
+        sigmatrix = np.array([[0.0, 1.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0]])
+        for signal, target in zip(output, sigmatrix):
+            self.assertIsInstance(signal, np.ndarray)
+            self.assertEqual(signal.shape, (3,))
+            self.assertTrue(np.allclose(signal, target))
+
+        # test generate signal in batch mode:
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              data_idx=np.arange(len(history_data_rolling_window)))
 
         sigmatrix = np.array([[0.0, 1.0, 0.0],
                               [0.0, 0.0, 0.0],
@@ -7633,7 +8312,7 @@ class TestOperator(unittest.TestCase):
                               [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0],
-                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0],
@@ -7656,8 +8335,8 @@ class TestOperator(unittest.TestCase):
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 1.0],
                               [0.0, 1.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0],
@@ -7672,11 +8351,103 @@ class TestOperator(unittest.TestCase):
         print(f'output and signal matrix lined up side by side is \n'
               f'{side_by_side_array}')
         self.assertEqual(sigmatrix.shape, output.shape)
-        self.assertTrue(np.allclose(output, sigmatrix))
+        self.assertTrue(np.allclose(np.array(output), sigmatrix))
 
-    def test_sel_finance(self):
-        """Test selecting_finance strategy, test all built-in strategy parameters"""
+        # test strategy with also reference data
+        print(f'\ntest strategy generate with reference_data')
+        stg_pars = (0.3, 0.02, -0.02)
+        stg.set_pars(stg_pars)
+        history_data = self.hp1['close, open, high, low', :, 4:50]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+        reference_data = self.test_ref_data2[0, 4:50, :]
+        ref_rolling_windows = rolling_window(reference_data, stg.window_length, 0)
+
+        # test generate signal in real time mode:
+        output = []
+        for step in [0, 3, 5, 7, 10]:
+            output.append(stg.generate(
+                    hist_data=history_data_rolling_window,
+                    ref_data=ref_rolling_windows,
+                    data_idx=step
+            ))
+        sigmatrix = np.array([[0.0, 1.0, 0.0],
+                              [1.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 1.0, 0.0]])
+        for signal, target in zip(output, sigmatrix):
+            self.assertIsInstance(signal, np.ndarray)
+            self.assertEqual(signal.shape, (3,))
+            self.assertTrue(np.allclose(signal, target))
+
+        # test generate signal in batch mode:
+        output = stg.generate(
+                hist_data=history_data_rolling_window,
+                ref_data=ref_rolling_windows,
+                data_idx=np.arange(len(history_data_rolling_window))
+        )
+
+        sigmatrix = np.array([[0.0, 1.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [1.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [1.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 1.0],
+                              [0.0, 1.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 1.0, 0.0]])
+
+        side_by_side_array = np.array([[i, out_line == sig_line, out_line, sig_line]
+                                       for
+                                       i, out_line, sig_line
+                                       in zip(range(len(output)), output, sigmatrix)])
+        print(f'output and signal matrix lined up side by side is \n'
+              f'{side_by_side_array}')
+        self.assertEqual(sigmatrix.shape, output.shape)
+        self.assertTrue(np.allclose(np.array(output), sigmatrix, equal_nan=True))
+
+    def test_factor_sorter(self):
+        """Test Factor Sorter 策略, test all built-in strategy parameters"""
+        print(f'\ntest strategy generate with only history data')
         stg = SelectingAvgIndicator()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, FactorSorter)
         stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         stg.window_length = 5
@@ -7686,16 +8457,23 @@ class TestOperator(unittest.TestCase):
         stg.condition = 'greater'
         stg.lbound = 0
         stg.ubound = 0
-        stg.proportion_or_quantity = 0.67
-        history_data = self.hp2.values
+        stg.max_sel_count = 0.67
+        # test additional FactorSorter properties
+        self.assertEqual(stg_pars, (False, 'even', 'greater', 0, 0, 0.67))
+        self.assertEqual(stg.window_length, 5)
+        self.assertEqual(stg.data_freq, 'd')
+        self.assertEqual(stg.sample_freq, '10d')
+        self.assertEqual(stg.sort_ascending, False)
+        self.assertEqual(stg.condition, 'greater')
+        self.assertEqual(stg.lbound, 0)
+        self.assertEqual(stg.ubound, 0)
+        self.assertEqual(stg.max_sel_count, 0.67)
+
+        history_data = self.hp2.values[:, :-1]
+        hist_data_rolling_window = rolling_window(history_data, window=stg.window_length, axis=1)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        seg_pos, seg_length, seg_count = stg._seg_periods(dates=self.hp1.hdates, freq=stg.sample_freq)
-        self.assertEqual(list(seg_pos), [0, 5, 11, 19, 26, 33, 41, 47, 49])
-        self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
-        self.assertEqual(seg_count, 8)
-
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7762,7 +8540,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0.5, 0.5, 0.0],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7826,7 +8604,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0.0, 0.33333333, 0.66666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7874,10 +8652,13 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get max factor in linear weight
-        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
+        stg_pars = (False, 'distance', 'greater', 0, 0, 0.67)
         stg.sort_ascending = False
         stg.weighting = 'distance'
         stg.condition = 'greater'
@@ -7886,7 +8667,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0., 0.08333333, 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7934,6 +8715,72 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
+
+        # test single factor, get max factor in proportion weight
+        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
+        stg.sort_ascending = False
+        stg.weighting = 'proportion'
+        stg.condition = 'greater'
+        stg.lbound = 0
+        stg.ubound = 0
+        stg.set_pars(stg_pars)
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+        selmask = np.array([[0., 0.4, 0.6],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.6, 0.4],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0., 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.25, 0., 0.75],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.375, 0.625, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
+
+        self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
         # test single factor, get max factor in linear weight, threshold 0.2
@@ -7946,7 +8793,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7994,46 +8841,95 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
-    def test_tokenizer(self):
-        self.assertListEqual(_exp_to_token('1+1'),
-                             ['1', '+', '1'])
-        print(_exp_to_token('1+1'))
-        self.assertListEqual(_exp_to_token('1 & 1'),
-                             ['1', '&', '1'])
-        print(_exp_to_token('1&1'))
-        self.assertListEqual(_exp_to_token('1 and 1'),
-                             ['1', 'and', '1'])
-        print(_exp_to_token('1 and 1'))
-        self.assertListEqual(_exp_to_token('1 or 1'),
-                             ['1', 'or', '1'])
-        print(_exp_to_token('1 or 1'))
-        self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
-                             ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
-        print(_exp_to_token('(1 - 1 + -1) * pi'))
-        self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
-                             ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
-        print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
-        self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
-                             ['sin(', 'pi', ')', '+', '2.14'])
-        print(_exp_to_token('sin(pi) + 2.14'))
-        self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
-                             ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
-        print(_exp_to_token('(1-2)/3.0 + 0.0000'))
-        self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
-                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
-        print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
-        self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
-                             ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
-        print(_exp_to_token('(x + e * 10) / 10'))
-        self.assertListEqual(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
-                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12',
-                              ')'])
-        print(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
-        self.assertListEqual(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
-                             ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
-        print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
+        print(f'\ntest financial generate with reference data')
+        # to be added
+
+    def test_stg_trading_different_prices(self):
+        """测试op包含的策略有不同的交易价格，以开盘价买入，以收盘价卖出"""
+        qt.get_basic_info('000899.SZ')
+        stg_buy = StgBuyOpen()
+        stg_sel = StgSelClose()
+        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        op.set_parameter(0,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         bt_price_type='open')
+        op.set_parameter(1,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         bt_price_type='close')
+        op.set_blender(blender='0')
+        op.get_blender()
+        qt.configure(asset_pool=['000300.SH',
+                                 '399006.SZ'],
+                     asset_type='IDX')
+        res = qt.run(op,
+                     visual=True,
+                     trade_log=True,
+                     invest_start='20110725',
+                     invest_end='20220401',
+                     trade_batch_size=1,
+                     sell_batch_size=0)
+        stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
+        qt.configure(asset_pool=stock_pool,
+                     asset_type='E',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,
+                     invest_cash_amounts=[1000000],
+                     mode=1,
+                     trade_log=True,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=-0.03,
+                     backtest_price_adj='none')
+        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_parameter(0,
+                         opt_tag=1,
+                         sample_freq='m',
+                         data_types='wt-000300.SH',
+                         sort_ascending=False,
+                         weighting='proportion',
+                         max_sel_count=300)
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     trade_log=True)
+
+    def test_non_day_data_freqs(self):
+        """测试除d之外的其他数据频率交易策略"""
+        op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
+        op_min.set_parameter(0, data_freq='h', sample_freq='h')
+        op_min.set_parameter(1, data_freq='h', sample_freq='d')
+        op_min.set_parameter(2, data_freq='h', sample_freq='y')
+        op_min.set_blender(blender='(0+1)*2')
+        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
+                                 '000918.SZ', '000819.SZ', '000899.SZ'],
+                     asset_type='E',
+                     visual=True,
+                     trade_log=False)
+        res = qt.run(op_min,
+                     visual=True,
+                     trade_log=False,
+                     invest_start='20160225',
+                     invest_end='20161023',
+                     trade_batch_size=100,
+                     sell_batch_size=100)
 
 
 class TestLog(unittest.TestCase):
@@ -8047,8 +8943,68 @@ class TestConfig(unittest.TestCase):
     def test_init(self):
         pass
 
-    def test_invest(self):
-        pass
+    def test_save_load_reset_config(self):
+        """保存读取重置configuration"""
+        conf = {'mode':                2,
+                'invest_cash_amounts': [200000]}
+        qt.configure(**conf)
+        qt.save_config(QT_CONFIG, 'saved3.cnf')
+        qt.load_config(QT_CONFIG, 'saved3.cnf')
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 2)
+        qt.reset_config()
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 1)
+
+    def test_config(self):
+        """测试设置不同的配置值，包括测试不合法的配置值以及不存在的配置值"""
+        # test legal parameter configurations in QT_CONFIG
+        qt.reset_config()
+        self.assertEqual(QT_CONFIG.mode, 1)
+        self.assertEqual(QT_CONFIG.opti_type, 'single')
+        self.assertEqual(QT_CONFIG.cash_deliver_period, 0)
+        self.assertEqual(QT_CONFIG.backtest_price_adj, 'none')
+        self.assertEqual(QT_CONFIG.invest_start, '20160405')
+        self.assertEqual(QT_CONFIG.cost_rate_buy, 0.0003)
+        self.assertEqual(QT_CONFIG.benchmark_asset, '000300.SH')
+
+        qt.configure(
+                mode=2,
+                opti_type='multiple',
+                cash_deliver_period=1,
+                backtest_price_adj='b',
+                invest_start='20191010',
+                cost_rate_buy=0.005,
+                benchmark_asset='000001.SH'
+        )
+        self.assertEqual(QT_CONFIG.mode, 2)
+        self.assertEqual(QT_CONFIG.opti_type, 'multiple')
+        self.assertEqual(QT_CONFIG.cash_deliver_period, 1)
+        self.assertEqual(QT_CONFIG.backtest_price_adj, 'b')
+        self.assertEqual(QT_CONFIG.invest_start, '20191010')
+        self.assertEqual(QT_CONFIG.cost_rate_buy, 0.005)
+        self.assertEqual(QT_CONFIG.benchmark_asset, '000001.SH')
+        # test legal parameter configurations in other Config objects
+
+        # test illegal parameter configurations
+        # illegal values
+        self.assertRaises(Exception, qt.configure, mode=5)
+        self.assertRaises(Exception, qt.configure, opti_type='mul')
+        self.assertRaises(Exception, qt.configure, cash_deliver_period='abc')
+        self.assertRaises(Exception, qt.configure, backtest_price_adj='wrong')
+        self.assertRaises(Exception, qt.configure, invest_start=None)
+        self.assertRaises(Exception, qt.configure, benchmark_asset=15)
+        # parameters that do not exist
+        self.assertRaises(Exception, qt.configure, wrong_parameter=3)
+        self.assertRaises(Exception, qt.configure, not_existed=3)
+        # user defined parameters
+        qt.configure(
+                only_built_in_keys=False,
+                self_defined_par1=2,
+                self_defined_par2='user_defined_value'
+        )
+        self.assertEqual(QT_CONFIG.self_defined_par1, 2)
+        self.assertEqual(QT_CONFIG.self_defined_par2, 'user_defined_value')
 
     def test_pars_string_to_type(self):
         _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())
@@ -8068,7 +9024,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.htypes = 'close,open,high,low'
         self.data2 = np.random.randint(10, size=(10, 5))
         self.data3 = np.random.randint(10, size=(10, 4))
-        self.data4 = np.random.randint(10, size=(10))
+        self.data4 = np.random.randint(10, size=(10,))
         self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
         self.hp2 = qt.HistoryPanel(values=self.data2, levels=self.shares, columns='close', rows=self.index)
         self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index2)
@@ -8149,7 +9105,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(empty_hp.column_count, 0)
 
     def test_create_history_panel(self):
-        """ test the creation of a HistoryPanel object by passing all data explicitly
+        """ test the creation of a HistoryPanel object by passing all arr explicitly
 
         """
         self.assertIsInstance(self.hp, qt.HistoryPanel)
@@ -8222,8 +9178,8 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp6.columns.keys()), [0, 1, 2, 3])
         self.assertEqual(list(self.hp6.rows.keys())[0], pd.Timestamp('2016-07-01'))
 
-        print('test creating HistoryPanel with very limited data')
-        print('test creating HistoryPanel with 2D data')
+        print('test creating HistoryPanel with very limited arr')
+        print('test creating HistoryPanel with 2D arr')
         temp_data = np.random.randint(10, size=(7, 3)).astype('float')
         temp_hp = qt.HistoryPanel(temp_data)
 
@@ -8322,7 +9278,7 @@ class TestHistoryPanel(unittest.TestCase):
         print('==========================\n输出000100、000120两只股票的close到open三组历史数据\n',
               hp['close,open', '000100, 000102'])
         print(f'historyPanel: hp:\n{hp}')
-        print(f'data is:\n{data}')
+        print(f'arr is:\n{data}')
         hp.htypes = 'open,high,low,close'
         hp.info()
         hp.shares = ['000300', '600227', '600222', '000123', '000129']
@@ -8549,8 +9505,8 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_hp_join(self):
         # TODO: 这里需要加强，需要用具体的例子确认hp_join的结果正确
-        # TODO: 尤其是不同的shares、htypes、hdates，以及它们在顺
-        # TODO: 序不同的情况下是否能正确地组合
+        #  尤其是不同的shares、htypes、hdates，以及它们在顺
+        #  序不同的情况下是否能正确地组合
         print(f'join two simple HistoryPanels with same shares')
         temp_hp = self.hp.join(self.hp2, same_shares=True)
         self.assertIsInstance(temp_hp, qt.HistoryPanel)
@@ -8591,13 +9547,14 @@ class TestHistoryPanel(unittest.TestCase):
         hp.info()
         self.assertRaises(KeyError, qt.dataframe_to_hp, df1)
 
+    # noinspection PyTypeChecker
     def test_to_dataframe(self):
         """ 测试HistoryPanel对象的to_dataframe方法
 
         """
         print(f'START TEST == test_to_dataframe')
         print(f'test converting test hp to dataframe with share == "000102":')
-        df_test = self.hp.to_dataframe(share='000102')
+        df_test = self.hp.slice_to_dataframe(share='000102')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
@@ -8605,7 +9562,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp[:, '000102'], values))
 
         print(f'test DataFrame conversion with share == "000100"')
-        df_test = self.hp.to_dataframe(share='000100')
+        df_test = self.hp.slice_to_dataframe(share='000100')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
@@ -8613,25 +9570,27 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp[:, '000100'], values))
 
         print(f'test DataFrame conversion error: type incorrect')
-        self.assertRaises(AssertionError, self.hp.to_dataframe, share=3.0)
+        self.assertRaises(AssertionError, self.hp.slice_to_dataframe, share=3.0)
 
         print(f'test DataFrame error raising with share not found error')
-        self.assertRaises(KeyError, self.hp.to_dataframe, share='000300')
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe, share='000300')
 
         print(f'test DataFrame conversion with htype == "close"')
-        df_test = self.hp.to_dataframe(htype='close')
+        df_test = self.hp.slice_to_dataframe(htype='close')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
+        # noinspection PyTypeChecker
         self.assertTrue(np.allclose(self.hp['close'].T, values))
 
         print(f'test DataFrame conversion with htype == "high"')
-        df_test = self.hp.to_dataframe(htype='high')
+        df_test = self.hp.slice_to_dataframe(htype='high')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
+        # noinspection PyTypeChecker
         self.assertTrue(np.allclose(self.hp['high'].T, values))
 
         print(f'test DataFrame conversion with htype == "high" and dropna')
@@ -8639,7 +9598,7 @@ class TestHistoryPanel(unittest.TestCase):
         v[:, 3, :] = np.nan
         v[:, 4, :] = np.inf
         test_hp = qt.HistoryPanel(v, levels=self.shares, columns=self.htypes, rows=self.index)
-        df_test = test_hp.to_dataframe(htype='high', dropna=True)
+        df_test = test_hp.slice_to_dataframe(htype='high', dropna=True)
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates[:3]) + list(self.hp.hdates[4:]), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
@@ -8653,7 +9612,7 @@ class TestHistoryPanel(unittest.TestCase):
         v[:, 3, :] = np.nan
         v[:, 4, :] = np.inf
         test_hp = qt.HistoryPanel(v, levels=self.shares, columns=self.htypes, rows=self.index)
-        df_test = test_hp.to_dataframe(htype='high', dropna=True, inf_as_na=True)
+        df_test = test_hp.slice_to_dataframe(htype='high', dropna=True, inf_as_na=True)
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates[:3]) + list(self.hp.hdates[5:]), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
@@ -8663,14 +9622,14 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(target_values, values))
 
         print(f'test DataFrame conversion error: type incorrect')
-        self.assertRaises(AssertionError, self.hp.to_dataframe, htype=pd.DataFrame())
+        self.assertRaises(AssertionError, self.hp.slice_to_dataframe, htype=pd.DataFrame())
 
         print(f'test DataFrame error raising with share not found error')
-        self.assertRaises(KeyError, self.hp.to_dataframe, htype='non_type')
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe, htype='non_type')
 
         print(f'Raises ValueError when both or none parameter is given')
-        self.assertRaises(KeyError, self.hp.to_dataframe)
-        self.assertRaises(KeyError, self.hp.to_dataframe, share='000100', htype='close')
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe)
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe, share='000100', htype='close')
 
     def test_to_df_dict(self):
         """测试HistoryPanel公有方法to_df_dict"""
@@ -8687,7 +9646,7 @@ class TestHistoryPanel(unittest.TestCase):
 
         print('test raise assertion error')
         self.assertRaises(AssertionError, self.hp.to_df_dict, by='random text')
-        self.assertRaises(AssertionError, self.hp.to_df_dict, by=3)
+        self.assertRaises(TypeError, self.hp.to_df_dict, by=3)
 
         print('test empty hp')
         df_dict = qt.HistoryPanel().to_df_dict('share')
@@ -8747,9 +9706,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df2.rename(index=pd.to_datetime))
         print(df3.rename(index=pd.to_datetime))
 
-        hp1 = stack_dataframes([df1, df2, df3], stack_as='shares',
+        hp1 = stack_dataframes([df1, df2, df3], dataframe_as='shares',
                                shares=['000100', '000200', '000300'])
-        hp2 = stack_dataframes([df1, df2, df3], stack_as='shares',
+        hp2 = stack_dataframes([df1, df2, df3], dataframe_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8760,9 +9719,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp2.shares, ['000100', '000300', '000200'])
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
-        hp3 = stack_dataframes([df1, df2, df3], stack_as='htypes',
+        hp3 = stack_dataframes([df1, df2, df3], dataframe_as='htypes',
                                htypes=['close', 'high', 'low'])
-        hp4 = stack_dataframes([df1, df2, df3], stack_as='htypes',
+        hp4 = stack_dataframes([df1, df2, df3], dataframe_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8827,9 +9786,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df3.rename(index=pd.to_datetime))
 
         hp1 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_as='shares')
+                               dataframe_as='shares')
         hp2 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_as='shares',
+                               dataframe_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8841,9 +9800,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = stack_dataframes(dfs={'close': df1, 'high': df2, 'low': df3},
-                               stack_as='htypes')
+                               dataframe_as='htypes')
         hp4 = stack_dataframes(dfs={'close': df1, 'low': df2, 'high': df3},
-                               stack_as='htypes',
+                               dataframe_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8911,19 +9870,6 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
         self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
-    def test_get_history_panel(self):
-        # test get only one line of data
-        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
-                                          htypes='wt-000003.SH, close, wt-000300.SH',
-                                          start='20210101',
-                                          end='20210802',
-                                          freq='m',
-                                          asset_type='any',
-                                          adj='none')
-        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
-        print(hp)
-
     def test_ffill_data(self):
         """ 测试前向填充NaN值"""
         d = np.array([[[0.03, 0.88, 0.2],
@@ -8975,6 +9921,95 @@ class TestHistoryPanel(unittest.TestCase):
                        [0.25, 0.36, 0.32],
                        [0.81, 0.94, 0.04]]])
         self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
+
+    def test_get_history_panel(self):
+        """ 测试是否能正确获取HistoryPanel"""
+        print('test get history panel data')  #
+        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, wt-000300.SH',
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
+                                          end='20210802', freq='m', asset_type='any', adj='none')
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        print('test get history panel data without shares')
+        hp = qt.history.get_history_panel(htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH', shares=None,
+                                          start='20210101', end='20210202', freq='d', asset_type='any', adj='none',
+                                          drop_nan=True)
+        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
+        self.assertEqual(hp.shares, ['none'])
+        print(hp)
+
+        print('test get history panel data from converting multiple frequencies')
+        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, pe, eps, revenue_ps',
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
+                                          end='20210502', freq='w', asset_type='any', adj='none', drop_nan=True)
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        print('test get history panel data with / without all NaN values')
+        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210101', end='20210115', freq='d', asset_type='any', adj='none',
+                                          drop_nan=False, resample_method='none', b_days_only=False)
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_3_rows = hp[:, :, 0:3]
+        row_9_til_10 = hp[:, :, 8:10]
+        self.assertTrue(np.all(np.isnan(first_3_rows)))
+        self.assertTrue(np.all(np.isnan(row_9_til_10)))
+
+        print('test getting history panel specific asset_type')
+        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210101', end='20210115', freq='d', asset_type='E', adj='f')
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        all_idx_data = hp[:, '000300.SH']
+        self.assertTrue(np.all(np.isnan(all_idx_data)))
+
+        print('test getting history panel with wrong parameters')
+        print('datetime not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='not_a_time',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='f')
+        print('freq not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='20210101',
+                          end='20210115',
+                          freq='wrong_freq',
+                          asset_type='E',
+                          adj='f')
+        print('asset_type not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='wront_asset_type',
+                          adj='f')
+        print('adj not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='wrong_adj')
 
 
 class RetryableError(Exception):
@@ -9131,15 +10166,15 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_list_truncate(self):
         """ test util func list_truncate()"""
-        l = [1, 2, 3, 4, 5]
-        ls = list_truncate(l, 2)
+        the_list = [1, 2, 3, 4, 5]
+        ls = list_truncate(the_list, 2)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
         self.assertEqual(ls[2], [5])
 
-        self.assertRaises(AssertionError, list_truncate, l, 0)
+        self.assertRaises(AssertionError, list_truncate, the_list, 0)
         self.assertRaises(AssertionError, list_truncate, 12, 0)
-        self.assertRaises(AssertionError, list_truncate, 0, l)
+        self.assertRaises(AssertionError, list_truncate, 0, the_list)
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
@@ -9150,7 +10185,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(maybe_trade_day('2020-01-01'))
         self.assertFalse(maybe_trade_day('2020/10/06'))
 
-        self.assertRaises(TypeError, maybe_trade_day, 'aaa')
+        self.assertRaises(Exception, maybe_trade_day, 'aaa')
 
     def test_prev_trade_day(self):
         """test the function prev_trade_day()
@@ -9412,6 +10447,140 @@ class TestUtilityFuncs(unittest.TestCase):
         print(f"matching {'招商银行'} with asset_type = 'E, FD': \n{match_ts_code('招商银行', asset_types='E, FD')}")
         print(f"matching {'贵阳银行'} with asset_type = 'E, FT': \n{match_ts_code('贵阳银行', asset_types='E, FT')}")
 
+    def test_rolling_window(self):
+        """ 测试含税rolling_window()"""
+        # test 1d array
+        arr = np.array([1, 2, 3, 4, 5])
+        window = rolling_window(arr, window=3, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[1, 2, 3],
+                           [2, 3, 4],
+                           [3, 4, 5]])
+        self.assertTrue(np.allclose(window, target))
+        # test 2d array
+        arr = np.array([[1, 2, 3, 4],
+                        [5, 6, 7, 8],
+                        [9, 0, 1, 2]])
+        window = rolling_window(arr, window=2, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3, 4],
+                            [5, 6, 7, 8]],
+                           [[5, 6, 7, 8],
+                            [9, 0, 1, 2]]])
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=3, axis=1)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3],
+                            [5, 6, 7],
+                            [9, 0, 1]],
+                           [[2, 3, 4],
+                            [6, 7, 8],
+                            [0, 1, 2]]])
+        self.assertTrue(np.allclose(window, target))
+        # test 3d array
+        arr = np.array([[[1, 2, 3, 4],
+                         [5, 6, 7, 8],
+                         [9, 0, 1, 2]],
+
+                        [[3, 4, 5, 6],
+                         [7, 8, 9, 0],
+                         [1, 2, 3, 4]],
+
+                        [[5, 6, 7, 8],
+                         [9, 0, 1, 2],
+                         [3, 4, 5, 6]]])
+        window = rolling_window(arr, window=2, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[[1, 2, 3, 4],
+                             [5, 6, 7, 8],
+                             [9, 0, 1, 2]],
+
+                            [[3, 4, 5, 6],
+                             [7, 8, 9, 0],
+                             [1, 2, 3, 4]]],
+
+                           [[[3, 4, 5, 6],
+                             [7, 8, 9, 0],
+                             [1, 2, 3, 4]],
+
+                            [[5, 6, 7, 8],
+                             [9, 0, 1, 2],
+                             [3, 4, 5, 6]]]])
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=2, axis=1)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[[1, 2, 3, 4],
+                             [5, 6, 7, 8]],
+
+                            [[3, 4, 5, 6],
+                             [7, 8, 9, 0]],
+
+                            [[5, 6, 7, 8],
+                             [9, 0, 1, 2]]],
+
+                           [[[5, 6, 7, 8],
+                             [9, 0, 1, 2]],
+
+                            [[7, 8, 9, 0],
+                             [1, 2, 3, 4]],
+
+                            [[9, 0, 1, 2],
+                             [3, 4, 5, 6]]]])
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=3, axis=2)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[[1, 2, 3],
+                             [5, 6, 7],
+                             [9, 0, 1]],
+
+                            [[3, 4, 5],
+                             [7, 8, 9],
+                             [1, 2, 3]],
+
+                            [[5, 6, 7],
+                             [9, 0, 1],
+                             [3, 4, 5]]],
+
+                           [[[2, 3, 4],
+                             [6, 7, 8],
+                             [0, 1, 2]],
+
+                            [[4, 5, 6],
+                             [8, 9, 0],
+                             [2, 3, 4]],
+
+                            [[6, 7, 8],
+                             [0, 1, 2],
+                             [4, 5, 6]]]
+                           ])
+        self.assertTrue(np.allclose(window, target))
+
+        # test false input
+        arr = np.array([[[1, 2, 3, 4],
+                         [5, 6, 7, 8],
+                         [9, 0, 1, 2]],
+
+                        [[3, 4, 5, 6],
+                         [7, 8, 9, 0],
+                         [1, 2, 3, 4]],
+
+                        [[5, 6, 7, 8],
+                         [9, 0, 1, 2],
+                         [3, 4, 5, 6]]])
+        self.assertRaises(TypeError, rolling_window, 1, 1, 1)
+        self.assertRaises(TypeError, rolling_window, 1, 's', 1)
+        self.assertRaises(TypeError, rolling_window, 1, 1, 's')
+        self.assertRaises(ValueError, rolling_window, arr, 1, -1)
+        self.assertRaises(ValueError, rolling_window, arr, -1, -1)
+        self.assertRaises(ValueError, rolling_window, arr, 5, 1)
+        self.assertRaises(ValueError, rolling_window, arr, 2, 3)
+
 
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
@@ -9468,8 +10637,6 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
-    # TODO: solve this problem, error message thrown out: no such module
-    # TODO: called "stock_company"
     def test_stock_company(self):
         print(f'test tushare function: stock_company')
         shares = '600748.SH'
@@ -9759,6 +10926,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
         print(f'test4, test error thrown out due to bad parameter')
+        # noinspection PyTypeChecker
         df = fund_basic(market=3)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertTrue(df.empty)
@@ -10880,18 +12048,19 @@ class TestQT(unittest.TestCase):
         self.op = qt.Operator(strategies=['dma', 'macd'])
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
-        self.op.set_parameter('dma', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-        self.op.set_parameter('macd', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('dma', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('macd', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
         self.op.signal_type = 'pt'
 
-        qt.configure(reference_asset='000300.SH',
+        qt.configure(benchmark_asset='000300.SH',
                      mode=1,
-                     ref_asset_type='IDX',
+                     benchmark_asset_type='IDX',
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
-                     trade_batch_size=0,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
                      parallel=True)
 
         timing_pars1 = (165, 191, 23)
@@ -10899,7 +12068,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('ls', 'pos-2')
+        self.op.set_blender('pos-2')
         self.op.set_parameter(stg_id='dma', pars=timing_pars1)
         self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
@@ -10917,6 +12086,39 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=2)
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
+        self.assertEqual(config.benchmark_asset, '000300.SH')
+        self.assertEqual(config.benchmark_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+        # test temp config in run() that works only in run()
+        qt.run(self.op,
+               mode=1,
+               asset_pool='000001.SZ',
+               asset_type='E',
+               invest_start='20100101',
+               visual=False)
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(qt.QT_CONFIG.mode, 2)
+        self.assertEqual(config.benchmark_asset, '000300.SH')
+        self.assertEqual(config.benchmark_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+
+        config_copy = config.copy()
+        qt.configure(config_copy,
+                     mode=1,
+                     benchmark_asset='000002.SZ',
+                     benchmark_asset_type='E')
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(config.benchmark_asset, '000300.SH')
+        self.assertEqual(config.benchmark_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+        self.assertEqual(config_copy.mode, 1)
+        self.assertEqual(config_copy.benchmark_asset, '000002.SZ')
+        self.assertEqual(config_copy.benchmark_asset_type, 'E')
+        self.assertEqual(config_copy.asset_pool, '000300.SH')
+        self.assertEqual(config_copy.invest_start, '20070110')
 
     def test_configuration(self):
         """ 测试CONFIG的显示"""
@@ -10939,7 +12141,7 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
-        op = qt.Operator(strategies=['stema'])
+        op = qt.Operator(strategies=['stema'], op_type='realtime')
         op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
         qt.run(op)
@@ -10949,7 +12151,7 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=1,
                      trade_batch_size=1,
                      visual=False,
-                     print_backtest_log=True,
+                     trade_log=True,
                      invest_cash_dates='20070604', )
         qt.run(self.op)
 
@@ -10961,7 +12163,7 @@ class TestQT(unittest.TestCase):
                mode=1,
                trade_batch_size=1,
                visual=True,
-               print_backtest_log=False,
+               trade_log=False,
                buy_sell_points=False,
                show_positions=False,
                invest_cash_dates='20070616')
@@ -10972,7 +12174,7 @@ class TestQT(unittest.TestCase):
                mode=1,
                trade_batch_size=1,
                visual=True,
-               print_backtest_log=False,
+               trade_log=False,
                buy_sell_points=True,
                show_positions=True,
                invest_cash_dates='20070604')
@@ -11344,23 +12546,23 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
-        op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
         all_shares = stock_basic()
-        shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
+        shares_banking = qt.filter_stock_codes(date='20070101', industry='银行')
         print('extracted banking share pool:')
         print(all_shares.loc[all_shares['ts_code'].isin(shares_banking)])
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181231',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     log=True)
+                     trade_log=True)
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
                          sample_freq='Q',
@@ -11370,47 +12572,47 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         proportion_or_quantity=0.4)
-        op.set_parameter('ricon_none', pars=())
+                         max_sel_count=0.4)
+        op.set_parameter('signal_none', pars=())
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
-        qt.run(op, visual=True, print_backtest_log=True, trade_batch_size=100)
+        qt.run(op, visual=True, trade_log=True, trade_batch_size=100)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance
         """
         print(f'test portfolio selection from large quantities of shares')
-        op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
-        qt.configure(asset_pool=qt.get_stock_pool(date='20070101',
-                                                  industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
-                                                            '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
-                                                            '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
-                                                            '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
-                                                            '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
-                                                            '铜', '普钢', '航空', '特种钢',
-                                                            '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
-                                                            '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
-                                                            '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
-                                                            '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
-                                                            '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
-                                                            '陶瓷', '船舶'],
-                                                  area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
-                                                        '安徽', '四川', '浙江', '湖南', '河北', '新疆',
-                                                        '山东', '河南', '山西', '江西', '青海', '湖北',
-                                                        '内蒙', '海南', '重庆', '陕西', '福建', '广西',
-                                                        '上海']),
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
+        qt.configure(asset_pool=qt.filter_stock_codes(date='20070101',
+                                                      industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
+                                                                '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
+                                                                '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
+                                                                '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                                                '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
+                                                                '铜', '普钢', '航空', '特种钢',
+                                                                '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
+                                                                '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
+                                                                '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
+                                                                '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                                                                '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
+                                                                '陶瓷', '船舶'],
+                                                      area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
+                                                            '安徽', '四川', '浙江', '湖南', '河北', '新疆',
+                                                            '山东', '河南', '山西', '江西', '青海', '湖北',
+                                                            '内蒙', '海南', '重庆', '陕西', '福建', '广西',
+                                                            '上海']),
                      asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20171228',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     log=False,
+                     trade_log=False,
                      hist_dnld_parallel=0)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('long', pars=())
@@ -11422,10 +12624,153 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         proportion_or_quantity=30)
-        op.set_parameter('ricon_none', pars=())
+                         max_sel_count=30)
+        op.set_parameter('signal_none', pars=())
         op.set_blender('ls', 'avg')
-        qt.run(op, visual=False, print_backtest_log=True)
+        qt.run(op, visual=False, trade_log=True)
+
+    def test_op_realtime(self):
+        """测试realtime模式下的operator的表，使用两个测试专用交易策略"""
+        # confirm that operator running results are same in realtime and batch type
+        op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
+        op_realtime = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='realtime')
+        for op in [op_batch, op_realtime]:
+            op.set_parameter(0, window_length=100, pars=(12, 26, 9))
+            op.set_parameter(1, window_length=100, pars=(12, 26, 9))
+
+        qt.configure(
+                benchmark_asset='000300.SH',
+                benchmark_asset_type='IDX',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
+                invest_start='20190101',
+                invest_end='20190331',
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                parallel=True
+        )
+        print('backtest in batch mode:')
+        res_batch = op_batch.run(mode=1)
+        print('backtest in realtime mode:')
+        res_realtime = op_realtime.run(mode=1)
+        val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        print(f'the result of batched operation is\n'
+              f'{val_batch}\n'
+              f'and the result of realtime operation is\n'
+              f'{val_realtime}')
+
+        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertEqual(res_batch['final_value'],
+                         res_realtime['final_value'])
+
+        print('backtest in batch mode:')
+        res_batch = op_batch.run(
+                mode=1,
+                invest_start='20180101',
+                invest_end='20191231'
+        )
+        print('backtest in realtime mode:')
+        res_realtime = op_realtime.run(
+                mode=1,
+                invest_start='20180101',
+                invest_end='20191231'
+        )
+        val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+
+        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertEqual(res_batch['final_value'],
+                         res_realtime['final_value'])
+
+        # test operator that utilizes trade data
+        stg1 = TestLSStrategy()
+        stg2 = TestSelStrategy()
+        stg1.window_length = 100
+        stg2.window_length = 100
+        stg2.sample_freq = '2w'
+        op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
+        op_realtime = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='realtime')
+        par_stg1 = {'000100': (20, 10),
+                    '000200': (20, 10),
+                    '000300': (20, 6)}
+        par_stg2 = ()
+        for op in [op_batch, op_realtime]:
+            op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([1, 20], [2, 100]))
+            op.set_parameter(1, pars=par_stg2, opt_tag=1)
+
+        qt.configure(
+                benchmark_asset='000300.SH',
+                benchmark_asset_type='IDX',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
+                invest_start='20190101',
+                invest_end='20190331',
+                opti_start='20190101',
+                opti_end='20191231',
+                test_start='20200101',
+                test_end='20200331',
+                trade_batch_size=100.,
+                sell_batch_size=100.,
+                parallel=True,
+                trade_log=True
+        )
+        print('output result back testing with test data')
+
+        print('backtest in batch mode:')
+        res_batch = op_batch.run(mode=1)
+        print('backtest in realtime mode:')
+        res_realtime = op_realtime.run(mode=1)
+        val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        print(f'the result of batched operation is\n'
+              f'{val_batch}\n'
+              f'and the result of realtime operation is\n'
+              f'{val_realtime}')
+
+        print('backtest in batch mode in optimization mode:')
+        op_batch.run(mode=2)
+        print('backtest in realtime mode in optimization mode')
+        op_realtime.run(mode=2)
+
+    def test_sell_short(self):
+        """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
+        op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
+        op.set_parameter(0, pars=(23, 100, 0.02))
+        res = qt.run(op,
+                     mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=False,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertTrue(no_short_in_res)
+        res = qt.run(op,
+                     mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=True,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertFalse(no_short_in_res)
+        op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
+        op.set_parameter(0, (23, 100, 0.02))
+        res = qt.run(op, mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=False,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertTrue(no_short_in_res)
+        res = qt.run(op, mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=True,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertFalse(no_short_in_res)
 
 
 class TestVisual(unittest.TestCase):
@@ -11436,11 +12781,11 @@ class TestVisual(unittest.TestCase):
     def test_candle(self):
         print(f'test mpf plot in candle form')
         self.data = qt.candle('513100.SH', start='2020-12-01', end='20210131', asset_type='FD')
-        print(f'get data from mpf plot function for adj = "none"')
+        print(f'get arr from mpf plot function for adj = "none"')
         qt.candle('000002.SZ', start='2018-12-01', end='2019-01-31', asset_type='E', adj='none')
-        print(f'get data from mpf plot function for adj = "back"')
+        print(f'get arr from mpf plot function for adj = "back"')
         qt.candle('600000.SH', start='2018-12-01', end='2019-01-31', asset_type='E', adj='back')
-        print(f'get data from mpf plot function for other parameters')
+        print(f'get arr from mpf plot function for other parameters')
         qt.candle('600000.SH', start='2018-12-01', end='2019-01-31',
                   asset_type='E',
                   adj='back',
@@ -11448,7 +12793,7 @@ class TestVisual(unittest.TestCase):
                   avg_type='bb',
                   indicator='rsi',
                   indicator_par=(12,))
-        print(f'test plot mpf data with indicator macd')
+        print(f'test plot mpf arr with indicator macd')
         qt.candle(stock_data=self.data,
                   start='20201101',
                   end='20201231',
@@ -11494,12 +12839,16 @@ class TestBuiltInsSingle(unittest.TestCase):
                      invest_end='20211231',
                      asset_pool='000300.SH',
                      asset_type='IDX',
-                     reference_asset='000300.SH',
-                     opti_sample_count=100)
+                     benchmark_asset='000300.SH',
+                     opti_sample_count=100,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
+                     trade_log=False,
+                     parallel=True)
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
-        op.set_parameter(0, pars=(35, 120, 10, 'buy'))
+        op.set_parameter(0, pars=(35, 120, 10))
         op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1, allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -11583,14 +12932,6 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
-    def test_sfama(self):
-        op = qt.Operator(strategies=['sfama'])
-        op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
-
     def test_st3(self):
         op = qt.Operator(strategies=['st3'])
         op.set_parameter(0, opt_tag=1)
@@ -11634,7 +12975,7 @@ class TestBuiltInsSingle(unittest.TestCase):
     def test_ddema(self):
         op = qt.Operator(strategies=['ddema'])
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
+        qt.run(op, mode=1, trade_log=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
@@ -11657,14 +12998,6 @@ class TestBuiltInsSingle(unittest.TestCase):
 
     def test_dmama(self):
         op = qt.Operator(strategies=['dmama'])
-        op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
-
-    def test_dfama(self):
-        op = qt.Operator(strategies=['dfama'])
         op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -11750,14 +13083,6 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
-    def test_slfama(self):
-        op = qt.Operator(strategies=['slfama'])
-        op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
-
     def test_slt3(self):
         op = qt.Operator(strategies=['slt3'])
         op.set_parameter(0, opt_tag=1)
@@ -11790,6 +13115,153 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
+    def test_adx(self):
+        op = qt.Operator(strategies=['adx'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_apo(self):
+        op = qt.Operator(strategies=['apo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_aroon(self):
+        op = qt.Operator(strategies=['aroon'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_aroonosc(self):
+        op = qt.Operator(strategies=['aroonosc'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_cci(self):
+        op = qt.Operator(strategies=['cci'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_cmo(self):
+        op = qt.Operator(strategies=['cmo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_macdext(self):
+        op = qt.Operator(strategies=['macdext'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_mfi(self):
+        op = qt.Operator(strategies=['mfi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_di(self):
+        op = qt.Operator(strategies=['di'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_dm(self):
+        op = qt.Operator(strategies=['dm'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_mom(self):
+        op = qt.Operator(strategies=['mom'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_ppo(self):
+        op = qt.Operator(strategies=['ppo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_rsi(self):
+        op = qt.Operator(strategies=['rsi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stoch(self):
+        op = qt.Operator(strategies=['stoch'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stochf(self):
+        op = qt.Operator(strategies=['stochf'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stochrsi(self):
+        op = qt.Operator(strategies=['stochrsi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_ultosc(self):
+        op = qt.Operator(strategies=['ultosc'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_willr(self):
+        op = qt.Operator(strategies=['willr'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    # TODO:
+    #  add more test cases for more momentum-based strategies
+
 
 class TestBuiltInsMultiple(unittest.TestCase):
     """ 测试标的为多种证券的投资策略
@@ -11799,48 +13271,47 @@ class TestBuiltInsMultiple(unittest.TestCase):
     """
 
     def setUp(self):
-        # self.stock_pool = qt.get_stock_pool(index='')
+        # self.stock_pool = qt.filter_stock_codes(index='')
         ds = qt.QT_DATA_SOURCE
         df = ds.read_table_data('index_weight', start='20210606', end='20210707', shares='000300.SH')
         self.stock_pool = df.index.get_level_values('con_code').tolist()
 
         qt.configure(asset_pool=self.stock_pool[-100:],
                      asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20211013',
                      invest_end='20211231',
                      opti_sample_count=100,
                      trade_batch_size=0.,
                      mode=1,
-                     log=True,
-                     print_backtest_log=True,
+                     trade_log=True,
                      PT_buy_threshold=0.03,
                      PT_sell_threshold=-0.03,
                      backtest_price_adj='none')
 
     def test_select_all(self):
         """ 测试策略selall选择所有股票"""
-        op = qt.Operator(strategies=['all'], signal_type='PS')
+        op = qt.Operator(strategies=['all'], signal_type='Ps')
         op.set_parameter(0, opt_tag=1, sample_freq='w')
-        qt.run(op, mode=1, allow_sell_short=True, visual=True)
+        qt.run(op, mode=1, allow_sell_short=False, visual=True)
 
 
-class StgBuyOpen(SimpleSelecting):
+class StgBuyOpen(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['descr'],
-                         stg_name='OPEN_BUY',
-                         par_bounds_or_enums=[(0, 100)],
+                         par_types=['int'],
+                         name='OPEN_BUY',
+                         par_range=[(0, 100)],
                          bt_price_type='open')
         pass
 
-    def _realize(self, hist_data, params):
-        n, = params
-        current_price = hist_data[:, -1, 0]
-        n_day_price = hist_data[:, -n, 0]
+    def realize(self, h, r=None, t=None):
+        n, = self.pars
+        current_price = h[:, -1, 0]
+        n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全0
@@ -11859,20 +13330,20 @@ class StgBuyOpen(SimpleSelecting):
             return sig
 
 
-class StgSelClose(SimpleSelecting):
+class StgSelClose(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['descr'],
-                         stg_name='SELL_CLOSE',
-                         par_bounds_or_enums=[(0, 100)],
+                         par_types=['int'],
+                         name='SELL_CLOSE',
+                         par_range=[(0, 100)],
                          bt_price_type='close')
         pass
 
-    def _realize(self, hist_data, params):
-        n, = params
-        current_price = hist_data[:, -1, 0]
-        n_day_price = hist_data[:, -n, 0]
+    def realize(self, h, r=None, t=None):
+        n, = self.pars
+        current_price = h[:, -1, 0]
+        n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全-1
@@ -11889,6 +13360,118 @@ class StgSelClose(SimpleSelecting):
             return sig
 
 
+class Cross_SMA_PS(qt.RuleIterator):
+    """自定义双均线择时策略策略，产生的信号类型为交易信号"""
+
+    def __init__(self):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        """
+        必须初始化的关键策略参数清单：
+
+        """
+        super().__init__(
+                pars=(25, 100, 0.01),
+                par_count=3,
+                par_types=['discr', 'discr', 'conti'],
+                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
+                data_types='close',
+                window_length=200,
+        )
+
+    # 策略的具体实现代码写在策略的realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def realize(self, h, r=None, t=None, pars=None):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度
+        """
+        f, s, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+        # 计算长短均线的当前值和昨天的值
+        sma = qt.tafuncs.sma
+        s_ma = sma(h[0], s)
+        f_ma = sma(h[0], f)
+
+        s_today, s_last = s_ma[-1], s_ma[-2]
+        f_today, f_last = f_ma[-1], f_ma[-2]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_today * (1 + m)
+        s_ma_l = s_today * (1 - m)
+
+        # 根据观望模式在不同的点位产生交易信号
+        if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
+            return 1
+        elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
+            return -1
+        elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
+            return -1
+        elif (f_last < s_ma_l) and (f_today > s_ma_l):  # 当快均线自下而上穿过下边界，平空仓
+            return 1
+        else:  # 其余情况不产生任何信号
+            return 0
+
+
+class Cross_SMA_PT(qt.RuleIterator):
+    """自定义双均线择时策略策略，产生的信号类型为持仓目标信号"""
+
+    def __init__(self):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        super().__init__(
+                pars=(25, 100, 0.01),
+                par_count=3,
+                par_types=['discr', 'discr', 'conti'],
+                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
+                data_types='close',
+                window_length=200,
+        )
+
+    # 策略的具体实现代码写在策略的_realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def realize(self, h, r=None, t=None, pars=None):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
+        f, s, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+        # 计算长短均线的当前值
+        sma = qt.tafuncs.sma
+        s_ma = sma(h[0], s)[-1]
+        f_ma = sma(h[0], f)[-1]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_ma * (1 + m)
+        s_ma_l = s_ma * (1 - m)
+
+        # 根据观望模式在不同的点位产生交易信号
+        if s_ma_u < f_ma:  # 当快均线在上边界以上时，持有多头仓位
+            return 1
+        elif s_ma_l <= f_ma <= s_ma_u:  # 当快均线在上下边界之间时，清空所有持仓
+            return 0
+        elif f_ma < s_ma_l:  # 当快均线在下边界以下时，持有空头仓位
+            return -1
+        else:  # 其余情况不产生任何信号
+            return 0
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -11896,77 +13479,17 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        # qt.get_basic_info('000899.SZ')
-        # stg_buy = StgBuyOpen()
-        # stg_sel = StgSelClose()
-        # op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        # op.set_parameter(0,
-        #                  data_freq='d',
-        #                  sample_freq='d',
-        #                  window_length=50,
-        #                  pars=(20,),
-        #                  data_types='close',
-        #                  bt_price_type='open')
-        # op.set_parameter(1,
-        #                  data_freq='d',
-        #                  sample_freq='d',
-        #                  window_length=50,
-        #                  pars=(20,),
-        #                  data_types='close',
-        #                  bt_price_type='close')
-        # op.set_blender(blender='0')
-        # op.get_blender()
-        # qt.configure(asset_pool=['000300.SH',
-        #                          '399006.SZ'],
-        #              asset_type='IDX')
-        # res = qt.run(op,
-        #              visual=True,
-        #              print_backtest_log=True,
-        #              log_backtest_detail=False,
-        #              invest_start='20110725',
-        #              invest_end='20220401',
-        #              trade_batch_size=1,
-        #              sell_batch_size=0)
-        stock_pool = qt.get_stock_pool(index='000300.SH', date='20211001')
-        qt.configure(asset_pool=stock_pool,
-                     asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
-                     opti_output_count=50,
-                     invest_start='20211013',
-                     invest_end='20211231',
-                     opti_sample_count=100,
-                     trade_batch_size=0.,
-                     sell_batch_size=0.,
-                     invest_cash_amounts=[10000000],
-                     mode=1,
-                     log=True,
-                     print_backtest_log=True,
-                     PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
-                     backtest_price_adj='none')
-        op = qt.Operator(strategies=['finance'], signal_type='PS')
-        op.set_parameter(0,
-                         opt_tag=1,
-                         sample_freq='m',
-                         data_types='wt-000300.SH',
-                         sort_ascending=False,
-                         weighting='proportion',
-                         proportion_or_quantity=300)
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     print_trade_log=True)
-
-    def test_time(self):
-        print(match_ts_code('000001'))
-        print(match_ts_code('中国电信'))
-        print(match_ts_code('嘉实服务'))
-        print(match_ts_code('中?集团'))
-        print(match_ts_code('中*金'))
-        print(match_ts_code('工商银行'))
-        print(match_ts_code('招商银行', asset_types='E, FD'))
-        print(match_ts_code('贵阳银行', asset_types='E, FT'))
+        """temp test"""
+        # ds = qteasy.QT_DATA_SOURCE
+        # ds.refill_local_source(tables='stk_managers',
+        #                        start_date='20180101',
+        #                        end_date='20200101',
+        #                        parallel=True,
+        #                        reversed_par_seq=False)
+        # df = ds.acquire_table_data('stk_managers', 'tushare', ann_date='20200102')
+        # print(df)
+        # ds.update_table_data('stk_managers', df)
+        pass
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -12137,7 +13660,7 @@ class TestDataSource(unittest.TestCase):
         self.assertTrue(all(item in target_list for item in res['shares']))
 
     def test_datasource_creation(self):
-        """ test creation of all kinds of data sources"""
+        """ test creation of all kinds of arr sources"""
         self.assertIsInstance(self.ds_db, DataSource)
         self.assertEqual(self.ds_db.connection_type, 'db:mysql://localhost@3306/test_db')
         self.assertIs(self.ds_db.file_path, None)
@@ -12193,17 +13716,17 @@ class TestDataSource(unittest.TestCase):
         f_name = self.ds_csv.file_path + "file_that_does_not_exist.csv"
         try:
             os.remove(f_name)
-        except:
+        except Exception:
             pass
         f_name = self.ds_hdf.file_path + "file_that_does_not_exist.hdf"
         try:
             os.remove(f_name)
-        except:
+        except Exception:
             pass
         f_name = self.ds_fth.file_path + "file_that_does_not_exist.fth"
         try:
             os.remove(f_name)
-        except:
+        except Exception:
             pass
         self.assertFalse(self.ds_csv.file_exists('file_that_does_not_exist'))
         self.assertFalse(self.ds_hdf.file_exists('file_that_does_not_exist'))
@@ -12581,20 +14104,20 @@ class TestDataSource(unittest.TestCase):
               f'{df}')
         con = self.ds_db.con
         cursor = self.ds_db.cursor
-        TABLE_NAME = 'test_db_table'
+        table_name = 'test_db_table'
         # 删除数据库中的临时表
-        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
         # 为确保update顺利进行，建立新表并设置primary_key
 
-        self.ds_db.write_database(df, TABLE_NAME)
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(df, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = df.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(df.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'retrieve whole data table from database\n'
+        print(f'retrieve whole arr table from database\n'
               f'df retrieved from database is\n'
               f'{loaded_df}\n')
         for i in range(len(saved_index)):
@@ -12605,13 +14128,13 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(TABLE_NAME,
+        loaded_df = self.ds_db.read_database(table_name,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ"],
                                              date_like_pk='trade_date',
                                              start='20211112',
                                              end='20211112')
-        print(f'retrieve partial data table from database with:\n'
+        print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ"]\n'
               f'start/end = 20211112/20211112\n'
               f'df retrieved from saved csv file is\n'
@@ -12629,14 +14152,14 @@ class TestDataSource(unittest.TestCase):
         print(f'write and read a MultiIndex dataframe to database')
         print(f'following dataframe with multiple index will be written to database:\n'
               f'{self.df2}')
-        TABLE_NAME = 'test_db_table2'
+        table_name = 'test_db_table2'
         # 删除数据库中的临时表
-        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
 
-        self.ds_db.write_database(self.df2, TABLE_NAME)
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(self.df2, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = self.df2.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(self.df2.values)
@@ -12651,10 +14174,10 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(TABLE_NAME,
+        loaded_df = self.ds_db.read_database(table_name,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
-        print(f'retrieve partial data table from database with:\n'
+        print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"]\n'
               f'df retrieved from saved csv file is\n'
               f'{loaded_df}\n')
@@ -12671,7 +14194,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
         print(f'Test getting database table coverages')
-        cov = self.ds_db.get_db_table_coverage(TABLE_NAME, 'ts_code')
+        cov = self.ds_db.get_db_table_coverage(table_name, 'ts_code')
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
@@ -12686,7 +14209,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_update_database(self):
         """ test the function update_database()"""
-        print(f'update a database table with new data on same primary key')
+        print(f'update a database table with new arr on same primary key')
         df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         df_add = set_primary_key_frame(self.df_add, primary_key=['ts_code', 'trade_date'],
                                        pk_dtypes=['str', 'TimeStamp'])
@@ -12711,7 +14234,7 @@ class TestDataSource(unittest.TestCase):
         loaded_index = loaded_df.index.values
         saved_values = np.array(df_res.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'retrieve whole data table from database\n'
+        print(f'retrieve whole arr table from database\n'
               f'df retrieved from database is\n'
               f'{loaded_df}\n')
         for i in range(len(saved_index)):
@@ -12742,7 +14265,7 @@ class TestDataSource(unittest.TestCase):
         # 测试完整读出标准表数据
         for data_source in all_data_sources:
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            print(f'df read from arr source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
             ts_codes = ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                         '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                         '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ']
@@ -12757,8 +14280,8 @@ class TestDataSource(unittest.TestCase):
                 tdf = self.built_in_df
                 t_val = tdf.loc[(tdf.ts_code == tc) & (tdf.trade_date == td)][cols].values
                 print(f'on row: {tc}, {td}\n'
-                      f'data read from local source: {df_val}\n'
-                      f'data from origin dataframe : {t_val}')
+                      f'arr read from local source: {df_val}\n'
+                      f'arr from origin dataframe : {t_val}')
                 self.assertTrue(np.allclose(df_val, t_val))
 
         # 测试读出并筛选部分标准表数据
@@ -12767,14 +14290,14 @@ class TestDataSource(unittest.TestCase):
                                              shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
                                              start='20211113',
                                              end='20211116')
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            print(f'df read from arr source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
             df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
             data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source after updating with merge type IGNORE:\n'
+            print(f'df read from arr source after updating with merge type IGNORE:\n'
                   f'{data_source.source_type}-{data_source.connection_type}\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"update"
@@ -12791,7 +14314,7 @@ class TestDataSource(unittest.TestCase):
             df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
             data_source.update_table_data(test_table, df, 'update')
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source after updating with merge type UPDATE:\n'
+            print(f'df read from arr source after updating with merge type UPDATE:\n'
                   f'{data_source.source_type}-{data_source.connection_type}\n{df}')
 
         # 测试读出并筛选部分标准表数据
@@ -12800,7 +14323,7 @@ class TestDataSource(unittest.TestCase):
                                              shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
                                              start='20211113',
                                              end='20211116')
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            print(f'df read from arr source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
 
         self.assertEqual(self.ds_csv.tables, ['stock_daily'])
         self.assertEqual(self.ds_hdf.tables, ['stock_daily'])
@@ -12808,7 +14331,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_db.tables, ['stock_daily'])
 
     def test_download_update_table_data(self):
-        """ test downloading data from tushare"""
+        """ test downloading arr from tushare"""
         tables_to_test = {'stock_daily':     {'ts_code':    None,
                                               'trade_date': '20211112'},
                           'stock_weekly':    {'ts_code':    None,
@@ -12836,53 +14359,59 @@ class TestDataSource(unittest.TestCase):
             for ds in all_data_sources:
                 ds.drop_table_data(table)
             # 下载并写入数据到表中
-            print(f'downloading table data ({table}) with parameter: \n'
+            print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
             df = self.ds_csv.acquire_table_data(table, 'tushare', **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
-                print(f'updating IGNORE table data ({table}) from tushare for '
+                print(f'updating IGNORE table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'ignore')
                 print(f'-- Done! --')
+                ds.overview()
 
             for ds in all_data_sources:
-                print(f'reading table data ({table}) from tushare for '
+                print(f'reading table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000007.SZ', '600067.SH'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200301')
-                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
+                print(f'got arr from arr source {ds.source_type}-{ds.connection_type}:\n{df}')
+                ds.overview()
 
             # 下载数据并添加到表中
-            print(f'downloading table data ({table}) with parameter: \n'
+            print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
             df = self.ds_hdf.acquire_table_data(table, 'tushare', **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
-                print(f'updating UPDATE table data ({table}) from tushare for '
+                print(f'updating UPDATE table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'update')
                 print(f'-- Done! --')
+                ds.overview()
 
             for ds in all_data_sources:
-                print(f'reading table data ({table}) from tushare for '
+                print(f'reading table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000004.SZ', '000005.SZ', '000006.SZ'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200201')
-                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
+                print(f'got arr from arr source {ds.source_type}-{ds.connection_type}:\n{df}')
+                ds.overview()
 
             # 删除所有的表
             for ds in all_data_sources:
                 ds.drop_table_data(table)
+                print('all table data are cleared')
+                ds.overview()
 
     def test_get_history_panel_data(self):
-        """ test getting data, from real database """
+        """ test getting arr, from real database """
         ds = DataSource(source_type='db',
-                        host='192.168.2.9',
+                        host='localhost',
                         port=3306,
                         user='jackie',
                         password='iama007',
@@ -12928,7 +14457,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel with price:\n{dfs}')
-        htypes = ['open', 'high', 'low', 'close', 'vol']
+        htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
         dfs = ds.get_history_data(shares=shares,
                                   htypes=htypes,
                                   start=start,
@@ -12939,7 +14468,7 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with price:\n{dfs}')
+        print(f'got history data:\n{dfs}')
 
     def test_get_index_weights(self):
         """ test get_index_weights() function"""
@@ -12964,6 +14493,511 @@ class TestDataSource(unittest.TestCase):
         ds.get_table_info('fund_hourly')
         ds.get_table_info('fund_nav')
 
+    def test_table_overview(self):
+        """ 所有数据表的基本信息打印"""
+        ds = qt.QT_DATA_SOURCE
+        ov = ds.overview()
+        print(ov[['has_data', 'size', 'records']])
+        print(ov[['pk1', 'min1', 'max1']])
+        print(ov[['pk2', 'min2', 'max2']])
+
+    def test_get_related_tables(self):
+        """根据数据名称查找相关数据表及数据列名称"""
+        # 精确查找数据表及数据列
+        tbls = htype_to_table_col(htypes='close', freq='d')
+        print("by: htype_to_table_col(htypes='close', freq='d')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close']}
+        )
+        tbls = htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')
+        print("by: htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'income': ['invest_income']}
+        )
+        # 精确查找多个数据表及数据列
+        tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')
+        print("by: htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close', 'open']}
+        )
+        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'index_weekly': ['open'],
+                 'stock_daily':  ['close']}
+        )
+        tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
+        print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stk_managers': ['name'],
+                 'stock_daily':  ['close']}
+        )
+        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
+        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'index_daily':  ['close', 'open'],
+                 'index_weekly': ['close', 'open'],
+                 'stock_daily':  ['close', 'open'],
+                 'stock_weekly': ['close', 'open']}
+        )
+        # 部分无法精确匹配时，只输出可以匹配的部分
+        tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'index_daily':  ['close'],
+                 'index_weekly': ['close'],
+                 'stock_daily':  ['close'],
+                 'stock_weekly': ['close']}
+        )
+        tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close']}
+        )
+        # 全部无法精确匹配时，不报错，输出空集合
+        tbls = htype_to_table_col(htypes='clese, opan', freq='d, t', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {}
+        )
+        # 当soft_freq为True时，匹配查找相应的可等分freq
+        tbls = htype_to_table_col(htypes='close, open', freq='2d',
+                                  asset_type='E, IDX', method='exact', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, open', freq='2d, 2d', "
+              f"asset_type='E, IDX', method='exact', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close'],
+                 'index_daily': ['open']}
+        )
+
+        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min',
+                                  asset_type='E, IDX', method='permute', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
+              f"asset_type='E, IDX', method='permute', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_weekly':    ['close'],
+                 'index_weekly':    ['close'],
+                 'stock_15min':     ['close'],
+                 'index_15min':     ['close'],
+                 'stock_indicator': ['pe'],
+                 'index_indicator': ['pe'],
+                 'income':          ['invest_income']
+                 }
+        )
+
+        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun',
+                                  asset_type='E, IDX', method='exact', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
+              f"asset_type='E, IDX', method='exact', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_weekly':    ['close'],
+                 'index_indicator': ['pe'],
+                 'income':          ['invest_income']
+                 }
+        )
+
+    def test_freq_resample(self):
+        """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（频率到日频以下时，仅保留交易时段）"""
+        print(f'build test data')
+        weekly_index = pd.date_range(start='20200101', end='20200331', freq='W-Fri')
+        hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
+        hourly_index_tt = hourly_index[hourly_index.indexer_between_time('9:00:00', '15:00:00')]
+
+        test_data1 = np.random.randint(20, size=(13, 7)).astype('float')  # 用于daily_index数据
+        test_data2 = np.random.randint(10, size=(217, 11)).astype('float')  # 用于sub_daily_index数据
+
+        columns1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        columns2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+
+        weekly_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
+        hourly_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
+        hourly_data_tt = hourly_data.reindex(index=hourly_index_tt)
+
+        print(f'test resample, above daily freq')
+        print(hourly_data.head(25))
+        print(hourly_data_tt.head(15))
+        print(f'verify that resampled from hourly data and hourly tt data are the same')
+        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        resampled_tt = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        self.assertTrue(np.allclose(resampled, resampled_tt))
+        print('checks resample hourly data to 15 min')
+        print(resampled.head(25))
+        sampled_rows = [(0, 2), (2, 6), (6, 9), (None, None), (9, 12), (12, 16), (16, 16)]
+        for day in range(9):
+            for pos in range(len(sampled_rows)):
+                start = sampled_rows[pos][0]
+                end = sampled_rows[pos][1]
+                if start is None:
+                    continue
+                for row in range(start + day * 17, end + day * 17):
+                    try:
+                        res = hourly_data_tt.iloc[pos + day * 7].values
+                        target = resampled.iloc[row].values
+                        self.assertTrue(np.allclose(res, target))
+                    except:
+                        import pdb;
+                        pdb.set_trace()
+
+        print('checks resample hourly data to 2d')
+        resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
+        resampled_2 = _resample_data(hourly_data, target_freq='2d', method='bfill')
+        resampled_3 = _resample_data(hourly_data, target_freq='2d', method='nan')
+        resampled_4 = _resample_data(hourly_data, target_freq='2d', method='zero')
+        print(resampled_1)
+        print(resampled_2)
+        print(resampled_3)
+        print(resampled_4)
+        print('resample with improper methods and check if they are same as "first"')
+        self.assertTrue(np.allclose(resampled_1, resampled_2))
+        self.assertTrue(np.allclose(resampled_1, resampled_3))
+        self.assertTrue(np.allclose(resampled_1, resampled_4))
+
+        print('check sample hourly data to d with proper methods, with none business days')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False)
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean', b_days_only=False)
+        print(resampled_1)
+        sampled_rows = [23, 47, 71, 95, 119, 143, 167, 191, 215]
+        for pos in range(len(sampled_rows)):
+            res = resampled_1.iloc[pos].values
+            target = hourly_data.iloc[sampled_rows[pos]].values
+            print(f'resampled row is \n{res}\n'
+                  f'target row is \n{target}')
+            self.assertTrue(np.allclose(res, target))
+
+        print(resampled_2)
+        sampled_row_starts = [0, 24, 48, 72, 96, 120, 144, 168, 192]
+        sampled_row_ends = [24, 48, 72, 96, 120, 144, 168, 192, 216]
+        for pos in range(len(sampled_rows)):
+            res = resampled_2.iloc[pos].values
+            start = sampled_row_starts[pos]
+            end = sampled_row_ends[pos]
+            target = hourly_data.iloc[start:end].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('check sample hourly data to d with proper methods, without none business days')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
+        print(resampled_1)
+        sampled_rows = [23, 47, 71, 143, 167, 191, 215]
+        for pos in range(len(sampled_rows)):
+            res = resampled_1.iloc[pos].values
+            target = hourly_data.iloc[sampled_rows[pos]].values
+            print(f'resampled row is \n{res}\n'
+                  f'target row is \n{target}')
+            self.assertTrue(np.allclose(res, target))
+
+        print(resampled_2)
+        sampled_row_starts = [0, 24, 48, 120, 144, 168, 192]
+        sampled_row_ends = [24, 48, 72, 144, 168, 192, 216]
+        for pos in range(len(sampled_rows)):
+            res = resampled_2.iloc[pos].values
+            start = sampled_row_starts[pos]
+            end = sampled_row_ends[pos]
+            target = hourly_data.iloc[start:end].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample daily data to 30min data')
+        daily_data = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
+        print(daily_data)
+        resampled = _resample_data(daily_data, target_freq='30min', method='ffill')
+        print(resampled)
+        # TODO: last day data missing when resampling daily data to sub-daily data
+        #   this is to be improved
+        sampled_rows = [(0, 9), (9, 18), (18, 27)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = daily_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+
+        print(f'test resample, below daily freq')
+        print(weekly_data)
+        print('resample weekly data to daily ffill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='ffill', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 7), (7, 14), (14, 21), (21, 28), (28, 35), (35, 42),
+                        (42, 49), (49, 56), (56, 63), (63, 70), (70, 77), (77, 84)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = weekly_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily bfill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='bfill', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1), (1, 8), (8, 15), (15, 22), (22, 29), (29, 36),
+                        (36, 43), (43, 50), (50, 57), (57, 64), (64, 71), (71, 78), (78, 84)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = weekly_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily none')
+        resampled = _resample_data(weekly_data, target_freq='d', method='nan', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
+        for pos in range(len(resampled)):
+            res = resampled.iloc[pos].values
+            if pos in sampled_rows:
+                row = sampled_rows.index(pos)
+                target = weekly_data.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+            else:
+                self.assertTrue(all(np.isnan(item) for item in res))
+
+        print('resample weekly data to daily zero')
+        resampled = _resample_data(weekly_data, target_freq='d', method='zero', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
+        for pos in range(len(resampled)):
+            res = resampled.iloc[pos].values
+            if pos in sampled_rows:
+                row = sampled_rows.index(pos)
+                target = weekly_data.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+            else:
+                self.assertTrue(all(item == 0. for item in res))
+
+        print('resample weekly data to bi-weekly sunday last with none business days')
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to bi-weekly sunday last without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Friday last')
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Friday last without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Wednesday first')
+        resampled = _resample_data(weekly_data, target_freq='2w-Wed', method='first', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 1, 3, 5, 7, 9]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly sum')
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly sum without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly max')
+        resampled = _resample_data(weekly_data, target_freq='m', method='high', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly avg')
+        resampled = _resample_data(weekly_data, target_freq='m', method='mean', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+    def test_trade_time_index(self):
+        """ 测试函数是否能正确生成交易时段的indexer"""
+        print('create datetime index with freq "D"')
+        indexer = _trade_time_index('20200101', '20200105', freq='d')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200101'),
+                                         pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103'),
+                                         pd.to_datetime('20200104'),
+                                         pd.to_datetime('20200105')])
+
+        print('create datetime index with freq "30min" with default trade time')
+        indexer = _trade_time_index('20200101', '20200102', freq='30min')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "w" and check if all dates are Sundays (default)')
+        indexer = _trade_time_index('20200101', '20200201', freq='w')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertTrue(
+                all(day.day_name() == 'Sunday' for day in indexer)
+        )
+
+        print('create datetime index with start/end/periods')
+        print('when freq can be inferred')
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=49)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+        print('when freq can NOT be inferred')
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 8)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:47:45.306122448',
+                                              '2020-01-01 10:17:08.571428571',
+                                              '2020-01-01 10:46:31.836734693',
+                                              '2020-01-01 11:15:55.102040816',
+                                              '2020-01-01 13:13:28.163265306',
+                                              '2020-01-01 13:42:51.428571428',
+                                              '2020-01-01 14:12:14.693877551',
+                                              '2020-01-01 14:41:37.959183673'])
+                              )
+                         )
+
+        print('create datetime index with start/periods/freq')
+        indexer = _trade_time_index(start='20200101', freq='30min', periods=49)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+
+        print('test false input')
+
+    def test_freq_manipulations(self):
+        """ 测试频率操作函数"""
+        print('test get_main_freq function')
+        self.assertEqual(get_main_freq('t'), (1, 'T', ''))
+        self.assertEqual(get_main_freq('min'), (1, '1MIN', ''))
+        self.assertEqual(get_main_freq('15min'), (1, '15MIN', ''))
+        self.assertEqual(get_main_freq('75min'), (5, '15MIN', ''))
+        self.assertEqual(get_main_freq('90min'), (3, '30MIN', ''))
+        self.assertEqual(get_main_freq('60min'), (2, '30MIN', ''))
+        self.assertEqual(get_main_freq('H'), (1, 'H', ''))
+        self.assertEqual(get_main_freq('14d'), (14, 'D', ''))
+        self.assertEqual(get_main_freq('2w-Fri'), (2, 'W', 'FRI'))
+        self.assertEqual(get_main_freq('w'), (1, 'W', ''))
+        self.assertEqual(get_main_freq('wrong_input'), (None, None, None))
+
+        print('test get_main_freq_level function')
+        self.assertEqual(get_main_freq_level('5min'), 90)
+        self.assertEqual(get_main_freq_level('15min'), 80)
+        self.assertEqual(get_main_freq_level('w'), 40)
+        self.assertIsNone(get_main_freq_level('wrong_input'), None)
+
+        print('test next_main_freq function')
+        self.assertEqual(next_main_freq('5min', 'up'), '1MIN')
+        self.assertEqual(next_main_freq('w', 'up'), 'D')
+        self.assertEqual(next_main_freq('m', 'up'), 'W')
+        self.assertEqual(next_main_freq('w', 'down'), 'M')
+        self.assertEqual(next_main_freq('m', 'down'), 'Q')
+        self.assertEqual(next_main_freq('d', 'down'), 'W')
+        self.assertEqual(next_main_freq('15min', 'down'), '30MIN')
+        self.assertEqual(next_main_freq('30min', 'down'), 'H')
+
+        print('test freq_dither function')
+        self.assertEqual(freq_dither('d', ['15min', 'd', 'w', 'm']), 'D')
+        self.assertEqual(freq_dither('3d', ['15min', 'd', 'w', 'm']), 'D')
+        self.assertEqual(freq_dither('w', ['15min', 'd', 'w', 'm']), 'W')
+        self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'w', 'm']), 'W')
+        self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'm']), 'D')
+        self.assertEqual(freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm']), '15MIN')
+        self.assertEqual(freq_dither('40min', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30MIN')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15MIN')
+        self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
+        self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
+        self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
+        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
+
 
 def test_suite(*args):
     suite = unittest.TestSuite()
@@ -12974,7 +15008,7 @@ def test_suite(*args):
                                   TestLog(),
                                   TestCashPlan()])
         elif arg_item == 'core':
-            suite.addTests(tests=[TestOperator(),
+            suite.addTests(tests=[TestOperatorAndStrategy(),
                                   TestLoop(),
                                   TestEvaluations(),
                                   TestBuiltInsSingle(),

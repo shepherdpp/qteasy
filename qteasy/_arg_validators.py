@@ -13,457 +13,6 @@ import pandas as pd
 import numpy as np
 import datetime
 
-PRICE_TYPE_DATA = ['close',
-                   'open',
-                   'high',
-                   'low',
-                   'pre_close',
-                   'change',
-                   'pct_chg',
-                   'vol',
-                   'amount']
-INCOME_TYPE_DATA = ['basic_eps',
-                    'diluted_eps',
-                    'total_revenue',
-                    'revenue',
-                    'int_income',
-                    'prem_earned',
-                    'comm_income',
-                    'n_commis_income',
-                    'n_oth_income',
-                    'n_oth_b_income',
-                    'prem_income',
-                    'out_prem',
-                    'une_prem_reser',
-                    'reins_income',
-                    'n_sec_tb_income',
-                    'n_sec_uw_income',
-                    'n_asset_mg_income',
-                    'oth_b_income',
-                    'fv_value_chg_gain',
-                    'invest_income',
-                    'ass_invest_income',
-                    'forex_gain',
-                    'total_cogs',
-                    'oper_cost',
-                    'int_exp',
-                    'comm_exp',
-                    'biz_tax_surchg',
-                    'sell_exp',
-                    'admin_exp',
-                    'fin_exp',
-                    'assets_impair_loss',
-                    'prem_refund',
-                    'compens_payout',
-                    'reser_insur_liab',
-                    'div_payt',
-                    'reins_exp',
-                    'oper_exp',
-                    'compens_payout_refu',
-                    'insur_reser_refu',
-                    'reins_cost_refund',
-                    'other_bus_cost',
-                    'operate_profit',
-                    'non_oper_income',
-                    'non_oper_exp',
-                    'nca_disploss',
-                    'total_profit',
-                    'income_tax',
-                    'n_income',
-                    'n_income_attr_p',
-                    'minority_gain',
-                    'oth_compr_income',
-                    't_compr_income',
-                    'compr_inc_attr_p',
-                    'compr_inc_attr_m_s',
-                    'ebit',
-                    'ebitda',
-                    'insurance_exp',
-                    'undist_profit',
-                    'distable_profit']
-BALANCE_TYPE_DATA = ['total_share',
-                     'cap_rese',
-                     'undistr_porfit',
-                     'surplus_rese',
-                     'special_rese',
-                     'money_cap',
-                     'trad_asset',
-                     'notes_receiv',
-                     'accounts_receiv',
-                     'oth_receiv',
-                     'prepayment',
-                     'div_receiv',
-                     'int_receiv',
-                     'inventories',
-                     'amor_exp',
-                     'nca_within_1y',
-                     'sett_rsrv',
-                     'loanto_oth_bank_fi',
-                     'premium_receiv',
-                     'reinsur_receiv',
-                     'reinsur_res_receiv',
-                     'pur_resale_fa',
-                     'oth_cur_assets',
-                     'total_cur_assets',
-                     'fa_avail_for_sale',
-                     'htm_invest',
-                     'lt_eqt_invest',
-                     'invest_real_estate',
-                     'time_deposits',
-                     'oth_assets',
-                     'lt_rec',
-                     'fix_assets',
-                     'cip',
-                     'const_materials',
-                     'fixed_assets_disp',
-                     'produc_bio_assets',
-                     'oil_and_gas_assets',
-                     'intan_assets',
-                     'r_and_d',
-                     'goodwill',
-                     'lt_amor_exp',
-                     'defer_tax_assets',
-                     'decr_in_disbur',
-                     'oth_nca',
-                     'total_nca',
-                     'cash_reser_cb',
-                     'depos_in_oth_bfi',
-                     'prec_metals',
-                     'deriv_assets',
-                     'rr_reins_une_prem',
-                     'rr_reins_outstd_cla',
-                     'rr_reins_lins_liab',
-                     'rr_reins_lthins_liab',
-                     'refund_depos',
-                     'ph_pledge_loans',
-                     'refund_cap_depos',
-                     'indep_acct_assets',
-                     'client_depos',
-                     'client_prov',
-                     'transac_seat_fee',
-                     'invest_as_receiv',
-                     'total_assets',
-                     'lt_borr',
-                     'st_borr',
-                     'cb_borr',
-                     'depos_ib_deposits',
-                     'loan_oth_bank',
-                     'trading_fl',
-                     'notes_payable',
-                     'acct_payable',
-                     'adv_receipts',
-                     'sold_for_repur_fa',
-                     'comm_payable',
-                     'payroll_payable',
-                     'taxes_payable',
-                     'int_payable',
-                     'div_payable',
-                     'oth_payable',
-                     'acc_exp',
-                     'deferred_inc',
-                     'st_bonds_payable',
-                     'payable_to_reinsurer',
-                     'rsrv_insur_cont',
-                     'acting_trading_sec',
-                     'acting_uw_sec',
-                     'non_cur_liab_due_1y',
-                     'oth_cur_liab',
-                     'total_cur_liab',
-                     'bond_payable',
-                     'lt_payable',
-                     'specific_payables',
-                     'estimated_liab',
-                     'defer_tax_liab',
-                     'defer_inc_non_cur_liab',
-                     'oth_ncl',
-                     'total_ncl',
-                     'depos_oth_bfi',
-                     'deriv_liab',
-                     'depos',
-                     'agency_bus_liab',
-                     'oth_liab',
-                     'prem_receiv_adva',
-                     'depos_received',
-                     'ph_invest',
-                     'reser_une_prem',
-                     'reser_outstd_claims',
-                     'reser_lins_liab',
-                     'reser_lthins_liab',
-                     'indept_acc_liab',
-                     'pledge_borr',
-                     'indem_payable',
-                     'policy_div_payable',
-                     'total_liab',
-                     'treasury_share',
-                     'ordin_risk_reser',
-                     'forex_differ',
-                     'invest_loss_unconf',
-                     'minority_int',
-                     'total_hldr_eqy_exc_min_int',
-                     'total_hldr_eqy_inc_min_int',
-                     'total_liab_hldr_eqy',
-                     'lt_payroll_payable',
-                     'oth_comp_income',
-                     'oth_eqt_tools',
-                     'oth_eqt_tools_p_shr',
-                     'lending_funds',
-                     'acc_receivable',
-                     'st_fin_payable',
-                     'payables',
-                     'hfs_assets',
-                     'hfs_sales',
-                     'update_flag']
-CASHFLOW_TYPE_DATA = ['net_profit',
-                      'finan_exp',
-                      'c_fr_sale_sg',
-                      'recp_tax_rends',
-                      'n_depos_incr_fi',
-                      'n_incr_loans_cb',
-                      'n_inc_borr_oth_fi',
-                      'prem_fr_orig_contr',
-                      'n_incr_insured_dep',
-                      'n_reinsur_prem',
-                      'n_incr_disp_tfa',
-                      'ifc_cash_incr',
-                      'n_incr_disp_faas',
-                      'n_incr_loans_oth_bank',
-                      'n_cap_incr_repur',
-                      'c_fr_oth_operate_a',
-                      'c_inf_fr_operate_a',
-                      'c_paid_goods_s',
-                      'c_paid_to_for_empl',
-                      'c_paid_for_taxes',
-                      'n_incr_clt_loan_adv',
-                      'n_incr_dep_cbob',
-                      'c_pay_claims_orig_inco',
-                      'pay_handling_chrg',
-                      'pay_comm_insur_plcy',
-                      'oth_cash_pay_oper_act',
-                      'st_cash_out_act',
-                      'n_cashflow_act',
-                      'oth_recp_ral_inv_act',
-                      'c_disp_withdrwl_invest',
-                      'c_recp_return_invest',
-                      'n_recp_disp_fiolta',
-                      'n_recp_disp_sobu',
-                      'stot_inflows_inv_act',
-                      'c_pay_acq_const_fiolta',
-                      'c_paid_invest',
-                      'n_disp_subs_oth_biz',
-                      'oth_pay_ral_inv_act',
-                      'n_incr_pledge_loan',
-                      'stot_out_inv_act',
-                      'n_cashflow_inv_act',
-                      'c_recp_borrow',
-                      'proc_issue_bonds',
-                      'oth_cash_recp_ral_fnc_act',
-                      'stot_cash_in_fnc_act',
-                      'free_cashflow',
-                      'c_prepay_amt_borr',
-                      'c_pay_dist_dpcp_int_exp',
-                      'incl_dvd_profit_paid_sc_ms',
-                      'oth_cashpay_ral_fnc_act',
-                      'stot_cashout_fnc_act',
-                      'n_cash_flows_fnc_act',
-                      'eff_fx_flu_cash',
-                      'n_incr_cash_cash_equ',
-                      'c_cash_equ_beg_period',
-                      'c_cash_equ_end_period',
-                      'c_recp_cap_contrib',
-                      'incl_cash_rec_saims',
-                      'uncon_invest_loss',
-                      'prov_depr_assets',
-                      'depr_fa_coga_dpba',
-                      'amort_intang_assets',
-                      'lt_amort_deferred_exp',
-                      'decr_deferred_exp',
-                      'incr_acc_exp',
-                      'loss_disp_fiolta',
-                      'loss_scr_fa',
-                      'loss_fv_chg',
-                      'invest_loss',
-                      'decr_def_inc_tax_assets',
-                      'incr_def_inc_tax_liab',
-                      'decr_inventories',
-                      'decr_oper_payable',
-                      'incr_oper_payable',
-                      'others',
-                      'im_net_cashflow_oper_act',
-                      'conv_debt_into_cap',
-                      'conv_copbonds_due_within_1y',
-                      'fa_fnc_leases',
-                      'end_bal_cash',
-                      'beg_bal_cash',
-                      'end_bal_cash_equ',
-                      'beg_bal_cash_equ',
-                      'im_n_incr_cash_equ']
-INDICATOR_TYPE_DATA = ['eps',
-                       'dt_eps',
-                       'total_revenue_ps',
-                       'revenue_ps',
-                       'capital_rese_ps',
-                       'surplus_rese_ps',
-                       'undist_profit_ps',
-                       'extra_item',
-                       'profit_dedt',
-                       'gross_margin',
-                       'current_ratio',
-                       'quick_ratio',
-                       'cash_ratio',
-                       'invturn_days',
-                       'arturn_days',
-                       'inv_turn',
-                       'ar_turn',
-                       'ca_turn',
-                       'fa_turn',
-                       'assets_turn',
-                       'op_income',
-                       'valuechange_income',
-                       'interst_income',
-                       'daa',
-                       'ebit',
-                       'ebitda',
-                       'fcff',
-                       'fcfe',
-                       'current_exint',
-                       'noncurrent_exint',
-                       'interestdebt',
-                       'netdebt',
-                       'tangible_asset',
-                       'working_capital',
-                       'networking_capital',
-                       'invest_capital',
-                       'retained_earnings',
-                       'diluted2_eps',
-                       'bps',
-                       'ocfps',
-                       'retainedps',
-                       'cfps',
-                       'ebit_ps',
-                       'fcff_ps',
-                       'fcfe_ps',
-                       'netprofit_margin',
-                       'grossprofit_margin',
-                       'cogs_of_sales',
-                       'expense_of_sales',
-                       'profit_to_gr',
-                       'saleexp_to_gr',
-                       'adminexp_of_gr',
-                       'finaexp_of_gr',
-                       'impai_ttm',
-                       'gc_of_gr',
-                       'op_of_gr',
-                       'ebit_of_gr',
-                       'roe',
-                       'roe_waa',
-                       'roe_dt',
-                       'roa',
-                       'npta',
-                       'roic',
-                       'roe_yearly',
-                       'roa2_yearly',
-                       'roe_avg',
-                       'opincome_of_ebt',
-                       'investincome_of_ebt',
-                       'n_op_profit_of_ebt',
-                       'tax_to_ebt',
-                       'dtprofit_to_profit',
-                       'salescash_to_or',
-                       'ocf_to_or',
-                       'ocf_to_opincome',
-                       'capitalized_to_da',
-                       'debt_to_assets',
-                       'assets_to_eqt',
-                       'dp_assets_to_eqt',
-                       'ca_to_assets',
-                       'nca_to_assets',
-                       'tbassets_to_totalassets',
-                       'int_to_talcap',
-                       'eqt_to_talcapital',
-                       'currentdebt_to_debt',
-                       'longdeb_to_debt',
-                       'ocf_to_shortdebt',
-                       'debt_to_eqt',
-                       'eqt_to_debt',
-                       'eqt_to_interestdebt',
-                       'tangibleasset_to_debt',
-                       'tangasset_to_intdebt',
-                       'tangibleasset_to_netdebt',
-                       'ocf_to_debt',
-                       'ocf_to_interestdebt',
-                       'ocf_to_netdebt',
-                       'ebit_to_interest',
-                       'longdebt_to_workingcapital',
-                       'ebitda_to_debt',
-                       'turn_days',
-                       'roa_yearly',
-                       'roa_dp',
-                       'fixed_assets',
-                       'profit_prefin_exp',
-                       'non_op_profit',
-                       'op_to_ebt',
-                       'nop_to_ebt',
-                       'ocf_to_profit',
-                       'cash_to_liqdebt',
-                       'cash_to_liqdebt_withinterest',
-                       'op_to_liqdebt',
-                       'op_to_debt',
-                       'roic_yearly',
-                       'total_fa_trun',
-                       'profit_to_op',
-                       'q_opincome',
-                       'q_investincome',
-                       'q_dtprofit',
-                       'q_eps',
-                       'q_netprofit_margin',
-                       'q_gsprofit_margin',
-                       'q_exp_to_sales',
-                       'q_profit_to_gr',
-                       'q_saleexp_to_gr',
-                       'q_adminexp_to_gr',
-                       'q_finaexp_to_gr',
-                       'q_impair_to_gr_ttm',
-                       'q_gc_to_gr',
-                       'q_op_to_gr',
-                       'q_roe',
-                       'q_dt_roe',
-                       'q_npta',
-                       'q_opincome_to_ebt',
-                       'q_investincome_to_ebt',
-                       'q_dtprofit_to_profit',
-                       'q_salescash_to_or',
-                       'q_ocf_to_sales',
-                       'q_ocf_to_or',
-                       'basic_eps_yoy',
-                       'dt_eps_yoy',
-                       'cfps_yoy',
-                       'op_yoy',
-                       'ebt_yoy',
-                       'netprofit_yoy',
-                       'dt_netprofit_yoy',
-                       'ocf_yoy',
-                       'roe_yoy',
-                       'bps_yoy',
-                       'assets_yoy',
-                       'eqt_yoy',
-                       'tr_yoy',
-                       'or_yoy',
-                       'q_gr_yoy',
-                       'q_gr_qoq',
-                       'q_sales_yoy',
-                       'q_sales_qoq',
-                       'q_op_yoy',
-                       'q_op_qoq',
-                       'q_profit_yoy',
-                       'q_profit_qoq',
-                       'q_netprofit_yoy',
-                       'q_netprofit_qoq',
-                       'equity_yoy',
-                       'rd_exp',
-                       'update_flag']
-FINANCE_TYPE_DATA = INCOME_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA
-COMPOSIT_TYPE_DATA = []
-
 
 class ConfigDict(dict):
     """ 继承自dict的一个类，用于构造qt.run()函数的参数表字典对象
@@ -474,8 +23,19 @@ class ConfigDict(dict):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+
+        :rtype: object
+        """
         super(ConfigDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
+
+    def copy(self):
+        """
+
+        :return:
+        """
+        return ConfigDict(**self)
 
 
 def _valid_qt_kwargs():
@@ -548,7 +108,7 @@ def _valid_qt_kwargs():
                                  'level':     2,
                                  'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
 
-        'parallel':             {'Default':   False,
+        'parallel':             {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     1,
                                  'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
@@ -558,18 +118,18 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程'},
 
-        'hist_dnld_delay':      {'Default':   None,
+        'hist_dnld_delay':      {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, float) and value >= 0,
                                  'level':     4,
                                  'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒'},
 
-        'hist_dnld_delay_evy':  {'Default':   None,
+        'hist_dnld_delay_evy':  {'Default':   0,
                                  'Validator': lambda value: isinstance(value, int) and value >= 0,
                                  'level':     4,
                                  'text':      '为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。\n'
                                               '此参数为两次延迟之间的数据下载量'},
 
-        'hist_dnld_prog_bar':   {'Default':   None,
+        'hist_dnld_prog_bar':   {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     4,
                                  'text':      '下载历史数据时是否显示进度条'},
@@ -648,47 +208,52 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '明细交易日志的存储路径\n'},
 
-        'print_backtest_log':   {'Default':   False,
+        'trade_log':            {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
-                                 'level':     4,
-                                 'text':      '如果True，将回测详细过程信息写入\n'
-                                              '一个DataFrame中，这个文件可以保存下来供仔细研究\n'
-                                              '这个参数只有在回测模式下有用'},
+                                 'level':     1,
+                                 'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
+                                              '包括交易信号以及每一步骤的交易结果'},
 
-        'log_backtest_detail':  {'Default':   False,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     4,
-                                 'text':      '如果True，将回测详细过程信息写入日志\n'
-                                              '日志级别为DEBUG，用于分析回测的细节，这个参数只有在\n'
-                                              '回测模式下有用'},
-
-        'reference_asset':      {'Default':   '000300.SH',
+        'benchmark_asset':      {'Default':   '000300.SH',
                                  'Validator': lambda value: isinstance(value, str)
                                                             and _validate_asset_id(value),
                                  'level':     1,
-                                 'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数\n'
-                                              '参考价格用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
+                                 'text':      '用来产生回测结果评价结果基准收益的资产类型，默认基准为沪深300指数\n'
+                                              '基准指数用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
                                               '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                                               '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'ref_asset_type':       {'Default':   'IDX',
+        'benchmark_asset_type': {'Default':   'IDX',
                                  'Validator': lambda value: _validate_asset_type(value),
                                  'level':     1,
-                                 'text':      '参考价格的资产类型，包括：\n'
+                                 'text':      '基准收益的资产类型，包括：\n'
                                               'IDX  : 指数\n'
                                               'E    : 股票\n'
                                               'FT   : 期货\n'
                                               'FD   : 基金\n'},
 
-        'ref_asset_dtype':      {'Default':   'close',
-                                 'Validator': lambda value: value in PRICE_TYPE_DATA,
+        'benchmark_dtype':      {'Default':   'close',
+                                 'Validator': lambda value: value in ['open',
+                                                                      'high',
+                                                                      'low',
+                                                                      'close',
+                                                                      'vol'],
                                  'level':     1,
-                                 'text':      '作为参考价格的资产的价格类型。'},
+                                 'text':      '作为基准收益的资产的价格类型。'},
+
+        'report':               {'Default':   True,
+                                 'Validator': lambda value: isinstance(value, bool),
+                                 'level':     1,
+                                 'text':      '为True时打印运行结果报告\n'
+                                              '实时模式显示策略运行报告，'
+                                              '回测模式显示回测结果报告，'
+                                              '优化模式显示优化结果报告'},
 
         'visual':               {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     1,
-                                 'text':      '为True时使用图表显示回测的结果'},
+                                 'text':      '为True时使用图表显示可视化运行结果\n'
+                                              '（回测模式显示回测报告，优化模式显示优化结果报告）'},
 
         'buy_sell_points':      {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
@@ -746,20 +311,6 @@ def _valid_qt_kwargs():
                                                             and 0 <= value < 1,
                                  'level':     2,
                                  'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
-
-        'log':                  {'Default':   True,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     1,
-                                 'text':      '是否生成日志\n'
-                                              'FutureWarning:\n'
-                                              '该参数在未来将会被"trade_log"所取代'},
-
-        'trade_log':            {'Default':   True,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     1,
-                                 'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
-                                              '包括交易信号以及每一步骤的交易结果\n'
-                                              '<该功能尚未实现>'},
 
         'invest_start':         {'Default':   '20160405',
                                  'Validator': lambda value: isinstance(value, str)
@@ -847,12 +398,10 @@ def _valid_qt_kwargs():
 
         'price_priority_OHLC':  {'Default':   'OHLC',
                                  'Validator': lambda value: isinstance(value, str)
-                                                            and all(item in ['O', 'H', 'L', 'C'
-                                                                                            'o', 'h', 'l', 'c']
+                                                            and all(item.upper() in 'OHLC'
                                                                     for item in value)
-                                                            and not any(item not in ['O', 'H', 'L', 'C'
-                                                                                                    'o', 'h', 'l', 'c']
-                                                                        for item in value),
+                                                            and all(item.upper() in value
+                                                                    for item in 'OHLC'),
                                  'level':     3,
                                  'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
                                               '不同的价格信号的优先级。\n'
@@ -1163,21 +712,28 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         output_strings.append('-------------------------------------\n')
     for key in kwargs:
         if key not in vkwargs:
-            raise KeyError(f'Unrecognized kwarg={str(key)}')
+            from qteasy import logger_core
+            logger_core.warning(f'Unrecognized kwarg={str(key)}')
+            cur_value = str(QT_CONFIG[key])
+            default_value = 'N/A'
+            description = 'Customer defined argument key'
         else:
             cur_level = vkwargs[key]['level']
             if cur_level in levels:  # only display kwargs that are in the list of levels
                 cur_value = str(QT_CONFIG[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
-                output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
-                if info:
-                    output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
-                                          f'<{default_value}>\n')
-                    if verbose:
-                        output_strings.append(f'{" " * column_offset_description}{description}\n')
-                else:
-                    output_strings.append(f'{cur_value}\n')
+            else:
+                continue
+
+        output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
+        if info:
+            output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
+                                  f'<{default_value}>\n')
+            if verbose:
+                output_strings.append(f'{" " * column_offset_description}{description}\n')
+        else:
+            output_strings.append(f'{cur_value}\n')
     return ''.join(output_strings)
 
 
@@ -1205,20 +761,20 @@ def _initialize_config_kwargs(kwargs, vkwargs):
     return config
 
 
-def _update_config_kwargs(config, kwargs):
+def _update_config_kwargs(config, kwargs, raise_if_key_not_existed=False):
     """ given existing configuration dict, verify that all kwargs are valid
         per kwargs table, and update the configuration dictionary
 
     :param config: configuration dictionary to be updated
     :param kwargs: kwargs that are to be updated
-    :param vkwargs: valid keywords table used for validating given kwargs
+    :param raise_if_key_not_existed:  if True, raise when key does not exist in vkwargs
     :return:
         config ConfigDict
     """
     vkwargs = _valid_qt_kwargs()
     for key in kwargs.keys():
         value = _parse_string_kwargs(kwargs[key], key, vkwargs)
-        if _validate_key_and_value(key, value):
+        if _validate_key_and_value(key, value, raise_if_key_not_existed):
             config[key] = value
 
     return config
@@ -1245,18 +801,28 @@ def _parse_string_kwargs(value, key, vkwargs):
     return value
 
 
-def _validate_key_and_value(key, value):
-    """ given one key, validate the key according to vkwargs dict
-        return True if the key is valid
-        raise if the key is not valid
+def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
+    """ given one key, validate the value according to vkwargs dict
+        return True if the value is valid
+        raise if the value is not valid
+        return False or raise if the key does not exist in vkwargs, depending on
+        argument "raise_if_key_not_existed"
 
     :param key:
     :param value:
+    :param raise_if_key_not_existed:    when key does not exist in vkwargs:
+                                        raise if True,
+                                        return False if False and warning
     :return:
     """
     vkwargs = _valid_qt_kwargs()
     if key not in vkwargs:
-        return False
+        err_msg = f'kwarg <{key}> is not a built-in parameter key, please check your input!'
+        if raise_if_key_not_existed:
+            raise KeyError(err_msg)
+        else:
+            import warnings
+            warnings.warn(err_msg)
     else:
         try:
             valid = vkwargs[key]['Validator'](value)
@@ -1319,7 +885,7 @@ def _validate_asset_type(value):
     :param value:
     :return:
     """
-    from .database import AVAILABLE_ASSET_TYPES
+    from .utilfuncs import AVAILABLE_ASSET_TYPES
     return value in AVAILABLE_ASSET_TYPES
 
 
