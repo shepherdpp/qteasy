@@ -13,19 +13,34 @@
 ```python
 import qteasy as qt
 ```
-### 配置qteasy的基本参数
-使用`qt.Context()`创建一个context上下文对象，并进行以下设置：
+### 配置qteasy的基本运行参数
+qteasy的所有基本运行参数都可以在qt.configure()函数中设置：
 - 投资回报率的对比数据采用沪深300指数
 - 同时设置对比数据的数据类型为“I”
 
 ```python
-qt.configure(reference_asset = '000300.SH', 
-             ref_asset_type = 'I')
+qt.configure(benchmark_asset = '000300.SH', 
+             benchmark_asset_type = 'IDX')
 ```
 
 - 设置参与投资组合创建的股票池，因为是纯择时策略，因此设置股票池中只有一个沪深300指数，同样设置资产类型为“I” 指数。
 
 ```python
 qt.configure(asset_pool = '000300.SH',
-             asset_type = 'I')
+             asset_type = 'IDX')
+```
+
+### 获取金融数据
+
+
+### 设置投资相关参数：
+- moq为0，意味着不存在着必须买卖整数股的条件
+- 默认的投资金额为10000元，投入日期为2006年4月6日
+- 投资费率是一个Cost对象，以下设置意味着买入费率为千分之一点五，卖出费率为0，没有最低费用的限制，滑点为0
+
+```python
+qt.configure(trade_batch_size = 0)
+qt.configure(invest_start = '20100105')
+qt.configure(invest_end = '20201231')
+qt.configure(invest_cash_dates = '20101231')
 ```

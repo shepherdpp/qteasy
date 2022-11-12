@@ -32,8 +32,9 @@ import qteasy as qt
 中的所有股票上应用同一种择时规则。
 
 ```python
+from qteasy import RuleIterator
 # 创建双均线交易策略类
-class Cross_SMA_PS(qt.RuleIterator):
+class Cross_SMA_PS(RuleIterator):
     """自定义双均线择时策略策略，产生的信号类型为交易信号
         这个均线择时策略有两个参数：
             - FMA 快均线周期
@@ -64,9 +65,9 @@ class Cross_SMA_PS(qt.RuleIterator):
          - f: fast, 短均线计算日期；
          - s: slow: 长均线计算日期;
         """
+        from qteasy.tafuncs import sma
         # 获取传入的策略参数
-        if pars is not None:
-            f, s= pars
+        f, s= pars
         # 计算长短均线的当前值和昨天的值
         # 由于h是一个M行N列的ndarray，包含多种历史数据类型
         # 使用h[:, N]获取第N种数据类型的全部窗口历史数据
@@ -74,8 +75,8 @@ class Cross_SMA_PS(qt.RuleIterator):
         # 因此h[:, 0]可以获取股票在窗口内的所有收盘价
         close = h[:, 0]
         # 使用qt.sma计算简单移动平均价
-        s_ma = qt.sma(close, s)
-        f_ma = qt.sma(close, f)
+        s_ma = sma(close, s)
+        f_ma = sma(close, f)
         
         # 为了考察两条均线的交叉, 计算两根均线昨日和今日的值，以便判断
         s_today, s_last = s_ma[-1], s_ma[-2]
