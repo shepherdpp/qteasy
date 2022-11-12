@@ -13480,15 +13480,28 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        # ds = qteasy.QT_DATA_SOURCE
-        # ds.refill_local_source(tables='stk_managers',
-        #                        start_date='20180101',
-        #                        end_date='20200101',
-        #                        parallel=True,
-        #                        reversed_par_seq=False)
-        # df = ds.acquire_table_data('stk_managers', 'tushare', ann_date='20200102')
-        # print(df)
-        # ds.update_table_data('stk_managers', df)
+        op = qt.Operator(strategies=['dma', 'all', 'ndayrate'])
+
+        op.set_parameter(0, opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
+        op.set_parameter(2, opt_tag=0, par_range=[(5, 14), (-0.2, -0.01)])
+        op.set_parameter(1, pars=(), sample_freq='y')
+
+        op.set_parameter(0, pars=(35, 50, 25))
+        op.set_parameter(2, pars=(8,))
+
+        qt.run(op,
+               mode=1,
+               benchmark_asset = '000300.SH',
+               benchmark_asset_type = 'IDX',
+               asset_pool = '000300.SH',
+               asset_type = 'IDX',
+               trade_batch_size = 0,
+               invest_start = '20100105',
+               invest_end = '20201231',
+               invest_cash_dates = '20101231',
+               trade_log=False,
+               parallel=False,
+               visual=True)
         pass
 
 
