@@ -166,17 +166,17 @@ def _valid_qt_kwargs():
         'local_data_file_path': {'Default':   'qteasy/data/',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
-                                 'text':      '确定本地历史数据文件存储路径\n'},
+                                 'text':      '确定本地历史数据文件存储路径'},
 
         'local_db_host':        {'Default':   'localhost',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
-                                 'text':      '用于存储历史数据的数据库的主机名，该数据库应该为mysql数据库或MariaDB\n'},
+                                 'text':      '用于存储历史数据的数据库的主机名，该数据库应该为mysql数据库或MariaDB'},
 
         'local_db_port':        {'Default':   3306,
                                  'Validator': lambda value: isinstance(value, int) and 1024 < value < 49151,
                                  'level':     4,
-                                 'text':      '用于存储历史数据的数据库的端口号，默认值为mysql数据库的端口号3306\n'},
+                                 'text':      '用于存储历史数据的数据库的端口号，默认值为mysql数据库的端口号3306'},
 
         'local_db_name':        {'Default':   'qt_db',
                                  'Validator': lambda value: isinstance(value, str) and
@@ -184,7 +184,7 @@ def _valid_qt_kwargs():
                                                             (all(char not in value for
                                                                  char in '+-/?<>{}[]()|\\!@#$%^&*=~`')),
                                  'level':     4,
-                                 'text':      '用于存储历史数据的数据库名，默认值为"qt_db"\n'},
+                                 'text':      '用于存储历史数据的数据库名，默认值为"qt_db"'},
 
         'local_db_user':        {'Default':   '',
                                  'Validator': lambda value: isinstance(value, str),

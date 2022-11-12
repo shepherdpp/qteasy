@@ -940,14 +940,19 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
                           verbose=verbose)
 
 
-def get_table_info(table_name, verbose):
-    """
+def get_table_info(table_name, data_source=None, verbose=True):
+    """ 获取数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容以及数据列的名称、数据类型及说明
 
-    :param table_name:
-    :param verbose:
+    :param table_name: 需要查询的数据表名称
+    :param data_source: 需要获取数据表信息的数据源，默认None，此时获取默认QT_DATA_SOURCE的信息
+    :param verbose: 默认True，是否打印完整数据列名称及类型清单
     :return:
     """
-    return qteasy.QT_DATA_SOURCE.get_table_info(table=table_name, verbose=verbose)
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+    if not isinstance(data_source, qteasy.DataSource):
+        raise TypeError(f'data_source should be a DataSource, got {type(data_source)} instead.')
+    return data_source.get_table_info(table=table_name, verbose=verbose)
 
 
 def get_table_overview(data_source=None):
