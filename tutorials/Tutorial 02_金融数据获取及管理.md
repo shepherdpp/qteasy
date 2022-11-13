@@ -419,12 +419,16 @@ get_basic_info()的别称
 
 根据发行日期、地区、行业、规模、指数成份等多种可用的信息筛选出一部分股票，返回股票的完整代码
 
-### `qt.get_history_data(htypes, shares=None, start=None, end=None, freq=None, asset_type=None, adj=None, as_data_frame=True, group_by=None, **kwargs)`
+### 提取金融历史数据
+
+### **`qt.get_history_data(htypes, shares=None, start=None, end=None, freq=None, asset_type=None, adj=None, as_data_frame=True, group_by=None, **kwargs)`**
 
 这个函数从默认QT_DATA_SOURCE中提取数据，根据输入的数据类型、股票代码、日期范围以及频率等参数，输出多个DataFrame或HistoryPanel对象
 这些DataFrame保存在一个dict中，这个dict的键为股票代码或数据类型，值为按股票代码或数据类型分组的数据框
 
-### `qt.candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle', interactive=True, data_source=None, **kwargs）`
+### 量价数据的可视化
+
+### **`qt.candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle', interactive=True, data_source=None, **kwargs）`**
 
 这个函数从本地数据源中提取股票的价格数据，并生成一张完整的动态高级K线图
 
@@ -1033,65 +1037,65 @@ df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
 
 
 
-![png](02_Financial_Data_Operations/output_18_1.png)
+![png](tutorial_02/output_18_1.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_2.png)
+![png](tutorial_02/output_18_2.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_3.png)
+![png](tutorial_02/output_18_3.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_4.png)
+![png](tutorial_02/output_18_4.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_5.png)
+![png](tutorial_02/output_18_5.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_6.png)
+![png](tutorial_02/output_18_6.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_7.png)
+![png](tutorial_02/output_18_7.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_8.png)
+![png](tutorial_02/output_18_8.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_9.png)
+![png](tutorial_02/output_18_9.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_10.png)
+![png](tutorial_02/output_18_10.png)
     
 
 
 
 
-![png](02_Financial_Data_Operations/output_18_11.png)
+![png](tutorial_02/output_18_11.png)
     
