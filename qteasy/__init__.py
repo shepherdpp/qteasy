@@ -70,7 +70,7 @@ except Exception as e:
     config_lines = []
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
-# config = value
+# config_key = value
 for line in config_lines:
     if line[0] == '#':  # 忽略注释行
         continue

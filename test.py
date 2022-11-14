@@ -12107,7 +12107,7 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
-        # test temp config in run() that works only in run()
+        # test temp config_key in run() that works only in run()
         qt.run(self.op,
                mode=1,
                asset_pool='000001.SZ',
@@ -13497,7 +13497,7 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        qteasy.configuration(config='local_data_source, local_data_file_type, local_data_file_path,'
+        qteasy.configuration(config_key='local_data_source, local_data_file_type, local_data_file_path,'
                                     'local_db_host, local_db_user',
                              default=True,
                              verbose=True)

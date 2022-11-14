@@ -1303,10 +1303,10 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
         _update_config_kwargs(set_config, default_kwargs, raise_if_key_not_existed=True)
 
 
-def configuration(config=None, level=0, up_to=0, default=True, verbose=False):
+def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False):
     """ 显示qt当前的配置变量，
 
-    :param config: str, list
+    :param config_key: str, list
         需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名
         可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名
         以下两种方式等价：
@@ -1341,15 +1341,15 @@ def configuration(config=None, level=0, up_to=0, default=True, verbose=False):
     else:
         level = list(range(level, up_to + 1))
 
-    if config is None:
+    if config_key is None:
         kwargs = QT_CONFIG.keys()
     else:
-        if isinstance(config, str):
-            config = str_to_list(config)
-        if not isinstance(config, list):
-            raise TypeError(f'config should be a string or list of strings, got {type(config)}')
-        assert all(isinstance(item, str) for item in config)
-        kwargs = config
+        if isinstance(config_key, str):
+            config_key = str_to_list(config_key)
+        if not isinstance(config_key, list):
+            raise TypeError(f'config_key should be a string or list of strings, got {type(config_key)}')
+        assert all(isinstance(item, str) for item in config_key)
+        kwargs = config_key
         level = [0, 1, 2, 3, 4, 5]
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
