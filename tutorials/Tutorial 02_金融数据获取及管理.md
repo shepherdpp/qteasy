@@ -26,9 +26,8 @@ import qteasy as qt
 
 使用`qt.configuration`可以查看当前的配置变量，使用`qt.QT_DATA_SOURCE`可以查看当前数据源的类型和参数
 
-
 ```python
-qt.configuration(config='local_data_source, local_data_file_type, local_data_file_path', default=False)
+qt.configuration(config_key='local_data_source, local_data_file_type, local_data_file_path', default=False)
 qt.QT_DATA_SOURCE
 ```
 
