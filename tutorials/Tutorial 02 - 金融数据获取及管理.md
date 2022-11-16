@@ -46,7 +46,7 @@ ds_db
 ```
 
     db:mysql://localhost@3306/qt_db
-
+    
     DataSource('db', 'localhost', 3306)
 
 
@@ -63,7 +63,7 @@ ds_csv
 ```
 
     file://csv@qt_root/qteasy/data
-
+    
     DataSource('file', 'qteasy/data', 'csv')
 
 
@@ -894,7 +894,7 @@ data = qt.candle('000004.SZ')
 ```
 
 
-![png](tutorial_02/output_20_2.png)
+![png](img/output_20_2.png)
     
 
 
@@ -905,8 +905,8 @@ qt.candle函数支持传入K线图的开始日期、结束日期、K线频率、
 data = qt.candle('000004.SZ', start='20220110', end='20220318', adj='b', freq='H')
 ```
 
-    
-![png](tutorial_02/output_22_2.png)
+
+![png](img/output_22_2.png)
     
 
 
@@ -917,8 +917,8 @@ candle()函数还支持通过股票名称显示K线图，如果输入是股票�
 data = qt.candle('国华网安', start='20220110', end='20220318', adj='b', freq='H')
 ```
 
-    
-![png](tutorial_02/output_24_2.png)
+
+![png](img/output_24_2.png)
 
 下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等
 ```python
@@ -938,65 +938,65 @@ df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
 
 
 
-![png](tutorial_02/output_18_1.png)
+![png](img/output_18_1.png)
     
 
 
 
 
-![png](tutorial_02/output_18_2.png)
+![png](img/output_18_2.png)
     
 
 
 
 
-![png](tutorial_02/output_18_3.png)
+![png](img/output_18_3 copy.png)
     
 
 
 
 
-![png](tutorial_02/output_18_4.png)
+![png](img/output_18_4.png)
     
 
 
 
 
-![png](tutorial_02/output_18_5.png)
+![png](img/output_18_5.png)
     
 
 
 
 
-![png](tutorial_02/output_18_6.png)
+![png](img/output_18_6.png)
     
 
 
 
 
-![png](tutorial_02/output_18_7.png)
+![png](img/output_18_7.png)
     
 
 
 
 
-![png](tutorial_02/output_18_8.png)
+![png](img/output_18_8.png)
     
 
 
 
 
-![png](tutorial_02/output_18_9.png)
+![png](img/output_18_9.png)
     
 
 
 
 
-![png](tutorial_02/output_18_10.png)
+![png](img/output_18_10.png)
     
 
 
 
 
-![png](tutorial_02/output_18_11.png)
+![png](img/output_18_11.png)
     

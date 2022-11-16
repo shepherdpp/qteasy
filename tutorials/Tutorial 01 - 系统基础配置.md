@@ -84,7 +84,7 @@ local_db_name = <your db name>
 
 # 或者如果使用csv文件作为本地数据源：
 local_data_source = file
-# 需要设置数据库服务器信息
+# 需要设置文件类型和存储路径
 local_data_file_type = csv  # 或者hdf/fth分别代表hdf5文件或feather文件
 local_data_file_path = qteasy/data  # 或者其他指定的文件存储目录
 ```
@@ -116,6 +116,8 @@ local_data_file_path = qteasy/data  # 或者其他指定的文件存储目录
 qt.configuration(level=0, up_to=1, default=True)
 ```
 
+输出如下
+
 
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
@@ -145,7 +147,7 @@ qt.configuration(level=0, up_to=1, default=True)
     24  optimize_target       final_value    <final_value>
     25  maximize_target       True           <True>
     26  opti_method           1              <1>
-    
+
 
 
 如果设置`verbose=True`，并传入`config_key`参数，可以显示特定`config_key`的详细描述
@@ -154,6 +156,8 @@ qt.configuration(level=0, up_to=1, default=True)
 ```python
 qt.configuration(config_key='mode, asset_pool, report, visual', default=True, verbose=True)
 ```
+
+输出如下：
 
     No. Config-Key            Cur Val        Default val
           Description
@@ -164,11 +168,10 @@ qt.configuration(config_key='mode, asset_pool, report, visual', default=True, ve
           1: 回测-评价模式
           2: 策略优化模式
           3: 统计预测模式
-          
     
     2   asset_pool            000300.SH      <000300.SH>
           可用投资产品池，投资组合基于池中的产品创建                         
-    
+          
     3   report                True           <True>
           为True时打印运行结果报告
           实时模式显示策略运行报告，回测模式显示回测结果报告，优化模式显示优化结果报告
@@ -176,5 +179,6 @@ qt.configuration(config_key='mode, asset_pool, report, visual', default=True, ve
     4   visual                True           <True>
           为True时使用图表显示可视化运行结果
           （回测模式显示回测报告，优化模式显示优化结果报告）
-    
-    
+
+
+​    

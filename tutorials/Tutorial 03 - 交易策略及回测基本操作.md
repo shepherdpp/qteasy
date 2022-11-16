@@ -57,7 +57,7 @@ stg.info()
     Sample frequency        d
     Window length           270
     Data types              ['close']
-    
+
 
 
 从上面的输出可以看到这个交易策略的基本信息。除了名称、描述以外，比较重要的信息包括：
@@ -293,15 +293,15 @@ qt.run(op)
     Max drawdown:                    46.12% 
         peak / valley:        2010-11-08 / 2014-06-19
         recovered on:         2015-04-17
-    
-    
-    ===========END OF REPORT=============
-    
+
+
+​    
+​    ===========END OF REPORT=============
 
 
 
-    
-![png](tutorial_03/output_12_2.png)
+
+![png](img/output_12_2.png)
     
 
 
@@ -459,12 +459,11 @@ print(f'optimization completed, 50 parameters found, they are\n'
     29   (104, 142, 87)    15.0     14.0  1,044.25 340,613.63 240.6%     66.6%     23.5%
     
     ===========END OF REPORT=============
-    
 
 
 
-    
-![png](tutorial_03/output_14_2.png)
+
+![png](img/output_14_2.png)
     
 
 
@@ -483,11 +482,8 @@ qt.run(op,
       mode=1, visual=True)
 ```
 
-    /Users/jackie/Library/CloudStorage/OneDrive-Personal/Projects/PycharmProjects/qteasy/qteasy/core.py:1502: RuntimeWarning: first cash investment on 20101231 differ from invest_start 20100105, first cash date will be used!
-      RuntimeWarning)
+输出回测结果如下：
 
-
-    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -527,14 +523,12 @@ qt.run(op,
         peak / valley:        2015-12-31 / 2016-01-28
         recovered on:         2017-08-28
     
-    
     ===========END OF REPORT=============
-    
 
 
 
-    
-![png](tutorial_03/output_16_2.png)
+
+![png](img/output_16_2.png)
     
 
 
@@ -722,16 +716,19 @@ print(f'Besr performing parameter: {pars[-1]}')
     29  ((147, 157, 57), (44, 135, 117), (104, 111, 10...    2.0      2.0    122.89 135,485.51 35.5%     31.2%     16.1%
     
     ===========END OF REPORT=============
+
+
+
+
+![png](img/output_20_2 copy.png)
     
 
+的到表现最佳的八组参数如下：
+
+    Best performing parameter: ((147, 157, 57), (44, 135, 117), (104, 111, 107), (101, 150, 24), (101, 59, 50), (104, 111, 107), (101, 150, 24), (129, 204, 16))
 
 
-    
-![png](tutorial_03/output_20_2.png)
-    
-
-    Besr performing parameter: ((147, 157, 57), (44, 135, 117), (104, 111, 107), (101, 150, 24), (101, 59, 50), (104, 111, 107), (101, 150, 24), (129, 204, 16))
-
+我们把上面八组参数分别设置为每一个策略的参数，将它们混合起来使用：
 
 ```python
 op.set_parameter(stg_id='dma', pars=(163, 233, 24))
@@ -747,11 +744,8 @@ qt.run(op,
        opti_sample_count=1000)
 ```
 
-    /Users/jackie/Library/CloudStorage/OneDrive-Personal/Projects/PycharmProjects/qteasy/qteasy/core.py:1502: RuntimeWarning: first cash investment on 20101231 differ from invest_start 20100105, first cash date will be used!
-      RuntimeWarning)
+输出回测结果如下：
 
-
-    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -791,13 +785,11 @@ qt.run(op,
         peak / valley:        2015-06-08 / 2016-01-28
         recovered on:         2019-12-17
     
-    
     ===========END OF REPORT=============
-    
 
 
 
-    
-![png](tutorial_03/output_21_2.png)
+
+![png](img/output_21_2.png)
     
 
