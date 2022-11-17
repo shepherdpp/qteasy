@@ -97,15 +97,15 @@ data = qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](readme_img/output_3_1.png)
+![png](img/output_3_1.png)
 
-![png](readme_img/output_7_2.png)
+![png](img//output_7_2.png)
 
-![png](readme_img/output_8_3.png)
+![png](img/output_8_3.png)
 
-![png](readme_img/output_3_4.png)
+![png](img/output_3_4.png)
 
-![png](readme_img/output_3_5.png)
+![png](img/output_3_5.png)
     
 
 
@@ -122,7 +122,7 @@ in and out with scrolling of your mouse, and switching bewteen multiple indicato
 - 在K线图上双击鼠标，可以切换不同的均线类型
 - 在K线图的指标区域双击，可以切换不同的指标类型：MACD，RSI，DEMA
 
-![gif](readme_img/output_dyna_plot.gif)
+![gif](img/output_dyna_plot.gif)
 
 ### Create and running of investment strategy sessions  创建一个投资策略，进行回测评价并优化其表现
 
@@ -249,8 +249,9 @@ Max drawdown:                    35.04%
 - 历史回撤分析（显示五次最大的回撤）
 - 历史收益率热力图、山积图等图表
 
-![png](readme_img/output_14_3.png)
+![png](img/output_14_3.png)
 qteasy提供了丰富的策略回测选项，例如：
+
 - 回测开始结束日期
 - 回测结果评价指标
 - 回测时是否允许持有负数仓位（用于模拟期货交易卖空行为，也可以使用专门的期货交易模拟算法）
@@ -274,5 +275,5 @@ res = qt.run(op, mode=2, visual=True)
 
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
 
-![png](readme_img/output_15_3.png)   
+![png](img/output_15_3.png)   
 
