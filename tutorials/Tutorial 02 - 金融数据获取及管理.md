@@ -23,11 +23,11 @@ QTEASY提供了一套比较完善的金融数据下载及管理工具，可以�
 
 ### `qt.DataSource(source_type, file_type='fth', file_loc='qteasy/data/', host='localhost', port=3306, user=None, password=None, db='qt_db')`
 
-对于一个DataSource对象，用户可以选择将数据存储为不同的形式，也叫数据源。DataSource目前支持两种不同的数据源：
+对于一个`DataSource`对象，用户可以选择将数据存储为不同的形式，也叫数据源。`DataSource`目前支持两种不同的数据源：
  - db: 数据库，数据存储在mysql/Maria DB数据库中，通过建立数据库连接来访问
  - file: 文件，数据以文件的形式存储在指定的文件夹中，支持csv、hdf5以及feather三种文件格式
 
-鉴于金融数据的数据量较大（例如，所有股票的日K线历史数据有超过一千万行数据，分钟级K线的数据量更加庞大），推荐使用mysql数据库来存储数据，如果使用本地文件存储数据，数据交换的效率将会很低。
+鉴于金融数据的数据量较大（例如，所有股票的日K线历史数据有超过一千万行数据，分钟级K线的数据量更加庞大），推荐使用`mysql`数据库来存储数据，如果使用本地文件存储数据，数据交换的效率将会很低。
 
 使用下面的参数建立一个连接到本地数据库的DataSource对象：
 
@@ -51,7 +51,7 @@ ds_db
 
 
 
-使用下面的参数可以建立一个使用本地文件夹的DataSource对象
+使用下面的参数可以建立一个使用本地文件夹的`DataSource`对象
 
 
 ```python
@@ -89,10 +89,10 @@ qt.QT_DATA_SOURCE
 
 
 ## 检查本地数据源的数据
-使用qt.get_table_overview()可以查看当前数据源中已经下载的数据量
+使用`qt.get_table_overview()`可以查看当前数据源中已经下载的数据量
 当数据量较大时，需要花费几分钟时间分析所有的数据，并打印本地数据源中数据表的数据量、占用磁盘空间以及数据范围
 
-本地数据存储在若干张数据表中，也可以通过qt.get_table_info()来获取某一张数据表的详细信息
+本地数据存储在若干张数据表中，也可以通过`qt.get_table_info()`来获取某一张数据表的详细信息
 包括数据表的主键类型和取值范围以外，还包括各数据列的名称、含义和数据类型
 
 ### `qt.get_table_info(table_name, data_source=None, verbose=True)`
@@ -105,7 +105,7 @@ qt.QT_DATA_SOURCE
 统计数据源中所有数据表的数据量并打印总览
 
 
-使用qt.get_table_info()可以获取一张数据表的信息：
+使用`qt.get_table_info()`可以获取一张数据表的信息：
 
 ```python
 qt.get_table_info('stock_15min', verbose=True)
@@ -134,7 +134,7 @@ qt.get_table_info('stock_15min', verbose=True)
     7      amount       double  成交额(元)
 
 
-使用qt.get_table_overview()可以检查并显示DataSource中保存的所有本地数据的总览
+使用`qt.get_table_overview()`可以检查并显示DataSource中保存的所有本地数据的总览
 
 ```python
 qt.get_table_overview()
@@ -187,9 +187,9 @@ qt.get_table_overview()
 
 
 ## 获取历史数据，并将数据保存在DataSource中
-如果DataSource中没有数据，那么qteasy将很难发挥所长，因此，首先需要将数据保存到DataSource中
-DataSource类提供了acquire_table_data()函数，来获取并存储历史数据到DataSource中，在这个函数的参数中可以直接给出一个DataFrame、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。
-使用DataSource对象获取、更新数据的方法包括：
+如果`DataSource`中没有数据，那么`qteasy`将很难发挥所长，因此，首先需要将数据保存到`DataSource`中
+`DataSource`类提供了`acquire_table_data()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。
+使用`DataSource`对象获取、更新数据的方法包括：
 
 ### `DataSource.acquire_table_data(table, channel, df=None, f_name=None, **kwargs)`
 从外部数据源获取数据，调整清洗数据以使它与数据源中的数据表匹配
@@ -213,7 +213,7 @@ DataSource类提供了acquire_table_data()函数，来获取并存储历史数�
 
 ### 通过本地文件获取数据，并保存到DataSource中：
 
-下面的示例代码将存储在DataFrame中的数据保存在DataSource中
+下面的示例代码将存储在`DataFrame`中的数据保存在`DataSource`中
 
 ```python
 # stock_data 是事先准备好的股票价格数据，格式为pd.DataFrame
@@ -230,10 +230,10 @@ ds_csv.table_data_exists('stock_basic')
 
 
 ### 通过tushare获取数据，并保存到DataSource中：
-tushare是一个网络金融数据API，提供了大量的金融数据，不过某些数据需要积分才能获取，请自行申请tushare账号并获取相应积分
-tushare的说明文档在这里：https://tushare.pro/document/2
+`tushare`是一个网络金融数据API，提供了大量的金融数据，不过某些数据需要积分才能获取，请自行申请`tushare`账号并获取相应积分
+`tushare`的说明文档在这里：https://tushare.pro/document/2
 
-连接到tushare获取数据的时候，只需要指定数据表的名称即可，DataSource会自行调用相应的tushare API下载数据：
+连接到`tushare`获取数据的时候，只需要指定数据表的名称即可，`DataSource`会自行调用相应的`tushare API`下载数据：
 
 
 ```python
@@ -243,24 +243,22 @@ ds_csv.table_data_exists('trade_calendar')
 ```
 
 
-
-
     True
 
 
-## 连接tushare下载数据并保存到本地数据源
+## 连接`tushare`下载数据并保存到本地数据源
 
-qteasy提供了tushare数据接口，在获取相应tushare权限后，可以直接从tushare批量下载金融数据，并将数据更新到本地数据源中
+`qteasy`提供了`tushare`数据接口，在获取相应`tushare`权限后，可以直接从`tushare`批量下载金融数据，并将数据更新到本地数据源中
 例如，下面的命令将2022年3月起到9月之间的所有股票日K线数据下载到本地：
-在下载数据前检察stock_daily表的信息：
+在下载数据前检察`stock_daily`表的信息：
 
 ### `qt.refill_data_source(data_source, *args, **kwargs)`
 
-连接到tushare下载所需的数据并保存到相应的数据表，给出需要下载的数据表名称，通过start_date和end_date限定数据的范围，同时可以通过freq、asset_type等指定不同的数据类型，即可下载表格数据并保存到合适的位置。
+连接到`tushare`下载所需的数据并保存到相应的数据表，给出需要下载的数据表名称，通过`start_date`和`end_date`限定数据的范围，同时可以通过`freq`、`asset_type`等指定不同的数据类型，即可下载表格数据并保存到合适的位置。
 重复的数据会被忽略或覆盖已有的数据
 
 
-例如，通过检查发现，stock_daily表中的数据不够完整，最新的数据仅更新到2022年3月22日，数据共有1210万行：
+例如，通过检查发现，`stock_daily`表中的数据不够完整，最新的数据仅更新到2022年3月22日，数据共有1210万行：
 ```python
 qt.get_table_info('stock_daily', verbose=False)
 ```
@@ -276,7 +274,7 @@ qt.get_table_info('stock_daily', verbose=False)
         starts: 1990-12-19, end: 2022-03-22
 
 
-此时使用qt.refill_data_source()函数，批量获取2022年3月以后一直到10月底的stock_daily数据
+此时使用`qt.refill_data_source()`函数，批量获取2022年3月以后一直到10月底的`stock_daily`数据
 
 ```python
 qt.refill_data_source(tables='stock_daily', 
@@ -291,7 +289,7 @@ qteasy会通过多线程并行下载提高速度，但下载频率过快可能�
     [########################################]163/163-100.0%  <stock_daily:20220301-20221031>786300wrtn in 2'42"199
 
 
-下载完成后重新检查stock_daily的数据：可以发现数据已经增加到1280万行，增加了70万行数据，数据覆盖的日期也达到了2022年10月31日。
+下载完成后重新检查`stock_daily`的数据：可以发现数据已经增加到1280万行，增加了70万行数据，数据覆盖的日期也达到了2022年10月31日。
 
 ```python
 qt.get_table_info('stock_daily', verbose=False)
@@ -317,13 +315,13 @@ qt.get_table_info('stock_daily', verbose=False)
 
 ### `qt.get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False)`
 
-获取一个股票或证券的基本信息，code_or_name可以是股票的代码，或者股票名称，默认情况下系统会进行全剧匹配查找匹配的证券，如‘000001’会匹配到多种不同的证券，所有匹配的证券都会被列出，除非在asset_type中指定一种或几种证券类型。
-如果设置match_full_name=True，则会通过股票或基金的全名来模糊匹配证券
+获取一个股票或证券的基本信息，`code_or_name`可以是股票的代码，或者股票名称，默认情况下系统会进行全剧匹配查找匹配的证券，如`‘000001’`会匹配到多种不同的证券，所有匹配的证券都会被列出，除非在`asset_type`中指定一种或几种证券类型。
+如果设置`match_full_name=True`，则会通过股票或基金的全名来模糊匹配证券
 
 
 ### `qt.get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False)`
 
-get_basic_info()的别称
+`get_basic_info()`的别称
 
 ### 筛选股票代码
 
@@ -339,8 +337,8 @@ get_basic_info()的别称
 
 ### **`qt.get_history_data(htypes, shares=None, start=None, end=None, freq=None, asset_type=None, adj=None, as_data_frame=True, group_by=None, **kwargs)`**
 
-这个函数从默认QT_DATA_SOURCE中提取数据，根据输入的数据类型、股票代码、日期范围以及频率等参数，输出多个DataFrame或HistoryPanel对象
-这些DataFrame保存在一个dict中，这个dict的键为股票代码或数据类型，值为按股票代码或数据类型分组的数据框
+这个函数从默认`QT_DATA_SOURCE`中提取数据，根据输入的数据类型、股票代码、日期范围以及频率等参数，输出多个`DataFrame`或`HistoryPanel`对象
+这些`DataFrame`保存在一个dict中，这个dict的键为股票代码或数据类型，值为按股票代码或数据类型分组的数据框
 
 ### 量价数据的可视化
 
@@ -354,7 +352,7 @@ get_basic_info()的别称
 ## 查找证券的基本信息
 
 使用`qt.get_basic_info()`获取证券的基本信息
-在DataSource中准备好相关的金融数据后，还可以方便地查找证券的信息，通过证券代码（六位数字）或证券的名称搜索证券，并打印出详细信息。
+在`DataSource`中准备好相关的金融数据后，还可以方便地查找证券的信息，通过证券代码（六位数字）或证券的名称搜索证券，并打印出详细信息。
 使用证券名称搜索时，支持模糊查找或使用通配符：
 
 例如，通过六位代码获取证券信息：
@@ -444,16 +442,23 @@ qt.get_basic_info('中国?通')
 
 
 ```python
+# 使用‘贵州钢绳’为关键字搜索股票代码，不匹配全名时，找不到匹配的结果：
 qt.get_basic_info('贵州钢绳')
 ```
+结果如下：
+
 
     found 0 matches, matched codes are {'E': {}, 'IDX': {}, 'FD': {}, 'count': 0}
 
 
 
+
 ```python
+# 然而如果设置了匹配全名`match_full_name=True`，则能够找到匹配的代码：
 qt.get_basic_info('贵州钢绳', match_full_name=True)
 ```
+
+结果如下：
 
     found 1 matches, matched codes are {'E': {'600992.SH': '贵绳股份'}, 'IDX': {}, 'FD': {}, 'count': 1}
     More information for asset type E:
@@ -468,7 +473,7 @@ qt.get_basic_info('贵州钢绳', match_full_name=True)
     -------------------------------------------
 
 
-qt.filter_stocks被用来根据某些标准筛选股票，例如：
+`qt.filter_stocks`被用来根据某些标准筛选股票，例如：
 
 ```python
 # 筛选2000年以后发行的HS300指数成份股
@@ -814,7 +819,7 @@ qt.filter_stocks(industry='航空, 全国地产', area='上海,北京,山东')
 qt.get_history_data(shares='000001.SH', htypes='open,high,low,close,vol', freq='d', start='20200101', end='20201231')
 ```
 
-生成的结果是一个dict，默认情况下以股票代码为key，value是一个包含所有需要类型的历史数据的DataFrame：
+生成的结果是一个`dict`，默认情况下以股票代码为`key`，`value`是一个包含所有需要类型的历史数据的`DataFrame`：
 
 
     {'000001.SH':                
@@ -886,7 +891,7 @@ qt.get_history_data(shares='000001.SH, 000002.SH, 000003.SH',
 保存到本地的股票量价数据可以直接以K线图的形式显示出来，下面是一些示例：
 
 ## 历史价格数据的可视化
-qteasy支持使用动态K线图展示数据，此时不需要从DataSource中读取数据，直接使用candle()函数即可实现：
+`qteasy`支持使用动态K线图展示数据，此时不需要从`DataSource`中读取数据，直接使用`qt.candle()`函数即可实现：
 
 
 ```python
@@ -898,7 +903,7 @@ data = qt.candle('000004.SZ')
     
 
 
-qt.candle函数支持传入K线图的开始日期、结束日期、K线频率、复权方式以显示不同区间和频率的K线图，也支持传入移动均线的时长和macd的不同参数显示不同的均线，例如，传入下面的参数显示一段时间内的60分钟K线图，且使用后复权价格:
+`qt.candle()`函数支持传入K线图的开始日期、结束日期、K线频率、复权方式以显示不同区间和频率的K线图，也支持传入移动均线的时长和macd的不同参数显示不同的均线，例如，传入下面的参数显示一段时间内的60分钟K线图，且使用后复权价格:
 
 
 ```python
@@ -910,7 +915,7 @@ data = qt.candle('000004.SZ', start='20220110', end='20220318', adj='b', freq='H
     
 
 
-candle()函数还支持通过股票名称显示K线图，如果输入是股票名称，会自动模糊查找，并且支持通配符。例如：
+`qt.candle()`函数还支持通过股票名称显示K线图，如果输入是股票名称，会自动模糊查找，并且支持通配符。例如：
 
 
 ```python
