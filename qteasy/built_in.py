@@ -35,6 +35,21 @@ def built_in_strategies(*args, **kwargs):
     return built_in_list(*args, **kwargs)
 
 
+def get_built_in_strategy(id):
+    """ 使用ID获取交易策略
+
+    :param id:
+    :return:
+    """
+    if not isinstance(id, str):
+        raise TypeError(f'id should be a string, got {type(id)} instead')
+
+    if not id in BUILT_IN_STRATEGIES.keys():
+        raise ValueError(f'id ({id}) is not valid, please check your input')
+
+    return BUILT_IN_STRATEGIES[id]
+
+
 # Basic technical analysis based Timing strategies
 class TimingCrossline(RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
