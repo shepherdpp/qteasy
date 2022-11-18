@@ -47,7 +47,7 @@ def get_built_in_strategy(id):
     if not id in BUILT_IN_STRATEGIES.keys():
         raise ValueError(f'id ({id}) is not valid, please check your input')
 
-    return BUILT_IN_STRATEGIES[id]
+    return BUILT_IN_STRATEGIES[id]()
 
 
 # Basic technical analysis based Timing strategies
@@ -3137,7 +3137,6 @@ class SelectingRandom(GeneralStg):
     """ 基础选股策略：在每个历史分段中，按照指定的比例（p<1时）随机抽取若干股票，
         或随机抽取指定数量（p>=1）的股票进入投资组合，投资比例平均分配
 
-
     策略参数：
         p: float, 抽取的股票的数量(p>=1)或比例(p<1)
     信号类型：
@@ -3506,6 +3505,7 @@ class SelectingNDayRateChange(FactorSorter):
 
 class SelectingNDayVolatility(FactorSorter):
     """ 根据股票以前n天的股价波动率作为选股因子
+
     策略参数：
         n: int, 股票历史数据的选择期
     信号类型：
