@@ -500,8 +500,8 @@ class BaseStrategy:
         if bt_price_type is not None:
             assert isinstance(bt_price_type,
                               str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
-            assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a valid ' \
-                                                                   f'price type'
+            assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a ' \
+                                                                   f'valid price type'
             self._bt_price_type = bt_price_type
         if reference_data_types is not None:
             if isinstance(reference_data_types, str):
@@ -996,7 +996,9 @@ class FactorSorter(BaseStrategy):
         将选股权重传递到generate()方法中，生成最终的选股交易信号
 
         input:
-            :type h_seg: np.ndarray
+            :param h_seg: np.ndarray
+            :param ref_seg:
+            :param trade_date:
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
         """
@@ -1019,7 +1021,9 @@ class FactorSorter(BaseStrategy):
         assert isinstance(h_seg, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
 
-        factors = self.realize(h=h_seg, r=ref_seg, t=trade_data).squeeze()
+        factors = self.realize(h=h_seg, r=ref_seg, t=trade_data)
+        if not factors.shape == (1,):
+            factors = factors.squeeze()
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':

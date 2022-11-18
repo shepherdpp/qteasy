@@ -28,6 +28,7 @@ from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_da
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
+from qteasy.utilfuncs import reindent
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, process_loop_results
@@ -10581,6 +10582,22 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(ValueError, rolling_window, arr, 5, 1)
         self.assertRaises(ValueError, rolling_window, arr, 2, 3)
 
+    def test_reindent(self):
+        """ 测试reindent函数"""
+        string = 'a random string'
+        mul_str = 'a multiple-line random string\n' \
+                  ' a multiple-line random string\n' \
+                  'a multiple-line random string'
+
+        self.assertEqual(reindent(string, 4), '    a random string')
+        self.assertEqual(reindent(mul_str, 4), '    a multiple-line random string\n'
+                                               '    a multiple-line random string\n'
+                                               '    a multiple-line random string')
+
+        self.assertRaises(TypeError, reindent, 123, 123)
+        self.assertRaises(TypeError, reindent, '123', '123')
+        self.assertRaises(ValueError, reindent, '123', 123)
+
 
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
@@ -12090,7 +12107,7 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
-        # test temp config in run() that works only in run()
+        # test temp config_key in run() that works only in run()
         qt.run(self.op,
                mode=1,
                asset_pool='000001.SZ',
@@ -13480,15 +13497,10 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        # ds = qteasy.QT_DATA_SOURCE
-        # ds.refill_local_source(tables='stk_managers',
-        #                        start_date='20180101',
-        #                        end_date='20200101',
-        #                        parallel=True,
-        #                        reversed_par_seq=False)
-        # df = ds.acquire_table_data('stk_managers', 'tushare', ann_date='20200102')
-        # print(df)
-        # ds.update_table_data('stk_managers', df)
+        qteasy.configuration(config_key='local_data_source, local_data_file_type, local_data_file_path,'
+                                    'local_db_host, local_db_user',
+                             default=True,
+                             verbose=True)
         pass
 
 

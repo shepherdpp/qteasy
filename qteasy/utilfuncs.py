@@ -1043,3 +1043,22 @@ def rolling_window(arr, window, axis=0):
                       shape=target_shape,
                       strides=target_strides,
                       writeable=False)
+
+
+def reindent(s, num_spaces=4):
+    """ 给定一个（通常多行）的string，在每一行前面添加空格形成缩进效果
+
+    :param s: 待处理的字符串
+    :param num_spaces: 需要添加的空格数量
+    :return:
+    """
+    if not isinstance(s, str):
+        raise TypeError(f's should be a string, got {type(s)} instead')
+    if not isinstance(num_spaces, int):
+        raise TypeError(f'num_spaces should be an integer, got {type(num_spaces)} instead')
+    if not 0 < num_spaces <= 50:
+        raise ValueError(f'num_spaces should be larger than 0 and smaller or equal to 50, got {num_spaces}')
+    s = s.split('\n')
+    s = [(num_spaces * ' ') + line.lstrip() for line in s]
+    s = '\n'.join(s)
+    return s
