@@ -19,9 +19,6 @@ import qteasy as qt
 %matplotlib inline
 ```
 
-    /Users/jackie/Library/CloudStorage/OneDrive-SharedLibraries-Onedrive/Projects/PycharmProjects/qteasy/qteasy/_arg_validators.py:829: UserWarning: config <tushare_token> is not a built-in parameter key, please check your input!
-      warnings.warn(err_msg)
-
 
 ## 创建Strategy对象和Operator对象
 qteasy中的每一个交易策略都被定义为交易策略（Strategy）对象。每个交易对象包含了一系列的交易规则，这些规则包括三个方面：
@@ -96,32 +93,32 @@ op = qt.Operator()
 
 ### 获取Operator对象的基本信息
 
-#### `op.info()`
+### `op.info()`
 打印Operator对象的重要信息
 
-#### `op.strategies`
+### `op.strategies`
 获取Operator对象中所有交易策略的清单
 
-#### `op.strategy_ids`
+### `op.strategy_ids`
 获取Operator对象中所有交易策略的ID
 
-#### `op.strategy_count`
+### `op.strategy_count`
 获取Operator对象中交易策略的数量
 
-#### `op.signal_type`
+### `op.signal_type`
 Operator对象的信号类型，代表交易信号的含义及处理方式：
 - **'pt': 目标持仓比例信号**，在这个模式下，交易员关注一个投资组合中各个成份股票的持仓比例，通过适时的买入和买出，维持各个成份股的持仓比例在一个目标值上；
 - **'ps': 百分比交易信号**，在这个模式下，交易员关注定时产生的比例交易信号，根据交易信号按比例买入或买出股票
 - **'vs': 数量交易信号**，在这个模式下，交易员关注定时产生的交易信号，按照交易信号买入或买出一定数量的股票
 
-#### `op.op_type`
+### `op.op_type`
 Operator对象的运行模式：
 - 'batch': 批量运行模式，在回测模式或优化模式下，预先生成交易清单，再批量进行模拟交易，运行速度较快
 - 'realtime': 实时运行模式，生成交易信号立即模拟交易，产生模拟交易结果后，再进行下一次交易信号生成，适用于实时运行模式，或特殊情况下的回测模式
 
 ### 获取交易策略
 
-#### `op.get_stg(stg_id)`
+### `op.get_stg(stg_id)`
 通过策略ID获取策略对象，下面的方法效果相同，且可以通过数字序号来获取策略
 ```
 stg = op.get_stg(stg_id)
@@ -130,24 +127,24 @@ stg = op[stg_idx]
 ```
 ### 添加或修改交易策略
 
-#### `op.add_strategy(stg, **kwargs)`
+### `op.add_strategy(stg, **kwargs)`
 添加一个策略到Operator，添加策略的同时可以同时设置策略参数
 
-#### `op.add_strategies(strategies)`
+### `op.add_strategies(strategies)`
 批量添加一系列策略到Operator，添加的同时不能同时设置策略参数
 
-#### `op.remove_strategy(id_or_pos=None)`
+### `op.remove_strategy(id_or_pos=None)`
 从Operator中删除一个策略
 
-#### `op.clear_strategies()`
+### `op.clear_strategies()`
 清除Operator中的所有交易策略
 
 ### 设置策略参数或Operator参数
 
-#### `op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, sample_freq=None, window_length=None, data_types=None, bt_price_type=None, **kwargs)`
+### `op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, sample_freq=None, window_length=None, data_types=None, bt_price_type=None, **kwargs)`
 指定一个交易策略的ID，设置这个交易策略的策略参数或其他属性
 
-#### `op.set_blender(price_type=None, blender=None)` 
+### `op.set_blender(price_type=None, blender=None)` 
 设置交易策略的混合方式。当Operator中有多个交易策略时，每个交易策略分别运行生成多组交易信号，再按照用户定义的规则混合后输出一组交易信号，用于交易
 
 我们可以用下面的代码将刚创建的DMA策略加入到Operator中去，并设置必要的策略参数
@@ -204,10 +201,10 @@ Operator对象创建好并添加策略后就可以开始进行回测了
 qteasy提供了丰富的环境参数以控制回测的具体过程
 所有的环境参数变量值都可以通过`qt.Configuration()`查看，并通过`qt.Configure()`来设置。
 
-#### `qt.configuration()`
+### `qt.configuration()`
 查看qteasy运行环境变量
 
-#### `qt.configure()`
+### `qt.configure()`
 设置qteasy运行环境变量
 
 与回测相关的主要环境变量参数包括：
@@ -238,7 +235,7 @@ qt.configure(
 
 ### 启动qteasy并开始运行Operator
 
-#### `qt.run(operator, **config)`
+### `qt.run(operator, **config)`
 开始运行Operator，根据运行的mode，qteasy会进入到不同的运行模式，输出不同的结果：
 
 - **mode 0 实时模式**：读取最近的（实时）数据，生成当前最新的交易信号。再此模式下，可以设置qteasy定期执行，定期读取最新数据，定期生成实时交易信号
@@ -550,266 +547,6 @@ qt.run(op,
 
 ![png](img/output_16_2.png)
     
+## 创建一个自定义策略
 
-
-### 择时策略的进一步改进——多重择时
-由于择时策略具备一定的随机性，在历史过程中某一个策略并不会总是表现好，而会时而表现好，时而表现差，因此，如果我们同时使用多个参数不同的策略来共同生成择时买卖信号，这样能够形成类似于“委员会”的效果，可能使择时信号在整个时段上都表现较好。
-
-下面，我们就可以创建这样一个多重择时策略，通过多个策略的平均信号或多重信号来进行买卖，看看相对于单一择时策略，能有多少性能提升。
-
-#### 建立多重择时策略
-
-我们可以建立一个包含8个相同的DMA择时策略的operator对象，并对它进行参数设置。
-
-为了在优化过程中充分利用上一步优化的结果，我们可以设置策略的opt_tag参数为2，并将上一次找到的三十组较优参数设置为参数空间，这样下一次优化的时候，将仅从上次优化的结果中选取参数，而忽略其他的参数。
-
-同样设置好基本参数后，可以直接开始优化过程（优化过程忽略）
-优化后，我们找到了一组最优参数组，这个参数组中包含了八组DMA参数，需要分别将这八组参数分别赋予operator对象中的八个DMA择时策略
-
-
-```python
-print(f'===============SEARCHING FOR COMBINED PARAMS==================\n'
-      f'==============================================================')
-op = qt.Operator(strategies=['dma', 'dma', 'dma', 'dma', 'dma', 'dma', 'dma', 'dma'])
-print(list(op.get_strategy_id_pairs()))
-op.set_parameter('dma', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_1', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_2', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_3', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_4', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_5', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_6', opt_tag=2, par_range=pars_dma, par_types='enum')
-op.set_parameter('dma_7', opt_tag=2, par_range=pars_dma, par_types='enum')
-
-op.set_parameter(stg_id='dma', pars=(163, 233, 24))
-op.set_parameter(stg_id='dma_1', pars=(192, 222, 249))
-op.set_parameter(stg_id='dma_2', pars=(96, 179, 29))
-op.set_parameter(stg_id='dma_3', pars=(41, 167, 218))
-op.set_parameter(stg_id='dma_4', pars=(84, 152, 219))
-op.set_parameter(stg_id='dma_5', pars=(192, 222, 249))
-op.set_parameter(stg_id='dma_6', pars=(119, 135, 187))
-op.set_parameter(stg_id='dma_7', pars=(163, 233, 24))
-```
-
-    ===============SEARCHING FOR COMBINED PARAMS==================
-    ==============================================================
-    [('dma', RULE-ITER(DMA)), ('dma_1', RULE-ITER(DMA)), ('dma_2', RULE-ITER(DMA)), ('dma_3', RULE-ITER(DMA)), ('dma_4', RULE-ITER(DMA)), ('dma_5', RULE-ITER(DMA)), ('dma_6', RULE-ITER(DMA)), ('dma_7', RULE-ITER(DMA))]
-
-
-### 最终结果
-设置好优化完成的参数后，进行一次回测，检查结果：
-
-与单个DMA策略的最终结果相比，多重择时策略的提升是巨大的：
-
-资产终值达到了39.7万元，年化收益达到了28.7%，夏普率达到了1.877！
-充分说明了多重择时策略的优良性能
-
-
-```python
-pars = qt.run(op, 
-              mode=2,
-              opti_method = 1,
-              opti_sample_count=1000)
-
-print(f'Besr performing parameter: {pars[-1]}')
-```
-
-
-    [########################################]1000/1000-100.0%  best performance: 234193.866
-    Optimization completed, total time consumption: 55"452
-    [########################################]30/30-100.0%  best performance: 234193.866
-    ==================================== 
-    |                                  |
-    |       OPTIMIZATION RESULT        |
-    |                                  |
-    ====================================
-    
-    qteasy running mode: 2 - Strategy Parameter Optimization
-    
-    investment starts on 2016-04-05 00:00:00
-    ends on 2021-02-01 00:00:00
-    Total looped periods: 4.8 years.
-    total investment amount: ¥   100,000.00
-    Reference index type is 000300.SH at IDX
-    Total Benchmark rtn: 65.96% 
-    Average Yearly Benchmark rtn rate: 11.06%
-    statistical analysis of optimal strategy messages indicators: 
-    total return:        123.37% ± 3.48%
-    annual return:       18.10% ± 0.38%
-    alpha:               0.076 ± 0.004
-    Beta:                1.002 ± 0.000
-    Sharp ratio:         1.027 ± 0.045
-    Info ratio:          0.116 ± 0.026
-    250 day volatility:  0.164 ± 0.006
-    other messages indicators are listed in below table
-    
-                         Strategy items                   Sell-outs Buy-ins ttl-fee     FV      ROI   Benchmark rtn  MDD 
-    0   ((44, 135, 117), (90, 185, 45), (105, 160, 29)...    6.0      6.0    341.79 219,513.87 119.5%     66.0%     18.2%
-    1   ((88, 108, 127), (149, 194, 24), (129, 204, 16...    7.0      7.0    409.72 219,850.45 119.9%     66.0%     18.2%
-    2   ((119, 200, 30), (98, 129, 45), (101, 59, 50),...    8.0      8.0    420.68 220,263.13 120.3%     66.0%     18.2%
-    3   ((94, 165, 78), (44, 135, 117), (147, 157, 57)...    6.0      6.0    352.35 220,527.79 120.5%     66.0%     22.4%
-    4   ((101, 124, 65), (98, 129, 45), (44, 135, 117)...    4.0      4.0    239.70 221,009.41 121.0%     66.0%     16.1%
-    5   ((82, 127, 144), (82, 127, 144), (98, 129, 45)...    4.0      4.0    265.90 221,095.83 121.1%     66.0%     16.1%
-    6   ((82, 127, 144), (147, 157, 57), (101, 59, 50)...    7.0      6.0    362.68 221,140.13 121.1%     66.0%     18.2%
-    7   ((88, 108, 127), (104, 111, 107), (102, 110, 1...    5.0      5.0    279.05 221,161.14 121.2%     66.0%     18.2%
-    8   ((129, 204, 16), (44, 135, 117), (94, 165, 78)...    3.0      3.0    197.64 221,191.77 121.2%     66.0%     16.1%
-    9   ((101, 59, 50), (150, 189, 33), (102, 110, 129...    8.0      8.0    446.78 221,373.44 121.4%     66.0%     18.2%
-    10  ((104, 142, 87), (147, 157, 57), (98, 129, 45)...    8.0      8.0    481.82 221,407.78 121.4%     66.0%     16.1%
-    11  ((98, 129, 45), (91, 198, 13), (150, 189, 33),...    5.0      5.0    305.89 221,826.17 121.8%     66.0%     16.1%
-    12  ((101, 59, 50), (149, 194, 24), (119, 200, 30)...    7.0      7.0    398.78 221,855.60 121.9%     66.0%     18.2%
-    13  ((144, 181, 57), (88, 108, 127), (88, 108, 127...    6.0      6.0    350.66 222,048.76 122.0%     66.0%     18.2%
-    14  ((44, 135, 117), (102, 110, 129), (101, 124, 6...    4.0      4.0    237.23 222,371.81 122.4%     66.0%     18.2%
-    15  ((98, 129, 45), (101, 124, 65), (101, 59, 50),...    6.0      6.0    345.81 222,879.27 122.9%     66.0%     18.2%
-    16  ((44, 135, 117), (150, 189, 33), (91, 198, 13)...    3.0      3.0    198.33 222,897.42 122.9%     66.0%     16.1%
-    17  ((101, 124, 65), (55, 151, 87), (44, 135, 117)...    3.0      3.0    198.33 222,897.42 122.9%     66.0%     16.1%
-    18  ((52, 111, 136), (52, 111, 136), (149, 194, 24...    6.0      6.0    348.27 223,154.77 123.2%     66.0%     18.2%
-    19  ((44, 135, 117), (179, 240, 25), (144, 181, 57...    4.0      4.0    240.78 223,231.86 123.2%     66.0%     16.1%
-    20  ((129, 204, 16), (90, 185, 45), (150, 189, 33)...    5.0      5.0    279.74 223,506.41 123.5%     66.0%     18.2%
-    21  ((101, 59, 50), (44, 135, 117), (150, 189, 33)...    6.0      6.0    344.70 223,834.93 123.8%     66.0%     18.2%
-    22  ((98, 129, 45), (88, 108, 127), (44, 135, 117)...    5.0      5.0    307.46 224,906.69 124.9%     66.0%     16.1%
-    23  ((44, 135, 117), (90, 185, 45), (149, 194, 24)...    6.0      6.0    347.78 225,216.19 125.2%     66.0%     18.2%
-    24  ((88, 157, 101), (101, 59, 50), (68, 113, 142)...    6.0      6.0    352.16 225,455.22 125.5%     66.0%     18.2%
-    25  ((52, 111, 136), (86, 147, 107), (101, 59, 50)...    6.0      6.0    347.35 225,833.82 125.8%     66.0%     18.2%
-    26  ((44, 135, 117), (44, 135, 117), (150, 189, 33...    5.0      5.0    302.16 225,995.75 126.0%     66.0%     18.2%
-    27  ((88, 108, 127), (104, 142, 87), (104, 111, 10...    7.0      7.0    415.58 226,205.87 126.2%     66.0%     18.2%
-    28  ((88, 108, 127), (44, 135, 117), (101, 59, 50)...    7.0      7.0    439.66 234,187.31 134.2%     66.0%     18.2%
-    29  ((147, 157, 57), (44, 135, 117), (104, 111, 10...    7.0      7.0    439.67 234,193.87 134.2%     66.0%     18.2%
-    
-    ===========END OF REPORT=============
-    
-    [########################################]30/30-100.0%  best performance: 135485.513
-    ==================================== 
-    |                                  |
-    |       OPTIMIZATION RESULT        |
-    |                                  |
-    ====================================
-    
-    qteasy running mode: 2 - Strategy Parameter Optimization
-    
-    investment starts on 2020-01-06 00:00:00
-    ends on 2021-02-01 00:00:00
-    Total looped periods: 1.1 years.
-    total investment amount: ¥   100,000.00
-    Reference index type is 000300.SH at IDX
-    Total Benchmark rtn: 31.20% 
-    Average Yearly Benchmark rtn rate: 28.77%
-    statistical analysis of optimal strategy messages indicators: 
-    total return:        30.11% ± 3.88%
-    annual return:       27.77% ± 3.55%
-    alpha:               -0.016 ± 0.037
-    Beta:                1.000 ± 0.001
-    Sharp ratio:         1.352 ± 0.122
-    Info ratio:          0.545 ± 0.365
-    250 day volatility:  0.215 ± 0.003
-    other messages indicators are listed in below table
-    
-                         Strategy items                   Sell-outs Buy-ins ttl-fee     FV      ROI  Benchmark rtn  MDD 
-    0   ((44, 135, 117), (90, 185, 45), (105, 160, 29)...    1.0      1.0     69.10 130,967.56 31.0%     31.2%     16.1%
-    1   ((88, 108, 127), (149, 194, 24), (129, 204, 16...    2.0      2.0    109.14 132,681.21 32.7%     31.2%     15.0%
-    2   ((119, 200, 30), (98, 129, 45), (101, 59, 50),...    1.0      1.0     69.10 132,311.33 32.3%     31.2%     16.1%
-    3   ((94, 165, 78), (44, 135, 117), (147, 157, 57)...    1.0      1.0     83.51 134,788.63 34.8%     31.2%     16.1%
-    4   ((101, 124, 65), (98, 129, 45), (44, 135, 117)...    1.0      1.0     67.01 124,814.92 24.8%     31.2%     16.1%
-    5   ((82, 127, 144), (82, 127, 144), (98, 129, 45)...    2.0      2.0    104.99 124,249.61 24.2%     31.2%     16.1%
-    6   ((82, 127, 144), (147, 157, 57), (101, 59, 50)...    2.0      1.0     82.55 134,514.68 34.5%     31.2%     16.1%
-    7   ((88, 108, 127), (104, 111, 107), (102, 110, 1...    1.0      1.0     69.10 132,311.33 32.3%     31.2%     16.1%
-    8   ((129, 204, 16), (44, 135, 117), (94, 165, 78)...    1.0      1.0     67.01 124,814.92 24.8%     31.2%     16.1%
-    9   ((101, 59, 50), (150, 189, 33), (102, 110, 129...    1.0      1.0     69.10 130,967.56 31.0%     31.2%     16.1%
-    10  ((104, 142, 87), (147, 157, 57), (98, 129, 45)...    2.0      2.0    115.09 124,120.57 24.1%     31.2%     16.1%
-    11  ((98, 129, 45), (91, 198, 13), (150, 189, 33),...    1.0      1.0     66.78 124,475.47 24.5%     31.2%     16.1%
-    12  ((101, 59, 50), (149, 194, 24), (119, 200, 30)...    1.0      1.0     69.10 131,839.02 31.8%     31.2%     16.1%
-    13  ((144, 181, 57), (88, 108, 127), (88, 108, 127...    1.0      1.0     69.10 127,982.86 28.0%     31.2%     16.1%
-    14  ((44, 135, 117), (102, 110, 129), (101, 124, 6...    1.0      1.0     69.10 131,839.02 31.8%     31.2%     16.1%
-    15  ((98, 129, 45), (101, 124, 65), (101, 59, 50),...    1.0      1.0     69.10 132,311.33 32.3%     31.2%     16.1%
-    16  ((44, 135, 117), (150, 189, 33), (91, 198, 13)...    1.0      1.0     67.01 125,262.07 25.3%     31.2%     16.1%
-    17  ((101, 124, 65), (55, 151, 87), (44, 135, 117)...    1.0      1.0     67.01 125,262.07 25.3%     31.2%     16.1%
-    18  ((52, 111, 136), (52, 111, 136), (149, 194, 24...    1.0      1.0     69.10 130,967.56 31.0%     31.2%     16.1%
-    19  ((44, 135, 117), (179, 240, 25), (144, 181, 57...    1.0      1.0     67.01 125,262.07 25.3%     31.2%     16.1%
-    20  ((129, 204, 16), (90, 185, 45), (150, 189, 33)...    1.0      1.0     69.10 132,311.33 32.3%     31.2%     16.1%
-    21  ((101, 59, 50), (44, 135, 117), (150, 189, 33)...    1.0      1.0     69.10 131,839.02 31.8%     31.2%     16.1%
-    22  ((98, 129, 45), (88, 108, 127), (44, 135, 117)...    1.0      1.0     66.78 124,475.47 24.5%     31.2%     16.1%
-    23  ((44, 135, 117), (90, 185, 45), (149, 194, 24)...    1.0      1.0     69.10 130,967.56 31.0%     31.2%     16.1%
-    24  ((88, 157, 101), (101, 59, 50), (68, 113, 142)...    2.0      2.0    109.21 131,241.90 31.2%     31.2%     16.1%
-    25  ((52, 111, 136), (86, 147, 107), (101, 59, 50)...    1.0      1.0     69.10 132,311.33 32.3%     31.2%     16.1%
-    26  ((44, 135, 117), (44, 135, 117), (150, 189, 33...    1.0      1.0     69.10 132,311.33 32.3%     31.2%     16.1%
-    27  ((88, 108, 127), (104, 142, 87), (104, 111, 10...    2.0      2.0    110.50 135,050.95 35.1%     31.2%     12.3%
-    28  ((88, 108, 127), (44, 135, 117), (101, 59, 50)...    2.0      2.0    122.89 135,485.51 35.5%     31.2%     16.1%
-    29  ((147, 157, 57), (44, 135, 117), (104, 111, 10...    2.0      2.0    122.89 135,485.51 35.5%     31.2%     16.1%
-    
-    ===========END OF REPORT=============
-
-
-
-
-![png](img/output_20_2 copy.png)
-    
-
-的到表现最佳的八组参数如下：
-
-    Best performing parameter: ((147, 157, 57), (44, 135, 117), (104, 111, 107), (101, 150, 24), (101, 59, 50), (104, 111, 107), (101, 150, 24), (129, 204, 16))
-
-
-我们把上面八组参数分别设置为每一个策略的参数，将它们混合起来使用：
-
-```python
-op.set_parameter(stg_id='dma', pars=(163, 233, 24))
-op.set_parameter(stg_id='dma_1', pars=(192, 222, 249))
-op.set_parameter(stg_id='dma_2', pars=(96, 179, 29))
-op.set_parameter(stg_id='dma_3', pars=(41, 167, 218))
-op.set_parameter(stg_id='dma_4', pars=(84, 152, 219))
-op.set_parameter(stg_id='dma_5', pars=(192, 222, 249))
-op.set_parameter(stg_id='dma_6', pars=(119, 135, 187))
-op.set_parameter(stg_id='dma_7', pars=(163, 233, 24))
-qt.run(op, 
-       mode=1,
-       opti_sample_count=1000)
-```
-
-输出回测结果如下：
-
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 405.3ms
-    time consumption for operation back looping:  852.8ms
-    
-    investment starts on      2010-12-31 00:00:00
-    ends on                   2020-12-31 00:00:00
-    Total looped periods:     10.0 years.
-    
-    -------------operation summary:------------
-    
-              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
-    000300.SH    14       14     28   72.9%      0.0%     27.1%   
-    
-    Total operation fee:     ¥      668.47
-    total investment amount: ¥  100,000.00
-    final value:              ¥  204,826.15
-    Total return:                   104.83% 
-    Avg Yearly return:                7.43%
-    Skewness:                         -0.78
-    Kurtosis:                          9.19
-    Benchmark return:                66.59% 
-    Benchmark Yearly return:          5.23%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.022
-    Beta:                             1.001
-    Sharp ratio:                      0.486
-    Info ratio:                       0.005
-    250 day volatility:               0.177
-    Max drawdown:                    47.01% 
-        peak / valley:        2015-06-08 / 2016-01-28
-        recovered on:         2019-12-17
-    
-    ===========END OF REPORT=============
-
-
-
-
-![png](img/output_21_2.png)
-    
-
+使用qteasy不仅可以使用内置策略，也可以创建自定义策略。下面有一个简单的例子，定义了一个简单的轮动交易策略
