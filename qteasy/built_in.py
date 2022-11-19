@@ -62,7 +62,7 @@ class TimingCrossline(RuleIterator):
         PT型：目标仓位百分比
     信号规则：
         1，当短均线位于长均线上方，且距离大于l*m%时，设置仓位目标为1
-        2，当短均线位于长均线下方，且距离大于l*mM时，设置仓位目标为-1
+        2，当短均线位于长均线下方，且距离大于l*m%时，设置仓位目标为-1
         3，当长短均线之间的距离不大于l*m%时，设置仓位目标为0
 
     策略属性缺省值：
@@ -112,7 +112,7 @@ class TimingCDL(RuleIterator):
         VS型：交易数量信号
     信号规则：
         搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算
-        等效cdldoji匹配数量，
+        等效cdldoji匹配数量，以匹配数量为交易信号。
 
     策略属性缺省值：
     默认参数：()
@@ -1680,7 +1680,7 @@ class TimingMACD(RuleIterator):
     信号规则：
         计算MACD值：
         1，当MACD值大于0时，设置仓位目标为1
-        3，当MACD值小于0时，设置仓位目标为0
+        2，当MACD值小于0时，设置仓位目标为0
 
     策略属性缺省值：
     默认参数：(12, 26, 9)
@@ -2115,11 +2115,11 @@ class MACDEXT(RuleIterator):
         2, 当hist<0时输出空头
 
     策略属性缺省值：
-    默认参数：(14,)
-    数据类型：high, low, close 最高价，最低，收盘价，多数据输入
+    默认参数：(12, 0, 26, 0, 9, 0)
+    数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：200
-    参数范围：[(2, 100)]
+    参数范围：[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)]
     策略不支持参考数据，不支持交易数据
     """
 
@@ -2422,7 +2422,7 @@ class RSI(RuleIterator):
         3, 其余情况设置持仓目标为0
 
     策略属性缺省值：
-    默认参数：(12, 60, 40)
+    默认参数：(12, 70, 30)
     数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：100
@@ -2897,8 +2897,8 @@ class BuyRate(RuleIterator):
         PS型：百分比买卖交易信号
     信号规则：
         在下面情况下产生买入信号：
-        1，当change > 0，且day日涨幅大于change时，产生1卖出信号
-        2，当change < 0，且day日跌幅大于change时，产生1卖出信号
+        1，当change > 0，且day日涨幅大于change时，产生1买入信号
+        2，当change < 0，且day日跌幅大于change时，产生1买入信号
 
     策略属性缺省值：
     默认参数：(20, 0.1)
@@ -2936,7 +2936,7 @@ class BuyRate(RuleIterator):
 
 
 class TimingLong(GeneralStg):
-    """ 简单择时策略，返回整个历史周期上的恒定多头状态
+    """ 简单择时策略，整个历史周期上固定保持多头全仓状态
 
     策略参数：
         none
@@ -2965,7 +2965,7 @@ class TimingLong(GeneralStg):
 
 
 class TimingShort(GeneralStg):
-    """ 简单择时策略，返回整个历史周期上的恒定空头全仓状态
+    """ 简单择时策略，整个历史周期上固定保持空头全仓状态
 
     策略参数：
         none
@@ -2995,7 +2995,7 @@ class TimingShort(GeneralStg):
 
 
 class TimingZero(GeneralStg):
-    """ 简单择时策略，返回整个历史周期上的恒定空仓状态
+    """ 简单择时策略，整个历史周期上固定保持空仓状态
 
     策略参数：
         none
@@ -3380,7 +3380,8 @@ class SelectingNDayAvg(FactorSorter):
 
 
 class SelectingNDayChange(FactorSorter):
-    """ 基础选股策略：根据股票以前n天的股价或数据变动幅度作为选股因子进行选股
+    """ 以股票过去N天的价格或数据指标的变动值作为选股因子选股
+    基础选股策略：根据股票以前n天的股价或数据变动幅度作为选股因子进行选股
 
     策略参数：
         n: int, 股票历史数据的选择期
@@ -3442,7 +3443,8 @@ class SelectingNDayChange(FactorSorter):
 
 
 class SelectingNDayRateChange(FactorSorter):
-    """ 基础选股策略：根据股票以前n天的股价变动比例作为选股因子
+    """ 以股票过去N天的价格或数据指标的变动比例作为选股因子选股
+    基础选股策略：根据股票以前n天的股价变动比例作为选股因子
 
     策略参数：
         n: int, 股票历史数据的选择期
@@ -3504,7 +3506,7 @@ class SelectingNDayRateChange(FactorSorter):
 
 
 class SelectingNDayVolatility(FactorSorter):
-    """ 根据股票以前n天的股价波动率作为选股因子
+    """ 根据股票以前N天的股价波动率作为选股因子
 
     策略参数：
         n: int, 股票历史数据的选择期
