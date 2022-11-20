@@ -11,89 +11,181 @@
 
 import numpy as np
 import math
+from numba import njit
 from .utilfuncs import unify, is_number_like, str_to_list
 
 
 # 这里定义可用的交易信号混合函数
-def argsum(*args):
-    """sum of all arguments"""
-    return sum(args)
-
-
+@njit()
 def op_avg(*args):
+    """ 通常用于PT持仓目标信号。
+        组合后的持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
+        只有所有蒙板均看空时，最终结果才看空所有蒙板的权重相同，因此，如
+        果一共五个蒙板三个看多两个看空时，持仓为60%。更简单的解释是，混
+        合后的多空仓位是所有蒙版仓位的平均值.
+
+    :param args: 以tuple形式传入的所有交易信号
+    :return:
     """
+    signal_sum = np.sum(args)  # 计算所有交易信号
+    # 的和
+    signal_count = len(args)
+    return signal_sum / signal_count
+
+
+@njit()
+def op_pos(n, t, *args):
+    """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
+
+        最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以
+        上的蒙板信号值为多(>0)或者为空(<0)时，最终蒙板的多空信号才为多或
+        为空。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
+        当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
+        此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
+        接受.
+        最终信号的强度始终为-1或1，如果希望最终信号强度为输入信号的
+        平均值，应该使用avg_pos-N方式混合
+
+    :param n:
+    :param t:
+    :param args:
+    :return:
+    """
+    signal_sign = 0.
+    for msk in args:
+        signal_sign += np.sign(np.where(np.abs(msk) < t, 0, msk))
+    res = np.where(np.abs(signal_sign) >= n, signal_sign, 0)
+    return res
+
+
+@njit()
+def op_avg_pos(n, t, *args):
+    """择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
+
+        持仓目标取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
+        看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度
+        。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
+        当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
+        此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
+        接受.
+        当然，avg_pos-1与avg等价，如avg_pos-2方式下，至少两个蒙板看多
+        则最终看多，否则看空
+
+    :param n:
+    :param t:
+    :param args:
+    :return:
+    """
+    signal_sum = np.sum(args)  # 计算所有交易信号的和
+    signal_count = len(args)
+    signal_sign = 0.
+    for msk in args:
+        signal_sign += np.sign(np.where(np.abs(msk) < t, 0, msk))
+    res = np.where(np.abs(signal_sign) >= n, signal_sum, 0) / signal_count
+    return res
+
+
+@njit()
+def op_str(t, *args):
+    """ str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于
+        某一个阈值T的时候，最终结果才会是多头，否则就是空头
 
     :param args:
     :return:
     """
-    raise NotImplementedError
+    signal_sum = np.sum(args)  # 计算所有交易信号的和
+    return np.where(np.abs(signal_sum) >= t, 1, 0) * np.sign(signal_sum)
 
 
-def op_pos(*args):
-    """
-
-    :param args:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def op_avg_pos(*args):
-    """
-
-    :param args:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def op_str(*args):
-    """
-
-    :param args:
-    :return:
-    """
-    raise NotImplementedError
-
-
+@njit()
 def op_combo(*args):
-    """
+    """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
+        虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
+        多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
+        运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
+        combo模式的信号组合进行计算的过程中产生问题。
+        例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
+        100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
+        两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
+        因此combo后的数据需要用clip处理
 
     :param args:
     :return:
     """
-    raise NotImplementedError
+    signal_sum = np.clip(*args)  # 计算所有交易信号的和
+    return signal_sum
 
 
-_AVAILABLE_FUNCTIONS = {'abs(':     abs,
-                        'acos(':    math.acos,
-                        'asin(':    math.asin,
-                        'atan(':    math.atan,
-                        'atan2(':   math.atan2,
-                        'ceil(':    math.ceil,
-                        'cos(':     math.cos,
-                        'cosh(':    math.cosh,
-                        'degrees(': math.degrees,
-                        'exp(':     math.exp,
-                        'fabs(':    math.fabs,
-                        'floor(':   math.floor,
-                        'fmod(':    math.fmod,
-                        'frexp(':   math.frexp,
-                        'hypot(':   math.hypot,
-                        'ldexp(':   math.ldexp,
-                        'log(':     math.log,
-                        'log10(':   math.log10,
-                        'max(':     max,
-                        'modf(':    math.modf,
-                        'pow(':     math.pow,
-                        'radians(': math.radians,
-                        'sin(':     math.sin,
-                        'sinh(':    math.sinh,
-                        'sqrt(':    math.sqrt,
-                        'tan(':     math.tan,
-                        'tanh(':    math.tanh,
-                        'sum(':     argsum
+@njit()
+def op_clip(lbound, ubound, *args):
+    """ 剪切掉信号中小于lbound，或大于ubound的值，替换为lbound或ubound
+
+    :param lbound:
+    :param ubound:
+    :param args:
+    :return:
+    """
+    signal_count = len(args)
+    if signal_count > 1:
+        raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
+                         f'your input')
+    return np.clip(*args, lbound, ubound)
+
+
+_AVAILABLE_FUNCTIONS = {'abs':      abs,
+                        'avg':      op_avg,
+                        'avg_pos':  op_avg_pos,
+                        'ceil':     math.ceil,
+                        'clip':     op_clip,
+                        'combo':    op_combo,
+                        'exp':      math.exp,
+                        'floor':    math.floor,
+                        'log':      math.log,
+                        'log10':    math.log10,
+                        'max':      max,
+                        'pos':      op_pos,
+                        'pow':      math.pow,
+                        'sqrt':     math.sqrt,
+                        'strength': op_str,
+                        'sum':      op_combo,
                         }
+
+
+def run_blend_func(func_str, *args):
+    """ 根据func_str（一个代表混合函数的字符串解析出正确的函，并返回正确结果
+
+    :param func_str:
+        交易信号混合函数名，额外的交易参数直接包含在函数名中
+        含有此类附加参数的函数必须特殊解析后才能使用，即将函数名中的特殊参数
+        分离出来后作为参数传入函数。
+        例如：
+        avg_pos-3-0.5(*args)
+        解析后的实际执行效果为：
+        avg_pos(3, 0.5, *args)
+
+    :param args:
+        作为函数func的参数传入的交易信号
+
+    :return:
+        函数的运行结果
+    """
+    if not isinstance(func_str, str):
+        raise TypeError(f'func_str should be a string, got {type(func_str)} instead')
+
+    # 分离函数名和附加参数（附加参数的个数不限，受实际定义的函数限制）
+    func_name_args = func_str.split('-')
+    func_name, *additional_args = func_name_args
+    func = _AVAILABLE_FUNCTIONS.get(func_name)
+    if func is None:
+        raise KeyError(f'function ({func_name}) is not available')
+    # 将所有的附加参数处理为float类型，便于传入func处理
+    additional_args = tuple(float(item) for item in additional_args)
+    try:
+        res = func(*additional_args, *args)
+    except Exception as e:
+        raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
+                        f'error message: \n{e}')
+    return res
 
 
 def blender_parser(blender_string):
@@ -206,29 +298,25 @@ def signal_blend(op_signals, blender):
     :return:
         ndarray, 混合完成的选股蒙板
     """
-    exp = blender[:]
-    s = []
+    exp = blender[:]  # 混合表达式的逆波兰式，可以直接读取后计算
+    s = []  # 信号栈，用来存储所有需要操作的交易信号
     while exp:
         if exp[-1].isdigit():
-            # 如果是数字则直接入栈
+            # 如果是数字，直接读取交易信号并压入信号栈
             s.append(op_signals[int(exp.pop())])
         elif exp[-1][-1] == ')':
-            # 如果碰到函数，
+            # 如果碰到函数，解析函数的参数数量，并弹出信号栈内的适当个交易信号，应用函数得到结果，压入信号栈
             token = exp.pop()
             arg_count = int(token[-2])
-            func = _AVAILABLE_FUNCTIONS.get(token[0:-2])
-            if func is None:
-                raise ValueError(
-                        f'the function \'{token[0:-2]}\' -> {func.get(token[0:-2])} is not a valid function!')
+            func_name = token[0:-3]
             args = tuple(s.pop() for i in range(arg_count))
-            try:
-                s.append(func(*args))
-            except:
-                print(f'wrong output func(*args) with args = {args} => ')
+            res = run_blend_func(func_name, *args)
+            s.append(res)
         else:
-            # 如果碰到运算符
+            # 如果碰到运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
     # TODO: 是否真的需要把unify作为一个通用指标应用到所有信号上？我看没有这个必要
+    #   完全可以把unify作为一个signal blend函数来使用
     return s[0]
 
 
@@ -354,103 +442,3 @@ def _operate(n1, n2, op):
     else:
         raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
 
-
-# TODO: 将ls_blend中的函数写入blender.py的第一部分函数定义中
-def _ls_blend(ls_masks):
-    """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
-        这些多空模板的混合方式由混合字符串来定义。
-        混合字符串是满足以下任意一种类型的字符串：
-
-        1，  'none'
-            模式表示输入的蒙板不会被混合，所有的蒙板会被转化为一个
-            三维的ndarray返回,不做任何混合，在后续计算中采用特殊计算方式
-            # 分别计算每一个多空蒙板的交易信号，然后再将交易信号混合起来.
-
-        2,  'avg':
-            avg方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
-            只有所有蒙板均看空时，最终结果才看空所有蒙板的权重相同，因此，如
-            果一共五个蒙板三个看多两个看空时，持仓为60%。更简单的解释是，混
-            合后的多空仓位是所有蒙版仓位的平均值.
-
-        3,  '[pos]/[avg-pos](-N)(-T)'
-            格式为满足以上正则表达式的字符串，其混合规则如下：
-            在pos-N方式下，
-            最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以
-            上的蒙板信号值为多(>0)或者为空(<0)时，最终蒙板的多空信号才为多或
-            为空。最终信号的强度始终为-1或1，如果希望最终信号强度为输入信号的
-            平均值，应该使用avg_pos-N方式混合
-
-            pos-N还有一种变体，即pos-N-T模式，在这种模式下，N参数仍然代表看
-            多的参数个数阈值，但是并不是所有判断持仓为正的数据都会被判断为正
-            只有绝对值大于T的数据才会被接受，例如，当T为0.25的时候，0.35会
-            被接受为多头，但是0.15不会被接受为多头，因此尽管有两个策略在这个
-            时间点判断为多头，但是实际上只有一个策略会被接受.
-
-            avg_pos-N方式下，
-            持仓同样取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
-            看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度
-            。当然，avg_pos-1与avg等价，如avg_pos-2方式下，至少两个蒙板看多
-            则最终看多，否则看空
-
-            avg_pos-N还有一种变体，即avg_pos-N-T模式，在通常的模式下加
-            入了一个阈值Threshold参数T，用来判断何种情况下输入的多空蒙板信号
-            可以被保留，当T大于0时，只有输入信号绝对值大于T的时候才会被接受为有
-            意义的信号否则就会被忽略。使用avg_pos-N-T模式，并把T设置为一个较
-            小的浮点数能够过滤掉一些非常微弱的多空信号.
-
-        4，  'str-T':
-            str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于
-            某一个阈值T的时候，最终结果才会是多头，否则就是空头
-
-        5,  'combo':
-            在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
-            虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
-            多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
-            运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
-            combo模式的信号组合进行计算的过程中产生问题。
-            例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
-            100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
-            两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
-
-    input：=====
-        :type: ls_masks：object ndarray, 多空蒙板列表，包含至少一个多空蒙板
-    return：=====
-        :rtype: object: 一个混合后的多空蒙板
-    """
-    try:
-        blndr = str_to_list(self._stg_blender, '-')  # 从对象的属性中读取择时混合参数
-    except:
-        raise TypeError(f'the timing blender converted successfully!')
-    assert isinstance(blndr[0], str) and blndr[0] in self.AVAILABLE_LS_BLENDER_TYPES, \
-        f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
-        f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
-    l_m = ls_masks
-    l_m_sum = np.sum(l_m, 0)  # 计算所有多空模版的和
-    l_count = ls_masks.shape[0]
-    # 根据多空蒙板混合字符串对多空模板进行混合
-    if blndr[0] == 'none':
-        return l_m
-    if blndr[0] == 'avg':
-        return l_m_sum / l_count
-    if blndr[0] == 'pos' or blndr[0] == 'avg_pos':
-        l_m_sign = 0.
-        n = int(blndr[1])
-        if len(blndr) == 3:
-            threshold = float(blndr[2])
-            for msk in ls_masks:
-                l_m_sign += np.sign(np.where(np.abs(msk) < threshold, 0, msk))
-        else:
-            for msk in ls_masks:
-                l_m_sign += np.sign(msk)
-        if blndr[0] == 'pos':
-            res = np.where(np.abs(l_m_sign) >= n, l_m_sign, 0)
-            return res.clip(-1, 1)
-        if blndr[0] == 'avg_pos':
-            res = np.where(np.abs(l_m_sign) >= n, l_m_sum, 0) / l_count
-            return res.clip(-1, 1)
-    if blndr[0] == 'str':
-        threshold = float(blndr[1])
-        return np.where(np.abs(l_m_sum) >= threshold, 1, 0) * np.sign(l_m_sum)
-    if blndr[0] == 'combo':
-        return l_m_sum
-    raise ValueError(f'Blender text \'({blndr})\' not recognized!')
