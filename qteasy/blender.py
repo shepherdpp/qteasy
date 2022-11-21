@@ -17,6 +17,28 @@ from .utilfuncs import unify, is_number_like, str_to_list
 
 # 这里定义可用的交易信号混合函数
 @njit()
+def op_sum(*args):
+    """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
+        虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
+        多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
+        运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
+        combo模式的信号组合进行计算的过程中产生问题。
+        例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
+        100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
+        两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
+        因此combo后的数据需要用clip处理
+
+    :param args:
+    :return:
+    """
+    # 计算所有交易信号之和
+    signal_sum = np.zeros_like(args[0])
+    for signal in args:
+        signal_sum += signal
+    return signal_sum
+
+
+@njit()
 def op_avg(*args):
     """ 通常用于PT持仓目标信号。
         组合后的持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
@@ -28,9 +50,7 @@ def op_avg(*args):
     :return:
     """
     # 计算所有交易信号之和
-    signal_sum = np.zeros_like(args[0])
-    for signal in args:
-        signal_sum += signal
+    signal_sum = op_sum(*args)
     # 交易信号的个数
     signal_count = len(args)
     return signal_sum / signal_count
@@ -80,9 +100,7 @@ def op_avg_pos(n, t, *args):
     :return:
     """
     # 计算所有交易信号之和
-    signal_sum = np.zeros_like(args[0])
-    for signal in args:
-        signal_sum += signal
+    signal_sum = op_sum(*args)
     # 交易信号的个数
     signal_count = len(args)
     signal_sign = 0.
@@ -101,32 +119,8 @@ def op_str(t, *args):
     :return:
     """
     # 计算所有交易信号之和
-    signal_sum = np.zeros_like(args[0])
-    for signal in args:
-        signal_sum += signal
+    signal_sum = op_sum(*args)
     return np.where(np.abs(signal_sum) >= t, 1, 0) * np.sign(signal_sum)
-
-
-@njit()
-def op_combo(*args):
-    """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
-        虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
-        多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
-        运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
-        combo模式的信号组合进行计算的过程中产生问题。
-        例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
-        100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
-        两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
-        因此combo后的数据需要用clip处理
-
-    :param args:
-    :return:
-    """
-    # 计算所有交易信号之和
-    signal_sum = np.zeros_like(args[0])
-    for signal in args:
-        signal_sum += signal
-    return signal_sum
 
 
 @njit()
@@ -146,22 +140,71 @@ def op_clip(lbound, ubound, *args):
     return np.clip(*args, lbound, ubound)
 
 
+@njit()
+def op_max(*args):
+    """ 信号混合器，将各个择时策略生成的信号取最大值后生成新的交易信号
+
+        生成的交易信号为所有交易信号中的最大值
+
+    :param args:
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count < 1:
+        return
+    elif signal_count == 1:
+        return args[0]
+    elif signal_count == 2:
+        return np.fmax(args[0], args[1])
+    else:  # signal_count > 2
+        signal_max = np.fmax(args[0], args[1])
+        for signal in args[2:]:
+            signal_max = np.fmax(signal_max, signal)
+        return signal_max
+
+
+@njit()
+def op_min(*args):
+    """ 信号混合器，将各个择时策略生成的信号取最小值后生成新的交易信号
+
+        生成的交易信号为所有交易信号中的最小值
+
+    :param args:
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count < 1:
+        return
+    elif signal_count == 1:
+        return args[0]
+    elif signal_count == 2:
+        return np.fmin(args[0], args[1])
+    else:  # signal_count > 2
+        signal_min = np.fmin(args[0], args[1])
+        for signal in args[2:]:
+            signal_min = np.fmin(signal_min, signal)
+        return signal_min
+
+
 _AVAILABLE_FUNCTIONS = {'abs':      abs,
                         'avg':      op_avg,
                         'avg_pos':  op_avg_pos,
                         'ceil':     math.ceil,
                         'clip':     op_clip,
-                        'combo':    op_combo,
+                        'combo':    op_sum,
                         'exp':      math.exp,
                         'floor':    math.floor,
                         'log':      math.log,
                         'log10':    math.log10,
-                        'max':      max,
+                        'max':      op_max,
+                        'min':      op_min,
                         'pos':      op_pos,
                         'pow':      math.pow,
                         'sqrt':     math.sqrt,
                         'strength': op_str,
-                        'sum':      op_combo,
+                        'sum':      op_sum,
                         }
 
 
@@ -195,7 +238,11 @@ def run_blend_func(func_str, *args):
     # 将所有的附加参数处理为float类型，便于传入func处理
     additional_args = tuple(float(item) for item in additional_args)
     try:
+        # debug
+        print(f'running function:\n{func_name}: {func} \n{additional_args}\n{args}')
         res = func(*additional_args, *args)
+        # debug
+        print(f'function run succeed, result\n{res}')
     except Exception as e:
         raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
                         f'error message: \n{e}')

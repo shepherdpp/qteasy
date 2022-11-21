@@ -322,7 +322,7 @@ blender表达式中支持的一些特殊函数如下：
 | op_pos | `op_pos()` | 累计值函数 |
 | op_avg_pos | `op_avg_pos()` | 平均值累计函数 |
 | op_str | `op_str()` | 强度累计函数 |
-| op_combo | `op_combo()`  | 组合值函数 |
+| op_sum | `op_sum()`  | 组合值函数 |
 
 
 以下方法可以被用来设置或获取策略的blender
