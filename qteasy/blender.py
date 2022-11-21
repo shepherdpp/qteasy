@@ -27,8 +27,11 @@ def op_avg(*args):
     :param args: 以tuple形式传入的所有交易信号
     :return:
     """
-    signal_sum = np.sum(args)  # 计算所有交易信号
-    # 的和
+    # 计算所有交易信号之和
+    signal_sum = np.zeros_like(args[0])
+    for signal in args:
+        signal_sum += signal
+    # 交易信号的个数
     signal_count = len(args)
     return signal_sum / signal_count
 
@@ -76,7 +79,11 @@ def op_avg_pos(n, t, *args):
     :param args:
     :return:
     """
-    signal_sum = np.sum(args)  # 计算所有交易信号的和
+    # 计算所有交易信号之和
+    signal_sum = np.zeros_like(args[0])
+    for signal in args:
+        signal_sum += signal
+    # 交易信号的个数
     signal_count = len(args)
     signal_sign = 0.
     for msk in args:
@@ -93,7 +100,10 @@ def op_str(t, *args):
     :param args:
     :return:
     """
-    signal_sum = np.sum(args)  # 计算所有交易信号的和
+    # 计算所有交易信号之和
+    signal_sum = np.zeros_like(args[0])
+    for signal in args:
+        signal_sum += signal
     return np.where(np.abs(signal_sum) >= t, 1, 0) * np.sign(signal_sum)
 
 
@@ -112,7 +122,10 @@ def op_combo(*args):
     :param args:
     :return:
     """
-    signal_sum = np.clip(*args)  # 计算所有交易信号的和
+    # 计算所有交易信号之和
+    signal_sum = np.zeros_like(args[0])
+    for signal in args:
+        signal_sum += signal
     return signal_sum
 
 
@@ -125,6 +138,7 @@ def op_clip(lbound, ubound, *args):
     :param args:
     :return:
     """
+    # 交易信号的个数
     signal_count = len(args)
     if signal_count > 1:
         raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
@@ -201,8 +215,7 @@ def blender_parser(blender_string):
     return：===== s2: 前缀表达式
         :rtype: list: 前缀表达式
     """
-    # TODO: 将所有与表达式解析相关的函数移到新的parser模块中
-    #  建立新的相关类，如表达式类、token类、function类、stack类等方便运算
+
     prio = {'|':   0,
             'or':  0,
             '&':   1,
@@ -213,30 +226,22 @@ def blender_parser(blender_string):
             '*':   1,
             '/':   1,
             '^':   2}
-    functions = {'sum(':  np.sum,
-                 'abs(':  np.abs,
-                 'sqrt(': np.sqrt,
-                 'cos(':  np.cos,
-                 'max(':  np.maximum}
+
     # 定义两个队列作为操作堆栈
     op_stack = []  # 运算符栈
     arg_count_stack = []  # 函数的参数个数栈
     output = []  # 结果队列
     exp_list = _exp_to_token(blender_string)[::-1]
     while exp_list:
-        # print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
-        #       f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
         token = exp_list.pop()
         # 从右至左逐个读取表达式中的元素（数字或操作符）
         # 并按照以下算法处理
         if is_number_like(token):
             # 1，如果元素是数字则进入结果队列
             output.append(token)
-            # print(f'got number token, put to output list')
         elif token == '(':
             # 2，如果元素是反括号则压入运算符栈
             op_stack.append(token)
-            # print(f'got "(" token, put to op stack')
         elif token == ')':
             # 3，扫描到")"时，依次弹出所有运算符直到遇到"("或一个函数，并根据遇到的token类型（函数/右括号）来确定下一步
             while op_stack[-1][-1] != '(':
@@ -250,14 +255,10 @@ def blender_parser(blender_string):
                 arg_count = arg_count_stack.pop() + 1
                 func = op_stack.pop() + str(arg_count) + ")"
                 output.append(func)
-                # print(f'there\'s function in op stack, poped function with argument count {arg_count}')
         elif token in prio.keys():
             # 4，扫描到运算符时
-            # print(f'got op type token')
             if len(op_stack) > 0:
                 if (op_stack[-1] in '+-*/&|^') and (prio[token] <= prio[op_stack[-1]]):
-                    # print(f'op stack has op {op_stack[-1]}, which is higher than current token {s}, poped!\n'
-                    #       f'current token {s} will be put back to exp for next try')
                     output.append(op_stack.pop())
                     exp_list.append(token)
                 else:
@@ -265,8 +266,8 @@ def blender_parser(blender_string):
             else:
                 # 如果op栈为空，直接将token压入op栈
                 op_stack.append(token)
-        elif token in functions:
-            # 5，扫描到函数时，将函数压入op栈，并将数字0压入arc_count栈
+        elif (token[0].isalpha) and (token[-1] == '('):
+            # 5，扫描到字母开，且'('结尾的字符串时，说明扫描到函数，将函数压入op栈，并将数字0压入arc_count栈
             op_stack.append(token)
             arg_count_stack.append(0)
         elif token == ',':

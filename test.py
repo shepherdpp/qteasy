@@ -7742,6 +7742,55 @@ class TestOperatorAndStrategy(unittest.TestCase):
                              ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
         print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
 
+    def test_all_blending_funcs(self):
+        """ 测试其他信号组合函数是否正常工作"""
+        # 生成五个示例交易信号
+        signal0 = np.array([[0.12, 0.35, 0.11],
+                            [0.81, 0.22, 0.29],
+                            [0.86, 0.47, 0.29],
+                            [0.46, 0.81, 0.60],
+                            [0.42, 0.55, 0.74]])
+
+        signal1 = np.array([[0.94, 0.66, 0.69],
+                            [0.85, 0.30, 0.65],
+                            [0.87, 0.06, 0.24],
+                            [0.73, 0.20, 0.19],
+                            [0.43, 0.18, 0.44]])
+
+        signal2 = np.array([[0.24, 0.81, 0.44],
+                            [0.66, 0.92, 0.99],
+                            [0.18, 0.17, 0.11],
+                            [0.48, 0.57, 0.55],
+                            [0.37, 0.66, 0.01]])
+
+        signal3 = np.array([[0.92, 0.88, 0.16],
+                            [0.89, 0.79, 0.27],
+                            [0.48, 0.77, 0.20],
+                            [0.43, 0.33, 0.25],
+                            [0.90, 0.30, 0.49]])
+
+        signal4 = np.array([[0.05, 0.17, 0.30],
+                            [0.16, 0.62, 0.61],
+                            [0.52, 0.83, 0.57],
+                            [0.16, 0.36, 0.28],
+                            [0.99, 0.57, 0.04]])
+
+        signals = [signal0, signal1, signal2, signal3, signal4]
+
+        blender = blender_parser('avg(0, 1, 2, 3, 4)')
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender \n{res}')
+        target = np.array([[0.454, 0.574, 0.340],
+                           [0.674, 0.570, 0.562],
+                           [0.582, 0.460, 0.282],
+                           [0.452, 0.454, 0.374],
+                           [0.622, 0.452, 0.344]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        raise NotImplementedError
+
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
         print(f'--------- Testing setting Opt Pars: set_opt_par -------')
