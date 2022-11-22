@@ -176,7 +176,7 @@ def op_min(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count < 1:
-        return
+        raise KeyError('at least one signal array should be passed to min()')
     elif signal_count == 1:
         return args[0]
     elif signal_count == 2:
@@ -188,22 +188,169 @@ def op_min(*args):
         return signal_min
 
 
+@njit()
+def op_power(*args):
+    """ ，逐个元素操作生成first的second次幂，功能等同于np.power
+
+        np.power()函数可以接受第三个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_power函数实现np.power的功能，但
+        同时避免超过两个参数出现时导致的问题
+
+        另外，在生成blender表达式的逆波兰式的时候，power函数的两个
+        参数次序会颠倒，因此这里实际需要生成的是second的first次幂
+
+    :param args: args中有且只能有两个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 2:
+        raise ValueError('only two signal arrays are allowed in power()/pow()')
+        # return  # 本函数允许且仅允许两个参数传入
+
+    # blender表达式的逆波兰式导致两个参数次序颠倒，这里再颠倒回来
+    signal_res = np.power(args[1], args[0])
+    return signal_res
+
+
+@njit()
+def op_exp(*args):
+    """ ，逐个元素操作生成e的signal次幂，效果与np.exp()一致
+
+        np.exp()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_exp函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.exp(args[0])
+    return signal_res
+
+
+@njit()
+def op_log(*args):
+    """ ，逐个元素操作生成signal的自然对数，效果与np.log()一致
+
+        np.log()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_log函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.log(args[0])
+    return signal_res
+
+
+@njit()
+def op_log10(*args):
+    """ ，逐个元素操作生成signal的以10为底的对数，效果与np.log10()一致
+
+        np.log10()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_log10函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.log10(args[0])
+    return signal_res
+
+
+@njit()
+def op_floor(*args):
+    """ 逐个元素操作生成signal的floor，效果与np.floor()一致
+
+        np.floor()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_floor函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.floor(args[0])
+    return signal_res
+
+
+@njit()
+def op_ceil(*args):
+    """ 逐个元素操作生成signal的ceil，效果与np.cail()一致
+
+        np.ceil()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_ceil函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.ceil(args[0])
+    return signal_res
+
+
+@njit()
+def op_sqrt(*args):
+    """ ，逐个元素操作生成signal的平方根，效果与np.sqrt()一致
+
+        np.sqrt()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_sqrt函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.sqrt(args[0])
+    return signal_res
+
+
 _AVAILABLE_FUNCTIONS = {'abs':      abs,
                         'avg':      op_avg,
                         'avg_pos':  op_avg_pos,
-                        'ceil':     math.ceil,
+                        'ceil':     op_ceil,
                         'clip':     op_clip,
                         'combo':    op_sum,
-                        'exp':      math.exp,
-                        'floor':    math.floor,
-                        'log':      math.log,
-                        'log10':    math.log10,
+                        'exp':      op_exp,
+                        'floor':    op_floor,
+                        'log':      op_log,
+                        'log10':    op_log10,
                         'max':      op_max,
                         'min':      op_min,
                         'pos':      op_pos,
-                        'pow':      math.pow,
-                        'sqrt':     math.sqrt,
+                        'pow':      op_power,
+                        'power':    op_power,
+                        'sqrt':     op_sqrt,
                         'strength': op_str,
+                        'str':      op_str,
                         'sum':      op_sum,
                         }
 
@@ -230,7 +377,7 @@ def run_blend_func(func_str, *args):
         raise TypeError(f'func_str should be a string, got {type(func_str)} instead')
 
     # 分离函数名和附加参数（附加参数的个数不限，受实际定义的函数限制）
-    func_name_args = func_str.split('-')
+    func_name_args = func_str.split('_')
     func_name, *additional_args = func_name_args
     func = _AVAILABLE_FUNCTIONS.get(func_name)
     if func is None:
@@ -239,10 +386,10 @@ def run_blend_func(func_str, *args):
     additional_args = tuple(float(item) for item in additional_args)
     try:
         # debug
-        print(f'running function:\n{func_name}: {func} \n{additional_args}\n{args}')
+        # print(f'running function:\n{func_name}: {func} \n{additional_args}\n{args}')
         res = func(*additional_args, *args)
         # debug
-        print(f'function run succeed, result\n{res}')
+        # print(f'function run succeed, result\n{res}')
     except Exception as e:
         raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
                         f'error message: \n{e}')
@@ -398,9 +545,10 @@ def _exp_to_token(string):
         if ch in '+*/^&|':
             cur_token_type = token_types['operator']
         elif ch in '-':
-            # '-'号出现在左括号或另一个符号以后，应被识别为负号，成为数字的一部分
-            if prev_token_type == token_types['operator'] or \
-                    prev_token_type == token_types['open_parenthesis']:
+            # '-'号出现在左括号或另一个符号或一个完整的function以后以后，应被识别为负号，成为数字的一部分
+            if (prev_token_type == token_types['operator']) or \
+                    (prev_token_type == token_types['open_parenthesis']) or \
+                    (prev_token_type == token_types['function']):
                 cur_token_type = token_types['number']
             else:
                 # 否则被识别为一个操作符
@@ -412,9 +560,9 @@ def _exp_to_token(string):
                 # 如果数字跟在function的后面，则被识别为字母（function）的一部分，否则被识别为数字
                 # 但数字被识别为function一部分的前提是function还没有以左括号结尾
                 # 以及前一个function不在"function_like_operator"中
-                if prev_token_type == token_types['function'] and \
-                        cur_token[-1] != '(' and \
-                        cur_token not in function_like_operators:
+                if (prev_token_type == token_types['function']) and \
+                        (cur_token[-1] != '(') and \
+                        (cur_token not in function_like_operators):
                     cur_token_type = token_types['function']
                 else:
                     cur_token_type = token_types['number']
@@ -427,7 +575,10 @@ def _exp_to_token(string):
                 cur_token_type = token_types['function']
             else:
                 # 如果前一个token已经为function且已经完整，则强行分割token
-                if cur_token_type == token_types['function'] and cur_token[-1] == '(':
+                if (cur_token_type == token_types['function']) and (cur_token[-1] == '('):
+                    next_token = True
+                # 如果前一个token已经为function，且属于function_like_operator，也强行分割token
+                if (cur_token_type == token_types['function']) and (cur_token in function_like_operators):
                     next_token = True
                 cur_token_type = token_types['function']
         elif ch in '(':
