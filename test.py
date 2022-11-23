@@ -7744,6 +7744,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('abs(-1.14)+power(2, 3)and log(3.14)'),
                              ['abs(', '-1.14', ')', '+', 'power(', '2', ',', '3', ')', 'and', 'log(', '3.14', ')'])
         print(_exp_to_token('abs(-1.14)+power(2, 3)and log(3.14)'))
+        self.assertListEqual(_exp_to_token('strength_1.25(0, 1, 2)'),
+                             ['strength_1.25(', '0', ',', '1', ',', '2', ')'])
+        print(_exp_to_token('strength_1.25(0, 1, 2)'))
+        self.assertListEqual(_exp_to_token('avg_pos_3_1.25(0, 1,2)'),
+                             ['avg_pos_3_1.25(', '0', ',', '1', ',', '2', ')'])
+        print(_exp_to_token('avg_pos_3_1.25(0, 1,2)'))
 
     def test_all_blending_funcs(self):
         """ 测试其他信号组合函数是否正常工作"""
@@ -7777,6 +7783,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         signals = [signal0, signal1, signal2, signal3, signal4]
 
         # 开始测试blender functions
+        print('\ntest average functions')
         blender_exp = 'avg(0, 1, 2, 3, 4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
@@ -7790,7 +7797,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
-        print('test comparison functions')
+        print('\ntest comparison functions')
         blender_exp = 'combo(0, 1, 2) + min(0, 1,2)-max(2, 3, 4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
@@ -7804,7 +7811,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
-        print('test mathematical functions')
+        print('\ntest mathematical functions')
         blender_exp = 'abs(0) + ceil(1) * pow(0, 1) + floor(2+3+4) - exp(3) and log(4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
@@ -7818,16 +7825,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
-        print('test signal combination functions')
-        blender_exp = 'strength_1(0, 1, 2)'
+        print('\ntest signal combination functions')
+        blender_exp = 'strength_1.35(0, 1, 2)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[8.77344165, 6.12214254, 1.74092762],
-                           [7.10858499, 3.90823377, 2.38476921],
-                           [3.79382222, 2.82813777, 1.71955085],
-                           [4.84445021, 4.18981584, 4.14202468],
-                           [3.13336769, 3.20675832, 6.87013820]])
+        target = np.array([[0., 1., 0.],
+                           [1., 1., 1.],
+                           [1., 0., 0.],
+                           [1., 1., 0.],
+                           [0., 1., 0.]])
 
         hit = np.allclose(res, target)
         self.assertTrue(hit)

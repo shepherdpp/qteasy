@@ -567,8 +567,13 @@ def _exp_to_token(string):
                 else:
                     cur_token_type = token_types['number']
         elif ch in '.':
-            # 小数点应被识别为数字
-            cur_token_type = token_types['number']
+            # 小数点应被识别为数字，除非小数点是跟在一个function中的且function未结束（不以"("结尾）
+            if (cur_token_type == token_types['function']) and (cur_token[-1] != '('):
+                # 此时小数点被识别为function的一部分
+                cur_token_type = token_types['function']
+            else:
+                # 其他情况下小数点应该被识别为数字（允许出现小数点打头的数字，如".15"
+                cur_token_type = token_types['number']
         elif ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             # 字母和下划线应被识别为变量或函数名,
             if cur_token == '':
@@ -598,14 +603,17 @@ def _exp_to_token(string):
             cur_token_type = token_types['comma']
         else:
             # 某种没有预料到的字符出现在表达式中：
-            raise TypeError(f'character in expression \'{ch}\' is not valid!')
+            raise TypeError(f'character in expression "{ch}" is not valid!')
 
         if cur_token_type != prev_token_type or \
                 cur_token_type == token_types['open_parenthesis'] or \
                 cur_token_type == token_types['close_parenthesis'] or \
                 next_token:
-            # 当发现当前字符被判定为新的token类型时，说明当前token已经完整，将该token压入tokens栈
-            # 并重置token类型、重置当前token，将当前字符赋予当前token
+            # 三种情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
+            # 1，当前字符被判定为新的token类型;
+            # 2，当前token类型为左括号;
+            # 3，当前token类型为右括号;
+            # 此时重置token类型、重置当前token，将当前字符赋予当前token
             if cur_token != '':
                 tokens.append(cur_token)
             prev_token_type = cur_token_type
