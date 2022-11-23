@@ -103,7 +103,7 @@ def op_avg_pos(n, t, *args):
     signal_sum = op_sum(*args)
     # 交易信号的个数
     signal_count = len(args)
-    signal_sign = 0.
+    signal_sign = np.zeros_like(args[0])
     for msk in args:
         signal_sign += np.sign(np.where(np.abs(msk) < t, 0, msk))
     res = np.where(np.abs(signal_sign) >= n, signal_sum, 0) / signal_count
@@ -140,6 +140,33 @@ def op_clip(lbound, ubound, *args):
     signal_res = args[0]
     signal_res = np.where(signal_res < lbound, lbound, signal_res)
     signal_res = np.where(signal_res > ubound, ubound, signal_res)
+    return signal_res
+
+
+@njit()
+def op_unify(*args):
+    """ 调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
+    用于调整
+
+    example:
+    unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
+    =
+    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
+
+    :param args:
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count > 1:
+        raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
+                         f'your input')
+    signal_arr = args[0]
+    s = signal_arr.sum(1)
+    shape = (s.shape[0], 1)
+    signal_res = signal_arr / s.reshape(shape)
+    # 如果原信号中有全0的情况，会导致NaN出现，下面将所有NaN填充为0
+    signal_res = np.where(np.isnan(signal_res), 0., signal_res)
     return signal_res
 
 
@@ -338,7 +365,7 @@ def op_sqrt(*args):
 
 _AVAILABLE_FUNCTIONS = {'abs':      abs,
                         'avg':      op_avg,
-                        'avg_pos':  op_avg_pos,
+                        'avgpos':   op_avg_pos,
                         'ceil':     op_ceil,
                         'clip':     op_clip,
                         'combo':    op_sum,
@@ -349,12 +376,15 @@ _AVAILABLE_FUNCTIONS = {'abs':      abs,
                         'max':      op_max,
                         'min':      op_min,
                         'pos':      op_pos,
+                        'position': op_pos,
                         'pow':      op_power,
                         'power':    op_power,
                         'sqrt':     op_sqrt,
                         'strength': op_str,
                         'str':      op_str,
                         'sum':      op_sum,
+                        'unify':    op_unify,
+                        'uni':      op_unify
                         }
 
 
@@ -513,8 +543,7 @@ def signal_blend(op_signals, blender):
         else:
             # 如果碰到运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
-    # TODO: 是否真的需要把unify作为一个通用指标应用到所有信号上？我看没有这个必要
-    #   完全可以把unify作为一个signal blend函数来使用
+
     return s[0]
 
 

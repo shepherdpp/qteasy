@@ -7842,7 +7842,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
-        print('\ntest signal combination function strength')
+        print('\ntest signal combination function position')
         blender_exp = 'pos_3_0.5(0, 1, 2, 3, 4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
@@ -7856,16 +7856,44 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
-        print('\ntest signal combination function strength')
-        blender_exp = 'clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'
+        print('\ntest signal combination function clip')
+        blender_exp = 'clip_-1_0.8(pos_5_0.2(0, 1, 2, 3, 4))'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0., 1., 0.],
-                           [1., 1., 1.],
-                           [1., 0., 0.],
-                           [0., 0., 0.],
-                           [0., 1., 0.]])
+        target = np.array([[0.0, 0.0, 0.0],
+                           [0.0, 0.8, 0.8],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.8, 0.0],
+                           [0.8, 0.0, 0.0]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function avg position')
+        blender_exp = 'avgpos_3_0.5(0, 1, 2, 3, 4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.000, 0.574, 0.000],
+                           [0.674, 0.570, 0.562],
+                           [0.582, 0.000, 0.000],
+                           [0.000, 0.000, 0.000],
+                           [0.000, 0.452, 0.000]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function unify')
+        blender_exp = 'unify(avgpos_3_0.5(0, 1, 2, 3, 4))'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.00000000, 1.00000000, 0.00000000],
+                           [0.37320044, 0.31561462, 0.31118494],
+                           [1.00000000, 0.00000000, 0.00000000],
+                           [0.00000000, 0.00000000, 0.00000000],
+                           [0.00000000, 1.00000000, 0.00000000]])
 
         hit = np.allclose(res, target)
         self.assertTrue(hit)
