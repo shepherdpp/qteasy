@@ -74,10 +74,10 @@ def op_pos(n, t, *args):
     :param args:
     :return:
     """
-    signal_sign = 0.
+    signal_sign = np.zeros_like(args[0])
     for msk in args:
         signal_sign += np.sign(np.where(np.abs(msk) < t, 0, msk))
-    res = np.where(np.abs(signal_sign) >= n, signal_sign, 0)
+    res = np.where(np.abs(signal_sign) >= n, 1., 0)
     return res
 
 
@@ -137,7 +137,10 @@ def op_clip(lbound, ubound, *args):
     if signal_count > 1:
         raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
                          f'your input')
-    return np.clip(*args, lbound, ubound)
+    signal_res = args[0]
+    signal_res = np.where(signal_res < lbound, lbound, signal_res)
+    signal_res = np.where(signal_res > ubound, ubound, signal_res)
+    return signal_res
 
 
 @njit()
@@ -477,7 +480,7 @@ def blender_parser(blender_string):
                     raise ValueError(f'Invalid expression, missing opening parenthesis!')
 
         else:  # 扫描到不合法输入
-            raise ValueError(f'unidentified characters found in blender string: \'{token}\'')
+            raise ValueError(f'Blender token can not be parsed"{token}"')
     while op_stack:
         output.append(op_stack.pop())
     output.reverse()  # 表达式解析完成，生成前缀表达式
@@ -545,8 +548,12 @@ def _exp_to_token(string):
         if ch in '+*/^&|':
             cur_token_type = token_types['operator']
         elif ch in '-':
-            # '-'号出现在左括号或另一个符号或一个完整的function以后以后，应被识别为负号，成为数字的一部分
-            if (prev_token_type == token_types['operator']) or \
+            # '-'号出现在function中时，应被识别为function的一部分
+            if (cur_token_type == token_types['function']) and (cur_token[-1] != '('):
+                # 此时负号被识别为function的一部分
+                cur_token_type = token_types['function']
+            # '-'号出现在左括号或另一个符号或一个完整的function之后，应被识别为负号，成为数字的一部分
+            elif (prev_token_type == token_types['operator']) or \
                     (prev_token_type == token_types['open_parenthesis']) or \
                     (prev_token_type == token_types['function']):
                 cur_token_type = token_types['number']

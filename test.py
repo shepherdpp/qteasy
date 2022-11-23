@@ -7750,6 +7750,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('avg_pos_3_1.25(0, 1,2)'),
                              ['avg_pos_3_1.25(', '0', ',', '1', ',', '2', ')'])
         print(_exp_to_token('avg_pos_3_1.25(0, 1,2)'))
+        self.assertListEqual(_exp_to_token('clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'),
+                             ['clip_-1_1(', 'pos_5_0.2(', '0', ',', '1', ',', '2', ',', '3', ',', '4', ')', ')'])
+        print(_exp_to_token('clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'))
 
     def test_all_blending_funcs(self):
         """ 测试其他信号组合函数是否正常工作"""
@@ -7825,7 +7828,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
-        print('\ntest signal combination functions')
+        print('\ntest signal combination function strength')
         blender_exp = 'strength_1.35(0, 1, 2)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
@@ -7834,6 +7837,34 @@ class TestOperatorAndStrategy(unittest.TestCase):
                            [1., 1., 1.],
                            [1., 0., 0.],
                            [1., 1., 0.],
+                           [0., 1., 0.]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function strength')
+        blender_exp = 'pos_3_0.5(0, 1, 2, 3, 4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0., 1., 0.],
+                           [1., 1., 1.],
+                           [1., 0., 0.],
+                           [0., 0., 0.],
+                           [0., 1., 0.]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function strength')
+        blender_exp = 'clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0., 1., 0.],
+                           [1., 1., 1.],
+                           [1., 0., 0.],
+                           [0., 0., 0.],
                            [0., 1., 0.]])
 
         hit = np.allclose(res, target)
