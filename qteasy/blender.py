@@ -10,10 +10,8 @@
 # ======================================
 
 import numpy as np
-import math
 from numba import njit
-from .utilfuncs import unify, is_number_like, str_to_list
-
+from .utilfuncs import is_number_like, BLENDER_STRATEGY_INDEX_IDENTIFIER
 
 # 这里定义可用的交易信号混合函数
 @njit()
@@ -530,10 +528,8 @@ def signal_blend(op_signals, blender):
     exp = blender[:]  # 混合表达式的逆波兰式，可以直接读取后计算
     s = []  # 信号栈，用来存储所有需要操作的交易信号
     while exp:
-        if exp[-1].isdigit():
-            # 如果是数字，直接读取交易信号并压入信号栈
-            s.append(op_signals[int(exp.pop())])
-        elif exp[-1][-1] == ')':
+        token = exp[-1]
+        if token[-1] == ')':
             # 如果碰到函数，解析函数的参数数量，并弹出信号栈内的适当个交易信号，应用函数得到结果，压入信号栈
             token = exp.pop()
             arg_count = int(token[-2])
@@ -541,12 +537,18 @@ def signal_blend(op_signals, blender):
             args = tuple(s.pop() for i in range(arg_count))
             res = run_blend_func(func_name, *args)
             s.append(res)
-        elif exp[-1] in '~not':
+        elif token in '~not':
             # 如果碰到一元运算符，弹出信号栈内的交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), None, exp.pop()))
-        else:
+        elif token in '+-*/^andor':
             # 如果碰到二元运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
+        elif BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
+            # 如果是index，直接读取交易信号并压入信号栈
+            s.append(op_signals[int(exp.pop())])
+        else:  # exp[-1].isnum():
+            # 如果是数字，直接作为数字压入信号栈
+            s.append(exp.pop())
 
     return s[0]
 
@@ -561,12 +563,15 @@ def _exp_to_token(string):
     function_like_operators = ['or',
                                'and',
                                'not']
-    token_types = {'operator':          0,
-                   'number':            1,
-                   'function':          2,
-                   'open_parenthesis':  3,
-                   'close_parenthesis': 4,
-                   'comma':             5}
+    token_types = {
+        'operator':          0,
+        'number':            1,
+        'function':          2,
+        'open_parenthesis':  3,
+        'close_parenthesis': 4,
+        'comma':             5,
+        'index':             6
+    }
     tokens = []
     string = string.replace(' ', '')
     string = string.replace('\t', '')
@@ -581,8 +586,8 @@ def _exp_to_token(string):
         if ch in '+*/^&|~':
             cur_token_type = token_types['operator']
         elif ch in '-':
-            # '-'号出现在function中时，应被识别为function的一部分
-            if (cur_token_type == token_types['function']) and (cur_token[-1] != '('):
+            # '-'号出现在function中作为参数存在时，应被识别为function的一部分，此时'-'前只能是'_'
+            if (cur_token_type == token_types['function']) and (cur_token[-1] == '_'):
                 cur_token_type = token_types['function']
             # '-'号在下面四种情况下应被识别为负号，成为数字的一部分：
             #   1，在表达式第一位
@@ -591,7 +596,7 @@ def _exp_to_token(string):
             #   4，紧接在一个完整结尾的function之后
             elif (prev_token_type == token_types['operator']) or \
                     (prev_token_type == token_types['open_parenthesis']) or \
-                    (prev_token_type == token_types['function']) or \
+                    (prev_token_type == token_types['function']) and (cur_token[-1] == '(') or \
                     (prev_token_type is None):
 
                 cur_token_type = token_types['number']
@@ -614,10 +619,9 @@ def _exp_to_token(string):
         elif ch in '.':
             # 小数点应被识别为数字，除非小数点是跟在一个function中的且function未结束（不以"("结尾）
             if (cur_token_type == token_types['function']) and (cur_token[-1] != '('):
-                # 此时小数点被识别为function的一部分
                 cur_token_type = token_types['function']
+            # 其他情况下小数点应该被识别为数字（允许出现小数点打头的数字，如".15"
             else:
-                # 其他情况下小数点应该被识别为数字（允许出现小数点打头的数字，如".15"
                 cur_token_type = token_types['number']
         elif ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             # 字母和下划线应被识别为变量或函数名,
@@ -651,18 +655,18 @@ def _exp_to_token(string):
             # 某种没有预料到的字符出现在表达式中：
             raise TypeError(f'character in expression "{ch}" is not valid!')
 
+        # 四种常规情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
+        # 1，当前字符被判定为新的token类型;
+        # 2，当前token类型为左括号;
+        # 3，当前token类型为右括号;
+        # 4，出现强行分割token的标识next_token
+        # 一种特殊情况下，将token压入tokens栈时，需要修改该token：
+        # 1，当前token类型为数字，且token仅包含一个字符"-"时，将token改为'-1'，并压入一个额外token'*'
+        # 此时重置token类型、重置当前token，将当前字符赋予当前token
         if cur_token_type != prev_token_type or \
                 cur_token_type == token_types['open_parenthesis'] or \
                 cur_token_type == token_types['close_parenthesis'] or \
                 next_token:
-            # 四种常规情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
-            # 1，当前字符被判定为新的token类型;
-            # 2，当前token类型为左括号;
-            # 3，当前token类型为右括号;
-            # 4，出现强行分割token的标识next_token
-            # 一种特殊情况下，将token压入tokens栈时，需要修改该token：
-            # 1，当前token类型为数字，且token仅包含一个字符"-"时，将token改为'-1'，并压入一个额外token'*'
-            # 此时重置token类型、重置当前token，将当前字符赋予当前token
             if cur_token != '':
                 if (cur_token == '-') and (prev_token_type == token_types['number']):
                     tokens.append('-1')

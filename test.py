@@ -7734,6 +7734,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                    '+', '5', '3', '2', '1', '1'])
 
     def test_tokenizer(self):
+        self.assertListEqual(_exp_to_token('s1+s1'),
+                             ['s1', '+', 's1'])
+        print(_exp_to_token('s1+s1'))
         self.assertListEqual(_exp_to_token('1+1'),
                              ['1', '+', '1'])
         print(_exp_to_token('1+1'))
@@ -7752,9 +7755,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
                              ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
         print(_exp_to_token('(1 - 1 + -1) * pi'))
+        self.assertListEqual(_exp_to_token('(s1 - s1 + -1) * pi'),
+                             ['(', 's1', '-', 's1', '+', '-1', ')', '*', 'pi'])
+        print(_exp_to_token('(s1 - s1 + -1) * pi'))
         self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
                              ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
         print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
+        self.assertListEqual(_exp_to_token('abs(s5-sqrt(s2) /  cos(pi))'),
+                             ['abs(', 's5', '-', 'sqrt(', 's2', ')', '/', 'cos(', 'pi', ')', ')'])
+        print(_exp_to_token('abs(s5-sqrt(s2) /  cos(pi))'))
         self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
                              ['sin(', 'pi', ')', '+', '2.14'])
         print(_exp_to_token('sin(pi) + 2.14'))

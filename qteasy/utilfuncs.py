@@ -11,6 +11,7 @@
 import numpy as np
 import pandas as pd
 import sys
+import re
 import qteasy
 import time
 from numba import njit
@@ -55,6 +56,8 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 38: '######################################--', 39: '#######################################-',
                 40: '########################################'
                 }
+NUMBER_IDENTIFIER = re.compile('^s+[0-9]')
+BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile('^s+[0-9]')
 
 
 def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=None):
@@ -656,6 +659,7 @@ def list_truncate(lst, trunc_size):
         return sub_lists
 
 
+# TODO: 这个函数运行太慢，使用re判断合法数字
 def is_number_like(key: [str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的数字
 
