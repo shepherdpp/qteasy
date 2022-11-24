@@ -7593,8 +7593,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_signal_blend(self):
         self.assertEqual(blender_parser('0 & 1'), ['&', '1', '0'])
         self.assertEqual(blender_parser('0 or 1'), ['or', '1', '0'])
-        self.assertEqual(blender_parser('0 & 1 | 2'), ['|', '2', '&', '1', '0'])
-        blender = blender_parser('0 & 1 | 2')
+        self.assertEqual(blender_parser('s0 & s1 | s2'), ['|', 's2', '&', 's1', 's0'])
+        blender = blender_parser('s0 & s1 | s2')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
         self.assertEqual(signal_blend([1, 0, 1], blender), 1)
         self.assertEqual(signal_blend([1, 1, 0], blender), 1)
@@ -7605,7 +7605,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([0, 0, 0], blender), 0)
         # parse: '0 & ( 1 | 2 )'
         self.assertEqual(blender_parser('0 & ( 1 | 2 )'), ['&', '|', '2', '1', '0'])
-        blender = blender_parser('0 & ( 1 | 2 )')
+        blender = blender_parser('s0 & ( s1 | s2 )')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
         self.assertEqual(signal_blend([1, 0, 1], blender), 1)
         self.assertEqual(signal_blend([1, 1, 0], blender), 1)
@@ -7615,22 +7615,22 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([0, 1, 0], blender), 0)
         self.assertEqual(signal_blend([0, 0, 0], blender), 0)
         # parse: '(1-2) and 3 + ~0'
-        self.assertEqual(blender_parser('(1-2)/3 + 0'), ['+', '0', '/', '3', '-', '2', '1'])
-        blender = blender_parser('(1-2)/3 + 0')
+        self.assertEqual(blender_parser('(s1-s2)/s3 + s0'), ['+', 's0', '/', 's3', '-', 's2', 's1'])
+        blender = blender_parser('(s1-s2)/s3 + s0')
         self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
         # parse: '(1-2)/3 + 0'
-        self.assertEqual(blender_parser('(1-2)/3 + 0'), ['+', '0', '/', '3', '-', '2', '1'])
-        blender = blender_parser('(1-2)/3 + 0')
+        self.assertEqual(blender_parser('(s1-s2)/s3 + s0'), ['+', 's0', '/', 's3', '-', 's2', 's1'])
+        blender = blender_parser('(s1-s2)/s3 + s0')
         self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
         # pars: '(0*1/2*(3+4))+5*(6+7)-8'
-        self.assertEqual(blender_parser('(0*1/2*(3+4))+5*(6+7)-8'), ['-', '8', '+', '*', '+', '7', '6', '5', '*',
-                                                                     '+', '4', '3', '/', '2', '*', '1', '0'])
-        blender = blender_parser('(0*1/2*(3+4))+5*(6+7)-8')
+        self.assertEqual(blender_parser('(s0*s1/s2*(s3+s4))+s5*(s6+s7)-s8'),
+                         ['-', 's8', '+', '*', '+', 's7', 's6', 's5', '*', '+', 's4', 's3', '/', 's2', '*', 's1', 's0'])
+        blender = blender_parser('(s0*s1/s2*(s3+s4))+s5*(s6+s7)-s8')
         self.assertEqual(signal_blend([1, 1, 1, 1, 1, 1, 1, 1, 1], blender), 3)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 14)
         # parse: '0/max(2,1,3 + 5)+4'
         self.assertEqual(blender_parser('0/max(2,1,3 + 5)+4'), ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
-        blender = blender_parser('0/max(2,1,3 + 5)+4')
+        blender = blender_parser('s0/max(s2,s1,s3 + 5)+s4')
         self.assertEqual(signal_blend([8.0, 4, 3, 5.0, 0.125, 5], blender), 0.925)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 5.25)
 
@@ -7644,16 +7644,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         et = time.time()
         print(f'total time for RPN processing: {et - st}, got result: {res}')
 
-        blender = blender_parser("0 + 1 * 2")
+        blender = blender_parser("s0 + s1 * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 7)
-        blender = blender_parser("(0 + 1) * 2")
+        blender = blender_parser("(s0 + s1) * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(0+1) * 2")
+        blender = blender_parser("(s0+s1) * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(0 + 1)   * 2")
+        blender = blender_parser("(s0 + s1)   * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(0-1)/2 + 3")
-        print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
+        blender = blender_parser("(s0-s1)/s2 + s3")
+        print(f'RPN of notation: "(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
         # TODO: 目前对于-(1+2)这样的表达式还无法处理，原因不在于负号无法处理，
@@ -7679,59 +7679,59 @@ class TestOperatorAndStrategy(unittest.TestCase):
         #   '(1.5*sig0 + 1.0*sig1 + 0.5*sig2) / 3'
         #  上例中使用数字代表数字，sigN代表index
 
-        # blender = blender_parser("-(0-1)/2 + 3")
-        # print(f'RPN of notation: "-(0-1)/2 + 3" is:\n'
-        #       f'{" ".join(blender[::-1])}')
-        # self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
-        blender = blender_parser("~(0-1)/2 + 3")
-        print(f'RPN of notation: "~(0-1)/2 + 3" is:\n'
+        blender = blender_parser("-(s0-s1)/s2 + s3")
+        print(f'RPN of notation: "-(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
-        blender = blender_parser("0 + 1 / 2")
+        blender = blender_parser("~(0-1)/s2 + s3")
+        print(f'RPN of notation: "~(s0-s1)/s2 + s3" is:\n'
+              f'{" ".join(blender[::-1])}')
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        blender = blender_parser("s0 + s1 / s2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, math.pi, 4], blender), 1.78539816)
-        blender = blender_parser("(0 + 1) / 2")
+        blender = blender_parser("(s0 + s1) / s2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertEqual(signal_blend([1, 2, 3], blender), 1)
-        blender = blender_parser("(0 + 1 * 2) / 3")
+        blender = blender_parser("(s0 + s1 * s2) / s3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
-        blender = blender_parser("0 / 1 * 2")
+        blender = blender_parser("s0 / s1 * s2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertEqual(signal_blend([1, 3, 6], blender), 2)
-        blender = blender_parser("(0 - 1 + 2) * 4")
+        blender = blender_parser("(s0 - s1 + s2) * s4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
-        blender = blender_parser("0 * 1")
+        blender = blender_parser("s0 * s1")
         print(f'RPN of notation: "0 * 1" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([math.pi, math.e], blender), 8.539734222673566)
 
-        blender = blender_parser('abs(3-sqrt(2) /  cos(1))')
+        blender = blender_parser('abs(s3-sqrt(s2) /  cos(s1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['abs(1)', '-', '/', 'cos(1)', '1', 'sqrt(1)', '2', '3'])
-        blender = blender_parser('0/max(2,1,3 + 5)+4')
+        self.assertEqual(blender, ['abs(1)', '-', '/', 'cos(1)', 's1', 'sqrt(1)', 's2', 's3'])
+        blender = blender_parser('s0/max(s2,s1,s3 + s5)+s4')
         print(f'RPN of notation: "0/max(2,1,3 + 5)+4" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
+        self.assertEqual(blender, ['+', 's4', '/', 'max(3)', '+', 's5', 's3', 's1', 's2', 's0'])
 
-        blender = blender_parser('1 + sum(1,2,3+3, sum(1, 2) + 3) *5')
+        blender = blender_parser('s1 + sum(s1,s2,s3+s3, sum(s1, s2) + s3) *s5')
         print(f'RPN of notation: "1 + sum(1,2,3+3, sum(1, 2) + 3) *5" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '*', '5', 'sum(4)', '+', '3', 'sum(2)', '2', '1',
-                                   '+', '3', '3', '2', '1', '1'])
-        blender = blender_parser('1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)')
+        self.assertEqual(blender, ['+', '*', 's5', 'sum(4)', '+', 's3', 'sum(2)', 's2', 's1',
+                                   '+', 's3', 's3', 's2', 's1', 's1'])
+        blender = blender_parser('s1+sum(1,2,(s3+s5)*s4, sum(s3, (4+s5)*s6), s7-s8) * (s2+s3)')
         print(f'RPN of notation: "1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '*', '+', '3', '2', 'sum(5)', '-', '8', '7',
-                                   'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
-                                   '+', '5', '3', '2', '1', '1'])
+        self.assertEqual(blender, ['+', '*', '+', 's3', 's2', 'sum(5)', '-', 's8', 's7',
+                                   'sum(2)', '*', 's6', '+', 's5', '4', 's3', '*', 's4',
+                                   '+', 's5', 's3', '2', '1', 's1'])
 
     def test_tokenizer(self):
         self.assertListEqual(_exp_to_token('s1+s1'),

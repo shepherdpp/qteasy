@@ -56,7 +56,7 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 38: '######################################--', 39: '#######################################-',
                 40: '########################################'
                 }
-NUMBER_IDENTIFIER = re.compile('^s+[0-9]')
+NUMBER_IDENTIFIER = re.compile('^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile('^s+[0-9]')
 
 
@@ -318,8 +318,8 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=None):
     """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义
 
-        :param input_string, str: 需要分割的字符串
-        :param sep_char, str: 字符串分隔符， 默认','
+        :param input_string: str: 需要分割的字符串
+        :param sep_char: str: 字符串分隔符， 默认','
         :param case, str, 默认None, 是否改变大小写，upper输出全大写, lower输出全消协
         :param dim，需要生成的目标list的元素数量
         :param padder，当元素数量不足的时候用来补充的元素
@@ -670,20 +670,23 @@ def is_number_like(key: [str, int, float]) -> bool:
         return True
     if not isinstance(key, str):
         return False
-    if len(key) == 0:
-        return False
-    if all(ch in '-0123456789.' for ch in key):
-        if key.count('.') + key.count('-') == len(key):
-            return False
-        if key.count('.') > 1 or key.count('-') > 1:
-            return False
-        if key.count('-') == 1 and key[0] != '-':
-            return False
-        if len(key) >= 2:
-            if key[0] == '0' and key[1] != '.':
-                return False
+    if NUMBER_IDENTIFIER.match(key):
         return True
     return False
+    # if len(key) == 0:
+    #     return False
+    # if all(ch in '-0123456789.' for ch in key):
+    #     if key.count('.') + key.count('-') == len(key):
+    #         return False
+    #     if key.count('.') > 1 or key.count('-') > 1:
+    #         return False
+    #     if key.count('-') == 1 and key[0] != '-':
+    #         return False
+    #     if len(key) >= 2:
+    #         if key[0] == '0' and key[1] != '.':
+    #             return False
+    #     return True
+    # return False
 
 
 def match_ts_code(code: str, asset_types='all', match_full_name=False):

@@ -507,6 +507,9 @@ def blender_parser(blender_string):
                     output.append(op_stack.pop())
                 except:
                     raise ValueError(f'Invalid expression, missing opening parenthesis!')
+        elif BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
+            # 7, 扫描到策略序号index时，将其送入结果队列
+            output.append(token)
 
         else:  # 扫描到不合法输入
             raise ValueError(f'Blender token can not be parsed"{token}"')
@@ -540,15 +543,16 @@ def signal_blend(op_signals, blender):
         elif token in '~not':
             # 如果碰到一元运算符，弹出信号栈内的交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), None, exp.pop()))
-        elif token in '+-*/^andor':
+        elif token in '+-*/^&|andor':
             # 如果碰到二元运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
         elif BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
             # 如果是index，直接读取交易信号并压入信号栈
-            s.append(op_signals[int(exp.pop())])
+            sig_index = int(exp.pop()[1:])
+            s.append(op_signals[sig_index])
         else:  # exp[-1].isnum():
             # 如果是数字，直接作为数字压入信号栈
-            s.append(exp.pop())
+            s.append(float(exp.pop()))
 
     return s[0]
 
