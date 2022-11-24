@@ -7614,6 +7614,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([1, 0, 0], blender), 0)
         self.assertEqual(signal_blend([0, 1, 0], blender), 0)
         self.assertEqual(signal_blend([0, 0, 0], blender), 0)
+        # parse: '(1-2) and 3 + ~0'
+        self.assertEqual(blender_parser('(1-2)/3 + 0'), ['+', '0', '/', '3', '-', '2', '1'])
+        blender = blender_parser('(1-2)/3 + 0')
+        self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
         # parse: '(1-2)/3 + 0'
         self.assertEqual(blender_parser('(1-2)/3 + 0'), ['+', '0', '/', '3', '-', '2', '1'])
         blender = blender_parser('(1-2)/3 + 0')
@@ -7648,8 +7652,39 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
         blender = blender_parser("(0 + 1)   * 2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("-(0-1)/2 + 3")
-        print(f'RPN of notation: "-(0-1)/2 + 3" is:\n'
+        blender = blender_parser("(0-1)/2 + 3")
+        print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
+              f'{" ".join(blender[::-1])}')
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
+        # TODO: 目前对于-(1+2)这样的表达式还无法处理，原因不在于负号无法处理，
+        #  而是在于-(1+2)实际上应该等于-1 * (1+2)
+        #  这个问题的解决方案：在tokenize的时候识别括号或函数紧接着负号的情况，直接在
+        #  生成的token中插入'-1'与'*'，形成完整的计算链条。
+        #  但是这样还是不够，因为此时的-1应该被处理为纯数字，而不是作为一个index用
+        #  于读取相应的signal，然而在目前的blending中，所有的数字都是被作为index
+        #  使用的，这就无法将作为数字的-1和作为index的-1区分开来。
+        #  因此，还需要解决如何在表达式中规定作为数字和index的字符如何区分的问题。
+        #  当然，还有一个更进一步的问题。在一个op中，如果存在不同的回测价格类型，那么
+        #  与不同的价格类型对应的strategy的index，与它在op中的index是不同的，这样
+        #  会导致混乱，
+        #  例如：
+        #  Operator('dma0, dma1, dma2, dma3, dma4)的五个策略分属两个price_type：
+        #  {'close': [dma0, dma3, dma4],
+        #   'open':  [dma1, dma2]}
+        #  如果定义close的blender为'0 + 1 + 2'
+        #  那么0、1、2分别代表哪个策略？是否容易产生歧义？如何消除歧义？
+        #
+        #  目前，上述问题是通过将'-'替换成'~'来解决的，但这不是最终的解决方案，区分数字和
+        #  index仍然是需要解决的一个问题，这样用户可以使用如下面的表达式实现加权平均：
+        #   '(1.5*sig0 + 1.0*sig1 + 0.5*sig2) / 3'
+        #  上例中使用数字代表数字，sigN代表index
+
+        # blender = blender_parser("-(0-1)/2 + 3")
+        # print(f'RPN of notation: "-(0-1)/2 + 3" is:\n'
+        #       f'{" ".join(blender[::-1])}')
+        # self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        blender = blender_parser("~(0-1)/2 + 3")
+        print(f'RPN of notation: "~(0-1)/2 + 3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
         blender = blender_parser("0 + 1 / 2")
@@ -7708,6 +7743,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('1 and 1'),
                              ['1', 'and', '1'])
         print(_exp_to_token('1 and 1'))
+        self.assertListEqual(_exp_to_token('-1 and 1'),
+                             ['-1', 'and', '1'])
+        print(_exp_to_token('1 and 1'))
         self.assertListEqual(_exp_to_token('1 or 1'),
                              ['1', 'or', '1'])
         print(_exp_to_token('1 or 1'))
@@ -7720,11 +7758,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
                              ['sin(', 'pi', ')', '+', '2.14'])
         print(_exp_to_token('sin(pi) + 2.14'))
+        self.assertListEqual(_exp_to_token('-sin(pi) + 2.14'),
+                             ['-1', '*', 'sin(', 'pi', ')', '+', '2.14'])
+        print(_exp_to_token('-sin(pi) + 2.14'))
         self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
                              ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
         print(_exp_to_token('(1-2)/3.0 + 0.0000'))
         self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
-                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
+                             ['-1', '*', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
         print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
         self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
                              ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])

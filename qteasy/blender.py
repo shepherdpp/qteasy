@@ -541,8 +541,11 @@ def signal_blend(op_signals, blender):
             args = tuple(s.pop() for i in range(arg_count))
             res = run_blend_func(func_name, *args)
             s.append(res)
+        elif exp[-1] in '~not':
+            # 如果碰到一元运算符，弹出信号栈内的交易信号，得到结果，再压入信号栈
+            s.append(_operate(s.pop(), None, exp.pop()))
         else:
-            # 如果碰到运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
+            # 如果碰到二元运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
 
     return s[0]
@@ -575,20 +578,25 @@ def _exp_to_token(string):
     cur_token_type = None
     # 逐个扫描字符，判断每个字符代表的token类型，当token类型发生变化时，将当前token压入tokens栈
     for ch in string:
-        if ch in '+*/^&|':
+        if ch in '+*/^&|~':
             cur_token_type = token_types['operator']
         elif ch in '-':
             # '-'号出现在function中时，应被识别为function的一部分
             if (cur_token_type == token_types['function']) and (cur_token[-1] != '('):
-                # 此时负号被识别为function的一部分
                 cur_token_type = token_types['function']
-            # '-'号出现在左括号或另一个符号或一个完整的function之后，应被识别为负号，成为数字的一部分
+            # '-'号在下面四种情况下应被识别为负号，成为数字的一部分：
+            #   1，在表达式第一位
+            #   2，紧接在左括号后面
+            #   3，紧接在另一个符号后面
+            #   4，紧接在一个完整结尾的function之后
             elif (prev_token_type == token_types['operator']) or \
                     (prev_token_type == token_types['open_parenthesis']) or \
-                    (prev_token_type == token_types['function']):
+                    (prev_token_type == token_types['function']) or \
+                    (prev_token_type is None):
+
                 cur_token_type = token_types['number']
+            # 其余情况下被识别为一个操作符
             else:
-                # 否则被识别为一个操作符
                 cur_token_type = token_types['operator']
         elif ch in '0123456789':
             if cur_token == '':
@@ -616,20 +624,21 @@ def _exp_to_token(string):
             if cur_token == '':
                 cur_token_type = token_types['function']
             else:
-                # 如果前一个token已经为function且已经完整，则强行分割token
+                # 如果当前token为function且已经完整，则强行分割token
                 if (cur_token_type == token_types['function']) and (cur_token[-1] == '('):
                     next_token = True
-                # 如果前一个token已经为function，且属于function_like_operator，也强行分割token
+                # 如果当前token为function，且属于function_like_operator，也强行分割token
                 if (cur_token_type == token_types['function']) and (cur_token in function_like_operators):
                     next_token = True
                 cur_token_type = token_types['function']
         elif ch in '(':
+            # 如果左括号是单独出现的，则应被识别为左括号
             if cur_token == '':
                 cur_token_type = token_types['open_parenthesis']
+            # 如果左括号出现在function的后面，且该function尚未以左括号结束，则应被识别为function
+            # 的一部分，且被包含在function内作为function的结束符
             else:
-                # 如果左括号出现在function的后面，则是function的一部分，否则被识别为左括号
-                # 例外情况是前一个function已经以一个左括号结尾了，此时仍然应被识别为左括号
-                if prev_token_type == token_types['function'] and cur_token[-1] != '(':
+                if (prev_token_type == token_types['function']) and (cur_token[-1] != '('):
                     cur_token_type = token_types['function']
                 else:
                     cur_token_type = token_types['open_parenthesis']
@@ -646,13 +655,20 @@ def _exp_to_token(string):
                 cur_token_type == token_types['open_parenthesis'] or \
                 cur_token_type == token_types['close_parenthesis'] or \
                 next_token:
-            # 三种情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
+            # 四种常规情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
             # 1，当前字符被判定为新的token类型;
             # 2，当前token类型为左括号;
             # 3，当前token类型为右括号;
+            # 4，出现强行分割token的标识next_token
+            # 一种特殊情况下，将token压入tokens栈时，需要修改该token：
+            # 1，当前token类型为数字，且token仅包含一个字符"-"时，将token改为'-1'，并压入一个额外token'*'
             # 此时重置token类型、重置当前token，将当前字符赋予当前token
             if cur_token != '':
-                tokens.append(cur_token)
+                if (cur_token == '-') and (prev_token_type == token_types['number']):
+                    tokens.append('-1')
+                    tokens.append('*')
+                else:
+                    tokens.append(cur_token)
             prev_token_type = cur_token_type
             cur_token = ''
             next_token = False
@@ -662,6 +678,7 @@ def _exp_to_token(string):
     return tokens
 
 
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间大大增加（因为overhead）
 def _operate(n1, n2, op):
     """混合操作符函数，将两个选股、多空蒙板混合为一个
 
@@ -683,9 +700,8 @@ def _operate(n1, n2, op):
         return n2 / n1
     elif op in ['or', '|']:
         return 1 - (1 - n2) * (1 - n1)
-    elif op in ['or', '~']:
-        # TODO: add operate: "not": -1 * signal
-        raise NotImplementedError
+    elif op in ['not', '~']:
+        return -1 * n1
     else:
-        raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
+        raise ValueError(f'Unknown operand!')
 
