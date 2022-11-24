@@ -443,16 +443,17 @@ def blender_parser(blender_string):
         :rtype: list: 前缀表达式
     """
 
-    prio = {'|':   0,
-            'or':  0,
-            '&':   1,
-            'and': 1,
-            'not': 1,
-            '+':   0,
-            '-':   0,
-            '*':   1,
-            '/':   1,
-            '^':   2}
+    prio = {'|':    0,
+            'or':   0,
+            '&':    1,
+            'and':  1,
+            '~':    1,
+            'not':  1,
+            '+':    0,
+            '-':    0,
+            '*':    1,
+            '/':    1,
+            '^':    2}
 
     # 定义两个队列作为操作堆栈
     op_stack = []  # 运算符栈
@@ -461,7 +462,7 @@ def blender_parser(blender_string):
     exp_list = _exp_to_token(blender_string)[::-1]
     while exp_list:
         token = exp_list.pop()
-        # 从右至左逐个读取表达式中的元素（数字或操作符）
+        # 从右至左逐个读取表达式中的元素（数字/操作符/函数/括号/逗号）
         # 并按照以下算法处理
         if is_number_like(token):
             # 1，如果元素是数字则进入结果队列
@@ -485,7 +486,7 @@ def blender_parser(blender_string):
         elif token in prio.keys():
             # 4，扫描到运算符时
             if len(op_stack) > 0:
-                if (op_stack[-1] in '+-*/&|^') and (prio[token] <= prio[op_stack[-1]]):
+                if (op_stack[-1] in '+-*/&|^~andnotor') and (prio[token] <= prio[op_stack[-1]]):
                     output.append(op_stack.pop())
                     exp_list.append(token)
                 else:
@@ -494,7 +495,7 @@ def blender_parser(blender_string):
                 # 如果op栈为空，直接将token压入op栈
                 op_stack.append(token)
         elif (token[0].isalpha) and (token[-1] == '('):
-            # 5，扫描到字母开，且'('结尾的字符串时，说明扫描到函数，将函数压入op栈，并将数字0压入arc_count栈
+            # 5，扫描到字母开头，且'('结尾的字符串时，说明扫描到函数，将函数压入op栈，并将数字0压入arc_count栈
             op_stack.append(token)
             arg_count_stack.append(0)
         elif token == ',':
@@ -674,14 +675,17 @@ def _operate(n1, n2, op):
     """
     if op == '+':
         return n2 + n1
-    elif op == 'and' or op == '&' or op == '*':
+    elif op in ['and', '&', '*']:
         return n2 * n1
     elif op == '-':
         return n2 - n1
     elif op == '/':
         return n2 / n1
-    elif op == 'or' or op == '|':
+    elif op in ['or', '|']:
         return 1 - (1 - n2) * (1 - n1)
+    elif op in ['or', '~']:
+        # TODO: add operate: "not": -1 * signal
+        raise NotImplementedError
     else:
         raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
 

@@ -6597,7 +6597,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('dma', bt_price_type='open')
         op.set_parameter('trix', bt_price_type='high')
 
-        op.set_blender('open', '1+2')
+        op.set_blender('1+2', 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6605,8 +6605,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, None)
         self.assertEqual(blender_high, None)
 
-        op.set_blender('open', '1+2+3')
-        op.set_blender('abc', '1+2+3')
+        op.set_blender('1+2+3', 'open')
+        op.set_blender('1+2+3', 'abc')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6617,11 +6617,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_high, None)
         self.assertEqual(blender_abc, None)
 
-        op.set_blender('open', 123)
+        op.set_blender(123, 'open')
         blender_open = op.get_blender('open')
         self.assertEqual(blender_open, [])
 
-        op.set_blender(None, '1+1')
+        op.set_blender('1+1', None)
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6633,7 +6633,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '1', '1'])
         self.assertEqual(blender_high, ['+', '1', '1'])
 
-        op.set_blender(None, ['1+1', '3+4'])
+        op.set_blender(['1+1', '3+4'])
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6657,9 +6657,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # test error inputs:
         # wrong type of price_type
-        self.assertRaises(TypeError, op.set_blender, 1, '1+3')
+        self.assertRaises(TypeError, op.set_blender, '1+3', 1)
         # price_type not found, no change is made
-        op.set_blender('volume', '1+3')
+        op.set_blender('1+3', 'volume')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6667,7 +6667,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # price_type not valid, no change is made
-        op.set_blender('closee', '1+2')
+        op.set_blender('1+2', 'closee')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6675,7 +6675,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # wrong type of blender, set to empty list
-        op.set_blender('open', 55)
+        op.set_blender(55, 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6683,7 +6683,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # wrong type of blender, set to empty list
-        op.set_blender('close', ['1+2'])
+        op.set_blender(['1+2'], 'close')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6691,7 +6691,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, [])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # can't parse blender, set to empty list
-        op.set_blender('high', 'a+bc')
+        op.set_blender('a+bc', 'high')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -7311,14 +7311,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id=1,
                               pars=())
-        # self.a_to_sell.set_blender(blender='0+1+2')
         self.op.assign_hist_data(hist_data=self.hp1,
                                  cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['+', '1', '0']})
-        self.op.set_blender(None, '0*1')
+        self.op.set_blender('0*1')
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
@@ -7575,17 +7574,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # test blenders of different price types
         # test setting blenders to different price types
         # TODO: to allow operands like "and", "or", "not", "xor"
-        # a_to_sell.set_blender('close', '0 and 1 or 2')
         # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
         self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
-        op.set_blender('open', '0 & 1 | 2')
-        self.assertEqual(op.get_blender('open'), ['|', '2', '&', '1', '0'])
-        op.set_blender('high', '(0|1) & 2')
-        self.assertEqual(op.get_blender('high'), ['&', '2', '|', '1', '0'])
-        op.set_blender('close', '0 & 1 | 2')
-        self.assertEqual(op.get_blender(), {'close': ['|', '2', '&', '1', '0'],
-                                            'high':  ['&', '2', '|', '1', '0'],
-                                            'open':  ['|', '2', '&', '1', '0']})
+        op.set_blender('0 and 1 or 2', 'open')
+        self.assertEqual(op.get_blender('open'), ['or', '2', 'and', '1', '0'])
+        op.set_blender('(0or1) & 2', 'high')
+        self.assertEqual(op.get_blender('high'), ['&', '2', 'or', '1', '0'])
+        op.set_blender('0 or 1 and 2', 'close')
+        self.assertEqual(op.get_blender(), {'close': ['or', 'and', '2', '1', '0'],
+                                            'high':  ['&', '2', 'or', '1', '0'],
+                                            'open':  ['or', '2', 'and', '1', '0']})
 
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
@@ -7650,13 +7648,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
         blender = blender_parser("(0 + 1)   * 2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        # TODO: 目前对于-(1+2)这样的表达式还无法处理
-        # self.a_to_sell.set_blender('selecting', "-(0 + 1) * 2")
-        # self.assertEqual(self.a_to_sell.signal_blend([1, 2, 3]), -9)
-        blender = blender_parser("(0-1)/2 + 3")
-        print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
+        blender = blender_parser("-(0-1)/2 + 3")
+        print(f'RPN of notation: "-(0-1)/2 + 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
         blender = blender_parser("0 + 1 / 2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -12241,7 +12236,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('pos-2')
+        self.op.set_blender('pos_2_0(0, 1)')
         self.op.set_parameter(stg_id='dma', pars=timing_pars1)
         self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
@@ -12747,7 +12742,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=0.4)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('ls', 'avg')
+        op.set_blender('avg(0, 1, 2)', 'ls')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
@@ -12799,7 +12794,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=30)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('ls', 'avg')
+        op.set_blender('avg(0, 1, 2)', 'ls')
         qt.run(op, visual=False, trade_log=True)
 
     def test_op_realtime(self):
