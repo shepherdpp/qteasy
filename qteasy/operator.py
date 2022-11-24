@@ -1038,9 +1038,12 @@ class Operator:
                 stg.set_pars(opt_par[s])
                 s = k
 
-    def set_blender(self, price_type=None, blender=None):
+    def set_blender(self, blender=None, price_type=None):
         """ 统一的blender混合器属性设置入口
 
+        :param blender:
+            :type blender: str, 一个合法的交易信号混合表达式
+                                当price_type为None时，可以接受list为参数，同时为所有的price_type设置混合表达式
         :param price_type:
             :type price_type: str, 一个字符串，用于指定需要混合的交易信号的价格类型，
                                 如果给出price_type且price_type存在，则设置该price_type的策略的混合表达式
@@ -1050,9 +1053,6 @@ class Operator:
                                     如果给出的blender为一个字符串，则设置所有的price_type为相同的表达式
                                     如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个price_type的混合表达式，
                                     如果blender中的元素不足，则重复最后一个混合表达式
-        :param blender:
-            :type blender: str, 一个合法的交易信号混合表达式
-                                当price_type为None时，可以接受list为参数，同时为所有的price_type设置混合表达式
 
         :example:
             >>> op = Operator('dma, macd')
@@ -1060,17 +1060,17 @@ class Operator:
             >>> op.set_parameter('macd', price_type='open')
 
             >>> # 设置open的策略混合模式
-            >>> op.set_blender('open', '1+2')
+            >>> op.set_blender('1+2', 'open')
             >>> op.get_blender()
             >>> {'open': ['+', '2', '1']}
 
             >>> # 给所有的交易价格策略设置同样的混合表达式
-            >>> op.set_blender(None, '1 + 2')
+            >>> op.set_blender('1 + 2')
             >>> op.get_blender()
             >>> {'close': ['+', '2', '1'], 'open':  ['+', '2', '1']}
 
             >>> # 通过一个列表给不同的交易价格策略设置不同的混合表达式（交易价格按照字母顺序从小到大排列）
-            >>> op.set_blender(None, ['1 + 2', '3*4'])
+            >>> op.set_blender(['1 + 2', '3*4'], None)
             >>> op.get_blender()
             >>> {'close': ['+', '2', '1'], 'open':  ['*', '4', '3']}
 
@@ -1109,7 +1109,6 @@ class Operator:
                         f'current valid price type list as following:\n{self.bt_price_types}')
                 return
             if isinstance(blender, str):
-                # TODO: 此处似乎应该增加blender字符串的合法性检查？？
                 try:
                     parsed_blender = blender_parser(blender)
                     self._stg_blender[price_type] = parsed_blender
@@ -1439,7 +1438,8 @@ class Operator:
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式，在未设置混合器时，混合器是一个空dict
         if self.strategy_blenders == {}:
-            logger_core.warning(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+            logger_core.warning(f'User-defined Signal blenders do not exist, default ones will be created!',
+                                UserWarning)
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
             for price_type in self.bt_price_types:
