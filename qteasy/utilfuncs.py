@@ -57,7 +57,7 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 40: '########################################'
                 }
 NUMBER_IDENTIFIER = re.compile('^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
-BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile('^s+[0-9]')
+BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile('s\d*\d$')
 
 
 def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=None):

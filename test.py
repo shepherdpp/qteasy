@@ -7316,10 +7316,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', '1', '0']})
-        self.op.set_blender('0*1')
+                         {'close': ['+', 's1', 's0']})
+        self.op.set_blender('s0*s1')
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['*', '1', '0']})
+                         {'close': ['*', 's1', 's0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal()
 
@@ -7399,14 +7399,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
-        self.op.set_blender(blender='0 or 1', price_type='open')
+        self.op.set_blender(blender='s0 or s1', price_type='open')
         self.op.assign_hist_data(hist_data=self.hp1,
                                  cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['*', '1', '0'],
-                          'open':  ['or', '1', '0']})
+                         {'close': ['*', 's1', 's0'],
+                          'open':  ['or', 's1', 's0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal()
 
@@ -7576,14 +7576,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # TODO: to allow operands like "and", "or", "not", "xor"
         # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
         self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
-        op.set_blender('0 and 1 or 2', 'open')
-        self.assertEqual(op.get_blender('open'), ['or', '2', 'and', '1', '0'])
-        op.set_blender('(0or1) & 2', 'high')
-        self.assertEqual(op.get_blender('high'), ['&', '2', 'or', '1', '0'])
-        op.set_blender('0 or 1 and 2', 'close')
-        self.assertEqual(op.get_blender(), {'close': ['or', 'and', '2', '1', '0'],
-                                            'high':  ['&', '2', 'or', '1', '0'],
-                                            'open':  ['or', '2', 'and', '1', '0']})
+        op.set_blender('s0 and s1 or s2', 'open')
+        self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
+        op.set_blender('(s0ors1) & s2', 'high')
+        self.assertEqual(op.get_blender('high'), ['&', 's2', 'or', 's1', 's0'])
+        op.set_blender('s0 or s1 and s2', 'close')
+        self.assertEqual(op.get_blender(), {'close': ['or', 'and', 's2', 's1', 's0'],
+                                            'high':  ['&', 's2', 'or', 's1', 's0'],
+                                            'open':  ['or', 's2', 'and', 's1', 's0']})
 
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
@@ -7656,29 +7656,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'RPN of notation: "(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
-        # TODO: 目前对于-(1+2)这样的表达式还无法处理，原因不在于负号无法处理，
-        #  而是在于-(1+2)实际上应该等于-1 * (1+2)
-        #  这个问题的解决方案：在tokenize的时候识别括号或函数紧接着负号的情况，直接在
-        #  生成的token中插入'-1'与'*'，形成完整的计算链条。
-        #  但是这样还是不够，因为此时的-1应该被处理为纯数字，而不是作为一个index用
-        #  于读取相应的signal，然而在目前的blending中，所有的数字都是被作为index
-        #  使用的，这就无法将作为数字的-1和作为index的-1区分开来。
-        #  因此，还需要解决如何在表达式中规定作为数字和index的字符如何区分的问题。
-        #  当然，还有一个更进一步的问题。在一个op中，如果存在不同的回测价格类型，那么
-        #  与不同的价格类型对应的strategy的index，与它在op中的index是不同的，这样
-        #  会导致混乱，
-        #  例如：
-        #  Operator('dma0, dma1, dma2, dma3, dma4)的五个策略分属两个price_type：
-        #  {'close': [dma0, dma3, dma4],
-        #   'open':  [dma1, dma2]}
-        #  如果定义close的blender为'0 + 1 + 2'
-        #  那么0、1、2分别代表哪个策略？是否容易产生歧义？如何消除歧义？
-        #
-        #  目前，上述问题是通过将'-'替换成'~'来解决的，但这不是最终的解决方案，区分数字和
-        #  index仍然是需要解决的一个问题，这样用户可以使用如下面的表达式实现加权平均：
-        #   '(1.5*sig0 + 1.0*sig1 + 0.5*sig2) / 3'
-        #  上例中使用数字代表数字，sigN代表index
-
         blender = blender_parser("-(s0-s1)/s2 + s3")
         print(f'RPN of notation: "-(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7748,6 +7725,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(_exp_to_token('1 and 1'))
         self.assertListEqual(_exp_to_token('-1 and 1'),
                              ['-1', 'and', '1'])
+        print(_exp_to_token('s0 and s1'))
+        self.assertListEqual(_exp_to_token('s0 or s1'),
+                             ['s0', 'or', 's1'])
         print(_exp_to_token('1 and 1'))
         self.assertListEqual(_exp_to_token('1 or 1'),
                              ['1', 'or', '1'])
@@ -7832,7 +7812,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # 开始测试blender functions
         print('\ntest average functions')
-        blender_exp = 'avg(0, 1, 2, 3, 4)'
+        blender_exp = 'avg(s0, s1, s2, s3, s4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7846,7 +7826,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest comparison functions')
-        blender_exp = 'combo(0, 1, 2) + min(0, 1,2)-max(2, 3, 4)'
+        blender_exp = 'combo(s0, s1, s2) + min(s0, s1,s2)-max(s2, s3, s4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7860,7 +7840,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest mathematical functions')
-        blender_exp = 'abs(0) + ceil(1) * pow(0, 1) + floor(2+3+4) - exp(3) and log(4)'
+        blender_exp = 'abs(s0) + ceil(s1) * pow(s0, s1) + floor(s2+s3+s4) - exp(s3) and log(s4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7874,7 +7854,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest signal combination function strength')
-        blender_exp = 'strength_1.35(0, 1, 2)'
+        blender_exp = 'strength_1.35(s0, s1, s2)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7888,7 +7868,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest signal combination function position')
-        blender_exp = 'pos_3_0.5(0, 1, 2, 3, 4)'
+        blender_exp = 'pos_3_0.5(s0, s1, s2, s3, s4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7902,7 +7882,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest signal combination function clip')
-        blender_exp = 'clip_-1_0.8(pos_5_0.2(0, 1, 2, 3, 4))'
+        blender_exp = 'clip_-1_0.8(pos_5_0.2(s0, s1, s2, s3, s4))'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7916,7 +7896,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest signal combination function avg position')
-        blender_exp = 'avgpos_3_0.5(0, 1, 2, 3, 4)'
+        blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -7930,7 +7910,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(hit)
 
         print('\ntest signal combination function unify')
-        blender_exp = 'unify(avgpos_3_0.5(0, 1, 2, 3, 4))'
+        blender_exp = 'unify(avgpos_3_0.5(s0, s1, s2, s3, s4))'
         blender = blender_parser(blender_exp)
         res = signal_blend(signals, blender)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
@@ -9071,7 +9051,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          pars=(20,),
                          data_types='close',
                          bt_price_type='close')
-        op.set_blender(blender='0')
+        op.set_blender(blender='s0')
         op.get_blender()
         qt.configure(asset_pool=['000300.SH',
                                  '399006.SZ'],
@@ -9119,7 +9099,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op_min.set_parameter(0, data_freq='h', sample_freq='h')
         op_min.set_parameter(1, data_freq='h', sample_freq='d')
         op_min.set_parameter(2, data_freq='h', sample_freq='y')
-        op_min.set_blender(blender='(0+1)*2')
+        op_min.set_blender(blender='(s0+s1)*s2')
         qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
                                  '000918.SZ', '000819.SZ', '000899.SZ'],
                      asset_type='E',
@@ -12286,7 +12266,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('pos_2_0(0, 1)')
+        self.op.set_blender('pos_2_0(s0, s1)')
         self.op.set_parameter(stg_id='dma', pars=timing_pars1)
         self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
@@ -12792,7 +12772,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=0.4)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('avg(0, 1, 2)', 'ls')
+        op.set_blender('avg(s0, s1, s2)', 'ls')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
@@ -12844,7 +12824,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=30)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('avg(0, 1, 2)', 'ls')
+        op.set_blender('avg(s0, s1, s2)', 'ls')
         qt.run(op, visual=False, trade_log=True)
 
     def test_op_realtime(self):

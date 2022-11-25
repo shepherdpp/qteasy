@@ -1444,8 +1444,9 @@ class Operator:
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
             for price_type in self.bt_price_types:
                 stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
+                strategy_indices = ('s'+idx for idx in map(str, range(stg_count_for_price_type)))
                 self.set_blender(price_type=price_type,
-                                 blender='+'.join(map(str, range(stg_count_for_price_type))))
+                                 blender='+'.join(strategy_indices))
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
             stg_id: hist_data[stg.data_types, :, :]

@@ -8,6 +8,7 @@
 #   Strategy blending functions and
 #   blender string parsers.
 # ======================================
+import re
 
 import numpy as np
 from numba import njit
@@ -573,8 +574,7 @@ def _exp_to_token(string):
         'function':          2,
         'open_parenthesis':  3,
         'close_parenthesis': 4,
-        'comma':             5,
-        'index':             6
+        'comma':             5
     }
     tokens = []
     string = string.replace(' ', '')
@@ -637,6 +637,10 @@ def _exp_to_token(string):
                     next_token = True
                 # 如果当前token为function，且属于function_like_operator，也强行分割token
                 if (cur_token_type == token_types['function']) and (cur_token in function_like_operators):
+                    next_token = True
+                # 如果当前token为function，但发现当前token是index，以s打头且后接若干数，也强行分割token
+                if (cur_token_type == token_types['function']) and \
+                        (BLENDER_STRATEGY_INDEX_IDENTIFIER.match(cur_token)):
                     next_token = True
                 cur_token_type = token_types['function']
         elif ch in '(':
