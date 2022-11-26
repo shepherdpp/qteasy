@@ -11,6 +11,7 @@
 import numpy as np
 import pandas as pd
 import sys
+import re
 import qteasy
 import time
 from numba import njit
@@ -55,6 +56,8 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 38: '######################################--', 39: '#######################################-',
                 40: '########################################'
                 }
+NUMBER_IDENTIFIER = re.compile('^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
+BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile('s\d*\d$')
 
 
 def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=None):
@@ -315,8 +318,8 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=None):
     """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义
 
-        :param input_string, str: 需要分割的字符串
-        :param sep_char, str: 字符串分隔符， 默认','
+        :param input_string: str: 需要分割的字符串
+        :param sep_char: str: 字符串分隔符， 默认','
         :param case, str, 默认None, 是否改变大小写，upper输出全大写, lower输出全消协
         :param dim，需要生成的目标list的元素数量
         :param padder，当元素数量不足的时候用来补充的元素
@@ -339,7 +342,6 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     return res
 
 
-# TODO: this function can be merged with str_to_list(), NO, different functions
 def input_to_list(pars: [str, int, list], dim: int, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
@@ -510,6 +512,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         return is_open == 1
     else:
         # TODO: Not yet implemented
+        #  提供一种足够简单但不太精确的方式大致估算交易日期；
+        #  或者直接使用maybe_trade_day()函数
         raise NotImplementedError
 
 
@@ -657,7 +661,7 @@ def list_truncate(lst, trunc_size):
 
 
 def is_number_like(key: [str, int, float]) -> bool:
-    """ 判断一个字符串是否是一个合法的数字
+    """ 判断一个字符串是否是一个合法的数，使用re比原来的版本快5～10倍
 
     :param key:
     :return:
@@ -666,20 +670,23 @@ def is_number_like(key: [str, int, float]) -> bool:
         return True
     if not isinstance(key, str):
         return False
-    if len(key) == 0:
-        return False
-    if all(ch in '-0123456789.' for ch in key):
-        if key.count('.') + key.count('-') == len(key):
-            return False
-        if key.count('.') > 1 or key.count('-') > 1:
-            return False
-        if key.count('-') == 1 and key[0] != '-':
-            return False
-        if len(key) >= 2:
-            if key[0] == '0' and key[1] != '.':
-                return False
+    if NUMBER_IDENTIFIER.match(key):
         return True
     return False
+    # if len(key) == 0:
+    #     return False
+    # if all(ch in '-0123456789.' for ch in key):
+    #     if key.count('.') + key.count('-') == len(key):
+    #         return False
+    #     if key.count('.') > 1 or key.count('-') > 1:
+    #         return False
+    #     if key.count('-') == 1 and key[0] != '-':
+    #         return False
+    #     if len(key) >= 2:
+    #         if key[0] == '0' and key[1] != '.':
+    #             return False
+    #     return True
+    # return False
 
 
 def match_ts_code(code: str, asset_types='all', match_full_name=False):

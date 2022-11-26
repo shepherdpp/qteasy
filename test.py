@@ -6597,7 +6597,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('dma', bt_price_type='open')
         op.set_parameter('trix', bt_price_type='high')
 
-        op.set_blender('open', '1+2')
+        op.set_blender('1+2', 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6605,8 +6605,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, None)
         self.assertEqual(blender_high, None)
 
-        op.set_blender('open', '1+2+3')
-        op.set_blender('abc', '1+2+3')
+        op.set_blender('1+2+3', 'open')
+        op.set_blender('1+2+3', 'abc')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6617,11 +6617,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_high, None)
         self.assertEqual(blender_abc, None)
 
-        op.set_blender('open', 123)
+        op.set_blender(123, 'open')
         blender_open = op.get_blender('open')
         self.assertEqual(blender_open, [])
 
-        op.set_blender(None, '1+1')
+        op.set_blender('1+1', None)
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6633,7 +6633,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '1', '1'])
         self.assertEqual(blender_high, ['+', '1', '1'])
 
-        op.set_blender(None, ['1+1', '3+4'])
+        op.set_blender(['1+1', '3+4'])
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6657,9 +6657,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # test error inputs:
         # wrong type of price_type
-        self.assertRaises(TypeError, op.set_blender, 1, '1+3')
+        self.assertRaises(TypeError, op.set_blender, '1+3', 1)
         # price_type not found, no change is made
-        op.set_blender('volume', '1+3')
+        op.set_blender('1+3', 'volume')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6667,7 +6667,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # price_type not valid, no change is made
-        op.set_blender('closee', '1+2')
+        op.set_blender('1+2', 'closee')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6675,7 +6675,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # wrong type of blender, set to empty list
-        op.set_blender('open', 55)
+        op.set_blender(55, 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6683,7 +6683,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # wrong type of blender, set to empty list
-        op.set_blender('close', ['1+2'])
+        op.set_blender(['1+2'], 'close')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6691,7 +6691,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_close, [])
         self.assertEqual(blender_high, ['*', '3', '2'])
         # can't parse blender, set to empty list
-        op.set_blender('high', 'a+bc')
+        op.set_blender('a+bc', 'high')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
@@ -6982,7 +6982,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op = qt.Operator('macd, dma, trix, cdl')
         # TODO: 修改set_parameter()，使下面的用法成立
-        # a_to_sell.set_parameter('dma, cdl', price_type='open')
+        #  a_to_sell.set_parameter('dma, cdl', price_type='open')
         op.set_parameter('dma', bt_price_type='open')
         op.set_parameter('cdl', bt_price_type='open')
         sb = op.strategy_blenders
@@ -7232,7 +7232,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(target_comparison)
         # test if automatic strategy blenders are set
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', '2', '+', '1', '0']})
+                         {'close': ['+', 's2', '+', 's1', 's0']})
         tim_hist_data = self.op._op_history_data['custom']
         sel_hist_data = self.op._op_history_data['custom_1']
         ric_hist_data = self.op._op_history_data['custom_2']
@@ -7311,16 +7311,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id=1,
                               pars=())
-        # self.a_to_sell.set_blender(blender='0+1+2')
         self.op.assign_hist_data(hist_data=self.hp1,
                                  cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', '1', '0']})
-        self.op.set_blender(None, '0*1')
+                         {'close': ['+', 's1', 's0']})
+        self.op.set_blender('s0*s1')
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['*', '1', '0']})
+                         {'close': ['*', 's1', 's0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal()
 
@@ -7400,14 +7399,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
-        self.op.set_blender(blender='0 or 1', price_type='open')
+        self.op.set_blender(blender='s0 or s1', price_type='open')
         self.op.assign_hist_data(hist_data=self.hp1,
                                  cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['*', '1', '0'],
-                          'open':  ['or', '1', '0']})
+                         {'close': ['*', 's1', 's0'],
+                          'open':  ['or', 's1', 's0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal()
 
@@ -7574,18 +7573,17 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
         # test blenders of different price types
         # test setting blenders to different price types
-        # TODO: to allow operands like "and", "or", "not", "xor"
-        # a_to_sell.set_blender('close', '0 and 1 or 2')
+
         # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
         self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
-        op.set_blender('open', '0 & 1 | 2')
-        self.assertEqual(op.get_blender('open'), ['|', '2', '&', '1', '0'])
-        op.set_blender('high', '(0|1) & 2')
-        self.assertEqual(op.get_blender('high'), ['&', '2', '|', '1', '0'])
-        op.set_blender('close', '0 & 1 | 2')
-        self.assertEqual(op.get_blender(), {'close': ['|', '2', '&', '1', '0'],
-                                            'high':  ['&', '2', '|', '1', '0'],
-                                            'open':  ['|', '2', '&', '1', '0']})
+        op.set_blender('s0 and s1 or s2', 'open')
+        self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
+        op.set_blender('(s0ors1) & s2', 'high')
+        self.assertEqual(op.get_blender('high'), ['&', 's2', 'or', 's1', 's0'])
+        op.set_blender('s0 or s1 and s2', 'close')
+        self.assertEqual(op.get_blender(), {'close': ['or', 'and', 's2', 's1', 's0'],
+                                            'high':  ['&', 's2', 'or', 's1', 's0'],
+                                            'open':  ['or', 's2', 'and', 's1', 's0']})
 
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
@@ -7595,8 +7593,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_signal_blend(self):
         self.assertEqual(blender_parser('0 & 1'), ['&', '1', '0'])
         self.assertEqual(blender_parser('0 or 1'), ['or', '1', '0'])
-        self.assertEqual(blender_parser('0 & 1 | 2'), ['|', '2', '&', '1', '0'])
-        blender = blender_parser('0 & 1 | 2')
+        self.assertEqual(blender_parser('s0 & s1 | s2'), ['|', 's2', '&', 's1', 's0'])
+        blender = blender_parser('s0 & s1 | s2')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
         self.assertEqual(signal_blend([1, 0, 1], blender), 1)
         self.assertEqual(signal_blend([1, 1, 0], blender), 1)
@@ -7607,7 +7605,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([0, 0, 0], blender), 0)
         # parse: '0 & ( 1 | 2 )'
         self.assertEqual(blender_parser('0 & ( 1 | 2 )'), ['&', '|', '2', '1', '0'])
-        blender = blender_parser('0 & ( 1 | 2 )')
+        blender = blender_parser('s0 & ( s1 | s2 )')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
         self.assertEqual(signal_blend([1, 0, 1], blender), 1)
         self.assertEqual(signal_blend([1, 1, 0], blender), 1)
@@ -7616,19 +7614,23 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([1, 0, 0], blender), 0)
         self.assertEqual(signal_blend([0, 1, 0], blender), 0)
         self.assertEqual(signal_blend([0, 0, 0], blender), 0)
+        # parse: '(1-2) and 3 + ~0'
+        self.assertEqual(blender_parser('(s1-s2)/s3 + s0'), ['+', 's0', '/', 's3', '-', 's2', 's1'])
+        blender = blender_parser('(s1-s2)/s3 + s0')
+        self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
         # parse: '(1-2)/3 + 0'
-        self.assertEqual(blender_parser('(1-2)/3 + 0'), ['+', '0', '/', '3', '-', '2', '1'])
-        blender = blender_parser('(1-2)/3 + 0')
+        self.assertEqual(blender_parser('(s1-s2)/s3 + s0'), ['+', 's0', '/', 's3', '-', 's2', 's1'])
+        blender = blender_parser('(s1-s2)/s3 + s0')
         self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
         # pars: '(0*1/2*(3+4))+5*(6+7)-8'
-        self.assertEqual(blender_parser('(0*1/2*(3+4))+5*(6+7)-8'), ['-', '8', '+', '*', '+', '7', '6', '5', '*',
-                                                                     '+', '4', '3', '/', '2', '*', '1', '0'])
-        blender = blender_parser('(0*1/2*(3+4))+5*(6+7)-8')
+        self.assertEqual(blender_parser('(s0*s1/s2*(s3+s4))+s5*(s6+s7)-s8'),
+                         ['-', 's8', '+', '*', '+', 's7', 's6', 's5', '*', '+', 's4', 's3', '/', 's2', '*', 's1', 's0'])
+        blender = blender_parser('(s0*s1/s2*(s3+s4))+s5*(s6+s7)-s8')
         self.assertEqual(signal_blend([1, 1, 1, 1, 1, 1, 1, 1, 1], blender), 3)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 14)
         # parse: '0/max(2,1,3 + 5)+4'
         self.assertEqual(blender_parser('0/max(2,1,3 + 5)+4'), ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
-        blender = blender_parser('0/max(2,1,3 + 5)+4')
+        blender = blender_parser('s0/max(s2,s1,s3 + 5)+s4')
         self.assertEqual(signal_blend([8.0, 4, 3, 5.0, 0.125, 5], blender), 0.925)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 5.25)
 
@@ -7642,68 +7644,76 @@ class TestOperatorAndStrategy(unittest.TestCase):
         et = time.time()
         print(f'total time for RPN processing: {et - st}, got result: {res}')
 
-        blender = blender_parser("0 + 1 * 2")
+        blender = blender_parser("s0 + s1 * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 7)
-        blender = blender_parser("(0 + 1) * 2")
+        blender = blender_parser("(s0 + s1) * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(0+1) * 2")
+        blender = blender_parser("(s0+s1) * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(0 + 1)   * 2")
+        blender = blender_parser("(s0 + s1)   * s2")
         self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        # TODO: 目前对于-(1+2)这样的表达式还无法处理
-        # self.a_to_sell.set_blender('selecting', "-(0 + 1) * 2")
-        # self.assertEqual(self.a_to_sell.signal_blend([1, 2, 3]), -9)
-        blender = blender_parser("(0-1)/2 + 3")
-        print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
+        blender = blender_parser("(s0-s1)/s2 + s3")
+        print(f'RPN of notation: "(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
-        blender = blender_parser("0 + 1 / 2")
+        blender = blender_parser("-(s0-s1)/s2 + s3")
+        print(f'RPN of notation: "-(s0-s1)/s2 + s3" is:\n'
+              f'{" ".join(blender[::-1])}')
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        blender = blender_parser("~(0-1)/s2 + s3")
+        print(f'RPN of notation: "~(s0-s1)/s2 + s3" is:\n'
+              f'{" ".join(blender[::-1])}')
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        blender = blender_parser("s0 + s1 / s2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, math.pi, 4], blender), 1.78539816)
-        blender = blender_parser("(0 + 1) / 2")
+        blender = blender_parser("(s0 + s1) / s2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertEqual(signal_blend([1, 2, 3], blender), 1)
-        blender = blender_parser("(0 + 1 * 2) / 3")
+        blender = blender_parser("(s0 + s1 * s2) / s3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
-        blender = blender_parser("0 / 1 * 2")
+        blender = blender_parser("s0 / s1 * s2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertEqual(signal_blend([1, 3, 6], blender), 2)
-        blender = blender_parser("(0 - 1 + 2) * 4")
+        blender = blender_parser("(s0 - s1 + s2) * s4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
-        blender = blender_parser("0 * 1")
+        blender = blender_parser("s0 * s1")
         print(f'RPN of notation: "0 * 1" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertAlmostEquals(signal_blend([math.pi, math.e], blender), 8.539734222673566)
 
-        blender = blender_parser('abs(3-sqrt(2) /  cos(1))')
+        blender = blender_parser('abs(s3-sqrt(s2) /  cos(s1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['abs(1)', '-', '/', 'cos(1)', '1', 'sqrt(1)', '2', '3'])
-        blender = blender_parser('0/max(2,1,3 + 5)+4')
+        self.assertEqual(blender, ['abs(1)', '-', '/', 'cos(1)', 's1', 'sqrt(1)', 's2', 's3'])
+        blender = blender_parser('s0/max(s2,s1,s3 + s5)+s4')
         print(f'RPN of notation: "0/max(2,1,3 + 5)+4" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
+        self.assertEqual(blender, ['+', 's4', '/', 'max(3)', '+', 's5', 's3', 's1', 's2', 's0'])
 
-        blender = blender_parser('1 + sum(1,2,3+3, sum(1, 2) + 3) *5')
+        blender = blender_parser('s1 + sum(s1,s2,s3+s3, sum(s1, s2) + s3) *s5')
         print(f'RPN of notation: "1 + sum(1,2,3+3, sum(1, 2) + 3) *5" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '*', '5', 'sum(4)', '+', '3', 'sum(2)', '2', '1',
-                                   '+', '3', '3', '2', '1', '1'])
-        blender = blender_parser('1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)')
+        self.assertEqual(blender, ['+', '*', 's5', 'sum(4)', '+', 's3', 'sum(2)', 's2', 's1',
+                                   '+', 's3', 's3', 's2', 's1', 's1'])
+        blender = blender_parser('s1+sum(1,2,(s3+s5)*s4, sum(s3, (4+s5)*s6), s7-s8) * (s2+s3)')
         print(f'RPN of notation: "1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '*', '+', '3', '2', 'sum(5)', '-', '8', '7',
-                                   'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
-                                   '+', '5', '3', '2', '1', '1'])
+        self.assertEqual(blender, ['+', '*', '+', 's3', 's2', 'sum(5)', '-', 's8', 's7',
+                                   'sum(2)', '*', 's6', '+', 's5', '4', 's3', '*', 's4',
+                                   '+', 's5', 's3', '2', '1', 's1'])
 
     def test_tokenizer(self):
+        self.assertListEqual(_exp_to_token('s1+s1'),
+                             ['s1', '+', 's1'])
+        print(_exp_to_token('s1+s1'))
         self.assertListEqual(_exp_to_token('1+1'),
                              ['1', '+', '1'])
         print(_exp_to_token('1+1'))
@@ -7713,23 +7723,38 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('1 and 1'),
                              ['1', 'and', '1'])
         print(_exp_to_token('1 and 1'))
+        self.assertListEqual(_exp_to_token('-1 and 1'),
+                             ['-1', 'and', '1'])
+        print(_exp_to_token('s0 and s1'))
+        self.assertListEqual(_exp_to_token('s0 or s1'),
+                             ['s0', 'or', 's1'])
+        print(_exp_to_token('1 and 1'))
         self.assertListEqual(_exp_to_token('1 or 1'),
                              ['1', 'or', '1'])
         print(_exp_to_token('1 or 1'))
         self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
                              ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
         print(_exp_to_token('(1 - 1 + -1) * pi'))
+        self.assertListEqual(_exp_to_token('(s1 - s1 + -1) * pi'),
+                             ['(', 's1', '-', 's1', '+', '-1', ')', '*', 'pi'])
+        print(_exp_to_token('(s1 - s1 + -1) * pi'))
         self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
                              ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
         print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
+        self.assertListEqual(_exp_to_token('abs(s5-sqrt(s2) /  cos(pi))'),
+                             ['abs(', 's5', '-', 'sqrt(', 's2', ')', '/', 'cos(', 'pi', ')', ')'])
+        print(_exp_to_token('abs(s5-sqrt(s2) /  cos(pi))'))
         self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
                              ['sin(', 'pi', ')', '+', '2.14'])
         print(_exp_to_token('sin(pi) + 2.14'))
+        self.assertListEqual(_exp_to_token('-sin(pi) + 2.14'),
+                             ['-1', '*', 'sin(', 'pi', ')', '+', '2.14'])
+        print(_exp_to_token('-sin(pi) + 2.14'))
         self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
                              ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
         print(_exp_to_token('(1-2)/3.0 + 0.0000'))
         self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
-                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
+                             ['-1', '*', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
         print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
         self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
                              ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
@@ -7741,6 +7766,162 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertListEqual(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
                              ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
         print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
+        self.assertListEqual(_exp_to_token('abs(-1.14)+power(2, 3)and log(3.14)'),
+                             ['abs(', '-1.14', ')', '+', 'power(', '2', ',', '3', ')', 'and', 'log(', '3.14', ')'])
+        print(_exp_to_token('abs(-1.14)+power(2, 3)and log(3.14)'))
+        self.assertListEqual(_exp_to_token('strength_1.25(0, 1, 2)'),
+                             ['strength_1.25(', '0', ',', '1', ',', '2', ')'])
+        print(_exp_to_token('strength_1.25(0, 1, 2)'))
+        self.assertListEqual(_exp_to_token('avg_pos_3_1.25(0, 1,2)'),
+                             ['avg_pos_3_1.25(', '0', ',', '1', ',', '2', ')'])
+        print(_exp_to_token('avg_pos_3_1.25(0, 1,2)'))
+        self.assertListEqual(_exp_to_token('clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'),
+                             ['clip_-1_1(', 'pos_5_0.2(', '0', ',', '1', ',', '2', ',', '3', ',', '4', ')', ')'])
+        print(_exp_to_token('clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'))
+
+    def test_all_blending_funcs(self):
+        """ 测试其他信号组合函数是否正常工作"""
+        # 生成五个示例交易信号
+        signal0 = np.array([[0.12, 0.35, 0.11],
+                            [0.81, 0.22, 0.29],
+                            [0.86, 0.47, 0.29],
+                            [0.46, 0.81, 0.60],
+                            [0.42, 0.55, 0.74]])
+        signal1 = np.array([[0.94, 0.66, 0.69],
+                            [0.85, 0.30, 0.65],
+                            [0.87, 0.06, 0.24],
+                            [0.73, 0.20, 0.19],
+                            [0.43, 0.18, 0.44]])
+        signal2 = np.array([[0.24, 0.81, 0.44],
+                            [0.66, 0.92, 0.99],
+                            [0.18, 0.17, 0.11],
+                            [0.48, 0.57, 0.55],
+                            [0.37, 0.66, 0.01]])
+        signal3 = np.array([[0.92, 0.88, 0.16],
+                            [0.89, 0.79, 0.27],
+                            [0.48, 0.77, 0.20],
+                            [0.43, 0.33, 0.25],
+                            [0.90, 0.30, 0.49]])
+        signal4 = np.array([[0.05, 0.17, 0.30],
+                            [0.16, 0.62, 0.61],
+                            [0.52, 0.83, 0.57],
+                            [0.16, 0.36, 0.28],
+                            [0.99, 0.57, 0.04]])
+        # 将示例信号组合为交易信号组，与operator输出形式相同
+        signals = [signal0, signal1, signal2, signal3, signal4]
+
+        # 开始测试blender functions
+        print('\ntest average functions')
+        blender_exp = 'avg(s0, s1, s2, s3, s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.454, 0.574, 0.340],
+                           [0.674, 0.570, 0.562],
+                           [0.582, 0.460, 0.282],
+                           [0.452, 0.454, 0.374],
+                           [0.622, 0.452, 0.344]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest comparison functions')
+        blender_exp = 'combo(s0, s1, s2) + min(s0, s1,s2)-max(s2, s3, s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.50,  1.29,  0.91],
+                           [2.09,  0.74,  1.23],
+                           [1.57, -0.07,  0.18],
+                           [1.65,  1.21,  0.98],
+                           [0.60,  0.91,  0.71]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest mathematical functions')
+        blender_exp = 'abs(s0) + ceil(s1) * pow(s0, s1) + floor(s2+s3+s4) - exp(s3) and log(s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[8.77344165, 6.12214254, 1.74092762],
+                           [7.10858499, 3.90823377, 2.38476921],
+                           [3.79382222, 2.82813777, 1.71955085],
+                           [4.84445021, 4.18981584, 4.14202468],
+                           [3.13336769, 3.20675832, 6.87013820]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function strength')
+        blender_exp = 'strength_1.35(s0, s1, s2)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0., 1., 0.],
+                           [1., 1., 1.],
+                           [1., 0., 0.],
+                           [1., 1., 0.],
+                           [0., 1., 0.]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function position')
+        blender_exp = 'pos_3_0.5(s0, s1, s2, s3, s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0., 1., 0.],
+                           [1., 1., 1.],
+                           [1., 0., 0.],
+                           [0., 0., 0.],
+                           [0., 1., 0.]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function clip')
+        blender_exp = 'clip_-1_0.8(pos_5_0.2(s0, s1, s2, s3, s4))'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.0, 0.0, 0.0],
+                           [0.0, 0.8, 0.8],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.8, 0.0],
+                           [0.8, 0.0, 0.0]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function avg position')
+        blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.000, 0.574, 0.000],
+                           [0.674, 0.570, 0.562],
+                           [0.582, 0.000, 0.000],
+                           [0.000, 0.000, 0.000],
+                           [0.000, 0.452, 0.000]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function unify')
+        blender_exp = 'unify(avgpos_3_0.5(s0, s1, s2, s3, s4))'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.00000000, 1.00000000, 0.00000000],
+                           [0.37320044, 0.31561462, 0.31118494],
+                           [1.00000000, 0.00000000, 0.00000000],
+                           [0.00000000, 0.00000000, 0.00000000],
+                           [0.00000000, 1.00000000, 0.00000000]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
@@ -8870,7 +9051,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          pars=(20,),
                          data_types='close',
                          bt_price_type='close')
-        op.set_blender(blender='0')
+        op.set_blender(blender='s0')
         op.get_blender()
         qt.configure(asset_pool=['000300.SH',
                                  '399006.SZ'],
@@ -8918,7 +9099,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op_min.set_parameter(0, data_freq='h', sample_freq='h')
         op_min.set_parameter(1, data_freq='h', sample_freq='d')
         op_min.set_parameter(2, data_freq='h', sample_freq='y')
-        op_min.set_blender(blender='(0+1)*2')
+        op_min.set_blender(blender='(s0+s1)*s2')
         qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
                                  '000918.SZ', '000819.SZ', '000899.SZ'],
                      asset_type='E',
@@ -12085,7 +12266,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('pos-2')
+        self.op.set_blender('pos_2_0(s0, s1)')
         self.op.set_parameter(stg_id='dma', pars=timing_pars1)
         self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
@@ -12591,7 +12772,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=0.4)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('ls', 'avg')
+        op.set_blender('avg(s0, s1, s2)', 'ls')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
@@ -12643,7 +12824,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=30)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('ls', 'avg')
+        op.set_blender('avg(s0, s1, s2)', 'ls')
         qt.run(op, visual=False, trade_log=True)
 
     def test_op_realtime(self):
@@ -14806,7 +14987,6 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to bi-weekly sunday last without none business days')
-        # TODO: without business days
         resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10]
@@ -14825,7 +15005,6 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Friday last without none business days')
-        # TODO: without business days
         resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10, 12]
@@ -14849,18 +15028,15 @@ class TestDataSource(unittest.TestCase):
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly sum without none business days')
-        # TODO: without business days
         resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
             self.assertTrue(np.allclose(res, target))
 
@@ -14870,7 +15046,6 @@ class TestDataSource(unittest.TestCase):
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
             self.assertTrue(np.allclose(res, target))
 
@@ -14880,7 +15055,6 @@ class TestDataSource(unittest.TestCase):
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
             self.assertTrue(np.allclose(res, target))
 

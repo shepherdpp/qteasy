@@ -8,92 +8,424 @@
 #   Strategy blending functions and
 #   blender string parsers.
 # ======================================
+import re
 
 import numpy as np
-import math
-from .utilfuncs import unify, is_number_like, str_to_list
-
+from numba import njit
+from .utilfuncs import is_number_like, BLENDER_STRATEGY_INDEX_IDENTIFIER
 
 # 这里定义可用的交易信号混合函数
-def argsum(*args):
-    """sum of all arguments"""
-    return sum(args)
+@njit()
+def op_sum(*args):
+    """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
+        虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
+        多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
+        运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
+        combo模式的信号组合进行计算的过程中产生问题。
+        例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
+        100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
+        两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
+        因此combo后的数据需要用clip处理
+
+    :param args:
+    :return:
+    """
+    # 计算所有交易信号之和
+    signal_sum = np.zeros_like(args[0])
+    for signal in args:
+        signal_sum += signal
+    return signal_sum
 
 
+@njit()
 def op_avg(*args):
+    """ 通常用于PT持仓目标信号。
+        组合后的持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
+        只有所有蒙板均看空时，最终结果才看空所有蒙板的权重相同，因此，如
+        果一共五个蒙板三个看多两个看空时，持仓为60%。更简单的解释是，混
+        合后的多空仓位是所有蒙版仓位的平均值.
+
+    :param args: 以tuple形式传入的所有交易信号
+    :return:
     """
+    # 计算所有交易信号之和
+    signal_sum = op_sum(*args)
+    # 交易信号的个数
+    signal_count = len(args)
+    return signal_sum / signal_count
+
+
+@njit()
+def op_pos(n, t, *args):
+    """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
+
+        最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以
+        上的蒙板信号值为多(>0)或者为空(<0)时，最终蒙板的多空信号才为多或
+        为空。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
+        当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
+        此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
+        接受.
+        最终信号的强度始终为-1或1，如果希望最终信号强度为输入信号的
+        平均值，应该使用avg_pos-N方式混合
+
+    :param n:
+    :param t:
+    :param args:
+    :return:
+    """
+    signal_sign = np.zeros_like(args[0])
+    for msk in args:
+        signal_sign += np.sign(np.where(np.abs(msk) < t, 0, msk))
+    res = np.where(np.abs(signal_sign) >= n, 1., 0)
+    return res
+
+
+@njit()
+def op_avg_pos(n, t, *args):
+    """择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
+
+        持仓目标取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
+        看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度
+        。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
+        当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
+        此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
+        接受.
+        当然，avg_pos-1与avg等价，如avg_pos-2方式下，至少两个蒙板看多
+        则最终看多，否则看空
+
+    :param n:
+    :param t:
+    :param args:
+    :return:
+    """
+    # 计算所有交易信号之和
+    signal_sum = op_sum(*args)
+    # 交易信号的个数
+    signal_count = len(args)
+    signal_sign = np.zeros_like(args[0])
+    for msk in args:
+        signal_sign += np.sign(np.where(np.abs(msk) < t, 0, msk))
+    res = np.where(np.abs(signal_sign) >= n, signal_sum, 0) / signal_count
+    return res
+
+
+@njit()
+def op_str(t, *args):
+    """ str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于
+        某一个阈值T的时候，最终结果才会是多头，否则就是空头
 
     :param args:
     :return:
     """
-    raise NotImplementedError
+    # 计算所有交易信号之和
+    signal_sum = op_sum(*args)
+    return np.where(np.abs(signal_sum) >= t, 1, 0) * np.sign(signal_sum)
 
 
-def op_pos(*args):
+@njit()
+def op_clip(lbound, ubound, *args):
+    """ 剪切掉信号中小于lbound，或大于ubound的值，替换为lbound或ubound
+
+    :param lbound:
+    :param ubound:
+    :param args:
+    :return:
     """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count > 1:
+        raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
+                         f'your input')
+    signal_res = args[0]
+    signal_res = np.where(signal_res < lbound, lbound, signal_res)
+    signal_res = np.where(signal_res > ubound, ubound, signal_res)
+    return signal_res
+
+
+@njit()
+def op_unify(*args):
+    """ 调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
+    用于调整
+
+    example:
+    unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
+    =
+    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
 
     :param args:
     :return:
     """
-    raise NotImplementedError
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count > 1:
+        raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
+                         f'your input')
+    signal_arr = args[0]
+    s = signal_arr.sum(1)
+    shape = (s.shape[0], 1)
+    signal_res = signal_arr / s.reshape(shape)
+    # 如果原信号中有全0的情况，会导致NaN出现，下面将所有NaN填充为0
+    signal_res = np.where(np.isnan(signal_res), 0., signal_res)
+    return signal_res
 
 
-def op_avg_pos(*args):
-    """
+@njit()
+def op_max(*args):
+    """ 信号混合器，将各个择时策略生成的信号取最大值后生成新的交易信号
 
-    :param args:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def op_str(*args):
-    """
-
-    :param args:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def op_combo(*args):
-    """
+        生成的交易信号为所有交易信号中的最大值
 
     :param args:
     :return:
     """
-    raise NotImplementedError
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count < 1:
+        return
+    elif signal_count == 1:
+        return args[0]
+    elif signal_count == 2:
+        return np.fmax(args[0], args[1])
+    else:  # signal_count > 2
+        signal_max = np.fmax(args[0], args[1])
+        for signal in args[2:]:
+            signal_max = np.fmax(signal_max, signal)
+        return signal_max
 
 
-_AVAILABLE_FUNCTIONS = {'abs(':     abs,
-                        'acos(':    math.acos,
-                        'asin(':    math.asin,
-                        'atan(':    math.atan,
-                        'atan2(':   math.atan2,
-                        'ceil(':    math.ceil,
-                        'cos(':     math.cos,
-                        'cosh(':    math.cosh,
-                        'degrees(': math.degrees,
-                        'exp(':     math.exp,
-                        'fabs(':    math.fabs,
-                        'floor(':   math.floor,
-                        'fmod(':    math.fmod,
-                        'frexp(':   math.frexp,
-                        'hypot(':   math.hypot,
-                        'ldexp(':   math.ldexp,
-                        'log(':     math.log,
-                        'log10(':   math.log10,
-                        'max(':     max,
-                        'modf(':    math.modf,
-                        'pow(':     math.pow,
-                        'radians(': math.radians,
-                        'sin(':     math.sin,
-                        'sinh(':    math.sinh,
-                        'sqrt(':    math.sqrt,
-                        'tan(':     math.tan,
-                        'tanh(':    math.tanh,
-                        'sum(':     argsum
+@njit()
+def op_min(*args):
+    """ 信号混合器，将各个择时策略生成的信号取最小值后生成新的交易信号
+
+        生成的交易信号为所有交易信号中的最小值
+
+    :param args:
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count < 1:
+        raise KeyError('at least one signal array should be passed to min()')
+    elif signal_count == 1:
+        return args[0]
+    elif signal_count == 2:
+        return np.fmin(args[0], args[1])
+    else:  # signal_count > 2
+        signal_min = np.fmin(args[0], args[1])
+        for signal in args[2:]:
+            signal_min = np.fmin(signal_min, signal)
+        return signal_min
+
+
+@njit()
+def op_power(*args):
+    """ ，逐个元素操作生成first的second次幂，功能等同于np.power
+
+        np.power()函数可以接受第三个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_power函数实现np.power的功能，但
+        同时避免超过两个参数出现时导致的问题
+
+        另外，在生成blender表达式的逆波兰式的时候，power函数的两个
+        参数次序会颠倒，因此这里实际需要生成的是second的first次幂
+
+    :param args: args中有且只能有两个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 2:
+        raise ValueError('only two signal arrays are allowed in power()/pow()')
+        # return  # 本函数允许且仅允许两个参数传入
+
+    # blender表达式的逆波兰式导致两个参数次序颠倒，这里再颠倒回来
+    signal_res = np.power(args[1], args[0])
+    return signal_res
+
+
+@njit()
+def op_exp(*args):
+    """ ，逐个元素操作生成e的signal次幂，效果与np.exp()一致
+
+        np.exp()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_exp函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.exp(args[0])
+    return signal_res
+
+
+@njit()
+def op_log(*args):
+    """ ，逐个元素操作生成signal的自然对数，效果与np.log()一致
+
+        np.log()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_log函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.log(args[0])
+    return signal_res
+
+
+@njit()
+def op_log10(*args):
+    """ ，逐个元素操作生成signal的以10为底的对数，效果与np.log10()一致
+
+        np.log10()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_log10函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.log10(args[0])
+    return signal_res
+
+
+@njit()
+def op_floor(*args):
+    """ 逐个元素操作生成signal的floor，效果与np.floor()一致
+
+        np.floor()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_floor函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.floor(args[0])
+    return signal_res
+
+
+@njit()
+def op_ceil(*args):
+    """ 逐个元素操作生成signal的ceil，效果与np.cail()一致
+
+        np.ceil()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_ceil函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.ceil(args[0])
+    return signal_res
+
+
+@njit()
+def op_sqrt(*args):
+    """ ，逐个元素操作生成signal的平方根，效果与np.sqrt()一致
+
+        np.sqrt()函数可以接受一个ndarray作为结果，这种操作方式
+        是这里不需要的，因此创建op_sqrt函数避免第二个参数被传入
+
+    :param args: args中有且只能有一个参数
+    :return:
+    """
+    # 交易信号的个数
+    signal_count = len(args)
+    if signal_count != 1:
+        raise ValueError('only one signal array is allowed in exp()')
+        # return  # 本函数允许且仅允许一个参数传入
+
+    signal_res = np.sqrt(args[0])
+    return signal_res
+
+
+_AVAILABLE_FUNCTIONS = {'abs':      abs,
+                        'avg':      op_avg,
+                        'avgpos':   op_avg_pos,
+                        'ceil':     op_ceil,
+                        'clip':     op_clip,
+                        'combo':    op_sum,
+                        'exp':      op_exp,
+                        'floor':    op_floor,
+                        'log':      op_log,
+                        'log10':    op_log10,
+                        'max':      op_max,
+                        'min':      op_min,
+                        'pos':      op_pos,
+                        'position': op_pos,
+                        'pow':      op_power,
+                        'power':    op_power,
+                        'sqrt':     op_sqrt,
+                        'strength': op_str,
+                        'str':      op_str,
+                        'sum':      op_sum,
+                        'unify':    op_unify,
+                        'uni':      op_unify
                         }
+
+
+def run_blend_func(func_str, *args):
+    """ 根据func_str（一个代表混合函数的字符串解析出正确的函，并返回正确结果
+
+    :param func_str:
+        交易信号混合函数名，额外的交易参数直接包含在函数名中
+        含有此类附加参数的函数必须特殊解析后才能使用，即将函数名中的特殊参数
+        分离出来后作为参数传入函数。
+        例如：
+        avg_pos-3-0.5(*args)
+        解析后的实际执行效果为：
+        avg_pos(3, 0.5, *args)
+
+    :param args:
+        作为函数func的参数传入的交易信号
+
+    :return:
+        函数的运行结果
+    """
+    if not isinstance(func_str, str):
+        raise TypeError(f'func_str should be a string, got {type(func_str)} instead')
+
+    # 分离函数名和附加参数（附加参数的个数不限，受实际定义的函数限制）
+    func_name_args = func_str.split('_')
+    func_name, *additional_args = func_name_args
+    func = _AVAILABLE_FUNCTIONS.get(func_name)
+    if func is None:
+        raise KeyError(f'function ({func_name}) is not available')
+    # 将所有的附加参数处理为float类型，便于传入func处理
+    additional_args = tuple(float(item) for item in additional_args)
+    try:
+        # debug
+        # print(f'running function:\n{func_name}: {func} \n{additional_args}\n{args}')
+        res = func(*additional_args, *args)
+        # debug
+        # print(f'function run succeed, result\n{res}')
+    except Exception as e:
+        raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
+                        f'error message: \n{e}')
+    return res
 
 
 def blender_parser(blender_string):
@@ -109,42 +441,34 @@ def blender_parser(blender_string):
     return：===== s2: 前缀表达式
         :rtype: list: 前缀表达式
     """
-    # TODO: 将所有与表达式解析相关的函数移到新的parser模块中
-    #  建立新的相关类，如表达式类、token类、function类、stack类等方便运算
-    prio = {'|':   0,
-            'or':  0,
-            '&':   1,
-            'and': 1,
-            'not': 1,
-            '+':   0,
-            '-':   0,
-            '*':   1,
-            '/':   1,
-            '^':   2}
-    functions = {'sum(':  np.sum,
-                 'abs(':  np.abs,
-                 'sqrt(': np.sqrt,
-                 'cos(':  np.cos,
-                 'max(':  np.maximum}
+
+    prio = {'|':    0,
+            'or':   0,
+            '&':    1,
+            'and':  1,
+            '~':    1,
+            'not':  1,
+            '+':    0,
+            '-':    0,
+            '*':    1,
+            '/':    1,
+            '^':    2}
+
     # 定义两个队列作为操作堆栈
     op_stack = []  # 运算符栈
     arg_count_stack = []  # 函数的参数个数栈
     output = []  # 结果队列
     exp_list = _exp_to_token(blender_string)[::-1]
     while exp_list:
-        # print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
-        #       f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
         token = exp_list.pop()
-        # 从右至左逐个读取表达式中的元素（数字或操作符）
+        # 从右至左逐个读取表达式中的元素（数字/操作符/函数/括号/逗号）
         # 并按照以下算法处理
         if is_number_like(token):
             # 1，如果元素是数字则进入结果队列
             output.append(token)
-            # print(f'got number token, put to output list')
         elif token == '(':
             # 2，如果元素是反括号则压入运算符栈
             op_stack.append(token)
-            # print(f'got "(" token, put to op stack')
         elif token == ')':
             # 3，扫描到")"时，依次弹出所有运算符直到遇到"("或一个函数，并根据遇到的token类型（函数/右括号）来确定下一步
             while op_stack[-1][-1] != '(':
@@ -158,14 +482,10 @@ def blender_parser(blender_string):
                 arg_count = arg_count_stack.pop() + 1
                 func = op_stack.pop() + str(arg_count) + ")"
                 output.append(func)
-                # print(f'there\'s function in op stack, poped function with argument count {arg_count}')
         elif token in prio.keys():
             # 4，扫描到运算符时
-            # print(f'got op type token')
             if len(op_stack) > 0:
-                if (op_stack[-1] in '+-*/&|^') and (prio[token] <= prio[op_stack[-1]]):
-                    # print(f'op stack has op {op_stack[-1]}, which is higher than current token {s}, poped!\n'
-                    #       f'current token {s} will be put back to exp for next try')
+                if (op_stack[-1] in '+-*/&|^~andnotor') and (prio[token] <= prio[op_stack[-1]]):
                     output.append(op_stack.pop())
                     exp_list.append(token)
                 else:
@@ -173,8 +493,8 @@ def blender_parser(blender_string):
             else:
                 # 如果op栈为空，直接将token压入op栈
                 op_stack.append(token)
-        elif token in functions:
-            # 5，扫描到函数时，将函数压入op栈，并将数字0压入arc_count栈
+        elif (token[0].isalpha) and (token[-1] == '('):
+            # 5，扫描到字母开头，且'('结尾的字符串时，说明扫描到函数，将函数压入op栈，并将数字0压入arc_count栈
             op_stack.append(token)
             arg_count_stack.append(0)
         elif token == ',':
@@ -188,9 +508,12 @@ def blender_parser(blender_string):
                     output.append(op_stack.pop())
                 except:
                     raise ValueError(f'Invalid expression, missing opening parenthesis!')
+        elif BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
+            # 7, 扫描到策略序号index时，将其送入结果队列
+            output.append(token)
 
         else:  # 扫描到不合法输入
-            raise ValueError(f'unidentified characters found in blender string: \'{token}\'')
+            raise ValueError(f'Blender token can not be parsed"{token}"')
     while op_stack:
         output.append(op_stack.pop())
     output.reverse()  # 表达式解析完成，生成前缀表达式
@@ -206,29 +529,32 @@ def signal_blend(op_signals, blender):
     :return:
         ndarray, 混合完成的选股蒙板
     """
-    exp = blender[:]
-    s = []
+    exp = blender[:]  # 混合表达式的逆波兰式，可以直接读取后计算
+    s = []  # 信号栈，用来存储所有需要操作的交易信号
     while exp:
-        if exp[-1].isdigit():
-            # 如果是数字则直接入栈
-            s.append(op_signals[int(exp.pop())])
-        elif exp[-1][-1] == ')':
-            # 如果碰到函数，
+        token = exp[-1]
+        if token[-1] == ')':
+            # 如果碰到函数，解析函数的参数数量，并弹出信号栈内的适当个交易信号，应用函数得到结果，压入信号栈
             token = exp.pop()
             arg_count = int(token[-2])
-            func = _AVAILABLE_FUNCTIONS.get(token[0:-2])
-            if func is None:
-                raise ValueError(
-                        f'the function \'{token[0:-2]}\' -> {func.get(token[0:-2])} is not a valid function!')
+            func_name = token[0:-3]
             args = tuple(s.pop() for i in range(arg_count))
-            try:
-                s.append(func(*args))
-            except:
-                print(f'wrong output func(*args) with args = {args} => ')
-        else:
-            # 如果碰到运算符
+            res = run_blend_func(func_name, *args)
+            s.append(res)
+        elif token in '~not':
+            # 如果碰到一元运算符，弹出信号栈内的交易信号，得到结果，再压入信号栈
+            s.append(_operate(s.pop(), None, exp.pop()))
+        elif token in '+-*/^&|andor':
+            # 如果碰到二元运算符，弹出信号栈内两个交易信号，得到结果，再压入信号栈
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
-    # TODO: 是否真的需要把unify作为一个通用指标应用到所有信号上？我看没有这个必要
+        elif BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
+            # 如果是index，直接读取交易信号并压入信号栈
+            sig_index = int(exp.pop()[1:])
+            s.append(op_signals[sig_index])
+        else:  # exp[-1].isnum():
+            # 如果是数字，直接作为数字压入信号栈
+            s.append(float(exp.pop()))
+
     return s[0]
 
 
@@ -242,12 +568,14 @@ def _exp_to_token(string):
     function_like_operators = ['or',
                                'and',
                                'not']
-    token_types = {'operator':          0,
-                   'number':            1,
-                   'function':          2,
-                   'open_parenthesis':  3,
-                   'close_parenthesis': 4,
-                   'comma':             5}
+    token_types = {
+        'operator':          0,
+        'number':            1,
+        'function':          2,
+        'open_parenthesis':  3,
+        'close_parenthesis': 4,
+        'comma':             5
+    }
     tokens = []
     string = string.replace(' ', '')
     string = string.replace('\t', '')
@@ -259,15 +587,25 @@ def _exp_to_token(string):
     cur_token_type = None
     # 逐个扫描字符，判断每个字符代表的token类型，当token类型发生变化时，将当前token压入tokens栈
     for ch in string:
-        if ch in '+*/^&|':
+        if ch in '+*/^&|~':
             cur_token_type = token_types['operator']
         elif ch in '-':
-            # '-'号出现在左括号或另一个符号以后，应被识别为负号，成为数字的一部分
-            if prev_token_type == token_types['operator'] or \
-                    prev_token_type == token_types['open_parenthesis']:
+            # '-'号出现在function中作为参数存在时，应被识别为function的一部分，此时'-'前只能是'_'
+            if (cur_token_type == token_types['function']) and (cur_token[-1] == '_'):
+                cur_token_type = token_types['function']
+            # '-'号在下面四种情况下应被识别为负号，成为数字的一部分：
+            #   1，在表达式第一位
+            #   2，紧接在左括号后面
+            #   3，紧接在另一个符号后面
+            #   4，紧接在一个完整结尾的function之后
+            elif (prev_token_type == token_types['operator']) or \
+                    (prev_token_type == token_types['open_parenthesis']) or \
+                    (prev_token_type == token_types['function']) and (cur_token[-1] == '(') or \
+                    (prev_token_type is None):
+
                 cur_token_type = token_types['number']
+            # 其余情况下被识别为一个操作符
             else:
-                # 否则被识别为一个操作符
                 cur_token_type = token_types['operator']
         elif ch in '0123456789':
             if cur_token == '':
@@ -276,31 +614,43 @@ def _exp_to_token(string):
                 # 如果数字跟在function的后面，则被识别为字母（function）的一部分，否则被识别为数字
                 # 但数字被识别为function一部分的前提是function还没有以左括号结尾
                 # 以及前一个function不在"function_like_operator"中
-                if prev_token_type == token_types['function'] and \
-                        cur_token[-1] != '(' and \
-                        cur_token not in function_like_operators:
+                if (prev_token_type == token_types['function']) and \
+                        (cur_token[-1] != '(') and \
+                        (cur_token not in function_like_operators):
                     cur_token_type = token_types['function']
                 else:
                     cur_token_type = token_types['number']
         elif ch in '.':
-            # 小数点应被识别为数字
-            cur_token_type = token_types['number']
+            # 小数点应被识别为数字，除非小数点是跟在一个function中的且function未结束（不以"("结尾）
+            if (cur_token_type == token_types['function']) and (cur_token[-1] != '('):
+                cur_token_type = token_types['function']
+            # 其他情况下小数点应该被识别为数字（允许出现小数点打头的数字，如".15"
+            else:
+                cur_token_type = token_types['number']
         elif ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             # 字母和下划线应被识别为变量或函数名,
             if cur_token == '':
                 cur_token_type = token_types['function']
             else:
-                # 如果前一个token已经为function且已经完整，则强行分割token
-                if cur_token_type == token_types['function'] and cur_token[-1] == '(':
+                # 如果当前token为function且已经完整，则强行分割token
+                if (cur_token_type == token_types['function']) and (cur_token[-1] == '('):
+                    next_token = True
+                # 如果当前token为function，且属于function_like_operator，也强行分割token
+                if (cur_token_type == token_types['function']) and (cur_token in function_like_operators):
+                    next_token = True
+                # 如果当前token为function，但发现当前token是index，以s打头且后接若干数，也强行分割token
+                if (cur_token_type == token_types['function']) and \
+                        (BLENDER_STRATEGY_INDEX_IDENTIFIER.match(cur_token)):
                     next_token = True
                 cur_token_type = token_types['function']
         elif ch in '(':
+            # 如果左括号是单独出现的，则应被识别为左括号
             if cur_token == '':
                 cur_token_type = token_types['open_parenthesis']
+            # 如果左括号出现在function的后面，且该function尚未以左括号结束，则应被识别为function
+            # 的一部分，且被包含在function内作为function的结束符
             else:
-                # 如果左括号出现在function的后面，则是function的一部分，否则被识别为左括号
-                # 例外情况是前一个function已经以一个左括号结尾了，此时仍然应被识别为左括号
-                if prev_token_type == token_types['function'] and cur_token[-1] != '(':
+                if (prev_token_type == token_types['function']) and (cur_token[-1] != '('):
                     cur_token_type = token_types['function']
                 else:
                     cur_token_type = token_types['open_parenthesis']
@@ -311,16 +661,26 @@ def _exp_to_token(string):
             cur_token_type = token_types['comma']
         else:
             # 某种没有预料到的字符出现在表达式中：
-            raise TypeError(f'character in expression \'{ch}\' is not valid!')
+            raise TypeError(f'character in expression "{ch}" is not valid!')
 
+        # 四种常规情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
+        # 1，当前字符被判定为新的token类型;
+        # 2，当前token类型为左括号;
+        # 3，当前token类型为右括号;
+        # 4，出现强行分割token的标识next_token
+        # 一种特殊情况下，将token压入tokens栈时，需要修改该token：
+        # 1，当前token类型为数字，且token仅包含一个字符"-"时，将token改为'-1'，并压入一个额外token'*'
+        # 此时重置token类型、重置当前token，将当前字符赋予当前token
         if cur_token_type != prev_token_type or \
                 cur_token_type == token_types['open_parenthesis'] or \
                 cur_token_type == token_types['close_parenthesis'] or \
                 next_token:
-            # 当发现当前字符被判定为新的token类型时，说明当前token已经完整，将该token压入tokens栈
-            # 并重置token类型、重置当前token，将当前字符赋予当前token
             if cur_token != '':
-                tokens.append(cur_token)
+                if (cur_token == '-') and (prev_token_type == token_types['number']):
+                    tokens.append('-1')
+                    tokens.append('*')
+                else:
+                    tokens.append(cur_token)
             prev_token_type = cur_token_type
             cur_token = ''
             next_token = False
@@ -330,6 +690,7 @@ def _exp_to_token(string):
     return tokens
 
 
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间大大增加（因为overhead）
 def _operate(n1, n2, op):
     """混合操作符函数，将两个选股、多空蒙板混合为一个
 
@@ -343,114 +704,16 @@ def _operate(n1, n2, op):
     """
     if op == '+':
         return n2 + n1
-    elif op == 'and' or op == '&' or op == '*':
+    elif op in ['and', '&', '*']:
         return n2 * n1
     elif op == '-':
         return n2 - n1
     elif op == '/':
         return n2 / n1
-    elif op == 'or' or op == '|':
+    elif op in ['or', '|']:
         return 1 - (1 - n2) * (1 - n1)
+    elif op in ['not', '~']:
+        return -1 * n1
     else:
-        raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
+        raise ValueError(f'Unknown operand!')
 
-
-# TODO: 将ls_blend中的函数写入blender.py的第一部分函数定义中
-def _ls_blend(ls_masks):
-    """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
-        这些多空模板的混合方式由混合字符串来定义。
-        混合字符串是满足以下任意一种类型的字符串：
-
-        1，  'none'
-            模式表示输入的蒙板不会被混合，所有的蒙板会被转化为一个
-            三维的ndarray返回,不做任何混合，在后续计算中采用特殊计算方式
-            # 分别计算每一个多空蒙板的交易信号，然后再将交易信号混合起来.
-
-        2,  'avg':
-            avg方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
-            只有所有蒙板均看空时，最终结果才看空所有蒙板的权重相同，因此，如
-            果一共五个蒙板三个看多两个看空时，持仓为60%。更简单的解释是，混
-            合后的多空仓位是所有蒙版仓位的平均值.
-
-        3,  '[pos]/[avg-pos](-N)(-T)'
-            格式为满足以上正则表达式的字符串，其混合规则如下：
-            在pos-N方式下，
-            最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以
-            上的蒙板信号值为多(>0)或者为空(<0)时，最终蒙板的多空信号才为多或
-            为空。最终信号的强度始终为-1或1，如果希望最终信号强度为输入信号的
-            平均值，应该使用avg_pos-N方式混合
-
-            pos-N还有一种变体，即pos-N-T模式，在这种模式下，N参数仍然代表看
-            多的参数个数阈值，但是并不是所有判断持仓为正的数据都会被判断为正
-            只有绝对值大于T的数据才会被接受，例如，当T为0.25的时候，0.35会
-            被接受为多头，但是0.15不会被接受为多头，因此尽管有两个策略在这个
-            时间点判断为多头，但是实际上只有一个策略会被接受.
-
-            avg_pos-N方式下，
-            持仓同样取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
-            看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度
-            。当然，avg_pos-1与avg等价，如avg_pos-2方式下，至少两个蒙板看多
-            则最终看多，否则看空
-
-            avg_pos-N还有一种变体，即avg_pos-N-T模式，在通常的模式下加
-            入了一个阈值Threshold参数T，用来判断何种情况下输入的多空蒙板信号
-            可以被保留，当T大于0时，只有输入信号绝对值大于T的时候才会被接受为有
-            意义的信号否则就会被忽略。使用avg_pos-N-T模式，并把T设置为一个较
-            小的浮点数能够过滤掉一些非常微弱的多空信号.
-
-        4，  'str-T':
-            str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于
-            某一个阈值T的时候，最终结果才会是多头，否则就是空头
-
-        5,  'combo':
-            在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
-            虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
-            多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
-            运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
-            combo模式的信号组合进行计算的过程中产生问题。
-            例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
-            100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
-            两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
-
-    input：=====
-        :type: ls_masks：object ndarray, 多空蒙板列表，包含至少一个多空蒙板
-    return：=====
-        :rtype: object: 一个混合后的多空蒙板
-    """
-    try:
-        blndr = str_to_list(self._stg_blender, '-')  # 从对象的属性中读取择时混合参数
-    except:
-        raise TypeError(f'the timing blender converted successfully!')
-    assert isinstance(blndr[0], str) and blndr[0] in self.AVAILABLE_LS_BLENDER_TYPES, \
-        f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
-        f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
-    l_m = ls_masks
-    l_m_sum = np.sum(l_m, 0)  # 计算所有多空模版的和
-    l_count = ls_masks.shape[0]
-    # 根据多空蒙板混合字符串对多空模板进行混合
-    if blndr[0] == 'none':
-        return l_m
-    if blndr[0] == 'avg':
-        return l_m_sum / l_count
-    if blndr[0] == 'pos' or blndr[0] == 'avg_pos':
-        l_m_sign = 0.
-        n = int(blndr[1])
-        if len(blndr) == 3:
-            threshold = float(blndr[2])
-            for msk in ls_masks:
-                l_m_sign += np.sign(np.where(np.abs(msk) < threshold, 0, msk))
-        else:
-            for msk in ls_masks:
-                l_m_sign += np.sign(msk)
-        if blndr[0] == 'pos':
-            res = np.where(np.abs(l_m_sign) >= n, l_m_sign, 0)
-            return res.clip(-1, 1)
-        if blndr[0] == 'avg_pos':
-            res = np.where(np.abs(l_m_sign) >= n, l_m_sum, 0) / l_count
-            return res.clip(-1, 1)
-    if blndr[0] == 'str':
-        threshold = float(blndr[1])
-        return np.where(np.abs(l_m_sum) >= threshold, 1, 0) * np.sign(l_m_sum)
-    if blndr[0] == 'combo':
-        return l_m_sum
-    raise ValueError(f'Blender text \'({blndr})\' not recognized!')

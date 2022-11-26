@@ -19,6 +19,8 @@ from warnings import warn
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import datetime
 
+from typing import Tuple, Union
+
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
@@ -440,9 +442,6 @@ def apply_loop(operator: Operator,
     op_log_matrix = []
     prev_date = 0
     # TODO: use Numba to optimize the efficiency of the looping process
-    # TODO: 此处应该避免使用从0开始的index，而是从start_idx到end_idx，从而在batch和realtime两种
-    #  情况下处理方式相同，不管是从op_list中获取信号，还是通过operqtor.create_signal
-    #  创建信号，信号的idx 都是i，而不需要offset
     for i in range(start_idx, end_idx):
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i].date()
