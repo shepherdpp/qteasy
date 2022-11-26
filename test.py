@@ -6982,7 +6982,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op = qt.Operator('macd, dma, trix, cdl')
         # TODO: 修改set_parameter()，使下面的用法成立
-        # a_to_sell.set_parameter('dma, cdl', price_type='open')
+        #  a_to_sell.set_parameter('dma, cdl', price_type='open')
         op.set_parameter('dma', bt_price_type='open')
         op.set_parameter('cdl', bt_price_type='open')
         sb = op.strategy_blenders
@@ -7232,7 +7232,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(target_comparison)
         # test if automatic strategy blenders are set
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', '2', '+', '1', '0']})
+                         {'close': ['+', 's2', '+', 's1', 's0']})
         tim_hist_data = self.op._op_history_data['custom']
         sel_hist_data = self.op._op_history_data['custom_1']
         ric_hist_data = self.op._op_history_data['custom_2']
@@ -7573,7 +7573,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
         # test blenders of different price types
         # test setting blenders to different price types
-        # TODO: to allow operands like "and", "or", "not", "xor"
+
         # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
         self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
         op.set_blender('s0 and s1 or s2', 'open')
@@ -14987,7 +14987,6 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to bi-weekly sunday last without none business days')
-        # TODO: without business days
         resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10]
@@ -15006,7 +15005,6 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Friday last without none business days')
-        # TODO: without business days
         resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10, 12]
@@ -15030,18 +15028,15 @@ class TestDataSource(unittest.TestCase):
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly sum without none business days')
-        # TODO: without business days
         resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
             self.assertTrue(np.allclose(res, target))
 
@@ -15051,7 +15046,6 @@ class TestDataSource(unittest.TestCase):
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
             self.assertTrue(np.allclose(res, target))
 
@@ -15061,7 +15055,6 @@ class TestDataSource(unittest.TestCase):
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
             res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
             self.assertTrue(np.allclose(res, target))
 

@@ -3517,7 +3517,9 @@ class DataSource:
                             self.update_table_data(table, dnld_data)
                             dnld_data = pd.DataFrame()
                         completed += 1
-                        total_written += len(df)  # TODO: total_written should be better calculated
+                        total_written += len(df)
+                        # TODO: 应该用更好的方式计算total_written，这种计算方式没有考虑下载的重复
+                        #  数据（重复数据不写入磁盘），因此不准确
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)

@@ -342,7 +342,6 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     return res
 
 
-# TODO: this function can be merged with str_to_list(), NO, different functions
 def input_to_list(pars: [str, int, list], dim: int, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
@@ -513,6 +512,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         return is_open == 1
     else:
         # TODO: Not yet implemented
+        #  提供一种足够简单但不太精确的方式大致估算交易日期；
+        #  或者直接使用maybe_trade_day()函数
         raise NotImplementedError
 
 
@@ -659,9 +660,8 @@ def list_truncate(lst, trunc_size):
         return sub_lists
 
 
-# TODO: 这个函数运行太慢，使用re判断合法数字
 def is_number_like(key: [str, int, float]) -> bool:
-    """ 判断一个字符串是否是一个合法的数字
+    """ 判断一个字符串是否是一个合法的数，使用re比原来的版本快5～10倍
 
     :param key:
     :return:

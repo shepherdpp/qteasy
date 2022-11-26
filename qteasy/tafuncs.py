@@ -27,8 +27,10 @@ from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOIN
     MINMAX, MINMAXINDEX, MULT, SUB, SUM
 
 
-# TODO: 假设talib没有正确安装时，需要提供替代办法计算相应值
-#   以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数
+# TODO: 假设talib没有正确安装时，需要提供替代办法计算相应值，或者针对部分最常用内置策略
+#  提供替代版本解决方案，对其他内置策略，使用恰当的提示方式提示用户应该及如何安装TA-lib
+
+# 以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数
 
 # ========================
 # Overlap Studies Functions 滚动窗口叠加算例函数

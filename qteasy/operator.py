@@ -368,7 +368,7 @@ class Operator:
     @strategy_blenders.setter
     def strategy_blenders(self, blenders):
         """ setting blenders of strategy"""
-        self.set_blender(price_type=None, blender=blenders)
+        self.set_blender(blender=blenders, price_type=None)
 
     @property
     def signal_type(self):
