@@ -362,6 +362,8 @@ def op_sqrt(*args):
     return signal_res
 
 
+# TODO: 增加下列函数支持：
+#  product()
 _AVAILABLE_FUNCTIONS = {'abs':      abs,
                         'avg':      op_avg,
                         'avgpos':   op_avg_pos,
