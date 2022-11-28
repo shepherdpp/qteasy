@@ -7923,6 +7923,20 @@ class TestOperatorAndStrategy(unittest.TestCase):
         hit = np.allclose(res, target)
         self.assertTrue(hit)
 
+        print('\ntest signal combination function with pure numbers')
+        blender_exp = 'avgpos_3_0.5(s0, 1.5*s1, 2*s2, 0.5*s3, 2+s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.000, 1.114, 0.881],
+                           [1.202, 0.000, 1.198],
+                           [1.057, 0.000, 0.000],
+                           [0.978, 0.955, 0.878],
+                           [1.049, 0.972, 0.741]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
         print(f'--------- Testing setting Opt Pars: set_opt_par -------')
