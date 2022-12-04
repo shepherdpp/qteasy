@@ -588,7 +588,7 @@ class GeneralStg(BaseStrategy):
 
             Class ExampleStrategy(GeneralStg):
 
-                def realize(self, pars, h, r, t):
+                def realize(self, h, r=None, t=None, pars=None):
 
                     # 在这里编写信号生成逻辑
                     ...
@@ -1126,7 +1126,7 @@ class RuleIterator(BaseStrategy):
 
             Class ExampleStrategy(GeneralStg):
 
-                def realize(self, pars, h, r, t):
+                def realize(self, h, r=None, t=None, pars=None):
 
                     # 在这里编写信号生成逻辑
                     ...

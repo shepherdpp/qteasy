@@ -1144,6 +1144,9 @@ class Operator:
         :param price_type: str 一个可用的price_type
 
         """
+        # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
+        #  例如： blender string: 's0 + s1 + s2'
+        #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
         if price_type is None:
             return self._stg_blender_strings
         if price_type not in self.bt_price_types:
@@ -1438,8 +1441,7 @@ class Operator:
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式，在未设置混合器时，混合器是一个空dict
         if self.strategy_blenders == {}:
-            logger_core.warning(f'User-defined Signal blenders do not exist, default ones will be created!',
-                                UserWarning)
+            logger_core.info(f'User-defined Signal blenders do not exist, default ones will be created!')
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
             for price_type in self.bt_price_types:

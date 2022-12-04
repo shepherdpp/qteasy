@@ -3387,6 +3387,9 @@ class DataSource:
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
+            # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
+            if 'trade_calendar' not in tables_to_refill:
+                tables_to_refill.add('trade_calendar')
         import time
         for table in table_map.index:
             # 逐个下载数据并写入本地数据表中
@@ -4322,8 +4325,22 @@ def get_table_map():
     return table_map
 
 
-def find_history_data(s):
+def find_history_data(s, fuzzy=False, match_description=False):
     """ 根据输入的字符串，查找或匹配历史数据类型
+
+    :param s: string，
+        一个字符串，用于查找或匹配历史数据类型
+
+    :param fuzzy: bool, 默认值：False
+        是否模糊匹配数据名称，
+         - False: 仅精确匹配数据的名称
+         - True:  模糊匹配数据名称以及数据描述
+
+    :param match_description, bool, 默认值: False
+        是否模糊匹配数据描述
+         - False: 模糊匹配时不包含数据描述（仅匹配数据名称）
+         - True:  模糊匹配时包含数据描述
+
         用户可以使用qt.datasource.find_history_data()形式查找可用的历史数据
         并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
         查找匹配的历史数据类型。
@@ -4340,6 +4357,8 @@ def find_history_data(s):
 
         TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
 
+        TODO: 增加函数的易用性：函数返回一个列表，包含查找到的所有数据类型的ID
+
         例如：
         >>> import qteasy as qt
         >>> qt.find_history_data('pe')
@@ -4354,7 +4373,6 @@ def find_history_data(s):
             2     pe   float   index_indicator   IDX    d        No                    市盈率
             ========================================================================
 
-    :param s: string，输入的字符串，用于查找或匹配历史数据类型
     :return:
         None
     """
@@ -4415,3 +4433,5 @@ def find_history_data(s):
           f'use "qt.get_history_panel()" to load these data:\n'
           f'------------------------------------------------------------------------\n{df}\n'
           f'========================================================================')
+
+    return list(df.index)

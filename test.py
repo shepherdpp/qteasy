@@ -13694,6 +13694,29 @@ class Cross_SMA_PT(qt.RuleIterator):
             return 0
 
 
+class AlphaSel(qt.FactorSorter):
+
+    def realize(self, h, r=None, t=None, pars=None):
+        # 在这里编写信号生成逻辑
+        total_mv = h[:, -1, 0]
+        total_liab = h[:, -1, 1]
+        cash_equ = h[:, -1, 2]
+        ebitda = h[:, -1, 3]
+
+        factor = (total_mv + total_liab - cash_equ) / ebitda
+
+        # 以下是PT信号类型时的输出，会存在每日调整的问题
+        # # result代表策略的输出
+        #
+        return factor
+
+        # 以下是PS信号类型时的输出，不会存在每日调整的问题
+        # 初始化交易信号，准备根据factor生成交易信号
+        # signal = np.zeros_like(factor)
+        # # 当factor小于0的时候，全部平仓
+        # signal = np.where(factor <= 0, -1, signal)
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -13702,7 +13725,59 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        qt.get_history_data('ebitda', shares='000651.SZ', asset_type='any', freq='q')
+        alpha = AlphaSel(pars=(),
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='AlphaSel',
+                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                         sample_freq='m',
+                         data_freq='d',
+                         window_length=200,
+                         max_sel_count=30,
+                         condition='greater',
+                         ubound=0.0,
+                         weighting='even',
+                         sort_ascending=False)
+        op = qt.Operator(alpha)
+        op.info(verbose=True)
+        shares = qt.filter_stock_codes(index='000300.SH', date='20221031')
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               PT_buy_threshold=0.03,
+               PT_sell_threshold=-0.80,
+               trade_batch_size=100,
+               sell_batch_size=100)
+
+        alpha = AlphaSel(pars=(),
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='AlphaSel',
+                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                         sample_freq='m',
+                         data_freq='m',
+                         window_length=6,
+                         max_sel_count=30,
+                         condition='greater',
+                         ubound=0.0,
+                         weighting='even',
+                         sort_ascending=False)
+        op = qt.Operator(alpha)
+        op.info(verbose=True)
+        shares = qt.filter_stock_codes(index='000300.SH', date='20221031')
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               PT_buy_threshold=0.03,
+               PT_sell_threshold=-0.80,
+               trade_batch_size=100,
+               sell_batch_size=100)
+
+        raise NotImplementedError
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
