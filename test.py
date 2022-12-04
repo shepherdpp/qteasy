@@ -1051,6 +1051,15 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'all the "000300.SH" composite after 20180101')
         stock_pool = qt.filter_stock_codes(date='20200101',
                                            index='000300.SH')
+        self.assertTrue(len(stock_pool) > 0)
+        print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
+              f'more information of some fo the stocks\n'
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
+
+        print(f'\nselect all stocks by index, without start and end dates:\n'
+              f'all the "000300.SH" composite')
+        stock_pool = qt.filter_stock_codes(index='000300.SH')
+        self.assertTrue(len(stock_pool) > 0)
         print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
               f'more information of some fo the stocks\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1059,6 +1068,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.filter_stock_codes(industry='银行业, 多元金融, 房地产',
                                            area='陕西省',
                                            market='主要')
+        self.assertTrue(len(stock_pool) > 0)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["多元金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -13692,11 +13702,7 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        qteasy.configuration(config_key='local_data_source, local_data_file_type, local_data_file_path,'
-                                    'local_db_host, local_db_user',
-                             default=True,
-                             verbose=True)
-        pass
+        qt.get_history_data('ebitda', shares='000651.SZ', asset_type='any', freq='q')
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

@@ -786,14 +786,14 @@ class FactorSorter(BaseStrategy):
 
             Class ExampleStrategy(GeneralStg):
 
-                def realize(self, pars, h, r, t):
+                def realize(self, h, r=None, t=None, pars=None):
 
                     # 在这里编写信号生成逻辑
                     ...
-                    result = ...
-                    # result代表策略的输出
+                    factor = ...
+                    # factor代表策略输出的选股因子，用于进一步选股
 
-                    return result
+                    return factor
 
         用下面的方法创建一个策略对象：
 
@@ -947,7 +947,7 @@ class FactorSorter(BaseStrategy):
         根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，
             例如：当
                     max_sel_count=0.5
-                    condition='larger',
+                    condition='greater',
                     ubound=0.5,
                     weighting='even'
             时，上述因子的选股结果为:
@@ -1065,6 +1065,9 @@ class FactorSorter(BaseStrategy):
         args = np.setdiff1d(share_found, share_nan, assume_unique=True)
         # 构造输出向量，初始值为全0
         arg_count = len(args)
+        # 如果符合条件的选项数量为0，则直接返回全0
+        if arg_count == 0:
+            return chosen
         # 根据投资组合比例分配方式，确定被选中产品的权重
         if weighting == 'linear':  # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍

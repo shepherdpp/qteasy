@@ -752,7 +752,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
         if column == 'index':
             # 查找date到今天之间的所有成分股, 如果date为today，则将date前推一个月
             end_date = pd.to_datetime('today')
-            start_date = date - pd.Timedelta(30, 'd')
+            start_date = date - pd.Timedelta(50, 'd')
             index_comp = ds.read_table_data('index_weight',
                                             shares=targets,
                                             start=start_date.strftime("%Y%m%d"),
@@ -1227,7 +1227,6 @@ def get_history_data(htypes,
         group_by = 'shares'
     elif group_by in ['htypes', 'htype', 'h']:
         group_by = 'htypes'
-
     hp = get_history_panel(htypes=htypes, shares=shares, start=start, end=end, freq=freq, asset_type=asset_type,
                            adj=adj, **kwargs)
 
