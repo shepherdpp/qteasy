@@ -26,7 +26,10 @@ cost_numba_spec = [
 ]
 
 
-# @jitclass(cost_numba_spec)
+# TODO: 重写cost类，将cost类简化为一个dict，存储相关的费用参数
+#   将所有的类方法该写为finance模块的函数，从而使所有的函数都可以
+#   nuba化，将所有相关函数numba化，从而使得loop_step函数和
+#   apply_loop函数都可以numba化
 class Cost:
     """ 交易成本类，用于在回测过程中估算交易成本
 
@@ -180,13 +183,9 @@ class Cost:
         :param moq: float, 最小交易单位
         :return:
          - a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
-         - cash_spent: ndarray,     花费的总金额，包括手续费在内
+         - cash_spent: ndarray,     花费的总金额，包括购买成本在内
          - fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
         """
-        # 给三个函数返回值预先赋值
-        a_purchased = np.zeros_like(prices)
-        cash_spent = np.zeros_like(prices)
-        fees = np.zeros_like(prices)
         if self.buy_fix == 0.:
             # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
             # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）

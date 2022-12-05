@@ -13747,9 +13747,10 @@ class FastExperiments(unittest.TestCase):
                asset_type='E',
                asset_pool=shares,
                PT_buy_threshold=0.03,
-               PT_sell_threshold=-0.80,
-               trade_batch_size=100,
-               sell_batch_size=100)
+               PT_sell_threshold=0.03,
+               maximize_cash_usage=False,
+               trade_batch_size=0,
+               sell_batch_size=0)
 
         alpha = AlphaSel(pars=(),
                          par_count=0,

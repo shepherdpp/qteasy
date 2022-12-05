@@ -204,7 +204,6 @@ def _loop_step(signal_type: int,
     # 如果不允许卖空交易，则需要更新股票卖出计划数量
     if not allow_sell_short:
         amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
-
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
                                                                     moq=moq_sell)
@@ -333,10 +332,14 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
+# TODO: 使用numba实现加速
 # TODO: apply_loop应该纯numpy化，删除operator作为传入参数，仅处理回测结果，将回测结果传出
 #  函数后再处理为pandas.DataFrame，并在函数以外进行进一步的记录和处理，这里仅仅使用与回测相关
 #  的参数
+# TODO: 结合operator.py中的TODO（1641，23）改进apply_loop：具备处理包含整行NaN交易信号的
+#  能力，在处理NaN交易信号时忽略整行NaN值，仅处理整行非NaN值的信号，并且使用交易结果插值补齐中
+#  间结果。这样可以使得PT信号在默认情况下也能尽在"信号日"处理，仅在特殊设置时才回测所有非信号日
+#  的PT信号
 def apply_loop(operator: Operator,
                trade_price_list: HistoryPanel,
                start_idx: int = 0,
@@ -441,7 +444,7 @@ def apply_loop(operator: Operator,
     op_log_value = []
     op_log_matrix = []
     prev_date = 0
-    # TODO: use Numba to optimize the efficiency of the looping process
+
     for i in range(start_idx, end_idx):
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i].date()
@@ -1457,6 +1460,11 @@ def reset_config(config=None):
     configure(config, reset=True)
 
 
+# TODO: Bug检查：
+#   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
+#   sample_freq='m',
+#   data_freq='m',
+#   window_length=6,
 def check_and_prepare_hist_data(oper: Operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
