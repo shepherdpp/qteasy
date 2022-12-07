@@ -134,6 +134,27 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '下载历史数据时是否显示进度条'},
 
+        'hist_dnld_retry_cnt':  {'Default':   7,
+                                 'Validator': lambda value: isinstance(value, int) and
+                                                            0 < value <= 10,
+                                 'level':     4,
+                                 'text':      '下载历史数据失败时的自动重试次数'},
+
+        'hist_dnld_retry_delay':
+                                {'Default':   1.,
+                                 'Validator': lambda value: isinstance(value, float) and
+                                                            0. <= value <= 5.0,
+                                 'level':     4,
+                                 'text':      '下载历史数据失败时的自动重试前的延迟时间，单位为秒'},
+
+        'hist_dnld_backoff':    {'Default':   2.,
+                                 'Validator': lambda value: isinstance(value, float) and
+                                                            0. <= value <= 2.0,
+                                 'level':     4,
+                                 'text':      '下载历史数据失败时的自动重试的延迟时间倍增乘数\n'
+                                              '例如，设置hist_dnld_backoff = 2时，每次重试失败\n'
+                                              '后延迟时间会变为前一次的2倍'},
+
         'gpu':                  {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     4,

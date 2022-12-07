@@ -9102,7 +9102,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      mode=1,
                      trade_log=True,
                      PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
+                     PT_sell_threshold=0.03,
                      backtest_price_adj='none')
         op = qt.Operator(strategies=['finance'], signal_type='PS')
         op.set_parameter(0,
@@ -13510,7 +13510,7 @@ class TestBuiltInsMultiple(unittest.TestCase):
                      mode=1,
                      trade_log=True,
                      PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
+                     PT_sell_threshold=0.03,
                      backtest_price_adj='none')
 
     def test_select_all(self):
@@ -13774,7 +13774,7 @@ class FastExperiments(unittest.TestCase):
                asset_type='E',
                asset_pool=shares,
                PT_buy_threshold=0.03,
-               PT_sell_threshold=-0.80,
+               PT_sell_threshold=0.03,
                trade_batch_size=100,
                sell_batch_size=100)
 

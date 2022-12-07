@@ -11,7 +11,7 @@ This project requires and depends on following packages:
 - *`pandas` version 0.25*
 - *`numpy` version 0.19*
 - *`TA-lib` version 0.4*
-- *`tushare pro` version 1.24.1*
+- *`tushare pro` version 1.2.89*
 - *`matplotlib.mplfinance` version 0.12*
 
 ## Introductions 介绍

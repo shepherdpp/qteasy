@@ -34,7 +34,7 @@ from pathlib import Path
 
 # 设置logger以及运行日志的存储路径
 logger_core = logging.getLogger('core')
-logger_core.setLevel(logging.DEBUG)
+# logger_core.setLevel(logging.DEBUG)
 debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
