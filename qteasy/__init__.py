@@ -33,16 +33,19 @@ from ._arg_validators import QT_CONFIG
 from pathlib import Path
 
 # 设置logger以及运行日志的存储路径
-logger_core = logging.getLogger('core')
-# logger_core.setLevel(logging.DEBUG)
-debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
+debug_handler = logging.handlers.TimedRotatingFileHandler(filename='qteasy/log/qteasy.log',
+                                                          backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
-error_handler.setLevel(logging.WARNING)
+error_handler.setLevel(logging.ERROR)
 formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s -: %(message)s')
 debug_handler.setFormatter(formatter)
+error_handler.setFormatter(formatter)
+logger_core = logging.getLogger('core')
 logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
+logger_core.setLevel(logging.INFO)
+logger_core.propagate = False
 
 # 准备从本地配置文件中读取预先存储的qteasy配置
 qt_local_configs = {}
@@ -80,9 +83,9 @@ for line in config_lines:
         arg_value = line[1].strip()
         try:
             qt_local_configs[arg_name] = arg_value
-            logger_core.info(f'qt configuration set: "{arg_name}" = {arg_value}')
+            logger_core.info(f'qt configuration set: "{arg_name}"')
         except Exception as e:
-            logger_core.warning(f'{e}, invalid parameter: {arg_name} = {arg_value}')
+            logger_core.warning(f'{e}, invalid parameter: {arg_name}')
 
 # 读取tushare token，如果读取失败，抛出warning
 try:
