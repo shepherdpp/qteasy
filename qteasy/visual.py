@@ -1455,9 +1455,11 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     print(f'investment starts on      {looped_values.index[0]}\n'
           f'ends on                   {looped_values.index[-1]}\n'
           f'Total looped periods:     {loop_results["years"]:.1f} years.')
-    print(f'\n-------------operation summary:------------'
-          f'\n')
+    print(f'\n-------------operation summary:------------\n'
+          f'Only non-empty shares are displayed, call \n'
+          f'"loop_result["oper_count"]" for complete operation summary\n')
     op_summary = loop_results['oper_count']
+    op_summary = op_summary.loc[op_summary['empty'] != 1.0]
     print(op_summary.to_string(columns=["sell",
                                         "buy",
                                         "total",
@@ -1476,7 +1478,8 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
                                            'long':  '{:.1%}'.format,
                                            'short': '{:.1%}'.format,
                                            'empty': '{:.1%}'.format},
-                               justify='center'), '\n')
+                               justify='center',
+                               max_rows=20), '\n')
     print(f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
     print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
           f'final value:              ¥{loop_results["final_value"]:12,.2f}')
@@ -1498,7 +1501,7 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
         print(f'    recovered on:         {loop_results["recover_date"].date()}\n')
     else:
         print(f'    recovered on:         Not recovered!\n')
-    print(f'\n===========END OF REPORT=============\n')
+    print(f'===========END OF REPORT=============\n')
 
 
 # TODO: like _plot_test_result, take the evaluate results on both opti and test hist data

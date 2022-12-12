@@ -755,6 +755,9 @@ class GeneralStg(BaseStrategy):
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """ 通用交易策略的所有策略代码全部都在realize中实现
         """
+        # TODO: 考虑增加错误提示：
+        #  如果用户定义了需要使用t数据的策略，但是使用的op_type为batch，会产生错误，
+        #  考虑在这里添加合适的错误提示
         return self.realize(h=h_seg, r=ref_seg, t=trade_data)
 
     @abstractmethod

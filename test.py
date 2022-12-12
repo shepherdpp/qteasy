@@ -1056,14 +1056,6 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'more information of some fo the stocks\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
 
-        print(f'\nselect all stocks by index, without start and end dates:\n'
-              f'all the "000300.SH" composite')
-        stock_pool = qt.filter_stock_codes(index='000300.SH')
-        self.assertTrue(len(stock_pool) > 0)
-        print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
-              f'more information of some fo the stocks\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
-
         print(f'\nprint out targets that can not be matched and return fuzzy results')
         stock_pool = qt.filter_stock_codes(industry='银行业, 多元金融, 房地产',
                                            area='陕西省',
@@ -1479,7 +1471,7 @@ class TestEvaluations(unittest.TestCase):
     def test_performance_stats(self):
         """test the function performance_statistics()
         """
-        pass
+        raise NotImplementedError
 
     # noinspection PyTypeChecker
     def test_fv(self):
@@ -2030,7 +2022,7 @@ class TestEvaluations(unittest.TestCase):
 
     def test_calmar(self):
         """test evaluate function eval_calmar()"""
-        pass
+        raise NotImplementedError
 
     def test_benchmark(self):
         reference = self.test_data1
@@ -2054,7 +2046,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEquals(yr, 0.929154957)
 
     def test_evaluate(self):
-        pass
+        raise NotImplementedError
 
 
 class TestLoop(unittest.TestCase):
@@ -7538,7 +7530,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         :return:
         """
-        pass
+        raise NotImplementedError
 
     def test_stg_parameter_setting(self):
         """ test setting parameters of strategies
@@ -9704,10 +9696,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(AssertionError, temp_hp.re_label, htypes='wrong input!')
 
     def test_csv_to_hp(self):
-        pass
+        raise NotImplementedError
 
     def test_hdf_to_hp(self):
-        pass
+        raise NotImplementedError
 
     def test_hp_join(self):
         # TODO: 这里需要加强，需要用具体的例子确认hp_join的结果正确
@@ -10020,10 +10012,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_to_csv(self):
-        pass
+        raise NotImplementedError
 
     def test_to_hdf(self):
-        pass
+        raise NotImplementedError
 
     def test_fill_na(self):
         """测试填充无效值"""
@@ -13717,6 +13709,42 @@ class AlphaSel(qt.FactorSorter):
         # signal = np.where(factor <= 0, -1, signal)
 
 
+class AlphaPS(qt.GeneralStg):
+
+    def realize(self, h, r=None, t=None, pars=None):
+        # 从历史数据编码中读取四种历史数据的最新数值
+        total_mv = h[:, -1, 0]  # 总市值
+        total_liab = h[:, -1, 1]  # 总负债
+        cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
+        ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
+
+        # 从持仓数据中读取当前的持仓数量，并找到持仓股序号
+        own_amounts = t[:, 0]
+        owned = np.where(own_amounts > 0)[0]  # 所有持仓股的序号
+        not_owned = np.where(own_amounts == 0)[0]  # 所有未持仓的股票序号
+
+        # 选股因子为EV/EBIDTA，使用下面公式计算
+        factors = (total_mv + total_liab - cash_equ) / ebitda
+        # 处理交易信号，将所有小于0的因子变为NaN
+        factors = np.where(factors < 0, np.nan, factors)
+        # 选出数值最小的30个股票的序号
+        arg_partitioned = factors.argpartition(30)
+        selected = arg_partitioned[:30]  # 被选中的30个股票的序号
+        not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+
+        # 开始生成交易信号
+        signal = np.zeros_like(factors)
+        # 如果持仓为正，且未被选中，生成全仓卖出交易信号
+        own_but_not_selected = np.intersect1d(owned, not_selected)
+        signal[own_but_not_selected] = -1  # 在PS信号模式下 -1 代表全仓卖出
+
+        # 如果持仓为零，且被选中，生成全仓买入交易信号
+        selected_but_not_own = np.intersect1d(not_owned, selected)
+        signal[selected_but_not_own] = 1  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
+        # import pdb; pdb.set_trace()
+        return signal
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -13725,60 +13753,24 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        alpha = AlphaSel(pars=(),
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='AlphaSel',
-                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
-                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                         sample_freq='m',
-                         data_freq='d',
-                         window_length=200,
-                         max_sel_count=30,
-                         condition='greater',
-                         ubound=0.0,
-                         weighting='even',
-                         sort_ascending=False)
-        op = qt.Operator(alpha)
-        op.info(verbose=True)
         shares = qt.filter_stock_codes(index='000300.SH', date='20221031')
+        alpha = AlphaPS(pars=(),
+                        par_count=0,
+                        par_types=[],
+                        par_range=[],
+                        name='AlphaPS',
+                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                        data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                        sample_freq='m',
+                        data_freq='d',
+                        window_length=100)
+        op = qt.Operator(alpha, signal_type='PS')
+        op.op_type = 'realtime'
         op.run(mode=1,
                asset_type='E',
                asset_pool=shares,
-               PT_buy_threshold=0.03,
-               PT_sell_threshold=0.03,
-               maximize_cash_usage=False,
-               trade_batch_size=0,
-               sell_batch_size=0)
-
-        alpha = AlphaSel(pars=(),
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='AlphaSel',
-                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
-                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                         sample_freq='m',
-                         data_freq='m',
-                         window_length=6,
-                         max_sel_count=30,
-                         condition='greater',
-                         ubound=0.0,
-                         weighting='even',
-                         sort_ascending=False)
-        op = qt.Operator(alpha)
-        op.info(verbose=True)
-        shares = qt.filter_stock_codes(index='000300.SH', date='20221031')
-        op.run(mode=1,
-               asset_type='E',
-               asset_pool=shares,
-               PT_buy_threshold=0.03,
-               PT_sell_threshold=0.03,
                trade_batch_size=100,
-               sell_batch_size=100)
-
-        raise NotImplementedError
+               sell_batch_size=1)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

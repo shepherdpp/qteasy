@@ -401,9 +401,9 @@ def apply_loop(operator: Operator,
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
     op_list = None
     if operator.op_type == 'batch':
-        # TODO: 此处应该传递完整的op_list到循环中，不过通过range(start_idx, end_idx)在获取相应的序号
+
         op_list = operator.op_list
-    # TODO: 此处应该传递完整的looped_dates到循环中，不过通过range(start_idx, end_idx)在获取相应的序号
+
     looped_dates = operator.op_list_hdates
     share_count, op_count, price_type_count = operator.op_list_shape
     if end_idx is None:
@@ -411,6 +411,13 @@ def apply_loop(operator: Operator,
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
+    #  补充说明：似乎更好的方式还是不要在每一个交易时间点上进行交易模拟计算，这里分两种情况讨论：
+    #  情况一：如果策略的data_freq与sample_freq相同，那么每一个历史时间点都是交易时间点，
+    #  这种情况下，根据现行规则，回测计算将在每一个历史时间点上进行。
+    #  情况二：如果策略的data_freq与sample_freq不同，那么不是每一个历史时间点都是交易时间点，
+    #  例如data_freq为d，但sample_freq为M，则每20天才会有一个交易取样点
+    #  上面讨论的两种情形实际上增加了回测计算的复杂度，inflation_factor的计算需要分两种情况讨论，
+    #  并不非常简单，因此需要仔细考虑
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
     additional_invest = 0.
@@ -445,11 +452,27 @@ def apply_loop(operator: Operator,
     op_log_matrix = []
     prev_date = 0
 
+    import pdb; pdb.set_trace()
     for i in range(start_idx, end_idx):
+        # TODO: 严重BUG：当策略的data_freq与sample_freq不同时，应该仅仅在有交易采样
+        #  的时间点上进行回测计算，忽略其他历史时间点，例如，当交易采样仅仅发生在[1, 10, 20, 30]
+        #  等四个历史时间点时，应该忽略其他交易时间点的交易信号
+        #  实际上，在op_type为batch时，交易信号本身就是在少数采样时间点上才有意义，但是在PT模式下
+        #  交易信号会被ffill到所有的历史时间点，因此会在每一个历史时间点产生交易信号，这时不需要的
+        #  因此在PT模式下需要排除非采样点的历史信号（也许允许客户选择），而在PS模式下，应该完全忽略
+        #  非交易采样日的交易信号
+        #  其次，在realtime模式下，交易信号本身就是实时生成的，那么这时交易信号就会被强制性地在每个
+        #  历史时间点上生成，而不管这个历史时间点是否采样时间点。
+        #  解决方案如下：
+        #  在realtime模式下运行时，在每次生成交易信号之前，都先检查operator对象的
+        #  _op_sample_indice，这个值中存储了所有的交易采样点序号，在所有的历史时间点上循环时，只有
+        #  当前历史时间点序号与采样时间点序号相同时，才生成交易信号
+
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i].date()
         sub_total_fee = 0
-        if (prev_date != current_date) and (inflation_rate > 0):  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
+        if (prev_date != current_date) and (inflation_rate > 0):
+            # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             own_cash *= inflation_factors[i]
             available_cash *= inflation_factors[i]
         if i in investment_date_pos:
@@ -474,7 +497,6 @@ def apply_loop(operator: Operator,
             current_prices = price[:, i - start_idx, j]
             if op_type == 'realtime':
                 # 在realtime模式下，准备trade_data并计算下一步的交易信号
-                # 由于回测不是从op_lsit_hdates的第一天开始，因此需要加上offset
                 trade_data[:, 0] = own_amounts
                 trade_data[:, 1] = available_amounts
                 trade_data[:, 2] = current_prices

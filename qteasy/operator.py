@@ -318,15 +318,17 @@ class Operator:
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
         # 以下属性由Operator自动设置，不允许用户手动设置
-        self._op_list = None  # Operator生成的交易信号清单
+        self._op_list = None  # 在batch模式下，Operator生成的交易信号清单
         self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
         self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {date: idx}
         self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {htype: idx}
 
+        # 以下属性同样自动设置。用于realtime模式下存储iama007
         self._op_signal = None  # 在realtime模式下，Operator生成的交易信号
         self._op_signal_hdate_idx = None  # 在realtime模式下，Operator交易信号的日期序号
         self._op_signal_price_type_idx = None  # 在realtime模式下，Operator交易信号的价格类型序号
 
+        # 设置operator的主要关键属性
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
         self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
@@ -1537,7 +1539,7 @@ class Operator:
 
             根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
 
-            - 如果sample_idx为一个int或np.int时，进入single模式，生成单组信号
+            - 如果sample_idx为一个int或np.int时，进入single模式，生成单组信号（单个价格类型上单一时间点混合信号）
                 从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组用于特定
                 回测price_type价格类型的交易信号
                 例如，假设 sample_idx = 7, price_type_idx = 0
@@ -1545,10 +1547,13 @@ class Operator:
                         array[1, 0, 0, 0, 1]
                 此时生成的是一个1D数组
 
+                为了确保只在sample采样时间点产生交易信号，需要比较sample_idx与operator的op_sample_indices，
+                只有sample_idx在op_sample_indices中时，才会产生交易信号，否则输出None
+
             - 如果sample_idx为None（默认）或一个ndarray，进入清单模式，生成完整清单
                 生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
                 一个元素代表的滑窗会被提取出来生成相应的信号，其余的滑窗忽略，相应的信号设置为np.nan
-                例如，假设 sample_idx = np.array([0, 3, 7])
+                例如，假设 sample_idx = np.array([0, 3, 7])T
                 生成一张完整的交易信号清单，清单中第0，3，7等三组信号为使用相应的数据滑窗生成，其余的信号
                 全部为np.nan：
                         array[[  0,   0,   0,   0,   0],
@@ -1674,6 +1679,7 @@ class Operator:
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             if sample_idx is not None:
+                # realtime mode, 返回
                 return blended_signal
             signal_out[bt_price_type] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股

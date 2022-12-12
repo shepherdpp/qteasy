@@ -841,28 +841,30 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     :return:
     """
     vkwargs = _valid_qt_kwargs()
-    if key not in vkwargs:
+    if (key not in vkwargs) and raise_if_key_not_existed:
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
-        if raise_if_key_not_existed:
-            raise KeyError(err_msg)
-        else:
-            import warnings
-            warnings.warn(err_msg)
-    else:
-        try:
-            valid = vkwargs[key]['Validator'](value)
-        except Exception as ex:
-            ex.extra_info = f'config_key {key} validator raised exception to value: {str(value)}'
-            raise
-        if not valid:
-            import inspect
-            v = inspect.getsource(vkwargs[key]['Validator']).strip()
-            raise TypeError(
-                    f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
-                    f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
-            # ---------------------------------------------------------------
-            #      At this point , if we have not raised an exception,
-            #      then config_key is valid as far as we can tell.
+        raise KeyError(err_msg)
+    if key not in vkwargs:
+        from qteasy import logger_core
+        warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error' \
+                   f'is suppressed by program!'
+        logger_core.warn(warn_msg)
+        return True
+
+    try:
+        valid = vkwargs[key]['Validator'](value)
+    except Exception as ex:
+        ex.extra_info = f'config_key {key} validator raised exception to value: {str(value)}'
+        raise ex
+    if not valid:
+        import inspect
+        v = inspect.getsource(vkwargs[key]['Validator']).strip()
+        raise TypeError(
+                f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
+                f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
+        # ---------------------------------------------------------------
+        #      At this point , if we have not raised an exception,
+        #      then config_key is valid as far as we can tell.
 
     return True
 
