@@ -452,7 +452,7 @@ def apply_loop(operator: Operator,
     op_log_matrix = []
     prev_date = 0
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     for i in range(start_idx, end_idx):
         # TODO: 严重BUG：当策略的data_freq与sample_freq不同时，应该仅仅在有交易采样
         #  的时间点上进行回测计算，忽略其他历史时间点，例如，当交易采样仅仅发生在[1, 10, 20, 30]

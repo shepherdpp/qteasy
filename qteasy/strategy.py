@@ -533,7 +533,10 @@ class BaseStrategy:
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
         # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单
         if data_idx is None:
-            data_idx = -1
+            # TODO: 为了实现stepwise模式运行op，且与qt的realtime模式配合实现实盘运行，是否可以考虑
+            #  当data_idx为None时输出None？这样在op运行时可以使用data_idx的值控制是否运行策略？
+            # data_idx = -1
+            return None
         if isinstance(data_idx, (int, np.int)):
             # 如果data_idx为整数时，生成单组信号stg_signal
             idx = data_idx

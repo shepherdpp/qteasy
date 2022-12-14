@@ -7525,7 +7525,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print('--Test two separate signal generation for different price types--')
         # 更多测试集合
 
-    def test_operator_generate_realtime(self):
+    def test_operator_generate_stepwise(self):
         """ 测试operator对象在实时模式下生成交易信号
 
         :return:
@@ -12355,7 +12355,7 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
-        op = qt.Operator(strategies=['stema'], op_type='realtime')
+        op = qt.Operator(strategies=['stema'], op_type='stepwise')
         op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
         qt.run(op)
@@ -12843,12 +12843,12 @@ class TestQT(unittest.TestCase):
         op.set_blender('avg(s0, s1, s2)', 'ls')
         qt.run(op, visual=False, trade_log=True)
 
-    def test_op_realtime(self):
-        """测试realtime模式下的operator的表，使用两个测试专用交易策略"""
-        # confirm that operator running results are same in realtime and batch type
+    def test_op_stepwise(self):
+        """测试stepwise模式下的operator的表，使用两个测试专用交易策略"""
+        # confirm that operator running results are same in stepwise and batch type
         op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
-        op_realtime = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='realtime')
-        for op in [op_batch, op_realtime]:
+        op_stepwise = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='step')
+        for op in [op_batch, op_stepwise]:
             op.set_parameter(0, window_length=100, pars=(12, 26, 9))
             op.set_parameter(1, window_length=100, pars=(12, 26, 9))
 
@@ -12866,18 +12866,18 @@ class TestQT(unittest.TestCase):
         )
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
-        print('backtest in realtime mode:')
-        res_realtime = op_realtime.run(mode=1)
+        print('backtest in stepwise mode:')
+        res_stepwise = op_stepwise.run(mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
-        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
               f'{val_batch}\n'
-              f'and the result of realtime operation is\n'
-              f'{val_realtime}')
+              f'and the result of stepwise operation is\n'
+              f'{val_stepwise}')
 
-        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertTrue(np.allclose(val_batch, val_stepwise))
         self.assertEqual(res_batch['final_value'],
-                         res_realtime['final_value'])
+                         res_stepwise['final_value'])
 
         print('backtest in batch mode:')
         res_batch = op_batch.run(
@@ -12885,18 +12885,18 @@ class TestQT(unittest.TestCase):
                 invest_start='20180101',
                 invest_end='20191231'
         )
-        print('backtest in realtime mode:')
-        res_realtime = op_realtime.run(
+        print('backtest in stepwise mode:')
+        res_stepwise = op_stepwise.run(
                 mode=1,
                 invest_start='20180101',
                 invest_end='20191231'
         )
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
-        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
 
-        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertTrue(np.allclose(val_batch, val_stepwise))
         self.assertEqual(res_batch['final_value'],
-                         res_realtime['final_value'])
+                         res_stepwise['final_value'])
 
         # test operator that utilizes trade data
         stg1 = TestLSStrategy()
@@ -12905,12 +12905,12 @@ class TestQT(unittest.TestCase):
         stg2.window_length = 100
         stg2.sample_freq = '2w'
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
-        op_realtime = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='realtime')
+        op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
                     '000300': (20, 6)}
         par_stg2 = ()
-        for op in [op_batch, op_realtime]:
+        for op in [op_batch, op_stepwise]:
             op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([1, 20], [2, 100]))
             op.set_parameter(1, pars=par_stg2, opt_tag=1)
 
@@ -12935,19 +12935,19 @@ class TestQT(unittest.TestCase):
 
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
-        print('backtest in realtime mode:')
-        res_realtime = op_realtime.run(mode=1)
+        print('backtest in stepwise mode:')
+        res_stepwise = op_stepwise.run(mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
-        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
               f'{val_batch}\n'
-              f'and the result of realtime operation is\n'
-              f'{val_realtime}')
+              f'and the result of stepwise operation is\n'
+              f'{val_stepwise}')
 
         print('backtest in batch mode in optimization mode:')
         op_batch.run(mode=2)
-        print('backtest in realtime mode in optimization mode')
-        op_realtime.run(mode=2)
+        print('backtest in stepwise mode in optimization mode')
+        op_stepwise.run(mode=2)
 
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
@@ -13765,7 +13765,7 @@ class FastExperiments(unittest.TestCase):
                         data_freq='d',
                         window_length=100)
         op = qt.Operator(alpha, signal_type='PS')
-        op.op_type = 'realtime'
+        op.op_type = 'stepwise'
         op.run(mode=1,
                asset_type='E',
                asset_pool=shares,
