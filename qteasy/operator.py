@@ -46,9 +46,9 @@ class Operator:
                                 在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文
 
             :param op_type:     交易模式，Operator对象有两种不同的交易模式：
-                                 - batch / b:       批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
+                                 - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
                                                     不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
-                                 - stepwise / rt:   实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
+                                 - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
                                                     交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
                                                     特殊交易策略，也可以用于实时交易
 
@@ -1496,12 +1496,16 @@ class Operator:
 
         # 为stepwise运行模式准备相关数据，包括每个策略的历史交易信号dict和历史日期序号dict，这部分数据是
         # 按price type组合的
-        self._op_signals_by_price_type = {price_type: [] * self.get_strategy_count_by_price_type(price_type) for
-                                          price_type in
-                                          self.bt_price_types}
-        self._op_signal_indices = {price_type: [] * self.get_strategy_count_by_price_type(price_type) for
-                                   price_type in
-                                   self.bt_price_types}
+        self._op_signals_by_price_type = {
+            price_type: [] * self.get_strategy_count_by_price_type(price_type) for
+            price_type in
+            self.bt_price_types
+        }
+        self._op_signal_indices = {
+            price_type: [] * self.get_strategy_count_by_price_type(price_type) for
+            price_type in
+            self.bt_price_types
+        }
         # 初始化历史交易信号和历史日期序号dict，在其中填入全0
 
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
@@ -1617,6 +1621,34 @@ class Operator:
                 #                            self.get_op_sample_indices_by_price_type(price_type=bt_price_type)]
                 relevant_sample_indices = [sample_idx] * len(relevant_strategies)
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
+            ############### map方式
+            # for stg, hd, rd, si in zip(relevant_strategies,
+            #                            relevant_hist_data,
+            #                            relevant_ref_data,
+            #                            relevant_sample_indices):
+            #     signal = stg.generate(hist_data=hd,
+            #                           ref_data=rd,
+            #                           trade_data=trade_data,
+            #                           data_idx=si)
+            #     op_signals.append(signal)
+            # if sample_idx is not None:
+            #     # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
+            #     self._op_signals_by_price_type[price_type_idx] = [
+            #         olds if news is None else news for
+            #         olds, news in zip(self._op_signals_by_price_type[price_type_idx],
+            #                           op_signals)
+            #     ]
+            #     self._op_sample_indices = [
+            #
+            #     ]
+            # elif (sample_idx is None) and (signal_type in ['ps', 'vs']):
+            #     # batch mode 且ps/vs信号: 填充signal_list中的空缺值为0
+            #     op_signals = map(fill_nan_data, op_signals, [0] * len(relevant_strategies))
+            # elif (sample_idx is None) and (signal_type == 'pt'):
+            #     # batch mode 且pt信号: ffill填充signal_list中的空缺值
+            #     op_signals = map(ffill_2d_data, op_signals, [0] * len(relevant_strategies))
+
+            ###############
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
                                        relevant_ref_data,
@@ -1625,12 +1657,7 @@ class Operator:
                                       ref_data=rd,
                                       trade_data=trade_data,
                                       data_idx=si)
-                if sample_idx is not None:
-                    # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
-                    self._op_signal = signal
-                    self._op_signal_indices = sample_idx
-                    self._op_signal_price_type_idx = bt_price_type
-                else:
+                if sample_idx is None:
                     # batch mode: 填充signal_list中的空缺值
                     # TODO: 潜在改进机会：
                     #  应该考虑这样的情况，或者给用户这样的选项：在PT模式下，是否也应该允许非信号日
@@ -1668,7 +1695,10 @@ class Operator:
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             if sample_idx is not None:
-                # stepwise mode, 返回
+                # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
+                self._op_signal = blended_signal
+                self._op_signal_indices = sample_idx
+                self._op_signal_price_type_idx = bt_price_type
                 return blended_signal
             signal_out[bt_price_type] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股

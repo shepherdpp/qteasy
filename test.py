@@ -12949,6 +12949,9 @@ class TestQT(unittest.TestCase):
         print('backtest in stepwise mode in optimization mode')
         op_stepwise.run(mode=2)
 
+        print('test stepwise mode with different sample freq')
+
+
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
         op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
@@ -13741,7 +13744,7 @@ class AlphaPS(qt.GeneralStg):
         # 如果持仓为零，且被选中，生成全仓买入交易信号
         selected_but_not_own = np.intersect1d(not_owned, selected)
         signal[selected_but_not_own] = 1  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
-        # import pdb; pdb.set_trace()
+
         return signal
 
 
@@ -13766,11 +13769,11 @@ class FastExperiments(unittest.TestCase):
                         window_length=100)
         op = qt.Operator(alpha, signal_type='PS')
         op.op_type = 'stepwise'
-        op.run(mode=1,
-               asset_type='E',
-               asset_pool=shares,
-               trade_batch_size=100,
-               sell_batch_size=1)
+        # op.run(mode=1,
+        #        asset_type='E',
+        #        asset_pool=shares,
+        #        trade_batch_size=100,
+        #        sell_batch_size=1)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

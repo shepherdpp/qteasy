@@ -461,7 +461,7 @@ def apply_loop(operator: Operator,
         #  交易信号会被ffill到所有的历史时间点，因此会在每一个历史时间点产生交易信号，这时不需要的
         #  因此在PT模式下需要排除非采样点的历史信号（也许允许客户选择），而在PS模式下，应该完全忽略
         #  非交易采样日的交易信号
-        #  其次，在realtime模式下，交易信号本身就是实时生成的，那么这时交易信号就会被强制性地在每个
+        #  其次，在stepwise模式下，交易信号本身就是实时生成的，那么这时交易信号就会被强制性地在每个
         #  历史时间点上生成，而不管这个历史时间点是否采样时间点。
         #  解决方案如下：
         #  在realtime模式下运行时，在每次生成交易信号之前，都先检查operator对象的
@@ -482,20 +482,23 @@ def apply_loop(operator: Operator,
             available_cash += additional_invest
         for j in price_priority_list:
             # 交易前将交割队列中达到交割期的现金完成交割
-            if ((prev_date != current_date) and (len(cash_delivery_queue) == cash_delivery_period)) or \
+            if ((prev_date != current_date) and
+                (len(cash_delivery_queue) == cash_delivery_period)) or \
                     (cash_delivery_period == 0):
                 if len(cash_delivery_queue) > 0:
                     cash_delivered = cash_delivery_queue.pop(0)
                     available_cash += cash_delivered
             # 交易前将交割队列中达到交割期的资产完成交割
-            if ((prev_date != current_date) and (len(stock_delivery_queue) == stock_delivery_period)) or \
+            if ((prev_date != current_date) and
+                (len(stock_delivery_queue) == stock_delivery_period)) or \
                     (stock_delivery_period == 0):
                 if len(stock_delivery_queue) > 0:
                     stock_delivered = stock_delivery_queue.pop(0)
                     available_amounts += stock_delivered
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i - start_idx, j]
-            if op_type == 'realtime':
+            # import pdb; pdb.set_trace()
+            if op_type == 'stepwise':
                 # 在realtime模式下，准备trade_data并计算下一步的交易信号
                 trade_data[:, 0] = own_amounts
                 trade_data[:, 1] = available_amounts
@@ -507,9 +510,12 @@ def apply_loop(operator: Operator,
                         sample_idx=i,
                         price_type_idx=j
                 )
-            else:
+            elif op_type == 'batch':
                 # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号
                 current_op = op_list[:, i, j]
+            else:
+                # 其他不合法的op_type
+                raise TypeError(f'op_type ({op_type}) is not valid!')
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=signal_type,
                     own_cash=own_cash,
@@ -1973,7 +1979,7 @@ def run(operator, **kwargs):
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in real time mode when its operation type is "batch", set '
-                           f'"Operator.op_type = \'realtime\'"')
+                           f'"Operator.op_type = \'step\'"')
         else:
             op_list = operator.create_signal(
                     trade_data=trade_data,
@@ -1991,6 +1997,8 @@ def run(operator, **kwargs):
                 operator=operator,
                 history_data=hist_op
         )
+
+        return op_list
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
