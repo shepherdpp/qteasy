@@ -717,5 +717,5 @@ def _operate(n1, n2, op):
     elif op in ['not', '~']:
         return -1 * n1
     else:
-        raise ValueError(f'Unknown operand!')
+        raise ValueError(f'Unknown operand: ({op})!')
 

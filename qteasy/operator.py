@@ -289,12 +289,12 @@ class Operator:
         # 以下属性由Operator自动设置，不允许用户手动设置
         self._op_list = None  # 在batch模式下，Operator生成的交易信号清单
         self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
-        self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {date: idx}
-        self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {htype: idx}
+        self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
+        self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {p_type: idx}
 
         # 以下属性同样自动设置。用于stepwise模式下存储stepwise模式下的单次交易信号
         self._op_signal = None  # 在stepwise模式下，Operator生成的交易信号（已经混合好的交易信号）
-        self._op_signals_by_price_type = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
+        self._op_signals_by_price_type_idx = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
         # 在stepwise模式下，各个strategy的信号分别存储为以下格式
         # {'open':  [[1,1,1], [1,0,0], [1,1,1]],
         #  'close': [[0,0,0], [1,1,1]]}
@@ -1494,19 +1494,18 @@ class Operator:
         # TODO: 检查生成的数据滑窗是否有问题，如果有问题则提出改进建议，
         #  例如：检查是否有部分滑窗存在全NaN数据？
 
-        # 为stepwise运行模式准备相关数据，包括每个策略的历史交易信号dict和历史日期序号dict，这部分数据是
-        # 按price type组合的
-        self._op_signals_by_price_type = {
-            price_type: [] * self.get_strategy_count_by_price_type(price_type) for
-            price_type in
-            self.bt_price_types
+        # 为stepwise运行模式准备相关数据结构，包括每个策略的历史交易信号dict和历史日期序号dict，这部分数据是
+        # 按price_type_idx组合的，而不是price_type。这里只创建数据结构，暂时不初始化数值
+        self._op_signals_by_price_type_idx = {
+            price_type_idx: [] for
+            price_type_idx in
+            range(self.bt_price_type_count)
         }
         self._op_signal_indices = {
-            price_type: [] * self.get_strategy_count_by_price_type(price_type) for
-            price_type in
-            self.bt_price_types
+            price_type_idx: [] for
+            price_type_idx in
+            range(self.bt_price_type_count)
         }
-        # 初始化历史交易信号和历史日期序号dict，在其中填入全0
 
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
@@ -1514,6 +1513,16 @@ class Operator:
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
         self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
                                                                                 range(self.bt_price_type_count))}
+
+        # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
+        for price_type_idx in range(self.bt_price_type_count):
+            # 按照price_type_idx逐个生成数据并填充
+            # TODO: 在realtime模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
+            price_type = self.bt_price_types[price_type_idx]
+            stg_count = self.get_strategy_count_by_price_type(price_type)
+            self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
+            self._op_signal_indices[price_type_idx] = [0] * stg_count
+
         return
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
@@ -1601,7 +1610,6 @@ class Operator:
         bt_price_type_count = len(bt_price_types)
         for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
-            op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(
                     price_type=bt_price_type,
@@ -1612,92 +1620,99 @@ class Operator:
                     get_rolling_window=True
             )
             if sample_idx is None:
+                signal_mode = 'batch'
                 relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
             else:
                 # stepwise运行，此时逐个比较sample_idx与op_sample_indices_by_price_type，只有sample_idx在其中时，才运行
                 # 此时strategy必须配套修改：当sample_idx为None时，策略输出也为None，即不运行
-                # relevant_sample_indices = [sample_idx if sample_idx in _ else None
-                #                            for _ in
-                #                            self.get_op_sample_indices_by_price_type(price_type=bt_price_type)]
-                relevant_sample_indices = [sample_idx] * len(relevant_strategies)
+                signal_mode = 'stepwise'
+                relevant_sample_indices = [sample_idx if sample_idx in _ else None
+                                           for _ in
+                                           self.get_op_sample_indices_by_price_type(
+                                                   price_type=bt_price_type
+                                           )]
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            ############### map方式
-            # for stg, hd, rd, si in zip(relevant_strategies,
-            #                            relevant_hist_data,
-            #                            relevant_ref_data,
-            #                            relevant_sample_indices):
-            #     signal = stg.generate(hist_data=hd,
-            #                           ref_data=rd,
-            #                           trade_data=trade_data,
-            #                           data_idx=si)
-            #     op_signals.append(signal)
-            # if sample_idx is not None:
-            #     # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
-            #     self._op_signals_by_price_type[price_type_idx] = [
-            #         olds if news is None else news for
-            #         olds, news in zip(self._op_signals_by_price_type[price_type_idx],
-            #                           op_signals)
-            #     ]
-            #     self._op_sample_indices = [
-            #
-            #     ]
-            # elif (sample_idx is None) and (signal_type in ['ps', 'vs']):
-            #     # batch mode 且ps/vs信号: 填充signal_list中的空缺值为0
-            #     op_signals = map(fill_nan_data, op_signals, [0] * len(relevant_strategies))
-            # elif (sample_idx is None) and (signal_type == 'pt'):
-            #     # batch mode 且pt信号: ffill填充signal_list中的空缺值
-            #     op_signals = map(ffill_2d_data, op_signals, [0] * len(relevant_strategies))
+            ###############
+            op_signals = [
+                stg.generate(hist_data=hd,
+                             ref_data=rd,
+                             trade_data=trade_data,
+                             data_idx=si) for
+                stg, hd, rd, si in
+                zip(relevant_strategies,
+                    relevant_hist_data,
+                    relevant_ref_data,
+                    relevant_sample_indices)
+            ]
+            if (signal_mode == 'stepwise') and (signal_type in ['ps', 'vs']):
+                # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
+                op_signals = [
+                    olds if news is None else news for
+                    olds, news in zip(self._op_signals_by_price_type_idx[price_type_idx],
+                                      op_signals)
+                ]
+                self._op_signals_by_price_type_idx[price_type_idx] = op_signals
+                self._op_signal_indices[price_type_idx] = [
+                    old_idx if new_idx is None else old_idx for
+                    old_idx, new_idx in zip(self._op_signal_indices[price_type_idx],
+                                            [sample_idx] * len(relevant_strategies))
+                ]
+            elif (signal_mode == 'stepwise') and (signal_type == 'pt'):
+                # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
+                # TODO: PT模式下的stepwise处理方式不太一样，应该用np.zeros()来填充而不是上一次信号
+                op_signals = [
+                    olds if news is None else news for
+                    olds, news in zip(self._op_signals_by_price_type_idx[price_type_idx],
+                                      op_signals)
+                ]
+                self._op_signals_by_price_type_idx[price_type_idx] = op_signals
+                self._op_signal_indices[price_type_idx] = [
+                    old_idx if new_idx is None else old_idx for
+                    old_idx, new_idx in zip(self._op_signal_indices[price_type_idx],
+                                            [sample_idx] * len(relevant_strategies))
+                ]
+            elif (signal_mode == 'batch') and (signal_type in ['ps', 'vs']):
+                # batch mode 且ps/vs信号: 填充signal_list中的空缺值为0
+                op_signals = list(map(fill_nan_data, op_signals, [0] * len(relevant_strategies)))
+            elif (signal_mode == 'batch') and (signal_type == 'pt'):
+                # batch mode 且pt信号: ffill填充signal_list中的空缺值
+                op_signals = list(map(ffill_2d_data, op_signals, [0] * len(relevant_strategies)))
 
             ###############
-            for stg, hd, rd, si in zip(relevant_strategies,
-                                       relevant_hist_data,
-                                       relevant_ref_data,
-                                       relevant_sample_indices):
-                signal = stg.generate(hist_data=hd,
-                                      ref_data=rd,
-                                      trade_data=trade_data,
-                                      data_idx=si)
-                if sample_idx is None:
-                    # batch mode: 填充signal_list中的空缺值
-                    # TODO: 潜在改进机会：
-                    #  应该考虑这样的情况，或者给用户这样的选项：在PT模式下，是否也应该允许非信号日
-                    #  的所有交易信号全部为NaN？此时意味着交易操作仅仅在有交易信号的时间点上发生，在
-                    #  其他时间点上，交易信号被完全忽略。更进一步，是否应该给客户选择的权利？
-                    #  设置两个选项：
-                    #  1，在所有信号模式下，包括PT信号模式，交易判断也仅仅在"信号日"上发生，而不是
-                    #     在所有历史时间点上发生；
-                    #  2，仅在PT模式下，交易判断除了在"信号日"上发生时，也会在所有历史时间点上发生，
-                    #     仅仅在其他两种信号模式下，交易判断仅在"信号日"上发生。
-                    #  初步考虑，要实现上面的目标，需要以下三点改变：
-                    #  1，在configuration中增加一个配置环境变量，用于控制PT信号模式下是否允许在
-                    #     所有历史时间点上进行交易判断（因为这是一种特殊情况，因此需要特殊处理）；
-                    #  2，修改交易信号清单的生成规则，使信号清单中非"信号日"的交易信号全部保持为NaN，
-                    #     以便仅筛选出"信号日"的信号进行回测，但只有在PT模式下，且用户设置了
-                    #     "允许非信号日进行交易"时，才将信号日的交易信号ffill到所有的"非信号日"；
-                    #  3，修改交易信号回测的规则，仅筛选信号清单中的"信号日"（也就是非NaN）信号进行
-                    #     回测。在这种情况下，如果用户在PT模式下设置了"允许非信号日进行交易"，则信号
-                    #     清单中不会存在NaN信号，也就是说会产生逐日交易（这种情况会较慢，因为需要回测
-                    #     所有的非信号日。
-                    #  以上修改后，好处是PT也可以仅处理"信号日"，效率会提升，尤其是sample频率低于
-                    #  data频率时
-                    if signal_type in ['ps', 'vs']:
-                        signal = fill_nan_data(signal, 0)
-                    elif signal_type == 'pt':
-                        signal = ffill_2d_data(signal, 0)
-                    else:
-                        raise KeyError(f'Invalid signal type: {self.signal_type}')
-                op_signals.append(signal)
-                # 生成的交易信号添加到交易信号队列中，
+            # TODO: 潜在改进机会：
+            #  应该考虑这样的情况，或者给用户这样的选项：在PT模式下，是否也应该允许非信号日
+            #  的所有交易信号全部为NaN？此时意味着交易操作仅仅在有交易信号的时间点上发生，在
+            #  其他时间点上，交易信号被完全忽略。更进一步，是否应该给客户选择的权利？
+            #  设置两个选项：
+            #  1，在所有信号模式下，包括PT信号模式，交易判断也仅仅在"信号日"上发生，而不是
+            #     在所有历史时间点上发生；
+            #  2，仅在PT模式下，交易判断除了在"信号日"上发生时，也会在所有历史时间点上发生，
+            #     仅仅在其他两种信号模式下，交易判断仅在"信号日"上发生。
+            #  初步考虑，要实现上面的目标，需要以下三点改变：
+            #  1，在configuration中增加一个配置环境变量，用于控制PT信号模式下是否允许在
+            #     所有历史时间点上进行交易判断（因为这是一种特殊情况，因此需要特殊处理）；
+            #  2，修改交易信号清单的生成规则，使信号清单中非"信号日"的交易信号全部保持为NaN，
+            #     以便仅筛选出"信号日"的信号进行回测，但只有在PT模式下，且用户设置了
+            #     "允许非信号日进行交易"时，才将信号日的交易信号ffill到所有的"非信号日"；
+            #  3，修改交易信号回测的规则，仅筛选信号清单中的"信号日"（也就是非NaN）信号进行
+            #     回测。在这种情况下，如果用户在PT模式下设置了"允许非信号日进行交易"，则信号
+            #     清单中不会存在NaN信号，也就是说会产生逐日交易（这种情况会较慢，因为需要回测
+            #     所有的非信号日。
+            #  以上修改后，好处是PT也可以仅处理"信号日"，效率会提升，尤其是sample频率低于
+            #  data频率时
+            # 生成的交易信号添加到交易信号队列中，
 
             # 根据蒙板混合前缀表达式混合所有蒙板
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(bt_price_type)
-            blended_signal = signal_blend(op_signals, blender=signal_blender)
-            if sample_idx is not None:
+            try:
+                blended_signal = signal_blend(op_signals, blender=signal_blender)
+            except:
+                import pdb; pdb.set_trace()
+            if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
                 self._op_signal = blended_signal
-                self._op_signal_indices = sample_idx
                 self._op_signal_price_type_idx = bt_price_type
                 return blended_signal
             signal_out[bt_price_type] = blended_signal
