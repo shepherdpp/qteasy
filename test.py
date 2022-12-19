@@ -13689,7 +13689,7 @@ class Cross_SMA_PT(qt.RuleIterator):
             return 0
 
 
-class AlphaSel(qt.FactorSorter):
+class AlphaFac(qt.FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
         # 在这里编写信号生成逻辑
@@ -13701,15 +13701,7 @@ class AlphaSel(qt.FactorSorter):
         factor = (total_mv + total_liab - cash_equ) / ebitda
 
         # 以下是PT信号类型时的输出，会存在每日调整的问题
-        # # result代表策略的输出
-        #
         return factor
-
-        # 以下是PS信号类型时的输出，不会存在每日调整的问题
-        # 初始化交易信号，准备根据factor生成交易信号
-        # signal = np.zeros_like(factor)
-        # # 当factor小于0的时候，全部平仓
-        # signal = np.where(factor <= 0, -1, signal)
 
 
 class AlphaPS(qt.GeneralStg):
@@ -13748,6 +13740,35 @@ class AlphaPS(qt.GeneralStg):
         return signal
 
 
+class AlphaPT(qt.GeneralStg):
+
+    def realize(self, h, r=None, t=None, pars=None):
+
+        # 从历史数据编码中读取四种历史数据的最新数值
+        total_mv = h[:, -1, 0]  # 总市值
+        total_liab = h[:, -1, 1]  # 总负债
+        cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
+        ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
+
+        # 选股因子为EV/EBIDTA，使用下面公式计算
+        factors = (total_mv + total_liab - cash_equ) / ebitda
+        # 处理交易信号，将所有小于0的因子变为NaN
+        factors = np.where(factors < 0, np.nan, factors)
+        # 选出数值最小的30个股票的序号
+        arg_partitioned = factors.argpartition(30)
+        selected = arg_partitioned[:30]  # 被选中的30个股票的序号
+        not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+
+        # 开始生成PT交易信号
+        signal = np.zeros_like(factors)
+        # 所有被选中的股票的持仓目标被设置为0.03，表示持有3.3%
+        signal[selected] = 0.0333
+        # 其余未选中的所有股票持仓目标在PT信号模式下被设置为0，代表目标仓位为0
+        signal[not_selected] = 0
+
+        return signal
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -13756,7 +13777,8 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        shares = qt.filter_stock_codes(index='000300.SH', date='20221031')
+        shares = qt.filter_stock_codes(index='000300.SH', date='20220131')
+        print(f'total {len(shares)} shares selected!')
         alpha = AlphaPS(pars=(),
                         par_count=0,
                         par_types=[],
@@ -13769,11 +13791,54 @@ class FastExperiments(unittest.TestCase):
                         window_length=100)
         op = qt.Operator(alpha, signal_type='PS')
         op.op_type = 'stepwise'
-        # op.run(mode=1,
-        #        asset_type='E',
-        #        asset_pool=shares,
-        #        trade_batch_size=100,
-        #        sell_batch_size=1)
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1)
+
+        alpha = AlphaPT(pars=(),
+                        par_count=0,
+                        par_types=[],
+                        par_range=[],
+                        name='AlphaSel',
+                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                        data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                        sample_freq='m',
+                        data_freq='d',
+                        window_length=100)
+        op = qt.Operator(alpha, signal_type='PT')
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               PT_buy_threshold=0.03,
+               PT_sell_threshold=0.03,
+               trade_batch_size=100,
+               sell_batch_size=1)
+
+        alpha = AlphaFac(pars=(),
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='AlphaSel',
+                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                         sample_freq='m',
+                         data_freq='d',
+                         window_length=100,
+                         max_sel_count=30,  # 设置选股数量，最多选出30个股票
+                         condition='greater',  # 设置筛选条件，仅筛选因子大于ubound的股票
+                         ubound=0.0,  # 设置筛选条件，仅筛选因子大于0的股票
+                         weighting='even',  # 设置股票权重，所有选中的股票平均分配权重
+                         sort_ascending=True)  # 设置排序方式，因子从小到大排序选择头30名
+        op = qt.Operator(alpha, signal_type='PT')
+        res = op.run(mode=1,
+                     asset_type='E',
+                     asset_pool=shares,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=0.03,
+                     trade_batch_size=100,
+                     sell_batch_size=1)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

@@ -1608,6 +1608,7 @@ class Operator:
         else:
             bt_price_types = [self.bt_price_types[price_type_idx]]
         bt_price_type_count = len(bt_price_types)
+        all_zero_signal = np.zeros(len(self._op_list_shares))
         for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
@@ -1645,11 +1646,10 @@ class Operator:
                     relevant_sample_indices)
             ]
             if (signal_mode == 'stepwise') and (signal_type in ['ps', 'vs']):
-                # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
+                # stepwise mode, 这时候如果idx不在sample_idx中，就使用全0信号
                 op_signals = [
-                    olds if news is None else news for
-                    olds, news in zip(self._op_signals_by_price_type_idx[price_type_idx],
-                                      op_signals)
+                    all_zero_signal if news is None else news for
+                    news in op_signals
                 ]
                 self._op_signals_by_price_type_idx[price_type_idx] = op_signals
                 self._op_signal_indices[price_type_idx] = [
