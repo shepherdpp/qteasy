@@ -13832,13 +13832,13 @@ class FastExperiments(unittest.TestCase):
                          weighting='even',  # 设置股票权重，所有选中的股票平均分配权重
                          sort_ascending=True)  # 设置排序方式，因子从小到大排序选择头30名
         op = qt.Operator(alpha, signal_type='PT')
-        res = op.run(mode=1,
-                     asset_type='E',
-                     asset_pool=shares,
-                     PT_buy_threshold=0.03,
-                     PT_sell_threshold=0.03,
-                     trade_batch_size=100,
-                     sell_batch_size=1)
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               PT_buy_threshold=0.03,
+               PT_sell_threshold=0.03,
+               trade_batch_size=100,
+               sell_batch_size=1)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

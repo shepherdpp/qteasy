@@ -206,7 +206,7 @@ class Operator:
         if op_type is None:
             op_type = 'batch'
 
-        # 初始化Operator对象的"工作数据"或"运行数据"：
+        # 初始化Operator对象的"工作数据"或"运行数据"，以下属性由Operator自动设置，不允许用户手动设置：
         '''
         Operator对象的工作数据包含多个字典Dict或其他类型数据，分别存储用于交易信号生成的历史数据
         参考数据、混合方式、以及交易信号的最终结果，这些数据包括三部分：
@@ -273,6 +273,7 @@ class Operator:
                                 交易清单对应的价格类型
 
         '''
+        # Operator对象的工作变量
         self._signal_type = ''
         self._op_type = ''
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
@@ -286,19 +287,21 @@ class Operator:
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
-        # 以下属性由Operator自动设置，不允许用户手动设置
+        # batch模式下生成的交易清单以及交易清单的相关信息
         self._op_list = None  # 在batch模式下，Operator生成的交易信号清单
         self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
         self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
         self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {p_type: idx}
+        self._op_list_bt_indices = None  # 在batch模式下生成交易信号清单后，需要回测交易的信号行序号，只有序号中的信号行会被回测
 
-        # 以下属性同样自动设置。用于stepwise模式下存储stepwise模式下的单次交易信号
+        # stepwise模式下生成的单次交易信号以及相关信息
+        self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
         self._op_signal = None  # 在stepwise模式下，Operator生成的交易信号（已经混合好的交易信号）
         self._op_signals_by_price_type_idx = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
         # 在stepwise模式下，各个strategy的信号分别存储为以下格式
         # {'open':  [[1,1,1], [1,0,0], [1,1,1]],
         #  'close': [[0,0,0], [1,1,1]]}
-        self._op_signal_indices = {}  # 在stepwise模式下，每个strategy最近交易信号的日期序号
+        self._op_signal_indices_by_price_type_idx = {}  # 在stepwise模式下，每个strategy最近交易信号的日期序号
         self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
 
         # 设置operator的主要关键属性
@@ -592,7 +595,7 @@ class Operator:
 
         :return:
         """
-        return self._op_signal_indices
+        return self._op_signal_index
 
     @property
     def op_signal_hdate(self):
@@ -601,7 +604,7 @@ class Operator:
 
         :return:
         """
-        idx = self._op_signal_indices
+        idx = self._op_signal_index
         return self.op_list_hdates[idx]
 
     @property
@@ -1501,7 +1504,7 @@ class Operator:
             price_type_idx in
             range(self.bt_price_type_count)
         }
-        self._op_signal_indices = {
+        self._op_signal_indices_by_price_type_idx = {
             price_type_idx: [] for
             price_type_idx in
             range(self.bt_price_type_count)
@@ -1521,7 +1524,7 @@ class Operator:
             price_type = self.bt_price_types[price_type_idx]
             stg_count = self.get_strategy_count_by_price_type(price_type)
             self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
-            self._op_signal_indices[price_type_idx] = [0] * stg_count
+            self._op_signal_indices_by_price_type_idx[price_type_idx] = [0] * stg_count
 
         return
 
@@ -1536,7 +1539,7 @@ class Operator:
 
             根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
 
-            - 如果sample_idx为一个int或np.int时，进入single模式，生成单组信号（单个价格类型上单一时间点混合信号）
+            - 如果sample_idx为一个int或np.int时，进入stepwise模式，生成单组信号（单个价格类型上单一时间点混合信号）
                 从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组用于特定
                 回测price_type价格类型的交易信号
                 例如，假设 sample_idx = 7, price_type_idx = 0
@@ -1621,7 +1624,13 @@ class Operator:
                     get_rolling_window=True
             )
             if sample_idx is None:
-                signal_mode = 'batch'
+                # TODO: 这里的signal_mode实际上就是self.op_typ。但是self.op_type并没有
+                #  在create_signal过程中起到任何作用，应该考虑op_type和sample_idx的关系，
+                #  将sample_idx的使用方法简化:
+                #  例如，
+                #  - 在生成信号之前检查sample_idx的类型，并加以调整
+                #  - 根据op_type确定运行模式
+                signal_mode = 'batch'   # TODO: self.op_type == 'batch'
                 relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
             else:
                 # stepwise运行，此时逐个比较sample_idx与op_sample_indices_by_price_type，只有sample_idx在其中时，才运行
@@ -1652,9 +1661,9 @@ class Operator:
                     news in op_signals
                 ]
                 self._op_signals_by_price_type_idx[price_type_idx] = op_signals
-                self._op_signal_indices[price_type_idx] = [
+                self._op_signal_indices_by_price_type_idx[price_type_idx] = [
                     old_idx if new_idx is None else old_idx for
-                    old_idx, new_idx in zip(self._op_signal_indices[price_type_idx],
+                    old_idx, new_idx in zip(self._op_signal_indices_by_price_type_idx[price_type_idx],
                                             [sample_idx] * len(relevant_strategies))
                 ]
             elif (signal_mode == 'stepwise') and (signal_type == 'pt'):
@@ -1666,9 +1675,9 @@ class Operator:
                                       op_signals)
                 ]
                 self._op_signals_by_price_type_idx[price_type_idx] = op_signals
-                self._op_signal_indices[price_type_idx] = [
+                self._op_signal_indices_by_price_type_idx[price_type_idx] = [
                     old_idx if new_idx is None else old_idx for
-                    old_idx, new_idx in zip(self._op_signal_indices[price_type_idx],
+                    old_idx, new_idx in zip(self._op_signal_indices_by_price_type_idx[price_type_idx],
                                             [sample_idx] * len(relevant_strategies))
                 ]
             elif (signal_mode == 'batch') and (signal_type in ['ps', 'vs']):
@@ -1706,13 +1715,11 @@ class Operator:
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(bt_price_type)
-            try:
-                blended_signal = signal_blend(op_signals, blender=signal_blender)
-            except:
-                import pdb; pdb.set_trace()
+            blended_signal = signal_blend(op_signals, blender=signal_blender)
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
                 self._op_signal = blended_signal
+                self._op_signal_index = sample_idx
                 self._op_signal_price_type_idx = bt_price_type
                 return blended_signal
             signal_out[bt_price_type] = blended_signal
