@@ -15,11 +15,10 @@ import numpy as np
 import time
 import math
 from warnings import warn
+from numba import njit
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import datetime
-
-from typing import Tuple, Union
 
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
@@ -27,7 +26,7 @@ from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date
 from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
-from .finance import Cost, CashPlan
+from .finance import CashPlan, get_selling_result, get_purchase_result, set_cost
 from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result
 from .visual import _print_operation_signal, _plot_test_result
@@ -39,15 +38,21 @@ from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
 # TODO: Usability improvements:
 #  使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
-# @njit
+@njit
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
                available_cash: float,
-               available_amounts: (np.ndarray, float),
+               available_amounts: np.ndarray,
                op: np.ndarray,
                prices: np.ndarray,
-               rate: Cost,
+               buy_fix: float,
+               sell_fix: float,
+               buy_rate: float,
+               sell_rate: float,
+               buy_min: float,
+               sell_min: float,
+               slipage: float,
                pt_buy_threshold: float,
                pt_sell_threshold: float,
                maximize_cash_usage: bool,
@@ -91,7 +96,7 @@ def _loop_step(signal_type: int,
             本次交易发生时各个股票的交易价格
 
         :param rate：
-            :type rate: object Cost
+            :type rate: dict
             交易成本率对象
 
         :param pt_buy_threshold：
@@ -126,7 +131,7 @@ def _loop_step(signal_type: int,
     # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
     # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
     # 出计算
-    if np.all(op == 0) and signal_type > 0:
+    if np.all(op == 0) and (signal_type > 0):
         # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
         # 因为正好op全为0，因此返回op即可
         return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
@@ -197,16 +202,33 @@ def _loop_step(signal_type: int,
             amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0)
 
     else:
-        raise ValueError(f'Invalid signal_type value ({signal_type})')
+        raise ValueError('Invalid signal_type value ({signal_type})')
 
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
+    # 解析交易费用
+    # buy_fix = rate['buy_rate']
+    # sell_fix = rate['sell_rate']
+    # buy_rate = rate['buy_fix']
+    # sell_rate = rate['sell_fix']
+    # buy_min = rate['buy_min']
+    # sell_min = rate['sell_min']
+    # slipage = rate['slipage']
     # 如果不允许卖空交易，则需要更新股票卖出计划数量
     if not allow_sell_short:
         amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
-    amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
-                                                                    a_to_sell=amounts_to_sell,
-                                                                    moq=moq_sell)
+    amount_sold, cash_gained, fee_selling = get_selling_result(
+            prices=prices,
+            a_to_sell=amounts_to_sell,
+            moq=moq_sell,
+            buy_fix=buy_fix,
+            sell_fix=sell_fix,
+            buy_rate=buy_rate,
+            sell_rate=sell_rate,
+            buy_min=buy_min,
+            sell_min=sell_min,
+            slipage=slipage
+    )
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
@@ -229,9 +251,18 @@ def _loop_step(signal_type: int,
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
     # if total_cash_to_spend < 0:
     #     import pdb; pdb.set_trace()
-    amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
-                                                                        cash_to_spend=cash_to_spend,
-                                                                        moq=moq_buy)
+    amount_purchased, cash_spent, fee_buying = get_purchase_result(
+            prices=prices,
+            cash_to_spend=cash_to_spend,
+            moq=moq_buy,
+            buy_fix=buy_fix,
+            sell_fix=sell_fix,
+            buy_rate=buy_rate,
+            sell_rate=sell_rate,
+            buy_min=buy_min,
+            sell_min=sell_min,
+            slipage=slipage
+    )
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
@@ -345,7 +376,7 @@ def apply_loop(operator: Operator,
                start_idx: int = 0,
                end_idx: int = None,
                cash_plan: CashPlan = None,
-               cost_rate: Cost = None,
+               cost_rate: dict = None,
                moq_buy: float = 100.,
                moq_sell: float = 1,
                inflation_rate: float = 0.03,
@@ -366,7 +397,7 @@ def apply_loop(operator: Operator,
         :param end_idx: int: 一个整数，默认为-1，模拟交易到交易清单的该序号为止
         :param trade_price_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
         :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
-        :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
+        :param cost_rate: dict: 交易成本率，包含交易费、滑点及冲击成本
         :param moq_buy: float：每次交易买进的最小份额单位
         :param moq_sell: float: 每次交易卖出的最小份额单位
         :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
@@ -521,7 +552,13 @@ def apply_loop(operator: Operator,
                     available_amounts=available_amounts,
                     op=current_op,
                     prices=current_prices,
-                    rate=cost_rate,
+                    buy_fix=cost_rate['buy_rate'],
+                    sell_fix=cost_rate['sell_rate'],
+                    buy_rate=cost_rate['buy_fix'],
+                    sell_rate=cost_rate['sell_fix'],
+                    buy_min=cost_rate['buy_min'],
+                    sell_min=cost_rate['sell_min'],
+                    slipage=cost_rate['slipage'],
                     pt_buy_threshold=pt_buy_threshold,
                     pt_sell_threshold=pt_sell_threshold,
                     maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
@@ -2421,14 +2458,14 @@ def _evaluate_one_parameter(par,
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
     price_priority_list = op.get_bt_price_type_id_in_priority(priority=config.price_priority_OHLC)
-    trade_cost = Cost(
-            config.cost_fixed_buy,
-            config.cost_fixed_sell,
-            config.cost_rate_buy,
-            config.cost_rate_sell,
-            config.cost_min_buy,
-            config.cost_min_sell,
-            config.cost_slippage
+    trade_cost = set_cost(
+            buy_fix=config.cost_fixed_buy,
+            sell_fix=config.cost_fixed_sell,
+            buy_rate=config.cost_rate_buy,
+            sell_rate=config.cost_rate_sell,
+            buy_min=config.cost_min_buy,
+            sell_min=config.cost_min_sell,
+            slipage=config.cost_slippage
     )
     st = time.time()
     for start, end in zip(start_dates, end_dates):

@@ -10,7 +10,6 @@
 # ======================================
 import unittest
 
-import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -22,6 +21,8 @@ import datetime
 import logging
 
 from qteasy import QT_CONFIG, QT_DATA_SOURCE, CashPlan
+
+from qteasy.finance import get_selling_result, get_purchase_result, calculate
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
@@ -95,14 +96,14 @@ class TestCost(unittest.TestCase):
         self.amounts_to_sell = np.array([0., 0., -3333.3333])
         self.cash_to_spend = np.array([0., 20000., 0.])
         self.prices = np.array([10., 20., 10.])
-        self.r = qt.Cost(0.0)
+        self.r = qt.set_cost()
 
     def test_rate_creation(self):
         """测试对象生成"""
         print('testing rates objects\n')
-        self.assertIsInstance(self.r, qt.Cost, 'Type should be Rate')
-        self.assertEqual(self.r.buy_fix, 0)
-        self.assertEqual(self.r.sell_fix, 0)
+        self.assertIsInstance(self.r, dict, 'Type should be Rate')
+        self.assertEqual(self.r['buy_fix'], 0)
+        self.assertEqual(self.r['sell_fix'], 0)
 
     def test_rate_operations(self):
         """测试交易费率对象"""
@@ -113,236 +114,240 @@ class TestCost(unittest.TestCase):
         self.assertEqual(self.r['buy_min'], 5., 'Item got is incorrect')
         self.assertEqual(self.r['sell_min'], 0.0, 'Item got is incorrect')
         self.assertEqual(self.r['slipage'], 0.0, 'Item got is incorrect')
-        self.assertEqual(np.allclose(self.r.calculate(self.amounts),
+        self.assertEqual(np.allclose(calculate(self.amounts, None, None, **self.r),
                                      [0.003, 0.003, 0.003]),
                          True,
                          'fee calculation wrong')
 
     def test_rate_fee(self):
         """测试买卖交易费率"""
-        self.r.buy_rate = 0.003
-        self.r.sell_rate = 0.001
-        self.r.buy_fix = 0.
-        self.r.sell_fix = 0.
-        self.r.buy_min = 0.
-        self.r.sell_min = 0.
-        self.r.slipage = 0.
-
+        self.r['buy_rate'] = 0.003
+        self.r['sell_rate'] = 0.001
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 0.
+        self.r['sell_min'] = 0.
+        self.r['slipage'] = 0.
+        r = self.r
         print('\nSell result with fixed rate = 0.001 and moq = 0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
-        test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.333333, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1.))
-        test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 1., **r))
+        test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 1, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3300]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_rate_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997.00897308, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 1))
-        test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 1)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 1, **r))
+        test_rate_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 1, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_rate_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
 
     def test_min_fee(self):
         """测试最低交易费用"""
-        self.r.buy_rate = 0.
-        self.r.sell_rate = 0.
-        self.r.buy_fix = 0.
-        self.r.sell_fix = 0.
-        self.r.buy_min = 300
-        self.r.sell_min = 300
-        self.r.slipage = 0.
+        self.r['buy_rate'] = 0.
+        self.r['sell_rate'] = 0.
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 300
+        self.r['sell_min'] = 300
+        self.r['slipage'] = 0.
+        r = self.r
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
-        test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 10, **r))
+        test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 10, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
-        test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_min_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33033.333)
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33033.333)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
-        test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 1, **r))
+        test_min_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 1, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33030)
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33030)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_min_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), 32700)
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 32700)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
     def test_rate_with_min(self):
         """测试最低交易费用对其他交易费率参数的影响"""
-        self.r.buy_rate = 0.0153
-        self.r.sell_rate = 0.01
-        self.r.buy_fix = 0.
-        self.r.sell_fix = 0.
-        self.r.buy_min = 300
-        self.r.sell_min = 333
-        self.r.slipage = 0.
+        self.r['buy_rate'] = 0.0153
+        self.r['sell_rate'] = 0.01
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 300
+        self.r['sell_min'] = 333
+        self.r['slipage'] = 0.
+        r = self.r
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 984.9305624, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 10:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
-        test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 10, **r))
+        test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 10, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
-        test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_rate_with_min_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32999.99967)
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.33333)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32999.99967)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.33333)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
-        test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 1, **r))
+        test_rate_with_min_result = get_selling_result(self.prices, self.amounts_to_sell, 1, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32996.7)
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.3)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32996.7)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.3)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_rate_with_min_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32667.0)
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.0)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32667.0)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.0)
 
     def test_fixed_fee(self):
         """测试固定交易费用"""
-        self.r.buy_rate = 0.
-        self.r.sell_rate = 0.
-        self.r.buy_fix = 200
-        self.r.sell_fix = 150
-        self.r.buy_min = 0
-        self.r.sell_min = 0
-        self.r.slipage = 0
+        self.r['buy_rate'] = 0.
+        self.r['sell_rate'] = 0.
+        self.r['buy_fix'] = 200
+        self.r['sell_fix'] = 150
+        self.r['buy_min'] = 0
+        self.r['sell_min'] = 0
+        self.r['slipage'] = 0
+        r = self.r
         print('\nselling result of fixed cost with fixed fee = 150 and moq=0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 0))
-        test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
 
         print('\nselling result of fixed cost with fixed fee = 150 and moq=100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3300.]), True,
                       f'result incorrect, {test_fixed_fee_result[0]} does not equal to [0,0,-3400]')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 990., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
     def test_slipage(self):
         """测试交易滑点"""
-        self.r.buy_fix = 0
-        self.r.sell_fix = 0
-        self.r.buy_min = 0
-        self.r.sell_min = 0
-        self.r.buy_rate = 0.003
-        self.r.sell_rate = 0.001
-        self.r.slipage = 1E-9
+        self.r['buy_fix'] = 0
+        self.r['sell_fix'] = 0
+        self.r['buy_min'] = 0
+        self.r['sell_min'] = 0
+        self.r['buy_rate'] = 0.003
+        self.r['sell_rate'] = 0.001
+        self.r['slipage'] = 1E-9
+        r = self.r
         print('\npurchase result of fixed rate = 0.003 and slipage = 1E-10 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
         print('\npurchase result of fixed rate = 0.003 and slipage = 1E-10 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
         print('\nselling result with fixed rate = 0.001 and slipage = 1E-10:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
 
-        test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True,
                       f'{test_fixed_fee_result[0]} does not equal to [0, 0, -10000]')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33298.88855591,
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33298.88855591,
                                 msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 34.44444409,
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 34.44444409,
                                 msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
 
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 996.98909294, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
 
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
 
 
 class TestSpace(unittest.TestCase):
@@ -737,9 +742,9 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(self.cp1.period, 730)
         self.assertEqual(self.cp1.dates, [Timestamp('2010-01-01'), Timestamp('2012-01-01')])
         self.assertEqual(self.cp1.ir, 0.1)
-        self.assertAlmostEquals(self.cp1.closing_value, 34200)
-        self.assertAlmostEquals(self.cp2.closing_value, 10000)
-        self.assertAlmostEquals(self.cp3.closing_value, 220385.3483685)
+        self.assertAlmostEqual(self.cp1.closing_value, 34200)
+        self.assertAlmostEqual(self.cp2.closing_value, 10000)
+        self.assertAlmostEqual(self.cp3.closing_value, 220385.3483685)
         self.assertIsInstance(self.cp1.plan, pd.DataFrame)
         self.assertIsInstance(self.cp2.plan, pd.DataFrame)
         self.assertIsInstance(self.cp3.plan, pd.DataFrame)
@@ -753,8 +758,8 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(empty.period, 0)
         self.assertEqual(empty.dates, [])
         self.assertEqual(empty.ir, 0.0)
-        self.assertAlmostEquals(empty.closing_value, 0)
-        self.assertAlmostEquals(empty.opening_value, 0)
+        self.assertAlmostEqual(empty.closing_value, 0)
+        self.assertAlmostEqual(empty.opening_value, 0)
         self.assertIsInstance(empty.plan, pd.DataFrame)
         self.assertTrue(empty.plan.empty)
 
@@ -1544,20 +1549,20 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEquals(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
 
     def test_volatility(self):
-        self.assertAlmostEquals(eval_volatility(self.test_data1), 0.748646166)
-        self.assertAlmostEquals(eval_volatility(self.test_data2), 0.75527442)
-        self.assertAlmostEquals(eval_volatility(self.test_data3), 0.654188853)
-        self.assertAlmostEquals(eval_volatility(self.test_data4), 0.688375814)
-        self.assertAlmostEquals(eval_volatility(self.test_data5), 1.089989522)
-        self.assertAlmostEquals(eval_volatility(self.test_data6), 1.775419308)
-        self.assertAlmostEquals(eval_volatility(self.test_data7), 1.962758406)
-        self.assertAlmostEquals(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
-        self.assertAlmostEquals(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
-        self.assertAlmostEquals(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
-        self.assertAlmostEquals(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
-        self.assertAlmostEquals(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
-        self.assertAlmostEquals(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
-        self.assertAlmostEquals(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
+        self.assertAlmostEqual(eval_volatility(self.test_data1), 0.748646166)
+        self.assertAlmostEqual(eval_volatility(self.test_data2), 0.75527442)
+        self.assertAlmostEqual(eval_volatility(self.test_data3), 0.654188853)
+        self.assertAlmostEqual(eval_volatility(self.test_data4), 0.688375814)
+        self.assertAlmostEqual(eval_volatility(self.test_data5), 1.089989522)
+        self.assertAlmostEqual(eval_volatility(self.test_data6), 1.775419308)
+        self.assertAlmostEqual(eval_volatility(self.test_data7), 1.962758406)
+        self.assertAlmostEqual(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
+        self.assertAlmostEqual(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
+        self.assertAlmostEqual(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
+        self.assertAlmostEqual(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
+        self.assertAlmostEqual(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
+        self.assertAlmostEqual(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
+        self.assertAlmostEqual(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
         self.assertEqual(eval_volatility(pd.DataFrame()), -np.inf)
         self.assertRaises(AssertionError, eval_volatility, [1, 2, 3])
@@ -1670,13 +1675,13 @@ class TestEvaluations(unittest.TestCase):
 
     # noinspection PyCallingNonCallable
     def test_sharp(self):
-        self.assertAlmostEquals(eval_sharp(self.test_data1, 0), 0.970116743)
-        self.assertAlmostEquals(eval_sharp(self.test_data2, 0), 2.654078559)
-        self.assertAlmostEquals(eval_sharp(self.test_data3, 0), 1.573319618)
-        self.assertAlmostEquals(eval_sharp(self.test_data4, 0), 2.449630585)
-        self.assertAlmostEquals(eval_sharp(self.test_data5, 0.002), 0.578781892)
-        self.assertAlmostEquals(eval_sharp(self.test_data6, 0.002), 0.570048419)
-        self.assertAlmostEquals(eval_sharp(self.test_data7, 0.002), 0.347565045)
+        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
+        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
+        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 1.573319618)
+        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 2.449630585)
+        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.578781892)
+        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.570048419)
+        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.347565045)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1781,7 +1786,7 @@ class TestEvaluations(unittest.TestCase):
                                    1.84548298, 2.08064663, 1.98788139, 2.04559367, 2.05991876])
         test_sharp = eval_sharp(self.long_data, 0.015)
         expected = float(np.nanmean(expected_sharp))
-        self.assertAlmostEquals(expected, test_sharp)
+        self.assertAlmostEqual(expected, test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
     def test_beta(self):
@@ -2900,20 +2905,20 @@ class TestLoop(unittest.TestCase):
 
         # 设置回测参数
         self.cash = qt.CashPlan(['2016/07/01', '2016/08/12', '2016/09/23'], [10000, 10000, 10000])
-        self.rate = qt.Cost(buy_fix=0,
-                            sell_fix=0,
-                            buy_rate=0,
-                            sell_rate=0,
-                            buy_min=0,
-                            sell_min=0,
-                            slipage=0)
-        self.rate2 = qt.Cost(buy_fix=0,
-                             sell_fix=0,
-                             buy_rate=0,
-                             sell_rate=0,
-                             buy_min=10,
-                             sell_min=5,
-                             slipage=0)
+        self.rate = qt.set_cost(buy_fix=0,
+                                sell_fix=0,
+                                buy_rate=0,
+                                sell_rate=0,
+                                buy_min=0,
+                                sell_min=0,
+                                slipage=0)
+        self.rate2 = qt.set_cost(buy_fix=0,
+                                 sell_fix=0,
+                                 buy_rate=0,
+                                 sell_rate=0,
+                                 buy_min=10,
+                                 sell_min=5,
+                                 slipage=0)
 
         # 模拟PT信号回测结果
         # PT信号，先卖后买，交割期为0
@@ -4234,7 +4239,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4257,7 +4262,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[3][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4280,7 +4285,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[31][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4303,7 +4308,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[60][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4326,7 +4331,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[61][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4349,7 +4354,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[96][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4372,7 +4377,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[97][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
 
     def test_loop_step_pt_bs00(self):
@@ -4397,7 +4402,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4420,7 +4425,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[3][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4443,7 +4448,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[31][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4466,7 +4471,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[60][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4489,7 +4494,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[61][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4512,7 +4517,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[96][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4535,7 +4540,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[97][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
 
     def test_loop_step_ps_sb00(self):
@@ -4560,7 +4565,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4583,7 +4588,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[3][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4606,7 +4611,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[31][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4629,7 +4634,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[60][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4652,7 +4657,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[61][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4675,7 +4680,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[96][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4698,7 +4703,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[97][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
 
     def test_loop_step_ps_bs00(self):
@@ -4723,7 +4728,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4746,7 +4751,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[3][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4769,7 +4774,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[31][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4792,7 +4797,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[60][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4815,7 +4820,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[61][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4838,7 +4843,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[96][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4861,7 +4866,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[97][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
 
     def test_loop_step_vs_sb00(self):
@@ -4886,7 +4891,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7750)
+        self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4909,7 +4914,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[3][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4932,7 +4937,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[31][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4955,7 +4960,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[60][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4978,7 +4983,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[61][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5001,7 +5006,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[96][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5024,7 +5029,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[97][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
 
     def test_loop_step_vs_bs00(self):
@@ -5049,7 +5054,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7750)
+        self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5072,7 +5077,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[3][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5095,7 +5100,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[31][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5118,7 +5123,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[60][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5141,7 +5146,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[61][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5164,7 +5169,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[96][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5187,7 +5192,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[97][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
 
     def test_loop_pt(self):
@@ -7657,19 +7662,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(s0-s1)/s2 + s3")
         print(f'RPN of notation: "(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
+        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
         blender = blender_parser("-(s0-s1)/s2 + s3")
         print(f'RPN of notation: "-(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
         blender = blender_parser("~(0-1)/s2 + s3")
         print(f'RPN of notation: "~(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
         blender = blender_parser("s0 + s1 / s2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, math.pi, 4], blender), 1.78539816)
+        self.assertAlmostEqual(signal_blend([1, math.pi, 4], blender), 1.78539816)
         blender = blender_parser("(s0 + s1) / s2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7677,7 +7682,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(s0 + s1 * s2) / s3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
+        self.assertAlmostEqual(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
         blender = blender_parser("s0 / s1 * s2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7685,11 +7690,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(s0 - s1 + s2) * s4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
+        self.assertAlmostEqual(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
         blender = blender_parser("s0 * s1")
         print(f'RPN of notation: "0 * 1" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([math.pi, math.e], blender), 8.539734222673566)
+        self.assertAlmostEqual(signal_blend([math.pi, math.e], blender), 8.539734222673566)
 
         blender = blender_parser('abs(s3-sqrt(s2) /  cos(s1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'

@@ -287,48 +287,48 @@ def _valid_qt_kwargs():
                                  'text':      '为True时在回测图表中用色带显示投资仓位'},
 
         'cost_fixed_buy':       {'Default':   0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化\n'
                                               '默认值为10元'},
 
         'cost_fixed_sell':      {'Default':   0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化\n'
                                               '默认值为0'},
 
         'cost_rate_buy':        {'Default':   0.0003,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and 0 <= value < 1,
                                  'level':     1,
                                  'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算\n'
                                               '默认值为万分之三'},
 
         'cost_rate_sell':       {'Default':   0.0001,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and 0 <= value < 1,
                                  'level':     1,
                                  'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算\n'
                                               '默认值为万分之一'},
 
         'cost_min_buy':         {'Default':   5.0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额\n'
                                               '默认值为5元'},
 
         'cost_min_sell':        {'Default':   0.0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额'},
 
         'cost_slippage':        {'Default':   0.0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and 0 <= value < 1,
                                  'level':     2,
                                  'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},

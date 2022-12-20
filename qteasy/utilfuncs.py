@@ -58,6 +58,7 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 }
 NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
+ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
 
 def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
