@@ -159,6 +159,7 @@ def _loop_step(signal_type: int,
                                  0)
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
+
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
             cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
                                       position_diff * total_value,
@@ -178,14 +179,16 @@ def _loop_step(signal_type: int,
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 =交易信号 * 当前总资产
+
+            # debug
+            # if np.any(op < 0):
+            #     import pdb;
+            #     pdb.set_trace()
+            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 交易信号 * 当前总资产
             cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op * own_amounts, 0)
-        # debug
-        # print(f'a:{np.round(own_amounts,2)}, signal:{op}, '
-        #       f'a2sell: {np.round(amounts_to_sell,2)}, '
-        #       f'c2spnd: {np.round(cash_to_spend,2)}')
+
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
@@ -206,14 +209,6 @@ def _loop_step(signal_type: int,
 
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
-    # 解析交易费用
-    # buy_fix = rate['buy_rate']
-    # sell_fix = rate['sell_rate']
-    # buy_rate = rate['buy_fix']
-    # sell_rate = rate['sell_fix']
-    # buy_min = rate['buy_min']
-    # sell_min = rate['sell_min']
-    # slipage = rate['slipage']
     # 如果不允许卖空交易，则需要更新股票卖出计划数量
     if not allow_sell_short:
         amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
@@ -249,6 +244,7 @@ def _loop_step(signal_type: int,
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
+    # debug
     # if total_cash_to_spend < 0:
     #     import pdb; pdb.set_trace()
     amount_purchased, cash_spent, fee_buying = get_purchase_result(
@@ -460,10 +456,10 @@ def apply_loop(operator: Operator,
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
     # 初始化计算结果列表
-    own_cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
-    available_cash = 0  # 每期可用现金总额
-    own_amounts = 0  # 投资组合中各个资产的持有数量，初始值为全0向量
-    available_amounts = 0  # 每期可用的资产数量
+    own_cash = 0.  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
+    available_cash = 0.  # 每期可用现金总额
+    own_amounts = np.zeros(shape=(share_count,))  # 投资组合中各个资产的持有数量，初始值为全0向量
+    available_amounts = np.zeros(shape=(share_count,))  # 每期可用的资产数量
     cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
     stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
     cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
@@ -472,7 +468,7 @@ def apply_loop(operator: Operator,
     amounts_matrix = []
     total_value = 0
     trade_data = np.empty(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
-    # 持有现金等数据的数组，用于realtime信号生成
+    # 持有现金等数据的数组，用于stepwise信号生成
     recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
     recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
     # 保存trade_log_table数据：
@@ -552,10 +548,10 @@ def apply_loop(operator: Operator,
                     available_amounts=available_amounts,
                     op=current_op,
                     prices=current_prices,
-                    buy_fix=cost_rate['buy_rate'],
-                    sell_fix=cost_rate['sell_rate'],
-                    buy_rate=cost_rate['buy_fix'],
-                    sell_rate=cost_rate['sell_fix'],
+                    buy_fix=cost_rate['buy_fix'],
+                    sell_fix=cost_rate['sell_fix'],
+                    buy_rate=cost_rate['buy_rate'],
+                    sell_rate=cost_rate['sell_rate'],
                     buy_min=cost_rate['buy_min'],
                     sell_min=cost_rate['sell_min'],
                     slipage=cost_rate['slipage'],

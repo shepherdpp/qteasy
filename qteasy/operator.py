@@ -1611,7 +1611,7 @@ class Operator:
         else:
             bt_price_types = [self.bt_price_types[price_type_idx]]
         bt_price_type_count = len(bt_price_types)
-        all_zero_signal = np.zeros(len(self._op_list_shares))
+        all_zero_signal = np.zeros(len(self._op_list_shares), dtype='float')
         for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
@@ -1715,7 +1715,7 @@ class Operator:
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(bt_price_type)
-            blended_signal = signal_blend(op_signals, blender=signal_blender)
+            blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
                 self._op_signal = blended_signal

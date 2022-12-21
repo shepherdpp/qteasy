@@ -13632,15 +13632,15 @@ class Cross_SMA_PS(qt.RuleIterator):
 
         # 根据观望模式在不同的点位产生交易信号
         if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
-            return 1
+            return 1.
         elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
-            return -1
+            return -1.
         elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
-            return -1
+            return -1.
         elif (f_last < s_ma_l) and (f_today > s_ma_l):  # 当快均线自下而上穿过下边界，平空仓
-            return 1
+            return 1.
         else:  # 其余情况不产生任何信号
-            return 0
+            return 0.
 
 
 class Cross_SMA_PT(qt.RuleIterator):
@@ -13800,7 +13800,8 @@ class FastExperiments(unittest.TestCase):
                asset_type='E',
                asset_pool=shares,
                trade_batch_size=100,
-               sell_batch_size=1)
+               sell_batch_size=1,
+               trade_log=False)
 
         alpha = AlphaPT(pars=(),
                         par_count=0,
@@ -13819,7 +13820,8 @@ class FastExperiments(unittest.TestCase):
                PT_buy_threshold=0.03,
                PT_sell_threshold=0.03,
                trade_batch_size=100,
-               sell_batch_size=1)
+               sell_batch_size=1,
+               trade_log=False)
 
         alpha = AlphaFac(pars=(),
                          par_count=0,
@@ -13843,7 +13845,8 @@ class FastExperiments(unittest.TestCase):
                PT_buy_threshold=0.03,
                PT_sell_threshold=0.03,
                trade_batch_size=100,
-               sell_batch_size=1)
+               sell_batch_size=1,
+               trade_log=False)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
