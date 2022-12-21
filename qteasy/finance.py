@@ -235,8 +235,9 @@ def get_purchase_result(prices: np.ndarray,
         purchased_values = a_purchased * prices + fees
         cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
     else:  # self.buy_fix
-        # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将小于buy_fix的金额置0
-        cash_to_spend = np.where(cash_to_spend < buy_fix, 0, cash_to_spend)
+        # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将绝对值小于buy_fix的金额置0
+        # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
+        cash_to_spend = np.where(np.abs(cash_to_spend) < buy_fix, 0, cash_to_spend)
         fixed_fees = calculate(trade_values=cash_to_spend,
                                is_buying=True,
                                fixed_fees=True,

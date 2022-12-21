@@ -36,8 +36,6 @@ from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
 
-# TODO: Usability improvements:
-#  使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
 @njit
 def _loop_step(signal_type: int,
                own_cash: float,
