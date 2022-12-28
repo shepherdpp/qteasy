@@ -376,6 +376,23 @@ def _valid_qt_kwargs():
                                               '- False - 默认值，不允许卖空操作，卖出数量最多仅为当前可用持仓数量\n'
                                               '- True -  允许卖空，卖出数量大于持仓量时，即持有空头仓位\n'},
 
+        'long_position_limit':  {'Default':   1.,
+                                 'Validator': lambda value: isinstance(value, float) and (value > 0),
+                                 'level':     3,
+                                 'text':      '回测过程中允许交易信号建立的多头仓位百分比的极限值，即允许动用\n'
+                                              '总资产（包括现金和持有股票的总额）的多少百分比用于持有多头仓位，\n'
+                                              '默认值1.0，即100%\n'
+                                              '如果设置值大于1，则表示允许超过持有现金建仓，这种情况会产生负现金\n'
+                                              '余额，表示产生了借贷\n'},
+
+        'short_position_limit': {'Default':  -1.,
+                                 'Validator': lambda value: isinstance(value, float) and (value < 0),
+                                 'level':     3,
+                                 'text':      '回测过程中允许交易信号建立的空头仓位百分比的极限值，即允许持有的\n'
+                                              '空头仓位占当前净资产总额的最高比例限额，默认值-1.0，即最多允许借入\n'
+                                              '相当于净资产总额100%价值的股票并持有空头仓位，此时持有负股票份额且\n'
+                                              '产生正现金流入'},
+
         'backtest_price_adj':   {'Default':   'none',
                                  'Validator': lambda value: isinstance(value, str)
                                                             and value in ['none', 'n', 'back', 'b', 'adj'],
@@ -413,7 +430,7 @@ def _valid_qt_kwargs():
 
         'PT_buy_threshold':     {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, (float, int))
-                                                            and 0 <= value < 1,
+                                                            and (0 <= value < 1),
                                  'level':     3,
                                  'text':      '回测信号模式为PT（position target）时，触发买入信号的仓位差异阈值\n'
                                               '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发买入信号\n'
@@ -422,7 +439,7 @@ def _valid_qt_kwargs():
 
         'PT_sell_threshold':    {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, (float, int))
-                                                            and 0 <= value < 1,
+                                                            and (0 <= value < 1),
                                  'level':     3,
                                  'text':      '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
                                               '在这种模式下，当持有的投资产品的仓位比目标仓位高，且差额超过阈值时，触发卖出信号\n'
@@ -442,7 +459,7 @@ def _valid_qt_kwargs():
 
         'price_priority_quote': {'Default':   'normal',
                                  'Validator': lambda value: isinstance(value, str)
-                                                            and value in ['normal', 'reverse'],
+                                                            and (value in ['normal', 'reverse']),
                                  'level':     3,
                                  'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为实时报价时，回测程序处理\n'
                                               '不同的价格信号的优先级。\n'

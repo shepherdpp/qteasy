@@ -93,9 +93,29 @@ def _loop_step(signal_type: int,
             :type prices: np.ndarray，
             本次交易发生时各个股票的交易价格
 
-        :param rate：
-            :type rate: dict
-            交易成本率对象
+        :param buy_fix：
+            :type buy_fix: float
+            交易成本：固定买入费用
+
+        :param sell_fix：
+            :type sell_fix: float
+            交易成本：固定卖出费用
+
+        :param buy_rate：
+            :type buy_rate: float
+            交易成本：固定买入费率
+
+        :param sell_rate：
+            :type sell_rate: float
+            交易成本：固定卖出费率
+
+        :param buy_min：
+            :type buy_min: float
+            交易成本：最低买入费用
+
+        :param sell_min：
+            :type sell_min: float
+            交易成本：最低卖出费用
 
         :param pt_buy_threshold：
             :type pt_buy_threshold: object Cost
@@ -178,10 +198,6 @@ def _loop_step(signal_type: int,
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
 
-            # debug
-            # if np.any(op < 0):
-            #     import pdb;
-            #     pdb.set_trace()
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 交易信号 * 当前总资产
             cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
@@ -203,7 +219,7 @@ def _loop_step(signal_type: int,
             amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0)
 
     else:
-        raise ValueError('Invalid signal_type value ({signal_type})')
+        raise ValueError('Invalid signal_type')
 
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
@@ -228,6 +244,12 @@ def _loop_step(signal_type: int,
         # 现金余额 = 期初现金余额 + 本次出售资产获得现金总额
         available_cash += cash_gained.sum()
 
+    # TODO: 这里调整处理cash_to_spend的工作方式：
+    #  1，将绝对值小于1分钱的买入金额清零，
+    #  2，跳过后续计算的条件不是总买入现金为0，而是所有买入现金分量都为0时跳过；
+    #  3，区分正买入现金和负买入现金（当允许买空卖空时）并计算买入现金总额；
+    #  4，分别对正买入现金和负买入现金（当允许买空卖空时）引入总额调整机制；
+    #  5，在调整负买入现金的总额时，使用qt级别配置参数
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     total_cash_to_spend = cash_to_spend.sum()
 
@@ -238,13 +260,10 @@ def _loop_step(signal_type: int,
     if total_cash_to_spend > available_cash:
         # 按比例降低分配给每个拟买入资产的现金额，如果金额特别小，将数额置0
         cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
-        cash_to_spend = np.where(cash_to_spend < 0.0001, 0, cash_to_spend)
+        cash_to_spend = np.where(np.abs(cash_to_spend) < 0.001, 0., cash_to_spend)
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
-    # debug
-    # if total_cash_to_spend < 0:
-    #     import pdb; pdb.set_trace()
     amount_purchased, cash_spent, fee_buying = get_purchase_result(
             prices=prices,
             cash_to_spend=cash_to_spend,

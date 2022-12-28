@@ -12956,7 +12956,6 @@ class TestQT(unittest.TestCase):
 
         print('test stepwise mode with different sample freq')
 
-
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
         op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
@@ -12996,7 +12995,7 @@ class TestQT(unittest.TestCase):
 
 
 class TestVisual(unittest.TestCase):
-    """ Test the visual effects and charts
+    """ 测试图表视觉效果
 
     """
 
