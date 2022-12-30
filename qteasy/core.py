@@ -36,7 +36,7 @@ from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
 
-# @njit
+@njit
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -279,6 +279,7 @@ def _loop_step(signal_type: int,
     total_neg_cash_to_spend = neg_cash_to_spend.sum()
     next_own_amounts = own_amounts - amount_sold
 
+    # 计算允许用于买入多头份额的最大金额
     current_long_pos = np.where(next_own_amounts > 0, next_own_amounts * prices, 0).sum() / total_value
     max_pos_cash_to_spend = (long_pos_limit - current_long_pos) * total_value
 
@@ -286,7 +287,7 @@ def _loop_step(signal_type: int,
         max_pos_cash_to_spend = min(max_pos_cash_to_spend, available_cash)
 
     if total_pos_cash_to_spend > max_pos_cash_to_spend:
-        # 按比例降低分配给每个拟买入多头资产的现金
+        # 如果计划买入多头现金超过允许买入最大金额，按比例降低分配给每个拟买入多头资产的现金
         pos_cash_to_spend = pos_cash_to_spend / total_pos_cash_to_spend * max_pos_cash_to_spend
 
     if allow_sell_short:
@@ -295,8 +296,8 @@ def _loop_step(signal_type: int,
         max_neg_cash_to_spend = (short_pos_limit - current_short_pos) * total_value
 
         if total_neg_cash_to_spend < max_neg_cash_to_spend:
+            # 如果计划买入空头现金超过允许买入最大金额，按比例调降拟买入空头资产的现金
             neg_cash_to_spend = neg_cash_to_spend / total_neg_cash_to_spend * max_neg_cash_to_spend
-            # import pdb; pdb.set_trace()
 
     cash_to_spend = pos_cash_to_spend + neg_cash_to_spend
 
@@ -472,11 +473,9 @@ def apply_loop(operator: Operator,
         - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
         - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
     """
-    assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
-    assert cash_plan is not None, 'ValueError: cash plan should not be None type'
     if moq_buy == 0:
         assert moq_sell == 0, f'ValueError, if "trade_batch_size" is 0, then ' \
-                              f'"sell_batch_size" should also be 0, got {moq_sell}'
+                              f'"sell_batch_size" should also be 0'
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
@@ -514,6 +513,250 @@ def apply_loop(operator: Operator,
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
+    # 解析交易费率参数：
+    buy_fix = cost_rate['buy_fix']
+    sell_fix = cost_rate['sell_fix']
+    buy_rate = cost_rate['buy_rate']
+    sell_rate = cost_rate['sell_rate']
+    buy_min = cost_rate['buy_min']
+    sell_min = cost_rate['sell_min']
+    slipage = cost_rate['slipage']
+
+    # 保存trade_log_table数据：
+    op_log_add_invest = []
+    op_log_cash = []
+    op_log_available_cash = []
+    op_log_value = []
+    op_log_matrix = []
+    prev_date = 0
+
+    if (op_type == 'batch') and (not trade_log):
+        # batch模式下调用apply_loop_core函数:
+        # 1, 将looped_dates数据转化为'day_index'数据，生成day序号
+        looped_day_indices = list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int'))
+        # 2, 将invset_dict处理为两个列表：invest_date_indices, invest_amounts
+        investment_date_pos = list(investment_date_pos)
+        invest_amounts = list(invest_dict.values())
+        cashes, fees, values, amounts_matrix = apply_loop_core(share_count,
+                                                               looped_day_indices,
+                                                               inflation_factors,
+                                                               investment_date_pos,
+                                                               invest_amounts,
+                                                               price,
+                                                               op_list,
+                                                               signal_type,
+                                                               start_idx,
+                                                               end_idx,
+                                                               buy_fix,
+                                                               sell_fix,
+                                                               buy_rate,
+                                                               sell_rate,
+                                                               buy_min,
+                                                               sell_min,
+                                                               slipage,
+                                                               moq_buy,
+                                                               moq_sell,
+                                                               inflation_rate,
+                                                               pt_buy_threshold,
+                                                               pt_sell_threshold,
+                                                               cash_delivery_period,
+                                                               stock_delivery_period,
+                                                               allow_sell_short,
+                                                               long_pos_limit,
+                                                               short_pos_limit,
+                                                               max_cash_usage,
+                                                               price_priority_list)
+    else:
+        # 初始化计算结果列表
+        own_cash = 0.  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
+        available_cash = 0.  # 每期可用现金总额
+        own_amounts = np.zeros(shape=(share_count,))  # 投资组合中各个资产的持有数量，初始值为全0向量
+        available_amounts = np.zeros(shape=(share_count,))  # 每期可用的资产数量
+        cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
+        stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
+        cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
+        fees = []  # 交易费用，记录每个操作时点产生的交易费用
+        values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
+        amounts_matrix = []
+        total_value = 0
+        trade_data = np.empty(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
+        # 持有现金等数据的数组，用于stepwise信号生成
+        recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
+        recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
+
+        for i in range(start_idx, end_idx):
+            # TODO: 允许交易信号中存在全NaN值，即零交易信号的时间点。在循环处理所有交易信号的时候，
+            #  跳过这些零交易信号时间点，仅仅处理有交易信号的时间点即可。
+            #  零交易信号时间点存在于下面两种情况中：
+            #   - 交易清单日期中的非sample_date：当sample_freq与data_freq不同的时候，只有部分
+            #     时间点上会产生交易信号，其余时间应该都是0，但如果op中有多个交易策略，每个策略的
+            #     sample_freq不同的时候，每个交易策略会有自己的sample_indices，这时候op的
+            #     sample_indices是所有交易策略的sample_indices的并集 （在pt模式下，可以通过
+            #     pt_signal_timing来控制： aggressive
+            #   - 无效交易信号：通过提前识别无效交易信号可以排除更多的苓交易信号时间点，在ps/vs模式
+            #     下，只要交易信号是全0，就是无效信号，在pt模式下，只要交易信号相比上个周期不变，就
+            #     是无效信号。（在pt模式下，可以通过 pt_signal_timing来控制： lazy
+
+            # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
+            current_date = looped_dates[i].date()
+            sub_total_fee = 0
+            if (prev_date != current_date) and (inflation_rate > 0):
+                # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
+                own_cash *= inflation_factors[i]
+                available_cash *= inflation_factors[i]
+            if i in investment_date_pos:
+                # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
+                additional_invest = invest_dict[i]
+                own_cash += additional_invest
+                available_cash += additional_invest
+            for j in price_priority_list:
+                # 交易前将交割队列中达到交割期的现金完成交割
+                if ((prev_date != current_date) and
+                    (len(cash_delivery_queue) == cash_delivery_period)) or \
+                        (cash_delivery_period == 0):
+                    if len(cash_delivery_queue) > 0:
+                        cash_delivered = cash_delivery_queue.pop(0)
+                        available_cash += cash_delivered
+                # 交易前将交割队列中达到交割期的资产完成交割
+                if ((prev_date != current_date) and
+                    (len(stock_delivery_queue) == stock_delivery_period)) or \
+                        (stock_delivery_period == 0):
+                    if len(stock_delivery_queue) > 0:
+                        stock_delivered = stock_delivery_queue.pop(0)
+                        available_amounts += stock_delivered
+                # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
+                current_prices = price[:, i - start_idx, j]
+                if op_type == 'stepwise':
+                    # 在realtime模式下，准备trade_data并计算下一步的交易信号
+                    trade_data[:, 0] = own_amounts
+                    trade_data[:, 1] = available_amounts
+                    trade_data[:, 2] = current_prices
+                    trade_data[:, 3] = recent_amounts_change
+                    trade_data[:, 4] = recent_trade_prices
+                    current_op = operator.create_signal(
+                            trade_data=trade_data,
+                            sample_idx=i,
+                            price_type_idx=j
+                    )
+                elif op_type == 'batch':
+                    # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号
+                    current_op = op_list[:, i, j]
+                else:
+                    # 其他不合法的op_type
+                    raise TypeError(f'invalid op_type!')
+                cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
+                        signal_type=signal_type,
+                        own_cash=own_cash,
+                        own_amounts=own_amounts,
+                        available_cash=available_cash,
+                        available_amounts=available_amounts,
+                        op=current_op,
+                        prices=current_prices,
+                        buy_fix=buy_fix,
+                        sell_fix=sell_fix,
+                        buy_rate=buy_rate,
+                        sell_rate=sell_rate,
+                        buy_min=buy_min,
+                        sell_min=sell_min,
+                        slipage=slipage,
+                        pt_buy_threshold=pt_buy_threshold,
+                        pt_sell_threshold=pt_sell_threshold,
+                        maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
+                        allow_sell_short=allow_sell_short,
+                        long_pos_limit=long_pos_limit,
+                        short_pos_limit=short_pos_limit,
+                        moq_buy=moq_buy,
+                        moq_sell=moq_sell
+                )
+                # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
+                if (prev_date != current_date) or (cash_delivery_period == 0):
+                    cash_delivery_queue.append(cash_gained.sum())
+                else:
+                    cash_delivery_queue[-1] += cash_gained.sum()
+
+                # 获得的资产进入交割队列，根据日期的变化确定是新增资产交割还是累加资产交割
+                if (prev_date != current_date) or (stock_delivery_period == 0):
+                    stock_delivery_queue.append(amount_purchased)
+                else:  # if prev_date == current_date
+                    stock_delivery_queue[-1] += amount_purchased
+
+                prev_date = current_date
+                # 持有现金、持有股票用于计算本期的总价值
+                available_cash += cash_spent.sum()
+                available_amounts += amount_sold
+                cash_changed = cash_gained + cash_spent
+                own_cash = own_cash + cash_changed.sum()
+                amount_changed = amount_sold + amount_purchased
+                own_amounts = own_amounts + amount_changed
+                total_stock_values = (own_amounts * current_prices)
+                total_stock_value = total_stock_values.sum()
+                total_value = total_stock_value + own_cash
+                sub_total_fee += fee.sum()
+                # 生成trade_log所需的数据，采用串列式表格排列：
+                if trade_log:
+                    rnd = np.round
+                    op_log_matrix.append(rnd(current_op, 3))
+                    op_log_matrix.append(rnd(current_prices, 3))
+                    op_log_matrix.append(rnd(amount_changed, 3))
+                    op_log_matrix.append(rnd(cash_changed, 3))
+                    op_log_matrix.append(rnd(fee, 3))
+                    op_log_matrix.append(rnd(own_amounts, 3))
+                    op_log_matrix.append(rnd(available_amounts, 3))
+                    op_log_matrix.append(rnd(total_stock_values, 3))
+                    op_log_add_invest.append(rnd(additional_invest, 3))
+                    additional_invest = 0.
+                    op_log_cash.append(rnd(own_cash, 3))
+                    op_log_available_cash.append(rnd(available_cash, 3))
+                    op_log_value.append(rnd(total_value, 3))
+
+            # 保存计算结果
+            cashes.append(own_cash)
+            fees.append(sub_total_fee)
+            values.append(total_value)
+            amounts_matrix.append(own_amounts)
+
+    loop_results = (amounts_matrix, cashes, fees, values)
+    op_summary_matrix = (op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value)
+    return loop_results, op_log_matrix, op_summary_matrix
+
+
+@njit
+def apply_loop_core(share_count,
+                    looped_dates,
+                    inflation_factors,
+                    investment_date_pos,
+                    invest_amounts,
+                    price,
+                    op_list,
+                    signal_type,
+                    start_idx: int,
+                    end_idx: int,
+                    buy_fix: float,
+                    sell_fix: float,
+                    buy_rate: float,
+                    sell_rate: float,
+                    buy_min: float,
+                    sell_min: float,
+                    slipage: float,
+                    moq_buy: float,
+                    moq_sell: float,
+                    inflation_rate: float,
+                    pt_buy_threshold: float,
+                    pt_sell_threshold: float,
+                    cash_delivery_period: int,
+                    stock_delivery_period: int,
+                    allow_sell_short: bool,
+                    long_pos_limit: float,
+                    short_pos_limit: float,
+                    max_cash_usage: bool,
+                    price_priority_list: list):
+    """ apply_loop的核心function,不含任何numba不支持的元素，仅包含batch模式下，
+        不需要生成trade_log的情形下运行核心循环的核心代码。
+        在符合要求的情况下，这部分代码以njit方式加速运行，实现提速
+
+    :return:
+    """
+
     # 初始化计算结果列表
     own_cash = 0.  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
     available_cash = 0.  # 每期可用现金总额
@@ -526,18 +769,8 @@ def apply_loop(operator: Operator,
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
     total_value = 0
-    trade_data = np.empty(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
-    # 持有现金等数据的数组，用于stepwise信号生成
-    recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
-    recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
-    # 保存trade_log_table数据：
-    op_log_add_invest = []
-    op_log_cash = []
-    op_log_available_cash = []
-    op_log_value = []
-    op_log_matrix = []
     prev_date = 0
-
+    investment_count = 0
     for i in range(start_idx, end_idx):
         # TODO: 允许交易信号中存在全NaN值，即零交易信号的时间点。在循环处理所有交易信号的时候，
         #  跳过这些零交易信号时间点，仅仅处理有交易信号的时间点即可。
@@ -552,7 +785,7 @@ def apply_loop(operator: Operator,
         #     是无效信号。（在pt模式下，可以通过 pt_signal_timing来控制： lazy
 
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
-        current_date = looped_dates[i].date()
+        current_date = looped_dates[i]
         sub_total_fee = 0
         if (prev_date != current_date) and (inflation_rate > 0):
             # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
@@ -560,9 +793,10 @@ def apply_loop(operator: Operator,
             available_cash *= inflation_factors[i]
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
-            additional_invest = invest_dict[i]
+            additional_invest = invest_amounts[investment_count]
             own_cash += additional_invest
             available_cash += additional_invest
+            investment_count += 1
         for j in price_priority_list:
             # 交易前将交割队列中达到交割期的现金完成交割
             if ((prev_date != current_date) and
@@ -580,25 +814,7 @@ def apply_loop(operator: Operator,
                     available_amounts += stock_delivered
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i - start_idx, j]
-            # import pdb; pdb.set_trace()
-            if op_type == 'stepwise':
-                # 在realtime模式下，准备trade_data并计算下一步的交易信号
-                trade_data[:, 0] = own_amounts
-                trade_data[:, 1] = available_amounts
-                trade_data[:, 2] = current_prices
-                trade_data[:, 3] = recent_amounts_change
-                trade_data[:, 4] = recent_trade_prices
-                current_op = operator.create_signal(
-                        trade_data=trade_data,
-                        sample_idx=i,
-                        price_type_idx=j
-                )
-            elif op_type == 'batch':
-                # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号
-                current_op = op_list[:, i, j]
-            else:
-                # 其他不合法的op_type
-                raise TypeError(f'op_type ({op_type}) is not valid!')
+            current_op = op_list[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=signal_type,
                     own_cash=own_cash,
@@ -607,13 +823,13 @@ def apply_loop(operator: Operator,
                     available_amounts=available_amounts,
                     op=current_op,
                     prices=current_prices,
-                    buy_fix=cost_rate['buy_fix'],
-                    sell_fix=cost_rate['sell_fix'],
-                    buy_rate=cost_rate['buy_rate'],
-                    sell_rate=cost_rate['sell_rate'],
-                    buy_min=cost_rate['buy_min'],
-                    sell_min=cost_rate['sell_min'],
-                    slipage=cost_rate['slipage'],
+                    buy_fix=buy_fix,
+                    sell_fix=sell_fix,
+                    buy_rate=buy_rate,
+                    sell_rate=sell_rate,
+                    buy_min=buy_min,
+                    sell_min=sell_min,
+                    slipage=slipage,
                     pt_buy_threshold=pt_buy_threshold,
                     pt_sell_threshold=pt_sell_threshold,
                     maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
@@ -647,22 +863,6 @@ def apply_loop(operator: Operator,
             total_stock_value = total_stock_values.sum()
             total_value = total_stock_value + own_cash
             sub_total_fee += fee.sum()
-            # 生成trade_log所需的数据，采用串列式表格排列：
-            if trade_log:
-                rnd = np.round
-                op_log_matrix.append(rnd(current_op, 3))
-                op_log_matrix.append(rnd(current_prices, 3))
-                op_log_matrix.append(rnd(amount_changed, 3))
-                op_log_matrix.append(rnd(cash_changed, 3))
-                op_log_matrix.append(rnd(fee, 3))
-                op_log_matrix.append(rnd(own_amounts, 3))
-                op_log_matrix.append(rnd(available_amounts, 3))
-                op_log_matrix.append(rnd(total_stock_values, 3))
-                op_log_add_invest.append(rnd(additional_invest, 3))
-                additional_invest = 0.
-                op_log_cash.append(rnd(own_cash, 3))
-                op_log_available_cash.append(rnd(available_cash, 3))
-                op_log_value.append(rnd(total_value, 3))
 
         # 保存计算结果
         cashes.append(own_cash)
@@ -670,9 +870,7 @@ def apply_loop(operator: Operator,
         values.append(total_value)
         amounts_matrix.append(own_amounts)
 
-    loop_results = (amounts_matrix, cashes, fees, values)
-    op_summary_matrix = (op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value)
-    return loop_results, op_log_matrix, op_summary_matrix
+    return cashes, fees, values, amounts_matrix
 
 
 def process_loop_results(operator,
