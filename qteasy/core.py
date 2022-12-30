@@ -36,7 +36,7 @@ from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
 
-@njit
+# @njit
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -54,6 +54,8 @@ def _loop_step(signal_type: int,
                pt_buy_threshold: float,
                pt_sell_threshold: float,
                maximize_cash_usage: bool,
+               long_pos_limit: float,
+               short_pos_limit: float,
                allow_sell_short: bool,
                moq_buy: float,
                moq_sell: float) -> tuple:
@@ -129,6 +131,19 @@ def _loop_step(signal_type: int,
             :type maximize_cash_usage: object Cost
             True:   先卖后买模式
             False:  先买后卖模式
+
+        :param long_pos_limit：
+            :type long_pos_limit: float
+            允许建立的多头总仓位与净资产的比值，默认值1.0，表示最多允许建立100%多头仓位
+
+        :param short_pos_limit：
+            :type short_pos_limit: float
+            允许建立的空头总仓位与净资产的比值，默认值-1.0，表示最多允许建立100%空头仓位
+
+        :param allow_sell_short：
+            :type allow_sell_short: bool
+            True:   允许买空卖空
+            False:  默认值，只允许买入多头仓位
 
         :param moq_buy：
             :type moq_buy: float:
@@ -251,16 +266,39 @@ def _loop_step(signal_type: int,
     #  4，分别对正买入现金和负买入现金（当允许买空卖空时）引入总额调整机制；
     #  5，在调整负买入现金的总额时，使用qt级别配置参数
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
-    total_cash_to_spend = cash_to_spend.sum()
+    abs_cash_to_spend = np.abs(cash_to_spend)
 
-    if total_cash_to_spend == 0:
-        # 如果买入计划为0，则直接跳过后续的计算
+    if np.all(abs_cash_to_spend < 0.01):
+        # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
         return cash_gained, np.zeros_like(op), np.zeros_like(op), amount_sold, fee_selling
 
-    if total_cash_to_spend > available_cash:
-        # 按比例降低分配给每个拟买入资产的现金额，如果金额特别小，将数额置0
-        cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
-        cash_to_spend = np.where(np.abs(cash_to_spend) < 0.001, 0., cash_to_spend)
+    # 分别处理买入金额中的多头买入和空头买入部分，分别计算当前持有的多头和空头仓位
+    pos_cash_to_spend = np.where(cash_to_spend > 0.01, cash_to_spend, 0)
+    total_pos_cash_to_spend = pos_cash_to_spend.sum()
+    neg_cash_to_spend = np.where(cash_to_spend < -0.01, cash_to_spend, 0)
+    total_neg_cash_to_spend = neg_cash_to_spend.sum()
+    next_own_amounts = own_amounts - amount_sold
+
+    current_long_pos = np.where(next_own_amounts > 0, next_own_amounts * prices, 0).sum() / total_value
+    max_pos_cash_to_spend = (long_pos_limit - current_long_pos) * total_value
+
+    if long_pos_limit <= 1.0:
+        max_pos_cash_to_spend = min(max_pos_cash_to_spend, available_cash)
+
+    if total_pos_cash_to_spend > max_pos_cash_to_spend:
+        # 按比例降低分配给每个拟买入多头资产的现金
+        pos_cash_to_spend = pos_cash_to_spend / total_pos_cash_to_spend * max_pos_cash_to_spend
+
+    if allow_sell_short:
+        # 只有当allow_sell_short的时候才去考察允许持有的空头仓位限制
+        current_short_pos = np.where(next_own_amounts < 0, next_own_amounts * prices, 0).sum() / total_value
+        max_neg_cash_to_spend = (short_pos_limit - current_short_pos) * total_value
+
+        if total_neg_cash_to_spend < max_neg_cash_to_spend:
+            neg_cash_to_spend = neg_cash_to_spend / total_neg_cash_to_spend * max_neg_cash_to_spend
+            # import pdb; pdb.set_trace()
+
+    cash_to_spend = pos_cash_to_spend + neg_cash_to_spend
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
@@ -370,7 +408,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     for date in invest.dates:
         try:
             op_list.loc[date]
-        except:
+        except Exception:
             op_list.loc[date] = 0
     op_list.sort_index(inplace=True)
     return op_list
@@ -398,6 +436,8 @@ def apply_loop(operator: Operator,
                cash_delivery_period: int = 0,
                stock_delivery_period: int = 0,
                allow_sell_short: bool = False,
+               long_pos_limit: float = 1.0,
+               short_pos_limit: float = -1.0,
                max_cash_usage: bool = False,
                trade_log: bool = False,
                price_priority_list: list = None) -> tuple:
@@ -419,6 +459,8 @@ def apply_loop(operator: Operator,
         :param cash_delivery_period: int, 现金交割周期，默认值为0，单位为天。
         :param stock_delivery_period: int, 股票交割周期，默认值为0，单位为天。
         :param allow_sell_short: bool, 是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
+        :param long_pos_limit: float, 允许持有的最大多头仓位比例
+        :param short_pos_limit: flaot, 允许持有的最大空头仓位比例
         :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
         :param trade_log: bool: 为True时，输出回测详细日志为csv格式的表格
         :param price_priority_list: list: 各交易价格的执行顺序列表，列表中0～N数字代表operator中的各个交易价格的序号，各个交易价格
@@ -576,6 +618,8 @@ def apply_loop(operator: Operator,
                     pt_sell_threshold=pt_sell_threshold,
                     maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
                     allow_sell_short=allow_sell_short,
+                    long_pos_limit=long_pos_limit,
+                    short_pos_limit=short_pos_limit,
                     moq_buy=moq_buy,
                     moq_sell=moq_sell
             )
