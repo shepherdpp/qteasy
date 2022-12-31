@@ -416,17 +416,16 @@ def _valid_qt_kwargs():
                                               '- True -  首先处理同一批次交易中的卖出信号，并在可能时将获得的现金立即用于\n'
                                               '          本次买入'},
 
-        'PT_signal_timing':     {'Default':   'normal',
-                                 'Validator': lambda value: value in ['aggressive', 'normal', 'lazy'],
+        'PT_signal_timing':     {'Default':   'lazy',
+                                 'Validator': lambda value: value in ['aggressive', 'lazy'],
                                  'level':     3,
                                  'text':      '回测信号模式为PT（position target）时，控制检查实际持仓比例并自动生成交易\n'
                                               '信号的时机，默认normal\n'
-                                              '- aggressive: 只要设置了持仓目标，在任何回测时间点都可以产生交易信号，哪怕\n'
-                                              '              这个时间点不是策略运行时间点'
-                                              '- normal:     只有在策略运行时间点才会产生交易信号，不在策略运行时间点上时\n'
-                                              '              不产生交易信号\n'
-                                              '- lazy:       只有在策略运行时间点上，同时持仓比例发生变化时，才会产生交易\n'
-                                              '              信号'},
+                                              '- aggressive: 在整个策略运行时间点上都会产生交易信号，不论此时PT信号是否发\n'
+                                              '              生变化，实时监控实际持仓与计划持仓之间的差异，只要二者发生偏\n'
+                                              '              离，就产生信号\n'
+                                              '- lazy:       在策略运行时间点上，只有当持仓比例发生变化时，才会产生交易\n'
+                                              '              信号，不实时监控实际持仓与计划持仓的差异'},
 
         'PT_buy_threshold':     {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, (float, int))

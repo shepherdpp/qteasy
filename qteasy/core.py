@@ -532,9 +532,8 @@ def apply_loop(operator: Operator,
 
     if (op_type == 'batch') and (not trade_log):
         # batch模式下调用apply_loop_core函数:
-        # 1, 将looped_dates数据转化为'day_index'数据，生成day序号
         looped_day_indices = list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int'))
-        # 2, 将invset_dict处理为两个列表：invest_date_indices, invest_amounts
+        # 2, 将invset_dict处理为两个列表：invest_date_indices, invest_amount，因为invest_dict无法被Numba处理
         investment_date_pos = list(investment_date_pos)
         invest_amounts = list(invest_dict.values())
         cashes, fees, values, amounts_matrix = apply_loop_core(share_count,
@@ -764,10 +763,11 @@ def apply_loop_core(share_count,
     available_amounts = np.zeros(shape=(share_count,))  # 每期可用的资产数量
     cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
     stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
-    cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
-    fees = []  # 交易费用，记录每个操作时点产生的交易费用
-    values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
-    amounts_matrix = []
+    signal_count = end_idx - start_idx
+    cashes = np.empty(shape=(signal_count, ))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
+    fees = np.empty(shape=(signal_count, ))  # 交易费用，记录每个操作时点产生的交易费用
+    values = np.empty(shape=(signal_count, ))  # 资产总价值，记录每个操作时点的资产和现金价值总和
+    amounts_matrix = np.empty(shape=(signal_count, share_count))
     total_value = 0
     prev_date = 0
     investment_count = 0
@@ -865,10 +865,11 @@ def apply_loop_core(share_count,
             sub_total_fee += fee.sum()
 
         # 保存计算结果
-        cashes.append(own_cash)
-        fees.append(sub_total_fee)
-        values.append(total_value)
-        amounts_matrix.append(own_amounts)
+        offset_i = i - start_idx
+        cashes[offset_i] = own_cash
+        fees[offset_i] = sub_total_fee
+        values[offset_i] = total_value
+        amounts_matrix[offset_i, :] = own_amounts
 
     return cashes, fees, values, amounts_matrix
 
@@ -2749,6 +2750,8 @@ def _evaluate_one_parameter(par,
                 cash_delivery_period=config.cash_deliver_period,
                 stock_delivery_period=config.stock_deliver_period,
                 allow_sell_short=config.allow_sell_short,
+                long_pos_limit=config.long_position_limit,
+                short_pos_limit=config.short_position_limit,
                 max_cash_usage=config.maximize_cash_usage,
                 trade_log=log_backtest,
                 price_priority_list=price_priority_list

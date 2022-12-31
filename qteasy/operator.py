@@ -1535,7 +1535,7 @@ class Operator:
             如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
             如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
 
-            用于生成交易信号的历史数据存储在operator对象的下面三个属性中，在生成交易信号时直接调用。
+            用于生成交易信号的历史数据存储在operator对象的几个属性中，在生成交易信号时直接调用。
 
             根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
 
@@ -1550,7 +1550,7 @@ class Operator:
                 为了确保只在sample采样时间点产生交易信号，需要比较sample_idx与operator的op_sample_indices，
                 只有sample_idx在op_sample_indices中时，才会产生交易信号，否则输出None
 
-            - 如果sample_idx为None（默认）或一个ndarray，进入清单模式，生成完整清单
+            - 如果sample_idx为None（默认）或一个ndarray，进入batch模式，生成完整清单
                 生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
                 一个元素代表的滑窗会被提取出来生成相应的信号，其余的滑窗忽略，相应的信号设置为np.nan
                 例如，假设 sample_idx = np.array([0, 3, 7])T
@@ -1624,7 +1624,7 @@ class Operator:
                     get_rolling_window=True
             )
             if sample_idx is None:
-                # TODO: 这里的signal_mode实际上就是self.op_typ。但是self.op_type并没有
+                # TODO: 这里的signal_mode实际上就是self.op_type。但是self.op_type并没有
                 #  在create_signal过程中起到任何作用，应该考虑op_type和sample_idx的关系，
                 #  将sample_idx的使用方法简化:
                 #  例如，
@@ -1729,4 +1729,11 @@ class Operator:
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_value[:, :, i] = signal_out[bt_price_type].T
         self._op_list = signal_value
+        # 检查信号清单，生成清单回测序号，用于排除不需要回测的信号行
+        if signal_type in ['ps', 'vs']:
+            self._op_list_bt_indices = np.where(np.any(np.any(signal_value != 0, axis=2), axis=0))[0]
+        else:  # signal_type == 'pt'
+            signal_diff = signal_value - np.roll(signal_value, 1, axis=1)
+            self._op_list_bt_indices = np.where(np.any(np.any(signal_diff != 0, axis=2), axis=0))[0]
+        import pdb; pdb.set_trace()
         return signal_value

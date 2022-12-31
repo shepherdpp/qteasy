@@ -9134,6 +9134,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      trade_batch_size=100,
                      sell_batch_size=100)
 
+    def test_long_short_position_limits(self):
+        """ 测试多头和空头仓位的最高仓位限制 """
+        raise NotImplementedError
+
 
 class TestLog(unittest.TestCase):
     def test_init(self):
