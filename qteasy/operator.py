@@ -855,6 +855,14 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
 
+    def get_combined_sample_indices(self):
+        """ 返回Operator对象所有交易信号采样点序列的并集
+
+        :return:
+        """
+        all_sample_indices = self.get_op_sample_indices_by_price_type()
+
+
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
@@ -1528,7 +1536,7 @@ class Operator:
 
         return
 
-    def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
+    def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None, pt_signal_timing=None):
         """ 生成交易信号，
 
             遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
@@ -1590,6 +1598,9 @@ class Operator:
             如果给出sample_ix，必须给出这个参数
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
+
+        :param pt_signal_timing: 'lazy', str
+            PT信号生成参数，用于控制PT信号的生成时机
 
         :return=====
             np.ndarray
@@ -1729,11 +1740,5 @@ class Operator:
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_value[:, :, i] = signal_out[bt_price_type].T
         self._op_list = signal_value
-        # 检查信号清单，生成清单回测序号，用于排除不需要回测的信号行
-        if signal_type in ['ps', 'vs']:
-            self._op_list_bt_indices = np.where(np.any(np.any(signal_value != 0, axis=2), axis=0))[0]
-        else:  # signal_type == 'pt'
-            signal_diff = signal_value - np.roll(signal_value, 1, axis=1)
-            self._op_list_bt_indices = np.where(np.any(np.any(signal_diff != 0, axis=2), axis=0))[0]
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return signal_value

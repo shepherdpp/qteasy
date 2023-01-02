@@ -432,6 +432,7 @@ def apply_loop(operator: Operator,
                moq_buy: float = 100.,
                moq_sell: float = 1,
                inflation_rate: float = 0.03,
+               pt_signal_timing: str = 'lazy',
                pt_buy_threshold: float = 0.1,
                pt_sell_threshold: float = 0.1,
                cash_delivery_period: int = 0,
@@ -455,6 +456,7 @@ def apply_loop(operator: Operator,
         :param moq_buy: float：每次交易买进的最小份额单位
         :param moq_sell: float: 每次交易卖出的最小份额单位
         :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
+        :param pt_signal_timing: str, 控制PT模式下交易信号产生的时机
         :param pt_buy_threshold: float, PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
         :param pt_sell_threshold: flaot, PT卖出信号阈值，只有当实际持仓与目标持仓的差值小于该阈值时，才会产生卖出信号
         :param cash_delivery_period: int, 现金交割周期，默认值为0，单位为天。
@@ -493,6 +495,15 @@ def apply_loop(operator: Operator,
     share_count, op_count, price_type_count = operator.op_list_shape
     if end_idx is None:
         end_idx = op_count
+    # 检查信号清单，生成清单回测序号，用于排除不需要回测的信号行
+    if signal_type in [1, 2]:
+        op_list_bt_indices = np.where(np.any(np.any(op_list != 0, axis=2), axis=0))[0]
+    elif (signal_type == 0) and (pt_signal_timing == 'lazy'):
+        signal_diff = op_list - np.roll(op_list, 1, axis=1)
+        op_list_bt_indices = np.where(np.any(np.any(signal_diff != 0, axis=2), axis=0))[0]
+    else:
+        op_list_bt_indices = operator.get_op_sample_indices_by_price_type()
+    # import pdb; pdb.set_trace()
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
@@ -544,6 +555,7 @@ def apply_loop(operator: Operator,
                                                                price,
                                                                op_list,
                                                                signal_type,
+                                                               op_list_bt_indices,
                                                                start_idx,
                                                                end_idx,
                                                                buy_fix,
@@ -583,7 +595,8 @@ def apply_loop(operator: Operator,
         recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
         recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
 
-        for i in range(start_idx, end_idx):
+        # for i in range(start_idx, end_idx):
+        for i in op_list_bt_indices:
             # TODO: 允许交易信号中存在全NaN值，即零交易信号的时间点。在循环处理所有交易信号的时候，
             #  跳过这些零交易信号时间点，仅仅处理有交易信号的时间点即可。
             #  零交易信号时间点存在于下面两种情况中：
@@ -595,7 +608,8 @@ def apply_loop(operator: Operator,
             #   - 无效交易信号：通过提前识别无效交易信号可以排除更多的苓交易信号时间点，在ps/vs模式
             #     下，只要交易信号是全0，就是无效信号，在pt模式下，只要交易信号相比上个周期不变，就
             #     是无效信号。（在pt模式下，可以通过 pt_signal_timing来控制： lazy
-
+            if i < start_idx:
+                continue
             # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
             current_date = looped_dates[i].date()
             sub_total_fee = 0
@@ -728,6 +742,7 @@ def apply_loop_core(share_count,
                     price,
                     op_list,
                     signal_type,
+                    op_list_bt_indices,
                     start_idx: int,
                     end_idx: int,
                     buy_fix: float,
@@ -771,7 +786,8 @@ def apply_loop_core(share_count,
     total_value = 0
     prev_date = 0
     investment_count = 0
-    for i in range(start_idx, end_idx):
+    # for i in range(start_idx, end_idx):
+    for i in op_list_bt_indices:
         # TODO: 允许交易信号中存在全NaN值，即零交易信号的时间点。在循环处理所有交易信号的时候，
         #  跳过这些零交易信号时间点，仅仅处理有交易信号的时间点即可。
         #  零交易信号时间点存在于下面两种情况中：
@@ -2745,6 +2761,7 @@ def _evaluate_one_parameter(par,
                 moq_buy=config.trade_batch_size,
                 moq_sell=config.sell_batch_size,
                 inflation_rate=config.riskfree_ir,
+                pt_signal_timing=config.PT_signal_timing,
                 pt_buy_threshold=config.PT_buy_threshold,
                 pt_sell_threshold=config.PT_sell_threshold,
                 cash_delivery_period=config.cash_deliver_period,
