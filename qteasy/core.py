@@ -36,7 +36,7 @@ from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
 
-@njit
+# @njit
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -277,7 +277,7 @@ def _loop_step(signal_type: int,
     total_pos_cash_to_spend = pos_cash_to_spend.sum()
     neg_cash_to_spend = np.where(cash_to_spend < -0.01, cash_to_spend, 0)
     total_neg_cash_to_spend = neg_cash_to_spend.sum()
-    next_own_amounts = own_amounts - amount_sold
+    next_own_amounts = own_amounts + amount_sold
 
     # 计算允许用于买入多头份额的最大金额
     current_long_pos = np.where(next_own_amounts > 0, next_own_amounts * prices, 0).sum() / total_value
@@ -554,7 +554,7 @@ def apply_loop(operator: Operator,
     op_log_value = []
     op_log_matrix = []
     prev_date = 0
-    # import pdb; pdb.set_trace()
+
     if (op_type == 'batch') and (not trade_log):
         # batch模式下调用apply_loop_core函数:
         looped_day_indices = list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int'))
@@ -657,6 +657,8 @@ def apply_loop(operator: Operator,
                 else:
                     # 其他不合法的op_type
                     raise TypeError(f'invalid op_type!')
+                # if i == 19:
+                #     import pdb; pdb.set_trace()
                 cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                         signal_type=signal_type,
                         own_cash=own_cash,
@@ -722,11 +724,11 @@ def apply_loop(operator: Operator,
                     op_log_available_cash.append(rnd(available_cash, 3))
                     op_log_value.append(rnd(total_value, 3))
                 # debug
-                print(f'step {i} {op_type} looping result on {current_date}:\n'
-                      f'op from calculation: {current_op}\n'
+                print(f'step {i} {op_type} looping result on {current_date}, total Value {total_value}::\n'
+                      f'op from calculation: {current_op}, prices: {current_prices}\n'
                       f'cash change: {cash_changed}, own cash: {own_cash}\n'
                       f'amount changed: {amount_changed}, '
-                      f'own amounts: {own_amounts}')
+                      f'own amounts: {own_amounts}\n')
 
             # 保存计算结果
             cashes.append(own_cash)
@@ -826,6 +828,8 @@ def apply_loop_core(share_count,
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i - start_idx, j]
             current_op = op_list[:, i, j]
+            # if i == 19:
+            #     import pdb; pdb.set_trace()
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=signal_type,
                     own_cash=own_cash,
@@ -875,11 +879,11 @@ def apply_loop_core(share_count,
             total_value = total_stock_value + own_cash
             sub_total_fee += fee.sum()
             # debug
-            print(f'step {i} batch looping result on {current_date}:\n'
-                  f'op from op_list: {current_op}\n'
+            print(f'step {i} batch looping result on {current_date}, total Value {total_value}:\n'
+                  f'op from op_list: {current_op}, prices: {current_prices}\n'
                   f'cash change: {cash_changed}, own cash: {own_cash}\n'
                   f'amount changed: {amount_changed}, d'
-                  f'own amounts: {own_amounts}')
+                  f'own amounts: {own_amounts}\n')
 
         # 保存计算结果
         cashes[result_count] = own_cash
