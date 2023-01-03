@@ -286,14 +286,14 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '为True时在回测图表中用色带显示投资仓位'},
 
-        'cost_fixed_buy':       {'Default':   0,
+        'cost_fixed_buy':       {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化\n'
                                               '默认值为10元'},
 
-        'cost_fixed_sell':      {'Default':   0,
+        'cost_fixed_sell':      {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,

@@ -185,38 +185,38 @@ def _loop_step(signal_type: int,
         # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
         amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
                                    position_diff / pre_position * own_amounts,
-                                   0)
+                                   0.)
         # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
         cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
                                  position_diff * total_value,
-                                 0)
+                                 0.)
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
 
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
             cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
                                       position_diff * total_value,
-                                      0)
+                                      0.)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 仓位差 * 当前持有空头份额
             amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
                                         position_diff / pre_position * own_amounts,
-                                        0)
+                                        0.)
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
         # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
-        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0)
+        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0.)
         # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * total_value, 0)
+        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * total_value, 0.)
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
 
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 交易信号 * 当前总资产
-            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0)
+            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0.)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op * own_amounts, 0)
+            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op * own_amounts, 0.)
 
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
@@ -431,7 +431,7 @@ def apply_loop(operator: Operator,
                cash_plan: CashPlan = None,
                cost_rate: dict = None,
                moq_buy: float = 100.,
-               moq_sell: float = 1,
+               moq_sell: float = 1.,
                inflation_rate: float = 0.03,
                pt_signal_timing: str = 'lazy',
                pt_buy_threshold: float = 0.1,
@@ -475,6 +475,7 @@ def apply_loop(operator: Operator,
         - loop_results:        用于生成交易结果的数据，如持仓数量、交易费用、持有现金以及总资产
         - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
         - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
+        - op_list_bt_indices:  交易清单中实际参加回测的行序号
     """
     if moq_buy == 0:
         assert moq_sell == 0, f'ValueError, if "trade_batch_size" is 0, then ' \
@@ -608,7 +609,6 @@ def apply_loop(operator: Operator,
         recent_amounts_change = np.zeros(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
         recent_trade_prices = np.zeros(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
 
-        # for i in range(start_idx, end_idx):
         for i in op_list_bt_indices:
             # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
             current_date = looped_dates[i].date()
@@ -721,6 +721,12 @@ def apply_loop(operator: Operator,
                     op_log_cash.append(rnd(own_cash, 3))
                     op_log_available_cash.append(rnd(available_cash, 3))
                     op_log_value.append(rnd(total_value, 3))
+                # debug
+                print(f'step {i} {op_type} looping result on {current_date}:\n'
+                      f'op from calculation: {current_op}\n'
+                      f'cash change: {cash_changed}, own cash: {own_cash}\n'
+                      f'amount changed: {amount_changed}, '
+                      f'own amounts: {own_amounts}')
 
             # 保存计算结果
             cashes.append(own_cash)
@@ -733,7 +739,7 @@ def apply_loop(operator: Operator,
     return loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices
 
 
-@njit
+# @njit
 def apply_loop_core(share_count,
                     looped_dates,
                     inflation_factors,
@@ -787,7 +793,7 @@ def apply_loop_core(share_count,
     prev_date = 0
     investment_count = 0  # 用于正确读取每笔投资金额的计数器
     result_count = 0  # 用于确保正确输出每笔交易结果的计数器
-    # for i in range(start_idx, end_idx):
+
     for i in op_list_bt_indices:
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i]
@@ -868,6 +874,12 @@ def apply_loop_core(share_count,
             total_stock_value = total_stock_values.sum()
             total_value = total_stock_value + own_cash
             sub_total_fee += fee.sum()
+            # debug
+            print(f'step {i} batch looping result on {current_date}:\n'
+                  f'op from op_list: {current_op}\n'
+                  f'cash change: {cash_changed}, own cash: {own_cash}\n'
+                  f'amount changed: {amount_changed}, d'
+                  f'own amounts: {own_amounts}')
 
         # 保存计算结果
         cashes[result_count] = own_cash
