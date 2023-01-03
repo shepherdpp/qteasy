@@ -376,6 +376,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     # 填充值的作用：
     # looped_value.cash = looped_value.cash.reindex(dates, method='ffill')
     looped_value[shares] = purchased_shares
+    # TODO: 在这里应该考虑现金的增值，将增值后的现金填入，
     looped_value.cash = cashes
     looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
     looped_value['reference'] = benchmark_list.reindex(hdates).fillna(0)
@@ -495,15 +496,6 @@ def apply_loop(operator: Operator,
     share_count, op_count, price_type_count = operator.op_list_shape
     if end_idx is None:
         end_idx = op_count
-    # 检查信号清单，生成清单回测序号，用于排除不需要回测的信号行
-    if signal_type in [1, 2]:
-        op_list_bt_indices = np.where(np.any(np.any(op_list != 0, axis=2), axis=0))[0]
-    elif (signal_type == 0) and (pt_signal_timing == 'lazy'):
-        signal_diff = op_list - np.roll(op_list, 1, axis=1)
-        op_list_bt_indices = np.where(np.any(np.any(signal_diff != 0, axis=2), axis=0))[0]
-    else:
-        op_list_bt_indices = operator.get_op_sample_indices_by_price_type()
-    # import pdb; pdb.set_trace()
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
@@ -533,6 +525,27 @@ def apply_loop(operator: Operator,
     sell_min = cost_rate['sell_min']
     slipage = cost_rate['slipage']
 
+    # 检查信号清单，生成清单回测序号，用于排除不需要回测的信号行
+    if operator.op_type == 'stepwise':
+        # 在stepwise模式下，每一天都需要回测（逐步回测）
+        op_list_bt_indices = np.array(range(start_idx, end_idx))
+    elif signal_type in [1, 2]:
+        # 否则，在batch模式下，PS/VS模式下仅回测有信号的交易日
+        op_list_bt_indices = np.where(np.any(np.any(op_list != 0, axis=2), axis=0))[0]
+    elif (signal_type == 0) and (pt_signal_timing == 'lazy'):
+        # 或者，在batch模式下，PT模式下仅回测信号发生变化的交易日（lazy）
+        signal_diff = op_list - np.roll(op_list, 1, axis=1)
+        op_list_bt_indices = np.where(np.any(np.any(signal_diff != 0, axis=2), axis=0))[0]
+    else:
+        # 否则，在batch/PT/aggressive模式下，回测所有交易信号日
+        op_list_bt_indices = operator.get_combined_sample_indices()
+    # 在回测序号清单中增加投资日
+    op_list_bt_indices = np.union1d(op_list_bt_indices, investment_date_pos)
+    # 在回测序号清单中去掉start_idx之前的日期，并添加start_idx
+    op_list_bt_indices = np.setdiff1d(op_list_bt_indices, range(start_idx))
+    # 确保在回测序号清单中第一个元素是start_idx
+    op_list_bt_indices = np.union1d(op_list_bt_indices, start_idx)
+
     # 保存trade_log_table数据：
     op_log_add_invest = []
     op_log_cash = []
@@ -540,7 +553,7 @@ def apply_loop(operator: Operator,
     op_log_value = []
     op_log_matrix = []
     prev_date = 0
-
+    # import pdb; pdb.set_trace()
     if (op_type == 'batch') and (not trade_log):
         # batch模式下调用apply_loop_core函数:
         looped_day_indices = list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int'))
@@ -590,26 +603,13 @@ def apply_loop(operator: Operator,
         values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
         amounts_matrix = []
         total_value = 0
-        trade_data = np.empty(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
+        trade_data = np.zeros(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
         # 持有现金等数据的数组，用于stepwise信号生成
-        recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
-        recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
+        recent_amounts_change = np.zeros(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
+        recent_trade_prices = np.zeros(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
 
         # for i in range(start_idx, end_idx):
         for i in op_list_bt_indices:
-            # TODO: 允许交易信号中存在全NaN值，即零交易信号的时间点。在循环处理所有交易信号的时候，
-            #  跳过这些零交易信号时间点，仅仅处理有交易信号的时间点即可。
-            #  零交易信号时间点存在于下面两种情况中：
-            #   - 交易清单日期中的非sample_date：当sample_freq与data_freq不同的时候，只有部分
-            #     时间点上会产生交易信号，其余时间应该都是0，但如果op中有多个交易策略，每个策略的
-            #     sample_freq不同的时候，每个交易策略会有自己的sample_indices，这时候op的
-            #     sample_indices是所有交易策略的sample_indices的并集 （在pt模式下，可以通过
-            #     pt_signal_timing来控制： aggressive
-            #   - 无效交易信号：通过提前识别无效交易信号可以排除更多的苓交易信号时间点，在ps/vs模式
-            #     下，只要交易信号是全0，就是无效信号，在pt模式下，只要交易信号相比上个周期不变，就
-            #     是无效信号。（在pt模式下，可以通过 pt_signal_timing来控制： lazy
-            if i < start_idx:
-                continue
             # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
             current_date = looped_dates[i].date()
             sub_total_fee = 0
@@ -730,7 +730,7 @@ def apply_loop(operator: Operator,
 
     loop_results = (amounts_matrix, cashes, fees, values)
     op_summary_matrix = (op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value)
-    return loop_results, op_log_matrix, op_summary_matrix
+    return loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices
 
 
 @njit
@@ -778,28 +778,17 @@ def apply_loop_core(share_count,
     available_amounts = np.zeros(shape=(share_count,))  # 每期可用的资产数量
     cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
     stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
-    signal_count = end_idx - start_idx
+    signal_count = len(op_list_bt_indices)
     cashes = np.empty(shape=(signal_count, ))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = np.empty(shape=(signal_count, ))  # 交易费用，记录每个操作时点产生的交易费用
     values = np.empty(shape=(signal_count, ))  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = np.empty(shape=(signal_count, share_count))
     total_value = 0
     prev_date = 0
-    investment_count = 0
+    investment_count = 0  # 用于正确读取每笔投资金额的计数器
+    result_count = 0  # 用于确保正确输出每笔交易结果的计数器
     # for i in range(start_idx, end_idx):
     for i in op_list_bt_indices:
-        # TODO: 允许交易信号中存在全NaN值，即零交易信号的时间点。在循环处理所有交易信号的时候，
-        #  跳过这些零交易信号时间点，仅仅处理有交易信号的时间点即可。
-        #  零交易信号时间点存在于下面两种情况中：
-        #   - 交易清单日期中的非sample_date：当sample_freq与data_freq不同的时候，只有部分
-        #     时间点上会产生交易信号，其余时间应该都是0，但如果op中有多个交易策略，每个策略的
-        #     sample_freq不同的时候，每个交易策略会有自己的sample_indices，这时候op的
-        #     sample_indices是所有交易策略的sample_indices的并集 （在pt模式下，可以通过
-        #     pt_signal_timing来控制： aggressive
-        #   - 无效交易信号：通过提前识别无效交易信号可以排除更多的苓交易信号时间点，在ps/vs模式
-        #     下，只要交易信号是全0，就是无效信号，在pt模式下，只要交易信号相比上个周期不变，就
-        #     是无效信号。（在pt模式下，可以通过 pt_signal_timing来控制： lazy
-
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i]
         sub_total_fee = 0
@@ -881,11 +870,11 @@ def apply_loop_core(share_count,
             sub_total_fee += fee.sum()
 
         # 保存计算结果
-        offset_i = i - start_idx
-        cashes[offset_i] = own_cash
-        fees[offset_i] = sub_total_fee
-        values[offset_i] = total_value
-        amounts_matrix[offset_i, :] = own_amounts
+        cashes[result_count] = own_cash
+        fees[result_count] = sub_total_fee
+        values[result_count] = total_value
+        amounts_matrix[result_count, :] = own_amounts
+        result_count += 1
 
     return cashes, fees, values, amounts_matrix
 
@@ -896,6 +885,7 @@ def process_loop_results(operator,
                          loop_results=None,
                          op_log_matrix=None,
                          op_summary_matrix=None,
+                         op_list_bt_indices=None,
                          trade_log=False,
                          bt_price_priority_ohlc: str = 'OHLC'):
     """ 接受apply_loop函数传回的计算结果，生成DataFrame型交易模拟结果数据，保存交易记录，并返回结果供下一步处理
@@ -906,6 +896,7 @@ def process_loop_results(operator,
     :param loop_results:
     :param op_log_matrix:
     :param op_summary_matrix:
+    :param op_list_bt_indices:
     :param trade_log:
     :param bt_price_priority_ohlc:
     :return:
@@ -913,7 +904,8 @@ def process_loop_results(operator,
     from qteasy import logger_core
     amounts_matrix, cashes, fees, values = loop_results
     shares = operator.op_list_shares
-    looped_dates = operator.op_list_hdates[start_idx:end_idx]
+    complete_loop_dates = operator.op_list_hdates
+    looped_dates = [complete_loop_dates[item] for item in op_list_bt_indices]
 
     price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
 
@@ -2751,7 +2743,8 @@ def _evaluate_one_parameter(par,
                 invest_cash_amounts,
                 riskfree_ir
         )
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        # TODO: 将op_list_bt_indices的计算放到这一层函数中，以便下面几个函数可以共享
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=op,
                 trade_price_list=trade_price_list_seg,
                 start_idx=start_idx,
@@ -2780,6 +2773,7 @@ def _evaluate_one_parameter(par,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
                 op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices,
                 trade_log=log_backtest,
                 bt_price_priority_ohlc='OHLC'
         )

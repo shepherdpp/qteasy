@@ -12880,8 +12880,10 @@ class TestQT(unittest.TestCase):
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
+              f'shape: {val_batch.shape}\n'
               f'{val_batch}\n'
               f'and the result of stepwise operation is\n'
+              f'shape: {val_stepwise.shape}\n'
               f'{val_stepwise}')
 
         self.assertTrue(np.allclose(val_batch, val_stepwise))

@@ -860,8 +860,12 @@ class Operator:
 
         :return:
         """
+        combined_indices = []
         all_sample_indices = self.get_op_sample_indices_by_price_type()
-
+        for item in all_sample_indices:
+            combined_indices = np.union1d(combined_indices, item)
+        import pdb; pdb.set_trace()
+        return combined_indices
 
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
@@ -1536,7 +1540,7 @@ class Operator:
 
         return
 
-    def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None, pt_signal_timing=None):
+    def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，
 
             遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
@@ -1740,5 +1744,4 @@ class Operator:
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_value[:, :, i] = signal_out[bt_price_type].T
         self._op_list = signal_value
-        # import pdb; pdb.set_trace()
         return signal_value
