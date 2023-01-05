@@ -499,21 +499,6 @@ def apply_loop(operator: Operator,
         end_idx = op_count
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
-    # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
-    #  补充说明：似乎更好的方式还是不要在每一个交易时间点上进行交易模拟计算，这里分两种情况讨论：
-    #  情况一：如果策略的data_freq与sample_freq相同，那么每一个历史时间点都是交易时间点，
-    #  这种情况下，根据现行规则，回测计算将在每一个历史时间点上进行。
-    #  情况二：如果策略的data_freq与sample_freq不同，那么不是每一个历史时间点都是交易时间点，
-    #  例如data_freq为d，但sample_freq为M，则每20天才会有一个交易取样点
-    #  上面讨论的两种情形实际上增加了回测计算的复杂度，inflation_factor的计算需要分两种情况讨论，
-    #  并不非常简单，因此需要仔细考虑
-    # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
-    inflation_factors = []
-    additional_invest = 0.
-    if inflation_rate > 0:
-        days_difference = np.ones_like(looped_dates, dtype='float')
-        # TODO: inflation_factors与op_freq有关，需要分别处理
-        inflation_factors = 1 + days_difference * inflation_rate / 250
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
@@ -546,6 +531,20 @@ def apply_loop(operator: Operator,
     op_list_bt_indices = np.setdiff1d(op_list_bt_indices, range(start_idx))
     # 确保在回测序号清单中第一个元素是start_idx
     op_list_bt_indices = np.union1d(op_list_bt_indices, start_idx)
+    # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
+    inflation_factors = np.ones_like(op_list_bt_indices, dtype='float')
+    additional_invest = 0.
+    # 如果inflation_rate不为0，则需要计算每一个bt回测交易日相对上一日的现金增值幅度，用于计算现金增值
+    if inflation_rate > 0:
+        # TODO: 考虑把下面的计算numba化
+        # 在不同的datafreq下，相差一个idx不一定代表相差一天，因此需要计算每个idx之间实际相差的天数
+        bt_index_days = pd.to_datetime(looped_dates)[op_list_bt_indices]
+        # bt_index_days = pd.to_datetime([looped_dates[i].date for i in op_list_bt_indices])
+        days_difference = np.array((bt_index_days - np.roll(bt_index_days, 1)).days)
+        daily_ir = 1 + inflation_rate / 365.  # 由于这几计算的是两个日期之间的自然天数之差，因此日利率需要用ir/365计算
+        inflation_factors = daily_ir ** days_difference
+        inflation_factors[0] = 1.  # 使用np.roll计算后的第一个值是错误值，需要修正为1
+        print(f'inflation factors: {inflation_factors}\non bt days: {bt_index_days}')
 
     # 保存trade_log_table数据：
     op_log_add_invest = []
@@ -554,6 +553,8 @@ def apply_loop(operator: Operator,
     op_log_value = []
     op_log_matrix = []
     prev_date = 0
+
+    import pdb; pdb.set_trace()
 
     if (op_type == 'batch') and (not trade_log):
         # batch模式下调用apply_loop_core函数:
@@ -608,15 +609,21 @@ def apply_loop(operator: Operator,
         # 持有现金等数据的数组，用于stepwise信号生成
         recent_amounts_change = np.zeros(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
         recent_trade_prices = np.zeros(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
+        result_count = 0  # 进行循环的次数，用于追踪inflation_factors
 
         for i in op_list_bt_indices:
             # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
             current_date = looped_dates[i].date()
             sub_total_fee = 0
-            if (prev_date != current_date) and (inflation_rate > 0):
+            if inflation_rate > 0:
                 # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
-                own_cash *= inflation_factors[i]
-                available_cash *= inflation_factors[i]
+                print(f'on day {current_date}, cash and available cash increases by inflation factor[{result_count}]:\n'
+                      f'{own_cash} -> {own_cash * inflation_factors[result_count]}\n'
+                      f'{available_cash} -> {available_cash * inflation_factors[result_count]}')
+                current_inflation_factor = inflation_factors[result_count]
+                own_cash *= current_inflation_factor
+                available_cash *= current_inflation_factor
+                result_count += 1
             if i in investment_date_pos:
                 # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
                 additional_invest = invest_dict[i]
@@ -657,8 +664,6 @@ def apply_loop(operator: Operator,
                 else:
                     # 其他不合法的op_type
                     raise TypeError(f'invalid op_type!')
-                # if i == 19:
-                #     import pdb; pdb.set_trace()
                 cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                         signal_type=signal_type,
                         own_cash=own_cash,
@@ -800,10 +805,13 @@ def apply_loop_core(share_count,
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i]
         sub_total_fee = 0
-        if (prev_date != current_date) and (inflation_rate > 0):
+        if inflation_rate > 0:
             # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
-            own_cash *= inflation_factors[i]
-            available_cash *= inflation_factors[i]
+            print(f'on day {current_date}, cash and available cash increases by inflation factor[{result_count}]:\n'
+                  f'{own_cash} -> {own_cash * inflation_factors[result_count]}\n'
+                  f'{available_cash} -> {available_cash * inflation_factors[result_count]}')
+            own_cash *= inflation_factors[result_count]
+            available_cash *= inflation_factors[result_count]
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
             additional_invest = invest_amounts[investment_count]
@@ -828,8 +836,6 @@ def apply_loop_core(share_count,
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i - start_idx, j]
             current_op = op_list[:, i, j]
-            # if i == 19:
-            #     import pdb; pdb.set_trace()
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=signal_type,
                     own_cash=own_cash,
