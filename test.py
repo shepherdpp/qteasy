@@ -13207,7 +13207,8 @@ class TestQT(unittest.TestCase):
                 invest_end='20190331',
                 trade_batch_size=1.,
                 sell_batch_size=1.,
-                parallel=True
+                parallel=True,
+                trade_log=True
         )
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
@@ -13276,7 +13277,7 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=100.,
                 sell_batch_size=100.,
                 parallel=True,
-                trade_log=True
+                trade_log=False
         )
         print('output result back testing with test data')
 

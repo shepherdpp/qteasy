@@ -1683,7 +1683,6 @@ class Operator:
                 ]
             elif (signal_mode == 'stepwise') and (signal_type == 'pt'):
                 # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
-                # TODO: PT模式下的stepwise处理方式不太一样，应该用np.zeros()来填充而不是上一次信号
                 op_signals = [
                     olds if news is None else news for
                     olds, news in zip(self._op_signals_by_price_type_idx[price_type_idx],
