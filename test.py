@@ -13208,7 +13208,7 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=1.,
                 sell_batch_size=1.,
                 parallel=True,
-                trade_log=True
+                trade_log=False
         )
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
