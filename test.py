@@ -2486,7 +2486,8 @@ class TestLoop(unittest.TestCase):
                                     [000, 000, 000, 000, 000, 000, 000],
                                     [-200, 000, 700, 000, 000, 000, 000],
                                     [000, 000, 000, 000, 000, 000, 000],
-                                    [000, 000, 000, 000, 000, 000, 000]])
+                                    [000, 000, 000, 000, 000, 000, 000]],
+                                   dtype='float')
 
         # 精心设计的模拟多价格交易信号，模拟50个交易日对三只股票的操作
         self.multi_shares = ['000010', '000030', '000039']
@@ -2890,12 +2891,15 @@ class TestLoop(unittest.TestCase):
         self.op_pt_batch._op_list = self.pt_signal_hp.values
         self.op_pt_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
         self.op_pt_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_pt_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
         self.op_ps_batch._op_list = self.ps_signal_hp.values
         self.op_ps_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
         self.op_ps_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_ps_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
         self.op_vs_batch._op_list = self.vs_signal_hp.values
         self.op_vs_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
         self.op_vs_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_vs_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
         self.op_multi_batch._op_list = self.multi_signal_hp.values
         self.op_multi_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.multi_dates,
                                                                                 range(len(self.multi_dates)))}
@@ -5541,7 +5545,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 0 days \n'
               'cash delivery delay = 0 day \n'
               'buy-sell sequence = sell first')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5549,17 +5553,23 @@ class TestLoop(unittest.TestCase):
                 moq_buy=0,
                 moq_sell=0,
                 inflation_rate=0,
-                trade_log=False,
+                pt_signal_timing='aggressive',
+                trade_log=True,
                 price_priority_list=[0]
         )
         res = process_loop_results(
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
-        # print(f'in test_loop:\nresult of loop test is \n{res}\ntarget is\n{self.pt_res_bs00}')
+        print(f'in test_loop, line by line comparison between test and target is:\n')
+        for r, t in zip(res.values, self.pt_res_bs00):
+            print(f'res: {np.round(r, 0)}\n'
+                  f'target: {np.round(t, 0)}\n'
+                  f'{"Check!" if np.allclose(r, t) else "<-Different!!"}\n')
         self.assertTrue(np.allclose(res, self.pt_res_bs00, atol=0.01))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
@@ -5585,7 +5595,7 @@ class TestLoop(unittest.TestCase):
                           0, 0.1, 0.1, 0, 0,
                           False)
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5593,6 +5603,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 trade_log=False,
                 price_priority_list=[0]
         )
@@ -5600,7 +5611,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         # print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5616,7 +5628,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5624,6 +5636,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=0,
                 moq_sell=0,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 trade_log=False,
@@ -5633,7 +5646,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5644,7 +5658,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.pt_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5652,6 +5666,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 trade_log=False,
                 price_priority_list=[0]
         )
@@ -5659,7 +5674,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5677,7 +5693,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 0 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5687,6 +5703,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=0,
                 stock_delivery_period=2,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 max_cash_usage=True,
                 price_priority_list=[0]
         )
@@ -5694,7 +5711,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5704,7 +5722,7 @@ class TestLoop(unittest.TestCase):
             print(np.around(self.pt_res_sb20[i]))
             print()
         self.assertTrue(np.allclose(res, self.pt_res_sb20, atol=0.01))
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5714,13 +5732,15 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 price_priority_list=[0]
         )
         res = process_loop_results(
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5729,7 +5749,7 @@ class TestLoop(unittest.TestCase):
         """ Test looping of PS Proportion Signal type of signals
 
         """
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5744,13 +5764,14 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.ps_res_bs00, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5765,7 +5786,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5781,7 +5803,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5799,7 +5821,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5811,7 +5834,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.ps_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5826,7 +5849,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5844,7 +5868,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5861,7 +5885,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5872,7 +5897,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.ps_res_sb20, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5888,7 +5913,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5897,7 +5923,7 @@ class TestLoop(unittest.TestCase):
         """ Test looping of VS Volume Signal type of signals
 
         """
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5912,13 +5938,14 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.vs_res_bs00, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5933,7 +5960,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5965,7 +5993,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5991,7 +6020,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -6009,7 +6039,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -6027,7 +6057,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -6038,7 +6069,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.vs_res_sb20, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -6055,7 +6086,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -6082,7 +6114,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_multi_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -6095,7 +6128,7 @@ class TestLoop(unittest.TestCase):
 
         self.assertTrue(np.allclose(res, self.multi_res, atol=0.1))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_multi_batch,
                 trade_price_list=self.multi_history_list,
                 cash_plan=self.cash,
@@ -6113,7 +6146,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_multi_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')

@@ -127,5 +127,5 @@ np.seterr(divide='ignore', invalid='ignore')
 logger_core.info('qteasy loaded!')
 
 # 设置qteasy回测交易报告以及错误报告的存储路径
-QT_ERR_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['error_log_file_path']
+QT_SYS_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['sys_log_file_path']
 QT_TRADE_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['trade_log_file_path']

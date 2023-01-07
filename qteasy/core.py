@@ -164,10 +164,10 @@ def _loop_step(signal_type: int,
     # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
     # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
     # 出计算
-    if np.all(op == 0) and (signal_type > 0):
-        # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
-        # 因为正好op全为0，因此返回op即可
-        return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
+    # if np.all(op == 0) and (signal_type > 0):
+    #     # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
+    #     # 因为正好op全为0，因此返回op即可
+    #     return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
 
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
@@ -222,16 +222,16 @@ def _loop_step(signal_type: int,
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
         # 当持有份额大于零时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
-        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0)
+        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0.)
         # 当持有份额不小于0时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
-        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0)
+        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0.)
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 信号数量 * 资产价格
-            cash_to_spend += np.where((op > 0) & (own_amounts <= 0), op * prices, 0)
+            cash_to_spend += np.where((op > 0) & (own_amounts <= 0), op * prices, 0.)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0)
+            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0.)
 
     else:
         raise ValueError('Invalid signal_type')
@@ -318,7 +318,7 @@ def _loop_step(signal_type: int,
 
 
 def _get_complete_hist(looped_value: pd.DataFrame,
-                       h_list: pd.DataFrame,
+                       h_list: HistoryPanel,
                        benchmark_list: pd.DataFrame,
                        with_price: bool = False) -> pd.DataFrame:
     """完成历史交易回测后，填充完整的历史资产总价值清单，
@@ -898,8 +898,6 @@ def apply_loop_core(share_count,
 
 
 def process_loop_results(operator,
-                         start_idx=0,
-                         end_idx=None,
                          loop_results=None,
                          op_log_matrix=None,
                          op_summary_matrix=None,
@@ -2786,8 +2784,6 @@ def _evaluate_one_parameter(par,
         )
         looped_val = process_loop_results(
                 operator=op,
-                start_idx=start_idx,
-                end_idx=end_idx,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
                 op_summary_matrix=op_summary_matrix,

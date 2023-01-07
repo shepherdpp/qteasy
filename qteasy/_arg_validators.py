@@ -219,7 +219,7 @@ def _valid_qt_kwargs():
                                  'text':      '数据库的访问密码\n\n'
                                               '建议通过配置文件配置数据库用户名和密码'},
 
-        'error_log_file_path':  {'Default':   'qteasy/log',
+        'sys_log_file_path':    {'Default':   'qteasy/log',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
                                  'text':      '系统运行日志及错误日志的存储路径\n'},
