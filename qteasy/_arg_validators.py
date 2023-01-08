@@ -134,6 +134,27 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '下载历史数据时是否显示进度条'},
 
+        'hist_dnld_retry_cnt':  {'Default':   7,
+                                 'Validator': lambda value: isinstance(value, int) and
+                                                            0 < value <= 10,
+                                 'level':     4,
+                                 'text':      '下载历史数据失败时的自动重试次数'},
+
+        'hist_dnld_retry_delay':
+                                {'Default':   1.,
+                                 'Validator': lambda value: isinstance(value, float) and
+                                                            0. <= value <= 5.0,
+                                 'level':     4,
+                                 'text':      '下载历史数据失败时的自动重试前的延迟时间，单位为秒'},
+
+        'hist_dnld_backoff':    {'Default':   2.,
+                                 'Validator': lambda value: isinstance(value, float) and
+                                                            0. <= value <= 2.0,
+                                 'level':     4,
+                                 'text':      '下载历史数据失败时的自动重试的延迟时间倍增乘数\n'
+                                              '例如，设置hist_dnld_backoff = 2时，每次重试失败\n'
+                                              '后延迟时间会变为前一次的2倍'},
+
         'gpu':                  {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     4,
@@ -198,7 +219,7 @@ def _valid_qt_kwargs():
                                  'text':      '数据库的访问密码\n\n'
                                               '建议通过配置文件配置数据库用户名和密码'},
 
-        'error_log_file_path':  {'Default':   'qteasy/log',
+        'sys_log_file_path':    {'Default':   'qteasy/log',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
                                  'text':      '系统运行日志及错误日志的存储路径\n'},
@@ -265,49 +286,49 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '为True时在回测图表中用色带显示投资仓位'},
 
-        'cost_fixed_buy':       {'Default':   0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+        'cost_fixed_buy':       {'Default':   0.,
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化\n'
                                               '默认值为10元'},
 
-        'cost_fixed_sell':      {'Default':   0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+        'cost_fixed_sell':      {'Default':   0.,
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化\n'
                                               '默认值为0'},
 
         'cost_rate_buy':        {'Default':   0.0003,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and 0 <= value < 1,
                                  'level':     1,
                                  'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算\n'
                                               '默认值为万分之三'},
 
         'cost_rate_sell':       {'Default':   0.0001,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and 0 <= value < 1,
                                  'level':     1,
                                  'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算\n'
                                               '默认值为万分之一'},
 
         'cost_min_buy':         {'Default':   5.0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额\n'
                                               '默认值为5元'},
 
         'cost_min_sell':        {'Default':   0.0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and value >= 0,
                                  'level':     2,
                                  'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额'},
 
         'cost_slippage':        {'Default':   0.0,
-                                 'Validator': lambda value: isinstance(value, (float, int))
+                                 'Validator': lambda value: isinstance(value, float)
                                                             and 0 <= value < 1,
                                  'level':     2,
                                  'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
@@ -355,6 +376,23 @@ def _valid_qt_kwargs():
                                               '- False - 默认值，不允许卖空操作，卖出数量最多仅为当前可用持仓数量\n'
                                               '- True -  允许卖空，卖出数量大于持仓量时，即持有空头仓位\n'},
 
+        'long_position_limit':  {'Default':   1.,
+                                 'Validator': lambda value: isinstance(value, float) and (value > 0),
+                                 'level':     3,
+                                 'text':      '回测过程中允许交易信号建立的多头仓位百分比的极限值，即允许动用\n'
+                                              '总资产（包括现金和持有股票的总额）的多少百分比用于持有多头仓位，\n'
+                                              '默认值1.0，即100%\n'
+                                              '如果设置值大于1，则表示允许超过持有现金建仓，这种情况会产生负现金\n'
+                                              '余额，表示产生了借贷\n'},
+
+        'short_position_limit': {'Default':  -1.,
+                                 'Validator': lambda value: isinstance(value, float) and (value < 0),
+                                 'level':     3,
+                                 'text':      '回测过程中允许交易信号建立的空头仓位百分比的极限值，即允许持有的\n'
+                                              '空头仓位占当前净资产总额的最高比例限额，默认值-1.0，即最多允许借入\n'
+                                              '相当于净资产总额100%价值的股票并持有空头仓位，此时持有负股票份额且\n'
+                                              '产生正现金流入'},
+
         'backtest_price_adj':   {'Default':   'none',
                                  'Validator': lambda value: isinstance(value, str)
                                                             and value in ['none', 'n', 'back', 'b', 'adj'],
@@ -378,23 +416,34 @@ def _valid_qt_kwargs():
                                               '- True -  首先处理同一批次交易中的卖出信号，并在可能时将获得的现金立即用于\n'
                                               '          本次买入'},
 
+        'PT_signal_timing':     {'Default':   'lazy',
+                                 'Validator': lambda value: value in ['aggressive', 'lazy'],
+                                 'level':     3,
+                                 'text':      '回测信号模式为PT（position target）时，控制检查实际持仓比例并自动生成交易\n'
+                                              '信号的时机，默认normal\n'
+                                              '- aggressive: 在整个策略运行时间点上都会产生交易信号，不论此时PT信号是否发\n'
+                                              '              生变化，实时监控实际持仓与计划持仓之间的差异，只要二者发生偏\n'
+                                              '              离，就产生信号\n'
+                                              '- lazy:       在策略运行时间点上，只有当持仓比例发生变化时，才会产生交易\n'
+                                              '              信号，不实时监控实际持仓与计划持仓的差异'},
+
         'PT_buy_threshold':     {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, (float, int))
-                                                            and 0 <= value < 1,
+                                                            and (0 <= value < 1),
                                  'level':     3,
                                  'text':      '回测信号模式为PT（position target）时，触发买入信号的仓位差异阈值\n'
                                               '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发买入信号\n'
-                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
-                                              '该百分比在0～100%之间，50%表示用一半的总资产价值买入该股票'},
+                                              '例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓<=25%时，才会产生\n'
+                                              '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了'},
 
         'PT_sell_threshold':    {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, (float, int))
-                                                            and -1 < value <= 0,
+                                                            and (0 <= value < 1),
                                  'level':     3,
                                  'text':      '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
                                               '在这种模式下，当持有的投资产品的仓位比目标仓位高，且差额超过阈值时，触发卖出信号\n'
-                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
-                                              '该百分比在-100%～0之间，-50%表示卖出一半持仓'},
+                                              '例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓>=35%时，才会产生\n'
+                                              '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了'},
 
         'price_priority_OHLC':  {'Default':   'OHLC',
                                  'Validator': lambda value: isinstance(value, str)
@@ -409,7 +458,7 @@ def _valid_qt_kwargs():
 
         'price_priority_quote': {'Default':   'normal',
                                  'Validator': lambda value: isinstance(value, str)
-                                                            and value in ['normal', 'reverse'],
+                                                            and (value in ['normal', 'reverse']),
                                  'level':     3,
                                  'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为实时报价时，回测程序处理\n'
                                               '不同的价格信号的优先级。\n'
@@ -820,28 +869,30 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     :return:
     """
     vkwargs = _valid_qt_kwargs()
-    if key not in vkwargs:
+    if (key not in vkwargs) and raise_if_key_not_existed:
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
-        if raise_if_key_not_existed:
-            raise KeyError(err_msg)
-        else:
-            import warnings
-            warnings.warn(err_msg)
-    else:
-        try:
-            valid = vkwargs[key]['Validator'](value)
-        except Exception as ex:
-            ex.extra_info = f'config_key {key} validator raised exception to value: {str(value)}'
-            raise
-        if not valid:
-            import inspect
-            v = inspect.getsource(vkwargs[key]['Validator']).strip()
-            raise TypeError(
-                    f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
-                    f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
-            # ---------------------------------------------------------------
-            #      At this point , if we have not raised an exception,
-            #      then config_key is valid as far as we can tell.
+        raise KeyError(err_msg)
+    if key not in vkwargs:
+        from qteasy import logger_core
+        warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error' \
+                   f'is suppressed by program!'
+        logger_core.warn(warn_msg)
+        return True
+
+    try:
+        valid = vkwargs[key]['Validator'](value)
+    except Exception as ex:
+        ex.extra_info = f'config_key {key} validator raised exception to value: {str(value)}'
+        raise ex
+    if not valid:
+        import inspect
+        v = inspect.getsource(vkwargs[key]['Validator']).strip()
+        raise TypeError(
+                f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
+                f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
+        # ---------------------------------------------------------------
+        #      At this point , if we have not raised an exception,
+        #      then config_key is valid as far as we can tell.
 
     return True
 

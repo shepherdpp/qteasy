@@ -10,7 +10,6 @@
 # ======================================
 import unittest
 
-import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -22,6 +21,8 @@ import datetime
 import logging
 
 from qteasy import QT_CONFIG, QT_DATA_SOURCE, CashPlan
+
+from qteasy.finance import get_selling_result, get_purchase_result, calculate
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
@@ -95,14 +96,14 @@ class TestCost(unittest.TestCase):
         self.amounts_to_sell = np.array([0., 0., -3333.3333])
         self.cash_to_spend = np.array([0., 20000., 0.])
         self.prices = np.array([10., 20., 10.])
-        self.r = qt.Cost(0.0)
+        self.r = qt.set_cost()
 
     def test_rate_creation(self):
         """测试对象生成"""
         print('testing rates objects\n')
-        self.assertIsInstance(self.r, qt.Cost, 'Type should be Rate')
-        self.assertEqual(self.r.buy_fix, 0)
-        self.assertEqual(self.r.sell_fix, 0)
+        self.assertIsInstance(self.r, dict, 'Type should be Rate')
+        self.assertEqual(self.r['buy_fix'], 0)
+        self.assertEqual(self.r['sell_fix'], 0)
 
     def test_rate_operations(self):
         """测试交易费率对象"""
@@ -113,236 +114,240 @@ class TestCost(unittest.TestCase):
         self.assertEqual(self.r['buy_min'], 5., 'Item got is incorrect')
         self.assertEqual(self.r['sell_min'], 0.0, 'Item got is incorrect')
         self.assertEqual(self.r['slipage'], 0.0, 'Item got is incorrect')
-        self.assertEqual(np.allclose(self.r.calculate(self.amounts),
+        self.assertEqual(np.allclose(calculate(self.amounts, None, None, **self.r),
                                      [0.003, 0.003, 0.003]),
                          True,
                          'fee calculation wrong')
 
     def test_rate_fee(self):
         """测试买卖交易费率"""
-        self.r.buy_rate = 0.003
-        self.r.sell_rate = 0.001
-        self.r.buy_fix = 0.
-        self.r.sell_fix = 0.
-        self.r.buy_min = 0.
-        self.r.sell_min = 0.
-        self.r.slipage = 0.
-
+        self.r['buy_rate'] = 0.003
+        self.r['sell_rate'] = 0.001
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 0.
+        self.r['sell_min'] = 0.
+        self.r['slipage'] = 0.
+        r = self.r
         print('\nSell result with fixed rate = 0.001 and moq = 0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
-        test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.333333, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1.))
-        test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 1., **r))
+        test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 1, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3300]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_rate_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997.00897308, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 1))
-        test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 1)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 1, **r))
+        test_rate_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 1, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_rate_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
-        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
 
     def test_min_fee(self):
         """测试最低交易费用"""
-        self.r.buy_rate = 0.
-        self.r.sell_rate = 0.
-        self.r.buy_fix = 0.
-        self.r.sell_fix = 0.
-        self.r.buy_min = 300
-        self.r.sell_min = 300
-        self.r.slipage = 0.
+        self.r['buy_rate'] = 0.
+        self.r['sell_rate'] = 0.
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 300
+        self.r['sell_min'] = 300
+        self.r['slipage'] = 0.
+        r = self.r
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
-        test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 10, **r))
+        test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 10, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
-        test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_min_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33033.333)
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33033.333)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
-        test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 1, **r))
+        test_min_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 1, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33030)
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33030)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_min_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEquals(test_min_fee_result[1].sum(), 32700)
-        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 32700)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
     def test_rate_with_min(self):
         """测试最低交易费用对其他交易费率参数的影响"""
-        self.r.buy_rate = 0.0153
-        self.r.sell_rate = 0.01
-        self.r.buy_fix = 0.
-        self.r.sell_fix = 0.
-        self.r.buy_min = 300
-        self.r.sell_min = 333
-        self.r.slipage = 0.
+        self.r['buy_rate'] = 0.0153
+        self.r['sell_rate'] = 0.01
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 300
+        self.r['sell_min'] = 333
+        self.r['slipage'] = 0.
+        r = self.r
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 984.9305624, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 10:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
-        test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 10, **r))
+        test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 10, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
-        test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_rate_with_min_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32999.99967)
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.33333)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32999.99967)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.33333)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
-        test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 1, **r))
+        test_rate_with_min_result = get_selling_result(self.prices, self.amounts_to_sell, 1, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32996.7)
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.3)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32996.7)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.3)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_rate_with_min_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32667.0)
-        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.0)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32667.0)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.0)
 
     def test_fixed_fee(self):
         """测试固定交易费用"""
-        self.r.buy_rate = 0.
-        self.r.sell_rate = 0.
-        self.r.buy_fix = 200
-        self.r.sell_fix = 150
-        self.r.buy_min = 0
-        self.r.sell_min = 0
-        self.r.slipage = 0
+        self.r['buy_rate'] = 0.
+        self.r['sell_rate'] = 0.
+        self.r['buy_fix'] = 200
+        self.r['sell_fix'] = 150
+        self.r['buy_min'] = 0
+        self.r['sell_min'] = 0
+        self.r['slipage'] = 0
+        r = self.r
         print('\nselling result of fixed cost with fixed fee = 150 and moq=0:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 0))
-        test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
+        test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
 
         print('\nselling result of fixed cost with fixed fee = 150 and moq=100:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
-        test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
+        print(get_selling_result(self.prices, self.amounts_to_sell, 100, **r))
+        test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 100, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3300.]), True,
                       f'result incorrect, {test_fixed_fee_result[0]} does not equal to [0,0,-3400]')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 990., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
     def test_slipage(self):
         """测试交易滑点"""
-        self.r.buy_fix = 0
-        self.r.sell_fix = 0
-        self.r.buy_min = 0
-        self.r.sell_min = 0
-        self.r.buy_rate = 0.003
-        self.r.sell_rate = 0.001
-        self.r.slipage = 1E-9
+        self.r['buy_fix'] = 0
+        self.r['sell_fix'] = 0
+        self.r['buy_min'] = 0
+        self.r['sell_min'] = 0
+        self.r['buy_rate'] = 0.003
+        self.r['sell_rate'] = 0.001
+        self.r['slipage'] = 1E-9
+        r = self.r
         print('\npurchase result of fixed rate = 0.003 and slipage = 1E-10 and moq = 0:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
+        print(get_purchase_result(self.prices, self.cash_to_spend, 0, **r))
         print('\npurchase result of fixed rate = 0.003 and slipage = 1E-10 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
+        print(get_purchase_result(self.prices, self.cash_to_spend, 100, **r))
         print('\nselling result with fixed rate = 0.001 and slipage = 1E-10:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
+        print(get_selling_result(self.prices, self.amounts_to_sell, 0, **r))
 
-        test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
+        test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True,
                       f'{test_fixed_fee_result[0]} does not equal to [0, 0, -10000]')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33298.88855591,
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33298.88855591,
                                 msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 34.44444409,
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 34.44444409,
                                 msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
 
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 996.98909294, 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
 
-        test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
+        test_fixed_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 100, **r)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
-        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
 
 
 class TestSpace(unittest.TestCase):
@@ -737,9 +742,9 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(self.cp1.period, 730)
         self.assertEqual(self.cp1.dates, [Timestamp('2010-01-01'), Timestamp('2012-01-01')])
         self.assertEqual(self.cp1.ir, 0.1)
-        self.assertAlmostEquals(self.cp1.closing_value, 34200)
-        self.assertAlmostEquals(self.cp2.closing_value, 10000)
-        self.assertAlmostEquals(self.cp3.closing_value, 220385.3483685)
+        self.assertAlmostEqual(self.cp1.closing_value, 34200)
+        self.assertAlmostEqual(self.cp2.closing_value, 10000)
+        self.assertAlmostEqual(self.cp3.closing_value, 220385.3483685)
         self.assertIsInstance(self.cp1.plan, pd.DataFrame)
         self.assertIsInstance(self.cp2.plan, pd.DataFrame)
         self.assertIsInstance(self.cp3.plan, pd.DataFrame)
@@ -753,8 +758,8 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(empty.period, 0)
         self.assertEqual(empty.dates, [])
         self.assertEqual(empty.ir, 0.0)
-        self.assertAlmostEquals(empty.closing_value, 0)
-        self.assertAlmostEquals(empty.opening_value, 0)
+        self.assertAlmostEqual(empty.closing_value, 0)
+        self.assertAlmostEqual(empty.opening_value, 0)
         self.assertIsInstance(empty.plan, pd.DataFrame)
         self.assertTrue(empty.plan.empty)
 
@@ -1051,6 +1056,7 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'all the "000300.SH" composite after 20180101')
         stock_pool = qt.filter_stock_codes(date='20200101',
                                            index='000300.SH')
+        self.assertTrue(len(stock_pool) > 0)
         print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
               f'more information of some fo the stocks\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1059,6 +1065,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.filter_stock_codes(industry='银行业, 多元金融, 房地产',
                                            area='陕西省',
                                            market='主要')
+        self.assertTrue(len(stock_pool) > 0)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["多元金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1469,7 +1476,7 @@ class TestEvaluations(unittest.TestCase):
     def test_performance_stats(self):
         """test the function performance_statistics()
         """
-        pass
+        raise NotImplementedError
 
     # noinspection PyTypeChecker
     def test_fv(self):
@@ -1542,20 +1549,20 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEquals(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
 
     def test_volatility(self):
-        self.assertAlmostEquals(eval_volatility(self.test_data1), 0.748646166)
-        self.assertAlmostEquals(eval_volatility(self.test_data2), 0.75527442)
-        self.assertAlmostEquals(eval_volatility(self.test_data3), 0.654188853)
-        self.assertAlmostEquals(eval_volatility(self.test_data4), 0.688375814)
-        self.assertAlmostEquals(eval_volatility(self.test_data5), 1.089989522)
-        self.assertAlmostEquals(eval_volatility(self.test_data6), 1.775419308)
-        self.assertAlmostEquals(eval_volatility(self.test_data7), 1.962758406)
-        self.assertAlmostEquals(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
-        self.assertAlmostEquals(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
-        self.assertAlmostEquals(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
-        self.assertAlmostEquals(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
-        self.assertAlmostEquals(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
-        self.assertAlmostEquals(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
-        self.assertAlmostEquals(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
+        self.assertAlmostEqual(eval_volatility(self.test_data1), 0.748646166)
+        self.assertAlmostEqual(eval_volatility(self.test_data2), 0.75527442)
+        self.assertAlmostEqual(eval_volatility(self.test_data3), 0.654188853)
+        self.assertAlmostEqual(eval_volatility(self.test_data4), 0.688375814)
+        self.assertAlmostEqual(eval_volatility(self.test_data5), 1.089989522)
+        self.assertAlmostEqual(eval_volatility(self.test_data6), 1.775419308)
+        self.assertAlmostEqual(eval_volatility(self.test_data7), 1.962758406)
+        self.assertAlmostEqual(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
+        self.assertAlmostEqual(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
+        self.assertAlmostEqual(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
+        self.assertAlmostEqual(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
+        self.assertAlmostEqual(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
+        self.assertAlmostEqual(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
+        self.assertAlmostEqual(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
         self.assertEqual(eval_volatility(pd.DataFrame()), -np.inf)
         self.assertRaises(AssertionError, eval_volatility, [1, 2, 3])
@@ -1668,13 +1675,13 @@ class TestEvaluations(unittest.TestCase):
 
     # noinspection PyCallingNonCallable
     def test_sharp(self):
-        self.assertAlmostEquals(eval_sharp(self.test_data1, 0), 0.970116743)
-        self.assertAlmostEquals(eval_sharp(self.test_data2, 0), 2.654078559)
-        self.assertAlmostEquals(eval_sharp(self.test_data3, 0), 1.573319618)
-        self.assertAlmostEquals(eval_sharp(self.test_data4, 0), 2.449630585)
-        self.assertAlmostEquals(eval_sharp(self.test_data5, 0.002), 0.578781892)
-        self.assertAlmostEquals(eval_sharp(self.test_data6, 0.002), 0.570048419)
-        self.assertAlmostEquals(eval_sharp(self.test_data7, 0.002), 0.347565045)
+        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
+        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
+        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 1.573319618)
+        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 2.449630585)
+        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.578781892)
+        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.570048419)
+        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.347565045)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1779,7 +1786,7 @@ class TestEvaluations(unittest.TestCase):
                                    1.84548298, 2.08064663, 1.98788139, 2.04559367, 2.05991876])
         test_sharp = eval_sharp(self.long_data, 0.015)
         expected = float(np.nanmean(expected_sharp))
-        self.assertAlmostEquals(expected, test_sharp)
+        self.assertAlmostEqual(expected, test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
     def test_beta(self):
@@ -2020,7 +2027,7 @@ class TestEvaluations(unittest.TestCase):
 
     def test_calmar(self):
         """test evaluate function eval_calmar()"""
-        pass
+        raise NotImplementedError
 
     def test_benchmark(self):
         reference = self.test_data1
@@ -2044,7 +2051,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEquals(yr, 0.929154957)
 
     def test_evaluate(self):
-        pass
+        raise NotImplementedError
 
 
 class TestLoop(unittest.TestCase):
@@ -2479,7 +2486,8 @@ class TestLoop(unittest.TestCase):
                                     [000, 000, 000, 000, 000, 000, 000],
                                     [-200, 000, 700, 000, 000, 000, 000],
                                     [000, 000, 000, 000, 000, 000, 000],
-                                    [000, 000, 000, 000, 000, 000, 000]])
+                                    [000, 000, 000, 000, 000, 000, 000]],
+                                   dtype='float')
 
         # 精心设计的模拟多价格交易信号，模拟50个交易日对三只股票的操作
         self.multi_shares = ['000010', '000030', '000039']
@@ -2883,12 +2891,15 @@ class TestLoop(unittest.TestCase):
         self.op_pt_batch._op_list = self.pt_signal_hp.values
         self.op_pt_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
         self.op_pt_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_pt_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
         self.op_ps_batch._op_list = self.ps_signal_hp.values
         self.op_ps_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
         self.op_ps_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_ps_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
         self.op_vs_batch._op_list = self.vs_signal_hp.values
         self.op_vs_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
         self.op_vs_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_vs_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
         self.op_multi_batch._op_list = self.multi_signal_hp.values
         self.op_multi_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.multi_dates,
                                                                                 range(len(self.multi_dates)))}
@@ -2898,20 +2909,20 @@ class TestLoop(unittest.TestCase):
 
         # 设置回测参数
         self.cash = qt.CashPlan(['2016/07/01', '2016/08/12', '2016/09/23'], [10000, 10000, 10000])
-        self.rate = qt.Cost(buy_fix=0,
-                            sell_fix=0,
-                            buy_rate=0,
-                            sell_rate=0,
-                            buy_min=0,
-                            sell_min=0,
-                            slipage=0)
-        self.rate2 = qt.Cost(buy_fix=0,
-                             sell_fix=0,
-                             buy_rate=0,
-                             sell_rate=0,
-                             buy_min=10,
-                             sell_min=5,
-                             slipage=0)
+        self.rate = qt.set_cost(buy_fix=0,
+                                sell_fix=0,
+                                buy_rate=0,
+                                sell_rate=0,
+                                buy_min=0,
+                                sell_min=0,
+                                slipage=0)
+        self.rate2 = qt.set_cost(buy_fix=0,
+                                 sell_fix=0,
+                                 buy_rate=0,
+                                 sell_rate=0,
+                                 buy_min=10,
+                                 sell_min=5,
+                                 slipage=0)
 
         # 模拟PT信号回测结果
         # PT信号，先卖后买，交割期为0
@@ -4219,10 +4230,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=np.zeros(7, dtype='float'),
                                                      op=self.pt_signals[0],
                                                      prices=self.prices[0],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4232,7 +4251,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4242,10 +4261,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_sb00[2][0:7],
                                                      op=self.pt_signals[3],
                                                      prices=self.prices[3],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4255,7 +4282,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[3][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4265,10 +4292,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_sb00[30][0:7],
                                                      op=self.pt_signals[31],
                                                      prices=self.prices[31],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4278,7 +4313,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[31][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4288,10 +4323,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_sb00[59][0:7],
                                                      op=self.pt_signals[60],
                                                      prices=self.prices[60],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4301,7 +4344,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[60][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4311,10 +4354,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.pt_signals[61],
                                                      prices=self.prices[61],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4324,7 +4375,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[61][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4334,10 +4385,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_sb00[95][0:7],
                                                      op=self.pt_signals[96],
                                                      prices=self.prices[96],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4347,7 +4406,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[96][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4357,10 +4416,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.pt_signals[97],
                                                      prices=self.prices[97],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4370,22 +4437,30 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_sb00[97][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
 
     def test_loop_step_pt_bs00(self):
         """ test loop step PT-signal, buy first"""
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
-                                                     own_cash=10000,
+                                                     own_cash=10000.,
                                                      own_amounts=np.zeros(7, dtype='float'),
-                                                     available_cash=10000,
+                                                     available_cash=10000.,
                                                      available_amounts=np.zeros(7, dtype='float'),
                                                      op=self.pt_signals[0],
                                                      prices=self.prices[0],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4395,7 +4470,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4405,10 +4480,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_bs00[2][0:7],
                                                      op=self.pt_signals[3],
                                                      prices=self.prices[3],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4418,7 +4501,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[3][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4428,10 +4511,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_bs00[30][0:7],
                                                      op=self.pt_signals[31],
                                                      prices=self.prices[31],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4441,7 +4532,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[31][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4451,10 +4542,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_bs00[59][0:7],
                                                      op=self.pt_signals[60],
                                                      prices=self.prices[60],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4464,7 +4563,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[60][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4474,10 +4573,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.pt_signals[61],
                                                      prices=self.prices[61],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4487,7 +4594,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[61][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4497,10 +4604,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.pt_res_bs00[95][0:7],
                                                      op=self.pt_signals[96],
                                                      prices=self.prices[96],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4510,7 +4625,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[96][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4520,10 +4635,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.pt_signals[97],
                                                      prices=self.prices[97],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4533,22 +4656,30 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.pt_res_bs00[97][7], 2)
+        self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
 
     def test_loop_step_ps_sb00(self):
         """ test loop step PS-signal, sell first"""
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
-                                                     own_cash=10000,
+                                                     own_cash=10000.,
                                                      own_amounts=np.zeros(7, dtype='float'),
-                                                     available_cash=10000,
+                                                     available_cash=10000.,
                                                      available_amounts=np.zeros(7, dtype='float'),
                                                      op=self.ps_signals[0],
                                                      prices=self.prices[0],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4558,7 +4689,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4568,10 +4699,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_sb00[2][0:7],
                                                      op=self.ps_signals[3],
                                                      prices=self.prices[3],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4581,7 +4720,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[3][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4591,10 +4730,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_sb00[30][0:7],
                                                      op=self.ps_signals[31],
                                                      prices=self.prices[31],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4604,20 +4751,28 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[31][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
-                                                     own_cash=self.ps_res_sb00[59][7] + 10000,
+                                                     own_cash=self.ps_res_sb00[59][7] + 10000.,
                                                      own_amounts=self.ps_res_sb00[59][0:7],
-                                                     available_cash=self.ps_res_sb00[59][7] + 10000,
+                                                     available_cash=self.ps_res_sb00[59][7] + 10000.,
                                                      available_amounts=self.ps_res_sb00[59][0:7],
                                                      op=self.ps_signals[60],
                                                      prices=self.prices[60],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4627,7 +4782,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[60][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4637,10 +4792,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.ps_signals[61],
                                                      prices=self.prices[61],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4650,7 +4813,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[61][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4660,10 +4823,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_sb00[95][0:7],
                                                      op=self.ps_signals[96],
                                                      prices=self.prices[96],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4673,7 +4844,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[96][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4683,10 +4854,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.ps_signals[97],
                                                      prices=self.prices[97],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4696,22 +4875,30 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_sb00[97][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
 
     def test_loop_step_ps_bs00(self):
         """ test loop step PS-signal, buy first"""
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
-                                                     own_cash=10000,
+                                                     own_cash=10000.,
                                                      own_amounts=np.zeros(7, dtype='float'),
-                                                     available_cash=10000,
+                                                     available_cash=10000.,
                                                      available_amounts=np.zeros(7, dtype='float'),
                                                      op=self.ps_signals[0],
                                                      prices=self.prices[0],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4721,7 +4908,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7500)
+        self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4731,10 +4918,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_bs00[2][0:7],
                                                      op=self.ps_signals[3],
                                                      prices=self.prices[3],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4744,7 +4939,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[3][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4754,10 +4949,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_bs00[30][0:7],
                                                      op=self.ps_signals[31],
                                                      prices=self.prices[31],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4767,7 +4970,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[31][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4777,10 +4980,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_bs00[59][0:7],
                                                      op=self.ps_signals[60],
                                                      prices=self.prices[60],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4790,7 +5001,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[60][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4800,10 +5011,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.ps_signals[61],
                                                      prices=self.prices[61],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4813,7 +5032,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[61][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4823,10 +5042,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.ps_res_bs00[95][0:7],
                                                      op=self.ps_signals[96],
                                                      prices=self.prices[96],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4836,7 +5063,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[96][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4846,10 +5073,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.ps_signals[97],
                                                      prices=self.prices[97],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4859,22 +5094,30 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.ps_res_bs00[97][7], 2)
+        self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
 
     def test_loop_step_vs_sb00(self):
         """test loop step of Volume Signal type of signals"""
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
-                                                     own_cash=10000,
+                                                     own_cash=10000.,
                                                      own_amounts=np.zeros(7, dtype='float'),
-                                                     available_cash=10000,
+                                                     available_cash=10000.,
                                                      available_amounts=np.zeros(7, dtype='float'),
                                                      op=self.vs_signals[0],
                                                      prices=self.prices[0],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4884,7 +5127,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7750)
+        self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4894,10 +5137,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_sb00[2][0:7],
                                                      op=self.vs_signals[3],
                                                      prices=self.prices[3],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4907,7 +5158,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[3][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4917,10 +5168,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_sb00[30][0:7],
                                                      op=self.vs_signals[31],
                                                      prices=self.prices[31],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4930,7 +5189,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[31][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4940,10 +5199,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_sb00[59][0:7],
                                                      op=self.vs_signals[60],
                                                      prices=self.prices[60],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4953,7 +5220,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[60][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4963,10 +5230,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.vs_signals[61],
                                                      prices=self.prices[61],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4976,7 +5251,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[61][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4986,10 +5261,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_sb00[95][0:7],
                                                      op=self.vs_signals[96],
                                                      prices=self.prices[96],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -4999,7 +5282,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[96][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5009,10 +5292,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.vs_signals[97],
                                                      prices=self.prices[97],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=True,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5022,22 +5313,30 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_sb00[97][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
 
     def test_loop_step_vs_bs00(self):
         """test loop step of Volume Signal type of signals"""
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
-                                                     own_cash=10000,
+                                                     own_cash=10000.,
                                                      own_amounts=np.zeros(7, dtype='float'),
-                                                     available_cash=10000,
+                                                     available_cash=10000.,
                                                      available_amounts=np.zeros(7, dtype='float'),
                                                      op=self.vs_signals[0],
                                                      prices=self.prices[0],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5047,7 +5346,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEquals(cash, 7750)
+        self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5057,10 +5356,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_bs00[2][0:7],
                                                      op=self.vs_signals[3],
                                                      prices=self.prices[3],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5070,7 +5377,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[3][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5080,10 +5387,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_bs00[30][0:7],
                                                      op=self.vs_signals[31],
                                                      prices=self.prices[31],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5093,7 +5408,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[31][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5103,10 +5418,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_bs00[59][0:7],
                                                      op=self.vs_signals[60],
                                                      prices=self.prices[60],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5116,7 +5439,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[60][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5126,10 +5449,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.vs_signals[61],
                                                      prices=self.prices[61],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5139,7 +5470,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[61][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5149,10 +5480,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=self.vs_res_bs00[95][0:7],
                                                      op=self.vs_signals[96],
                                                      prices=self.prices[96],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5162,7 +5501,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[96][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5172,10 +5511,18 @@ class TestLoop(unittest.TestCase):
                                                      available_amounts=amounts,
                                                      op=self.vs_signals[97],
                                                      prices=self.prices[97],
-                                                     rate=self.rate,
+                                                     buy_fix=self.rate['buy_fix'],
+                                                     sell_fix=self.rate['sell_fix'],
+                                                     buy_rate=self.rate['buy_rate'],
+                                                     sell_rate=self.rate['sell_rate'],
+                                                     buy_min=self.rate['buy_min'],
+                                                     sell_min=self.rate['sell_min'],
+                                                     slipage=self.rate['slipage'],
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
                                                      maximize_cash_usage=False,
+                                                     long_pos_limit=1.,
+                                                     short_pos_limit=-1.,
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0)
@@ -5185,7 +5532,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEquals(cash, self.vs_res_bs00[97][7], 2)
+        self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
 
     def test_loop_pt(self):
@@ -5198,7 +5545,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 0 days \n'
               'cash delivery delay = 0 day \n'
               'buy-sell sequence = sell first')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5206,17 +5553,23 @@ class TestLoop(unittest.TestCase):
                 moq_buy=0,
                 moq_sell=0,
                 inflation_rate=0,
-                trade_log=False,
+                pt_signal_timing='aggressive',
+                trade_log=True,
                 price_priority_list=[0]
         )
         res = process_loop_results(
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
-        # print(f'in test_loop:\nresult of loop test is \n{res}\ntarget is\n{self.pt_res_bs00}')
+        print(f'in test_loop, line by line comparison between test and target is:\n')
+        for r, t in zip(res.values, self.pt_res_bs00):
+            print(f'res: {np.round(r, 0)}\n'
+                  f'target: {np.round(t, 0)}\n'
+                  f'{"Check!" if np.allclose(r, t) else "<-Different!!"}\n')
         self.assertTrue(np.allclose(res, self.pt_res_bs00, atol=0.01))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
@@ -5242,7 +5595,7 @@ class TestLoop(unittest.TestCase):
                           0, 0.1, 0.1, 0, 0,
                           False)
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5250,6 +5603,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 trade_log=False,
                 price_priority_list=[0]
         )
@@ -5257,7 +5611,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         # print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5273,7 +5628,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5281,6 +5636,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=0,
                 moq_sell=0,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 trade_log=False,
@@ -5290,7 +5646,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5301,7 +5658,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.pt_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5309,6 +5666,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 trade_log=False,
                 price_priority_list=[0]
         )
@@ -5316,7 +5674,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5334,7 +5693,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 0 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_pt_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5344,6 +5703,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=0,
                 stock_delivery_period=2,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 max_cash_usage=True,
                 price_priority_list=[0]
         )
@@ -5351,7 +5711,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_pt_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5361,7 +5722,7 @@ class TestLoop(unittest.TestCase):
             print(np.around(self.pt_res_sb20[i]))
             print()
         self.assertTrue(np.allclose(res, self.pt_res_sb20, atol=0.01))
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5371,13 +5732,15 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
+                pt_signal_timing='aggressive',
                 price_priority_list=[0]
         )
         res = process_loop_results(
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5386,7 +5749,7 @@ class TestLoop(unittest.TestCase):
         """ Test looping of PS Proportion Signal type of signals
 
         """
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5401,13 +5764,14 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.ps_res_bs00, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5422,7 +5786,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5438,7 +5803,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5456,7 +5821,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5468,7 +5834,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.ps_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5483,7 +5849,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5501,7 +5868,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5518,7 +5885,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5529,7 +5897,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.ps_res_sb20, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_ps_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5545,7 +5913,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_ps_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5554,7 +5923,7 @@ class TestLoop(unittest.TestCase):
         """ Test looping of VS Volume Signal type of signals
 
         """
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5569,13 +5938,14 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.vs_res_bs00, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5590,7 +5960,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5606,7 +5977,7 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5622,7 +5993,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5633,7 +6005,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.vs_res_bs21, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5648,7 +6020,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5666,7 +6039,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5684,7 +6057,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5695,7 +6069,7 @@ class TestLoop(unittest.TestCase):
             print()
         self.assertTrue(np.allclose(res, self.vs_res_sb20, atol=0.01))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_vs_batch,
                 trade_price_list=self.history_list,
                 cash_plan=self.cash,
@@ -5712,7 +6086,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_vs_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -5721,7 +6096,7 @@ class TestLoop(unittest.TestCase):
         """ Test looping of PS Proportion Signal type of signals
 
         """
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_multi_batch,
                 trade_price_list=self.multi_history_list,
                 cash_plan=self.cash,
@@ -5739,7 +6114,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_multi_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
@@ -5752,7 +6128,7 @@ class TestLoop(unittest.TestCase):
 
         self.assertTrue(np.allclose(res, self.multi_res, atol=0.1))
         print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
                 operator=self.op_multi_batch,
                 trade_price_list=self.multi_history_list,
                 cash_plan=self.cash,
@@ -5770,7 +6146,8 @@ class TestLoop(unittest.TestCase):
                 operator=self.op_multi_batch,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix
+                op_summary_matrix=op_summary_matrix,
+                op_list_bt_indices=op_list_bt_indices
         )
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
@@ -7523,12 +7900,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print('--Test two separate signal generation for different price types--')
         # 更多测试集合
 
-    def test_operator_generate_realtime(self):
+    def test_operator_generate_stepwise(self):
         """ 测试operator对象在实时模式下生成交易信号
 
         :return:
         """
-        pass
+        raise NotImplementedError
 
     def test_stg_parameter_setting(self):
         """ test setting parameters of strategies
@@ -7655,19 +8032,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(s0-s1)/s2 + s3")
         print(f'RPN of notation: "(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
+        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
         blender = blender_parser("-(s0-s1)/s2 + s3")
         print(f'RPN of notation: "-(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
         blender = blender_parser("~(0-1)/s2 + s3")
         print(f'RPN of notation: "~(s0-s1)/s2 + s3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
+        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
         blender = blender_parser("s0 + s1 / s2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, math.pi, 4], blender), 1.78539816)
+        self.assertAlmostEqual(signal_blend([1, math.pi, 4], blender), 1.78539816)
         blender = blender_parser("(s0 + s1) / s2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7675,7 +8052,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(s0 + s1 * s2) / s3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
+        self.assertAlmostEqual(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
         blender = blender_parser("s0 / s1 * s2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7683,11 +8060,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(s0 - s1 + s2) * s4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
+        self.assertAlmostEqual(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
         blender = blender_parser("s0 * s1")
         print(f'RPN of notation: "0 * 1" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEquals(signal_blend([math.pi, math.e], blender), 8.539734222673566)
+        self.assertAlmostEqual(signal_blend([math.pi, math.e], blender), 8.539734222673566)
 
         blender = blender_parser('abs(s3-sqrt(s2) /  cos(s1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
@@ -7919,6 +8296,20 @@ class TestOperatorAndStrategy(unittest.TestCase):
                            [1.00000000, 0.00000000, 0.00000000],
                            [0.00000000, 0.00000000, 0.00000000],
                            [0.00000000, 1.00000000, 0.00000000]])
+
+        hit = np.allclose(res, target)
+        self.assertTrue(hit)
+
+        print('\ntest signal combination function with pure numbers')
+        blender_exp = 'avgpos_3_0.5(s0, 1.5*s1, 2*s2, 0.5*s3, 2+s4)'
+        blender = blender_parser(blender_exp)
+        res = signal_blend(signals, blender)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        target = np.array([[0.000, 1.114, 0.881],
+                           [1.202, 0.000, 1.198],
+                           [1.057, 0.000, 0.000],
+                           [0.978, 0.955, 0.878],
+                           [1.049, 0.972, 0.741]])
 
         hit = np.allclose(res, target)
         self.assertTrue(hit)
@@ -9078,7 +9469,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      mode=1,
                      trade_log=True,
                      PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
+                     PT_sell_threshold=0.03,
                      backtest_price_adj='none')
         op = qt.Operator(strategies=['finance'], signal_type='PS')
         op.set_parameter(0,
@@ -9112,6 +9503,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      invest_end='20161023',
                      trade_batch_size=100,
                      sell_batch_size=100)
+
+    def test_long_short_position_limits(self):
+        """ 测试多头和空头仓位的最高仓位限制 """
+        raise NotImplementedError
 
 
 class TestLog(unittest.TestCase):
@@ -9680,10 +10075,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(AssertionError, temp_hp.re_label, htypes='wrong input!')
 
     def test_csv_to_hp(self):
-        pass
+        raise NotImplementedError
 
     def test_hdf_to_hp(self):
-        pass
+        raise NotImplementedError
 
     def test_hp_join(self):
         # TODO: 这里需要加强，需要用具体的例子确认hp_join的结果正确
@@ -9996,10 +10391,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_to_csv(self):
-        pass
+        raise NotImplementedError
 
     def test_to_hdf(self):
-        pass
+        raise NotImplementedError
 
     def test_fill_na(self):
         """测试填充无效值"""
@@ -12339,7 +12734,7 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
-        op = qt.Operator(strategies=['stema'], op_type='realtime')
+        op = qt.Operator(strategies=['stema'], op_type='stepwise')
         op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
         qt.run(op)
@@ -12827,12 +13222,12 @@ class TestQT(unittest.TestCase):
         op.set_blender('avg(s0, s1, s2)', 'ls')
         qt.run(op, visual=False, trade_log=True)
 
-    def test_op_realtime(self):
-        """测试realtime模式下的operator的表，使用两个测试专用交易策略"""
-        # confirm that operator running results are same in realtime and batch type
+    def test_op_stepwise(self):
+        """测试stepwise模式下的operator的表，使用两个测试专用交易策略"""
+        # confirm that operator running results are same in stepwise and batch type
         op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
-        op_realtime = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='realtime')
-        for op in [op_batch, op_realtime]:
+        op_stepwise = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='step')
+        for op in [op_batch, op_stepwise]:
             op.set_parameter(0, window_length=100, pars=(12, 26, 9))
             op.set_parameter(1, window_length=100, pars=(12, 26, 9))
 
@@ -12846,22 +13241,25 @@ class TestQT(unittest.TestCase):
                 invest_end='20190331',
                 trade_batch_size=1.,
                 sell_batch_size=1.,
-                parallel=True
+                parallel=True,
+                trade_log=False
         )
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
-        print('backtest in realtime mode:')
-        res_realtime = op_realtime.run(mode=1)
+        print('backtest in stepwise mode:')
+        res_stepwise = op_stepwise.run(mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
-        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
+              f'shape: {val_batch.shape}\n'
               f'{val_batch}\n'
-              f'and the result of realtime operation is\n'
-              f'{val_realtime}')
+              f'and the result of stepwise operation is\n'
+              f'shape: {val_stepwise.shape}\n'
+              f'{val_stepwise}')
 
-        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertTrue(np.allclose(val_batch, val_stepwise))
         self.assertEqual(res_batch['final_value'],
-                         res_realtime['final_value'])
+                         res_stepwise['final_value'])
 
         print('backtest in batch mode:')
         res_batch = op_batch.run(
@@ -12869,18 +13267,18 @@ class TestQT(unittest.TestCase):
                 invest_start='20180101',
                 invest_end='20191231'
         )
-        print('backtest in realtime mode:')
-        res_realtime = op_realtime.run(
+        print('backtest in stepwise mode:')
+        res_stepwise = op_stepwise.run(
                 mode=1,
                 invest_start='20180101',
                 invest_end='20191231'
         )
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
-        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
 
-        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertTrue(np.allclose(val_batch, val_stepwise))
         self.assertEqual(res_batch['final_value'],
-                         res_realtime['final_value'])
+                         res_stepwise['final_value'])
 
         # test operator that utilizes trade data
         stg1 = TestLSStrategy()
@@ -12889,12 +13287,12 @@ class TestQT(unittest.TestCase):
         stg2.window_length = 100
         stg2.sample_freq = '2w'
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
-        op_realtime = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='realtime')
+        op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
                     '000300': (20, 6)}
         par_stg2 = ()
-        for op in [op_batch, op_realtime]:
+        for op in [op_batch, op_stepwise]:
             op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([1, 20], [2, 100]))
             op.set_parameter(1, pars=par_stg2, opt_tag=1)
 
@@ -12913,25 +13311,27 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=100.,
                 sell_batch_size=100.,
                 parallel=True,
-                trade_log=True
+                trade_log=False
         )
         print('output result back testing with test data')
 
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
-        print('backtest in realtime mode:')
-        res_realtime = op_realtime.run(mode=1)
+        print('backtest in stepwise mode:')
+        res_stepwise = op_stepwise.run(mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
-        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
               f'{val_batch}\n'
-              f'and the result of realtime operation is\n'
-              f'{val_realtime}')
+              f'and the result of stepwise operation is\n'
+              f'{val_stepwise}')
 
         print('backtest in batch mode in optimization mode:')
         op_batch.run(mode=2)
-        print('backtest in realtime mode in optimization mode')
-        op_realtime.run(mode=2)
+        print('backtest in stepwise mode in optimization mode')
+        op_stepwise.run(mode=2)
+
+        print('test stepwise mode with different sample freq')
 
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
@@ -12972,7 +13372,7 @@ class TestQT(unittest.TestCase):
 
 
 class TestVisual(unittest.TestCase):
-    """ Test the visual effects and charts
+    """ 测试图表视觉效果
 
     """
 
@@ -13486,7 +13886,7 @@ class TestBuiltInsMultiple(unittest.TestCase):
                      mode=1,
                      trade_log=True,
                      PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
+                     PT_sell_threshold=0.03,
                      backtest_price_adj='none')
 
     def test_select_all(self):
@@ -13608,15 +14008,15 @@ class Cross_SMA_PS(qt.RuleIterator):
 
         # 根据观望模式在不同的点位产生交易信号
         if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
-            return 1
+            return 1.
         elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
-            return -1
+            return -1.
         elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
-            return -1
+            return -1.
         elif (f_last < s_ma_l) and (f_today > s_ma_l):  # 当快均线自下而上穿过下边界，平空仓
-            return 1
+            return 1.
         else:  # 其余情况不产生任何信号
-            return 0
+            return 0.
 
 
 class Cross_SMA_PT(qt.RuleIterator):
@@ -13670,6 +14070,86 @@ class Cross_SMA_PT(qt.RuleIterator):
             return 0
 
 
+class AlphaFac(qt.FactorSorter):
+
+    def realize(self, h, r=None, t=None, pars=None):
+        # 在这里编写信号生成逻辑
+        total_mv = h[:, -1, 0]
+        total_liab = h[:, -1, 1]
+        cash_equ = h[:, -1, 2]
+        ebitda = h[:, -1, 3]
+
+        factor = (total_mv + total_liab - cash_equ) / ebitda
+
+        # 以下是PT信号类型时的输出，会存在每日调整的问题
+        return factor
+
+
+class AlphaPS(qt.GeneralStg):
+
+    def realize(self, h, r=None, t=None, pars=None):
+        # 从历史数据编码中读取四种历史数据的最新数值
+        total_mv = h[:, -1, 0]  # 总市值
+        total_liab = h[:, -1, 1]  # 总负债
+        cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
+        ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
+
+        # 从持仓数据中读取当前的持仓数量，并找到持仓股序号
+        own_amounts = t[:, 0]
+        owned = np.where(own_amounts > 0)[0]  # 所有持仓股的序号
+        not_owned = np.where(own_amounts == 0)[0]  # 所有未持仓的股票序号
+
+        # 选股因子为EV/EBIDTA，使用下面公式计算
+        factors = (total_mv + total_liab - cash_equ) / ebitda
+        # 处理交易信号，将所有小于0的因子变为NaN
+        factors = np.where(factors < 0, np.nan, factors)
+        # 选出数值最小的30个股票的序号
+        arg_partitioned = factors.argpartition(30)
+        selected = arg_partitioned[:30]  # 被选中的30个股票的序号
+        not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+
+        # 开始生成交易信号
+        signal = np.zeros_like(factors)
+        # 如果持仓为正，且未被选中，生成全仓卖出交易信号
+        own_but_not_selected = np.intersect1d(owned, not_selected)
+        signal[own_but_not_selected] = -1  # 在PS信号模式下 -1 代表全仓卖出
+
+        # 如果持仓为零，且被选中，生成全仓买入交易信号
+        selected_but_not_own = np.intersect1d(not_owned, selected)
+        signal[selected_but_not_own] = 1  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
+
+        return signal
+
+
+class AlphaPT(qt.GeneralStg):
+
+    def realize(self, h, r=None, t=None, pars=None):
+
+        # 从历史数据编码中读取四种历史数据的最新数值
+        total_mv = h[:, -1, 0]  # 总市值
+        total_liab = h[:, -1, 1]  # 总负债
+        cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
+        ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
+
+        # 选股因子为EV/EBIDTA，使用下面公式计算
+        factors = (total_mv + total_liab - cash_equ) / ebitda
+        # 处理交易信号，将所有小于0的因子变为NaN
+        factors = np.where(factors < 0, np.nan, factors)
+        # 选出数值最小的30个股票的序号
+        arg_partitioned = factors.argpartition(30)
+        selected = arg_partitioned[:30]  # 被选中的30个股票的序号
+        not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+
+        # 开始生成PT交易信号
+        signal = np.zeros_like(factors)
+        # 所有被选中的股票的持仓目标被设置为0.03，表示持有3.3%
+        signal[selected] = 0.0333
+        # 其余未选中的所有股票持仓目标在PT信号模式下被设置为0，代表目标仓位为0
+        signal[not_selected] = 0
+
+        return signal
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -13678,11 +14158,71 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        qteasy.configuration(config_key='local_data_source, local_data_file_type, local_data_file_path,'
-                                    'local_db_host, local_db_user',
-                             default=True,
-                             verbose=True)
-        pass
+        shares = qt.filter_stock_codes(index='000300.SH', date='20220131')
+        print(f'total {len(shares)} shares selected!')
+        alpha = AlphaPS(pars=(),
+                        par_count=0,
+                        par_types=[],
+                        par_range=[],
+                        name='AlphaPS',
+                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                        data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                        sample_freq='m',
+                        data_freq='d',
+                        window_length=100)
+        op = qt.Operator(alpha, signal_type='PS')
+        op.op_type = 'stepwise'
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=False)
+
+        alpha = AlphaPT(pars=(),
+                        par_count=0,
+                        par_types=[],
+                        par_range=[],
+                        name='AlphaSel',
+                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                        data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                        sample_freq='m',
+                        data_freq='d',
+                        window_length=100)
+        op = qt.Operator(alpha, signal_type='PT')
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               PT_buy_threshold=0.03,
+               PT_sell_threshold=0.03,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=False)
+
+        alpha = AlphaFac(pars=(),
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='AlphaSel',
+                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
+                         sample_freq='m',
+                         data_freq='d',
+                         window_length=100,
+                         max_sel_count=30,  # 设置选股数量，最多选出30个股票
+                         condition='greater',  # 设置筛选条件，仅筛选因子大于ubound的股票
+                         ubound=0.0,  # 设置筛选条件，仅筛选因子大于0的股票
+                         weighting='even',  # 设置股票权重，所有选中的股票平均分配权重
+                         sort_ascending=True)  # 设置排序方式，因子从小到大排序选择头30名
+        op = qt.Operator(alpha, signal_type='PT')
+        op.run(mode=1,
+               asset_type='E',
+               asset_pool=shares,
+               PT_buy_threshold=0.03,
+               PT_sell_threshold=0.03,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=False)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

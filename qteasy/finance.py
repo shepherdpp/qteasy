@@ -11,24 +11,14 @@
 
 import numpy as np
 import pandas as pd
-from numba import jit, njit, int64, float64
-from numba import jitclass, types, typed
+from numba import njit
 from collections import Iterable
 
-cost_numba_spec = [
-    ('buy_fix', float64),
-    ('sell_fix', float64),
-    ('buy_rate', float64),
-    ('sell_rate', float64),
-    ('buy_min', float64),
-    ('sell_min', float64),
-    ('slipage', float64)
-]
+from .utilfuncs import ALL_COST_PARAMETERS
 
 
-# @jitclass(cost_numba_spec)
-class Cost:
-    """ 交易成本类，用于在回测过程中估算交易成本
+def set_cost(**kwargs):
+    """ 新建一个cost字典
 
     交易成本的估算依赖四种类型的成本：
     1,  fixed_fee：固定费用，在交易过程中产生的固定现金费用，与交易金额和交易量无关，买入与卖出固定费用可以不同
@@ -43,185 +33,228 @@ class Cost:
     4,  slipage：type：float，交易滑点，或者叫二阶费率。
         用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
+
+    :param kwargs:
+    :return:
     """
+    cost = dict(buy_fix=0.0,
+                sell_fix=0.0,
+                buy_rate=0.003,
+                sell_rate=0.001,
+                buy_min=5.0,
+                sell_min=0.0,
+                slipage=0.0)
 
-    def __init__(self,
-                 buy_fix=0.0,
-                 sell_fix=0.0,
-                 buy_rate=0.003,
-                 sell_rate=0.001,
-                 buy_min=5.0,
-                 sell_min=0.0,
-                 slipage=0.0):
-        self.buy_fix = buy_fix
-        self.sell_fix = sell_fix
-        self.buy_rate = buy_rate
-        self.sell_rate = sell_rate
-        self.buy_min = buy_min
-        self.sell_min = sell_min
-        self.slipage = slipage
+    update_cost(cost, **kwargs)
+    return cost
 
-    def __str__(self):
-        """设置Rate对象的打印形式"""
-        return f'<Buying: {self.buy_fix}, rate:{self.buy_rate}, slipage:{self.slipage}\n' \
-               f'Selling: {self.sell_fix}, rate:{self.sell_rate}>'
 
-    def __repr__(self):
-        """设置Rate对象"""
-        return f'Rate({self.buy_fix}/{self.sell_fix}, {self.buy_rate}/{self.sell_rate}, ' \
-               f'{self.buy_min}/{self.sell_min}, {self.slipage})'
+def update_cost(c, **kwargs):
+    """ 更新cost字典中各个值
 
-    def calculate(self,
-                  trade_values: np.ndarray,
-                  is_buying: bool = True,
-                  fixed_fees: bool = False) -> float:
-        """直接调用对象，计算交易费率或交易费用
+    :param c:
+    :param kwargs:
+    :return:
+    """
+    if not isinstance(c, dict):
+        raise TypeError(f'cost should be a dict, got {type(c)} instead')
+    if any(k not in ALL_COST_PARAMETERS for k in c.keys()):
+        invalid_keys = [k for k in c.keys() if k not in ALL_COST_PARAMETERS]
+        raise KeyError(f'invalid keys ({invalid_keys}) found in cost dict!')
+    for k, v in kwargs.items():
+        if k not in ALL_COST_PARAMETERS:
+            continue
+        # TODO: 此处应该validate输入值
+        c[k] = v
 
-        采用两种模式计算：
-            当fixed_fees为True时，采用固定费用模式计算，返回值为包含滑点的交易成本列表，
-            当fixed_fees为False时，采用固定费率模式计算，返回值为包含滑点的交易成本率列表
+    return c
 
-        :param trade_values: ndarray: 总交易金额清单
-        :param is_buying: bool: 当前是否计算买入费用或费率
-        :param fixed_fees: bool: 当前是否采用固定费用模式计算
-        :return:
-        np.ndarray,
-        """
-        bf = self.buy_fix
-        sf = self.sell_fix
-        br = self.buy_rate
-        sr = self.sell_rate
-        bm = self.buy_min
-        sm = self.sell_min
-        slp = self.slipage
 
-        if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
-            if is_buying:
-                return bf + slp * trade_values ** 2
-            else:
-                return sf + slp * trade_values ** 2
-        else:  # 采用固定费率模式计算
-            if is_buying:
-                if bm == 0.:
-                    return br + slp * trade_values
-                else:
-                    min_rate = bm / (trade_values - bm)
-                    return np.fmax(br, min_rate) + slp * trade_values
-            else:
-                if sm == 0.:
-                    return sr - slp * trade_values
-                else:
-                    min_rate = -sm / trade_values
-                    min_rate[np.isinf(min_rate)] = 0  # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
-                    return np.fmax(sr, min_rate) + slp * trade_values
+@njit
+def calculate(trade_values: np.ndarray,
+              is_buying,
+              fixed_fees,
+              buy_fix,
+              sell_fix,
+              buy_rate,
+              sell_rate,
+              buy_min,
+              sell_min,
+              slipage) -> float:
+    """直接调用对象，计算交易费率或交易费用
 
-    def __getitem__(self, item: str) -> float:
-        """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
-        # assert isinstance(item, str), 'TypeError, item should be a string in ' \
-        #                               '[\'buy_fix\', \'sell_fix\', \'buy_rate\', \'sell_rate\',' \
-        #                               ' \'buy_min\', \'sell_min\',\'slipage\']'
-        if item == 'buy_fix':
-            return self.buy_fix
-        elif item == 'sell_fix':
-            return self.sell_fix
-        elif item == 'buy_rate':
-            return self.buy_rate
-        elif item == 'sell_rate':
-            return self.sell_rate
-        elif item == 'buy_min':
-            return self.buy_min
-        elif item == 'sell_min':
-            return self.sell_min
-        elif item == 'slipage':
-            return self.slipage
+    采用两种模式计算：
+        当fixed_fees为True时，采用固定费用模式计算，返回值为包含滑点的交易成本列表，
+        当fixed_fees为False时，采用固定费率模式计算，返回值为包含滑点的交易成本率列表
+
+    :param trade_values: ndarray: 总交易金额清单
+    :param is_buying: bool: 当前是否计算买入费用或费率, 默认True
+    :param fixed_fees: bool: 当前是否采用固定费用模式计算, 默认False
+    :param buy_fix
+    :return:
+    np.ndarray,
+    """
+    if is_buying is None:
+        is_buying = True
+    if fixed_fees is None:
+        fixed_fees = False
+
+    if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
+        if is_buying:
+            return buy_fix + slipage * trade_values ** 2
         else:
-            raise TypeError
-
-    # @njit
-    def get_selling_result(self,
-                           prices: np.ndarray,
-                           a_to_sell: np.ndarray,
-                           moq=0.):
-        """计算出售投资产品的要素
-
-        :param prices: 投资产品的价格
-        :param a_to_sell: 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
-        :param moq: 卖出股票的最小交易单位
-
-        :return: tuple
-         - a_sold: ndarray          实际出售的资产份额
-         - cash_gained: ndarray     扣除手续费后获得的现金
-         - fee: ndarray             扣除的手续费
-        """
-        if moq == 0:
-            a_sold = a_to_sell
-        else:
-            a_sold = np.trunc(a_to_sell / moq) * moq
-        sold_values = a_sold * prices
-        if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
-            rates = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=False)
-            cash_gained = (-1 * sold_values * (1 - rates))
-            fees = -(sold_values * rates)
-        else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
-            fixed_fees = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=True)
-            fees = np.where(a_sold, fixed_fees, 0)
-            cash_gained = - sold_values - fees
-        return a_sold, cash_gained, fees
-
-    # @njit
-    def get_purchase_result(self,
-                            prices: np.ndarray,
-                            cash_to_spend: [np.ndarray, float],
-                            moq: float):
-        """获得购买资产时的要素
-
-        :param prices: ndarray, 投资组合中每只股票的当前单价
-        :param cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
-        :param moq: float, 最小交易单位
-        :return:
-         - a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
-         - cash_spent: ndarray,     花费的总金额，包括手续费在内
-         - fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
-        """
-        # 给三个函数返回值预先赋值
-        a_purchased = np.zeros_like(prices)
-        cash_spent = np.zeros_like(prices)
-        fees = np.zeros_like(prices)
-        if self.buy_fix == 0.:
-            # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
-            # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
-            cash_to_spend = np.where(abs(cash_to_spend) < self.buy_min, 0, cash_to_spend)
-            rates = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
-            # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
-            if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
-                a_purchased = np.where(prices,
-                                       cash_to_spend / (prices * (1 + rates)),
-                                       0.)
-            else:  # moq不为零，实际买入份额必须是moq的倍数，因此实际买入份额通常小于期望买入份额
-                a_purchased = np.where(prices,
-                                       np.trunc(cash_to_spend / (prices * moq * (1 + rates))) * moq,
-                                       0.)
-            # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
-            fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0.)
-            purchased_values = a_purchased * prices + fees
-            cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
-        else:  # self.buy_fix
-            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将小于buy_fix的金额置0
-            cash_to_spend = np.where(cash_to_spend < self.buy_fix, 0, cash_to_spend)
-            fixed_fees = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
-            if moq == 0.:
-                a_purchased = np.fmax(np.where(prices,
-                                               (cash_to_spend - fixed_fees) / prices,
-                                               0.),
-                                      0.)
+            return sell_fix + slipage * trade_values ** 2
+    else:  # 采用固定费率模式计算
+        if is_buying:
+            if buy_min == 0.:
+                return buy_rate + slipage * trade_values
             else:
-                a_purchased = np.fmax(np.where(prices,
-                                               np.trunc((cash_to_spend - fixed_fees) / (prices * moq)) * moq,
-                                               0.),
-                                      0.)
-            cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0.)
-            fees = np.where(a_purchased, fixed_fees, 0.)
-        return a_purchased, cash_spent, fees
+                min_rate = buy_min / (trade_values - buy_min)
+                return np.fmax(buy_rate, min_rate) + slipage * trade_values
+        else:
+            if sell_min == 0.:
+                return sell_rate - slipage * trade_values
+            else:
+                min_rate = -sell_min / trade_values
+                # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
+                min_rate[np.isinf(min_rate)] = 0
+                return np.fmax(sell_rate, min_rate) + slipage * trade_values
+
+
+@njit
+def get_selling_result(prices: np.ndarray,
+                       a_to_sell: np.ndarray,
+                       moq,
+                       buy_fix,
+                       sell_fix,
+                       buy_rate,
+                       sell_rate,
+                       buy_min,
+                       sell_min,
+                       slipage):
+    """计算出售投资产品的要素
+
+    :param prices: 投资产品的价格
+    :param a_to_sell: 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
+    :param moq: 卖出股票的最小交易单位
+    :param cost: 交易成本
+
+    :return: tuple
+     - a_sold: ndarray          实际出售的资产份额
+     - cash_gained: ndarray     扣除手续费后获得的现金
+     - fee: ndarray             扣除的手续费
+    """
+    if moq == 0:
+        a_sold = a_to_sell
+    else:
+        a_sold = np.trunc(a_to_sell / moq) * moq
+    sold_values = a_sold * prices
+    if sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
+        rates = calculate(trade_values=sold_values,
+                          is_buying=False,
+                          fixed_fees=False,
+                          buy_fix=buy_fix,
+                          sell_fix=sell_fix,
+                          buy_rate=buy_rate,
+                          sell_rate=sell_rate,
+                          buy_min=buy_min,
+                          sell_min=sell_min,
+                          slipage=slipage)
+        cash_gained = (-1 * sold_values * (1 - rates))
+        fees = -(sold_values * rates)
+    else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
+        fixed_fees = calculate(trade_values=sold_values,
+                               is_buying=False,
+                               fixed_fees=True,
+                               buy_fix=buy_fix,
+                               sell_fix=sell_fix,
+                               buy_rate=buy_rate,
+                               sell_rate=sell_rate,
+                               buy_min=buy_min,
+                               sell_min=sell_min,
+                               slipage=slipage)
+        fees = np.where(a_sold, fixed_fees, 0)
+        cash_gained = - sold_values - fees
+    return a_sold, cash_gained, fees
+
+
+@njit
+def get_purchase_result(prices: np.ndarray,
+                        cash_to_spend: np.ndarray,
+                        moq,
+                        buy_fix,
+                        sell_fix,
+                        buy_rate,
+                        sell_rate,
+                        buy_min,
+                        sell_min,
+                        slipage):
+    """获得购买资产时的要素
+
+    :param prices: ndarray, 投资组合中每只股票的当前单价
+    :param cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
+    :param moq: float, 最小交易单位
+    :return:
+     - a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
+     - cash_spent: ndarray,     花费的总金额，包括购买成本在内
+     - fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
+    """
+    # buy_min = buy_min
+    # buy_fix = buy_fix
+    if buy_fix == 0.:
+        # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
+        # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
+        cash_to_spend = np.where(np.abs(cash_to_spend) < buy_min, 0, cash_to_spend)
+        rates = calculate(trade_values=cash_to_spend,
+                          is_buying=True,
+                          fixed_fees=False,
+                          buy_fix=buy_fix,
+                          sell_fix=sell_fix,
+                          buy_rate=buy_rate,
+                          sell_rate=sell_rate,
+                          buy_min=buy_min,
+                          sell_min=sell_min,
+                          slipage=slipage)
+        # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
+        if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
+            a_purchased = np.where(prices,
+                                   cash_to_spend / (prices * (1 + rates)),
+                                   0.)
+        else:  # moq不为零，实际买入份额必须是moq的倍数，因此实际买入份额通常小于期望买入份额
+            a_purchased = np.where(prices,
+                                   np.trunc(cash_to_spend / (prices * moq * (1 + rates))) * moq,
+                                   0.)
+        # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
+        fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, buy_min), 0.)
+        purchased_values = a_purchased * prices + fees
+        cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
+    else:  # self.buy_fix
+        # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将绝对值小于buy_fix的金额置0
+        # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
+        cash_to_spend = np.where(np.abs(cash_to_spend) < buy_fix, 0, cash_to_spend)
+        fixed_fees = calculate(trade_values=cash_to_spend,
+                               is_buying=True,
+                               fixed_fees=True,
+                               buy_fix=buy_fix,
+                               sell_fix=sell_fix,
+                               buy_rate=buy_rate,
+                               sell_rate=sell_rate,
+                               buy_min=buy_min,
+                               sell_min=sell_min,
+                               slipage=slipage)
+        if moq == 0.:
+            a_purchased = np.fmax(np.where(prices,
+                                           (cash_to_spend - fixed_fees) / prices,
+                                           0.),
+                                  0.)
+        else:
+            a_purchased = np.fmax(np.where(prices,
+                                           np.trunc((cash_to_spend - fixed_fees) / (prices * moq)) * moq,
+                                           0.),
+                                  0.)
+        cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0.)
+        fees = np.where(a_purchased, fixed_fees, 0.)
+    return a_purchased, cash_spent, fees
 
 
 class CashPlan:

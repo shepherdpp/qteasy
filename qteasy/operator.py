@@ -46,9 +46,9 @@ class Operator:
                                 在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文
 
             :param op_type:     交易模式，Operator对象有两种不同的交易模式：
-                                 - batch / b:       批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
+                                 - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
                                                     不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
-                                 - realtime / rt:   实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
+                                 - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
                                                     交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
                                                     特殊交易策略，也可以用于实时交易
 
@@ -56,7 +56,7 @@ class Operator:
             assign_hist_data():     准备交易数据，为所有的交易策略分配交易数据，生成数据滑窗，以便生成交易信号
             create_signal():    生成交易信号，在batch模式下，使用所有的数据生成完整交易信号清单，用于交易信号的模拟
                                 回测交易
-                                在realtime模式下，利用数据滑窗和交易相关数据，生成一组交易信号
+                                在stepwise模式下，利用数据滑窗和交易相关数据，生成一组交易信号
 
         ==策略的三种信号类型==
 
@@ -160,50 +160,19 @@ class Operator:
             交易信号的混合基于一系列事先定义的运算和函数，这些函数或运算都被称为"原子函数"或"算子"，用户利用这些"算子"来操作
             Operator对象生成的交易信号，并将多个交易信号组变换成一个唯一的交易信号组，同时保持其形状不变，数字有意义。
 
-            交易信号的混合是由一个混合表达式来确定的，例如'0 and (1 + 2) * avg(3, 4)'
+            交易信号的混合是由一个混合表达式来确定的，例如's0 and (s1 + s2) * avg(s3, s4)'
 
-            上面的表达式表示了如何将五组交易信号变换为一组信号。表达式可以是任意合法的通用四则运算表达式，表达式中可以包含任意内建
-            的信号算子或函数，用户可以相当自由地组合自己的混合表达式。表达式中的数字0～4代表Operator所生成的交易信号，这些数字也
-            不必唯一，可以重复，也可以遗漏，如写成"1+1+1*2+max(1, 4)"是完全合法的，只是第二组信号会被重复使用四次，而第一组(0)和第
-            四组(3)数据不会被用到而已。如果数字超过了信号的个数，则会使用最后一组信号，如"999+999"表达式被用于只有两组信号的Operator
-            对象时，系统会把第二组信号相加返回。
-
-            交易信号的算子包括以下这些：
-
-            and: 0.5 and 0.5 = 0.5 * 0.5 = 0.25,
-            or:  0.5 or 0.5 = 0.5 + 0.5 = 1
-            orr: 0.5 orr 0.5 = 1 - (1 - 0.5) * (1 - 0.5) = 0.75
-            not: not(1) = 1 - 1 = 0; not(0.3) = 1 - 0.3 = 0.7
-            + :  0.5 + 0.5 = 1
-            - :  1.0 - 0.5 = 0.5
-            * :  0.5 * 0.5 = 0.25
-            / :  0.25 / 0.5 = 0.5
-
-            算子还包括以下函数：
-
-            'chg-N()': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
-            'pos-N()': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-            'cumulative()': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
-            所有类型的交易信号都一样，只要交易价格是同一类型的时候，都应该混合为一组信号进入回测程序进行回测，混合的方式由混合
-            字符串确定，字符串的格式为"[chg|pos]-0/9|cumulative"(此处应该使用正则表达式)
-
-            'str-T()': T为浮点数，当多个策略多空蒙板的总体信号强度达到阈值T时，总体输出为1(或者-1)，否则为0
-            'pos-N()': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-                这种类型有一个变体：
-                'pos-N-T': T为信号强度阈值，忽略信号强度达不到该阈值的多空蒙板信号，将剩余的多空蒙板进行计数，信号数量达到或
-                超过N时，输出为1（或者-1），否则为0
-            'avg()': 平均信号强度，所有多空蒙板的信号强度的平均值
-            'combo()': 在每个策略发生反转时都会产生交易信号，信号的强度不经过衰减，但是通常第一个信号产生后，后续信号就再无意义
+            上面的表达式表示了如何将五组交易信号变换为一组信号。表达式可以是任意合法的通用四则运算表达式。关于混合表达式的更多介绍，
+            请参见qteasy的tutorial
 
     """
 
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
 
-    AVAILABLE_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
     AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                               'proportion signal': 'ps',
                               'volume signal':     'vs'}
-    AVAILABLE_OP_TYPES = ['batch', 'realtime', 'rt', 'r', 'b']
+    AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
 
     def __init__(self, strategies=None, signal_type=None, op_type=None):
         """ 生成具体的Operator对象
@@ -220,13 +189,13 @@ class Operator:
                                 默认交易信号类型为'pt'
 
             :param op_type:     str, Operator对象的的运行模式，包含以下两种：
-                                        'batch', 'realtime'
+                                        'batch', 'stepwise'
                                 默认运行模式为'batch'
         """
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
             stg = str_to_list(strategies)
-        elif isinstance(strategies, (BaseStrategy, RuleIterator, GeneralStg, FactorSorter)):
+        elif isinstance(strategies, BaseStrategy):
             stg = [strategies]
         elif isinstance(strategies, list):
             stg = strategies
@@ -237,7 +206,7 @@ class Operator:
         if op_type is None:
             op_type = 'batch'
 
-        # 初始化Operator对象的"工作数据"或"运行数据"：
+        # 初始化Operator对象的"工作数据"或"运行数据"，以下属性由Operator自动设置，不允许用户手动设置：
         '''
         Operator对象的工作数据包含多个字典Dict或其他类型数据，分别存储用于交易信号生成的历史数据
         参考数据、混合方式、以及交易信号的最终结果，这些数据包括三部分：
@@ -304,6 +273,7 @@ class Operator:
                                 交易清单对应的价格类型
 
         '''
+        # Operator对象的工作变量
         self._signal_type = ''
         self._op_type = ''
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
@@ -317,16 +287,24 @@ class Operator:
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
-        # 以下属性由Operator自动设置，不允许用户手动设置
-        self._op_list = None  # Operator生成的交易信号清单
+        # batch模式下生成的交易清单以及交易清单的相关信息
+        self._op_list = None  # 在batch模式下，Operator生成的交易信号清单
         self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
-        self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {date: idx}
-        self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {htype: idx}
+        self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
+        self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {p_type: idx}
+        self._op_list_bt_indices = None  # 在batch模式下生成交易信号清单后，需要回测交易的信号行序号，只有序号中的信号行会被回测
 
-        self._op_signal = None  # 在realtime模式下，Operator生成的交易信号
-        self._op_signal_hdate_idx = None  # 在realtime模式下，Operator交易信号的日期序号
-        self._op_signal_price_type_idx = None  # 在realtime模式下，Operator交易信号的价格类型序号
+        # stepwise模式下生成的单次交易信号以及相关信息
+        self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
+        self._op_signal = None  # 在stepwise模式下，Operator生成的交易信号（已经混合好的交易信号）
+        self._op_signals_by_price_type_idx = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
+        # 在stepwise模式下，各个strategy的信号分别存储为以下格式
+        # {'open':  [[1,1,1], [1,0,0], [1,1,1]],
+        #  'close': [[0,0,0], [1,1,1]]}
+        self._op_signal_indices_by_price_type_idx = {}  # 在stepwise模式下，每个strategy最近交易信号的日期序号
+        self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
 
+        # 设置operator的主要关键属性
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
         self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
@@ -412,8 +390,8 @@ class Operator:
         op_type = op_type.lower()
         if op_type not in self.AVAILABLE_OP_TYPES:
             raise KeyError(f'Invalid op_type ({op_type})')
-        if op_type in ['r', 'rt', 'realtime']:
-            op_type = 'realtime'
+        if op_type in ['s', 'st', 'step', 'stepwise']:
+            op_type = 'stepwise'
         else:
             op_type = 'batch'
         self._op_type = op_type
@@ -605,7 +583,7 @@ class Operator:
 
     @property
     def op_signal(self):
-        """ realtime模式下单次生成的交易信号
+        """ stepwise模式下单次生成的交易信号
 
         :return:
         """
@@ -613,25 +591,25 @@ class Operator:
 
     @property
     def op_signal_hdate_idx(self):
-        """ realtime模式下，单次生成的交易信号对应的日期序号
+        """ stepwise模式下，单次生成的交易信号对应的日期序号
 
         :return:
         """
-        return self._op_signal_hdate_idx
+        return self._op_signal_index
 
     @property
     def op_signal_hdate(self):
-        """ realtime模式下，单次生成的交易信号对应的日期
+        """ stepwise模式下，单次生成的交易信号对应的日期
         根据op_signal_hdate_idx查找
 
         :return:
         """
-        idx = self._op_signal_hdate_idx
+        idx = self._op_signal_index
         return self.op_list_hdates[idx]
 
     @property
     def op_signal_price_type_idx(self):
-        """ realtime模式下，单次生成的交易信号对应的价格类型
+        """ stepwise模式下，单次生成的交易信号对应的价格类型
 
         :return:
         """
@@ -639,7 +617,7 @@ class Operator:
 
     @property
     def op_signal_price_type(self):
-        """ realtime模式下，单次生成的交易信号对应的价格类型
+        """ stepwise模式下，单次生成的交易信号对应的价格类型
         等同于op_signal_price_type_idx
 
         :return:
@@ -876,6 +854,18 @@ class Operator:
         else:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
+
+    def get_combined_sample_indices(self):
+        """ 返回Operator对象所有交易信号采样点序列的并集
+
+        :return:
+        """
+        combined_indices = []
+        all_sample_indices = self.get_op_sample_indices_by_price_type()
+        for item in all_sample_indices:
+            combined_indices = np.union1d(combined_indices, item)
+        import pdb; pdb.set_trace()
+        return combined_indices
 
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
@@ -1139,11 +1129,15 @@ class Operator:
         return self._stg_blender[price_type]
 
     def view_blender(self, price_type=None):
-        """返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串
+        """ TODO: 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
+             版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
 
         :param price_type: str 一个可用的price_type
 
         """
+        # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
+        #  例如： blender string: 's0 + s1 + s2'
+        #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
         if price_type is None:
             return self._stg_blender_strings
         if price_type not in self.bt_price_types:
@@ -1438,13 +1432,12 @@ class Operator:
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式，在未设置混合器时，混合器是一个空dict
         if self.strategy_blenders == {}:
-            logger_core.warning(f'User-defined Signal blenders do not exist, default ones will be created!',
-                                UserWarning)
+            logger_core.info(f'User-defined Signal blenders do not exist, default ones will be created!')
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
             for price_type in self.bt_price_types:
                 stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
-                strategy_indices = ('s'+idx for idx in map(str, range(stg_count_for_price_type)))
+                strategy_indices = ('s' + idx for idx in map(str, range(stg_count_for_price_type)))
                 self.set_blender(price_type=price_type,
                                  blender='+'.join(strategy_indices))
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
@@ -1516,12 +1509,35 @@ class Operator:
         # TODO: 检查生成的数据滑窗是否有问题，如果有问题则提出改进建议，
         #  例如：检查是否有部分滑窗存在全NaN数据？
 
+        # 为stepwise运行模式准备相关数据结构，包括每个策略的历史交易信号dict和历史日期序号dict，这部分数据是
+        # 按price_type_idx组合的，而不是price_type。这里只创建数据结构，暂时不初始化数值
+        self._op_signals_by_price_type_idx = {
+            price_type_idx: [] for
+            price_type_idx in
+            range(self.bt_price_type_count)
+        }
+        self._op_signal_indices_by_price_type_idx = {
+            price_type_idx: [] for
+            price_type_idx in
+            range(self.bt_price_type_count)
+        }
+
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
         self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
         self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
-                                                                                range(len(self.bt_price_types)))}
+                                                                                range(self.bt_price_type_count))}
+
+        # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
+        for price_type_idx in range(self.bt_price_type_count):
+            # 按照price_type_idx逐个生成数据并填充
+            # TODO: 在realtime模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
+            price_type = self.bt_price_types[price_type_idx]
+            stg_count = self.get_strategy_count_by_price_type(price_type)
+            self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
+            self._op_signal_indices_by_price_type_idx[price_type_idx] = [0] * stg_count
+
         return
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
@@ -1531,11 +1547,11 @@ class Operator:
             如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
             如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
 
-            用于生成交易信号的历史数据存储在operator对象的下面三个属性中，在生成交易信号时直接调用。
+            用于生成交易信号的历史数据存储在operator对象的几个属性中，在生成交易信号时直接调用。
 
             根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
 
-            - 如果sample_idx为一个int或np.int时，进入single模式，生成单组信号
+            - 如果sample_idx为一个int或np.int时，进入stepwise模式，生成单组信号（单个价格类型上单一时间点混合信号）
                 从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组用于特定
                 回测price_type价格类型的交易信号
                 例如，假设 sample_idx = 7, price_type_idx = 0
@@ -1543,10 +1559,13 @@ class Operator:
                         array[1, 0, 0, 0, 1]
                 此时生成的是一个1D数组
 
-            - 如果sample_idx为None（默认）或一个ndarray，进入清单模式，生成完整清单
+                为了确保只在sample采样时间点产生交易信号，需要比较sample_idx与operator的op_sample_indices，
+                只有sample_idx在op_sample_indices中时，才会产生交易信号，否则输出None
+
+            - 如果sample_idx为None（默认）或一个ndarray，进入batch模式，生成完整清单
                 生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
                 一个元素代表的滑窗会被提取出来生成相应的信号，其余的滑窗忽略，相应的信号设置为np.nan
-                例如，假设 sample_idx = np.array([0, 3, 7])
+                例如，假设 sample_idx = np.array([0, 3, 7])T
                 生成一张完整的交易信号清单，清单中第0，3，7等三组信号为使用相应的数据滑窗生成，其余的信号
                 全部为np.nan：
                         array[[  0,   0,   0,   0,   0],
@@ -1584,6 +1603,9 @@ class Operator:
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
 
+        :param pt_signal_timing: 'lazy', str
+            PT信号生成参数，用于控制PT信号的生成时机
+
         :return=====
             np.ndarray
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
@@ -1604,9 +1626,9 @@ class Operator:
         else:
             bt_price_types = [self.bt_price_types[price_type_idx]]
         bt_price_type_count = len(bt_price_types)
+        all_zero_signal = np.zeros(len(self._op_list_shares), dtype='float')
         for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
-            op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(
                     price_type=bt_price_type,
@@ -1617,74 +1639,86 @@ class Operator:
                     get_rolling_window=True
             )
             if sample_idx is None:
+                # TODO: 这里的signal_mode实际上就是self.op_type。但是self.op_type并没有
+                #  在create_signal过程中起到任何作用，应该考虑op_type和sample_idx的关系，
+                #  将sample_idx的使用方法简化:
+                #  例如，
+                #  - 在生成信号之前检查sample_idx的类型，并加以调整
+                #  - 根据op_type确定运行模式
+                signal_mode = 'batch'   # TODO: self.op_type == 'batch'
                 relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
             else:
-                relevant_sample_indices = [sample_idx] * len(relevant_strategies)
+                # stepwise运行，此时逐个比较sample_idx与op_sample_indices_by_price_type，只有sample_idx在其中时，才运行
+                # 此时strategy必须配套修改：当sample_idx为None时，策略输出也为None，即不运行
+                signal_mode = 'stepwise'
+                relevant_sample_indices = [sample_idx if sample_idx in _ else None
+                                           for _ in
+                                           self.get_op_sample_indices_by_price_type(
+                                                   price_type=bt_price_type
+                                           )]
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            for stg, hd, rd, si in zip(relevant_strategies,
-                                       relevant_hist_data,
-                                       relevant_ref_data,
-                                       relevant_sample_indices):
-                signal = stg.generate(hist_data=hd,
-                                      ref_data=rd,
-                                      trade_data=trade_data,
-                                      data_idx=si)
-                if sample_idx is not None:
-                    # realtime mode, 填充op_signal相关属性
-                    self._op_signal = signal
-                    self._op_signal_hdate_idx = sample_idx
-                    self._op_signal_price_type_idx = bt_price_type
-                else:
-                    # batch mode: 填充signal_list中的空缺值
-                    if signal_type in ['ps', 'vs']:
-                        signal = fill_nan_data(signal, 0)
-                    elif signal_type == 'pt':
-                        signal = ffill_2d_data(signal, 0)
-                    else:
-                        raise KeyError(f'Invalid signal type: {self.signal_type}')
-                op_signals.append(signal)
-                # 生成的交易信号添加到交易信号队列中，
+            ###############
+            op_signals = [
+                stg.generate(hist_data=hd,
+                             ref_data=rd,
+                             trade_data=trade_data,
+                             data_idx=si) for
+                stg, hd, rd, si in
+                zip(relevant_strategies,
+                    relevant_hist_data,
+                    relevant_ref_data,
+                    relevant_sample_indices)
+            ]
+            if (signal_mode == 'stepwise') and (signal_type in ['ps', 'vs']):
+                # stepwise mode, 这时候如果idx不在sample_idx中，就使用全0信号
+                op_signals = [
+                    all_zero_signal if news is None else news for
+                    news in op_signals
+                ]
+                self._op_signals_by_price_type_idx[price_type_idx] = op_signals
+                self._op_signal_indices_by_price_type_idx[price_type_idx] = [
+                    old_idx if new_idx is None else old_idx for
+                    old_idx, new_idx in zip(self._op_signal_indices_by_price_type_idx[price_type_idx],
+                                            [sample_idx] * len(relevant_strategies))
+                ]
+            elif (signal_mode == 'stepwise') and (signal_type == 'pt'):
+                # stepwise mode, 这时候如果idx不在sample_idx中，就沿用上次的交易信号（不生成信号）
+                op_signals = [
+                    olds if news is None else news for
+                    olds, news in zip(self._op_signals_by_price_type_idx[price_type_idx],
+                                      op_signals)
+                ]
+                self._op_signals_by_price_type_idx[price_type_idx] = op_signals
+                self._op_signal_indices_by_price_type_idx[price_type_idx] = [
+                    old_idx if new_idx is None else old_idx for
+                    old_idx, new_idx in zip(self._op_signal_indices_by_price_type_idx[price_type_idx],
+                                            [sample_idx] * len(relevant_strategies))
+                ]
+            elif (signal_mode == 'batch') and (signal_type in ['ps', 'vs']):
+                # batch mode 且ps/vs信号: 填充signal_list中的空缺值为0
+                op_signals = list(map(fill_nan_data, op_signals, [0] * len(relevant_strategies)))
+            elif (signal_mode == 'batch') and (signal_type == 'pt'):
+                # batch mode 且pt信号: ffill填充signal_list中的空缺值
+                op_signals = list(map(ffill_2d_data, op_signals, [0] * len(relevant_strategies)))
+
+            # 生成的交易信号添加到交易信号队列中，
 
             # 根据蒙板混合前缀表达式混合所有蒙板
-            # 针对不同的looping-price-type，应该生成不同的signal，因此不同looping-price-type的signal需要分别混合
+            # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(bt_price_type)
-            blended_signal = signal_blend(op_signals, blender=signal_blender)
-            if sample_idx is not None:
+            blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
+            if signal_mode == 'stepwise':
+                # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
+                self._op_signal = blended_signal
+                self._op_signal_index = sample_idx
+                self._op_signal_price_type_idx = bt_price_type
                 return blended_signal
             signal_out[bt_price_type] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股
         signal_shape = blended_signal.T.shape
-        signal_value = np.empty((*signal_shape, bt_price_type_count))
+        signal_value = np.empty((*signal_shape, bt_price_type_count), dtype='float')
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_value[:, :, i] = signal_out[bt_price_type].T
         self._op_list = signal_value
         return signal_value
-
-    def signal_list_segment(self, start=None, end=None):
-        """ 根据start/end截取signal_list的一段，self._op_list必须存在
-
-        :param start:
-        :param end:
-        :return:
-        """
-        if self.op_list is None:
-            return
-        start_idx = self.get_hdate_idx(pd.to_datetime(start))
-        end_idx = self.get_hdate_idx(pd.to_datetime(end))
-
-        return self.op_list[:, start_idx:end_idx]
-
-    def signal_hdates_segment(self, start=None, end=None):
-        """ 根据start/end截取signal_list_hdates的一段，self._op_list_hdates必须存在
-
-        :param start:
-        :param end:
-        :return:
-        """
-        if self.op_list is None:
-            return
-        start_idx = self.get_hdate_idx(pd.to_datetime(start))
-        end_date = self.get_hdate_idx(pd.to_datetime(end))
-
-        return self.op_list_hdates[start_idx:end_date]

@@ -1807,11 +1807,11 @@ class ADX(RuleIterator):
         #  指标比较复杂，需要深入研究一下
         #  指标大于25时属于强趋势。。。未完待续
         if res > 25:
-            cat = 1
+            cat = 1.
         elif res < 20:
-            cat = -1
+            cat = -1.
         else:
-            cat = 0
+            cat = 0.
         return cat
 
 
@@ -1861,11 +1861,11 @@ class APO(RuleIterator):
         # 当指标大于0时，输出多头
         # 当指标小于0时，输出空头
         if res > 0:
-            cat = 1
+            cat = 1.
         elif res < 0:
-            cat = -1
+            cat = -1.
         else:
-            cat = 0
+            cat = 0.
         return cat
 
 

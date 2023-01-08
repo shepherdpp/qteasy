@@ -533,8 +533,11 @@ class BaseStrategy:
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
         # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单
         if data_idx is None:
-            data_idx = -1
-        if isinstance(data_idx, (int, np.int)):
+            # 为了实现stepwise模式运行op，且与qt的realtime模式配合实现实盘运行，是否可以考虑
+            #  当data_idx为None时输出None？这样在op运行时可以使用data_idx的值控制是否运行策略？
+            # data_idx = -1
+            return None
+        if isinstance(data_idx, (int, np.int, np.int64)):
             # 如果data_idx为整数时，生成单组信号stg_signal
             idx = data_idx
             h_seg = hist_data[idx]
@@ -564,6 +567,8 @@ class BaseStrategy:
             sig_list[data_idx] = np.array(signals)
             # 将所有分段组合成完整的ndarray
             return sig_list
+        else:  # for any other unexpected type of input
+            raise TypeError(f'invalid type of data_idx: ({type(data_idx)})')
 
     @abstractmethod
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
@@ -588,7 +593,7 @@ class GeneralStg(BaseStrategy):
 
             Class ExampleStrategy(GeneralStg):
 
-                def realize(self, pars, h, r, t):
+                def realize(self, h, r=None, t=None, pars=None):
 
                     # 在这里编写信号生成逻辑
                     ...
@@ -755,6 +760,9 @@ class GeneralStg(BaseStrategy):
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """ 通用交易策略的所有策略代码全部都在realize中实现
         """
+        # TODO: 考虑增加错误提示：
+        #  如果用户定义了需要使用t数据的策略，但是使用的op_type为batch，会产生错误，
+        #  考虑在这里添加合适的错误提示
         return self.realize(h=h_seg, r=ref_seg, t=trade_data)
 
     @abstractmethod
@@ -786,14 +794,14 @@ class FactorSorter(BaseStrategy):
 
             Class ExampleStrategy(GeneralStg):
 
-                def realize(self, pars, h, r, t):
+                def realize(self, h, r=None, t=None, pars=None):
 
                     # 在这里编写信号生成逻辑
                     ...
-                    result = ...
-                    # result代表策略的输出
+                    factor = ...
+                    # factor代表策略输出的选股因子，用于进一步选股
 
-                    return result
+                    return factor
 
         用下面的方法创建一个策略对象：
 
@@ -947,7 +955,7 @@ class FactorSorter(BaseStrategy):
         根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，
             例如：当
                     max_sel_count=0.5
-                    condition='larger',
+                    condition='greater',
                     ubound=0.5,
                     weighting='even'
             时，上述因子的选股结果为:
@@ -1065,6 +1073,9 @@ class FactorSorter(BaseStrategy):
         args = np.setdiff1d(share_found, share_nan, assume_unique=True)
         # 构造输出向量，初始值为全0
         arg_count = len(args)
+        # 如果符合条件的选项数量为0，则直接返回全0
+        if arg_count == 0:
+            return chosen
         # 根据投资组合比例分配方式，确定被选中产品的权重
         if weighting == 'linear':  # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
@@ -1123,7 +1134,7 @@ class RuleIterator(BaseStrategy):
 
             Class ExampleStrategy(GeneralStg):
 
-                def realize(self, pars, h, r, t):
+                def realize(self, h, r=None, t=None, pars=None):
 
                     # 在这里编写信号生成逻辑
                     ...
