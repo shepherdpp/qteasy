@@ -371,7 +371,6 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     # 填充值的作用：
     # looped_value.cash = looped_value.cash.reindex(dates, method='ffill')
     looped_value[shares] = purchased_shares
-    # TODO: 在这里应该考虑现金的增值，将增值后的现金填入，
     looped_value.cash = cashes
     looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
     looped_value['reference'] = benchmark_list.reindex(hdates).fillna(0)
@@ -411,7 +410,6 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: 使用numba实现加速
 # TODO: apply_loop应该纯numpy化，删除operator作为传入参数，仅处理回测结果，将回测结果传出
 #  函数后再处理为pandas.DataFrame，并在函数以外进行进一步的记录和处理，这里仅仅使用与回测相关
 #  的参数
