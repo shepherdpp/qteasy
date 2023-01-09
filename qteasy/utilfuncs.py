@@ -495,7 +495,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20221231'):
+    # TODO: 这里有bug: _date的上限和下限需要从trade_calendar中动态读取，而不能硬编码到源代码中
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20231231'):
         return False
     if not isinstance(exchange, str) and exchange in ['SSE',
                                                       'SZSE',
@@ -572,7 +573,8 @@ def nearest_market_trade_day(date, exchange='SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20221231'):
+    # TODO: 这里有bug: _date的上限和下限需要从trade_calendar中动态读取，而不能硬编码到源代码中
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20231231'):
         return None
     if is_market_trade_day(_date, exchange):
         return _date

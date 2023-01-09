@@ -14158,71 +14158,13 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        shares = qt.filter_stock_codes(index='000300.SH', date='20220131')
-        print(f'total {len(shares)} shares selected!')
-        alpha = AlphaPS(pars=(),
-                        par_count=0,
-                        par_types=[],
-                        par_range=[],
-                        name='AlphaPS',
-                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
-                        data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                        sample_freq='m',
-                        data_freq='d',
-                        window_length=100)
-        op = qt.Operator(alpha, signal_type='PS')
-        op.op_type = 'stepwise'
-        op.run(mode=1,
-               asset_type='E',
-               asset_pool=shares,
-               trade_batch_size=100,
-               sell_batch_size=1,
-               trade_log=False)
-
-        alpha = AlphaPT(pars=(),
-                        par_count=0,
-                        par_types=[],
-                        par_range=[],
-                        name='AlphaSel',
-                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
-                        data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                        sample_freq='m',
-                        data_freq='d',
-                        window_length=100)
-        op = qt.Operator(alpha, signal_type='PT')
-        op.run(mode=1,
-               asset_type='E',
-               asset_pool=shares,
-               PT_buy_threshold=0.03,
-               PT_sell_threshold=0.03,
-               trade_batch_size=100,
-               sell_batch_size=1,
-               trade_log=False)
-
-        alpha = AlphaFac(pars=(),
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='AlphaSel',
-                         description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
-                         data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                         sample_freq='m',
-                         data_freq='d',
-                         window_length=100,
-                         max_sel_count=30,  # 设置选股数量，最多选出30个股票
-                         condition='greater',  # 设置筛选条件，仅筛选因子大于ubound的股票
-                         ubound=0.0,  # 设置筛选条件，仅筛选因子大于0的股票
-                         weighting='even',  # 设置股票权重，所有选中的股票平均分配权重
-                         sort_ascending=True)  # 设置排序方式，因子从小到大排序选择头30名
-        op = qt.Operator(alpha, signal_type='PT')
-        op.run(mode=1,
-               asset_type='E',
-               asset_pool=shares,
-               PT_buy_threshold=0.03,
-               PT_sell_threshold=0.03,
-               trade_batch_size=100,
-               sell_batch_size=1,
-               trade_log=False)
+        tables = 'data, adj'
+        qt.refill_data_source(tables=tables,
+                              start_date='20220731',
+                              end_date='20230131',
+                              parallel=True,
+                              merge_type='update',
+                              reversed_par_seq=True)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
