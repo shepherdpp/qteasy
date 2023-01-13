@@ -228,7 +228,7 @@ class Operator:
         
         第二部分：交易策略运行所需历史数据及其预处理后的数据滑窗、采样清单、混合表达式
         一类历史数据都保存在一系列字典中：通过各个Strategy的ID从字典中访问：
-        这部分数据通过prepare_data()方法填充或修改
+        这部分数据通过assign_hist_data()方法填充或修改
 
             _op_history_data:   
                                 历史数据：
@@ -661,18 +661,20 @@ class Operator:
         item_is_int = isinstance(item, int)
         item_is_str = isinstance(item, str)
         if not (item_is_int or item_is_str):
-            warnings.warn('the item is in a wrong format and can not be parsed!')
+            warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} insted!')
             return
         all_ids = self._strategy_id
         if item_is_str:
             if item not in all_ids:
-                warnings.warn('the strategy name can not be recognized!')
+                warnings.warn(f'No such strategy with ID ({item})!')
                 return
             return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             # 当输入的item明显不符合要求时，仍然返回结果，是否不合理？
             item = strategy_count - 1
+        elif item < 0:
+            item = 0
         return self._strategies[all_ids[item]]
 
     def get_stg(self, stg_id):
@@ -961,6 +963,7 @@ class Operator:
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
+            这里使用strategy.update_pars接口，不检查策略参数的合规性，因此需要提前确保参数符合strategy的设定
 
         :param opt_par:
             :type opt_par:Tuple
@@ -1019,13 +1022,13 @@ class Operator:
             # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
             elif stg.opt_tag == 1:
                 k += stg.par_count
-                stg.set_pars(opt_par[s:k])
+                stg.update_pars(opt_par[s:k])
                 s = k
             # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
             elif stg.opt_tag == 2:
                 # 在这种情况下，只需要取出参数向量中的一个分量，赋值给策略作为参数即可。因为这一个分量就包含了完整的策略参数tuple
                 k += 1
-                stg.set_pars(opt_par[s])
+                stg.update_pars(opt_par[s])
                 s = k
 
     def set_blender(self, blender=None, price_type=None):
@@ -1230,6 +1233,7 @@ class Operator:
 
     # =================================================
     # 下面是Operation模块的公有方法：
+    # TODO: 改造operator.info()，采用更加简明扼要的方式显示Operator的关键信息
     def info(self, verbose=False):
         """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
             如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
@@ -1295,9 +1299,9 @@ class Operator:
             import qteasy as qt
             return qt.run(self, **kwargs)
 
-    # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
+    # TODO: 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
-    # TODO 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
+    # TODO: 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
     def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
@@ -1489,6 +1493,18 @@ class Operator:
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
             # 根据sample_freq生成一个策略运行采样日期序列
+            # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
+            #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
+            #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
+            #  注：
+            #  需要生成每月第一天，则freq='MS'，
+            #  生成每月最后一天，freq='M'，
+            #  生成每月第N天，则pd.date_range(freq='MS') + pd.DateOffset(days=N)
+            #  甚至，还应该进一步允许定义时间，
+            #  例如：
+            #  运行在每日9:00，则此时没有当天数据可用
+            #  运行在每日10:00，则每日有开盘价可用，但收盘价不可用
+            #  诸如此类
             temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
             if len(temp_date_series) <= 1:
                 # 如果sample_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
@@ -1579,7 +1595,7 @@ class Operator:
                 当sample_idx为None时，使用self._op_sample_idx的值为采样清单
                 此时生成的是一个3D数组
 
-            在生成交易信号之前需要调用prepare_data准备好相应的历史数据
+            在生成交易信号之前需要调用assign_hist_data准备好相应的历史数据
 
             输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
             levels = shares

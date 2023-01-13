@@ -6741,6 +6741,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'test printing information of operator object')
         self.op.info()
 
+    def test_set_pars(self):
+        """ 测试设置策略参数"""
+        stg_dma = self.op[0]
+        stg_macd = self.op[1]
+        stg_trix = self.op[2]
+
+        stg_dma.pars = (1, 2, 3)
+
     def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""
         op = qt.Operator()
@@ -10704,7 +10712,7 @@ class TestUtilityFuncs(unittest.TestCase):
         date_weekend = '20210424'
         date_seems_trade_day = '20210217'
         date_too_early = '19890601'
-        date_too_late = '20230105'
+        date_too_late = '20240105'
         date_christmas = '20201225'
 
         self.assertTrue(maybe_trade_day(date_trade))
@@ -10831,7 +10839,7 @@ class TestUtilityFuncs(unittest.TestCase):
         date_seems_trade_day = '20210217'
         prev_seems_trade_day = pd.to_datetime(date_seems_trade_day) - pd.Timedelta(7, 'd')
         date_too_early = '19890601'
-        date_too_late = '20230105'
+        date_too_late = '20240105'
         date_christmas = '20201225'
         prev_christmas_xhkg = '20201224'
         self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_trade)),

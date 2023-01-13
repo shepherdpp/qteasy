@@ -129,14 +129,15 @@ class BaseStrategy:
                 logger_core.info(f'Got more parameter types({len(par_range)}) than count of parameters({par_count})')
                 par_range = par_range[0:par_count]
 
-        self._pars = pars  # 策略的参数，动态属性
-        self._opt_tag = opt_tag  # 策略的优化标记，
+        self._pars = None
+        self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
         self._stg_name = name  # 策略的名称
         self._stg_text = description  # 策略的描述文字
         self._par_count = par_count  # 策略参数的元素个数
         self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
         self._par_bounds_or_enums = par_range
+        self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
         logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={par_count},'
                          f' par_types={par_types}, par_range={par_range}')
 
@@ -374,6 +375,8 @@ class BaseStrategy:
 
     def info(self, verbose: bool = True):
         """打印所有相关信息和主要属性"""
+        # TODO: 重新设计strategy.info()，更加简明扼要地输出关键信息，
+        #  还要兼顾operator.info()的需要
         stg_type = self.__class__.__bases__[0].__name__
         print(f'Strategy_type:      {stg_type}\n'
               f'Strategy name:      {self.name}\n'
@@ -407,28 +410,74 @@ class BaseStrategy:
         """设置策略参数，在设置之前对参数的个数进行检查
 
         input:
-            :param: type items: tuple，需要设置的参数
+            :param pars: tuple / dict 需要设置的参数
         return:
             int: 1: 设置成功，0: 设置失败
         """
-        # TODO: 使用set_pars设定参数时，会绕开__init__()中定义的根据pars推测
-        #  par_count/par_type/par_range的过程，应该重构这部分代码：
-        #  在set_pars()函数中检查输入的par是否符合已有的par_count，par_type，par_range，
-        #  如果符合，则直接更新set_pars，
-        #  如果不符合，则根据输入的pars推测新的par_count，par_type和par_range。
-        #  在__init__()中直接引用set_pars函数。
-        #  为了实现策略运行过程中的快速更新参数操作，创建新的函数update_par()，
-        #  采用极简方式更新参数
         assert isinstance(pars, (tuple, dict)) or pars is None, \
             f'parameter should be either a tuple or a dict, got {type(pars)} instead'
         if pars is None:
             self._pars = pars
             return 1
-        if len(pars) == self.par_count or isinstance(pars, dict):
+        if isinstance(pars, dict):
+            return self.set_dict_pars(pars)
+        if not isinstance(pars, tuple):
+            raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
+        if len(pars) != self.par_count:
+            raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
+                             f' got {len(pars)} ({pars}).')
+        if self.check_pars(pars):
             self._pars = pars
             return 1
-        raise ValueError(f'parameter setting error in set_pars() method of \n{self}\nexpected par count: '
-                         f'{self.par_count}, got {pars}')
+
+    def check_pars(self, pars):
+        """检查pars(一个tuple)是否符合strategy的参数设置"""
+        # 逐个检查每个par的类型是否正确，是否在取值范围内
+        from qteasy import logger_core
+        for par, par_type, range in zip(pars, self._par_types, self.par_range):
+            if par_type in ['int', 'discr']:
+                try:
+                    par = int(par)
+                except Exception:
+                    raise Exception(f'Invalid parameter, {par} can not be converted to an integer')
+
+            if par_type in ['float', 'conti']:
+                try:
+                    par = float(par)
+                except Exception:
+                    raise Exception(f'Invalid parameter, {par} can not be converted to a float number')
+
+            if par_type in ['enum']:
+                if par not in range:
+                    raise OverflowError(f'Invalid parameter, {par} should be one of items in ({range})')
+            else:
+                l_bound, u_bound = range
+                if (par < l_bound) or (par > u_bound):
+                    logger_core.warning(f'Parameter Overflow!, {par} is out of range:({l_bound} - {u_bound})')
+        return True
+
+    def set_dict_pars(self, pars: dict) -> int:
+        """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
+            检查dict的合法性，并设置参数
+
+        :param pars:
+        :return:
+        """
+        if not isinstance(pars, dict):
+            raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
+        if len(pars) == 0:
+            return self.set_pars(pars=None)
+        for key in pars.keys():
+            if not isinstance(key, str):
+                raise TypeError(f'Invalid parameter, all keys of dict type parameter should be a stock code,'
+                                f' got a {type(key)}')
+        if all(self.check_pars(par) for par in pars.values()):
+            self._pars = pars
+            return 1
+
+    def update_pars(self, pars):
+        """ 极简方式更新策略的参数，默认参数格式正确，不检查参数的合规性"""
+        self._pars = pars
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型
