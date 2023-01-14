@@ -1,0 +1,43 @@
+# ======================================
+# File:     pyproject.toml
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2023-01-12
+# Desc:
+#   QTEASY:
+#   A fast and easy-to-use quant-investment
+#   strategy research tool kit.
+# ======================================
+
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qteasy"
+version = "0.0.0.dev0"
+description = "A fast quantitative investment tool kit"
+readme = "README.md"
+authors = [{ name = "Jackie PENG", email = "jackie.pengzhao@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["quant", "quantitative investment", "investment"]
+dependencies = [
+    "pandas >= 5.2.0",
+    "numpy",
+    '',
+]
+requires-python = ">=3.6"
+
+[project.optional-dependencies]
+dev = ["black", "bumpver", "isort", "pip-tools", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/shepherdpp/qteasy"
+
+[project.scripts]
+qteasy = "qteasy.__main__:main"
