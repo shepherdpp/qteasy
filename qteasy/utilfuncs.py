@@ -1072,3 +1072,31 @@ def reindent(s, num_spaces=4):
     s = [(num_spaces * ' ') + line.lstrip() for line in s]
     s = '\n'.join(s)
     return s
+
+
+def truncate_string(s, n, padder='.'):
+    """ 如果字符串超过指定长度，则将字符串截短到制定的长度，并确保字符串的末尾有三个句点
+        如果n<=4，则句点的数量相应减少
+        如果n<0则报错
+
+    :param s: 字符串
+    :param n: 需要保留的长度
+    :param padder: 作为省略号填充在字符串末尾的字符
+    :return:
+    """
+    if not isinstance(s, str):
+        raise TypeError
+    if not isinstance(n, int):
+        raise TypeError
+    if not isinstance(padder, str):
+        raise TypeError
+    if not len(padder) == 1:
+        raise ValueError
+    if n <= 0:
+        raise ValueError
+    if len(s) <= n:
+        return s
+    padder_count = 3
+    if n < 3:
+        padder_count = n
+    return s[:n-padder_count] + '.' * padder_count

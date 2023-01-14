@@ -1242,32 +1242,53 @@ class Operator:
             :type verbose: bool
 
         """
-        print('OPERATOR INFO:')
-        print('=' * 25)
-        print('Information of the Module')
-        print('=' * 25)
+        from .utilfuncs import truncate_string
+        signal_type_descriptions = {
+            'pt': 'Position Target, signal represents target of position holding',
+            'ps': 'Percentage trade signal, represents buy/sell stock in percentage of total value',
+            'vs': 'Value trade signal, represent tha amount of stocks to be sold/bought'
+        }
+        op_type_description = {
+            'batch': 'All history operation signals are generated before back testing',
+            'stepwise': 'History op signals are generated one by one, every piece of signal will be back tested before '
+                        'the next signal being generated.'
+        }
+        print(f'    ----------Operator Information----------\n'
+              f'Strategies:  {self.strategy_count} Strategies\n'
+              f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
+              f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
         # 打印各个子模块的信息：
-        print(f'Total {self.strategy_count} operation strategies, requiring {self.op_data_type_count} '
-              f'types of historical data:')
-        all_op_data_types = []
-        for data_type in self.op_data_types:
-            all_op_data_types.append(data_type)
-        print(", ".join(all_op_data_types))
-        print(f'{self.bt_price_type_count} types of back test price types:\n'
-              f'{self.bt_price_types}')
+        if self.strategy_count > 0:
+            print(f'    ---------------Strategies---------------\n'
+                  f'{"id":<10}'
+                  f'{"name":<15}'
+                  f'{"back_test_price":<15}'
+                  f'{"d_freq":^10}'
+                  f'{"s_freq":^10}'
+                  f'{"date_types":<10}\n'
+                  f'{"_" * 70}')
+            for stg_id, stg in self.get_strategy_id_pairs():
+                print(f'{truncate_string(stg_id, 10):<10}'
+                      f'{truncate_string(stg.name, 15):<15}'
+                      f'{truncate_string(stg.bt_price_type, 15):^15}'
+                      f'{truncate_string(stg.data_freq, 10):^10}'
+                      f'{truncate_string(stg.sample_freq, 10):^10}'
+                      f'{stg.data_types}')
+            print('=' * 70)
+        # 打印blender的信息：
         for price_type in self.bt_price_types:
-            print(f'for backtest histoty price type - {price_type}: \n'
-                  f'{self.get_strategies_by_price_type(price_type)}:')
+            print(f'for backtest histoty price type - {price_type}:')
             if self.strategy_blenders != {}:
                 print(f'signal blenders: {self.view_blender(price_type)}')
             else:
                 print(f'no blender')
         # 打印每个strategy的详细信息
         if verbose:
-            print('Parameters of GeneralStg Strategies:')
-            for stg in self.strategies:
+            print('\n    ------------Strategy Details------------')
+            for stg_id, stg in self.get_strategy_id_pairs():
+                print(f'Strategy_ID:        {stg_id}')
                 stg.info()
-            print('=' * 25)
+            print('=' * 70)
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置

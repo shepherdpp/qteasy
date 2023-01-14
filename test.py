@@ -14166,13 +14166,9 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        tables = 'data, adj'
-        qt.refill_data_source(tables=tables,
-                              start_date='20220731',
-                              end_date='20230131',
-                              parallel=True,
-                              merge_type='update',
-                              reversed_par_seq=True)
+        op = qt.Operator('macd, dma, mfi, trix, ndayrate, trix, signal_none, ndaylast, finance, dtrima, ddema')
+        op.info(verbose=False)
+        # op.info(verbose=True)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
