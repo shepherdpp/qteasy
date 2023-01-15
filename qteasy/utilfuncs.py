@@ -60,6 +60,11 @@ NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
 ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
+AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
+                          'proportion signal': 'ps',
+                          'volume signal':     'vs'}
+AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
+
 
 def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.

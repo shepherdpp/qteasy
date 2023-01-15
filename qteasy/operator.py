@@ -17,7 +17,8 @@ import pandas as pd
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
+from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES
+from .strategy import BaseStrategy
 from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
 from .blender import blender_parser
 
@@ -168,11 +169,6 @@ class Operator:
     """
 
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
-
-    AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
-                              'proportion signal': 'ps',
-                              'volume signal':     'vs'}
-    AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
 
     def __init__(self, strategies=None, signal_type=None, op_type=None):
         """ 生成具体的Operator对象
@@ -358,13 +354,13 @@ class Operator:
         """ 设置signal_type的值"""
         if not isinstance(st, str):
             raise TypeError(f'signal type should be a string, got {type(st)} instead!')
-        elif st.lower() in self.AVAILABLE_SIGNAL_TYPES:
-            self._signal_type = self.AVAILABLE_SIGNAL_TYPES[st.lower()]
-        elif st.lower() in self.AVAILABLE_SIGNAL_TYPES.values():
+        elif st.lower() in AVAILABLE_SIGNAL_TYPES:
+            self._signal_type = AVAILABLE_SIGNAL_TYPES[st.lower()]
+        elif st.lower() in AVAILABLE_SIGNAL_TYPES.values():
             self._signal_type = st.lower()
         else:
             raise ValueError(f'Invalid signal type ({st})\nChoose one from '
-                             f'{self.AVAILABLE_SIGNAL_TYPES}')
+                             f'{AVAILABLE_SIGNAL_TYPES}')
 
     @property
     def signal_type_id(self):
@@ -388,7 +384,7 @@ class Operator:
         if not isinstance(op_type, str):
             raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
         op_type = op_type.lower()
-        if op_type not in self.AVAILABLE_OP_TYPES:
+        if op_type not in AVAILABLE_OP_TYPES:
             raise KeyError(f'Invalid op_type ({op_type})')
         if op_type in ['s', 'st', 'step', 'stepwise']:
             op_type = 'stepwise'
@@ -1244,7 +1240,7 @@ class Operator:
         """
         from .utilfuncs import truncate_string
         signal_type_descriptions = {
-            'pt': 'Position Target, signal represents target of position holding',
+            'pt': 'Position Target, signal represents position holdings in percentage of total value',
             'ps': 'Percentage trade signal, represents buy/sell stock in percentage of total value',
             'vs': 'Value trade signal, represent tha amount of stocks to be sold/bought'
         }
@@ -1639,9 +1635,6 @@ class Operator:
             如果给出sample_ix，必须给出这个参数
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
-
-        :param pt_signal_timing: 'lazy', str
-            PT信号生成参数，用于控制PT信号的生成时机
 
         :return=====
             np.ndarray

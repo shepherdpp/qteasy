@@ -242,7 +242,7 @@ def op_power(*args):
     return signal_res
 
 
-@njit()
+@njit()  # 这个函数本身速度不够快，njit版本的运行速度稍快，实测大约快5%
 def op_exp(*args):
     """ ，逐个元素操作生成e的signal次幂，效果与np.exp()一致
 
@@ -262,7 +262,7 @@ def op_exp(*args):
     return signal_res
 
 
-@njit()
+# 这个函数本身速度不够快，但是njit版本的运行速度更慢，实测大约慢5%
 def op_log(*args):
     """ ，逐个元素操作生成signal的自然对数，效果与np.log()一致
 
@@ -275,14 +275,14 @@ def op_log(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in log()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.log(args[0])
     return signal_res
 
 
-@njit()
+# 这个函数本身速度不够快，但是njit版本的运行速度更慢，实测大约慢20%
 def op_log10(*args):
     """ ，逐个元素操作生成signal的以10为底的对数，效果与np.log10()一致
 
@@ -295,14 +295,14 @@ def op_log10(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in log10()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.log10(args[0])
     return signal_res
 
 
-@njit()
+@njit()  # 实测njit版本运行速度是python版本的10倍以上
 def op_floor(*args):
     """ 逐个元素操作生成signal的floor，效果与np.floor()一致
 
@@ -315,14 +315,14 @@ def op_floor(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in floor()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.floor(args[0])
     return signal_res
 
 
-@njit()
+@njit()  # 实测njit版本运行速度是python版本的10倍以上
 def op_ceil(*args):
     """ 逐个元素操作生成signal的ceil，效果与np.cail()一致
 
@@ -335,14 +335,14 @@ def op_ceil(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in ceil()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.ceil(args[0])
     return signal_res
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增倍（因为overhead）
 def op_sqrt(*args):
     """ ，逐个元素操作生成signal的平方根，效果与np.sqrt()一致
 
@@ -355,7 +355,7 @@ def op_sqrt(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in sqrt()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.sqrt(args[0])
@@ -419,11 +419,7 @@ def run_blend_func(func_str, *args):
     # 将所有的附加参数处理为float类型，便于传入func处理
     additional_args = tuple(float(item) for item in additional_args)
     try:
-        # debug
-        # print(f'running function:\n{func_name}: {func} \n{additional_args}\n{args}')
         res = func(*additional_args, *args)
-        # debug
-        # print(f'function run succeed, result\n{res}')
     except Exception as e:
         raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
                         f'error message: \n{e}')
