@@ -170,7 +170,7 @@ res = qt.run(op,
 
 下面是交易结果的可视化图表展示
     
-![png](Example_01_双均线择时策略/output_3_2.png)
+![png](img/output_3_2.png)
     
 
 交叉线交易策略的长短周期选择很重要，可以使用`qteasy`来搜索最优的策略参数：
@@ -322,7 +322,7 @@ res = qt.run(op, mode=2,
     
 参数优化结果以及各个指标的可视化图表展示：
     
-![png](Example_01_双均线择时策略/output_4_1.png)
+![png](img/output_4_1.png)
     
 优化之后我们可以检验一下找到的最佳参数：
 
@@ -389,6 +389,6 @@ res = qt.run(op,
 优化后的结果可视化图表如下：
 
     
-![png](Example_01_双均线择时策略/output_5_1.png)
+![png](img/output_5_1.png)
     
 
