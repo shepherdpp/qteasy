@@ -101,7 +101,7 @@ class TestCost(unittest.TestCase):
     def test_rate_creation(self):
         """测试对象生成"""
         print('testing rates objects\n')
-        self.assertIsInstance(self.r, dict, 'Type should be Rate')
+        self.assertIsInstance(self.r, dict, 'Type should be a dictThisis_007')
         self.assertEqual(self.r['buy_fix'], 0)
         self.assertEqual(self.r['sell_fix'], 0)
 
