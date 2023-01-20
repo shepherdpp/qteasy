@@ -78,7 +78,7 @@ class TimingCrossline(RuleIterator):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['int', 'int', 'float'],
-                         par_range=[(10, 250), (10, 250), (0, 1)],
+                         par_range=[(10, 250), (10, 250), (0, 0.1)],
                          name='CROSSLINE',
                          description='Moving average crossline strategy, determine long/short position according '
                                      'to the cross point of long and short term moving average prices ',

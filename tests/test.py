@@ -14166,9 +14166,10 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        op = qt.Operator('macd, dma, mfi, trix, ndayrate, trix, signal_none, ndaylast, finance, dtrima, ddema')
-        op.info(verbose=False)
-        # op.info(verbose=True)
+        op = qt.Operator(strategies='dma')
+        op.set_parameter('dma', pars=(23, 166, 196))
+        res = qt.run(op, mode=1, invest_start='20160501', visual=True, trade_log=True)
+
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
