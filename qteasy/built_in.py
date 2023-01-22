@@ -51,7 +51,7 @@ def get_built_in_strategy(id):
 
 
 # Basic technical analysis based Timing strategies
-class TimingCrossline(RuleIterator):
+class Crossline(RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
     策略参数：
@@ -102,7 +102,7 @@ class TimingCrossline(RuleIterator):
             return 0
 
 
-class TimingCDL(RuleIterator):
+class CDL(RuleIterator):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
     策略参数：
@@ -194,7 +194,7 @@ class SoftBBand(RuleIterator):
         return sig
 
 
-class TimingBBand(RuleIterator):
+class BBand(RuleIterator):
     """ 布林带线交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，
         在价格上穿或下穿布林带线上下轨时产生交易信号。
         布林带线的均线类型不可选
@@ -1614,7 +1614,7 @@ class SLPWMA(RuleIterator):
 # the long/short positions or operation signals are generated
 # according to the momentum of prices calculated in different
 # methods
-class TimingSAREXT(RuleIterator):
+class SAREXT(RuleIterator):
     """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
 
     策略参数：
@@ -1665,7 +1665,7 @@ class TimingSAREXT(RuleIterator):
         return cat
 
 
-class TimingMACD(RuleIterator):
+class MACD(RuleIterator):
     """MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
 
     策略参数：
@@ -1714,7 +1714,7 @@ class TimingMACD(RuleIterator):
         return cat
 
 
-class TimingTRIX(RuleIterator):
+class TRIX(RuleIterator):
     """TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断
 
     策略参数：
@@ -3020,7 +3020,7 @@ class TimingZero(GeneralStg):
         return np.zeros(shape=(sc, ))
 
 
-class TimingDMA(RuleIterator):
+class DMA(RuleIterator):
     """ DMA择时策略
 
     策略参数：
@@ -3565,14 +3565,14 @@ class SelectingNDayVolatility(FactorSorter):
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
-                       'macd':          TimingMACD,
-                       'dma':           TimingDMA,
-                       'trix':          TimingTRIX,
-                       'cdl':           TimingCDL,
-                       'bband':         TimingBBand,
+BUILT_IN_STRATEGIES = {'crossline':     Crossline,
+                       'macd':          MACD,
+                       'dma':           DMA,
+                       'trix':          TRIX,
+                       'cdl':           CDL,
+                       'bband':         BBand,
                        's-bband':       SoftBBand,
-                       'sarext':        TimingSAREXT,
+                       'sarext':        SAREXT,
                        'ssma':          SCRSSMA,
                        'sdema':         SCRSDEMA,
                        'sema':          SCRSEMA,

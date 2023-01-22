@@ -33,7 +33,7 @@ from qteasy.utilfuncs import reindent
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, process_loop_results
-from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL
+from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
 
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
