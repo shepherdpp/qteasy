@@ -1,6 +1,6 @@
 # coding=utf-8
 # ======================================
-# File:     test.py
+# Package:  qteasy
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-11
@@ -10,6 +10,7 @@
 #   strategy research tool kit.
 # ======================================
 
+import os
 import tushare as ts
 import numpy as np
 import logging
@@ -32,8 +33,11 @@ from ._arg_validators import QT_CONFIG
 
 from pathlib import Path
 
+# 解析qteasy的本地安装路径
+QT_ROOT_PATH = os.path.join(os.path.dirname(__file__), '../')
+
 # 设置logger以及运行日志的存储路径
-debug_handler = logging.handlers.TimedRotatingFileHandler(filename='qteasy/log/qteasy.log',
+debug_handler = logging.handlers.TimedRotatingFileHandler(filename=QT_ROOT_PATH + 'qteasy/log/qteasy.log',
                                                           backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
@@ -50,8 +54,6 @@ logger_core.propagate = False
 # 准备从本地配置文件中读取预先存储的qteasy配置
 qt_local_configs = {}
 
-# 解析qteasy的本地安装路径
-QT_ROOT_PATH = str(Path('.').resolve()) + '/'
 QT_CONFIG_FILE_INTRO = '# qteasy configuration file\n' \
                        '# following configurations will be loaded when initialize qteasy\n\n' \
                        '# example:\n' \

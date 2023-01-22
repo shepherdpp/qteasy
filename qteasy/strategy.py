@@ -433,8 +433,7 @@ class BaseStrategy:
     def check_pars(self, pars):
         """检查pars(一个tuple)是否符合strategy的参数设置"""
         # 逐个检查每个par的类型是否正确，是否在取值范围内
-        from qteasy import logger_core
-        for par, par_type, range in zip(pars, self._par_types, self.par_range):
+        for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
             if par_type in ['int', 'discr']:
                 try:
                     par = int(par)
@@ -448,12 +447,12 @@ class BaseStrategy:
                     raise Exception(f'Invalid parameter, {par} can not be converted to a float number')
 
             if par_type in ['enum']:
-                if par not in range:
-                    raise OverflowError(f'Invalid parameter, {par} should be one of items in ({range})')
+                if par not in par_range:
+                    raise OverflowError(f'Invalid parameter, {par} should be one of items in ({par_range})')
             else:
-                l_bound, u_bound = range
+                l_bound, u_bound = par_range
                 if (par < l_bound) or (par > u_bound):
-                    logger_core.warning(f'Parameter Overflow!, {par} is out of range:({l_bound} - {u_bound})')
+                    raise OverflowError(f'Parameter Overflow!, {par} is out of range:({l_bound} - {u_bound})')
         return True
 
     def set_dict_pars(self, pars: dict) -> int:
