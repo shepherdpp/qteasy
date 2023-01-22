@@ -1,43 +1,40 @@
-# qteasy -- a python-based fast quantitative investment utility module 一个基于Python的高效量化投资工具包
+# qteasy -- 一个基于Python的高效量化投资工具包
 
-- Author: **Jackie PENG**
+- 作者: **Jackie PENG**
 
 - email: *jackie_pengzhao@163.com* 
 
-- Project created on: 2019, July, 16
+- 项目启动日期: 2019, July, 16
 
-## Installation and dependencies 安装及依赖包
-This project requires and depends on following packages:
+## 安装及依赖包
+这个项目依赖以下python package:
 - *`pandas` version 0.25*
 - *`numpy` version 0.19*
+- *`numba` version 0.47*
 - *`TA-lib` version 0.4*
 - *`tushare pro` version 1.2.89*
 - *`matplotlib.mplfinance` version 0.12*
 
-## Introductions 介绍
+## 介绍
 
-This project is aiming at a fast quantitative investment package for python, with following functions:
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
-1. Historical stock data acquiring and bundling, visualization 金融历史数据的获取、清洗、整理、可视化及应用
-2. Investment strategy creation, backtesting, assessment and optimization 投资交易策略的创建、回测、性能评价及优化
-3. Live stock trading: trading operation submission, withdrawal, status checking and feedback reporting 交易策略的部署、实时运行，未来还将实现与自动化交易系统连接、实现自动化交易
+1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用，并计划提供一些金融统计数据分析工具
+2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
+3. 交易策略的部署、实时运行，未来还将实现与自动化交易系统连接、实现自动化交易
 
-The target of this module is to provide effective vectorized backtesting and assessment of investment 
-strategies, with highly versertility and flexibility
 
 开发本模块的目标是为量化交易人员提供一套策略开发框架，回测速度快、回测精度高、评价指标全，而且可以非常灵活地实现各种自定义交易策略
 
-##  Gets to know qteasy in 10 Min, 10分钟了解qteasy的功能
+##  10分钟了解qteasy的功能
 
-- Import the module 模块的导入
-- data acquiring 数据的获取和可视化  
-- strategy creation 投资策略的创建
-- Back-test of strategies 投资策略的回测
-- Strategy Optimization 投资策略的优化
+- 模块的导入
+- 数据的获取和可视化  
+- 投资策略的创建
+- 投资策略的回测
+- 投资策略的优化
 
-The convensional way of importing this package is following:
 基本的模块导入方法如下
 
 
@@ -46,7 +43,7 @@ import qteasy as qt
 import matplotlib as mpl
 ```
 
-Then the classes and functions can be used 模块导入后，工具包中的函数及对象即可以使用了:
+模块导入后，工具包中的函数及对象即可以使用了:
 
 
 ```python
@@ -54,9 +51,7 @@ ht = qt.HistoryPanel()
 op = qt.Operator()
 ```
 
-### Load and visualize Stock prices 下载股票价格数据并将其可视化 
-To use `qteasy`, lots of historical financial data should be prepared and saved locally for back testing and optimizing trading strategies created through a DataSource object defined in qteasy.  Fortunately, these data can be easily loaded through tushare module.
-
+### 下载股票价格数据并将其可视化 
 为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，通过一个DataSource对象来获取。这些数据可以生成投资策略所需要的历史数据组合，也可以通过简单的命令生成股票的K线图，如果本地没有历史数据，那么qteasy的许多功能就无法执行。
 
 为了使用历史数据，`qteasy`支持通过`tushare`金融数据包来获取大量的金融数据，用户需要自行获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
@@ -76,7 +71,7 @@ qt.QT_DATA_SOURCE.refill_data_source('all', start_date='20210101', end_date='202
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](readme_img/output_5_2.png)
+![png](img/output_5_2.png)
     
 
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
@@ -99,7 +94,7 @@ data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[]
 
 ![png](img/output_3_1.png)
 
-![png](img//output_7_2.png)
+![png](img/output_7_2.png)
 
 ![png](img/output_8_3.png)
 
@@ -108,10 +103,6 @@ data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[]
 ![png](img/output_3_5.png)
     
 
-
-
-a dynamic candle chart of stock 000300 will be displayed, you can drag the candle plots over to view wider span of data, zoom
-in and out with scrolling of your mouse, and switching bewteen multiple indicator lines by double-clicking the chart
 
 生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持动态图表，详情请参阅https://matplotlib.org/stable/users/explain/backends.html），在使用动态K线图时，用户可以用鼠标和键盘控制K线图的显示范围：
 
@@ -124,11 +115,7 @@ in and out with scrolling of your mouse, and switching bewteen multiple indicato
 
 ![gif](img/output_dyna_plot.gif)
 
-### Create and running of investment strategy sessions  创建一个投资策略，进行回测评价并优化其表现
-
-There are multiple internally preset strategies such as crossline timing strategy or DMA timing strategy provided in
- `qteasy`, a strategy should be created with an `Operator` object, the `Operator` is the container of strategies, and provides
- multiple methods to utilize and operate on these strategies.
+###  创建一个投资策略，进行回测评价并优化其表现
 
 `queasy`提供了多种内置交易策略可供用户使用，因此用户不需要手工创建这些策略，可以直接使用内置策略（关于所有内置策略的介绍，请参见详细文档）。复合策略可以通过多个简单的策略混合而成。当复合策略无法达到预计的效果时，可以通过`qteasy.Strategy`类来自定义一个策略。
 
