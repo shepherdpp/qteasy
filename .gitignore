@@ -49,3 +49,4 @@ qteasy/log/*
 *.log
 **qteasy/log/
 *.cnf
+test.py
