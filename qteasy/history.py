@@ -8,7 +8,6 @@
 #   HistoryPanel Class, and more history
 #   data manipulating functions.
 # ======================================
-import pdb
 
 import pandas as pd
 import numpy as np

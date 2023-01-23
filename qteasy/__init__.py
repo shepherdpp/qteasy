@@ -31,7 +31,6 @@ from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG
 
-from pathlib import Path
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.join(os.path.dirname(__file__), '../')

@@ -10,34 +10,60 @@
 # ======================================
 
 [build-system]
-requires      = ["setuptools>=61.0.0", "wheel"]
+requires      = ["setuptools>=61.0.4", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "qteasy"
-version = "0.0.0.dev0"
+version = "0.0.1.dev"
 description = "A fast quantitative investment tool kit"
-readme = "README.md"
+readme = { file = ["README.md", "README_EN.md"], content-type = "markdown" }
 authors = [{ name = "Jackie PENG", email = "jackie.pengzhao@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers = [
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Topic :: Office/Business :: Financial :: Investment",
 ]
 keywords = ["quant", "quantitative investment", "investment"]
 dependencies = [
-    "pandas >= 5.2.0",
-    "numpy",
-    '',
+    "pandas >= 0.25.1",
+    "numpy >= 1.18.1",
+    "numba >= 0.47.0",
+    "ta-lib >= 0.4.18",
+    "tushare >= 1.2.89",
+    "mplfinance >= 0.12.7",
 ]
 requires-python = ">=3.6"
 
 [project.optional-dependencies]
-dev = ["black", "bumpver", "isort", "pip-tools", "pytest"]
+dev = ["sphinx", "pip-tools", "pytest"]
 
 [project.urls]
 Homepage = "https://github.com/shepherdpp/qteasy"
 
-[project.scripts]
-qteasy = "qteasy.__main__:main"
+[tool.setuptools.packages.find]
+where = ["qteasy"]
+include = [
+    "__init__",
+    "_arg_validators",
+    "blender",
+    "built_in",
+    "core",
+    "database",
+    "evaluate",
+    "finance",
+    "history",
+    "operator",
+    "space",
+    "strategy",
+    "tafuncs",
+    "tsfuncs",
+    "utilfuncs",
+    "visual",
+]
+namespaces = false
