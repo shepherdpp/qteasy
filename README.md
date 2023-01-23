@@ -8,12 +8,14 @@
 
 ## 安装及依赖包
 这个项目依赖以下python package:
-- *`pandas` version 0.25*
-- *`numpy` version 0.19*
-- *`numba` version 0.47*
-- *`TA-lib` version 0.4*
-- *`tushare pro` version 1.2.89*
-- *`matplotlib.mplfinance` version 0.12*
+- *`pandas` version 0.25.1*
+- *`numpy` version 1.18.1*
+- *`numba` version 0.47.0*
+- *`TA-lib` version 0.4.18*    `# conda install -c conda-forge ta-lib`
+- *`tushare` version 1.2.89*    `# pip install tushare`
+- *`mplfinance` version 0.12.7*    `# conda install -c conda-forge mplfinance`
+- *`pymysql`*    `# conda install -c anaconda pymysql`
+- 
 
 ## 介绍
 

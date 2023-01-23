@@ -4,9 +4,8 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-01-12
 # Desc:
-#   QTEASY:
-#   A fast and easy-to-use quant-investment
-#   strategy research tool kit.
+#   QTEASY setup build system
+#   configurations
 # ======================================
 
 [build-system]
@@ -37,6 +36,8 @@ dependencies = [
     "ta-lib >= 0.4.18",
     "tushare >= 1.2.89",
     "mplfinance >= 0.12.7",
+    "pymysql >= 1.0.2",
+    "sqlalchemy "
 ]
 requires-python = ">=3.6"
 
