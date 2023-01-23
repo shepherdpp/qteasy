@@ -1086,22 +1086,22 @@ def truncate_string(s, n, padder='.'):
 
     :param s: 字符串
     :param n: 需要保留的长度
-    :param padder: 作为省略号填充在字符串末尾的字符
+    :param padder: 作为省略号填充在字符串末尾的字符, 默认值:'.'
     :return:
     """
     if not isinstance(s, str):
-        raise TypeError
+        raise TypeError(f'the first argument should be a string, got {type(s)} instead')
     if not isinstance(n, int):
-        raise TypeError
+        raise TypeError(f'the second argument should be an integer, got {type(n)} instead')
     if not isinstance(padder, str):
-        raise TypeError
+        raise TypeError(f'the padder should be a character, got {type(padder)} instead')
     if not len(padder) == 1:
-        raise ValueError
-    if n <= 0:
-        raise ValueError
+        raise ValueError(f'the padder should be a single character, got {len(padder)} characters')
+    if n <= 1:
+        raise ValueError(f'the expected length should be larger than 0, got {n}')
     if len(s) <= n:
         return s
     padder_count = 3
     if n < 3:
         padder_count = n
-    return s[:n-padder_count] + '.' * padder_count
+    return s[:n-padder_count] + padder * padder_count

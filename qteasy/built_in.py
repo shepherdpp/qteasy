@@ -3048,7 +3048,7 @@ class DMA(RuleIterator):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (10, 250)],
+                         par_range=[(10, 250), (10, 250), (8, 250)],
                          name='DMA',
                          description='Quick DMA strategy, determine long/short position according to differences of '
                                      'moving average prices with simple timing strategy',
