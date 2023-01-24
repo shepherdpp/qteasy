@@ -1697,13 +1697,13 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
 
 def save_config(config=None, file_name=None, overwrite=True):
     """ 将config保存为一个文件，如果不明确给出文件名及config对象，则
-        将QT_CONFIG保存到qteasy.cnf中
+        将QT_CONFIG保存到qteasy.cfg中
 
     :param config: ConfigDict 对象
         一个config对象，默认None，如果为None，则保存QT_CONFIG
 
     :param file_name: str
-        文件名，默认None，如果为None，文件名为qteasy.cnf
+        文件名，默认None，如果为None，文件名为qteasy.cfg
 
     :param overwrite: bool
         默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
@@ -1720,11 +1720,11 @@ def save_config(config=None, file_name=None, overwrite=True):
         raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
 
     if file_name is None:
-        file_name = 'saved_config.cnf'
+        file_name = 'saved_config.cfg'
     if not isinstance(file_name, str):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
     import re
-    if not re.match('[a-zA-Z_]\w+\.cnf$', file_name):
+    if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
     config_path = QT_ROOT_PATH + 'qteasy/config/'
@@ -1751,7 +1751,7 @@ def load_config(config=None, file_name=None):
         一个config对象，默认None，如果为None，则保存QT_CONFIG
 
     :param file_name: str
-        文件名，默认None，如果为None，文件名为qteasy.cnf
+        文件名，默认None，如果为None，文件名为qteasy.cfg
     :return:
     """
     from qteasy import logger_core
@@ -1764,11 +1764,11 @@ def load_config(config=None, file_name=None):
         raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
 
     if file_name is None:
-        file_name = 'saved_config.cnf'
+        file_name = 'saved_config.cfg'
     if not isinstance(file_name, str):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
     import re
-    if not re.match('[a-zA-Z_]\w+\.cnf$', file_name):
+    if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
     try:

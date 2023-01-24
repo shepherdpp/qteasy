@@ -28,8 +28,8 @@ class TestConfig(unittest.TestCase):
         conf = {'mode':                2,
                 'invest_cash_amounts': [200000]}
         qt.configure(**conf)
-        qt.save_config(QT_CONFIG, 'saved3.cnf')
-        qt.load_config(QT_CONFIG, 'saved3.cnf')
+        qt.save_config(QT_CONFIG, 'saved3.cfg')
+        qt.load_config(QT_CONFIG, 'saved3.cfg')
         print(QT_CONFIG)
         self.assertEqual(QT_CONFIG.mode, 2)
         qt.reset_config()

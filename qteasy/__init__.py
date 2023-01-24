@@ -59,12 +59,12 @@ QT_CONFIG_FILE_INTRO = '# qteasy configuration file\n' \
                        '# local_data_source = database\n\n'
 # 读取configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
 try:
-    with open(QT_ROOT_PATH+'qteasy/qteasy.cnf') as f:
+    with open(QT_ROOT_PATH+'qteasy/qteasy.cfg') as f:
         config_lines = f.readlines()
         logger_core.info(f'read configuration file: {f.name}')
 except FileNotFoundError as e:
     logger_core.warning(f'{e}\na new configuration file is created.')
-    f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
+    f = open(QT_ROOT_PATH + 'qteasy/qteasy.cfg', 'w')
     intro = QT_CONFIG_FILE_INTRO
     f.write(intro)
     f.close()
