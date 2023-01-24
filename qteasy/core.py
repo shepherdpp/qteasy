@@ -1727,10 +1727,9 @@ def save_config(config=None, file_name=None, overwrite=True):
     if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
-    config_path = QT_ROOT_PATH + 'qteasy/config/'
+    config_path = QT_ROOT_PATH + 'config/'
     if not os.path.exists(config_path):
-        logger_core.warning(f'target directory does not exist, will create one')
-        os.makedirs(config_path)
+        os.makedirs(config_path, exist_ok=False)
     if overwrite:
         open_method = 'wb'  # overwrite the file
     else:
@@ -1772,11 +1771,11 @@ def load_config(config=None, file_name=None):
         raise ValueError(f'invalid file name given: {file_name}')
 
     try:
-        with open(QT_ROOT_PATH + 'qteasy/config/' + file_name, 'rb') as f:
+        with open(QT_ROOT_PATH + 'config/' + file_name, 'rb') as f:
             saved_config = pickle.load(f)
             logger_core.info(f'read configuration file: {f.name}')
     except FileNotFoundError as e:
-        logger_core.warning(f'{e}\nError during loading {file_name}! nothing will be read.')
+        logger_core.warning(f'{e}\nError during loading configuration {file_name}! nothing will be read.')
         saved_config = {}
 
     configure(config=config,

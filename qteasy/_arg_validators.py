@@ -12,6 +12,7 @@
 import pandas as pd
 import numpy as np
 import datetime
+import warnings
 
 
 class ConfigDict(dict):
@@ -184,7 +185,7 @@ def _valid_qt_kwargs():
                                               'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
                                               'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
 
-        'local_data_file_path': {'Default':   'qteasy/data/',
+        'local_data_file_path': {'Default':   'data/',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
                                  'text':      '确定本地历史数据文件存储路径'},
@@ -219,12 +220,12 @@ def _valid_qt_kwargs():
                                  'text':      '数据库的访问密码\n\n'
                                               '建议通过配置文件配置数据库用户名和密码'},
 
-        'sys_log_file_path':    {'Default':   'qteasy/log',
+        'sys_log_file_path':    {'Default':   'syslog/',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
                                  'text':      '系统运行日志及错误日志的存储路径\n'},
 
-        'trade_log_file_path':  {'Default':   'qteasy/log',
+        'trade_log_file_path':  {'Default':   'tradelog/',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
                                  'text':      '明细交易日志的存储路径\n'},
@@ -873,10 +874,9 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
-        from qteasy import logger_core
         warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error' \
                    f'is suppressed by program!'
-        logger_core.warn(warn_msg)
+        warnings.warn(warn_msg)
         return True
 
     try:

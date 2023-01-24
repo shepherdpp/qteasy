@@ -7,11 +7,12 @@
 # Desc:
 #   Local historical data management.
 # ======================================
+import os
+from os import path
 import numpy as np
 import pymysql
 from sqlalchemy import create_engine
 import pandas as pd
-from os import path
 import warnings
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -2005,7 +2006,8 @@ class DataSource:
             from qteasy import QT_ROOT_PATH
             # if not self.file_exists(file_loc):
             #     raise SystemError('specified file path does not exist')
-            self.file_path = QT_ROOT_PATH + file_loc
+            self.file_path = path.join(QT_ROOT_PATH, file_loc)
+            os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
             self.engine = None
             self.source_type = 'file'
             self.file_type = file_type
@@ -2084,7 +2086,8 @@ class DataSource:
             raise RuntimeError('can not check file system while source type is "db"')
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_name = file_name + '.' + self.file_type
+        file_path_name = path.join(self.file_path, file_name)
         return file_path_name
 
     def file_exists(self, file_name):

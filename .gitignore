@@ -50,3 +50,9 @@ qteasy/log/*
 **qteasy/log/
 *.cnf
 test.py
+qteasy/config/qt_config.cfg
+qteasy/config/saved.cfg
+qteasy/config/saved2.cfg
+qteasy.cfg
+config/
+syslog/
