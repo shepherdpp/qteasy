@@ -27,7 +27,7 @@ from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
 from .finance import CashPlan, get_selling_result, get_purchase_result, set_cost
-from .operator import Operator
+from .qt_operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result
 from .visual import _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics

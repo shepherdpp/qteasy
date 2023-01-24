@@ -23,7 +23,7 @@ from .core import get_realtime_holdings, get_realtime_trades, filter_stock_codes
 from .core import reconnect_ds
 from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
-from .operator import Operator
+from .qt_operator import Operator
 from .strategy import RuleIterator, GeneralStg, FactorSorter
 from .built_in import built_ins, built_in_list, built_in_strategies, get_built_in_strategy
 from .visual import candle

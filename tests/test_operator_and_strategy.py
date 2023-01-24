@@ -190,7 +190,7 @@ class TestSigStrategy(GeneralStg):
                 description='test signal creation strategy',
                 par_count=3,
                 par_types='conti, conti, conti',
-                par_range=([2, 10], [0, 3], [0, 3]),
+                par_range=([0, 10], [-3, 3], [-3, 3]),
                 data_types='close, open, high, low',
                 window_length=2
         )
@@ -673,11 +673,41 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_set_pars(self):
         """ 测试设置策略参数"""
-        stg_dma = self.op[0]
-        stg_macd = self.op[1]
-        stg_trix = self.op[2]
+        stg_dma = self.op2[0]
+        stg_macd = self.op2[1]
+        stg_trix = self.op2[2]
 
-        stg_dma.pars = (1, 2, 3)
+        stg_dma.pars = (10, 20, 30)
+        self.assertEqual(stg_dma.pars, (10, 20, 30))
+        stg_macd.pars = (10, 20, 30)
+        self.assertEqual(stg_macd.pars, (10, 20, 30))
+        stg_trix.set_pars((10, 20))
+        self.assertEqual(stg_trix.pars, (10, 20))
+        stg_dma.set_pars({'a': (10, 20, 30),
+                          'b': (11, 21, 31),
+                          'c': (12, 22, 32)})
+        self.assertEqual(stg_dma.pars,
+                         {'a': (10, 20, 30),
+                          'b': (11, 21, 31),
+                          'c': (12, 22, 32)})
+
+        # test errors
+        self.assertRaises(AssertionError, stg_dma.set_pars, 'wrong input')   # wrong input type
+        self.assertRaises(ValueError, stg_dma.set_pars, (10, -100))  # par count does not match
+        self.assertRaises(ValueError, stg_dma.set_pars, (10, 10, -10))   # par out of range
+        wrong_dict_pars = {'a': (10, 20, 30),
+                           'b': (11, 21, 31),
+                           'c': (12, 22, 32)}
+        self.assertRaises(ValueError, stg_trix.set_pars, wrong_dict_pars)  # par count not match in dict
+        wrong_dict_pars = {'a': 'wrong_type',
+                           'b': (11, 21),
+                           'c': (12, 22)}
+        self.assertRaises(TypeError, stg_trix.set_pars, wrong_dict_pars)  # wrong input type in dict
+        wrong_dict_pars = {'a': (10, 20),
+                           'b': (11, 21),
+                           'c': (12, -22)}
+        self.assertRaises(ValueError, stg_trix.set_pars, wrong_dict_pars)  # par out of range in dict
+        # raise NotImplementedError
 
     def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""
@@ -1210,7 +1240,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(osp[1], list)
         self.assertEqual(len(osp[0]), 6)
         self.assertEqual(len(osp[1]), 6)
-        self.assertEqual(osp[0], [(10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250)])
+        self.assertEqual(osp[0], [(10, 250), (10, 250), (5, 250), (10, 250), (10, 250), (5, 250)])
         self.assertEqual(osp[1], ['int', 'int', 'int', 'int', 'int', 'int'])
 
     def test_property_opt_types(self):
@@ -1858,11 +1888,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # TODO: allow set_parameters to all strategies of specific bt price type
         print(f'Set up strategy parameters by strategy id')
         op.set_parameter('dma',
-                         pars=(5, 10, 5),
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (10, 15)),
+                         par_range=((5, 10), (5, 15), (5, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
+        op.set_parameter('dma',
+                         pars=(5, 10, 5))
         op.set_parameter('all',
                          window_length=20)
         op.set_parameter('all', bt_price_type='high')
@@ -1873,12 +1904,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          pars=(9, -0.09),
                          window_length=10)
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (10, 15)))
+        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
         self.assertEqual(op.strategies[2].pars, (9, -0.09))
         self.assertEqual(op.op_data_freq, 'd')
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
+                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.max_window_length, 20)
         print(f'KeyError will be raised if wrong strategy id is given')
@@ -1901,7 +1932,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                             'open':  ['or', 's2', 'and', 's1', 's0']})
 
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
+                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
@@ -2257,11 +2288,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'--------- Testing setting Opt Pars: set_opt_par -------')
         op = qt.Operator('dma, random, crossline')
         op.set_parameter('dma',
-                         pars=(5, 10, 5),
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (10, 15)),
+                         par_range=((5, 10), (5, 15), (5, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
+        op.set_parameter('dma',
+                         pars=(5, 10, 5))
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
         self.assertEqual(op.strategies[1].pars, (0.5,))
         self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
@@ -2272,29 +2304,31 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
 
         op.set_parameter('crossline',
-                         pars=(5, 10, 0.1),
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (0, 1)),
+                         par_range=((5, 10), (5, 35), (0, 1)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
+        op.set_parameter('crossline',
+                         pars=(5, 10, 0.1))
         self.assertEqual(op.opt_tags, [1, 0, 1])
-        op.set_opt_par((5, 12, 9, 8, 26, 9, 'buy'))
+        op.set_opt_par((5, 12, 9, 8, 26, 0.09))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 0.09))
 
-        op.set_opt_par((9, 200, 155, 8, 26, 9, 'buy', 5, 12, 9))
+        op.set_opt_par((9, 200, 155, 8, 26, 0.09, 5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 0.09))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
-                         pars=(5, 10, 5),
                          opt_tag=2,
-                         par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 35), (5, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
+        op.set_parameter('crossline',
+                         pars=(5, 10, 5))
         self.assertEqual(op.opt_tags, [1, 0, 2])
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
@@ -2305,11 +2339,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # Test Errors
-        # Not enough values for parameter
-        op.set_parameter('crossline', opt_tag=1)
-        self.assertRaises(ValueError, op.set_opt_par, (5, 12, 9, 8))
-        # wrong type of input
-        self.assertRaises(AssertionError, op.set_opt_par, [5, 12, 9, 7, 15, 12, 'sell'])
+        # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
 
     def test_stg_attribute_get_and_set(self):
         self.stg = qt.built_in.Crossline()
@@ -2319,7 +2349,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                         'point' \
                         ' of long and short term moving average prices '
         self.pars = (35, 120, 0.02)
-        self.par_boes = [(10, 250), (10, 250), (0, 1)]
+        self.par_boes = [(10, 250), (10, 250), (0, 0.1)]
         self.par_count = 3
         self.par_types = ['int', 'int', 'float']
         self.opt_tag = 0
@@ -2344,8 +2374,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.stg.description = 'NEW TEXT'
         self.assertEqual(self.stg.name, 'NEW NAME')
         self.assertEqual(self.stg.description, 'NEW TEXT')
-        self.stg.pars = (1, 2, 3)
-        self.assertEqual(self.stg.pars, (1, 2, 3))
+        self.stg.pars = (10, 20, 0.03)
+        self.assertEqual(self.stg.pars, (10, 20, 0.03))
         self.stg.par_count = 3
         self.assertEqual(self.stg.par_count, 3)
         self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]

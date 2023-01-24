@@ -81,6 +81,7 @@ class BaseStrategy:
         if par_count is None:
             par_count = implied_par_count
         else:
+            # TODO: 按照当前的代码，par_count一但设置后就无法修改，这点是否合理？
             if not isinstance(par_count, int):
                 raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
             if par_count < 0:
@@ -104,8 +105,8 @@ class BaseStrategy:
             for item in par_types:
                 if not isinstance(item, str):
                     raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
-                if not item.lower() in ['int', 'float', 'conti', 'discr', 'enum']:
-                    raise KeyError(f'Invalid type ({item}), should be one of "int, float, conti, discr, enum"')
+                if not item.lower() in ['int', 'float', 'conti', 'discr', 'enum', 'list']:
+                    raise KeyError(f'Invalid type ({item}), should be one of "int, float, conti, discr, enum, list"')
             if len(par_types) < par_count:
                 logger_core.warning(f'Not enough parameter types({len(par_types)}) to assign'
                                     f' to all ({par_count}) parameters')
@@ -135,7 +136,7 @@ class BaseStrategy:
         self._stg_name = name  # 策略的名称
         self._stg_text = description  # 策略的描述文字
         self._par_count = par_count  # 策略参数的元素个数
-        self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
+        self._par_types = par_types  # 策略参数的类型，可选类型'int/float/discr/conti/enum/list'
         self._par_bounds_or_enums = par_range
         self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
         logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={par_count},'
@@ -223,7 +224,6 @@ class BaseStrategy:
             # 当没有给出策略参数类型时，参数类型为空列表
             self._par_types = []
         else:
-
             if isinstance(par_types, str):
                 par_types = str_to_list(par_types, ',')
             assert isinstance(par_types, list), f'TypeError, par type should be a list, got {type(par_types)} instead'
@@ -421,11 +421,7 @@ class BaseStrategy:
             return 1
         if isinstance(pars, dict):
             return self.set_dict_pars(pars)
-        if not isinstance(pars, tuple):
-            raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
-        if len(pars) != self.par_count:
-            raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
-                             f' got {len(pars)} ({pars}).')
+        # now pars should be tuples
         if self.check_pars(pars):
             self._pars = pars
             return 1
@@ -434,6 +430,11 @@ class BaseStrategy:
         """检查pars(一个tuple)是否符合strategy的参数设置"""
         # 逐个检查每个par的类型是否正确，是否在取值范围内
         for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
+            if not isinstance(pars, tuple):
+                raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
+            if len(pars) != self.par_count:
+                raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
+                                 f' got {len(pars)} ({pars}).')
             if par_type in ['int', 'discr']:
                 try:
                     par = int(par)
@@ -448,11 +449,11 @@ class BaseStrategy:
 
             if par_type in ['enum']:
                 if par not in par_range:
-                    raise OverflowError(f'Invalid parameter, {par} should be one of items in ({par_range})')
+                    raise ValueError(f'Invalid parameter, {par} should be one of items in ({par_range})')
             else:
                 l_bound, u_bound = par_range
                 if (par < l_bound) or (par > u_bound):
-                    raise OverflowError(f'Parameter Overflow!, {par} is out of range:({l_bound} - {u_bound})')
+                    raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
         return True
 
     def set_dict_pars(self, pars: dict) -> int:

@@ -1684,7 +1684,7 @@ class MACD(RuleIterator):
     数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：270
-    参数范围：[(10, 250), (10, 250), (10, 250)]
+    参数范围：[(10, 250), (10, 250), (5, 250)]
     策略不支持参考数据，不支持交易数据
     """
 
@@ -1692,7 +1692,7 @@ class MACD(RuleIterator):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (10, 250)],
+                         par_range=[(10, 250), (10, 250), (5, 250)],
                          name='MACD',
                          description='MACD strategy, determine long/short position according to differences of '
                                      'exponential weighted moving average prices',
@@ -3040,7 +3040,7 @@ class DMA(RuleIterator):
     数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：270
-    参数范围：[(10, 250), (10, 250), (10, 250)]
+    参数范围：[(10, 250), (10, 250), (8, 250)]
     策略不支持参考数据，不支持交易数据
     """
 
@@ -3048,7 +3048,7 @@ class DMA(RuleIterator):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (8, 250)],
+                         par_range=[(10, 250), (10, 250), (5, 250)],
                          name='DMA',
                          description='Quick DMA strategy, determine long/short position according to differences of '
                                      'moving average prices with simple timing strategy',
@@ -3233,11 +3233,11 @@ class SelectingAvgIndicator(FactorSorter):
                          par_count=6,
                          par_types=['enum', 'enum', 'enum', 'float', 'float', 'float'],
                          par_range=[(True, False),
-                                    ('even', 'linear', 'proportion'),
+                                    ('even', 'linear', 'distance', 'proportion'),
                                     ('any', 'greater', 'less', 'between', 'not_between'),
                                     (-np.inf, np.inf),
                                     (-np.inf, np.inf),
-                                    (0, 1.)],
+                                    (0, np.inf)],
                          name='FINANCE',
                          description='GeneralStg share_pool according to financial report EPS indicator',
                          data_freq='d',

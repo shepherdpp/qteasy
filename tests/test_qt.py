@@ -39,7 +39,7 @@ class TestLSStrategy(RuleIterator):
                          description='test long/short strategy',
                          par_count=2,
                          par_types='discr, conti',
-                         par_range=([1, 5], [2, 10]),
+                         par_range=([1, 20], [2, 20]),
                          data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)

@@ -1,6 +1,6 @@
 # coding=utf-8
 # ======================================
-# File:     operator.py
+# File:     qt_operator.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-21
@@ -1018,13 +1018,13 @@ class Operator:
             # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
             elif stg.opt_tag == 1:
                 k += stg.par_count
-                stg.update_pars(opt_par[s:k])
+                stg.update_pars(opt_par[s:k])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
             # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
             elif stg.opt_tag == 2:
                 # 在这种情况下，只需要取出参数向量中的一个分量，赋值给策略作为参数即可。因为这一个分量就包含了完整的策略参数tuple
                 k += 1
-                stg.update_pars(opt_par[s])
+                stg.update_pars(opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
     def set_blender(self, blender=None, price_type=None):
