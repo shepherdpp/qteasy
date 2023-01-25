@@ -10,6 +10,7 @@
 # ======================================
 import unittest
 
+import os
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -199,19 +200,19 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(self.ds_csv, DataSource)
         self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/qteasy/data/')
         self.assertEqual(self.ds_csv.file_type, 'csv')
-        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertEqual(self.ds_csv.file_path, os.path.join(self.qt_root_path, 'qteasy/data/'))
         self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
         self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/qteasy/data/')
         self.assertEqual(self.ds_hdf.file_type, 'hdf')
-        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertEqual(self.ds_hdf.file_path, os.path.join(self.qt_root_path, 'qteasy/data/'))
         self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
         self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/qteasy/data/')
         self.assertEqual(self.ds_fth.file_type, 'fth')
-        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, 'qteasy/data/'))
         self.assertIs(self.ds_fth.engine, None)
 
     def test_file_manipulates(self):

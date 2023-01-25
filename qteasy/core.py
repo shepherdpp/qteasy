@@ -10,6 +10,7 @@
 
 # here's some test codes
 
+import os
 import pandas as pd
 import numpy as np
 import time
@@ -1727,14 +1728,14 @@ def save_config(config=None, file_name=None, overwrite=True):
     if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
-    config_path = QT_ROOT_PATH + 'config/'
+    config_path = os.path.join(QT_ROOT_PATH, 'config/')
     if not os.path.exists(config_path):
         os.makedirs(config_path, exist_ok=False)
     if overwrite:
         open_method = 'wb'  # overwrite the file
     else:
         open_method = 'xb'  # raise if file already existed
-    with open(config_path + file_name, open_method) as f:
+    with open(os.path.join(config_path, file_name), open_method) as f:
         try:
             pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
             logger_core.info(f'file content written: {f.name}')
@@ -1770,8 +1771,9 @@ def load_config(config=None, file_name=None):
     if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
+    config_path = os.path.join(QT_ROOT_PATH, 'config/')
     try:
-        with open(QT_ROOT_PATH + 'config/' + file_name, 'rb') as f:
+        with open(os.path.join(config_path, file_name), 'rb') as f:
             saved_config = pickle.load(f)
             logger_core.info(f'read configuration file: {f.name}')
     except FileNotFoundError as e:
