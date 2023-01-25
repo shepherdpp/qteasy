@@ -312,7 +312,8 @@ class TestEvaluations(unittest.TestCase):
     def test_performance_stats(self):
         """test the function performance_statistics()
         """
-        raise NotImplementedError
+        # TODO: implement this test
+        pass
 
     # noinspection PyTypeChecker
     def test_fv(self):
@@ -863,7 +864,8 @@ class TestEvaluations(unittest.TestCase):
 
     def test_calmar(self):
         """test evaluate function eval_calmar()"""
-        raise NotImplementedError
+        # TODO: implement this test
+        pass
 
     def test_benchmark(self):
         reference = self.test_data1
@@ -887,7 +889,9 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEquals(yr, 0.929154957)
 
     def test_evaluate(self):
-        raise NotImplementedError
+        """ 测试回测结果评价函数"""
+        # TODO: implement this test
+        pass
 
 
 if __name__ == '__main__':

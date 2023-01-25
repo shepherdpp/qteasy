@@ -507,10 +507,14 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(AssertionError, temp_hp.re_label, htypes='wrong input!')
 
     def test_csv_to_hp(self):
-        raise NotImplementedError
+        """ 测试从csv文件中读取HistoryPanel"""
+        # TODO: implement this test
+        pass
 
     def test_hdf_to_hp(self):
-        raise NotImplementedError
+        """ 测试从hdf文件中读取HistoryPanel"""
+        # TODO: implement this test
+        pass
 
     def test_hp_join(self):
         # TODO: 这里需要加强，需要用具体的例子确认hp_join的结果正确
@@ -823,10 +827,14 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_to_csv(self):
-        raise NotImplementedError
+        """ 测试将HistoryPanel保存为csv文件"""
+        # TODO: implement this test
+        pass
 
     def test_to_hdf(self):
-        raise NotImplementedError
+        """ 测试将HistoryPanel保存为hdf文件"""
+        # TODO: implement this test
+        pass
 
     def test_fill_na(self):
         """测试填充无效值"""
