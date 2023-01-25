@@ -59,6 +59,12 @@ class HistoryPanel():
             HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
             HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
         6, 方便地由多个pandas DataFrame对象组合而成
+
+    Attributes
+    ----------
+
+    Methods
+    -------
     """
 
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
@@ -891,18 +897,29 @@ def dataframe_to_hp(df: pd.DataFrame,
                     htypes=None,
                     shares=None,
                     column_type: str = None) -> HistoryPanel:
-    """ 根据DataFrame中的数据创建HistoryPanel对象。由于DataFrame只有一个二维数组，因此一个DataFrame只能转化为以下两种HistoryPanel之一：
-        1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的shape为(1, dates, htypes)
-            在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出
-        2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
-        具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
+    """ 根据DataFrame中的数据创建HistoryPanel对象。
 
-    :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame。
-    :param hdates:
-    :param htypes: str,
-    :param shares: str,
-    :param column_type: str: 可以为'share' or 'htype'
-    :return:
+    由于DataFrame只有一个二维数组，因此一个DataFrame只能转化为以下两种HistoryPanel之一：
+    1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的shape为(1, dates, htypes)
+        在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出
+    2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
+    具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
+
+    Parameters
+    ----------
+    df: pd.DataFrame,
+        需要被转化为HistoryPanel的DataFrame。
+    hdates:
+
+    htypes: str
+
+    shares: str
+
+    column_type: str
+        可以为'share' or 'htype'
+
+    Returns
+    -------
         HistoryPanel对象
     """
     available_column_types = ['shares', 'htypes', None]
@@ -1008,13 +1025,14 @@ def from_multi_index_dataframe(df: pd.DataFrame):
 def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
     """ 将多个dataframe组合成一个HistoryPanel.
 
-    :param dfs: list, dict
+    Parameters
+    ----------
+    dfs: list, dict
         需要被堆叠的dataframe，可以为list或dict，
         dfs可以是一个dict或一个list，如果是一个list，这个list包含需要组合的所有dataframe，如果是dict，这个dict的values包含
         所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列
         （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。
-
-    :param dataframe_as: type str, 'shares' 或 'htypes'
+    dataframe_as: type str, 'shares' 或 'htypes'
         每个dataframe代表的数据类型。
             组合的方式有两种，根据dataframe_as参数的值来确定采用哪一种组合方式：
         stack_as == 'shares'，
@@ -1032,8 +1050,7 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
             如果dfs是一个list，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同，作为HP的列标签
             如果dfs是一个dict，htypes参数不必给出，dfs的keys会被用于列标签，如果htypes参数给出且符合要求，
             htypes参数将取代dfs的keys参数
-
-    :param shares: list 或 str
+    shares: list 或 str
         生成的HistoryPanel的层标签或股票名称标签。
         如果堆叠方式为"shares"，则层标签必须以dict的key的形式给出或者在shares参数中给出
         以下两种参数均有效且等效：
@@ -1043,21 +1060,21 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
         如果堆叠方式为"htypes"，不需要给出shares，默认使用dfs的columns标签的并集作为输出的层标签
         如果给出了shares，则会强制使用shares作为层标签，多出的标签会用fill_values填充，
         多余的DataFrame数据会被丢弃
-
-    :param htypes:list 或 str
+    htypes:list 或 str
         生成的HistoryPanel的列标签或数据类型标签。
         如果堆叠方式为"htypes"，则层标签必须以dict的key的形式给出或者在shares参数中给出
         以下两种参数均有效且等效：
         '000001.SZ, 000002.SZ, 000003.SZ'
         ['000001.SZ', '000002.SZ', '000003.SZ']
-
         如果堆叠方式为"shares"，不需要给出htypes，默认使用dfs的columns标签的并集作为列标签
         如果给出了htypes，则会强制用它作为列标签，多出的标签会用fill_values填充，
         多余的DataFrame数据会被丢弃
-
-    :param fill_value: 多余的位置用fill_value填充
+    fill_value:
+        多余的位置用fill_value填充
 
     :return:
+    HistoryPanel
+        一个由多个单index的数据框组成的HistoryPanel对象
     """
     assert isinstance(dfs, (list, dict)), \
         f'TypeError, dfs should be a list of or a dict whose values are pandas DataFrames, got {type(dfs)} instead.'

@@ -1929,6 +1929,26 @@ class DataSource:
     返回空DataFrame。
     DataSource对象可以按要求定期刷新或从NDP拉取数据，也可以手动操作
 
+    Attributes
+    ----------
+    tables
+
+
+    Methods
+    -------
+    info()
+
+    overview(print_out=True)
+
+    read_table_data()
+
+    export_table_data()
+
+    get_history_data()
+
+    get_index_weights()
+
+    refill_local_source()
     """
 
     def __init__(self,
@@ -4342,15 +4362,17 @@ def get_table_map():
 def find_history_data(s, fuzzy=False, match_description=False):
     """ 根据输入的字符串，查找或匹配历史数据类型
 
-    :param s: string，
+    Parameters
+    ----------
+    s: string，
         一个字符串，用于查找或匹配历史数据类型
 
-    :param fuzzy: bool, 默认值：False
+    fuzzy: bool, 默认值：False
         是否模糊匹配数据名称，
          - False: 仅精确匹配数据的名称
          - True:  模糊匹配数据名称以及数据描述
 
-    :param match_description, bool, 默认值: False
+    match_description, bool, 默认值: False
         是否模糊匹配数据描述
          - False: 模糊匹配时不包含数据描述（仅匹配数据名称）
          - True:  模糊匹配时包含数据描述
@@ -4362,34 +4384,38 @@ def find_history_data(s, fuzzy=False, match_description=False):
         相关信息如：
         调用名称、中文简介、所属数据表、数据频率、证券类型等等
 
-        TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
-          方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
-          存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
-          指导如何精确定位数据，至于数据列名仅作为参考信息存在。
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.find_history_data('pe')
+    output:
+        matched following history data,
+        use "qt.get_history_panel()" to load these data:
+        ------------------------------------------------------------------------
+          h_data   dtype             table asset freq plottable                remarks
+        0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
+        1     pe  double  stock_indicator2     E    d        No                  市盈(动)
+        2     pe   float   index_indicator   IDX    d        No                    市盈率
+        ========================================================================
 
-        TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
+    Raises
+    ------
 
-        TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
-
-        TODO: 增加函数的易用性：函数返回一个列表，包含查找到的所有数据类型的ID
-
-        例如：
-        >>> import qteasy as qt
-        >>> qt.find_history_data('pe')
-        得到：
-        >>> output:
-            matched following history data,
-            use "qt.get_history_panel()" to load these data:
-            ------------------------------------------------------------------------
-              h_data   dtype             table asset freq plottable                remarks
-            0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
-            1     pe  double  stock_indicator2     E    d        No                  市盈(动)
-            2     pe   float   index_indicator   IDX    d        No                    市盈率
-            ========================================================================
-
-    :return:
-        None
+    Returns
+    -------
+    None
     """
+
+    # TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
+    #  方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
+    #  存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
+    #  指导如何精确定位数据，至于数据列名仅作为参考信息存在。
+    #
+    # TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
+    #
+    # TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
+    #
+    # TODO: 增加函数的易用性：函数返回一个列表，包含查找到的所有数据类型的ID
     if not isinstance(s, str):
         raise TypeError(f'input should be a string, got {type(s)} instead.')
     # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述

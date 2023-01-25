@@ -383,52 +383,45 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
            interactive=True, data_source=None, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
 
-    :param stock: str,
+    Parameters
+    ----------
+    stock: str,
         简化证券代码、完整证券代码或股票名称，根据该代码或名称匹配准确的证券代码
         如果给出股票名称，支持使用%、？等通配符、支持模糊查找
         如果匹配到多个证券代码，将打印出提示，并选择第一个匹配的证券代码输出图表
-
-    :param start: str, datetime, TimeStamp
+    start: str, datetime, TimeStamp
         K线图的起始日期
-
-    :param end: str, datetime, TimeStamp
+    end: str, datetime, TimeStamp
         K线图的终止日期
-
-    :param stock_data: pd.DataFrame
+    stock_data: pd.DataFrame
         直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
-
-    :param freq: str
+    freq: str
         K线图的时间频率，合法输入包括：
         - D/d: 日K线
         - W/w: 周K线
         - M/m: 月K线
         - XMin/Xmin: 分钟K线，接受1min/5min/15min/30min/60min等五种输入
-
-    :param asset_type: str
+    asset_type: str
         证券类型，包含：
         - E:    股票
         - IDX:  指数
         - FD:   基金
         - FT:   期货
         - OPT:  期权
-
-    :param plot_type: str
+    plot_type: str
         输出图表的类型，包括以下选项
         - candle:   显示蜡烛图
         - ohlc:     显示OHLC K线图
         - renko:    显示RENKO图
         - none:     只返回数据，不显示图表
-
-    :param interactive: Bool
+    interactive: Bool
         是否输出可交互式图表
         （受matplotlib的backend限制，某些环境下交互式图表不可用，详情请参见
         https://matplotlib.org/stable/users/explain/backends.html）
-
-    :param data_source: DataSource Object
+    data_source: DataSource Object
         历史数据源，默认使用qt内置的数据源QT_DATA_SOURCE
         否则使用给定的DataSource
-
-    :param kwargs:
+    kwargs:
         用于传递至K线图的更多参数，包括：
         - adj:          str, 复权参数： none，back，forward
         - mav:          list, 移动均线周期
@@ -439,8 +432,10 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         - rsi_par:      tuple, RSI指标参数
         - dema_par:     tuple, DEMA指标参数
 
-    :return:
-        pd.DataFrame, 包含相应股票数据的DataFrame
+    Returns
+    -------
+    pd.DataFrame
+        包含相应股票数据的DataFrame
     """
     from qteasy import logger_core
     no_visual = False

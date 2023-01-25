@@ -396,7 +396,8 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
     :param op_list: 交易信号清单，一个DataFrame。index为Timestamp类型
     :param invest: CashPlan对象，投资日期和投资金额
-    :return:
+    Returns
+    -------
     """
     if not isinstance(op_list, pd.DataFrame):
         raise TypeError(f'operation list should be a pandas DataFrame, got {type(op_list)} instead')
@@ -778,7 +779,8 @@ def apply_loop_core(share_count,
         不需要生成trade_log的情形下运行核心循环的核心代码。
         在符合要求的情况下，这部分代码以njit方式加速运行，实现提速
 
-    :return:
+    Returns
+    -------
     """
 
     # 初始化计算结果列表
@@ -914,7 +916,8 @@ def process_loop_results(operator,
     :param op_list_bt_indices:
     :param trade_log:
     :param bt_price_priority_ohlc:
-    :return:
+    Returns
+    -------
     """
     from qteasy import logger_core
     amounts_matrix, cashes, fees, values = loop_results
@@ -1001,7 +1004,9 @@ def process_loop_results(operator,
 def get_realtime_holdings():
     """ 获取当前持有的产品在手数量
 
-    :return: tuple:
+    Returns
+    -------
+    tuple:
     """
     return None
 
@@ -1009,7 +1014,8 @@ def get_realtime_holdings():
 def get_realtime_trades():
     """ 获取最近的交易记录
 
-    :return:
+    Returns
+    -------
     """
     return None
 
@@ -1019,7 +1025,8 @@ def build_trade_data(holdings, recent_trades):
 
     :param holdings: tuple
     :param recent_trades: tuple
-    :return:
+    Returns
+    -------
     """
     return None
 
@@ -1037,7 +1044,8 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
 
     :param date:
     :param kwargs:
-    :return:
+    Returns
+    -------
     """
     try:
         date = pd.to_datetime(date)
@@ -1142,33 +1150,33 @@ def filter_stock_codes(date: str = 'today', **kwargs) -> list:
 def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
     """ 等同于get_stock_info()
         根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
-    
-    :param code_or_name: 
+
+    Parameters
+    ----------
+    code_or_name:
         证券代码或名称，
         如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
         如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
-        
-    :param asset_types: 默认None
+    asset_types: 默认None
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
         - E     股票
         - IDX   指数
         - FD    基金
         - FT    期货
         - OPT   期权
-
-    :param match_full_name: bool
+    match_full_name: bool
         是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
-
-    :param printout: bool
+    printout: bool
         如果为True，打印匹配到的结果
-
-    :param verbose: bool
+    verbose: bool
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
 
-    :return: dict
+    Returns
+    -------
+    dict
         当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
@@ -1244,31 +1252,32 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
     """ 等同于get_basic_info()
         根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
 
-    :param code_or_name:
+    Parameters
+    ----------
+    code_or_name:
         证券代码或名称，
         如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
         如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
-
-    :param asset_types:
+    asset_types:
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
         - E     股票
         - IDX   指数
         - FD    基金
         - FT    期货
         - OPT   期权
-
-    :param match_full_name: bool
+    match_full_name: bool
         是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
-
-    :param printout: bool
+    printout: bool
         如果为True，打印匹配到的结果
-
-    :param verbose: bool
+    verbose: bool
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
-    :return: dict
+
+    Returns
+    -------
+    dict
         当仅找到一个匹配是，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
@@ -1276,6 +1285,7 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
         - 期货：   期货名称
         - 期权：   期权名称
     """
+
     return get_basic_info(code_or_name=code_or_name,
                           asset_types=asset_types,
                           match_full_name=match_full_name,
@@ -1289,7 +1299,8 @@ def get_table_info(table_name, data_source=None, verbose=True):
     :param table_name: 需要查询的数据表名称
     :param data_source: 需要获取数据表信息的数据源，默认None，此时获取默认QT_DATA_SOURCE的信息
     :param verbose: 默认True，是否打印完整数据列名称及类型清单
-    :return:
+    Returns
+    -------
     """
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE
@@ -1301,8 +1312,14 @@ def get_table_info(table_name, data_source=None, verbose=True):
 def get_table_overview(data_source=None):
     """ 显示默认数据源或指定数据源的数据总览
 
-    :param data_source: Object
+    Parameters
+    ----------
+    data_source: Object
         一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview
+
+    Returns
+    -------
+    str
     """
     from .database import DataSource
     if data_source is None:
@@ -1409,117 +1426,121 @@ def get_history_data(htypes,
     """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
-        :param htypes: [str, list]
-            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-            如以下两种输入方式皆合法且等效：
-             - str:     'open, high, low, close'
-             - list:    ['open', 'high', 'low', 'close']
-            特殊htypes的处理：
-            以下特殊htypes将被特殊处理"
-             - wt-000300.SH:
-                指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
-                获取的数据的htypes同样为wt-000300.SH型
-             - close-000300.SH:
-                给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
-                的参考数据
+    Parameters
+    ----------
+    htypes: [str, list]
+        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     'open, high, low, close'
+         - list:    ['open', 'high', 'low', 'close']
+        特殊htypes的处理：
+        以下特殊htypes将被特殊处理"
+         - wt-000300.SH:
+            指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
+            获取的数据的htypes同样为wt-000300.SH型
+         - close-000300.SH:
+            给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
+            的参考数据
+    shares: [str, list]
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    start: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+    end: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    freq: str
+        获取的历史数据的频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+    asset_type: str, list
+        限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+        逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+         - any: 可以获取任意资产类型的证券数据(默认值)
+         - E:   只获取股票类型证券的数据
+         - IDX: 只获取指数类型证券的数据
+         - FT:  只获取期货类型证券的数据
+         - FD:  只获取基金类型证券的数据
+    adj: str
+        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+         - none / n: 不复权(默认值)
+         - back / b: 后复权
+         - forward / fw / f: 前复权
+    resample_method: str
+        处理数据频率更新时的方法
+    as_data_frame: bool 默认False
+        是否返回DataFrame对象，True时返回HistoryPanel对象
+    group_by: str, 默认'shares'
+        如果返回DataFrame对象，设置dataframe的分组策略
+        - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
+        - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
+    **kwargs:
+        用于生成trade_time_index的参数，包括：
+    drop_nan: bool
+        是否保留全NaN的行
+    resample_method: str
+        如果数据需要升频或降频时，调整频率的方法
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+        数据合并方法:
+        - 'last'/'close': 使用合并区间的最后一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'first'/'open': 使用合并区间的第一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'max'/'high': 使用合并区间的最大值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'min'/'low': 使用合并区间的最小值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+        - 'sum'/'total': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
 
-        :param shares: [str, list]
-            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-            如以下两种输入方式皆合法且等效：
-             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        例如，填充下列数据(?表示插入的数据）
+            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+        缺失数据的填充方法如下:
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+        - 'nan': 使用NaN值填充缺失数据：
+            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+        - 'zero': 使用0值填充缺失数据：
+            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+    b_days_only: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+    trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+    include_start:
+        日期时间序列是否包含开始日期/时间
+    include_end:
+        日期时间序列是否包含结束日期/时间
+    start_am:
+        早晨交易时段的开始时间
+    end_am:
+        早晨交易时段的结束时间
+    include_start_am:
+        早晨交易时段是否包括开始时间
+    include_end_am:
+        早晨交易时段是否包括结束时间
+    start_pm:
+        下午交易时段的开始时间
+    end_pm:
+        下午交易时段的结束时间
+    include_start_pm
+        下午交易时段是否包含开始时间
+    include_end_pm
+        下午交易时段是否包含结束时间
 
-        :param start: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-
-        :param end: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-
-        :param freq: str
-            获取的历史数据的频率，包括以下选项：
-             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
-             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-
-        :param asset_type: str, list
-            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
-            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-             - any: 可以获取任意资产类型的证券数据(默认值)
-             - E:   只获取股票类型证券的数据
-             - IDX: 只获取指数类型证券的数据
-             - FT:  只获取期货类型证券的数据
-             - FD:  只获取基金类型证券的数据
-
-        :param adj: str
-            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-             - none / n: 不复权(默认值)
-             - back / b: 后复权
-             - forward / fw / f: 前复权
-
-        :param resample_method: str
-            处理数据频率更新时的方法
-
-        :param as_data_frame: bool 默认False
-            是否返回DataFrame对象，True时返回HistoryPanel对象
-
-        :param group_by: str, 默认'shares'
-            如果返回DataFrame对象，设置dataframe的分组策略
-            - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
-            - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
-
-        :param **kwargs:
-            用于生成trade_time_index的参数，包括：
-            :param drop_nan: bool
-                是否保留全NaN的行
-            :param resample_method: str
-                如果数据需要升频或降频时，调整频率的方法
-                调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
-                数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
-                例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
-                数据合并方法:
-                - 'last'/'close': 使用合并区间的最后一个值。如：
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-                - 'first'/'open': 使用合并区间的第一个值。如：
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-                - 'max'/'high': 使用合并区间的最大值作为合并值：
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-                - 'min'/'low': 使用合并区间的最小值作为合并值：
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-                - 'avg'/'mean': 使用合并区间的平均值作为合并值：
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-                - 'sum'/'total': 使用合并区间的平均值作为合并值：
-                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-
-                数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
-                例如，填充下列数据(?表示插入的数据）
-                    [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
-                缺失数据的填充方法如下:
-                - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-                    [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
-                - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-                    [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
-                - 'nan': 使用NaN值填充缺失数据：
-                    [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
-                - 'zero': 使用0值填充缺失数据：
-                    [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
-            :param b_days_only: bool 默认True
-                是否强制转换自然日频率为工作日，即：
-                'D' -> 'B'
-                'W' -> 'W-FRI'
-                'M' -> 'BM'
-            :param trade_time_only: bool, 默认True
-                为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
-            :param include_start:   日期时间序列是否包含开始日期/时间
-            :param include_end:     日期时间序列是否包含结束日期/时间
-            :param start_am:        早晨交易时段的开始时间
-            :param end_am:          早晨交易时段的结束时间
-            :param include_start_am:早晨交易时段是否包括开始时间
-            :param include_end_am:  早晨交易时段是否包括结束时间
-            :param start_pm:        下午交易时段的开始时间
-            :param end_pm:          下午交易时段的结束时间
-            :param include_start_pm 下午交易时段是否包含开始时间
-            :param include_end_pm   下午交易时段是否包含结束时间
-    :return:
+    Returns
+    -------
     """
     if htypes is None:
         raise ValueError(f'htype should not be None')
@@ -1585,8 +1606,12 @@ def get_history_data(htypes,
 def is_ready(**kwargs):
     """ 检查QT_CONFIG以及Operator对象，确认qt.run()是否具备基本运行条件
 
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    kwargs:
+
+    Returns
+    -------
     """
     # 检查各个cash_amounts与各个cash_dates是否能生成正确的CashPlan对象
 
@@ -1600,8 +1625,12 @@ def is_ready(**kwargs):
 def info(**kwargs):
     """ qteasy 模块的帮助信息入口函数
 
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    kwargs:
+
+    Returns
+    -------
     """
     raise NotImplementedError
 
@@ -1609,8 +1638,12 @@ def info(**kwargs):
 def help(**kwargs):
     """ qteasy 模块的帮助信息入口函数
 
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    kwargs:
+
+    Returns
+    -------
     """
     raise NotImplementedError
 
@@ -1618,18 +1651,23 @@ def help(**kwargs):
 def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
     """ 配置qteasy的运行参数QT_CONFIG
 
-    :param config: ConfigDict 对象
+    Parameters
+    ----------
+    config: ConfigDict 对象
         需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数
 
-    :param reset: bool
+    reset: bool
         默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值
 
-    :param only_built_in_keys: bool
+    only_built_in_keys: bool
         默认值False，如果为True，仅允许传入内部参数，False时允许传入任意参数
 
-    :param kwargs:
+    kwargs:
         需要设置的所有参数
-    :return:
+
+    Returns
+    -------
+    None
     """
     if config is None:
         set_config = QT_CONFIG
@@ -1648,30 +1686,33 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
 def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False):
     """ 显示qt当前的配置变量，
 
-    :param config_key: str, list
+    Parameters
+    ----------
+    config_key : str, list
         需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名
         可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名
         以下两种方式等价：
         'local_data_source, local_data_file_type, local_data_file_path'
         ['local_data_source', 'local_data_file_type', 'local_data_file_path']
 
-    :param level: 默认0
+    level : int 默认0
         需要显示的配置变量的级别。
         如果给出了config，则忽略此参数
 
-    :param up_to: 默认0
+    up_to : int 默认0
         需要显示的配置变量的级别上限，需要配合level设置。
         例如，当level == 0, up_to == 2时
         会显示级别在0～2之间的所有配置变量
         如果给出了config，则忽略此参数
 
-    :param default: 默认False
+    default: 默认False
         是否显示配置变量的默认值，如果True，会同时显示配置变量的当前值和默认值
 
-    :param verbose: 默认False
+    verbose: 默认False
         是否显示完整说明信息，如果True，会同时显示配置变量的详细说明
 
-    :return:
+    Returns
+    -------
     """
     assert isinstance(level, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
     assert isinstance(up_to, int) and (0 <= up_to <= 5), f'InputError, up_to level should be an integer, ' \
@@ -1700,15 +1741,17 @@ def save_config(config=None, file_name=None, overwrite=True):
     """ 将config保存为一个文件，如果不明确给出文件名及config对象，则
         将QT_CONFIG保存到qteasy.cfg中
 
-    :param config: ConfigDict 对象
+    Parameters
+    ----------
+    config: ConfigDict 对象
         一个config对象，默认None，如果为None，则保存QT_CONFIG
-
-    :param file_name: str
+    file_name: str
         文件名，默认None，如果为None，文件名为qteasy.cfg
-
-    :param overwrite: bool
+    overwrite: bool
         默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
-    :return:
+
+    Returns
+    -------
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
@@ -1747,12 +1790,15 @@ def load_config(config=None, file_name=None):
     """ 从文件file_name中读取相应的config参数，写入到config中，如果config为
         None，则保存参数到QT_CONFIG中
 
-    :param config: ConfigDict 对象
+    Parameters
+    ----------
+    config: ConfigDict 对象
         一个config对象，默认None，如果为None，则保存QT_CONFIG
-
-    :param file_name: str
+    file_name: str
         文件名，默认None，如果为None，文件名为qteasy.cfg
-    :return:
+
+    Returns
+    -------
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
@@ -1789,8 +1835,13 @@ def reset_config(config=None):
     """ 重设config对象，将所有的参数都设置为默认值
         如果config为None，则重设QT_CONFIG
 
-    :param config:
-    :return:
+    Parameters
+    ----------
+    config: ConfigDict
+        需要重设的config对象
+
+    Returns
+    -------
     """
     from qteasy import logger_core
     if config is None:
@@ -1811,7 +1862,8 @@ def check_and_prepare_hist_data(oper: Operator, config):
 
     :param: oper: Operator对象，
     :param: config, ConfigDict 参数字典
-    :return:
+    Returns
+    -------
         hist_op:            type: HistoryPanel, 用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
         hist_ref:           type: HistoryPanel, 用于回测模式下投资策略生成的历史参考数据
         back_trade_prices:  type: HistoryPanel, 用于回测模式投资策略回测的交易价格数据
@@ -1964,8 +2016,13 @@ def check_and_prepare_hist_data(oper: Operator, config):
 def reconnect_ds(data_source=None):
     """ （当数据库连接超时时）重新连接到data source，如果不指定具体的data_source，则重新连接默认数据源
 
-    :param data_source:
-    :return:
+    Parameters
+    ----------
+    data_source:
+        需要重新连接的datasource对象
+
+    Returns
+    -------
     """
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE
@@ -1980,7 +2037,8 @@ def reconnect_ds(data_source=None):
 def check_and_prepare_real_time_data(operator, config):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
-    :return:
+    Returns
+    -------
     """
     (hist_op,
      hist_ref,
@@ -2000,7 +2058,8 @@ def check_and_prepare_real_time_data(operator, config):
 def check_and_prepare_backtest_data(operator, config):
     """ 在run_mode == 1的回测模式情况下准备相应的历史数据
 
-    :return:
+    Returns
+    -------
     """
     (hist_op,
      hist_ref,
@@ -2020,7 +2079,8 @@ def check_and_prepare_backtest_data(operator, config):
 def check_and_prepare_optimize_data(operator, config):
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
 
-    :return:
+    Returns
+    -------
     """
     (hist_op,
      hist_ref,
@@ -2215,17 +2275,16 @@ def run(operator, **kwargs):
             进入评价模式（技术冻结后暂停开发此功能）
             评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学
             表现
-    input：
+    Parameters
+    ----------
+    operator : Operator
+        策略执行器对象
 
-        :param operator:
-            :type Operator
-            策略执行器对象
+    **kwargs:
+        可用的kwargs包括：
 
-        :param **kwargs:
-            可用的kwargs包括：
-
-
-    return:
+    Returns
+    -------
         1, 在signal模式或模式0下,返回: op_list
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
@@ -2497,7 +2556,8 @@ def _evaluate_all_parameters(par_generator,
         :param stage:
             :type stage: str
             该参数直接传递至_evaluate_one_parameter()函数中，其含义和作用参见其docstring
-    :return:
+    Returns
+    -------
         pool，一个Pool对象，包含经过筛选后的所有策略参数以及它们的性能表现
 
     """
@@ -2624,7 +2684,8 @@ def _evaluate_one_parameter(par,
                                 使用测试区间回测投资计划
                                 回测区间利用方式使用test_type的设置值
                                 回测区间分段数量和间隔使用test_sub_periods
-    :return:
+    Returns
+    -------
         dict:
         一个dict对象，存储该策略在使用par作为参数时的性能表现评分以及一些其他运行信息，允许对性能
         表现进行多重指标评价，dict的指标类型为dict的键，评价结果为结果分值，dict不能为空，至少包含以下值：
@@ -2827,7 +2888,8 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
         :type history_data: HistoryPanel
         模拟数据的参考源
 
-    :return:
+    Returns
+    -------
         HistoryPanel
     """
 
@@ -3104,13 +3166,15 @@ def _search_gradient(hist, benchmark, benchmark_type, op, config):
     在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
     最大步数为止，输出结果为最后N步的结果
 
-    :input
+    Parameters
+    ----------
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param benchmark:
         :param benchmark_type:
         :param op，object，交易信号生成器对象
         :param config, object, 用于存储交易相关参数配置对象
-    :return:
+    Returns
+    -------
     """
     raise NotImplementedError
 
@@ -3118,13 +3182,15 @@ def _search_gradient(hist, benchmark, benchmark_type, op, config):
 def _search_pso(hist, benchmark, benchmark_type, op, config):
     """ Particle Swarm Optimization 粒子群优化算法，与梯度下降相似，从随机解出发，通过迭代寻找最优解
 
-    :input
+    Parameters
+    ----------
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param benchmark:
         :param benchmark_type:
         :param op，object，交易信号生成器对象
         :param config, object, 用于存储交易相关参数配置对象
-    :return:
+    Returns
+    -------
     """
     raise NotImplementedError
 
@@ -3132,12 +3198,14 @@ def _search_pso(hist, benchmark, benchmark_type, op, config):
 def _search_aco(hist, benchmark, benchmark_type, op, config):
     """ Ant Colony Optimization 蚁群优化算法，
 
-    :input
+    Parameters
+    ----------
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param benchmark:
         :param benchmark_type:
         :param op，object，交易信号生成器对象
         :param config, object, 用于存储交易相关参数配置对象
-    :return:
+    Returns
+    -------
     """
     raise NotImplementedError

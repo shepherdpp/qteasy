@@ -34,8 +34,26 @@ def set_cost(**kwargs):
         用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
 
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    buy_fix : float
+        固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
+    sell_fix : float
+        固定卖出费用，如果设置了固定费用，则费率和最低费用会被忽略
+    buy_rate : float
+        买入费率，实际买入费用等于买入金额乘以费率
+    sell_rate : float
+        卖出费率，实际卖出费用等于卖出金额乘以费率
+    buy_min : float
+        最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
+    sell_min : float
+        最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
+    slipage : float
+        滑点，用于估算交易价格损失，金额为滑点乘以交易金额
+
+    Returns
+    -------
+
     """
     cost = dict(buy_fix=0.0,
                 sell_fix=0.0,
@@ -52,9 +70,26 @@ def set_cost(**kwargs):
 def update_cost(c, **kwargs):
     """ 更新cost字典中各个值
 
-    :param c:
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    buy_fix : float
+        固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
+    sell_fix : float
+        固定卖出费用，如果设置了固定费用，则费率和最低费用会被忽略
+    buy_rate : float
+        买入费率，实际买入费用等于买入金额乘以费率
+    sell_rate : float
+        卖出费率，实际卖出费用等于卖出金额乘以费率
+    buy_min : float
+        最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
+    sell_min : float
+        最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
+    slipage : float
+        滑点，用于估算交易价格损失，金额为滑点乘以交易金额
+
+    Returns
+    -------
+
     """
     if not isinstance(c, dict):
         raise TypeError(f'cost should be a dict, got {type(c)} instead')
@@ -261,6 +296,12 @@ class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
+
+    Attributes
+    ----------
+
+    Methods
+    -------
     """
 
     def __init__(self, dates: [list, str], amounts: [list, str, int, float], interest_rate: float = 0.0):
