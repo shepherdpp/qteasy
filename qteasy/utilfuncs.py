@@ -499,10 +499,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     except Exception as ex:
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
-    assert _date is not None, f'{date} is not a valide date'
-    # TODO: 这里有bug: _date的上限和下限需要从trade_calendar中动态读取，而不能硬编码到源代码中
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20231231'):
-        return False
+    if _date is None:
+        raise TypeError(f'{date} is not a valid date')
     if not isinstance(exchange, str) and exchange in ['SSE',
                                                       'SZSE',
                                                       'CFFEX',
@@ -514,8 +512,14 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
                                                       'XHKG']:
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
     if qteasy.QT_TRADE_CALENDAR is not None:
-        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
-        is_open = exchange_trade_cal.loc[_date].is_open
+        try:
+            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        except KeyError as e:
+            raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
+        try:
+            is_open = exchange_trade_cal.loc[_date].is_open
+        except KeyError as e:
+            raise ValueError(f'The date {_date} is out of trade calendar range, please refill data')
         return is_open == 1
     else:
         # TODO: Not yet implemented

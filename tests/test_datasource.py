@@ -862,6 +862,11 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_fth.tables, ['stock_daily'])
         self.assertEqual(self.ds_db.tables, ['stock_daily'])
 
+    def test_export_table_data(self):
+        """ 测试函数datasource.export_table_data"""
+        # TODO: implement this test
+        pass
+
     def test_download_update_table_data(self):
         """ test downloading arr from tushare"""
         tables_to_test = {'stock_daily':     {'ts_code':    None,

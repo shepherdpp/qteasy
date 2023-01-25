@@ -1060,7 +1060,7 @@ TABLE_SOURCE_MAP = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
-         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', '', ''],
+         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE,XHKG', '', '', ''],
 
     'stock_basic':
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '',
@@ -2655,6 +2655,17 @@ class DataSource:
 
         return df
 
+    def export_table_data(self, table, shares=None, start=None, end=None):
+        """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据
+
+        :param table:
+        :param shares:
+        :param start:
+        :param end:
+        :return:
+        """
+        raise NotImplementedError
+
     def write_table_data(self, df, table, on_duplicate='ignore'):
         """ 将df中的数据写入本地数据表(本地文件或数据库)
             如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
@@ -3520,6 +3531,7 @@ class DataSource:
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
                         else:
+                            dnld_data = pd.concat([dnld_data, df])
                             self.update_table_data(table, dnld_data)
                             dnld_data = pd.DataFrame()
                         completed += 1
@@ -3531,7 +3543,6 @@ class DataSource:
                                                       estimation=True, short_form=False)
                         progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
                                                        f'{total_written}dnld/{time_remain}left')
-
                     self.update_table_data(table, dnld_data)
                 strftime_elapsed = time_str_format(time_elapsed, short_form=True)
                 if len(arg_coverage) > 1:
