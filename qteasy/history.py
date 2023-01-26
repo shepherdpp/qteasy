@@ -18,7 +18,11 @@ from .utilfuncs import fill_nan_data, fill_inf_data
 
 
 class HistoryPanel():
-    """qteasy 量化投资系统使用的主要历史数据的数据类型.
+    """qteasy 量化投资系统使用的主要历史数据的数据类型
+
+    一个HistoryPanel对象其本质是一个numpy.ndarray，这个ndarray是一个
+    三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。历史数据类型可以包括
+    类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据
 
     HistoryPanel数据结构的核心部分是一个基于numpy的三维ndarray矩阵，这个矩阵由M层N行L列，三个维度的轴标签分别为：
         axis 0: levels/层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
@@ -26,72 +30,70 @@ class HistoryPanel():
         axis 2: columns/列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
 
     使用HistoryPanel类，用户可以：
-        1, 方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个
-           numpy ndarray。
-            为了对正确的数轴进行切片，通过方括号传入的切片器或列表对象必须按照[htype slicer, shares slicer, dates slicer]的顺序
-            传入，第一个切片器对数据类型进行切片，第二个对股票品种，第三个对日期切片。切片的方法非常灵活：
-            * 可以通过直接输入数轴的标签来选择某个单独的数据类型/股票品种，如：
-                HistoryPanel['close']: 选择所有股票品种的全部历史收盘价
-                HistoryPanel[,'000300.SH']: 选择000300股票品种的所有历史数据
-            * 可以以逗号分隔的数轴标签字符串形式指定某几个股票品种或数据类型，如：
-                HistoryPanel['close, open, high']: 选择所有股票品种的全部历史收盘、开盘及最高价
-            * 可以通过冒号:分隔的数轴标签字符串选择从第一个标签到最后一个标签之间的所有品种或数据类型，如：
-                HistoryPanel['000300.SH:000500.SH']: 选择从000300开始到000500之间的所有股票品种全部历史数据
-            * 可以通过int列表或str列表指定某几个品种或类型的数据，如：
-                HistoryPanel[[0, 1, 2, 4]] 或 HistoryPanel[['close', 'open', 'high', 'low']]
-                选择第0、1、2、4种数据类型或'close', 'open', 'high', 'low'等标签代表的数据类型
-            * 也可以通过常见的slicer对象来选择， 如：
-                HistoryPanel[0:5:2] 选择0、2、4等三种数据类型的全部数据
-            * 上面的所有切片方式可以单独使用，也可以混合使用，甚至几个list混合使用也不会造成问题，如：
-                要选择000300， 000500， 000700等三只股票的close到high之间所有类型的2010年全年的历史数据，可以用下列方式实现：
-                HistoryPanel['close:high', ['000300', '000500', '000700'], '20100101:20101231']
-        2, 动态地修改每一个数轴上的标签内容，容易地调取标签和元素位置的对应关系（一个字典）
-            HistoryPanel.shares 输出一个列表，包含按顺序排列的所有层标签，即所有股票品种代码或名称
-            HistoryPanel.hdates 输出一个列表，包含按顺序排列的所有行标签，即所有数据的日期及时间
-            HistoryPanel.htypes 输出一个列表，包含按顺序排列的所有列标签，即所数据类型
-            HistoryPanel.levels 输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1）
-            HistoryPanel.columns 输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1）
-            HistoryPanel.rows 输出一个字典，包含所有日期行标签及其对应的行号，从0开始一直到N-1）
-        3, 方便地打印HistoryPanel的相关信息
-        4, 方便地打印及格式化输出HistoryPanel的内容，如：
-
-        5, 方便地转化为 pandas DataFrame对象
-            HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
-            HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
-        6, 方便地由多个pandas DataFrame对象组合而成
+    1, 方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个
+       numpy ndarray。
+        为了对正确的数轴进行切片，通过方括号传入的切片器或列表对象必须按照[htype slicer, shares slicer, dates slicer]的顺序
+        传入，第一个切片器对数据类型进行切片，第二个对股票品种，第三个对日期切片。切片的方法非常灵活：
+        * 可以通过直接输入数轴的标签来选择某个单独的数据类型/股票品种，如：
+            HistoryPanel['close']: 选择所有股票品种的全部历史收盘价
+            HistoryPanel[,'000300.SH']: 选择000300股票品种的所有历史数据
+        * 可以以逗号分隔的数轴标签字符串形式指定某几个股票品种或数据类型，如：
+            HistoryPanel['close, open, high']: 选择所有股票品种的全部历史收盘、开盘及最高价
+        * 可以通过冒号:分隔的数轴标签字符串选择从第一个标签到最后一个标签之间的所有品种或数据类型，如：
+            HistoryPanel['000300.SH:000500.SH']: 选择从000300开始到000500之间的所有股票品种全部历史数据
+        * 可以通过int列表或str列表指定某几个品种或类型的数据，如：
+            HistoryPanel[[0, 1, 2, 4]] 或 HistoryPanel[['close', 'open', 'high', 'low']]
+            选择第0、1、2、4种数据类型或'close', 'open', 'high', 'low'等标签代表的数据类型
+        * 也可以通过常见的slicer对象来选择， 如：
+            HistoryPanel[0:5:2] 选择0、2、4等三种数据类型的全部数据
+        * 上面的所有切片方式可以单独使用，也可以混合使用，甚至几个list混合使用也不会造成问题，如：
+            要选择000300， 000500， 000700等三只股票的close到high之间所有类型的2010年全年的历史数据，可以用下列方式实现：
+            HistoryPanel['close:high', ['000300', '000500', '000700'], '20100101:20101231']
+    2, 动态地修改每一个数轴上的标签内容，容易地调取标签和元素位置的对应关系（一个字典）
+        HistoryPanel.shares     输出一个列表，包含按顺序排列的所有层标签，即所有股票品种代码或名称
+        HistoryPanel.hdates     输出一个列表，包含按顺序排列的所有行标签，即所有数据的日期及时间
+        HistoryPanel.htypes     输出一个列表，包含按顺序排列的所有列标签，即所数据类型
+        HistoryPanel.levels     输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1）
+        HistoryPanel.columns    输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1）
+        HistoryPanel.rows       输出一个字典，包含所有日期行标签及其对应的行号，从0开始一直到N-1）
+    3, 方便地打印HistoryPanel的相关信息
+    4, 方便地打印及格式化输出HistoryPanel的内容
+    5, 方便地转化为 pandas DataFrame对象
+        HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
+        HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
+    6, 方便地由多个pandas DataFrame对象组合而成
 
     Attributes
     ----------
+    is_empty
+    values
+    levels
+    shares
 
     Methods
     -------
+
     """
 
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
         """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 
-            一个HistoryPanel对象是qteasy中用于历史数据操作的主要数据结构，其本质是一个numpy.ndarray，这个ndarray是一个
-            三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。
+        在生成一个HistoryPanel的时候，可以同时输入层标签（股票代码）、行标签（日期时间）和列标签（历史数据类型）
+        如果不输入这些数据，HistoryPanel会自动生成标签。在某些qteasy应用中，要求输入正确的标签，如果标签不正确
+        可能导致报错。
 
-            在生成一个HistoryPanel的时候，可以同时输入层标签（股票代码）、行标签（日期时间）和列标签（历史数据类型）
-            如果不输入这些数据，HistoryPanel会自动生成标签。在某些qteasy应用中，要求输入正确的标签，如果标签不正确
-            可能导致报错。
-
-            历史数据类型可以包括类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据
-
-        :param values:
+        Parameters
+        ----------
+        values: Iterables
             一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
             如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-
-        :param levels:
+        levels: Iterables
             HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
-
-        :param rows:
+        rows: Iterables
             HistoryPanel的时间日期标签。
             datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
             行标签代表每一条数据对应的历史时间戳
-
-        :param columns:str，
+        columns:str，
             HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
         """
 
@@ -880,8 +882,15 @@ class HistoryPanel():
 def hp_join(*historypanels):
     """ 当元组*historypanels不是None，且内容全都是HistoryPanel对象时，将所有的HistoryPanel对象连接成一个HistoryPanel
 
-    :param historypanels: 一个或多个HistoryPanel对象，他们将被组合成一个包含他们所有数据的HistoryPanel
-    :return:
+    parameters
+    ----------
+    historypanels: HistoryPanels
+        一个或多个HistoryPanel对象，他们将被组合成一个包含他们所有数据的HistoryPanel
+
+    Returns
+    -------
+    HistoryPanel
+        组合后的HistoryPanel
     """
     assert all(isinstance(hp, HistoryPanel) for hp in historypanels), \
         f'Object type Error, all objects passed to this function should be HistoryPanel'
@@ -899,29 +908,33 @@ def dataframe_to_hp(df: pd.DataFrame,
                     column_type: str = None) -> HistoryPanel:
     """ 根据DataFrame中的数据创建HistoryPanel对象。
 
+    Parameters
+    ----------
+    df: pd.DataFrame,
+        需要被转化为HistoryPanel的DataFrame。
+    hdates: DatetimeIndex or List of DateTime like, Optional
+        如果给出hdates，它会被用于转化后HistoryPanel的日期标签
+    htypes: str, Optional
+        转化后HistoryPanel的历史数据类型标签
+    shares: str, Optional
+        转化后HistoryPanel的股票代码标签
+    column_type: str, Default None
+        DataFrame的column代表的数据类型，可以为 'shares' or 'htype'
+        如果为None，则必须输入htypes和shares参数中的一个
+
+    Returns
+    -------
+    HistoryPanel对象
+
+    Notes
+    -----
     由于DataFrame只有一个二维数组，因此一个DataFrame只能转化为以下两种HistoryPanel之一：
     1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的shape为(1, dates, htypes)
         在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出
     2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
     具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
-
-    Parameters
-    ----------
-    df: pd.DataFrame,
-        需要被转化为HistoryPanel的DataFrame。
-    hdates:
-
-    htypes: str
-
-    shares: str
-
-    column_type: str
-        可以为'share' or 'htype'
-
-    Returns
-    -------
-        HistoryPanel对象
     """
+
     available_column_types = ['shares', 'htypes', None]
     from collections import Iterable
     assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
@@ -931,11 +944,11 @@ def dataframe_to_hp(df: pd.DataFrame,
     index_count = len(hdates)
     assert index_count == len(df.index), \
         f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
-    assert column_type in available_column_types, f'column_type should be a string in ["shares", "htypes"], ' \
+    assert column_type in available_column_types, f'column_type should be either "shares" or "htypes", ' \
                                                   f'got {type(column_type)} instead!'
     # TODO: Temp codes, implement this method when column_type is not given -- the column type should be infered
     #  by the input combination of shares and htypes
-    if column_type is None:
+    if column_type is None:  # try to infer a proper column type
         if shares is None:
             htype_list = []
             if htypes is None:
@@ -1027,15 +1040,15 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
 
     Parameters
     ----------
-    dfs: list, dict
+    dfs: list of DataFrames or dict of DataFrames
         需要被堆叠的dataframe，可以为list或dict，
         dfs可以是一个dict或一个list，如果是一个list，这个list包含需要组合的所有dataframe，如果是dict，这个dict的values包含
         所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列
         （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。
-    dataframe_as: type str, 'shares' 或 'htypes'
-        每个dataframe代表的数据类型。
-            组合的方式有两种，根据dataframe_as参数的值来确定采用哪一种组合方式：
-        stack_as == 'shares'，
+    dataframe_as: str
+        'shares' 或 'htypes', 每个dataframe代表的数据类型。
+        组合的方式有两种，根据dataframe_as参数的值来确定采用哪一种组合方式：
+        dataframe_as == 'shares'，
             表示每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
             层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
             在这种模式下：
@@ -1043,14 +1056,14 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
             如果dfs是一个dict，shares参数不必给出，dfs的keys会被用于层标签，如果shares参数给出且符合要求，
             shares参数将取代dfs的keys参数
 
-        stack_as == 'htypes'，
+        dataframe_as == 'htypes'，
             表示每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象
             列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
             在这种模式下，
             如果dfs是一个list，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同，作为HP的列标签
             如果dfs是一个dict，htypes参数不必给出，dfs的keys会被用于列标签，如果htypes参数给出且符合要求，
             htypes参数将取代dfs的keys参数
-    shares: list 或 str
+    shares: str or list of str
         生成的HistoryPanel的层标签或股票名称标签。
         如果堆叠方式为"shares"，则层标签必须以dict的key的形式给出或者在shares参数中给出
         以下两种参数均有效且等效：
@@ -1060,7 +1073,7 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
         如果堆叠方式为"htypes"，不需要给出shares，默认使用dfs的columns标签的并集作为输出的层标签
         如果给出了shares，则会强制使用shares作为层标签，多出的标签会用fill_values填充，
         多余的DataFrame数据会被丢弃
-    htypes:list 或 str
+    htypes: str or list of str
         生成的HistoryPanel的列标签或数据类型标签。
         如果堆叠方式为"htypes"，则层标签必须以dict的key的形式给出或者在shares参数中给出
         以下两种参数均有效且等效：

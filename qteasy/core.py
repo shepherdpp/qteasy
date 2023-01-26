@@ -1319,8 +1319,9 @@ def get_table_overview(data_source=None):
 
     Returns
     -------
-    str
+    None
     """
+
     from .database import DataSource
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE
@@ -1329,15 +1330,32 @@ def get_table_overview(data_source=None):
     return data_source.overview()
 
 
-def refill_data_source(data_source=None, *args, **kwargs):
-    """ 填充数据到默认数据源或指定数据源
+def get_data_overview(data_source=None):
+    """ 显示数据源的数据总览，等同于get_table_overview()
 
-    :param data_source: Object
+    Parameters
+    ----------
+    data_source: Object
         一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview
 
-    :param *args
-        DataSource.refill_data_source的数据下载参数：
-        tables:
+    Returns
+    -------
+    None
+    """
+
+    return get_table_overview(data_source=data_source)
+
+
+def refill_data_source(data_source=None, **kwargs):
+    """ 填充数据数据源
+
+    Parameters
+    ----------
+    data_source: DataSource, Default None
+        需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
+    **kwargs
+        DataSource.refill_local_source()的数据下载参数：
+        tables: str or list of str
             需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
             例如，下面两种方式都合法且相同：
                 table='stock_indicator, stock_daily, income, stock_adj_factor'
@@ -1351,26 +1369,21 @@ def refill_data_source(data_source=None, *args, **kwargs):
                 - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
                 - 'report'  : 财务报表
                 - 'comp'    : 指数成分表
-
-        dtypes:
+        dtypes: str or list of str
             通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
             如果给出了tables，则dtypes参数会被忽略
-
-        freqs:
+        freqs: str
             通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
             如果tables != all时，给出freq会排除掉freq与之不符的数据表
-
-        asset_types:
+        asset_types: Str of List of Str
             通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
             如果tables != all时，给出asset_type会排除掉与之不符的数据表
-
-        start_date:
+        start_date: DateTime Like
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-
-        end_date:
+        end_date: DateTime Like
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-
-        code_range:
+        code_range: str or list of str
+            **注意，不是所有情况下code_range参数都有效
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'
@@ -1381,28 +1394,27 @@ def refill_data_source(data_source=None, *args, **kwargs):
                 两种写法等效，列表中列举出的证券数据会被下载
             - '000001:000300'
                 从'000001'开始到'000300'之间的所有证券数据都会被下载
-
         merge_type: str
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
             - 'ignore' 默认值，不下载重复的数据
             - 'update' 下载并更新本地数据的重复部分
-
         reversed_par_seq: Bool
             是否逆序参数下载数据， 默认False
             - True:  逆序参数下载数据
             - False: 顺序参数下载数据
-
         parallel: Bool
             是否启用多线程下载数据，默认True
             - True:  启用多线程下载数据
             - False: 禁用多线程下载
-
         process_count: int
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
-
         chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
+
+    Returns
+    -------
+    None
 
     """
     from .database import DataSource
@@ -1410,7 +1422,7 @@ def refill_data_source(data_source=None, *args, **kwargs):
         data_source = qteasy.QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
-    data_source.refill_local_source(*args, **kwargs)
+    data_source.refill_local_source(**kwargs)
 
 
 def get_history_data(htypes,
@@ -1467,9 +1479,7 @@ def get_history_data(htypes,
          - none / n: 不复权(默认值)
          - back / b: 后复权
          - forward / fw / f: 前复权
-    resample_method: str
-        处理数据频率更新时的方法
-    as_data_frame: bool 默认False
+    as_data_frame: bool, Default: False
         是否返回DataFrame对象，True时返回HistoryPanel对象
     group_by: str, 默认'shares'
         如果返回DataFrame对象，设置dataframe的分组策略
@@ -1477,70 +1487,75 @@ def get_history_data(htypes,
         - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
     **kwargs:
         用于生成trade_time_index的参数，包括：
-    drop_nan: bool
-        是否保留全NaN的行
-    resample_method: str
-        如果数据需要升频或降频时，调整频率的方法
-        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
-        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
-        例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
-        数据合并方法:
-        - 'last'/'close': 使用合并区间的最后一个值。如：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'first'/'open': 使用合并区间的第一个值。如：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'max'/'high': 使用合并区间的最大值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'min'/'low': 使用合并区间的最小值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'avg'/'mean': 使用合并区间的平均值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-        - 'sum'/'total': 使用合并区间的平均值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+        drop_nan: bool
+            是否保留全NaN的行
+        resample_method: str
+            如果数据需要升频或降频时，调整频率的方法
+            调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+            数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+            例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+            数据合并方法:
+            - 'last'/'close': 使用合并区间的最后一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'first'/'open': 使用合并区间的第一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'max'/'high': 使用合并区间的最大值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'min'/'low': 使用合并区间的最小值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+            - 'sum'/'total': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
 
-        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
-        例如，填充下列数据(?表示插入的数据）
-            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
-        缺失数据的填充方法如下:
-        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
-        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
-        - 'nan': 使用NaN值填充缺失数据：
-            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
-        - 'zero': 使用0值填充缺失数据：
-            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
-    b_days_only: bool 默认True
-        是否强制转换自然日频率为工作日，即：
-        'D' -> 'B'
-        'W' -> 'W-FRI'
-        'M' -> 'BM'
-    trade_time_only: bool, 默认True
-        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
-    include_start:
-        日期时间序列是否包含开始日期/时间
-    include_end:
-        日期时间序列是否包含结束日期/时间
-    start_am:
-        早晨交易时段的开始时间
-    end_am:
-        早晨交易时段的结束时间
-    include_start_am:
-        早晨交易时段是否包括开始时间
-    include_end_am:
-        早晨交易时段是否包括结束时间
-    start_pm:
-        下午交易时段的开始时间
-    end_pm:
-        下午交易时段的结束时间
-    include_start_pm
-        下午交易时段是否包含开始时间
-    include_end_pm
-        下午交易时段是否包含结束时间
+            数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+            例如，填充下列数据(?表示插入的数据）
+                [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+            缺失数据的填充方法如下:
+            - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+            - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+            - 'nan': 使用NaN值填充缺失数据：
+                [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+            - 'zero': 使用0值填充缺失数据：
+                [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+        b_days_only: bool 默认True
+            是否强制转换自然日频率为工作日，即：
+            'D' -> 'B'
+            'W' -> 'W-FRI'
+            'M' -> 'BM'
+        trade_time_only: bool, 默认True
+            为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+        include_start:
+            日期时间序列是否包含开始日期/时间
+        include_end:
+            日期时间序列是否包含结束日期/时间
+        start_am:
+            早晨交易时段的开始时间
+        end_am:
+            早晨交易时段的结束时间
+        include_start_am:
+            早晨交易时段是否包括开始时间
+        include_end_am:
+            早晨交易时段是否包括结束时间
+        start_pm:
+            下午交易时段的开始时间
+        end_pm:
+            下午交易时段的结束时间
+        include_start_pm
+            下午交易时段是否包含开始时间
+        include_end_pm
+            下午交易时段是否包含结束时间
 
     Returns
     -------
+    HistoryPanel:
+        如果设置as_data_frame为False，则返回一个HistoryPanel对象
+    Dict of DataFrame:
+        如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames
+
     """
     if htypes is None:
         raise ValueError(f'htype should not be None')
@@ -1688,31 +1703,28 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
 
     Parameters
     ----------
-    config_key : str, list
+    config_key : str or list of str
         需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名
         可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名
         以下两种方式等价：
         'local_data_source, local_data_file_type, local_data_file_path'
         ['local_data_source', 'local_data_file_type', 'local_data_file_path']
-
-    level : int 默认0
+    level : int, Default: 0
         需要显示的配置变量的级别。
         如果给出了config，则忽略此参数
-
-    up_to : int 默认0
+    up_to : int, Default: 0
         需要显示的配置变量的级别上限，需要配合level设置。
         例如，当level == 0, up_to == 2时
         会显示级别在0～2之间的所有配置变量
         如果给出了config，则忽略此参数
-
-    default: 默认False
+    default: Bool, Default: False
         是否显示配置变量的默认值，如果True，会同时显示配置变量的当前值和默认值
-
-    verbose: 默认False
+    verbose: Bool, Default: False
         是否显示完整说明信息，如果True，会同时显示配置变量的详细说明
 
     Returns
     -------
+    None
     """
     assert isinstance(level, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
     assert isinstance(up_to, int) and (0 <= up_to <= 5), f'InputError, up_to level should be an integer, ' \
@@ -1833,7 +1845,7 @@ def load_config(config=None, file_name=None):
 
 def reset_config(config=None):
     """ 重设config对象，将所有的参数都设置为默认值
-        如果config为None，则重设QT_CONFIG
+        如果config为None，则重设qt.QT_CONFIG
 
     Parameters
     ----------

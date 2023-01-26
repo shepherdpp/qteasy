@@ -177,23 +177,18 @@ class Operator:
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
 
     def __init__(self, strategies=None, signal_type=None, op_type=None):
-        """ 生成具体的Operator对象
-            每个Operator对象主要包含多个strategy对象，每一个strategy对象都会被赋予一个唯一的ID，通过
-            这个ID可以访问Strategy对象，除ID以外，每个strategy也会有一个唯一的序号，通过该序号也可以
-            访问所有的额strategy对象。或者给相应的strategy对象设置、调整参数。
+        """ 生成一个Operator对象
 
         parameters
         ----------
         strategies : str, Strategy, list of str or list of Strategy
             用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             如果不给出strategies，则会生成一个空的Operator对象
-
-        signal_type : str
+        signal_type : str, Default: 'pt'
             需要生成的交易信号的类型，包含以下三种类型:
             'pt', 'ps', 'vs'
             默认交易信号类型为'pt'
-
-        op_type : str
+        op_type : str, Default: 'batch'
             Operator对象的的运行模式，包含以下两种：
             'batch', 'stepwise'
             默认运行模式为'batch'
