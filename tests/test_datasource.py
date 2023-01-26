@@ -29,8 +29,11 @@ class TestDataSource(unittest.TestCase):
     """test local historical file database management methods"""
 
     def setUp(self):
+        """ execute before each test"""
         from qteasy import QT_ROOT_PATH
         self.qt_root_path = QT_ROOT_PATH
+        self.data_test_dir = 'data_test/'
+        # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
         # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
         self.ds_db = DataSource('db',
                                 host='localhost',
@@ -38,9 +41,9 @@ class TestDataSource(unittest.TestCase):
                                 user='jackie',
                                 password='iama007',
                                 db='test_db')
-        self.ds_csv = DataSource('file', file_type='csv')
-        self.ds_hdf = DataSource('file', file_type='hdf')
-        self.ds_fth = DataSource('file', file_type='fth')
+        self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
+        self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
+        self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
         self.df = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                            '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
@@ -125,14 +128,14 @@ class TestDataSource(unittest.TestCase):
 
     def test_properties(self):
         """test properties"""
-        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/data/')
-        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/data/')
-        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/data/')
+        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/data_test/')
+        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/data_test/')
+        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/data_test/')
         self.assertEqual(self.ds_db.__str__(), 'db:mysql://localhost@3306/test_db')
 
-        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'data/')")
-        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'data/')")
-        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'data/')")
+        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'data_test/')")
+        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'data_test/')")
+        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'data_test/')")
         self.assertEqual(self.ds_db.__repr__(), "DataSource('db', 'localhost', 3306)")
 
         self.assertEqual(self.ds_csv.tables, [])
@@ -198,21 +201,21 @@ class TestDataSource(unittest.TestCase):
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)
-        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/data/')
+        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/data_test/')
         self.assertEqual(self.ds_csv.file_type, 'csv')
-        self.assertEqual(self.ds_csv.file_path, os.path.join(self.qt_root_path, 'data/'))
+        self.assertEqual(self.ds_csv.file_path, os.path.join(self.qt_root_path, 'data_test/'))
         self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
-        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/data/')
+        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/data_test/')
         self.assertEqual(self.ds_hdf.file_type, 'hdf')
-        self.assertEqual(self.ds_hdf.file_path, os.path.join(self.qt_root_path, 'data/'))
+        self.assertEqual(self.ds_hdf.file_path, os.path.join(self.qt_root_path, 'data_test/'))
         self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
-        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/data/')
+        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/data_test/')
         self.assertEqual(self.ds_fth.file_type, 'fth')
-        self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, 'data/'))
+        self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, 'data_test/'))
         self.assertIs(self.ds_fth.engine, None)
 
     def test_file_manipulates(self):

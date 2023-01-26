@@ -184,7 +184,7 @@ class Operator:
 
         parameters
         ----------
-        strategies : str
+        strategies : str, Strategy, list of str or list of Strategy
             用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             如果不给出strategies，则会生成一个空的Operator对象
 

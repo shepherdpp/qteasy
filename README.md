@@ -1,24 +1,25 @@
 # qteasy -- 一个基于Python的高效量化投资工具包
 
-- 作者: **Jackie PENG**
+- Author: **Jackie PENG**
 
 - email: *jackie_pengzhao@163.com* 
 
-- 项目启动日期: 2019, July, 16
+- Created: 2019, July, 16
 
 ## 安装及依赖包
 这个项目依赖以下python package:
-- *`pandas` version 0.25.1*
-- *`numpy` version 1.18.1*
-- *`numba` version 0.47.0*
-- *`TA-lib` version 0.4.18*    `# conda install -c conda-forge ta-lib`
-- *`tushare` version 1.2.89*    `# pip install tushare`
-- *`mplfinance` version 0.12.7*    `# conda install -c conda-forge mplfinance`
-- *`pymysql`*    `# conda install -c anaconda pymysql`
-- 
+- *`pandas` version ~= 0.25.1*    `# conda install pandas`
+- *`numpy` version ~= 1.18.1*    `# conda install numpy`
+- *`numba` version ~= 0.47.0*    `# conda install numba`
+- *`TA-lib` version ~= 0.4.18*    `# conda install -c conda-forge ta-lib`
+- *`tushare` version ~= 1.2.89*    `# pip install tushare`
+- *`mplfinance` version ~= 0.12.7*    `# conda install -c conda-forge mplfinance`
+- *`pymysql`*    `# optional for datasource type database, conda install -c anaconda pymysql`
+- *`sqlalchemy`* version ~= 1.4.22   `# optional for datasource type database, conda install sqlalchemy`
+- *`pytables`* version ~= 3.6.1  `# optional for datasource file type "hdf", conda install -c conda-forge pytables`
+- *`pyarrow`* version ~= 3.0.0   `# optional for datasource file type "feather", conda install -c conda-forge pyarrow`
 
 ## 介绍
-
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -39,10 +40,8 @@
 
 基本的模块导入方法如下
 
-
 ```python
 import qteasy as qt
-import matplotlib as mpl
 ```
 
 模块导入后，工具包中的函数及对象即可以使用了:

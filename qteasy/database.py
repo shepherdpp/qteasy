@@ -1924,7 +1924,7 @@ class DataSource:
     对象会检查数据的格式，确保格式正确并删除重复的数据。
     下载下来的历史数据可以存储成不同的格式，但是不管任何存储格式，所有数据表的结构都是一样
     的，而且都是与Pandas的DataFrame兼容的数据表格式。目前兼容的文件存储格式包括csv, hdf,
-    ftr(feather)，兼容的数据库包括mysql和MariaDB。
+    fth(feather)，兼容的数据库包括mysql和MariaDB。
     如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会
     返回空DataFrame。
     DataSource对象可以按要求定期刷新或从NDP拉取数据，也可以手动操作
@@ -1954,7 +1954,7 @@ class DataSource:
     def __init__(self,
                  source_type: str,
                  file_type: str = 'fth',
-                 file_loc: str = 'qteasy/data/',
+                 file_loc: str = 'data/',
                  host: str = 'localhost',
                  port: int = 3306,
                  user: str = None,
@@ -2235,7 +2235,7 @@ class DataSource:
         """
         import os
         if self.file_exists(file_name):
-            file_path_name = self.file_path + file_name + '.' + self.file_type
+            file_path_name = os.path.join(self.file_path, file_name + '.' + self.file_type)
             os.remove(file_path_name)
 
     def get_file_size(self, file_name):

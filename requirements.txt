@@ -7,3 +7,5 @@ tushare~=1.2.89
 pymysql~=1.0.2
 sqlalchemy~=1.4.22
 setuptools~=58.0.4
+pytables~=3.6.1
+pyarrow~=3.0.0

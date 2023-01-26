@@ -345,17 +345,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def setUp(self):
         """prepare arr for Operator test"""
-        # get all stock prices from year 2020 to year 2022
-        qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_daily', start_date='20200101', end_date='20221231')
-
-        # get index prices of 000300 and 399006 data from 2005 to year 2022
-        qt.refill_data_source(qt.QT_DATA_SOURCE, tables='index_daily', start_date='20050101', end_date='20221231',
-                              code_range='000300,399006')
-
-        # get hourly price data for a few stocks in year 2016
-        qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_hourly', start_date='20160101', end_date='20161231',
-                              code_range=['000001', '000002', '000005', '000006', '000007', '000918', '000819',
-                                          '000899'])
 
         print('start testing HistoryPanel object\n')
 
@@ -3492,4 +3481,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    # get all stock prices from year 2020 to year 2022
+    qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_daily', start_date='20200101', end_date='20221231')
+
+    # get index prices of 000300 and 399006 data from 2005 to year 2022
+    qt.refill_data_source(qt.QT_DATA_SOURCE, tables='index_daily', start_date='20050101', end_date='20221231',
+                          code_range='000300,399006')
+
+    # get hourly price data for a few stocks in year 2016
+    qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_hourly', start_date='20160101', end_date='20161231',
+                          code_range=['000001', '000002', '000005', '000006', '000007', '000918', '000819',
+                                      '000899'])
     unittest.main()
