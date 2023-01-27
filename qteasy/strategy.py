@@ -1180,20 +1180,33 @@ class RuleIterator(BaseStrategy):
 
     Attributes
     ----------
-    pars:               tuple,  策略参数
-    opt_tag:            int,    优化标记，策略是否参与参数优化
-    name:               str,    策略名称
-    description:        str,    策略简介
-    par_count:          int,    策略参数个数
-    par_types:          tuple,  策略参数类型
-    par_range:          tuple,  策略参数取值范围
-    data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-    sample_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
-    window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-    data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-    bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-    reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                生成，如指数、宏观经济数据等。
+    pars:               tuple,
+        策略参数
+    opt_tag:            int,
+        优化标记，策略是否参与参数优化
+    name:               str,
+        策略名称
+    description:        str,
+        策略简介
+    par_count:          int,
+        策略参数个数
+    par_types:          tuple,
+        策略参数类型
+    par_range:          tuple,
+        策略参数取值范围
+    data_freq:          str:
+        数据频率，用于生成策略输出所需的历史数据的频率
+    sample_freq:
+        策略运行采样频率，即相邻两次策略生成的间隔频率。
+    window_length:
+        历史数据视窗长度。即生成策略输出所需要的历史数据的数量
+    data_types:
+        静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+    bt_price_type:
+        策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+    reference_data_types:
+        参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有
+        的股票的信号生成，如指数、宏观经济数据等。
 
     Examples
     --------

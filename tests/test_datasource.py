@@ -40,7 +40,7 @@ class TestDataSource(unittest.TestCase):
                                 port=3306,
                                 user='jackie',
                                 password='iama007',
-                                db='test_db')
+                                db_name='test_db')
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
@@ -955,7 +955,7 @@ class TestDataSource(unittest.TestCase):
                         port=3306,
                         user='jackie',
                         password='iama007',
-                        db='ts_db')
+                        db_name='ts_db')
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
         htypes = str_to_list(htypes)
