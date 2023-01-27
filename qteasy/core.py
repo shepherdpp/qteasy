@@ -1670,14 +1670,11 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
     ----------
     config: ConfigDict 对象
         需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数
-
     reset: bool
         默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值
-
     only_built_in_keys: bool
         默认值False，如果为True，仅允许传入内部参数，False时允许传入任意参数
-
-    kwargs:
+    **kwargs:
         需要设置的所有参数
 
     Returns
@@ -1696,6 +1693,28 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
         default_kwargs = {k: v['Default'] for k, v in zip(_valid_qt_kwargs().keys(),
                                                           _valid_qt_kwargs().values())}
         _update_config_kwargs(set_config, default_kwargs, raise_if_key_not_existed=True)
+
+
+def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs):
+    """ 配置qteasy的运行参数QT_CONFIG，等同于configure()
+
+    Parameters
+    ----------
+    config: ConfigDict 对象
+        需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数
+    reset: bool
+        默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值
+    only_built_in_keys: bool
+        默认值False，如果为True，仅允许传入内部参数，False时允许传入任意参数
+    **kwargs:
+        需要设置的所有参数
+
+    Returns
+    -------
+    None
+    """
+
+    return configure(config=config, reset=reset, only_built_in_keys=only_built_in_keys, **kwargs)
 
 
 def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False):
@@ -1747,6 +1766,70 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
         kwargs = config_key
         level = [0, 1, 2, 3, 4, 5]
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
+
+
+def get_configurations(config_key=None, level=0, up_to=0, default=True, verbose=False):
+    """ 显示qt当前的配置变量，与get_config / configuration 相同
+
+    Parameters
+    ----------
+    config_key : str or list of str
+        需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名
+        可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名
+        以下两种方式等价：
+        'local_data_source, local_data_file_type, local_data_file_path'
+        ['local_data_source', 'local_data_file_type', 'local_data_file_path']
+    level : int, Default: 0
+        需要显示的配置变量的级别。
+        如果给出了config，则忽略此参数
+    up_to : int, Default: 0
+        需要显示的配置变量的级别上限，需要配合level设置。
+        例如，当level == 0, up_to == 2时
+        会显示级别在0～2之间的所有配置变量
+        如果给出了config，则忽略此参数
+    default: Bool, Default: False
+        是否显示配置变量的默认值，如果True，会同时显示配置变量的当前值和默认值
+    verbose: Bool, Default: False
+        是否显示完整说明信息，如果True，会同时显示配置变量的详细说明
+
+    Returns
+    -------
+    None
+    """
+
+    return configuration(config_key=config_key, level=level, up_to=up_to, default=default, verbose=verbose)
+
+
+def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
+    """ 显示qt当前的配置变量，与get_config / configuration 相同
+
+    Parameters
+    ----------
+    config_key : str or list of str
+        需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名
+        可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名
+        以下两种方式等价：
+        'local_data_source, local_data_file_type, local_data_file_path'
+        ['local_data_source', 'local_data_file_type', 'local_data_file_path']
+    level : int, Default: 0
+        需要显示的配置变量的级别。
+        如果给出了config，则忽略此参数
+    up_to : int, Default: 0
+        需要显示的配置变量的级别上限，需要配合level设置。
+        例如，当level == 0, up_to == 2时
+        会显示级别在0～2之间的所有配置变量
+        如果给出了config，则忽略此参数
+    default: Bool, Default: False
+        是否显示配置变量的默认值，如果True，会同时显示配置变量的当前值和默认值
+    verbose: Bool, Default: False
+        是否显示完整说明信息，如果True，会同时显示配置变量的详细说明
+
+    Returns
+    -------
+    None
+    """
+
+    return configuration(config_key=config_key, level=level, up_to=up_to, default=default, verbose=verbose)
 
 
 def save_config(config=None, file_name=None, overwrite=True):

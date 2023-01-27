@@ -874,7 +874,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
-        warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error' \
+        warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error ' \
                    f'is suppressed by program!'
         warnings.warn(warn_msg)
         return True
