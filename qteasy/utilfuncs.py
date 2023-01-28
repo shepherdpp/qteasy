@@ -397,16 +397,17 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = '',
-                 show_time_remain: bool = False,
-                 short_form: bool = False):
+def progress_bar(prog: int, total: int = 100, comments: str = ''):
     """根据输入的数字生成进度条字符串并刷新
 
-    :param prog: 当前进度，用整数表示
-    :param total:  总体进度，默认为100
-    :param comments:  需要显示在进度条中的文字信息
-    :param show_time_remain: Bool, True时显示预计剩余时间
-    :param short_form:  显示
+    Parameters
+    ----------
+    prog: int
+        当前进度，用整数表示
+    total: int
+        总体进度，默认为100
+    comments: str, optional
+        需要显示在进度条中的文字信息
     """
     if total > 0:
         if prog > total:
@@ -418,13 +419,19 @@ def progress_bar(prog: int, total: int = 100, comments: str = '',
 
 
 def maybe_trade_day(date):
-    """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）
-    准确率有限但是效率高
+    """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）准确率有限但是效率高
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: datetime-like
+        可以转化为时间日期格式的字符串或其他类型对象
+
+    Raises
+    ------
+    ValueError, 当字符串无法被转化为datetime时
 
     :return:
+    bool
     """
     # public_holidays 是一个含两个list的tuple，存储了闭市的公共假期，第一个list是代表月份的数字，第二个list是代表日期的数字
     public_holidays = ([1, 1, 1, 4, 4, 4, 5, 5, 5, 10, 10, 10, 10, 10, 10, 10],
@@ -432,7 +439,7 @@ def maybe_trade_day(date):
     try:
         date = pd.to_datetime(date)
     except Exception:
-        raise Exception('date is not a valid date time format, cannot be converted to timestamp')
+        raise ValueError('date is not a valid date time format, cannot be converted to timestamp')
     if date.weekday() > 4:
         return False
     for m, d in zip(public_holidays[0], public_holidays[1]):
@@ -475,24 +482,25 @@ def next_trade_day(date):
 
 def is_market_trade_day(date, exchange: str = 'SSE'):
     """ 根据交易所发布的交易日历判断一个日期是否是交易日，
-        要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码:
+            SSE:    上交所, SZSE:   深交所,
+            CFFEX:  中金所, SHFE:   上期所,
+            CZCE:   郑商所, DCE:    大商所,
+            INE:    上能源, IB:     银行间,
+            XHKG:   港交所
 
-    :param exchange:
-        :type exchange: str 交易所代码:
-                            SSE:    上交所,
-                            SZSE:   深交所,
-                            CFFEX:  中金所,
-                            SHFE:   上期所,
-                            CZCE:   郑商所,
-                            DCE:    大商所,
-                            INE:    上能源,
-                            IB:     银行间,
-                            XHKG:   港交所
+    Raises
+    ------
+    NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
     :return:
+    bool
     """
     try:
         _date = pd.to_datetime(date)
@@ -501,15 +509,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         raise
     if _date is None:
         raise TypeError(f'{date} is not a valid date')
-    if not isinstance(exchange, str) and exchange in ['SSE',
-                                                      'SZSE',
-                                                      'CFFEX',
-                                                      'SHFE',
-                                                      'CZCE',
-                                                      'DCE',
-                                                      'INE',
-                                                      'IB',
-                                                      'XHKG']:
+    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
+                                                      'DCE', 'INE', 'IB', 'XHKG']:
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
     if qteasy.QT_TRADE_CALENDAR is not None:
         try:
@@ -530,14 +531,29 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
 
 def prev_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的上一交易日，需要提前准备QT_TRADE_CALENDAR数据
-        返回值：
-        - 如果date是交易日，则返回上一个交易日，如2020-12-24是交易日，它的前一天也是交易日，返回上一日2020-12-23
-        - 如果date不是交易日，则返回它最近交易日的上一个交易日，如2020-12-25不是交易日，但2020-12-24是交易日，则
-            返回2020-12-24的上一交易日即2020-12-23
 
-    :param date:
-    :param exchange:
-    :return:
+    - 如果date是交易日，则返回上一个交易日，如2020-12-24是交易日，它的前一天也是交易日，返回上一日2020-12-23
+    - 如果date不是交易日，则返回它最近交易日的上一个交易日，如2020-12-25不是交易日，但2020-12-24是交易日，则
+        返回2020-12-24的上一交易日即2020-12-23
+
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码
+
+    Returns
+    -------
+    pd.TimeStamp
+
+    Raises
+    ------
+    NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
+
+    See Also
+    --------
+    is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date)
@@ -554,27 +570,24 @@ def prev_market_trade_day(date, exchange='SSE'):
 
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
-        返回值：
-        - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
-        - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
 
+    - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
+    - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码
 
-    :param exchange:
-        :type exchange: str 交易所代码:
-                            SSE:    上交所,
-                            SZSE:   深交所,
-                            CFFEX:  中金所,
-                            SHFE:   上期所,
-                            CZCE:   郑商所,
-                            DCE:    大商所,
-                            INE:    上能源,
-                            IB:     银行间,
-                            XHKG:   港交所
+    Returns
+    -------
+    pd.TimeStamp
 
-    :return:
+    See Also
+    --------
+    is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date)
@@ -597,22 +610,24 @@ def nearest_market_trade_day(date, exchange='SSE'):
 def next_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码
 
-    :param exchange:
-        :type exchange: str 交易所代码:
-                            SSE:    上交所,
-                            SZSE:   深交所,
-                            CFFEX:  中金所,
-                            SHFE:   上期所,
-                            CZCE:   郑商所,
-                            DCE:    大商所,
-                            INE:    上能源,
-                            IB:     银行间,
-                            XHKG:   港交所
+    Returns
+    -------
+    pd.TimeStamp
 
-    :return:
+    Raises
+    ------
+    NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
+
+    See Also
+    --------
+    is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date)
@@ -649,11 +664,21 @@ def weekday_name(weekday: int):
 def list_truncate(lst, trunc_size):
     """ 将一个list切分成若干个等长的sublist，除最末一个列表以外，所有列表的元素数量都为trunc_size
 
-    :param lst:
-        list, 需要被切分的列表
-    :param trunc_size:
-        int, 列表中元素数量
-    :return:
+    Parameters
+    ----------
+    lst: list
+        需要被切分的列表
+    trunc_size: int
+        列表中元素数量
+
+    Returns
+    -------
+    nested list, 切分好的子列表
+
+    Examples
+    --------
+    >>> list_truncate([1,2,3,4,5,6,7,8,9,0], 4)
+    >>> [[1,2,3,4], [5,6,7,8], [9,0]]
     """
     assert isinstance(lst, list), f'first parameter should be a list, got {type(lst)}'
     assert isinstance(trunc_size, int), f'second parameter should be an integer larger than 0'
@@ -673,10 +698,15 @@ def list_truncate(lst, trunc_size):
 
 
 def is_number_like(key: [str, int, float]) -> bool:
-    """ 判断一个字符串是否是一个合法的数，使用re比原来的版本快5～10倍
+    """ 判断一个字符串是否是一个合法的数字，使用re比原来的版本快5～10倍
 
-    :param key:
-    :return:
+    Parameters
+    ----------
+    key: [str, int, float], 需要检查的输入
+
+    Returns
+    -------
+    bool
     """
     if isinstance(key, (float, int)):
         return True
@@ -703,53 +733,63 @@ def is_number_like(key: [str, int, float]) -> bool:
 
 def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """ 根据输入匹配证券代码或证券名称，输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
-        如果给出asset_types参数，则限定只返回符合asset_types的结果
-        如果输入字符串全部为数字，则匹配证券代码ts_code，如：
-            输入：
-                000001
-            匹配：
-                '000001.SZ': '平安银行'，
-                '000001.CZC': '农期指数', 
-                '000001.SH': '上证指数' ...
 
-        输入的证券名称可以包含通配符，则进行模式匹配，如：
-        - '?' 匹配一个字符，如
-            输入：
-                "中?集团"
-            匹配
-                '000039.SZ': '中集集团',
-                '000759.SZ': '中百集团',
-                '002309.SZ': '中利集团',
-                '600252.SH': '中恒集团',
-                '601512.SH': '中新集团'
-        - '*' 匹配多个字符，如
-            输入：
-                "中*金"
-            匹配：
-                '600489.SH': '中金黄金',
-                '600916.SH': '中国黄金'
+    如果给出asset_types参数，则限定只返回符合asset_types的结果
+    - 输入六位证券代码匹配相应的证券
+    - 输入证券名称模糊匹配
+    - 输入带通配符的证券名称查找匹配的证券
 
-        输入的证券名称如果不含通配符，将进行模糊匹配：并按匹配程度从高到低输出相似的名称，如：
-            输入：
-                '工商银行'
-            匹配：
-                '601398.SH': '工商银行',
-                '600036.SH': '招商银行',
-                '601916.SH': '浙商银行'
-
-
-    :param code:
+    Parameters
+    ----------
+    code: str
         字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
-    :param asset_types: str
+    asset_types: str
         返回结果类型，以逗号分隔的资产类型代码，如"E,FD"代表只返回股票和基金代码
-    :param match_full_name: bool
+    match_full_name: bool
         是否匹配股票或基金全名，默认不匹配
-    :return:
-        Dict {'E':      [equity codes 股票代码],
-              'IDX':    [index codes 指数代码],
-              'FD':     [fund codes 基金代码],
-              'FT':     [futures codes 期货代码],
-              'OPT':    [options codes 期权代码]}
+
+    Returns
+    -------
+    Dict {'E':      [equity codes 股票代码],
+          'IDX':    [index codes 指数代码],
+          'FD':     [fund codes 基金代码],
+          'FT':     [futures codes 期货代码],
+          'OPT':    [options codes 期权代码]}
+
+    Examples
+    --------
+    如果输入字符串全部为数字，则匹配证券代码ts_code，如：
+        输入：
+            000001
+        匹配：
+            '000001.SZ': '平安银行'，
+            '000001.CZC': '农期指数',
+            '000001.SH': '上证指数' ...
+
+    输入的证券名称可以包含通配符，则进行模式匹配，如：
+    - '?' 匹配一个字符，如
+        输入：
+            "中?集团"
+        匹配
+            '000039.SZ': '中集集团',
+            '000759.SZ': '中百集团',
+            '002309.SZ': '中利集团',
+            '600252.SH': '中恒集团',
+            '601512.SH': '中新集团'
+    - '*' 匹配多个字符，如
+        输入：
+            "中*金"
+        匹配：
+            '600489.SH': '中金黄金',
+            '600916.SH': '中国黄金'
+
+    输入的证券名称如果不含通配符，将进行模糊匹配：并按匹配程度从高到低输出相似的名称，如：
+        输入：
+            '工商银行'
+        匹配：
+            '601398.SH': '工商银行',
+            '600036.SH': '招商银行',
+            '601916.SH': '浙商银行'
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE

@@ -14,10 +14,10 @@
 - *`TA-lib` version ~= 0.4.18*    `# conda install -c conda-forge ta-lib`
 - *`tushare` version ~= 1.2.89*    `# pip install tushare`
 - *`mplfinance` version ~= 0.12.7*    `# conda install -c conda-forge mplfinance`
-- *`pymysql`*    `# optional for datasource type database, conda install -c anaconda pymysql`
-- *`sqlalchemy`* version ~= 1.4.22   `# optional for datasource type database, conda install sqlalchemy`
-- *`pytables`* version ~= 3.6.1  `# optional for datasource file type "hdf", conda install -c conda-forge pytables`
-- *`pyarrow`* version ~= 3.0.0   `# optional for datasource file type "feather", conda install -c conda-forge pyarrow`
+- *`pymysql` version ~= 1.0.2*    `# Optional, conda install -c anaconda pymysql`
+- *`sqlalchemy`* version ~= 1.4.22   `# Optional, conda install sqlalchemy`
+- *`pytables`* version ~= 3.6.1   `# Optional, conda install -c conda-forge pytables`
+- *`pyarrow`* version ~= 3.0.0   `# Optional, conda install -c conda-forge pyarrow`
 
 ## 介绍
 
@@ -120,12 +120,11 @@ data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[]
 
 `queasy`提供了多种内置交易策略可供用户使用，因此用户不需要手工创建这些策略，可以直接使用内置策略（关于所有内置策略的介绍，请参见详细文档）。复合策略可以通过多个简单的策略混合而成。当复合策略无法达到预计的效果时，可以通过`qteasy.Strategy`类来自定义一个策略。
 
-### Create a DMA timing strategy  生成一个DMA均线择时交易策略
+### 生成一个DMA均线择时交易策略
 
 `qteasy`中的所有交易策略都是通过`qteast.Operator`对象来实现回测和运行的，每一个`Operator`对象均包含三种不同的交易策略用途，每一种用途用于生成不同类型的交易信号，以便用于交易的模拟，例如选股信号、择时信号或者风控信号，每种信号类型都可以由一个或多个交易策略来生成，在后面的章节中我们可以详细介绍每一种信号类型以及交易策略，在这里，我们将使用一个内置的DMA均线择时策略来生成一个择时信号，忽略选股和风控信号。
 
 创建一个`Operator`对象，并在创建时传入参数：`strategies='DMA'`，新建一个DMA双均线择时交易策略。
-
 
 ```python
 op = qt.Operator(strategies='dma')
@@ -155,7 +154,7 @@ op.set_parameter('dma', pars=(23, 166, 196))
 上面的代码将参数`pars=(23, 166, 196)`传递给DMA策略，`op.set_parameter()`的详细使用方法见手册。
 
 
-### Back-test strategy  回测并评价交易策略的性能表现
+### 回测并评价交易策略的性能表现
 
 使用默认参数回测策略在历史数据上的表现，请使用`qteasy.run()`，`mode=1`表示进入回测模式，传入参数`visual=False`以文本形式打印结果
 `qteasy.run()`的其他可选参数参见手册
@@ -222,8 +221,6 @@ Max drawdown:                    35.04%
 
 最终打印的回测结果是考虑上述所有交易参数之后的最终结果，因此可以看到总交易成本。详细的交易参数设置请参见详细文档。
 
-
-
 另外，`qteasy`还给给出了关于策略表现的几个指标：
 如alpha和beta分别是0.067和1.002，而夏普率为0.041。最大回撤发生在2009年8月3日到2014年7月10日，回撤了35.0%，且到了2014年12月16日才翻盘。
 
@@ -246,7 +243,7 @@ qteasy提供了丰富的策略回测选项，例如：
 
 更多的选项请参见详细文档
 
-### Optimize strategy  回测并优化交易策略
+### 回测并优化交易策略
 
 交易策略的表现往往与参数有关，例如上个例子中的DMA择时策略，如果输入不同的参数，策略回报相差会非常大。qteasy提供了多种不同的策略参数优化算法，帮助搜索最优的策略参数，并且提供多种不同的策略参数检验方法，为策略参数的表现提供独立检验。
 

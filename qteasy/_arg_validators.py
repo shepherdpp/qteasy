@@ -394,7 +394,7 @@ def _valid_qt_kwargs():
                                               '相当于净资产总额100%价值的股票并持有空头仓位，此时持有负股票份额且\n'
                                               '产生正现金流入'},
 
-        'backtest_price_adj':   {'Default':   'none',
+        'backtest_price_adj':   {'Default':   'back',
                                  'Validator': lambda value: isinstance(value, str)
                                                             and value in ['none', 'n', 'back', 'b', 'adj'],
                                  'level':     4,
@@ -404,8 +404,8 @@ def _valid_qt_kwargs():
                                               '法，即直接采用复权价格进行回测，目前处理方法有两种'
                                               '- none/n - 默认值，不使用复权价格，但也不处理派息，这只是临时处理，因\n'
                                               '           为长期回测不考虑除权派息将会导致回测结果与实际相差巨大\n'
-                                              '- back/b - 使用后复权价格回测，可以一定程度上弥补不考虑分红派股的不足，'
-                                              '           虽不完美，但是权宜之计\n'},
+                                              '- back/b - 使用后复权价格回测，可以弥补不考虑分红派股的不足\n'
+                                              '- adj    - 使用前复权价格回测。\n'},
 
         'maximize_cash_usage':  {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),

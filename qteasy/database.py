@@ -1970,7 +1970,7 @@ class DataSource:
             数据源类型:
             - db/database: 数据存储在mysql数据库中
             - file: 数据存储在本地文件中
-        file_type: str, Default: csv
+        file_type: str, {'csv', 'hdf', 'hdf5', 'feather', 'fth'}, Default: csv
             如果数据源为file时，数据文件类型：
             - csv: 简单的纯文本文件格式，可以用Excel打开，但是占用空间大，读取速度慢
             - hdf/hdf5: 基于pytables的数据表文件，速度较快，需要安装pytables
@@ -1979,7 +1979,7 @@ class DataSource:
             用于存储本地数据文件的路径
         host: str, default: localhost
             如果数据源为database时，数据库的host
-        port: int, default: 3306
+        port: int, Default: 3306
             如果数据源为database时，数据库的port，默认3306
         user: str, Default: None
             如果数据源为database时，数据库的user name
