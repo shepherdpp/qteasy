@@ -1,12 +1,13 @@
 # coding=utf-8
 # ======================================
-# File:     test.py
+# File:     test_operator_and_strategy.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Unittest for all qteasy
-#   functionalities.
+#   Unittest for all Operator and
+#   Strategy class attributes and
+#   methods.
 # ======================================
 import unittest
 

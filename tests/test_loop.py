@@ -5,7 +5,7 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Unittest for all qteasy
+#   Unittest for all qteasy backtest
 #   functionalities.
 # ======================================
 import unittest

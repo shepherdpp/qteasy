@@ -1,12 +1,12 @@
 # coding=utf-8
 # ======================================
-# File:     test.py
+# File:     test_fast_experiments.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Unittest for all qteasy
-#   functionalities.
+#   Temporary test file for quick
+#   function tests.
 # ======================================
 import unittest
 

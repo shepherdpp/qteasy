@@ -1,11 +1,11 @@
 # coding=utf-8
 # ======================================
-# File:     test.py
+# File:     test_utilityfuncs.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Unittest for all qteasy
+#   Unittest for all qteasy utility
 #   functionalities.
 # ======================================
 import unittest

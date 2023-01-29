@@ -1,12 +1,12 @@
 # coding=utf-8
 # ======================================
-# File:     test.py
+# File:     test_evaluate.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Unittest for all qteasy
-#   functionalities.
+#   Unittest for all back test result
+#   evaluation functions.
 # ======================================
 import unittest
 
