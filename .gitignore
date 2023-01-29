@@ -55,3 +55,4 @@ config/
 syslog/
 UNKNOWN.egg-info/
 dist/
+qteasy.egg-info/
