@@ -14,10 +14,21 @@
 - *`TA-lib` version ~= 0.4.18*    `# conda install -c conda-forge ta-lib`
 - *`tushare` version ~= 1.2.89*    `# pip install tushare`
 - *`mplfinance` version ~= 0.12.7*    `# conda install -c conda-forge mplfinance`
-- *`pymysql` version ~= 1.0.2*    `# Optional, conda install -c anaconda pymysql`
-- *`sqlalchemy`* version ~= 1.4.22   `# Optional, conda install sqlalchemy`
-- *`pytables`* version ~= 3.6.1   `# Optional, conda install -c conda-forge pytables`
-- *`pyarrow`* version ~= 3.0.0   `# Optional, conda install -c conda-forge pyarrow`
+
+## 可选依赖包
+如果使用除默认的csv文件以外的方式作为本地数据源，则需要以下可选依赖包
+### 如果使用mysql数据库作为本地数据源
+- *`pymysql` version ~= 1.0.2*    `# conda install -c anaconda pymysql`
+- *`sqlalchemy`* version ~= 1.4.22   `# conda install sqlalchemy`
+
+### 如果使用hdf文件作为本地数据源 
+- *`pytables`* version ~= 3.6.1   `# conda install -c conda-forge pytables`
+
+### 如果使用feather文件作为本地数据源
+- *`pyarrow`* version ~= 3.0.0   `# conda install -c conda-forge pyarrow`
+
+
+## 开发系统依赖包
 
 ## 介绍
 

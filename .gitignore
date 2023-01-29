@@ -7,16 +7,13 @@ qteasy/__pycache__/core.cpython-36.pyc
 *.pyc
 .idea/workspace.xml
 *.xml
-qt_test_temp.ipynb
-Untitled.ipynb
-.ipynb_checkpoints/Untitled-checkpoint.ipynb
-.ipynb_checkpoints/qt_test_temp-checkpoint.ipynb
+*.ipynb
+.ipynb_checkpoints/
 *.pyc
-qteasy/__pycache__/__init__.cpython-36.pyc
-.idea/workspace.xml
+qteasy/__pycache__/
+.idea/
 test_par_in_different_periods.ipynb
 .ipynb_checkpoints/test_par_in_different_periods-checkpoint.ipynb
-.idea/workspace.xml
 .ipynb_checkpoints/Multi_DMA_test-checkpoint.ipynb
 Multi_DMA_test.ipynb
 .ipynb_checkpoints/All_timing_test_separately-checkpoint.ipynb
@@ -56,3 +53,5 @@ qteasy/config/saved2.cfg
 qteasy.cfg
 config/
 syslog/
+UNKNOWN.egg-info/
+dist/
