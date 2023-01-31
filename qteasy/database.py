@@ -3252,6 +3252,10 @@ class DataSource:
                 if not adj_df.empty:
                     adj_df = adj_df['adj_factor'].unstack(level=0)
                 adj_factors[tbl] = adj_df
+            # 如果无法读取adj因子，则报错
+            if len(adj_factors) == 0:
+                raise ValueError(f'Failed reading price adjust factor data, please check local source '
+                                 f'for data availability by calling "qt.get_table_overview()"')
 
             # 根据复权因子更新所有可复权数据
             prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]

@@ -1,31 +1,49 @@
 # qteasy -- 一个基于Python的高效量化投资工具包
 
+
+
+- [安装及依赖](#安装及依赖)
+- [介绍](#介绍)
+- [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
+- [下载股票价格并可视化](#下载股票价格数据并将其可视化)
+- [创建投资策略](#创建一个投资策略，进行回测评价并优化其表现)
+- [投资策略的回测和评价](#回测并评价交易策略的性能表现)
+- [投资策略的优化](#回测并优化交易策略)
+
+
 - Author: **Jackie PENG**
 
 - email: *jackie_pengzhao@163.com* 
 
 - Created: 2019, July, 16
 
-## 安装及依赖包
+## 安装及依赖
+
+### qteasy的安装
+
+`python -m pip install qteasy`
+
+### 安装依赖
+
 这个项目依赖以下python package:
-- *`pandas` version ~= 0.25.1*    `# conda install pandas`
-- *`numpy` version ~= 1.18.1*    `# conda install numpy`
-- *`numba` version ~= 0.47.0*    `# conda install numba`
-- *`TA-lib` version ~= 0.4.18*    `# conda install -c conda-forge ta-lib`
-- *`tushare` version ~= 1.2.89*    `# pip install tushare`
-- *`mplfinance` version ~= 0.12.7*    `# conda install -c conda-forge mplfinance`
+- *`pandas` version <= 0.25.1*    `# conda install pandas`
+- *`numpy` version <= 1.18.1*    `# conda install numpy`
+- *`numba` version <= 0.47*    `# conda install numba`
+- *`TA-lib` version <= 0.4.18*    `# conda install -c conda-forge ta-lib`
+- *`tushare` version <= 1.2.89*    `# pip install tushare`
+- *`mplfinance` version <= 0.12*    `# conda install -c conda-forge mplfinance`
 
 ## 可选依赖包
 如果使用除默认的csv文件以外的方式作为本地数据源，则需要以下可选依赖包
 ### 如果使用mysql数据库作为本地数据源
-- *`pymysql` version ~= 1.0.2*    `# conda install -c anaconda pymysql`
-- *`sqlalchemy`* version ~= 1.4.22   `# conda install sqlalchemy`
+- *`pymysql` version <= 1.0.2*    `# conda install -c anaconda pymysql`
+- *`sqlalchemy` version <= 1.4.22*   `# conda install sqlalchemy`
 
 ### 如果使用hdf文件作为本地数据源 
-- *`pytables`* version ~= 3.6.1   `# conda install -c conda-forge pytables`
+- *`pytables` version <= 3.6.1*   `# conda install -c conda-forge pytables`
 
 ### 如果使用feather文件作为本地数据源
-- *`pyarrow`* version ~= 3.0.0   `# conda install -c conda-forge pyarrow`
+- *`pyarrow` version <= 3*   `# conda install -c conda-forge pyarrow`
 
 
 ## 开发系统依赖包
@@ -73,7 +91,7 @@ op = qt.Operator()
 关于`DataSource`对象的更多详细介绍，请参见详细文档。
 
 ```python
-qt.QT_DATA_SOURCE.refill_data_source('all', start_date='20210101', end_date='20220101')
+qt.refill_data_source('all', start_date='20210101', end_date='20220101')
 ```
 
 股票的数据下载后，使用`candle()`函数，如果K线图显示成功，表明价格数据下载成功。
@@ -83,7 +101,7 @@ qt.QT_DATA_SOURCE.refill_data_source('all', start_date='20210101', end_date='202
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](img/output_5_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_5_2.png)
     
 
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
@@ -93,26 +111,26 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 
 ```python
 # 场内基金的小时K线图
-data = qt.candle('159601', start = '20220121', freq='h')
+qt.candle('159601', start = '20220121', freq='h')
 # 沪深300指数的日K线图
-data = qt.candle('000300', start = '20200121')
+qt.candle('000300', start = '20200121')
 # 股票的30分钟K线，复权价格
-data = qt.candle('中国电信', start = '20211021', freq='30min', adj='b')
+qt.candle('中国电信', start = '20211021', freq='30min', adj='b')
 # 期货K线，三条移动均线分别为9天、12天、26天
-data = qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
+qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 # 场外基金净值曲线图，复权净值，不显示移动均线
-data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
+qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](img/output_3_1.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_1.png)
 
-![png](img/output_7_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_7_2.png)
 
-![png](img/output_8_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_8_3.png)
 
-![png](img/output_3_4.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_4.png)
 
-![png](img/output_3_5.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_5.png)
     
 
 
@@ -125,7 +143,7 @@ data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[]
 - 在K线图上双击鼠标，可以切换不同的均线类型
 - 在K线图的指标区域双击，可以切换不同的指标类型：MACD，RSI，DEMA
 
-![gif](img/output_dyna_plot.gif)
+![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
 
 ###  创建一个投资策略，进行回测评价并优化其表现
 
@@ -245,7 +263,7 @@ Max drawdown:                    35.04%
 - 历史回撤分析（显示五次最大的回撤）
 - 历史收益率热力图、山积图等图表
 
-![png](img/output_14_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_14_3.png)
 qteasy提供了丰富的策略回测选项，例如：
 
 - 回测开始结束日期
@@ -271,5 +289,5 @@ res = qt.run(op, mode=2, visual=True)
 
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
 
-![png](img/output_15_3.png)   
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_15_3.png)   
 
