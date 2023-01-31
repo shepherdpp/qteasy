@@ -1,5 +1,8 @@
 # qteasy -- a python-based fast quantitative investment utility module 一个基于Python的高效量化投资工具包
 
+![publish](https://github.com/shepherdpp/qteasy/actions/workflows/python-publish.yml/badge.svg)
+
+
 - Author: **Jackie PENG**
 
 - email: *jackie_pengzhao@163.com* 
