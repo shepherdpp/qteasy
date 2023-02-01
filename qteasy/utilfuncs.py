@@ -456,12 +456,12 @@ def prev_trade_day(date):
     """
     if maybe_trade_day(date):
         return date
-    else:
-        d = pd.to_datetime(date)
-        prev = d - pd.Timedelta(1, 'd')
-        while not maybe_trade_day(prev):
-            prev = prev - pd.Timedelta(1, 'd')
-        return prev
+
+    d = pd.to_datetime(date)
+    prev = d - pd.Timedelta(1, 'd')
+    while not maybe_trade_day(prev):
+        prev = prev - pd.Timedelta(1, 'd')
+    return prev
 
 
 def next_trade_day(date):
@@ -472,12 +472,12 @@ def next_trade_day(date):
     """
     if maybe_trade_day(date):
         return date
-    else:
-        d = pd.to_datetime(date)
-        next = d + pd.Timedelta(1, 'd')
-        while not maybe_trade_day(next):
-            next = next + pd.Timedelta(1, 'd')
-        return next
+
+    d = pd.to_datetime(date)
+    next = d + pd.Timedelta(1, 'd')
+    while not maybe_trade_day(next):
+        next = next + pd.Timedelta(1, 'd')
+    return next
 
 
 def is_market_trade_day(date, exchange: str = 'SSE'):
@@ -519,7 +519,7 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
             raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
         try:
             is_open = exchange_trade_cal.loc[_date].is_open
-        except KeyError as e:
+        except KeyError:
             raise ValueError(f'The date {_date} is out of trade calendar range, please refill data')
         return is_open == 1
     else:

@@ -17,9 +17,9 @@
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
-1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用，并*提供一些金融统计数据分析工具（开发过程中）*
+1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用，并*提供一些金融统计数据分析工具（开发中）*
 2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
-3. 交易策略的部署、实时运行，未来还将实现与自动化交易系统连接、实现自动化交易
+3. 交易策略的部署、*实盘运行(开发中)*，未来还将实现*与自动化交易系统连接、实现自动化交易(开发中)*
 
 
 开发本模块的目标是为量化交易人员提供一套策略开发框架，回测速度快、回测精度高、评价指标全，而且可以非常灵活地实现各种自定义交易策略
@@ -34,24 +34,24 @@
 ### 安装依赖
 
 这个项目依赖以下python package:
-- *`pandas` version <= 0.25.1*    `# conda install pandas`
-- *`numpy` version <= 1.18.1*    `# conda install numpy`
-- *`numba` version <= 0.47*    `# conda install numba`
-- *`TA-lib` version <= 0.4.18*    `# conda install -c conda-forge ta-lib`
-- *`tushare` version <= 1.2.89*    `# pip install tushare`
-- *`mplfinance` version <= 0.12*    `# conda install -c conda-forge mplfinance`
+- *`pandas` version >= 0.25.1*    `# conda install pandas`
+- *`numpy` version >= 1.18.1*    `# conda install numpy`
+- *`numba` version >= 0.47*    `# conda install numba`
+- *`TA-lib` version >= 0.4.18*    `# conda install -c conda-forge ta-lib`
+- *`tushare` version >= 1.2.89*    `# pip install tushare`
+- *`mplfinance` version >= 0.12*    `# conda install -c conda-forge mplfinance`
 
 ## 可选依赖包
 如果使用除默认的csv文件以外的方式作为本地数据源，则需要以下可选依赖包
 ### 如果使用mysql数据库作为本地数据源
-- *`pymysql` version <= 1.0.2*    `# conda install -c anaconda pymysql`
-- *`sqlalchemy` version <= 1.4.22*   `# conda install sqlalchemy`
+- *`pymysql` version >= 1.0.2*    `# conda install -c anaconda pymysql`
+- *`sqlalchemy` version >= 1.4.22*   `# conda install sqlalchemy`
 
 ### 如果使用hdf文件作为本地数据源 
-- *`pytables` version <= 3.6.1*   `# conda install -c conda-forge pytables`
+- *`pytables` version >= 3.6.1*   `# conda install -c conda-forge pytables`
 
 ### 如果使用feather文件作为本地数据源
-- *`pyarrow` version <= 3*   `# conda install -c conda-forge pyarrow`
+- *`pyarrow` version >= 3*   `# conda install -c conda-forge pyarrow`
 
 
 ##  10分钟了解qteasy的功能

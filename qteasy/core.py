@@ -1294,13 +1294,33 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
 
 
 def get_table_info(table_name, data_source=None, verbose=True):
-    """ 获取数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容以及数据列的名称、数据类型及说明
+    """ 获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容
+        以及数据列的名称、数据类型及说明
 
-    :param table_name: 需要查询的数据表名称
-    :param data_source: 需要获取数据表信息的数据源，默认None，此时获取默认QT_DATA_SOURCE的信息
-    :param verbose: 默认True，是否打印完整数据列名称及类型清单
+    Parameters:
+    -----------
+    table_name: str
+        需要查询的数据表名称
+    data_source: DataSource
+        需要获取数据表信息的数据源，默认None，此时获取QT_DATA_SOURCE的信息
+    verbose: bool, Default: True，
+        是否打印完整数据列名称及类型清单
+
     Returns
     -------
+    一个tuple，包含数据表的结构化信息：
+            (table name:    数据表名称
+             table_exists:  bool，数据表是否存在
+             table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+             table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
+             primary_key1:  str，数据表第一个主键名称
+             pk_count1:     int，数据表第一个主键记录数量
+             pk_min1:       obj，数据表主键1起始记录
+             pk_max1:       obj，数据表主键2最终记录
+             primary_key2:  str，数据表第二个主键名称
+             pk_count2:     int，数据表第二个主键记录
+             pk_min2:       obj，数据表主键2起始记录
+             pk_max2:       obj，数据表主键2最终记录)
     """
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE

@@ -138,7 +138,7 @@ class TestUtilityFuncs(unittest.TestCase):
         date_weekend = '20210424'
         date_seems_trade_day = '20210217'
         date_too_early = '19890601'
-        date_too_late = '20240105'
+        date_too_late = '20500105'
         date_christmas = '20201225'
 
         self.assertTrue(maybe_trade_day(date_trade))
@@ -152,10 +152,12 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_market_trade_day(date_holiday))
         self.assertFalse(is_market_trade_day(date_weekend))
         self.assertFalse(is_market_trade_day(date_seems_trade_day))
-        self.assertFalse(is_market_trade_day(date_too_early))
-        self.assertFalse(is_market_trade_day(date_too_late))
         self.assertTrue(is_market_trade_day(date_christmas))
         self.assertFalse(is_market_trade_day(date_christmas, exchange='XHKG'))
+
+        # raises when date out of range
+        self.assertRaises(ValueError, is_market_trade_day, date_too_early)
+        self.assertRaises(ValueError, is_market_trade_day, date_too_late)
 
         date_trade = pd.to_datetime('20210401')
         date_holiday = pd.to_datetime('20210102')

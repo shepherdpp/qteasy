@@ -836,7 +836,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=30)
         op.set_parameter('signal_none', pars=())
-        op.set_blender('avg(s0, s1, s2)', 'ls')
+        op.set_blender('avg(s0, s1, s2)', 'close')
         qt.run(op, visual=False, trade_log=True)
 
     def test_op_stepwise(self):

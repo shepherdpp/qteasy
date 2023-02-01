@@ -1912,7 +1912,7 @@ class MissingDataWarning(Warning):
     pass
 
 
-# noinspection SqlDialectInspection,PyTypeChecker
+# noinspection SqlDialectInspection,PyTypeChecker,PyPackageRequirements
 class DataSource:
     """ DataSource 对象管理存储在本地的历史数据文件或数据库.
 
@@ -2056,7 +2056,7 @@ class DataSource:
                 raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
             if file_type in ['hdf']:
                 try:
-                    import pytables
+                    import tables
                 except ImportError:
                     raise ImportError(f'Missing optional dependency \'pytables\' for datasource file type '
                                       f'\'hdf5\'. Use pip or conda to install pytables')
@@ -3020,12 +3020,20 @@ class DataSource:
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
-        :param table:
-        :param verbose: 是否显示更多信息，如是，显示表结构等信息
-        :param print_info: 是否打印输出所有结果
-        :param human: 是否给出容易阅读的字符串形式
-        :return:
-            一个tuple，包含数据表的结构化信息：
+        Parameters:
+        -----------
+        table: str
+            数据表名称
+        verbose: bool, Default: True
+            是否显示更多信息，如是，显示表结构等信息
+        print_info: bool, Default: True
+            是否打印输出所有结果
+        human: bool, Default: True
+            是否给出容易阅读的字符串形式
+
+        Returns
+        -------
+        一个tuple，包含数据表的结构化信息：
             (table name:    数据表名称
              table_exists:  bool，数据表是否存在
              table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
@@ -3217,9 +3225,6 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
-        # debug
-        # import pdb;
-        # pdb.set_trace()
 
         # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
@@ -3239,12 +3244,12 @@ class DataSource:
                                f'check data source availability: \n'
                                f'check availability of all tables:  qt.get_table_overview()\nor\n'
                                f'check specific table:              qt.get_table_info(\'table_name\')\n'
-                               f'fill datasource:                   DataSource.refill_local_source(\'table_name\', '
+                               f'fill datasource:                   qt.refill_data_source(table=\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
+        adj_factors = {}
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
-            adj_factors = {}
             adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
                                                table_map.asset_type.isin(asset_type)].index.to_list()
             for tbl in adj_tables_to_read:
@@ -3252,11 +3257,12 @@ class DataSource:
                 if not adj_df.empty:
                     adj_df = adj_df['adj_factor'].unstack(level=0)
                 adj_factors[tbl] = adj_df
-            # 如果无法读取adj因子，则报错
-            if len(adj_factors) == 0:
-                raise ValueError(f'Failed reading price adjust factor data, please check local source '
-                                 f'for data availability by calling "qt.get_table_overview()"')
+            # 如果adj table不为空但无法读取adj因子，则报错
+            if adj_tables_to_read and (not adj_factors):
+                raise ValueError(f'Failed reading price adjust factor data. call "qt.get_table_info()" to '
+                                 f'check local source data availability')
 
+        if adj_factors:
             # 根据复权因子更新所有可复权数据
             prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]
             for htyp in prices_to_adjust:
@@ -4384,7 +4390,6 @@ def next_main_freq(freq, direction='up'):
             target_pos += 1
         elif direction == 'down':
             target_pos -= 1
-        # import pdb; pdb.set_trace()
         if get_main_freq_level(target_freq) != level:
             return target_freq
 

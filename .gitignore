@@ -29,7 +29,6 @@ examples/strategy_optimization.ipynb
 **/qteasy/data/
 */qteasy/data/
 **/data/
-configurations.txt
 *.dat
 qteasy/data/close.dat
 qteasy/.DS_Store
@@ -46,7 +45,6 @@ qteasy/log/*
 *.log
 **qteasy/log/
 *.cnf
-test.py
 qteasy/config/qt_config.cfg
 qteasy/config/saved.cfg
 qteasy/config/saved2.cfg
@@ -56,3 +54,4 @@ syslog/
 UNKNOWN.egg-info/
 dist/
 qteasy.egg-info/
+data_test/
