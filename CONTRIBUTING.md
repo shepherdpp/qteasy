@@ -1,12 +1,31 @@
 ## Contributing Basics
 
-- Contributing can be as simple as **asking questions**, participating in discussions, suggesting enhancements, etc.  **All of these are valuable!**  There are many ways to contribute.  We also very much appreciate when you share the creative things you've done *using* qteasy (both code and plot images).  And, of course, writing code for qteasy is also a great way to contribute.    Thank you.
+- Contributing can be as simple as **asking questions**, **report issues**, participating in discussions, suggesting enhancements, etc.  **All of these are valuable!**  There are many ways to contribute.  I also very much appreciate when you share the creative things you've done *using* qteasy (both code and plot images).  And, of course, writing code for qteasy is also a great way to contribute.    Thank you.
 
-- All of the usual/typical open source contribution guidelines apply (see for example, **[Open Source Guide to Contributing](https://opensource.guide/how-to-contribute/)**).  Therefore, here, on this page, we will mention just a few items that we may be particular about in **qteasy**.
+- All of the usual/typical open source contribution guidelines apply (see for example, **[Open Source Guide to Contributing](https://opensource.guide/how-to-contribute/)**).  Therefore, here, on this page, I will mention just a few items that I may be particular about in **qteasy**.
+
+---
+## Report Issues
+- Please provide clear description of the issue and the information of Environment you are working in. Preferably, include following sections in your description:
+  - **Your Expectation**: describe what you are trying to achieve while you encountered the issue
+  - **Your Method**: provide your code that you think would have given expected results
+  - **The Outcome**: describe what you actually get with *Your Method*, provide error messages
+  - **Your Environment**: Tell me about your machine, OS, and versions of your dependency packages
+  - **Your Configurations**: Print out your qteasy configuration and local datasource overview
+  - **How to reproduce**: try to provide examples for me to reproduce the issue in order to pin down its root cause
+
+---
+## Provide Examples and Improve Documents
+- I highly appreciate if you can provide examples and/or help me with document improvements:
+  - Example strategies
+  - Code snippets
+  - Visualizations
+  - Error Corrections
+- Please follow below Fork / Clone / Pull Request workflow to provide your contribution to qteasy, I will try to feedback as quickly as possible.
 
 ---
 
-## Fork Clone Workflow
+## Fork Clone and Pull Request Workflow
 - The standard workflow for contributing on GitHub is called **Fork/Clone**.  For those who may not be familiar, here is a brief summary and some reference links.  
   - *We assume you are familiar with **git** basics: `git clone`, `git commit`, etc*.
 - Note: a "Fork" is just a `git clone` *that is created on, and that lives on, GitHub*.  You create a fork using the **Fork** button on GitHub: This allows GitHub to track the relationship between the original github repository, and your Fork.
