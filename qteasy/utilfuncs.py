@@ -117,13 +117,13 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
 def mask_to_signal(lst):
     """将持仓蒙板转化为交易信号.
 
-        转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
-        则产生相应的补仓买入信号；如果持仓比率降低，则产生相应的卖出信号将仓位降低到目标水平。
-        生成的信号范围在(-1, 1)之间，负数代表卖出，正数代表买入，且具体的买卖信号signal意义如下：
-        signal > 0时，表示用总资产的 signal * 100% 买入该资产， 如0.35表示用当期总资产的35%买入该投资产品，如果
-            现金总额不足，则按比例调降买入比率，直到用尽现金。
-        signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
-        signal = 0时，表示不进行任何操作
+    转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
+    则产生相应的补仓买入信号；如果持仓比率降低，则产生相应的卖出信号将仓位降低到目标水平。
+    生成的信号范围在(-1, 1)之间，负数代表卖出，正数代表买入，且具体的买卖信号signal意义如下：
+    signal > 0时，表示用总资产的 signal * 100% 买入该资产， 如0.35表示用当期总资产的35%买入该投资产品，如果
+        现金总额不足，则按比例调降买入比率，直到用尽现金。
+    signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
+    signal = 0时，表示不进行任何操作
 
     input:
         :param lst，ndarray，持仓蒙板
@@ -151,13 +151,18 @@ def mask_to_signal(lst):
 def unify(arr):
     """调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
 
-    example:
-    unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
-    =
-    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
+    Parameters
+    ----------
+    arr: np.ndarray
 
-    :param arr: type: np.ndarray
-    :return: ndarray
+    Returns
+    -------
+    ndarray
+
+    examples
+    --------
+    >>> unify([[3.0, 2.0, 5.0], [1.0, 1.0, 1.0]])
+    >>> [[0.3, 0.2, 0.5], [0.3333, 0.3333, 0.3333]]
     """
     if isinstance(arr, np.ndarray):  # Input should be ndarray! got {type(arr)}'
         s = arr.sum(1)
@@ -171,10 +176,20 @@ def unify(arr):
 def time_str_format(t: float, estimation: bool = False, short_form: bool = False):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
-    :param t:  输入时间，单位为秒
-    :param estimation:
-    :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XX sec", 为True时输出"XXD XXH XX'XX".XXX"
-    :return:
+    Parameters
+    ----------
+    t: float
+        输入时间，单位为秒
+    estimation: bool, Default: False
+        True时返回结果精确到最大单位
+    short_form: bool, Default: False
+        时间输出形式，
+        False时输出格式为"XX hour XX day XX min XX sec",
+        True时输出"XXD XXH XX'XX".XXX"
+
+    Returns
+    -------
+    str: 时间字符串格式
     """
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
@@ -248,10 +263,14 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         3.3 如果列表元素为boolean时，输出True对应的切片编号，如[True, True, False, False] 输出为[0,1]
     4 输入数据为int型时，输出相应的切片，如输入0的输出为[0]
 
-    :param unknown_input: slice or int/str or list of int/string
-    :param str_int_dict: a dictionary that contains strings as keys and integer as values
-    :return:
-        a list of slice/list that can be used to slice the Historical Data Object
+    Parameters
+    ----------
+    unknown_input: slice, int, str or list of int/str
+    str_int_dict: dict: {str: int}
+
+    Returns
+    -------
+    list of slice/list that can be used to slice the Historical Data Object
     """
     if isinstance(unknown_input, slice):
         return unknown_input  # slice object can be directly used
@@ -296,6 +315,23 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
     这个函数生成的字典可以生成一个适合快速访问的label与target_list中的元素映射，使得可以快速地通过label访问列表中的元素
+
+    本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
+
+    Parameters
+    ----------
+    input_labels:
+        输入标签，可以接受两种形式的输入：
+        字符串形式: 如:     'first,second,third'
+        列表形式，如:      ['first', 'second', 'third']
+    target_list:
+        需要进行映射的目标列表
+
+    Returns
+    -------
+
+    Examples
+    --------
     例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
     现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
     使用labels_to_dict函数生成一个字典ID如下：
@@ -305,12 +341,6 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
     通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
     target_list[ID['first']] == target_list[0] == 100
 
-    本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
-    :param input_labels: 输入标签，可以接受两种形式的输入：
-                                    字符串形式: 如:     'first,second,third'
-                                    列表形式，如:      ['first', 'second', 'third']
-    :param target_list: 需要进行映射的目标列表
-    :return:
     """
     if isinstance(input_labels, str):
         input_labels = str_to_list(input_string=input_labels)
@@ -327,11 +357,22 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=None):
     """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义
 
-        :param input_string: str: 需要分割的字符串
-        :param sep_char: str: 字符串分隔符， 默认','
-        :param case, str, 默认None, 是否改变大小写，upper输出全大写, lower输出全消协
-        :param dim，需要生成的目标list的元素数量
-        :param padder，当元素数量不足的时候用来补充的元素
+    Parameters
+    ----------
+    input_string: str:
+        需要分割的字符串
+    sep_char: str:
+        字符串分隔符， 默认','
+    case: str
+        默认None, 是否改变大小写，upper输出全大写, lower输出全消协
+    dim: int
+        需要生成的目标list的元素数量
+    padder: str
+        当元素数量不足的时候用来补充的元素
+
+    Returns
+    -------
+    list of str: 字符串分割后的列表
     """
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     if input_string == "":
@@ -887,8 +928,12 @@ def human_file_size(file_size: int) -> str:
 def human_units(number: int, short_form=True) -> str:
     """ 将一个整型数字转化为以K/M/B/T为单位的文件大小字符串
 
-    :param number: int 表示文件大小的数字，单位为字节
-    :param short_form: bool, True时使用K/M/B/T 代表 thousand/million/billion/trillion
+    Parameters
+    ----------
+    number: int
+        表示文件大小的数字，单位为字节
+    short_form: bool, Default: True
+        True时使用K/M/B/T 代表 thousand/million/billion/trillion
     :return:
     """
     if not isinstance(number, (float, int)):
@@ -915,14 +960,17 @@ def human_units(number: int, short_form=True) -> str:
 
 @njit()
 def _lev_ratio(s, t):
-    """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio
-    此处忽略大小写字母的区别
+    """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio,此处忽略大小写字母的区别
 
-    :param s: str  第一个字符串
-    :param t: str  第二个字符串
-    :return:
-        float： 两个字符串的levenshtein ratio
+    Parameters
+    ----------
+    s, t: str  第一个和第二个字符串
+
+    Returns
+    -------
+    float： 两个字符串的levenshtein ratio
     """
+
     s = s.lower()
     t = t.lower()
     # Initialize matrix of zeros
