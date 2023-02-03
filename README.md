@@ -117,7 +117,7 @@ local_data_file_path = data/  # 或者其他指定的文件存储目录
 如果日常使用的数据量大，建议设置`data_source_type = 'database'`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
 间， 分钟级别数据将占用350GB甚至更多的磁盘空间。
 
-关闭并保存好配置文件后，重新导入qteasy，就完成了数据源的配置，可以开始下载数据到本地数据源了。
+关闭并保存好配置文件后，重新导入`qteasy`，就完成了数据源的配置，可以开始下载数据到本地数据源了。
 
 ### 下载股票价格数据并将其可视化 
 
@@ -140,7 +140,7 @@ qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='202
 > - `all`     : 所有的数据表，以上所有数据表，由于数据量大，建议分批下载
 
 
-数据下载到本地后，可以使用qt.get_history_data()来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个dict中。
+数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。
 
 ```python
 qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
