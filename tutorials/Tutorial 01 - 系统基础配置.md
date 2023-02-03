@@ -77,7 +77,7 @@ tushare_token = <your tushare token>
 # 设置本地数据源，如果使用database作为本地数据源
 local_data_source = database
 # 需要设置数据库服务器信息
-local_db_host = localhost
+local_db_host = <host name>
 local_db_user = <user name>
 local_db_password = <your password>
 local_db_name = <your db name>
@@ -86,7 +86,7 @@ local_db_name = <your db name>
 local_data_source = file
 # 需要设置文件类型和存储路径
 local_data_file_type = csv  # 或者hdf/fth分别代表hdf5文件或feather文件
-local_data_file_path = qteasy/data  # 或者其他指定的文件存储目录
+local_data_file_path = data  # 或者其他指定的文件存储目录
 ```
 完成上述配置后，`qteasy`会将上述配置读取后写入**`QT_CONFIG`**，这样在运行中就会使用这一组配置变量。
 

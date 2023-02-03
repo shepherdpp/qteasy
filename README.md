@@ -2,19 +2,20 @@
 
 
 - [QTEASY简介](#基本介绍)
-- [安装及依赖](#安装及依赖)
+- [安装及依赖](#安装依赖包)
 - [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
-- [下载股票价格并可视化](#下载股票价格数据并将其可视化)
-- [创建投资策略](#创建一个投资策略，进行回测评价并优化其表现)
-- [投资策略的回测和评价](#回测并评价交易策略的性能表现)
-- [投资策略的优化](#回测并优化交易策略)
+  - [qteasy初始配置](#配置qteasy数据源:)
+  - [下载股票价格并可视化](#下载股票价格数据并将其可视化)
+  - [创建投资策略](#创建一个投资策略，进行回测评价并优化其表现)
+  - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
+  - [投资策略的优化](#回测并优化交易策略)
 
 ## QTEASY简介
 
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.0.0.dev8`
+- Latest Version: `0.0.1.dev0`
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -23,7 +24,7 @@
 3. 交易策略的部署、*实盘运行(开发中)*，未来还将实现*与自动化交易系统连接、实现自动化交易(开发中)*
 
 
-开发本模块的目标是为量化交易人员提供一套策略开发框架，回测速度快、回测精度高、评价指标全，而且可以非常灵活地实现各种自定义交易策略
+开发本模块的目标是为量化交易人员提供一套量化交易策略开发框架，提供了金融数据下载和分析，交易策略快速回测，策略可调参数的寻优以及交易策略实盘运行等功能。
 
 
 ## 安装及依赖
@@ -32,9 +33,9 @@
 
 `python -m pip install qteasy`
 
-### 安装依赖
+### 安装依赖包
 
-这个项目依赖以下python package:
+这个项目依赖以下python package，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装:
 - *`pandas` version >= 0.25.1*    `# conda install pandas`
 - *`numpy` version >= 1.18.1*    `# conda install numpy`
 - *`numba` version >= 0.47*    `# conda install numba`
@@ -43,7 +44,7 @@
 - *`mplfinance` version >= 0.12*    `# conda install -c conda-forge mplfinance`
 
 ## 可选依赖包
-如果使用除默认的csv文件以外的方式作为本地数据源，则需要以下可选依赖包
+使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包
 ### 如果使用mysql数据库作为本地数据源
 - *`pymysql` version >= 1.0.0*    `# conda install -c anaconda pymysql`
 - *`sqlalchemy` version >= 1.4.18*   `# conda install sqlalchemy`
@@ -55,13 +56,7 @@
 - *`pyarrow` version >= 3*   `# conda install -c conda-forge pyarrow`
 
 
-##  10分钟了解qteasy的功能
-
-- 模块的导入
-- 数据的获取和可视化  
-- 投资策略的创建
-- 投资策略的回测
-- 投资策略的优化
+##  10分钟了解`qteasy`的功能
 
 基本的模块导入方法如下
 
@@ -69,41 +64,83 @@
 import qteasy as qt
 ```
 
-模块导入后，工具包中的函数及对象即可以使用了:
+### 配置qteasy数据源:
 
+为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
 
-```python
-ht = qt.HistoryPanel()
-op = qt.Operator()
+`qteasy`可以通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请API Token，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
+
+因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置，初始配置是通过一个文件`qteasy.cfg`来实现的。第一次导入`qteasy`时，
+`qteasy`
+会在安装根目录下创建一个空白的配置文件，用TextEdit或Notepad打开文件可以看到下面内容：
+
+```
+# qteasy configuration file
+# following configurations will be loaded when initialize qteasy
+
+# example:
+# local_data_source = database
+
 ```
 
-### 下载股票价格数据并将其可视化 
-为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，通过一个`DataSource`对象来获取。这些数据可以生成投
-资策略所需要的历史数据组合，也可以通过简单的命令生成股票的K线图，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
+> - 使用`qt.QT_ROOT_PATH`可以查看qteasy的安装根目录
+> - `tushare` 的`API token`可以到[tushare pro主页](https://tushare.pro)免费申请
 
-为了使用历史数据，`qteasy`支持通过`tushare`金融数据包来获取大量的金融数据，用户需要自行获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
-一旦拥有足够的权限，可以通过下面的命令批量拉取过去一年的所有股票日K线数据并保存在本地，以确保`qteasy`的相关功能可以正常使用。
 
-下载数据时，使用`qt.refill_data_source()`函数的`tables`参数指定需要补充的数据表，可以同时给出多个`table`的名称，逗号分隔字符串和字符串列表都合法：
-例如，下面两种方式都合法且相同：
+在文件中直接添加下面的配置后保存即可：
 
-- `table='stock_indicator, stock_daily, income, stock_adj_factor'`
-- `table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']`
+```
+# qteasy configuration file
+# following configurations will be loaded when initialize qteasy
 
-除了直接给出表名称以外，还可以通过表类型指明多个表：
+# example:
+# local_data_source = database
 
-- `cal`     : 交易日历表，各个交易所的交易日历
-- `basics`  : 所有的基础信息表，包括股票、基金、指数、期货、期权的基本信息表
-- `adj`     : 所有的复权因子表，包括股票、基金的复权因子，用于生成复权价格
-- `data`    : 所有的历史数据表，包括股票、基金、指数、期货、期权的日K线数据以及周、月K线数据
-- `events`  : 所有的历史事件表，包括股票更名、更换基金经理、基金份额变动等数据
-- `report`  : 财务报表，包括财务指标、三大财务报表、财务快报、月报、季报以及年报
-- `comp`    : 指数成分表，包括各个指数的成份股及其百分比
-- `all`     : 所有的数据表，以上所有数据表，由于数据量大，建议分批下载
+tushare_token = <你的tushare API Token> 
 
-如果日常使用的数据量大，建议设置`data_source_type = 'db'`，使用数据库保存本地数据，不包括分钟数据时，所有数据将占用大约10G的磁盘空
+# 如果设置使用mysql数据库作为本地数据源，需要设置：
+local_data_source = database  
+# 同时设置mysql数据库的连接信息
+local_db_host = <host name>
+local_db_user = <user name>
+local_db_password = <password>
+local_db_name = <database name>
+
+# 如果使用csv文件作为本地数据源：
+local_data_source = file
+# 需要设置文件类型和存储路径
+local_data_file_type = csv  # 或者hdf/fth分别代表hdf5文件或feather文件
+local_data_file_path = data/  # 或者其他指定的文件存储目录
+```
+根据你选择的本地数据源类型，可能需要安装对应的依赖包，参见[安装及依赖](#安装依赖包)
+
+如果日常使用的数据量大，建议设置`data_source_type = 'database'`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
 间， 分钟级别数据将占用350GB甚至更多的磁盘空间。
-关于`DataSource`对象的更多详细介绍，请参见详细文档。
+
+关闭并保存好配置文件后，重新导入qteasy，就完成了数据源的配置，可以开始下载数据到本地数据源了。
+
+### 下载股票价格数据并将其可视化 
+
+要下载数据，使用`qt.refill_data_source()`函数。下面的代码下载一年内所有股票的日K线数据：
+
+```python
+qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
+```
+
+> `qt.refill_data_source()`的`tables`参数指定需要补充的数据表；
+> 除了直接给出表名称以外，还可以通过表类型同时下载多个数据表的数据：
+> 
+> - `cal`     : 交易日历表，各个交易所的交易日历
+> - `basics`  : 所有的基础信息表，包括股票、基金、指数、期货、期权的基本信息表
+> - `adj`     : 所有的复权因子表，包括股票、基金的复权因子，用于生成复权价格
+> - `data`    : 所有的历史数据表，包括股票、基金、指数、期货、期权的日K线数据以及周、月K线数据
+> - `events`  : 所有的历史事件表，包括股票更名、更换基金经理、基金份额变动等数据
+> - `report`  : 财务报表，包括财务指标、三大财务报表、财务快报、月报、季报以及年报
+> - `comp`    : 指数成分表，包括各个指数的成份股及其百分比
+> - `all`     : 所有的数据表，以上所有数据表，由于数据量大，建议分批下载
+
+
+数据下载到本地后，可以使用qt.get_history_data()来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个dict中。
 
 ```python
 qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
@@ -257,6 +294,8 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 - 在K线图的指标区域双击，可以切换不同的指标类型：MACD，RSI，DEMA
 
 ![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
+
+关于`DataSource`对象的更多详细介绍，请参见[qteasy教程](https://github.com/shepherdpp/qteasy/tutorials)
 
 ###  创建一个投资策略，进行回测评价并优化其表现
 

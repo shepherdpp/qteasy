@@ -1852,22 +1852,27 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     return configuration(config_key=config_key, level=level, up_to=up_to, default=default, verbose=verbose)
 
 
-def save_config(config=None, file_name=None, overwrite=True):
-    """ 将config保存为一个文件，如果不明确给出文件名及config对象，则
-        将QT_CONFIG保存到qteasy.cfg中
+def save_config(config=None, file_name=None, overwrite=True, initial_config=False):
+    """ 将config保存为一个文件
+    尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
 
     Parameters
     ----------
-    config: ConfigDict 对象
-        一个config对象，默认None，如果为None，则保存QT_CONFIG
-    file_name: str
-        文件名，默认None，如果为None，文件名为qteasy.cfg
-    overwrite: bool
+    config: ConfigDict or dict, Default: None
+        一个config对象或者包含配置环境变量的dict，如果为None，则保存qt.QT_CONFIG
+    file_name: str, Default: None
+        文件名，如果为None，文件名为"saved_config.cfg"
+    overwrite: bool, Default: True
         默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
+    initial_config: bool, Default: False ** FUNCTIONALITY NOT IMPLEMENTED **
+        保存环境变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部分环境变量了，则覆盖相关环境变量
 
     Returns
     -------
+    None
     """
+
+    # TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
     import pickle
@@ -1875,8 +1880,8 @@ def save_config(config=None, file_name=None, overwrite=True):
 
     if config is None:
         config = QT_CONFIG
-    if not isinstance(config, ConfigDict):
-        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+    if not isinstance(config, (ConfigDict, dict)):
+        raise TypeError(f'config should be a ConfigDict or a dict, got {type(config)} instead.')
 
     if file_name is None:
         file_name = 'saved_config.cfg'
@@ -1884,7 +1889,7 @@ def save_config(config=None, file_name=None, overwrite=True):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
     import re
     if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
-        raise ValueError(f'invalid file name given: {file_name}')
+        raise ValueError(f'invalid file name: {file_name}, file name must be like "filename.cfg".')
 
     config_path = os.path.join(QT_ROOT_PATH, 'config/')
     if not os.path.exists(config_path):
@@ -1896,7 +1901,7 @@ def save_config(config=None, file_name=None, overwrite=True):
     with open(os.path.join(config_path, file_name), open_method) as f:
         try:
             pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
-            logger_core.info(f'file content written: {f.name}')
+            logger_core.info(f'config file content written to: {f.name}')
         except Exception as e:
             logger_core.warning(f'{e}, error during writing config to local file.')
 
@@ -1944,6 +1949,21 @@ def load_config(config=None, file_name=None):
     configure(config=config,
               only_built_in_keys=False,
               **saved_config)
+
+
+def view_config_files(details=False):
+    """ 查看已经保存的配置文件，并显示其主要内容
+
+    Parameters
+    ----------
+    details: bool, Default: False
+        是否显示配置文件的详细内容
+
+    :return:
+    """
+
+    # TODO: Implement this function and add unittests
+    raise NotImplementedError
 
 
 def reset_config(config=None):
