@@ -1,6 +1,6 @@
 # coding=utf-8
 # ======================================
-# File:     operator.py
+# File:     qt_operator.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-21
@@ -17,180 +17,181 @@ import pandas as pd
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
+from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES
+from .strategy import BaseStrategy
 from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
 from .blender import blender_parser
 
 
 class Operator:
     """ Operator(交易员)类，用于生成Operator对象，它是qteasy的核心对象。
-        Operator是一个容器对象，它包含一系列交易策略，保存每一个交易策略所需的历史数据，并且可以调用所有交易策略，生成交易信号，
-        同时根据保存的规则把所有交易策略生成的信号混合起来，形成一组最终的交易信号。就像一个交易员在实际交易中的行为一样。
+
+    Operator是一个容器对象，它包含一系列交易策略，保存每一个交易策略所需的历史数据，并且可以调用所有交易策略，生成交易信号，
+    同时根据保存的规则把所有交易策略生成的信号混合起来，形成一组最终的交易信号。就像一个交易员在实际交易中的行为一样。
 
     创建一个Operator对象时，需要给出一组交易策略，并设定好交易员的交易模式和信号模式，交易模式和信号模式都是Operator对象最重要
     的属性，他们共同决定了交易员的行为模式:
 
-        key properties:
-            :param strategies:  一个列表，Operator对象包含的策略对象，可以给出自定义策略对象或内置
-                                交易策略的id，
-                                例如：
-                                 - ['macd', 'dma']:
-                                    一个包含两个内置交易策略的列表
-                                 - [ExampleStrategy(), 'macd']
-                                    一个包含两个交易策略，其中第一个是自定义策略的列表
+    Attributes
+    ----------
+    strategies:
+        一个列表，Operator对象包含的策略对象，可以给出自定义策略对象或内置
+        交易策略的id，
+        例如：
+         - ['macd', 'dma']:
+            一个包含两个内置交易策略的列表
+         - [ExampleStrategy(), 'macd']
+            一个包含两个交易策略，其中第一个是自定义策略的列表
+    signal_type:
+        交易信号模式，Operator支持三种不同的信号模式，分别如下：
+         - PT：positional target，生成的信号代表某种股票的目标仓位
+         - PS：proportion signal，比例买卖信号，代表每种股票的买卖百分比
+         - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
+        在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文
+    op_type:
+        交易模式，Operator对象有两种不同的交易模式：
+         - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
+                            不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
+         - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
+                            交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
+                            特殊交易策略，也可以用于实时交易
 
-            :param signal_type: 交易信号模式，Operator支持三种不同的信号模式，分别如下：
-                                 - PT：positional target，生成的信号代表某种股票的目标仓位
-                                 - PS：proportion signal，比例买卖信号，代表每种股票的买卖百分比
-                                 - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
-                                在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文
+    Methods
+    -------
+    assign_hist_data():
+        准备交易数据，为所有的交易策略分配交易数据，生成数据滑窗，以便生成交易信号
+    create_signal():
+        生成交易信号，在batch模式下，使用所有的数据生成完整交易信号清单，用于交易信号的模拟
+        回测交易
+        在stepwise模式下，利用数据滑窗和交易相关数据，生成一组交易信号
 
-            :param op_type:     交易模式，Operator对象有两种不同的交易模式：
-                                 - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
-                                                    不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
-                                 - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
-                                                    交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
-                                                    特殊交易策略，也可以用于实时交易
+    ==策略的三种信号类型==
 
-        key methods:
-            assign_hist_data():     准备交易数据，为所有的交易策略分配交易数据，生成数据滑窗，以便生成交易信号
-            create_signal():    生成交易信号，在batch模式下，使用所有的数据生成完整交易信号清单，用于交易信号的模拟
-                                回测交易
-                                在stepwise模式下，利用数据滑窗和交易相关数据，生成一组交易信号
+    Operator对象生成的交易信号是一个浮点数，代表每个时间点某一支股票的交易指令。在不同的模式下，这一交易指令有不同的含义
 
-        ==策略的三种信号类型==
+         - 股票交易账户：
+            - signal_type = PT:     交易信号代表股票的目标仓位，当输出的信号为sig时：
 
-        Operator对象生成的交易信号是一个浮点数，代表每个时间点某一支股票的交易指令。在不同的模式下，这一交易指令有不同的含义
+                - sig > 1:          无意义
+                - 1 >= sig > 0:     此时代表持有该资产，并使持有资产的市值为总资产的sig倍，
+                                    例如： sig = 0.5, 总资产为100,000，则此时应持有价值50,000的资产
+                                    如果实际持有资产价值不是50,000，则买入或卖出相应的资产使其达到目标
+                - sig = 0:          清空全部持有的资产，持有资产为0
+                - -1 <= sig < 0:    无意义
+                - sig < -1:         无意义
 
-             - 股票交易账户：
-                - signal_type = PT:     交易信号代表股票的目标仓位，当输出的信号为sig时：
+            - signal_type = PS:     交易信号代表股票的买卖方向和比例，当输出的信号为sig时：
 
-                    - sig > 1:          无意义
-                    - 1 >= sig > 0:     此时代表持有该资产，并使持有资产的市值为总资产的sig倍，
-                                        例如： sig = 0.5, 总资产为100,000，则此时应持有价值50,000的资产
-                                        如果实际持有资产价值不是50,000，则买入或卖出相应的资产使其达到目标
-                    - sig = 0:          清空全部持有的资产，持有资产为0
-                    - -1 <= sig < 0:    无意义
-                    - sig < -1:         无意义
+                - sig > 1:          无意义
+                - 1 >= sig > 0:     买入该资产，买入的金额占总资产的比例为sig，
+                                    例如： sig = 0.5, 总资产为100,000，则此时花费50,000元金额买入资
+                                    产(含手续费)
+                - sig = 0:          不进行任何操作
+                - -1 <= sig < 0:    卖出该资产，卖出的部分占当前持有数量的比例为sig
+                                    例如： sig = -0.5, 持有1000股，则此时应卖出500股
+                - sig < -1:         无意义
 
-                - signal_type = PS:     交易信号代表股票的买卖方向和比例，当输出的信号为sig时：
+            - signal_type = VS:     交易信号代表股票买卖方向及数量，当输出的信号为sig时：
 
-                    - sig > 1:          无意义
-                    - 1 >= sig > 0:     买入该资产，买入的金额占总资产的比例为sig，
-                                        例如： sig = 0.5, 总资产为100,000，则此时花费50,000元金额买入资
-                                        产(含手续费)
-                    - sig = 0:          不进行任何操作
-                    - -1 <= sig < 0:    卖出该资产，卖出的部分占当前持有数量的比例为sig
-                                        例如： sig = -0.5, 持有1000股，则此时应卖出500股
-                    - sig < -1:         无意义
+                - sig > 0:          买入该资产，买入的数量为sig，
+                                    例如： sig = 500, 买入500股
+                - sig = 0:          不进行任何操作
+                - sig < 0:          卖出该资产，卖出的部分占当前持有数量的比例为sig
+                                    例如： sig = -500, 卖出500股
 
-                - signal_type = VS:     交易信号代表股票买卖方向及数量，当输出的信号为sig时：
+         - 期货交易账户：
+            - signal_type = PT:     交易信号代表期货持仓的目标仓位，当输出的信号为sig时：
 
-                    - sig > 0:          买入该资产，买入的数量为sig，
-                                        例如： sig = 500, 买入500股
-                    - sig = 0:          不进行任何操作
-                    - sig < 0:          卖出该资产，卖出的部分占当前持有数量的比例为sig
-                                        例如： sig = -500, 卖出500股
+                - sig > 0:          平掉所有空仓，开多仓，并使持有合约价值为总资产的sig倍，
+                                    例如： sig = 1.5, 总资产为100,000，则开多仓持有总价150,000的合约
+                                    * 如果保证金比例<1时，持仓比例可以大于1
+                - sig = 0:          清空全部持有的资产，持有资产为0
+                - sig < 0:          平掉所有多仓，开空仓，并使持有合约价值为总资产的sig倍，
+                                    例如： sig = -1.5, 总资产为100,000，则开空仓持有总价150,000的合约
+                                    * 如果保证金比例<1时，持仓比例可以小于-1
 
-             - 期货交易账户：
-                - signal_type = PT:     交易信号代表期货持仓的目标仓位，当输出的信号为sig时：
+            - signal_type = PS:     交易信号代表期货的开仓方向和比例，当输出的信号为sig时：
 
-                    - sig > 0:          平掉所有空仓，开多仓，并使持有合约价值为总资产的sig倍，
-                                        例如： sig = 1.5, 总资产为100,000，则开多仓持有总价150,000的合约
-                                        * 如果保证金比例<1时，持仓比例可以大于1
-                    - sig = 0:          清空全部持有的资产，持有资产为0
-                    - sig < 0:          平掉所有多仓，开空仓，并使持有合约价值为总资产的sig倍，
-                                        例如： sig = -1.5, 总资产为100,000，则开空仓持有总价150,000的合约
-                                        * 如果保证金比例<1时，持仓比例可以小于-1
+                - sig > 0:          当前如果持有空头仓位：
+                                        平部分空仓，平空仓的数量占总持有的比例为sig，
+                                        例如： sig = 0.5, 总持仓为1,000手，则此时平仓500手
+                                        * 此时sig必须小于等于1
+                                    当前如果空仓或持有多头仓位：
+                                        开多仓，开仓的合约价值占总资产的比例为sig，
+                                        例如： sig = 1.5, 总资产为100,000，则开多仓持有总价150,000元的合约
+                                        * 如果保证金比例<1时，sig可以大于1
+                - sig = 0:          不进行任何操作
+                - sig < 0:          当前如果持有多头仓位：
+                                        平部分多仓，平多仓的数量占总持有的比例为sig，
+                                        例如： sig = -0.5, 总持仓为1,000手，则此时平仓500手
+                                        * 此时sig必须小于等于1
+                                    当前如果空仓或持有空头仓位：
+                                        开空仓，开仓的合约价值占总资产的比例为sig，
+                                        例如： sig = -1.5, 总资产为100,000，则开仓持有总价150,000元的合约
+                                        * 如果保证金比例<1时，sig可以小于-1
 
-                - signal_type = PS:     交易信号代表期货的开仓方向和比例，当输出的信号为sig时：
+            - signal_type = VS:     交易信号代表期货开仓方向及数量，当输出的信号为sig时：
 
-                    - sig > 0:          当前如果持有空头仓位：
-                                            平部分空仓，平空仓的数量占总持有的比例为sig，
-                                            例如： sig = 0.5, 总持仓为1,000手，则此时平仓500手
-                                            * 此时sig必须小于等于1
-                                        当前如果空仓或持有多头仓位：
-                                            开多仓，开仓的合约价值占总资产的比例为sig，
-                                            例如： sig = 1.5, 总资产为100,000，则开多仓持有总价150,000元的合约
-                                            * 如果保证金比例<1时，sig可以大于1
-                    - sig = 0:          不进行任何操作
-                    - sig < 0:          当前如果持有多头仓位：
-                                            平部分多仓，平多仓的数量占总持有的比例为sig，
-                                            例如： sig = -0.5, 总持仓为1,000手，则此时平仓500手
-                                            * 此时sig必须小于等于1
-                                        当前如果空仓或持有空头仓位：
-                                            开空仓，开仓的合约价值占总资产的比例为sig，
-                                            例如： sig = -1.5, 总资产为100,000，则开仓持有总价150,000元的合约
-                                            * 如果保证金比例<1时，sig可以小于-1
+                - sig > 0:          当前如果持有空头仓位：
+                                        平部分或全部空仓，平空仓的数量为sig，
+                                        例如： sig = 500, 总持仓为1,000手，则此时平仓500手
+                                        * 此时如果sig大于总持仓数时超出部分无意义
+                                    当前如果空仓或持有多头仓位：
+                                        开多仓，开仓的合约价值为sig，
+                                        例如： sig = 1500, 则开多仓持有1500手的合约
+                                        * 如果保证金比例<1时，持仓合约的价值可以大于持有的现金
+                - sig = 0:          不进行任何操作
+                - sig < 0:          当前如果持有多头仓位：
+                                        平部分多仓，平仓的数量为sig，
+                                        例如： sig = -500, 总持仓为1,000手，则此时平仓500手
+                                        * 此时如果sig>总持仓量，超过的部分无意义
+                                    当前如果空仓或持有空头仓位：
+                                        开空仓，开仓的合约价值为sig，
+                                        例如： sig = -1500, 则开空仓持有1500手合约
+                                        * 如果保证金比例<1时，开仓持有的合约价值可以大于持有现金
 
-                - signal_type = VS:     交易信号代表期货开仓方向及数量，当输出的信号为sig时：
+    ==交易信号的混合==
 
-                    - sig > 0:          当前如果持有空头仓位：
-                                            平部分或全部空仓，平空仓的数量为sig，
-                                            例如： sig = 500, 总持仓为1,000手，则此时平仓500手
-                                            * 此时如果sig大于总持仓数时超出部分无意义
-                                        当前如果空仓或持有多头仓位：
-                                            开多仓，开仓的合约价值为sig，
-                                            例如： sig = 1500, 则开多仓持有1500手的合约
-                                            * 如果保证金比例<1时，持仓合约的价值可以大于持有的现金
-                    - sig = 0:          不进行任何操作
-                    - sig < 0:          当前如果持有多头仓位：
-                                            平部分多仓，平仓的数量为sig，
-                                            例如： sig = -500, 总持仓为1,000手，则此时平仓500手
-                                            * 此时如果sig>总持仓量，超过的部分无意义
-                                        当前如果空仓或持有空头仓位：
-                                            开空仓，开仓的合约价值为sig，
-                                            例如： sig = -1500, 则开空仓持有1500手合约
-                                            * 如果保证金比例<1时，开仓持有的合约价值可以大于持有现金
+        尽管同一个Operator对象同时只能生成一种类型的信号，但由于Operator对象能容纳无限多个不同的交易策略，因而Operator对象
+        也能产生无限多组同类型的交易策略。为了节省交易回测时的计算开销，避免冲突的交易信号或重复的交易信号占用计算资源，同时也
+        为了增加交易信号的灵活度，应该将所有交易信号首先混合成一组，再送入回测程序进行回测。
 
-        ==交易信号的混合==
+        不过，在一个Operator对象中，不同策略生成的交易信号可能运行的交易价格是不同的，例如，某些策略生成开盘价交易信号，而另一
+        些策略生成的是收盘价交易策略，那么不同的交易价格信号当然不应该混合。但除此之外，只要是交易价格相同的信号，都应该全部混合。
+        除非所有的额交易信号都是基于"固定价格"交易而不是"市场价格"交易的。所有以"固定价格"交易的信号都不能被混合，必须单独进入
+        回测系统进行混合。
 
-            尽管同一个Operator对象同时只能生成一种类型的信号，但由于Operator对象能容纳无限多个不同的交易策略，因而Operator对象
-            也能产生无限多组同类型的交易策略。为了节省交易回测时的计算开销，避免冲突的交易信号或重复的交易信号占用计算资源，同时也
-            为了增加交易信号的灵活度，应该将所有交易信号首先混合成一组，再送入回测程序进行回测。
+        交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个ndarray的
+        函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。
 
-            不过，在一个Operator对象中，不同策略生成的交易信号可能运行的交易价格是不同的，例如，某些策略生成开盘价交易信号，而另一
-            些策略生成的是收盘价交易策略，那么不同的交易价格信号当然不应该混合。但除此之外，只要是交易价格相同的信号，都应该全部混合。
-            除非所有的额交易信号都是基于"固定价格"交易而不是"市场价格"交易的。所有以"固定价格"交易的信号都不能被混合，必须单独进入
-            回测系统进行混合。
+        交易信号的混合基于一系列事先定义的运算和函数，这些函数或运算都被称为"原子函数"或"算子"，用户利用这些"算子"来操作
+        Operator对象生成的交易信号，并将多个交易信号组变换成一个唯一的交易信号组，同时保持其形状不变，数字有意义。
 
-            交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个ndarray的
-            函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。
+        交易信号的混合是由一个混合表达式来确定的，例如's0 and (s1 + s2) * avg(s3, s4)'
 
-            交易信号的混合基于一系列事先定义的运算和函数，这些函数或运算都被称为"原子函数"或"算子"，用户利用这些"算子"来操作
-            Operator对象生成的交易信号，并将多个交易信号组变换成一个唯一的交易信号组，同时保持其形状不变，数字有意义。
-
-            交易信号的混合是由一个混合表达式来确定的，例如's0 and (s1 + s2) * avg(s3, s4)'
-
-            上面的表达式表示了如何将五组交易信号变换为一组信号。表达式可以是任意合法的通用四则运算表达式。关于混合表达式的更多介绍，
-            请参见qteasy的tutorial
+        上面的表达式表示了如何将五组交易信号变换为一组信号。表达式可以是任意合法的通用四则运算表达式。关于混合表达式的更多介绍，
+        请参见qteasy的tutorial
 
     """
 
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
 
-    AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
-                              'proportion signal': 'ps',
-                              'volume signal':     'vs'}
-    AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
-
     def __init__(self, strategies=None, signal_type=None, op_type=None):
-        """ 生成具体的Operator对象
-            每个Operator对象主要包含多个strategy对象，每一个strategy对象都会被赋予一个唯一的ID，通过
-            这个ID可以访问Strategy对象，除ID以外，每个strategy也会有一个唯一的序号，通过该序号也可以
-            访问所有的额strategy对象。或者给相应的strategy对象设置、调整参数。
+        """ 生成一个Operator对象
 
-        input:
-            :param strategies:  str, 用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
-                                如果不给出strategies，则会生成一个空的Operator对象
-
-            :param signal_type: str, 需要生成的交易信号的类型，包含以下三种类型:
-                                        'pt', 'ps', 'vs'
-                                默认交易信号类型为'pt'
-
-            :param op_type:     str, Operator对象的的运行模式，包含以下两种：
-                                        'batch', 'stepwise'
-                                默认运行模式为'batch'
+        parameters
+        ----------
+        strategies : str, Strategy, list of str or list of Strategy
+            用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
+            如果不给出strategies，则会生成一个空的Operator对象
+        signal_type : str, Default: 'pt'
+            需要生成的交易信号的类型，包含以下三种类型:
+            'pt', 'ps', 'vs'
+            默认交易信号类型为'pt'
+        op_type : str, Default: 'batch'
+            Operator对象的的运行模式，包含以下两种：
+            'batch', 'stepwise'
+            默认运行模式为'batch'
         """
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
@@ -228,7 +229,7 @@ class Operator:
         
         第二部分：交易策略运行所需历史数据及其预处理后的数据滑窗、采样清单、混合表达式
         一类历史数据都保存在一系列字典中：通过各个Strategy的ID从字典中访问：
-        这部分数据通过prepare_data()方法填充或修改
+        这部分数据通过assign_hist_data()方法填充或修改
 
             _op_history_data:   
                                 历史数据：
@@ -358,13 +359,13 @@ class Operator:
         """ 设置signal_type的值"""
         if not isinstance(st, str):
             raise TypeError(f'signal type should be a string, got {type(st)} instead!')
-        elif st.lower() in self.AVAILABLE_SIGNAL_TYPES:
-            self._signal_type = self.AVAILABLE_SIGNAL_TYPES[st.lower()]
-        elif st.lower() in self.AVAILABLE_SIGNAL_TYPES.values():
+        elif st.lower() in AVAILABLE_SIGNAL_TYPES:
+            self._signal_type = AVAILABLE_SIGNAL_TYPES[st.lower()]
+        elif st.lower() in AVAILABLE_SIGNAL_TYPES.values():
             self._signal_type = st.lower()
         else:
             raise ValueError(f'Invalid signal type ({st})\nChoose one from '
-                             f'{self.AVAILABLE_SIGNAL_TYPES}')
+                             f'{AVAILABLE_SIGNAL_TYPES}')
 
     @property
     def signal_type_id(self):
@@ -388,7 +389,7 @@ class Operator:
         if not isinstance(op_type, str):
             raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
         op_type = op_type.lower()
-        if op_type not in self.AVAILABLE_OP_TYPES:
+        if op_type not in AVAILABLE_OP_TYPES:
             raise KeyError(f'Invalid op_type ({op_type})')
         if op_type in ['s', 'st', 'step', 'stepwise']:
             op_type = 'stepwise'
@@ -661,18 +662,20 @@ class Operator:
         item_is_int = isinstance(item, int)
         item_is_str = isinstance(item, str)
         if not (item_is_int or item_is_str):
-            warnings.warn('the item is in a wrong format and can not be parsed!')
+            warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} insted!')
             return
         all_ids = self._strategy_id
         if item_is_str:
             if item not in all_ids:
-                warnings.warn('the strategy name can not be recognized!')
+                warnings.warn(f'No such strategy with ID ({item})!')
                 return
             return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             # 当输入的item明显不符合要求时，仍然返回结果，是否不合理？
             item = strategy_count - 1
+        elif item < 0:
+            item = 0
         return self._strategies[all_ids[item]]
 
     def get_stg(self, stg_id):
@@ -961,6 +964,7 @@ class Operator:
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
+            这里使用strategy.update_pars接口，不检查策略参数的合规性，因此需要提前确保参数符合strategy的设定
 
         :param opt_par:
             :type opt_par:Tuple
@@ -1019,13 +1023,13 @@ class Operator:
             # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
             elif stg.opt_tag == 1:
                 k += stg.par_count
-                stg.set_pars(opt_par[s:k])
+                stg.update_pars(opt_par[s:k])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
             # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
             elif stg.opt_tag == 2:
                 # 在这种情况下，只需要取出参数向量中的一个分量，赋值给策略作为参数即可。因为这一个分量就包含了完整的策略参数tuple
                 k += 1
-                stg.set_pars(opt_par[s])
+                stg.update_pars(opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
     def set_blender(self, blender=None, price_type=None):
@@ -1230,6 +1234,7 @@ class Operator:
 
     # =================================================
     # 下面是Operation模块的公有方法：
+    # TODO: 改造operator.info()，采用更加简明扼要的方式显示Operator的关键信息
     def info(self, verbose=False):
         """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
             如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
@@ -1238,32 +1243,53 @@ class Operator:
             :type verbose: bool
 
         """
-        print('OPERATOR INFO:')
-        print('=' * 25)
-        print('Information of the Module')
-        print('=' * 25)
+        from .utilfuncs import truncate_string
+        signal_type_descriptions = {
+            'pt': 'Position Target, signal represents position holdings in percentage of total value',
+            'ps': 'Percentage trade signal, represents buy/sell stock in percentage of total value',
+            'vs': 'Value trade signal, represent tha amount of stocks to be sold/bought'
+        }
+        op_type_description = {
+            'batch': 'All history operation signals are generated before back testing',
+            'stepwise': 'History op signals are generated one by one, every piece of signal will be back tested before '
+                        'the next signal being generated.'
+        }
+        print(f'    ----------Operator Information----------\n'
+              f'Strategies:  {self.strategy_count} Strategies\n'
+              f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
+              f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
         # 打印各个子模块的信息：
-        print(f'Total {self.strategy_count} operation strategies, requiring {self.op_data_type_count} '
-              f'types of historical data:')
-        all_op_data_types = []
-        for data_type in self.op_data_types:
-            all_op_data_types.append(data_type)
-        print(", ".join(all_op_data_types))
-        print(f'{self.bt_price_type_count} types of back test price types:\n'
-              f'{self.bt_price_types}')
+        if self.strategy_count > 0:
+            print(f'    ---------------Strategies---------------\n'
+                  f'{"id":<10}'
+                  f'{"name":<15}'
+                  f'{"back_test_price":<15}'
+                  f'{"d_freq":^10}'
+                  f'{"s_freq":^10}'
+                  f'{"date_types":<10}\n'
+                  f'{"_" * 70}')
+            for stg_id, stg in self.get_strategy_id_pairs():
+                print(f'{truncate_string(stg_id, 10):<10}'
+                      f'{truncate_string(stg.name, 15):<15}'
+                      f'{truncate_string(stg.bt_price_type, 15):^15}'
+                      f'{truncate_string(stg.data_freq, 10):^10}'
+                      f'{truncate_string(stg.sample_freq, 10):^10}'
+                      f'{stg.data_types}')
+            print('=' * 70)
+        # 打印blender的信息：
         for price_type in self.bt_price_types:
-            print(f'for backtest histoty price type - {price_type}: \n'
-                  f'{self.get_strategies_by_price_type(price_type)}:')
+            print(f'for backtest histoty price type - {price_type}:')
             if self.strategy_blenders != {}:
                 print(f'signal blenders: {self.view_blender(price_type)}')
             else:
                 print(f'no blender')
         # 打印每个strategy的详细信息
         if verbose:
-            print('Parameters of GeneralStg Strategies:')
-            for stg in self.strategies:
+            print('\n    ------------Strategy Details------------')
+            for stg_id, stg in self.get_strategy_id_pairs():
+                print(f'Strategy_ID:        {stg_id}')
                 stg.info()
-            print('=' * 25)
+            print('=' * 70)
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
@@ -1295,9 +1321,9 @@ class Operator:
             import qteasy as qt
             return qt.run(self, **kwargs)
 
-    # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
+    # TODO: 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
-    # TODO 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
+    # TODO: 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
     def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
@@ -1489,6 +1515,18 @@ class Operator:
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
             # 根据sample_freq生成一个策略运行采样日期序列
+            # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
+            #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
+            #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
+            #  注：
+            #  需要生成每月第一天，则freq='MS'，
+            #  生成每月最后一天，freq='M'，
+            #  生成每月第N天，则pd.date_range(freq='MS') + pd.DateOffset(days=N)
+            #  甚至，还应该进一步允许定义时间，
+            #  例如：
+            #  运行在每日9:00，则此时没有当天数据可用
+            #  运行在每日10:00，则每日有开盘价可用，但收盘价不可用
+            #  诸如此类
             temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
             if len(temp_date_series) <= 1:
                 # 如果sample_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
@@ -1579,7 +1617,7 @@ class Operator:
                 当sample_idx为None时，使用self._op_sample_idx的值为采样清单
                 此时生成的是一个3D数组
 
-            在生成交易信号之前需要调用prepare_data准备好相应的历史数据
+            在生成交易信号之前需要调用assign_hist_data准备好相应的历史数据
 
             输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
             levels = shares
@@ -1602,9 +1640,6 @@ class Operator:
             如果给出sample_ix，必须给出这个参数
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
-
-        :param pt_signal_timing: 'lazy', str
-            PT信号生成参数，用于控制PT信号的生成时机
 
         :return=====
             np.ndarray

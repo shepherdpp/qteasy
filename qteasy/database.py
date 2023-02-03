@@ -7,11 +7,10 @@
 # Desc:
 #   Local historical data management.
 # ======================================
-import numpy as np
-import pymysql
-from sqlalchemy import create_engine
-import pandas as pd
+import os
 from os import path
+import numpy as np
+import pandas as pd
 import warnings
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -21,7 +20,7 @@ from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day, 
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
 
-AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
+AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
 TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
@@ -1059,7 +1058,7 @@ TABLE_SOURCE_MAP = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
-         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', '', ''],
+         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE,XHKG', '', '', ''],
 
     'stock_basic':
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '',
@@ -1913,44 +1912,92 @@ class MissingDataWarning(Warning):
     pass
 
 
-# noinspection SqlDialectInspection,PyTypeChecker
+# noinspection SqlDialectInspection,PyTypeChecker,PyPackageRequirements
 class DataSource:
     """ DataSource 对象管理存储在本地的历史数据文件或数据库.
 
     通过DataSource对象，History模块可以容易地从本地存储的数据中读取并组装所需要的历史数据
-    并确保历史数据符合HistoryPannel的要求。
+    并确保历史数据符合HistoryPanel的要求。
     所有的历史数据必须首先从网络数据提供商处下载下来并存储在本地文件或数据库中，DataSource
     对象会检查数据的格式，确保格式正确并删除重复的数据。
     下载下来的历史数据可以存储成不同的格式，但是不管任何存储格式，所有数据表的结构都是一样
     的，而且都是与Pandas的DataFrame兼容的数据表格式。目前兼容的文件存储格式包括csv, hdf,
-    ftr(feather)，兼容的数据库包括mysql和MariaDB。
+    fth(feather)，兼容的数据库包括mysql和MariaDB。
     如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会
     返回空DataFrame。
-    DataSource对象可以按要求定期刷新或从NDP拉取数据，也可以手动操作
+    DataSource对象可以按要求定期刷新或从Provider拉取数据，也可以手动操作
+
+    Attributes
+    ----------
+    tables:
+        NotImplemented 所有已经创建的数据表的清单
+
+    Methods
+    -------
+    overview(print_out=True)
+        以表格形式列出所有数据表的当前数据状态
+    read_table_data(self, table, shares=None, start=None, end=None)
+        从本地数据表中读取数据并返回DataFrame，不修改数据格式
+    export_table_data(self, table, shares=None, start=None, end=None)
+        NotImplemented 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小
+        规模转移数据
+    get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none')
+        根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
+        HistoryPanel对象。
+    get_index_weights(self, index, start=None, end=None, shares=None)
+        从本地数据仓库中获取一个指数的成分权重
+    refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None,...)
+        批量补充本地数据，手动或自动运行补充本地数据库
 
     """
 
     def __init__(self,
-                 source_type: str,
-                 file_type: str = 'fth',
-                 file_loc: str = 'qteasy/data/',
+                 source_type: str = 'file',
+                 file_type: str = 'csv',
+                 file_loc: str = 'data/',
                  host: str = 'localhost',
                  port: int = 3306,
                  user: str = None,
                  password: str = None,
-                 db: str = 'qt_db'):
-        """ 创建一个DataSource 对象，确定本地数据存储方式，
-            如果存储方式是文件，确定文件存储位置、文件类型
-            如果存储方式是数据库，建立数据库的连接
+                 db_name: str = 'qt_db'):
+        """ 创建一个DataSource 对象
 
-        :param source_type:
-        :param file_type:
-        :param file_loc:
-        :param host:
-        :param port:
-        :param user:
-        :param password:
-        :param db
+        创建对象时确定本地数据存储方式，确定文件存储位置、文件类型，或者建立数据库的连接
+
+        Parameters
+        ----------
+        source_type: str, Default: file
+            数据源类型:
+            - db/database: 数据存储在mysql数据库中
+            - file: 数据存储在本地文件中
+        file_type: str, {'csv', 'hdf', 'hdf5', 'feather', 'fth'}, Default: csv
+            如果数据源为file时，数据文件类型：
+            - csv: 简单的纯文本文件格式，可以用Excel打开，但是占用空间大，读取速度慢
+            - hdf/hdf5: 基于pytables的数据表文件，速度较快，需要安装pytables
+            - feather/fth: 轻量级数据文件，速度较快，占用空间小，需要安装pyarrow
+        file_loc: str, Default: data/
+            用于存储本地数据文件的路径
+        host: str, default: localhost
+            如果数据源为database时，数据库的host
+        port: int, Default: 3306
+            如果数据源为database时，数据库的port，默认3306
+        user: str, Default: None
+            如果数据源为database时，数据库的user name
+        password: str, Default: None
+            如果数据源为database时，数据库的passwrod
+        db_name: str, Default: 'qt_db'
+            如果数据源为database时，数据库的名称，默认值qt_db
+
+        Raises
+        ------
+        ImportError
+            部分文件格式以及数据类型需要optional dependency，如果缺乏这些package时，会提示安装
+        SystemError
+            数据类型为file时，在本地创建数据文件夹失败时会抛出该异常
+
+        Returns
+        -------
+        None
         """
         if not isinstance(source_type, str):
             raise TypeError(f'source type should be a string, got {type(source_type)} instead.')
@@ -1959,6 +2006,13 @@ class DataSource:
         self._table_list = set()
 
         if source_type.lower() in ['db', 'database']:
+            # optional packages to be imported
+            try:
+                import pymysql
+                from sqlalchemy import create_engine
+            except ImportError:
+                raise ImportError(f'Missing dependency \'pymysql\' and/or \'sqlalchemy\' for datasource type '
+                                  f'\'database\'. Use pip or conda to install pymysql and sqlalchemy.')
             # set up connection to the data base
             if not isinstance(port, int):
                 raise TypeError(f'port should be of type int')
@@ -1975,18 +2029,18 @@ class DataSource:
                                            password=password)
                 # 检查db是否存在，当db不存在时创建新的db
                 self.cursor = self.con.cursor()
-                sql = f"CREATE DATABASE IF NOT EXISTS {db}"
+                sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
                 self.cursor.execute(sql)
                 self.con.commit()
-                sql = f"USE {db}"
+                sql = f"USE {db_name}"
                 self.cursor.execute(sql)
                 self.con.commit()
                 # if cursor and connect created then create sqlalchemy engine for dataframe
-                self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
-                self.connection_type = f'db:mysql://{host}@{port}/{db}'
+                self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}')
+                self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
                 self.host = host
                 self.port = port
-                self.db_name = db
+                self.db_name = db_name
                 self.file_type = None
                 self.file_path = None
             except Exception as e:
@@ -2000,12 +2054,27 @@ class DataSource:
             file_type = file_type.lower()
             if file_type not in AVAILABLE_DATA_FILE_TYPES:
                 raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
-            if file_type == 'feather':
+            if file_type in ['hdf']:
+                try:
+                    import tables
+                except ImportError:
+                    raise ImportError(f'Missing optional dependency \'pytables\' for datasource file type '
+                                      f'\'hdf5\'. Use pip or conda to install pytables')
+                file_type = 'hdf'
+            if file_type in ['feather', 'fth']:
+                try:
+                    import pyarrow
+                except ImportError:
+                    raise ImportError(f'Missing optional dependency \'pyarrow\' for datasource file type '
+                                      f'\'feather\'. Use pip or conda to install pyarrow')
                 file_type = 'fth'
             from qteasy import QT_ROOT_PATH
-            # if not self.file_exists(file_loc):
-            #     raise SystemError('specified file path does not exist')
-            self.file_path = QT_ROOT_PATH + file_loc
+            self.file_path = path.join(QT_ROOT_PATH, file_loc)
+            try:
+                os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
+            except Exception:
+                raise SystemError(f'Failed creating data directory \'{file_loc}\' in qt root path, '
+                                  f'please check your input.')
             self.engine = None
             self.source_type = 'file'
             self.file_type = file_type
@@ -2084,7 +2153,8 @@ class DataSource:
             raise RuntimeError('can not check file system while source type is "db"')
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_name = file_name + '.' + self.file_type
+        file_path_name = path.join(self.file_path, file_name)
         return file_path_name
 
     def file_exists(self, file_name):
@@ -2212,7 +2282,7 @@ class DataSource:
         """
         import os
         if self.file_exists(file_name):
-            file_path_name = self.file_path + file_name + '.' + self.file_type
+            file_path_name = os.path.join(self.file_path, file_name + '.' + self.file_type)
             os.remove(file_path_name)
 
     def get_file_size(self, file_name):
@@ -2554,23 +2624,31 @@ class DataSource:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
     def read_table_data(self, table, shares=None, start=None, end=None):
-        """ 从指定的一张本地数据表(文件或数据库)中读取数据并返回DataFrame，不修改数据格式
+        """ 从本地数据表中读取数据并返回DataFrame，不修改数据格式
+
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
 
-            TODO: 历史数据表的规模较大，如果数据存储在数据库中，读取和存储时
-             没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
-             ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
-             csv文件的读取效率，其他文件系统的读取还需要进一步优化
+        Parameters
+        ----------
+        table: str
+            数据表名称
+        shares: list，
+            ts_code筛选条件，为空时给出所有记录
+        start: str，
+            YYYYMMDD格式日期，为空时不筛选
+        end: str，
+            YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
 
-        :param table: str 数据表名称
-        :param shares: list，ts_code筛选条件，为空时给出所有记录
-        :param start: str，YYYYMMDD格式日期，为空时不筛选
-        :param end: str，YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
-
-        :return
-        pd.DataFrame 返回的数据为DataFrame格式
+        Returns
+        -------
+        pd.DataFrame 返回数据表中的数据
 
         """
+
+        # TODO: 历史数据表的规模较大，如果数据存储在数据库中，读取和存储时
+        #  没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
+        #  ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
+        #  csv文件的读取效率，其他文件系统的读取还需要进一步优化
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAP.keys():
@@ -2652,24 +2730,53 @@ class DataSource:
 
         return df
 
+    def export_table_data(self, table, shares=None, start=None, end=None):
+        """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据
+
+        Parameters
+        ----------
+        table: str
+            数据表名称
+        shares: list，
+            ts_code筛选条件，为空时给出所有记录
+        start: str，
+            YYYYMMDD格式日期，为空时不筛选
+        end: str，
+            YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
+
+        Returns
+        -------
+        None
+        """
+        raise NotImplementedError
+
     def write_table_data(self, df, table, on_duplicate='ignore'):
         """ 将df中的数据写入本地数据表(本地文件或数据库)
-            如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
-            如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定
 
-            注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查
-            请使用update_table_data()来更新或写入数据到本地数据库
+        如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
+        如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定
 
-        :param df: pd.DataFrame 一个数据表，数据表的列名应该与本地数据表定义一致
-        :param table: str 本地数据表名，
-        :param on_duplicate: str 重复数据处理方式(仅当mode==db的时候有效)
+        Parameters
+        ----------
+        df: pd.DataFrame
+            一个数据表，数据表的列名应该与本地数据表定义一致
+        table: str
+            本地数据表名，
+        on_duplicate: str
+            重复数据处理方式(仅当mode==db的时候有效)
             -ignore: 默认方式，将全部数据写入数据库表的末尾
             -update: 将数据写入数据库表中，如果遇到重复的pk则修改表中的内容
 
-        :return
-        None
+        Notes
+        -----
+        注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查
+        请使用update_table_data()来更新或写入数据到本地数据库
 
+        Returns
+        -------
+        None
         """
+
         assert isinstance(df, pd.DataFrame)
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
@@ -2691,28 +2798,37 @@ class DataSource:
         self._table_list.add(table)
 
     def acquire_table_data(self, table, channel, df=None, f_name=None, **kwargs):
-        """从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
-            1，根据channel确定数据源，根据table名下载相应的数据表
-            2，处理获取的df的格式，确保为只含简单range-index的格式
+        """从网络获取本地数据表的数据，并进行内容写入前的预处理：
 
-        :param table: str, 数据表名，必须是database中定义的数据表
-        :param channel:
+        数据预处理包含以下步骤：
+        1，根据channel确定数据源，根据table名下载相应的数据表
+        2，处理获取的df的格式，确保为只含简单range-index的格式
+
+        Parameters
+        ----------
+        table: str,
+            数据表名，必须是database中定义的数据表
+        channel:
             str: 数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
             - 'df'      : 通过参数传递一个df，该df的columns必须与table的定义相同
             - 'csv'     : 通过本地csv文件导入数据，此时必须给出f_name参数
             - 'excel'   : 通过一个Excel文件导入数据，此时必须给出f_name参数
             - 'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分
-            - 'other'   : 其他金融数据API，尚未开发
-        :param df: pd.DataFrame 通过传递一个DataFrame获取数据
-            如果数据获取渠道为"df"，则必须给出此参数
-        :param f_name: str 通过本地csv文件或excel文件获取数据
+            - 'other'   : NotImplemented 其他金融数据API，尚未开发
+        df: pd.DataFrame
+            通过传递一个DataFrame获取数据, 如果数据获取渠道为"df"，则必须给出此参数
+        f_name: str 通过本地csv文件或excel文件获取数据
             如果数据获取方式为"csv"或者"excel"时，必须给出此参数，表示文件的路径
-        :param kwargs:
+        **kwargs:
             用于下载金融数据的函数参数，或者读取本地csv文件的函数参数
 
-        :return:
-            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
+        Returns
+        -------
+        pd.DataFrame:
+            下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
         """
+
+        # 目前仅支持从tushare获取数据，未来可能增加新的API
         from .tsfuncs import acquire_data
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
@@ -2904,12 +3020,20 @@ class DataSource:
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
-        :param table:
-        :param verbose: 是否显示更多信息，如是，显示表结构等信息
-        :param print_info: 是否打印输出所有结果
-        :param human: 是否给出容易阅读的字符串形式
-        :return:
-            一个tuple，包含数据表的结构化信息：
+        Parameters:
+        -----------
+        table: str
+            数据表名称
+        verbose: bool, Default: True
+            是否显示更多信息，如是，显示表结构等信息
+        print_info: bool, Default: True
+            是否打印输出所有结果
+        human: bool, Default: True
+            是否给出容易阅读的字符串形式
+
+        Returns
+        -------
+        一个tuple，包含数据表的结构化信息：
             (table name:    数据表名称
              table_exists:  bool，数据表是否存在
              table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
@@ -3009,33 +3133,30 @@ class DataSource:
     # ==============
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
-            HistoryPanel对象，用于策略的运行、回测或优化测试。
+            HistoryPanel对象。
 
-        :param shares: [str, list]
+        Parameters
+        ----------
+        shares: str or list of str
             需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
             如以下两种输入方式皆合法且等效：
              - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
              - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-
-        :param htypes: [str, list]
+        htypes: str or list of str
             需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
             如以下两种输入方式皆合法且等效：
              - str:     'open, high, low, close'
              - list:    ['open', 'high', 'low', 'close']
-
-        :param start: str
+        start: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-
-        :param end: str
+        end: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-
-        :param freq: str
+        freq: str
             获取的历史数据的频率，包括以下选项：
              - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
              - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
              如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
-
-        :param asset_type: str, list
+        asset_type: str or list of str
             限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
             逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
              - any: 可以获取任意资产类型的证券数据(默认值)
@@ -3043,15 +3164,16 @@ class DataSource:
              - IDX: 只获取指数类型证券的数据
              - FT:  只获取期货类型证券的数据
              - FD:  只获取基金类型证券的数据
-
-        :param adj: str
+        adj: str
             对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
              - none / n: 不复权(默认值)
              - back / b: 后复权
              - forward / fw / f: 前复权
 
-        :return:
-        Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
+        Returns
+        -------
+        Dict of DataFrame
+            一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
         if isinstance(shares, str):
@@ -3103,9 +3225,6 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
-        # debug
-        # import pdb;
-        # pdb.set_trace()
 
         # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
@@ -3125,12 +3244,12 @@ class DataSource:
                                f'check data source availability: \n'
                                f'check availability of all tables:  qt.get_table_overview()\nor\n'
                                f'check specific table:              qt.get_table_info(\'table_name\')\n'
-                               f'fill datasource:                   DataSource.refill_local_source(\'table_name\', '
+                               f'fill datasource:                   qt.refill_data_source(table=\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
+        adj_factors = {}
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
-            adj_factors = {}
             adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
                                                table_map.asset_type.isin(asset_type)].index.to_list()
             for tbl in adj_tables_to_read:
@@ -3138,7 +3257,12 @@ class DataSource:
                 if not adj_df.empty:
                     adj_df = adj_df['adj_factor'].unstack(level=0)
                 adj_factors[tbl] = adj_df
+            # 如果adj table不为空但无法读取adj因子，则报错
+            if adj_tables_to_read and (not adj_factors):
+                raise ValueError(f'Failed reading price adjust factor data. call "qt.get_table_info()" to '
+                                 f'check local source data availability')
 
+        if adj_factors:
             # 根据复权因子更新所有可复权数据
             prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]
             for htyp in prices_to_adjust:
@@ -3235,9 +3359,11 @@ class DataSource:
                             process_count=None,
                             chunk_size=100,
                             save_log=False):
-        """ 补充本地数据，手动或自动运行补充本地数据库
+        """ 批量补充本地数据，手动或自动运行补充本地数据库
 
-        :param tables:
+        Parameters
+        ----------
+        tables: str or list of str
             需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
             例如，下面两种方式都合法且相同：
                 table='stock_indicator, stock_daily, income, stock_adj_factor'
@@ -3251,26 +3377,20 @@ class DataSource:
                 - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
                 - 'report'  : 财务报表
                 - 'comp'    : 指数成分表
-
-        :param dtypes:
+        dtypes: str or list of str
             通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
             如果给出了tables，则dtypes参数会被忽略
-
-        :param freqs:
+        freqs: str or list of str
             通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
             如果tables != all时，给出freq会排除掉freq与之不符的数据表
-
-        :param asset_types:
+        asset_types: str or list of str
             通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
             如果tables != all时，给出asset_type会排除掉与之不符的数据表
-
-        :param start_date:
+        start_date: str YYYYMMDD
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-
-        :param end_date:
+        end_date: str YYYYMMDD
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-
-        :param code_range:
+        code_range: str or list of str
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'
@@ -3281,32 +3401,30 @@ class DataSource:
                 两种写法等效，列表中列举出的证券数据会被下载
             - '000001:000300'
                 从'000001'开始到'000300'之间的所有证券数据都会被下载
-
-        :param merge_type: str
+        merge_type: str, Default update
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
             - 'update' 默认值，下载并更新本地数据的重复部分，使用下载的数据覆盖本地数据
             - 'ignore' 不覆盖本地的数据，在将数据复制到本地时，先去掉本地已经存在的数据，会导致速度降低
-
-        :param reversed_par_seq: Bool
+        reversed_par_seq: Bool, Default False
             是否逆序参数下载数据， 默认False
             - True:  逆序参数下载数据
             - False: 顺序参数下载数据
-
-        :param parallel: Bool
-            是否启用多线程下载数据，默认True
+        parallel: Bool, Default True
+            是否启用多线程下载数据
             - True:  启用多线程下载数据
             - False: 禁用多线程下载
-
-        :param process_count: int
+        process_count: int
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
-
-        :param chunk_size: int
+        chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
 
-        :return:
-            None
+        Returns
+        -------
+        None
+
         """
+
         from .tsfuncs import acquire_data
         # 1 参数合法性检查
         if (tables is None) and (dtypes is None):
@@ -3517,6 +3635,7 @@ class DataSource:
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
                         else:
+                            dnld_data = pd.concat([dnld_data, df])
                             self.update_table_data(table, dnld_data)
                             dnld_data = pd.DataFrame()
                         completed += 1
@@ -3528,7 +3647,6 @@ class DataSource:
                                                       estimation=True, short_form=False)
                         progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
                                                        f'{total_written}dnld/{time_remain}left')
-
                     self.update_table_data(table, dnld_data)
                 strftime_elapsed = time_str_format(time_elapsed, short_form=True)
                 if len(arg_coverage) > 1:
@@ -3548,8 +3666,16 @@ class DataSource:
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
         如果设置refresh_cache为True，则清空缓存并重新下载数据
 
-        :return:
+        Parameters
+        ----------
+        refresh_cache: Bool, Default False
+            如果为True，则清空缓存并重新下载数据
+
+        Returns
+        -------
+        DataFrame
         """
+
         if refresh_cache:
             self._get_all_basic_table_data.cache_clear()
         return self._get_all_basic_table_data()
@@ -3571,9 +3697,10 @@ class DataSource:
         """ 当数据库超时或其他原因丢失连接时，Ping数据库检查状态，
             如果可行的话，重新连接数据库
 
-        :return: bool
-            True: 连接成功
-            False: 连接失败
+        Returns
+        -------
+        True: 连接成功
+        False: 连接失败
         """
         if self.source_type != 'db':
             return True
@@ -4173,20 +4300,27 @@ def freq_dither(freq, freq_list):
 
 
 def get_main_freq(freq):
-    """ 获取freqstring的main_freq
-        如：
-        - '25d' -> 'D'
-        - 'w-Fri' -> 'W'
-        - '75min' -> '15MIN'
-        - '90min' -> '30MIN'
+    """ 解析freqstring，找出其中的主频率、副频率，以及主频率的倍数
 
-    :param freq:
-    :return:
-        tuple: (qty, main_freq, sub_freq)
-        qty, int
-        main_freq, str
-        sub_freq, str
+    Parameters
+    ----------
+    freq: str
+
+    Returns
+    -------
+    tuple: 包含三个元素(qty, main_freq, sub_freq)
+    qty, int 主频率的倍数
+    main_freq, str 主频率
+    sub_freq, str 副频率
+
+    Examples
+    --------
+    >>> get_main_freq('25d') -> (25, 'D', '')
+    >>> get_main_freq('w-Fri') -> (1, 'W', 'Fri')
+    >>> get_main_freq('75min') -> (5, '15MIN', '')
+    >>> get_main_freq('90min') -> (3, '30MIN', '')
     """
+
     import re
     from .utilfuncs import TIME_FREQ_STRINGS
 
@@ -4236,7 +4370,7 @@ def get_main_freq_level(freq):
 
 
 def next_main_freq(freq, direction='up'):
-    """
+    """ 在可用freq清单中找到下一个可用的freq字符串
 
     :param freq: main_freq string
     :param direction: 'up' / 'down'
@@ -4256,7 +4390,6 @@ def next_main_freq(freq, direction='up'):
             target_pos += 1
         elif direction == 'down':
             target_pos -= 1
-        # import pdb; pdb.set_trace()
         if get_main_freq_level(target_freq) != level:
             return target_freq
 
@@ -4265,18 +4398,23 @@ def next_main_freq(freq, direction='up'):
 @lru_cache(maxsize=16)
 def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
-    :param table:
+
+    Parameters
+    ----------
+    table:
         str, 表名称(注意不是表的结构名称)
-    :param with_remark: bool
+    with_remark: bool
         为True时返回remarks，否则不返回
-    :param with_primary_keys: bool
+    with_primary_keys: bool
         为True时返回primary_keys以及primary_key的数据类型，否则不返回
-    :return
-        Tuple: 包含四个List，包括:
-            columns: 整张表的列名称
-            dtypes: 整张表所有列的数据类型
-            primary_keys: 主键列名称
-            pk_dtypes: 主键列的数据类型
+
+    Returns
+    -------
+    Tuple: 包含四个List，包括:
+        columns: 整张表的列名称
+        dtypes: 整张表所有列的数据类型
+        primary_keys: 主键列名称
+        pk_dtypes: 主键列的数据类型
     """
     if not isinstance(table, str):
         raise TypeError(f'table name should be a string, got {type(table)} instead')
@@ -4328,54 +4466,59 @@ def get_table_map():
 def find_history_data(s, fuzzy=False, match_description=False):
     """ 根据输入的字符串，查找或匹配历史数据类型
 
-    :param s: string，
-        一个字符串，用于查找或匹配历史数据类型
+    用户可以使用qt.datasource.find_history_data()形式查找可用的历史数据
+    并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
+    查找匹配的历史数据类型。
+    例如，输入"pe"或"市盈率"都可以匹配到市盈率数据类型，并且提供该数据类型的相关信息
+    相关信息如：
+    调用名称、中文简介、所属数据表、数据频率、证券类型等等
 
-    :param fuzzy: bool, 默认值：False
+    Parameters
+    ----------
+    s: string，
+        一个字符串，用于查找或匹配历史数据类型
+    fuzzy: bool, 默认值：False
         是否模糊匹配数据名称，
          - False: 仅精确匹配数据的名称
          - True:  模糊匹配数据名称以及数据描述
-
-    :param match_description, bool, 默认值: False
+    match_description, bool, 默认值: False
         是否模糊匹配数据描述
          - False: 模糊匹配时不包含数据描述（仅匹配数据名称）
          - True:  模糊匹配时包含数据描述
 
-        用户可以使用qt.datasource.find_history_data()形式查找可用的历史数据
-        并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
-        查找匹配的历史数据类型。
-        例如，输入"pe"或"市盈率"都可以匹配到市盈率数据类型，并且提供该数据类型的相关信息
-        相关信息如：
-        调用名称、中文简介、所属数据表、数据频率、证券类型等等
+    Returns
+    -------
+    None
 
-        TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
-          方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
-          存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
-          指导如何精确定位数据，至于数据列名仅作为参考信息存在。
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.find_history_data('pe')
+    output:
+        matched following history data,
+        use "qt.get_history_panel()" to load these data:
+        ------------------------------------------------------------------------
+          h_data   dtype             table asset freq plottable                remarks
+        0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
+        1     pe  double  stock_indicator2     E    d        No                  市盈(动)
+        2     pe   float   index_indicator   IDX    d        No                    市盈率
+        ========================================================================
 
-        TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
+    Raises
+    ------
 
-        TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
-
-        TODO: 增加函数的易用性：函数返回一个列表，包含查找到的所有数据类型的ID
-
-        例如：
-        >>> import qteasy as qt
-        >>> qt.find_history_data('pe')
-        得到：
-        >>> output:
-            matched following history data,
-            use "qt.get_history_panel()" to load these data:
-            ------------------------------------------------------------------------
-              h_data   dtype             table asset freq plottable                remarks
-            0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
-            1     pe  double  stock_indicator2     E    d        No                  市盈(动)
-            2     pe   float   index_indicator   IDX    d        No                    市盈率
-            ========================================================================
-
-    :return:
-        None
     """
+
+    # TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
+    #  方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
+    #  存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
+    #  指导如何精确定位数据，至于数据列名仅作为参考信息存在。
+    #
+    # TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
+    #
+    # TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
+    #
+    # TODO: 增加函数的易用性：函数返回一个列表，包含查找到的所有数据类型的ID
     if not isinstance(s, str):
         raise TypeError(f'input should be a string, got {type(s)} instead.')
     # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述

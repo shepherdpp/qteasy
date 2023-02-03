@@ -60,22 +60,29 @@ NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
 ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
+AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
+                          'proportion signal': 'ps',
+                          'volume signal':     'vs'}
+AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
+
 
 def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
-    :param exception_to_check: 需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
-    :type exception_to_check: Exception 或 tuple
-    :param tries: 最终放弃前的尝试次数
-    :type tries: int
-    :param delay: 第一次重试前等待的延迟时间（秒）
-    :type delay: float
-    :param backoff: 延迟倍增乘数，每多一次重试延迟时间就延长该倍数
-    :type backoff: float
-    :param mute: 静默功能，True时不打印信息也不输出logger.warning, 只输出logger.info()
-    :type mute: Boolean default False
-    :param logger: 日志logger对象. 如果给出None, 则打印结果
-    :type logger: logging.Logger 对象
+    Parameters
+    ----------
+    exception_to_check: Exception 或 tuple
+        需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
+    tries: int
+        最终放弃前的尝试次数
+    delay: float
+        第一次重试前等待的延迟时间（秒）
+    backoff: float
+        延迟倍增乘数，每多一次重试延迟时间就延长该倍数
+    mute: bool, Default: False
+        静默功能，True时不打印信息也不输出logger.warning, 只输出logger.info()
+    logger: logging.Logger 对象
+        日志logger对象. 如果给出None, 则打印结果
     """
 
     def deco_retry(f):
@@ -87,6 +94,7 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
+                    import pdb; pdb.set_trace()
                     msg = f'Error in {f.__name__}: {str(e)}, Retrying in {mdelay} seconds...'
                     if mute:
                         if logger:
@@ -109,13 +117,13 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
 def mask_to_signal(lst):
     """将持仓蒙板转化为交易信号.
 
-        转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
-        则产生相应的补仓买入信号；如果持仓比率降低，则产生相应的卖出信号将仓位降低到目标水平。
-        生成的信号范围在(-1, 1)之间，负数代表卖出，正数代表买入，且具体的买卖信号signal意义如下：
-        signal > 0时，表示用总资产的 signal * 100% 买入该资产， 如0.35表示用当期总资产的35%买入该投资产品，如果
-            现金总额不足，则按比例调降买入比率，直到用尽现金。
-        signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
-        signal = 0时，表示不进行任何操作
+    转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
+    则产生相应的补仓买入信号；如果持仓比率降低，则产生相应的卖出信号将仓位降低到目标水平。
+    生成的信号范围在(-1, 1)之间，负数代表卖出，正数代表买入，且具体的买卖信号signal意义如下：
+    signal > 0时，表示用总资产的 signal * 100% 买入该资产， 如0.35表示用当期总资产的35%买入该投资产品，如果
+        现金总额不足，则按比例调降买入比率，直到用尽现金。
+    signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
+    signal = 0时，表示不进行任何操作
 
     input:
         :param lst，ndarray，持仓蒙板
@@ -143,13 +151,18 @@ def mask_to_signal(lst):
 def unify(arr):
     """调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
 
-    example:
-    unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
-    =
-    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
+    Parameters
+    ----------
+    arr: np.ndarray
 
-    :param arr: type: np.ndarray
-    :return: ndarray
+    Returns
+    -------
+    ndarray
+
+    examples
+    --------
+    >>> unify([[3.0, 2.0, 5.0], [1.0, 1.0, 1.0]])
+    >>> [[0.3, 0.2, 0.5], [0.3333, 0.3333, 0.3333]]
     """
     if isinstance(arr, np.ndarray):  # Input should be ndarray! got {type(arr)}'
         s = arr.sum(1)
@@ -163,10 +176,20 @@ def unify(arr):
 def time_str_format(t: float, estimation: bool = False, short_form: bool = False):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
-    :param t:  输入时间，单位为秒
-    :param estimation:
-    :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XX sec", 为True时输出"XXD XXH XX'XX".XXX"
-    :return:
+    Parameters
+    ----------
+    t: float
+        输入时间，单位为秒
+    estimation: bool, Default: False
+        True时返回结果精确到最大单位
+    short_form: bool, Default: False
+        时间输出形式，
+        False时输出格式为"XX hour XX day XX min XX sec",
+        True时输出"XXD XXH XX'XX".XXX"
+
+    Returns
+    -------
+    str: 时间字符串格式
     """
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
@@ -240,10 +263,14 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         3.3 如果列表元素为boolean时，输出True对应的切片编号，如[True, True, False, False] 输出为[0,1]
     4 输入数据为int型时，输出相应的切片，如输入0的输出为[0]
 
-    :param unknown_input: slice or int/str or list of int/string
-    :param str_int_dict: a dictionary that contains strings as keys and integer as values
-    :return:
-        a list of slice/list that can be used to slice the Historical Data Object
+    Parameters
+    ----------
+    unknown_input: slice, int, str or list of int/str
+    str_int_dict: dict: {str: int}
+
+    Returns
+    -------
+    list of slice/list that can be used to slice the Historical Data Object
     """
     if isinstance(unknown_input, slice):
         return unknown_input  # slice object can be directly used
@@ -288,6 +315,23 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
     这个函数生成的字典可以生成一个适合快速访问的label与target_list中的元素映射，使得可以快速地通过label访问列表中的元素
+
+    本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
+
+    Parameters
+    ----------
+    input_labels:
+        输入标签，可以接受两种形式的输入：
+        字符串形式: 如:     'first,second,third'
+        列表形式，如:      ['first', 'second', 'third']
+    target_list:
+        需要进行映射的目标列表
+
+    Returns
+    -------
+
+    Examples
+    --------
     例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
     现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
     使用labels_to_dict函数生成一个字典ID如下：
@@ -297,12 +341,6 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
     通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
     target_list[ID['first']] == target_list[0] == 100
 
-    本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
-    :param input_labels: 输入标签，可以接受两种形式的输入：
-                                    字符串形式: 如:     'first,second,third'
-                                    列表形式，如:      ['first', 'second', 'third']
-    :param target_list: 需要进行映射的目标列表
-    :return:
     """
     if isinstance(input_labels, str):
         input_labels = str_to_list(input_string=input_labels)
@@ -319,11 +357,22 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=None):
     """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义
 
-        :param input_string: str: 需要分割的字符串
-        :param sep_char: str: 字符串分隔符， 默认','
-        :param case, str, 默认None, 是否改变大小写，upper输出全大写, lower输出全消协
-        :param dim，需要生成的目标list的元素数量
-        :param padder，当元素数量不足的时候用来补充的元素
+    Parameters
+    ----------
+    input_string: str:
+        需要分割的字符串
+    sep_char: str:
+        字符串分隔符， 默认','
+    case: str
+        默认None, 是否改变大小写，upper输出全大写, lower输出全消协
+    dim: int
+        需要生成的目标list的元素数量
+    padder: str
+        当元素数量不足的时候用来补充的元素
+
+    Returns
+    -------
+    list of str: 字符串分割后的列表
     """
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     if input_string == "":
@@ -392,16 +441,17 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = '',
-                 show_time_remain: bool = False,
-                 short_form: bool = False):
+def progress_bar(prog: int, total: int = 100, comments: str = ''):
     """根据输入的数字生成进度条字符串并刷新
 
-    :param prog: 当前进度，用整数表示
-    :param total:  总体进度，默认为100
-    :param comments:  需要显示在进度条中的文字信息
-    :param show_time_remain: Bool, True时显示预计剩余时间
-    :param short_form:  显示
+    Parameters
+    ----------
+    prog: int
+        当前进度，用整数表示
+    total: int
+        总体进度，默认为100
+    comments: str, optional
+        需要显示在进度条中的文字信息
     """
     if total > 0:
         if prog > total:
@@ -413,13 +463,19 @@ def progress_bar(prog: int, total: int = 100, comments: str = '',
 
 
 def maybe_trade_day(date):
-    """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）
-    准确率有限但是效率高
+    """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）准确率有限但是效率高
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: datetime-like
+        可以转化为时间日期格式的字符串或其他类型对象
+
+    Raises
+    ------
+    ValueError, 当字符串无法被转化为datetime时
 
     :return:
+    bool
     """
     # public_holidays 是一个含两个list的tuple，存储了闭市的公共假期，第一个list是代表月份的数字，第二个list是代表日期的数字
     public_holidays = ([1, 1, 1, 4, 4, 4, 5, 5, 5, 10, 10, 10, 10, 10, 10, 10],
@@ -427,7 +483,7 @@ def maybe_trade_day(date):
     try:
         date = pd.to_datetime(date)
     except Exception:
-        raise Exception('date is not a valid date time format, cannot be converted to timestamp')
+        raise ValueError('date is not a valid date time format, cannot be converted to timestamp')
     if date.weekday() > 4:
         return False
     for m, d in zip(public_holidays[0], public_holidays[1]):
@@ -444,12 +500,12 @@ def prev_trade_day(date):
     """
     if maybe_trade_day(date):
         return date
-    else:
-        d = pd.to_datetime(date)
-        prev = d - pd.Timedelta(1, 'd')
-        while not maybe_trade_day(prev):
-            prev = prev - pd.Timedelta(1, 'd')
-        return prev
+
+    d = pd.to_datetime(date)
+    prev = d - pd.Timedelta(1, 'd')
+    while not maybe_trade_day(prev):
+        prev = prev - pd.Timedelta(1, 'd')
+    return prev
 
 
 def next_trade_day(date):
@@ -460,57 +516,55 @@ def next_trade_day(date):
     """
     if maybe_trade_day(date):
         return date
-    else:
-        d = pd.to_datetime(date)
-        next = d + pd.Timedelta(1, 'd')
-        while not maybe_trade_day(next):
-            next = next + pd.Timedelta(1, 'd')
-        return next
+
+    d = pd.to_datetime(date)
+    next = d + pd.Timedelta(1, 'd')
+    while not maybe_trade_day(next):
+        next = next + pd.Timedelta(1, 'd')
+    return next
 
 
 def is_market_trade_day(date, exchange: str = 'SSE'):
     """ 根据交易所发布的交易日历判断一个日期是否是交易日，
-        要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码:
+            SSE:    上交所, SZSE:   深交所,
+            CFFEX:  中金所, SHFE:   上期所,
+            CZCE:   郑商所, DCE:    大商所,
+            INE:    上能源, IB:     银行间,
+            XHKG:   港交所
 
-    :param exchange:
-        :type exchange: str 交易所代码:
-                            SSE:    上交所,
-                            SZSE:   深交所,
-                            CFFEX:  中金所,
-                            SHFE:   上期所,
-                            CZCE:   郑商所,
-                            DCE:    大商所,
-                            INE:    上能源,
-                            IB:     银行间,
-                            XHKG:   港交所
+    Raises
+    ------
+    NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
     :return:
+    bool
     """
     try:
         _date = pd.to_datetime(date)
     except Exception as ex:
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
-    assert _date is not None, f'{date} is not a valide date'
-    # TODO: 这里有bug: _date的上限和下限需要从trade_calendar中动态读取，而不能硬编码到源代码中
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20231231'):
-        return False
-    if not isinstance(exchange, str) and exchange in ['SSE',
-                                                      'SZSE',
-                                                      'CFFEX',
-                                                      'SHFE',
-                                                      'CZCE',
-                                                      'DCE',
-                                                      'INE',
-                                                      'IB',
-                                                      'XHKG']:
+    if _date is None:
+        raise TypeError(f'{date} is not a valid date')
+    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
+                                                      'DCE', 'INE', 'IB', 'XHKG']:
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
     if qteasy.QT_TRADE_CALENDAR is not None:
-        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
-        is_open = exchange_trade_cal.loc[_date].is_open
+        try:
+            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        except KeyError as e:
+            raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
+        try:
+            is_open = exchange_trade_cal.loc[_date].is_open
+        except KeyError:
+            raise ValueError(f'The date {_date} is out of trade calendar range, please refill data')
         return is_open == 1
     else:
         # TODO: Not yet implemented
@@ -521,14 +575,29 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
 
 def prev_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的上一交易日，需要提前准备QT_TRADE_CALENDAR数据
-        返回值：
-        - 如果date是交易日，则返回上一个交易日，如2020-12-24是交易日，它的前一天也是交易日，返回上一日2020-12-23
-        - 如果date不是交易日，则返回它最近交易日的上一个交易日，如2020-12-25不是交易日，但2020-12-24是交易日，则
-            返回2020-12-24的上一交易日即2020-12-23
 
-    :param date:
-    :param exchange:
-    :return:
+    - 如果date是交易日，则返回上一个交易日，如2020-12-24是交易日，它的前一天也是交易日，返回上一日2020-12-23
+    - 如果date不是交易日，则返回它最近交易日的上一个交易日，如2020-12-25不是交易日，但2020-12-24是交易日，则
+        返回2020-12-24的上一交易日即2020-12-23
+
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码
+
+    Returns
+    -------
+    pd.TimeStamp
+
+    Raises
+    ------
+    NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
+
+    See Also
+    --------
+    is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date)
@@ -545,27 +614,24 @@ def prev_market_trade_day(date, exchange='SSE'):
 
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
-        返回值：
-        - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
-        - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
 
+    - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
+    - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码
 
-    :param exchange:
-        :type exchange: str 交易所代码:
-                            SSE:    上交所,
-                            SZSE:   深交所,
-                            CFFEX:  中金所,
-                            SHFE:   上期所,
-                            CZCE:   郑商所,
-                            DCE:    大商所,
-                            INE:    上能源,
-                            IB:     银行间,
-                            XHKG:   港交所
+    Returns
+    -------
+    pd.TimeStamp
 
-    :return:
+    See Also
+    --------
+    is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date)
@@ -588,22 +654,24 @@ def nearest_market_trade_day(date, exchange='SSE'):
 def next_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
 
-    :param date:
-        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+    Parameters
+    ----------
+    date: str datetime like
+        可以转化为时间日期格式的字符串或其他类型对象
+    exchange: str
+        交易所代码
 
-    :param exchange:
-        :type exchange: str 交易所代码:
-                            SSE:    上交所,
-                            SZSE:   深交所,
-                            CFFEX:  中金所,
-                            SHFE:   上期所,
-                            CZCE:   郑商所,
-                            DCE:    大商所,
-                            INE:    上能源,
-                            IB:     银行间,
-                            XHKG:   港交所
+    Returns
+    -------
+    pd.TimeStamp
 
-    :return:
+    Raises
+    ------
+    NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
+
+    See Also
+    --------
+    is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date)
@@ -640,11 +708,21 @@ def weekday_name(weekday: int):
 def list_truncate(lst, trunc_size):
     """ 将一个list切分成若干个等长的sublist，除最末一个列表以外，所有列表的元素数量都为trunc_size
 
-    :param lst:
-        list, 需要被切分的列表
-    :param trunc_size:
-        int, 列表中元素数量
-    :return:
+    Parameters
+    ----------
+    lst: list
+        需要被切分的列表
+    trunc_size: int
+        列表中元素数量
+
+    Returns
+    -------
+    nested list, 切分好的子列表
+
+    Examples
+    --------
+    >>> list_truncate([1,2,3,4,5,6,7,8,9,0], 4)
+    >>> [[1,2,3,4], [5,6,7,8], [9,0]]
     """
     assert isinstance(lst, list), f'first parameter should be a list, got {type(lst)}'
     assert isinstance(trunc_size, int), f'second parameter should be an integer larger than 0'
@@ -664,10 +742,15 @@ def list_truncate(lst, trunc_size):
 
 
 def is_number_like(key: [str, int, float]) -> bool:
-    """ 判断一个字符串是否是一个合法的数，使用re比原来的版本快5～10倍
+    """ 判断一个字符串是否是一个合法的数字，使用re比原来的版本快5～10倍
 
-    :param key:
-    :return:
+    Parameters
+    ----------
+    key: [str, int, float], 需要检查的输入
+
+    Returns
+    -------
+    bool
     """
     if isinstance(key, (float, int)):
         return True
@@ -694,53 +777,63 @@ def is_number_like(key: [str, int, float]) -> bool:
 
 def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """ 根据输入匹配证券代码或证券名称，输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
-        如果给出asset_types参数，则限定只返回符合asset_types的结果
-        如果输入字符串全部为数字，则匹配证券代码ts_code，如：
-            输入：
-                000001
-            匹配：
-                '000001.SZ': '平安银行'，
-                '000001.CZC': '农期指数', 
-                '000001.SH': '上证指数' ...
 
-        输入的证券名称可以包含通配符，则进行模式匹配，如：
-        - '?' 匹配一个字符，如
-            输入：
-                "中?集团"
-            匹配
-                '000039.SZ': '中集集团',
-                '000759.SZ': '中百集团',
-                '002309.SZ': '中利集团',
-                '600252.SH': '中恒集团',
-                '601512.SH': '中新集团'
-        - '*' 匹配多个字符，如
-            输入：
-                "中*金"
-            匹配：
-                '600489.SH': '中金黄金',
-                '600916.SH': '中国黄金'
+    如果给出asset_types参数，则限定只返回符合asset_types的结果
+    - 输入六位证券代码匹配相应的证券
+    - 输入证券名称模糊匹配
+    - 输入带通配符的证券名称查找匹配的证券
 
-        输入的证券名称如果不含通配符，将进行模糊匹配：并按匹配程度从高到低输出相似的名称，如：
-            输入：
-                '工商银行'
-            匹配：
-                '601398.SH': '工商银行',
-                '600036.SH': '招商银行',
-                '601916.SH': '浙商银行'
-
-
-    :param code:
+    Parameters
+    ----------
+    code: str
         字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
-    :param asset_types: str
+    asset_types: str
         返回结果类型，以逗号分隔的资产类型代码，如"E,FD"代表只返回股票和基金代码
-    :param match_full_name: bool
+    match_full_name: bool
         是否匹配股票或基金全名，默认不匹配
-    :return:
-        Dict {'E':      [equity codes 股票代码],
-              'IDX':    [index codes 指数代码],
-              'FD':     [fund codes 基金代码],
-              'FT':     [futures codes 期货代码],
-              'OPT':    [options codes 期权代码]}
+
+    Returns
+    -------
+    Dict {'E':      [equity codes 股票代码],
+          'IDX':    [index codes 指数代码],
+          'FD':     [fund codes 基金代码],
+          'FT':     [futures codes 期货代码],
+          'OPT':    [options codes 期权代码]}
+
+    Examples
+    --------
+    如果输入字符串全部为数字，则匹配证券代码ts_code，如：
+        输入：
+            000001
+        匹配：
+            '000001.SZ': '平安银行'，
+            '000001.CZC': '农期指数',
+            '000001.SH': '上证指数' ...
+
+    输入的证券名称可以包含通配符，则进行模式匹配，如：
+    - '?' 匹配一个字符，如
+        输入：
+            "中?集团"
+        匹配
+            '000039.SZ': '中集集团',
+            '000759.SZ': '中百集团',
+            '002309.SZ': '中利集团',
+            '600252.SH': '中恒集团',
+            '601512.SH': '中新集团'
+    - '*' 匹配多个字符，如
+        输入：
+            "中*金"
+        匹配：
+            '600489.SH': '中金黄金',
+            '600916.SH': '中国黄金'
+
+    输入的证券名称如果不含通配符，将进行模糊匹配：并按匹配程度从高到低输出相似的名称，如：
+        输入：
+            '工商银行'
+        匹配：
+            '601398.SH': '工商银行',
+            '600036.SH': '招商银行',
+            '601916.SH': '浙商银行'
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
@@ -835,8 +928,12 @@ def human_file_size(file_size: int) -> str:
 def human_units(number: int, short_form=True) -> str:
     """ 将一个整型数字转化为以K/M/B/T为单位的文件大小字符串
 
-    :param number: int 表示文件大小的数字，单位为字节
-    :param short_form: bool, True时使用K/M/B/T 代表 thousand/million/billion/trillion
+    Parameters
+    ----------
+    number: int
+        表示文件大小的数字，单位为字节
+    short_form: bool, Default: True
+        True时使用K/M/B/T 代表 thousand/million/billion/trillion
     :return:
     """
     if not isinstance(number, (float, int)):
@@ -863,14 +960,17 @@ def human_units(number: int, short_form=True) -> str:
 
 @njit()
 def _lev_ratio(s, t):
-    """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio
-    此处忽略大小写字母的区别
+    """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio,此处忽略大小写字母的区别
 
-    :param s: str  第一个字符串
-    :param t: str  第二个字符串
-    :return:
-        float： 两个字符串的levenshtein ratio
+    Parameters
+    ----------
+    s, t: str  第一个和第二个字符串
+
+    Returns
+    -------
+    float： 两个字符串的levenshtein ratio
     """
+
     s = s.lower()
     t = t.lower()
     # Initialize matrix of zeros
@@ -1072,3 +1172,31 @@ def reindent(s, num_spaces=4):
     s = [(num_spaces * ' ') + line.lstrip() for line in s]
     s = '\n'.join(s)
     return s
+
+
+def truncate_string(s, n, padder='.'):
+    """ 如果字符串超过指定长度，则将字符串截短到制定的长度，并确保字符串的末尾有三个句点
+        如果n<=4，则句点的数量相应减少
+        如果n<0则报错
+
+    :param s: 字符串
+    :param n: 需要保留的长度
+    :param padder: 作为省略号填充在字符串末尾的字符, 默认值:'.'
+    :return:
+    """
+    if not isinstance(s, str):
+        raise TypeError(f'the first argument should be a string, got {type(s)} instead')
+    if not isinstance(n, int):
+        raise TypeError(f'the second argument should be an integer, got {type(n)} instead')
+    if not isinstance(padder, str):
+        raise TypeError(f'the padder should be a character, got {type(padder)} instead')
+    if not len(padder) == 1:
+        raise ValueError(f'the padder should be a single character, got {len(padder)} characters')
+    if n <= 1:
+        raise ValueError(f'the expected length should be larger than 0, got {n}')
+    if len(s) <= n:
+        return s
+    padder_count = 3
+    if n < 3:
+        padder_count = n
+    return s[:n-padder_count] + padder * padder_count

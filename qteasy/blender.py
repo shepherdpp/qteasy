@@ -15,7 +15,7 @@ from .utilfuncs import is_number_like, BLENDER_STRATEGY_INDEX_IDENTIFIER
 
 
 # 这里定义可用的交易信号混合函数
-@njit()
+@njit()  # 实测njit版本运行速度是python版本的2倍左右
 def op_sum(*args):
     """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
         虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
@@ -37,7 +37,7 @@ def op_sum(*args):
     return signal_sum
 
 
-@njit()
+# 这个函数本身速度比较快，而且njit版本的运行速度没有任何提升
 def op_avg(*args):
     """ 通常用于PT持仓目标信号。
         组合后的持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
@@ -55,7 +55,7 @@ def op_avg(*args):
     return signal_sum / signal_count
 
 
-@njit()
+# 这个函数本身速度不快，但njit版本更慢，njit()后运行时间增加40%
 def op_pos(n, t, *args):
     """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
 
@@ -80,7 +80,7 @@ def op_pos(n, t, *args):
     return res
 
 
-@njit()
+# 这个函数本身速度不快，但njit版本更慢，njit()后运行时间增加33%
 def op_avg_pos(n, t, *args):
     """择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
 
@@ -109,7 +109,7 @@ def op_avg_pos(n, t, *args):
     return res
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增加25%
 def op_str(t, *args):
     """ str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于
         某一个阈值T的时候，最终结果才会是多头，否则就是空头
@@ -122,7 +122,7 @@ def op_str(t, *args):
     return np.where(np.abs(signal_sum) >= t, 1, 0) * np.sign(signal_sum)
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增加4倍
 def op_clip(lbound, ubound, *args):
     """ 剪切掉信号中小于lbound，或大于ubound的值，替换为lbound或ubound
 
@@ -134,7 +134,7 @@ def op_clip(lbound, ubound, *args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count > 1:
-        raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
+        raise ValueError(f'only one array of signals can be passed to blend function "clip", please check '
                          f'your input')
     signal_res = args[0]
     signal_res = np.where(signal_res < lbound, lbound, signal_res)
@@ -142,7 +142,7 @@ def op_clip(lbound, ubound, *args):
     return signal_res
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增加90%
 def op_unify(*args):
     """ 调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
     用于调整
@@ -158,7 +158,7 @@ def op_unify(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count > 1:
-        raise ValueError(f'only one array of signals can be passed to blend function "combo", please check '
+        raise ValueError(f'only one array of signals can be passed to blend function "unify", please check '
                          f'your input')
     signal_arr = args[0]
     s = signal_arr.sum(1)
@@ -169,7 +169,7 @@ def op_unify(*args):
     return signal_res
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增加80%
 def op_max(*args):
     """ 信号混合器，将各个择时策略生成的信号取最大值后生成新的交易信号
 
@@ -193,7 +193,7 @@ def op_max(*args):
         return signal_max
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增加50%
 def op_min(*args):
     """ 信号混合器，将各个择时策略生成的信号取最小值后生成新的交易信号
 
@@ -217,7 +217,7 @@ def op_min(*args):
         return signal_min
 
 
-@njit()
+# 这个函数本身速度不够快，但是njit版本的运行速度没有任何提升
 def op_power(*args):
     """ ，逐个元素操作生成first的second次幂，功能等同于np.power
 
@@ -242,7 +242,7 @@ def op_power(*args):
     return signal_res
 
 
-@njit()
+@njit()  # 这个函数本身速度不够快，njit版本的运行速度稍快，实测大约快5%
 def op_exp(*args):
     """ ，逐个元素操作生成e的signal次幂，效果与np.exp()一致
 
@@ -262,7 +262,7 @@ def op_exp(*args):
     return signal_res
 
 
-@njit()
+# 这个函数本身速度不够快，但是njit版本的运行速度更慢，实测大约慢5%
 def op_log(*args):
     """ ，逐个元素操作生成signal的自然对数，效果与np.log()一致
 
@@ -275,14 +275,14 @@ def op_log(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in log()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.log(args[0])
     return signal_res
 
 
-@njit()
+# 这个函数本身速度不够快，但是njit版本的运行速度更慢，实测大约慢20%
 def op_log10(*args):
     """ ，逐个元素操作生成signal的以10为底的对数，效果与np.log10()一致
 
@@ -295,14 +295,14 @@ def op_log10(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in log10()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.log10(args[0])
     return signal_res
 
 
-@njit()
+@njit()  # 实测njit版本运行速度是python版本的10倍以上
 def op_floor(*args):
     """ 逐个元素操作生成signal的floor，效果与np.floor()一致
 
@@ -315,14 +315,14 @@ def op_floor(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in floor()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.floor(args[0])
     return signal_res
 
 
-@njit()
+@njit()  # 实测njit版本运行速度是python版本的10倍以上
 def op_ceil(*args):
     """ 逐个元素操作生成signal的ceil，效果与np.cail()一致
 
@@ -335,14 +335,14 @@ def op_ceil(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in ceil()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.ceil(args[0])
     return signal_res
 
 
-@njit()
+# 这个简单函数本身速度已经很快，不需要@njit()，njit()后运行时间增倍（因为overhead）
 def op_sqrt(*args):
     """ ，逐个元素操作生成signal的平方根，效果与np.sqrt()一致
 
@@ -355,7 +355,7 @@ def op_sqrt(*args):
     # 交易信号的个数
     signal_count = len(args)
     if signal_count != 1:
-        raise ValueError('only one signal array is allowed in exp()')
+        raise ValueError('only one signal array is allowed in sqrt()')
         # return  # 本函数允许且仅允许一个参数传入
 
     signal_res = np.sqrt(args[0])
@@ -419,11 +419,7 @@ def run_blend_func(func_str, *args):
     # 将所有的附加参数处理为float类型，便于传入func处理
     additional_args = tuple(float(item) for item in additional_args)
     try:
-        # debug
-        # print(f'running function:\n{func_name}: {func} \n{additional_args}\n{args}')
         res = func(*additional_args, *args)
-        # debug
-        # print(f'function run succeed, result\n{res}')
     except Exception as e:
         raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
                         f'error message: \n{e}')

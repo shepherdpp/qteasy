@@ -1,12 +1,15 @@
+# coding=utf-8
 # ======================================
-# File:     setup.py
+# Package:  qteasy.test
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
-# Created:  2023-01-23
+# Created:  2020-02-11
 # Desc:
-#   QTEASY setup file
+#   QTEASY:
+#   unittest for all qteasy
+#   sub-functions.
 # ======================================
 
-from setuptools import setup
 
-setup()
+
+

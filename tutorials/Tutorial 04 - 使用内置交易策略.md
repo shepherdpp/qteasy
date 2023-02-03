@@ -195,7 +195,7 @@ stg_macd.info()
 例如：
 
 ```python
-qt.built_in.TimingCrossline?
+qt.built_in.Crossline?
 ```
 可以看到
 ```

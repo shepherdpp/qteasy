@@ -32,10 +32,9 @@ qteasy中的每一个交易策略都被定义为交易策略（Strategy）对象
 
 创建Strategy对象的最简单方法是使用qt.built_in模块, 也可以在创建Operator对象的时候同时创建。
 
-
 ```python
 # 通过qt内置策略模块创建一个DMA则时策略
-stg = qt.built_in.TimingDMA()
+stg = qt.built_in.DMA()
 # 通过stg.info()可以查看策略的主要信息：
 stg.info()
 ```
