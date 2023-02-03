@@ -69,18 +69,20 @@ AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
 def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
-    :param exception_to_check: 需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
-    :type exception_to_check: Exception 或 tuple
-    :param tries: 最终放弃前的尝试次数
-    :type tries: int
-    :param delay: 第一次重试前等待的延迟时间（秒）
-    :type delay: float
-    :param backoff: 延迟倍增乘数，每多一次重试延迟时间就延长该倍数
-    :type backoff: float
-    :param mute: 静默功能，True时不打印信息也不输出logger.warning, 只输出logger.info()
-    :type mute: Boolean default False
-    :param logger: 日志logger对象. 如果给出None, 则打印结果
-    :type logger: logging.Logger 对象
+    Parameters
+    ----------
+    exception_to_check: Exception 或 tuple
+        需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
+    tries: int
+        最终放弃前的尝试次数
+    delay: float
+        第一次重试前等待的延迟时间（秒）
+    backoff: float
+        延迟倍增乘数，每多一次重试延迟时间就延长该倍数
+    mute: bool, Default: False
+        静默功能，True时不打印信息也不输出logger.warning, 只输出logger.info()
+    logger: logging.Logger 对象
+        日志logger对象. 如果给出None, 则打印结果
     """
 
     def deco_retry(f):
@@ -92,6 +94,7 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
+                    import pdb; pdb.set_trace()
                     msg = f'Error in {f.__name__}: {str(e)}, Retrying in {mdelay} seconds...'
                     if mute:
                         if logger:
