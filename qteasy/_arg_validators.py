@@ -874,9 +874,10 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
-        warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error ' \
-                   f'is suppressed by program!'
-        warnings.warn(warn_msg)
+        # warning is suppressed, ignore warning
+        # warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error ' \
+        #            f'is suppressed by program!'
+        # warnings.warn(warn_msg)
         return True
 
     try:
@@ -891,8 +892,8 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
                 f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
                 f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
         # ---------------------------------------------------------------
-        #      At this point , if we have not raised an exception,
-        #      then config_key is valid as far as we can tell.
+        #      至此 , 如果没有任何Exception被Raise出来,
+        #      那么我们就认为所有的argument都是valid的.
 
     return True
 
