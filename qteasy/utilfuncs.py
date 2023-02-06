@@ -196,11 +196,11 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
     -------
     str: 时间字符串格式
     """
+
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
-    # debug
-    # print(f'time input is {t}')
+
     str_element = []
     enough_accuracy = False
     if t >= 86400 and not enough_accuracy:
@@ -277,6 +277,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
     -------
     list of slice/list that can be used to slice the Historical Data Object
     """
+
     if isinstance(unknown_input, slice):
         return unknown_input  # slice object can be directly used
     elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
@@ -1333,3 +1334,5 @@ def truncate_string(s, n, padder='.'):
     if n < 3:
         padder_count = n
     return s[:n-padder_count] + padder * padder_count
+
+

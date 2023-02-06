@@ -1,5 +1,7 @@
 # `qteasy` -- 一个基于Python的高效量化投资工具包
 
+[![PyPI version](https://badge.fury.io/py/qteasy.svg)](https://badge.fury.io/py/qteasy)
+[![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
 
 - [QTEASY简介](#基本介绍)
 - [安装及依赖](#安装依赖包)

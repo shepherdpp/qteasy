@@ -766,7 +766,20 @@ class HistoryPanel():
     # TODO: implement this method
     def flatten_to_dataframe(self, multi_index=True):
         """ 将一个HistoryPanel"展平"成为一个DataFrame
-            HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
+
+        HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
+
+        Parameters
+        ----------
+        multi_index: Boolean,
+            是否生成MultiIndex
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Examples
+        --------
         例如：
         HistoryPanel有2层，每层3列：
         000300:
@@ -786,8 +799,6 @@ class HistoryPanel():
         12.6,   13.2,   1020020 2.6,    3.2,    20020
 
 
-        :param multi_index:
-        :return:
         """
         raise NotImplementedError
 
@@ -795,9 +806,20 @@ class HistoryPanel():
     def to_multi_index_dataframe(self):
         """ 等同于HistoryPanel.flatten_to_dataframe(multi_index=True)
 
-        :return:
+        Returns
+        -------
+        pandas.DataFrame
         """
-        raise NotImplementedError
+        return self.flatten_to_dataframe(multi_index=True)
+
+    def flatten(self):
+        """ 等同于HistoryPanel.flatten_to_dataframe(multi_index=False)
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        return self.flatten_to_dataframe(multi_index=False)
 
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
