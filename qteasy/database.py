@@ -2730,6 +2730,7 @@ class DataSource:
 
         return df
 
+    # TODO: 为什么需要这个函数？为什么不能用read_table_data+write_table_data()来实现？
     def export_table_data(self, table, shares=None, start=None, end=None):
         """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据
 

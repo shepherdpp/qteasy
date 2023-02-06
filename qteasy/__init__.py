@@ -116,7 +116,7 @@ QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])
 # 设置系统日志以及交易日志的存储路径，如果路径不存在，则新建一个文件夹
 os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
 os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
-debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, '/qteasy.log'),
+debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'qteasy.log'),
                                                           backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
