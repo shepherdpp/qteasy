@@ -764,40 +764,77 @@ class HistoryPanel():
         return res_df
 
     # TODO: implement this method
-    def flatten_to_dataframe(self, multi_index=True):
+    def flatten_to_dataframe(self, along='row'):
         """ 将一个HistoryPanel"展平"成为一个DataFrame
-            HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
+
+        HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex，或者多层数据
+        会被平铺到DataFrame的行，同样变成一个MultiIndex，平铺到行还是列取决于along参数
+
+        Parameters
+        ----------
+        along: str, {'col', 'row', 'column'} Default: 'row'
+            平铺HistoryPanel的每一层时，沿行方向还是列方向平铺，
+            'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Examples
+        --------
         例如：
-        HistoryPanel有2层，每层3列：
-        000300:
-        close,  open,   vol
-        12.3,   12.5,   1020010
-        12.6,   13.2,   1020020
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
 
-        000001：
-        close,  open,   vol
-        2.3,    2.5,    20010
-        2.6,    3.2,    20020
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
 
-        --> 转化为MultiIndex
-        000300                  000001
-        close,  open,   vol,    close,  open,   vol
-        12.3,   12.5,   1020010 2.3,    2.5,    20010
-        12.6,   13.2,   1020020 2.6,    3.2,    20020
+        >>> hp.flatten_to_dataframe(along='col')
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
+        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
 
-
-        :param multi_index:
-        :return:
+        >>> hp.flatten_to_dataframe(along='row')
+                            close,  open,   vol
+        000300  2020-01-01  12.3,   12.5,   1020010
+                2020-01-02  12.6,   13.2,   1020020
+        000001  2020-01-01  2.3,    2.5,    20010
+                2020-01-02  2.6,    3.2,    20020
         """
-        raise NotImplementedError
+        if not isinstance(along, str):
+            raise TypeError(f'along must be a string, got {type(along)} instead')
+        if along not in ('col', 'row', 'column'):
+            raise ValueError(f'along must be "col" or "row", got {along}')
 
-    # TODO: implement this method
-    def to_multi_index_dataframe(self):
-        """ 等同于HistoryPanel.flatten_to_dataframe(multi_index=True)
+        df_dict = self.to_df_dict(by='share')
+        if along in ('col', 'column'):
+            return pd.concat(df_dict, axis=1, keys=df_dict.keys())
+        if along == 'row':
+            return pd.concat(df_dict, axis=0, keys=df_dict.keys())
 
-        :return:
+    def to_multi_index_dataframe(self, along=None):
+        """ 等同于HistoryPanel.flatten_to_dataframe()
+
+        Returns
+        -------
+        pandas.DataFrame
         """
-        raise NotImplementedError
+        return self.flatten_to_dataframe(along=along)
+
+    def flatten(self, along=None):
+        """ 等同于HistoryPanel.flatten_to_dataframe()
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        return self.flatten_to_dataframe(along=along)
 
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
@@ -829,7 +866,7 @@ class HistoryPanel():
                 df_dict[htype] = self.slice_to_dataframe(htype=htype)
             return df_dict
 
-    def unstack(self,  by: str = 'share') -> dict:
+    def unstack(self, by: str = 'share') -> dict:
         """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称"""
         return self.to_df_dict(by=by)
 
@@ -1429,7 +1466,7 @@ def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asse
                 code = htype_code_pairs[htyp]
                 code_type_pair = htyp + '-' + code
                 df = df.reindex(columns=[code])
-                df.columns=['none']
+                df.columns = ['none']
                 new_reference_dfs[code_type_pair] = df
         if pure_ref_dfs:
             new_reference_dfs.update(pure_ref_dfs)

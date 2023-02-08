@@ -94,8 +94,8 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    import pdb; pdb.set_trace()
-                    msg = f'Error in {f.__name__}: {str(e)}, Retrying in {mdelay} seconds...'
+                    # import pdb; pdb.set_trace()
+                    msg = f'Error in {f.__name__}: {e.__class__}:{str(e)}, Retrying in {mdelay} seconds...'
                     if mute:
                         if logger:
                             logger.info(msg)
@@ -125,10 +125,14 @@ def mask_to_signal(lst):
     signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
     signal = 0时，表示不进行任何操作
 
-    input:
-        :param lst，ndarray，持仓蒙板
-    return: =====
-        op，ndarray，交易信号矩阵
+    Parameters
+    ----------
+    lst，ndarray
+        持仓蒙板
+
+    Returns
+    -------
+    op，ndarray，交易信号矩阵
     """
     np.seterr(divide='ignore', invalid='ignore')
     if lst.ndim == 2:  # 如果输入信号是2D的，则逐行操作（axis=0）
@@ -161,8 +165,9 @@ def unify(arr):
 
     examples
     --------
-    >>> unify([[3.0, 2.0, 5.0], [1.0, 1.0, 1.0]])
-    >>> [[0.3, 0.2, 0.5], [0.3333, 0.3333, 0.3333]]
+    >>> unify(np.array([[3.0, 2.0, 5.0], [1.0, 1.0, 1.0]]))
+    array([[0.3   , 0.2   , 0.5   ],
+           [0.3333, 0.3333, 0.3333]])
     """
     if isinstance(arr, np.ndarray):  # Input should be ndarray! got {type(arr)}'
         s = arr.sum(1)
@@ -191,11 +196,11 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
     -------
     str: 时间字符串格式
     """
+
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
-    # debug
-    # print(f'time input is {t}')
+
     str_element = []
     enough_accuracy = False
     if t >= 86400 and not enough_accuracy:
@@ -272,6 +277,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
     -------
     list of slice/list that can be used to slice the Historical Data Object
     """
+
     if isinstance(unknown_input, slice):
         return unknown_input  # slice object can be directly used
     elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
@@ -364,7 +370,7 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     sep_char: str:
         字符串分隔符， 默认','
     case: str
-        默认None, 是否改变大小写，upper输出全大写, lower输出全消协
+        默认None, 是否改变大小写，upper输出全大写, lower输出全小写
     dim: int
         需要生成的目标list的元素数量
     padder: str
@@ -395,15 +401,20 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
 def input_to_list(pars: [str, int, list], dim: int, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
-    input:
-        :param pars，需要转化为list对象的输出对象
-        :param dim，需要生成的目标list的元素数量
-        :param padder，当元素数量不足的时候用来补充的元素
-    return: =====
-        items, list 转化好的元素清单
+    Parameters
+    ----------
+    pars: list of str or list of int
+        需要转化为list对象的输出对象
+    dim: int
+        需要生成的目标list的元素数量
+    padder: str
+        当元素数量不足的时候用来补充的元素
+
+    Returns
+    -------
+    items, list 转化好的元素清单
     """
     if isinstance(pars, (str, int, np.int64)):  # 处理字符串类型的输入
-        # print 'type of types', type(items)
         pars = [pars] * dim
     else:
         pars = list(pars)  # 正常处理，输入转化为列表类型
@@ -428,11 +439,21 @@ def regulate_date_format(date_str: [str, object]) -> str:
 
 
 def list_to_str_format(str_list: [list, str]) -> str:
-    """ 将list型的str数据转变为逗号分隔的str类型，如
-    ['close', 'open', 'high', 'low'] -> 'close, open, high, low'
+    """ 将list型的str数据转变为逗号分隔的str类型，
 
-    :param str_list: type: list[str]
-    :return: string
+    Parameters
+    ----------
+    str_list: list[str]
+        需要转化为str的列表
+
+    Returns
+    -------
+    str: 组合后的字符串
+
+    Examples
+    --------
+    >>> list_to_str_format(['close', 'open', 'high', 'low'])
+    'close, open, high, low'
     """
     assert isinstance(str_list, (list, str)), f'TypeError: expect list[str] or str type, got {type(str_list)} instead'
     if isinstance(str_list, str):
@@ -692,8 +713,14 @@ def next_market_trade_day(date, exchange='SSE'):
 def weekday_name(weekday: int):
     """ 将weekday数字转化为易于理解的人类语言
 
-    :param weekday:
-    :return:
+    Parameters
+    ----------
+    weekday: int
+        需要转化的星期数字
+
+    Returns
+    -------
+    str
     """
     weekday_names = {0: 'Monday',
                      1: 'Tuesday',
@@ -724,6 +751,7 @@ def list_truncate(lst, trunc_size):
     >>> list_truncate([1,2,3,4,5,6,7,8,9,0], 4)
     >>> [[1,2,3,4], [5,6,7,8], [9,0]]
     """
+
     assert isinstance(lst, list), f'first parameter should be a list, got {type(lst)}'
     assert isinstance(trunc_size, int), f'second parameter should be an integer larger than 0'
     assert trunc_size > 0, f'second parameter should be an integer larger than 0, got {trunc_size}'
@@ -934,7 +962,10 @@ def human_units(number: int, short_form=True) -> str:
         表示文件大小的数字，单位为字节
     short_form: bool, Default: True
         True时使用K/M/B/T 代表 thousand/million/billion/trillion
-    :return:
+
+    Returns
+    -------
+    str: 字符串形式的数字
     """
     if not isinstance(number, (float, int)):
         return f'{number}'
@@ -1002,15 +1033,18 @@ def _lev_ratio(s, t):
 
 @njit()
 def _partial_lev_ratio(s, t):
-    """ 比较两个字符串的局部相似度，将较短的字符串与较长字符串的所有字串进行比较，计算所有的相似度，
-        返回最大相似度
-        此处忽略大小写的区别
+    """ 比较两个字符串的局部相似度，返回最大相似度，此处忽略大小写的区别
 
-    :param s: str  第一个字符串
-    :param t: str  第二个字符串
-    :return:
-        两个字符串的局部相似度值
+    Parameters
+    ----------
+    s, t: str
+        第一个和第二个字符串
+
+    Returns
+    -------
+    float, 两个字符串的局部相似度值
     """
+
     s = s.lower()
     t = t.lower()
     if len(s) > len(t):
@@ -1033,10 +1067,16 @@ def _partial_lev_ratio(s, t):
 def _wildcard_match(mode, wordlist):
     """ 在字符串列表或序列中搜索符合模式的字符串
 
-    :param mode: str  带通配符wildcard的字符串
-    :param wordlist: iterable  一个列表、元组、生成器或任何可循环的对象，包含一系列需要匹配的字符串
-    :return:
-        list: 匹配成功的字符串
+    Parameters
+    ----------
+    mode: str
+        带通配符wildcard的字符串
+    wordlist: iterable
+        一个列表、元组、生成器或任何可循环的对象，包含一系列需要匹配的字符串
+
+    Returns
+    -------
+    list: 匹配成功的字符串
     """
     import re
 
@@ -1053,77 +1093,158 @@ def _wildcard_match(mode, wordlist):
 
 
 @njit
-def ffill_3d_data(val, init_val):
+def ffill_3d_data(arr, init_val=0.):
     """ 给定一个三维np数组，如果数组中有nan值时，使用axis=1的前一个非Nan值填充Nan
 
-    :param val: 3D ndarray, 一个含有Nan值的三维数组
-    :param init_val:
-    :return:
+    Parameters
+    ----------
+    arr: 3D ndarray
+        一个含有Nan值的三维数组
+    init_val: int, Default: 0.
+        用于填充二维数组第一行Nan值的数字
+
+    Returns
+    -------
+    ndarray, 填充后的ndarray
     """
-    lv, row, col = val.shape
-    r0 = val[:, 0, :]
+    lv, row, col = arr.shape
+    r0 = arr[:, 0, :]
     r0 = np.where(np.isnan(r0), init_val, r0)
     for i in range(row):
         if i == 0:
-            val[:, i, :] = r0
-        r_c = val[:, i, :]
+            arr[:, i, :] = r0
+        r_c = arr[:, i, :]
         r_c = np.where(np.isnan(r_c), r0, r_c)
         r0 = r_c
-        val[:, i, :] = r_c
-    return val
+        arr[:, i, :] = r_c
+    return arr
 
 
 @njit()
-def ffill_2d_data(val, init_val):
+def ffill_2d_data(arr, init_val=0.):
     """ 给定一个二维np数组，如果数组中有nan值时，使用axis=0的前一个非Nan值填充Nan
 
-    :param val: 2D ndarray, 一个含有Nan值的二维数组
-    :param init_val:
-    :return:
+    Parameters
+    ----------
+    arr: 2D ndarray
+        一个含有Nan值的二维数组
+    init_val: int, Default: 0.
+        用于填充二维数组第一行Nan值的数字
+
+    Returns
+    -------
+    ndarray, 填充后的ndarray
     """
-    row, col = val.shape
-    r0 = val[0, :]
+    row, col = arr.shape
+    r0 = arr[0, :]
     r0 = np.where(np.isnan(r0), init_val, r0)
     for i in range(row):
         if i == 0:
-            val[i, :] = r0
-        r_c = val[i, :]
+            arr[i, :] = r0
+        r_c = arr[i, :]
         r_c = np.where(np.isnan(r_c), r0, r_c)
         r0 = r_c
-        val[i, :] = r_c
-    return val
+        arr[i, :] = r_c
+    return arr
 
 
 @njit()
-def fill_nan_data(val, fill_val):
+def fill_nan_data(arr, fill_val=0.):
     """ 给定一个ndarray，用fill_val来填充array中的nan值
 
-    :param val:
-    :param fill_val:
-    :return:
+    Parameters
+    ----------
+    arr: ndarray
+        需要填充nan值的ndarray
+    fill_val: float, Default: 0.
+        需要填充的值
+
+    Returns
+    -------
+    ndarray, 填充后的ndarray
     """
-    return np.where(np.isnan(val), fill_val, val)
+    return np.where(np.isnan(arr), fill_val, arr)
 
 
 @njit()
-def fill_inf_data(val, fill_val):
+def fill_inf_data(arr, fill_val=0.):
     """ 给定一个ndarray，用fill_val来填充array中的inf值
 
-    :param val:
-    :param fill_val:
-    :return:
+    Parameters
+    ----------
+    arr: ndarray
+        需要填充inf值的ndarray
+    fill_val: float, Default: 0.
+        需要填充的值
+
+    Returns
+    -------
+    ndarray, 填充后的ndarray
     """
-    return np.where(np.isinf(val), fill_val, val)
+    return np.where(np.isinf(arr), fill_val, arr)
 
 
 def rolling_window(arr, window, axis=0):
     """ 给定一个ndarray，生成一个滑动窗口视图
 
-    :param arr:
-    :param window:
-    :param axis:
-    :return:
-        ndarray_view 输入数据的一个移动滑窗视图
+    Parameters
+    ----------
+    arr: ndarray
+        需要生成滑窗的矩阵，可以为1维或以上的数据
+    window: int
+        生成的滑动窗口的宽度
+    axis: int, Default: 0
+        生成滑窗的移动轴
+
+    Returns
+    -------
+    ndarray_view
+        输入数据的一个移动滑窗视图
+
+    Examples
+    --------
+    >>> rolling_window(np.array([0,1,2,3,4,5]), 2)
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4],
+           [3, 4, 5]])
+    >>> arr = np.random.randint(5, size=(5,4))
+    array([[3, 0, 0, 0],
+           [3, 2, 0, 2],
+           [2, 3, 4, 1],
+           [1, 2, 2, 3],
+           [3, 2, 3, 0]])
+    >>> rolling_window(arr, 3)
+    array([[[3, 0, 0, 0],
+            [3, 2, 0, 2],
+            [2, 3, 4, 1]],
+
+           [[3, 2, 0, 2],
+            [2, 3, 4, 1],
+            [1, 2, 2, 3]],
+
+           [[2, 3, 4, 1],
+            [1, 2, 2, 3],
+            [3, 2, 3, 0]]])
+    >>> rolling_window(arr, 3, 1)
+    array([[[3, 0, 0],
+            [3, 2, 0],
+            [2, 3, 4],
+            [1, 2, 2],
+            [3, 2, 3]],
+
+           [[0, 0, 0],
+            [2, 0, 2],
+            [3, 4, 1],
+            [2, 2, 3],
+            [2, 3, 0]]])
+
+    Raises
+    ------
+    TypeError:
+        当输入的参数类型不正确时
+    ValueError:
+        当输入的window或axis越界时
     """
     from numpy.lib.stride_tricks import as_strided
     if not isinstance(arr, np.ndarray):
@@ -1133,15 +1254,13 @@ def rolling_window(arr, window, axis=0):
     if not isinstance(axis, int):
         raise TypeError(f'axis should be an integer, got {type(axis)} instead.')
     if window <= 0:
-        raise ValueError(f'window should be larger than 0')
-    if axis < 0:
-        raise ValueError(f'axis can not be smaller than 0')
+        raise ValueError(f'Invalid window({window}), can not be smaller than 0')
+    if (axis < 0) or (axis >= arr.ndim):
+        raise ValueError(f'Invalid axis({axis})')
 
     ndim = arr.ndim
     shape = list(arr.shape)
     strides = arr.strides
-    if axis >= ndim:
-        raise ValueError(f'axis should be smaller than array dimension({ndim})')
     axis_length = shape[axis]
     if window > axis_length:
         raise ValueError(f'window too long, should be less than or equal to axis_length ({axis_length})')
@@ -1158,9 +1277,16 @@ def rolling_window(arr, window, axis=0):
 def reindent(s, num_spaces=4):
     """ 给定一个（通常多行）的string，在每一行前面添加空格形成缩进效果
 
-    :param s: 待处理的字符串
-    :param num_spaces: 需要添加的空格数量
-    :return:
+    Parameters
+    ----------
+    s: str
+        待处理的字符串
+    num_spaces: int, Default: 4
+        需要添加的空格数量
+
+    Returns
+    -------
+    str
     """
     if not isinstance(s, str):
         raise TypeError(f's should be a string, got {type(s)} instead')
@@ -1179,10 +1305,18 @@ def truncate_string(s, n, padder='.'):
         如果n<=4，则句点的数量相应减少
         如果n<0则报错
 
-    :param s: 字符串
-    :param n: 需要保留的长度
-    :param padder: 作为省略号填充在字符串末尾的字符, 默认值:'.'
-    :return:
+    Parameters
+    ----------
+    s: str
+        字符串
+    n: int
+        需要保留的长度
+    padder: str, Default: '.'
+        作为省略号填充在字符串末尾的字符
+
+    Returns
+    -------
+    str
     """
     if not isinstance(s, str):
         raise TypeError(f'the first argument should be a string, got {type(s)} instead')
@@ -1200,3 +1334,5 @@ def truncate_string(s, n, padder='.'):
     if n < 3:
         padder_count = n
     return s[:n-padder_count] + padder * padder_count
+
+

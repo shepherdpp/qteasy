@@ -1028,6 +1028,31 @@ class TestHistoryPanel(unittest.TestCase):
                           asset_type='E',
                           adj='wrong_adj')
 
+    def test_flatten_to_dataframe(self):
+        """ 测试函数 flatten_to_dataframe() """
+
+        hp = self.hp
+        print('test flatten_to_dataframe(along="row")')
+        df = hp.flatten_to_dataframe()
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(df.shape, (hp.shape[0] * hp.shape[1], hp.shape[2]))
+        self.assertEqual(df.columns.to_list(), hp.htypes)
+        for share in hp.shares:
+            self.assertTrue(np.allclose(df.loc[share].values, hp[:, share].squeeze()))
+
+        print('test flatten_to_dataframe(along="col")')
+        df = hp.flatten_to_dataframe(along='col')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(df.shape, (hp.shape[1], hp.shape[0] * hp.shape[2]))
+        self.assertEqual(df.index.to_list(), hp.hdates)
+        for share in hp.shares:
+            self.assertTrue(np.allclose(df[share].values, hp[:, share].squeeze()))
+
+        print('test error raises')
+        self.assertRaises(TypeError, hp.flatten_to_dataframe, along=35)
+        self.assertRaises(ValueError, hp.flatten_to_dataframe, along='wrong_value')
+        self.assertRaises(Exception, hp.flatten_to_dataframe, along='col', drop_nan=True)
+
 
 if __name__ == '__main__':
     unittest.main()

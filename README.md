@@ -1,5 +1,7 @@
 # `qteasy` -- 一个基于Python的高效量化投资工具包
 
+[![PyPI version](https://badge.fury.io/py/qteasy.svg)](https://badge.fury.io/py/qteasy)
+[![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
 
 - [QTEASY简介](#基本介绍)
 - [安装及依赖](#安装依赖包)
@@ -15,7 +17,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.0.1.dev0`
+- Latest Version: `0.0.1.dev1`
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -36,24 +38,24 @@
 ### 安装依赖包
 
 这个项目依赖以下python package，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装:
-- *`pandas` version >= 0.25.1*    `# conda install pandas`
-- *`numpy` version >= 1.18.1*    `# conda install numpy`
-- *`numba` version >= 0.47*    `# conda install numba`
-- *`TA-lib` version == 0.4.18*    `# pip install ta-lib==0.4.18`
-- *`tushare` version >= 1.2.89*    `# pip install tushare`
-- *`mplfinance` version >= 0.12*    `# conda install -c conda-forge mplfinance`
+- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
+- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
+- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
+- *`TA-lib` version == 0.4.18*    `pip install ta-lib==0.4.18`
+- *`tushare` version >= 1.2.89*    `pip install tushare`
+- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 
 ## 可选依赖包
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包
 ### 如果使用mysql数据库作为本地数据源
-- *`pymysql` version >= 1.0.0*    `# conda install -c anaconda pymysql`
-- *`sqlalchemy` version >= 1.4.18*   `# conda install sqlalchemy`
+- *`pymysql` version >= 1.0.0*    `pip install pymysql` / `conda install -c anaconda pymysql`
+- *`sqlalchemy` version >= 1.4.18, <=1.4.23*   `pip install sqlalchemy` / `conda install sqlalchemy`
 
 ### 如果使用hdf文件作为本地数据源 
-- *`pytables` version >= 3.6.1*   `# conda install -c conda-forge pytables`
+- *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
 
 ### 如果使用feather文件作为本地数据源
-- *`pyarrow` version >= 3*   `# conda install -c conda-forge pyarrow`
+- *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
 
 
 ##  10分钟了解`qteasy`的功能

@@ -97,9 +97,10 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
-        op = qt.Operator(strategies='dma')
-        op.set_parameter('dma', pars=(23, 166, 196))
-        res = qt.run(op, mode=1, invest_start='20160501', visual=True, trade_log=True)
+        stocks = qt.filter_stock_codes(index='000300.SH', date='20150101')  # [0:90]
+        # op = qt.Operator(strategies='dma')
+        # op.set_parameter('dma', pars=(23, 166, 196))
+        # res = qt.run(op, mode=1, invest_start='20160501', visual=True, trade_log=True)
 
 
 if __name__ == '__main__':

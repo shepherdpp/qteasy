@@ -1111,7 +1111,9 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
                                             end=end_date.strftime('%Y%m%d'))
             if index_comp.empty:
                 return index_comp
-            return share_basics.loc[index_comp.index.get_level_values('con_code').unique().tolist()]
+            # share_basics.loc[a_list] is deprecated since pandas 1.0.0
+            # return share_basics.loc[index_comp.index.get_level_values('con_code').unique().tolist()]
+            return share_basics.reindex(index=index_comp.index.get_level_values('con_code').unique().tolist())
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if len(targets) == 0:

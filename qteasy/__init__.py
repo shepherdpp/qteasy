@@ -48,17 +48,15 @@ QT_CONFIG_FILE_INTRO = '# qteasy configuration file\n' \
 try:
     with open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg')) as f:
         config_lines = f.readlines()
-        # logger_core.info(f'read configuration file: {f.name}')
+
 except FileNotFoundError as e:
-    # logger_core.warning(f'{e}\nqteasy.cfg does not exist, a new configuration file is created.')
     warnings.warn(f'{e}\nqteasy.cfg does not exist, a new configuration file is created.')
-    f = open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), 'w')
-    intro = QT_CONFIG_FILE_INTRO
-    f.write(intro)
-    f.close()
+    with open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), mode='w', encoding='utf-8') as f:
+        intro = QT_CONFIG_FILE_INTRO
+        f.write(intro)
+
     config_lines = []  # 本地配置文件行
 except Exception as e:
-    # logger_core.warning(f'{e}\nreading configuration file error, default configurations will be used')
     warnings.warn(f'{e}\nreading configuration file error, default configurations will be used')
     config_lines = []
 
@@ -73,18 +71,14 @@ for line in config_lines:
         arg_value = line[1].strip()
         try:
             qt_local_configs[arg_name] = arg_value
-            # logger_core.info(f'qt configuration set: "{arg_name}"')
         except Exception as e:
-            # logger_core.warning(f'{e}, invalid parameter: {arg_name}')
             warnings.warn(f'{e}, invalid parameter: {arg_name}')
 
 # 读取tushare token，如果读取失败，抛出warning
 try:
     TUSHARE_TOKEN = qt_local_configs['tushare_token']
     ts.set_token(TUSHARE_TOKEN)
-    # logger_core.info(f'tushare token set')
 except Exception as e:
-    # logger_core.warning(f'{e}, tushare token was not loaded, features might not work properly!')
     warnings.warn(f'{e}, tushare token was not loaded, data downloading from tushare might be limited!')
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
@@ -101,18 +95,13 @@ QT_DATA_SOURCE = DataSource(
         password=QT_CONFIG['local_db_password'],
         db_name=QT_CONFIG['local_db_name']
 )
-# logger_core.info(f'local data source connected: {QT_DATA_SOURCE}')
 
 # 初始化默认交易日历
 QT_TRADE_CALENDAR = QT_DATA_SOURCE.read_table_data('trade_calendar')
 if not QT_TRADE_CALENDAR.empty:
     QT_TRADE_CALENDAR = QT_TRADE_CALENDAR
-    # logger_core.info(f'qteasy trade calendar created')
 else:
     QT_TRADE_CALENDAR = None
-    # logger_core.warning(f'trade calendar can not be loaded, some of the trade day related functions may not work '
-    #                     f'properly.\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
-    #                     f'download trade calendar data')
     warnings.warn(f'trade calendar can not be loaded, some of the trade day related functions may not work '
                   f'properly.\nrun "qt.refill_data_source(qt.QT_DATA_SOURCE, \'trade_calendar\')" to '
                   f'download trade calendar data')
@@ -127,7 +116,7 @@ QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])
 # 设置系统日志以及交易日志的存储路径，如果路径不存在，则新建一个文件夹
 os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
 os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
-debug_handler = logging.handlers.TimedRotatingFileHandler(filename=QT_SYS_LOG_PATH + '/qteasy.log',
+debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'qteasy.log'),
                                                           backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
