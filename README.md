@@ -43,7 +43,7 @@
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`TA-lib` version == 0.4.18*    `pip install ta-lib==0.4.18`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance` version >= 0.12*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 
 ## 可选依赖包
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包

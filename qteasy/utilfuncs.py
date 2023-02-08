@@ -1255,7 +1255,7 @@ def rolling_window(arr, window, axis=0):
         raise TypeError(f'axis should be an integer, got {type(axis)} instead.')
     if window <= 0:
         raise ValueError(f'Invalid window({window}), can not be smaller than 0')
-    if (axis < 0) or (axis > arr.ndim):
+    if (axis < 0) or (axis >= arr.ndim):
         raise ValueError(f'Invalid axis({axis})')
 
     ndim = arr.ndim
