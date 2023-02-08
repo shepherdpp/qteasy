@@ -3658,8 +3658,9 @@ class DataSource:
                                                f'{total_written}wrtn in {strftime_elapsed}\n')
             except Exception as e:
                 self.update_table_data(table, dnld_data)
-                warnings.warn(f'\n{e} process interrupted, tried to write {total_written} rows, '
-                              f'will proceed with next table!')
+                warnings.warn(f'\n{e.__class__}:{str(e)} \ndownload process interrupted at [{table}]:'
+                              f'<{arg_coverage[0]}>-<{arg_coverage[completed]}>\n'
+                              f'{total_written} rows downloaded, will proceed with next table!')
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
 

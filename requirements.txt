@@ -1,6 +1,8 @@
-numpy>=1.18.1
-pandas>=0.25.1
-numba>=0.47.0
-mplfinance~=0.12.7a0
-matplotlib>=3.3.2
-tushare~=1.2.89
+numpy
+pandas
+numba
+mplfinance
+matplotlib
+tushare
+setuptools
+requests

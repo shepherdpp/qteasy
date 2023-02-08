@@ -14,13 +14,16 @@ import tushare as ts
 from qteasy import logger_core, QT_CONFIG
 from .utilfuncs import regulate_date_format, list_to_str_format
 from .utilfuncs import retry
-
+from requests.exceptions import ProxyError
 
 data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
 data_download_retry_delay = QT_CONFIG.hist_dnld_retry_delay
 data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
 
-ERRORS_TO_CHECK_ON_RETRY = (ConnectionError, ConnectionResetError, RuntimeError, BlockingIOError)
+# ERRORS_TO_CHECK_ON_RETRY = (ConnectionError, ConnectionResetError, RuntimeError,
+#                             BlockingIOError, ProxyError, Exception)
+ERRORS_TO_CHECK_ON_RETRY = Exception
+
 
 # tsfuncs interface function
 # call this function to extract data for tables defined in DataSource module

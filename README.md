@@ -52,7 +52,7 @@
 - *`sqlalchemy` version >= 1.4.18, <=1.4.23*   `pip install sqlalchemy` / `conda install sqlalchemy`
 
 ### 如果使用hdf文件作为本地数据源 
-- *`pytables` version >= 3.6.1*   `pip install pytables` / `conda install -c conda-forge pytables`
+- *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
 
 ### 如果使用feather文件作为本地数据源
 - *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
