@@ -2044,8 +2044,10 @@ class DataSource:
                 self.file_type = None
                 self.file_path = None
             except Exception as e:
-                warnings.warn(f'{str(e)}, data source fall back to file system', RuntimeWarning)
+                warnings.warn(f'{str(e)}, Can not set data source type to "db",'
+                              f' will fall back to default type', RuntimeWarning)
                 source_type = 'file'
+                file_type = 'csv'
 
         if source_type.lower() == 'file':
             # set up file type and file location
