@@ -23,7 +23,7 @@ from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_fi
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
-TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
+TABLE_USAGES = ['sys', 'cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
 
 '''
 量化投资研究所需用到各种金融数据，DataSource提供了管理金融数据的方式：
@@ -1051,10 +1051,17 @@ DATA_TABLE_MAP = {
     ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '股票技术指标 - 近3月涨幅'],
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
+# TODO: change 'structure' to 'schema'
 TABLE_SOURCE_MAP_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                             'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                             'start_end_chunk_size']
 TABLE_SOURCE_MAP = {
+
+    '_sys_op_record':
+        ['sys_op_records', '实盘运行交易信号记录表', 'sys', '', '', '', '', '', '', '', '', ''],
+
+    '_sys_account_changes':
+        ['sys_account_change', '实盘运行账户余额变动表', 'sys', '', '', '', '', '', '', '', '', ''],
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
@@ -1296,23 +1303,43 @@ TABLE_SOURCE_MAP = {
          'Y', ''],
 
 }
-# 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
+# 定义Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
+# TODO: change TABLE_STRUCTURES to TABLE_SCHEMA
 TABLE_STRUCTURES = {
 
-    'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
-                         'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
-                         'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
-                         'prime_keys': [0, 1]},
+    'sys_op_record':
+        {'columns':    ['run_id', 'op_status', 'op_time', 'direction', 'order_type', 'code', 'amount', 'quote_price',
+                        'transaction_price', 'transaction_amount', 'transaction_fee'],
+         'dtypes':     ['varchar(20)', 'varchar(20)', 'datetime', 'varchar(20)', 'varchar(20)'],
+         'remarks':    ['操作ID', '操作类型', '操作时间', '操作表', '操作表索引', '操作表索引值'],
+         'prime_keys': [0]
+         },
 
-    'stock_basic':      {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
+    'sys_account_changes':
+        {'columns':    ['op_id', 'op_type', 'op_time', 'op_table', 'op_table_index', 'op_table_index_value'],
+         'dtypes':     ['varchar(20)', 'varchar(20)', 'datetime', 'varchar(20)', 'varchar(20)'],
+         'remarks':    ['操作ID', '操作类型', '操作时间', '操作表', '操作表索引', '操作表索引值'],
+         'prime_keys': [0]
+         },
+
+    'trade_calendar':
+        {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
+         'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
+         'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
+         'prime_keys': [0, 1]
+         },
+
+    'stock_basic':
+        {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
                                         'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
                                         'delist_date', 'is_hs'],
-                         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)',
-                                        'varchar(50)', 'varchar(80)', 'varchar(40)', 'varchar(6)', 'varchar(6)',
-                                        'varchar(6)', 'varchar(4)', 'date', 'date', 'varchar(2)'],
-                         'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
-                                        '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
-                         'prime_keys': [0]},
+         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)',
+                        'varchar(50)', 'varchar(80)', 'varchar(40)', 'varchar(6)', 'varchar(6)',
+                        'varchar(6)', 'varchar(4)', 'date', 'date', 'varchar(2)'],
+         'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
+                        '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
+         'prime_keys': [0]
+         },
 
     'name_changes':     {'columns':    ['ts_code', 'start_date', 'name', 'end_date', 'ann_date', 'change_reason'],
                          'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'date', 'date', 'varchar(10)'],
