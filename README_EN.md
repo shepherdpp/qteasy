@@ -1,4 +1,26 @@
-# qteasy -- a python-based fast quantitative investment utility module 一个基于Python的高效量化投资工具包
+# qteasy -- a python-based fast quantitative investment utility module
+
+![PyPI](https://img.shields.io/pypi/v/qteasy)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
+[![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
+![GitHub](https://img.shields.io/github/license/shepherdpp/qteasy)
+![GitHub repo size](https://img.shields.io/github/repo-size/shepherdpp/qteasy)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shepherdpp/qteasy)
+![GitHub top language](https://img.shields.io/github/languages/top/shepherdpp/qteasy)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/qteasy)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qteasy)
+![GitHub branch checks state](https://img.shields.io/github/checks-status/shepherdpp/qteasy/master)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/shepherdpp/qteasy)
+![GitHub issues](https://img.shields.io/github/issues/shepherdpp/qteasy)
+![GitHub last commit](https://img.shields.io/github/last-commit/shepherdpp/qteasy)
+![GitHub contributors](https://img.shields.io/github/contributors/shepherdpp/qteasy)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/qteasy)
+![PyPI - Downloads](https://img.shields.io/pypi/dw/qteasy)
+![GitHub Repo stars](https://img.shields.io/github/stars/shepherdpp/qteasy?style=social)
+![GitHub forks](https://img.shields.io/github/forks/shepherdpp/qteasy?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/shepherdpp/qteasy?style=social)
+![GitHub followers](https://img.shields.io/github/followers/shepherdpp?style=social)
+![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 - Author: **Jackie PENG**
 
@@ -6,7 +28,7 @@
 
 - Project created on: 2019, July, 16
 
-## Installation and dependencies 安装及依赖包
+## Installation and dependencies
 This project requires and depends on following packages:
 - *`pandas` version ~= 0.25.1*    `# conda install pandas`
 - *`numpy` version ~= 1.18.1*    `# conda install numpy`
@@ -20,22 +42,20 @@ This project requires and depends on following packages:
 - *`pyarrow`* version ~= 3.0.0   `# Optional, conda install -c conda-forge pyarrow`
 
 
-## Introductions 介绍
+## Introductions 
 
 This project is aiming at a fast quantitative investment package for python, with following functions:
 
-本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
-1. Historical stock data acquiring and bundling, visualization 金融历史数据的获取、清洗、整理、可视化及应用
-2. Investment strategy creation, backtesting, assessment and optimization 投资交易策略的创建、回测、性能评价及优化
-3. Live stock trading: trading operation submission, withdrawal, status checking and feedback reporting 交易策略的部署、实时运行，未来还将实现与自动化交易系统连接、实现自动化交易
+1. Historical stock data acquiring and bundling, visualization 
+2. Investment strategy creation, backtesting, assessment and optimization 
+3. Live stock trading: trading operation submission, withdrawal, status checking and feedback reporting 
 
 The target of this module is to provide effective vectorized backtesting and assessment of investment 
 strategies, with highly versertility and flexibility
 
-开发本模块的目标是为量化交易人员提供一套策略开发框架，回测速度快、回测精度高、评价指标全，而且可以非常灵活地实现各种自定义交易策略
 
-##  Gets to know qteasy in 10 Min, 10分钟了解qteasy的功能
+##  Gets to know qteasy in 10 Min
 
 - Import the module 模块的导入
 - data acquiring 数据的获取和可视化  
@@ -82,7 +102,7 @@ qt.QT_DATA_SOURCE.refill_data_source('all', start_date='20210101', end_date='202
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](readme_img/output_5_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_5_2.png)
     
 
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
@@ -103,15 +123,15 @@ data = qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](img/output_3_1.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_1.png)
 
-![png](img//output_7_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_7_2.png)
 
-![png](img/output_8_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_8_3.png)
 
-![png](img/output_3_4.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_4.png)
 
-![png](img/output_3_5.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_5.png)
     
 
 
