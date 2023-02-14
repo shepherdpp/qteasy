@@ -53,7 +53,7 @@ def set_cost(**kwargs):
 
     Returns
     -------
-
+    cost : dict of float, cost parameters
     """
     cost = dict(buy_fix=0.0,
                 sell_fix=0.0,
@@ -122,12 +122,32 @@ def calculate(trade_values: np.ndarray,
         当fixed_fees为True时，采用固定费用模式计算，返回值为包含滑点的交易成本列表，
         当fixed_fees为False时，采用固定费率模式计算，返回值为包含滑点的交易成本率列表
 
-    :param trade_values: ndarray: 总交易金额清单
-    :param is_buying: bool: 当前是否计算买入费用或费率, 默认True
-    :param fixed_fees: bool: 当前是否采用固定费用模式计算, 默认False
-    :param buy_fix
-    :return:
-    np.ndarray,
+    Parameters
+    ----------
+    trade_values: ndarray:
+        总交易金额清单
+    is_buying: bool:
+        当前是否计算买入费用或费率, 默认True
+    fixed_fees: bool:
+        当前是否采用固定费用模式计算, 默认False
+    buy_fix: float:
+        买入固定费用
+    sell_fix: float:
+        卖出固定费用
+    buy_rate: float:
+        买入费率
+    sell_rate: float:
+        卖出费率
+    buy_min: float:
+        买入最低费用
+    sell_min: float:
+        卖出最低费用
+    slipage: float:
+        滑点
+
+    Returns
+    -------
+    np.ndarray:
     """
     if is_buying is None:
         is_buying = True
@@ -169,12 +189,22 @@ def get_selling_result(prices: np.ndarray,
                        slipage):
     """计算出售投资产品的要素
 
-    :param prices: 投资产品的价格
-    :param a_to_sell: 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
-    :param moq: 卖出股票的最小交易单位
-    :param cost: 交易成本
+    Parameters
+    ----------
+    prices: ndarray, 投资产品的价格
+    a_to_sell: ndarray, 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
+    moq: float, 卖出股票的最小交易单位
+    buy_fix: float, 买入固定费用
+    sell_fix: float, 卖出固定费用
+    buy_rate: float, 买入费率
+    sell_rate: float, 卖出费率
+    buy_min: float, 买入最低费用
+    sell_min: float, 卖出最低费用
+    slipage: float, 滑点
 
-    :return: tuple
+    Returns
+    -------
+    tuple: (a_sold, cash_gained, fee)
      - a_sold: ndarray          实际出售的资产份额
      - cash_gained: ndarray     扣除手续费后获得的现金
      - fee: ndarray             扣除的手续费
@@ -226,13 +256,25 @@ def get_purchase_result(prices: np.ndarray,
                         slipage):
     """获得购买资产时的要素
 
-    :param prices: ndarray, 投资组合中每只股票的当前单价
-    :param cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
-    :param moq: float, 最小交易单位
-    :return:
-     - a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
-     - cash_spent: ndarray,     花费的总金额，包括购买成本在内
-     - fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
+    Parameters
+    ----------
+    prices: ndarray, 投资组合中每只股票的当前单价
+    cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
+    moq: float, 最小交易单位
+    buy_fix: float, 买入固定费用
+    sell_fix: float, 卖出固定费用
+    buy_rate: float, 买入费率
+    sell_rate: float, 卖出费率
+    buy_min: float, 买入最低费用
+    sell_min: float, 卖出最低费用
+    slipage: float, 滑点
+
+    Returns
+    -------
+    tuple: (a_to_purchase, cash_spent, fee)
+    a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
+    cash_spent: ndarray,     花费的总金额，包括购买成本在内
+    fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
     """
     # buy_min = buy_min
     # buy_fix = buy_fix
@@ -299,17 +341,82 @@ class CashPlan:
 
     Attributes
     ----------
+    first_date: str, 第一笔投资的日期
+    last_date: str, 最后一笔投资的日期
+    periods: int, 投资的总期数
+    investment_amounts: list, 投资的金额列表
+    dates: list, 投资的日期列表
+    amounts: list, 投资的金额列表
+    total: float, 投资的总金额
+    ir: float, 投资的年化收益率
+    closing_value: float, 投资的最终价值
+    opening_value: float, 投资的初始价值
 
     Methods
     -------
+    info()
+        打印投资计划的基本信息
+    reset_dates(dates: [list, str])
+        重置投资计划的日期
+    plan()
+        返回投资计划的时间序列数据
+    to_dict(key: str = 'cash_plan')
+        返回投资计划的字典数据
+
+    Operators
+    ---------
+    __add__(other)
+        投资计划的加法运算，两个投资计划相加得到投资计划的并集
+    __mul__(other)
+        投资计划的乘法运算，投资计划乘以一个整数得到倍增的投资计划
+    __rmul__(other)
+        投资计划的乘法运算，一个整数乘以投资计划得到延长的投资计划，一个浮点数乘以投资计划得到倍增的投资计划
+
+    Examples
+    --------
+    >>> plan = CashPlan(dates='2020-01-01', amounts=10000)
+    >>> plan.info()
+    <class 'qteasy.finance.CashPlan'>
+    Investment is one-off amount of ¥10,000.00 on 2020-01-01
+    Interest rate: 0.00%, equivalent final value: ¥10,000.00:
+                amount
+    2020-01-01   10000
+
+    >>> plan2 = CashPlan(dates=['2020-01-01', '2020-02-01'], amounts=[10000, 20000])
+    >>> plan2.info()
+    <class 'qteasy.finance.CashPlan'>
+    Investment is two times of ¥10,000.00 on 2020-01-01 and ¥20,000.00 on 2020-02-01
+    Interest rate: 0.00%, equivalent final value: ¥30,000.00:
+                amount
+    2020-01-01   10000
+    2020-02-01   20000
+
+    >>> plan
+    CashPlan(['20200101'], [10000], 0.0)
+    >>> plan2
+    CashPlan(['20200101', '20200201'], [10000, 20000], 0.0)
+    >>> plan + plan2
+    CashPlan(['20200101', '20200201'], [20000, 20000], 0.0)
+
+    >>> plan2 + 10000
+    CashPlan(['20200101', '20200201'], [20000, 30000], 0.0)
+    >>> plan2 * 2
+    CashPlan(['20200101', '20200201'], [20000, 40000], 0.0)
+    >>> 2 * plan2
+    CashPlan(['20200101', '20200201', '20200304', '20200404'], [10000, 20000, 10000, 20000], 0.0)
     """
 
-    def __init__(self, dates: [list, str], amounts: [list, str, int, float], interest_rate: float = 0.0):
-        """
+    def __init__(self, dates: (str, [str]), amounts: (int, float, [int], [float]), interest_rate: float = 0.0):
+        """ 初始化投资计划
 
-        :param dates:
-        :param amounts:
-        :param interest_rate: float
+        Parameters
+        ----------
+        dates: str or list of str
+            投资的日期，可以是一个日期字符串，也可以是一个日期字符串列表
+        amounts: int, float, list of int or float
+            投资的金额，可以是一个数字，也可以是一个数字列表
+        interest_rate: float, Default 0.0
+            投资的年化收益率，用于计算投资的最终价值
         """
         if isinstance(amounts, (int, float)):
             amounts = [amounts]
@@ -512,7 +619,9 @@ class CashPlan:
 
             CashPlan对象与一个int或float对象相加，得到的新的CashPlan对象的每笔投资都增加int或float数额
 
-        :param other: (int, float, CashPlan): 另一个对象，根据对象类型不同行为不同
+        Parameters
+        ----------
+        other: (int, float, CashPlan): 另一个对象，根据对象类型不同行为不同
         :return:
         """
 
@@ -544,16 +653,26 @@ class CashPlan:
         """ 另一个对象other + CashPlan的结果与CashPlan + other相同， 即：
             other + CashPlan == CashPlan + other
 
-        :param other:
-        :return:
+        Parameters
+        ----------
+        other: (int, float, CashPlan): 另一个对象，根据对象类型不同行为不同
+
+        Returns
+        -------
+        CashPlan: 新的CashPlan对象
         """
         return self.__add__(other)
 
     def __mul__(self, other):
         """CashPlan乘以一个int或float返回一个新的CashPlan，它的投资数量和投资日期与CashPlan对象相同，每次投资额增加int或float倍
 
-        :param other: (int, float):
-        :return:
+        Parameters
+        ----------
+        other: (int, float), 倍增一个cashplan的倍数
+
+        Returns
+        -------
+        CashPlan: 新的CashPlan对象
         """
         assert isinstance(other, (int, float))
         assert other >= 0
@@ -563,12 +682,18 @@ class CashPlan:
 
     def __rmul__(self, other):
         """ other 乘以一个CashPlan的结果是一个新的CashPlan，结果取决于other的类型：
-            other 为 int时，新的CashPlan的投资次数重复int次，投资额不变，投资日期按照相同的频率顺延，如果CashPlan只有一个投资日期时
-                频率为一年
-            other 为 float时，other * CashPlan == CashPlan * other
 
-        :param other:
-        :return:
+        other 为 int时，新的CashPlan的投资次数重复int次，投资额不变，投资日期按照相同的频率顺延，如果CashPlan只有一个投资日期时
+            频率为一年
+        other 为 float时，other * CashPlan == CashPlan * other
+
+        Parameters
+        ----------
+        other: (int, float), 倍增或延长一个cashplan的倍数或次数
+
+        Returns
+        -------
+        CashPlan: 新的CashPlan对象
         """
         assert isinstance(other, (int, float))
         if isinstance(other, int):
@@ -605,7 +730,9 @@ class CashPlan:
     def __repr__(self):
         """
 
-        :return:
+        Returns
+        -------
+        str
         """
         dates = self.plan.index.strftime('%Y%m%d').to_list()
         return f'CashPlan({dates}, {self.amounts}, {self.ir})'
@@ -641,3 +768,4 @@ def distribute_investment(amount: float,
     :param freq:
     :return:
     """
+    raise NotImplementedError

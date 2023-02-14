@@ -1,7 +1,27 @@
 # `qteasy` -- 一个基于Python的高效量化投资工具包
 
-[![PyPI version](https://badge.fury.io/py/qteasy.svg)](https://badge.fury.io/py/qteasy)
+![PyPI](https://img.shields.io/pypi/v/qteasy)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
 [![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
+![GitHub](https://img.shields.io/github/license/shepherdpp/qteasy)
+![GitHub repo size](https://img.shields.io/github/repo-size/shepherdpp/qteasy)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shepherdpp/qteasy)
+![GitHub top language](https://img.shields.io/github/languages/top/shepherdpp/qteasy)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/qteasy)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qteasy)
+![GitHub branch checks state](https://img.shields.io/github/checks-status/shepherdpp/qteasy/master)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/shepherdpp/qteasy)
+![GitHub issues](https://img.shields.io/github/issues/shepherdpp/qteasy)
+![GitHub last commit](https://img.shields.io/github/last-commit/shepherdpp/qteasy)
+![GitHub contributors](https://img.shields.io/github/contributors/shepherdpp/qteasy)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/qteasy)
+![PyPI - Downloads](https://img.shields.io/pypi/dw/qteasy)
+![GitHub Repo stars](https://img.shields.io/github/stars/shepherdpp/qteasy?style=social)
+![GitHub forks](https://img.shields.io/github/forks/shepherdpp/qteasy?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/shepherdpp/qteasy?style=social)
+![GitHub followers](https://img.shields.io/github/followers/shepherdpp?style=social)
+![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
+
 
 - [QTEASY简介](#基本介绍)
 - [安装及依赖](#安装依赖包)
@@ -17,7 +37,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.0.1.dev1`
+- Latest Version: `0.0.1.dev2`
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -58,7 +78,7 @@
 - *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
 
 
-##  10分钟了解`qteasy`的功能
+##  10分钟了解qteasy的功能
 
 基本的模块导入方法如下
 

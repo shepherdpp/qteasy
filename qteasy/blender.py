@@ -59,19 +59,24 @@ def op_avg(*args):
 def op_pos(n, t, *args):
     """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
 
-        最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以
-        上的蒙板信号值为多(>0)或者为空(<0)时，最终蒙板的多空信号才为多或
-        为空。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
-        当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
-        此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
-        接受.
-        最终信号的强度始终为-1或1，如果希望最终信号强度为输入信号的
-        平均值，应该使用avg_pos-N方式混合
+    最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以
+    上的蒙板信号值为多(>0)或者为空(<0)时，最终蒙板的多空信号才为多或
+    为空。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
+    当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
+    此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
+    接受.
+    最终信号的强度始终为-1或1，如果希望最终信号强度为输入信号的
+    平均值，应该使用avg_pos-N方式混合
 
-    :param n:
-    :param t:
-    :param args:
-    :return:
+    Parameters
+    ---------
+    n: int
+    t: float
+    args: ndarray
+
+    Returns
+    -------
+    ndarray
     """
     signal_sign = np.zeros_like(args[0])
     for msk in args:
@@ -84,19 +89,24 @@ def op_pos(n, t, *args):
 def op_avg_pos(n, t, *args):
     """择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
 
-        持仓目标取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
-        看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度
-        。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
-        当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
-        此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
-        接受.
-        当然，avg_pos-1与avg等价，如avg_pos-2方式下，至少两个蒙板看多
-        则最终看多，否则看空
+    持仓目标取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
+    看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度
+    。某组信号看多/看空的判断依据是信号强度绝对值是否大于t。例如，
+    当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因
+    此尽管有两个策略在这个时间点判断为多头，但是实际上只有一个策略会被
+    接受.
+    当然，avg_pos-1与avg等价，如avg_pos-2方式下，至少两个蒙板看多
+    则最终看多，否则看空
 
-    :param n:
-    :param t:
-    :param args:
-    :return:
+    Parameters
+    ---------
+    n: int
+    t: float
+    args: ndarray
+
+    Returns
+    -------
+    ndarray
     """
     # 计算所有交易信号之和
     signal_sum = op_sum(*args)
@@ -114,8 +124,14 @@ def op_str(t, *args):
     """ str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于
         某一个阈值T的时候，最终结果才会是多头，否则就是空头
 
-    :param args:
-    :return:
+    Parameters
+    ----------
+    t: float
+    args: ndarray
+
+    Returns
+    -------
+    ndarray
     """
     # 计算所有交易信号之和
     signal_sum = op_sum(*args)
@@ -126,10 +142,15 @@ def op_str(t, *args):
 def op_clip(lbound, ubound, *args):
     """ 剪切掉信号中小于lbound，或大于ubound的值，替换为lbound或ubound
 
-    :param lbound:
-    :param ubound:
-    :param args:
-    :return:
+    Parameters
+    ----------
+    lbound: float
+    ubound: float
+    args: ndarray
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -147,13 +168,18 @@ def op_unify(*args):
     """ 调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
     用于调整
 
-    example:
-    unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
-    =
-    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
+    Parameters
+    ----------
+    args: ndarray
 
-    :param args:
-    :return:
+    Returns
+    -------
+    ndarray
+
+    examples
+    --------
+    >>> op_unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
+    >>> [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -173,10 +199,15 @@ def op_unify(*args):
 def op_max(*args):
     """ 信号混合器，将各个择时策略生成的信号取最大值后生成新的交易信号
 
-        生成的交易信号为所有交易信号中的最大值
+    生成的交易信号为所有交易信号中的最大值
 
-    :param args:
-    :return:
+    Parameters
+    ----------
+    args: ndarray
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -197,10 +228,15 @@ def op_max(*args):
 def op_min(*args):
     """ 信号混合器，将各个择时策略生成的信号取最小值后生成新的交易信号
 
-        生成的交易信号为所有交易信号中的最小值
+    生成的交易信号为所有交易信号中的最小值
 
-    :param args:
-    :return:
+    Parameters
+    ----------
+    args: ndarray
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -221,12 +257,12 @@ def op_min(*args):
 def op_power(*args):
     """ ，逐个元素操作生成first的second次幂，功能等同于np.power
 
-        np.power()函数可以接受第三个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_power函数实现np.power的功能，但
-        同时避免超过两个参数出现时导致的问题
+    np.power()函数可以接受第三个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_power函数实现np.power的功能，但
+    同时避免超过两个参数出现时导致的问题
 
-        另外，在生成blender表达式的逆波兰式的时候，power函数的两个
-        参数次序会颠倒，因此这里实际需要生成的是second的first次幂
+    另外，在生成blender表达式的逆波兰式的时候，power函数的两个
+    参数次序会颠倒，因此这里实际需要生成的是second的first次幂
 
     :param args: args中有且只能有两个参数
     :return:

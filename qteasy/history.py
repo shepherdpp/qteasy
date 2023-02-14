@@ -65,13 +65,27 @@ class HistoryPanel():
 
     Attributes
     ----------
-    is_empty
-    values
-    levels
-    shares
+    is_empty: bool, 该属性返回一个bool值，表示HistoryPanel是否为空
+    values: np.ndarray, 该属性返回一个numpy ndarray，包含HistoryPanel的全部数据
+    levels: dict, 该属性返回一个dict， 包含所有层标签(股票代码)及其对应的层编号
+    rows: dict, 该属性返回一个dict， 包含所有行标签(交易日期)及其对应的行编号
+    columns: dict, 该属性返回一个dict， 包含所有列标签(数据类型)及其对应的列编号
+    shares: list, 该属性包含所有层标签，即所有股票代码
+    hdates: list, 该属性包含所有行标签，即所有日期时间
+    htypes: list, 该属性包含所有列标签，即所有历史数据类型
 
     Methods
     -------
+    __getitem__(self, slicer)
+        该方法用于对HistoryPanel进行切片，返回一个numpy ndarray
+    re_label(self, levels=None, rows=None, columns=None)
+        该方法用于重新设置HistoryPanel的标签，如果不输入任何参数，则会自动重新生成标签
+    join(self, other, how='outer', axis=0)
+        该方法用于将两个HistoryPanel对象合并为一个HistoryPanel对象
+    slice_to_dataframe(self, slicer)
+        该方法用于将HistoryPanel的一个切片转化为pandas DataFrame对象
+    flatten_to_dataframe(self, level=None, htype=None)
+        该方法用于将HistoryPanel转化为一个multi-index DataFrame对象
 
     """
 
@@ -84,7 +98,7 @@ class HistoryPanel():
 
         Parameters
         ----------
-        values: Iterables
+        values: ndarray
             一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
             如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
         levels: Iterables
@@ -93,7 +107,7 @@ class HistoryPanel():
             HistoryPanel的时间日期标签。
             datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
             行标签代表每一条数据对应的历史时间戳
-        columns:str，
+        columns: Iterables
             HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
         """
 
@@ -555,56 +569,67 @@ class HistoryPanel():
              same_hdates: bool = False,
              fill_value: float = np.nan):
         """ Join one historypanel object with another one
-            将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
+        将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
 
-            新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列
-            层标签完全包含两个HistoryPanel对象的对应标签。
+        新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列
+        层标签完全包含两个HistoryPanel对象的对应标签。
 
-            如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
+        Parameters
+        ----------
+        other: HistoryPanel
+            需要合并的另一个HistoryPanel
+        same_shares: bool, Default False
+            两个HP的shares是否相同，如果相同，可以省去shares维度的标签合并，以节省时间。默认False，
+        same_htypes: bool, Default False
+            两个HP的htypes是否相同，如果相同，可以省去htypes维度的标签合并，以节省时间。默认False，
+        same_hdates: bool, Default False
+            两个HP的hdates是否相同，如果相同，可以省去hdates维度的标签合并，以节省时间。默认False，
+        fill_value: float, Default np.nan
+            空数据填充值，当组合后的HP存在空数据时，应该以什么值填充，默认为np.nan
 
-            hp1:
-            share 0, label: 000200
-                        close  open  high
-            2020-01-01      8     9     9
-            2020-01-02      7     5     5
-            2020-01-03      4     8     4
-            2020-01-04      1     0     7
-            2020-01-05      8     7     9
+        Returns
+        -------
+        HistoryPanel, 一个新的History Panel对象
 
-            share 1, label: 000300
-                        close  open  high
-            2020-01-01      2     3     3
-            2020-01-02      5     4     6
-            2020-01-03      2     8     7
-            2020-01-04      3     3     4
-            2020-01-05      8     8     7
+        Examples
+        --------
+        如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
 
-            hp2:
-            share 0, label: 000200
-                        close  open  high
-            2020-01-01      8     9     9
-            2020-01-02      7     5     5
-            2020-01-03      4     8     4
-            2020-01-04      1     0     7
-            2020-01-05      8     7     9
+        hp1:
+        share 0, label: 000200
+                    close  open  high
+        2020-01-01      8     9     9
+        2020-01-02      7     5     5
+        2020-01-03      4     8     4
+        2020-01-04      1     0     7
+        2020-01-05      8     7     9
 
-            share 1, label: 000300
-                        close  open  high
-            2020-01-01      2     3     3
-            2020-01-02      5     4     6
-            2020-01-03      2     8     7
-            2020-01-04      3     3     4
-            2020-01-05      8     8     7
+        share 1, label: 000300
+                    close  open  high
+        2020-01-01      2     3     3
+        2020-01-02      5     4     6
+        2020-01-03      2     8     7
+        2020-01-04      3     3     4
+        2020-01-05      8     8     7
 
-            连接时可以指定两个HistoryPanel之间共享的标签类型，如
+        hp2:
+        share 0, label: 000200
+                    close  open  high
+        2020-01-01      8     9     9
+        2020-01-02      7     5     5
+        2020-01-03      4     8     4
+        2020-01-04      1     0     7
+        2020-01-05      8     7     9
 
-        :param other: type: HistoryPanel 需要合并的另一个HistoryPanel
-        :param same_shares: 两个HP的shares是否相同，如果相同，可以省去shares维度的标签合并，以节省时间。默认False，
-        :param same_htypes: 两个HP的htypes是否相同，如果相同，可以省去htypes维度的标签合并，以节省时间。默认False，
-        :param same_hdates: 两个HP的hdates是否相同，如果相同，可以省去hdates维度的标签合并，以节省时间。默认False，
-        :param fill_value:  空数据填充值，当组合后的HP存在空数据时，应该以什么值填充，默认为np.nan
-        :return:
-        一个新的History Panel对象
+        share 1, label: 000300
+                    close  open  high
+        2020-01-01      2     3     3
+        2020-01-02      5     4     6
+        2020-01-03      2     8     7
+        2020-01-04      3     3     4
+        2020-01-05      8     8     7
+
+        连接时可以指定两个HistoryPanel之间共享的标签类型，如
         """
         assert isinstance(other, HistoryPanel), \
             f'TypeError, HistoryPanel can only be joined with other HistoryPanel.'
@@ -707,23 +732,27 @@ class HistoryPanel():
                            inf_as_na: bool = False) -> pd.DataFrame:
         """ 将HistoryPanel对象中的指定片段转化为DataFrame
 
-            指定htype或者share，将这个htype或share对应的数据切片转化为一个DataFrame。
-            由于HistoryPanel对象包含三维数据，因此在转化时必须指定htype或者share参数中的一个
+        指定htype或者share，将这个htype或share对应的数据切片转化为一个DataFrame。
+        由于HistoryPanel对象包含三维数据，因此在转化时必须指定htype或者share参数中的一个
 
-            :param htype:   一个string或int，表示需要生成DataFrame的数据类型切片
-                            如果给出此参数，定位该htype对应的切片后，将该htype对应的所有股票所有日期的数据转化为一个DataFrame
-                            如果类型为str，表示htype的名称，如果类型为int，代表该htype所在的列序号
+        Parameters
+        ----------
+        htype:   str or int，
+            表示需要生成DataFrame的数据类型切片
+            如果给出此参数，定位该htype对应的切片后，将该htype对应的所有股票所有日期的数据转化为一个DataFrame
+            如果类型为str，表示htype的名称，如果类型为int，代表该htype所在的列序号
+        share:   str or int，
+            表示需要生成DataFrame的股票代码切片
+            如果给出此参数，定位该share对应的切片后，将该share对应的所有数据类型所有日期的数据转化为一个DataFrame
+            如果类型为str，表示股票代码，如果类型为int，代表该share所在的层序号
+        dropna: bool, Default False
+            是否去除NaN值
+        inf_as_na: bool, Default False
+            是否将inf值当成NaN值一同去掉，当dropna为False时无效
 
-            :param share:   一个string或int，表示需要生成DataFrame的股票代码切片
-                            如果给出此参数，定位该share对应的切片后，将该share对应的所有数据类型所有日期的数据转化为一个DataFrame
-                            如果类型为str，表示股票代码，如果类型为int，代表该share所在的层序号
-
-            :param dropna:  Boolean，是否去除NaN值
-
-            :param inf_as_na:
-                            Boolean，是否将inf值当成NaN值一同去掉，当dropna为False时无效
-            :return:
-                pandas.DataFrame
+        Returns
+        -------
+        pandas.DataFrame
 
         """
         if self.is_empty:
@@ -763,7 +792,6 @@ class HistoryPanel():
 
         return res_df
 
-    # TODO: implement this method
     def flatten_to_dataframe(self, along='row'):
         """ 将一个HistoryPanel"展平"成为一个DataFrame
 
@@ -1066,8 +1094,12 @@ def from_single_dataframe(df: pd.DataFrame,
 def from_multi_index_dataframe(df: pd.DataFrame):
     """ 将一个含有multi-index的DataFrame转化为一个HistoryPanel
 
-    :param df:
-    :return:
+    df: pd.DataFrame
+        需要被转化的DataFrame
+
+    Returns
+    -------
+    HistoryPanel
     """
     raise NotImplementedError
 
@@ -1122,7 +1154,8 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
     fill_value:
         多余的位置用fill_value填充
 
-    :return:
+    Returns
+    -------
     HistoryPanel
         一个由多个单index的数据框组成的HistoryPanel对象
     """
@@ -1230,115 +1263,108 @@ def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asse
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
-        :param htypes: [str, list]
-            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-            如以下两种输入方式皆合法且等效：
-             - str:     'open, high, low, close'
-             - list:    ['open', 'high', 'low', 'close']
-            特殊htypes的处理：
-            以下特殊htypes将被特殊处理"
-             - wt-000300.SH:
-                指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
-                获取的数据的htypes同样为wt-000300.SH型
-             - close-000300.SH:
-                给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
-                的参考数据
+    Parameters
+    ----------
+    htypes: str or list of str
+        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     'open, high, low, close'
+         - list:    ['open', 'high', 'low', 'close']
+        特殊htypes的处理：
+        以下特殊htypes将被特殊处理"
+         - wt-000300.SH:
+            指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
+            获取的数据的htypes同样为wt-000300.SH型
+         - close-000300.SH:
+            给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
+            的参考数据
+    shares: [str, list]
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    start: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+    end: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    freq: str
+        获取的历史数据的频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+    asset_type: str, list
+        限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+        逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+         - any: 可以获取任意资产类型的证券数据(默认值)
+         - E:   只获取股票类型证券的数据
+         - IDX: 只获取指数类型证券的数据
+         - FT:  只获取期货类型证券的数据
+         - FD:  只获取基金类型证券的数据
+    adj: str
+        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+         - none / n: 不复权(默认值)
+         - back / b: 后复权
+         - forward / fw / f: 前复权
+    drop_nan: bool
+        是否保留全NaN的行
+    resample_method: str
+        如果数据需要升频或降频时，调整频率的方法
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+        数据合并方法:
+        - 'last'/'close': 使用合并区间的最后一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'first'/'open': 使用合并区间的第一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'max'/'high': 使用合并区间的最大值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'min'/'low': 使用合并区间的最小值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+        - 'sum'/'total': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
 
-        :param shares: [str, list]
-            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-            如以下两种输入方式皆合法且等效：
-             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        例如，填充下列数据(?表示插入的数据）
+            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+        缺失数据的填充方法如下:
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+        - 'nan': 使用NaN值填充缺失数据：
+            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+        - 'zero': 使用0值填充缺失数据：
+            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+    b_days_only: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+    trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+    resample_method: str
+        处理数据频率更新时的方法
+    **kwargs:
+        用于生成trade_time_index的参数，包括：
+        include_start:   日期时间序列是否包含开始日期/时间
+        include_end:     日期时间序列是否包含结束日期/时间
+        start_am:        早晨交易时段的开始时间
+        end_am:          早晨交易时段的结束时间
+        include_start_am:早晨交易时段是否包括开始时间
+        include_end_am:  早晨交易时段是否包括结束时间
+        start_pm:        下午交易时段的开始时间
+        end_pm:          下午交易时段的结束时间
+        include_start_pm 下午交易时段是否包含开始时间
+        include_end_pm   下午交易时段是否包含结束时间
+    data_source: DataSource Object
+        数据源对象，用于获取数据
 
-        :param start: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-
-        :param end: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-
-        :param freq: str
-            获取的历史数据的频率，包括以下选项：
-             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
-             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-
-        :param asset_type: str, list
-            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
-            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-             - any: 可以获取任意资产类型的证券数据(默认值)
-             - E:   只获取股票类型证券的数据
-             - IDX: 只获取指数类型证券的数据
-             - FT:  只获取期货类型证券的数据
-             - FD:  只获取基金类型证券的数据
-
-        :param adj: str
-            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-             - none / n: 不复权(默认值)
-             - back / b: 后复权
-             - forward / fw / f: 前复权
-
-        :param drop_nan: bool
-            是否保留全NaN的行
-
-        :param resample_method: str
-            如果数据需要升频或降频时，调整频率的方法
-            调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
-            数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
-            例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
-            数据合并方法:
-            - 'last'/'close': 使用合并区间的最后一个值。如：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-            - 'first'/'open': 使用合并区间的第一个值。如：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-            - 'max'/'high': 使用合并区间的最大值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-            - 'min'/'low': 使用合并区间的最小值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-            - 'avg'/'mean': 使用合并区间的平均值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-            - 'sum'/'total': 使用合并区间的平均值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-
-            数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
-            例如，填充下列数据(?表示插入的数据）
-                [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
-            缺失数据的填充方法如下:
-            - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-                [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
-            - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-                [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
-            - 'nan': 使用NaN值填充缺失数据：
-                [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
-            - 'zero': 使用0值填充缺失数据：
-                [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
-
-        :param b_days_only: bool 默认True
-            是否强制转换自然日频率为工作日，即：
-            'D' -> 'B'
-            'W' -> 'W-FRI'
-            'M' -> 'BM'
-
-        :param trade_time_only: bool, 默认True
-            为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
-
-        :param resample_method: str
-            处理数据频率更新时的方法
-
-        :param **kwargs:
-            用于生成trade_time_index的参数，包括：
-            :param include_start:   日期时间序列是否包含开始日期/时间
-            :param include_end:     日期时间序列是否包含结束日期/时间
-            :param start_am:        早晨交易时段的开始时间
-            :param end_am:          早晨交易时段的结束时间
-            :param include_start_am:早晨交易时段是否包括开始时间
-            :param include_end_am:  早晨交易时段是否包括结束时间
-            :param start_pm:        下午交易时段的开始时间
-            :param end_pm:          下午交易时段的结束时间
-            :param include_start_pm 下午交易时段是否包含开始时间
-            :param include_end_pm   下午交易时段是否包含结束时间
-
-    :param data_source: DataSource Object
-    :return:
+    Returns
+    -------
+    DataFrame
     """
     # 检查数据合法性：
     # TODO: 应该考虑将这部分内容移到core.get_history_data()函数中去
