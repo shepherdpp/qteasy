@@ -31,11 +31,11 @@ ERRORS_TO_CHECK_ON_RETRY = Exception
 def acquire_data(table, **kwargs):
     """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
     # function map 定义了table与tushare函数之间的对应关系，以便调用正确的函数下载数据
-    from .database import TABLE_SOURCE_MAP, TABLE_SOURCE_MAP_COLUMNS
+    from .database import TABLE_MASTERS, TABLE_MASTER_COLUMNS
     assert isinstance(table, str), TypeError(f'A string should be given as table name, got {type(table)} instead')
-    assert table in TABLE_SOURCE_MAP.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
+    assert table in TABLE_MASTERS.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
 
-    func_name = TABLE_SOURCE_MAP[table][TABLE_SOURCE_MAP_COLUMNS.index('tushare')]
+    func_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
     func = globals()[func_name]
     res = func(**kwargs)
     return res
