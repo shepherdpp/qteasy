@@ -41,19 +41,19 @@ def acquire_data(table, **kwargs):
     return res
 
 
-# Tushare functions:
-# Basic Market Data
-# ==================
-
-
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
        tries=data_download_retry_count, delay=data_download_retry_delay,
        backoff=data_download_retry_backoff, logger=logger_core)
 def stock_basic(exchange: str = None):
     """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
 
-    :param exchange: optional, 交易所 SSE上交所 SZSE深交所 HKEX港交所(未上线)
-    :return: pd.DataFrame:
+    Parameters
+    ----------
+    optional, 交易所 SSE上交所 SZSE深交所 HKEX港交所(未上线)
+
+    Returns
+    -------
+    pd.DataFrame:
         column      type    description
         ts_code,    str,    TS代码
         symbol,     str,    股票代码
@@ -61,7 +61,7 @@ def stock_basic(exchange: str = None):
         area,       str,    所在地域
         industry,   str,    所属行业
         fullname,   str,    股票全称
-        ennamem     str,    英文全称
+        enname      str,    英文全称
         market,     str,    市场类型 （主板/中小板/创业板/科创板）
         exchange,   str,    交易所代码
         curr_type,  str,    交易货币
