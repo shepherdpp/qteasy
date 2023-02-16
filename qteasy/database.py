@@ -75,7 +75,7 @@ description:                历史数据的详细描述，可以用于列搜索
 table source mapping定义了一张数据表的基本属性以及数据来源： 
 table_name(key):            数据表的名称（主键）自定义表名称不能与内置表名称重复
 ---------------------------------------------------------------------------------------------------------
-structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
+schema:                     数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
                             型和详情描述
                             数据表的数据结构存储在不同的数据结构表中，许多表拥有相同的数据结构
                             
@@ -141,8 +141,8 @@ start_end_chunk_size:       传入开始结束日期作为附加参数时，是�
 ---------------------------------------------------------------------------------------------------------
 
 3, TABLE_SCHEMAS:
-Table structure表定义了数据表的数据结构：
-table_structure_name:       数据结构名称（主键）
+Table schema表定义了数据表的数据结构：
+table_schema_name:          数据结构名称（主键）
 ---------------------------------------------------------------------------------------------------------
 columns:                    数据列名称
 
@@ -1051,8 +1051,7 @@ DATA_TABLE_MAP = {
     ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '股票技术指标 - 近3月涨幅'],
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
-# TODO: change 'table_source_map' to 'table_masters'
-# TODO: change 'structure' to 'schema'
+
 TABLE_MASTER_COLUMNS = ['schema', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                         'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                         'start_end_chunk_size']
@@ -1305,7 +1304,6 @@ TABLE_MASTERS = {
 
 }
 # 定义Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
-# TODO: change TABLE_STRUCTURES to TABLE_SCHEMA
 TABLE_SCHEMA = {
 
     'sys_op_record':
@@ -3563,7 +3561,7 @@ class DataSource:
                     )
             for item in dtypes:
                 for tbl, schema in table_map.schema.iteritems():
-                    if item.lower() in TABLE_SCHEMA[structure]['columns']:
+                    if item.lower() in TABLE_SCHEMA[schema]['columns']:
                         tables_to_refill.add(tbl)
 
             if freqs is not None:
@@ -3774,13 +3772,40 @@ class DataSource:
     def _get_all_basic_table_data(self):
         """ 获取所有basic数据表
 
-        :return:
+        Returns
+        -------
+        tuple of DataFrames:
+        df_s: stock_basic
+        df_i: index_basic
+        df_f: fund_basic
+        df_ft: future_basic
+        df_o: opt_basic
+
+        Raises
+        ------
+        ValueError
+            如果任意一个数据表为空，则抛出ValueError
         """
         df_s = self.read_table_data('stock_basic')
+        if df_s.empty:
+            raise ValueError('stock_basic table is empty, please refill data source with '
+                             '"qt.refill_data_source(tables="stock_basic")"')
         df_i = self.read_table_data('index_basic')
+        if df_i.empty:
+            raise ValueError('index_basic table is empty, please refill data source with '
+                             '"qt.refill_data_source(tables="index_basic")"')
         df_f = self.read_table_data('fund_basic')
+        if df_f.empty:
+            raise ValueError('fund_basic table is empty, please refill data source with '
+                             '"qt.refill_data_source(tables="fund_basic")"')
         df_ft = self.read_table_data('future_basic')
+        if df_ft.empty:
+            raise ValueError('future_basic table is empty, please refill data source with '
+                             '"qt.refill_data_source(tables="future_basic")"')
         df_o = self.read_table_data('opt_basic')
+        if df_o.empty:
+            raise ValueError('opt_basic table is empty, please refill data source with '
+                             '"qt.refill_data_source(tables="opt_basic")"')
         return df_s, df_i, df_f, df_ft, df_o
 
     def reconnect(self):
