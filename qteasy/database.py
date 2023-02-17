@@ -2380,15 +2380,24 @@ class DataSource:
 
     def write_database(self, df, db_table):
         """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
-        与db_table的schema相同
+        与db_table的schema相同且顺序也相同
 
-        ** 注意 ** 通常情况下不要使用这个函数写入数据到数据表。因为这个函数并不会检查
-        写入的数据是否存在冲突的键值，如果键值冲突时，会导致错误
+        Parameter
+        ---------
+        df: pd.DataFrame
+            需要添加的DataFrame
+        db_table: str
+            需要添加数据的数据库表
 
-        :param df: 需要添加的DataFrame
-        :param db_table: 需要添加数据的数据库表
-        :return:
-            None
+        Returns
+        -------
+        int: 返回写入的记录数
+
+        Note
+        ----
+        当数据库表中已经存在数据时，如果不希望已经存在的数据被替换掉，
+        不要使用这个函数写入数据。因为这个函数并不会检查数据是否存在冲突
+        的键值，如果键值冲突时，df中的数据会覆盖数据库中的数据。
         """
         df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
 
@@ -2770,14 +2779,14 @@ class DataSource:
             -ignore: 默认方式，将全部数据写入数据库表的末尾
             -update: 将数据写入数据库表中，如果遇到重复的pk则修改表中的内容
 
+        Returns
+        -------
+        int: 写入的数据条数 TODO: 此返回值需要实现
+
         Notes
         -----
         注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查
         请使用update_table_data()来更新或写入数据到本地数据库
-
-        Returns
-        -------
-        None
         """
 
         assert isinstance(df, pd.DataFrame)
@@ -2883,16 +2892,21 @@ class DataSource:
             3，如果datasource type是"file"，将下载的数据与本地数据合并并去重
             返回处理完毕的dataFrame
 
-        :param table: str, 数据表名，必须是database中定义的数据表
-        :param merge_type: str
+        Parameters
+        ----------
+        table: str,
+            数据表名，必须是database中定义的数据表
+        merge_type: str
             指定如何合并下载数据和本地数据：
             - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据
             - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
-        :param df: pd.DataFrame 通过传递一个DataFrame获取数据
+        df: pd.DataFrame
+            通过传递一个DataFrame获取数据
             如果数据获取渠道为"df"，则必须给出此参数
 
-        :return:
-            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
+        Returns
+        -------
+        int, 写入数据表中的数据的行数 TODO: 返回值需要实现
         """
         if not isinstance(df, pd.DataFrame):
             raise TypeError(f'df should be a dataframe, got {type(df)} instead')
@@ -4638,7 +4652,10 @@ def get_dtype_map():
 def get_table_map():
     """ 获取所有内置数据表的清单
 
-    :return:
+    Returns
+    -------
+    pd.DataFrame
+    数据表清单
     """
     table_map = pd.DataFrame(TABLE_SOURCE_MAP).T
     table_map.columns = TABLE_SOURCE_MAP_COLUMNS
