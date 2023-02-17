@@ -1198,8 +1198,8 @@ class TestDataSource(unittest.TestCase):
                         res = hourly_data_tt.iloc[pos + day * 7].values
                         target = resampled.iloc[row].values
                         self.assertTrue(np.allclose(res, target))
-                    except:
-                        import pdb;
+                    except AssertionError:
+                        import pdb
                         pdb.set_trace()
 
         print('checks resample hourly data to 2d')

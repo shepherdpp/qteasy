@@ -2446,21 +2446,21 @@ class DataSource:
             # No WHERE clause
             pass
         elif has_ts_code_filter and has_date_filter:
-            # both WHERE clause
+            # both WHERE clause for ts_code and date
             sql += f'WHERE {ts_code_filter}' \
                    f' AND {date_filter}\n'
         elif has_ts_code_filter and not has_date_filter:
-            # only one WHERE clause
+            # only one WHERE clause for ts_code
             sql += f'WHERE {ts_code_filter}\n'
         elif not has_ts_code_filter and has_date_filter:
-            # only one WHERE clause
+            # only one WHERE clause for date
             sql += f'WHERE {date_filter}'
         sql += ''
-        # debug
-        # print(f'trying to get data from database with SQL: \n"{sql}"')
-
-        df = pd.read_sql_query(sql, con=self.engine)
-        return df
+        try:
+            df = pd.read_sql_query(sql, con=self.engine)
+            return df
+        except Exception as e:
+            raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
 
     def write_database(self, df, db_table):
         """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
@@ -2474,7 +2474,11 @@ class DataSource:
         :return:
             None
         """
-        df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
+        try:
+            df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
+            return len(df)
+        except Exception as e:
+            raise RuntimeError(f'{e}, error in writing data into database.')
 
     def update_database(self, df, db_table, primary_key):
         """ 用DataFrame中的数据更新数据表中的数据记录，假定
@@ -2486,7 +2490,7 @@ class DataSource:
         :param db_table: 需要更新的数据表
         :param primary_key: 数据表的primary_key，必须定义在数据表中，如果数据库表没有primary_key，将append所有数据
         :return:
-            None
+        int: rows affected
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
@@ -2506,8 +2510,9 @@ class DataSource:
             sql += f"`{col}`=VALUES(`{col}`),\n"
         sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
         try:
-            self.cursor.executemany(sql, df_tuple)
+            rows_affected = self.cursor.executemany(sql, df_tuple)
             self.con.commit()
+            return rows_affected
         except Exception as e:
             self.con.rollback()
             raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
@@ -2861,7 +2866,7 @@ class DataSource:
 
         Returns
         -------
-        None
+        int: 写入的数据行数
         """
 
         assert isinstance(df, pd.DataFrame)
@@ -2873,16 +2878,17 @@ class DataSource:
         if self.source_type == 'file':
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
-            self.write_file(df, file_name=table)
+            rows_affected = self.write_file(df, file_name=table)
         elif self.source_type == 'db':
             self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':
-                self.write_database(df, db_table=table)
+                rows_affected = self.write_database(df, db_table=table)
             elif on_duplicate == 'update':
-                self.update_database(df, db_table=table, primary_key=primary_key)
+                rows_affected = self.update_database(df, db_table=table, primary_key=primary_key)
             else:  # for unexpected cases
                 raise KeyError(f'Invalid process mode on duplication: {on_duplicate}')
         self._table_list.add(table)
+        return rows_affected
 
     def acquire_table_data(self, table, channel, df=None, f_name=None, **kwargs):
         """从网络获取本地数据表的数据，并进行内容写入前的预处理：
@@ -2975,8 +2981,9 @@ class DataSource:
         :param df: pd.DataFrame 通过传递一个DataFrame获取数据
             如果数据获取渠道为"df"，则必须给出此参数
 
-        :return:
-            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
+        Returns
+        -------
+        int: 返回合并后的数据行数
         """
         if not isinstance(df, pd.DataFrame):
             raise TypeError(f'df should be a dataframe, got {type(df)} instead')
@@ -2987,7 +2994,7 @@ class DataSource:
 
         dnld_data = df
         if dnld_data.empty:
-            return
+            return 0
 
         table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
@@ -3022,7 +3029,7 @@ class DataSource:
                 local_data = local_data[~local_data.index.isin(dnld_data.index)]
             else:  # for unexpected cases
                 raise KeyError(f'Invalid merge type, got "{merge_type}"')
-            self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
+            rows_affected = self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
         elif self.source_type == 'db':
             # 如果source_type == 'db'，不需要合并数据，当merge_type == 'update'时，甚至不需要下载
             # 本地数据
@@ -3032,11 +3039,11 @@ class DataSource:
                 set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
                 dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
             dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-            self.write_table_data(dnld_data, table=table, on_duplicate=merge_type)
+            rows_affected = self.write_table_data(dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
             raise KeyError(f'invalid data source type')
 
-        return
+        return rows_affected
 
     def drop_table_data(self, table):
         """ 删除本地存储的数据表(操作不可撤销，谨慎使用)
@@ -3705,17 +3712,17 @@ class DataSource:
                             if completed % chunk_size:
                                 dnld_data = pd.concat([dnld_data, df])
                             else:
-                                self.update_table_data(table, dnld_data)
+                                rows_affected = self.update_table_data(table, dnld_data)
                                 dnld_data = pd.DataFrame()
                             completed += 1
-                            total_written += len(df)
+                            total_written += rows_affected
                             time_elapsed = time.time() - st
                             time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
                             progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
-                                                           f'{total_written}dnld/{time_remain}left')
+                                                           f'{total_written}wrtn/{time_remain}left')
 
-                        self.update_table_data(table, dnld_data)
+                        total_written += self.update_table_data(table, dnld_data)
                 else:
                     for kwargs in all_kwargs:
                         df = self.acquire_table_data(table, 'tushare', **kwargs)
@@ -3723,19 +3730,24 @@ class DataSource:
                             dnld_data = pd.concat([dnld_data, df])
                         else:
                             dnld_data = pd.concat([dnld_data, df])
-                            self.update_table_data(table, dnld_data)
+                            rows_affected = self.update_table_data(table, dnld_data)
                             dnld_data = pd.DataFrame()
                         completed += 1
-                        total_written += len(df)
-                        # TODO: 应该用更好的方式计算total_written，这种计算方式没有考虑下载的重复
-                        #  数据（重复数据不写入磁盘），因此不准确
+                        total_written += rows_affected
                         time_elapsed = time.time() - st
-                        time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                      estimation=True, short_form=False)
+                        time_remain = time_str_format(
+                                (total - completed) * time_elapsed / completed,
+                                estimation=True,
+                                short_form=False
+                        )
                         progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
-                                                       f'{total_written}dnld/{time_remain}left')
-                    self.update_table_data(table, dnld_data)
-                strftime_elapsed = time_str_format(time_elapsed, short_form=True)
+                                                       f'{total_written}wrtn/{time_remain}left')
+                    total_written += self.update_table_data(table, dnld_data)
+                strftime_elapsed = time_str_format(
+                        time_elapsed,
+                        esitimation=True,
+                        short_form=True
+                )
                 if len(arg_coverage) > 1:
                     progress_bar(total, total, f'<{table}:{arg_coverage[0]}-{arg_coverage[-1]}>'
                                                f'{total_written}wrtn in {strftime_elapsed}\n')
@@ -3743,7 +3755,7 @@ class DataSource:
                     progress_bar(total, total, f'[{table}:None>'
                                                f'{total_written}wrtn in {strftime_elapsed}\n')
             except Exception as e:
-                self.update_table_data(table, dnld_data)
+                total_written += self.update_table_data(table, dnld_data)
                 warnings.warn(f'\n{e.__class__}:{str(e)} \ndownload process interrupted at [{table}]:'
                               f'<{arg_coverage[0]}>-<{arg_coverage[completed]}>\n'
                               f'{total_written} rows downloaded, will proceed with next table!')

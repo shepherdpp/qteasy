@@ -144,13 +144,13 @@ def _valid_qt_kwargs():
         'hist_dnld_retry_delay':
                                 {'Default':   1.,
                                  'Validator': lambda value: isinstance(value, float) and
-                                                            0. <= value <= 5.0,
+                                                            1.0 <= value <= 5.0,
                                  'level':     4,
                                  'text':      '下载历史数据失败时的自动重试前的延迟时间，单位为秒'},
 
         'hist_dnld_backoff':    {'Default':   2.,
                                  'Validator': lambda value: isinstance(value, float) and
-                                                            0. <= value <= 2.0,
+                                                            1.0 <= value <= 3.0,
                                  'level':     4,
                                  'text':      '下载历史数据失败时的自动重试的延迟时间倍增乘数\n'
                                               '例如，设置hist_dnld_backoff = 2时，每次重试失败\n'
@@ -386,7 +386,7 @@ def _valid_qt_kwargs():
                                               '如果设置值大于1，则表示允许超过持有现金建仓，这种情况会产生负现金\n'
                                               '余额，表示产生了借贷\n'},
 
-        'short_position_limit': {'Default':  -1.,
+        'short_position_limit': {'Default':   -1.,
                                  'Validator': lambda value: isinstance(value, float) and (value < 0),
                                  'level':     3,
                                  'text':      '回测过程中允许交易信号建立的空头仓位百分比的极限值，即允许持有的\n'
