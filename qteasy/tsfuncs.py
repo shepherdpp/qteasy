@@ -98,11 +98,20 @@ def trade_calendar(exchange: str = 'SSE',
         如果不指定is_open，则返回包含所有日期以及is_open代码的DataFrame
         如果指定is_open == 0 或者 1， 则返回相应的日期列表
 
-    :param exchange: 交易所 SSE上交所,SZSE深交所,CFFEX 中金所,SHFE 上期所,CZCE 郑商所,DCE 大商所,INE 上能源,IB 银行间,XHKG 港交所
-    :param start: 开始日期
-    :param end: 结束日期
-    :param is_open: 是否交易 '0'休市 '1'交易
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    exchange: str
+        交易所 SSE上交所,SZSE深交所,CFFEX 中金所,SHFE 上期所,CZCE 郑商所,DCE 大商所,INE 上能源,IB 银行间,XHKG 港交所
+    start: datetime like str
+        开始日期
+    end: datetime like str
+        结束日期
+    is_open: int, {0, 1}
+        是否交易 '0'休市 '1'交易
+
+    Returns
+    -------
+    pd.DataFrame:
         column          type    description
         exchange,       str,    交易所 SSE上交所 SZSE深交所
         cal_date,       str,    日历日期
@@ -131,10 +140,18 @@ def name_change(ts_code: str = None,
                 end: str = None):
     """ 历史名称变更记录
 
-    :param ts_code:
-    :param start:
-    :param end:
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: str
+        TS代码
+    start: datetime like str
+        开始日期
+    end: datetime like str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column              type    default     description
         ts_code	            str	    Y	        TS代码
         name	            str	    Y	        证券名称
@@ -142,11 +159,13 @@ def name_change(ts_code: str = None,
         end_date	        str	    Y	        结束日期
         ann_date	        str	    Y	        公告日期
         change_reason	    str	    Y	        变更原因
-    example:
-        pro = ts.pro_api()
-        df = pro.namechange(ts_code='600848.SH',
+
+    Examples
+    --------
+    >>> pro = ts.pro_api()
+    >>> df = pro.namechange(ts_code='600848.SH',
                             fields='ts_code,name,start_date,end_date,change_reason')
-    :output:
+    >>> df
                 ts_code     name      start_date   end_date      change_reason
         0       600848.SH   上海临港   20151118      None           改名
         1       600848.SH   自仪股份   20070514     20151117         撤销ST
@@ -172,11 +191,16 @@ def name_change(ts_code: str = None,
        backoff=data_download_retry_backoff, logger=logger_core)
 def new_share(start: str = None,
               end: str = None) -> pd.DataFrame:
-    """
+    """ 新股上网发行列表
 
-    :param start: str, 上网发行开始日期
-    :param end: str, 上网发行结束日期
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    start: str, 上网发行开始日期
+    end: str, 上网发行结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column              type    default     description
         ts_code		        str	    Y	        TS股票代码
         sub_code	        str	    Y	        申购代码
@@ -190,10 +214,12 @@ def new_share(start: str = None,
         limit_amount	    float	Y	        个人申购上限（万股）
         funds		        float	Y	        募集资金（亿元）
         ballot		        float	Y	        中签率
-    example:
-        pro = ts.pro_api()
-        df = pro.new_share(start_date='20180901', end='20181018')
-    output:
+
+    Examples
+    --------
+    >>> pro = ts.pro_api()
+    >>> df = pro.new_share(start_date='20180901', end='20181018')
+    >>> df
             ts_code     ub_code  name  ipo_date    issue_date   amount  market_amount  \
         0   002939.SZ   002939  长城证券  20181017       None  31034.0        27931.0
         1   002940.SZ   002940   昂利康  20181011   20181023   2250.0         2025.0
@@ -238,12 +264,17 @@ def new_share(start: str = None,
 def stock_company(ts_code: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:
-    """
+    """ 获取上市公司基本信息
 
-    :param ts_code: str, 股票代码
-    :param exchange: str, 交易所代码 ，SSE上交所 SZSE深交所
-    :param fields: str, 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    exchange: str, 交易所代码 ，SSE上交所 SZSE深交所
+    fields: str, 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
+
+    Returns
+    -------
+    pd.DataFrame
         column              type    default     description
         ts_code		        str	    Y	        股票代码
         exchange	        str	    Y	        交易所代码 ，SSE上交所 SZSE深交所
@@ -261,22 +292,23 @@ def stock_company(ts_code: str = None,
         employees	        int	    Y	        员工人数
         main_business	    str	    N	        主要业务及产品
         business_scope	    str	    N	        经营范围
-    example:
-        stock_company(exchange='SZSE',
+
+    Examples
+    --------
+    >>> stock_company(exchange='SZSE',
                       fields='ts_code,chairman,manager,secretary,reg_capital,setup_date,province')
-    output:
                ts_code     chairman manager     secretary   reg_capital setup_date province  \
-        0     000001.SZ      谢永林     胡跃飞        周强  1.717041e+06   19871222       广东
-        1     000002.SZ       郁亮     祝九胜        朱旭  1.103915e+06   19840530       广东
-        2     000003.SZ      马钟鸿     马钟鸿        安汪  3.334336e+04   19880208       广东
-        3     000004.SZ      李林琳     李林琳       徐文苏  8.397668e+03   19860505       广东
-        4     000005.SZ       丁芃     郑列列       罗晓春  1.058537e+05   19870730       广东
-        5     000006.SZ      赵宏伟     朱新宏        杜汛  1.349995e+05   19850525       广东
-        6     000007.SZ      智德宇     智德宇       陈伟彬  3.464480e+04   19830311       广东
-        7     000008.SZ      王志全      钟岩       王志刚  2.818330e+05   19891011       北京
-        8     000009.SZ      陈政立     陈政立       郭山清  2.149345e+05   19830706       广东
-        9     000010.SZ       曾嵘     李德友       金小刚  8.198547e+04   19881231       广东
-        10    000011.SZ      刘声向     王航军       范维平  5.959791e+04   19830117       广东
+    0     000001.SZ      谢永林     胡跃飞        周强  1.717041e+06   19871222       广东
+    1     000002.SZ       郁亮     祝九胜        朱旭  1.103915e+06   19840530       广东
+    2     000003.SZ      马钟鸿     马钟鸿        安汪  3.334336e+04   19880208       广东
+    3     000004.SZ      李林琳     李林琳       徐文苏  8.397668e+03   19860505       广东
+    4     000005.SZ       丁芃     郑列列       罗晓春  1.058537e+05   19870730       广东
+    5     000006.SZ      赵宏伟     朱新宏        杜汛  1.349995e+05   19850525       广东
+    6     000007.SZ      智德宇     智德宇       陈伟彬  3.464480e+04   19830311       广东
+    7     000008.SZ      王志全      钟岩       王志刚  2.818330e+05   19891011       北京
+    8     000009.SZ      陈政立     陈政立       郭山清  2.149345e+05   19830706       广东
+    9     000010.SZ       曾嵘     李德友       金小刚  8.198547e+04   19881231       广东
+    10    000011.SZ      刘声向     王航军       范维平  5.959791e+04   19830117       广东
     """
     if fields is None:
         fields = 'ts_code,exchange,chairman,manager,secretary,reg_capital,setup_date,province,city,introduction,' \
@@ -296,13 +328,18 @@ def stk_managers(ts_code: str = None,
                  ann_date: str = None,
                  start: str = None,
                  end: str = None) -> pd.DataFrame:
-    """
+    """ 获取上市公司高管持股变动情况
 
-    :param ts_code: str, 股票代码
-    :param ann_date: str, 交易所代码 ，SSE上交所 SZSE深交所
-    :param start: 记录开始日期
-    :param end: 记录结束日期
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    ann_date: str, 交易所代码 ，SSE上交所 SZSE深交所
+    start: 记录开始日期
+    end: 记录结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column          type    default     description
         ts_code	        str	    Y	        TS股票代码
         ann_date	    str	    Y	        公告日期
@@ -316,21 +353,22 @@ def stk_managers(ts_code: str = None,
         begin_date	    str	    Y	        上任日期
         end_date	    str	    Y	        离任日期
         resume	        str	    N	        个人简历
-    example:
-        pro.stk_managers(ts_code='000001.SZ')
-    output:
-            ts_code  ann_date     name    gender  ... national  birthday begin_date  end_date
-        0    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20180815  20190604
-        1    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20170629  20190604
-        2    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20180129  20190604
-        3    000001.SZ  20190309   吴鹏      M  ...       中国     1965   20110817  20190309
-        4    000001.SZ  20190307  孙永桢      F  ...       中国     1968   20181025      None
-        5    000001.SZ  20180816  杨志群      M  ...       中国     1970   20180815      None
-        6    000001.SZ  20180816  郭世邦      M  ...       中国     1965   20180815      None
-        7    000001.SZ  20180405  何之江      M  ...       中国     1965   20170513  20180405
-        8    000001.SZ  20180203  项有志      M  ...       中国     1964   20170913      None
-        9    000001.SZ  20180130  杨如生      M  ...       中国   196802   20161107      None
-        10   000001.SZ  20180130  蔡方方      F  ...       中国     1974   20161107      None
+
+    Examples
+    --------
+    >>> pro.stk_managers(ts_code='000001.SZ')
+        ts_code  ann_date     name    gender  ... national  birthday begin_date  end_date
+    0    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20180815  20190604
+    1    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20170629  20190604
+    2    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20180129  20190604
+    3    000001.SZ  20190309   吴鹏      M  ...       中国     1965   20110817  20190309
+    4    000001.SZ  20190307  孙永桢      F  ...       中国     1968   20181025      None
+    5    000001.SZ  20180816  杨志群      M  ...       中国     1970   20180815      None
+    6    000001.SZ  20180816  郭世邦      M  ...       中国     1965   20180815      None
+    7    000001.SZ  20180405  何之江      M  ...       中国     1965   20170513  20180405
+    8    000001.SZ  20180203  项有志      M  ...       中国     1964   20170913      None
+    9    000001.SZ  20180130  杨如生      M  ...       中国   196802   20161107      None
+    10   000001.SZ  20180130  蔡方方      F  ...       中国     1974   20161107      None
     """
     fields = 'ts_code, ann_date, name, gender, lev, title, edu, national, birthday, begin_date, end_date, resume'
     pro = ts.pro_api()
@@ -350,7 +388,53 @@ def daily_basic(ts_code: object = None,
                 trade_date: object = None,
                 start: object = None,
                 end: object = None) -> pd.DataFrame:
-    """ tushare function wrapper: """
+    """ 获取个股行情 (日线)
+    TODO: 以下字段需要进一步确认
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    trade_date: str, 交易日期
+    start: 记录开始日期
+    end: 记录结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default     description
+        ts_code	        str	    Y	        TS股票代码
+        trade_date	    str	    Y	        交易日期
+        close	        float	Y	        当日收盘价
+        turnover_rate	float	Y	        换手率
+        turnover_rate_f	float	Y	        换手率(自由流通股)
+        volume_ratio	float	Y	        量比
+        pe	            float	Y	        市盈率
+        pe_ttm	        float	Y	        市盈率TTM
+        pb	            float	Y	        市净率
+        ps	            float	Y	        市销率
+        ps_ttm	        float	Y	        市销率TTM
+        dv_ratio	    float	Y	        股息率(%)，如果是指数，则为股息率
+        dv_ttm	        float	Y	        股息率TTM(%)，如果是指数，则为股息率TTM
+        total_share	    float	Y	        总股本 （万）
+        float_share	    float	Y	        流通股本 （万）
+        free_share	    float	Y	        自由流通股本 （万）
+        total_mv	    float	Y	        总市值 （万元）
+        circ_mv	        float	Y	        流通市值（万元）
+
+    Examples
+    --------
+    >>> pro.daily_basic(ts_code='000001.SZ', trade_date='20180713')
+        ts_code  trade_date  close  turnover_rate  ...  free_share  total_mv      circ_mv
+    0    000001.SZ    20180713  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    1    000001.SZ    20180712  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    2    000001.SZ    20180711  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    3    000001.SZ    20180710  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    4    000001.SZ    20180709  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    5    000001.SZ    20180706  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    6    000001.SZ    20180705  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    7    000001.SZ    20180704  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    8    000001.SZ    20180703  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    9    000001.SZ    20180702  11.01         0.0000  ...     165.000  1845.000  1845.000000
+    """
     pro = ts.pro_api()
     res = pro.daily_basic(ts_code=ts_code,
                           trade_date=trade_date,
@@ -369,7 +453,43 @@ def daily_basic2(ts_code: object = None,
                  trade_date: object = None,
                  start: object = None,
                  end: object = None) -> pd.DataFrame:
-    """ tushare function wrapper: """
+    """ 获取个股行情
+
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    trade_date: str, 交易日期
+    start: 记录开始日期
+    end: 记录结束日期
+    TODO: 以下字段需要进一步确认
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default     description
+        ts_code	        str	    Y	        TS股票代码
+        trade_date	    str	    Y	        交易日期
+        close	        float	Y	        当日收盘价
+        turnover_rate	float	Y	        换手率
+        turnover_rate_f	float	Y	        换手率(自由流通股)
+        volume_ratio	float	Y	        量比
+        pe	            float	Y	        市盈率
+        pe_ttm	        float	Y	        市盈率TTM
+        pb	            float	Y	        市净率
+        ps	            float	Y	        市销率
+        ps_ttm	        float	Y	        市销率TTM
+        dv_ratio	    float	Y	        股息率(%)，如果是指数，则为股息率
+        dv_ttm	        float	Y	        股息率TTM(%)，如果是指数，则为股息率TTM
+        total_share	    float	Y	        总股本 （万）
+        float_share	    float	Y	        流通股本 （万）
+        free_share	    float	Y	        自由流通股本 （万）
+        total_mv	    float	Y	        总市值 （万元）
+        circ_mv	        float	Y	        流通市值（万元）
+
+    Examples
+    --------
+    >>> pro.daily_basic2(ts_code='000001.SZ', trade_date='20180713')
+
+    """
     pro = ts.pro_api()
     res = pro.bak_daily(ts_code=ts_code,
                         trade_date=trade_date,
@@ -388,7 +508,25 @@ def index_daily_basic(ts_code: object = None,
                       trade_date: object = None,
                       start: object = None,
                       end: object = None) -> pd.DataFrame:
-    """ tushare function wrapper: """
+    """ 获取指数行情
+
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    trade_date: str, 交易日期
+    start: 记录开始日期
+    end: 记录结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default     description
+        ts_code	        str	    Y	        TS股票代码
+        trade_date	    str	    Y	        交易日期
+        close	        float	Y	        当日收盘价
+        turnover_rate	float	Y	        换手率
+        turnover_rate_f	float	Y	        换手率(自由流通股)
+        """
     pro = ts.pro_api()
     res = pro.index_dailybasic(ts_code=ts_code,
                                trade_date=trade_date,
@@ -963,15 +1101,20 @@ def balance(ts_code: str,
             fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据资产负债表
 
-    :param ts_code: 股票代码
-    :param rpt_date: optional 公告日期
-    :param start: optional 公告开始日期
-    :param end: optional 公告结束日期
-    :param period: optional 报告期(每个季度最后一天的日期，比如20171231表示年报)
-    :param report_type: optional 报告类型： 参考下表说明
-    :param comp_type: optional 公司类型：1一般工商业 2银行 3保险 4证券
-    :param fields: str, 输出数据，结果DataFrame的数据列名，用逗号分隔
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: 股票代码
+    rpt_date: optional 公告日期
+    start: optional 公告开始日期
+    end: optional 公告结束日期
+    period: optional 报告期(每个季度最后一天的日期，比如20171231表示年报)
+    report_type: optional 报告类型： 参考下表说明
+    comp_type: optional 公司类型：1一般工商业 2银行 3保险 4证券
+    fields: str, 输出数据，结果DataFrame的数据列名，用逗号分隔
+
+    Returns
+    -------
+    pd.DataFrame
         column              type    default description
         s_code			    str	        Y	TS股票代码
         ann_date		    str	        Y	公告日期
@@ -1125,11 +1268,13 @@ def balance(ts_code: str,
         10	母公司调整前报表	母公司调整之前的原始财务报表数据
         11	调整前合并报表 	调整之前合并报表原数据
         12	母公司调整前报表	母公司报表发生变更前保留的原数据
-    example:
-    df = balance(ts_code='600000.SH',
-                 start_date='20180101',
-                 end_date='20180730',
-                 fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese')
+
+    Examples
+    --------
+    >>> df = balance(ts_code='600000.SH',
+                     start_date='20180101',
+                     end_date='20180730',
+                     fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese')
     """
     if fields is None:
         fields = 'ts_code, ann_date, f_ann_date, end_date, report_type, comp_type, end_type, total_share, cap_rese, ' \
@@ -1850,19 +1995,29 @@ def index_basic(ts_code: str = None,
                 category: str = None) -> pd.DataFrame:
     """ 获取大盘指数的基本信息如名称代码等
 
-    :param ts_code: 指数代码
-    :param name: 指数简称
-    :param market: 交易所或服务商(默认SSE)，包括：
-                    MSCI:    MSCI指数
-                    CSI:     中证指数
-                    SSE:     上交所指数
-                    SZSE:    深交所指数
-                    CICC:    中金指数
-                    SW:      申万指数
-                    OTH:     其他指数
-    :param publisher: 发布商
-    :param category: 指数类别
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: str
+        指数代码
+    name: str
+        指数简称
+    market: str, {'MSCI', 'CSI', 'SSE', 'SZSE', 'CICC', 'SW', 'OTH'}
+        交易所或服务商(默认SSE)，包括：
+        MSCI:    MSCI指数
+        CSI:     中证指数
+        SSE:     上交所指数
+        SZSE:    深交所指数
+        CICC:    中金指数
+        SW:      申万指数
+        OTH:     其他指数
+    publisher: str, {'SW', 'SZSE', 'SSE', 'OTH'}
+        发布商
+    category: str
+        指数类别
+
+    Returns
+    -------
+    pd.DataFrame
         column          type    description
         ts_code	        str	    TS代码
         name	        str	    简称
@@ -1877,24 +2032,25 @@ def index_basic(ts_code: str = None,
         weight_rule	    str	    加权方式
         desc	        str	    描述
         exp_date	    str	    终止日期
-    example:
-        index_basic(market='SW')
-    output:
-               ts_code    name         market     publisher   category     base_date  base_point  \
-                5         801010.SI    农林牧渔        SW申万       一级行业指数      19991230      1000.0
-                6         801011.SI    林业Ⅱ          SW申万         二级行业指数  19991230      1000.0
-                7         801012.SI    农产品加工      SW申万      二级行业指数  19991230      1000.0
-                8         801013.SI    农业综合Ⅱ       SW申万      二级行业指数  19991230      1000.0
-                9         801014.SI    饲料Ⅱ          SW申万       二级行业指数  19991230      1000.0
-                10        801015.SI    渔业           SW申万       二级行业指数  19991230      1000.0
-                11        801016.SI    种植业         SW申万      二级行业指数  19991230      1000.0
-                12        801017.SI    畜禽养殖Ⅱ       SW申万       二级行业指数  20111010      1000.0
-                13        801018.SI    动物保健Ⅱ       SW申万研     二级行业指数  19991230      1000.0
-                14        801020.SI    采掘           SW申万     一级行业指数  19991230      1000.0
-                15        801021.SI    煤炭开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
-                16        801022.SI    其他采掘Ⅱ       SW申万      二级行业指数  19991230      1000.0
-                17        801023.SI    石油开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
-                18        801024.SI    采掘服务Ⅱ       SW申万      二级行业指数  19991230      1000.0
+
+    Examples
+    --------
+    >>> index_basic(market='SW')
+    ts_code    name         market     publisher   category     base_date  base_point  \
+     5         801010.SI    农林牧渔        SW申万       一级行业指数      19991230      1000.0
+     6         801011.SI    林业Ⅱ          SW申万         二级行业指数  19991230      1000.0
+     7         801012.SI    农产品加工      SW申万      二级行业指数  19991230      1000.0
+     8         801013.SI    农业综合Ⅱ       SW申万      二级行业指数  19991230      1000.0
+     9         801014.SI    饲料Ⅱ          SW申万       二级行业指数  19991230      1000.0
+     10        801015.SI    渔业           SW申万       二级行业指数  19991230      1000.0
+     11        801016.SI    种植业         SW申万      二级行业指数  19991230      1000.0
+     12        801017.SI    畜禽养殖Ⅱ       SW申万       二级行业指数  20111010      1000.0
+     13        801018.SI    动物保健Ⅱ       SW申万研     二级行业指数  19991230      1000.0
+     14        801020.SI    采掘           SW申万     一级行业指数  19991230      1000.0
+     15        801021.SI    煤炭开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
+     16        801022.SI    其他采掘Ⅱ       SW申万      二级行业指数  19991230      1000.0
+     17        801023.SI    石油开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
+     18        801024.SI    采掘服务Ⅱ       SW申万      二级行业指数  19991230      1000.0
     """
     fields = 'ts_code, name, fullname, market, publisher, index_type, category, ' \
              'base_date, base_point, list_date, weight_rule, desc, exp_date'
@@ -1924,12 +2080,17 @@ def index_indicators(trade_date: str = None,
             2，给定特定的trade_date，获取当天所有index的数据
             3，给定特定的index，并指定start和end，获取指定指数在历史区间中的每天的数据
 
-    :param trade_date: str, 交易日期 （格式：YYYYMMDD，比如20181018，下同）
-    :param ts_code: str, TS代码
-    :param start: str, 开始日期
-    :param end: str, 结束日期
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
-    :return:
+    Parameters
+    ----------
+    trade_date: str, 交易日期 （格式：YYYYMMDD，比如20181018，下同）
+    ts_code: str, TS代码
+    start: str, 开始日期
+    end: str, 结束日期
+    fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+
+    Returns
+    -------
+    DataFrame
         column          type    default description
         ts_code		    str	    Y	    TS代码
         trade_date	    str	    Y	    交易日期
@@ -1943,18 +2104,19 @@ def index_indicators(trade_date: str = None,
         pe		        float	Y	    市盈率
         pe_ttm		    float	Y	    市盈率TTM
         pb		        float	Y	    市净率
-    example:
-        index_indicators(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
-    output:
-            ts_code  trade_date  turnover_rate     pe
-        0  000001.SH   20181018           0.38  11.92
-        1  000300.SH   20181018           0.27  11.17
-        2  000905.SH   20181018           0.82  18.03
-        3  399001.SZ   20181018           0.88  17.48
-        4  399005.SZ   20181018           0.85  21.43
-        5  399006.SZ   20181018           1.50  29.56
-        6  399016.SZ   20181018           1.06  18.86
-        7  399300.SZ   20181018           0.27  11.17
+
+    Examples
+    --------
+    >>> index_indicators(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
+        ts_code  trade_date  turnover_rate     pe
+    0  000001.SH   20181018           0.38  11.92
+    1  000300.SH   20181018           0.27  11.17
+    2  000905.SH   20181018           0.82  18.03
+    3  399001.SZ   20181018           0.88  17.48
+    4  399005.SZ   20181018           0.85  21.43
+    5  399006.SZ   20181018           1.50  29.56
+    6  399016.SZ   20181018           1.06  18.86
+    7  399300.SZ   20181018           0.27  11.17
     """
     if fields is None:
         fields = 'ts_code,trade_date,turnover_rate,pe,pe_ttm,pb'
@@ -2408,10 +2570,15 @@ def shibor(date=None, start=None, end=None):
 def hibor(date=None, start=None, end=None):
     """ 获取HIBOR (Hongkong InterBank Offered Rate)，香港银行同行业拆借利率
 
-    :param date: str 利率日期
-    :param start: str 开始日期
-    :param end: str 结束日期
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    date: str 利率日期
+    start: str 开始日期
+    end: str 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column  type    default     description
         date	str	    Y	        日期
         on	    float	Y	        隔夜
@@ -2422,9 +2589,10 @@ def hibor(date=None, start=None, end=None):
         3m	    float	Y	        3个月
         6m	    float	Y	        6个月
         12m	    float	Y	        12个月
-    example:
-        df = hibor(start='20180101', end='20181101')
-    output:
+
+    Examples
+    --------
+    >>> df = hibor(start='20180101', end='20181101')
              date       on       1w       2w       1m       2m       3m       6m      12m
     0    20181130  1.52500  1.10125  1.08000  1.20286  1.83030  2.03786  2.32821  2.65929
     1    20181129  0.76143  0.95643  1.01036  1.12357  1.80493  2.01018  2.31643  2.65500
