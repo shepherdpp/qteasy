@@ -697,11 +697,13 @@ def daily(ts_code=None,
           end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -719,11 +721,13 @@ def weekly(ts_code=None,
            end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -741,11 +745,13 @@ def monthly(ts_code=None,
             end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -763,11 +769,13 @@ def index_daily(ts_code=None,
                 end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.index_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -785,11 +793,13 @@ def index_weekly(ts_code=None,
                  end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.index_weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -807,11 +817,13 @@ def index_monthly(ts_code=None,
                   end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.index_monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -829,11 +841,13 @@ def fund_daily(ts_code=None,
                end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.fund_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -851,11 +865,13 @@ def adj_factors(ts_code=None,
                 end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.adj_factor(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -873,11 +889,13 @@ def fund_adj(ts_code=None,
              end=None):
     """
 
-    :param ts_code:
-    :param trade_date:
-    :param start:
-    :param end:
-    :return:
+    ts_code:
+    trade_date:
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.fund_adj(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -895,11 +913,13 @@ def fund_share(ts_code=None,
                end=None):
     """
 
-    :param ts_code: 基金代码，支持多只基金同时提取，用逗号分隔
-    :param trade_date:  交易变动日期，格式YYYYMMDD
-    :param start:
-    :param end:
-    :return:
+    ts_code: 基金代码，支持多只基金同时提取，用逗号分隔
+    trade_date:  交易变动日期，格式YYYYMMDD
+    start:
+    end:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.fund_share(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
@@ -916,10 +936,12 @@ def fund_manager(ts_code=None,
                  offset=None):
     """
 
-    :param ts_code: 基金代码，支持多只基金同时提取，用逗号分隔
-    :param ann_date:  公告日期，格式YYYYMMDD
-    :param offset:
-    :return:
+    ts_code: 基金代码，支持多只基金同时提取，用逗号分隔
+    ann_date:  公告日期，格式YYYYMMDD
+    offset:
+
+    Returns
+    -------
     """
     pro = ts.pro_api()
     res = pro.fund_manager(ts_code=ts_code, ann_date=ann_date, offset=offset)
@@ -944,15 +966,18 @@ def income(ts_code: str,
     """ 获取上市公司财务利润表数据
 
     :rtype: pd.DataFrame
-    :param ts_code: 股票代码，注意一次只能读取一只股票的数据
-    :param rpt_date: optional 公告日期
-    :param start: optional 公告开始日期
-    :param end: optional 公告结束日期
-    :param period: optional 报告期(每个季度最后一天的日期，比如20171231表示年报)
-    :param report_type: optional 报告类型： 参考下表说明
-    :param comp_type: optional 公司类型：1一般工商业 2银行 3保险 4证券
-    :param fields: str, 输出数据，结果DataFrame的数据列名，用逗号分隔
-    :return: pd.DataFrame:
+    ts_code: 股票代码，注意一次只能读取一只股票的数据
+    rpt_date: optional 公告日期
+    start: optional 公告开始日期
+    end: optional 公告结束日期
+    period: optional 报告期(每个季度最后一天的日期，比如20171231表示年报)
+    report_type: optional 报告类型： 参考下表说明
+    comp_type: optional 公司类型：1一般工商业 2银行 3保险 4证券
+    fields: str, 输出数据，结果DataFrame的数据列名，用逗号分隔
+
+    Returns
+    -------
+    pd.DataFrame:
         column              type   dft  description
         ts_code	            str	    Y   TS代码
         ann_date	        str	    Y	公告日期
@@ -1352,15 +1377,20 @@ def cashflow(ts_code: str,
              fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据现金流量表
 
-    :param ts_code:                     股票代码
-    :param rpt_date: optional           公告日期
-    :param start: optional         公告开始日期
-    :param end: optional           公告结束日期
-    :param period: optional             报告期(每个季度最后一天的日期，比如20171231表示年报)
-    :param report_type: optional        报告类型： 参考下表说明
-    :param comp_type: optional          公司类型：1一般工商业 2银行 3保险 4证券
-    :param fields: str,                 输出数据，结果DataFrame的数据列名，用逗号分隔
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code:                     股票代码
+    rpt_date: optional           公告日期
+    start: optional         公告开始日期
+    end: optional           公告结束日期
+    period: optional             报告期(每个季度最后一天的日期，比如20171231表示年报)
+    report_type: optional        报告类型： 参考下表说明
+    comp_type: optional          公司类型：1一般工商业 2银行 3保险 4证券
+    fields: str,                 输出数据，结果DataFrame的数据列名，用逗号分隔
+
+    Returns
+    -------
+    pd.DataFrame
         column                      type    default description
         ts_code				        str	    Y	TS股票代码
         ann_date			        str	    Y	公告日期
@@ -1466,8 +1496,10 @@ def cashflow(ts_code: str,
         10	母公司调整前报表	    母公司调整之前的原始财务报表数据
         11	调整前合并报表	        调整之前合并报表原数据
         12	母公司调整前报表	    母公司报表发生变更前保留的原数据
-    example:
-        cashflow(ts_code='600000.SH',
+
+    Examples
+    --------
+    >>> cashflow(ts_code='600000.SH',
                  start_date='20180101',
                  end_date='20180730',
                  fields = 'fa_fnc_leases, end_bal_cash, beg_bal_cash')
@@ -1540,13 +1572,18 @@ def indicators(ts_code: str,
                fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据——财务指标
 
-    :param ts_code: str, TS股票代码,e.g. 600001.SH/000001.SZ
-    :param rpt_date: str, 公告日期
-    :param start: str, 报告期开始日期
-    :param end: str, 报告期结束日期
-    :param period: str, 报告期(每个季度最后一天的日期,比如20171231表示年报)
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: str, TS股票代码,e.g. 600001.SH/000001.SZ
+    rpt_date: str, 公告日期
+    start: str, 报告期开始日期
+    end: str, 报告期结束日期
+    period: str, 报告期(每个季度最后一天的日期,比如20171231表示年报)
+    fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+
+    Returns
+    -------
+    pd.DataFrame
         column                      type    default description
         ts_code				        str	    Y	TS代码
         ann_date			        str	    Y	公告日期
@@ -1715,8 +1752,10 @@ def indicators(ts_code: str,
         equity_yoy			        float	Y	净资产同比增长率
         rd_exp				        float	N	研发费用
         update_flag			        str	    N	更新标识
-    example:
-        indicator(ts_code='600000.SH', fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps')
+
+    Examples
+    --------
+    >>> indicator(ts_code='600000.SH', fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps')
     output:
               ts_code  ann_date    eps  dt_eps  total_revenue_ps  revenue_ps
         0   600000.SH  20191030  1.620    1.62            4.9873      4.9873
@@ -1793,27 +1832,31 @@ def forecast(ts_code: str = None,
              type: str = None):
     """ 获取上市公司的业绩预报
 
-    :param ts_code:
-    :param ann_date:
-    :param start:
-    :param end:
-    :param period:
-    :param type:
-    :return:
-    DataFrame:
-    column          type    description
-    ts_code		    str	    TS股票代码
-    ann_date	    str	    公告日期
-    end_date	    str	    报告期
-    type		    str	    业绩预告类型(预增/预减/扭亏/首亏/续亏/续盈/略增/略减)
-    p_change_min	float	预告净利润变动幅度下限（%）
-    p_change_max	float	预告净利润变动幅度上限（%）
-    net_profit_min	float	预告净利润下限（万元）
-    net_profit_max	float	预告净利润上限（万元）
-    last_parent_net	float	上年同期归属母公司净利润
-    first_ann_date	str	    首次公告日
-    summary		    str	    业绩预告摘要
-    change_reason	str	    业绩变动原因
+    Parameters
+    ----------
+    ts_code:
+    ann_date:
+    start:
+    end:
+    period:
+    type:
+
+    Returns
+    -------
+    pd.DataFrame:
+        column          type    description
+        ts_code		    str	    TS股票代码
+        ann_date	    str	    公告日期
+        end_date	    str	    报告期
+        type		    str	    业绩预告类型(预增/预减/扭亏/首亏/续亏/续盈/略增/略减)
+        p_change_min	float	预告净利润变动幅度下限（%）
+        p_change_max	float	预告净利润变动幅度上限（%）
+        net_profit_min	float	预告净利润下限（万元）
+        net_profit_max	float	预告净利润上限（万元）
+        last_parent_net	float	上年同期归属母公司净利润
+        first_ann_date	str	    首次公告日
+        summary		    str	    业绩预告摘要
+        change_reason	str	    业绩变动原因
 
     """
     fields = 'ts_code, ann_date, end_date, type, p_change_min, p_change_max, net_profit_min, net_profit_max,' \
@@ -1857,47 +1900,51 @@ def express(ts_code: str = None,
             period: str = None):
     """ 获取上市公司的业绩快报
 
-    :param ts_code:
-    :param ann_date:
-    :param start:
-    :param end:
-    :param period:
-    :return:
-    DataFrame:
-    column              type        description
-    ts_code		        str	        TS股票代码
-    ann_date	        str	        公告日期
-    end_date	        str	        报告期
-    revenue		        float	    营业收入(元)
-    operate_profit	    float	    营业利润(元)
-    total_profit	    float	    利润总额(元)
-    n_income	        float	    净利润(元)
-    total_assets	    float	    总资产(元)
-    total_hldr_eqy_
-    exc_min_int	        float	    股东权益合计(不含少数股东权益)(元)
-    diluted_eps	        float	    每股收益(摊薄)(元)
-    diluted_roe	        float	    净资产收益率(摊薄)(%)
-    yoy_net_profit	    float	    去年同期修正后净利润
-    bps		            float	    每股净资产
-    yoy_sales	        float	    同比增长率:营业收入
-    yoy_op		        float	    同比增长率:营业利润
-    yoy_tp		        float	    同比增长率:利润总额
-    yoy_dedu_np	        float	    同比增长率:归属母公司股东的净利润
-    yoy_eps		        float	    同比增长率:基本每股收益
-    yoy_roe		        float	    同比增减:加权平均净资产收益率
-    growth_assets	    float	    比年初增长率:总资产
-    yoy_equity	        float	    比年初增长率:归属母公司的股东权益
-    growth_bps	        float	    比年初增长率:归属于母公司股东的每股净资产
-    or_last_year	    float	    去年同期营业收入
-    op_last_year	    float	    去年同期营业利润
-    tp_last_year	    float	    去年同期利润总额
-    np_last_year	    float	    去年同期净利润
-    eps_last_year	    float	    去年同期每股收益
-    open_net_assets	    float	    期初净资产
-    open_bps	        float	    期初每股净资产
-    perf_summary	    str	        业绩简要说明
-    is_audit	        int	        是否审计： 1是 0否
-    remark		        str	        备注
+    Parameters
+    ----------
+    ts_code:
+    ann_date:
+    start:
+    end:
+    period:
+
+    Returns
+    -------
+    pd.DataFrame
+        column              type        description
+        ts_code		        str	        TS股票代码
+        ann_date	        str	        公告日期
+        end_date	        str	        报告期
+        revenue		        float	    营业收入(元)
+        operate_profit	    float	    营业利润(元)
+        total_profit	    float	    利润总额(元)
+        n_income	        float	    净利润(元)
+        total_assets	    float	    总资产(元)
+        total_hldr_eqy_
+        exc_min_int	        float	    股东权益合计(不含少数股东权益)(元)
+        diluted_eps	        float	    每股收益(摊薄)(元)
+        diluted_roe	        float	    净资产收益率(摊薄)(%)
+        yoy_net_profit	    float	    去年同期修正后净利润
+        bps		            float	    每股净资产
+        yoy_sales	        float	    同比增长率:营业收入
+        yoy_op		        float	    同比增长率:营业利润
+        yoy_tp		        float	    同比增长率:利润总额
+        yoy_dedu_np	        float	    同比增长率:归属母公司股东的净利润
+        yoy_eps		        float	    同比增长率:基本每股收益
+        yoy_roe		        float	    同比增减:加权平均净资产收益率
+        growth_assets	    float	    比年初增长率:总资产
+        yoy_equity	        float	    比年初增长率:归属母公司的股东权益
+        growth_bps	        float	    比年初增长率:归属于母公司股东的每股净资产
+        or_last_year	    float	    去年同期营业收入
+        op_last_year	    float	    去年同期营业利润
+        tp_last_year	    float	    去年同期利润总额
+        np_last_year	    float	    去年同期净利润
+        eps_last_year	    float	    去年同期每股收益
+        open_net_assets	    float	    期初净资产
+        open_bps	        float	    期初每股净资产
+        perf_summary	    str	        业绩简要说明
+        is_audit	        int	        是否审计： 1是 0否
+        remark		        str	        备注
     """
     fields = 'ts_code, ann_date, end_date, revenue, operate_profit, total_profit, n_income, total_assets, ' \
              'total_hldr_eqy_exc_min_int, diluted_eps, diluted_roe, yoy_net_profit, bps, yoy_sales, yoy_op,' \
@@ -1940,10 +1987,15 @@ def top_list(trade_date: str = None,
              fields: str = None) -> pd.DataFrame:
     """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000
 
-    :param trade_date: str, 交易日期
-    :param shares: str, 股票代码
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    trade_date: str, 交易日期
+    shares: str, 股票代码
+    fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+
+    Returns
+    -------
+    pd.DataFrame
         column                      type    default description
         trade_date	                str	    Y	    交易日期
         ts_code		                str	    Y	    TS代码
@@ -1960,8 +2012,10 @@ def top_list(trade_date: str = None,
         amount_rate	                float	Y	    龙虎榜成交额占比
         float_values	            float	Y	    当日流通市值
         reason		                str	    Y	    上榜理由
-    example:
-        top_list(trade_date='20180928', fields='trade_date,ts_code,name,close')
+
+    Examples
+    --------
+    >>> top_list(trade_date='20180928', fields='trade_date,ts_code,name,close')
     output:
            trade_date    ts_code  name   close
         0    20180928  000007.SZ   全新好   7.830
@@ -2140,18 +2194,25 @@ def composite(index: str = None,
               end: str = None) -> pd.DataFrame:
     """ 获取各类指数成分和权重，月度数据 ，如需日度指数成分和权重，请联系 waditu@163.com
 
-    :param index: str, 指数代码 (二选一)
-    :param trade_date: str, 交易日期 （二选一）
-    :param start: str, 开始日期
-    :param end: str, 结束日期
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    index: str, 指数代码 (二选一)
+    trade_date: str, 交易日期 （二选一）
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column      type    description
         index_code	str	    指数代码
         con_code	str	    成分代码
         trade_date	str	    交易日期
         weight	 	float	权重
-    example:
-        composite(index_code='399300.SZ', start='20180901', end='20180930')
+
+    Examples
+    --------
+    >>> composite(index_code='399300.SZ', start='20180901', end='20180930')
     output:
             index_code   con_code trade_date  weight
         0    399300.SZ  000001.SZ   20180903  0.8656
@@ -2182,9 +2243,14 @@ def fund_basic(market: str = None,
                status: str = None) -> pd.DataFrame:
     """ 获取基金列表
 
-    :param market: str, 交易市场: E场内 O场外（默认E）
-    :param status: str, 存续状态 D摘牌 I发行 L上市中
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    market: str, 交易市场: E场内 O场外（默认E）
+    status: str, 存续状态 D摘牌 I发行 L上市中
+
+    Returns
+    -------
+    pd.DataFrame
         column          type    default     description
         ts_code		    str	      Y	        基金代码
         name		    str	      Y	        简称
@@ -2212,8 +2278,10 @@ def fund_basic(market: str = None,
         redm_startdate	str	      Y	        日常赎回起始日
         market		    str	      Y	        E场内O场外
 
-    example:
-        fund_basic(market='E')
+
+    Examples
+    --------
+    >>> fund_basic(market='E')
     output:
             ts_code        	name         		management	custodian      fund_type 	found_date
         1     512850.SH    	中信建投北京50ETF     中信建投基金   招商银行       	股票型   	20180927
@@ -2244,10 +2312,15 @@ def fund_net_value(ts_code: str = None,
                    market: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
-    :param ts_code: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
-    :param nav_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
-    :param market: str, 交易市场类型: E场内 O场外
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    ts_code: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
+    nav_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
+    market: str, 交易市场类型: E场内 O场外
+
+    Returns
+    -------
+    pd.DataFrame
         column          type  default   description
         ts_code		    str	    Y	    TS代码
         nav_date	    str	    Y	    净值日期
@@ -2258,8 +2331,10 @@ def fund_net_value(ts_code: str = None,
         net_asset	    float	Y   	资产净值
         total_netasset	float	Y   	合计资产净值
         adj_nav		    float	Y   	复权单位净值
-    example:
-        fund_neg_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
+
+    Examples
+    --------
+    >>> fund_neg_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
     output:
         ts_code   adj_nav
         0     165509.SZ  1.827306
@@ -2288,9 +2363,14 @@ def future_basic(exchange: str = None,
                  future_type: str = None) -> pd.DataFrame:
     """ 获取期货合约列表数据
 
-    :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
-    :param future_type: str, 合约类型 (1 普通合约 2主力与连续合约 默认取全部)
-    :return:
+    Parameters
+    ----------
+    exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
+    future_type: str, 合约类型 (1 普通合约 2主力与连续合约 默认取全部)
+
+    Returns
+    -------
+    pd.DataFrame
         column          type    default description
         ts_code		    str	    Y	    合约代码
         symbol		    str	    Y	    交易标识
@@ -2308,8 +2388,10 @@ def future_basic(exchange: str = None,
         d_month		    str	    Y	    交割月份
         last_ddate	    str	    Y	    最后交割日
         trade_time_desc	str	    N	    交易时间说明
-    example:
-        future_basic(exchange='DCE', fut_type='1')
+
+    Examples
+    --------
+    >>> future_basic(exchange='DCE', fut_type='1')
     output:
                 ts_code  symbol      name   list_date    delist_date
         0      P0805.DCE   P0805   棕榈油0805  20071029    20080516
@@ -2340,9 +2422,14 @@ def options_basic(exchange: str = None,
                   call_put: str = None) -> pd.DataFrame:
     """ 获取期权合约信息
 
-    :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
-    :param call_put: str, 期权类型
-    :return pd.DataFrame
+    Parameters
+    ----------
+    exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
+    call_put: str, 期权类型
+
+    Returns
+    -------
+    pd.DataFrame
         column          type    default description
         ts_code		    str	    Y   	TS代码
         exchange	    str 	Y   	交易市场
@@ -2362,8 +2449,10 @@ def options_basic(exchange: str = None,
         last_ddate  	str 	Y   	最后交割日期
         quote_unit  	str 	Y   	报价单位
         min_price_chg	str 	Y   	最小价格波幅
-    example:
-        options_basic(exchange='DCE', fields='ts_code,name,exercise_type,list_date,delist_date')
+
+    Examples
+    --------
+    >>> options_basic(exchange='DCE', fields='ts_code,name,exercise_type,list_date,delist_date')
     output:
                     ts_code                  name             exercise_type list_date delist_date
         0    M1707-C-2400.DCE  豆粕期权1707认购2400            美式  20170605    20170607
@@ -2394,12 +2483,15 @@ def future_daily(trade_date: str = None,
                  end: str = None) -> pd.DataFrame:
     """ 期货日线行情数据
 
-    :param trade_date: str, 交易日期
-    :param future: str, 合约代码
-    :param exchange: str, 交易所代码
-    :param start: str, 开始日期
-    :param end: str, 结束日期
-    :return: pd.DataFrame
+    trade_date: str, 交易日期
+    future: str, 合约代码
+    exchange: str, 交易所代码
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column      type    default description
         ts_code		str	    Y	    TS合约代码
         trade_date	str	    Y	    交易日期
@@ -2417,8 +2509,10 @@ def future_daily(trade_date: str = None,
         oi		    float	Y   	持仓量(手)
         oi_chg		float	Y   	持仓量变化
         delv_settle	float	N   	交割结算价
-    example:
-        future_daily(ts_code='CU1811.SHF', start_date='20180101', end_date='20181113')
+
+    Examples
+    --------
+    >>> future_daily(ts_code='CU1811.SHF', start_date='20180101', end_date='20181113')
     output:
                 ts_code trade_date  pre_close  pre_settle     open   ...  change2      vol     amount       oi  oi_chg
         0    CU1811.SHF   20181113    48900.0     49030.0  48910.0   ...   -200.0  17270.0  421721.70  16110.0 -6830.0
@@ -2454,12 +2548,17 @@ def options_daily(trade_date: str = None,
                   end: str = None) -> pd.DataFrame:
     """ 获取期权日线行情
 
-    :param trade_date: str, 交易日期
-    :param option: str, 合约代码
-    :param exchange: str, 交易所代码
-    :param start: str, 开始日期
-    :param end: str, 结束日期
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    trade_date: str, 交易日期
+    option: str, 合约代码
+    exchange: str, 交易所代码
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column      type    default description
         ts_code		str	    Y   	TS代码
         trade_date	str	    Y   	交易日期
@@ -2474,9 +2573,10 @@ def options_daily(trade_date: str = None,
         vol		    float	Y   	成交量(手)
         amount		float	Y   	成交金额(万元)
         oi		    float	Y   	持仓量(手)
-    example:
-        options_daily(trade_date='20181212')
-    output:
+
+    Examples
+    --------
+    >>> options_daily(trade_date='20181212')
                   ts_code      trade_date exchange  pre_settle  pre_close     open  \
         0         10001313.SH   20181212      SSE      0.0311     0.0312    0.0355
         1         10001314.SH   20181212      SSE      0.0156     0.0157    0.0170
@@ -2515,10 +2615,15 @@ def options_daily(trade_date: str = None,
 def shibor(date=None, start=None, end=None):
     """ 获取上海银行间同业拆借利率SHIBOR利率
 
-    :param date: str 利率日期
-    :param start: str 开始日期
-    :param end: str 结束日期
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    date: str 利率日期
+    start: str 开始日期
+    end: str 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
         column  type    default     description
         date	str	    Y	        日期
         on	    float	Y	        隔夜
@@ -2529,9 +2634,10 @@ def shibor(date=None, start=None, end=None):
         6m	    float	Y	        6个月
         9m	    float	Y	        9个月
         1y	    float	Y	        1年
-    example:
-        df = shibor(start='20180101', end='20181101')
-    output:
+
+    Examples
+    --------
+    >>> df = shibor(start='20180101', end='20181101')
                  date      on      1w      2w      1m      3m      6m      9m      1y
         0    20181101  2.5470  2.6730  2.6910  2.6960  2.9760  3.2970  3.5040  3.5500
         1    20181031  2.3700  2.7150  2.7300  2.6890  2.9630  3.2980  3.5040  3.5500
@@ -2631,11 +2737,16 @@ def hibor(date=None, start=None, end=None):
 def libor(date=None, start=None, end=None, currency=None):
     """ 获取上海银行间同业拆借利率SHIBOR利率
 
-    :param date: str 利率日期
-    :param start: str 开始日期
-    :param end: str 结束日期
-    :param currency: str 货币种类，包含：USD美元 EUR欧元 JPY日元 GBP英镑 CHF瑞郎，默认USD
-    :return: pd.DataFrame
+    Parameters
+    ----------
+    date: str 利率日期
+    start: str 开始日期
+    end: str 结束日期
+    currency: str 货币种类，包含：USD美元 EUR欧元 JPY日元 GBP英镑 CHF瑞郎，默认USD
+
+    Returns
+    -------
+    pd.DataFrame
         column  type    default     description
         date	str	    Y	        日期
         curr    str     Y           货币
@@ -2646,9 +2757,10 @@ def libor(date=None, start=None, end=None, currency=None):
         3m	    float	Y	        3个月
         6m	    float	Y	        6个月
         12m	    float	Y	        1年
-    example:
-        df = libor(start='20180101', end='20181101')
-    output:
+
+    Examples
+    --------
+    >>> df = libor(start='20180101', end='20181101')
          date     curr_type       on       1w       1m       2m       3m       6m       12m
     0    20181130       USD  2.17750  2.22131  2.34694  2.51006  2.73613  2.89463   3.12025
     1    20181129       USD  2.18275  2.22881  2.34925  2.51125  2.73813  2.88519   3.11869
