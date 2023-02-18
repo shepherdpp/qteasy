@@ -999,13 +999,13 @@ class HistoryPanel():
         2020-01-01  2.3,    2.5,    20010
         2020-01-02  2.6,    3.2,    20020
 
-        >>> hp.flatten_to_dataframe(along='col')
+        >>> hp.to_multi_index_dataframe(along='col')
                     000300                  000001
                     close,  open,   vol,    close,  open,   vol
         2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
         2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
 
-        >>> hp.flatten_to_dataframe(along='row')
+        >>> hp.to_multi_index_dataframe(along='row')
                             close,  open,   vol
         000300  2020-01-01  12.3,   12.5,   1020010
                 2020-01-02  12.6,   13.2,   1020020
@@ -1040,13 +1040,13 @@ class HistoryPanel():
         2020-01-01  2.3,    2.5,    20010
         2020-01-02  2.6,    3.2,    20020
 
-        >>> hp.flatten_to_dataframe(along='col')
+        >>> hp.flatten(along='col')
                     000300                  000001
                     close,  open,   vol,    close,  open,   vol
         2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
         2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
 
-        >>> hp.flatten_to_dataframe(along='row')
+        >>> hp.flatten(along='row')
                             close,  open,   vol
         000300  2020-01-01  12.3,   12.5,   1020010
                 2020-01-02  12.6,   13.2,   1020020
@@ -1186,7 +1186,7 @@ class HistoryPanel():
         2020-01-02  2.5,    2.6,    2.7,    2.8
         2020-01-03  2.9,    3.0,    3.1,    3.2
 
-        >>> hp.to_df_dict(by='share')
+        >>> hp.unstack(by='share')
         {'000001':
                     close,  open,   high,   low
         2020-01-01  0.1,    0.2,    0.3,    0.4
@@ -1204,7 +1204,7 @@ class HistoryPanel():
         2020-01-03  2.9,    3.0,    3.1,    3.2
         }
 
-        >>> hp.to_df_dict(by='htype')
+        >>> hp.unstack(by='htype')
         {'close':
                     000001,  000002,  000003
         2020-01-01  0.1,     1.1,     2.1
