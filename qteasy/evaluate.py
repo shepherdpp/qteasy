@@ -579,7 +579,7 @@ def eval_operation(looped_value, cash_plan):
     2，总投资额
     3，总交易费用
     4，回测时间长度, 分别用年、月、日数表示，年的类型为float，月和日的类型都是int
-
+～
     :param looped_value:
     :param cash_plan:
     :return:

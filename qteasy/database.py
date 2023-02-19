@@ -1057,11 +1057,17 @@ TABLE_MASTER_COLUMNS = ['schema', 'desc', 'table_usage', 'asset_type', 'freq', '
                         'start_end_chunk_size']
 TABLE_MASTERS = {
 
-    '_sys_op_record':
-        ['sys_op_record', '实盘运行交易信号记录表', 'sys', '', '', '', '', '', '', '', '', ''],
+    'sys_op_live_account_masters':
+        ['sys_op_live_account_masters', '实盘运行基本信息主记录表', 'sys', '', '', '', '', '', '', '', '', ''],
 
-    '_sys_account_changes':
-        ['sys_account_change', '实盘运行账户余额变动表', 'sys', '', '', '', '', '', '', '', '', ''],
+    'sys_op_holdings':
+        ['sys_op_holdings', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', ''],
+
+    'sys_op_trade_signals':
+        ['sys_op_trade_signals', '实盘运行交易信号记录表', 'sys', '', '', '', '', '', '', '', '', ''],
+
+    'sys_op_trade_results':
+        ['sys_op_trade_results', '实盘运行交易结果记录表', 'sys', '', '', '', '', '', '', '', '', ''],
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
@@ -1306,18 +1312,38 @@ TABLE_MASTERS = {
 # 定义Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_SCHEMA = {
 
-    'sys_op_record':
-        {'columns':    ['run_id', 'op_status', 'op_time', 'direction', 'order_type', 'code', 'amount', 'quote_price',
-                        'transaction_price', 'transaction_amount', 'transaction_fee'],
-         'dtypes':     ['varchar(20)', 'varchar(20)', 'datetime', 'varchar(20)', 'varchar(20)'],
-         'remarks':    ['操作ID', '操作类型', '操作时间', '操作表', '操作表索引', '操作表索引值'],
+    # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
+    'sys_op_live_account_masters':
+        {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash'],
+         'dtypes':     ['int', 'varchar(20)', 'datetime', 'float', 'float'],
+         'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额'],
          'prime_keys': [0]
          },
 
-    'sys_account_change':
-        {'columns':    ['op_id', 'op_type', 'op_time', 'op_table', 'op_table_index', 'op_table_index_value'],
-         'dtypes':     ['varchar(20)', 'varchar(20)', 'datetime', 'varchar(20)', 'varchar(20)'],
-         'remarks':    ['操作ID', '操作类型', '操作时间', '操作表', '操作表索引', '操作表索引值'],
+    'sys_op_positions':
+        {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty'],
+         'dtypes':     ['int', 'int', 'varchar(20)', 'byte', 'float', 'float'],
+         'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量'],
+         'prime_keys': [0]
+         },
+
+    'sys_op_trade_signals':
+        {'columns':    ['signal_id', 'symbol', 'position', 'direction', 'order_type',
+                        'qty', 'price', 'submitted_time', 'status'],
+         'dtypes':     ['int', 'varchar(20)', 'varchar(5)', 'varchar(10)', 'varchar(5)',
+                        'float', 'float', 'datetime', 'varchar(5)'],
+         'remarks':    ['交易信号ID', '资产代码', '交易头寸(多long/空short)', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)',
+                        '委托数量', '委托报价', '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
+         'prime_keys': [0]
+         },
+
+    'sys_op_trade_results':
+        {'columns':    ['result_id', 'account_id', 'pos_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee',
+                        'execution_time', 'canceled_qty'],
+         'dtypes':     ['int', 'int', 'int', 'int', 'float', 'float', 'float',
+                        'datetime', 'float'],
+         'remarks':    ['结果ID', '运行账号ID', '持仓ID', '交易信号ID', '成交数量', '成交价格', '交易费用',
+                        '成交时间', '取消交易数量'],
          'prime_keys': [0]
          },
 
