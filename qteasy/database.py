@@ -3264,6 +3264,16 @@ class DataSource:
         -------
         last_id: int
         """
+
+        ensure_sys_table(table)
+        # 如果是文件系统，在可行的情况下，直接从文件系统中获取最后一个id，否则读取文件数据后获取id
+        if self.source_type == 'file':
+            pass
+        # 如果是数据库系统，直接获取最后一个id
+        elif self.source_type == 'db':
+            pass
+        else: # for other unexpected cases
+            pass
         pass
 
     def read_sys_table_data(self, table, id=None, **kwargs):
@@ -3299,7 +3309,7 @@ class DataSource:
             res_df = self.read_database(table)  # 这种方式读取整个数据表，然后再筛选
         elif self.source_type == 'file':
             res_df = self.read_file(table, p_keys, pk_dtypes)
-        else:  # for other unexpected casees
+        else:  # for other unexpected cases
             res_df = pd.DataFrame()
 
         if res_df.empty:
@@ -3320,20 +3330,18 @@ class DataSource:
 
         return res_df.to_dict()
 
-    def update_sys_table_data(self, table, data, id=None):
-        """ 更新系统操作表的数据，包括更新或插入新的记录，一次插入或更新一条记录，
-        不需要给出数据的ID，因为ID会自动生成
-
-        在插入
+    def update_sys_table_data(self, table, id, **kwargs):
+        """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
+        每次只能更新一条数据，可以同时更新多个字段
 
         Parameters
         ----------
         table: str
             需要更新的数据表名称
-        data: dict
-            需要更新或插入的数据
         id: int
-            需要更新的数据的id，如果不给出id，则会插入一条新的数据，并返回其id
+            需要更新的数据的id
+        kwargs: dict
+            需要更新的数据，包括需要更新的字段如: account_id = 123
 
         Returns
         -------
@@ -3342,19 +3350,52 @@ class DataSource:
 
         Raises
         ------
-        KeyError: 当给出的id不存在时
+        KeyError: 当给出的id不存在或为None时
         """
 
         ensure_sys_table(table)
-        # 检察数据
+        # 检察数据，如果**kwargs中有不可用的字段，则抛出异常，如果kwargs为空，则返回None
 
-        # 获取最后一个ID
-        last_id = self.get_sys_table_last_id()
-        # 判断ID是否已存在，如果已存在，需要更新，否则需要插入
+        # 判断id是否存在范围内，如果id超出范围，则抛出异常
 
-        # 生成数据df
+        # 写入数据，如果是文件系统，读取文件，更新数据，然后写入文件，如果是数据库，直接用SQL更新数据库
+        if self.source_type == 'file':
+            pass
+        elif self.source_type == 'db':
+            pass
+        else: # for other unexpected cases
+            pass
+        pass
 
-        # 写入
+    def insert_sys_table_data(self, table, data):
+        """ 插入系统操作表的数据，一次插入一条记录，不需要给出数据的ID，因为ID会自动生成
+
+        Parameters
+        ----------
+        table: str
+            需要更新的数据表名称
+        data: dict
+            需要更新或插入的数据
+
+        Returns
+        -------
+        id: int
+            更新的记录ID
+        """
+
+        ensure_sys_table(table)
+        # 检察数据，如果**kwargs中有不可用的字段，则抛出异常，如果kwargs为空，则返回None
+
+        # 获取最后一个ID，然后+1，作为新的ID
+
+        # 写入数据，如果是文件系统，对可行的文件类型直接写入文件，否则读取文件，插入数据后再写入文件，如果是数据库，直接用SQL更新数据库
+        if self.source_type == 'file':
+            pass
+        elif self.source_type == 'db':
+            pass
+        else: # for other unexpected cases
+            pass
+        pass
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
