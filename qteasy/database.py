@@ -2024,7 +2024,7 @@ class MissingDataWarning(Warning):
     pass
 
 
-# noinspection SqlDialectInspection,PyTypeChecker,PyPackageRequirements
+# noinspection SqlDialectInspection #,PyTypeChecker,PyPackageRequirements
 class DataSource:
     """ DataSource 对象管理存储在本地的历史数据文件或数据库.
 
@@ -2726,6 +2726,7 @@ class DataSource:
             self.con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
+    # ==============
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def table_data_exists(self, table):
         """ 逻辑层函数，判断数据表是否存在
@@ -3247,6 +3248,113 @@ class DataSource:
                 pk_min2,
                 pk_max2
                 )
+
+    # ==============
+    # 系统操作表操作函数，专门用于操作sys_operations表，记录系统操作信息，数据格式简化
+    # ==============
+    def get_sys_table_last_id(self, table, setting):
+        """ 从已有的table中获取最后一个id
+
+        Parameters
+        ----------
+        table:
+        setting:
+
+        Returns
+        -------
+        last_id: int
+        """
+        pass
+
+    def read_sys_table_data(self, table, id=None, **kwargs):
+        """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
+
+        每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列
+
+        Parameters
+        ----------
+        table: str
+            需要读取的数据表名称
+        id: int, Default: None
+            如果给出id，只返回id行记录
+        kwargs: dict
+            筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
+
+        Returns
+        -------
+        data: dict
+            读取的数据，包括数据表的结构化信息以及数据表中的记录
+        None:
+            当输入的id或筛选条件没有匹配项时
+        """
+        ensure_sys_table(table)
+
+        # 检查kwargs中是否有不可用的字段
+        columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
+        if any(k not in columns for k in kwargs):
+            raise KeyError(f'Some of the kwargs is not valid')
+
+        # 读取数据
+        if self.source_type == 'db':
+            res_df = self.read_database(table)  # 这种方式读取整个数据表，然后再筛选
+        elif self.source_type == 'file':
+            res_df = self.read_file(table, p_keys, pk_dtypes)
+        else:  # for other unexpected casees
+            res_df = pd.DataFrame()
+
+        if res_df.empty:
+            return None
+
+        # 筛选ID，如果筛选了ID，则忽略kwargs
+        if id is not None:
+            try:
+                return res_df.loc[id]
+            except KeyError:
+                return None
+            except Exception as e:
+                raise RuntimeError(f'{e}, An error occurred when get {id} row data from table {table}')
+
+        # 筛选数据
+        for k, v in kwargs:
+            res_df = res_df.loc[res_df[k] == v]
+
+        return res_df.to_dict()
+
+    def update_sys_table_data(self, table, data, id=None):
+        """ 更新系统操作表的数据，包括更新或插入新的记录，一次插入或更新一条记录，
+        不需要给出数据的ID，因为ID会自动生成
+
+        在插入
+
+        Parameters
+        ----------
+        table: str
+            需要更新的数据表名称
+        data: dict
+            需要更新或插入的数据
+        id: int
+            需要更新的数据的id，如果不给出id，则会插入一条新的数据，并返回其id
+
+        Returns
+        -------
+        id: int
+            更新的记录ID
+
+        Raises
+        ------
+        KeyError: 当给出的id不存在时
+        """
+
+        ensure_sys_table(table)
+        # 检察数据
+
+        # 获取最后一个ID
+        last_id = self.get_sys_table_last_id()
+        # 判断ID是否已存在，如果已存在，需要更新，否则需要插入
+
+        # 生成数据df
+
+        # 写入
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
@@ -3771,7 +3879,7 @@ class DataSource:
                     total_written += self.update_table_data(table, dnld_data)
                 strftime_elapsed = time_str_format(
                         time_elapsed,
-                        esitimation=True,
+                        estimation=True,
                         short_form=True
                 )
                 if len(arg_coverage) > 1:
@@ -3783,7 +3891,7 @@ class DataSource:
             except Exception as e:
                 total_written += self.update_table_data(table, dnld_data)
                 warnings.warn(f'\n{e.__class__}:{str(e)} \ndownload process interrupted at [{table}]:'
-                              f'<{arg_coverage[0]}>-<{arg_coverage[completed]}>\n'
+                              f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n'
                               f'{total_written} rows downloaded, will proceed with next table!')
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
@@ -4116,13 +4224,13 @@ def _trade_time_index(start=None,
     if freq is not None:
         freq = str(freq).lower()
     # 检查时间序列区间的开闭状况
-    closed=None
+    closed = None
     if include_start:
-        closed='left'
+        closed = 'left'
     if include_end:
-        closed='right'
+        closed = 'right'
     if include_start and include_end:
-        closed=None
+        closed = None
 
     time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
     # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
@@ -4731,3 +4839,33 @@ def find_history_data(s, fuzzy=False, match_description=False):
           f'========================================================================')
 
     return list(df.index)
+
+
+def ensure_sys_table(table):
+    """ 检察table是不是sys表
+
+    Parameters
+    ----------
+    table:
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    KeyError: 当输入的表名称不正确时，或筛选条件字段名不存在时
+    TypeError: 当输入的表名称类型不正确，或表使用方式不是sys类型时
+    """
+
+    # 检察输入的table名称，以及是否属于sys表
+    if not isinstance(table, str):
+        raise TypeError(f'table name should be a string, got {type(table)} instead.')
+    try:
+        table_usage = TABLE_MASTERS[table][2]
+        if not table_usage == 'sys':
+            raise TypeError(f'Table {table}<{table_usage}> is not subjected to sys use')
+    except KeyError as e:
+        raise KeyError(f'"{e}" is not a valid table name')
+    except Exception as e:
+        raise RuntimeError(f'{e}: An error occurred when checking table usage')

@@ -14,10 +14,17 @@ import asyncio
 
 
 async def process_trade_signal(signal):
-    # 将交易信号提交给交易平台
+    # 将交易信号提交给交易平台或用户以获取交易结果
     trade_results = await submit_signal(signal)
-    # 处理交易结果
-    process_trade_result(trade_results)
+    # 更新交易信号状态并更新TUI
+    update_signal_status(signal_id=signal['signal_id'], status=trade_results['status'])
+    output_trade_signal()
+    # 更新账户的持仓
+    update_account_position(account_id=signal['account_id'], position=trade_results['position'])
+    # 更新账户的可用资金
+    update_account(account_id=signal['account_id'], trade_results=trade_results)
+    # 刷新TUI
+    output_account_position()
 
 
 async def live_trade_signals():
