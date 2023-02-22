@@ -2319,6 +2319,7 @@ class DataSource:
         :return:
             DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
+        import pdb; pdb.set_trace()
         file_path_name = self.get_file_path_name(file_name)
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
@@ -3033,6 +3034,7 @@ class DataSource:
         if dnld_data.empty:
             return 0
 
+        import pdb; pdb.set_trace()
         table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         dnld_columns = dnld_data.columns.to_list()
@@ -3262,25 +3264,45 @@ class DataSource:
     # ==============
     # 系统操作表操作函数，专门用于操作sys_operations表，记录系统操作信息，数据格式简化
     # ==============
-    def get_sys_table_last_id(self, table, setting):
+    def get_sys_table_last_id(self, table):
         """ 从已有的table中获取最后一个id
 
         Parameters
         ----------
-        table:
-        setting:
+        table: str
+            数据表名称
 
         Returns
         -------
-        last_id: int
+        last_id: int 当前使用的最后一个ID（自增ID）
         """
 
         ensure_sys_table(table)
         # 如果是文件系统，在可行的情况下，直接从文件系统中获取最后一个id，否则读取文件数据后获取id
         if self.source_type == 'file':
-            pass
+            df = self.read_sys_table_data(table)
+            if df is None:
+                return 0
+            # if df.empty:
+            #     return 0
+            return df.index.max()
         # 如果是数据库系统，直接获取最后一个id
         elif self.source_type == 'db':
+            db_name = self.db_name
+            sql = f"SELECT AUTO_INCREMENT\n" \
+                  f"FROM information_schema.TABLES\n" \
+                  f"WHERE TABLE_SCHEMA = `{db_name}`\n" \
+                  f"AND TABLE_NAME = `table`;"
+            try:
+                self.cursor.execute(sql)
+                self.con.commit()
+                res = self.cursor.fetchall()
+                output = {}
+                for col, typ in results:
+                    output[col] = typ
+                return output
+            except Exception as e:
+                raise RuntimeError(f'{e}, An error occurred when getting last id for table {table} with SQL:\n{sql}')
 
         else: # for other unexpected cases
             pass
@@ -3314,16 +3336,18 @@ class DataSource:
         if any(k not in columns for k in kwargs):
             raise KeyError(f'Some of the kwargs is not valid')
 
-        share_like_pk = p_keys[0] if len(p_keys) == 1 else None
+        id_column = p_keys[0] if (len(p_keys) == 1) and (id is not None) else None
+        id_values = [id] if id is not None else None
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
-            res_df = self.read_database(table, share_like_pk=share_like_pk, shares=id)
+            res_df = self.read_database(table, share_like_pk=id_column, shares=id_values)
         elif self.source_type == 'file':
-            res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=share_like_pk, shares=id)
+            res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=id_column, shares=id_values)
         else:  # for other unexpected cases
             res_df = pd.DataFrame()
 
+        import pdb; pdb.set_trace()
         if res_df.empty:
             return None
 
@@ -3340,7 +3364,10 @@ class DataSource:
         for k, v in kwargs:
             res_df = res_df.loc[res_df[k] == v]
 
-        return res_df.to_dict()
+        if id:
+            return res_df.loc[id].to_dict()
+        else:
+            return res_df
 
     def update_sys_table_data(self, table, id, data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
@@ -3462,6 +3489,7 @@ class DataSource:
         next_id = last_id + 1 if last_id is not None else 1
         df = pd.DataFrame(data, index=[next_id], columns=data.keys())
 
+        import pdb; pdb.set_trace()
         # 插入数据
         self.update_table_data(table, df, merge_type='ignore')
 
@@ -4383,10 +4411,17 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
         并重设df的index为0，1，2，3，4...
 
-    :param df: 需要操作的df
-    :param primary_key:
-    :param pk_dtypes:
-    :return:
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的df
+    primary_key: list of str
+        被判定为主键的列名称，如果
+    pk_dtypes:
+        被判定为主键
+
+    Returns
+    -------
         DataFrame
     """
     if not isinstance(df, pd.DataFrame):
@@ -4395,12 +4430,19 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
-    idx_columns = list(df.index.names)
-    pk_columns = primary_key
-    if idx_columns != [None]:
-        index_frame = df.index.to_frame()
-        for col in idx_columns:
-            df[col] = index_frame[col]
+
+    if primary_key:
+        pk_columns = primary_key
+    else:
+        pk_columns = list(df.index.names)
+    if pk_columns == [None]:
+        raise KeyError(f'primary_key must be given if df index does not have names')
+
+    index_frame = df.index.to_frame()
+    for col_number, col_name in enumerate(pk_columns):
+        df[col_name] = index_frame.iloc[:, col_number]
+    import pdb; pdb.set_trace()
+
     df.index = range(len(df))
     # 此时primary key有可能被放到了columns的最后面，需要将primary key移动到columns的最前面：
     columns = df.columns.to_list()
