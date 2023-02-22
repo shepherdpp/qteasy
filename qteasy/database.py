@@ -1057,8 +1057,8 @@ TABLE_MASTER_COLUMNS = ['schema', 'desc', 'table_usage', 'asset_type', 'freq', '
                         'start_end_chunk_size']
 TABLE_MASTERS = {
 
-    'sys_op_live_account_masters':
-        ['sys_op_live_account_masters', '实盘运行基本信息主记录表', 'sys', '', '', '', '', '', '', '', '', ''],
+    'sys_op_live_accounts':
+        ['sys_op_live_accounts', '实盘运行基本信息主记录表', 'sys', '', '', '', '', '', '', '', '', ''],
 
     'sys_op_holdings':
         ['sys_op_holdings', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', ''],
@@ -1313,7 +1313,7 @@ TABLE_MASTERS = {
 TABLE_SCHEMA = {
 
     # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
-    'sys_op_live_account_masters':
+    'sys_op_live_accounts':
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash'],
          'dtypes':     ['int', 'varchar(20)', 'datetime', 'float', 'float'],
          'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额'],
@@ -2623,20 +2623,26 @@ class DataSource:
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
 
-    def new_db_table(self, db_table, columns, dtypes, primary_key):
+    def new_db_table(self, db_table, columns, dtypes, primary_key, auto_increment_id=False):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
             并创建正确的index
 
-        :param db_table:
-            Str: 数据表名
-        :param columns:
-            List: 一个包含若干str的list，表示数据表的所有字段名
-        :param dtypes:
-            List: 一个包含若干str的list，表示数据表所有字段的数据类型
-        :param primary_key:
-            List: 一个包含若干str的list，表示数据表的所有primary_key
-        :return:
-            None
+        Parameters
+        ----------
+        db_table: str
+            数据表名
+        columns: list of str
+            数据表的所有字段名
+        dtypes: list of str {'varchar', 'float', 'int', 'datetime', 'text'}
+            数据表所有字段的数据类型
+        primary_key: list of str
+            数据表的所有primary_key
+        auto_increment_id: bool, Default: False
+            是否使用自增主键
+
+        Returns
+        -------
+        None
         """
         if self.source_type != 'db':
             raise TypeError(f'Datasource is not connected to a database')
@@ -2645,7 +2651,8 @@ class DataSource:
         for col_name, dtype in zip(columns, dtypes):
             sql += f"`{col_name}` {dtype}"
             if col_name in primary_key:
-                sql += " NOT NULL,\n"
+                sql += " NOT NULL"
+                sql += " AUTO_INCREMENT,\n" if auto_increment_id else ",\n"
             else:
                 sql += " DEFAULT NULL,\n"
         # 如果有primary key则添加primary key
@@ -2828,7 +2835,9 @@ class DataSource:
         elif self.source_type == 'db':
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
-            self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+            if not self.db_table_exists(db_table=table):
+                # 如果数据库中不存在该表，则创建表
+                self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if share_like_pk is None:
                 shares = None
             if date_like_pk is None:
@@ -2907,7 +2916,8 @@ class DataSource:
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             rows_affected = self.write_file(df, file_name=table)
         elif self.source_type == 'db':
-            self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+            if not self.db_table_exists(table):
+                self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':
                 rows_affected = self.write_database(df, db_table=table)
             elif on_duplicate == 'update':
@@ -3271,7 +3281,7 @@ class DataSource:
             pass
         # 如果是数据库系统，直接获取最后一个id
         elif self.source_type == 'db':
-            pass
+
         else: # for other unexpected cases
             pass
         pass
@@ -3304,11 +3314,13 @@ class DataSource:
         if any(k not in columns for k in kwargs):
             raise KeyError(f'Some of the kwargs is not valid')
 
-        # 读取数据
+        share_like_pk = p_keys[0] if len(p_keys) == 1 else None
+
+        # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
-            res_df = self.read_database(table)  # 这种方式读取整个数据表，然后再筛选
+            res_df = self.read_database(table, share_like_pk=share_like_pk, shares=id)
         elif self.source_type == 'file':
-            res_df = self.read_file(table, p_keys, pk_dtypes)
+            res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=share_like_pk, shares=id)
         else:  # for other unexpected cases
             res_df = pd.DataFrame()
 
@@ -3316,13 +3328,13 @@ class DataSource:
             return None
 
         # 筛选ID，如果筛选了ID，则忽略kwargs
-        if id is not None:
-            try:
-                return res_df.loc[id]
-            except KeyError:
-                return None
-            except Exception as e:
-                raise RuntimeError(f'{e}, An error occurred when get {id} row data from table {table}')
+        # if id is not None:
+        #     try:
+        #         return res_df.loc[id]
+        #     except KeyError:
+        #         return None
+        #     except Exception as e:
+        #         raise RuntimeError(f'{e}, An error occurred when get {id} row data from table {table}')
 
         # 筛选数据
         for k, v in kwargs:
@@ -3330,9 +3342,9 @@ class DataSource:
 
         return res_df.to_dict()
 
-    def update_sys_table_data(self, table, id, **kwargs):
+    def update_sys_table_data(self, table, id, data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
-        每次只能更新一条数据，可以同时更新多个字段
+        每次只能更新一条数据，可以更新一个或多个字段
 
         Parameters
         ----------
@@ -3340,7 +3352,7 @@ class DataSource:
             需要更新的数据表名称
         id: int
             需要更新的数据的id
-        kwargs: dict
+        data: dict
             需要更新的数据，包括需要更新的字段如: account_id = 123
 
         Returns
@@ -3354,6 +3366,9 @@ class DataSource:
         """
 
         ensure_sys_table(table)
+        # TODO: 为了提高开发速度，使用self.update_table_data()，后续需要重构代码
+        #  用下面的思路重构代码，提高运行效率
+        """
         # 检察数据，如果**kwargs中有不可用的字段，则抛出异常，如果kwargs为空，则返回None
 
         # 判断id是否存在范围内，如果id超出范围，则抛出异常
@@ -3366,6 +3381,16 @@ class DataSource:
         else: # for other unexpected cases
             pass
         pass
+        """
+
+        # 将data构造为一个df，然后调用self.update_table_data()
+        last_id = self.get_sys_table_last_id(table)
+        if id is None or id > last_id:
+            raise KeyError(f'No such id {id} in table {table}')
+
+        data = pd.DataFrame(data, index=[id])
+        self.update_table_data(table, data, merge_type='update')
+        return id
 
     def insert_sys_table_data(self, table, data):
         """ 插入系统操作表的数据，一次插入一条记录，不需要给出数据的ID，因为ID会自动生成
@@ -3375,7 +3400,7 @@ class DataSource:
         table: str
             需要更新的数据表名称
         data: dict
-            需要更新或插入的数据
+            需要更新或插入的数据，数据的key必须与数据库表的字段相同，否则会抛出异常
 
         Returns
         -------
@@ -3384,18 +3409,63 @@ class DataSource:
         """
 
         ensure_sys_table(table)
-        # 检察数据，如果**kwargs中有不可用的字段，则抛出异常，如果kwargs为空，则返回None
+        # TODO: 为了缩短开发时间，先暂时调用self.update_table_data()，后续需要重构
+        #  按照下面的思路重构简化代码：
+        """
+        # 检察数据，如果data中有不可用的字段，则抛出异常，如果data为空，则返回None
+        if not isinstance(data, dict):
+            raise TypeError(f'Input data must be a dict, but got {type(data)}')
+        if not data:
+            return None
 
-        # 获取最后一个ID，然后+1，作为新的ID
+        columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
+        values = list(data.values())
+        # 检查data的key是否与column完全一致，如果不一致，则抛出异常
+        if list(data.keys() != columns):
+            raise KeyError(f'Input data keys must be the same as the table columns, '
+                           f'got {list(data.keys())} vs {columns}')
 
         # 写入数据，如果是文件系统，对可行的文件类型直接写入文件，否则读取文件，插入数据后再写入文件，如果是数据库，直接用SQL更新数据库
         if self.source_type == 'file':
+            # 获取最后一个ID，然后+1，作为新的ID(仅当source_type==file时，数据库可以自动生成ID)
+            last_id = self.get_last_id(table)
+            new_id = last_id + 1 if last_id is not None else 1
             pass
         elif self.source_type == 'db':
+            # 使用SQL插入一条数据到数据库
+            db_table = table
+            if not self.db_table_exists(db_table=table):
+                # 如果数据库中不存在该表，则创建表
+                self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+            # 生成sql语句
+            sql = f"INSERT INTO `{db_table}` ("
+            for col in columns[:-1]:
+                sql += f"`{col}`, "
+            sql += f"`{columns[-1]}`)\nVALUES\n("
+            for val in values[:-1]:
+                sql += f"{val}, "
+            sql += f"{values[-1]})\n"
+            import pdb; pdb.set_trace()
+            try:
+                self.conn.execute(sql)
+                self.conn.commit()
+            except Exception as e:
+                raise RuntimeError(f'{e}, An error occurred when insert data into table {table} with sql:\n{sql}')
+        else:  # for other unexpected cases
             pass
-        else: # for other unexpected cases
-            pass
-        pass
+        last_id = self.get_last_id(table)
+        return last_id
+        """
+
+        # 将data构造为一个df，然后调用self.update_table_data()
+        last_id = self.get_sys_table_last_id(table)
+        next_id = last_id + 1 if last_id is not None else 1
+        df = pd.DataFrame(data, index=[next_id], columns=data.keys())
+
+        # 插入数据
+        self.update_table_data(table, df, merge_type='ignore')
+
+        return next_id
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
