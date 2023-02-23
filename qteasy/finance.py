@@ -36,20 +36,15 @@ def set_cost(**kwargs):
 
     Parameters
     ----------
-    buy_fix : float
-        固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
-    sell_fix : float
-        固定卖出费用，如果设置了固定费用，则费率和最低费用会被忽略
-    buy_rate : float
-        买入费率，实际买入费用等于买入金额乘以费率
-    sell_rate : float
-        卖出费率，实际卖出费用等于卖出金额乘以费率
-    buy_min : float
-        最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
-    sell_min : float
-        最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
-    slipage : float
-        滑点，用于估算交易价格损失，金额为滑点乘以交易金额
+    kwargs: dict
+        可用的成本参数包括：
+        - buy_fix: float, 固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
+        - sell_fix: float, 固定卖出费用，如果设置了固定费用，则费率和最低费用会被忽略
+        - buy_rate: float, 买入费率，实际买入费用等于买入金额乘以费率
+        - sell_rate: float, 卖出费率，实际卖出费用等于卖出金额乘以费率
+        - buy_min: float, 最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
+        - sell_min: float, 最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
+        - slipage: float, 滑点，用于估算交易价格损失，金额为滑点乘以交易金额
 
     Returns
     -------
@@ -72,24 +67,19 @@ def update_cost(c, **kwargs):
 
     Parameters
     ----------
-    buy_fix : float
-        固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
-    sell_fix : float
-        固定卖出费用，如果设置了固定费用，则费率和最低费用会被忽略
-    buy_rate : float
-        买入费率，实际买入费用等于买入金额乘以费率
-    sell_rate : float
-        卖出费率，实际卖出费用等于卖出金额乘以费率
-    buy_min : float
-        最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
-    sell_min : float
-        最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
-    slipage : float
-        滑点，用于估算交易价格损失，金额为滑点乘以交易金额
+    kwargs: dict
+        可用的成本参数包括：
+        - buy_fix: float, 固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
+        - sell_fix: float, 固定卖出费用，如果设置了固定费用，则费率和最低费用会被忽略
+        - buy_rate: float, 买入费率，实际买入费用等于买入金额乘以费率
+        - sell_rate: float, 卖出费率，实际卖出费用等于卖出金额乘以费率
+        - buy_min: float, 最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
+        - sell_min: float, 最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
+        - slipage: float, 滑点，用于估算交易价格损失，金额为滑点乘以交易金额
 
     Returns
     -------
-
+    c: dict, 更新后的成本参数
     """
     if not isinstance(c, dict):
         raise TypeError(f'cost should be a dict, got {type(c)} instead')
@@ -451,7 +441,9 @@ class CashPlan:
     def first_day(self):
         """ 返回投资第一天的日期
 
-        :return: pd.Timestamp
+        Returns
+        -------
+        pd.Timestamp
         """
         if self.dates:
             return self.dates[0]
@@ -462,7 +454,9 @@ class CashPlan:
     def last_day(self):
         """ 返回投资期最后一天的日期
 
-        :return: pd.Timestamp
+        Returns
+        -------
+        pd.Timestamp
         """
         if self.dates:
             return self.dates[-1]
@@ -473,7 +467,9 @@ class CashPlan:
     def period(self):
         """ 返回第一次投资到最后一次投资之间的时长，单位为天
 
-        :return: int
+        Returns
+        -------
+        int
         """
         if self.dates:
             return (self.last_day - self.first_day).days
@@ -484,7 +480,9 @@ class CashPlan:
     def investment_count(self):
         """ 返回在整个投资计划期间的投资次数
 
-        :return: int
+        Returns
+        -------
+        int
         """
         return len(self.dates)
 
@@ -492,7 +490,9 @@ class CashPlan:
     def dates(self):
         """ 返回整个投资计划期间的所有投资日期，按从先到后排列
 
-        :return: list[pandas.Timestamp]
+        Returns
+        -------
+        list of pd.Timestamp
         """
         return list(self.plan.index)
 
@@ -500,7 +500,9 @@ class CashPlan:
     def amounts(self):
         """ 返回整个投资计划期间的所有投资额列表，按从先到后排列
 
-        :return: list[float]
+        Returns
+        -------
+        list of float
         """
         return list(self.plan.amount)
 
@@ -508,7 +510,9 @@ class CashPlan:
     def total(self):
         """ 返回整个投资计划期间的投资额总和，不考虑利率
 
-        :return: float
+        Returns
+        -------
+        float, 所有投资金额的简单相加
         """
         return self.plan.amount.sum()
 
@@ -516,27 +520,22 @@ class CashPlan:
     def ir(self):
         """ 无风险利率，年化利率
 
-        :return: float
+        Returns
+        -------
+        float
         """
         return self._ir
 
     @ir.setter
     def ir(self, ir: float):
-        """ 设置无风险利率
-
-        :param ir: float, 无风险利率
-        :return:
-        """
+        """ 设置无风险利率 """
         assert isinstance(ir, float), f'The interest rate should be a float number, not {type(ir)}'
         assert 0. < ir < 1., f'Interest rate should be between 0 and 1'
         self._ir = ir
 
     @property
     def closing_value(self):
-        """ 计算所有投资额按照无风险利率到最后一个投资额的终值
-
-        :return: float
-        """
+        """ 计算所有投资额按照无风险利率到最后一笔投资当天的终值"""
         if self.ir == 0:
             return self.total
         else:
@@ -547,10 +546,7 @@ class CashPlan:
 
     @property
     def opening_value(self):
-        """ 计算所有投资额按照无风险利率在第一个投资日的现值
-
-        :return: float
-        """
+        """ 计算所有投资额按照无风险利率在第一个投资日的现值"""
         if self.ir == 0:
             return self.total
         else:
@@ -561,18 +557,44 @@ class CashPlan:
 
     @property
     def plan(self):
-        """ 返回整个投资区间的投资计划，形式为DataFrame
+        """ 返回整个投资区间的投资计划
 
-        :return: pandas.DataFrame
+        Returns
+        -------
+        pandas.DataFrame
+
+        Examples
+        --------
+        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> cp.plan
+                    amount
+        2020-01-01   10000
+        2021-01-01   10000
         """
+
         return self._cash_plan
 
     def reset_dates(self, dates):
         """ 重设投资日期，dates必须为一个可迭代的日期时间序列，数量与CashPlan的投资
             期数相同，且可转换为datetime对象
 
-        :param dates: 一个可迭代的时间日期序列
-        :return:
+        Parameters
+        ----------
+        dates: iterables
+            一个可迭代的时间日期序列
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> cp
+        CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
+        >>> cp.reset_dates(['20200101', '20200601'])
+        >>> cp
+        CashPlan(['20200101', '20200601'], [10000, 10000], 0.0)
         """
         try:
             idx = pd.Index(dates, dtype='datetime64[ns]')
@@ -580,11 +602,30 @@ class CashPlan:
         except Exception as e:
             print(f'{e}, ')
 
-    def to_dict(self, keys: [list, np.ndarray] = None):
+    def to_dict(self, keys: [list, tuple, np.ndarray] = None):
         """ 返回整个投资区间的投资计划，形式为字典。默认key为日期，如果明确给出keys，则使用参数keys
 
-        :return: dict
+        Parameters
+        ----------
+        keys: iterables
+            用于替代投资计划日期的可迭代对象
+
+        Returns
+        -------
+        dict
+
+        Examples
+        --------
+        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> cp
+        CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
+        >>> cp.to_dict()
+        {Timestamp('2020-01-01 00:00:00'): 10000,
+         Timestamp('2021-01-01 00:00:00'): 10000}
+        >>> cp.to_dict(['1st invest', '2nd invest'])
+        {'1st invest': 10000, '2nd invest': 10000}
         """
+
         if keys is None:
             return dict(self.plan.amount)
         else:
@@ -597,7 +638,19 @@ class CashPlan:
     def info(self):
         """ 打印投资计划的所有信息
 
-        :return: None
+        Examples
+        --------
+        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> cp.info()
+        <class 'qteasy.finance.CashPlan'>
+        Investment contains multiple entries
+        Investment Period from 2020-01-01 to 2021-01-01, lasting 366 days
+        Total investment count: 2 entries, total invested amount: ¥20,000.00
+        Interest rate: 0.00%, equivalent final value: ¥20,000.00:
+                    amount
+        2020-01-01   10000
+        2021-01-01   10000
+        memory usage: 136 bytes
         """
         import sys
         print(f'\n{type(self)}')
@@ -614,15 +667,27 @@ class CashPlan:
         print(f'memory usage: {sys.getsizeof(self.plan)} bytes\n')
 
     def __add__(self, other):
-        """ 两个CashPlan对象相加，得到一个新的CashPlan对象，这个对象包含两个CashPlan对象的投资计划的并集，如果两个投资计划的时间
-            相同，则新的CashPlan的投资计划每个投资日的投资额是两个投资计划的和
+        """ 将CashPlan与另一个对象相加
 
-            CashPlan对象与一个int或float对象相加，得到的新的CashPlan对象的每笔投资都增加int或float数额
+        两个CashPlan对象相加，得到一个金额合并后的的CashPlan对象
+        CashPlan对象与一个int或float对象相加，得到的新的CashPlan对象的每笔投资都增加int或float数额
 
         Parameters
         ----------
         other: (int, float, CashPlan): 另一个对象，根据对象类型不同行为不同
-        :return:
+
+        Returns
+        -------
+        cashplan
+
+        Examples
+        --------
+        >>> cp1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> cp2 = CashPlan(dates=['20200601', '20210101'], amounts=[10000, 10000])
+        >>> cp1 + 10000
+        CashPlan(['20200101', '20210101'], [20000, 20000], 0.0)
+        >>> cp1 + cp2
+        CashPlan(['20200101', '20200601', '20210101'], [10000.0, 10000.0, 20000.0], 0.0)
         """
 
         if isinstance(other, (int, float)):
@@ -660,6 +725,15 @@ class CashPlan:
         Returns
         -------
         CashPlan: 新的CashPlan对象
+
+        Examples
+        --------
+        >>> cp1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> cp2 = CashPlan(dates=['20200601', '20210101'], amounts=[10000, 10000])
+        >>> 10000 + cp1
+        CashPlan(['20200101', '20210101'], [20000, 20000], 0.0)
+        >>> cp1 + cp2
+        CashPlan(['20200101', '20200601', '20210101'], [10000.0, 10000.0, 20000.0], 0.0)
         """
         return self.__add__(other)
 
@@ -673,6 +747,10 @@ class CashPlan:
         Returns
         -------
         CashPlan: 新的CashPlan对象
+
+        Examples
+        --------
+
         """
         assert isinstance(other, (int, float))
         assert other >= 0
@@ -761,11 +839,16 @@ def distribute_investment(amount: float,
                           freq: str) -> CashPlan:
     """ 将投资额拆分成一系列定投金额，并生成一个CashPlan对象
 
-    :param amount:
-    :param start:
-    :param end:
-    :param periods:
-    :param freq:
-    :return:
+    Parameters
+    ----------
+    amount:
+    start:
+    end:
+    periods:
+    freq:
+
+    Returns
+    -------
+    cashplan:
     """
     raise NotImplementedError

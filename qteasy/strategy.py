@@ -39,6 +39,43 @@ class BaseStrategy:
                  data_types: [str, list] = 'close',
                  bt_price_type: str = 'close',
                  reference_data_types: [str, list] = ''):
+        """ 初始化策略
+
+        Parameters
+        ----------
+        pars: any
+            策略参数，可以是任意类型，但是需要根据具体的策略类来确定具体的参数类型
+        opt_tag: int {0, 1}
+            策略的优化标签，0表示不参与优化，1表示参与优化
+        stg_type: str
+            策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
+        name: str
+            策略名称，用户自定义策略的名称，用于区分不同的策略
+        description: str
+            策略描述，用户自定义策略的描述，用于区分不同的策略
+        par_count: int
+            策略可调参数的个数
+        par_types: list of str, {'int', 'float', 'enum'}
+            策略可调参数的类型，每个参数的类型可以是int, float或enum
+        par_range: list or tuple
+            策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
+        data_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略使用的数据频率，可以是日频、周频、月频、季频或年频
+        sample_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略使用的采样频率，可以是日频、周频、月频、季频或年频
+        window_length: int
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
+        data_types: str or list of str
+            策略使用的数据类型，例如close, open, high, low等
+        bt_price_type: str {'open', 'high', 'low', 'close'}
+            策略回测时使用的价格类型，可以是开盘价、收盘价、最高价、最低价等
+        reference_data_types: str or list of str
+            策略使用的参考数据类型，例如close, open, high, low等
+
+        Returns
+        -------
+        None
+        """
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
@@ -367,7 +404,9 @@ class BaseStrategy:
         """ 打印对象的代表信息，strategy对象的代表信息即它的名字，其他的属性都是可变的，唯独name是唯一不变的strategy的id
         因此打印的格式为"Timing(macd)"或类似式样
 
-        :return:
+        Returns
+        -------
+        str
         """
         str1 = f'{self._stg_type}('
         str2 = f'{self.name})'
@@ -409,10 +448,14 @@ class BaseStrategy:
     def set_pars(self, pars: (tuple, dict)) -> int:
         """设置策略参数，在设置之前对参数的个数进行检查
 
-        input:
-            :param pars: tuple / dict 需要设置的参数
-        return:
-            int: 1: 设置成功，0: 设置失败
+        Parameters
+        ----------
+        pars: tuple or dict of tuples
+            需要设置的参数
+
+        Returns
+        -------
+        int: 1: 设置成功，0: 设置失败
         """
         assert isinstance(pars, (tuple, dict)) or pars is None, \
             f'parameter should be either a tuple or a dict, got {type(pars)} instead'
@@ -428,30 +471,34 @@ class BaseStrategy:
 
     def check_pars(self, pars):
         """检查pars(一个tuple)是否符合strategy的参数设置"""
-        # 逐个检查每个par的类型是否正确，是否在取值范围内
         for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
             if not isinstance(pars, tuple):
                 raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
             if len(pars) != self.par_count:
+                # 如果参数的个数不对，那么抛出异常
                 raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
                                  f' got {len(pars)} ({pars}).')
             if par_type in ['int', 'discr']:
+                # 如果par_type是int或者discr，那么par应该是一个整数
                 try:
                     par = int(par)
                 except Exception:
                     raise Exception(f'Invalid parameter, {par} can not be converted to an integer')
 
             if par_type in ['float', 'conti']:
+                # 如果par_type是float或者conti，那么par应该是一个浮点数
                 try:
                     par = float(par)
                 except Exception:
                     raise Exception(f'Invalid parameter, {par} can not be converted to a float number')
 
             if par_type in ['enum']:
+                # 如果par_type是enum，那么par应该是par_range中的一个元素
                 if par not in par_range:
                     raise ValueError(f'Invalid parameter, {par} should be one of items in ({par_range})')
             else:
                 l_bound, u_bound = par_range
+                # 如果par_type是int或者float，那么par应该在par_range定义的范围内
                 if (par < l_bound) or (par > u_bound):
                     raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
         return True
@@ -459,10 +506,8 @@ class BaseStrategy:
     def set_dict_pars(self, pars: dict) -> int:
         """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
             检查dict的合法性，并设置参数
-
-        :param pars:
-        :return:
         """
+
         if not isinstance(pars, dict):
             raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
         if len(pars) == 0:
@@ -480,24 +525,14 @@ class BaseStrategy:
         self._pars = pars
 
     def set_opt_tag(self, opt_tag: int) -> int:
-        """ 设置策略的优化类型
-
-        input"
-            :param opt_tag: int，0：不参加优化，1：参加优化
-        :return:
-        """
+        """ 设置策略的优化类型"""
         assert isinstance(opt_tag, int), f'optimization tag should be an integer, got {type(opt_tag)} instead'
         assert 0 <= opt_tag <= 2, f'ValueError, optimization tag should be between 0 and 2, got {opt_tag} instead'
         self._opt_tag = opt_tag
         return opt_tag
 
     def set_par_range(self, par_range):
-        """ 设置策略参数的取值范围
-
-        input:
-            :param par_range: 策略的参数取值范围
-        :return:
-        """
+        """ 设置策略参数的取值范围"""
         if par_range is None:
             self._par_bounds_or_enums = []
         else:
@@ -513,13 +548,24 @@ class BaseStrategy:
                       reference_data_types=None):
         """ 设置策略的历史数据回测相关属性
 
-        :param data_freq: str,
-        :param sample_freq: str, 可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        :param window_length: int，表示回测时需要用到的历史数据深度
-        :param data_types: str，表示需要用到的历史数据类型
-        :param bt_price_type: str, 需要用到的历史数据回测价格类型
-        :param reference_data_types: str, 策略运行参考数据类型
-        :return: None
+        Parameters
+        ----------
+        data_freq: str
+            数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+        sample_freq: str
+            采样频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+        window_length: int
+            回测时需要用到的历史数据窗口的长度
+        data_types: str
+            需要用到的历史数据类型
+        bt_price_type: str
+            需要用到的历史数据回测价格类型
+        reference_data_types: str
+            策略运行参考数据类型
+
+        Returns
+        -------
+        None
         """
         if data_freq is not None:
             assert isinstance(data_freq, str), \
@@ -574,10 +620,21 @@ class BaseStrategy:
                  data_idx=None):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
 
-        :param hist_data:
-        :param ref_data:
-        :param trade_data:
-        :param data_idx:
+        Parameters
+        ----------
+        hist_data: np.ndarray
+            策略运行所需的历史数据，包括价格数据、指标数据等
+        ref_data: np.ndarray
+            策略运行所需的参考数据，包括价格数据、指标数据等
+        trade_data: np.ndarray
+            策略运行所需的交易数据，包括价格数据、指标数据等
+        data_idx: int or np.ndarray
+            策略运行所需的历史数据的索引，用于在历史数据中定位当前运行的数据
+
+        Returns
+        -------
+        stg_signal: np.ndarray
+            策略运行的输出，包括交易信号、交易指令等
         """
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
         # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单

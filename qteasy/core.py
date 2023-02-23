@@ -8,8 +8,6 @@
 #   Core functions and Classes of qteasy.
 # ======================================
 
-# here's some test codes
-
 import os
 import pandas as pd
 import numpy as np
@@ -64,103 +62,68 @@ def _loop_step(signal_type: int,
         接受交易信号、交易价格以及期初可用现金和可用股票等输入，加上交易费率等信息计算交易后
         的现金和股票变动值、并计算交易费用
 
-    input：=====
-        :param signal_type:
-            :type signal_type: int
-            信号类型:
-                0 - PT signal
-                1 - PS signal
-                2 - VS signal
+    Parameters
+    ----------
+    signal_type: int
+        信号类型:
+            0 - PT signal
+            1 - PS signal
+            2 - VS signal
+    own_cash: float
+        本次交易开始前持有的现金余额（包括交割中的现金）
+    own_amounts: np.ndarray
+        本次交易开始前持有的资产份额（包括交割中的资产份额）
+    available_cash: np.ndarray
+        本次交易开始前账户可用现金余额（交割中的现金不计入余额）
+    available_amounts: np.ndarray:
+        交易开始前各个股票的可用数量余额（交割中的股票不计入余额）
+    op: np.ndarray
+        本次交易的个股交易信号清单
+    prices: np.ndarray，
+        本次交易发生时各个股票的交易价格
+    buy_fix: float
+        交易成本：固定买入费用
+    sell_fix: float
+        交易成本：固定卖出费用
+    buy_rate: float
+        交易成本：固定买入费率
+    sell_rate: float
+        交易成本：固定卖出费率
+    buy_min: float
+        交易成本：最低买入费用
+    sell_min: float
+        交易成本：最低卖出费用
+    pt_buy_threshold: object Cost
+        当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
+    pt_sell_threshold: object Cost
+        当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
+    maximize_cash_usage: object Cost
+        True:   先卖后买模式
+        False:  先买后卖模式
+    long_pos_limit: float
+        允许建立的多头总仓位与净资产的比值，默认值1.0，表示最多允许建立100%多头仓位
+    short_pos_limit: float
+        允许建立的空头总仓位与净资产的比值，默认值-1.0，表示最多允许建立100%空头仓位
+    allow_sell_short: bool
+        True:   允许买空卖空
+        False:  默认值，只允许买入多头仓位
 
-        :param own_cash:
-            :type own_cash: float
-            本次交易开始前持有的现金余额（包括交割中的现金）
-
-        :param own_amounts:
-            :type own_amounts: np.ndarray
-            本次交易开始前持有的资产份额（包括交割中的资产份额）
-
-        :param available_cash,
-            :type available_cash: np.ndarray
-            本次交易开始前账户可用现金余额（交割中的现金不计入余额）
-
-        :param available_amounts,
-            :type available_amounts: np.ndarray:
-            交易开始前各个股票的可用数量余额（交割中的股票不计入余额）
-
-        :param op,
-            :type op: np.ndarray
-            本次交易的个股交易信号清单
-
-        :param prices：
-            :type prices: np.ndarray，
-            本次交易发生时各个股票的交易价格
-
-        :param buy_fix：
-            :type buy_fix: float
-            交易成本：固定买入费用
-
-        :param sell_fix：
-            :type sell_fix: float
-            交易成本：固定卖出费用
-
-        :param buy_rate：
-            :type buy_rate: float
-            交易成本：固定买入费率
-
-        :param sell_rate：
-            :type sell_rate: float
-            交易成本：固定卖出费率
-
-        :param buy_min：
-            :type buy_min: float
-            交易成本：最低买入费用
-
-        :param sell_min：
-            :type sell_min: float
-            交易成本：最低卖出费用
-
-        :param pt_buy_threshold：
-            :type pt_buy_threshold: object Cost
-            当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
-
-        :param pt_sell_threshold：
-            :type pt_sell_threshold: object Cost
-            当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
-
-        :param maximize_cash_usage：
-            :type maximize_cash_usage: object Cost
-            True:   先卖后买模式
-            False:  先买后卖模式
-
-        :param long_pos_limit：
-            :type long_pos_limit: float
-            允许建立的多头总仓位与净资产的比值，默认值1.0，表示最多允许建立100%多头仓位
-
-        :param short_pos_limit：
-            :type short_pos_limit: float
-            允许建立的空头总仓位与净资产的比值，默认值-1.0，表示最多允许建立100%空头仓位
-
-        :param allow_sell_short：
-            :type allow_sell_short: bool
-            True:   允许买空卖空
-            False:  默认值，只允许买入多头仓位
-
-        :param moq_buy：
-            :type moq_buy: float:
+        :param moq_buy: float:
             投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
-        :param moq_sell：
-            :type moq_sell: float:
+        :param moq_sell: float:
             投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
-    return：===== tuple，包含五个元素
+    Returns
+    -------
+    tuple: (cash_gained, cash_spent, amounts_purchased, amounts_sold, fee)
         cash_gained:        float, 本批次交易中获得的现金增加额
         cash_spent:         float, 本批次交易中共花费的现金总额
         amounts_purchased:  ndarray, 交易后每个个股账户中的股份增加数量
         amounts_sold:       ndarray, 交易后每个个股账户中的股份减少数量
         fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
+
     # 0, 当本期交易信号全为0，且信号类型为1或2时，退出计算，因为此时
     # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
     # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
@@ -438,35 +401,57 @@ def apply_loop(operator: Operator,
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
-    input：=====
-        :param operator: Operator对象, 用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
-        :param start_idx: int: 一个整数，默认为0。模拟交易从交易清单的该序号开始循环
-        :param end_idx: int: 一个整数，默认为-1，模拟交易到交易清单的该序号为止
-        :param trade_price_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
-        :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
-        :param cost_rate: dict: 交易成本率，包含交易费、滑点及冲击成本
-        :param moq_buy: float：每次交易买进的最小份额单位
-        :param moq_sell: float: 每次交易卖出的最小份额单位
-        :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
-        :param pt_signal_timing: str, 控制PT模式下交易信号产生的时机
-        :param pt_buy_threshold: float, PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
-        :param pt_sell_threshold: flaot, PT卖出信号阈值，只有当实际持仓与目标持仓的差值小于该阈值时，才会产生卖出信号
-        :param cash_delivery_period: int, 现金交割周期，默认值为0，单位为天。
-        :param stock_delivery_period: int, 股票交割周期，默认值为0，单位为天。
-        :param allow_sell_short: bool, 是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
-        :param long_pos_limit: float, 允许持有的最大多头仓位比例
-        :param short_pos_limit: flaot, 允许持有的最大空头仓位比例
-        :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
-        :param trade_log: bool: 为True时，输出回测详细日志为csv格式的表格
-        :param price_priority_list: list: 各交易价格的执行顺序列表，列表中0～N数字代表operator中的各个交易价格的序号，各个交易价格
-                将按照列表中的序号顺序执行
+    Parameters
+    ----------
+    operator: Operator
+        用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
+    start_idx: int, Default: 0
+        模拟交易从交易清单的该序号开始循环
+    end_idx: int, Default: None
+        模拟交易到交易清单的该序号为止
+    trade_price_list: object HistoryPanel
+        完整历史价格清单，数据的频率由freq参数决定
+    cash_plan: CashPlan: Default: None
+        资金投资计划，CashPlan对象
+    cost_rate: dict: Default: None
+        交易成本率，包含交易费、滑点及冲击成本
+    moq_buy: float：Default: 100
+        每次交易买进的最小份额单位
+    moq_sell: float: Default: 1
+        每次交易卖出的最小份额单位
+    inflation_rate: float, Default: 0.03
+        现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
+    pt_signal_timing: str, {'lazy', 'eager'}  # TODO: 将参数值'aggressive'改为'eager'
+        控制PT模式下交易信号产生的时机
+    pt_buy_threshold: float, Default: 0.1
+        PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
+    pt_sell_threshold: flaot, Default: 0.1
+        PT卖出信号阈值，只有当实际持仓与目标持仓的差值小于该阈值时，才会产生卖出信号
+    cash_delivery_period: int, Default: 0
+        现金交割周期，默认值为0，单位为天。
+    stock_delivery_period: int, Default: 0
+        股票交割周期，默认值为0，单位为天。
+    allow_sell_short: bool, Default: False
+        是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
+    long_pos_limit: float, Default: 1.0
+        允许持有的最大多头仓位比例
+    short_pos_limit: flaot, Default: -1.0
+        允许持有的最大空头仓位比例
+    max_cash_usage: bool, Default: False
+        是否最大化利用现金，如果为True，则在每次交易时，会将卖出股票的现金用于买入股票
+    trade_log: bool: Default: False
+        为True时，输出回测详细日志为csv格式的表格
+    price_priority_list: list, Default: None
+        各交易价格的执行顺序列表，列表中0～N数字代表operator中的各个交易价格的序号，各个交易价格
+        将按照列表中的序号顺序执行
 
-    output：=====
-        tuple: 包含以下元素：
-        - loop_results:        用于生成交易结果的数据，如持仓数量、交易费用、持有现金以及总资产
-        - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
-        - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
-        - op_list_bt_indices:  交易清单中实际参加回测的行序号
+    Returns
+    -------
+    tuple: (loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices)
+    - loop_results:        用于生成交易结果的数据，如持仓数量、交易费用、持有现金以及总资产
+    - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
+    - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
+    - op_list_bt_indices:  交易清单中实际参加回测的行序号
     """
     if moq_buy == 0:
         assert moq_sell == 0, f'ValueError, if "trade_batch_size" is 0, then ' \
@@ -3183,10 +3168,11 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
         max_rounds:         最大轮数，int，循环次数达到该值时结束循环
         min_volume:         最小体积，float，当参数空间的体积（Volume）小于该值时停止循环
 
-    input:
-        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param op，object，交易信号生成器对象
-        :param config, object, 用于存储交易相关参数的上下文对象
+    Parameters
+    ----------
+    hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+    op，object，交易信号生成器对象
+    config, object, 用于存储交易相关参数的上下文对象
 
     Returns
     -------
