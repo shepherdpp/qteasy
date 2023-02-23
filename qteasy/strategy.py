@@ -643,7 +643,8 @@ class BaseStrategy:
             #  当data_idx为None时输出None？这样在op运行时可以使用data_idx的值控制是否运行策略？
             # data_idx = -1
             return None
-        if isinstance(data_idx, (int, np.int32, np.int64)):
+
+        if isinstance(data_idx, (int, np.int64)):
             # 如果data_idx为整数时，生成单组信号stg_signal
             idx = data_idx
             h_seg = hist_data[idx]
