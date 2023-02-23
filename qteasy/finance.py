@@ -407,7 +407,17 @@ class CashPlan:
             投资的金额，可以是一个数字，也可以是一个数字列表
         interest_rate: float, Default 0.0
             投资的年化收益率，用于计算投资的最终价值
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates='2020-01-01', amounts=10000)
+        >>> plan
+        CashPlan(['20200101'], [10000], 0.0)
+        >>> plan = CashPlan(dates=['2020-01-01', '2020-02-01'], amounts=[10000, 20000])
+        >>> plan
+        CashPlan(['20200101', '20200201'], [10000, 20000], 0.0)
         """
+
         if isinstance(amounts, (int, float)):
             amounts = [amounts]
         assert isinstance(amounts, (list, np.ndarray)), \
@@ -444,6 +454,12 @@ class CashPlan:
         Returns
         -------
         pd.Timestamp
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'], amounts=[10000, 10000, 15000])
+        >>> plan.first_day
+        Timestamp('2020-01-01 00:00:00')
         """
         if self.dates:
             return self.dates[0]
@@ -457,6 +473,12 @@ class CashPlan:
         Returns
         -------
         pd.Timestamp
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'], amounts=[10000, 10000, 15000])
+        >>> plan.last_day
+        Timestamp('2021-01-01 00:00:00')
         """
         if self.dates:
             return self.dates[-1]
@@ -470,6 +492,12 @@ class CashPlan:
         Returns
         -------
         int
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan.period
+        366
         """
         if self.dates:
             return (self.last_day - self.first_day).days
@@ -483,6 +511,12 @@ class CashPlan:
         Returns
         -------
         int
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan.investment_count
+        2
         """
         return len(self.dates)
 
@@ -493,6 +527,14 @@ class CashPlan:
         Returns
         -------
         list of pd.Timestamp
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'], amounts=[10000, 10000, 15000])
+        >>> plan.dates
+        [Timestamp('2020-01-01 00:00:00'),
+         Timestamp('2020-06-01 00:00:00'),
+         Timestamp('2021-01-01 00:00:00')]
         """
         return list(self.plan.index)
 
@@ -503,6 +545,12 @@ class CashPlan:
         Returns
         -------
         list of float
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'], amounts=[10000, 10000, 15000])
+        >>> plan.amounts
+        [10000.0, 15000.0, 10000.0]
         """
         return list(self.plan.amount)
 
@@ -513,6 +561,12 @@ class CashPlan:
         Returns
         -------
         float, 所有投资金额的简单相加
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'], amounts=[10000, 10000, 15000])
+        >>> plan.total
+        35000.0
         """
         return self.plan.amount.sum()
 
@@ -523,6 +577,13 @@ class CashPlan:
         Returns
         -------
         float
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'],
+        ... amounts=[10000, 10000, 15000],
+        ... interest_rate=0.03)
+        >>> plan
+        CashPlan(['20200101', '20200601', '20210101'], [10000, 15000, 10000], 0.03)
+        >>> plan.ir
+        0.03
         """
         return self._ir
 
@@ -535,25 +596,43 @@ class CashPlan:
 
     @property
     def closing_value(self):
-        """ 计算所有投资额按照无风险利率到最后一笔投资当天的终值"""
+        """ 计算所有投资额按照无风险利率到最后一笔投资当天的终值
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'],
+        ... amounts=[10000, 10000, 15000],
+        ... interest_rate=0.03)
+        >>> plan.closing_value
+        35563.06
+        """
         if self.ir == 0:
             return self.total
         else:
             df = self.plan.copy()
             df['days'] = (df.index[-1] - df.index).days
             df['fv'] = df.amount * (1 + self.ir) ** (df.days / 365.)
-            return df.fv.sum()
+            return np.round(df.fv.sum(), 2)
 
     @property
     def opening_value(self):
-        """ 计算所有投资额按照无风险利率在第一个投资日的现值"""
+        """ 计算所有投资额按照无风险利率在第一个投资日的现值
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101', '20200601'],
+        ... amounts=[10000, 10000, 15000],
+        ... interest_rate=0.03)
+        >>> plan.opening_value
+        34524.44
+        """
         if self.ir == 0:
             return self.total
         else:
             df = self.plan.copy()
             df['days'] = (df.index - df.index[0]).days
             df['pv'] = df.amount / (1 + self.ir) ** (df.days / 365.)
-            return df.pv.sum()
+            return np.round(df.pv.sum(), 2)
 
     @property
     def plan(self):
@@ -565,8 +644,8 @@ class CashPlan:
 
         Examples
         --------
-        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> cp.plan
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan.plan
                     amount
         2020-01-01   10000
         2021-01-01   10000
@@ -589,11 +668,11 @@ class CashPlan:
 
         Examples
         --------
-        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> cp
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan
         CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
-        >>> cp.reset_dates(['20200101', '20200601'])
-        >>> cp
+        >>> plan.reset_dates(['20200101', '20200601'])
+        >>> plan
         CashPlan(['20200101', '20200601'], [10000, 10000], 0.0)
         """
         try:
@@ -616,13 +695,13 @@ class CashPlan:
 
         Examples
         --------
-        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> cp
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan
         CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
-        >>> cp.to_dict()
+        >>> plan.to_dict()
         {Timestamp('2020-01-01 00:00:00'): 10000,
          Timestamp('2021-01-01 00:00:00'): 10000}
-        >>> cp.to_dict(['1st invest', '2nd invest'])
+        >>> plan.to_dict(['1st invest', '2nd invest'])
         {'1st invest': 10000, '2nd invest': 10000}
         """
 
@@ -640,8 +719,8 @@ class CashPlan:
 
         Examples
         --------
-        >>> cp = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> cp.info()
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan.info()
         <class 'qteasy.finance.CashPlan'>
         Investment contains multiple entries
         Investment Period from 2020-01-01 to 2021-01-01, lasting 366 days
@@ -682,11 +761,11 @@ class CashPlan:
 
         Examples
         --------
-        >>> cp1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> cp2 = CashPlan(dates=['20200601', '20210101'], amounts=[10000, 10000])
-        >>> cp1 + 10000
+        >>> plan1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan2 = CashPlan(dates=['20200601', '20210101'], amounts=[10000, 10000])
+        >>> plan1 + 10000
         CashPlan(['20200101', '20210101'], [20000, 20000], 0.0)
-        >>> cp1 + cp2
+        >>> plan1 + plan2
         CashPlan(['20200101', '20200601', '20210101'], [10000.0, 10000.0, 20000.0], 0.0)
         """
 
@@ -728,11 +807,11 @@ class CashPlan:
 
         Examples
         --------
-        >>> cp1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> cp2 = CashPlan(dates=['20200601', '20210101'], amounts=[10000, 10000])
-        >>> 10000 + cp1
+        >>> plan1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan2 = CashPlan(dates=['20200601', '20210101'], amounts=[10000, 10000])
+        >>> 10000 + plan1
         CashPlan(['20200101', '20210101'], [20000, 20000], 0.0)
-        >>> cp1 + cp2
+        >>> plan1 + plan2
         CashPlan(['20200101', '20200601', '20210101'], [10000.0, 10000.0, 20000.0], 0.0)
         """
         return self.__add__(other)
@@ -750,7 +829,11 @@ class CashPlan:
 
         Examples
         --------
-
+        >>> plan1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan1 * 2
+        CashPlan(['20200101', '20210101'], [20000, 20000], 0.0)
+        >>> plan1 * 0.5
+        CashPlan(['20200101', '20210101'], [5000.0, 5000.0], 0.0)
         """
         assert isinstance(other, (int, float))
         assert other >= 0
@@ -772,6 +855,14 @@ class CashPlan:
         Returns
         -------
         CashPlan: 新的CashPlan对象
+
+        Examples
+        --------
+        >>> plan1 = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> 2 * plan1
+        CashPlan(['20200101', '20210101', '20220103', '20230104'], [10000, 10000, 10000, 10000], 0.0)
+        >>> 2.5 * plan1
+        CashPlan(['20200101', '20210101'], [25000.0, 25000.0], 0.0)
         """
         assert isinstance(other, (int, float))
         if isinstance(other, int):
@@ -806,11 +897,13 @@ class CashPlan:
             return self.__mul__(other)
 
     def __repr__(self):
-        """
+        """ 打印cash plan
 
-        Returns
-        -------
-        str
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan
+        CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
         """
         dates = self.plan.index.strftime('%Y%m%d').to_list()
         return f'CashPlan({dates}, {self.amounts}, {self.ir})'
@@ -818,17 +911,39 @@ class CashPlan:
     def __str__(self):
         """ 打印cash plan
 
-        :return:
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> print(cp)
+        CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
         """
         return self._cash_plan.__str__()
 
     def __getitem__(self, item):
-        """
+        """ 获取cash plan中某一天的投资金额
 
-        :param item:
-        :return:
+        Parameters
+        ----------
+        item: (int, datetimelike), 用于索引cash plan的索引器
+
+        Returns
+        -------
+        dict, cash plan中的一个部分
+
+        Examples
+        --------
+        >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
+        >>> plan[0]
+        {'amount': 10000}
+        >>> plan['20200101']
+        {'amount': 10000}
+        >>> plan['2020-01-01']
+        {'amount': 10000}
         """
-        return self.plan[item]
+        if isinstance(item, int):
+            return self.plan.iloc[item].to_dict()
+        else:
+            return self.plan.loc[item].to_dict()
 
 
 # TODO: 实现多种方式的定投计划，可定制周期、频率、总金额、单次金额等简单功能，同时还应支持递增累进式定投、按照公式定投等高级功能
