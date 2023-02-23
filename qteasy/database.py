@@ -1060,8 +1060,8 @@ TABLE_MASTERS = {
     'sys_op_live_accounts':
         ['sys_op_live_accounts', '实盘运行基本信息主记录表', 'sys', '', '', '', '', '', '', '', '', ''],
 
-    'sys_op_holdings':
-        ['sys_op_holdings', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', ''],
+    'sys_op_positions':
+        ['sys_op_positions', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', ''],
 
     'sys_op_trade_signals':
         ['sys_op_trade_signals', '实盘运行交易信号记录表', 'sys', '', '', '', '', '', '', '', '', ''],
@@ -2319,7 +2319,7 @@ class DataSource:
         :return:
             DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         file_path_name = self.get_file_path_name(file_name)
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
@@ -3034,7 +3034,7 @@ class DataSource:
         if dnld_data.empty:
             return 0
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         dnld_columns = dnld_data.columns.to_list()
@@ -3347,7 +3347,7 @@ class DataSource:
         else:  # for other unexpected cases
             res_df = pd.DataFrame()
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         if res_df.empty:
             return None
 
@@ -3472,7 +3472,7 @@ class DataSource:
             for val in values[:-1]:
                 sql += f"{val}, "
             sql += f"{values[-1]})\n"
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             try:
                 self.conn.execute(sql)
                 self.conn.commit()
@@ -3489,7 +3489,7 @@ class DataSource:
         next_id = last_id + 1 if last_id is not None else 1
         df = pd.DataFrame(data, index=[next_id], columns=data.keys())
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         # 插入数据
         self.update_table_data(table, df, merge_type='ignore')
 
@@ -4441,7 +4441,7 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     index_frame = df.index.to_frame()
     for col_number, col_name in enumerate(pk_columns):
         df[col_name] = index_frame.iloc[:, col_number]
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     df.index = range(len(df))
     # 此时primary key有可能被放到了columns的最后面，需要将primary key移动到columns的最前面：

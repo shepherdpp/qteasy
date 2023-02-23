@@ -9,7 +9,14 @@
 #   related to live trade.
 # ======================================
 import unittest
-from database import DataSource
+
+import os
+import qteasy as qt
+import pandas as pd
+from pandas import Timestamp
+import numpy as np
+
+from qteasy.database import DataSource
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -34,22 +41,27 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_read_write_signals(self):
         """ test writing trade signals to trade_signal tables in all datasource types"""
+        # TODO: implement this test case
         pass
 
     def test_read_write_results(self):
         """ test writing trade signal results into data tables in all datasource types"""
+        # TODO: implement this test case
         pass
 
     def test_process_account_table(self):
         """ test basic update operation with account table in all datasource types"""
+        # TODO: implement this test case
         pass
 
     def test_process_position_table(self):
         """ test basic operations with position table in all datasource types"""
+        # TODO: implement this test case
         pass
 
     def test_signal_process(self):
         """ full process test of signal process in all datasource types"""
+        # TODO: implement this test case
         pass
 
     def test_live_trade_functions(self):
