@@ -19,33 +19,52 @@ from .space import ResultPool
 # TODO: 改进evaluate：生成完整的evaluate参数DataFrame
 def performance_statistics(performances: list, stats='mean'):
     """ 输入几个不同的评价指标，对它们进行统计分析，并输出统计分析的结果
-        所有输入侧评价指标存储在一个列表中，每个指标都必须是dict类型，且所有的dict结构相同，例如：
+    所有输入侧评价指标存储在一个列表中，每个指标都必须是dict类型，且所有的dict结构相同，
 
-        performances = [{'fv':     20000,
-                         'rtn':    0.12,
-                         'beta':   0.003},
-                        {'fv':     18000,
-                         'rtn':    0.10,
-                         'beta':   0.002},
-                         {'fv':     35070,
-                         'rtn':    0.245,
-                         'beta':   0.013}]
-        上面的performances中含有三组参数的评价指标，每组评价指标中都有fv、rtn、beta三种指标的评分
+    Parameters
+    ----------
+    performances: List:
+        一个列表，包含一个或多个不同的评价指标，所有评价指标
+    stats: str:
+        统计方法，确定输出所有评价指标的统计方法：
+        'mean':     返回所有指标的均值
+        'std':      返回所有指标的标准差
+        'max':      返回所有指标的最大值
+        'min':      返回所有指标的最小值
+        'median':   返回所有指标的中值
 
-    :param performances: List: 一个列表，包含一个或多个不同的评价指标，所有评价指标
-    :param stats: str: 统计方法，确定输出所有评价指标的统计方法：
-                                'mean':     返回所有指标的均值
-                                'std':      返回所有指标的标准差
-                                'max':      返回所有指标的最大值
-                                'min':      返回所有指标的最小值
-                                'median':   返回所有指标的中值
-    :return:
-        dict: 一个字典，其结构和输入的字典结构相同，值为输入数据的统计值
-        例如，如过stats=='max'时，前例输入的输出为：
+    Returns
+    -------
+    dict: 一个字典，其结构和输入的字典结构相同，值为输入数据的统计值
 
+    Examples
+    --------
+    例如：
+    performances = [{'fv':     20000,
+                     'rtn':    0.12,
+                     'beta':   0.003},
+                    {'fv':     18000,
+                     'rtn':    0.10,
+                     'beta':   0.002},
+                     {'fv':     35070,
+                     'rtn':    0.245,
+                     'beta':   0.013}]
+    上面的performances中含有三组参数的评价指标，每组评价指标中都有fv、rtn、beta三种指标的评分
+
+    >>> performance_statistics(performances, stats='mean')
+        res = {'fv':     24356.666666666668,
+               'rtn':    0.155,
+               'beta':   0.006}
+
+    >>> performance_statistics(performances, stats='max')
         res = {'fv':     35070,
                'rtn':    0.245,
                'beta':   0.013}
+
+    >>> performance_statistics(performances, stats='min')
+        res = {'fv':     18000,
+               'rtn':    0.10,
+               'beta':   0.002}
 
     """
     assert isinstance(performances, list), \
@@ -116,45 +135,54 @@ def evaluate(looped_values: pd.DataFrame,
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
         返回一个dict，包含所有需要的indicators
 
-        这里生成的indicators包含：
-        - final_value:        回测区间最后一天的总资产金额
-        - loop_start:        回测区间起始日
-        - loop_end:          回测区间终止日
-        - complete_values:   完整的回测历史价格记录
-                             此DF包含的数据如下：
-                             - stocks;
-                             - operation fee;
-                             - own cash;
-                             - total value;
-                             - indicators like rolling sharp/rolling alpha/rolling beta/rolling volatility
-        - days:              回测历史周期总天数
-        - months:            回测历史周期总月数
-        - years:             回测历史周期年份数
-        - oper_count         操作数量
-        - total_invest       总投入资金数量
-        - total_fee          总交易费用
-        - rtn:               回测的总回报率
-        - annual_rtn:        回测的年均回报率
-        - mdd:               最大回测
-        - peak_date:         最大回测峰值日期
-        - valley_date:       最大回测谷值日期
-        - volatility:        回测区间波动率（最后一日波动率）
-        - ref_rtn:           benchmark参照指标的回报率
-        - ref_annual_rtn:    benchmark参照指标的年均回报率
-        - beta:              回测区间的beta值
-        - sharp:             回测区间的夏普率
-        - alpha:             回测区间的阿尔法值
-        - info:              回测区间的信息比率
-        - worst_drawdowns    一个DataFrame，五次最大的回撤记录
-        TODO: 增加Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
-    input:
-        :param looped_values:
-        :param hist_benchmark: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
-        :param benchmark_data: 参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
-        :param cash_plan: 投资计划
-        :param indicators: 评价指标，逗号分隔的多个评价指标
-    :return:
-        performance_dict: dict: 一个字典，每个指标的各种值
+    这里生成的indicators包含：
+    - final_value:        回测区间最后一天的总资产金额
+    - loop_start:        回测区间起始日
+    - loop_end:          回测区间终止日
+    - complete_values:   完整的回测历史价格记录
+                         此DF包含的数据如下：
+                         - stocks;
+                         - operation fee;
+                         - own cash;
+                         - total value;
+                         - indicators like rolling sharp/rolling alpha/rolling beta/rolling volatility
+    - days:              回测历史周期总天数
+    - months:            回测历史周期总月数
+    - years:             回测历史周期年份数
+    - oper_count         操作数量
+    - total_invest       总投入资金数量
+    - total_fee          总交易费用
+    - rtn:               回测的总回报率
+    - annual_rtn:        回测的年均回报率
+    - mdd:               最大回测
+    - peak_date:         最大回测峰值日期
+    - valley_date:       最大回测谷值日期
+    - volatility:        回测区间波动率（最后一日波动率）
+    - ref_rtn:           benchmark参照指标的回报率
+    - ref_annual_rtn:    benchmark参照指标的年均回报率
+    - beta:              回测区间的beta值
+    - sharp:             回测区间的夏普率
+    - alpha:             回测区间的阿尔法值
+    - info:              回测区间的信息比率
+    - worst_drawdowns    一个DataFrame，五次最大的回撤记录
+    TODO: 增加Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
+
+    Parameters
+    ----------
+    looped_values: pd.DataFrame:
+        回测区间的历史价格记录
+    hist_benchmark: pd.DataFrame,
+        参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
+    benchmark_data: pd.DataFrame,
+        参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
+    cash_plan: CashPlan,
+        投资计划
+    indicators: str, Default: 'final_value'
+        评价指标，逗号分隔的多个评价指标
+
+    Returns
+    -------
+    performance_dict: dict: 一个字典，每个指标的各种值
     """
     indicator_list = str_to_list(indicators)
     performance_dict = dict()
@@ -220,8 +248,14 @@ def evaluate(looped_values: pd.DataFrame,
 def _get_yearly_span(value_df: pd.DataFrame) -> float:
     """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
 
-    :param value_df: pd.DataFrame, 回测结果
-    :return:
+    Parameters
+    ----------
+    value_df: pd.DataFrame
+        回测结果
+
+    Returns
+    -------
+    total_year: float
     """
     if not isinstance(value_df, pd.DataFrame):
         raise TypeError(f'Looped value should be a pandas DataFrame, got {type(value_df)} instead!')
@@ -242,10 +276,15 @@ def _get_yearly_span(value_df: pd.DataFrame) -> float:
 def eval_benchmark(looped_value, reference_value, reference_data):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
 
-        :param looped_value:
-        :param reference_value:
-        :param reference_data:
-        :return:
+    Parameters
+    ----------
+    looped_value:
+    reference_value:
+    reference_data:
+
+    Returns
+    -------
+    tuple: (total_rtn, annual_rtn)
     """
     total_year = _get_yearly_span(looped_value)
     try:
@@ -264,12 +303,23 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     超额收益和期望收益的差额即α系数。
 
     阿尔法比率 alpha Ratio。具体计算方式为 (投资组合年化收益 - 无风险收益) - b × (基准组合年化收益 - 无风险收益)，
-    :param risk_free_ror: 无风险利率，默认值设置为0.35%
-    :param looped_value:
-    :param total_invest: float 总投资金额
-    :param reference_value:
-    :param reference_data:
-    :return:
+
+    Parameters
+    ----------
+    risk_free_ror: float
+        无风险利率，默认值设置为0.35%
+    looped_value: pd.DataFrame
+        回测结果
+    total_invest: float
+        总投资金额
+    reference_value: pd.DataFrame
+        参考标准
+    reference_data: str
+        参考标准数据名称
+
+    Returns
+    -------
+    alpha: float
     """
     loop_len = len(looped_value)
     # 计算alpha的过程需要用到beta，如果beta不存在则需要先计算beta
@@ -306,10 +356,18 @@ def eval_beta(looped_value, reference_value, reference_data):
 
     具体计算方法为 策略每日收益与基准组合每日收益的协方差 / 基准组合每日收益的方差 。
 
-    :param looped_value: pandas.DataFrame, 回测结果，需要计算Beta的股票价格或投资收益历史价格
-    :param reference_value: pandas.DataFrame, 参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
-    :param reference_data: str: 参考结果的数据类型，如close, open, low 等
-    :return:
+    Parameters
+    ----------
+    looped_value:pd.DataFrame,
+        回测结果，需要计算Beta的股票价格或投资收益历史价格
+    reference_value: pd.DataFrame,
+        参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
+    reference_data: str:
+        参考结果的数据类型，如close, open, low 等
+
+    Returns
+    -------
+    beta: float
     """
     if not isinstance(reference_value, pd.DataFrame):
         raise TypeError(f'reference value should be pandas DataFrame, got {type(reference_value)} instead!')
@@ -339,7 +397,12 @@ def eval_sharp(looped_value, riskfree_interest_rate: float = 0.0035):
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
 
-    :param looped_value:
+    Parameters
+    ----------
+    looped_value: pd.DataFrame,
+        回测结果，需要计算sharp率的股票价格或投资收益历史价格
+    riskfree_interest_rate: float, Default: 0.0035
+        无风险利率，用于计算超额收益，通常使用国债收益率作为无风险利率，如2019年国债收益率为3.35%，则riskfree_interest_rate=0.0035
     :return:
     """
     loop_len = len(looped_value)
@@ -361,9 +424,16 @@ def eval_sharp(looped_value, riskfree_interest_rate: float = 0.0035):
 def eval_volatility(looped_value, logarithm: bool = True):
     """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差。可以使用logarithm参数指定是否计算对数收益率
 
-    :param looped_value:
-    :parma logarithm: 是否计算指数收益率，默认为True，计算对数收益率，为False时计算常规收益率
-    :return:
+    Parameters
+    ----------
+    looped_value: pd.DataFrame,
+        回测结果，需要计算volatility的股票价格或投资收益历史价格
+    logarithm: bool, Default: True
+        是否计算指数收益率，默认为True，计算对数收益率，为False时计算常规收益率
+
+    Returns
+    -------
+    volatility: float
     """
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
@@ -388,8 +458,14 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
         information ratio = (portfolio return - reference return) / tracking error
 
-    :param looped_value:
-    :return:
+    Parameters
+    ----------
+    looped_value: pd.DataFrame,
+        回测结果，需要计算info_ratio的股票价格或投资收益历史价格
+
+    Returns
+    -------
+    info_ratio: float
     """
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
     ref = reference_value[reference_data]
@@ -402,8 +478,14 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
 def eval_calmar(looped_value):
     """ Calmar ratio, 卡尔玛比率，定义为平均年化收益率与最大回撤比率的比值，定义每一份回撤获得多大的年化收益
 
-    :param looped_value:
-    :return:
+    Parameters
+    ----------
+    looped_value: pd.DataFrame,
+        回测结果，需要计算calmar的股票价格或投资收益历史价格
+
+    Returns
+    -------
+    calmar: float
     """
     value = looped_value['value']
     cummax = value.cummax()
@@ -425,13 +507,19 @@ def eval_max_drawdown(looped_value):
         除了计算最大回撤以外，同时还找到最大的五个回撤区间，分别找到他们的峰值日期、谷值日期、回撤率、回复日期
         并将上述信息放入一个DataFrame中与最大回撤相关数据一起返回
 
-    :param looped_value: pd.DataFrame, 完整的回测历史价值数据，包括价格、现金、总价值
-    :return:
-        - max_drawdown: 最大回撤
-        - peak_date: 峰值日期
-        - valley_date: 谷值日期
-        - recover_date: 回撤恢复日期
-        - dd_df:   完整的DataFrame，包含最大的五个回撤区间的全部信息
+    Parameters
+    ----------
+    looped_value: pd.DataFrame,
+        完整的回测历史价值数据，包括价格、现金、总价值
+
+    Returns
+    -------
+    tuple: (max_drawdown, peak_date, valley_date, recover_date, dd_df)
+    max_drawdown: 最大回撤
+    peak_date: 峰值日期
+    valley_date: 谷值日期
+    recover_date: 回撤恢复日期
+    dd_df:   完整的DataFrame，包含最大的五个回撤区间的全部信息
     """
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
@@ -478,12 +566,16 @@ def eval_fv(looped_val):
 
     '投资模拟期最后一个交易日的资产总值
 
-    input:
-        :param looped_val，ndarray，回测器生成输出的交易模拟记录
-    return:
-        perf: float，应用该评价方法对回测模拟结果的评价分数
+    Parameters
+    ----------
+    looped_val: ndarray，
+        回测器生成输出的交易模拟记录
 
-"""
+    Returns
+    -------
+    perf: float，应用该评价方法对回测模拟结果的评价分数
+
+    """
     if not isinstance(looped_val, pd.DataFrame):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_val)} instead')
     if looped_val.empty:
@@ -507,10 +599,21 @@ def eval_return(looped_val, cash_plan):
 
     '滚动计算回测收益的年化收益率和总收益率，输出最后一天的总收益率和年化收益率
 
-    :param looped_val:
-    :param cash_plan:
-    :return: tuple
-        total_return, yearly_return
+    Parameters
+    ----------
+    looped_val: pd.DataFrame，
+        回测器生成输出的交易模拟记录
+    cash_plan: qteasy.CashPlan，
+        回测器生成的资金计划
+
+    Returns
+    -------
+    tuple: (perf, annual_perf, skew, kurtosis, looped_val)
+    perf: float，应用该评价方法对回测模拟结果的评价分数
+    annual_perf: float，应用该评价方法对回测模拟结果的评价分数
+    skew: float，应用该评价方法对回测模拟结果的评价分数
+    kurtosis: float，应用该评价方法对回测模拟结果的评价分数
+    looped_val: pd.DataFrame，回测器生成输出的交易模拟记录
     """
     assert isinstance(looped_val, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
@@ -579,11 +682,25 @@ def eval_operation(looped_value, cash_plan):
     2，总投资额
     3，总交易费用
     4，回测时间长度, 分别用年、月、日数表示，年的类型为float，月和日的类型都是int
-～
-    :param looped_value:
-    :param cash_plan:
-    :return:
+
+    Parameters
+    ----------
+    looped_value: pd.DataFrame
+        回测器生成输出的交易模拟记录
+    cash_plan: qteasy.CashPlan
+        回测器生成输出的资金计划
+
+    Returns
+    -------
+    tuple: (total_days, total_months, total_years, total_trades, total_invest, total_fee)
+    total_days: int 回测时间长度，以日数表示
+    total_months: int 回测时间长度，以月数表示
+    total_years: float 回测时间长度，以年数表示
+    total_trades: pd.DataFrame 总交易次数，包括买入、卖出、总操作次数
+    total_invest: float 总投资额
+    total_fee: float 总交易费用
     """
+
     total_rounds = len(looped_value.index)
     total_days = (looped_value.index[-1] - looped_value.index[0]).days
     total_years = total_days / 365.

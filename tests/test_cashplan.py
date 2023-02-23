@@ -61,7 +61,7 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(self.cp1.ir, 0.1)
         self.assertAlmostEqual(self.cp1.closing_value, 34200)
         self.assertAlmostEqual(self.cp2.closing_value, 10000)
-        self.assertAlmostEqual(self.cp3.closing_value, 220385.3483685)
+        self.assertAlmostEqual(self.cp3.closing_value, 220385.35)
         self.assertIsInstance(self.cp1.plan, pd.DataFrame)
         self.assertIsInstance(self.cp2.plan, pd.DataFrame)
         self.assertIsInstance(self.cp3.plan, pd.DataFrame)
@@ -158,3 +158,4 @@ class TestCashPlan(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    

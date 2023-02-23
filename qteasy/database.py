@@ -2156,8 +2156,10 @@ class DataSource:
                 self.file_type = None
                 self.file_path = None
             except Exception as e:
-                warnings.warn(f'{str(e)}, data source fall back to file system', RuntimeWarning)
+                warnings.warn(f'{str(e)}, Can not set data source type to "db",'
+                              f' will fall back to default type', RuntimeWarning)
                 source_type = 'file'
+                file_type = 'csv'
 
         if source_type.lower() == 'file':
             # set up file type and file location
@@ -2491,15 +2493,24 @@ class DataSource:
 
     def write_database(self, df, db_table):
         """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
-        与db_table的schema相同
+        与db_table的schema相同且顺序也相同
 
-        ** 注意 ** 通常情况下不要使用这个函数写入数据到数据表。因为这个函数并不会检查
-        写入的数据是否存在冲突的键值，如果键值冲突时，会导致错误
+        Parameter
+        ---------
+        df: pd.DataFrame
+            需要添加的DataFrame
+        db_table: str
+            需要添加数据的数据库表
 
-        :param df: 需要添加的DataFrame
-        :param db_table: 需要添加数据的数据库表
-        :return:
-            None
+        Returns
+        -------
+        int: 返回写入的记录数
+
+        Note
+        ----
+        当数据库表中已经存在数据时，如果不希望已经存在的数据被替换掉，
+        不要使用这个函数写入数据。因为这个函数并不会检查数据是否存在冲突
+        的键值，如果键值冲突时，df中的数据会覆盖数据库中的数据。
         """
         try:
             df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
@@ -2896,14 +2907,14 @@ class DataSource:
             -ignore: 默认方式，将全部数据写入数据库表的末尾
             -update: 将数据写入数据库表中，如果遇到重复的pk则修改表中的内容
 
+        Returns
+        -------
+        int: 写入的数据条数 TODO: 此返回值需要实现
+
         Notes
         -----
         注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查
-        请使用update_table_data()来更新或写入数据到本地数据库
-
-        Returns
-        -------
-        int: 写入的数据行数
+        请使用update_table_data()来更新或写入数据到本地
         """
 
         assert isinstance(df, pd.DataFrame)
@@ -3011,17 +3022,21 @@ class DataSource:
             3，如果datasource type是"file"，将下载的数据与本地数据合并并去重
             返回处理完毕的dataFrame
 
-        :param table: str, 数据表名，必须是database中定义的数据表
-        :param merge_type: str
+        Parameters
+        ----------
+        table: str,
+            数据表名，必须是database中定义的数据表
+        merge_type: str
             指定如何合并下载数据和本地数据：
             - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据
             - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
-        :param df: pd.DataFrame 通过传递一个DataFrame获取数据
+        df: pd.DataFrame
+            通过传递一个DataFrame获取数据
             如果数据获取渠道为"df"，则必须给出此参数
 
         Returns
         -------
-        int: 返回合并后的数据行数
+        int, 写入数据表中的数据的行数 TODO: 返回值需要实现
         """
         if not isinstance(df, pd.DataFrame):
             raise TypeError(f'df should be a dataframe, got {type(df)} instead')
@@ -4115,18 +4130,23 @@ class DataSource:
             return False
 
 
-# 以下函数是通用df操作函数
+# 以下是通用dataframe操作函数
 def set_primary_key_index(df, primary_key, pk_dtypes):
     """ df是一个DataFrame，primary key是df的某一列或多列的列名，将primary key所指的
     列设置为df的行标签，设置正确的时间日期格式，并删除primary key列后返回新的df
 
-    :param df: 需要操作的DataFrame
-    :param primary_key:
-        List，需要设置为行标签的列名，所有列名必须出现在df的列名中
-    :param pk_dtypes:
-        List, 需要设置为行标签的列的数据类型，日期数据需要小心处理
-    :return:
-        None
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的DataFrame
+    primary_key: list of str
+        需要设置为行标签的列名，所有列名必须出现在df的列名中
+    pk_dtypes: list of str
+        需要设置为行标签的列的数据类型，日期数据需要小心处理
+
+    Returns
+    -------
+    None
     """
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
@@ -4166,78 +4186,90 @@ def _resample_data(hist_data, target_freq,
     """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
     符合target_freq
 
-    :param hist_data: pd.DataFrame
+    Parameters
+    ----------
+    hist_data: pd.DataFrame
         历史数据，是一个index为日期/时间的DataFrame
-
-    :param target_freq: str
+    target_freq: str
         历史数据的目标频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
          如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
-
-    :param method: str
+    method: str
         调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
         数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
-        例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
-        数据合并方法:
-        - 'last'/'close': 使用合并区间的最后一个值。如：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'first'/'open': 使用合并区间的第一个值。如：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'max'/'high': 使用合并区间的最大值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'min'/'low': 使用合并区间的最小值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'avg'/'mean': 使用合并区间的平均值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-        - 'sum'/'total': 使用合并区间的平均值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+        降频可用的methods有：
+        - 'last'/'close': 使用合并区间的最后一个值
+        - 'first'/'open': 使用合并区间的第一个值
+        - 'max'/'high': 使用合并区间的最大值作为合并值
+        - 'min'/'low': 使用合并区间的最小值作为合并值
+        - 'mean'/'average': 使用合并区间的平均值作为合并值
+        - 'sum/total': 使用合并区间的总和作为合并值
 
         数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
-        例如，填充下列数据(?表示插入的数据）
-            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
-        缺失数据的填充方法如下:
-        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
-        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
-        - 'nan': 使用NaN值填充缺失数据：
-            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
-        - 'zero': 使用0值填充缺失数据：
-            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
-
-    :param b_days_only: bool 默认True
+        升频可用的methods有：
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'nan': 使用NaN值填充缺失数据
+        - 'zero': 使用0值填充缺失数据
+    b_days_only: bool 默认True
         是否强制转换自然日频率为工作日，即：
         'D' -> 'B'
         'W' -> 'W-FRI'
         'M' -> 'BM'
-
-    :param trade_time_only: bool, 默认True
+    trade_time_only: bool, 默认True
         为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
-
-    :param forced_start: str, Datetime like, 默认None
+    forced_start: str, Datetime like, 默认None
         强制开始日期，如果为None，则使用hist_data的第一天为开始日期
-
-    :param forced_start: str, Datetime like, 默认None
+    forced_start: str, Datetime like, 默认None
         强制结束日期，如果为None，则使用hist_data的最后一天为结束日期
-
-    :param **kwargs:
+    **kwargs:
         用于生成trade_time_index的参数，包括：
-        :param include_start:   日期时间序列是否包含开始日期/时间
-        :param include_end:     日期时间序列是否包含结束日期/时间
-        :param start_am:        早晨交易时段的开始时间
-        :param end_am:          早晨交易时段的结束时间
-        :param include_start_am:早晨交易时段是否包括开始时间
-        :param include_end_am:  早晨交易时段是否包括结束时间
-        :param start_pm:        下午交易时段的开始时间
-        :param end_pm:          下午交易时段的结束时间
-        :param include_start_pm 下午交易时段是否包含开始时间
-        :param include_end_pm   下午交易时段是否包含结束时间
+        include_start:   日期时间序列是否包含开始日期/时间
+        include_end:     日期时间序列是否包含结束日期/时间
+        start_am:        早晨交易时段的开始时间
+        end_am:          早晨交易时段的结束时间
+        include_start_am:早晨交易时段是否包括开始时间
+        include_end_am:  早晨交易时段是否包括结束时间
+        start_pm:        下午交易时段的开始时间
+        end_pm:          下午交易时段的结束时间
+        include_start_pm 下午交易时段是否包含开始时间
+        include_end_pm   下午交易时段是否包含结束时间
 
-    :return:
-        DataFrame:
-        一个重新设定index并填充好数据的历史数据DataFrame
+    Returns
+    -------
+    DataFrame:
+    一个重新设定index并填充好数据的历史数据DataFrame
+
+    Examples
+    --------
+    例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+    数据合并方法:
+    - 'last'/'close': 使用合并区间的最后一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'first'/'open': 使用合并区间的第一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'max'/'high': 使用合并区间的最大值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'min'/'low': 使用合并区间的最小值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+    - 'sum'/'total': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+    例如，填充下列数据(?表示插入的数据）
+        [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+    缺失数据的填充方法如下:
+    - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+    - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+    - 'nan': 使用NaN值填充缺失数据：
+        [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+    - 'zero': 使用0值填充缺失数据：
+        [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
     """
 
     if not isinstance(target_freq, str):
@@ -4343,21 +4375,40 @@ def _trade_time_index(start=None,
                       include_end_pm=True):
     """ 生成一个符合交易时间段的datetime index
 
-    :param start:           日期时间序列的开始日期/时间
-    :param end:             日期时间序列的终止日期/时间
-    :param periods:         日期时间序列的分段数量
-    :param freq:            日期时间序列的频率
-    :param include_start:   日期时间序列是否包含开始日期/时间
-    :param include_end:     日期时间序列是否包含结束日期/时间
-    :param start_am:        早晨交易时段的开始时间
-    :param end_am:          早晨交易时段的结束时间
-    :param include_start_am:早晨交易时段是否包括开始时间
-    :param include_end_am:  早晨交易时段是否包括结束时间
-    :param start_pm:        下午交易时段的开始时间
-    :param end_pm:          下午交易时段的结束时间
-    :param include_start_pm 下午交易时段是否包含开始时间
-    :param include_end_pm   下午交易时段是否包含结束时间
-    :return:
+    Parameters
+    ----------
+    start: datetime like str,
+        日期时间序列的开始日期/时间
+    end: datetime like str,
+        日期时间序列的终止日期/时间
+    periods: int
+        日期时间序列的分段数量
+    freq: str, {'min', 'h', 'd', 'M'}
+        日期时间序列的频率
+    include_start: bool, Default True
+        日期时间序列是否包含开始日期/时间
+    include_end: bool, Default True
+        日期时间序列是否包含结束日期/时间
+    start_am: datetime like str, Default '9:30:00'
+        早晨交易时段的开始时间
+    end_am: datetime like str, Default '11:30:00'
+        早晨交易时段的结束时间
+    include_start_am: bool, Default True
+        早晨交易时段是否包括开始时间
+    include_end_am: bool, Default True
+        早晨交易时段是否包括结束时间
+    start_pm: datetime like str, Default '13:00:00'
+        下午交易时段的开始时间
+    end_pm: datetime like str, Default '15:00:00'
+        下午交易时段的结束时间
+    include_start_pm: bool, Default False
+        下午交易时段是否包含开始时间
+    include_end_pm: bool, Default True
+        下午交易时段是否包含结束时间
+
+    Returns
+    -------
+    time_index: pd.DatetimeIndex
     """
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
     if freq is not None:
@@ -4415,14 +4466,34 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     ----------
     df: pd.DataFrame
         需要操作的df
-    primary_key: list of str
-        被判定为主键的列名称，如果
-    pk_dtypes:
-        被判定为主键
+    primary_key: list
+        primary key的名称
+    pk_dtypes: list
+        primary key的数据类型
 
     Returns
     -------
-        DataFrame
+    df: pd.DataFrame
+
+    #TODO: 下面的Example由Copilot生成，需要检查
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df = set_primary_key_frame(df, ['a'], [int])
+    >>> df
+         a  b
+    0    1  4
+    1    2  5
+    2    3  6
+    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> df
+         b
+    a
+    1    4
+    2    5
+    3    6
+
+
     """
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
@@ -4459,11 +4530,44 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
 def set_datetime_format_frame(df, primary_key, pk_dtypes):
     """ 根据primary_key的rule为df的主键设置正确的时间日期类型
 
-    :param df: 需要操作的df
-    :param primary_key: 主键列
-    :param pk_dtypes: 主键数据类型，主要关注"date" 和"TimeStamp"
-    :return:
-        None
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的df
+    primary_key: list of str
+        主键列
+    pk_dtypes: list of str
+        主键数据类型，主要关注"date" 和"TimeStamp"
+
+    Returns
+    -------
+    None
+
+    # TODO: 下面的Example由Copilot生成，需要检查
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df = set_primary_key_frame(df, ['a'], [int])
+    >>> df
+            a  b
+    0    1    4
+    1    2    5
+    2    3    6
+    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> df
+            b
+    a
+    1    4
+    2    5
+    3    6
+    >>> set_datetime_format_frame(df, ['a'], ['date'])
+    >>> df
+            b
+    a
+    1970-01-01 00:00:00.000000001    4
+    1970-01-01 00:00:00.000000002    5
+    1970-01-01 00:00:00.000000003    6
+
     """
     # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     if ("date" in pk_dtypes) or ("TimeStamp" in pk_dtypes):
@@ -4480,11 +4584,54 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
         如果主键类型为string，则给出一个list，包含所有的元素
         如果主键类型为date，则给出上下界
 
-    :param df: 需要操作的df
-    :param primary_key: 以列表形式给出的primary_key列名
-    :param pk_dtypes: primary_key的数据类型
-    :return:
-        dict，形式为{primary_key1: [values], 'start': start_date, 'end': end_date}
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的df
+    primary_key: list
+        以列表形式给出的primary_key列名
+    pk_dtypes: list
+        primary_key的数据类型
+
+    Returns
+    -------
+    dict，形式为{primary_key1: [values], 'start': start_date, 'end': end_date}
+
+    # TODO: 下面的Example由Copilot生成，需要检查
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df
+            a  b
+    0    1    4
+    1    2    5
+    2    3    6
+    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> df
+            b
+    a
+    1    4
+    2    5
+    3    6
+    >>> get_primary_key_range(df, ['a'], ['int'])
+    {'shares': [1, 2, 3]}
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df = set_primary_key_frame(df, ['a'], ['date'])
+    >>> df
+            a  b
+    0    1    4
+    1    2    5
+    2    3    6
+    >>> df = set_primary_key_index(df, ['a'], ['date'])
+    >>> df
+            b
+    a
+    1970-01-01 00:00:00.000000001    4
+    1970-01-01 00:00:00.000000002    5
+    1970-01-01 00:00:00.000000003    6
+    >>> get_primary_key_range(df, ['a'], ['date'])
+    {'start': Timestamp('1970-01-01 00:00:00.000000001'), 'end': Timestamp('1970-01-01 00:00:00.000000003')}
+
     """
     if df.index.name is not None:
         df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
@@ -4504,15 +4651,16 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
         仅支持精确匹配。无法精确匹配数据表时，报错
 
-    :param htypes: (str, list)
+    Parameters
+    ----------
+    htypes: str or list of str
         需要查找的的数据类型，该数据类型必须能在data_table_map中找到，包括所有内置数据类型，
         也包括自定义数据类型（自定义数据类型必须事先添加到data_table_map中），
         否则会被忽略
         当输入类型为str时，可以接受逗号分隔的字符串表示多个不同的data type
         如下面两种输入等效：
         'close, open, high' == ['close', 'open', 'high']
-
-    :param freq: (str, list) default 'd'
+    freq: str or list of str default 'd'
         所需数据的频率，数据频率必须符合标准频率定义，即包含以下关键字：
         min / hour / H / d / w / M / Q / Y
         同时支持含数字或附加信息的频率如：
@@ -4522,13 +4670,11 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
             在已有的data_table_map中查找最接近的freq并输出
         - 如果soft_freq == False:
             该项被忽略
-
-    :param asset_type: (str, list) default 'E'
+    asset_type: (str, list) default 'E'
         所需数据的资产类型。该资产类型必须能在data_table_map中找到，
         否则会被忽略
         输入逗号分隔的多个asset_type等效于多个asset_type的list
-
-    :param method: str
+    method: str
         决定htype和asset_type数据的匹配方式以及输出的数据表数量：
         - 'exact': 完全匹配，针对输入的每一个参数匹配一张数据表
           输出的数据列数量与htype/freq/asset_type的最大数量相同，
@@ -4554,17 +4700,34 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
                  'index_daily':     ['close', 'open'],
                  'stock_indicator': ['pe'],
                  'index_indicator': ['pe']}
-
-    :param soft_freq: bool, default False
+    soft_freq: bool, default False
         决定freq的匹配方式：
         - True: 允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
           失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
           或被忽略(当method为'permute'时)
         - False:不允许不完全匹配的freq，当输入的freq无法匹配时输出None(当method为'exact'时)
 
-    :return:
-        一个dict, key为需要的数据所在数据表，value为该数据表中的数据列:
-        {tables: columns}
+    Returns
+    -------
+    matched_tables: dict
+    key为需要的数据所在数据表，value为该数据表中的数据列:
+    {tables: columns}
+
+    TODO: 未来可以考虑增加对freq的soft匹配，即允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
+     失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
+     或被忽略(当method为'permute'时)
+
+    TODO: 下面Example中的输出结果需要更新
+    Examples
+    --------
+    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact')
+    {'stock_daily': ['close', 'open', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='permute')
+    {'stock_daily': ['close', 'open', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact', soft_freq=True)
+    {'stock_daily': ['close', 'open', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='permute', soft_freq=True)
+    {'stock_daily': ['close', 'open', 'high']}
     """
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
@@ -4674,9 +4837,28 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
 def freq_dither(freq, freq_list):
     """ 频率抖动，将一个目标频率抖动到频率列表中的一个频率上，
 
-    :param freq:
-    :param freq_list:
-    :return:
+    Parameters
+    ----------
+    freq: str
+        目标频率
+    freq_list: list of str
+        频率列表
+
+    Returns
+    -------
+    dithered_freq: str
+        抖动后的频率
+
+    Examples
+    --------
+    >>> freq_dither('M', ['Q', 'A'])
+    'Q'
+    >>> freq_dither('Q', ['M', 'A'])
+    'M'
+    >>> freq_dither('A', ['M', 'Q'])
+    'M'
+    >>> freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm'])
+    '15MIN'
     """
     """抖动算法如下：
             0，从频率string中提取目标qty，目标主频、副频
@@ -4719,6 +4901,7 @@ def get_main_freq(freq):
     Parameters
     ----------
     freq: str
+        一个频率字符串
 
     Returns
     -------
@@ -4729,10 +4912,14 @@ def get_main_freq(freq):
 
     Examples
     --------
-    >>> get_main_freq('25d') -> (25, 'D', '')
-    >>> get_main_freq('w-Fri') -> (1, 'W', 'Fri')
-    >>> get_main_freq('75min') -> (5, '15MIN', '')
-    >>> get_main_freq('90min') -> (3, '30MIN', '')
+    >>> get_main_freq('25d')
+    (25, 'D', '')
+    >>> get_main_freq('w-Fri')
+    (1, 'W', 'Fri')
+    >>> get_main_freq('75min')
+    (5, '15MIN', '')
+    >>> get_main_freq('90min')
+    (3, '30MIN', '')
     """
 
     import re
@@ -4870,7 +5057,10 @@ def get_dtype_map():
 def get_table_map():
     """ 获取所有内置数据表的清单
 
-    :return:
+    Returns
+    -------
+    pd.DataFrame
+    数据表清单
     """
     table_map = pd.DataFrame(TABLE_MASTERS).T
     table_map.columns = TABLE_MASTER_COLUMNS
@@ -4908,15 +5098,14 @@ def find_history_data(s, fuzzy=False, match_description=False):
     --------
     >>> import qteasy as qt
     >>> qt.find_history_data('pe')
-    output:
-        matched following history data,
-        use "qt.get_history_panel()" to load these data:
-        ------------------------------------------------------------------------
-          h_data   dtype             table asset freq plottable                remarks
-        0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
-        1     pe  double  stock_indicator2     E    d        No                  市盈(动)
-        2     pe   float   index_indicator   IDX    d        No                    市盈率
-        ========================================================================
+    matched following history data,
+    use "qt.get_history_panel()" to load these data:
+    ------------------------------------------------------------------------
+      h_data   dtype             table asset freq plottable                remarks
+    0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
+    1     pe  double  stock_indicator2     E    d        No                  市盈(动)
+    2     pe   float   index_indicator   IDX    d        No                    市盈率
+    ========================================================================
 
     Raises
     ------
@@ -4931,8 +5120,6 @@ def find_history_data(s, fuzzy=False, match_description=False):
     # TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
     #
     # TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
-    #
-    # TODO: 增加函数的易用性：函数返回一个列表，包含查找到的所有数据类型的ID
     if not isinstance(s, str):
         raise TypeError(f'input should be a string, got {type(s)} instead.')
     # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述

@@ -39,6 +39,43 @@ class BaseStrategy:
                  data_types: [str, list] = 'close',
                  bt_price_type: str = 'close',
                  reference_data_types: [str, list] = ''):
+        """ 初始化策略
+
+        Parameters
+        ----------
+        pars: any
+            策略参数，可以是任意类型，但是需要根据具体的策略类来确定具体的参数类型
+        opt_tag: int {0, 1}
+            策略的优化标签，0表示不参与优化，1表示参与优化
+        stg_type: str
+            策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
+        name: str
+            策略名称，用户自定义策略的名称，用于区分不同的策略
+        description: str
+            策略描述，用户自定义策略的描述，用于区分不同的策略
+        par_count: int
+            策略可调参数的个数
+        par_types: list of str, {'int', 'float', 'enum'}
+            策略可调参数的类型，每个参数的类型可以是int, float或enum
+        par_range: list or tuple
+            策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
+        data_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略使用的数据频率，可以是日频、周频、月频、季频或年频
+        sample_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略使用的采样频率，可以是日频、周频、月频、季频或年频
+        window_length: int
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
+        data_types: str or list of str
+            策略使用的数据类型，例如close, open, high, low等
+        bt_price_type: str {'open', 'high', 'low', 'close'}
+            策略回测时使用的价格类型，可以是开盘价、收盘价、最高价、最低价等
+        reference_data_types: str or list of str
+            策略使用的参考数据类型，例如close, open, high, low等
+
+        Returns
+        -------
+        None
+        """
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
@@ -367,7 +404,9 @@ class BaseStrategy:
         """ 打印对象的代表信息，strategy对象的代表信息即它的名字，其他的属性都是可变的，唯独name是唯一不变的strategy的id
         因此打印的格式为"Timing(macd)"或类似式样
 
-        :return:
+        Returns
+        -------
+        str
         """
         str1 = f'{self._stg_type}('
         str2 = f'{self.name})'
@@ -409,10 +448,14 @@ class BaseStrategy:
     def set_pars(self, pars: (tuple, dict)) -> int:
         """设置策略参数，在设置之前对参数的个数进行检查
 
-        input:
-            :param pars: tuple / dict 需要设置的参数
-        return:
-            int: 1: 设置成功，0: 设置失败
+        Parameters
+        ----------
+        pars: tuple or dict of tuples
+            需要设置的参数
+
+        Returns
+        -------
+        int: 1: 设置成功，0: 设置失败
         """
         assert isinstance(pars, (tuple, dict)) or pars is None, \
             f'parameter should be either a tuple or a dict, got {type(pars)} instead'
@@ -428,30 +471,34 @@ class BaseStrategy:
 
     def check_pars(self, pars):
         """检查pars(一个tuple)是否符合strategy的参数设置"""
-        # 逐个检查每个par的类型是否正确，是否在取值范围内
         for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
             if not isinstance(pars, tuple):
                 raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
             if len(pars) != self.par_count:
+                # 如果参数的个数不对，那么抛出异常
                 raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
                                  f' got {len(pars)} ({pars}).')
             if par_type in ['int', 'discr']:
+                # 如果par_type是int或者discr，那么par应该是一个整数
                 try:
                     par = int(par)
                 except Exception:
                     raise Exception(f'Invalid parameter, {par} can not be converted to an integer')
 
             if par_type in ['float', 'conti']:
+                # 如果par_type是float或者conti，那么par应该是一个浮点数
                 try:
                     par = float(par)
                 except Exception:
                     raise Exception(f'Invalid parameter, {par} can not be converted to a float number')
 
             if par_type in ['enum']:
+                # 如果par_type是enum，那么par应该是par_range中的一个元素
                 if par not in par_range:
                     raise ValueError(f'Invalid parameter, {par} should be one of items in ({par_range})')
             else:
                 l_bound, u_bound = par_range
+                # 如果par_type是int或者float，那么par应该在par_range定义的范围内
                 if (par < l_bound) or (par > u_bound):
                     raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
         return True
@@ -459,10 +506,8 @@ class BaseStrategy:
     def set_dict_pars(self, pars: dict) -> int:
         """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
             检查dict的合法性，并设置参数
-
-        :param pars:
-        :return:
         """
+
         if not isinstance(pars, dict):
             raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
         if len(pars) == 0:
@@ -480,24 +525,14 @@ class BaseStrategy:
         self._pars = pars
 
     def set_opt_tag(self, opt_tag: int) -> int:
-        """ 设置策略的优化类型
-
-        input"
-            :param opt_tag: int，0：不参加优化，1：参加优化
-        :return:
-        """
+        """ 设置策略的优化类型"""
         assert isinstance(opt_tag, int), f'optimization tag should be an integer, got {type(opt_tag)} instead'
         assert 0 <= opt_tag <= 2, f'ValueError, optimization tag should be between 0 and 2, got {opt_tag} instead'
         self._opt_tag = opt_tag
         return opt_tag
 
     def set_par_range(self, par_range):
-        """ 设置策略参数的取值范围
-
-        input:
-            :param par_range: 策略的参数取值范围
-        :return:
-        """
+        """ 设置策略参数的取值范围"""
         if par_range is None:
             self._par_bounds_or_enums = []
         else:
@@ -513,13 +548,24 @@ class BaseStrategy:
                       reference_data_types=None):
         """ 设置策略的历史数据回测相关属性
 
-        :param data_freq: str,
-        :param sample_freq: str, 可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        :param window_length: int，表示回测时需要用到的历史数据深度
-        :param data_types: str，表示需要用到的历史数据类型
-        :param bt_price_type: str, 需要用到的历史数据回测价格类型
-        :param reference_data_types: str, 策略运行参考数据类型
-        :return: None
+        Parameters
+        ----------
+        data_freq: str
+            数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+        sample_freq: str
+            采样频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+        window_length: int
+            回测时需要用到的历史数据窗口的长度
+        data_types: str
+            需要用到的历史数据类型
+        bt_price_type: str
+            需要用到的历史数据回测价格类型
+        reference_data_types: str
+            策略运行参考数据类型
+
+        Returns
+        -------
+        None
         """
         if data_freq is not None:
             assert isinstance(data_freq, str), \
@@ -574,10 +620,21 @@ class BaseStrategy:
                  data_idx=None):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
 
-        :param hist_data:
-        :param ref_data:
-        :param trade_data:
-        :param data_idx:
+        Parameters
+        ----------
+        hist_data: np.ndarray
+            策略运行所需的历史数据，包括价格数据、指标数据等
+        ref_data: np.ndarray
+            策略运行所需的参考数据，包括价格数据、指标数据等
+        trade_data: np.ndarray
+            策略运行所需的交易数据，包括价格数据、指标数据等
+        data_idx: int or np.ndarray
+            策略运行所需的历史数据的索引，用于在历史数据中定位当前运行的数据
+
+        Returns
+        -------
+        stg_signal: np.ndarray
+            策略运行的输出，包括交易信号、交易指令等
         """
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
         # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单
@@ -586,6 +643,7 @@ class BaseStrategy:
             #  当data_idx为None时输出None？这样在op运行时可以使用data_idx的值控制是否运行策略？
             # data_idx = -1
             return None
+
         if isinstance(data_idx, (int, np.int64)):
             # 如果data_idx为整数时，生成单组信号stg_signal
             idx = data_idx
@@ -830,196 +888,196 @@ class FactorSorter(BaseStrategy):
     """ 因子排序选股策略，根据用户定义的选股因子筛选排序后确定每个股票的选股权重(请注意，FactorSorter策略
         生成的交易信号在0到1之间，推荐设置signal_type为"PT")
 
-        这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
-        用户需要在realize()方法中计算选股因子，计算出选股因子后，接下来的排序和选股逻辑都不需要用户自行定义。
-        策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定数量的股票，最后根据它
-        们的因子值分配权重或信号值。
+    这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
+    用户需要在realize()方法中计算选股因子，计算出选股因子后，接下来的排序和选股逻辑都不需要用户自行定义。
+    策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定数量的股票，最后根据它
+    们的因子值分配权重或信号值。
 
-        这些选股因子的排序和筛选条件，由6个选股参数来控制，因此用户只需要在策略属性中设置好相应的参数，
-        策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
-        因子的筛选排序取舍逻辑了。
+    这些选股因子的排序和筛选条件，由6个选股参数来控制，因此用户只需要在策略属性中设置好相应的参数，
+    策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
+    因子的筛选排序取舍逻辑了。
 
-        推荐使用下面的方法创建策略类：
+    推荐使用下面的方法创建策略类：
 
-            Class ExampleStrategy(GeneralStg):
+        Class ExampleStrategy(GeneralStg):
 
-                def realize(self, h, r=None, t=None, pars=None):
+            def realize(self, h, r=None, t=None, pars=None):
 
-                    # 在这里编写信号生成逻辑
-                    ...
-                    factor = ...
-                    # factor代表策略输出的选股因子，用于进一步选股
+                # 在这里编写信号生成逻辑
+                ...
+                factor = ...
+                # factor代表策略输出的选股因子，用于进一步选股
 
-                    return factor
+                return factor
 
-        用下面的方法创建一个策略对象：
+    用下面的方法创建一个策略对象：
 
-            example_strategy = ExampleStrategy(pars=<example pars>,
-                                               name='example',
-                                               description='example strategy',
-                                               data_types='close'
-                                               ...
-                                               )
-            在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
+        example_strategy = ExampleStrategy(pars=<example pars>,
+                                           name='example',
+                                           description='example strategy',
+                                           data_types='close'
+                                           ...
+                                           )
+        在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
 
-        与通用策略类不同，FactorSorter策略需要几个特殊属性用于确定选股行为（以下*者）
-        策略属性如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
+    与通用策略类不同，FactorSorter策略需要几个特殊属性用于确定选股行为（以下*者）
+    策略属性如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
 
-            pars:               tuple,  策略参数
-            opt_tag:            int,    优化标记，策略是否参与参数优化
-            name:               str,    策略名称
-            description:        str,    策略简介
-            par_count:          int,    策略参数个数
-            par_types:          tuple,  策略参数类型
-            par_range:          tuple,  策略参数取值范围
-            data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-            sample_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
-            window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-            bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-            reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                        生成，如指数、宏观经济数据等。
-            *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
-            *condition:         str ,   确定股票的筛选条件，默认值'any'
-                                        'any'        :默认值，选择所有可用股票
-                                        'greater'    :筛选出因子大于ubound的股票
-                                        'less'       :筛选出因子小于lbound的股票
-                                        'between'    :筛选出因子介于lbound与ubound之间的股票
-                                        'not_between':筛选出因子不在lbound与ubound之间的股票
-            *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
-            *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
-            *sort_ascending:    bool,   排序方法，默认值: False, True: 优先选择因子最小的股票, False, 优先选择因子最大的股票
-            *weighting:         str ,   确定如何分配选中股票的权重
-                                        默认值: 'even'
-                                        'even'       :所有被选中的股票都获得同样的权重
-                                        'linear'     :权重根据因子排序线性分配
-                                        'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
-                                        'proportion' :权重与股票的因子分值成正比
+        pars:               tuple,  策略参数
+        opt_tag:            int,    优化标记，策略是否参与参数优化
+        name:               str,    策略名称
+        description:        str,    策略简介
+        par_count:          int,    策略参数个数
+        par_types:          tuple,  策略参数类型
+        par_range:          tuple,  策略参数取值范围
+        data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
+        sample_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
+        window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
+        data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+        bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+        reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
+                                    生成，如指数、宏观经济数据等。
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False, True: 优先选择因子最小的股票, False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
 
-        - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
+    - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
 
-        realize()的定义：
+    realize()的定义：
 
-            def realize(self,
-                        h: np.ndarray,
-                        r: np.ndarray,
-                        t: np.ndarray):
+        def realize(self,
+                    h: np.ndarray,
+                    r: np.ndarray,
+                    t: np.ndarray):
 
-        realize()中获取策略参数：
+    realize()中获取策略参数：
 
-                par_1, par_2, ..., par_n = self.pars
+            par_1, par_2, ..., par_n = self.pars
 
-        realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
+    realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
 
-            - h(history): 历史数据片段，shape为(M, N, L)，即：
+        - h(history): 历史数据片段，shape为(M, N, L)，即：
 
-                - M层：   股票类型
+            - M层：   股票类型
 
-                - N行：   交易日期/时间轴
+            - N行：   交易日期/时间轴
 
-                - L列：   历史数据类型轴
+            - L列：   历史数据类型轴
 
-                在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
-                例如：设定：
-                        - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
-                        - data_freq = 'd'
-                        - window_length = 100
-                        - data_types = "open, high, low, close, pe"
+            在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
+            例如：设定：
+                    - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
+                    - data_freq = 'd'
+                    - window_length = 100
+                    - data_types = "open, high, low, close, pe"
 
-                    以下例子都基于前面给出的参数设定
-                    例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
-                        close_last_day = h_seg[:, -1, 3]
-                        close_10_day = h_seg[:, -10, 3]
-                        rate_10 = (close_last_day / close_10_day) - 1
+                以下例子都基于前面给出的参数设定
+                例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
+                    close_last_day = h_seg[:, -1, 3]
+                    close_10_day = h_seg[:, -10, 3]
+                    rate_10 = (close_last_day / close_10_day) - 1
 
-                    例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                        max_10_day = h_seg[:, -10:-1, 1].max(axis=1)
-                        close_last_day = h_seg[:, -1, 3]
-                        penetrate = close_last_day > max_10_day
+                例2, 判断股票最近的收盘价是否大于10日内的最高价：
+                    max_10_day = h_seg[:, -10:-1, 1].max(axis=1)
+                    close_last_day = h_seg[:, -1, 3]
+                    penetrate = close_last_day > max_10_day
 
-                    例3, 获取股票最近10日市盈率的平均值
-                        pe_10_days = h_seg[:, -10:-1, 4]
-                        avg_pe = pe_10_days.mean(axis=1)
+                例3, 获取股票最近10日市盈率的平均值
+                    pe_10_days = h_seg[:, -10:-1, 4]
+                    avg_pe = pe_10_days.mean(axis=1)
 
-                    例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                        close_10_days = h_seg[:, -10:-1, 3]
-                        close_50_days = h_seg[:, -50:-1, 3]
-                        ma_10 = close_10_days.mean(axis=1)
-                        ma_50 = close_10_days.mean(axis=1)
+                例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
+                    close_10_days = h_seg[:, -10:-1, 3]
+                    close_50_days = h_seg[:, -50:-1, 3]
+                    ma_10 = close_10_days.mean(axis=1)
+                    ma_50 = close_10_days.mean(axis=1)
 
-            - r(reference):参考历史数据，默认为None，shape为(N, L)
-                与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-                宏观经济数据等，
+        - r(reference):参考历史数据，默认为None，shape为(N, L)
+            与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
+            宏观经济数据等，
 
-                - N行, 交易日期/时间轴
+            - N行, 交易日期/时间轴
 
-                - L列，参考数据类型轴
+            - L列，参考数据类型轴
 
-                以下是获取参考数据的几个例子：
-                    设定：
-                        - reference_data_types = "000300.SH.close, 000001.SH.close"
+            以下是获取参考数据的几个例子：
+                设定：
+                    - reference_data_types = "000300.SH.close, 000001.SH.close"
 
-                    例1: 获取最近一天的沪深300收盘价：
-                        close_300 = r[-1, 0]
-                    例2: 获取五天前的上证指数收盘价:
-                        close_SH = r[-5, 1]
+                例1: 获取最近一天的沪深300收盘价：
+                    close_300 = r[-1, 0]
+                例2: 获取五天前的上证指数收盘价:
+                    close_SH = r[-5, 1]
 
-            - t(trade):交易历史数据，默认为None，shape为(N, 5)
-                最近几次交易的结果数据，2D数据。包含N行5列数据
-                如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-                数据的结构如下
+        - t(trade):交易历史数据，默认为None，shape为(N, 5)
+            最近几次交易的结果数据，2D数据。包含N行5列数据
+            如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
+            数据的结构如下
 
-                - N行， 股票/证券类型轴
-                    每一列代表一只个股或证券
+            - N行， 股票/证券类型轴
+                每一列代表一只个股或证券
 
-                - 5列,  交易数据类型轴
-                    - 0, own_amounts:              当前持有每种股票的份额
-                    - 1, available_amounts:        当前可用的每种股票的份额
-                    - 2, current_prices:           当前的交易价格
-                    - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                    - 4, recent_trade_prices:      最近一次成交价格
+            - 5列,  交易数据类型轴
+                - 0, own_amounts:              当前持有每种股票的份额
+                - 1, available_amounts:        当前可用的每种股票的份额
+                - 2, current_prices:           当前的交易价格
+                - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
+                - 4, recent_trade_prices:      最近一次成交价格
 
-                示例：以下是在策略中获取交易数据的几个例子：
+            示例：以下是在策略中获取交易数据的几个例子：
 
-                    例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                        volume = t[:, 3]
-                        trade_prices = t[:, 4]
-                        或者:
-                        t = t.T
-                        volume = t[3]
-                        trade_prices = t[4]
-                    例2: 获取当前持有股票数量:
-                        own_amounts = t[:, 0]
-                        或者:
-                        t = t.T
-                        own_amounts = t[0]
+                例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
+                    volume = t[:, 3]
+                    trade_prices = t[:, 4]
+                    或者:
+                    t = t.T
+                    volume = t[3]
+                    trade_prices = t[4]
+                例2: 获取当前持有股票数量:
+                    own_amounts = t[:, 0]
+                    或者:
+                    t = t.T
+                    own_amounts = t[0]
 
-        realize()方法的输出：
-        FactorSorter交易策略的输出信号为1D ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子
-        自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。
+    realize()方法的输出：
+    FactorSorter交易策略的输出信号为1D ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子
+    自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。
 
-            output：
-                    np.array(arr), 如： np.array[0.1, 1.0, 10.0, 100.0]
+        output：
+                np.array(arr), 如： np.array[0.1, 1.0, 10.0, 100.0]
 
-        根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，
-            例如：当
-                    max_sel_count=0.5
-                    condition='greater',
-                    ubound=0.5,
-                    weighting='even'
-            时，上述因子的选股结果为:
-                    np.array[0.0, 0.0, 0.5, 0.5]
+    根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，
+        例如：当
+                max_sel_count=0.5
+                condition='greater',
+                ubound=0.5,
+                weighting='even'
+        时，上述因子的选股结果为:
+                np.array[0.0, 0.0, 0.5, 0.5]
 
-        在使用FactorSorter策略类时，建议将信号类型设置为PT,此时策略根据选股因子生成的交易信号含义如下:
+    在使用FactorSorter策略类时，建议将信号类型设置为PT,此时策略根据选股因子生成的交易信号含义如下:
 
-             signal type   |         PT prefered type     |
-            -----------------------------------------------
-                sig > 1    |              N/A             |
-             1 >= sig > 0  |      Buy to sig position     |
-                sig = 0    |      Sell to hold 0 share    |
-             0 > sig >= -1 |             N/A              |
-               sig < -1    |             N/A              |
-        关于Strategy类的更详细说明，请参见qteasy的文档。
+         signal type   |         PT prefered type     |
+        -----------------------------------------------
+            sig > 1    |              N/A             |
+         1 >= sig > 0  |      Buy to sig position     |
+            sig = 0    |      Sell to hold 0 share    |
+         0 > sig >= -1 |             N/A              |
+           sig < -1    |             N/A              |
+    关于Strategy类的更详细说明，请参见qteasy的文档。
 
     """
     __metaclass__ = ABCMeta

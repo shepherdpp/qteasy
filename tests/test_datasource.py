@@ -26,7 +26,7 @@ from qteasy.database import get_main_freq
 
 # noinspection SqlDialectInspection,PyTypeChecker
 class TestDataSource(unittest.TestCase):
-    """test local historical file database management methods"""
+    """test local historical f`~`ile database management methods"""
 
     def setUp(self):
         """ execute before each test"""
