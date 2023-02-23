@@ -79,28 +79,36 @@ normal_font = {'fontname': 'Arial',
 
 # 动态交互式蜡烛图类
 class InterCandle:
-    """ 一个动态交互式图表类，基于matplotlib和mplfinance实现，在合适的backend显示时，
-        支持以下鼠标及键盘交互操作：
+    """ 一个动态交互式图表类，基于matplotlib和mplfinance实现
 
-            1, 鼠标点击K线图区域，左右拖放平移K线图
-            2, 鼠标滚轮在K线图区域滚动，放大或缩小K线图的显示范围
-            3, 鼠标双击K线图区域，切换不同的均线类型：移动平均及布林带线
-            4, 鼠标在指标图区域双击，切换不同的指标类型：macd、rsi、dema等
-            5, 按键盘左右键平移K线图
-            6, 按键盘上下键放大或缩小K线图的显示范围
-            7, 按键盘a键切换不同的指标类型
+    在合适的backend显示时，支持以下鼠标及键盘交互操作：
+    1, 鼠标点击K线图区域，左右拖放平移K线图
+    2, 鼠标滚轮在K线图区域滚动，放大或缩小K线图的显示范围
+    3, 鼠标双击K线图区域，切换不同的均线类型：移动平均及布林带线
+    4, 鼠标在指标图区域双击，切换不同的指标类型：macd、rsi、dema等
+    5, 按键盘左右键平移K线图
+    6, 按键盘上下键放大或缩小K线图的显示范围
+    7, 按键盘a键切换不同的指标类型
 
     """
 
     def __init__(self, data, title_info, plot_type, style, avg_type, indicator):
         """ 初始化动态图表对象，初始化属性
 
-        :param data: 需要显示的数据
-        :param title_info: 需要显示的图表标题以及指标显示信息
-        :param plot_type: K线图类型： candle 蜡烛图， ohlc: K线图，
-        :param style: 一个图表style对象，确定K线图或蜡烛图的颜色风格
-        :param avg_type: 均线类型： ma：移动平均线，bb / bbands：布林带线
-        :param indicator: 指标类型：macd，rsi，dema
+        Parameters
+        ----------
+        data: np.array
+            需要显示的数据
+        title_info: str
+            需要显示的图表标题以及指标显示信息
+        plot_type: str, {'candle', 'renko', 'ohlc', 'line'}
+            K线图类型： candle 蜡烛图， ohlc: K线图，
+        style: dict of table style
+            一个图表style对象，确定K线图或蜡烛图的颜色风格
+        avg_type: str, {'ma', 'bb', 'bbands'}
+            均线类型： ma：移动平均线，bb / bbands：布林带线
+        indicator: str, {'macd', 'rsi', 'dema'}
+            指标类型：macd，rsi，dema
         """
         self.pressed = False
         self.xpress = None
@@ -649,13 +657,17 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
 
-    :param stock: 股票代码
-    :param asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数, OPT——期权
-    :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
-    :param freq: 价格周期，d——日K线，5min——五分钟k线
-    :param data_source: 获取数据的数据源
-    :return:
-        tuple：(pd.DataFrame, share_name)
+    Parameters
+    ----------
+    stock: 股票代码
+    asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数, OPT——期权
+    adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
+    freq: 价格周期，d——日K线，5min——五分钟k线
+    data_source: 获取数据的数据源
+
+    Returns
+    -------
+    tuple：(pd.DataFrame, share_name)
     """
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
     name_of = {'E':   'Stock 股票',

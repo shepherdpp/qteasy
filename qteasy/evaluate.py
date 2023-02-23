@@ -700,6 +700,7 @@ def eval_operation(looped_value, cash_plan):
     total_invest: float 总投资额
     total_fee: float 总交易费用
     """
+
     total_rounds = len(looped_value.index)
     total_days = (looped_value.index[-1] - looped_value.index[0]).days
     total_years = total_days / 365.

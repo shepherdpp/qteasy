@@ -398,16 +398,16 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     return res
 
 
-def input_to_list(pars: [str, int, list], dim: int, padder=None):
+def input_to_list(pars, dim, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
     Parameters
     ----------
-    pars: list of str or list of int
+    pars: int or list of int or list of str
         需要转化为list对象的输出对象
     dim: int
         需要生成的目标list的元素数量
-    padder: str
+    padder: Any
         当元素数量不足的时候用来补充的元素
 
     Returns

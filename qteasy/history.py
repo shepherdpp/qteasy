@@ -241,7 +241,11 @@ class HistoryPanel():
                  row_date[r]: r
                  }
         因此内部可以较快地进行数据切片或数据访问
-        :return:
+
+        Returns
+        -------
+        dict
+            日期字典
         """
         return self._rows
 
@@ -355,9 +359,14 @@ class HistoryPanel():
         [:,0:2]                     输出0、1、2三个股票的历史数据
         [:,'000100,000120']         输出000100、000120两只股票的所有历史数据
 
-        input：
-            :param keys: list/tuple/slice历史数据的类型名，为空时给出所有类型的数据
-        输出：
+        Parameters
+        ----------
+        keys: list/tuple/slice
+            历史数据的类型名，为空时给出所有类型的数据
+
+        Returns
+        -------
+        out : ndarray
             self.value的一个切片
         """
         if self.is_empty:
@@ -434,12 +443,15 @@ class HistoryPanel():
             这两个日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
             htypes的数据
 
-        :input
-            :param start_date: 开始日期
-            :param end_date: 结束日期
+        Parameters
+        ----------
+        start_date: 开始日期
+        end_date: 结束日期
 
-        :return
-            HistoryPanel
+        Returns
+        -------
+        out : HistoryPanel
+            一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据
         """
         hdates = np.array(self.hdates)
         if start_date is None:
@@ -458,12 +470,17 @@ class HistoryPanel():
         """ 获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符
             串，表示需要获取的股票或数据的种类。
 
-        :input
-            :param shares: 需要的股票列表
-            :param htypes: 需要的数据类型列表
+        Parameters
+        ----------
+        shares: str or list of str
+            需要的股票列表
+        htypes: str or list of str
+            需要的数据类型列表
 
-        :return
-            HistoryPanel
+        Returns
+        -------
+        out : HistoryPanel
+            一个HistoryPanel，包含shares和htypes中指定的股票和数据类型的数据
         """
         if self.is_empty:
             return self
@@ -486,7 +503,21 @@ class HistoryPanel():
     def info(self):
         """ 打印本HistoryPanel对象的信息
 
-        :return:
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> hp.info()
+        <class 'quantdigger.datastruct.historypanel.HistoryPanel'>
+        History Panel at 0x7f8b0c0b0f10
+        Datetime Range: 100 entries, 2015-01-05 00:00:00 to 2015-04-24 00:00:00
+        Historical Data Types (total 5 data types):
+        ['open', 'high', 'low', 'close', 'volume']
+        Shares (total 2 shares):
+        ['000001', '000002']
+
         """
         import sys
         print(f'\n{type(self)}')
@@ -509,16 +540,25 @@ class HistoryPanel():
             print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
     def copy(self):
+        """ 返回一个新的HistoryPanel对象，其值和本对象相同"""
         # TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
         return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
         """ 给HistoryPanel对象的层、行、列标签重新赋值
 
-        :param shares: List or Str
-        :param htypes:
-        :param hdates:
-        :return: HistoryPanel
+        Parameters
+        ----------
+        shares: str or list of str
+            股票列表
+        htypes: str or list of str
+            数据类型列表
+        hdates: str or list of str
+            日期列表
+
+        Returns
+        -------
+        None
         """
         if not self.is_empty:
             if shares is not None:
@@ -531,8 +571,14 @@ class HistoryPanel():
     def fillna(self, with_val: [int, float, np.int, np.float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
-        :param with_val:
-        :return:
+        Parameters
+        ----------
+        with_val: float or int
+            填充的值
+
+        Returns
+        -------
+        out : HistoryPanel, 填充后的HistoryPanel对象
         """
         if not self.is_empty:
             self._values = fill_nan_data(self._values, with_val)
@@ -541,8 +587,14 @@ class HistoryPanel():
     def fillinf(self, with_val: [int, float, np.int, np.float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
-        :param with_val: flaot
-        :return:
+        Parameters
+        ----------
+        with_val: float or int
+            填充的值
+
+        Returns
+        -------
+        out : HistoryPanel, 填充后的HistoryPanel对象
         """
         if not self.is_empty:
             self._values = fill_inf_data(self._values, with_val)
@@ -552,9 +604,53 @@ class HistoryPanel():
         """ 前向填充缺失值，当历史数据中存在缺失值时，使用缺失值以前
         的最近有效数据填充缺失值
 
-        :param init_val: float, 如果Nan值出现在第一行时，没有前序有效数据，则使用这个值来填充，默认为np.nan
-        :return:
+        Parameters
+        ----------
+        init_val: float, 如果Nan值出现在第一行时，没有前序有效数据，则使用这个值来填充，默认为np.nan
+
+        Returns
+        -------
+        out : HistoryPanel, 填充后的HistoryPanel对象
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.array([[[1, 2, 3], [4, np.nan, 6]], [[np.nan, 8, 9], [np.nan, np.nan, 12]]]),
+        ...                   levels=['000001', '000002'], rows=['2015-01-01', '2015-01-02'],
+        ...                   columns=['open', 'high', 'low'])
+        >>> hp
+        share 0, label: 000001
+                    open  high  low
+        2015-01-01   1.0   2.0  3.0
+        2015-01-02   4.0   NaN  6.0
+
+        share 1, label: 000002
+                    open  high   low
+        2015-01-01   NaN   8.0   9.0
+        2015-01-02   NaN   NaN  12.0
+
+        >>> hp.ffill()
+        share 0, label: 000001
+                    open  high  low
+        2015-01-01   1.0   2.0  3.0
+        2015-01-02   4.0   2.0  6.0
+
+        share 1, label: 000002
+                    open  high   low
+        2015-01-01   NaN   8.0   9.0
+        2015-01-02   NaN   8.0  12.0
+
+        >>> hp.ffill(init_val=3)
+        share 0, label: 000001
+                    open  high  low
+        2015-01-01   1.0   2.0  3.0
+        2015-01-02   4.0   2.0  6.0
+
+        share 1, label: 000002
+                    open  high   low
+        2015-01-01   3.0   8.0   9.0
+        2015-01-02   3.0   8.0  12.0
         """
+
         if not self.is_empty:
             val = self.values
             if np.all(~np.isnan(val)):
@@ -715,7 +811,7 @@ class HistoryPanel():
         """ 将HistoryPanel的数据类型转换为dtype类型
         dtype只能为'float'或'int'
 
-        :param dtype:
+        dtype:
         :return:
         """
         ALL_DTYPES = ['float', 'int']
@@ -754,7 +850,39 @@ class HistoryPanel():
         -------
         pandas.DataFrame
 
+        Examples
+        --------
+        >>> hp = HistoryPanel(values=np.array([[[1, 2, np.nan], [4, 5, 6]],
+        ...                                    [[7, 8, np.nan], [np.inf, 11, 12]]]),
+        ...                    levels=['000001', '000002'],
+        ...                    rows=['2019-01-01', '2019-01-02'],
+        ...                    columns=['open', 'high', 'low']))
+        >>> hp
+        share 0, label: 000001
+                    open  high  low
+        2019-01-01   1.0   2.0  NaN
+        2019-01-02   4.0   5.0  NaN
+
+        share 1, label: 000002
+                    open  high   low
+        2019-01-01   7.0   8.0   9.0
+        2019-01-02   inf  11.0  12.0
+
+        >>> hp.slice_to_dataframe(htype='open')
+        000001  000002
+        2019-01-01  1.0  7.0
+        2019-01-02  4.0  inf
+
+        >>> hp.slice_to_dataframe(share='000001')
+        open  high  low
+        2019-01-01  1.0  2.0  NaN
+        2019-01-02  4.0  5.0  6.0
+
+        >>> hp.slice_to_dataframe(htype='low', dropna=True)
+                    000001  000002
+        2019-01-02     6.0    12.0
         """
+
         if self.is_empty:
             return pd.DataFrame()
         if all(par is not None for par in (htype, share)) or all(par is None for par in (htype, share)):
@@ -810,7 +938,6 @@ class HistoryPanel():
 
         Examples
         --------
-        例如：
         >>> hp
         share 0, label: 000300
                     close,  open,   vol
@@ -849,18 +976,82 @@ class HistoryPanel():
     def to_multi_index_dataframe(self, along=None):
         """ 等同于HistoryPanel.flatten_to_dataframe()
 
+        Parameters
+        ----------
+        along: str, {'col', 'row', 'column'} Default: 'row'
+            平铺HistoryPanel的每一层时，沿行方向还是列方向平铺，
+            'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺
+
         Returns
         -------
         pandas.DataFrame
+
+        Examples
+        --------
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+
+        >>> hp.to_multi_index_dataframe(along='col')
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
+        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+
+        >>> hp.to_multi_index_dataframe(along='row')
+                            close,  open,   vol
+        000300  2020-01-01  12.3,   12.5,   1020010
+                2020-01-02  12.6,   13.2,   1020020
+        000001  2020-01-01  2.3,    2.5,    20010
+                2020-01-02  2.6,    3.2,    20020
         """
         return self.flatten_to_dataframe(along=along)
 
     def flatten(self, along=None):
         """ 等同于HistoryPanel.flatten_to_dataframe()
 
+        Parameters
+        ----------
+        along: str, {'col', 'row', 'column'} Default: 'row'
+            平铺HistoryPanel的每一层时，沿行方向还是列方向平铺，
+            'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺
+
         Returns
         -------
         pandas.DataFrame
+
+        Examples
+        --------
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+
+        >>> hp.flatten(along='col')
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
+        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+
+        >>> hp.flatten(along='row')
+                            close,  open,   vol
+        000300  2020-01-01  12.3,   12.5,   1020010
+                2020-01-02  12.6,   13.2,   1020020
+        000001  2020-01-01  2.3,    2.5,    20010
+                2020-01-02  2.6,    3.2,    20020
         """
         return self.flatten_to_dataframe(along=along)
 
@@ -868,14 +1059,81 @@ class HistoryPanel():
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
 
-        :param by: str, 'share' 或 'shares' 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
-                        它的keys是股票的代码，每个股票代码一个DataFrame
-                        'htype' 或 'htypes' 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
-                        它的keys是历史数据类型，每种类型一个DataFrame
+        Parameters
+        ----------
+        by: str, {'share', 'shares', 'htype', 'htypes'}
+            - 'share' 或 'shares': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
+            它的keys是股票的代码，每个股票代码一个DataFrame
+            - 'htype' 或 'htypes': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
+            它的keys是历史数据类型，每种类型一个DataFrame
 
-        :return:
-            dict
+        Returns
+        -------
+        df_dict: dict, {str: pandas.DataFrame}
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.random.randn(2, 3, 4), hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
+        >>> hp
+        share 0, label: 000001
+                    close,  open,   high,   low
+        2020-01-01  0.1,    0.2,    0.3,    0.4
+        2020-01-02  0.5,    0.6,    0.7,    0.8
+        2020-01-03  0.9,    1.0,    1.1,    1.2
+        share 1, label: 000002
+                    close,  open,   high,   low
+        2020-01-01  1.1,    1.2,    1.3,    1.4
+        2020-01-02  1.5,    1.6,    1.7,    1.8
+        2020-01-03  1.9,    2.0,    2.1,    2.2
+        share 2, label: 000003
+                    close,  open,   high,   low
+        2020-01-01  2.1,    2.2,    2.3,    2.4
+        2020-01-02  2.5,    2.6,    2.7,    2.8
+        2020-01-03  2.9,    3.0,    3.1,    3.2
+
+        >>> hp.to_df_dict(by='share')
+        {'000001':
+                    close,  open,   high,   low
+        2020-01-01  0.1,    0.2,    0.3,    0.4
+        2020-01-02  0.5,    0.6,    0.7,    0.8
+        2020-01-03  0.9,    1.0,    1.1,    1.2
+        , '000002':
+                    close,  open,   high,   low
+        2020-01-01  1.1,    1.2,    1.3,    1.4
+        2020-01-02  1.5,    1.6,    1.7,    1.8
+        2020-01-03  1.9,    2.0,    2.1,    2.2
+        , '000003':
+                    close,  open,   high,   low
+        2020-01-01  2.1,    2.2,    2.3,    2.4
+        2020-01-02  2.5,    2.6,    2.7,    2.8
+        2020-01-03  2.9,    3.0,    3.1,    3.2
+        }
+
+        >>> hp.to_df_dict(by='htype')
+        {'close':
+                    000001,  000002,  000003
+        2020-01-01  0.1,     1.1,     2.1
+        2020-01-02  0.5,     1.5,     2.5
+        2020-01-03  0.9,     1.9,     2.9
+        , 'open':
+                    000001,  000002,  000003
+        2020-01-01  0.2,     1.2,     2.2
+        2020-01-02  0.6,     1.6,     2.6
+        2020-01-03  1.0,     2.0,     3.0
+        , 'high':
+                    000001,  000002,  000003
+        2020-01-01  0.3,     1.3,     2.3
+        2020-01-02  0.7,     1.7,     2.7
+        2020-01-03  1.1,     2.1,     3.1
+        , 'low':
+                    000001,  000002,  000003
+        2020-01-01  0.4,     1.4,     2.4
+        2020-01-02  0.8,     1.8,     2.8
+        2020-01-03  1.2,     2.2,     3.2
+        }
         """
+
         if not isinstance(by, str):
             raise TypeError(f'by ({by}) should be a string, and either "shares" or "htypes", got {type(by)}')
         assert by.lower() in ['share', 'shares', 'htype', 'htypes']
@@ -895,7 +1153,81 @@ class HistoryPanel():
             return df_dict
 
     def unstack(self, by: str = 'share') -> dict:
-        """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称"""
+        """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称
+
+        Parameters
+        ----------
+        by: str, {'share', 'htype'}, default 'share'
+            指定按照share或者htype来unstack, 默认为share
+
+        Returns
+        -------
+        dict
+            unstack后的结果，是一个字典，key为share或htype，value为对应的DataFrame
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.random.randn(2, 3, 4), hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
+        >>> hp
+        share 0, label: 000001
+                    close,  open,   high,   low
+        2020-01-01  0.1,    0.2,    0.3,    0.4
+        2020-01-02  0.5,    0.6,    0.7,    0.8
+        2020-01-03  0.9,    1.0,    1.1,    1.2
+        share 1, label: 000002
+                    close,  open,   high,   low
+        2020-01-01  1.1,    1.2,    1.3,    1.4
+        2020-01-02  1.5,    1.6,    1.7,    1.8
+        2020-01-03  1.9,    2.0,    2.1,    2.2
+        share 2, label: 000003
+                    close,  open,   high,   low
+        2020-01-01  2.1,    2.2,    2.3,    2.4
+        2020-01-02  2.5,    2.6,    2.7,    2.8
+        2020-01-03  2.9,    3.0,    3.1,    3.2
+
+        >>> hp.unstack(by='share')
+        {'000001':
+                    close,  open,   high,   low
+        2020-01-01  0.1,    0.2,    0.3,    0.4
+        2020-01-02  0.5,    0.6,    0.7,    0.8
+        2020-01-03  0.9,    1.0,    1.1,    1.2
+        , '000002':
+                    close,  open,   high,   low
+        2020-01-01  1.1,    1.2,    1.3,    1.4
+        2020-01-02  1.5,    1.6,    1.7,    1.8
+        2020-01-03  1.9,    2.0,    2.1,    2.2
+        , '000003':
+                    close,  open,   high,   low
+        2020-01-01  2.1,    2.2,    2.3,    2.4
+        2020-01-02  2.5,    2.6,    2.7,    2.8
+        2020-01-03  2.9,    3.0,    3.1,    3.2
+        }
+
+        >>> hp.unstack(by='htype')
+        {'close':
+                    000001,  000002,  000003
+        2020-01-01  0.1,     1.1,     2.1
+        2020-01-02  0.5,     1.5,     2.5
+        2020-01-03  0.9,     1.9,     2.9
+        , 'open':
+                    000001,  000002,  000003
+        2020-01-01  0.2,     1.2,     2.2
+        2020-01-02  0.6,     1.6,     2.6
+        2020-01-03  1.0,     2.0,     3.0
+        , 'high':
+                    000001,  000002,  000003
+        2020-01-01  0.3,     1.3,     2.3
+        2020-01-02  0.7,     1.7,     2.7
+        2020-01-03  1.1,     2.1,     3.1
+        , 'low':
+                    000001,  000002,  000003
+        2020-01-01  0.4,     1.4,     2.4
+        2020-01-02  0.8,     1.8,     2.8
+        2020-01-03  1.2,     2.2,     3.2
+        }
+        """
+
         return self.to_df_dict(by=by)
 
     # TODO: implement this method
@@ -927,8 +1259,8 @@ class HistoryPanel():
     def ohlc(self, *args, **kwargs):
         """ plot ohlc chart with data in the HistoryPanel, check data availability before plotting
 
-        :param args:
-        :param kwargs:
+        args:
+        kwargs:
         :return:
         """
         raise NotImplementedError
@@ -937,8 +1269,8 @@ class HistoryPanel():
     def renko(self, *args, **kwargs):
         """ plot renko chart with data in the HistoryPanel, check data availability before plotting
 
-        :param args:
-        :param kwargs:
+        args:
+        kwargs:
         :return:
         """
         raise NotImplementedError
@@ -1114,9 +1446,8 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
         dfs可以是一个dict或一个list，如果是一个list，这个list包含需要组合的所有dataframe，如果是dict，这个dict的values包含
         所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列
         （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。
-    dataframe_as: str
-        'shares' 或 'htypes', 每个dataframe代表的数据类型。
-        组合的方式有两种，根据dataframe_as参数的值来确定采用哪一种组合方式：
+    dataframe_as: str {'shares', 'htypes'}
+        每个dataframe代表的数据类型。
         dataframe_as == 'shares'，
             表示每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
             层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
@@ -1158,11 +1489,33 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
     -------
     HistoryPanel
         一个由多个单index的数据框组成的HistoryPanel对象
+
+    Examples
+    --------
+    >>> df1 = pd.DataFrame([[1, 2, 3], [4, 5, 6]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
+    >>> df2 = pd.DataFrame([[7, 8, 9], [10, 11, 12]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
+    >>> df3 = pd.DataFrame([[13, 14, 15], [16, 17, 18]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
+    >>> dfs = [df1, df2, df3]
+    >>> hp = stack_dataframes(dfs, dataframe_as='shares', shares='000001.SZ, 000002.SZ, 000003.SZ')
+    >>> hp
+    share 0, label: 000001.SZ
+             open  close   low
+    20210101  1.0    2.0   3.0
+    20210102  4.0    5.0   6.0
+    share 1, label: 000002.SZ
+              open  close   low
+    20210101   7.0    8.0   9.0
+    20210102  10.0   11.0  12.0
+    share 2, label: 000003.SZ
+              open  close   low
+    20210101  13.0   14.0  15.0
+    20210102  16.0   17.0  18.0
+
     """
     assert isinstance(dfs, (list, dict)), \
         f'TypeError, dfs should be a list of or a dict whose values are pandas DataFrames, got {type(dfs)} instead.'
     assert dataframe_as in ['shares', 'htypes'], \
-        f'InputError, valid input for dataframe_as can only be \'shaers\' or \'htypes\''
+        f'InputError, valid input for dataframe_as can only be \'shares\' or \'htypes\''
     if fill_value is None:
         fill_value = np.nan
     assert isinstance(fill_value, (int, float)), f'invalid fill value type {type(fill_value)}'
