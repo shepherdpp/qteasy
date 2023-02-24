@@ -35,13 +35,14 @@ class TestDataSource(unittest.TestCase):
         self.data_test_dir = 'data_test/'
         # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
         # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
-        # TODO: do not explicitly leave password and user in the code
-        self.ds_db = DataSource('db',
-                                host='localhost',
-                                port=3306,
-                                user='jackie',
-                                password='iama007',
-                                db_name='test_db')
+        self.ds_db = DataSource(
+                'db',
+                host=QT_CONFIG['test_db_host'],
+                port=3306,
+                user=QT_CONFIG['test_db_user'],
+                password=QT_CONFIG['test_db_password'],
+                db_name=QT_CONFIG['test_db_name']
+        )
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
