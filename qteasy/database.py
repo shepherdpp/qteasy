@@ -4502,17 +4502,13 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
 
-    if primary_key:
-        pk_columns = primary_key
-    else:
-        pk_columns = list(df.index.names)
-    if pk_columns == [None]:
-        raise KeyError(f'primary_key must be given if df index does not have names')
+    idx_columns = list(df.index.names)
+    pk_columns = primary_key
 
-    index_frame = df.index.to_frame()
-    for col_number, col_name in enumerate(pk_columns):
-        df[col_name] = index_frame.iloc[:, col_number]
-    # import pdb; pdb.set_trace()
+    if idx_columns != [None]:
+        index_frame = df.index.to_frame()
+        for col in idx_columns:
+            df[col] = index_frame[col]
 
     df.index = range(len(df))
     # 此时primary key有可能被放到了columns的最后面，需要将primary key移动到columns的最前面：
