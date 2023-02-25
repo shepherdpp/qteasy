@@ -36,12 +36,16 @@ class TestDataSource(unittest.TestCase):
         # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
         # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
         # TODO: do not explicitly leave password and user in the code
-        self.ds_db = DataSource('db',
-                                host='localhost',
-                                port=3306,
-                                user='jackie',
-                                password='iama007',
-                                db_name='test_db')
+        from qteasy import QT_CONFIG
+
+        self.ds_db = DataSource(
+                'db',
+                host=QT_CONFIG['test_db_host'],
+                port=3306,
+                user=QT_CONFIG['test_db_user'],
+                password=QT_CONFIG['test_db_password'],
+                db_name=QT_CONFIG['test_db_name']
+        )
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
@@ -646,7 +650,6 @@ class TestDataSource(unittest.TestCase):
         cursor.execute(sql)
         con.commit()
         # 为确保update顺利进行，建立新表并设置primary_key
-
         self.ds_db.write_database(df, table_name)
         loaded_df = self.ds_db.read_database(table_name)
         saved_index = df.index.values
@@ -673,7 +676,7 @@ class TestDataSource(unittest.TestCase):
         print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ"]\n'
               f'start/end = 20211112/20211112\n'
-              f'df retrieved from saved csv file is\n'
+              f'df retrieved from database is\n'
               f'{loaded_df}\n')
         saved_index = df.index.values
         saved_values = np.array(df.values)
@@ -751,7 +754,7 @@ class TestDataSource(unittest.TestCase):
                                        pk_dtypes=['str', 'TimeStamp'])
         df_res = set_primary_key_frame(self.df_res, primary_key=['ts_code', 'trade_date'],
                                        pk_dtypes=['str', 'TimeStamp'])
-        print(f'following dataframe with be written to an empty database table:\n'
+        print(f'following dataframe with be written to an empty data-table:\n'
               f'{df}\n'
               f'and following dataframe will be used to updated that database table\n'
               f'{df_add}')
@@ -1538,10 +1541,10 @@ class TestDataSource(unittest.TestCase):
                     'symbol': '000001.SZ',
                     'position': 'long',
                     'direction': 'buy',
-                    'type': 'limit',
+                    'order_type': 'limit',
                     'qty': 100,
                     'price': 10.0,
-                    'submitted_time': '20230220',
+                    'submitted_time': pd.to_datetime('20230220'),
                     'status': 'submitted',
         }
         test_result_data = {
@@ -1551,23 +1554,22 @@ class TestDataSource(unittest.TestCase):
             'filled_qty': 100,
             'price': 10.0,
             'transaction_fee': 0.0,
-            'execution_time': '20230220',
-            'cancelled_qty': 0,
+            'execution_time': pd.to_datetime('20230220'),
+            'canceled_qty': 0,
         }
         test_account_data = {
             'user_name': 'John Doe',
-            'created_time': '20221223',
+            'created_time': pd.to_datetime('20221223'),
             'cash_amount': 40000.0,
             'available_cash': 40000.0
         }
         test_position = {
-            'account_id': 1,
+            'account_id': 1, 
             'symbol': '000001.SZ',
             'position': 'long',
             'qty': 100,
             'available_qty': 100.
         }
-
         test_position1 = {
             'account_id': 1,
             'symbol': '000002.SZ',
@@ -1585,7 +1587,7 @@ class TestDataSource(unittest.TestCase):
 
         tables_to_be_tested = [
             'sys_op_live_accounts',
-            'sys_op_holdings',
+            'sys_op_positions',
             'sys_op_trade_signals',
             'sys_op_trade_results'
         ]
@@ -1595,13 +1597,28 @@ class TestDataSource(unittest.TestCase):
             self.ds_fth,
             self.ds_db
         ]
+
         for table, data in zip(tables_to_be_tested, sys_table_test_data):
+            print(f'\n=============================='
+                  f'\ntest insert_sys_table_data function\n'
+                  f'following table will be tested: {table}\n'
+                  f'with data: {data}')
             for ds in datasources_to_be_tested:
+                if ds.table_data_exists(table):
+                    ds.drop_table_data(table)
+                print(f'\n----------------------'
+                      f'\ninserting into table {table}@{ds} with following data\n{data}')
                 ds.insert_sys_table_data(table, data)
                 res = ds.read_sys_table_data(table, 1)
-                print(res)
+                print(f'following data are read from table {table}\n'
+                      f'{res}\n')
                 self.assertIsNotNone(res)
-                self.assertEqual(res, data)
+                for origin, read in zip(data.values(), res.values()):
+                    print(f'origin: {origin}->{type(origin)}, read: {read}->{type(read)}')
+                    if isinstance(origin, pd.Timestamp):
+                        self.assertEqual(origin, pd.to_datetime(read))
+                    else:
+                        self.assertEqual(origin, read)
 
             # 测试传入无效的表名时是否引发KeyError异常
             with self.assertRaises(KeyError):

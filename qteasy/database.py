@@ -1322,7 +1322,7 @@ TABLE_SCHEMA = {
 
     'sys_op_positions':
         {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty'],
-         'dtypes':     ['int', 'int', 'varchar(20)', 'byte', 'float', 'float'],
+         'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'float', 'float'],
          'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量'],
          'prime_keys': [0]
          },
@@ -1331,7 +1331,7 @@ TABLE_SCHEMA = {
         {'columns':    ['signal_id', 'symbol', 'position', 'direction', 'order_type',
                         'qty', 'price', 'submitted_time', 'status'],
          'dtypes':     ['int', 'varchar(20)', 'varchar(5)', 'varchar(10)', 'varchar(5)',
-                        'float', 'float', 'datetime', 'varchar(5)'],
+                        'float', 'float', 'datetime', 'varchar(10)'],
          'remarks':    ['交易信号ID', '资产代码', '交易头寸(多long/空short)', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)',
                         '委托数量', '委托报价', '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
          'prime_keys': [0]
@@ -2218,14 +2218,24 @@ class DataSource:
         """
         raise NotImplementedError
 
-    def overview(self, print_out=True):
+    def overview(self, print_out=True, include_sys_tables=False):
         """ 以表格形式列出所有数据表的当前数据状态
 
-        :param print_out: bool, 是否打印数据表总揽
+        Parameters
+        ----------
+        print_out: bool, Default True
+            是否打印数据表总揽
+        include_sys_tables: bool, Default False
+            是否包含系统表
 
-        :return:
+        Returns
+        -------
+        pd.DataFrame, 包含所有数据表的数据状态
         """
+
         all_tables = get_table_map()
+        if not include_sys_tables:
+            all_tables = all_tables[all_tables['table_usage'] != 'sys']
         all_table_names = all_tables.index
         all_info = []
         print('Analyzing local data source tables... depending on size of tables, it may take a few minutes')
@@ -2519,15 +2529,23 @@ class DataSource:
             raise RuntimeError(f'{e}, error in writing data into database.')
 
     def update_database(self, df, db_table, primary_key):
-        """ 用DataFrame中的数据更新数据表中的数据记录，假定
-            df的列与db_table的列相同且顺序也相同
-            在插入数据之前，必须确保表的primary_key已经正确设定
-            如果写入记录的键值存在冲突时，更新数据库中的记录
+        """ 用DataFrame中的数据更新数据表中的数据记录
 
-        :param df: 用于更新数据表的数据DataFrame
-        :param db_table: 需要更新的数据表
-        :param primary_key: 数据表的primary_key，必须定义在数据表中，如果数据库表没有primary_key，将append所有数据
-        :return:
+        假定df的列与db_table的列相同且顺序也相同
+        在插入数据之前，必须确保表的primary_key已经正确设定
+        如果写入记录的键值存在冲突时，更新数据库中的记录
+
+        Parameters
+        ----------
+        df: pd.DataFrame
+            用于更新数据表的数据DataFrame
+        db_table: str
+            需要更新的数据表
+        primary_key: tuple
+            数据表的primary_key，必须定义在数据表中，如果数据库表没有primary_key，将append所有数据
+
+        Returns
+        -------
         int: rows affected
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
@@ -2909,7 +2927,7 @@ class DataSource:
 
         Returns
         -------
-        int: 写入的数据条数 TODO: 此返回值需要实现
+        int: 写入的数据条数
 
         Notes
         -----
@@ -2923,11 +2941,13 @@ class DataSource:
         if table not in TABLE_MASTERS.keys():
             raise KeyError(f'Invalid table name.')
         columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
+        rows_affected = 0
         if self.source_type == 'file':
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             rows_affected = self.write_file(df, file_name=table)
         elif self.source_type == 'db':
+            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             if not self.db_table_exists(table):
                 self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':
@@ -3303,11 +3323,19 @@ class DataSource:
             return df.index.max()
         # 如果是数据库系统，直接获取最后一个id
         elif self.source_type == 'db':
+            if not self.db_table_exists(table):
+                columns, dtypes, prime_keys, pk_dtypes = get_built_in_table_schema(table)
+                self.new_db_table(table,
+                                  columns=columns,
+                                  dtypes=dtypes,
+                                  primary_key=prime_keys,
+                                  auto_increment_id=True)
+                return 0
             db_name = self.db_name
             sql = f"SELECT AUTO_INCREMENT\n" \
                   f"FROM information_schema.TABLES\n" \
                   f"WHERE TABLE_SCHEMA = `{db_name}`\n" \
-                  f"AND TABLE_NAME = `table`;"
+                  f"AND TABLE_NAME = `{table}`;"
             try:
                 self.cursor.execute(sql)
                 self.con.commit()
@@ -3357,6 +3385,7 @@ class DataSource:
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
             res_df = self.read_database(table, share_like_pk=id_column, shares=id_values)
+            set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
             res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=id_column, shares=id_values)
         else:  # for other unexpected cases
@@ -3378,7 +3407,6 @@ class DataSource:
         # 筛选数据
         for k, v in kwargs:
             res_df = res_df.loc[res_df[k] == v]
-
         if id:
             return res_df.loc[id].to_dict()
         else:
@@ -3502,8 +3530,10 @@ class DataSource:
         # 将data构造为一个df，然后调用self.update_table_data()
         last_id = self.get_sys_table_last_id(table)
         next_id = last_id + 1 if last_id is not None else 1
+        columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         df = pd.DataFrame(data, index=[next_id], columns=data.keys())
-
+        df.index.name = primary_keys[0]
+        #
         # import pdb; pdb.set_trace()
         # 插入数据
         self.update_table_data(table, df, merge_type='ignore')
@@ -4479,20 +4509,19 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     Examples
     --------
     >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
-    >>> df = set_primary_key_frame(df, ['a'], [int])
+    >>> df = set_primary_key_frame(df, ['a'], ['int'])
     >>> df
          a  b
     0    1  4
     1    2  5
     2    3  6
-    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> df = set_primary_key_index(df, ['a'], ['int'])
     >>> df
          b
     a
     1    4
     2    5
     3    6
-
 
     """
     if not isinstance(df, pd.DataFrame):
@@ -4502,17 +4531,13 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
 
-    if primary_key:
-        pk_columns = primary_key
-    else:
-        pk_columns = list(df.index.names)
-    if pk_columns == [None]:
-        raise KeyError(f'primary_key must be given if df index does not have names')
+    idx_columns = list(df.index.names)
+    pk_columns = primary_key
 
-    index_frame = df.index.to_frame()
-    for col_number, col_name in enumerate(pk_columns):
-        df[col_name] = index_frame.iloc[:, col_number]
-    # import pdb; pdb.set_trace()
+    if idx_columns != [None]:
+        index_frame = df.index.to_frame()
+        for col in idx_columns:
+            df[col] = index_frame[col]
 
     df.index = range(len(df))
     # 此时primary key有可能被放到了columns的最后面，需要将primary key移动到columns的最前面：
@@ -4553,7 +4578,7 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     0    1    4
     1    2    5
     2    3    6
-    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> df = set_primary_key_index(df, ['a'], ['int'])
     >>> df
             b
     a
@@ -4639,7 +4664,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     for pk, dtype in zip(primary_key, pk_dtypes):
         if (dtype == 'str') or (dtype[:7] == 'varchar'):
             res['shares'] = (list(set(df[pk].values)))
-        elif dtype.lower() in ['date', 'timestamp', 'datetime']:
+        elif dtype.lower() in ['date', 'timestamp', 'datetime', 'int', 'float', 'double']:
             res['start'] = df[pk].min()
             res['end'] = df[pk].max()
         else:
@@ -5079,13 +5104,13 @@ def find_history_data(s, fuzzy=False, match_description=False):
 
     Parameters
     ----------
-    s: string，
+    s: str
         一个字符串，用于查找或匹配历史数据类型
-    fuzzy: bool, 默认值：False
+    fuzzy: bool, Default: False
         是否模糊匹配数据名称，
          - False: 仅精确匹配数据的名称
          - True:  模糊匹配数据名称以及数据描述
-    match_description, bool, 默认值: False
+    match_description: bool, Default: False
         是否模糊匹配数据描述
          - False: 模糊匹配时不包含数据描述（仅匹配数据名称）
          - True:  模糊匹配时包含数据描述
@@ -5209,3 +5234,4 @@ def ensure_sys_table(table):
         raise KeyError(f'"{e}" is not a valid table name')
     except Exception as e:
         raise RuntimeError(f'{e}: An error occurred when checking table usage')
+    
