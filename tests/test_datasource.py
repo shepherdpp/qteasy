@@ -961,12 +961,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
-        ds = DataSource(source_type='db',
-                        host='localhost',
-                        port=3306,
-                        user='jackie',
-                        password='iama007',
-                        db_name='ts_db')
+        ds = qt.QT_DATA_SOURCE
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
         htypes = str_to_list(htypes)
@@ -1046,11 +1041,23 @@ class TestDataSource(unittest.TestCase):
 
     def test_table_overview(self):
         """ 所有数据表的基本信息打印"""
-        ds = qt.QT_DATA_SOURCE
-        ov = ds.overview()
-        print(ov[['has_data', 'size', 'records']])
-        print(ov[['pk1', 'min1', 'max1']])
-        print(ov[['pk2', 'min2', 'max2']])
+        qt_ds = qt.QT_DATA_SOURCE
+        df_trade_calendar = qt_ds.read_table_data('trade_calendar',
+                                                  start='20200101',
+                                                  end='20200201')
+        df_stock_basic = qt_ds.read_table_data('stock_basic',
+                                               shares=['000001.SZ', '000002.SZ'],
+                                               start='20200101', end='20200201')
+        for ds in [self.ds_csv, self.ds_db, self.ds_hdf, self.ds_db]:
+            print(f'-- {ds.source_type}-{ds.connection_type} --')
+            print('write data to datasource')
+            ds.update_table_data('trade_calendar', df_trade_calendar)
+            ds.update_table_data('stock_basic', df_stock_basic)
+
+            ov = ds.overview()
+            print(ov[['has_data', 'size', 'records']])
+            print(ov[['pk1', 'min1', 'max1']])
+            print(ov[['pk2', 'min2', 'max2']])
 
     def test_get_related_tables(self):
         """根据数据名称查找相关数据表及数据列名称"""

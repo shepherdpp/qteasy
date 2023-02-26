@@ -3380,20 +3380,18 @@ class DataSource:
             db_name = self.db_name
             sql = f"SELECT AUTO_INCREMENT\n" \
                   f"FROM information_schema.TABLES\n" \
-                  f"WHERE TABLE_SCHEMA = `{db_name}`\n" \
-                  f"AND TABLE_NAME = `{table}`;"
+                  f"WHERE `TABLE_SCHEMA` = %s\n" \
+                  f"AND `TABLE_NAME` = %s;"
+
             try:
-                self.cursor.execute(sql)
+                self.cursor.execute(sql, (db_name, table))
                 self.con.commit()
                 res = self.cursor.fetchall()
-                output = {}
-                for col, typ in results:
-                    output[col] = typ
-                return output
+                return res[0][0]-1
             except Exception as e:
                 raise RuntimeError(f'{e}, An error occurred when getting last id for table {table} with SQL:\n{sql}')
 
-        else: # for other unexpected cases
+        else:  # for other unexpected cases
             pass
         pass
 
