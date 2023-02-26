@@ -2312,26 +2312,37 @@ class DataSource:
 
     def read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
                   shares=None, date_like_pk=None, start=None, end=None, chunk_size=50000):
-        """ read the file with name file_name and return the df
+        """ 从文件中读取DataFrame，当文件类型为csv时，支持分块读取且完成数据筛选
 
-        :param file_name: str， 文件名
-        :param primary_key:
-            List, 用于生成primary_key index 的主键
-        :param pk_dtypes:
-            List，primary_key的数据类型
-        :param share_like_pk:
-            str,
-        :param shares:
-            list
-        :param date_like_pk:
-        :param start:
-        :param end:
-        :param chunk_size:
-            int, 分块读取csv大文件时的分块大小
-        :return:
-            DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
+        Parameters
+        ----------
+        file_name: str
+            文件名
+        primary_key: list of str
+            用于生成primary_key index 的主键
+        pk_dtypes: list of str
+            primary_key的数据类型
+        share_like_pk: str
+            用于按值筛选数据的主键
+        shares: list of str
+            用于筛选数据的主键的值
+        date_like_pk: str
+            用于按日期筛选数据的主键
+        start: datetime-like
+            用于按日期筛选数据的起始日期
+        end: datetime-like
+            用于按日期筛选数据的结束日期
+        chunk_size: int
+            分块读取csv大文件时的分块大小
+
+        Returns
+        -------
+        DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
-        # import pdb; pdb.set_trace()
+
+        # TODO: 这里对所有读取的文件都进行筛选，需要考虑是否在read_table_data还需要筛选？
+        #  也就是说，在read_table_data级别筛选数据还是在read_file/read_database级别
+        #  筛选数据？
         file_path_name = self.get_file_path_name(file_name)
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
@@ -2355,26 +2366,56 @@ class DataSource:
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares))] for chunk in df_reader)
             df = pd.concat(df_picker)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
-        elif self.file_type == 'hdf':
-            # hdf5的大文件读取尚未优化
+
+            return df
+
+        if self.file_type == 'hdf':
+            # hdf5/feather的大文件读取尚未优化
             df = pd.read_hdf(file_path_name, 'df')
+            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'fth':
             # feather大文件读取尚未优化
             df = pd.read_feather(file_path_name)
-            set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
+
+        try:
+            # 如果self.file_type 为 hdf/fth，那么需要筛选数据
+            if (share_like_pk is not None) and (date_like_pk is not None):
+                df = df.loc[(df[share_like_pk].isin(shares)) &
+                            (df[date_like_pk] >= start) &
+                            (df[date_like_pk] <= end)]
+            elif (share_like_pk is None) and (date_like_pk is not None):
+                df = df.loc[(df[date_like_pk] >= start) &
+                            (df[date_like_pk] <= end)]
+            elif (share_like_pk is not None) and (date_like_pk is None):
+                df = df.loc[(df[share_like_pk].isin(shares))]
+        except:
+            import pdb; pdb.set_trace()
+
+        set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
 
     def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
 
-        :param table:
-        :param column:
-        :param primary_key
-        :param pk_dtypes
-        :param min_max_only: 仅输出最小、最大以及总数量
-        :return:
+        Parameters
+        ----------
+        table: str
+            数据表名
+        column: str
+            关键列名
+        primary_key: list of str
+            数据表的主键名称列表
+        pk_dtypes: list of str
+            数据表的主键数据类型列表
+        min_max_only: bool
+            为True时仅输出最小、最大以及总数量，False输出完整列表
+
+        Returns
+        -------
+        list of str
+            数据表中存储的数据关键列的清单
         """
         if not self.file_exists(table):
             return list()
@@ -2401,9 +2442,14 @@ class DataSource:
     def drop_file(self, file_name):
         """ 删除本地文件
 
-        :param file_name: 将被删除的文件名
-        :return:
-            None
+        Parameters
+        ----------
+        file_name: str
+            将被删除的文件名
+
+        Returns
+        -------
+        None
         """
         import os
         if self.file_exists(file_name):
@@ -3377,10 +3423,10 @@ class DataSource:
         # 检查kwargs中是否有不可用的字段
         columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
         if any(k not in columns for k in kwargs):
-            raise KeyError(f'Some of the kwargs is not valid')
+            raise KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
 
         id_column = p_keys[0] if (len(p_keys) == 1) and (id is not None) else None
-        id_values = [id] if id is not None else None
+        id_values = [id] if id else None
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
@@ -3391,26 +3437,16 @@ class DataSource:
         else:  # for other unexpected cases
             res_df = pd.DataFrame()
 
-        # import pdb; pdb.set_trace()
         if res_df.empty:
             return None
 
-        # 筛选ID，如果筛选了ID，则忽略kwargs
-        # if id is not None:
-        #     try:
-        #         return res_df.loc[id]
-        #     except KeyError:
-        #         return None
-        #     except Exception as e:
-        #         raise RuntimeError(f'{e}, An error occurred when get {id} row data from table {table}')
-
         # 筛选数据
-        for k, v in kwargs:
+        for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
         if id:
             return res_df.loc[id].to_dict()
         else:
-            return res_df
+            return res_df if not res_df.empty else None
 
     def update_sys_table_data(self, table, id, data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
@@ -3533,8 +3569,7 @@ class DataSource:
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         df = pd.DataFrame(data, index=[next_id], columns=data.keys())
         df.index.name = primary_keys[0]
-        #
-        # import pdb; pdb.set_trace()
+
         # 插入数据
         self.update_table_data(table, df, merge_type='ignore')
 
