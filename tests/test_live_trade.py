@@ -33,8 +33,8 @@ class TestLiveTrade(unittest.TestCase):
         self.ds_db = DataSource('db',
                                 host=Config['test_db_host'],
                                 user=Config['test_db_user'],
-                                password=['test_db_password'],
-                                db_name=['test_db_name'])
+                                password=Config['test_db_password'],
+                                db_name=Config['test_db_name'])
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
