@@ -1549,7 +1549,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
         self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
 
-    def test_insert_update_read_sys_table_data(self):
+    def test_insert_read_sys_table_data(self):
         # 测试正常情况下写入及读取表的数据
         test_signal_data = {
                     'symbol': '000001.SZ',
@@ -1791,6 +1791,12 @@ class TestDataSource(unittest.TestCase):
             {'symbol': 'invalid symbol'},
             {'signal_id': 999}
         ]
+        test_kwargs_to_update = [
+            {'user_name': 'new_user'},
+            {'account_id': 3},
+            {'symbol': 'new_symbol'},
+            {'signal_id': 3}
+        ]
 
         datasources_to_be_tested = [
             self.ds_csv,
@@ -1829,6 +1835,14 @@ class TestDataSource(unittest.TestCase):
             with self.assertRaises(KeyError):
                 ds.read_sys_table_data('test_table', invalid_column='test')
 
+            # 测试写入不正确的dict时是否返回错误
+            print(f'test writing wrong data fields into table')
+            with self.assertRaises(Exception):
+                ds.insert_sys_table_data(table, {
+                    'wrong_key1': 'wrong_value',
+                    'wrong_key2': 321,
+                })
+
         # 测试读取指定id的记录
         # 循环使用所有的示例数据在所有的sys表上进行测试，测试覆盖所有的source_type
         # 首先在数据表中写入五条数据，每条数据稍有变化
@@ -1837,11 +1851,12 @@ class TestDataSource(unittest.TestCase):
         # 3，测试传入kwargs筛选数据，验证是否读取正确
         # 4，测试传入无效的kwargs时是否返回None
         # table: str, id: int=None, **kwargs
-        for table, datas, kw, kwn in zip(
+        for table, datas, kw, kwn, kwu in zip(
                 tables_to_be_tested,
                 sys_table_test_multiple_data,
                 test_kwargs_existed,
-                test_kwargs_not_existed
+                test_kwargs_not_existed,
+                test_kwargs_to_update
         ):
             print(f'\n=============================='
                   f'\ntest insert and read specific data from table...\n'
@@ -1889,6 +1904,21 @@ class TestDataSource(unittest.TestCase):
                 # 测试传入无效的kwargs是否返回None
                 with self.assertRaises(KeyError):
                     ds.read_sys_table_data('test_table', invalid_column='test')
+
+                # 测试update_sys_table_data后数据是否正确地更新
+                print(f'\nupdating data (id = {id_to_read}) with kwargs: {kwu}...\n')
+                before = ds.read_sys_table_data(table, id=id_to_read)
+                ds.update_sys_table_data(table, id=id_to_read, **kwu)
+                after = ds.read_sys_table_data(table, id=id_to_read)
+                print(f'before update:\n{before}\nafter update:\n{after}')
+                for bk, bv, ak, av in zip(before.items(), after.items()):
+                    if bk[0] in kwu.keys():
+                        self.assertEqual(av[1], kwu[bk[0]])
+                    else:
+                        if isinstance(b, pd.Timestamp):
+                            self.assertEqual(b, pd.to_datetime(a))
+                        else:
+                            self.assertEqual(b, a)
 
 
 if __name__ == '__main__':

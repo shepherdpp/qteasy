@@ -3398,7 +3398,8 @@ class DataSource:
     def read_sys_table_data(self, table, id=None, **kwargs):
         """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
 
-        每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列
+        每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列，
+        如果给出id，只返回id行记录（dict），如果不给出id，返回所有记录（DataFrame）
 
         Parameters
         ----------
@@ -3448,7 +3449,10 @@ class DataSource:
 
     def update_sys_table_data(self, table, id, data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
-        每次只能更新一条数据，可以更新一个或多个字段
+
+        每次只能更新一条数据，数据以dict形式给出
+        可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。
+        id必须存在，否则抛出异常
 
         Parameters
         ----------
@@ -3467,6 +3471,7 @@ class DataSource:
         Raises
         ------
         KeyError: 当给出的id不存在或为None时
+        KeyError: 当给出的字段不存在时
         """
 
         ensure_sys_table(table)
@@ -3489,15 +3494,25 @@ class DataSource:
 
         # 将data构造为一个df，然后调用self.update_table_data()
         last_id = self.get_sys_table_last_id(table)
-        if id is None or id > last_id:
-            raise KeyError(f'No such id {id} in table {table}')
+        if (id <= 0) or (id > last_id):
+            raise KeyError(f'id({id}) not found in table {table}')
+        # 当data中有不可用的字段时，会抛出异常
+        columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
+        data_columns = [col for col in columns if col not in p_keys]
+        if any(k not in data_columns for k in data.keys()):
+            raise KeyError(f'kwargs not valid: {[k for k in data.keys() if k not in data_columns]}')
 
         data = pd.DataFrame(data, index=[id])
         self.update_table_data(table, data, merge_type='update')
         return id
 
     def insert_sys_table_data(self, table, data):
-        """ 插入系统操作表的数据，一次插入一条记录，不需要给出数据的ID，因为ID会自动生成
+        """ 插入系统操作表的数据
+
+        一次插入一条记录，数据以dict形式给出
+        不需要给出数据的ID，因为ID会自动生成
+        如果给出的数据字段不完整，则抛出异常
+        如果给出的数据中有不可用的字段，则抛出异常
 
         Parameters
         ----------
@@ -3510,6 +3525,10 @@ class DataSource:
         -------
         id: int
             更新的记录ID
+
+        Raises
+        ------
+        KeyError: 当给出的字段不完整或者有不可用的字段时
         """
 
         ensure_sys_table(table)
@@ -3565,6 +3584,11 @@ class DataSource:
         last_id = self.get_sys_table_last_id(table)
         next_id = last_id + 1 if last_id is not None else 1
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+        data_columns = [col for col in columns if col not in primary_keys]
+        # 检查data的key是否与data_column完全一致，如果不一致，则抛出异常
+        if list(data.keys()) != data_columns:
+            raise KeyError(f'Input data keys must be the same as the table data columns, '
+                           f'got {list(data.keys())} vs {data_columns}')
         df = pd.DataFrame(data, index=[next_id], columns=data.keys())
         df.index.name = primary_keys[0]
 
