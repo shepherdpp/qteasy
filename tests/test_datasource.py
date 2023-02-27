@@ -953,12 +953,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
-        ds = DataSource(source_type='db',
-                        host='localhost',
-                        port=3306,
-                        user='jackie',
-                        password='iama007',
-                        db_name='ts_db')
+        ds = qt.QT_DATA_SOURCE
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
         htypes = str_to_list(htypes)
