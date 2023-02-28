@@ -153,46 +153,37 @@ def update_account(account_id, trade_results):
     data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, **trade_results)
 
 
-def update_account_balance(account_id, balance_change):
-    """ 更新账户的可用资金
+def update_account_balance(account_id, **cash_change):
+    """ 更新账户的资金总额和可用资金
 
     Parameters
     ----------
     account_id: int
         账户的id
-    balance_change: float
-        可用资金的变化量
+    cash_change: dict, optional {'cash_amount_change': float, 'available_cash_change': float}
+        可用资金的变化，其余字段不可用此函数修改
 
     Returns
     -------
     None
     """
     import qteasy.QT_DATA_SOURCE as data_source
+
     account_data = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
-    cash_amount = account_data['cash_amount']
-    cash_amount += balance_change
-    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, cash_amount=cash_amount)
+    cash_amount = account_data['cash_amount_change']
+    available_cash = account_data['available_cash_change']
+    if 'cash_amount_change' in cash_change:
+        cash_amount += cash_change['cash_amount_change']
+    if 'available_cash_change' in cash_change:
+        available_cash += cash_change['available_cash_change']
 
-
-def update_account_available_amount(account_id, amount_change):
-    """ 更新账户的可用资金
-
-    Parameters
-    ----------
-    account_id: int
-        账户的id
-    amount_change: float
-        可用资金的变化量
-
-    Returns
-    -------
-    None
-    """
-    import qteasy.QT_DATA_SOURCE as data_source
-    account_data = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
-    available_amount = account_data['available_amount']
-    available_amount += amount_change
-    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, available_amount=available_amount)
+    # 更新账户的资金总额和可用资金
+    data_source.update_sys_table_data(
+            'sys_op_live_accounts',
+            id=account_id,
+            cash_amount=cash_amount,
+            available_cash=available_cash
+    )
 
 
 def check_position_availability(account_id, planned_qty, planned_pos):
@@ -226,24 +217,29 @@ def check_position_availability(account_id, planned_qty, planned_pos):
     return available_qty / planned_qty
 
 
-def update_position(account_id, position_id, trade_results):
-    """ 更新账户的持仓
+def update_position(position_id, **position_data):
+    """ 更新账户的持仓，包括持仓的数量和可用数量，account_id, position和symbol不可修改
 
     Parameters
     ----------
-    account_id: int
-        账户的id
     position_id: int
         持仓的id
-    trade_results: dict
-        交易结果
+    position_data: dict, optional, {'qty_change': int, 'available_qty_change': int}
+        持仓的数据，只能修改qty, available_qty两类数据中的任意一个或多个
 
     Returns
     -------
     None
     """
     import qteasy.QT_DATA_SOURCE as data_source
-    data_source.update_sys_table_data('sys_op_live_positions', id=position_id, **trade_results)
+    # 从数据库中读取持仓数据，修改后再写入数据库
+    position = data_source.read_sys_table_data('sys_op_live_positions', id=position_id)
+    if qty_change in position_data:
+        position['qty'] += position_data['qty_change']
+    if available_qty_change in position_data:
+        position['available_qty'] += position_data['available_qty_change']
+
+    data_source.update_sys_table_data('sys_op_live_positions', id=position_id, **position)
 
 
 def record_trade_signal(signal):
@@ -283,11 +279,9 @@ def update_trade_signal(signal_id, trade_results):
     if trade_signal is None:
         raise RuntimeError(f'Trade signal (signal_id = {signal_id}) not found!')
 
-    data_source.insert_sys_table_data('sys_op_trade_results', trade_results)
-
     # 如果canceled quantity大于0，则说明交易信号已经被取消
     if trade_results['canceled_qty'] > 0:
-        trade_signal['status'] = trade_signal['status'] + 'canceled'
+        trade_signal['status'] = 'canceled'
         # 计算需要revert的可用现金数量及计划交易数量
         planned_symbol = trade_signal['symbol']
         planned_qty = trade_signal['qty']
@@ -298,48 +292,51 @@ def update_trade_signal(signal_id, trade_results):
 
     # 如果filled quantity大于0，但小于交易信号委托数量，则说明交易信号部分执行
     elif (trade_results['filled_qty'] > 0) and (trade_results['filled_qty'] < trade_signal['qty']):
-        trade_signal['status'] = trade_signal['status'] + 'partially_filled'
+        trade_signal['status'] = 'partial'
 
     # 如果filled quantity等于交易信号委托数量，则说明交易信号全部执行
     elif trade_results['filled_qty'] == trade_signal['qty']:
-        trade_signal['status'] = trade_signal['status'] + 'filled'
+        trade_signal['status'] = 'filled'
 
     else:  # 其他情况报错
         raise RuntimeError(f'Unexpected trade results: {trade_results}')
 
     # 计算需要更新的现金、可用现金数量及持仓数量、可用持仓数量 TODO: 以下代码由Copilot生成，需要进一步调整
-    # 如果是多头买进或空头卖出，则需要更新现金、可用现金数量
-    if (trade_signal['position'] == 'long') and (trade_signal['side'] == 'buy' or trade_signal['side'] == 'cover'):
-        cash_change = - trade_results['filled_qty'] * trade_results['filled_price'] - trade_results['transaction_fee']
-        available_cash_change = cash_change
+    trade_position = trade_signal['position']
+    trade_symbol = trade_signal['symbol']
+    filled_qty = trade_results['filled_qty']
+    filled_price = trade_results['price']
+    transaction_fee = trade_results['transaction_fee']
+    cash_change = 0.0
+    position_change = 0.0
+    # 如果是买入股票，则现金会减少，持仓会增加
+    # 新增的持仓进入交割清单，等待交割
+    if trade_signal['direction'] == 'buy':
+        cash_change = - filled_qty * filled_price - transaction_fee
         position_change = trade_results['filled_qty']
-        available_position_change = position_change
-    # 如果是多头卖出或空头买进，则需要更新持仓、可用持仓数量
-    elif (trade_signal['position'] == 'long') and (trade_signal['side'] == 'sell' or trade_signal['side'] == 'short'):
-        cash_change = trade_results['filled_qty'] * trade_results['filled_price'] - trade_results['transaction_fee']
-        available_cash_change = cash_change
+    # 如果是卖出股票，则现金会增加，持仓会减少
+    # 卖出的持仓进入交割清单，等待交割
+    elif trade_signal['direction'] == 'sell':
+        cash_change = filled_qty * filled_price - transaction_fee
         position_change = - trade_results['filled_qty']
-        available_position_change = position_change
-    # 如果是空头买进或多头卖出，则需要更新现金、可用现金数量
-    elif (trade_signal['position'] == 'short') and (trade_signal['side'] == 'buy' or trade_signal['side'] == 'cover'):
-        cash_change = trade_results['filled_qty'] * trade_results['filled_price'] - trade_results['transaction_fee']
-        available_cash_change = cash_change
-        position_change = - trade_results['filled_qty']
-        available_position_change = position_change
-    # 如果是空头卖出或多头买进，则需要更新持仓、可用持仓数量
-    elif (trade_signal['position'] == 'short') and (trade_signal['side'] == 'sell' or trade_signal['side'] == 'short'):
-        cash_change = - trade_results['filled_qty'] * trade_results['filled_price'] - trade_results['transaction_fee']
-        available_cash_change = cash_change
-        position_change = trade_results['filled_qty']
-        available_position_change = position_change
-    else:
-        raise RuntimeError(f'Unexpected trade signal: {trade_signal}')
+
     # 更新account和position的变化
     account_id = trade_signal['account_id']
-    position_id = trade_signal['position_id']
-    update_account_balance(account_id, cash_change)
-    update_account_available_amount(account_id, available_cash_change)
-    update_position_amount(position_id, position_change)
+    position_id = trade_signal['pos_id']
+
+    # TODO: 需要引入delivery list机制，以便在交割清单中记录交易信号的交割过程
+    update_account_balance(
+            account_id=account_id,
+            cash_amount_change=cash_change,
+            position_amount_change=position_change
+    )
+    update_position(
+            position_id=position_id,
+            qty_change=position_change,
+            available_qty_change=position_change
+    )
+
+    data_source.insert_sys_table_data('sys_op_trade_results', trade_results)
     return
 
 
@@ -358,6 +355,35 @@ def read_trade_signal(signal_id):
     """
     import qteasy.QT_DATA_SOURCE as data_source
     return data_source.read_sys_table_data('sys_op_trade_signals', id=signal_id)
+
+
+def query_trade_signal(account_id, symbol, direction, status):
+    """ 从数据库中查询交易信号
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    symbol: str
+        交易标的
+    direction: str
+        交易方向
+    status: str
+        交易信号状态
+
+    Returns
+    -------
+    signals: list
+        交易信号列表
+    """
+    import qteasy.QT_DATA_SOURCE as data_source
+    return data_source.read_sys_table_data(
+        'sys_op_trade_signals',
+        account_id=account_id,
+        symbol=symbol,
+        direction=direction,
+        status=status
+    )
 
 
 def output_trade_signal():
