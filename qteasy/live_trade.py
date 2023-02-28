@@ -102,7 +102,7 @@ def parse_trade_signal(signal, config):
         'submitted_time': None,
         'status': 'submitted',
     }
-    pass
+    return trade_signal
 
 
 def check_account_availability(account_id, requested_amount):
@@ -149,7 +149,8 @@ def update_account(account_id, trade_results):
     -------
     None
     """
-    pass
+    import qteasy.QT_DATA_SOURCE as data_source
+    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, **trade_results)
 
 
 def update_account_balance(account_id, balance_change):
@@ -166,7 +167,11 @@ def update_account_balance(account_id, balance_change):
     -------
     None
     """
-    pass
+    import qteasy.QT_DATA_SOURCE as data_source
+    account_data = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
+    cash_amount = account_data['cash_amount']
+    cash_amount += balance_change
+    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, cash_amount=cash_amount)
 
 
 def update_account_available_amount(account_id, amount_change):
@@ -183,7 +188,11 @@ def update_account_available_amount(account_id, amount_change):
     -------
     None
     """
-    pass
+    import qteasy.QT_DATA_SOURCE as data_source
+    account_data = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
+    available_amount = account_data['available_amount']
+    available_amount += amount_change
+    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, available_amount=available_amount)
 
 
 def check_position_availability(account_id, planned_qty, planned_pos):
@@ -233,7 +242,8 @@ def update_position(account_id, position_id, trade_results):
     -------
     None
     """
-    pass
+    import qteasy.QT_DATA_SOURCE as data_source
+    data_source.update_sys_table_data('sys_op_live_positions', id=position_id, **trade_results)
 
 
 def record_trade_signal(signal):
@@ -397,7 +407,7 @@ def generate_trade_result(signal_id, account_id):
     pass
 
 
-def write_trade_result(trade_results):
+def record_trade_result(trade_results):
     """ 将交易结果写入数据库
 
     Parameters
@@ -410,7 +420,8 @@ def write_trade_result(trade_results):
     result_id: int
         交易结果的id
     """
-    pass
+    import qteasy.QT_DATA_SOURCE as data_source
+    return data_source.write_sys_table_data('sys_op_trade_results', trade_results)
 
 
 def read_trade_result(result_id):
@@ -426,7 +437,8 @@ def read_trade_result(result_id):
     trade_results: dict
         交易结果
     """
-    pass
+    import qteasy.QT_DATA_SOURCE as data_source
+    return data_source.read_sys_table_data('sys_op_trade_results', id=result_id)
 
 
 def output_account_position(account_id, position_id):

@@ -4572,7 +4572,6 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     -------
     df: pd.DataFrame
 
-    #TODO: 下面的Example由Copilot生成，需要检查
     Examples
     --------
     >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
@@ -4582,7 +4581,7 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     0    1  4
     1    2  5
     2    3  6
-    >>> df = set_primary_key_index(df, ['a'], ['int'])
+    >>> set_primary_key_index(df, ['a'], ['int'])
     >>> df
          b
     a
@@ -4640,26 +4639,25 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     -------
     None
 
-    # TODO: 下面的Example由Copilot生成，需要检查
     Examples
     --------
     >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
     >>> df = set_primary_key_frame(df, ['a'], [int])
     >>> df
-            a  b
+         a    b
     0    1    4
     1    2    5
     2    3    6
-    >>> df = set_primary_key_index(df, ['a'], ['int'])
+    >>> set_primary_key_index(df, ['a'], ['int'])
     >>> df
-            b
+         b
     a
     1    4
     2    5
     3    6
     >>> set_datetime_format_frame(df, ['a'], ['date'])
     >>> df
-            b
+                                     b
     a
     1970-01-01 00:00:00.000000001    4
     1970-01-01 00:00:00.000000002    5
@@ -4819,12 +4817,15 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     --------
     >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact')
     {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='permute')
-    {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact', soft_freq=True)
-    {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='permute', soft_freq=True)
-    {'stock_daily': ['close', 'open', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E', method='exact')
+    {'stock_daily': ['close', 'high'], 'stock_monthly': ['open']}
+    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E, IDX', method='exact')
+    {'index_monthly': ['open'], 'stock_daily': ['close', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E, IDX', method='permute')
+    {'stock_daily': ['close', 'open', 'high'],
+     'stock_monthly': ['close', 'open', 'high'],
+     'index_daily': ['close', 'open', 'high'],
+     'index_monthly': ['close', 'open', 'high']}
     """
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
