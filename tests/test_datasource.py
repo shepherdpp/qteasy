@@ -1827,6 +1827,15 @@ class TestDataSource(unittest.TestCase):
                     else:
                         self.assertEqual(origin, read)
 
+            # 测试传入无效的id时是否引发KeyError异常
+            print(f'test passing invalid id to read_sys_table_data')
+            res = ds.read_sys_table_data(table, id=-1)
+            self.assertIsNone(res)
+            res = ds.read_sys_table_data(table, id=0)
+            self.assertIsNone(res)
+            res = ds.read_sys_table_data(table, id=999)
+            self.assertIsNone(res)
+
             # 测试传入无效的表名时是否引发KeyError异常
             with self.assertRaises(KeyError):
                 ds.read_sys_table_data('invalid_table')
@@ -1906,19 +1915,19 @@ class TestDataSource(unittest.TestCase):
                     ds.read_sys_table_data('test_table', invalid_column='test')
 
                 # 测试update_sys_table_data后数据是否正确地更新
-                print(f'\nupdating data (id = {id_to_read}) with kwargs: {kwu}...\n')
-                before = ds.read_sys_table_data(table, id=id_to_read)
-                ds.update_sys_table_data(table, id=id_to_read, **kwu)
-                after = ds.read_sys_table_data(table, id=id_to_read)
+                print(f'\nupdating {table}@(id = {id_to_read}) with kwargs: {kwu}...\n')
+                before = ds.read_sys_table_data(table, id=id_to_read+1)
+                ds.update_sys_table_data(table, id=id_to_read+1, **kwu)
+                after = ds.read_sys_table_data(table, id=id_to_read+1)
                 print(f'before update:\n{before}\nafter update:\n{after}')
-                for bk, bv, ak, av in zip(before.items(), after.items()):
-                    if bk[0] in kwu.keys():
-                        self.assertEqual(av[1], kwu[bk[0]])
+                for bk_v, ak_v in zip(before.items(), after.items()):
+                    if bk_v[0] in kwu.keys():
+                        self.assertEqual(ak_v[1], kwu[bk_v[0]])
                     else:
-                        if isinstance(b, pd.Timestamp):
-                            self.assertEqual(b, pd.to_datetime(a))
+                        if isinstance(bk_v[0], pd.Timestamp):
+                            self.assertEqual(bk_v[1], pd.to_datetime(ak_v[1]))
                         else:
-                            self.assertEqual(b, a)
+                            self.assertEqual(bk_v[1], ak_v[1])
 
 
 if __name__ == '__main__':

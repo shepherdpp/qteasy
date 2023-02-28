@@ -3417,6 +3417,11 @@ class DataSource:
         None:
             当输入的id或筛选条件没有匹配项时
         """
+
+        # 如果ID<=0，返回None
+        if id is not None and id <= 0:
+            return None
+
         ensure_sys_table(table)
 
         # 检查kwargs中是否有不可用的字段
@@ -3442,12 +3447,12 @@ class DataSource:
         # 筛选数据
         for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
-        if id:
+        if id is not None:
             return res_df.loc[id].to_dict()
         else:
             return res_df if not res_df.empty else None
 
-    def update_sys_table_data(self, table, id, data):
+    def update_sys_table_data(self, table, id, **data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
 
         每次只能更新一条数据，数据以dict形式给出
@@ -3493,17 +3498,22 @@ class DataSource:
         """
 
         # 将data构造为一个df，然后调用self.update_table_data()
-        last_id = self.get_sys_table_last_id(table)
-        if (id <= 0) or (id > last_id):
+        table_data = self.read_sys_table_data(table, id=id)
+        if table_data is None:
             raise KeyError(f'id({id}) not found in table {table}')
+
         # 当data中有不可用的字段时，会抛出异常
         columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
         data_columns = [col for col in columns if col not in p_keys]
         if any(k not in data_columns for k in data.keys()):
             raise KeyError(f'kwargs not valid: {[k for k in data.keys() if k not in data_columns]}')
 
-        data = pd.DataFrame(data, index=[id])
-        self.update_table_data(table, data, merge_type='update')
+        # 更新original_data
+        table_data.update(data)
+
+        df_data = pd.DataFrame(table_data, index=[id])
+        df_data.index.name = p_keys[0]
+        self.update_table_data(table, df_data, merge_type='update')
         return id
 
     def insert_sys_table_data(self, table, data):
@@ -4581,17 +4591,22 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     3    6
 
     """
+
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
     if not isinstance(primary_key, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+    # TODO: 增加检查：primary_key中的元素是否在df.column中存，
+    #  如果不存在，df必须有index，且index.name必须存在且与primary_key中的元素一致
+    #  否则报错
 
     idx_columns = list(df.index.names)
     pk_columns = primary_key
 
     if idx_columns != [None]:
+        # index中有值，需要将index中的值放入DataFrame中
         index_frame = df.index.to_frame()
         for col in idx_columns:
             df[col] = index_frame[col]
