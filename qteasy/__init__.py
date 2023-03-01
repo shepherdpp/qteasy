@@ -36,6 +36,7 @@ from ._arg_validators import QT_CONFIG
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
+QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
 
 # 准备从本地配置文件中读取预先存储的qteasy配置
 qt_local_configs = {}
@@ -57,11 +58,12 @@ except FileNotFoundError as e:
 
     config_lines = []  # 本地配置文件行
 except Exception as e:
-    warnings.warn(f'{e}\nreading configuration file error, default configurations will be used')
+    warnings.warn(f'{e}\nError reading configuration file, all configurations will fall back to default!')
     config_lines = []
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
 # config_key = value
+# TODO: 读取配置文件时，如果文件中有int/float/bool类型的配置，需要进行类型转换
 for line in config_lines:
     if line[0] == '#':  # 忽略注释行
         continue
@@ -102,8 +104,8 @@ if not QT_TRADE_CALENDAR.empty:
     QT_TRADE_CALENDAR = QT_TRADE_CALENDAR
 else:
     QT_TRADE_CALENDAR = None
-    warnings.warn(f'trade calendar can not be loaded, some of the trade day related functions may not work '
-                  f'properly.\nrun "qt.refill_data_source(qt.QT_DATA_SOURCE, \'trade_calendar\')" to '
+    warnings.warn(f'trade calendar is not loaded, some utility functions may not work '
+                  f'properly.\nrun "qt.refill_data_source(tables=\'trade_calendar\')" to '
                   f'download trade calendar data')
 
 # 设置qteasy运行过程中忽略某些numpy计算错误报警
