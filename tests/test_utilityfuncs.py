@@ -20,7 +20,7 @@ from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_da
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
-from qteasy.utilfuncs import reindent, truncate_string
+from qteasy.utilfuncs import reindent, truncate_string, is_float_like, is_integer_like
 
 
 class RetryableError(Exception):
@@ -332,6 +332,47 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_number_like('abc'))
         self.assertFalse(is_number_like('0.32a'))
         self.assertFalse(is_number_like('0-2'))
+
+    def test_is_integer_like(self):
+        """test the function: is_integer_like()"""
+        self.assertTrue(is_integer_like(123))
+        self.assertTrue(is_integer_like('123'))
+        self.assertTrue(is_integer_like('-123'))
+        self.assertTrue(is_integer_like('0'))
+        self.assertTrue(is_integer_like('-0'))
+
+        self.assertFalse(is_integer_like('0000'))
+        self.assertFalse(is_integer_like(123.4))
+        self.assertFalse(is_integer_like('123.4'))
+        self.assertFalse(is_integer_like('-123.4'))
+        self.assertFalse(is_integer_like('0.0'))
+        self.assertFalse(is_integer_like('-0.0'))
+        self.assertFalse(is_integer_like('0000.0'))
+        self.assertFalse(is_integer_like('000.0'))
+        self.assertFalse(is_integer_like('abc'))
+        self.assertFalse(is_integer_like('0.32a'))
+        self.assertFalse(is_integer_like('0-2'))
+
+    def test_is_float_like(self):
+        """test the function: is_float_like()"""
+        self.assertTrue(is_float_like(123))
+        self.assertTrue(is_float_like('123'))
+        self.assertTrue(is_float_like('-123'))
+        self.assertTrue(is_float_like('0'))
+        self.assertTrue(is_float_like('-0'))
+        self.assertTrue(is_float_like(123.4))
+        self.assertTrue(is_float_like('123.4'))
+        self.assertTrue(is_float_like('-123.4'))
+        self.assertTrue(is_float_like('0.0'))
+        self.assertTrue(is_float_like('-0.0'))
+
+        self.assertFalse(is_float_like('0000.0'))
+        self.assertFalse(is_float_like('000.0'))
+        self.assertFalse(is_float_like('0000'))
+        self.assertFalse(is_float_like('000'))
+        self.assertFalse(is_float_like('abc'))
+        self.assertFalse(is_float_like('0.32a'))
+        self.assertFalse(is_float_like('0-2'))
 
     def test_retry_decorator(self):
         """ test the retry decorator"""

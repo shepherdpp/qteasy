@@ -57,6 +57,8 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 40: '########################################'
                 }
 NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
+INTEGER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)$')
+FLOAT_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
 ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
@@ -770,7 +772,7 @@ def list_truncate(lst, trunc_size):
 
 
 def is_number_like(key: [str, int, float]) -> bool:
-    """ 判断一个字符串是否是一个合法的数字，使用re比原来的版本快5～10倍
+    """ 判断一个字符串是否是一个合法的数字
 
     Parameters
     ----------
@@ -780,6 +782,8 @@ def is_number_like(key: [str, int, float]) -> bool:
     -------
     bool
     """
+
+    # 使用re比原来的版本快5～10倍
     if isinstance(key, (float, int)):
         return True
     if not isinstance(key, str):
@@ -787,6 +791,7 @@ def is_number_like(key: [str, int, float]) -> bool:
     if NUMBER_IDENTIFIER.match(key):
         return True
     return False
+    # 原来的版本
     # if len(key) == 0:
     #     return False
     # if all(ch in '-0123456789.' for ch in key):
@@ -801,6 +806,46 @@ def is_number_like(key: [str, int, float]) -> bool:
     #             return False
     #     return True
     # return False
+
+
+def is_integer_like(key: [str, int]) -> bool:
+    """ 判断一个字符串是否是一个合法的整数
+
+    Parameters
+    ----------
+    key: [str, int], 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    if isinstance(key, int):
+        return True
+    if not isinstance(key, str):
+        return False
+    if INTEGER_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_float_like(key: [str, int, float]) -> bool:
+    """ 判断一个字符串是否是一个合法的浮点数
+
+    Parameters
+    ----------
+    key: [str, int, float], 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    if isinstance(key, (float, int)):
+        return True
+    if not isinstance(key, str):
+        return False
+    if FLOAT_IDENTIFIER.match(key):
+        return True
+    return False
 
 
 def match_ts_code(code: str, asset_types='all', match_full_name=False):
