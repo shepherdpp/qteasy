@@ -1552,8 +1552,8 @@ class TestDataSource(unittest.TestCase):
     def test_insert_read_sys_table_data(self):
         # 测试正常情况下写入及读取表的数据
         test_signal_data = {
-                    'symbol': '000001.SZ',
-                    'position': 'long',
+                    'account_id': 1,
+                    'pos_id': 1,
                     'direction': 'buy',
                     'order_type': 'limit',
                     'qty': 100,
@@ -1562,8 +1562,6 @@ class TestDataSource(unittest.TestCase):
                     'status': 'submitted',
         }
         test_result_data = {
-            'account_id': 1,
-            'pos_id': 1,
             'signal_id': 1,
             'filled_qty': 100,
             'price': 10.0,
@@ -1587,8 +1585,8 @@ class TestDataSource(unittest.TestCase):
         # 生成五条不同的模拟信号数据
         test_multiple_signal_data = [
             {
-                'symbol': '000001.SZ',
-                'position': 'long',
+                'account_id': 1,
+                'pos_id': 1,
                 'direction': 'buy',
                 'order_type': 'limit',
                 'qty': 100,
@@ -1597,8 +1595,8 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'symbol': '000002.SZ',
-                'position': 'long',
+                'account_id': 1,
+                'pos_id': 2,
                 'direction': 'buy',
                 'order_type': 'limit',
                 'qty': 200,
@@ -1607,8 +1605,8 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'symbol': '000003.SZ',
-                'position': 'long',
+                'account_id': 2,
+                'pos_id': 3,
                 'direction': 'buy',
                 'order_type': 'limit',
                 'qty': 300,
@@ -1617,8 +1615,8 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'symbol': '000004.SZ',
-                'position': 'long',
+                'account_id': 2,
+                'pos_id': 4,
                 'direction': 'buy',
                 'order_type': 'limit',
                 'qty': 400,
@@ -1627,8 +1625,8 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'symbol': '000005.SZ',
-                'position': 'long',
+                'account_id': 2,
+                'pos_id': 5,
                 'direction': 'buy',
                 'order_type': 'limit',
                 'qty': 500,
@@ -1639,8 +1637,6 @@ class TestDataSource(unittest.TestCase):
         ]
         test_multiple_result_data = [
             {
-                'account_id': 1,
-                'pos_id': 1,
                 'signal_id': 1,
                 'filled_qty': 100,
                 'price': 10.0,
@@ -1649,8 +1645,6 @@ class TestDataSource(unittest.TestCase):
                 'canceled_qty': 0,
             },
             {
-                'account_id': 1,
-                'pos_id': 2,
                 'signal_id': 2,
                 'filled_qty': 200,
                 'price': 10.0,
@@ -1659,8 +1653,6 @@ class TestDataSource(unittest.TestCase):
                 'canceled_qty': 0,
             },
             {
-                'account_id': 1,
-                'pos_id': 3,
                 'signal_id': 3,
                 'filled_qty': 300,
                 'price': 10.0,
@@ -1669,8 +1661,6 @@ class TestDataSource(unittest.TestCase):
                 'canceled_qty': 0,
             },
             {
-                'account_id': 2,
-                'pos_id': 4,
                 'signal_id': 4,
                 'filled_qty': 400,
                 'price': 10.0,
@@ -1679,8 +1669,6 @@ class TestDataSource(unittest.TestCase):
                 'canceled_qty': 0,
             },
             {
-                'account_id': 2,
-                'pos_id': 5,
                 'signal_id': 5,
                 'filled_qty': 500,
                 'price': 10.0,
@@ -1782,19 +1770,19 @@ class TestDataSource(unittest.TestCase):
         test_kwargs_existed = [
             {'user_name': 'John Doe'},
             {'account_id': 1},
-            {'symbol': '000001.SZ'},
+            {'direction': 'buy'},
             {'signal_id': 1}
         ]
         test_kwargs_not_existed = [
             {'user_name': 'Not a user'},
             {'account_id': 999},
-            {'symbol': 'invalid symbol'},
+            {'direction': 'invalid_direction'},
             {'signal_id': 999}
         ]
         test_kwargs_to_update = [
             {'user_name': 'new_user'},
             {'account_id': 3},
-            {'symbol': 'new_symbol'},
+            {'direction': 'sell'},
             {'signal_id': 3}
         ]
 

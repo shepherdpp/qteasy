@@ -1340,7 +1340,7 @@ TABLE_SCHEMA = {
     'sys_op_trade_results':
         {'columns':    ['result_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                         'canceled_qty'],
-         'dtypes':     ['int', 'int', 'int', 'int', 'float', 'float', 'float', 'datetime',
+         'dtypes':     ['int', 'int', 'float', 'float', 'float', 'datetime',
                         'float'],
          'remarks':    ['交易结果ID', '交易信号ID', '成交数量', '成交价格', '交易费用', '成交时间',
                         '取消交易数量'],
