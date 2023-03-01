@@ -12,6 +12,8 @@
 
 import asyncio
 
+import pandas as pd
+
 
 async def process_trade_signal(signal):
     # 将交易信号提交给交易平台或用户以获取交易结果
@@ -20,7 +22,7 @@ async def process_trade_signal(signal):
     update_signal_status(signal_id=signal['signal_id'], status=trade_results['status'])
     output_trade_signal()
     # 更新账户的持仓
-    update_account_position(account_id=signal['account_id'], position=trade_results['position'])
+    update_account_position(account_id=signal['account_id'], position=trade_results['position_type'])
     # 更新账户的可用资金
     update_account(account_id=signal['account_id'], trade_results=trade_results)
     # 刷新TUI
@@ -66,12 +68,14 @@ def generate_signal():
     pass
 
 
-def parse_trade_signal(signal, config):
+def parse_trade_signal(account_id, signal, config):
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
 
 
     Parameters
     ----------
+    account_id: int
+        账户的id
     signal: np.ndarray
         交易信号
     config: dict
@@ -79,30 +83,44 @@ def parse_trade_signal(signal, config):
 
     Returns
     -------
-    tuple of dict:
-    ({
-        symbol:
-        position:
-        direction:
-        order_type:
-        qty:
-        price:
-        submitted_time:
-        status:
-    }, ...)
+    int, 提交的交易信号的数量
     """
+    # 读取signal的值，根据signal_type确定如何解析交易信号
 
-    trade_signal = {
-        'symbol': None,
-        'position': None,
-        'direction': None,
-        'order_type': None,
-        'qty': None,
-        'price': None,
-        'submitted_time': None,
-        'status': 'submitted',
-    }
-    return trade_signal
+    # PT交易信号和PS/VS交易信号需要分开解析
+
+    # 解析PT交易信号：
+    # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
+    symbols_to_trade = []
+    directions_of_trade = []
+    qty_to_trade = []
+    # 解析PS/VS交易信号
+    # 直接根据交易信号确定计划买进和卖出的数量
+
+    # 产生计划买进和卖出数量后，逐一生成交易信号：
+    # 检查所有持仓，获取已有持仓的id，如果没有持仓，需要创建一个新的持仓获得持仓id
+    # 生成交易信号
+    submitted_qty = 0
+    for symbol, direction, q in zip(symbols_to_trade, directions_of_trade, qty_to_trade):
+        pos_id = get_or_create_position(
+            account_id=account_id,
+            symbol=symbol,
+            position_type=position,
+        )
+        trade_signal = {
+            'account_id': account_id,
+            'pos_id': pos_id,
+            'direction': direction,
+            'order_type': 'normal',
+            'qty': q,
+            'price': get_price(),
+            'submitted_time': pd.to_datetime('now'),
+            'status': 'submitted',
+        }
+        if submit_signal(trade_signal) is not None:
+            submitted_qty += 1
+
+    return submitted_qty
 
 
 def check_account_availability(account_id, requested_amount):
@@ -186,6 +204,42 @@ def update_account_balance(account_id, **cash_change):
     )
 
 
+def get_or_create_position(account_id, symbol, position_type):
+    """ 获取账户的持仓, 如果持仓不存在，则创建一条新的持仓记录
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    symbol: str
+        交易标的
+    position_type: str, {'long', 'short'}
+        持仓类型
+
+    Returns
+    -------
+    int or None: 持仓的id
+    """
+    import qteasy.QT_DATA_SOURCE as data_source
+    position = data_source.read_sys_table_data(
+            'sys_op_live_positions',
+            id=None,
+            account_id=account_id,
+            symbol=symbol,
+            position=position_type
+    )
+    if position.empty:
+        return data_source.insert_sys_table_data(
+                'sys_op_live_positions',
+                account_id=account_id,
+                symbol=symbol,
+                position=position_type,
+                qty=0,
+                avg_price=0
+        )
+    return position['id']
+
+
 def check_position_availability(account_id, planned_qty, planned_pos):
     """ 检查账户的持仓是否允许下单
 
@@ -207,7 +261,7 @@ def check_position_availability(account_id, planned_qty, planned_pos):
     position = data_source.read_sys_table_data('sys_op_live_positions', id=None, account_id=account_id)
     if position is None:
         raise RuntimeError('Position not found!')
-    if position['position'] != planned_pos:
+    if position['position_type'] != planned_pos:
         return 0.0
     available_qty = position['available_qty']
     if available_qty == 0:
@@ -302,7 +356,7 @@ def update_trade_signal(signal_id, trade_results):
         raise RuntimeError(f'Unexpected trade results: {trade_results}')
 
     # 计算需要更新的现金、可用现金数量及持仓数量、可用持仓数量 TODO: 以下代码由Copilot生成，需要进一步调整
-    trade_position = trade_signal['position']
+    trade_position = trade_signal['position_type']
     trade_symbol = trade_signal['symbol']
     filled_qty = trade_results['filled_qty']
     filled_price = trade_results['price']
@@ -400,7 +454,7 @@ def output_trade_signal():
 def submit_signal(signal):
     """ 将交易信号提交给交易平台或用户以等待交易结果
 
-    交易结果可以来自用户输入，也可以来自交易平台的返回
+    交易结果可以来自用户输入，也可以来自交易平台的返回，在这个函数中不等待交易结果，而是将交易信号写入数据库，然后返回交易信号的id
 
     Parameters
     ----------
@@ -409,8 +463,7 @@ def submit_signal(signal):
 
     Returns
     -------
-    trade_results: dict
-        交易结果
+    int, 交易信号的id
     """
     return get_trade_result(signal)
 

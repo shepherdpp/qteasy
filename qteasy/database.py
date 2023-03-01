@@ -1328,22 +1328,22 @@ TABLE_SCHEMA = {
          },
 
     'sys_op_trade_signals':
-        {'columns':    ['signal_id', 'symbol', 'position', 'direction', 'order_type',
-                        'qty', 'price', 'submitted_time', 'status'],
-         'dtypes':     ['int', 'varchar(20)', 'varchar(5)', 'varchar(10)', 'varchar(5)',
-                        'float', 'float', 'datetime', 'varchar(10)'],
-         'remarks':    ['交易信号ID', '资产代码', '交易头寸(多long/空short)', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)',
-                        '委托数量', '委托报价', '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
+        {'columns':    ['signal_id', 'account_id', 'pos_id', 'direction', 'order_type', 'qty',
+                        'price', 'submitted_time', 'status'],
+         'dtypes':     ['int', 'int', 'int', 'varchar(10)', 'varchar(5)', 'float',
+                        'float', 'datetime', 'varchar(10)'],
+         'remarks':    ['交易信号ID', '账户ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量',
+                        '委托报价', '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
          'prime_keys': [0]
          },
 
     'sys_op_trade_results':
-        {'columns':    ['result_id', 'account_id', 'pos_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee',
-                        'execution_time', 'canceled_qty'],
-         'dtypes':     ['int', 'int', 'int', 'int', 'float', 'float', 'float',
-                        'datetime', 'float'],
-         'remarks':    ['结果ID', '运行账号ID', '持仓ID', '交易信号ID', '成交数量', '成交价格', '交易费用',
-                        '成交时间', '取消交易数量'],
+        {'columns':    ['result_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+                        'canceled_qty'],
+         'dtypes':     ['int', 'int', 'int', 'int', 'float', 'float', 'float', 'datetime',
+                        'float'],
+         'remarks':    ['交易结果ID', '交易信号ID', '成交数量', '成交价格', '交易费用', '成交时间',
+                        '取消交易数量'],
          'prime_keys': [0]
          },
 
