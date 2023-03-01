@@ -37,7 +37,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.0.1.dev5`
+- Latest Version: `0.0.1.dev6`
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -94,7 +94,7 @@ import qteasy as qt
 
 因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置，初始配置是通过一个文件`qteasy.cfg`来实现的。第一次导入`qteasy`时，
 `qteasy`
-会在安装根目录下创建一个空白的配置文件，用TextEdit或Notepad打开文件可以看到下面内容：
+会在QT_ROOT_PATH/qteasy/下创建一个空白的配置文件，用TextEdit或Notepad打开文件可以看到下面内容：
 
 ```
 # qteasy configuration file
@@ -105,7 +105,7 @@ import qteasy as qt
 
 ```
 
-> - 使用`qt.QT_ROOT_PATH`可以查看qteasy的安装根目录
+> - 使用`qt.QT_ROOT_PATH`可以查看qteasy的根目录
 > - `tushare` 的`API token`可以到[tushare pro主页](https://tushare.pro)免费申请
 
 
@@ -124,6 +124,7 @@ tushare_token = <你的tushare API Token>
 local_data_source = database  
 # 同时设置mysql数据库的连接信息
 local_db_host = <host name>
+local_db_port = <port number>
 local_db_user = <user name>
 local_db_password = <password>
 local_db_name = <database name>
@@ -133,13 +134,21 @@ local_data_source = file
 # 需要设置文件类型和存储路径
 local_data_file_type = csv  # 或者hdf/fth分别代表hdf5文件或feather文件
 local_data_file_path = data/  # 或者其他指定的文件存储目录
+
+# 如果要使用tests目录下的测试数据，需要设置：
+test_db_host = <host name>
+test_db_port = <port number>
+test_db_user = <user name>
+test_db_password = <password>
+test_db_name = test_db <或其他用于测试的临时数据库>
+
 ```
 根据你选择的本地数据源类型，可能需要安装对应的依赖包，参见[安装及依赖](#安装依赖包)
 
-如果日常使用的数据量大，建议设置`data_source_type = 'database'`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
+如果日常使用的数据量大，建议设置`data_source_type = database`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
 间， 分钟级别数据将占用350GB甚至更多的磁盘空间。
 
-关闭并保存好配置文件后，重新导入`qteasy`，就完成了数据源的配置，可以开始下载数据到本地数据源了。
+关闭并保存好配置文件后，重新导入`qteasy`，就完成了数据源的配置，可以开始下载数据到本地了。
 
 ### 下载股票价格数据并将其可视化 
 
