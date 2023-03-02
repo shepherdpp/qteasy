@@ -240,6 +240,27 @@ def get_or_create_position(account_id, symbol, position_type):
     return position['id']
 
 
+def get_account_positions(account_id):
+    """ 获取账户的所有持仓
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+
+    Returns
+    -------
+    pandas.DataFrame or None: 账户的所有持仓
+    """
+    import qteasy.QT_DATA_SOURCE as data_source
+    positions = data_source.read_sys_table_data(
+            'sys_op_live_positions',
+            id=None,
+            account_id=account_id,
+    )
+    return positions
+
+
 def check_position_availability(account_id, planned_qty, planned_pos):
     """ 检查账户的持仓是否允许下单
 

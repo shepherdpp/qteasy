@@ -18,6 +18,7 @@ import numpy as np
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+import qteasy.utilfuncs
 from .core import run, set_config, get_configurations, get_config
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import get_basic_info, get_stock_info, get_table_overview, get_data_overview, refill_data_source
@@ -51,26 +52,40 @@ try:
         config_lines = f.readlines()
 
 except FileNotFoundError as e:
-    warnings.warn(f'{e}\nqteasy.cfg does not exist, a new configuration file is created.')
+    warnings.warn(f'qteasy.cfg not found, a new configuration file is created.')
     with open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), mode='w', encoding='utf-8') as f:
         intro = QT_CONFIG_FILE_INTRO
         f.write(intro)
 
     config_lines = []  # 本地配置文件行
 except Exception as e:
-    warnings.warn(f'{e}\nError reading configuration file, all configurations will fall back to default!')
+    warnings.warn(f'Error reading configuration file, all configurations will fall back to default! \n{e}')
     config_lines = []
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
 # config_key = value
-# TODO: 读取配置文件时，如果文件中有int/float/bool类型的配置，需要进行类型转换
 for line in config_lines:
     if line[0] == '#':  # 忽略注释行
         continue
     line = line.split('=')
+    # TODO: 读取配置文件时，字符串是不需要引号的，但是如果字符串用引号引起来，说明强制要求字符串类型，需要解决
     if len(line) == 2:
         arg_name = line[0].strip()
-        arg_value = line[1].strip()
+        read_value = line[1].strip()
+        if read_value == 'True':
+            read_value = True
+        elif read_value == 'False':
+            read_value = False
+        elif read_value == 'None':
+            read_value = None
+        elif qteasy.utilfuncs.is_integer_like(read_value):
+            read_value = int(read_value)
+        elif qteasy.utilfuncs.is_float_like(read_value):
+            read_value = float(read_value)
+        else:
+            pass
+
+        arg_value = read_value
         try:
             qt_local_configs[arg_name] = arg_value
         except Exception as e:
@@ -81,7 +96,9 @@ try:
     TUSHARE_TOKEN = qt_local_configs['tushare_token']
     ts.set_token(TUSHARE_TOKEN)
 except Exception as e:
-    warnings.warn(f'{e}, tushare token was not loaded, data downloading from tushare might be limited!')
+    warnings.warn(f'Failed Loading tushare_token, configure it in qteasy.cfg:\n'
+                  f'tushare_token = your_token\n'
+                  f'for more information, please visit: https://tushare.pro/')
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
 configure(only_built_in_keys=False, **qt_local_configs)
@@ -92,7 +109,7 @@ QT_DATA_SOURCE = DataSource(
         file_type=QT_CONFIG['local_data_file_type'],
         file_loc=QT_CONFIG['local_data_file_path'],
         host=QT_CONFIG['local_db_host'],
-        port=QT_CONFIG['local_db_port'],  # TODO: 所有从配置文件中读取的参数都会变成str类型，需要转换为int类型，需要设法解决
+        port=QT_CONFIG['local_db_port'],
         user=QT_CONFIG['local_db_user'],
         password=QT_CONFIG['local_db_password'],
         db_name=QT_CONFIG['local_db_name']
@@ -105,8 +122,7 @@ if not QT_TRADE_CALENDAR.empty:
 else:
     QT_TRADE_CALENDAR = None
     warnings.warn(f'trade calendar is not loaded, some utility functions may not work '
-                  f'properly.\nrun "qt.refill_data_source(tables=\'trade_calendar\')" to '
-                  f'download trade calendar data')
+                  f'properly, to download trade calendar, run \n"qt.refill_data_source(tables=\'trade_calendar\')"')
 
 # 设置qteasy运行过程中忽略某些numpy计算错误报警
 np.seterr(divide='ignore', invalid='ignore')

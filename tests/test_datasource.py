@@ -41,7 +41,7 @@ class TestDataSource(unittest.TestCase):
         self.ds_db = DataSource(
                 'db',
                 host=QT_CONFIG['test_db_host'],
-                port=3306,
+                port=QT_CONFIG['test_db_port'],
                 user=QT_CONFIG['test_db_user'],
                 password=QT_CONFIG['test_db_password'],
                 db_name=QT_CONFIG['test_db_name']
