@@ -85,15 +85,17 @@ def parse_trade_signal(account_id, signal, config):
     -------
     int, 提交的交易信号的数量
     """
+    order_type = 'normal'
     # 读取signal的值，根据signal_type确定如何解析交易信号
 
     # PT交易信号和PS/VS交易信号需要分开解析
 
     # 解析PT交易信号：
     # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
-    symbols_to_trade = []
-    directions_of_trade = []
-    qty_to_trade = []
+    symbols = []
+    positions = []
+    directions = []
+    quantities = []
     # 解析PS/VS交易信号
     # 直接根据交易信号确定计划买进和卖出的数量
 
@@ -101,18 +103,18 @@ def parse_trade_signal(account_id, signal, config):
     # 检查所有持仓，获取已有持仓的id，如果没有持仓，需要创建一个新的持仓获得持仓id
     # 生成交易信号
     submitted_qty = 0
-    for symbol, direction, q in zip(symbols_to_trade, directions_of_trade, qty_to_trade):
+    for sym, pos, d, qty in zip(symbols, positions, directions, quantities):
         pos_id = get_or_create_position(
             account_id=account_id,
-            symbol=symbol,
-            position_type=position,
+            symbol=sym,
+            position_type=pos,
         )
         trade_signal = {
             'account_id': account_id,
             'pos_id': pos_id,
-            'direction': direction,
-            'order_type': 'normal',
-            'qty': q,
+            'direction': d,
+            'order_type': order_type,
+            'qty': qty,
             'price': get_price(),
             'submitted_time': pd.to_datetime('now'),
             'status': 'submitted',
@@ -121,6 +123,40 @@ def parse_trade_signal(account_id, signal, config):
             submitted_qty += 1
 
     return submitted_qty
+
+
+def parse_pt_type_signal(signal, config):
+    """ 解析PT类型的交易信号
+
+    Parameters
+    ----------
+    signal: np.ndarray
+        交易信号
+    config: dict
+        交易信号的配置
+
+    Returns
+    -------
+    list: 交易信号的列表
+    """
+    pass
+
+
+def parse_psvs_type_signal(signal, config):
+    """ 解析PS/VS类型的交易信号
+
+    Parameters
+    ----------
+    signal: np.ndarray
+        交易信号
+    config: dict
+        交易信号的配置
+
+    Returns
+    -------
+    list: 交易信号的列表
+    """
+    pass
 
 
 def new_account(user_name, cash_amount, **account_data):
