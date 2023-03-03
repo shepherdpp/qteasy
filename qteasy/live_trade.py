@@ -123,6 +123,33 @@ def parse_trade_signal(account_id, signal, config):
     return submitted_qty
 
 
+def new_account(user_name, cash_amount, **account_data):
+    """ 创建一个新的账户
+
+    Parameters
+    ----------
+    user_name: str
+        用户名
+    cash_amount: float
+        账户的初始资金
+    account_data: dict
+        账户的其他信息
+
+    Returns
+    -------
+    int: 账户的id
+    """
+    import qteasy.QT_DATA_SOURCE as data_source
+    account_id = data_source.write_sys_table_data(
+        'sys_op_live_accounts',
+        user_name=user_name,
+        created_time=pd.to_datetime('now'),
+        cash_amount=cash_amount,
+        **account_data,
+    )
+    return account_id
+
+
 def check_account_availability(account_id, requested_amount):
     """ 检查账户的可用资金是否充足
 
@@ -218,7 +245,8 @@ def get_or_create_position(account_id, symbol, position_type):
 
     Returns
     -------
-    int or None: 持仓的id
+    dict: 持仓记录
+    int: 如果持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
     """
     import qteasy.QT_DATA_SOURCE as data_source
     position = data_source.read_sys_table_data(
