@@ -17,6 +17,53 @@ from .utilfuncs import TIME_FREQ_STRINGS
 
 class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
+
+    Attributes
+    ----------
+    pars: any
+        策略可调参数，可以是任意类型。策略的优化过程，就是寻找策略可调参数的最优组合的过程。
+    opt_tag: int {0, 1}
+        策略的优化标签，0表示不参与优化，1表示参与优化
+    par_count: int
+        策略可调参数的个数
+    par_types: [list, str]
+        策略可调参数的类型，可以是一个列表，也可以是一个字符串，如果是字符串，则表示所有参数的类型都相同
+    par_range: [list, tuple]
+        策略可调参数的取值范围，可以是一个列表，也可以是一个元组，如果是列表，则表示所有参数的取值范围都相同
+    stg_type: str
+        策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
+    name: str
+        策略名称，用户自定义，用于区分不同的策略
+    description: str
+        策略描述，用户自定义，用于描述策略的基本原理
+    data_freq: str
+        策略所使用的数据的频率，可以是以下几种类型：
+        'd'：日线数据
+        'w'：周线数据
+        'm'：月线数据
+    sample_freq: str
+        策略的采样频率，可以是以下几种类型：
+        'd'：日线数据
+        'w'：周线数据
+        'm'：月线数据
+    window_length: int
+        策略所使用的数据的长度，即策略所使用的数据的长度，例如策略所使用的均线的长度
+    data_types: [str, list]
+        策略所使用的数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
+    reference_data_types: [str, list]
+        策略所使用的参考数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
+    bt_price_type: str
+        策略回测时的价格类型，可以是以下几种类型：
+        'open'：开盘价
+        'high'：最高价
+        'low'：最低价
+        'close'：收盘价
+
+    Methods
+    -------
+    generate(data: np.ndarray, pars: any = None)
+        生成策略信号，该方法是策略的核心方法，所有的策略都必须实现该方法
+
     """
     __mataclass__ = ABCMeta
 
