@@ -1196,8 +1196,8 @@ class TestDataSource(unittest.TestCase):
                         res = hourly_data_tt.iloc[pos + day * 7].values
                         target = resampled.iloc[row].values
                         self.assertTrue(np.allclose(res, target))
-                    except:
-                        import pdb;
+                    except AssertionError:
+                        import pdb
                         pdb.set_trace()
 
         print('checks resample hourly data to 2d')
@@ -1528,6 +1528,133 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
         self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
         self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
+
+    def test_insert_update_read_sys_table_data(self):
+        # 测试正常情况下写入及读取表的数据
+        test_signal_data = {
+                    'symbol': '000001.SZ',
+                    'position': 'long',
+                    'direction': 'buy',
+                    'type': 'limit',
+                    'qty': 100,
+                    'price': 10.0,
+                    'submitted_time': '20230220',
+                    'status': 'submitted',
+        }
+        test_result_data = {
+            'account_id': 1,
+            'pos_id': 1,
+            'signal_id': 1,
+            'filled_qty': 100,
+            'price': 10.0,
+            'transaction_fee': 0.0,
+            'execution_time': '20230220',
+            'cancelled_qty': 0,
+        }
+        test_account_data = {
+            'user_name': 'John Doe',
+            'created_time': '20221223',
+            'cash_amount': 40000.0,
+            'available_cash': 40000.0
+        }
+        test_position = {
+            'account_id': 1,
+            'symbol': '000001.SZ',
+            'position': 'long',
+            'qty': 100,
+            'available_qty': 100.
+        }
+
+        test_position1 = {
+            'account_id': 1,
+            'symbol': '000002.SZ',
+            'position': 'long',
+            'qty': 200,
+            'available_qty': 100.
+        }
+
+        sys_table_test_data = [
+            test_account_data,
+            test_position,
+            test_signal_data,
+            test_result_data,
+        ]
+
+        tables_to_be_tested = [
+            'sys_op_live_accounts',
+            'sys_op_holdings',
+            'sys_op_trade_signals',
+            'sys_op_trade_results'
+        ]
+        datasources_to_be_tested = [
+            self.ds_csv,
+            self.ds_hdf,
+            self.ds_fth,
+            self.ds_db
+        ]
+        for table, data in zip(tables_to_be_tested, sys_table_test_data):
+            for ds in datasources_to_be_tested:
+                ds.insert_sys_table_data(table, data)
+                res = ds.read_sys_table_data(table, 1)
+                print(res)
+                self.assertIsNotNone(res)
+                self.assertEqual(res, data)
+
+            # 测试传入无效的表名时是否引发KeyError异常
+            with self.assertRaises(KeyError):
+                ds.read_sys_table_data('invalid_table')
+
+            # 测试传入无效的kwargs时是否引发KeyError异常
+            with self.assertRaises(KeyError):
+                ds.read_sys_table_data('test_table', invalid_column='test')
+
+        # 测试读取指定id的记录
+        # 这里假设在数据库中有一个'test_table'表
+        # table: str, id: int=None, **kwargs
+        res = self.ds_csv.read_sys_table_data('test_table', id=1)
+        self.assertIsNotNone(res)
+        res = self.ds_hdf.read_sys_table_data('test_table', id=1)
+        self.assertIsNotNone(res)
+        res = self.ds_fth.read_sys_table_data('test_table', id=1)
+        self.assertIsNotNone(res)
+        res = self.ds_db.read_sys_table_data('test_table', id=1)
+        self.assertIsNotNone(res)
+
+        # 测试传入无效的id时是否返回None
+        # 这里假设在数据库中有一个'test_table'表
+        # table: str, id: int=None, **kwargs
+        res = self.ds_csv.read_sys_table_data('test_table', id=999)
+        self.assertIsNone(res)
+        res = self.ds_hdf.read_sys_table_data('test_table', id=999)
+        self.assertIsNone(res)
+        res = self.ds_fth.read_sys_table_data('test_table', id=999)
+        self.assertIsNone(res)
+        res = self.ds_db.read_sys_table_data('test_table', id=999)
+        self.assertIsNone(res)
+
+        # 测试根据kwargs筛选数据的情况
+        # 这里假设在数据库中有一个'test_table'表，并且其中有一个名为'column1'的列
+        # table: str, id: int=None, **kwargs
+        res = self.ds_csv.read_sys_table_data('test_table', column1='test_value')
+        self.assertIsNotNone(res)
+        res = self.ds_hdf.read_sys_table_data('test_table', column1='test_value')
+        self.assertIsNotNone(res)
+        res = self.ds_fth.read_sys_table_data('test_table', column1='test_value')
+        self.assertIsNotNone(res)
+        res = self.ds_db.read_sys_table_data('test_table', column1='test_value')
+        self.assertIsNotNone(res)
+
+        # 测试传入无效的kwargs值时是否返回None
+        # 这里假设在数据库中有一个'test_table'表，并且其中有一个名为'column1'的列
+        # table: str, id: int=None, **kwargs
+        res = self.ds_csv.read_sys_table_data('test_table', column1='invalid_value')
+        self.assertIsNone(res)
+        res = self.ds_hdf.read_sys_table_data('test_table', column1='invalid_value')
+        self.assertIsNone(res)
+        res = self.ds_fth.read_sys_table_data('test_table', column1='invalid_value')
+        self.assertIsNone(res)
+        res = self.ds_db.read_sys_table_data('test_table', column1='invalid_value')
+        self.assertIsNone(res)
 
 
 if __name__ == '__main__':

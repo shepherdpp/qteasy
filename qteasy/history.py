@@ -664,8 +664,7 @@ class HistoryPanel():
              same_htypes: bool = False,
              same_hdates: bool = False,
              fill_value: float = np.nan):
-        """ Join one historypanel object with another one
-        将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
+        """ 将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
 
         新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列
         层标签完全包含两个HistoryPanel对象的对应标签。
@@ -681,11 +680,13 @@ class HistoryPanel():
         same_hdates: bool, Default False
             两个HP的hdates是否相同，如果相同，可以省去hdates维度的标签合并，以节省时间。默认False，
         fill_value: float, Default np.nan
+
             空数据填充值，当组合后的HP存在空数据时，应该以什么值填充，默认为np.nan
 
         Returns
         -------
         HistoryPanel, 一个新的History Panel对象
+
 
         Examples
         --------
@@ -725,8 +726,10 @@ class HistoryPanel():
         2020-01-04      3     3     4
         2020-01-05      8     8     7
 
+
         连接时可以指定两个HistoryPanel之间共享的标签类型，如
         """
+
         assert isinstance(other, HistoryPanel), \
             f'TypeError, HistoryPanel can only be joined with other HistoryPanel.'
         if self.is_empty:
@@ -808,11 +811,21 @@ class HistoryPanel():
                                 columns=combined_htypes)
 
     def as_type(self, dtype):
-        """ 将HistoryPanel的数据类型转换为dtype类型
-        dtype只能为'float'或'int'
+        """ 将HistoryPanel的数据类型转换为dtype类型，dtype只能为'float'或'int'
 
-        dtype:
-        :return:
+        Parameters
+        ----------
+        dtype: str, {'float', 'int'}
+            需要转换的目标数据类型
+
+        Returns
+        -------
+        self
+
+        Raises
+        ______
+        AssertionError
+            当输入的数据类型不正确或输入除float/int外的其他数据类型时
         """
         ALL_DTYPES = ['float', 'int']
         if not self.is_empty:
@@ -881,6 +894,7 @@ class HistoryPanel():
         >>> hp.slice_to_dataframe(htype='low', dropna=True)
                     000001  000002
         2019-01-02     6.0    12.0
+
         """
 
         if self.is_empty:
@@ -1061,10 +1075,11 @@ class HistoryPanel():
 
         Parameters
         ----------
-        by: str, {'share', 'shares', 'htype', 'htypes'}
+        by: str, {'share', 'shares', 'htype', 'htypes'}, Default: 'share'
             - 'share' 或 'shares': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
             它的keys是股票的代码，每个股票代码一个DataFrame
             - 'htype' 或 'htypes': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
+
             它的keys是历史数据类型，每种类型一个DataFrame
 
         Returns
@@ -1132,6 +1147,7 @@ class HistoryPanel():
         2020-01-02  0.8,     1.8,     2.8
         2020-01-03  1.2,     2.2,     3.2
         }
+
         """
 
         if not isinstance(by, str):
@@ -1298,11 +1314,13 @@ def hp_join(*historypanels):
     return res_hp
 
 
-def dataframe_to_hp(df: pd.DataFrame,
-                    hdates=None,
-                    htypes=None,
-                    shares=None,
-                    column_type: str = None) -> HistoryPanel:
+def dataframe_to_hp(
+        df: pd.DataFrame,
+        hdates=None,
+        htypes=None,
+        shares=None,
+        column_type: str = None
+):
     """ 根据DataFrame中的数据创建HistoryPanel对象。
 
     Parameters
@@ -1432,6 +1450,7 @@ def from_multi_index_dataframe(df: pd.DataFrame):
     Returns
     -------
     HistoryPanel
+
     """
     raise NotImplementedError
 
@@ -1610,15 +1629,28 @@ def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, h
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asset_type: str = None, adj: str = None,
-                      data_source=None, drop_nan=True, resample_method='ffill', b_days_only=True, trade_time_only=True,
-                      **kwargs):
+def get_history_panel(
+        htypes,
+        shares=None,
+        start=None,
+        end=None,
+        freq=None,
+        asset_type: str = None,
+        adj: str = None,
+        data_source=None,
+        drop_nan=True,
+        resample_method='ffill',
+        b_days_only=True,
+        trade_time_only=True,
+        **kwargs
+):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
     Parameters
     ----------
     htypes: str or list of str
+
         需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
         如以下两种输入方式皆合法且等效：
          - str:     'open, high, low, close'
@@ -1713,6 +1745,7 @@ def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asse
         include_start_pm 下午交易时段是否包含开始时间
         include_end_pm   下午交易时段是否包含结束时间
     data_source: DataSource Object
+
         数据源对象，用于获取数据
 
     Returns
