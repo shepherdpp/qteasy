@@ -35,12 +35,12 @@ async def live_trade_signals():
         # 当有交易策略处于"运行"状态时，生成交易信号
         signal = generate_signal()
         # 解析交易信号，将其转换为标准的交易信号
-        signal = parse_trade_signal(signal)
+        signal = parse_trade_signal(signal, config)
         # 检查账户的可用资金是否充足
-        if not check_account_availability():
+        if not check_account_availability(account_id=signal['account_id']):
             continue
         # 检查账户的持仓是否允许下单
-        if not check_position_availability():
+        if not check_position_availability(account_id=signal['account_id']):
             continue
         # 将交易信号写入数据库
         signal_id = record_trade_signal(signal)
@@ -68,7 +68,7 @@ def generate_signal():
     pass
 
 
-def parse_trade_signal(account_id, signal, config):
+def parse_trade_signal(account_id, signal, signal_type, config):
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
 
 
@@ -89,15 +89,14 @@ def parse_trade_signal(account_id, signal, config):
     # 读取signal的值，根据signal_type确定如何解析交易信号
 
     # PT交易信号和PS/VS交易信号需要分开解析
-
+    if signal_type == 'PT':
+        symbols, positions, directions, quantities = parse_pt_type_signal(signal=signal, config=config)
     # 解析PT交易信号：
     # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
-    symbols = []
-    positions = []
-    directions = []
-    quantities = []
     # 解析PS/VS交易信号
     # 直接根据交易信号确定计划买进和卖出的数量
+    elif signal_type in ['PS', 'VS']:
+        symbols, positions, directions, quantities = parse_ps_vs_type_signal(signal=signal, config=config)
 
     # 产生计划买进和卖出数量后，逐一生成交易信号：
     # 检查所有持仓，获取已有持仓的id，如果没有持仓，需要创建一个新的持仓获得持仓id
@@ -125,24 +124,53 @@ def parse_trade_signal(account_id, signal, config):
     return submitted_qty
 
 
-def parse_pt_type_signal(signal, config):
+def parse_pt_type_signal(signal, shares, total_value, previous_pos, own_cash, pt_buy_threshold, pt_sell_threshold):
     """ 解析PT类型的交易信号
 
     Parameters
     ----------
     signal: np.ndarray
         交易信号
-    config: dict
-        交易信号的配置
+    shares: np.ndarray
+        各个资产的代码
+    total_value: float
+        账户的总资产
+    previous_pos: np.ndarray
+        各个资产的上一期的头寸
+    own_cash: float
+        账户的现金
+    pt_buy_threshold: float
+        PT买入的阈值
+    pt_sell_threshold: float
+        PT卖出的阈值
 
     Returns
     -------
-    list: 交易信号的列表
+    tuple: (symbols, positions, directions, quantities)
+    - symbols: list of str, 产生交易信号的资产代码
+    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
+    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
+    - quantities: list of float, 所有交易信号的交易数量
     """
+
+    ptbt = pt_buy_threshold
+    ptst = -pt_sell_threshold
+    # 计算当前的头寸
+    # pre_position = pre_values / total_value
+    position_diff = op - previous_pos
+    # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
+    # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
+    amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
+                               position_diff / pre_position * own_amounts,
+                               0.)
+    # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
+    cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
+                             position_diff * total_value,
+                             0.)
     pass
 
 
-def parse_psvs_type_signal(signal, config):
+def parse_psvs_type_signal(signal, shares, total_value, available_cash, own_cash):
     """ 解析PS/VS类型的交易信号
 
     Parameters
@@ -154,8 +182,13 @@ def parse_psvs_type_signal(signal, config):
 
     Returns
     -------
-    list: 交易信号的列表
+    tuple: (symbols, positions, directions, quantities)
+    - symbols: list of str, 产生交易信号的资产代码
+    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
+    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
+    - quantities: list of float, 所有交易信号的交易数量
     """
+
     pass
 
 

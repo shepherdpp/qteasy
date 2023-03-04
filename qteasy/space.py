@@ -176,10 +176,10 @@ class Space:
         ----------
         interval_or_qty: int
             从空间中每个轴上需要提取数据的步长或坐标数量
-        how: str
-            有两个合法参数：
-            'interval',以间隔步长的方式提取坐标，这时候interval_or_qty代表步长
-            'rand', 以随机方式提取坐标，这时候interval_or_qty代表提取数量
+        how: str, default 'interval', {'interval', 'intv', 'step', 'rand', 'random'}
+            合法参数：
+            interval/intv/step,以间隔步长的方式提取坐标，这时候interval_or_qty代表步长
+            rand/random, 以随机方式提取坐标，这时候interval_or_qty代表提取数量
 
         Returns
         -------
@@ -195,10 +195,13 @@ class Space:
         if self.types == ['enum'] and isinstance(self.boes[0], tuple):
             # in this case, space is an enum of tuple parameters, no formation of tuple is needed
             return axis_ranges[0], len(axis_ranges[0])
-        if how == 'interval':
+        if how in ['interval', 'intv', 'step']:
             return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
-        elif how == 'rand':
+        elif how in ['rand', 'random']:
             return itertools.zip_longest(*axis_ranges), interval_or_qty  # 使用迭代器工具将所有点组合打包为点集
+        else:
+            raise KeyError(f'Invalid extraction method: {how}\n'
+                           f'Valid methods are: "interval" or "rand"')
 
     def __contains__(self, item: [list, tuple, object]):
         """ 判断item是否在Space对象中, 返回True如果item在Space中，否则返回False
@@ -391,6 +394,15 @@ class Axis:
                 self._new_continuous_axis(0, boe[0])
             else:
                 self._new_continuous_axis(boe[0], boe[1])
+
+    def __repr__(self):
+        """输出数轴的字符串表示"""
+        if self.axis_type == 'enum':
+            return 'Enum Axis({})'.format(self.axis_boe)
+        elif self.axis_type == 'float':
+            return 'Float Axis({}, {})'.format(self._lbound, self._ubound)
+        else:
+            return 'Int Axis({}, {})'.format(self._lbound, self._ubound)
 
     @property
     def count(self):
