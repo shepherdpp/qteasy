@@ -26,7 +26,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.0.1.dev5`
+- Latest Version: `0.0.1.dev7`
 
 ## Installation and dependencies
 This project requires and depends on following packages:
