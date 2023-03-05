@@ -906,7 +906,7 @@ class Operator:
         >>> op.strategies[0].pars
         (50, 10, 20)
         """
-        
+
         # TODO: 添加策略时应可以设置name属性
         # TODO: 添加策略时应可以设置description属性
         # TODO: 添加策略时如果有错误，应该删除刚刚添加的strategy
@@ -934,7 +934,7 @@ class Operator:
         self.set_parameter(stg_id=stg_id, **kwargs)
 
     def _next_stg_id(self, stg_id: str):
-        """ find out next available strategy id"""
+        """ 为一个交易策略生成一个新的id"""
         all_ids = self._strategy_id
         if stg_id in all_ids:
             stg_id_stripped = [ID.partition("_")[0] for ID in all_ids if ID.partition("_")[0] == stg_id]
@@ -965,10 +965,7 @@ class Operator:
         return
 
     def clear_strategies(self):
-        """clear all strategies
-
-        :return:
-        """
+        """ 清空Operator对象中的所有交易策略 """
         if self.strategy_count > 0:
             self._strategy_id = []
             self._strategies = {}
@@ -979,11 +976,18 @@ class Operator:
         return
 
     def get_strategies_by_price_type(self, price_type=None):
-        """返回operator对象中的strategy对象, price_type为一个可选参数，
-        如果给出price_type时，返回使用该price_type的交易策略
+        """返回operator对象中的strategy对象, 按price_type筛选
 
-        :param price_type: str 一个可用的price_type
+        Parameters
+        ----------
+        price_type: str, optional
+            price_type为一个可选参数，
+            如果给出price_type时，返回使用该price_type的交易策略
 
+        Returns
+        -------
+        List
+            返回一个list，包含operator对象中的strategy对象
         """
         if price_type is None:
             return self.strategies
@@ -991,12 +995,20 @@ class Operator:
             return [stg for stg in self.strategies if stg.bt_price_type == price_type]
 
     def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):
-        """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
-        如果给出price_type时，返回使用该price_type的所有策略的历史数据的rolling window
+        """ 返回Operator对象中每个strategy对应的交易信号历史数据，按price_type筛选
 
-        :param price_type: str 一个可用的price_type
-        :param get_rolling_window: True时返回rolling_window数据，否则直接返回历史数据
-        :return List
+        Parameters
+        ----------
+        price_type: str, optional
+            price_type是一个可选参数
+            如果给出price_type时，返回使用该price_type的所有策略的历史数据的rolling window
+        get_rolling_window: bool, Default: True
+            True时返回rolling_window数据，否则直接返回历史数据
+
+        Returns
+        -------
+        list of ndarray
+            返回一个list，包含operator对象运行所需的历史数据
         """
         if get_rolling_window:
             all_hist_data = self._op_hist_data_rolling_windows
@@ -1009,12 +1021,20 @@ class Operator:
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_ref_data_by_price_type(self, price_type=None, get_rolling_window=True):
-        """ 返回Operator对象中每个strategy对应的交易信号参考数据，price_type是一个可选参数
-        如果给出price_type时，返回使用该price_type的所有策略的参考数据
+        """ 返回Operator对象中每个strategy对应的交易信号参考数据，按price_type筛选
 
-        :param price_type: str 一个可用的price_type
-        :param get_rolling_window: True时返回rolling_window数据，否则直接返回历史数据
-        :return: List
+        Parameters
+        ----------
+        price_type: str, optional
+            price_type是一个可选参数
+            如果给出price_type时，返回使用该price_type的所有策略的历史数据的rolling window
+        get_rolling_window: bool, Default: True
+            True时返回rolling_window数据，否则直接返回历史数据
+
+        Returns
+        -------
+        List
+            返回一个list，包含operator对象运行所需的历史参考数据
         """
         if get_rolling_window:
             all_ref_data = self._op_ref_data_rolling_windows
@@ -1027,11 +1047,18 @@ class Operator:
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_sample_indices_by_price_type(self, price_type=None):
-        """ 返回Operator对象中每个strategy对应的交易信号采样点序列，price_type是一个可选参数
-        如果给出price_type时，返回使用该price_type的所有策略的信号采样点序列
+        """ 返回Operator对象中每个strategy对应的交易信号采样点序列，按price_type筛选
 
-        :param price_type: str 一个可用的price_type
-        :return: List
+        Parameters
+        ----------
+        price_type: str, optional
+            price_type为一个可选参数，
+            如果给出price_type时，返回使用该price_type的交易策略对应的交易采样点序列
+
+        Returns
+        -------
+        List
+            返回一个list，包含operator中的strategy对象所需的交易信号采样点序列
         """
         all_sample_indices = self._op_sample_indices
         if price_type is None:
@@ -1042,19 +1069,27 @@ class Operator:
 
     def get_combined_sample_indices(self):
         """ 返回Operator对象所有交易信号采样点序列的并集
-
-        :return:
         """
         combined_indices = []
         all_sample_indices = self.get_op_sample_indices_by_price_type()
         for item in all_sample_indices:
             combined_indices = np.union1d(combined_indices, item)
-        import pdb; pdb.set_trace()
         return combined_indices
 
     def get_strategy_count_by_price_type(self, price_type=None):
-        """返回operator中的交易策略的数量, price_type为一个可选参数，
-        如果给出price_type时，返回使用该price_type的交易策略数量"""
+        """返回operator中的交易策略的数量, 按price_type筛选
+
+        Parameter
+        ----------
+        price_type: str, optional
+            price_type为一个可选参数，
+            如果给出price_type时，返回使用该price_type的交易策略数量
+
+        Returns
+        -------
+        int
+            返回operator中的交易策略的数量
+        """
         return len(self.get_strategies_by_price_type(price_type))
 
     def get_strategy_names_by_price_type(self, price_type=None):
@@ -1079,12 +1114,18 @@ class Operator:
 
     def get_bt_price_type_id_in_priority(self, priority=None):
         """ 根据字符串priority输出正确的回测交易价格ID
+
+        Parameters
+        ----------
+        priority: str,
+            优先级字符串
             例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
             价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
 
-        :param priority: str, 优先级字符串
-        :return:
-            list
+        Returns
+        -------
+        sequence: list of int
+            返回一个list，包含每一个交易策略在回测时的执行先后顺序
         """
         if priority is None:
             priority = 'OHLC'
@@ -1103,12 +1144,18 @@ class Operator:
 
     def get_bt_price_types_in_priority(self, priority=None):
         """ 根据字符串priority输出正确的回测交易价格
+
+        Parameters
+        ----------
+        priority: str,
+            优先级字符串
             例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
             价格执行顺序为['open', 'close'], 表示先处理open价格，再处理'close'价格
 
-        :param priority: str, 优先级字符串
-        :return:
-            list
+        Returns
+        -------
+        sequence: list of str
+            返回一个list，包含每一个交易策略在回测时的执行先后顺序
         """
         price_types = self.bt_price_types
         price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
@@ -1117,8 +1164,15 @@ class Operator:
     def get_share_idx(self, share):
         """ 给定一个share（字符串）返回它对应的index
 
-        :param share:
-        :return:
+        Parameters
+        ----------
+        share: str
+            share为一个字符串，表示股票代码
+
+        Returns
+        -------
+        int
+            返回一个整数，表示share对应的index
         """
         if self._op_list_shares == {}:
             return
@@ -1146,54 +1200,59 @@ class Operator:
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
-            这里使用strategy.update_pars接口，不检查策略参数的合规性，因此需要提前确保参数符合strategy的设定
-
-        :param opt_par:
-            :type opt_par:Tuple
-            一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
-
-        :return
-            None
 
         本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
         在一个包含多个Strategy的Operator中，可能同时有几个不同的strategy需要寻优。这时，为了寻找最优解，需要建立一个Space，包含需要寻优的
         几个strategy的所有参数空间。通过这个space生成参数空间后，空间中的每一个向量实际上包含了不同的策略的参数，因此需要将他们原样分配到不
         同的策略中。
 
-        举例如下：
+        Parameters
+        ----------
+        opt_par: Tuple
+            一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
 
-            一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
-            成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数：
-                     stg1:   stg2:       stg3:
-                     tag=1   tag=0       tag=1
-                    [p0, p1, p2, p3, p4, p5, p6, p7]
-                     ==  ==              ==  ==  ==
-            为了寻优方便，可以建立一个五维参数空间，用于生成五维参数向量：
-                    [v0, v1, v2, v3, v4]
-            set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，只要发现opt_tag不为0，则将相应的参数赋值给strategy：
-                     stg1:   stg2:       stg3:
-                     tag=1   tag=0       tag=1
-                    [p0, p1, p2, p3, p4, p5, p6, p7]
-                     ==  ==              ==  ==  ==
-                    [v0, v1]            [v2, v3, v4]
+        Returns
+        -------
+        None
 
-            在另一种情况下，一个策略的参数本身就以一个tuple的形式给出，一系列的合法参数组以enum的形式形成一个完整的参数空间，这时，opt_tag被
-            设置为2，此时参数空间中每个向量的一个分量就包含了完整的参数信息，例子如下：
+        Notes
+        -----
+        这里使用strategy.update_pars接口，不检查策略参数的合规性，因此需要提前确保参数符合strategy的设定
 
-            一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
-            成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数，注意其中stg3的opt_tag被设置为2：
-                     stg1:   stg2:       stg3:
-                     tag=1   tag=0       tag=2
-                    [p0, p1, p2, p3, p4, p5, p6, p7]
-                     ==  ==              ==  ==  ==
-            为了寻优建立一个3维参数空间，用于生成五维参数向量：
-                    [v0, v1, v2]，其中v2 = (i0, i1, i2)
-            set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策略，则分配参数给这个策略
-                     stg1:   stg2:       stg3:
-                     tag=1   tag=0       tag=2
-                    [p0, p1, p2, p3, p4, p5, p6, p7]
-                     ==  ==              ==  ==  ==
-                    [v0, v1]         v2=[i0, i1, i2]
+        Examples
+        --------
+        一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
+        成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数：
+                 stg1:   stg2:       stg3:
+                 tag=1   tag=0       tag=1
+                [p0, p1, p2, p3, p4, p5, p6, p7]
+                 ==  ==              ==  ==  ==
+        为了寻优方便，可以建立一个五维参数空间，用于生成五维参数向量：
+                [v0, v1, v2, v3, v4]
+        set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，只要发现opt_tag不为0，则将相应的参数赋值给strategy：
+                 stg1:   stg2:       stg3:
+                 tag=1   tag=0       tag=1
+                [p0, p1, p2, p3, p4, p5, p6, p7]
+                 ==  ==              ==  ==  ==
+                [v0, v1]            [v2, v3, v4]
+
+        在另一种情况下，一个策略的参数本身就以一个tuple的形式给出，一系列的合法参数组以enum的形式形成一个完整的参数空间，这时，opt_tag被
+        设置为2，此时参数空间中每个向量的一个分量就包含了完整的参数信息，例子如下：
+
+        一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
+        成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数，注意其中stg3的opt_tag被设置为2：
+                 stg1:   stg2:       stg3:
+                 tag=1   tag=0       tag=2
+                [p0, p1, p2, p3, p4, p5, p6, p7]
+                 ==  ==              ==  ==  ==
+        为了寻优建立一个3维参数空间，用于生成五维参数向量：
+                [v0, v1, v2]，其中v2 = (i0, i1, i2)
+        set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策略，则分配参数给这个策略
+                 stg1:   stg2:       stg3:
+                 tag=1   tag=0       tag=2
+                [p0, p1, p2, p3, p4, p5, p6, p7]
+                 ==  ==              ==  ==  ==
+                [v0, v1]         v2=[i0, i1, i2]
         """
         s = 0
         k = 0
@@ -1217,42 +1276,52 @@ class Operator:
     def set_blender(self, blender=None, price_type=None):
         """ 统一的blender混合器属性设置入口
 
-        :param blender:
-            :type blender: str, 一个合法的交易信号混合表达式
-                                当price_type为None时，可以接受list为参数，同时为所有的price_type设置混合表达式
-        :param price_type:
-            :type price_type: str, 一个字符串，用于指定需要混合的交易信号的价格类型，
-                                如果给出price_type且price_type存在，则设置该price_type的策略的混合表达式
-                                如果给出price_type而price_type不存在，则给出warning并返回
-                                如果给出的price_type不是正确的类型，则报错
-                                如果price_type为None，则设置所有price_type的策略的混合表达式，此时：
-                                    如果给出的blender为一个字符串，则设置所有的price_type为相同的表达式
-                                    如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个price_type的混合表达式，
-                                    如果blender中的元素不足，则重复最后一个混合表达式
+        Parameters
+        ----------
+        blender: str or list of str
+            一个合法的交易信号混合表达式当price_type为None时，可以接受list为参数，
+            同时为所有的price_type设置混合表达式
+        price_type: str,
+            一个字符串，用于指定需要混合的交易信号的价格类型，
+            如果给出price_type则设置该price_type的策略的混合表达式
+            如果price_type为None，则设置所有price_type的策略的混合表达式，此时：
+                如果给出的blender为一个字符串，则设置所有的price_type为相同的表达式
+                如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个price_type的混合表达式，
+                如果blender中的元素不足，则重复最后一个混合表达式
 
-        :example:
-            >>> op = Operator('dma, macd')
-            >>> op.set_parameter('dma', price_type='close')
-            >>> op.set_parameter('macd', price_type='open')
+        Returns
+        -------
+        None
 
-            >>> # 设置open的策略混合模式
-            >>> op.set_blender('1+2', 'open')
-            >>> op.get_blender()
-            >>> {'open': ['+', '2', '1']}
+        Raises
+        ------
+        TypeError
+            如果给出的price_type不是正确的类型
 
-            >>> # 给所有的交易价格策略设置同样的混合表达式
-            >>> op.set_blender('1 + 2')
-            >>> op.get_blender()
-            >>> {'close': ['+', '2', '1'], 'open':  ['+', '2', '1']}
+        Warnings
+        --------
+        如果给出的price_type不存在，则给出warning并返回
 
-            >>> # 通过一个列表给不同的交易价格策略设置不同的混合表达式（交易价格按照字母顺序从小到大排列）
-            >>> op.set_blender(['1 + 2', '3*4'], None)
-            >>> op.get_blender()
-            >>> {'close': ['+', '2', '1'], 'open':  ['*', '4', '3']}
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> op.set_parameter('dma', price_type='close')
+        >>> op.set_parameter('macd', price_type='open')
 
-        :return
-            None
+        >>> # 设置open的策略混合模式
+        >>> op.set_blender('1+2', 'open')
+        >>> op.get_blender()
+        >>> {'open': ['+', '2', '1']}
 
+        >>> # 给所有的交易价格策略设置同样的混合表达式
+        >>> op.set_blender('1 + 2')
+        >>> op.get_blender()
+        >>> {'close': ['+', '2', '1'], 'open':  ['+', '2', '1']}
+
+        >>> # 通过一个列表给不同的交易价格策略设置不同的混合表达式（交易价格按照字母顺序从小到大排列）
+        >>> op.set_blender(['1 + 2', '3*4'], None)
+        >>> op.get_blender()
+        >>> {'close': ['+', '2', '1'], 'open':  ['*', '4', '3']}
         """
         if self.strategy_count == 0:
             return
@@ -1430,11 +1499,15 @@ class Operator:
     # TODO: 改造operator.info()，采用更加简明扼要的方式显示Operator的关键信息
     def info(self, verbose=False):
         """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
-            如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
-            在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息
-            首先打印Operation木块本身的信息
-            :type verbose: bool
 
+        如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
+        在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息
+        首先打印Operation木块本身的信息
+
+        Parameters
+        ----------
+        verbose: bool, Default False
+            是否打印出策略的详细信息, 如果为True, 则会打印出策略的详细信息，包括选股策略的信息等
         """
         from .utilfuncs import truncate_string
         signal_type_descriptions = {
@@ -1490,11 +1563,16 @@ class Operator:
             如果op可以运行，返回True
             如果op不可以运行，检查所有可能存在的问题，提出改进建议，汇总后raise ValueError
 
-        :param raise_if_not, bool
+        Parameters
+        ----------
+        raise_if_not: bool, Default False
             如果True，当operator对象未准备好时，raise ValueError
             如果False，当operator对象未准备好时，返回False
 
-        :return: bool
+        Returns
+        -------
+        bool
+            如果operator对象准备好了，返回True
         """
         ready = True
         err_msg = ''
@@ -1508,7 +1586,11 @@ class Operator:
         return ready
 
     def run(self, **kwargs):
-        """ Alias as qt.run(op)
+        """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
+
+        See Also
+        --------
+        qteasy.run
         """
         if self.is_ready(raise_if_not=True):
             import qteasy as qt
@@ -1520,62 +1602,67 @@ class Operator:
     def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
-            检查hist_data历史数据的类型正确；
-            检查cash_plan投资计划的类型正确；
-            检查hist_data是否为空（要求不为空）；
-            在hist_data中找到cash_plan投资计划中投资时间点的具体位置
-            检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
-            检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
-            检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
-            从hist_data中根据各个量化策略的参数选取正确的历史数据切片放入各个策略数据仓库中
-            检查op_signal混合器的设置，根据op的属性设置正确的混合器，如果没有设置混合器，则生成一个
-                基础混合器（blender）
+        检查hist_data历史数据的类型正确；
+        检查cash_plan投资计划的类型正确；
+        检查hist_data是否为空（要求不为空）；
+        在hist_data中找到cash_plan投资计划中投资时间点的具体位置
+        检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
+        检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
+        检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
+        从hist_data中根据各个量化策略的参数选取正确的历史数据切片放入各个策略数据仓库中
+        检查op_signal混合器的设置，根据op的属性设置正确的混合器，如果没有设置混合器，则生成一个
+            基础混合器（blender）
 
-            然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
-            切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。包括：
+        然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
+        切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。包括：
 
-                self._op_hist_data:
-                    交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
-                self._op_ref_data:
-                    交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
-                self._op_sample_idx:
-                    交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
-
-        :param hist_data:
-            :type hist_data: HistoryPanel
+        self._op_hist_data:
+            交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
+        self._op_ref_data:
+            交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
+        self._op_sample_idx:
+            交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
+        hist_data: HistoryPanel
             历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
             个股所有类型的数据，
-
-            例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
-                策略        所需数据类型
-                ------------------------------
-                策略A:   close, open, high
-                策略B:   close, eps
-
-            hist_data中就应该包含close、open、high、eps四种类型的数据
-            数据覆盖的时间段和时间频率也必须符合上述要求
-
-        :param cash_plan:
-            :type cash_plan: CashPlan
+        cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
-
-        :param reference_data:
-            :type reference_data: HistoryPanel
+        reference_data: HistoryPanel
             参考数据，默认None。一个HistoryPanel对象，这些数据被operator对象中的策略用于生成交易信号，但是与history_data
             不同，参考数据与个股无关，可以被所有个股同时使用，例如大盘指数、宏观经济数据等都可以作为参考数据，某一个个股
             的历史数据也可以被用作参考数据，参考数据可以被所有个股共享。reference_data包含所有策略所需的参考数据。
 
-            例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
-                策略        所需数据类型
-                ------------------------------
-                策略A:   000300.SH (IDX)
-                策略B:   601993.SH (IDX)
+        Returns
+        -------
+        None
 
-            reference_data中就应该包含000300.SH(IDX), 601993.SH(IDX)四种类型的数据
-            数据覆盖的时间段和时间频率也必须符合上述要求
+        Notes
+        -----
+        1. 该函数仅仅是将历史数据切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。
+        2. 该函数不会生成交易清单，也不会执行交易
+        3. 该函数不会检查operator的可用性，也不会检查operator的属性是否正确，也不会检查operator的策略是否正确
 
-        :return:
-            None
+        Examples
+        --------
+        关于hist_data的要求：
+        例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
+            策略        所需数据类型
+            ------------------------------
+            策略A:   close, open, high
+            策略B:   close, eps
+
+        hist_data中就应该包含close、open、high、eps四种类型的数据
+        数据覆盖的时间段和时间频率也必须符合上述要求
+
+        关于reference_data的要求：
+        例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
+            策略        所需数据类型
+            ------------------------------
+            策略A:   000300.SH (IDX)
+            策略B:   601993.SH (IDX)
+
+        reference_data中就应该包含000300.SH(IDX), 601993.SH(IDX)四种类型的数据
+        数据覆盖的时间段和时间频率也必须符合上述要求
         """
         from qteasy import logger_core
         logger_core.debug(f'starting prepare operator history data')
@@ -1772,75 +1859,76 @@ class Operator:
         return
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
-        """ 生成交易信号，
+        """ 生成交易信号。
 
-            遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
-            如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
-            如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
+        遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
+        如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
+        如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
 
-            用于生成交易信号的历史数据存储在operator对象的几个属性中，在生成交易信号时直接调用。
+        用于生成交易信号的历史数据存储在operator对象的几个属性中，在生成交易信号时直接调用。
 
-            根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
+        根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
 
-            - 如果sample_idx为一个int或np.int时，进入stepwise模式，生成单组信号（单个价格类型上单一时间点混合信号）
-                从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组用于特定
-                回测price_type价格类型的交易信号
-                例如，假设 sample_idx = 7, price_type_idx = 0
-                则提取出第7组数据滑窗，提取price_type序号为0的交易策略，并使用这些策略生成一组交易信号
-                        array[1, 0, 0, 0, 1]
-                此时生成的是一个1D数组
+        - 如果sample_idx为一个int或np.int时，进入stepwise模式，生成单组信号（单个价格类型上单一时间点混合信号）
+            从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组用于特定
+            回测price_type价格类型的交易信号
+            例如，假设 sample_idx = 7, price_type_idx = 0
+            则提取出第7组数据滑窗，提取price_type序号为0的交易策略，并使用这些策略生成一组交易信号
+                    array[1, 0, 0, 0, 1]
+            此时生成的是一个1D数组
 
-                为了确保只在sample采样时间点产生交易信号，需要比较sample_idx与operator的op_sample_indices，
-                只有sample_idx在op_sample_indices中时，才会产生交易信号，否则输出None
+            为了确保只在sample采样时间点产生交易信号，需要比较sample_idx与operator的op_sample_indices，
+            只有sample_idx在op_sample_indices中时，才会产生交易信号，否则输出None
 
-            - 如果sample_idx为None（默认）或一个ndarray，进入batch模式，生成完整清单
-                生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
-                一个元素代表的滑窗会被提取出来生成相应的信号，其余的滑窗忽略，相应的信号设置为np.nan
-                例如，假设 sample_idx = np.array([0, 3, 7])T
-                生成一张完整的交易信号清单，清单中第0，3，7等三组信号为使用相应的数据滑窗生成，其余的信号
-                全部为np.nan：
-                        array[[  0,   0,   0,   0,   0],
-                              [nan, nan, nan, nan, nan],
-                              [nan, nan, nan, nan, nan],
-                              [  0,   0,   1,   0,   0],
-                              [nan, nan, nan, nan, nan],
-                              [nan, nan, nan, nan, nan],
-                              [nan, nan, nan, nan, nan],
-                              [  1,   0,   0,   0,   1]]
-                当sample_idx为None时，使用self._op_sample_idx的值为采样清单
-                此时生成的是一个3D数组
+        - 如果sample_idx为None（默认）或一个ndarray，进入batch模式，生成完整清单
+            生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
+            一个元素代表的滑窗会被提取出来生成相应的信号，其余的滑窗忽略，相应的信号设置为np.nan
+            例如，假设 sample_idx = np.array([0, 3, 7])T
+            生成一张完整的交易信号清单，清单中第0，3，7等三组信号为使用相应的数据滑窗生成，其余的信号
+            全部为np.nan：
+                    array[[  0,   0,   0,   0,   0],
+                          [nan, nan, nan, nan, nan],
+                          [nan, nan, nan, nan, nan],
+                          [  0,   0,   1,   0,   0],
+                          [nan, nan, nan, nan, nan],
+                          [nan, nan, nan, nan, nan],
+                          [nan, nan, nan, nan, nan],
+                          [  1,   0,   0,   0,   1]]
+            当sample_idx为None时，使用self._op_sample_idx的值为采样清单
+            此时生成的是一个3D数组
 
-            在生成交易信号之前需要调用assign_hist_data准备好相应的历史数据
+        在生成交易信号之前需要调用assign_hist_data准备好相应的历史数据
 
-            输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
-            levels = shares
-            columns = price_types
-            rows = hdates
+        输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
+        levels = shares
+        columns = price_types
+        rows = hdates
 
-        :param trade_data: np.ndarray
+        Parameters
+        ----------
+        trade_data: np.ndarray
             可选参数，交易过程数据，包括最近一次成交的数据以及最近一次交易信号，如果在回测过程中实时
             产生交易信号，则可以将上述数据传入Operator，从而新一轮交易信号可以与上一次交易结果相关。
             如果给出trade_date信号，trade_date中需要包含所有股票的交易信息，每列表示不同的交易价
             格种类，其结构与生成的交易信号一致
-
-        :param sample_idx: None, int, np.int, ndarray
+        sample_idx: None, int, np.int, ndarray
             交易信号序号。
             如果参数为int型，则只计算该序号滑窗数据的交易信号
             如果参数为array，则计算完整的交易信号清单
-
-        :param price_type_idx: None, int
+        price_type_idx: None, int
             回测价格类型序号
             如果给出sample_ix，必须给出这个参数
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
 
-        :return=====
-            np.ndarray
-            使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
-            模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
-            当sample_idx不是None时，必须给出一个int，此时price_type_idx也必须给出
-            此时输出为一个1D数组
-            当sample_idx为None时，会生成一张完整的
+        Returns
+        -------
+        signal_value: np.ndarray
+        使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
+        模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
+        当sample_idx不是None时，必须给出一个int，此时price_type_idx也必须给出
+        此时输出为一个1D数组
+        当sample_idx为None时，会生成一张完整的
         """
         from .blender import signal_blend
         signal_type = self.signal_type
