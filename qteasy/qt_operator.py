@@ -49,7 +49,7 @@ class Operator:
          - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
         在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文
     op_type:
-        交易模式，Operator对象有两种不同的交易模式：
+        运行类型，Operator对象有两种不同的运行类型：
          - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
                             不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
          - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
@@ -184,14 +184,26 @@ class Operator:
         strategies : str, Strategy, list of str or list of Strategy
             用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             如果不给出strategies，则会生成一个空的Operator对象
-        signal_type : str, Default: 'pt'
+        signal_type : str, Default: 'pt', {'pt', 'ps', 'vs'}
             需要生成的交易信号的类型，包含以下三种类型:
             'pt', 'ps', 'vs'
             默认交易信号类型为'pt'
-        op_type : str, Default: 'batch'
+        op_type : str, Default: 'batch', {'batch', 'stepwise'}
             Operator对象的的运行模式，包含以下两种：
             'batch', 'stepwise'
-            默认运行模式为'batch'
+
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        Operator([dma, macd], 'pt', 'batch')
+        >>> op = Operator(['dma', 'macd'])
+        Operator([dma, macd], 'pt', 'batch')
+
+        >>> stg_dma = qt.built_in.DMA
+        >>> stg_macd = qt.built_in.MACD
+        >>> op = Operator([stg_dma, stg_macd])
+        Operator([dma, macd], 'pt', 'batch')
+
         """
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
@@ -342,6 +354,7 @@ class Operator:
 
     @property
     def strategy_blenders(self):
+        """返回operator对象中所有交易策略对象的混合表达式"""
         return self._stg_blender
 
     @strategy_blenders.setter
@@ -381,11 +394,12 @@ class Operator:
 
     @property
     def op_type(self):
+        """ 返回operator对象的运行类型"""
         return self._op_type
 
     @op_type.setter
     def op_type(self, op_type):
-        """ 设置op_type的值"""
+        """ 设置operator对象的运行类型"""
         if not isinstance(op_type, str):
             raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
         op_type = op_type.lower()
@@ -421,8 +435,7 @@ class Operator:
 
     @property
     def op_ref_type_count(self):
-        """ 返回operator对象生成交易清单所需的历史数据类型数量
-        """
+        """ 返回operator对象生成交易清单所需的历史数据类型数量"""
         return len(self.op_ref_types)
 
     @property
@@ -478,21 +491,27 @@ class Operator:
     @property
     def opt_space_par(self):
         """一次性返回operator对象中所有参加优化（opt_tag != 0）的子策略的参数空间Space信息
-            改属性的返回值是一个元组，包含ranges, types两个列表，这两个列表正好可以直接用作Space对象的创建参数，用于创建一个合适的
-            Space对象
 
-            一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
-            stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
-            这样的控制，我们可以给每一个子策略一个属性opt_tag优化标签，通过设置这个标签的值，可以控制这个子策略是否参与优化：
-            {0: 'No optimization, 不参与优化，这个子策略在整个优化过程中将始终使用同一组参数',
-             1: 'Normal optimization, 普通优化，这个子策略在优化过程中使用不同的参数，这些参数都是从它的参数空间中按照规律取出的',
-             2: 'enumerate optimization, 枚举优化，在优化过程中使用不同的参数，但并非取自其参数空间，而是来自一个预设的枚举对象'}
+        改属性的返回值是一个元组，包含ranges, types两个列表，这两个列表正好可以直接用作Space对象的创建参数，用于创建一个合适的
+        Space对象
+
+        一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
+        stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
+        这样的控制，我们可以给每一个子策略一个属性opt_tag优化标签，通过设置这个标签的值，可以控制这个子策略是否参与优化：
+        {0: 'No optimization, 不参与优化，这个子策略在整个优化过程中将始终使用同一组参数',
+         1: 'Normal optimization, 普通优化，这个子策略在优化过程中使用不同的参数，这些参数都是从它的参数空间中按照规律取出的',
+         2: 'enumerate optimization, 枚举优化，在优化过程中使用不同的参数，但并非取自其参数空间，而是来自一个预设的枚举对象'}
 
          这个函数遍历operator对象中所有子策略，根据其优化类型选择它的参数空间信息，组合成一个多维向量用于创建可以用于生成所有相关
          策略的参数的高维空间
 
-         return: ranges, types
+        Returns
+        -------
+        ranges, types: list, list
+            两个列表，分别包含了所有参与优化的策略的参数空间的范围和类型信息，这两个列表可以直接用作Space对象的创建参数，用于
+            创建一个合适的Space对象
         """
+
         ranges = []
         types = []
         for stg in self.strategies:
@@ -519,7 +538,9 @@ class Operator:
     def max_window_length(self):
         """ 计算并返回operator对象所有子策略中最长的策略形成期。在准备回测或优化历史数据时，以此确保有足够的历史数据供策略形成
 
-        :return: int
+        Returns
+        -------
+        int, operator对象中所有子策略中最长的策略形成期
         """
         if self.strategy_count == 0:
             return 0
@@ -529,22 +550,30 @@ class Operator:
     @property
     def bt_price_type_count(self):
         """ 计算operator对象中所有子策略的不同回测价格类型的数量
-        :return: int
+
+        Returns
+        -------
+        int, 不同回测价格类型的数量
         """
         return len(self.bt_price_types)
 
     @property
     def op_list(self):
-        """
+        """ 生成的交易清单，包含了所有交易信号，以及交易信号对应的交易价格
 
-        :return:
+        Returns
+        -------
+        list, 交易清单，包含了所有交易信号，以及交易信号对应的交易价格
         """
         return self._op_list
 
     @property
     def op_list_shares(self):
         """ 生成的交易清单的shares序号，股票代码清单
-        :return:
+
+        Returns
+        -------
+        list, 交易清单的shares序号，股票代码清单
         """
         if self._op_list_shares == {}:
             return
@@ -554,7 +583,9 @@ class Operator:
     def op_list_hdates(self):
         """ 生成的交易清单的hdates序号，交易清单的日期序号
 
-        :return:
+        Returns
+        -------
+        list, 交易清单的hdates序号，交易清单的日期序号
         """
         if self._op_list_hdates == {}:
             return
@@ -564,7 +595,9 @@ class Operator:
     def op_list_price_types(self):
         """ 生成的交易清单的price_types，回测交易价格类型
 
-        :return:
+        Returns
+        -------
+        list, 生成的交易清单的price_types，回测交易价格类型
         """
         if self._op_list_price_types == {}:
             return
@@ -572,8 +605,13 @@ class Operator:
 
     @property
     def op_list_shape(self):
-        """ 生成的交易清单的shape，包含(op_list_shares, op_list_hdates, op_list_price_types)
-        三个维度的数据量"""
+        """ 生成的交易清单的shape。
+
+        Returns
+        -------
+        tuple, (op_list_shares, op_list_hdates, op_list_price_types)
+            生成的交易清单的shape，包含三个维度的数据量
+        """
         if self._op_list_shares == {}:
             return
         return (
@@ -586,7 +624,9 @@ class Operator:
     def op_signal(self):
         """ stepwise模式下单次生成的交易信号
 
-        :return:
+        Returns
+        -------
+        np.ndarray, stepwise模式下单次生成的交易信号
         """
         return self._op_signal
 
@@ -594,7 +634,9 @@ class Operator:
     def op_signal_hdate_idx(self):
         """ stepwise模式下，单次生成的交易信号对应的日期序号
 
-        :return:
+        Returns
+        -------
+        int, stepwise模式下，单次生成的交易信号对应的日期序号
         """
         return self._op_signal_index
 
@@ -603,7 +645,9 @@ class Operator:
         """ stepwise模式下，单次生成的交易信号对应的日期
         根据op_signal_hdate_idx查找
 
-        :return:
+        Returns
+        -------
+        datetime, stepwise模式下，单次生成的交易信号对应的日期
         """
         idx = self._op_signal_index
         return self.op_list_hdates[idx]
@@ -612,7 +656,9 @@ class Operator:
     def op_signal_price_type_idx(self):
         """ stepwise模式下，单次生成的交易信号对应的价格类型
 
-        :return:
+        Returns
+        -------
+        int, stepwise模式下，单次生成的交易信号对应的价格类型的序号
         """
         return self._op_signal_price_type_idx
 
@@ -621,19 +667,23 @@ class Operator:
         """ stepwise模式下，单次生成的交易信号对应的价格类型
         等同于op_signal_price_type_idx
 
-        :return:
+        Returns
+        -------
+        int, stepwise模式下，单次生成的交易信号对应的价格类型的序号
         """
         return self._op_signal_price_type_idx
 
     @property
     def ready(self):
-        """ 检查Operator对象是否已经准备好，可以开始生成交易信号，如果可以，返回True，否则返回False
+        """ 检查Operator对象是否已经准备好，可以开始生成交易信号
 
         返回True，表明Operator的各项属性已经具备以下条件：
             1，Operator 已经有strategy
             2，所有类型的strategy都有blender
 
-        :return:
+        Returns
+        -------
+        bool, Operator对象是否已经准备好，可以开始生成交易信号
         """
         if self.empty:
             return False
@@ -658,11 +708,45 @@ class Operator:
         return is_ready
 
     def __getitem__(self, item):
-        """ 根据策略的名称或序号返回子策略"""
+        """ 根据策略的名称或序号返回子策略
+
+        Parameters
+        ----------
+        item: int or str
+            策略的名称或序号
+
+        Returns
+        -------
+        Strategy, 子策略
+
+        Notes
+        -----
+        1，当item为int时，返回的是第item个策略
+        2，当item为str时，返回的是名称为item的策略
+        3，当item不符合要求时，返回最后一个策略
+
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> op[0]
+        RULE-ITER(DMA)
+        >>> op['dma']
+        RULE-ITER(DMA)
+        >>> op[999]
+        RULE-ITER(MACD)
+        >>> op['invalid_strategy_name']
+        UserWarning: No such strategy with ID (invalid_strategy_name)!
+
+        See Also
+        --------
+        get_stg()
+        get_strategy_by_id()
+        """
+
         item_is_int = isinstance(item, int)
         item_is_str = isinstance(item, str)
         if not (item_is_int or item_is_str):
-            warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} insted!')
+            warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} instead!')
             return
         all_ids = self._strategy_id
         if item_is_str:
@@ -681,34 +765,98 @@ class Operator:
     def get_stg(self, stg_id):
         """ 获取一个strategy对象, Operator[item]的另一种用法
 
+        Parameters
+        ----------
+        stg_id: int or str
+            策略的名称或序号
+
+        Returns
+        -------
+        Strategy, 子策略
+
+        Notes
+        -----
+        1，当stg_id为int时，返回的是第stg_id个策略
+        2，当stg_id为str时，返回的是名称为stg_id的策略
+        3，当stg_id不符合要求时，返回最后一个策略
+
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> op[0]
+        RULE-ITER(DMA)
+        >>> op['dma']
+        RULE-ITER(DMA)
+        >>> op[999]
+        RULE-ITER(MACD)
+        >>> op['invalid_strategy_name']
+        UserWarning: No such strategy with ID (invalid_strategy_name)!
+
+        See Also
+        --------
+        get_strategy_by_id()
         """
         return self[stg_id]
 
     def get_strategy_by_id(self, stg_id):
         """ 获取一个strategy对象, Operator[item]的另一种用法
 
+        Parameters
+        ----------
+        stg_id: int or str
+            策略的名称或序号
+
+        Returns
+        -------
+        Strategy, 子策略
+
+        See Also
+        --------
+        get_stg()
         """
         return self[stg_id]
 
     def get_strategy_id_pairs(self):
         """ 返回一个generator，包含op中所有strategy和id对：
 
-        zip(['stg_id1', 'stg_id2', 'stg_id3'], [Stg(1), Stg(2), Stg(3)]
+        Returns
+        -------
+        generator, 包含op中所有strategy和id对
 
-        :return:
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> list(op.get_strategy_id_pairs())
+        [('dma', RULE-ITER(DMA)), ('macd', RULE-ITER(MACD))]
         """
+
         return zip(self._strategy_id, self.strategies)
 
     def add_strategies(self, strategies):
         """ 添加多个Strategy交易策略到Operator对象中
+
         使用这个方法，不能在添加交易策策略的同时修改交易策略的基本属性
         输入参数strategies可以为一个列表或者一个逗号分隔字符串
         列表中的元素可以为代表内置策略类型的字符串，或者为一个具体的策略对象
         字符串和策略对象可以混合给出
 
-        :param strategies:
-        :return:
+        Parameters
+        ----------
+        strategies: stg or list of str or list of Strategy
+            交易策略的名称或者交易策略对象
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> op = Operator()
+        >>> op.add_strategies(['dma', 'macd'])
+        >>> op.strategies
+        [RULE-ITER(DMA), RULE-ITER(MACD)]
         """
+
         if isinstance(strategies, str):
             strategies = str_to_list(strategies)
         assert isinstance(strategies, list), f'TypeError, the strategies ' \
@@ -721,13 +869,47 @@ class Operator:
 
     def add_strategy(self, stg, **kwargs):
         """ 添加一个strategy交易策略到operator对象中
+
         如果调用本方法添加一个交易策略到Operator中，可以在添加的时候同时修改或指定交易策略的基本属性
 
-        :param: stg, 需要添加的交易策略，可以为交易策略对象，也可以是内置交易策略的策略id或策略名称
-        :param: **kwargs, 任意合法的策略属性，可以在添加策略时直接给该策略属性赋值，
-                必须明确指定需要修改的属性名称，
-                例如: opt_tag = 1
+        Parameters
+        ----------
+        stg: str or int or Strategy
+            需要添加的交易策略，也可以是内置交易策略的策略id或策略名称
+        kwargs: dict
+            任意合法的策略属性，可以在添加策略时直接给该策略属性赋值，
+            必须明确指定需要修改的属性名称，包含
+            - pars: dict or tuple, 策略可调参数
+            - opt_tag: int, 策略优化标签
+            - stg_type: int, 策略类型
+            - par_count: int, 策略参数个数
+            - par_types: list, 策略参数类型
+            - par_ranges: list, 策略参数范围
+            - data_freq: str, 策略数据频率
+            - sample_freq: str, 策略采样频率
+            - window_length: int, 策略窗口长度
+            - data_types: list, 策略数据类型
+            - bt_price_types: list, 策略回测价格类型
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> op = Operator()
+        >>> op.add_strategy('dma', opt_tag=1, pars=(50, 10, 20))
+        >>> op.strategies
+        [RULE-ITER(DMA)]
+        >>> op.strategies[0].opt_tag
+        1
+        >>> op.strategies[0].pars
+        (50, 10, 20)
         """
+        
+        # TODO: 添加策略时应可以设置name属性
+        # TODO: 添加策略时应可以设置description属性
+        # TODO: 添加策略时如果有错误，应该删除刚刚添加的strategy
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
             stg = stg.lower()
@@ -1121,8 +1303,16 @@ class Operator:
     def get_blender(self, price_type=None):
         """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
 
-        :param price_type: str 一个可用的price_type
-        :return Dict
+        Parameters
+        ----------
+        price_type: str
+            一个可用的price_type
+
+        Returns
+        -------
+        blender: dict or list
+            如果price_type为None，则返回一个字典，其中包含所有的price_type的blender
+            如果price_type不为None，则返回一个列表，其中包含该price_type的blender
         """
         if price_type is None:
             return self._stg_blender
@@ -1136,7 +1326,10 @@ class Operator:
         """ TODO: 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
              版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
 
-        :param price_type: str 一个可用的price_type
+        Parameters
+        ----------
+        price_type: str
+            一个可用的price_type
 
         """
         # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
