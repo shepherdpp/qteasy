@@ -867,7 +867,6 @@ class Operator:
         all_sample_indices = self.get_op_sample_indices_by_price_type()
         for item in all_sample_indices:
             combined_indices = np.union1d(combined_indices, item)
-        import pdb; pdb.set_trace()
         return combined_indices
 
     def get_strategy_count_by_price_type(self, price_type=None):
