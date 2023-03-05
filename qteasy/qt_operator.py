@@ -728,6 +728,9 @@ class Operator:
                 必须明确指定需要修改的属性名称，
                 例如: opt_tag = 1
         """
+        # TODO: 添加策略时应可以设置name属性
+        # TODO: 添加策略时应可以设置description属性
+        # TODO: 添加策略时如果有错误，应该删除刚刚添加的strategy
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
             stg = stg.lower()
