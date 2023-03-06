@@ -18,6 +18,10 @@ import numpy as np
 
 from qteasy.database import DataSource
 
+from qteasy.live_trade import parse_pt_signals, parse_ps_signals, parse_vs_signals, itemize_trade_signals
+from qteasy.live_trade import read_signals, write_signals, read_results, write_results
+from qteasy.live_trade import process_account_table
+
 
 class TestLiveTrade(unittest.TestCase):
 
@@ -37,6 +41,34 @@ class TestLiveTrade(unittest.TestCase):
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
+
+    def test_itemize_trade_signals(self):
+        
+
+    def test_parse_pt_type_signal(self):
+        """ test parsing trade signal from pt_type signal"""
+        signals = np.array([0, 1, 0, 0, 1, 1])
+        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
+        prices = np.array([10., 10., 10., 10., 10., 10.])
+        own_amounts = np.array([0.0, 0.0, 500.0, 150.0, 0.0, 500.0])
+        own_cash = 0.0
+        pt_buy_threshold = 0.5
+        pt_sell_threshold = 0.5
+
+        symbols, positions, directions, quantities = parse_pt_type_signal(
+                signals=signals,
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold
+        )
+
+        self.assertEqual(symbols, ['000002', '000005', '000006'])
+        self.assertEqual(positions, ['long', 0, 1])
+        self.assertEqual(directions, ['buy', -1, 1])
+        self.assertEqual(quantities, [0.7, 0.3, 1])
 
     def test_read_write_signals(self):
         """ test writing trade signals to trade_signal tables in all datasource types"""
