@@ -19,8 +19,6 @@ import numpy as np
 from qteasy.database import DataSource
 
 from qteasy.live_trade import parse_pt_signals, parse_ps_signals, parse_vs_signals, itemize_trade_signals
-from qteasy.live_trade import read_signals, write_signals, read_results, write_results
-from qteasy.live_trade import process_account_table
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -43,7 +41,91 @@ class TestLiveTrade(unittest.TestCase):
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
 
     def test_itemize_trade_signals(self):
-        
+        """ test itemize trade signals"""
+        # test itemize_trade_signals with only one symbol, buy 500 shares in long position
+        shares = ['000001']
+        prices = np.array([10.])
+        cash_to_spend = np.array([5000.0])
+        amounts_to_sell = np.array([0.0])
+
+        symbols, positions, directions, quantities = itemize_trade_signals(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices
+        )
+        self.assertEqual(symbols, ['000001'])
+        self.assertEqual(positions, ['long'])
+        self.assertEqual(directions, ['buy'])
+        self.assertEqual(quantities, [500.0])
+
+        # test itemize_trade_signals with only one symbol, sell 500 shares in long position
+        shares = ['000001']
+        prices = np.array([10.])
+        cash_to_spend = np.array([0.0])
+        amounts_to_sell = np.array([500.0])
+
+        symbols, positions, directions, quantities = itemize_trade_signals(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices
+        )
+        self.assertEqual(symbols, ['000001'])
+        self.assertEqual(positions, ['long'])
+        self.assertEqual(directions, ['sell'])
+        self.assertEqual(quantities, [500.0])
+
+        # test itemize_trade_signals with only one symbol, sell 500 shares in short position
+        shares = ['000001']
+        prices = np.array([10.])
+        cash_to_spend = np.array([0.0])
+        amounts_to_sell = np.array([-500.0])
+
+        symbols, positions, directions, quantities = itemize_trade_signals(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices
+        )
+        self.assertEqual(symbols, ['000001'])
+        self.assertEqual(positions, ['short'])
+        self.assertEqual(directions, ['sell'])
+        self.assertEqual(quantities, [500.0])
+
+        # test itemize_trade_signals with only one symbol, buy 500 shares in short position
+        shares = ['000001']
+        prices = np.array([10.])
+        cash_to_spend = np.array([-5000.0])
+        amounts_to_sell = np.array([0.0])
+
+        symbols, positions, directions, quantities = itemize_trade_signals(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices
+        )
+        self.assertEqual(symbols, ['000001'])
+        self.assertEqual(positions, ['short'])
+        self.assertEqual(directions, ['buy'])
+        self.assertEqual(quantities, [500.0])
+
+        # test itemize_trade_signals with multiple symbols
+        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
+        prices = np.array([10., 10., 10., 10., 10., 10.])
+        cash_to_spend = np.array([5000.0, 0.0, 0.0, 3500.0, 1000.0, 0.0])
+        amounts_to_sell = np.array([0.0, 0.0, 500.0, 150.0, 0.0, 500.0])
+
+        symbols, positions, directions, quantities = itemize_trade_signals(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices
+        )
+        self.assertEqual(symbols, ['000001', '000003', '000004', '000004', '000005', '000006'])
+        self.assertEqual(positions, ['long', 'long', 'long', 'long', 'long', 'long'])
+        self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
+        self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
 
     def test_parse_pt_type_signal(self):
         """ test parsing trade signal from pt_type signal"""

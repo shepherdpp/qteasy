@@ -51,8 +51,8 @@ async def live_trade_signals():
         # 继续生成后续交易信号
         await asyncio.sleep(1)
 
-
-asyncio.run(live_trade_signals())
+#
+# asyncio.run(live_trade_signals())
 
 
 # all functions for live trade
@@ -97,7 +97,8 @@ def parse_trade_signal(account_id, signals, signal_type, config):
             own_amounts=own_amounts,
             own_cash=own_cash,
             pt_buy_threshold=config['pt_buy_threshold'],
-            pt_sell_threshold=config['pt_sell_threshold']
+            pt_sell_threshold=config['pt_sell_threshold'],
+            allow_sell_short=config['allow_sell_short']
         )
     # 解析PT交易信号：
     # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
@@ -109,7 +110,8 @@ def parse_trade_signal(account_id, signals, signal_type, config):
             shares=shares,
             prices=prices,
             own_amounts=own_amounts,
-            own_cash=own_cash
+            own_cash=own_cash,
+            allow_sell_short=config['allow_sell_short']
         )
     elif signal_type.lower() == 'vs':
         symbols, positions, directions, quantities = parse_vs_signals(
@@ -117,7 +119,7 @@ def parse_trade_signal(account_id, signals, signal_type, config):
             shares=shares,
             prices=prices,
             own_amounts=own_amounts,
-            own_cash=own_cash
+            allow_sell_short=config['allow_sell_short']
         )
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
@@ -148,7 +150,14 @@ def parse_trade_signal(account_id, signals, signal_type, config):
     return submitted_qty
 
 
-def parse_pt_signals(signals, shares, prices, own_amounts, own_cash, pt_buy_threshold, pt_sell_threshold):
+def parse_pt_signals(signals,
+                     shares,
+                     prices,
+                     own_amounts,
+                     own_cash,
+                     pt_buy_threshold,
+                     pt_sell_threshold,
+                     allow_sell_short):
     """ 解析PT类型的交易信号
 
     Parameters
@@ -167,6 +176,8 @@ def parse_pt_signals(signals, shares, prices, own_amounts, own_cash, pt_buy_thre
         PT买入的阈值
     pt_sell_threshold: float
         PT卖出的阈值
+    allow_sell_short: bool
+        是否允许卖空
 
     Returns
     -------
@@ -216,7 +227,7 @@ def parse_pt_signals(signals, shares, prices, own_amounts, own_cash, pt_buy_thre
     return symbols, positions, directions, quantities
 
 
-def parse_ps_signals(signals, shares, prices, own_amounts, own_cash):
+def parse_ps_signals(signals, shares, prices, own_amounts, own_cash, allow_sell_short):
     """ 解析PS类型的交易信号
 
     Parameters
@@ -231,6 +242,8 @@ def parse_ps_signals(signals, shares, prices, own_amounts, own_cash):
         当前持有的资产份额
     own_cash: float
         当前持有的现金
+    allow_sell_short: bool
+        是否允许卖空
 
     Returns
     -------
@@ -268,7 +281,7 @@ def parse_ps_signals(signals, shares, prices, own_amounts, own_cash):
     return symbols, positions, directions, quantities
 
 
-def parse_vs_signals(signals, shares, prices, own_amounts, own_cash):
+def parse_vs_signals(signals, shares, prices, own_amounts, allow_sell_short):
     """ 解析VS类型的交易信号
 
     Parameters
@@ -281,8 +294,8 @@ def parse_vs_signals(signals, shares, prices, own_amounts, own_cash):
         当前资产的价格
     own_amounts: np.ndarray
         当前持有的资产的数量
-    own_cash: float
-        当前持有的现金的数量
+    allow_sell_short: bool
+        是否允许卖空
 
     Returns
     -------
