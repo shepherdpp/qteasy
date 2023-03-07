@@ -58,27 +58,23 @@ async def live_trade_signals():
 
 # all functions for live trade
 
-def generate_signal():
+def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash, config):
     """ 从Operator对象中生成qt交易信号
-
-    Returns
-    -------
-    signal: ndarray
-        交易信号
-    """
-    pass
-
-
-def parse_trade_signal(account_id, signals, signal_type, config):
-    """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
-
 
     Parameters
     ----------
-    account_id: int
-        账户的id
-    signals: np.ndarray
-        交易信号
+    operator: Operator
+        交易策略的Operator对象
+    signal_type: str, {'PT', 'PS', 'VS'}
+        交易信号类型
+    shares: list of str
+        股票代码
+    prices: np.ndarray
+        股票价格
+    own_amounts: np.ndarray
+        股票持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
+    own_cash: float
+        账户可用资金
     config: dict
         交易信号的配置
 
@@ -86,51 +82,17 @@ def parse_trade_signal(account_id, signals, signal_type, config):
     -------
     int, 提交的交易信号的数量
     """
-    order_type = 'normal'
-    # 读取signal的值，根据signal_type确定如何解析交易信号
-
-    # PT交易信号和PS/VS交易信号需要分开解析
-    if signal_type.lower() == 'pt':
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
-            signals=signals,
-            shares=shares,
-            prices=prices,
-            own_amounts=own_amounts,
-            own_cash=own_cash,
-            pt_buy_threshold=config['pt_buy_threshold'],
-            pt_sell_threshold=config['pt_sell_threshold'],
-            allow_sell_short=config['allow_sell_short']
-        )
-    # 解析PT交易信号：
-    # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
-    # 解析PS/VS交易信号
-    # 直接根据交易信号确定计划买进和卖出的数量
-    elif signal_type.lower() == 'ps':
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
-            signals=signals,
-            shares=shares,
-            prices=prices,
-            own_amounts=own_amounts,
-            own_cash=own_cash,
-            allow_sell_short=config['allow_sell_short']
-        )
-    elif signal_type.lower() == 'vs':
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
-            signals=signals,
-            shares=shares,
-            prices=prices,
-            own_amounts=own_amounts,
-            allow_sell_short=config['allow_sell_short']
-        )
-    else:
-        raise ValueError('Unknown signal type: {}'.format(signal_type))
-
-    # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = itemize_trade_signals(
+    # 从Operator对象中读取交易信号
+    op_signal = operator.create_signal()
+    # 解析交易信号
+    symbols, positions, directions, quantities = parse_trade_signal(
+        signals=op_signal,
+        signal_type=signal_type,
         shares=shares,
-        cash_to_spend=cash_to_spend,
-        amounts_to_sell=amounts_to_sell,
-        prices=prices
+        prices=prices,
+        own_amounts=own_amounts,
+        own_cash=own_cash,
+        config=config
     )
     # 产生计划买进和卖出数量后，逐一生成交易信号：
     # 检查所有持仓，获取已有持仓的id，如果没有持仓，需要创建一个新的持仓获得持仓id
@@ -150,12 +112,90 @@ def parse_trade_signal(account_id, signals, signal_type, config):
             'qty': qty,
             'price': get_price(),
             'submitted_time': pd.to_datetime('now'),
-            'status': 'submitted',
+            'status': 'created',
         }
+        # 逐一提交交易信号
         if submit_signal(trade_signal) is not None:
-            submitted_qty += 1
+
+            # 记录已提交的交易数量
+            submitted_qty += qty
 
     return submitted_qty
+
+
+def parse_trade_signal(signals, signal_type, shares, prices, own_amounts, own_cash, config):
+    """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
+    资产代码、头寸类型、交易方向、交易数量等
+
+    Parameters
+    ----------
+    signals: np.ndarray
+        交易信号
+    signal_type: str, {'PT', 'PS', 'VS'}
+        交易信号类型
+    shares: list of str
+        股票代码
+    prices: np.ndarray
+        股票价格
+    own_amounts: np.ndarray
+        股票持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
+    own_cash: float
+        账户可用资金
+    config: dict
+        交易信号的配置
+
+    Returns
+    -------
+    tuple, (symbols, positions, directions, quantities)
+        symbols: list, 交易信号对应的股票代码
+        positions: list, 交易信号对应的持仓类型
+        directions: list, 交易信号对应的交易方向
+        quantities: list, 交易信号对应的交易数量
+    """
+
+    # 读取signal的值，根据signal_type确定如何解析交易信号
+
+    # PT交易信号和PS/VS交易信号需要分开解析
+    if signal_type.lower() == 'pt':
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+            signals=signals,
+            prices=prices,
+            own_amounts=own_amounts,
+            own_cash=own_cash,
+            pt_buy_threshold=config['pt_buy_threshold'],
+            pt_sell_threshold=config['pt_sell_threshold'],
+            allow_sell_short=config['allow_sell_short']
+        )
+    # 解析PT交易信号：
+    # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
+    # 解析PS/VS交易信号
+    # 直接根据交易信号确定计划买进和卖出的数量
+    elif signal_type.lower() == 'ps':
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+            signals=signals,
+            prices=prices,
+            own_amounts=own_amounts,
+            own_cash=own_cash,
+            allow_sell_short=config['allow_sell_short']
+        )
+    elif signal_type.lower() == 'vs':
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+            signals=signals,
+            prices=prices,
+            own_amounts=own_amounts,
+            allow_sell_short=config['allow_sell_short']
+        )
+    else:
+        raise ValueError('Unknown signal type: {}'.format(signal_type))
+
+    # 将计算出的买入和卖出的数量转换为交易信号
+    symbols, positions, directions, quantities = itemize_trade_signals(
+        shares=shares,
+        cash_to_spend=cash_to_spend,
+        amounts_to_sell=amounts_to_sell,
+        prices=prices
+    )
+    return symbols, positions, directions, quantities
 
 
 # TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py中直接引用这三个函数的返回值
@@ -174,7 +214,6 @@ def parse_trade_signal(account_id, signals, signal_type, config):
 #  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
 #  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
 def parse_pt_signals(signals,
-                     shares,
                      prices,
                      own_amounts,
                      own_cash,
@@ -187,8 +226,6 @@ def parse_pt_signals(signals,
     ----------
     signals: np.ndarray
         交易信号
-    shares: list of str
-        各个资产的代码
     prices: np.ndarray
         各个资产的价格
     own_amounts: np.ndarray
@@ -241,15 +278,13 @@ def parse_pt_signals(signals,
     return cash_to_spend, amounts_to_sell
 
 
-def parse_ps_signals(signals, shares, prices, own_amounts, own_cash, allow_sell_short):
+def parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     """ 解析PS类型的交易信号
 
     Parameters
     ----------
     signals: np.ndarray
         交易信号
-    shares: list of str
-        资产代码
     prices: np.ndarray
         当前资产的价格
     own_amounts: np.ndarray
@@ -286,15 +321,13 @@ def parse_ps_signals(signals, shares, prices, own_amounts, own_cash, allow_sell_
     return cash_to_spend, amounts_to_sell
 
 
-def parse_vs_signals(signals, shares, prices, own_amounts, allow_sell_short):
+def parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     """ 解析VS类型的交易信号
 
     Parameters
     ----------
     signals: np.ndarray
         交易信号
-    shares: list of str
-        资产代码
     prices: np.ndarray
         当前资产的价格
     own_amounts: np.ndarray
@@ -447,7 +480,7 @@ def check_account_availability(account_id, requested_amount):
     return available_amount / requested_amount
 
 
-def update_account(account_id, trade_results):
+def update_account(account_id, **account_data):
     """ 更新账户信息
 
     通用接口，用于更新账户的所有信息，除了账户的持仓和可用资金
@@ -457,7 +490,7 @@ def update_account(account_id, trade_results):
     ----------
     account_id: int
         账户的id
-    trade_results: dict
+    account_data: dict
         交易结果
 
     Returns
@@ -465,7 +498,7 @@ def update_account(account_id, trade_results):
     None
     """
     import qteasy.QT_DATA_SOURCE as data_source
-    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, **trade_results)
+    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, **account_data)
 
 
 def update_account_balance(account_id, **cash_change):
@@ -770,21 +803,57 @@ def output_trade_signal():
     pass
 
 
-def submit_signal(signal):
+def submit_signal(trade_signal):
     """ 将交易信号提交给交易平台或用户以等待交易结果
 
     交易结果可以来自用户输入，也可以来自交易平台的返回，在这个函数中不等待交易结果，而是将交易信号写入数据库，然后返回交易信号的id
 
     Parameters
     ----------
-    signal: dict
-        交易信号
+    trade_signal: dict
+        标准格式交易信号
 
     Returns
     -------
     int, 交易信号的id
     """
-    return get_trade_result(signal)
+    # 如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
+    if not trade_signal['status'] == 'created':
+        return None
+
+    # 如果交易方向为buy，则需要检查账户的现金是否足够 TODO: position为short时做法不同，需要进一步调整
+    if trade_signal['direction'] == 'buy':
+        account_id = trade_signal['account_id']
+        account = read_account(account_id)
+        # 如果账户的现金不足，则按比例调整交易信号的委托数量
+        if account['available_cash'] < trade_signal['qty'] * trade_signal['price']:
+            proportion = (trade_signal['qty'] * trade_signal['price']) / account['available_cash']
+            trade_signal['qty'] = trade_signal['qty'] * proportion
+        else:
+            pass
+        # 调整账户的可用现金余额, 并更新到数据表中
+        account['available_cash'] = account['available_cash'] - trade_signal['qty'] * trade_signal['price']
+        update_account(account_id, available_cash=account['available_cash'])
+
+    # 如果交易方向为sell，则需要检查账户的持仓是否足够 TODO: position为short时做法不一样，需要考虑
+    elif trade_signal['direction'] == 'sell':
+        position_id = trade_signal['pos_id']
+        position = read_position(position_id)
+        # 如果账户的持仓不足，则最多只能卖出账户的持仓数量
+        if position['available_qty'] < trade_signal['qty']:
+            trade_signal['qty'] = position['available_qty']
+        else:
+            pass
+        # 调整账户的可用持仓余额，并更新到数据表中
+        position['available_qty'] = position['available_qty'] - trade_signal['qty']
+        update_position(position_id, available_qty=position['available_qty'])
+
+    # 将signal的status改为"submitted"，并将trade_signal写入数据库
+    trade_signal['status'] = 'submitted'
+    signal_id = record_trade_signal(trade_signal)
+    # 检查交易信号
+
+    return signal_id
 
 
 def generate_trade_result(signal_id, account_id):

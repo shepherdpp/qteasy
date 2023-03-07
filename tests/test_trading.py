@@ -131,7 +131,6 @@ class TestLiveTrade(unittest.TestCase):
         """ test parsing trade signal from pt_type signal"""
         # test parsing pt buy long signal with only one symbol
         signals = np.array([1])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([0.0])
         own_cash = 5000.0
@@ -140,7 +139,6 @@ class TestLiveTrade(unittest.TestCase):
 
         cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -153,7 +151,6 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing pt sell long signal with only one symbol
         signals = np.array([0])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([500.0])
         own_cash = 0.0
@@ -162,7 +159,6 @@ class TestLiveTrade(unittest.TestCase):
 
         cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -175,7 +171,6 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing pt buy short signal with only one symbol
         signals = np.array([-1])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([0.0])
         own_cash = 5000.0
@@ -184,7 +179,6 @@ class TestLiveTrade(unittest.TestCase):
 
         cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -197,7 +191,6 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing pt sell short signal with only one symbol
         signals = np.array([0])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
         own_cash = 10000.0
@@ -206,7 +199,6 @@ class TestLiveTrade(unittest.TestCase):
 
         cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -220,7 +212,6 @@ class TestLiveTrade(unittest.TestCase):
         # test parsing pt multi-type signal with multiple symbols
 
         signals = np.array([0, 0.2, 0, 0.1, -0.2, -0.3])
-        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
         prices = np.array([10., 10., 10., 10., 10., 10.])
         own_amounts = np.array([0.0, 0.0, 500.0, 150.0, 0.0, -500.0])
         own_cash = 10000.0
@@ -229,7 +220,6 @@ class TestLiveTrade(unittest.TestCase):
 
         cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -244,14 +234,12 @@ class TestLiveTrade(unittest.TestCase):
         """ test parse_ps_signals function """
         # test parsing ps buy long signal with only one symbol
         signals = np.array([1])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
         cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -262,14 +250,12 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing ps sell long signal with only one symbol
         signals = np.array([-1])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([500.0])
         own_cash = 0.0
 
         cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -280,14 +266,12 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing ps buy short signal with only one symbol
         signals = np.array([-1])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
         cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -298,14 +282,12 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing ps sell short signal with only one symbol
         signals = np.array([1])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
         own_cash = 0.0
 
         cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -317,14 +299,12 @@ class TestLiveTrade(unittest.TestCase):
         # test parsing ps multi-type signal with multiple symbols
 
         signals = np.array([1, 0, -1, 0, -1, 0.5])
-        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
         prices = np.array([10., 10., 10., 10., 10., 10.])
         own_amounts = np.array([0.0, 0.0, 500.0, 150.0, 0.0, -500.0])
         own_cash = 0.0
 
         cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -337,13 +317,11 @@ class TestLiveTrade(unittest.TestCase):
         """ test parse_vs_signals function """
         # test parsing vs buy long signal with only one symbol
         signals = np.array([500])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
         cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=False
@@ -353,13 +331,11 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing vs sell long signal with only one symbol
         signals = np.array([-500])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([500.0])
 
         cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=False
@@ -369,14 +345,11 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing vs buy short signal with only one symbol
         signals = np.array([-500])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([0.0])
-        own_cash = 5000.0
 
         cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True
@@ -386,13 +359,11 @@ class TestLiveTrade(unittest.TestCase):
 
         # test parsing vs sell short signal with only one symbol
         signals = np.array([500])
-        shares = ['000001']
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
         cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True
@@ -403,13 +374,11 @@ class TestLiveTrade(unittest.TestCase):
         # test parsing vs multi-type signal with multiple symbols
 
         signals = np.array([500, 0, -500, -250, 0, 250])
-        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
         prices = np.array([10., 10., 10., 10., 10., 10.])
         own_amounts = np.array([0.0, 0.0, 500.0, -250.0, 0.0, -500.0])
 
         cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
-                shares=shares,
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True
