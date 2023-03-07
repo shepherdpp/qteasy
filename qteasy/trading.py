@@ -1,6 +1,6 @@
 # coding=utf-8
 # ======================================
-# File:     live_trade.py
+# File:     trading.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-02-20
@@ -13,6 +13,7 @@
 import asyncio
 
 import pandas as pd
+import numpy as np
 
 
 async def process_trade_signal(signal):
@@ -90,7 +91,7 @@ def parse_trade_signal(account_id, signals, signal_type, config):
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
-        symbols, positions, directions, quantities = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
             signals=signals,
             shares=shares,
             prices=prices,
@@ -105,7 +106,7 @@ def parse_trade_signal(account_id, signals, signal_type, config):
     # 解析PS/VS交易信号
     # 直接根据交易信号确定计划买进和卖出的数量
     elif signal_type.lower() == 'ps':
-        symbols, positions, directions, quantities = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
             signals=signals,
             shares=shares,
             prices=prices,
@@ -114,7 +115,7 @@ def parse_trade_signal(account_id, signals, signal_type, config):
             allow_sell_short=config['allow_sell_short']
         )
     elif signal_type.lower() == 'vs':
-        symbols, positions, directions, quantities = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
             signals=signals,
             shares=shares,
             prices=prices,
@@ -124,6 +125,13 @@ def parse_trade_signal(account_id, signals, signal_type, config):
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
 
+    # 将计算出的买入和卖出的数量转换为交易信号
+    symbols, positions, directions, quantities = itemize_trade_signals(
+        shares=shares,
+        cash_to_spend=cash_to_spend,
+        amounts_to_sell=amounts_to_sell,
+        prices=prices
+    )
     # 产生计划买进和卖出数量后，逐一生成交易信号：
     # 检查所有持仓，获取已有持仓的id，如果没有持仓，需要创建一个新的持仓获得持仓id
     # 生成交易信号
@@ -150,6 +158,21 @@ def parse_trade_signal(account_id, signals, signal_type, config):
     return submitted_qty
 
 
+# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py中直接引用这三个函数的返回值
+#  从而消除重复的代码
+# TODO: 考虑修改多空买卖信号的表示方式：当前的表示方式为：
+#  1. 多头买入信号：正数cash_to_spend
+#  2. 空头买入信号：负数cash_to_spend
+#  3. 多头卖出信号：负数amounts_to_sell，负数表示空头，与直觉相反
+#  4. 空头卖出信号：正数amounts_to_sell，正数表示多头，与直觉相反
+#  但是这种表示方式不够直观
+#  可以考虑将多头买入信号和空头卖出信号的表示方式统一为：
+#  1. 多头买入信号：正数cash_to_spend
+#  2. 空头买入信号：负数cash_to_spend
+#  3. 多头卖出信号：正数amounts_to_sell
+#  4. 空头卖出信号：负数amounts_to_sell
+#  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
+#  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
 def parse_pt_signals(signals,
                      shares,
                      prices,
@@ -164,7 +187,7 @@ def parse_pt_signals(signals,
     ----------
     signals: np.ndarray
         交易信号
-    shares: np.ndarray
+    shares: list of str
         各个资产的代码
     prices: np.ndarray
         各个资产的价格
@@ -181,11 +204,9 @@ def parse_pt_signals(signals,
 
     Returns
     -------
-    tuple: (symbols, positions, directions, quantities)
-    - symbols: list of str, 产生交易信号的资产代码
-    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
-    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
-    - quantities: list of float, 所有交易信号的交易数量
+    tuple: (cash_to_spend, amounts_to_sell)
+        cash_to_spend: np.ndarray, 买入资产的现金
+        amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
     # 计算当前总资产
@@ -217,14 +238,7 @@ def parse_pt_signals(signals,
                                     position_diff / previous_pos * own_amounts,
                                     0.)
 
-    # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = itemize_trade_signals(
-        shares=shares,
-        cash_to_spend=cash_to_spend,
-        amounts_to_sell=amounts_to_sell,
-        prices=prices,
-    )
-    return symbols, positions, directions, quantities
+    return cash_to_spend, amounts_to_sell
 
 
 def parse_ps_signals(signals, shares, prices, own_amounts, own_cash, allow_sell_short):
@@ -247,11 +261,9 @@ def parse_ps_signals(signals, shares, prices, own_amounts, own_cash, allow_sell_
 
     Returns
     -------
-    tuple: (symbols, positions, directions, quantities)
-    - symbols: list of str, 产生交易信号的资产代码
-    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
-    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
-    - quantities: list of float, 所有交易信号的交易数量
+    tuple: (cash_to_spend, amounts_to_sell)
+        cash_to_spend: np.ndarray, 买入资产的现金
+        amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
     # 计算当前总资产
@@ -271,14 +283,7 @@ def parse_ps_signals(signals, shares, prices, own_amounts, own_cash, allow_sell_
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
         amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), signals * own_amounts, 0.)
 
-    # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = itemize_trade_signals(
-        shares=shares,
-        cash_to_spend=cash_to_spend,
-        amounts_to_sell=amounts_to_sell,
-        prices=prices,
-    )
-    return symbols, positions, directions, quantities
+    return cash_to_spend, amounts_to_sell
 
 
 def parse_vs_signals(signals, shares, prices, own_amounts, allow_sell_short):
@@ -299,7 +304,7 @@ def parse_vs_signals(signals, shares, prices, own_amounts, allow_sell_short):
 
     Returns
     -------
-    tuple: (symbols, positions, directions, quantities)
+    tuple: (cash_to_spend, amounts_to_sell)
     - symbols: list of str, 产生交易信号的资产代码
     - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
@@ -315,18 +320,11 @@ def parse_vs_signals(signals, shares, prices, own_amounts, allow_sell_short):
     # 当允许买空卖空时，允许开启空头头寸：
     if allow_sell_short:
         # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 信号数量 * 资产价格
-        cash_to_spend += np.where((signals > 0) & (own_amounts <= 0), signals * prices, 0.)
+        cash_to_spend += np.where((signals < 0) & (own_amounts <= 0), signals * prices, 0.)
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-        amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), signals, 0.)
+        amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), -signals, 0.)
 
-    # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = itemize_trade_signals(
-        shares=shares,
-        cash_to_spend=cash_to_spend,
-        amounts_to_sell=amounts_to_sell,
-        prices=prices,
-    )
-    return symbols, positions, directions, quantities
+    return cash_to_spend, amounts_to_sell
 
 
 def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
@@ -335,7 +333,7 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
 
     Parameters
     ----------
-    shares: np.ndarray
+    shares: list of str
         各个资产的代码
     cash_to_spend: np.ndarray
         各个资产的买入金额
@@ -376,17 +374,17 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
             directions.append('buy')
             quantities.append(quantity)
         # 计算多头卖出的数量
-        if amounts_to_sell[i] > 0.001:
+        if amounts_to_sell[i] < -0.001:
             # 计算卖出的数量
-            quantity = amounts_to_sell[i]
+            quantity = -amounts_to_sell[i]
             symbols.append(sym)
             positions.append('long')
             directions.append('sell')
             quantities.append(quantity)
         # 计算空头卖出的数量
-        if amounts_to_sell[i] < -0.001:
+        if amounts_to_sell[i] > 0.001:
             # 计算卖出的数量
-            quantity = -amounts_to_sell[i]
+            quantity = amounts_to_sell[i]
             symbols.append(sym)
             positions.append('short')
             directions.append('sell')

@@ -19,7 +19,7 @@ from numba import njit
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import datetime
 
-import qteasy
+# import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import next_market_trade_day
@@ -185,17 +185,17 @@ def _loop_step(signal_type: int,
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
+        # 当持有份额大于零时，卖出多仓：卖出数量 = 信号数量，此时持仓份额需大于零
         amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0.)
-        # 当持有份额不小于0时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
+        # 当持有份额不小于0时，买入多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
         cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0.)
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 信号数量 * 资产价格
-            cash_to_spend += np.where((op > 0) & (own_amounts <= 0), op * prices, 0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0.)
+            # 当持有份额小于等于零且交易信号为负，买入空仓：买入空头金额 = 信号数量 * 资产价格
+            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * prices, 0.)
+            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，卖出空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
+            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), -op, 0.)
 
     else:
         raise ValueError('Invalid signal_type')
