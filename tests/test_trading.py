@@ -43,6 +43,8 @@ class TestLiveTrade(unittest.TestCase):
     # test foundational functions related to database info read and write
     def test_create_and_get_account(self):
         """ test new_account function """
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
         # test new_account with simple account info
         user_name = 'test_user'
         cash_amount = 10000.0
@@ -66,6 +68,8 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_update_account(self):
         """ test update_account function """
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
         # read all accounts from datasource and modify the username
         new_account('test_user', 10000, data_source=self.test_ds)
         new_account('test_user2', 20000, data_source=self.test_ds)
@@ -100,7 +104,78 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_create_and_get_position(self):
         """ test new_position function """
-        pass
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        # create new accounts and new positions
+        new_account('test_user', 10000, data_source=self.test_ds)
+        new_account('test_user2', 20000, data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 1)
+        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 2)
+        position = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertIsInstance(position, dict)
+        print(position)
+        self.assertEqual(position['account_id'], 1)
+        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['position'], 'long')
+        self.assertEqual(position['qty'], 0)
+        position = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertIsInstance(position, dict)
+        self.assertEqual(position['account_id'], 1)
+        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['position'], 'short')
+        self.assertEqual(position['qty'], 0)
+        # add more positions to account 2
+        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'GOOG', 'short', data_source=self.test_ds)
+        # test get_or_create_position with non-existing account id
+        with self.assertRaises(RuntimeError):
+            get_or_create_position(4, 'AAPL', 'long', data_source=self.test_ds)
+        # test get_or_create_position with incorrect symbol type and direction type/value
+        with self.assertRaises(TypeError):
+            get_or_create_position(1, 123, 'long', data_source=self.test_ds)
+            get_or_create_position(1, 'AAPL', 123, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            get_or_create_position(1, 'AAPL', 'long123', data_source=self.test_ds)
+
+        # test get all positions with get_account_positions()
+        positions = get_account_positions(1, data_source=self.test_ds)
+        print(positions)
+        self.assertIsInstance(positions, pd.DataFrame)
+        self.assertEqual(len(positions), 2)
+        self.assertEqual(positions.loc[1]['account_id'], 1)
+        self.assertEqual(positions.loc[1]['symbol'], 'AAPL')
+        self.assertEqual(positions.loc[1]['position'], 'long')
+        self.assertEqual(positions.loc[1]['qty'], 0)
+        self.assertEqual(positions.loc[2]['account_id'], 1)
+        self.assertEqual(positions.loc[2]['symbol'], 'AAPL')
+        self.assertEqual(positions.loc[2]['position'], 'short')
+        self.assertEqual(positions.loc[2]['qty'], 0)
+        position = get_account_positions(2, data_source=self.test_ds)
+        print(position)
+        self.assertIsInstance(position, pd.DataFrame)
+        self.assertEqual(len(position), 4)
+        self.assertEqual(position.loc[3]['account_id'], 2)
+        self.assertEqual(position.loc[3]['symbol'], 'AAPL')
+        self.assertEqual(position.loc[3]['position'], 'long')
+        self.assertEqual(position.loc[3]['qty'], 0)
+        self.assertEqual(position.loc[4]['account_id'], 2)
+        self.assertEqual(position.loc[4]['symbol'], 'AAPL')
+        self.assertEqual(position.loc[4]['position'], 'short')
+        self.assertEqual(position.loc[4]['qty'], 0)
+        self.assertEqual(position.loc[5]['account_id'], 2)
+        self.assertEqual(position.loc[5]['symbol'], 'GOOG')
+        self.assertEqual(position.loc[5]['position'], 'long')
+        self.assertEqual(position.loc[5]['qty'], 0)
+        self.assertEqual(position.loc[6]['account_id'], 2)
+        self.assertEqual(position.loc[6]['symbol'], 'GOOG')
+        self.assertEqual(position.loc[6]['position'], 'short')
+        self.assertEqual(position.loc[6]['qty'], 0)
 
     def test_update_position(self):
         """ test update_position function """

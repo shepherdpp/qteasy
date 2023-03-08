@@ -3413,7 +3413,9 @@ class DataSource:
         Returns
         -------
         data: dict
-            读取的数据，包括数据表的结构化信息以及数据表中的记录
+            当给出record_id时，读取的数据为dict，包括数据表的结构化信息以及数据表中的记录
+        pd.DataFrame:
+            当不给出record_id时，读取的数据为DataFrame，包括数据表的结构化信息以及数据表中的记录
         None:
             当输入的id或筛选条件没有匹配项时
         """

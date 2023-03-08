@@ -595,8 +595,8 @@ def get_or_create_position(account_id, symbol, position_type, data_source=None):
 
     Returns
     -------
-    dict: 持仓记录
-    int: 如果持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
+    dict: 如果symbol和position匹配的持仓记录已存在，则直接返回该记录的dict形式
+    int: 如果匹配的持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
     """
 
     from qteasy import DataSource, QT_DATA_SOURCE
@@ -605,23 +605,38 @@ def get_or_create_position(account_id, symbol, position_type, data_source=None):
     if not isinstance(data_source, DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
+    # 检查account_id是否存在，如果不存在，则报错，否则创建的持仓记录将无法关联到账户
+    account = get_account(account_id, data_source=data_source)
+    if account is None:
+        raise RuntimeError(f'account_id {account_id} not found!')
+
+    if not isinstance(symbol, str):
+        raise TypeError(f'symbol must be a str, got {type(symbol)} instead')
+    if not isinstance(position_type, str):
+        raise TypeError(f'position_type must be a str, got {type(position_type)} instead')
+    if position_type not in ('long', 'short'):
+        raise ValueError(f'position_type must be "long" or "short", got {position_type} instead')
+
     position = data_source.read_sys_table_data(
-            table='sys_op_live_positions',
+            table='sys_op_positions',
             record_id=None,
             account_id=account_id,
             symbol=symbol,
             position=position_type
     )
-    if position.empty:
+    if position is None:
         return data_source.insert_sys_table_data(
-                table='sys_op_live_positions',
+                table='sys_op_positions',
                 account_id=account_id,
                 symbol=symbol,
                 position=position_type,
                 qty=0,
-                avg_price=0
+                available_qty=0
         )
-    return position['record_id']
+    # position已存，此时position中只能有一条记录，否则说明记录重复，报错
+    if len(position) > 1:
+        raise RuntimeError(f'position record is duplicated, got {len(position)} records: \n{position}')
+    return position.iloc[0].to_dict()
 
 
 def update_position(position_id, data_source=None, **position_data):
@@ -649,10 +664,19 @@ def update_position(position_id, data_source=None, **position_data):
 
     # 从数据库中读取持仓数据，修改后再写入数据库
     position = data_source.read_sys_table_data('sys_op_live_positions', record_id=position_id)
-    if qty_change in position_data:
-        position['qty'] += position_data['qty_change']
-    if available_qty_change in position_data:
-        position['available_qty'] += position_data['available_qty_change']
+    position['qty'] += position_data.get('qty_change', 0.0)
+    position['available_qty'] += position_data.get('available_qty_change', 0.0)
+
+    # 如果可用数量超过持仓数量，则报错
+    if position['available_qty'] > position['qty']:
+        raise RuntimeError(f'available_qty ({position["available_qty"]}) cannot be greater than '
+                           f'qty ({position["qty"]})')
+    # 如果可用数量小于0，则报错
+    if position['available_qty'] < 0:
+        raise RuntimeError(f'available_qty ({position["available_qty"]}) cannot be less than 0!')
+    # 如果持仓数量小于0，则报错
+    if position['qty'] < 0:
+        raise RuntimeError(f'qty ({position["qty"]}) cannot be less than 0!')
 
     data_source.update_sys_table_data('sys_op_live_positions', record_id=position_id, **position)
 
@@ -679,7 +703,7 @@ def get_account_positions(account_id, data_source=None):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     positions = data_source.read_sys_table_data(
-            'sys_op_live_positions',
+            'sys_op_positions',
             record_id=None,
             account_id=account_id,
     )
