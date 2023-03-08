@@ -94,9 +94,6 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
         own_cash=own_cash,
         config=config
     )
-    # 产生计划买进和卖出数量后，逐一生成交易信号：
-    # 检查所有持仓，获取已有持仓的id，如果没有持仓，需要创建一个新的持仓获得持仓id
-    # 生成交易信号
     submitted_qty = 0
     for sym, pos, d, qty in zip(symbols, positions, directions, quantities):
         pos_id = get_or_create_position(
@@ -104,6 +101,11 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
             symbol=sym,
             position_type=pos,
         )
+        # 如果是卖出信号，检查是否有足够的可用持仓，如果可用持仓不足，降低交易数量
+        if d == 'sell':
+            qty = check_position_availability(account_id=account_id, symbol=sym, qty=qty)
+
+        # 生成交易信号dict
         trade_signal = {
             'account_id': account_id,
             'pos_id': pos_id,
@@ -111,7 +113,7 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
             'order_type': order_type,
             'qty': qty,
             'price': get_price(),
-            'submitted_time': pd.to_datetime('now'),
+            'submitted_time': None,
             'status': 'created',
         }
         # 逐一提交交易信号
@@ -123,12 +125,14 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
     return submitted_qty
 
 
-def parse_trade_signal(signals, signal_type, shares, prices, own_amounts, own_cash, config):
+def parse_trade_signal(account_id, signals, signal_type, shares, prices, own_amounts, own_cash, config):
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
     资产代码、头寸类型、交易方向、交易数量等
 
     Parameters
     ----------
+    account_id: int
+        账户ID
     signals: np.ndarray
         交易信号
     signal_type: str, {'PT', 'PS', 'VS'}
@@ -147,10 +151,10 @@ def parse_trade_signal(signals, signal_type, shares, prices, own_amounts, own_ca
     Returns
     -------
     tuple, (symbols, positions, directions, quantities)
-        symbols: list, 交易信号对应的股票代码
-        positions: list, 交易信号对应的持仓类型
-        directions: list, 交易信号对应的交易方向
-        quantities: list, 交易信号对应的交易数量
+        symbols: list of str, 交易信号对应的股票代码
+        positions: list of str, 交易信号对应的持仓类型
+        directions: list of str, 交易信号对应的交易方向
+        quantities: list of float, 交易信号对应的交易数量
     """
 
     # 读取signal的值，根据signal_type确定如何解析交易信号
@@ -187,6 +191,10 @@ def parse_trade_signal(signals, signal_type, shares, prices, own_amounts, own_ca
         )
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
+
+    # 检查可用现金是否足够执行交易，如果不足，则将计划买入金额调整为可用的最大值，可用持仓检查可以分别进行
+    total_cash_to_spend = np.sum(cash_to_spend)  # 计划买进的总金额 TODO: 仅对多头持仓有效，空头买入需要另外处理
+    cash_to_spend *= check_account_availability(account_id=account_id, requested_amount=total_cash_to_spend)
 
     # 将计算出的买入和卖出的数量转换为交易信号
     symbols, positions, directions, quantities = itemize_trade_signals(
@@ -426,7 +434,8 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
     return symbols, positions, directions, quantities
 
 
-def new_account(user_name, cash_amount, **account_data):
+# 7 foundational functions for account and position management
+def new_account(user_name, cash_amount, data_source=None, **account_data):
     """ 创建一个新的账户
 
     Parameters
@@ -435,6 +444,8 @@ def new_account(user_name, cash_amount, **account_data):
         用户名
     cash_amount: float
         账户的初始资金
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
     account_data: dict
         账户的其他信息
 
@@ -442,7 +453,16 @@ def new_account(user_name, cash_amount, **account_data):
     -------
     int: 账户的id
     """
-    import qteasy.QT_DATA_SOURCE as data_source
+    # 输入数据检查在这里进行
+    if cash_amount <= 0:
+        raise ValueError('cash_amount must be positive!')
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
     account_id = data_source.write_sys_table_data(
         'sys_op_live_accounts',
         user_name=user_name,
@@ -453,34 +473,34 @@ def new_account(user_name, cash_amount, **account_data):
     return account_id
 
 
-def check_account_availability(account_id, requested_amount):
-    """ 检查账户的可用资金是否充足
+def get_account(account_id, data_source=None):
+    """ 获取账户的信息
 
     Parameters
     ----------
     account_id: int
         账户的id
-    requested_amount: float
-        交易所需的资金
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
-    float: 可用资金相对于交易所需资金的比例，如果可用资金大于交易所需资金，则返回1.0
+    dict: 账户的信息
     """
 
-    import qteasy.QT_DATA_SOURCE as data_source
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
     account = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
     if account is None:
         raise RuntimeError('Account not found!')
-    available_amount = account['available_amount']
-    if available_amount == 0:
-        return 0.0
-    if available_amount >= requested_amount:
-        return 1.0
-    return available_amount / requested_amount
+    return account
 
 
-def update_account(account_id, **account_data):
+def update_account(account_id, data_source=None, **account_data):
     """ 更新账户信息
 
     通用接口，用于更新账户的所有信息，除了账户的持仓和可用资金
@@ -490,6 +510,8 @@ def update_account(account_id, **account_data):
     ----------
     account_id: int
         账户的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
     account_data: dict
         交易结果
 
@@ -497,17 +519,25 @@ def update_account(account_id, **account_data):
     -------
     None
     """
-    import qteasy.QT_DATA_SOURCE as data_source
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
     data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, **account_data)
 
 
-def update_account_balance(account_id, **cash_change):
+def update_account_balance(account_id, data_source=None, **cash_change):
     """ 更新账户的资金总额和可用资金
 
     Parameters
     ----------
     account_id: int
         账户的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
     cash_change: dict, optional {'cash_amount_change': float, 'available_cash_change': float}
         可用资金的变化，其余字段不可用此函数修改
 
@@ -515,7 +545,12 @@ def update_account_balance(account_id, **cash_change):
     -------
     None
     """
-    import qteasy.QT_DATA_SOURCE as data_source
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     account_data = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
     cash_amount = account_data['cash_amount_change']
@@ -534,7 +569,8 @@ def update_account_balance(account_id, **cash_change):
     )
 
 
-def get_or_create_position(account_id, symbol, position_type):
+# noinspection PyTypeChecker
+def get_or_create_position(account_id, symbol, position_type, data_source=None):
     """ 获取账户的持仓, 如果持仓不存在，则创建一条新的持仓记录
 
     Parameters
@@ -542,16 +578,24 @@ def get_or_create_position(account_id, symbol, position_type):
     account_id: int
         账户的id
     symbol: str
-        交易标的
+        交易标的的代码
     position_type: str, {'long', 'short'}
-        持仓类型
+        持仓类型, 'long'表示多头持仓, 'short'表示空头持仓
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
     dict: 持仓记录
     int: 如果持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
     """
-    import qteasy.QT_DATA_SOURCE as data_source
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
     position = data_source.read_sys_table_data(
             'sys_op_live_positions',
             id=None,
@@ -571,13 +615,48 @@ def get_or_create_position(account_id, symbol, position_type):
     return position['id']
 
 
-def get_account_positions(account_id):
+def update_position(position_id, data_source=None, **position_data):
+    """ 更新账户的持仓，包括持仓的数量和可用数量，account_id, position和symbol不可修改
+
+    Parameters
+    ----------
+    position_id: int
+        持仓的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+    position_data: dict, optional, {'qty_change': int, 'available_qty_change': int}
+        持仓的数据，只能修改qty, available_qty两类数据中的任意一个或多个
+
+    Returns
+    -------
+    None
+    """
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    # 从数据库中读取持仓数据，修改后再写入数据库
+    position = data_source.read_sys_table_data('sys_op_live_positions', id=position_id)
+    if qty_change in position_data:
+        position['qty'] += position_data['qty_change']
+    if available_qty_change in position_data:
+        position['available_qty'] += position_data['available_qty_change']
+
+    data_source.update_sys_table_data('sys_op_live_positions', id=position_id, **position)
+
+
+def get_account_positions(account_id, data_source=None):
     """ 获取账户的所有持仓
 
     Parameters
     ----------
     account_id: int
         账户的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
@@ -592,29 +671,53 @@ def get_account_positions(account_id):
     return positions
 
 
-def check_position_availability(account_id, planned_qty, planned_pos):
+# 2nd foundational functions for account and position availability check
+def check_account_availability(account_id, requested_amount):
+    """ 检查账户的可用资金是否充足
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    requested_amount: float or np.float64 or np.ndarray
+        交易所需的资金
+
+    Returns
+    -------
+    float: 可用资金相对于交易所需资金的比例，如果可用资金大于交易所需资金，则返回1.0
+    """
+
+    account = get_account(account_id)
+    available_amount = account['available_amount']
+    if available_amount == 0:
+        return 0.0
+    if available_amount >= requested_amount:
+        return 1.0
+    return available_amount / requested_amount
+
+
+def check_position_availability(account_id, planned_pos, planned_qty):
     """ 检查账户的持仓是否允许下单
 
     Parameters
     ----------
     account_id: int
         账户的id
-    planned_qty: int
+    planned_pos: str, {'long', 'short'}
+        计划交易的持仓类型, long为多头仓位，short为空头仓位
+    planned_qty: float
         计划交易数量
-    planned_pos: str
-        计划交易的持仓
 
     Returns
     -------
     float: 可用于交易的资产相对于计划交易数量的比例，如果可用资产大于计划交易数量，则返回1.0
     """
 
-    import qteasy.QT_DATA_SOURCE as data_source
-    position = data_source.read_sys_table_data('sys_op_live_positions', id=None, account_id=account_id)
+    position = get_or_create_position(account_id, symbol, planned_pos)
     if position is None:
         raise RuntimeError('Position not found!')
-    if position['position_type'] != planned_pos:
-        return 0.0
+    if position['position'] != planned_pos:
+        raise RuntimeError('Position type not match!')  # 根据持仓类型新建或读取数据，类型应该匹配
     available_qty = position['available_qty']
     if available_qty == 0:
         return 0.0
@@ -623,31 +726,7 @@ def check_position_availability(account_id, planned_qty, planned_pos):
     return available_qty / planned_qty
 
 
-def update_position(position_id, **position_data):
-    """ 更新账户的持仓，包括持仓的数量和可用数量，account_id, position和symbol不可修改
-
-    Parameters
-    ----------
-    position_id: int
-        持仓的id
-    position_data: dict, optional, {'qty_change': int, 'available_qty_change': int}
-        持仓的数据，只能修改qty, available_qty两类数据中的任意一个或多个
-
-    Returns
-    -------
-    None
-    """
-    import qteasy.QT_DATA_SOURCE as data_source
-    # 从数据库中读取持仓数据，修改后再写入数据库
-    position = data_source.read_sys_table_data('sys_op_live_positions', id=position_id)
-    if qty_change in position_data:
-        position['qty'] += position_data['qty_change']
-    if available_qty_change in position_data:
-        position['available_qty'] += position_data['available_qty_change']
-
-    data_source.update_sys_table_data('sys_op_live_positions', id=position_id, **position)
-
-
+# 4 foundational functions for trade signal
 def record_trade_signal(signal):
     """ 将交易信号写入数据库
 
@@ -763,8 +842,8 @@ def read_trade_signal(signal_id):
     return data_source.read_sys_table_data('sys_op_trade_signals', id=signal_id)
 
 
-def query_trade_signal(account_id, symbol, direction, status):
-    """ 从数据库中查询交易信号
+def query_trade_signals(account_id, symbol, direction, status):
+    """ 从数据库中查询交易信号并批量返回结果
 
     Parameters
     ----------
@@ -792,6 +871,7 @@ def query_trade_signal(account_id, symbol, direction, status):
     )
 
 
+# 2 2nd level functions for trade signal
 def output_trade_signal():
     """ 将交易信号输出到终端或TUI
 
@@ -806,7 +886,11 @@ def output_trade_signal():
 def submit_signal(trade_signal):
     """ 将交易信号提交给交易平台或用户以等待交易结果
 
-    交易结果可以来自用户输入，也可以来自交易平台的返回，在这个函数中不等待交易结果，而是将交易信号写入数据库，然后返回交易信号的id
+    只有刚刚创建的交易信号（status == 'created'）才能提交，否则不需要再次提交
+    在提交交易信号以前，对于买入信号，会检查账户的现金是否足够，如果不足，则会按比例调整交易信号的委托数量
+    对于卖出信号，会检查账户的持仓是否足够，如果不足，则会按比例调整交易信号的委托数量
+    交易信号提交后，会将交易信号的状态设置为submitted，同时将交易信号保存到数据库中
+
 
     Parameters
     ----------
@@ -817,6 +901,7 @@ def submit_signal(trade_signal):
     -------
     int, 交易信号的id
     """
+
     # 如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
     if not trade_signal['status'] == 'created':
         return None
@@ -856,24 +941,7 @@ def submit_signal(trade_signal):
     return signal_id
 
 
-def generate_trade_result(signal_id, account_id):
-    """ 生成交易结果
-
-    Parameters
-    ----------
-    signal_id: int
-        交易信号的id
-    account_id: int
-        账户的id
-
-    Returns
-    -------
-    trade_results: dict
-        交易结果
-    """
-    pass
-
-
+# foundational functions for trade result
 def record_trade_result(trade_results):
     """ 将交易结果写入数据库
 
@@ -921,6 +989,24 @@ def output_account_position(account_id, position_id):
     Returns
     -------
     None
+    """
+    pass
+
+
+def generate_trade_result(signal_id, account_id):
+    """ 生成交易结果
+
+    Parameters
+    ----------
+    signal_id: int
+        交易信号的id
+    account_id: int
+        账户的id
+
+    Returns
+    -------
+    trade_results: dict
+        交易结果
     """
     pass
 

@@ -19,6 +19,7 @@ import numpy as np
 from qteasy.database import DataSource
 
 from qteasy.trading import parse_pt_signals, parse_ps_signals, parse_vs_signals, itemize_trade_signals
+from qteasy.trading import generate_signal, submit_signal
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -39,6 +40,82 @@ class TestLiveTrade(unittest.TestCase):
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
+
+    # test foundational functions related to database info read and write
+    def test_create_and_get_account(self):
+        """ test new_account function """
+        # test new_account with simple account info
+        user_name = 'test_user'
+        cash_amount = 10000.0
+        account_id = new_account(user_name, cash_amount)
+        print(f'account created, id: {account_id}')
+
+    def test_update_account(self):
+        """ test update_account function """
+        pass
+
+    def test_create_and_get_position(self):
+        """ test new_position function """
+        pass
+
+    def test_update_position(self):
+        """ test update_position function """
+        # test update_position with only one symbol
+        pass
+
+    def test_check_account_availability(self):
+        """ test check_account_availability function """
+        pass
+
+    # test foundational functions related to signal generation and submission
+
+    def test_record_and_read_signal(self):
+        """ test record_and_read_signal function """
+        # test recording and reading signal
+        signal = np.array([1, 2, 3, 4, 5])
+        record_signal(signal, 'test_signal')
+        read_signal = read_trade_signal('test_signal')
+        self.assertEqual(list(signal), list(read_signal))
+
+        # test recording and reading signal with multiple symbols
+        signal = np.array([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])
+        record_signal(signal, 'test_signal')
+        read_signal = read_signal('test_signal')
+        self.assertEqual(list(signal[0]), list(read_signal[0]))
+        self.assertEqual(list(signal[1]), list(read_signal[1]))
+
+        # test recording and reading signal with multiple symbols and multiple time steps
+        signal = np.array([[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]], [[11, 12, 13, 14, 15], [16, 17, 18, 19, 20]]])
+        record_signal(signal, 'test_signal')
+        read_signal = read_signal('test_signal')
+        self.assertEqual(list(signal[0][0]), list(read_signal[0][0]))
+        self.assertEqual(list(signal[0][1]), list(read_signal[0][1]))
+        self.assertEqual(list(signal[1][0]), list(read_signal[1][0]))
+        self.assertEqual(list(signal[1][1]), list(read_signal[1][1]))
+
+    def test_update_trade_signal(self):
+        """ test update_trade_signal function """
+        pass
+
+    def test_query_trade_signals(self):
+        """ test query_trade_signals function """
+        pass
+
+    # test sub functions related to signal generation and submission
+    def test_parse_signal(self):
+        """ test submit_signal function """
+        # test function submit_signal with only one symbol
+        test_signal = {
+            'account_id': 1,
+            'pos_id': 1,
+            'direction': 'buy',
+            'order_type': 'market',
+            'qty': 100,
+            'price': 10.0,
+            'submitted_time': None,
+            'status': 'created',
+        }
+        submit_signal(test_signal)
 
     def test_itemize_trade_signals(self):
         """ test itemize trade signals"""
@@ -385,38 +462,6 @@ class TestLiveTrade(unittest.TestCase):
         )
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
-
-    def test_read_write_signals(self):
-        """ test writing trade signals to trade_signal tables in all datasource types"""
-        # TODO: implement this test case
-        pass
-
-    def test_read_write_results(self):
-        """ test writing trade signal results into data tables in all datasource types"""
-        # TODO: implement this test case
-        pass
-
-    def test_process_account_table(self):
-        """ test basic update operation with account table in all datasource types"""
-        # TODO: implement this test case
-        pass
-
-    def test_process_position_table(self):
-        """ test basic operations with position table in all datasource types"""
-        # TODO: implement this test case
-        pass
-
-    def test_signal_process(self):
-        """ full process test of signal process in all datasource types"""
-        # TODO: implement this test case
-        pass
-
-    def test_live_trade_functions(self):
-        """ test all functions defined in live_trade
-
-        this test case might be separated into multiple test cases
-        """
-        pass
 
 
 if __name__ == '__main__':

@@ -1803,7 +1803,7 @@ class TestDataSource(unittest.TestCase):
                     ds.drop_table_data(table)
                 print(f'\n----------------------'
                       f'\ninserting into table {table}@{ds} with following data\n{data}')
-                ds.insert_sys_table_data(table, data)
+                ds.insert_sys_table_data(table, **data)
                 res = ds.read_sys_table_data(table, 1)
                 print(f'following data are read from table {table}\n'
                       f'{res}\n')
@@ -1865,7 +1865,7 @@ class TestDataSource(unittest.TestCase):
                 print(f'\n----------------------'
                       f'\ninserting multiple data into table {table}@{ds} ')
                 for data in datas:
-                    ds.insert_sys_table_data(table, data)
+                    ds.insert_sys_table_data(table, **data)
                 id_to_read = int(np.random.randint(5, size=(1,)))
                 res = ds.read_sys_table_data(table, id_to_read + 1)
                 print(f'\nreading data with "id = {id_to_read}"...\n'

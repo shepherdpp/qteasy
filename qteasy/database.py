@@ -3516,7 +3516,7 @@ class DataSource:
         self.update_table_data(table, df_data, merge_type='update')
         return id
 
-    def insert_sys_table_data(self, table, data):
+    def insert_sys_table_data(self, table, **data):
         """ 插入系统操作表的数据
 
         一次插入一条记录，数据以dict形式给出

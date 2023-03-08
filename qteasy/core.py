@@ -19,7 +19,7 @@ from numba import njit
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import datetime
 
-# import qteasy
+import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import next_market_trade_day
