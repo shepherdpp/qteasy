@@ -1817,11 +1817,11 @@ class TestDataSource(unittest.TestCase):
 
             # 测试传入无效的id时是否引发KeyError异常
             print(f'test passing invalid id to read_sys_table_data')
-            res = ds.read_sys_table_data(table, id=-1)
+            res = ds.read_sys_table_data(table, record_id=-1)
             self.assertIsNone(res)
-            res = ds.read_sys_table_data(table, id=0)
+            res = ds.read_sys_table_data(table, record_id=0)
             self.assertIsNone(res)
-            res = ds.read_sys_table_data(table, id=999)
+            res = ds.read_sys_table_data(table, record_id=999)
             self.assertIsNone(res)
 
             # 测试传入无效的表名时是否引发KeyError异常
@@ -1847,7 +1847,7 @@ class TestDataSource(unittest.TestCase):
         # 2，测试传入无效的id时是否返回None
         # 3，测试传入kwargs筛选数据，验证是否读取正确
         # 4，测试传入无效的kwargs时是否返回None
-        # table: str, id: int=None, **kwargs
+        # table: str, record_id: int=None, **kwargs
         for table, datas, kw, kwn, kwu in zip(
                 tables_to_be_tested,
                 sys_table_test_multiple_data,
@@ -1904,9 +1904,9 @@ class TestDataSource(unittest.TestCase):
 
                 # 测试update_sys_table_data后数据是否正确地更新
                 print(f'\nupdating {table}@(id = {id_to_read}) with kwargs: {kwu}...\n')
-                before = ds.read_sys_table_data(table, id=id_to_read+1)
-                ds.update_sys_table_data(table, id=id_to_read+1, **kwu)
-                after = ds.read_sys_table_data(table, id=id_to_read+1)
+                before = ds.read_sys_table_data(table, record_id=id_to_read + 1)
+                ds.update_sys_table_data(table, record_id=id_to_read + 1, **kwu)
+                after = ds.read_sys_table_data(table, record_id=id_to_read + 1)
                 print(f'before update:\n{before}\nafter update:\n{after}')
                 for bk_v, ak_v in zip(before.items(), after.items()):
                     if bk_v[0] in kwu.keys():

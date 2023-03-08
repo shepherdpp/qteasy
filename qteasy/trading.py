@@ -463,11 +463,12 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    account_id = data_source.write_sys_table_data(
+    account_id = data_source.insert_sys_table_data(
         'sys_op_live_accounts',
         user_name=user_name,
         created_time=pd.to_datetime('now'),
         cash_amount=cash_amount,
+        available_cash=cash_amount,
         **account_data,
     )
     return account_id
@@ -494,7 +495,7 @@ def get_account(account_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    account = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
+    account = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
     if account is None:
         raise RuntimeError('Account not found!')
     return account
@@ -526,11 +527,11 @@ def update_account(account_id, data_source=None, **account_data):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    data_source.update_sys_table_data('sys_op_live_accounts', id=account_id, **account_data)
+    data_source.update_sys_table_data('sys_op_live_accounts', record_id=account_id, **account_data)
 
 
 def update_account_balance(account_id, data_source=None, **cash_change):
-    """ 更新账户的资金总额和可用资金
+    """ 更新账户的资金总额和可用资金, 为了避免误操作，仅允许修改现金总额和可用现金，其他字段不可修改
 
     Parameters
     ----------
@@ -552,24 +553,32 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    account_data = data_source.read_sys_table_data('sys_op_live_accounts', id=account_id)
-    cash_amount = account_data['cash_amount_change']
-    available_cash = account_data['available_cash_change']
-    if 'cash_amount_change' in cash_change:
-        cash_amount += cash_change['cash_amount_change']
-    if 'available_cash_change' in cash_change:
-        available_cash += cash_change['available_cash_change']
+    account_data = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
+    if account_data is None:
+        raise RuntimeError('Account not found!')
+
+    cash_amount = account_data['cash_amount'] + cash_change.get('cash_amount_change', 0.0)
+    available_cash = account_data['available_cash'] + cash_change.get('available_cash_change', 0.0)
+
+    # 如果可用现金超过现金总额，则报错
+    if available_cash > cash_amount:
+        raise RuntimeError(f'available_cash ({available_cash}) cannot be greater than cash_amount ({cash_amount})')
+    # 如果可用现金小于0，则报错
+    if available_cash < 0:
+        raise RuntimeError(f'available_cash ({available_cash}) cannot be less than 0!')
+    # 如果现金总额小于0，则报错
+    if cash_amount < 0:
+        raise RuntimeError(f'cash_amount cannot be less than 0!')
 
     # 更新账户的资金总额和可用资金
     data_source.update_sys_table_data(
             'sys_op_live_accounts',
-            id=account_id,
+            record_id=account_id,
             cash_amount=cash_amount,
             available_cash=available_cash
     )
 
 
-# noinspection PyTypeChecker
 def get_or_create_position(account_id, symbol, position_type, data_source=None):
     """ 获取账户的持仓, 如果持仓不存在，则创建一条新的持仓记录
 
@@ -590,29 +599,29 @@ def get_or_create_position(account_id, symbol, position_type, data_source=None):
     int: 如果持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
     """
 
-    import qteasy as qt
+    from qteasy import DataSource, QT_DATA_SOURCE
     if data_source is None:
-        data_source = qt.QT_DATA_SOURCE
-    if not isinstance(data_source, qt.DataSource):
+        data_source = QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     position = data_source.read_sys_table_data(
-            'sys_op_live_positions',
-            id=None,
+            table='sys_op_live_positions',
+            record_id=None,
             account_id=account_id,
             symbol=symbol,
             position=position_type
     )
     if position.empty:
         return data_source.insert_sys_table_data(
-                'sys_op_live_positions',
+                table='sys_op_live_positions',
                 account_id=account_id,
                 symbol=symbol,
                 position=position_type,
                 qty=0,
                 avg_price=0
         )
-    return position['id']
+    return position['record_id']
 
 
 def update_position(position_id, data_source=None, **position_data):
@@ -639,13 +648,13 @@ def update_position(position_id, data_source=None, **position_data):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     # 从数据库中读取持仓数据，修改后再写入数据库
-    position = data_source.read_sys_table_data('sys_op_live_positions', id=position_id)
+    position = data_source.read_sys_table_data('sys_op_live_positions', record_id=position_id)
     if qty_change in position_data:
         position['qty'] += position_data['qty_change']
     if available_qty_change in position_data:
         position['available_qty'] += position_data['available_qty_change']
 
-    data_source.update_sys_table_data('sys_op_live_positions', id=position_id, **position)
+    data_source.update_sys_table_data('sys_op_live_positions', record_id=position_id, **position)
 
 
 def get_account_positions(account_id, data_source=None):
@@ -662,10 +671,16 @@ def get_account_positions(account_id, data_source=None):
     -------
     pandas.DataFrame or None: 账户的所有持仓
     """
-    import qteasy.QT_DATA_SOURCE as data_source
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
     positions = data_source.read_sys_table_data(
             'sys_op_live_positions',
-            id=None,
+            record_id=None,
             account_id=account_id,
     )
     return positions
@@ -759,7 +774,7 @@ def update_trade_signal(signal_id, trade_results):
     None
     """
     import qteasy.QT_DATA_SOURCE as data_source
-    trade_signal = data_source.read_sys_table_data('sys_op_trade_signals', id=signal_id)
+    trade_signal = data_source.read_sys_table_data('sys_op_trade_signals', record_id=signal_id)
 
     if trade_signal is None:
         raise RuntimeError(f'Trade signal (signal_id = {signal_id}) not found!')
@@ -839,7 +854,7 @@ def read_trade_signal(signal_id):
         交易信号
     """
     import qteasy.QT_DATA_SOURCE as data_source
-    return data_source.read_sys_table_data('sys_op_trade_signals', id=signal_id)
+    return data_source.read_sys_table_data('sys_op_trade_signals', record_id=signal_id)
 
 
 def query_trade_signals(account_id, symbol, direction, status):
@@ -909,7 +924,7 @@ def submit_signal(trade_signal):
     # 如果交易方向为buy，则需要检查账户的现金是否足够 TODO: position为short时做法不同，需要进一步调整
     if trade_signal['direction'] == 'buy':
         account_id = trade_signal['account_id']
-        account = read_account(account_id)
+        account = get_account(account_id)
         # 如果账户的现金不足，则按比例调整交易信号的委托数量
         if account['available_cash'] < trade_signal['qty'] * trade_signal['price']:
             proportion = (trade_signal['qty'] * trade_signal['price']) / account['available_cash']
@@ -973,7 +988,7 @@ def read_trade_result(result_id):
         交易结果
     """
     import qteasy.QT_DATA_SOURCE as data_source
-    return data_source.read_sys_table_data('sys_op_trade_results', id=result_id)
+    return data_source.read_sys_table_data('sys_op_trade_results', record_id=result_id)
 
 
 def output_account_position(account_id, position_id):

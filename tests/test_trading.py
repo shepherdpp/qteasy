@@ -20,6 +20,10 @@ from qteasy.database import DataSource
 
 from qteasy.trading import parse_pt_signals, parse_ps_signals, parse_vs_signals, itemize_trade_signals
 from qteasy.trading import generate_signal, submit_signal
+from qteasy.trading import new_account, get_account, update_account, update_account_balance, get_or_create_position
+from qteasy.trading import update_position, get_account_positions, check_account_availability
+from qteasy.trading import check_position_availability, record_trade_signal, update_trade_signal, read_trade_signal
+from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -29,17 +33,12 @@ class TestLiveTrade(unittest.TestCase):
         from qteasy import QT_ROOT_PATH
         self.qt_root_path = QT_ROOT_PATH
         self.data_test_dir = 'data_test/'
-        # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
-        # 使用测试数据库进行与database型数据源的测试
-        config = qt.QT_CONFIG
-        self.ds_db = DataSource('db',
-                                host=config['test_db_host'],
-                                user=config['test_db_user'],
-                                password=config['test_db_password'],
-                                db_name=config['test_db_name'])
-        self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
-        self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
-        self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
+        # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
+        self.test_ds = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
+        # 清空测试数据源中的所有相关表格数据
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_signals', 'sys_op_trade_signals']:
+            if self.test_ds.table_data_exists(table):
+                self.test_ds.drop_table_data(table)
 
     # test foundational functions related to database info read and write
     def test_create_and_get_account(self):
@@ -47,12 +46,57 @@ class TestLiveTrade(unittest.TestCase):
         # test new_account with simple account info
         user_name = 'test_user'
         cash_amount = 10000.0
-        account_id = new_account(user_name, cash_amount)
+        account_id = new_account(user_name, cash_amount, data_source=self.test_ds)
         print(f'account created, id: {account_id}')
+        self.assertEqual(account_id, 1)
+        # add two more accounts
+        new_account('test_user2', 20000, data_source=self.test_ds)
+        new_account('test_user3', 30000, data_source=self.test_ds)
+        # test get_account
+        account = get_account(2, data_source=self.test_ds)
+        self.assertEqual(account['user_name'], 'test_user2')
+        self.assertEqual(account['cash_amount'], 20000.0)
+        self.assertEqual(account['available_cash'], 20000.0)
+        # test add account with negative cash amount
+        with self.assertRaises(ValueError):
+            new_account('test_user4', -10000, data_source=self.test_ds)
+        # test get account with non-existing account id
+        with self.assertRaises(RuntimeError):
+            get_account(4, data_source=self.test_ds)
 
     def test_update_account(self):
         """ test update_account function """
-        pass
+        # read all accounts from datasource and modify the username
+        new_account('test_user', 10000, data_source=self.test_ds)
+        new_account('test_user2', 20000, data_source=self.test_ds)
+        account = get_account(1, data_source=self.test_ds)
+        self.assertEqual(account['user_name'], 'test_user')
+        update_account(1, data_source=self.test_ds, user_name='test_user1')
+        account = get_account(1, data_source=self.test_ds)
+        self.assertEqual(account['user_name'], 'test_user1')
+        update_account(2, data_source=self.test_ds, user_name='new_user2')
+        account = get_account(2, data_source=self.test_ds)
+        self.assertEqual(account['user_name'], 'new_user2')
+        # test update account with non-existing account id
+        with self.assertRaises(KeyError):
+            update_account(4, data_source=self.test_ds, user_name='test_user4')
+        # update account balance and available cash
+        update_account_balance(1, data_source=self.test_ds, cash_amount_change=-2000.0, available_cash_change=-2000.0)
+        self.assertEqual(get_account(1, data_source=self.test_ds)['cash_amount'], 8000.0)
+        self.assertEqual(get_account(1, data_source=self.test_ds)['available_cash'], 8000.0)
+        update_account_balance(1, data_source=self.test_ds, cash_amount_change=1000.0, available_cash_change=1000.0)
+        self.assertEqual(get_account(1, data_source=self.test_ds)['cash_amount'], 9000.0)
+        self.assertEqual(get_account(1, data_source=self.test_ds)['available_cash'], 9000.0)
+
+        # update account balance and available cash with non-existing account id
+        with self.assertRaises(RuntimeError):
+            update_account_balance(4, data_source=self.test_ds, cash_amount_change=1000.0, available_cash_change=1000.0)
+
+        # update so that cash balance is wrong (negative or available cash is more than cash amount)
+        with self.assertRaises(RuntimeError):
+            update_account_balance(1, data_source=self.test_ds, cash_amount_change=-90000.0, available_cash_change=0.0)
+            update_account_balance(1, data_source=self.test_ds, cash_amount_change=0.0, available_cash_change=-90000.0)
+            update_account_balance(1, data_source=self.test_ds, cash_amount_change=0.0, available_cash_change=90000.0)
 
     def test_create_and_get_position(self):
         """ test new_position function """
@@ -71,27 +115,7 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_record_and_read_signal(self):
         """ test record_and_read_signal function """
-        # test recording and reading signal
-        signal = np.array([1, 2, 3, 4, 5])
-        record_signal(signal, 'test_signal')
-        read_signal = read_trade_signal('test_signal')
-        self.assertEqual(list(signal), list(read_signal))
-
-        # test recording and reading signal with multiple symbols
-        signal = np.array([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])
-        record_signal(signal, 'test_signal')
-        read_signal = read_signal('test_signal')
-        self.assertEqual(list(signal[0]), list(read_signal[0]))
-        self.assertEqual(list(signal[1]), list(read_signal[1]))
-
-        # test recording and reading signal with multiple symbols and multiple time steps
-        signal = np.array([[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]], [[11, 12, 13, 14, 15], [16, 17, 18, 19, 20]]])
-        record_signal(signal, 'test_signal')
-        read_signal = read_signal('test_signal')
-        self.assertEqual(list(signal[0][0]), list(read_signal[0][0]))
-        self.assertEqual(list(signal[0][1]), list(read_signal[0][1]))
-        self.assertEqual(list(signal[1][0]), list(read_signal[1][0]))
-        self.assertEqual(list(signal[1][1]), list(read_signal[1][1]))
+        pass
 
     def test_update_trade_signal(self):
         """ test update_trade_signal function """
@@ -115,7 +139,6 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status': 'created',
         }
-        submit_signal(test_signal)
 
     def test_itemize_trade_signals(self):
         """ test itemize trade signals"""

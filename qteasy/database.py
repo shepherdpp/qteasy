@@ -3389,13 +3389,13 @@ class DataSource:
                 res = self.cursor.fetchall()
                 return res[0][0]-1
             except Exception as e:
-                raise RuntimeError(f'{e}, An error occurred when getting last id for table {table} with SQL:\n{sql}')
+                raise RuntimeError(f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
 
         else:  # for other unexpected cases
             pass
         pass
 
-    def read_sys_table_data(self, table, id=None, **kwargs):
+    def read_sys_table_data(self, table, record_id=None, **kwargs):
         """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
 
         每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列，
@@ -3405,7 +3405,7 @@ class DataSource:
         ----------
         table: str
             需要读取的数据表名称
-        id: int, Default: None
+        record_id: int, Default: None
             如果给出id，只返回id行记录
         kwargs: dict
             筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
@@ -3419,7 +3419,7 @@ class DataSource:
         """
 
         # 如果ID<=0，返回None
-        if id is not None and id <= 0:
+        if record_id is not None and record_id <= 0:
             return None
 
         ensure_sys_table(table)
@@ -3429,8 +3429,8 @@ class DataSource:
         if any(k not in columns for k in kwargs):
             raise KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
 
-        id_column = p_keys[0] if (len(p_keys) == 1) and (id is not None) else None
-        id_values = [id] if id else None
+        id_column = p_keys[0] if (len(p_keys) == 1) and (record_id is not None) else None
+        id_values = [record_id] if record_id else None
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
@@ -3447,12 +3447,12 @@ class DataSource:
         # 筛选数据
         for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
-        if id is not None:
-            return res_df.loc[id].to_dict()
+        if record_id is not None:
+            return res_df.loc[record_id].to_dict()
         else:
             return res_df if not res_df.empty else None
 
-    def update_sys_table_data(self, table, id, **data):
+    def update_sys_table_data(self, table, record_id, **data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
 
         每次只能更新一条数据，数据以dict形式给出
@@ -3463,7 +3463,7 @@ class DataSource:
         ----------
         table: str
             需要更新的数据表名称
-        id: int
+        record_id: int
             需要更新的数据的id
         data: dict
             需要更新的数据，包括需要更新的字段如: account_id = 123
@@ -3498,9 +3498,9 @@ class DataSource:
         """
 
         # 将data构造为一个df，然后调用self.update_table_data()
-        table_data = self.read_sys_table_data(table, id=id)
+        table_data = self.read_sys_table_data(table, record_id=record_id)
         if table_data is None:
-            raise KeyError(f'id({id}) not found in table {table}')
+            raise KeyError(f'record_id({record_id}) not found in table {table}')
 
         # 当data中有不可用的字段时，会抛出异常
         columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
@@ -3511,10 +3511,10 @@ class DataSource:
         # 更新original_data
         table_data.update(data)
 
-        df_data = pd.DataFrame(table_data, index=[id])
+        df_data = pd.DataFrame(table_data, index=[record_id])
         df_data.index.name = p_keys[0]
         self.update_table_data(table, df_data, merge_type='update')
-        return id
+        return record_id
 
     def insert_sys_table_data(self, table, **data):
         """ 插入系统操作表的数据
@@ -3533,7 +3533,7 @@ class DataSource:
 
         Returns
         -------
-        id: int
+        record_id: int
             更新的记录ID
 
         Raises
