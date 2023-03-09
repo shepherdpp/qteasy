@@ -663,9 +663,19 @@ def update_position(position_id, data_source=None, **position_data):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     # 从数据库中读取持仓数据，修改后再写入数据库
-    position = data_source.read_sys_table_data('sys_op_live_positions', record_id=position_id)
-    position['qty'] += position_data.get('qty_change', 0.0)
-    position['available_qty'] += position_data.get('available_qty_change', 0.0)
+    position = data_source.read_sys_table_data('sys_op_positions', record_id=position_id)
+    if position is None:
+        raise RuntimeError(f'position_id {position_id} not found!')
+
+    qty_change = position_data.get('qty_change', 0.0)
+    if not isinstance(qty_change, (int, float)):
+        raise TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
+    position['qty'] += qty_change
+
+    available_qty_change = position_data.get('available_qty_change', 0.0)
+    if not isinstance(available_qty_change, (int, float)):
+        raise TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
+    position['available_qty'] += available_qty_change
 
     # 如果可用数量超过持仓数量，则报错
     if position['available_qty'] > position['qty']:
@@ -678,7 +688,7 @@ def update_position(position_id, data_source=None, **position_data):
     if position['qty'] < 0:
         raise RuntimeError(f'qty ({position["qty"]}) cannot be less than 0!')
 
-    data_source.update_sys_table_data('sys_op_live_positions', record_id=position_id, **position)
+    data_source.update_sys_table_data('sys_op_positions', record_id=position_id, **position)
 
 
 def get_account_positions(account_id, data_source=None):

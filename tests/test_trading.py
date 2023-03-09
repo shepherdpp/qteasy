@@ -179,8 +179,78 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_update_position(self):
         """ test update_position function """
-        # test update_position with only one symbol
-        pass
+        # clear existing accounts and positions, add test accounts and positions
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        # create new test accounts and new positions
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=100000, data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 1)
+        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 2)
+        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 3)
+        pos_id = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 4)
+        pos_id = get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 5)
+        pos_id = get_or_create_position(2, 'GOOG', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 6)
+        # test update_position qty and available qty
+        update_position(1, data_source=self.test_ds, qty_change=100)
+        update_position(2, data_source=self.test_ds, qty_change=300)
+        # check updated positions
+        position = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(position['qty'], 100)
+        self.assertEqual(position['available_qty'], 0)
+        position = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(position['qty'], 300)
+        self.assertEqual(position['available_qty'], 0)
+        # update qty and available qty in the same time
+        update_position(3, data_source=self.test_ds, qty_change=200, available_qty_change=100)
+        update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=300)
+        # check updated positions
+        position = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(position['qty'], 200)
+        self.assertEqual(position['available_qty'], 100)
+        position = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(position['qty'], 300)
+        self.assertEqual(position['available_qty'], 300)
+        # update qty and available qty on previous positions
+        update_position(3, data_source=self.test_ds, qty_change=100, available_qty_change=-100)
+        update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=100)
+        # check updated positions
+        position = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(position['qty'], 300)
+        self.assertEqual(position['available_qty'], 0)
+        position = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(position['qty'], 600)
+        self.assertEqual(position['available_qty'], 400)
+
+        # update qty and available qty with bad values
+        with self.assertRaises(RuntimeError):
+            update_position(3, data_source=self.test_ds, qty_change=-400, available_qty_change=100)
+        with self.assertRaises(RuntimeError):
+            update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=-500)
+        with self.assertRaises(TypeError):
+            update_position(5, data_source=self.test_ds, qty_change='not a number', available_qty_change=100)
+        with self.assertRaises(TypeError):
+            update_position(6, data_source=self.test_ds, qty_change=300, available_qty_change='not a number')
+
+        # update position with bad pos_id
+        with self.assertRaises(RuntimeError):
+            update_position(0, data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        with self.assertRaises(RuntimeError):
+            update_position(-1, data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        with self.assertRaises(TypeError):
+            update_position('not a number', data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        with self.assertRaises(ValueError):
+            update_position(None, data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        with self.assertRaises(RuntimeError):
+            update_position(100, data_source=self.test_ds, qty_change=100, available_qty_change=100)
 
     def test_check_account_availability(self):
         """ test check_account_availability function """

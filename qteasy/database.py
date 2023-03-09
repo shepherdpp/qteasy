@@ -3420,7 +3420,7 @@ class DataSource:
             当输入的id或筛选条件没有匹配项时
         """
 
-        # 如果ID<=0，返回None
+        # 检查record_id是否合法
         if record_id is not None and record_id <= 0:
             return None
 
@@ -3449,6 +3449,7 @@ class DataSource:
         # 筛选数据
         for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
+
         if record_id is not None:
             return res_df.loc[record_id].to_dict()
         else:
