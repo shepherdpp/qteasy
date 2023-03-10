@@ -1552,7 +1552,6 @@ class TestDataSource(unittest.TestCase):
     def test_insert_read_sys_table_data(self):
         # 测试正常情况下写入及读取表的数据
         test_signal_data = {
-                    'account_id': 1,
                     'pos_id': 1,
                     'direction': 'buy',
                     'order_type': 'limit',
@@ -1585,7 +1584,6 @@ class TestDataSource(unittest.TestCase):
         # 生成五条不同的模拟信号数据
         test_multiple_signal_data = [
             {
-                'account_id': 1,
                 'pos_id': 1,
                 'direction': 'buy',
                 'order_type': 'limit',
@@ -1595,7 +1593,6 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'account_id': 1,
                 'pos_id': 2,
                 'direction': 'buy',
                 'order_type': 'limit',
@@ -1605,7 +1602,6 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'account_id': 2,
                 'pos_id': 3,
                 'direction': 'buy',
                 'order_type': 'limit',
@@ -1615,7 +1611,6 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'account_id': 2,
                 'pos_id': 4,
                 'direction': 'buy',
                 'order_type': 'limit',
@@ -1625,7 +1620,6 @@ class TestDataSource(unittest.TestCase):
                 'status': 'submitted',
             },
             {
-                'account_id': 2,
                 'pos_id': 5,
                 'direction': 'buy',
                 'order_type': 'limit',
