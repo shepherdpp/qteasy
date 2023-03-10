@@ -252,8 +252,107 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             update_position(100, data_source=self.test_ds, qty_change=100, available_qty_change=100)
 
-    def test_check_account_availability(self):
-        """ test check_account_availability function """
+    def test_check_availability(self):
+        """ test check_account_availability and position availability functions """
+        # clear existing accounts and positions, add test accounts and positions
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        # add test accounts
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=100000, data_source=self.test_ds)
+        # add test positions
+        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'MSFT', 'short', data_source=self.test_ds)
+        get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'GOOG', 'short', data_source=self.test_ds)
+        # set cash amount and available amounts for test accounts
+        update_account_balance(1, data_source=self.test_ds, cash_amount_change=100000, available_cash_change=100000)
+        update_account_balance(2, data_source=self.test_ds, cash_amount_change=200000, available_cash_change=200000)
+        # set position qty and available qty for test positions
+        update_position(1, data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        update_position(2, data_source=self.test_ds, qty_change=200, available_qty_change=200)
+        update_position(3, data_source=self.test_ds, qty_change=300, available_qty_change=300)
+        update_position(4, data_source=self.test_ds, qty_change=400, available_qty_change=400)
+        update_position(5, data_source=self.test_ds, qty_change=500, available_qty_change=500)
+        update_position(6, data_source=self.test_ds, qty_change=600, available_qty_change=600)
+        update_position(7, data_source=self.test_ds, qty_change=700, available_qty_change=700)
+        update_position(8, data_source=self.test_ds, qty_change=800, available_qty_change=800)
+
+        # test check_account_availability function
+        res = check_account_availability(1, 10000, data_source=self.test_ds)
+        self.assertEqual(res, 1.0)
+        res = check_account_availability(1, 100000, data_source=self.test_ds)
+        self.assertEqual(res, 1.0)
+        res = check_account_availability(1, 400000, data_source=self.test_ds)
+        self.assertEqual(res, 0.5)
+        res = check_account_availability(2, 1000000, data_source=self.test_ds)
+        self.assertEqual(res, 0.3)
+
+        # test check_account_availability function with bad parameters
+        with self.assertRaises(TypeError):
+            check_account_availability('not an id', 10000, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            check_account_availability(None, 10000, data_source=self.test_ds)
+        with self.assertRaises(RuntimeError):
+            check_account_availability(0, 10000, data_source=self.test_ds)
+        with self.assertRaises(RuntimeError):
+            check_account_availability(-1, 10000, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_account_availability(1, 'not a number', data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_account_availability(1, None, data_source=self.test_ds)
+        with self.assertRaises(RuntimeError):
+            check_account_availability(1, -10000, data_source=self.test_ds)
+
+        # test check_position_availability function
+        res = check_position_availability(1, 'AAPL', 'long', 100, data_source=self.test_ds)
+        self.assertEqual(res, 1.0)
+        res = check_position_availability(1, 'AAPL', 'long', 1000, data_source=self.test_ds)
+        self.assertEqual(res, 0.1)
+        res = check_position_availability(1, 'AAPL', 'short', 400, data_source=self.test_ds)
+        self.assertEqual(res, 0.5)
+        res = check_position_availability(1, 'AAPL', 'short', 1000, data_source=self.test_ds)
+        self.assertEqual(res, 0.2)
+        res = check_position_availability(1, 'AAPL', 'short', 0, data_source=self.test_ds)
+        self.assertEqual(res, 1)
+        # test check_position_availability function with not existing position
+        with self.assertRaises(IndexError):
+            res = check_position_availability(1, 'MSFT', 'long', 100, data_source=self.test_ds)
+
+        # test check_position_availability function with bad parameters
+        with self.assertRaises(TypeError):
+            check_position_availability('not an id', 'AAPL', 'long', 100, data_source=self.test_ds)
+        with self.assertRaises(IndexError):
+            check_position_availability(None, 'AAPL', 'long', 100, data_source=self.test_ds)
+        with self.assertRaises(RuntimeError):
+            check_position_availability(0, 'AAPL', 'long', 100, data_source=self.test_ds)
+        with self.assertRaises(RuntimeError):
+            check_position_availability(-1, 'AAPL', 'long', 100, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_position_availability(1, 1, 'long', 100, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_position_availability(1, None, 'long', 100, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_position_availability(1, 'AAPL', 1, 100, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_position_availability(1, 'AAPL', None, 100, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_position_availability(1, 'AAPL', 'long', 'not a number', data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            check_position_availability(1, 'AAPL', 'long', None, data_source=self.test_ds)
+        with self.assertRaises(RuntimeError):
+            check_position_availability(1, 'AAPL', 'long', -100, data_source=self.test_ds)
+
+
+
+    def test_check_position_availability(self):
+        """ test check_position_availability function """
         pass
 
     # test foundational functions related to signal generation and submission

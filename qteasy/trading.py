@@ -16,6 +16,8 @@ import pandas as pd
 import numpy as np
 
 
+# TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
+#  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
 async def process_trade_signal(signal):
     # 将交易信号提交给交易平台或用户以获取交易结果
     trade_results = await submit_signal(signal)
@@ -557,8 +559,15 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     if account_data is None:
         raise RuntimeError('Account not found!')
 
-    cash_amount = account_data['cash_amount'] + cash_change.get('cash_amount_change', 0.0)
-    available_cash = account_data['available_cash'] + cash_change.get('available_cash_change', 0.0)
+    cash_amount_change = cash_change.get('cash_amount_change', 0.0)
+    if not isinstance(cash_amount_change, (int, float)):
+        raise TypeError(f'cash_amount_change must be a number, got {type(cash_amount_change)} instead')
+    cash_amount = account_data['cash_amount'] + cash_amount_change
+
+    available_cash_change = cash_change.get('available_cash_change', 0.0)
+    if not isinstance(available_cash_change, (int, float)):
+        raise TypeError(f'available_cash_change must be a number, got {type(available_cash_change)} instead')
+    available_cash = account_data['available_cash'] + available_cash_change
 
     # 如果可用现金超过现金总额，则报错
     if available_cash > cash_amount:
@@ -721,7 +730,7 @@ def get_account_positions(account_id, data_source=None):
 
 
 # 2nd foundational functions for account and position availability check
-def check_account_availability(account_id, requested_amount):
+def check_account_availability(account_id, requested_amount, data_source=None):
     """ 检查账户的可用资金是否充足
 
     Parameters
@@ -730,44 +739,70 @@ def check_account_availability(account_id, requested_amount):
         账户的id
     requested_amount: float or np.float64 or np.ndarray
         交易所需的资金
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
     float: 可用资金相对于交易所需资金的比例，如果可用资金大于交易所需资金，则返回1.0
     """
 
-    account = get_account(account_id)
-    available_amount = account['available_amount']
-    if available_amount == 0:
-        return 0.0
-    if available_amount >= requested_amount:
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    if requested_amount == 0:
         return 1.0
-    return available_amount / requested_amount
+    if requested_amount < 0:
+        raise RuntimeError(f'requested_amount ({requested_amount}) cannot be less than 0!')
+    account = get_account(account_id, data_source=data_source)
+    available_cash = account['available_cash']
+    if available_cash == 0:
+        return 0.0
+    if available_cash >= requested_amount:
+        return 1.0
+    return available_cash / requested_amount
 
 
-def check_position_availability(account_id, planned_pos, planned_qty):
+def check_position_availability(account_id, symbol, position, planned_qty, data_source=None):
     """ 检查账户的持仓是否允许下单
 
     Parameters
     ----------
     account_id: int
         账户的id
-    planned_pos: str, {'long', 'short'}
+    symbol: str
+        交易标的的代码
+    position: str, {'long', 'short'}
         计划交易的持仓类型, long为多头仓位，short为空头仓位
     planned_qty: float
         计划交易数量
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
     float: 可用于交易的资产相对于计划交易数量的比例，如果可用资产大于计划交易数量，则返回1.0
     """
 
-    position = get_or_create_position(account_id, symbol, planned_pos)
-    if position is None:
+    if planned_qty == 0:
+        return 1.0
+    if planned_qty < 0:
+        raise RuntimeError(f'planned_qty ({planned_qty}) cannot be less than 0!')
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    position_read = get_or_create_position(account_id, symbol, position, data_source=data_source)
+    if position_read is None:
         raise RuntimeError('Position not found!')
-    if position['position'] != planned_pos:
-        raise RuntimeError('Position type not match!')  # 根据持仓类型新建或读取数据，类型应该匹配
-    available_qty = position['available_qty']
+    if position_read['position'] != position:  # 根据持仓类型新建或读取数据，类型应该匹配
+        raise RuntimeError(f'Position type not match: "{position_read["position"]}" != "{position}"')
+    available_qty = position_read['available_qty']
     if available_qty == 0:
         return 0.0
     if available_qty >= planned_qty:
