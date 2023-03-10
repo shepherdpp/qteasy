@@ -23,7 +23,7 @@ from qteasy.trading import generate_signal, submit_signal
 from qteasy.trading import new_account, get_account, update_account, update_account_balance, get_or_create_position
 from qteasy.trading import update_position, get_account_positions, check_account_availability
 from qteasy.trading import check_position_availability, record_trade_signal, update_trade_signal, read_trade_signal
-from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal
+from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal, get_position_by_id
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -143,6 +143,23 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_or_create_position(1, 'AAPL', 'long123', data_source=self.test_ds)
 
+        # test get_position_by_id function
+        position = get_position_by_id(1, data_source=self.test_ds)
+        self.assertIsInstance(position, dict)
+        self.assertEqual(position['account_id'], 1)
+        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['position'], 'long')
+        self.assertEqual(position['qty'], 0)
+        position = get_position_by_id(2, data_source=self.test_ds)
+        self.assertIsInstance(position, dict)
+        self.assertEqual(position['account_id'], 1)
+        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['position'], 'short')
+        self.assertEqual(position['qty'], 0)
+        # test get_position_by_id with non-existing position id
+        with self.assertRaises(RuntimeError):
+            get_position_by_id(999, data_source=self.test_ds)
+
         # test get all positions with get_account_positions()
         positions = get_account_positions(1, data_source=self.test_ds)
         print(positions)
@@ -252,6 +269,7 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             update_position(100, data_source=self.test_ds, qty_change=100, available_qty_change=100)
 
+    # test 2nd foundational function: check_account_availability / check_position_availability
     def test_check_availability(self):
         """ test check_account_availability and position availability functions """
         # clear existing accounts and positions, add test accounts and positions
@@ -349,25 +367,192 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             check_position_availability(1, 'AAPL', 'long', -100, data_source=self.test_ds)
 
-
-
-    def test_check_position_availability(self):
-        """ test check_position_availability function """
-        pass
-
     # test foundational functions related to signal generation and submission
-
-    def test_record_and_read_signal(self):
+    def test_record_read_and_update_signal(self):
         """ test record_and_read_signal function """
-        pass
+        # clear tables in test datasource if they existed
+        if self.test_ds.table_data_exists('sys_op_trade_signals'):
+            self.test_ds.drop_table_data('sys_op_trade_signals')
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
 
-    def test_update_trade_signal(self):
-        """ test update_trade_signal function """
-        pass
+        # writing test accounts and positions
+        new_account('test_user', 100000, data_source=self.test_ds)
+        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
+        # test recording and reading signals
+        test_signal = {
+            'pos_id': 1,
+            'direction': 'buy',
+            'order_type': 'market',
+            'qty': 300,
+            'price': 10.0,
+            'submitted_time': None,
+            'status': 'created',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id': 2,
+            'direction': 'buy',
+            'order_type': 'market',
+            'qty': 200,
+            'price': 10.0,
+            'submitted_time': None,
+            'status': 'created',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id': 3,
+            'direction': 'sell',
+            'order_type': 'market',
+            'qty': 100,
+            'price': 10.0,
+            'submitted_time': None,
+            'status': 'created',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        signal = read_trade_signal(1, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 1)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 300)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'created')
+        signal = read_trade_signal(2, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 2)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 200)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'created')
+        signal = read_trade_signal(3, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 3)
+        self.assertEqual(signal['direction'], 'sell')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 100)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'created')
+        # test record signal with bad input
+        with self.assertRaises(TypeError):
+            record_trade_signal(None, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            record_trade_signal(1, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            record_trade_signal('test', data_source=self.test_ds)
+        bad_signal = {
+            'account_id': 'a',
+            'pos_id': 'a',
+            'direction': 'buy',
+            'order_type': 'market',
+            'qty': 300,
+            'price': 10.0,
+            'submitted_time': None,
+        }
+        with self.assertRaises(TypeError):
+            record_trade_signal(bad_signal, data_source=self.test_ds)
+        bad_signal = {
+            'account_id': 1,
+            'pos_id': 1,
+            'direction': 'buy',
+            'order_type': 'market',
+            'qty': -300,
+            'price': -10.0,
+            'status': 'created',
+        }
+        with self.assertRaises(RuntimeError):
+            record_trade_signal(bad_signal, data_source=self.test_ds)
+        # test read signal with bad input
+        # self.assertIsNone(read_trade_signal(None, data_source=self.test_ds))  # will return all signals
+        with self.assertRaises(TypeError):
+            read_trade_signal(1.0, data_source=self.test_ds)
+            read_trade_signal('test', data_source=self.test_ds)
+        self.assertIsNone(read_trade_signal(-1, data_source=self.test_ds))
+
+        # test update signal
+        update_trade_signal(1, data_source=self.test_ds, status='submitted')
+        signal = read_trade_signal(1, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 1)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 300)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'submitted')
+        update_trade_signal(1, status='partial-filled', data_source=self.test_ds)
+        signal = read_trade_signal(1, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 1)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 300)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'partial-filled')
+        update_trade_signal(1, status='filled', data_source=self.test_ds)
+        signal = read_trade_signal(1, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 1)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 300)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'filled')
+        update_trade_signal(2, status='canceled', data_source=self.test_ds)
+        signal = read_trade_signal(2, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 2)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 200)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'created')
+        update_trade_signal(2, status='submitted', data_source=self.test_ds)
+        signal = read_trade_signal(2, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 2)
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 200)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'submitted')
+        # test update bad status
+        with self.assertRaises(RuntimeError):
+            update_trade_signal(1, status='test', data_source=self.test_ds, raise_if_status_wrong=True)
+            update_trade_signal(1, status='created', data_source=self.test_ds, raise_if_status_wrong=True)
+            update_trade_signal(1, status='submitted', data_source=self.test_ds, raise_if_status_wrong=True)
+            update_trade_signal(1, status='partial-filled', data_source=self.test_ds, raise_if_status_wrong=True)
+            update_trade_signal(1, status='filled', data_source=self.test_ds, raise_if_status_wrong=True)
+        self.assertIsNone(
+                update_trade_signal(1, status='test', data_source=self.test_ds, raise_if_status_wrong=False)
+        )
+        self.assertIsNone(
+                update_trade_signal(1, status='created', data_source=self.test_ds, raise_if_status_wrong=False)
+        )
+        self.assertIsNone(
+                update_trade_signal(1, status='submitted', data_source=self.test_ds, raise_if_status_wrong=False)
+        )
+        self.assertIsNone(
+                update_trade_signal(1, status='partial-filled', data_source=self.test_ds, raise_if_status_wrong=False)
+        )
+        self.assertIsNone(
+                update_trade_signal(1, status='filled', data_source=self.test_ds, raise_if_status_wrong=False)
+        )
+
+        # test update bad signal id
+        with self.assertRaises(TypeError):
+            update_trade_signal('test', status='submitted', data_source=self.test_ds)
+
 
     def test_query_trade_signals(self):
         """ test query_trade_signals function """
         pass
+
+    # test 2nd foundational functions: read_trade_signal_detail / submit_signal / output_trade_signal
 
     # test sub functions related to signal generation and submission
     def test_parse_signal(self):

@@ -1328,12 +1328,12 @@ TABLE_SCHEMA = {
          },
 
     'sys_op_trade_signals':
-        {'columns':    ['signal_id', 'account_id', 'pos_id', 'direction', 'order_type', 'qty',
-                        'price', 'submitted_time', 'status'],
-         'dtypes':     ['int', 'int', 'int', 'varchar(10)', 'varchar(5)', 'float',
-                        'float', 'datetime', 'varchar(10)'],
-         'remarks':    ['交易信号ID', '账户ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量',
-                        '委托报价', '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
+        {'columns':    ['signal_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
+                        'submitted_time', 'status'],
+         'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(5)', 'float', 'float',
+                        'datetime', 'varchar(10)'],
+         'remarks':    ['交易信号ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
+                        '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
          'prime_keys': [0]
          },
 
