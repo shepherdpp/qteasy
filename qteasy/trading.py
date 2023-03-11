@@ -616,6 +616,53 @@ def get_position_by_id(pos_id, data_source=None):
     return position
 
 
+def get_position_ids(account_id, symbol=None, position_type=None, data_source=None):
+    """ 根据symbol和position_type获取账户的持仓id, 如果没有持仓，则返回空列表, 如果有多个持仓，则返回所有持仓的id
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    symbol: str, optional
+        交易标的的代码
+    position_type: str, optional, {'long', 'short'}
+        持仓类型, 'long' 表示多头持仓, 'short' 表示空头持仓
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    position_ids: list of int: 持仓的id列表
+    None: 如果没有持仓, 则返回None
+    """
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    # 获取账户的持仓
+    position_filter = {'account_id': account_id}
+    if symbol is not None:
+        position_filter['symbol'] = str(symbol)
+    if position_type is not None:
+        position_filter['position'] = str(position_type)
+
+    try:
+        position = data_source.read_sys_table_data(
+                table='sys_op_positions',
+                record_id=None,
+                **position_filter,
+        )
+    except Exception as e:
+        print(f'Error occurred: {e}')
+        return None
+    if position is None:
+        return
+    return position.index.tolist()
+
+
 def get_or_create_position(account_id, symbol, position_type, data_source=None):
     """ 获取账户的持仓, 如果持仓不存在，则创建一条新的持仓记录
 
@@ -987,33 +1034,69 @@ def update_trade_signal(signal_id, data_source=None, status=None, raise_if_statu
     return
 
 
-def query_trade_signals(account_id, symbol, direction, status):
+def query_trade_signals(account_id,
+                        symbol=None,
+                        position=None,
+                        direction=None,
+                        order_type=None,
+                        status=None,
+                        data_source=None):
     """ 根据symbol、direction、status 从数据库中查询交易信号并批量返回结果
 
     Parameters
     ----------
     account_id: int
         账户的id
-    symbol: str
+    symbol: str, optional
         交易标的
-    direction: str
-        交易方向
-    status: str
+    position: str, optional, {'long', 'short'}
+        交易方向, 默认为None, 表示不限制, 'long' 表示多头, 'short' 表示空头
+    direction: str, optional, {'buy', 'sell'}
+        交易方向, 默认为None, 表示不限制, 'buy' 表示买入, 'sell' 表示卖出
+    order_type: str, optional, {'market', 'limit', 'stop', 'stop_limit'}
+        交易类型, 默认为None, 表示不限制, 'market' 表示市价单, 'limit' 表示限价单, 'stop' 表示止损单, 'stop_limit' 表示止损限价单
+    status: str, optional, {'created', 'submitted', 'canceled', 'partial-filled', 'filled'}
         交易信号状态
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
     signals: list
         交易信号列表
     """
-    import qteasy.QT_DATA_SOURCE as data_source
-    return data_source.read_sys_table_data(
-        'sys_op_trade_signals',
-        account_id=account_id,
-        symbol=symbol,
-        direction=direction,
-        status=status
-    )
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    # 从数据库中读取position的id
+    pos_ids = get_position_ids(account_id, symbol, position, data_source=data_source)
+    if pos_ids is None:
+        return None
+
+    data_filter = {}
+    if direction is not None:
+        data_filter['direction'] = direction
+    if order_type is not None:
+        data_filter['order_type'] = order_type
+    if status is not None:
+        data_filter['status'] = status
+
+    res = []
+    for pos_id in pos_ids:
+        res.append(
+                data_source.read_sys_table_data(
+                        'sys_op_trade_signals',
+                        pos_id=pos_id,
+                        **data_filter,
+                )
+        )
+    if all(r is None for r in res):
+        return None
+    return pd.concat(res)
 
 
 # 2 2nd level functions for trade signal

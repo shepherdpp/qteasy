@@ -24,6 +24,7 @@ from qteasy.trading import new_account, get_account, update_account, update_acco
 from qteasy.trading import update_position, get_account_positions, check_account_availability
 from qteasy.trading import check_position_availability, record_trade_signal, update_trade_signal, read_trade_signal
 from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal, get_position_by_id
+from qteasy.trading import get_position_ids
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -142,6 +143,18 @@ class TestLiveTrade(unittest.TestCase):
             get_or_create_position(1, 'AAPL', 123, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             get_or_create_position(1, 'AAPL', 'long123', data_source=self.test_ds)
+
+        # test get_position_id function
+        pos_id = get_position_ids(1, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, [1])
+        pos_id = get_position_ids(1, 'AAPL', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, [2])
+        # test get_position_id with non-existing account id
+        self.assertIsNone(get_position_ids(4, 'AAPL', 'long', data_source=self.test_ds))
+        # test get_position_id with incorrect symbol type and direction type/value
+        self.assertIsNone(get_position_ids(1, 123, 'long', data_source=self.test_ds))
+        self.assertIsNone(get_position_ids(1, 'AAPL', 123, data_source=self.test_ds))
+        self.assertIsNone(get_position_ids(1, 'AAPL', 'long123', data_source=self.test_ds))
 
         # test get_position_by_id function
         position = get_position_by_id(1, data_source=self.test_ds)
@@ -547,10 +560,193 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(TypeError):
             update_trade_signal('test', status='submitted', data_source=self.test_ds)
 
-
     def test_query_trade_signals(self):
         """ test query_trade_signals function """
-        pass
+        # clear tables in test datasource if they existed
+        if self.test_ds.table_data_exists('sys_op_trade_signals'):
+            self.test_ds.drop_table_data('sys_op_trade_signals')
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+
+        # writing test accounts and positions
+        new_account('test_user1', 100000, data_source=self.test_ds)
+        new_account('test_user2', 300000, data_source=self.test_ds)
+        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
+        # test recording and reading signals
+        test_signal = {
+            'pos_id':         1,
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            300,
+            'price':          10.0,
+            'submitted_time': None,
+            'status':         'created',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id':         2,
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            200,
+            'price':          10.0,
+            'submitted_time': None,
+            'status':         'submitted',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id':         3,
+            'direction':      'sell',
+            'order_type':     'market',
+            'qty':            100,
+            'price':          10.0,
+            'submitted_time': None,
+            'status':         'filled',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id':         2,
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            300,
+            'price':          15.0,
+            'submitted_time': None,
+            'status':         'submitted',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id':         3,
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            500,
+            'price':          20.0,
+            'submitted_time': None,
+            'status':         'canceled',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id':         3,
+            'direction':      'sell',
+            'order_type':     'market',
+            'qty':            200,
+            'price':          20.0,
+            'submitted_time': None,
+            'status':         'partial-filled',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+        test_signal = {
+            'pos_id':         2,
+            'direction':      'sell',
+            'order_type':     'market',
+            'qty':            350,
+            'price':          12.5,
+            'submitted_time': None,
+            'status':         'partial-filled',
+        }
+        record_trade_signal(test_signal, data_source=self.test_ds)
+
+        # test query all signals for a symbol and direction
+        signals = query_trade_signals(1, symbol='AAPL', position='long', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 1)
+        self.assertEqual(signals['pos_id'].values[0], 1)
+        self.assertEqual(signals['direction'].values[0], 'buy')
+        self.assertEqual(signals['qty'].values[0], 300)
+        self.assertEqual(signals['price'].values[0], 10.0)
+        self.assertEqual(signals['status'].values[0], 'created')
+        signals = query_trade_signals(1, symbol='GOOG', position='long', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 3)
+        self.assertEqual(signals['pos_id'].values[0], 3)
+        self.assertEqual(signals['direction'].values[0], 'sell')
+        self.assertEqual(signals['qty'].values[0], 100)
+        self.assertEqual(signals['price'].values[0], 10.0)
+        self.assertEqual(signals['status'].values[0], 'filled')
+        signals = query_trade_signals(1, symbol='GOOG', status='filled', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 1)
+        self.assertEqual(signals['pos_id'].values[0], 3)
+        self.assertEqual(signals['direction'].values[0], 'sell')
+        self.assertEqual(signals['qty'].values[0], 100)
+        self.assertEqual(signals['price'].values[0], 10.0)
+        self.assertEqual(signals['status'].values[0], 'filled')
+        signals = query_trade_signals(1, symbol='GOOG', status='canceled', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 1)
+        self.assertEqual(signals['pos_id'].values[0], 3)
+        self.assertEqual(signals['direction'].values[0], 'buy')
+        self.assertEqual(signals['qty'].values[0], 500)
+        self.assertEqual(signals['price'].values[0], 20.0)
+        self.assertEqual(signals['status'].values[0], 'canceled')
+        signals = query_trade_signals(2, symbol='MSFT', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 3)
+        self.assertEqual(signals['pos_id'].values[0], 2)
+        self.assertEqual(signals['direction'].values[0], 'buy')
+        self.assertEqual(signals['qty'].values[0], 200)
+        self.assertEqual(signals['price'].values[0], 10.0)
+        self.assertEqual(signals['status'].values[0], 'submitted')
+        self.assertEqual(signals['pos_id'].values[1], 2)
+        self.assertEqual(signals['direction'].values[1], 'buy')
+        self.assertEqual(signals['qty'].values[1], 300)
+        self.assertEqual(signals['price'].values[1], 15.0)
+        self.assertEqual(signals['status'].values[1], 'submitted')
+        self.assertEqual(signals['pos_id'].values[2], 2)
+        self.assertEqual(signals['direction'].values[2], 'sell')
+        self.assertEqual(signals['qty'].values[2], 350)
+        self.assertEqual(signals['price'].values[2], 12.5)
+        self.assertEqual(signals['status'].values[2], 'partial-filled')
+        signals = query_trade_signals(1, status='partial-filled', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 1)
+        self.assertEqual(signals['pos_id'].values[0], 3)
+        self.assertEqual(signals['direction'].values[0], 'sell')
+        self.assertEqual(signals['qty'].values[0], 200)
+        self.assertEqual(signals['price'].values[0], 20.0)
+        self.assertEqual(signals['status'].values[0], 'partial-filled')
+        signals = query_trade_signals(1, direction='buy', data_source=self.test_ds)
+        print(signals)
+        self.assertIsInstance(signals, pd.DataFrame)
+        self.assertEqual(len(signals), 2)
+        self.assertEqual(signals['pos_id'].values[0], 1)
+        self.assertEqual(signals['direction'].values[0], 'buy')
+        self.assertEqual(signals['qty'].values[0], 300)
+        self.assertEqual(signals['price'].values[0], 10.0)
+        self.assertEqual(signals['status'].values[0], 'created')
+        self.assertEqual(signals['pos_id'].values[1], 3)
+        self.assertEqual(signals['direction'].values[1], 'buy')
+        self.assertEqual(signals['qty'].values[1], 500)
+        self.assertEqual(signals['price'].values[1], 20.0)
+        self.assertEqual(signals['status'].values[1], 'canceled')
+
+        # test query signals with bad input
+        signals = query_trade_signals(1, symbol='AAPL', position='long', status='filled', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol='invalid', position='long', status='filled', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol='GOOG', position='invalid', status='filled', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol='GOOG', position='long', status='invalid', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol='GOOG', position='long', direction='invalid', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(999, symbol='GOOG', position='long', direction='buy', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol=123, position='long', direction='buy', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol='GOOG', position=123, direction='buy', data_source=self.test_ds)
+        self.assertIsNone(signals)
+        signals = query_trade_signals(1, symbol='GOOG', position='long', direction=123, data_source=self.test_ds)
+        self.assertIsNone(signals)
 
     # test 2nd foundational functions: read_trade_signal_detail / submit_signal / output_trade_signal
 
