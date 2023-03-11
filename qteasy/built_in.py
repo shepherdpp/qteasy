@@ -3510,7 +3510,7 @@ class SelectingNDayVolatility(FactorSorter):
     信号类型：
         PT型：百分比持仓比例信号
     信号规则：
-        在每个选股周期使用以前n天的股价波动率作为选股因子进行选股
+        在每个选股周期使用以前n天的股价的ATR波动率作为选股因子进行选股
         通过以下策略属性控制选股方法：
         *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
         *condition:         str ,   确定股票的筛选条件，默认值'any'
@@ -3560,7 +3560,9 @@ class SelectingNDayVolatility(FactorSorter):
         high = h[:, :, 0]
         low = h[:, :, 1]
         close = h[:, :, 2]
-        factors = atr(high, low, close, n)
+
+        # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
+        factors = np.array(list(map(atr, high, low, close, [n]*len(high))))[:, -1]
 
         return factors
 

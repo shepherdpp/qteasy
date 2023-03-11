@@ -671,6 +671,7 @@ class BaseStrategy:
                 trade_data_list = [trade_data] * signal_count
             # 使用map完成快速遍历填充
             signals = list(map(self.generate_one, hist_data_list, ref_data_list, trade_data_list))
+            # 将生成的交易信号填充到清单中对应的位置(data_idx)上
             sig_list[data_idx] = np.array(signals)
             # 将所有分段组合成完整的ndarray
             return sig_list
@@ -1137,8 +1138,11 @@ class FactorSorter(BaseStrategy):
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
 
         factors = self.realize(h=h_seg, r=ref_seg, t=trade_data)
-        if not factors.shape == (1,):
-            factors = factors.squeeze()
+        # factors必须是一维向量，如果因子是二维向量，允许shape为(N, 1)型，此时将其转换为一维向量，否则报错
+        if factors.ndim == 2:
+            factors = factors.flatten()
+        # if len(factors) != share_count:
+        #     raise ValueError(f'invalid length of factors, expect {share_count}, got {len(factors)} instead')
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -1184,12 +1188,14 @@ class FactorSorter(BaseStrategy):
         if arg_count == 0:
             return chosen
         # 根据投资组合比例分配方式，确定被选中产品的权重
-        if weighting == 'linear':  # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
+
+        # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
+        if weighting == 'linear':
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
         # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
-        # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
-        # 获取比例分配
+        #  与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
+        #  获取比例分配
         elif weighting == 'distance':
             dist = factors[args]
             d_max = dist[-1]
@@ -1224,7 +1230,7 @@ class FactorSorter(BaseStrategy):
                 h,
                 r=None,
                 t=None):
-        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
+        """ h, r, 和 t 都是用于生成交易信号的窗口数据，根据这一段窗口数据
             生成一条交易信号
         """
         pass

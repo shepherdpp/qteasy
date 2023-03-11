@@ -752,6 +752,27 @@ class TestQT(unittest.TestCase):
 
     def test_built_in_timing(self):
         """测试内置的择时策略"""
+        # 使用以下参数测试所有qt.built_in中的交易策略
+        #   mode=1,
+        #   asset_pool='000300.SH, 399006.SZ',
+        #   start='20200101',
+        #   end='20211231',
+        #   trade_log=False,
+        #   visual=False,
+        # 其他均为默认参数
+        print(f'testing built-in strategies')
+        for strategy in qt.built_in_strategies():
+            print(f'testing strategy {strategy}')
+            op = qt.Operator(strategies=[strategy])
+            qt.run(
+                    op,
+                    mode=1,
+                    asset_pool='000300.SH, 399006.SZ',
+                    invest_start='20200101',
+                    invest_end='20211231',
+                    trade_log=False,
+                    visual=False,
+            )
 
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance

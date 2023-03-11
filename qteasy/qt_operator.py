@@ -870,7 +870,6 @@ class Operator:
         all_sample_indices = self.get_op_sample_indices_by_price_type()
         for item in all_sample_indices:
             combined_indices = np.union1d(combined_indices, item)
-        import pdb; pdb.set_trace()
         return combined_indices
 
     def get_strategy_count_by_price_type(self, price_type=None):
@@ -1680,7 +1679,7 @@ class Operator:
                 # TODO: 这里的signal_mode实际上就是self.op_type。但是self.op_type并没有
                 #  在create_signal过程中起到任何作用，应该考虑op_type和sample_idx的关系，
                 #  将sample_idx的使用方法简化:
-                #  例如，
+                #  例如:
                 #  - 在生成信号之前检查sample_idx的类型，并加以调整
                 #  - 根据op_type确定运行模式
                 signal_mode = 'batch'   # TODO: self.op_type == 'batch'
