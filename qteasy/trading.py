@@ -15,6 +15,8 @@ import asyncio
 import pandas as pd
 import numpy as np
 
+from qteasy.database import DataSource
+
 
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
 #  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
@@ -128,14 +130,20 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
     return submitted_qty
 
 
-def parse_trade_signal(account_id, signals, signal_type, shares, prices, own_amounts, own_cash, config):
+def parse_trade_signal(signals,
+                       signal_type,
+                       shares,
+                       prices,
+                       own_amounts,
+                       own_cash,
+                       available_amounts=None,
+                       available_cash=None,
+                       config=None):
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
-    资产代码、头寸类型、交易方向、交易数量等
+    资产代码、头寸类型、交易方向、交易数量等, 不检查账户的可用资金和持仓数量
 
     Parameters
     ----------
-    account_id: int
-        账户ID
     signals: np.ndarray
         交易信号
     signal_type: str, {'PT', 'PS', 'VS'}
@@ -147,7 +155,11 @@ def parse_trade_signal(account_id, signals, signal_type, shares, prices, own_amo
     own_amounts: np.ndarray
         股票持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
     own_cash: float
-        账户可用资金
+        账户可用资金总额
+    available_amounts: np.ndarray
+        股票可用持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
+    available_cash: float
+        账户可用资金总额
     config: dict
         交易信号的配置
 
@@ -160,7 +172,20 @@ def parse_trade_signal(account_id, signals, signal_type, shares, prices, own_amo
         quantities: list of float, 交易信号对应的交易数量
     """
 
-    # 读取signal的值，根据signal_type确定如何解析交易信号
+    # 处理optional参数:
+    # 如果没有提供可用资金和持仓数量，使用当前的资金和持仓数量
+    if available_amounts is None:
+        available_amounts = own_amounts
+    if available_cash is None:
+        available_cash = own_cash
+    # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
+    if config is None:
+        from qteasy import QT_CONFIG
+        config = {
+            'pt_buy_threshold': QT_CONFIG['pt_buy_threshold'],
+            'pt_sell_threshold': QT_CONFIG['pt_sell_threshold'],
+            'allow_sell_short': QT_CONFIG['allow_sell_short'],
+        }
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
@@ -195,16 +220,25 @@ def parse_trade_signal(account_id, signals, signal_type, shares, prices, own_amo
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
 
-    # 检查可用现金是否足够执行交易，如果不足，则将计划买入金额调整为可用的最大值，可用持仓检查可以分别进行
+    # 将计划买进金额和计划卖出数量四舍五入到小数点后3位  # TODO: 可以考虑增加一个qt参数，用于控制小数点后的位数
+    cash_to_spend = np.round(cash_to_spend, 3)
+    amounts_to_sell = np.round(amounts_to_sell, 3)
+
+    # 确认总现金是否足够执行交易，如果不足，则将计划买入金额调整为可用的最大值，可用持仓检查可以分别进行
     total_cash_to_spend = np.sum(cash_to_spend)  # 计划买进的总金额 TODO: 仅对多头持仓有效，空头买入需要另外处理
-    cash_to_spend *= check_account_availability(account_id=account_id, requested_amount=total_cash_to_spend)
+    if total_cash_to_spend > own_cash:
+        # 将计划买入的金额调整为可用的最大值
+        cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
 
     # 将计算出的买入和卖出的数量转换为交易信号
     symbols, positions, directions, quantities = itemize_trade_signals(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,
-        prices=prices
+        prices=prices,
+        available_cash=available_cash,
+        available_amounts=available_amounts,
+        allow_sell_short=config['allow_sell_short']
     )
     return symbols, positions, directions, quantities
 
@@ -371,9 +405,19 @@ def parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
-def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
+def itemize_trade_signals(shares,
+                          cash_to_spend,
+                          amounts_to_sell,
+                          prices,
+                          available_cash,
+                          available_amounts,
+                          allow_sell_short=False):
     """ 逐个计算每一只资产的买入和卖出的数量，将parse_pt/ps/vs_signal函数计算出的交易信号逐项拆分
     成为交易信号的各个元素，以便于后续生成交易信号
+
+    在生成交易信号时，需要考虑可用现金的总量以及可用资产的总量
+    如果可用现金不足买入所有的股票，则将买入金额按照比例分配给各个股票
+    如果可用资产不足计划卖出数量，则降低卖出的数量，同时在允许卖空的情况下，增加对应的空头买入信号
 
     Parameters
     ----------
@@ -385,6 +429,12 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
         各个资产的卖出数量
     prices: np.ndarray
         各个资产的价格
+    available_cash: float
+        可用现金
+    available_amounts: np.ndarray
+        可用资产的数量
+    allow_sell_short: bool, default False
+        是否允许卖空，如果允许，当可用资产不足时，会增加空头买入信号
 
     Returns
     -------
@@ -394,6 +444,11 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
     """
+    # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
+    total_cash_to_spend = np.sum(cash_to_spend)
+    if total_cash_to_spend > available_cash:
+        cash_to_spend = cash_to_spend * available_cash / total_cash_to_spend
+
     # 逐个计算每一只资产的买入和卖出的数量
     symbols = []
     positions = []
@@ -410,7 +465,7 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
             directions.append('buy')
             quantities.append(quantity)
         # 计算空头买入的数量
-        if cash_to_spend[i] < -0.001:
+        if (cash_to_spend[i] < -0.001) and allow_sell_short:
             # 计算买入的数量
             quantity = -cash_to_spend[i] / prices[i]
             symbols.append(sym)
@@ -419,20 +474,51 @@ def itemize_trade_signals(shares, cash_to_spend, amounts_to_sell, prices):
             quantities.append(quantity)
         # 计算多头卖出的数量
         if amounts_to_sell[i] < -0.001:
-            # 计算卖出的数量
-            quantity = -amounts_to_sell[i]
-            symbols.append(sym)
-            positions.append('long')
-            directions.append('sell')
-            quantities.append(quantity)
+            # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
+            if amounts_to_sell[i] < -available_amounts[i]:
+                # 计算卖出的数量
+                quantity = available_amounts[i]
+                symbols.append(sym)
+                positions.append('long')
+                directions.append('sell')
+                quantities.append(quantity)
+                # 如果allow_sell_short，增加反向头寸的买入信号
+                if allow_sell_short:
+                    quantity = - amounts_to_sell[i] - available_amounts[i]
+                    symbols.append(sym)
+                    positions.append('short')
+                    directions.append('buy')
+                    quantities.append(quantity)
+            else:
+                # 计算卖出的数量，如果可用资产足够，则直接卖出
+                quantity = -amounts_to_sell[i]
+                symbols.append(sym)
+                positions.append('long')
+                directions.append('sell')
+                quantities.append(quantity)
         # 计算空头卖出的数量
-        if amounts_to_sell[i] > 0.001:
-            # 计算卖出的数量
-            quantity = amounts_to_sell[i]
-            symbols.append(sym)
-            positions.append('short')
-            directions.append('sell')
-            quantities.append(quantity)
+        if (amounts_to_sell[i] > 0.001) and allow_sell_short:
+            # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
+            if amounts_to_sell[i] > available_amounts[i]:
+                # 计算卖出的数量
+                quantity = - available_amounts[i]
+                symbols.append(sym)
+                positions.append('short')
+                directions.append('sell')
+                quantities.append(quantity)
+                # 增加反向头寸的买入信号
+                quantity = amounts_to_sell[i] + available_amounts[i]
+                symbols.append(sym)
+                positions.append('long')
+                directions.append('buy')
+                quantities.append(quantity)
+            else:
+                # 计算卖出的数量，如果可用资产足够，则直接卖出
+                quantity = amounts_to_sell[i]
+                symbols.append(sym)
+                positions.append('short')
+                directions.append('sell')
+                quantities.append(quantity)
 
     return symbols, positions, directions, quantities
 
@@ -663,7 +749,7 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
     return position.index.tolist()
 
 
-def get_or_create_position(account_id, symbol, position_type, data_source=None):
+def get_or_create_position(account_id: int, symbol: str, position_type: str, data_source: DataSource=None):
     """ 获取账户的持仓, 如果持仓不存在，则创建一条新的持仓记录
 
     Parameters
@@ -674,7 +760,7 @@ def get_or_create_position(account_id, symbol, position_type, data_source=None):
         交易标的的代码
     position_type: str, {'long', 'short'}
         持仓类型, 'long'表示多头持仓, 'short'表示空头持仓
-    data_source: str, optional
+    data_source: DataSource, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
