@@ -24,7 +24,8 @@ from qteasy.trading import new_account, get_account, update_account, update_acco
 from qteasy.trading import update_position, get_account_positions, check_account_availability
 from qteasy.trading import check_position_availability, record_trade_signal, update_trade_signal, read_trade_signal
 from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal, get_position_by_id
-from qteasy.trading import get_position_ids
+from qteasy.trading import get_position_ids, read_trade_signal_detail
+from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -380,6 +381,10 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             check_position_availability(1, 'AAPL', 'long', -100, data_source=self.test_ds)
 
+    def test_get_account_cash_and_position_availabilities(self):
+        """ test function get_account_cash_availabilities and get_account_position_availabilities """
+        pass
+
     # test foundational functions related to signal generation and submission
     def test_record_read_and_update_signal(self):
         """ test record_and_read_signal function """
@@ -533,6 +538,49 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal['qty'], 200)
         self.assertEqual(signal['price'], 10.0)
         self.assertEqual(signal['status'], 'submitted')
+
+        # test read trade signal details
+        signal = read_trade_signal_detail(1, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 1)
+        self.assertEqual(signal['symbol'], 'AAPL')
+        self.assertEqual(signal['position'], 'long')
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 300)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'filled')
+        signal = read_trade_signal_detail(2, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 2)
+        self.assertEqual(signal['symbol'], 'MSFT')
+        self.assertEqual(signal['position'], 'long')
+        self.assertEqual(signal['direction'], 'buy')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 200)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'submitted')
+        signal = read_trade_signal_detail(3, data_source=self.test_ds)
+        self.assertIsInstance(signal, dict)
+        self.assertEqual(signal['pos_id'], 3)
+        self.assertEqual(signal['symbol'], 'GOOG')
+        self.assertEqual(signal['position'], 'long')
+        self.assertEqual(signal['direction'], 'sell')
+        self.assertEqual(signal['order_type'], 'market')
+        self.assertEqual(signal['qty'], 100)
+        self.assertEqual(signal['price'], 10.0)
+        self.assertEqual(signal['status'], 'created')
+        # return None if no signal found
+        signal = read_trade_signal_detail(4, data_source=self.test_ds)
+        self.assertIs(signal, None)
+        # test read trade signal details with bad input
+        with self.assertRaises(TypeError):
+            read_trade_signal_detail('1', data_source=self.test_ds)
+            read_trade_signal_detail(-1, data_source=self.test_ds)
+            read_trade_signal_detail(0, data_source=self.test_ds)
+            read_trade_signal_detail(999, data_source=self.test_ds)
+            read_trade_signal_detail(1.0, data_source=self.test_ds)
+
         # test update bad status
         with self.assertRaises(RuntimeError):
             update_trade_signal(1, status='test', data_source=self.test_ds, raise_if_status_wrong=True)
@@ -838,9 +886,106 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'sell', 'buy'])
         self.assertEqual(parsed_signal_elements[3], [500.0, 250.0, 500.0, 2100.0])
 
+        # create test data for VS signal and parse it
+        vs_signal = np.array([300, 400, 500])
+        parsed_signal_elements = parse_trade_signal(
+            signals=vs_signal,
+            signal_type='vs',
+            shares=shares,
+            prices=prices,
+            own_amounts=own_shares,
+            own_cash=own_cash,
+            available_amounts=available_amounts,
+            available_cash=available_cash,
+            config=test_config,
+        )
+        print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['buy', 'buy', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [300.0, 400.0, 500.0])
+        vs_signal = np.array([-1300, 400, -500])
+        parsed_signal_elements = parse_trade_signal(
+            signals=vs_signal,
+            signal_type='vs',
+            shares=shares,
+            prices=prices,
+            own_amounts=own_shares,
+            own_cash=own_cash,
+            available_amounts=available_amounts,
+            available_cash=available_cash,
+            config=test_config,
+        )
+        print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'short', 'long', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'buy', 'sell'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 800.0, 400.0, 500.0])
+
+        # test allow_sell_short = False
+        test_config = {
+            'pt_buy_threshold': 0.1,
+            'pt_sell_threshold': -0.1,
+            'allow_sell_short': False,
+        }
+        # test pt signal previously used
+        pt_signal = np.array([-0.1, 0.2, 0.3])
+        parsed_signal_elements = parse_trade_signal(
+            signals=pt_signal,
+            signal_type='pt',
+            shares=shares,
+            prices=prices,
+            own_amounts=own_shares,
+            own_cash=own_cash,
+            available_amounts=available_amounts,
+            available_cash=available_cash,
+            config=test_config,
+        )
+        print(f'parsed_signal_elements with signal {pt_signal} not allow short: \n{parsed_signal_elements}')
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 900.0, 1100.0])
+        # test ps signal previously used
+        ps_signal = np.array([-1.5, -1, 0.3])
+        parsed_signal_elements = parse_trade_signal(
+            signals=ps_signal,
+            signal_type='ps',
+            shares=shares,
+            prices=prices,
+            own_amounts=own_shares,
+            own_cash=own_cash,
+            available_amounts=available_amounts,
+            available_cash=available_cash,
+            config=test_config,
+        )
+        print(f'parsed_signal_elements with signal {ps_signal} not allow short: \n{parsed_signal_elements}')
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'sell', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 500.0, 2100.0])
+        # test vs signal previously used
+        vs_signal = np.array([-1300, 400, -500])
+        parsed_signal_elements = parse_trade_signal(
+            signals=vs_signal,
+            signal_type='vs',
+            shares=shares,
+            prices=prices,
+            own_amounts=own_shares,
+            own_cash=own_cash,
+            available_amounts=available_amounts,
+            available_cash=available_cash,
+            config=test_config,
+        )
+        print(f'parsed_signal_elements with vs signal {vs_signal} not allow short: \n{parsed_signal_elements}')
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'sell'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 400.0, 500.0])
+
         # TODO: test parse_trade_signal with different config:
-        #  1. vs type of signals
-        #  2, allow_sell_short = False
+        #  1. vs type of signals done
+        #  2, allow_sell_short = False done
         #  3. no available cash and no available shares
 
     def test_itemize_trade_signals(self):

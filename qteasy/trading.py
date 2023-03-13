@@ -130,6 +130,7 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
     return submitted_qty
 
 
+# Work functions for live trade
 def parse_trade_signal(signals,
                        signal_type,
                        shares,
@@ -243,7 +244,7 @@ def parse_trade_signal(signals,
     return symbols, positions, directions, quantities
 
 
-# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py中直接引用这三个函数的返回值
+# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loopstep中直接引用这三个函数的返回值
 #  从而消除重复的代码
 # TODO: 考虑修改多空买卖信号的表示方式：当前的表示方式为：
 #  1. 多头买入信号：正数cash_to_spend
@@ -862,7 +863,7 @@ def update_position(position_id, data_source=None, **position_data):
 
 
 def get_account_positions(account_id, data_source=None):
-    """ 获取账户的所有持仓
+    """ 根据account_id获取账户的所有持仓
 
     Parameters
     ----------
@@ -890,7 +891,81 @@ def get_account_positions(account_id, data_source=None):
     return positions
 
 
-# 2nd foundational functions for account and position availability check
+# Four 2nd foundational functions for account and position availability check
+def get_account_cash_availabilities(account_id, data_source=None):
+    """ 根据账户id获取账户的可用资金和资金总额
+    返回一个tuple，第一个元素是账户的可用资金，第二个元素是账户的资金总额
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    cash_availabilities: tuple, (float, float)
+        账户的可用资金和资金总额
+    """
+
+    account = get_account(account_id=account_id, data_source=data_source)
+    return account['available_cash'], account['cash_amount']
+
+
+def get_account_position_availabilities(account_id, shares, data_source=None):
+    """ 根据account_id读取账户的持仓，筛选出与shares相同的symbol的持仓，返回两个ndarray，分别为
+    每一个share对应的持仓的数量和可用数量
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    shares: list of str
+        需要输出的持仓的symbol列表
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    tuple of two numpy.ndarray: 每一个share对应的持仓的数量和可用数量
+    """
+
+    # 根据account_id读取账户的全部持仓
+    positions = get_account_positions(account_id=account_id, data_source=data_source)
+
+    if positions.empty:
+        return np.zeros(len(shares)), np.zeros(len(shares))
+
+    own_amounts = []
+    available_amounts = []
+    for share in shares:
+        # 检查symbol为share的持仓是否存在
+        position = positions[(positions['symbol'] == share) & (positions['qty'] > 0)]
+        if position.empty:
+            own_amounts.append(0.0)
+            available_amounts.append(0.0)
+            continue
+        # 如果存在多头持仓，则将多头持仓的数量和可用数量放入列表
+        if position['position'] == 'long':
+            own_amounts.append(position['qty'].values[0])
+            available_amounts.append(position['available_qty'].values[0])
+            continue
+        # 如果存在空头持仓，则将空头持仓的数量和可用数量乘以-1并放入列表
+        if position['position'] == 'short':
+            own_amounts.append(-position['qty'].values[0])
+            available_amounts.append(-position['available_qty'].values[0])
+            continue
+    # 如果列表长度与shares长度不相等，则报错
+    if len(own_amounts) != len(shares):
+        raise RuntimeError(f'own_amounts length ({len(own_amounts)}) is not equal to shares length ({len(shares)})')
+    if len(available_amounts) != len(shares):
+        raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
+                           f'shares length ({len(shares)})')
+    # 将列表转换为ndarray并返回
+    return np.array(own_amounts), np.array(available_amounts)
+
+
 def check_account_availability(account_id, requested_amount, data_source=None):
     """ 检查账户的可用资金是否充足
 
@@ -1211,7 +1286,7 @@ def read_trade_signal_detail(signal_id, data_source=None):
     trade_signal_detail = read_trade_signal(signal_id, data_source=data_source)
     if trade_signal_detail is None:
         return None
-    pos_id = trade_signal_detail['position_id']
+    pos_id = trade_signal_detail['pos_id']
     position = get_position_by_id(pos_id, data_source=data_source)
     if position is None:
         raise RuntimeError(f'Position (position_id = {pos_id}) not found!')
@@ -1239,7 +1314,7 @@ def submit_signal(signal_id, data_source=None):
     在提交交易信号以前，对于买入信号，会检查账户的现金是否足够，如果不足，则会按比例调整交易信号的委托数量
     对于卖出信号，会检查账户的持仓是否足够，如果不足，则会按比例调整交易信号的委托数量
     交易信号提交后，会将交易信号的状态设置为submitted，同时将交易信号保存到数据库中
-
+    - 只有使用submit_signal才能将信号保存到数据库中，同时调整相应的账户和持仓信息
 
     Parameters
     ----------
