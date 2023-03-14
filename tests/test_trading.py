@@ -383,7 +383,81 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_get_account_cash_and_position_availabilities(self):
         """ test function get_account_cash_availabilities and get_account_position_availabilities """
-        pass
+        # clear existing accounts and positions, add test accounts and positions
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        # create new test accounts and new positions
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=100000, data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 1)
+        pos_id = get_or_create_position(1, 'GOOG', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 2)
+        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 3)
+        pos_id = get_or_create_position(2, 'MSFT', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 4)
+        pos_id = get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
+        self.assertEqual(pos_id, 5)
+        pos_id = get_or_create_position(2, 'AMZN', 'short', data_source=self.test_ds)
+        self.assertEqual(pos_id, 6)
+        # set up available cash and positions
+        update_account_balance(1, data_source=self.test_ds, cash_amount_change=0, available_cash_change=-20000)
+        update_account_balance(2, data_source=self.test_ds, cash_amount_change=0, available_cash_change=-50000)
+        update_position(1, data_source=self.test_ds, qty_change=1000, available_qty_change=1000)
+        update_position(2, data_source=self.test_ds, qty_change=1000, available_qty_change=300)
+        update_position(3, data_source=self.test_ds, qty_change=1000, available_qty_change=500)
+        update_position(4, data_source=self.test_ds, qty_change=1000, available_qty_change=700)
+        update_position(5, data_source=self.test_ds, qty_change=1000, available_qty_change=1000)
+        update_position(6, data_source=self.test_ds, qty_change=1000, available_qty_change=600)
+
+        # test get_account_cash_availabilities function
+        res = get_account_cash_availabilities(account_id=1, data_source=self.test_ds)
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0], 100000)
+        self.assertEqual(res[1], 80000)
+        res = get_account_cash_availabilities(account_id=2, data_source=self.test_ds)
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0], 100000)
+        self.assertEqual(res[1], 50000)
+
+        # test get_account_position_availabilities function
+        res = get_account_position_availabilities(account_id=1, shares=['AAPL', 'GOOG'], data_source=self.test_ds)
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        self.assertIsInstance(res[0], np.ndarray)
+        self.assertIsInstance(res[1], np.ndarray)
+        self.assertEqual(res[0].shape, (2,))
+        self.assertEqual(res[1].shape, (2,))
+        print(f'get_account_position_availabilities result: {res}')
+        self.assertTrue(np.allclose(res[0], np.array([1000, -1000])))
+        self.assertTrue(np.allclose(res[1], np.array([1000, -300])))
+        res = get_account_position_availabilities(account_id=2, shares=['AAPL', 'GOOG', 'MSFT', 'AMZN'],
+                                                  data_source=self.test_ds)
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        self.assertIsInstance(res[0], np.ndarray)
+        self.assertIsInstance(res[1], np.ndarray)
+        self.assertEqual(res[0].shape, (4,))
+        self.assertEqual(res[1].shape, (4,))
+        print(f'get_account_position_availabilities result: {res}')
+        self.assertTrue(np.allclose(res[0], np.array([1000, 1000, -1000, -1000])))
+        self.assertTrue(np.allclose(res[1], np.array([500, 1000, -700, -600])))
+        res = get_account_position_availabilities(account_id=2, shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
+                                                    data_source=self.test_ds)
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        self.assertIsInstance(res[0], np.ndarray)
+        self.assertIsInstance(res[1], np.ndarray)
+        self.assertEqual(res[0].shape, (5,))
+        self.assertEqual(res[1].shape, (5,))
+        print(f'get_account_position_availabilities result: {res}')
+        self.assertTrue(np.allclose(res[0], np.array([1000, 0, -1000, -1000, 0])))
+        self.assertTrue(np.allclose(res[1], np.array([500, 0, -700, -600, 0])))
 
     # test foundational functions related to signal generation and submission
     def test_record_read_and_update_signal(self):
@@ -796,7 +870,14 @@ class TestLiveTrade(unittest.TestCase):
         signals = query_trade_signals(1, symbol='GOOG', position='long', direction=123, data_source=self.test_ds)
         self.assertIsNone(signals)
 
-    # test 2nd foundational functions: read_trade_signal_detail / submit_signal / output_trade_signal
+    # test 2nd foundational functions: submit_signal / output_trade_signal
+    def test_submit_signal(self):
+        """ test submit_signal function """
+        pass
+
+    def test_output_signal(self):
+        """ test output_trade_signal function """
+        pass
 
     # test sub functions related to signal generation and submission
     def test_parse_signal(self):

@@ -910,7 +910,7 @@ def get_account_cash_availabilities(account_id, data_source=None):
     """
 
     account = get_account(account_id=account_id, data_source=data_source)
-    return account['available_cash'], account['cash_amount']
+    return account['cash_amount'], account['available_cash']
 
 
 def get_account_position_availabilities(account_id, shares, data_source=None):
@@ -946,15 +946,19 @@ def get_account_position_availabilities(account_id, shares, data_source=None):
             own_amounts.append(0.0)
             available_amounts.append(0.0)
             continue
+        # 如果同时存在多头和空头持仓，则报错
+        if len(position) > 1:
+            raise RuntimeError(f'position for {share} has more than one position!')
+        position = position.iloc[0]
         # 如果存在多头持仓，则将多头持仓的数量和可用数量放入列表
         if position['position'] == 'long':
-            own_amounts.append(position['qty'].values[0])
-            available_amounts.append(position['available_qty'].values[0])
+            own_amounts.append(position['qty'])
+            available_amounts.append(position['available_qty'])
             continue
         # 如果存在空头持仓，则将空头持仓的数量和可用数量乘以-1并放入列表
         if position['position'] == 'short':
-            own_amounts.append(-position['qty'].values[0])
-            available_amounts.append(-position['available_qty'].values[0])
+            own_amounts.append(-position['qty'])
+            available_amounts.append(-position['available_qty'])
             continue
     # 如果列表长度与shares长度不相等，则报错
     if len(own_amounts) != len(shares):
