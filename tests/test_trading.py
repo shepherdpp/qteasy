@@ -24,7 +24,7 @@ from qteasy.trading import new_account, get_account, update_account, update_acco
 from qteasy.trading import update_position, get_account_positions, check_account_availability
 from qteasy.trading import check_position_availability, record_trade_signal, update_trade_signal, read_trade_signal
 from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal, get_position_by_id
-from qteasy.trading import get_position_ids, read_trade_signal_detail
+from qteasy.trading import get_position_ids, read_trade_signal_detail, save_parsed_trade_signals
 from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities
 
 
@@ -117,14 +117,16 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(pos_id, 1)
         pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, 2)
-        position = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertIsInstance(position, dict)
         print(position)
         self.assertEqual(position['account_id'], 1)
         self.assertEqual(position['symbol'], 'AAPL')
         self.assertEqual(position['position'], 'long')
         self.assertEqual(position['qty'], 0)
-        position = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertIsInstance(position, dict)
         self.assertEqual(position['account_id'], 1)
         self.assertEqual(position['symbol'], 'AAPL')
@@ -234,30 +236,36 @@ class TestLiveTrade(unittest.TestCase):
         update_position(1, data_source=self.test_ds, qty_change=100)
         update_position(2, data_source=self.test_ds, qty_change=300)
         # check updated positions
-        position = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 100)
         self.assertEqual(position['available_qty'], 0)
-        position = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 300)
         self.assertEqual(position['available_qty'], 0)
         # update qty and available qty in the same time
         update_position(3, data_source=self.test_ds, qty_change=200, available_qty_change=100)
         update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=300)
         # check updated positions
-        position = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 200)
         self.assertEqual(position['available_qty'], 100)
-        position = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 300)
         self.assertEqual(position['available_qty'], 300)
         # update qty and available qty on previous positions
         update_position(3, data_source=self.test_ds, qty_change=100, available_qty_change=-100)
         update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=100)
         # check updated positions
-        position = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 300)
         self.assertEqual(position['available_qty'], 0)
-        position = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 600)
         self.assertEqual(position['available_qty'], 400)
 
@@ -354,29 +362,29 @@ class TestLiveTrade(unittest.TestCase):
         res = check_position_availability(1, 'AAPL', 'short', 0, data_source=self.test_ds)
         self.assertEqual(res, 1)
         # test check_position_availability function with not existing position
-        with self.assertRaises(IndexError):
+        with self.assertRaises(RuntimeError):
             res = check_position_availability(1, 'MSFT', 'long', 100, data_source=self.test_ds)
 
         # test check_position_availability function with bad parameters
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             check_position_availability('not an id', 'AAPL', 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(RuntimeError):
             check_position_availability(None, 'AAPL', 'long', 100, data_source=self.test_ds)
         with self.assertRaises(RuntimeError):
             check_position_availability(0, 'AAPL', 'long', 100, data_source=self.test_ds)
         with self.assertRaises(RuntimeError):
             check_position_availability(-1, 'AAPL', 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             check_position_availability(1, 1, 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             check_position_availability(1, None, 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             check_position_availability(1, 'AAPL', 1, 100, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             check_position_availability(1, 'AAPL', None, 100, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             check_position_availability(1, 'AAPL', 'long', 'not a number', data_source=self.test_ds)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             check_position_availability(1, 'AAPL', 'long', None, data_source=self.test_ds)
         with self.assertRaises(RuntimeError):
             check_position_availability(1, 'AAPL', 'long', -100, data_source=self.test_ds)
@@ -458,6 +466,15 @@ class TestLiveTrade(unittest.TestCase):
         print(f'get_account_position_availabilities result: {res}')
         self.assertTrue(np.allclose(res[0], np.array([1000, 0, -1000, -1000, 0])))
         self.assertTrue(np.allclose(res[1], np.array([500, 0, -700, -600, 0])))
+        res = get_account_position_availabilities(account_id=2, data_source=self.test_ds)
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        self.assertIsInstance(res[0], np.ndarray)
+        self.assertIsInstance(res[1], np.ndarray)
+        self.assertEqual(res[0].shape, (4,))
+        print(f'get_account_position_availabilities result: {res}')
+        self.assertTrue(np.allclose(res[0], np.array([1000, -1000, 1000, -1000])))
+        self.assertTrue(np.allclose(res[1], np.array([500, -700, 1000, -600])))
 
     # test foundational functions related to signal generation and submission
     def test_record_read_and_update_signal(self):
@@ -870,10 +887,114 @@ class TestLiveTrade(unittest.TestCase):
         signals = query_trade_signals(1, symbol='GOOG', position='long', direction=123, data_source=self.test_ds)
         self.assertIsNone(signals)
 
-    # test 2nd foundational functions: submit_signal / output_trade_signal
+    # test 2nd foundational functions: save_parsed_signals / submit_signal / output_trade_signal
+    def test_save_parsed_signals(self):
+        """ test save_parsed_signals function """
+        # remove all data in test datasource
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        if self.test_ds.table_data_exists('sys_op_trade_signals'):
+            self.test_ds.drop_table_data('sys_op_trade_signals')
+        # create test accounts, positions should be created automatically with signals
+        new_account('test_user1', 100000, self.test_ds)
+        new_account('test_user2', 150000, self.test_ds)
+        # create test signals with parsed signals, which include list of symbols, positions, directions, qty, and prices
+        # parsed signals has 5 symbols, with only long position, and buy direction
+        parsed_signals = (
+            ['GOOG', 'FB', 'AAPL', 'AMZN', 'MSFT'],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'buy', 'buy', 'buy', 'buy'],
+            [100, 200, 300, 400, 500],
+            [10.0, 20.0, 30.0, 40.0, 50.0]
+        )
+        # save parsed signals
+        signal_ids = save_parsed_trade_signals(
+                account_id=1,
+                symbols=parsed_signals[0],
+                positions=parsed_signals[1],
+                directions=parsed_signals[2],
+                quantities=parsed_signals[3],
+                prices=parsed_signals[4],
+                data_source=self.test_ds
+        )
+        # query signals from database
+        self.assertEqual(len(signal_ids), 5)
+        signal_detail = read_trade_signal_detail(signal_ids[0], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 1)
+        self.assertEqual(signal_detail['symbol'], 'GOOG')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 100)
+        self.assertEqual(signal_detail['price'], 10.0)
+        self.assertEqual(signal_detail['submitted_time'], None)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[1], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 2)
+        self.assertEqual(signal_detail['symbol'], 'FB')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 200)
+        self.assertEqual(signal_detail['price'], 20.0)
+        self.assertEqual(signal_detail['submitted_time'], None)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[2], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 3)
+        self.assertEqual(signal_detail['symbol'], 'AAPL')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 300)
+        self.assertEqual(signal_detail['price'], 30.0)
+        self.assertEqual(signal_detail['submitted_time'], None)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[3], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 4)
+        self.assertEqual(signal_detail['symbol'], 'AMZN')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 400)
+        self.assertEqual(signal_detail['price'], 40.0)
+        self.assertEqual(signal_detail['submitted_time'], None)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[4], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 5)
+        self.assertEqual(signal_detail['symbol'], 'MSFT')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 500)
+        self.assertEqual(signal_detail['price'], 50.0)
+        self.assertEqual(signal_detail['submitted_time'], None)
+        self.assertEqual(signal_detail['status'], 'created')
+        # create test positions for account 2, and add buy and sell signals for account 2
+        # create test positions
+
+
     def test_submit_signal(self):
         """ test submit_signal function """
-        pass
+        # remove all data in test datasource
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        if self.test_ds.table_data_exists('sys_op_trade_signals'):
+            self.test_ds.drop_table_data('sys_op_trade_signals')
+        # create test data, including two test accounts, 10 test positions, 5 for each account, and 10 test signals
+        # create test accounts
+        new_account('test_user1', 100000, self.test_ds)
+        new_account('test_user2', 150000, self.test_ds)
+        # create test positions
+        get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'AMZN', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'FB', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'AMZN', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'FB', 'long', data_source=self.test_ds)
+
 
     def test_output_signal(self):
         """ test output_trade_signal function """

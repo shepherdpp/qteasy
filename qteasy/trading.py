@@ -16,6 +16,7 @@ import pandas as pd
 import numpy as np
 
 from qteasy.database import DataSource
+from qteasy.qt_operator import Operator
 
 
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
@@ -100,18 +101,13 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
     )
     submitted_qty = 0
     for sym, pos, d, qty in zip(symbols, positions, directions, quantities):
-        pos_id = get_or_create_position(
-            account_id=account_id,
-            symbol=sym,
-            position_type=pos,
-        )
-        # 如果是卖出信号，检查是否有足够的可用持仓，如果可用持仓不足，降低交易数量
-        if d == 'sell':
-            qty = check_position_availability(account_id=account_id, symbol=sym, qty=qty)
+        pos_id = get_position_ids(account_id=account_id,
+                                  symbol=sym,
+                                  position_type=pos,
+                                  data_source=data_source)
 
         # 生成交易信号dict
         trade_signal = {
-            'account_id': account_id,
             'pos_id': pos_id,
             'direction': d,
             'order_type': order_type,
@@ -744,9 +740,9 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
         )
     except Exception as e:
         print(f'Error occurred: {e}')
-        return None
+        return []
     if position is None:
-        return
+        return []
     return position.index.tolist()
 
 
@@ -766,8 +762,7 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
 
     Returns
     -------
-    dict: 如果symbol和position匹配的持仓记录已存在，则直接返回该记录的dict形式
-    int: 如果匹配的持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
+    int: 返回持仓记录的id，如果匹配的持仓记录不存在，则创建一条新的空持仓记录，并返回新持仓记录的id
     """
 
     from qteasy import DataSource, QT_DATA_SOURCE
@@ -804,10 +799,10 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
                 qty=0,
                 available_qty=0
         )
-    # position已存，此时position中只能有一条记录，否则说明记录重复，报错
+    # position已存在，此时position中只能有一条记录，否则说明记录重复，报错
     if len(position) > 1:
         raise RuntimeError(f'position record is duplicated, got {len(position)} records: \n{position}')
-    return position.iloc[0].to_dict()
+    return position.index[0]
 
 
 def update_position(position_id, data_source=None, **position_data):
@@ -913,7 +908,7 @@ def get_account_cash_availabilities(account_id, data_source=None):
     return account['cash_amount'], account['available_cash']
 
 
-def get_account_position_availabilities(account_id, shares, data_source=None):
+def get_account_position_availabilities(account_id, shares=None, data_source=None):
     """ 根据account_id读取账户的持仓，筛选出与shares相同的symbol的持仓，返回两个ndarray，分别为
     每一个share对应的持仓的数量和可用数量
 
@@ -921,8 +916,8 @@ def get_account_position_availabilities(account_id, shares, data_source=None):
     ----------
     account_id: int
         账户的id
-    shares: list of str
-        需要输出的持仓的symbol列表
+    shares: list of str, optional
+        需要输出的持仓的symbol列表, 如果不给出shares，则返回所有持仓的数量和可用数量
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
 
@@ -936,6 +931,9 @@ def get_account_position_availabilities(account_id, shares, data_source=None):
 
     if positions.empty:
         return np.zeros(len(shares)), np.zeros(len(shares))
+    # 如果没有给出shares，则读取账户中所有持仓的symbol
+    if shares is None:
+        shares = positions['symbol'].unique()
 
     own_amounts = []
     available_amounts = []
@@ -967,7 +965,7 @@ def get_account_position_availabilities(account_id, shares, data_source=None):
         raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
     # 将列表转换为ndarray并返回
-    return np.array(own_amounts), np.array(available_amounts)
+    return np.array(own_amounts).astype('float'), np.array(available_amounts).astype('float')
 
 
 def check_account_availability(account_id, requested_amount, data_source=None):
@@ -1039,6 +1037,10 @@ def check_position_availability(account_id, symbol, position, planned_qty, data_
     RuntimeError: 如果持仓类型不匹配，则报错
     """
 
+    if planned_qty is None:
+        raise RuntimeError('planned_qty cannot be None!')
+    if not isinstance(planned_qty, (float, np.float64, int, np.int64)):
+        raise TypeError(f'planned_qty must be float or np.float64, got {type(planned_qty)} instead')
     if planned_qty == 0:
         return 1.0
     if planned_qty < 0:
@@ -1049,9 +1051,15 @@ def check_position_availability(account_id, symbol, position, planned_qty, data_
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    position_read = get_or_create_position(account_id, symbol, position, data_source=data_source)
-    if position_read is None:
+    if symbol is None:
+        raise RuntimeError('symbol cannot be None!')
+
+    position_ids = get_position_ids(account_id, symbol=symbol, position_type=position, data_source=data_source)
+    if len(position_ids) == 0:
         raise RuntimeError('Position not found!')
+    if len(position_ids) > 1:
+        raise RuntimeError('More than one position found!')
+    position_read = get_position_by_id(position_ids[0], data_source=data_source)
     if position_read['position'] != position:  # 根据持仓类型新建或读取数据，类型应该匹配
         raise RuntimeError(f'Position type not match: "{position_read["position"]}" != "{position}"')
     available_qty = position_read['available_qty']
@@ -1300,6 +1308,64 @@ def read_trade_signal_detail(signal_id, data_source=None):
     return trade_signal_detail
 
 
+def save_parsed_trade_signals(account_id, symbols, positions, directions, quantities, prices, data_source=None):
+    """ 根据parse_trade_signal的结果，将交易信号各个要素组装成完整的交易信号dict，并将交易信号保存到数据库
+
+    Parameters
+    ----------
+    account_id: int
+        账户ID
+    symbols: list of str
+        交易信号对应的股票代码
+    positions: list of str
+        交易信号对应的持仓类型
+    directions: list of str
+        交易信号对应的交易方向
+    quantities: list of float
+        交易信号对应的交易数量
+    prices: list of float
+        交易信号对应的股票价格
+    data_source: str, optional
+        交易信号对应的数据源, 默认为None, 使用默认数据源
+
+    Returns
+    -------
+    list of int
+        交易信号的id
+    """
+
+    if len(symbols) == 0:
+        return []
+
+    if len(symbols) != len(positions) or \
+            len(symbols) != len(directions) or \
+            len(symbols) != len(quantities) or \
+            len(symbols) != len(prices):
+        raise ValueError('Length of symbols, positions, directions, quantities and prices must be the same')
+
+    signal_ids = []
+    # 逐个处理所有的交易信号要素
+    for sym, pos, dirc, qty, price in zip(symbols, positions, directions, quantities, prices):
+        # 获取pos_id, 如果pos_id不存在，则新建一个posiiton
+        pos_id = get_or_create_position(account_id, sym, pos, data_source=data_source)
+        # 生成交易信号dict
+        trade_signal = {
+            'pos_id': pos_id,
+            'direction': dirc,
+            'order_type': 'market',  # TODO: 交易信号的order_type应该是可配置的，增加其他配置选项
+            'qty': qty,
+            'price': price,
+            'submitted_time': None,
+            'status': 'created'
+        }
+        sig_id = record_trade_signal(trade_signal, data_source=data_source)
+        # 提交交易信号
+        submit_signal(sig_id, data_source=data_source)
+        signal_ids.append(sig_id)
+
+    return signal_ids
+
+
 def output_trade_signal():
     """ 将交易信号输出到终端或TUI
 
@@ -1312,7 +1378,7 @@ def output_trade_signal():
 
 
 def submit_signal(signal_id, data_source=None):
-    """ 将交易信号提交给交易平台或用户以等待交易结果
+    """ 将交易信号提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
 
     只有刚刚创建的交易信号（status == 'created'）才能提交，否则不需要再次提交
     在提交交易信号以前，对于买入信号，会检查账户的现金是否足够，如果不足，则会按比例调整交易信号的委托数量
@@ -1330,6 +1396,11 @@ def submit_signal(signal_id, data_source=None):
     Returns
     -------
     int, 交易信号的id
+
+    Raises
+    ------
+    RuntimeError
+        如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
     """
 
     # 读取交易信号
@@ -1339,9 +1410,13 @@ def submit_signal(signal_id, data_source=None):
     if trade_signal['status'] != 'created':
         return None
 
+    # 实际上在parse_trade_signal的时候就已经检查过总买入数量与可用现金之间的关系了，这里再检查一次主要是为了防止
+    #  交易信号被修改过，或者可用现金数量被修改过，因此需要再次检查
     # 如果交易方向为buy，则需要检查账户的现金是否足够 TODO: position为short时做法不同，需要进一步调整
+    position_id = trade_signal['pos_id']
+    position = get_position_by_id(position_id, data_source=data_source)
     if trade_signal['direction'] == 'buy':
-        account_id = trade_signal['account_id']
+        account_id = position['account_id']
         account = get_account(account_id, data_source=data_source)
         # 如果账户的现金不足，则按比例调整交易信号的委托数量
         if account['available_cash'] < trade_signal['qty'] * trade_signal['price']:
@@ -1351,12 +1426,10 @@ def submit_signal(signal_id, data_source=None):
             pass
         # 调整账户的可用现金余额, 并更新到数据表中
         available_cash_change = -trade_signal['qty'] * trade_signal['price']
-        update_account(account_id, data_source=data_source, available_cash_change=available_cash_change)
+        update_account_balance(account_id, data_source=data_source, available_cash_change=available_cash_change)
 
     # 如果交易方向为sell，则需要检查账户的持仓是否足够 TODO: position为short时做法不一样，需要考虑
     elif trade_signal['direction'] == 'sell':
-        position_id = trade_signal['pos_id']
-        position = get_position_by_id(position_id, data_source=data_source)
         # 如果账户的持仓不足，则最多只能卖出账户的持仓数量
         if position['available_qty'] < trade_signal['qty']:
             trade_signal['qty'] = position['available_qty']
