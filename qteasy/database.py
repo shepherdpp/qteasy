@@ -4254,7 +4254,8 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     all_columns = df.columns
     if not all(item in all_columns for item in primary_key):
-        raise KeyError(f'primary key contains invalid value')
+        raise KeyError(f'primary key contains invalid value: '
+                       f'{[item for item in primary_key if item not in all_columns]}')
 
     # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     set_datetime_format_frame(df, primary_key, pk_dtypes)

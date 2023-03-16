@@ -18,6 +18,8 @@ import numpy as np
 from qteasy.database import DataSource
 from qteasy.qt_operator import Operator
 
+# TODO: add TIMEZONE to qt config arguments
+TIMEZONE = 'Asia/Shanghai'
 
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
 #  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
@@ -834,12 +836,12 @@ def update_position(position_id, data_source=None, **position_data):
         raise RuntimeError(f'position_id {position_id} not found!')
 
     qty_change = position_data.get('qty_change', 0.0)
-    if not isinstance(qty_change, (int, float)):
+    if not isinstance(qty_change, (int, float, np.int64, np.float64)):
         raise TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
     position['qty'] += qty_change
 
     available_qty_change = position_data.get('available_qty_change', 0.0)
-    if not isinstance(available_qty_change, (int, float)):
+    if not isinstance(available_qty_change, (int, float, np.int64, np.float64)):
         raise TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
     position['available_qty'] += available_qty_change
 
@@ -1146,7 +1148,7 @@ def update_trade_signal(signal_id, data_source=None, status=None, raise_if_statu
 
     trade_signal的所有字段中，可以更新字段只有status。
     status的更新遵循下列规律：
-    1. 如果status为 'created'，则可以更新为 'submitted';
+    1. 如果status为 'created'，则可以更新为 'submitted', 同时设置'submitted_time';
     2. 如果status为 'submitted'，则可以更新为 'canceled', 'partial-filled' 或 'filled';
     3. 如果status为 'partial-filled'，则可以更新为 'canceled' 或 'filled';
     4. 如果status为 'canceled' 或 'filled'，则不可以再更新.
@@ -1193,13 +1195,27 @@ def update_trade_signal(signal_id, data_source=None, status=None, raise_if_statu
 
     # 如果trade_signal的状态为 'created'，则可以更新为 'submitted'
     if trade_signal['status'] == 'created' and status == 'submitted':
-        return data_source.update_sys_table_data('sys_op_trade_signals', signal_id, status=status)
+        submit_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+        return data_source.update_sys_table_data(
+                'sys_op_trade_signals',
+                record_id=signal_id,
+                submitted_time=submit_time,
+                status=status,
+        )
     # 如果trade_signal的状态为 'submitted'，则可以更新为 'canceled', 'partial-filled' 或 'filled'
     if trade_signal['status'] == 'submitted' and status in ['canceled', 'partial-filled', 'filled']:
-        return data_source.update_sys_table_data('sys_op_trade_signals', signal_id, status=status)
+        return data_source.update_sys_table_data(
+                'sys_op_trade_signals',
+                signal_id,
+                status=status
+        )
     # 如果trade_signal的状态为 'partial-filled'，则可以更新为 'canceled' 或 'filled'
     if trade_signal['status'] == 'partial-filled' and status in ['canceled', 'filled']:
-        return data_source.update_sys_table_data('sys_op_trade_signals', signal_id, status=status)
+        return data_source.update_sys_table_data(
+                'sys_op_trade_signals',
+                signal_id,
+                status=status
+        )
 
     if raise_if_status_wrong:
         raise RuntimeError(f'Wrong status update: {trade_signal["status"]} -> {status}')
@@ -1359,8 +1375,6 @@ def save_parsed_trade_signals(account_id, symbols, positions, directions, quanti
             'status': 'created'
         }
         sig_id = record_trade_signal(trade_signal, data_source=data_source)
-        # 提交交易信号
-        # submit_signal(sig_id, data_source=data_source)
         signal_ids.append(sig_id)
 
     return signal_ids
@@ -1437,11 +1451,14 @@ def submit_signal(signal_id, data_source=None):
             pass
         # 调整账户的可用持仓余额，并更新到数据表中
         available_qty_change = -trade_signal['qty']
-        update_position(position_id, available_qty_change=available_qty_change)
+        update_position(position_id, available_qty_change=available_qty_change, data_source=data_source)
 
     # 将signal的status改为"submitted"，并将trade_signal写入数据库
-    trade_signal['status'] = 'submitted'
-    signal_id = update_trade_signal(signal_id=signal_id, data_source=data_source, status='submitted')
+    signal_id = update_trade_signal(
+            signal_id=signal_id,
+            data_source=data_source,
+            status='submitted'
+    )
     # 检查交易信号
 
     return signal_id

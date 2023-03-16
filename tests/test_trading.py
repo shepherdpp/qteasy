@@ -25,7 +25,7 @@ from qteasy.trading import update_position, get_account_positions, check_account
 from qteasy.trading import check_position_availability, record_trade_signal, update_trade_signal, read_trade_signal
 from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal, get_position_by_id
 from qteasy.trading import get_position_ids, read_trade_signal_detail, save_parsed_trade_signals
-from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities
+from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities, submit_signal
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -1040,8 +1040,6 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal_detail['status'], 'created')
         # check position detail
 
-
-
     def test_submit_signal(self):
         """ test submit_signal function """
         # remove all data in test datasource
@@ -1051,7 +1049,7 @@ class TestLiveTrade(unittest.TestCase):
             self.test_ds.drop_table_data('sys_op_positions')
         if self.test_ds.table_data_exists('sys_op_trade_signals'):
             self.test_ds.drop_table_data('sys_op_trade_signals')
-        # create test data, including two test accounts, 10 test positions, 5 for each account, and 10 test signals
+        # create test data, including two test accounts, 10 test positions, 5 for each account
         # create test accounts
         new_account('test_user1', 100000, self.test_ds)
         new_account('test_user2', 150000, self.test_ds)
@@ -1066,6 +1064,160 @@ class TestLiveTrade(unittest.TestCase):
         get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'AMZN', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'FB', 'long', data_source=self.test_ds)
+        # set up position quantities and available amounts
+        update_position(1, data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        update_position(2, data_source=self.test_ds, qty_change=200, available_qty_change=200)
+        update_position(3, data_source=self.test_ds, qty_change=300, available_qty_change=300)
+        update_position(4, data_source=self.test_ds, qty_change=400, available_qty_change=400)
+        update_position(5, data_source=self.test_ds, qty_change=500, available_qty_change=500)
+        update_position(6, data_source=self.test_ds, qty_change=600, available_qty_change=600)
+        update_position(7, data_source=self.test_ds, qty_change=700, available_qty_change=700)
+        update_position(8, data_source=self.test_ds, qty_change=800, available_qty_change=800)
+        update_position(9, data_source=self.test_ds, qty_change=900, available_qty_change=900)
+        update_position(10, data_source=self.test_ds, qty_change=1000, available_qty_change=1000)
+        # print out position data of both accounts
+        print(f'position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}')
+        print(f'position data of account_id == 2: \n'
+              f'{get_account_positions(2, data_source=self.test_ds)}')
+
+        # create test signals, 10 signals in total, quantity does not exceed available amount
+        parsed_signals_batch_1 = (
+            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'sell', 'sell', 'buy', 'buy'],
+            [100, 200, 300, 400, 500],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        # save first batch of signals
+        signal_ids = save_parsed_trade_signals(
+                account_id=1,
+                symbols=parsed_signals_batch_1[0],
+                positions=parsed_signals_batch_1[1],
+                directions=parsed_signals_batch_1[2],
+                quantities=parsed_signals_batch_1[3],
+                prices=parsed_signals_batch_1[4],
+                data_source=self.test_ds,
+        )
+        print('signal ids of first batch: {}'.format(signal_ids))
+        print(f'before submission, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        # submit first batch of signals one by one
+        submit_signal(1, data_source=self.test_ds)
+        print(f'after submitting signal 1, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        position = get_account_positions(1, data_source=self.test_ds)
+        self.assertEqual(position.iloc[0]['qty'], 100)
+        self.assertEqual(position.iloc[1]['qty'], 200)
+        self.assertEqual(position.iloc[2]['qty'], 300)
+        self.assertEqual(position.iloc[3]['qty'], 400)
+        self.assertEqual(position.iloc[4]['qty'], 500)
+        self.assertEqual(position.iloc[0]['available_qty'], 100)
+        self.assertEqual(position.iloc[1]['available_qty'], 200)
+        self.assertEqual(position.iloc[2]['available_qty'], 300)
+        self.assertEqual(position.iloc[3]['available_qty'], 400)
+        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        submit_signal(2, data_source=self.test_ds)
+        print(f'after submitting signal 2, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        position = get_account_positions(1, data_source=self.test_ds)
+        self.assertEqual(position.iloc[0]['qty'], 100)
+        self.assertEqual(position.iloc[1]['qty'], 200)
+        self.assertEqual(position.iloc[2]['qty'], 300)
+        self.assertEqual(position.iloc[3]['qty'], 400)
+        self.assertEqual(position.iloc[4]['qty'], 500)
+        self.assertEqual(position.iloc[0]['available_qty'], 100)
+        self.assertEqual(position.iloc[1]['available_qty'], 200)
+        self.assertEqual(position.iloc[2]['available_qty'], 300)
+        self.assertEqual(position.iloc[3]['available_qty'], 400)
+        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        submit_signal(3, data_source=self.test_ds)
+        print(f'after submitting signal 3, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        position = get_account_positions(1, data_source=self.test_ds)
+        self.assertEqual(position.iloc[0]['qty'], 100)
+        self.assertEqual(position.iloc[1]['qty'], 200)
+        self.assertEqual(position.iloc[2]['qty'], 300)
+        self.assertEqual(position.iloc[3]['qty'], 400)
+        self.assertEqual(position.iloc[4]['qty'], 500)
+        self.assertEqual(position.iloc[0]['available_qty'], 100)
+        self.assertEqual(position.iloc[1]['available_qty'], 200)
+        self.assertEqual(position.iloc[2]['available_qty'], 300)
+        self.assertEqual(position.iloc[3]['available_qty'], 400)
+        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        submit_signal(4, data_source=self.test_ds)
+        print(f'after submitting signal 4, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        position = get_account_positions(1, data_source=self.test_ds)
+        self.assertEqual(position.iloc[0]['qty'], 100)
+        self.assertEqual(position.iloc[1]['qty'], 200)
+        self.assertEqual(position.iloc[2]['qty'], 300)
+        self.assertEqual(position.iloc[3]['qty'], 400)
+        self.assertEqual(position.iloc[4]['qty'], 500)
+        self.assertEqual(position.iloc[0]['available_qty'], 100)
+        self.assertEqual(position.iloc[1]['available_qty'], 200)
+        self.assertEqual(position.iloc[2]['available_qty'], 300)
+        self.assertEqual(position.iloc[3]['available_qty'], 400)
+        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        submit_signal(5, data_source=self.test_ds)
+        print(f'after submitting signal 5, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        position = get_account_positions(1, data_source=self.test_ds)
+        self.assertEqual(position.iloc[0]['qty'], 100)
+        self.assertEqual(position.iloc[1]['qty'], 200)
+        self.assertEqual(position.iloc[2]['qty'], 300)
+        self.assertEqual(position.iloc[3]['qty'], 400)
+        self.assertEqual(position.iloc[4]['qty'], 500)
+        self.assertEqual(position.iloc[0]['available_qty'], 100)
+        self.assertEqual(position.iloc[1]['available_qty'], 200)
+        self.assertEqual(position.iloc[2]['available_qty'], 300)
+        self.assertEqual(position.iloc[3]['available_qty'], 400)
+        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        # check status of all signals
+        signal_detail = read_trade_signal_detail(1, data_source=self.test_ds)
+        print(f'signal_detail of signal 1: {signal_detail}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        self.assertEqual(signal_detail['status'], 'submitted')
+        self.assertIsInstance(signal_detail['submitted_time'], str)
+
+        # create second batch of signals, quantity exceeds available amount
+        parsed_signals_batch_2 = (
+            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['sell', 'sell', 'sell', 'buy', 'buy'],
+            [600, 700, 800, 900, 1000],
+            [10.0, 20.0, 30.0, 40.0, 50.0],
+        )
+        # save second batch of signals
+        signal_ids = save_parsed_trade_signals(
+                account_id=1,
+                symbols=parsed_signals_batch_2[0],
+                positions=parsed_signals_batch_2[1],
+                directions=parsed_signals_batch_2[2],
+                quantities=parsed_signals_batch_2[3],
+                prices=parsed_signals_batch_2[4],
+                data_source=self.test_ds,
+        )
+        print('signal ids of second batch: {}'.format(signal_ids))
+        print(f'before submission, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}')
+        # submit second batch of signals one by one
+        submit_signal(6, data_source=self.test_ds)
+
+        raise NotImplementedError
 
     def test_output_signal(self):
         """ test output_trade_signal function """
