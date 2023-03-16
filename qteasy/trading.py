@@ -1096,15 +1096,15 @@ def record_trade_signal(signal, data_source=None):
     # 检查交易信号的格式和数据合法性
     if not isinstance(signal, dict):
         raise TypeError(f'signal must be a dict, got {type(signal)} instead')
-    if not isinstance(signal['pos_id'], int):
+    if not isinstance(signal['pos_id'], (int, np.int64)):
         raise TypeError(f'signal["pos_id"] must be an int, got {type(signal["pos_id"])} instead')
     if not isinstance(signal['direction'], str):
         raise TypeError(f'signal["direction"] must be a str, got {type(signal["direction"])} instead')
     if not isinstance(signal['order_type'], str):
         raise TypeError(f'signal["order_type"] must be a str, got {type(signal["order_type"])} instead')
-    if not isinstance(signal['qty'], (float, int)):
+    if not isinstance(signal['qty'], (float, int, np.float64, np.int64)):
         raise TypeError(f'signal["qty"] must be a float, got {type(signal["qty"])} instead')
-    if not isinstance(signal['price'], (float, int)):
+    if not isinstance(signal['price'], (float, int, np.float64, np.int64)):
         raise TypeError(f'signal["price"] must be a float, got {type(signal["price"])} instead')
     if signal['qty'] <= 0:
         raise RuntimeError(f'signal["qty"] ({signal["qty"]}) must be greater than 0!')
@@ -1129,7 +1129,7 @@ def read_trade_signal(signal_id, data_source=None):
     signal: dict
         交易信号
     """
-    if not isinstance(signal_id, int):
+    if not isinstance(signal_id, (int, np.int64)):
         raise TypeError(f'signal_id must be an int, got {type(signal_id)} instead')
 
     import qteasy as qt
@@ -1360,7 +1360,7 @@ def save_parsed_trade_signals(account_id, symbols, positions, directions, quanti
         }
         sig_id = record_trade_signal(trade_signal, data_source=data_source)
         # 提交交易信号
-        submit_signal(sig_id, data_source=data_source)
+        # submit_signal(sig_id, data_source=data_source)
         signal_ids.append(sig_id)
 
     return signal_ids

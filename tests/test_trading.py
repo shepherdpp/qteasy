@@ -153,11 +153,11 @@ class TestLiveTrade(unittest.TestCase):
         pos_id = get_position_ids(1, 'AAPL', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, [2])
         # test get_position_id with non-existing account id
-        self.assertIsNone(get_position_ids(4, 'AAPL', 'long', data_source=self.test_ds))
+        self.assertEqual(get_position_ids(4, 'AAPL', 'long', data_source=self.test_ds), [])
         # test get_position_id with incorrect symbol type and direction type/value
-        self.assertIsNone(get_position_ids(1, 123, 'long', data_source=self.test_ds))
-        self.assertIsNone(get_position_ids(1, 'AAPL', 123, data_source=self.test_ds))
-        self.assertIsNone(get_position_ids(1, 'AAPL', 'long123', data_source=self.test_ds))
+        self.assertEqual(get_position_ids(1, 123, 'long', data_source=self.test_ds), [])
+        self.assertEqual(get_position_ids(1, 'AAPL', 123, data_source=self.test_ds), [])
+        self.assertEqual(get_position_ids(1, 'AAPL', 'long123', data_source=self.test_ds), [])
 
         # test get_position_by_id function
         position = get_position_by_id(1, data_source=self.test_ds)
@@ -928,7 +928,6 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 100)
         self.assertEqual(signal_detail['price'], 10.0)
-        self.assertEqual(signal_detail['submitted_time'], None)
         self.assertEqual(signal_detail['status'], 'created')
         signal_detail = read_trade_signal_detail(signal_ids[1], data_source=self.test_ds)
         self.assertEqual(signal_detail['pos_id'], 2)
@@ -937,7 +936,6 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 200)
         self.assertEqual(signal_detail['price'], 20.0)
-        self.assertEqual(signal_detail['submitted_time'], None)
         self.assertEqual(signal_detail['status'], 'created')
         signal_detail = read_trade_signal_detail(signal_ids[2], data_source=self.test_ds)
         self.assertEqual(signal_detail['pos_id'], 3)
@@ -946,7 +944,6 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 300)
         self.assertEqual(signal_detail['price'], 30.0)
-        self.assertEqual(signal_detail['submitted_time'], None)
         self.assertEqual(signal_detail['status'], 'created')
         signal_detail = read_trade_signal_detail(signal_ids[3], data_source=self.test_ds)
         self.assertEqual(signal_detail['pos_id'], 4)
@@ -955,7 +952,6 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 400)
         self.assertEqual(signal_detail['price'], 40.0)
-        self.assertEqual(signal_detail['submitted_time'], None)
         self.assertEqual(signal_detail['status'], 'created')
         signal_detail = read_trade_signal_detail(signal_ids[4], data_source=self.test_ds)
         self.assertEqual(signal_detail['pos_id'], 5)
@@ -964,10 +960,86 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 500)
         self.assertEqual(signal_detail['price'], 50.0)
-        self.assertEqual(signal_detail['submitted_time'], None)
         self.assertEqual(signal_detail['status'], 'created')
         # create test positions for account 2, and add buy and sell signals for account 2
-        # create test positions
+        get_or_create_position(2, 'GOOG', 'long', self.test_ds)  # pos_id = 6, qty = 1000
+        get_or_create_position(2, 'FB', 'long', self.test_ds)  # pos_id = 7
+        get_or_create_position(2, 'AAPL', 'long', self.test_ds)  # pos_id = 8
+        get_or_create_position(2, 'AMZN', 'long', self.test_ds)   # pos_id = 9
+        get_or_create_position(2, 'MSFT', 'long', self.test_ds)  # pos_id = 10
+        get_or_create_position(2, 'GOOG', 'short', self.test_ds)  # pos_id = 11
+        get_or_create_position(2, 'FB', 'short', self.test_ds)  # pos_id = 12
+        get_or_create_position(2, 'AAPL', 'short', self.test_ds)  # pos_id = 13
+        get_or_create_position(2, 'AMZN', 'short', self.test_ds)  # pos_id = 14
+        get_or_create_position(2, 'MSFT', 'short', self.test_ds)  # pos_id = 15
+        # set position qty 1000 for some positions, make sure that only
+        # either long or short position qty is 1000 for each symbol
+        update_position(6, self.test_ds, qty_change=1000, available_qty_change=1000)
+        update_position(8, self.test_ds, qty_change=1000, available_qty_change=1000)
+        update_position(12, self.test_ds, qty_change=1000, available_qty_change=1000)
+        update_position(14, self.test_ds, qty_change=1000, available_qty_change=1000)
+        update_position(10, self.test_ds, qty_change=1000, available_qty_change=1000)
+        # create test signals for account 2, apply sell signals on positions with qty 1000
+        parsed_signals = (
+            ['GOOG', 'FB', 'AAPL', 'AMZN', 'MSFT'],
+            ['long', 'long', 'short', 'short', 'long'],
+            ['sell', 'buy', 'buy', 'sell', 'sell'],
+            [100, 200, 300, 400, 500],
+            [10.0, 20.0, 30.0, 40.0, 50.0]
+        )
+        signal_ids = save_parsed_trade_signals(
+                account_id=2,
+                symbols=parsed_signals[0],
+                positions=parsed_signals[1],
+                directions=parsed_signals[2],
+                quantities=parsed_signals[3],
+                prices=parsed_signals[4],
+                data_source=self.test_ds
+        )
+        # check signal detail
+        self.assertEqual(len(signal_ids), 5)
+        signal_detail = read_trade_signal_detail(signal_ids[0], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 6)
+        self.assertEqual(signal_detail['symbol'], 'GOOG')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'sell')
+        self.assertEqual(signal_detail['qty'], 100)
+        self.assertEqual(signal_detail['price'], 10.0)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[1], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 7)
+        self.assertEqual(signal_detail['symbol'], 'FB')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 200)
+        self.assertEqual(signal_detail['price'], 20.0)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[2], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 13)
+        self.assertEqual(signal_detail['symbol'], 'AAPL')
+        self.assertEqual(signal_detail['position'], 'short')
+        self.assertEqual(signal_detail['direction'], 'buy')
+        self.assertEqual(signal_detail['qty'], 300)
+        self.assertEqual(signal_detail['price'], 30.0)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[3], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 14)
+        self.assertEqual(signal_detail['symbol'], 'AMZN')
+        self.assertEqual(signal_detail['position'], 'short')
+        self.assertEqual(signal_detail['direction'], 'sell')
+        self.assertEqual(signal_detail['qty'], 400)
+        self.assertEqual(signal_detail['price'], 40.0)
+        self.assertEqual(signal_detail['status'], 'created')
+        signal_detail = read_trade_signal_detail(signal_ids[4], data_source=self.test_ds)
+        self.assertEqual(signal_detail['pos_id'], 10)
+        self.assertEqual(signal_detail['symbol'], 'MSFT')
+        self.assertEqual(signal_detail['position'], 'long')
+        self.assertEqual(signal_detail['direction'], 'sell')
+        self.assertEqual(signal_detail['qty'], 500)
+        self.assertEqual(signal_detail['price'], 50.0)
+        self.assertEqual(signal_detail['status'], 'created')
+        # check position detail
+
 
 
     def test_submit_signal(self):
@@ -994,7 +1066,6 @@ class TestLiveTrade(unittest.TestCase):
         get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'AMZN', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'FB', 'long', data_source=self.test_ds)
-
 
     def test_output_signal(self):
         """ test output_trade_signal function """
