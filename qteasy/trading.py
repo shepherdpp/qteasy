@@ -1143,10 +1143,10 @@ def read_trade_signal(signal_id, data_source=None):
     return data_source.read_sys_table_data('sys_op_trade_signals', record_id=signal_id)
 
 
-def update_trade_signal(signal_id, data_source=None, status=None, raise_if_status_wrong=False):
+def update_trade_signal(signal_id, data_source=None, status=None, qty=None, raise_if_status_wrong=False):
     """ 更新数据库中trade_signal的状态或其他信，这里只操作trade_signal，不处理交易结果
 
-    trade_signal的所有字段中，可以更新字段只有status。
+    trade_signal的所有字段中，可以更新字段只有status和qty(qty只能在submit的时候更改，一旦submit之后就不能再更改。
     status的更新遵循下列规律：
     1. 如果status为 'created'，则可以更新为 'submitted', 同时设置'submitted_time';
     2. 如果status为 'submitted'，则可以更新为 'canceled', 'partial-filled' 或 'filled';
@@ -1161,6 +1161,8 @@ def update_trade_signal(signal_id, data_source=None, status=None, raise_if_statu
         数据源的名称, 默认为None, 表示使用默认的数据源
     status: str, optional
         交易信号的状态, 默认为None, 表示不更新状态
+    qty: float, optional
+        交易信号的数量, 默认为None, 表示不更新数量
     raise_if_status_wrong: bool, default False
         如果status不符合规则，则抛出RuntimeError, 默认为False, 表示不抛出异常
 
@@ -1195,12 +1197,16 @@ def update_trade_signal(signal_id, data_source=None, status=None, raise_if_statu
 
     # 如果trade_signal的状态为 'created'，则可以更新为 'submitted'
     if trade_signal['status'] == 'created' and status == 'submitted':
+        if qty is not None:
+            assert isinstance(qty, (float, int, np.float64, np.int64)), f'qty must be a float, got {type(qty)} instead'
+            assert qty >= 0, f'qty ({qty}) must be greater than or equal to 0!'
         submit_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
         return data_source.update_sys_table_data(
                 'sys_op_trade_signals',
                 record_id=signal_id,
                 submitted_time=submit_time,
                 status=status,
+                qty=qty,
         )
     # 如果trade_signal的状态为 'submitted'，则可以更新为 'canceled', 'partial-filled' 或 'filled'
     if trade_signal['status'] == 'submitted' and status in ['canceled', 'partial-filled', 'filled']:
@@ -1457,7 +1463,8 @@ def submit_signal(signal_id, data_source=None):
     signal_id = update_trade_signal(
             signal_id=signal_id,
             data_source=data_source,
-            status='submitted'
+            status='submitted',
+            qty=trade_signal['qty'],
     )
     # 检查交易信号
 

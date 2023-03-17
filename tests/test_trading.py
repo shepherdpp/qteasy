@@ -1086,7 +1086,7 @@ class TestLiveTrade(unittest.TestCase):
             ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'sell', 'sell', 'buy', 'buy'],
-            [100, 200, 300, 400, 500],
+            [100, 100, 300, 400, 500],
             [60.0, 70.0, 80.0, 90.0, 100.0],
         )
         # save first batch of signals
@@ -1110,81 +1110,71 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60)
         position = get_account_positions(1, data_source=self.test_ds)
-        self.assertEqual(position.iloc[0]['qty'], 100)
-        self.assertEqual(position.iloc[1]['qty'], 200)
-        self.assertEqual(position.iloc[2]['qty'], 300)
-        self.assertEqual(position.iloc[3]['qty'], 400)
-        self.assertEqual(position.iloc[4]['qty'], 500)
-        self.assertEqual(position.iloc[0]['available_qty'], 100)
-        self.assertEqual(position.iloc[1]['available_qty'], 200)
-        self.assertEqual(position.iloc[2]['available_qty'], 300)
-        self.assertEqual(position.iloc[3]['available_qty'], 400)
-        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        qty = position['qty']
+        aqty = position['available_qty']
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
+
         submit_signal(2, data_source=self.test_ds)
         print(f'after submitting signal 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60)
         position = get_account_positions(1, data_source=self.test_ds)
-        self.assertEqual(position.iloc[0]['qty'], 100)
-        self.assertEqual(position.iloc[1]['qty'], 200)
-        self.assertEqual(position.iloc[2]['qty'], 300)
-        self.assertEqual(position.iloc[3]['qty'], 400)
-        self.assertEqual(position.iloc[4]['qty'], 500)
-        self.assertEqual(position.iloc[0]['available_qty'], 100)
-        self.assertEqual(position.iloc[1]['available_qty'], 200)
-        self.assertEqual(position.iloc[2]['available_qty'], 300)
-        self.assertEqual(position.iloc[3]['available_qty'], 400)
-        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 100, 300, 400, 500]))
+
         submit_signal(3, data_source=self.test_ds)
         print(f'after submitting signal 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60)
         position = get_account_positions(1, data_source=self.test_ds)
-        self.assertEqual(position.iloc[0]['qty'], 100)
-        self.assertEqual(position.iloc[1]['qty'], 200)
-        self.assertEqual(position.iloc[2]['qty'], 300)
-        self.assertEqual(position.iloc[3]['qty'], 400)
-        self.assertEqual(position.iloc[4]['qty'], 500)
-        self.assertEqual(position.iloc[0]['available_qty'], 100)
-        self.assertEqual(position.iloc[1]['available_qty'], 200)
-        self.assertEqual(position.iloc[2]['available_qty'], 300)
-        self.assertEqual(position.iloc[3]['available_qty'], 400)
-        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 100, 0, 400, 500]))
+
         submit_signal(4, data_source=self.test_ds)
         print(f'after submitting signal 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90)
         position = get_account_positions(1, data_source=self.test_ds)
-        self.assertEqual(position.iloc[0]['qty'], 100)
-        self.assertEqual(position.iloc[1]['qty'], 200)
-        self.assertEqual(position.iloc[2]['qty'], 300)
-        self.assertEqual(position.iloc[3]['qty'], 400)
-        self.assertEqual(position.iloc[4]['qty'], 500)
-        self.assertEqual(position.iloc[0]['available_qty'], 100)
-        self.assertEqual(position.iloc[1]['available_qty'], 200)
-        self.assertEqual(position.iloc[2]['available_qty'], 300)
-        self.assertEqual(position.iloc[3]['available_qty'], 400)
-        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 100, 0, 400, 500]))
+
         submit_signal(5, data_source=self.test_ds)
         print(f'after submitting signal 5, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
         position = get_account_positions(1, data_source=self.test_ds)
-        self.assertEqual(position.iloc[0]['qty'], 100)
-        self.assertEqual(position.iloc[1]['qty'], 200)
-        self.assertEqual(position.iloc[2]['qty'], 300)
-        self.assertEqual(position.iloc[3]['qty'], 400)
-        self.assertEqual(position.iloc[4]['qty'], 500)
-        self.assertEqual(position.iloc[0]['available_qty'], 100)
-        self.assertEqual(position.iloc[1]['available_qty'], 200)
-        self.assertEqual(position.iloc[2]['available_qty'], 300)
-        self.assertEqual(position.iloc[3]['available_qty'], 400)
-        self.assertEqual(position.iloc[4]['available_qty'], 500)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 100, 0, 400, 500]))
+
         # check status of all signals
         signal_detail = read_trade_signal_detail(1, data_source=self.test_ds)
         print(f'signal_detail of signal 1: {signal_detail}\n'
@@ -1198,7 +1188,7 @@ class TestLiveTrade(unittest.TestCase):
             ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'],
             ['long', 'long', 'long', 'long', 'long'],
             ['sell', 'sell', 'sell', 'buy', 'buy'],
-            [600, 700, 800, 900, 1000],
+            [100, 700, 800, 900, 1000],
             [10.0, 20.0, 30.0, 40.0, 50.0],
         )
         # save second batch of signals
@@ -1216,6 +1206,84 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_positions(1, data_source=self.test_ds)}')
         # submit second batch of signals one by one
         submit_signal(6, data_source=self.test_ds)
+        print(f'after submitting signal 6, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        signal = read_trade_signal_detail(6, data_source=self.test_ds)
+        self.assertEqual(signal['qty'], 100)
+        position = get_account_positions(1, data_source=self.test_ds)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [0, 100, 0, 400, 500]))
+
+        submit_signal(7, data_source=self.test_ds)  # 此时需要卖出700股，但只有100股可用
+        print(f'after submitting signal 7, position data of account_id == 1: \n'
+                f'{get_account_positions(1, data_source=self.test_ds)}\n'
+                f'cash availability of account_id == 1: \n'
+                f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        signal = read_trade_signal_detail(7, data_source=self.test_ds)
+        self.assertEqual(signal['qty'], 100)
+        position = get_account_positions(1, data_source=self.test_ds)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+
+        submit_signal(8, data_source=self.test_ds)  # 此时需要卖出800股，但已经没有可用股份
+        print(f'after submitting signal 8, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        signal = read_trade_signal_detail(8, data_source=self.test_ds)
+        self.assertEqual(signal['qty'], 0)  # TODO, quantity is 0, 是否应该允许这种情况？
+        position = get_account_positions(1, data_source=self.test_ds)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+
+        submit_signal(9, data_source=self.test_ds)  # 此时需要买入900股，但可用现金仅够买入200股
+        print(f'after submitting signal 9, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100 - 200 * 40)
+        signal = read_trade_signal_detail(9, data_source=self.test_ds)
+        self.assertEqual(signal['qty'], 200)
+        position = get_account_positions(1, data_source=self.test_ds)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+
+        submit_signal(10, data_source=self.test_ds)  # 此时已经没有可用现金
+        print(f'after submitting signal 10, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(cash_availabilities[0], 100000)
+        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100 - 200 * 40)
+        signal = read_trade_signal_detail(10, data_source=self.test_ds)
+        self.assertEqual(signal['qty'], 0)  # TODO, quantity is 0, 是否应该允许这种情况？
+        position = get_account_positions(1, data_source=self.test_ds)
+        qty = position['qty'].sort_index()
+        aqty = position['available_qty'].sort_index()
+        self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
 
         raise NotImplementedError
 
