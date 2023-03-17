@@ -1200,6 +1200,8 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
         if qty is not None:
             assert isinstance(qty, (float, int, np.float64, np.int64)), f'qty must be a float, got {type(qty)} instead'
             assert qty >= 0, f'qty ({qty}) must be greater than or equal to 0!'
+        else:
+            qty = trade_signal['qty']
         submit_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
         return data_source.update_sys_table_data(
                 'sys_op_trade_signals',
@@ -1440,23 +1442,25 @@ def submit_signal(signal_id, data_source=None):
         account = get_account(account_id, data_source=data_source)
         # 如果账户的现金不足，则按比例调整交易信号的委托数量
         if account['available_cash'] < trade_signal['qty'] * trade_signal['price']:
-            proportion = (trade_signal['qty'] * trade_signal['price']) / account['available_cash']
-            trade_signal['qty'] = trade_signal['qty'] * proportion
+            proportion = account['available_cash'] / (trade_signal['qty'] * trade_signal['price'])
+            adjusted_qty = trade_signal['qty'] * proportion
+            trade_signal['qty'] = adjusted_qty
         else:
-            pass
+            adjusted_qty = trade_signal['qty']
         # 调整账户的可用现金余额, 并更新到数据表中
-        available_cash_change = -trade_signal['qty'] * trade_signal['price']
+        available_cash_change = - adjusted_qty * trade_signal['price']
         update_account_balance(account_id, data_source=data_source, available_cash_change=available_cash_change)
 
     # 如果交易方向为sell，则需要检查账户的持仓是否足够 TODO: position为short时做法不一样，需要考虑
     elif trade_signal['direction'] == 'sell':
         # 如果账户的持仓不足，则最多只能卖出账户的持仓数量
         if position['available_qty'] < trade_signal['qty']:
-            trade_signal['qty'] = position['available_qty']
+            adjusted_qty = position['available_qty']
+            trade_signal['qty'] = adjusted_qty
         else:
-            pass
+            adjusted_qty = trade_signal['qty']
         # 调整账户的可用持仓余额，并更新到数据表中
-        available_qty_change = -trade_signal['qty']
+        available_qty_change = - adjusted_qty
         update_position(position_id, available_qty_change=available_qty_change, data_source=data_source)
 
     # 将signal的status改为"submitted"，并将trade_signal写入数据库

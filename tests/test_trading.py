@@ -1285,8 +1285,6 @@ class TestLiveTrade(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
 
-        raise NotImplementedError
-
     def test_output_signal(self):
         """ test output_trade_signal function """
         pass
