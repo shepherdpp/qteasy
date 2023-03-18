@@ -27,6 +27,7 @@ from qteasy.trading import query_trade_signals, submit_signal, output_trade_sign
 from qteasy.trading import get_position_ids, read_trade_signal_detail, save_parsed_trade_signals
 from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities, submit_signal
 from qteasy.trading import write_trade_result, read_trade_result_by_id, read_trade_results_by_signal_id
+from qteasy.trading import process_trade_result
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -1521,8 +1522,7 @@ class TestLiveTrade(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty': 0.0,
         }
-
-        raise NotImplementedError
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
 
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):

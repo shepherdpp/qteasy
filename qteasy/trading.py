@@ -1604,7 +1604,53 @@ def process_trade_result(raw_trade_result, data_source=None):
     -------
     None
     """
-    pass
+
+    if not isinstance(raw_trade_result, dict):
+        raise TypeError(f'raw_trade_result must be a dict, got {type(raw_trade_result)} instead')
+
+    signal_id = raw_trade_result['signal_id']
+    signal_detail = read_trade_signal_detail(signal_id, data_source=data_source)
+
+    # 确认交易信号的状态不为 'created'. 'filled' or 'canceled'，如果是，则抛出异常
+    if signal_detail['status'] in ['created', 'filled', 'canceled']:
+        raise RuntimeError(f'signal {signal_id} has already been filled or canceled')
+    # 读取交易信号的历史交易记录，计算尚未成交的数量：remaining_qty
+    trade_results = read_trade_results_by_signal_id(signal_id, data_source=data_source)
+    remaining_qty = signal_detail['qty'] - trade_results['filled_qty'].sum()
+    # 如果交易结果中的cancel_qty大于0，则将交易信号的状态设置为'canceled'，同时确认cancel_qty等于remaining_qty
+    if raw_trade_result['canceled_qty'] > 0:
+        if raw_trade_result['canceled_qty'] != remaining_qty:
+            raise RuntimeError(f'canceled_qty {raw_trade_result["canceled_qty"]} '
+                               f'does not match remaining_qty {remaining_qty}')
+        signal_detail['status'] = 'canceled'
+    # 如果交易结果中的canceled_qty等于0，则检查filled_qty的数量是大于remaining_qty，如果大于，则抛出异常
+    else:
+        if raw_trade_result['filled_qty'] > remaining_qty:
+            raise RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
+                               f'is greater than remaining_qty {remaining_qty}')
+    # 如果filled_qty等于remaining_qty，则将交易信号的状态设置为'filled'
+    if raw_trade_result['filled_qty'] == remaining_qty:
+        signal_detail['status'] = 'filled'
+    # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partially_filled'
+    elif raw_trade_result['filled_qty'] < remaining_qty:
+        signal_detail['status'] = 'partially_filled'
+    # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
+    position_change = raw_trade_result['filled_qty'] * raw_trade_result['filled_price']
+    cash_change = - raw_trade_result['filled_qty'] * raw_trade_result['filled_price']
+    # 如果position_change大于available_position or cash_change大于available_cash，则抛出异常
+    if position_change > signal_detail['available_position']:
+        raise RuntimeError(f'position_change {position_change} is greater than '
+                           f'available_position {signal_detail["available_position"]}')
+    # 生成交易结果的execution_time字段，保存交易结果
+    raw_trade_result['execution_time'] = pd.to_datetime('now')
+    write_trade_result(raw_trade_result, data_source=data_source)
+    # 更新账户的持仓和现金余额
+    update_account_balance(signal_detail['account_id'], cash_change, data_source=data_source)
+    update_position(signal_detail['position_id'], position_change, data_source=data_source)
+    # 更新交易信号的状态
+    update_trade_signal(signal_id, data_source=data_source, status=signal_detail['status'])
+
+    raise NotImplementedError
 
 
 def output_account_position(account_id, position_id):
