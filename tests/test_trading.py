@@ -1328,11 +1328,11 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(result_id, 2)
         trade_result = {
             'signal_id': 2,
-            'filled_qty': 100.0,
+            'filled_qty': 0.0,
             'price': 10.0,
             'transaction_fee': 5.0,
             'execution_time': pd.to_datetime('now'),
-            'canceled_qty': 0.0,
+            'canceled_qty': 100.0,
         }
         result_id = write_trade_result(trade_result, data_source=self.test_ds)
         self.assertEqual(result_id, 3)
@@ -1340,6 +1340,118 @@ class TestLiveTrade(unittest.TestCase):
         self.assertIsInstance(trade_results, pd.DataFrame)
         self.assertEqual(len(trade_results), 2)
         self.assertEqual(trade_results['signal_id'].loc[1], 1)
+        self.assertEqual(trade_results['signal_id'].loc[2], 1)
+        self.assertEqual(trade_results['filled_qty'].loc[1], 100.0)
+        self.assertEqual(trade_results['filled_qty'].loc[2], 200.0)
+        self.assertEqual(trade_results['price'].loc[1], 10.0)
+        self.assertEqual(trade_results['price'].loc[2], 10.5)
+        self.assertEqual(trade_results['transaction_fee'].loc[1], 5.0)
+        self.assertEqual(trade_results['transaction_fee'].loc[2], 5.0)
+        self.assertEqual(trade_results['canceled_qty'].loc[1], 0.0)
+        self.assertEqual(trade_results['canceled_qty'].loc[2], 0.0)
+
+        # test write_trade_result with bad input
+        with self.assertRaises(TypeError):
+            write_trade_result(None, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            write_trade_result({
+                'signal_id': '1',
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': '200.0',
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': '10.5',
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': '5.0',
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': 'now',
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': '0.0',
+            }, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            write_trade_result({
+                'signal_id': -1,
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': -200.0,
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': -10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': -5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': 0.0,
+            }, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            write_trade_result({
+                'signal_id': 1,
+                'filled_qty': 200.0,
+                'price': 10.5,
+                'transaction_fee': 5.0,
+                'execution_time': pd.to_datetime('now'),
+                'canceled_qty': -100.0,
+            }, data_source=self.test_ds)
 
     def test_process_trade_signals(self):
         """ test full process of trade signal generation, submission and result recording"""
@@ -1362,7 +1474,7 @@ class TestLiveTrade(unittest.TestCase):
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'buy', 'buy', 'buy', 'buy'],
             [100, 100, 300, 400, 500],
-            [60.0, 70.0, 80.0, 90.0, 100.0],
+            [60.0, 70.0, 80.0, 90.0, 30.0],
         )
         # save first batch of signals
         signal_ids = save_parsed_trade_signals(
@@ -1374,11 +1486,43 @@ class TestLiveTrade(unittest.TestCase):
                 prices=parsed_signals_batch_1[4],
                 data_source=self.test_ds,
         )
+        self.assertEqual(signal_ids, [1, 2, 3, 4, 5])
+        # 逐个提交交易信号并打印相关余额的变化
         submit_signal(1, data_source=self.test_ds)
         print(f'after submitting signal 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        submit_signal(2, data_source=self.test_ds)
+        print(f'after submitting signal 2, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        submit_signal(3, data_source=self.test_ds)
+        print(f'after submitting signal 3, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        submit_signal(4, data_source=self.test_ds)
+        print(f'after submitting signal 4, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        submit_signal(5, data_source=self.test_ds)
+        print(f'after submitting signal 5, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+        # 生成交易结果并逐个处理, 注意raw_results没有execution_time字段
+        raw_trade_result = {
+            'signal_id': 1,
+            'filled_qty': 100,
+            'price': 60.0,
+            'transaction_fee': 5.0,
+            'canceled_qty': 0.0,
+        }
+
+        raise NotImplementedError
 
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):

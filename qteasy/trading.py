@@ -1476,12 +1476,12 @@ def submit_signal(signal_id, data_source=None):
 
 
 # foundational functions for trade result
-def write_trade_result(trade_results, data_source=None):
+def write_trade_result(trade_result, data_source=None):
     """ 将交易结果写入数据库, 并返回交易结果的id
 
     Parameters
     ----------
-    trade_results: dict
+    trade_result: dict
         交易结果
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
@@ -1492,8 +1492,34 @@ def write_trade_result(trade_results, data_source=None):
         交易结果的id
     """
 
-    if not isinstance(trade_results, dict):
+    if not isinstance(trade_result, dict):
         raise TypeError('trade_results must be a dict')
+
+    if not isinstance(trade_result['signal_id'], (int, np.int64)):
+        raise TypeError(f'signal_id of trade_result must be an int, got {type(trade_result["signal_id"])} instead')
+    if not isinstance(trade_result['filled_qty'], (int, float, np.int64, np.float64)):
+        raise TypeError(f'filled_qty of trade_result must be a number, got {type(trade_result["filled_qty"])} instead')
+    if not isinstance(trade_result['price'], (int, float, np.int64, np.float64)):
+        raise TypeError(f'price of trade_result must be a number, got {type(trade_result["price"])} instead')
+    if not isinstance(trade_result['transaction_fee'], (int, float, np.int64, np.float64)):
+        raise TypeError(f'transaction_fee of trade_result must be a number, got '
+                        f'{type(trade_result["transaction_fee"])} instead')
+    if not isinstance(trade_result['execution_time'], pd.Timestamp):
+        raise TypeError(f'execution_time of trade_result must be a pd.Timestamp, got '
+                        f'{type(trade_result["execution_time"])} instead')
+    if not isinstance(trade_result['canceled_qty'], (int, float, np.int64, np.float64)):
+        raise TypeError(f'canceled_qty of trade_result must be a number, got '
+                        f'{type(trade_result["canceled_qty"])} instead')
+    if trade_result['signal_id'] <= 0:
+        raise ValueError('signal_id can not be less than or equal to 0')
+    if trade_result['filled_qty'] < 0:
+        raise ValueError('filled_qty can not be less than 0')
+    if trade_result['price'] < 0:
+        raise ValueError('price can not be less than 0')
+    if trade_result['transaction_fee'] < 0:
+        raise ValueError('transaction_fee can not be less than 0')
+    if trade_result['canceled_qty'] < 0:
+        raise ValueError('canceled_qty can not be less than 0')
 
     import qteasy as qt
     if data_source is None:
@@ -1501,7 +1527,7 @@ def write_trade_result(trade_results, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    result_id = data_source.insert_sys_table_data('sys_op_trade_results', **trade_results)
+    result_id = data_source.insert_sys_table_data('sys_op_trade_results', **trade_result)
     return result_id
 
 
@@ -1561,7 +1587,7 @@ def read_trade_results_by_signal_id(signal_id, data_source=None):
     return trade_results
 
 
-def process_trade_result(trade_result):
+def process_trade_result(raw_trade_result, data_source=None):
     """ 处理交易结果: 更新交易委托的状态，更新账户的持仓，更新持有现金金额
 
     交易结果一旦生成，其内容就不会再改变，因此不需要更新交易结果，只需要根据交易结果
@@ -1569,8 +1595,10 @@ def process_trade_result(trade_result):
 
     Parameters
     ----------
-    trade_result: dict
-        交易结果
+    raw_trade_result: dict
+        原始交易结果, 与正式交易结果的区别在于，原始交易结果不包含execution_time字段
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
