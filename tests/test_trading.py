@@ -26,6 +26,7 @@ from qteasy.trading import check_position_availability, record_trade_signal, upd
 from qteasy.trading import query_trade_signals, submit_signal, output_trade_signal, get_position_by_id
 from qteasy.trading import get_position_ids, read_trade_signal_detail, save_parsed_trade_signals
 from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities, submit_signal
+from qteasy.trading import write_trade_result, read_trade_result_by_id, read_trade_results_by_signal_id
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -1289,7 +1290,97 @@ class TestLiveTrade(unittest.TestCase):
         """ test output_trade_signal function """
         pass
 
-    # test sub functions related to signal generation and submission
+    def test_read_and_write_result(self):
+        """ test read_trade_result and write_trade_result functions """
+        # 检查datasource中的数据表，删除所有的trade_result数据
+        if self.test_ds.table_data_exists('sys_op_trade_results'):
+            self.test_ds.drop_table_data('sys_op_trade_results')
+        # 生成一个trade_result
+        trade_result = {
+            'signal_id': 1,
+            'filled_qty': 100.0,
+            'price': 10.0,
+            'transaction_fee': 5.0,
+            'execution_time': pd.to_datetime('now'),
+            'canceled_qty': 0.0,
+        }
+        # 将trade_result写入datasource
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        # 从datasource中读取trade_result
+        trade_result = read_trade_result_by_id(result_id, data_source=self.test_ds)
+        # 检查读取的trade_result是否与写入的trade_result一致
+        self.assertIsInstance(trade_result, dict)
+        self.assertEqual(trade_result['signal_id'], 1)
+        self.assertEqual(trade_result['filled_qty'], 100.0)
+        self.assertEqual(trade_result['price'], 10.0)
+        self.assertEqual(trade_result['transaction_fee'], 5.0)
+        self.assertEqual(trade_result['canceled_qty'], 0.0)
+        # 再次写入两个trade_results，signal_id分别为1, 2，检查是否能正确读取signal_id为1的两条交易结果
+        trade_result = {
+            'signal_id': 1,
+            'filled_qty': 200.0,
+            'price': 10.5,
+            'transaction_fee': 5.0,
+            'execution_time': pd.to_datetime('now'),
+            'canceled_qty': 0.0,
+        }
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        self.assertEqual(result_id, 2)
+        trade_result = {
+            'signal_id': 2,
+            'filled_qty': 100.0,
+            'price': 10.0,
+            'transaction_fee': 5.0,
+            'execution_time': pd.to_datetime('now'),
+            'canceled_qty': 0.0,
+        }
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        self.assertEqual(result_id, 3)
+        trade_results = read_trade_results_by_signal_id(signal_id=1, data_source=self.test_ds)
+        self.assertIsInstance(trade_results, pd.DataFrame)
+        self.assertEqual(len(trade_results), 2)
+        self.assertEqual(trade_results['signal_id'].loc[1], 1)
+
+    def test_process_trade_signals(self):
+        """ test full process of trade signal generation, submission and result recording"""
+        # 检查datasource中的数据表，删除所有的account, positions, trade_signal, trade_result数据
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        if self.test_ds.table_data_exists('sys_op_trade_signals'):
+            self.test_ds.drop_table_data('sys_op_trade_signals')
+        if self.test_ds.table_data_exists('sys_op_trade_results'):
+            self.test_ds.drop_table_data('sys_op_trade_results')
+        # 重新创建account及trade_signal数据, position会在submit_signal中自动创建
+        # create test accounts
+        new_account('test_user1', 100000, self.test_ds)
+        # create test trade signals
+        # create test signals, all signals are buy signals, because the test starts with zero positions
+        parsed_signals_batch_1 = (
+            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'buy', 'buy', 'buy', 'buy'],
+            [100, 100, 300, 400, 500],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        # save first batch of signals
+        signal_ids = save_parsed_trade_signals(
+                account_id=1,
+                symbols=parsed_signals_batch_1[0],
+                positions=parsed_signals_batch_1[1],
+                directions=parsed_signals_batch_1[2],
+                quantities=parsed_signals_batch_1[3],
+                prices=parsed_signals_batch_1[4],
+                data_source=self.test_ds,
+        )
+        submit_signal(1, data_source=self.test_ds)
+        print(f'after submitting signal 1, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+
+    # test top level functions related to signal generation and submission
     def test_parse_signal(self):
         """ test parse_trade_signal function """
         # test parse_trade_signal with three symbols, with three signal types

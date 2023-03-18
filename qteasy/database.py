@@ -3595,20 +3595,20 @@ class DataSource:
 
         # 将data构造为一个df，然后调用self.update_table_data()
         last_id = self.get_sys_table_last_id(table)
-        next_id = last_id + 1 if last_id is not None else 1
+        record_id = last_id + 1 if last_id is not None else 1
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         data_columns = [col for col in columns if col not in primary_keys]
         # 检查data的key是否与data_column完全一致，如果不一致，则抛出异常
         if list(data.keys()) != data_columns:
             raise KeyError(f'Input data keys must be the same as the table data columns, '
                            f'got {list(data.keys())} vs {data_columns}')
-        df = pd.DataFrame(data, index=[next_id], columns=data.keys())
+        df = pd.DataFrame(data, index=[record_id], columns=data.keys())
         df.index.name = primary_keys[0]
 
         # 插入数据
         self.update_table_data(table, df, merge_type='ignore')
 
-        return next_id
+        return record_id
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数

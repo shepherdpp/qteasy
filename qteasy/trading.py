@@ -1476,38 +1476,107 @@ def submit_signal(signal_id, data_source=None):
 
 
 # foundational functions for trade result
-def record_trade_result(trade_results):
-    """ 将交易结果写入数据库
+def write_trade_result(trade_results, data_source=None):
+    """ 将交易结果写入数据库, 并返回交易结果的id
 
     Parameters
     ----------
     trade_results: dict
         交易结果
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
     result_id: int
         交易结果的id
     """
-    import qteasy.QT_DATA_SOURCE as data_source
-    return data_source.write_sys_table_data('sys_op_trade_results', trade_results)
+
+    if not isinstance(trade_results, dict):
+        raise TypeError('trade_results must be a dict')
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    result_id = data_source.insert_sys_table_data('sys_op_trade_results', **trade_results)
+    return result_id
 
 
-def read_trade_result(result_id):
-    """ 从数据库中读取交易结果
+def read_trade_result_by_id(result_id, data_source=None):
+    """ 根据result_id从数据库中读取一条交易结果, 并返回交易结果的dict形式
 
     Parameters
     ----------
     result_id: int
         交易结果的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
-    trade_results: dict
+    trade_result: dict
         交易结果
     """
-    import qteasy.QT_DATA_SOURCE as data_source
-    return data_source.read_sys_table_data('sys_op_trade_results', record_id=result_id)
+    if not isinstance(result_id, (int, np.int64)):
+        raise TypeError('result_id must be an int')
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    trade_result = data_source.read_sys_table_data('sys_op_trade_results', result_id)
+    return trade_result
+
+
+def read_trade_results_by_signal_id(signal_id, data_source=None):
+    """ 根据signal_id从数据库中读取所有与signal相关的交易结果，以DataFrame的形式返回
+
+    Parameters
+    ----------
+    signal_id: int
+        交易信号的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    trade_results: pd.DataFrame
+    交易结果
+    """
+    if not isinstance(signal_id, (int, np.int64)):
+        raise TypeError('signal_id must be an int')
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    trade_results = data_source.read_sys_table_data('sys_op_trade_results', signal_id=signal_id)
+    return trade_results
+
+
+def process_trade_result(trade_result):
+    """ 处理交易结果: 更新交易委托的状态，更新账户的持仓，更新持有现金金额
+
+    交易结果一旦生成，其内容就不会再改变，因此不需要更新交易结果，只需要根据交易结果
+    更新相应交易信号（委托）的状态，更新账户的持仓，更新账户的现金余额
+
+    Parameters
+    ----------
+    trade_result: dict
+        交易结果
+
+    Returns
+    -------
+    None
+    """
+    pass
 
 
 def output_account_position(account_id, position_id):
