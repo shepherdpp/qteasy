@@ -26,10 +26,10 @@ TIMEZONE = 'Asia/Shanghai'
 #  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
 async def process_trade_signal(signal):
     # 将交易信号提交给交易平台或用户以获取交易结果
-    trade_results = await submit_signal(signal)
+    trade_results = await submit_order(signal)
     # 更新交易信号状态并更新TUI
-    update_signal_status(signal_id=signal['signal_id'], status=trade_results['status'])
-    output_trade_signal()
+    update_signal_status(order_id=signal['order_id'], status=trade_results['status'])
+    output_trade_order()
     # 更新账户的持仓
     update_account_position(account_id=signal['account_id'], position=trade_results['position_type'])
     # 更新账户的可用资金
@@ -52,9 +52,9 @@ async def live_trade_signals():
         if not check_position_availability(account_id=signal['account_id']):
             continue
         # 将交易信号写入数据库
-        signal_id = record_trade_signal(signal)
+        order_id = record_trade_signal(signal)
         # 读取交易信号并将其显示在界面上
-        display_trade_signal(read_trade_signal(signal_id=signal_id))
+        display_trade_signal(read_trade_order(order_id=order_id))
         # 提交交易信号并等待结果
         asyncio.create_task(process_trade_signal(signal))
         # 继续生成后续交易信号
@@ -121,7 +121,7 @@ def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash
         }
         record_trade_signal(trade_signal)
         # 逐一提交交易信号
-        if submit_signal(trade_signal) is not None:
+        if submit_order(trade_signal) is not None:
 
             # 记录已提交的交易数量
             submitted_qty += qty
@@ -139,7 +139,7 @@ def parse_trade_signal(signals,
                        available_amounts=None,
                        available_cash=None,
                        config=None):
-    """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易信号，包括
+    """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易订单元素，包括
     资产代码、头寸类型、交易方向、交易数量等, 不检查账户的可用资金和持仓数量
 
     Parameters
@@ -165,7 +165,7 @@ def parse_trade_signal(signals,
 
     Returns
     -------
-    tuple, (symbols, positions, directions, quantities)
+    order_elements: tuple, (symbols, positions, directions, quantities)
         symbols: list of str, 交易信号对应的股票代码
         positions: list of str, 交易信号对应的持仓类型
         directions: list of str, 交易信号对应的交易方向
@@ -1092,7 +1092,7 @@ def record_trade_signal(signal, data_source=None):
 
     Returns
     -------
-    signal_id: int
+    order_id: int
     写入数据库的交易信号的id
     """
 
@@ -1120,15 +1120,15 @@ def record_trade_signal(signal, data_source=None):
     if signal['price'] <= 0:
         raise RuntimeError(f'signal["price"] ({signal["price"]}) must be greater than 0!')
 
-    return data_source.insert_sys_table_data('sys_op_trade_signals', **signal)
+    return data_source.insert_sys_table_data('sys_op_trade_orders', **signal)
 
 
-def read_trade_signal(signal_id, data_source=None):
-    """ 根据signal_id从数据库中读取交易信号
+def read_trade_order(order_id, data_source=None):
+    """ 根据order_id从数据库中读取交易信号
 
     Parameters
     ----------
-    signal_id: int
+    order_id: int
         交易信号的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
@@ -1138,8 +1138,8 @@ def read_trade_signal(signal_id, data_source=None):
     signal: dict
         交易信号
     """
-    if not isinstance(signal_id, (int, np.int64)):
-        raise TypeError(f'signal_id must be an int, got {type(signal_id)} instead')
+    if not isinstance(order_id, (int, np.int64)):
+        raise TypeError(f'order_id must be an int, got {type(order_id)} instead')
 
     import qteasy as qt
     if data_source is None:
@@ -1147,13 +1147,13 @@ def read_trade_signal(signal_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    return data_source.read_sys_table_data('sys_op_trade_signals', record_id=signal_id)
+    return data_source.read_sys_table_data('sys_op_trade_orders', record_id=order_id)
 
 
-def update_trade_signal(signal_id, data_source=None, status=None, qty=None, raise_if_status_wrong=False):
+def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_if_status_wrong=False):
     """ 更新数据库中trade_signal的状态或其他信，这里只操作trade_signal，不处理交易结果
 
-    trade_signal的所有字段中，可以更新字段只有status和qty(qty只能在submit的时候更改，一旦submit之后就不能再更改。
+    trade_order的所有字段中，可以更新字段只有status和qty(qty只能在submit的时候更改，一旦submit之后就不能再更改。
     status的更新遵循下列规律：
     1. 如果status为 'created'，则可以更新为 'submitted', 同时设置'submitted_time';
     2. 如果status为 'submitted'，则可以更新为 'canceled', 'partial-filled' 或 'filled';
@@ -1162,7 +1162,7 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
 
     Parameters
     ----------
-    signal_id: int
+    order_id: int
         交易信号的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
@@ -1175,7 +1175,7 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
 
     Returns
     -------
-    signal_id: int, 如果更新成功，返回更新后的交易信号的id
+    order_id: int, 如果更新成功，返回更新后的交易信号的id
     None, 如果更新失败，返回None
 
     Raises
@@ -1201,11 +1201,11 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
         if status not in ['created', 'submitted', 'canceled', 'partial-filled', 'filled']:
             raise RuntimeError(f'status ({status}) not in [created, submitted, canceled, partial-filled, filled]!')
 
-    trade_signal = data_source.read_sys_table_data('sys_op_trade_signals', record_id=signal_id)
+    trade_signal = data_source.read_sys_table_data('sys_op_trade_orders', record_id=order_id)
 
     # 如果trade_signal读取失败，则报错
     if trade_signal is None:
-        raise RuntimeError(f'Trade signal (signal_id = {signal_id}) not found!')
+        raise RuntimeError(f'Trade signal (order_id = {order_id}) not found!')
 
     # 如果trade_signal的状态为 'created'，则可以更新为 'submitted'
     if trade_signal['status'] == 'created' and status == 'submitted':
@@ -1216,8 +1216,8 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
             qty = trade_signal['qty']
         submit_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
         return data_source.update_sys_table_data(
-                'sys_op_trade_signals',
-                record_id=signal_id,
+                'sys_op_trade_orders',
+                record_id=order_id,
                 submitted_time=submit_time,
                 status=status,
                 qty=qty,
@@ -1225,15 +1225,15 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
     # 如果trade_signal的状态为 'submitted'，则可以更新为 'canceled', 'partial-filled' 或 'filled'
     if trade_signal['status'] == 'submitted' and status in ['canceled', 'partial-filled', 'filled']:
         return data_source.update_sys_table_data(
-                'sys_op_trade_signals',
-                signal_id,
+                'sys_op_trade_orders',
+                order_id,
                 status=status
         )
     # 如果trade_signal的状态为 'partial-filled'，则可以更新为 'canceled' 或 'filled'
     if trade_signal['status'] == 'partial-filled' and status in ['canceled', 'filled']:
         return data_source.update_sys_table_data(
-                'sys_op_trade_signals',
-                signal_id,
+                'sys_op_trade_orders',
+                order_id,
                 status=status
         )
 
@@ -1243,13 +1243,13 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
     return
 
 
-def query_trade_signals(account_id,
-                        symbol=None,
-                        position=None,
-                        direction=None,
-                        order_type=None,
-                        status=None,
-                        data_source=None):
+def query_trade_orders(account_id,
+                       symbol=None,
+                       position=None,
+                       direction=None,
+                       order_type=None,
+                       status=None,
+                       data_source=None):
     """ 根据symbol、direction、status 从数据库中查询交易信号并批量返回结果
 
     Parameters
@@ -1298,7 +1298,7 @@ def query_trade_signals(account_id,
     for pos_id in pos_ids:
         res.append(
                 data_source.read_sys_table_data(
-                        'sys_op_trade_signals',
+                        'sys_op_trade_orders',
                         pos_id=pos_id,
                         **data_filter,
                 )
@@ -1309,12 +1309,12 @@ def query_trade_signals(account_id,
 
 
 # 2 2nd level functions for trade signal
-def read_trade_signal_detail(signal_id, data_source=None):
+def read_trade_order_detail(order_id, data_source=None):
     """ 从数据库中读取交易信号的详细信息，包括从关联表中读取symbol和position的信息
 
     Parameters
     ----------
-    signal_id: int
+    order_id: int
         交易信号的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
@@ -1343,7 +1343,7 @@ def read_trade_signal_detail(signal_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    trade_signal_detail = read_trade_signal(signal_id, data_source=data_source)
+    trade_signal_detail = read_trade_order(order_id, data_source=data_source)
     if trade_signal_detail is None:
         return None
     pos_id = trade_signal_detail['pos_id']
@@ -1357,8 +1357,8 @@ def read_trade_signal_detail(signal_id, data_source=None):
     return trade_signal_detail
 
 
-def save_parsed_trade_signals(account_id, symbols, positions, directions, quantities, prices, data_source=None):
-    """ 根据parse_trade_signal的结果，将交易信号各个要素组装成完整的交易信号dict，并将交易信号保存到数据库
+def save_parsed_trade_orders(account_id, symbols, positions, directions, quantities, prices, data_source=None):
+    """ 根据parse_trade_signal的结果，将交易订单要素组装成完整的交易订单dict，并将交易信号保存到数据库
 
     Parameters
     ----------
@@ -1379,8 +1379,8 @@ def save_parsed_trade_signals(account_id, symbols, positions, directions, quanti
 
     Returns
     -------
-    list of int
-        交易信号的id
+    order_ids: list of int
+        生成的交易订单的id
     """
 
     if len(symbols) == 0:
@@ -1392,7 +1392,7 @@ def save_parsed_trade_signals(account_id, symbols, positions, directions, quanti
             len(symbols) != len(prices):
         raise ValueError('Length of symbols, positions, directions, quantities and prices must be the same')
 
-    signal_ids = []
+    order_ids = []
     # 逐个处理所有的交易信号要素
     for sym, pos, dirc, qty, price in zip(symbols, positions, directions, quantities, prices):
         # 获取pos_id, 如果pos_id不存在，则新建一个posiiton
@@ -1408,24 +1408,24 @@ def save_parsed_trade_signals(account_id, symbols, positions, directions, quanti
             'status': 'created'
         }
         sig_id = record_trade_signal(trade_signal, data_source=data_source)
-        signal_ids.append(sig_id)
+        order_ids.append(sig_id)
 
-    return signal_ids
+    return order_ids
 
 
-def output_trade_signal():
+def output_trade_order():
     """ 将交易信号输出到终端或TUI
 
     Returns
     -------
-    signal_id: int
+    order_id: int
         交易信号的id
     """
     pass
 
 
-def submit_signal(signal_id, data_source=None):
-    """ 将交易信号提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
+def submit_order(order_id, data_source=None):
+    """ 将交易订单提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
 
     只有刚刚创建的交易信号（status == 'created'）才能提交，否则不需要再次提交
     在提交交易信号以前，对于买入信号，会检查账户的现金是否足够，如果不足，则会按比例调整交易信号的委托数量
@@ -1435,7 +1435,7 @@ def submit_signal(signal_id, data_source=None):
 
     Parameters
     ----------
-    signal_id: int
+    order_id: int
         交易信号的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
@@ -1451,42 +1451,38 @@ def submit_signal(signal_id, data_source=None):
     """
 
     # 读取交易信号
-    trade_signal = read_trade_signal(signal_id, data_source=data_source)
+    trade_order = read_trade_order(order_id, data_source=data_source)
 
     # 如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
-    if trade_signal['status'] != 'created':
+    if trade_order['status'] != 'created':
         return None
 
     # 实际上在parse_trade_signal的时候就已经检查过总买入数量与可用现金之间的关系了，这里不再检察
     # 如果交易方向为buy，则需要检查账户的现金是否足够 TODO: position为short时做法不同，需要进一步调整
-    position_id = trade_signal['pos_id']
+    position_id = trade_order['pos_id']
     position = get_position_by_id(position_id, data_source=data_source)
-    if trade_signal['direction'] == 'buy':
+    if trade_order['direction'] == 'buy':
         account_id = position['account_id']
         account = get_account(account_id, data_source=data_source)
         # 如果账户的现金不足，则输出警告信息
-        if account['available_cash'] < trade_signal['qty'] * trade_signal['price']:
+        if account['available_cash'] < trade_order['qty'] * trade_order['price']:
             logger.warning(f'Available cash {account["available_cash"]} is not enough for trade order: \n'
-                           f'{trade_signal}'
+                           f'{trade_order}'
                            f'trade order might not be executed!')
 
     # 如果交易方向为sell，则需要检查账户的持仓是否足够 TODO: position为short时做法不一样，需要考虑
-    elif trade_signal['direction'] == 'sell':
+    elif trade_order['direction'] == 'sell':
         # 如果账户的持仓不足，则输出警告信息
-        if position['available_qty'] < trade_signal['qty']:
+        if position['available_qty'] < trade_order['qty']:
             logger.warning(f'Available quantity {position["available_qty"]} is not enough for trade order: \n'
-                           f'{trade_signal}'
+                           f'{trade_order}'
                            f'trade order might not be executed!')
 
     # 将signal的status改为"submitted"，并将trade_signal写入数据库
-    signal_id = update_trade_signal(
-            signal_id=signal_id,
-            data_source=data_source,
-            status='submitted',
-    )
+    order_id = update_trade_order(order_id=order_id, data_source=data_source, status='submitted')
     # 检查交易信号
 
-    return signal_id
+    return order_id
 
 
 # foundational functions for trade result
@@ -1509,8 +1505,8 @@ def write_trade_result(trade_result, data_source=None):
     if not isinstance(trade_result, dict):
         raise TypeError('trade_results must be a dict')
 
-    if not isinstance(trade_result['signal_id'], (int, np.int64)):
-        raise TypeError(f'signal_id of trade_result must be an int, got {type(trade_result["signal_id"])} instead')
+    if not isinstance(trade_result['order_id'], (int, np.int64)):
+        raise TypeError(f'order_id of trade_result must be an int, got {type(trade_result["order_id"])} instead')
     if not isinstance(trade_result['filled_qty'], (int, float, np.int64, np.float64)):
         raise TypeError(f'filled_qty of trade_result must be a number, got {type(trade_result["filled_qty"])} instead')
     if not isinstance(trade_result['price'], (int, float, np.int64, np.float64)):
@@ -1534,8 +1530,8 @@ def write_trade_result(trade_result, data_source=None):
     if not isinstance(trade_result['delivery_amount'], (int, float, np.int64, np.float64)):
         raise TypeError(f'delivery_amount of trade_result must be a number, got '
                         f'{type(trade_result["delivery_amount"])} instead')
-    if trade_result['signal_id'] <= 0:
-        raise ValueError('signal_id can not be less than or equal to 0')
+    if trade_result['order_id'] <= 0:
+        raise ValueError('order_id can not be less than or equal to 0')
     if trade_result['filled_qty'] < 0:
         raise ValueError('filled_qty can not be less than 0')
     if trade_result['price'] < 0:
@@ -1616,12 +1612,12 @@ def read_trade_result_by_id(result_id, data_source=None):
     return trade_result
 
 
-def read_trade_results_by_signal_id(signal_id, data_source=None):
-    """ 根据signal_id从数据库中读取所有与signal相关的交易结果，以DataFrame的形式返回
+def read_trade_results_by_order_id(order_id, data_source=None):
+    """ 根据order_id从数据库中读取所有与signal相关的交易结果，以DataFrame的形式返回
 
     Parameters
     ----------
-    signal_id: int
+    order_id: int
         交易信号的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
@@ -1631,8 +1627,8 @@ def read_trade_results_by_signal_id(signal_id, data_source=None):
     trade_results: pd.DataFrame
     交易结果
     """
-    if not isinstance(signal_id, (int, np.int64)):
-        raise TypeError('signal_id must be an int')
+    if not isinstance(order_id, (int, np.int64)):
+        raise TypeError('order_id must be an int')
 
     import qteasy as qt
     if data_source is None:
@@ -1640,7 +1636,7 @@ def read_trade_results_by_signal_id(signal_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    trade_results = data_source.read_sys_table_data('sys_op_trade_results', signal_id=signal_id)
+    trade_results = data_source.read_sys_table_data('sys_op_trade_results', order_id=order_id)
     return trade_results
 
 
@@ -1711,13 +1707,13 @@ def process_trade_delivery(account_id, data_source=None, config=None):
     # 循环处理每一条未交割的交易结果：
     for result_id, result in undelivered_results.iterrows():
         # 读取交易结果的signal_detail，如果account_id不匹配，则跳过，如果signal_detail不存在，则报错
-        signal_detail = read_trade_signal_detail(result.signal_id, data_source=data_source)
-        if signal_detail is None:
-            raise RuntimeError(f'No signal_detail found for signal_id {result.signal_id}')
-        if signal_detail['account_id'] != account_id:
+        order_detail = read_trade_order_detail(result.order_id, data_source=data_source)
+        if order_detail is None:
+            raise RuntimeError(f'No order_detail found for order_id {result.order_id}')
+        if order_detail['account_id'] != account_id:
             continue
         # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
-        direction = signal_detail['direction']
+        direction = order_detail['direction']
         if direction == 'buy':
             delivery_period = config['stock_delivery_period']
         elif direction == 'sell':
@@ -1726,19 +1722,20 @@ def process_trade_delivery(account_id, data_source=None, config=None):
             raise ValueError(f'Invalid direction: {direction}')
         # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
         execution_date = pd.to_datetime(result.execution_time).date()
-        day_diff = (pd.to_datetime('now').date() - execution_date).days
+        current_date = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).date()
+        day_diff = (current_date - execution_date).days
         if day_diff < delivery_period:
             continue
         # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
         if direction == 'buy':
-            position_id = signal_detail['pos_id']
+            position_id = order_detail['pos_id']
             update_position(
                     position_id=position_id,
                     data_source=data_source,
                     available_qty_change=result.delivery_amount,
             )
         elif direction == 'sell':
-            account_id = signal_detail['account_id']
+            account_id = order_detail['account_id']
             update_account_balance(
                     account_id=account_id,
                     data_source=data_source,
@@ -1776,32 +1773,33 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     if not isinstance(raw_trade_result, dict):
         raise TypeError(f'raw_trade_result must be a dict, got {type(raw_trade_result)} instead')
 
-    signal_id = raw_trade_result['signal_id']
-    signal_detail = read_trade_signal_detail(signal_id, data_source=data_source)
+    order_id = raw_trade_result['order_id']
+    order_detail = read_trade_order_detail(order_id, data_source=data_source)
 
     # 确认交易信号的状态不为 'created'. 'filled' or 'canceled'，如果是，则抛出异常
-    if signal_detail['status'] in ['created', 'filled', 'canceled']:
-        raise RuntimeError(f'signal {signal_id} has already been filled or canceled')
+    if order_detail['status'] in ['created', 'filled', 'canceled']:
+        raise RuntimeError(f'signal {order_id} has already been filled or canceled')
     # 交割历史交易结果
     if config is None:
         import qteasy as qt
         config = qt.QT_CONFIG
     if not isinstance(config, dict):
         raise TypeError('config must be a dict')
-    process_trade_delivery(account_id=signal_detail['account_id'], data_source=data_source, config=config)
+    process_trade_delivery(account_id=order_detail['account_id'], data_source=data_source, config=config)
+
     # 读取交易信号的历史交易记录，计算尚未成交的数量：remaining_qty
-    trade_results = read_trade_results_by_signal_id(signal_id, data_source=data_source)
+    trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
     filled_qty = trade_results['filled_qty'].sum() if trade_results is not None else 0
-    remaining_qty = signal_detail['qty'] - filled_qty
+    remaining_qty = order_detail['qty'] - filled_qty
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
         import pdb; pdb.set_trace()
-        raise RuntimeError(f'qty {signal_detail["qty"]} is not an integer')
+        raise RuntimeError(f'qty {order_detail["qty"]} is not an integer')
     # 如果交易结果中的cancel_qty大于0，则将交易信号的状态设置为'canceled'，同时确认cancel_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
             raise RuntimeError(f'canceled_qty {raw_trade_result["canceled_qty"]} '
                                f'does not match remaining_qty {remaining_qty}')
-        signal_detail['status'] = 'canceled'
+        order_detail['status'] = 'canceled'
     # 如果交易结果中的canceled_qty等于0，则检查filled_qty的数量是大于remaining_qty，如果大于，则抛出异常
     else:
         if raw_trade_result['filled_qty'] > remaining_qty:
@@ -1810,78 +1808,76 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
         # 如果filled_qty等于remaining_qty，则将交易信号的状态设置为'filled'
         elif raw_trade_result['filled_qty'] == remaining_qty:
-            signal_detail['status'] = 'filled'
+            order_detail['status'] = 'filled'
 
         # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partially_filled'
         elif raw_trade_result['filled_qty'] < remaining_qty:
-            signal_detail['status'] = 'partial-filled'
+            order_detail['status'] = 'partial-filled'
 
     # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
     position_change = raw_trade_result['filled_qty']
-    if signal_detail['direction'] == 'sell':
+    if order_detail['direction'] == 'sell':
         cash_change = raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
-    elif signal_detail['direction'] == 'buy':
+    elif order_detail['direction'] == 'buy':
         cash_change = - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
 
     # 如果position_change小于available_position_amount，则抛出异常
-    available_qty = get_position_by_id(signal_detail['pos_id'], data_source=data_source)['available_qty']
+    available_qty = get_position_by_id(order_detail['pos_id'], data_source=data_source)['available_qty']
     if available_qty + position_change < 0:
         raise RuntimeError(f'position_change {position_change} is greater than '
                            f'available position amount {available_qty}')
 
     # 如果cash_change小于available_cash，则抛出异常
-    available_cash = get_account_cash_availabilities(signal_detail['account_id'], data_source=data_source)[1]
+    available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
     if available_cash + cash_change < 0:
         raise RuntimeError(f'cash_change {cash_change} is greater than '
                            f'available cash {available_cash}')
 
     # 计算并生成交易结果的交割数量和交割状，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
-    if signal_detail['direction'] == 'buy':
+    if order_detail['direction'] == 'buy':
         raw_trade_result['delivery_amount'] = position_change
-    elif signal_detail['direction'] == 'sell':
+    elif order_detail['direction'] == 'sell':
         raw_trade_result['delivery_amount'] = cash_change
     else:
-        raise ValueError(f'direction must be buy or sell, got {signal_detail["direction"]} instead')
+        raise ValueError(f'direction must be buy or sell, got {order_detail["direction"]} instead')
     raw_trade_result['delivery_status'] = 'ND'
     # 生成交易结果的execution_time字段，保存交易结果
     execution_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
     raw_trade_result['execution_time'] = execution_time
-    # debug
-    print(f'raw_trade_result: {raw_trade_result}')
     write_trade_result(raw_trade_result, data_source=data_source)
 
     # 更新账户的持仓和现金余额:
-    print(f'cash_change: {cash_change}, position_change: {position_change}, direction: {signal_detail["direction"]}')
+
     # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
-    if signal_detail['direction'] == 'buy':
+    if order_detail['direction'] == 'buy':
         update_account_balance(
-                account_id=signal_detail['account_id'],
+                account_id=order_detail['account_id'],
                 data_source=data_source,
                 cash_amount_change=cash_change,
                 available_cash_change=cash_change,
         )
         update_position(
-                position_id=signal_detail['pos_id'],
+                position_id=order_detail['pos_id'],
                 data_source=data_source,
                 qty_change=position_change,
         )
     # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
-    elif signal_detail['direction'] == 'sell':
+    elif order_detail['direction'] == 'sell':
         update_account_balance(
-                account_id=signal_detail['account_id'],
+                account_id=order_detail['account_id'],
                 data_source=data_source,
                 cash_amount_change=cash_change,
         )
         update_position(
-                position_id=signal_detail['pos_id'],
+                position_id=order_detail['pos_id'],
                 data_source=data_source,
                 qty_change=-position_change,
                 available_qty_change=-position_change,
         )
     else:
-        raise RuntimeError(f'invalid direction {signal_detail["direction"]}')
+        raise RuntimeError(f'invalid direction {order_detail["direction"]}')
     # 更新交易信号的状态
-    update_trade_signal(signal_id, data_source=data_source, status=signal_detail['status'])
+    update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
 
 
 def output_account_position(account_id, position_id):
@@ -1901,12 +1897,12 @@ def output_account_position(account_id, position_id):
     pass
 
 
-def generate_trade_result(signal_id, account_id):
+def generate_trade_result(order_id, account_id):
     """ 生成交易结果
 
     Parameters
     ----------
-    signal_id: int
+    order_id: int
         交易信号的id
     account_id: int
         账户的id

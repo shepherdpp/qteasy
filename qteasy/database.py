@@ -1063,8 +1063,8 @@ TABLE_MASTERS = {
     'sys_op_positions':
         ['sys_op_positions', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', ''],
 
-    'sys_op_trade_signals':
-        ['sys_op_trade_signals', '实盘运行交易信号记录表', 'sys', '', '', '', '', '', '', '', '', ''],
+    'sys_op_trade_orders':
+        ['sys_op_trade_orders', '实盘运行交易订单记录表', 'sys', '', '', '', '', '', '', '', '', ''],
 
     'sys_op_trade_results':
         ['sys_op_trade_results', '实盘运行交易结果记录表', 'sys', '', '', '', '', '', '', '', '', ''],
@@ -1327,22 +1327,22 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'sys_op_trade_signals':  # 交易信号表 TODO: 应该将此表重命名为交易订单表sys_op_trade_orders
-        {'columns':    ['signal_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
+    'sys_op_trade_orders':  # 交易订单表
+        {'columns':    ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
                         'submitted_time', 'status'],
          'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'float', 'float',
                         'datetime', 'varchar(10)'],
-         'remarks':    ['交易信号ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
+         'remarks':    ['交易订单ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
                         '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
          'prime_keys': [0]
          },
 
     'sys_op_trade_results':  # 交易结果表
-        {'columns':    ['result_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+        {'columns':    ['result_id', 'order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                         'canceled_qty', 'delivery_amount', 'delivery_status'],
          'dtypes':     ['int', 'int', 'float', 'float', 'float', 'datetime',
                         'float', 'float', 'varchar(2)'],
-         'remarks':    ['交易结果ID', '交易信号ID', '成交数量', '成交价格', '交易费用', '成交时间',
+         'remarks':    ['交易结果ID', '交易订单ID', '成交数量', '成交价格', '交易费用', '成交时间',
                         '取消交易数量', '交割数量(现金或证券)', '交割状态{ND, DL}'],
          'prime_keys': [0],
          },
