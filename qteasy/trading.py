@@ -786,7 +786,7 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
         raise TypeError(f'position_type must be a str, got {type(position_type)} instead')
     if position_type not in ('long', 'short'):
         raise ValueError(f'position_type must be "long" or "short", got {position_type} instead')
-
+    print(f'account_id: {account_id}, symbol: {symbol}, position_type: {position_type}')
     position = data_source.read_sys_table_data(
             table='sys_op_positions',
             record_id=None,

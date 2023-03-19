@@ -1331,7 +1331,7 @@ TABLE_SCHEMA = {
         {'columns':    ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
                         'submitted_time', 'status'],
          'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'float', 'float',
-                        'datetime', 'varchar(10)'],
+                        'datetime', 'varchar(15)'],
          'remarks':    ['交易订单ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
                         '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
          'prime_keys': [0]
@@ -3444,6 +3444,8 @@ class DataSource:
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
             res_df = self.read_database(table, share_like_pk=id_column, shares=id_values)
+            if res_df.empty:
+                return None
             set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
             res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=id_column, shares=id_values)
@@ -4258,6 +4260,8 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     """
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+    if df.empty:
+        return df
     if not isinstance(primary_key, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     all_columns = df.columns
@@ -4605,6 +4609,8 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
 
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+    if df.empty:
+        return df
     if not isinstance(primary_key, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     if not isinstance(pk_dtypes, list):

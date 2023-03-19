@@ -1551,7 +1551,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_insert_read_sys_table_data(self):
         # 测试正常情况下写入及读取表的数据
-        test_signal_data = {
+        test_order_data = {
                     'pos_id': 1,
                     'direction': 'buy',
                     'order_type': 'limit',
@@ -1561,7 +1561,7 @@ class TestDataSource(unittest.TestCase):
                     'status': 'submitted',
         }
         test_result_data = {
-            'signal_id': 1,
+            'order_id': 1,
             'filled_qty': 100,
             'price': 10.0,
             'transaction_fee': 0.0,
@@ -1642,7 +1642,7 @@ class TestDataSource(unittest.TestCase):
         ]
         test_multiple_result_data = [
             {
-                'signal_id': 1,
+                'order_id': 1,
                 'filled_qty': 100,
                 'price': 10.0,
                 'transaction_fee': 0.0,
@@ -1652,7 +1652,7 @@ class TestDataSource(unittest.TestCase):
                 'delivery_status': 'ND',
             },
             {
-                'signal_id': 2,
+                'order_id': 2,
                 'filled_qty': 200,
                 'price': 10.0,
                 'transaction_fee': 0.0,
@@ -1662,7 +1662,7 @@ class TestDataSource(unittest.TestCase):
                 'delivery_status': 'ND',
             },
             {
-                'signal_id': 3,
+                'order_id': 3,
                 'filled_qty': 300,
                 'price': 10.0,
                 'transaction_fee': 0.0,
@@ -1672,7 +1672,7 @@ class TestDataSource(unittest.TestCase):
                 'delivery_status': 'ND',
             },
             {
-                'signal_id': 4,
+                'order_id': 4,
                 'filled_qty': 400,
                 'price': 10.0,
                 'transaction_fee': 0.0,
@@ -1682,7 +1682,7 @@ class TestDataSource(unittest.TestCase):
                 'delivery_status': 'ND',
             },
             {
-                'signal_id': 5,
+                'order_id': 5,
                 'filled_qty': 500,
                 'price': 10.0,
                 'transaction_fee': 0.0,
@@ -1766,7 +1766,7 @@ class TestDataSource(unittest.TestCase):
         sys_table_test_data = [
             test_account_data,
             test_position,
-            test_signal_data,
+            test_order_data,
             test_result_data,
         ]
         sys_table_test_multiple_data = [
@@ -1779,26 +1779,26 @@ class TestDataSource(unittest.TestCase):
         tables_to_be_tested = [
             'sys_op_live_accounts',
             'sys_op_positions',
-            'sys_op_trade_signals',
+            'sys_op_trade_orders',
             'sys_op_trade_results'
         ]
         test_kwargs_existed = [
             {'user_name': 'John Doe'},
             {'account_id': 1},
             {'direction': 'buy'},
-            {'signal_id': 1}
+            {'order_id': 1}
         ]
         test_kwargs_not_existed = [
             {'user_name': 'Not a user'},
             {'account_id': 999},
             {'direction': 'invalid_direction'},
-            {'signal_id': 999}
+            {'order_id': 999}
         ]
         test_kwargs_to_update = [
             {'user_name': 'new_user'},
             {'account_id': 3},
             {'direction': 'sell'},
-            {'signal_id': 3}
+            {'order_id': 3}
         ]
 
         datasources_to_be_tested = [
@@ -1832,9 +1832,9 @@ class TestDataSource(unittest.TestCase):
                 # if ds.table_data_exists(table):
                 #     ds.drop_table_data(table)
                 print(f'write and read shuffled data')
-                ds.insert_sys_table_data('sys_op_trade_signals', **test_shuffled_signal_data)
-                last_id = ds.get_sys_table_last_id('sys_op_trade_signals')
-                res = ds.read_sys_table_data('sys_op_trade_signals', record_id=last_id)
+                ds.insert_sys_table_data('sys_op_trade_orders', **test_shuffled_signal_data)
+                last_id = ds.get_sys_table_last_id('sys_op_trade_orders')
+                res = ds.read_sys_table_data('sys_op_trade_orders', record_id=last_id)
                 print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
                       f'{res}\n')
                 self.assertIsNotNone(res)
@@ -1946,6 +1946,16 @@ class TestDataSource(unittest.TestCase):
                             self.assertEqual(bk_v[1], pd.to_datetime(ak_v[1]))
                         else:
                             self.assertEqual(bk_v[1], ak_v[1])
+
+                res = ds.read_sys_table_data(
+                        table='sys_op_positions',
+                        record_id=None,
+                        account_id=1,
+                        symbol='000001.SZ',
+                        position='long',
+                )
+                print(f'res: {res}')
+                raise NotImplementedError
 
 
 if __name__ == '__main__':

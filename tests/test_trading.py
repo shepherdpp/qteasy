@@ -38,15 +38,15 @@ class TestLiveTrade(unittest.TestCase):
         self.qt_root_path = QT_ROOT_PATH
         self.data_test_dir = 'data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        self.test_ds = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
-        # self.test_ds = DataSource(
-        #         'db',
-        #         host=QT_CONFIG['test_db_host'],
-        #         port=QT_CONFIG['test_db_port'],
-        #         user=QT_CONFIG['test_db_user'],
-        #         password=QT_CONFIG['test_db_password'],
-        #         db_name=QT_CONFIG['test_db_name']
-        # )
+        # self.test_ds = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
+        self.test_ds = DataSource(
+                'db',
+                host=QT_CONFIG['test_db_host'],
+                port=QT_CONFIG['test_db_port'],
+                user=QT_CONFIG['test_db_user'],
+                password=QT_CONFIG['test_db_password'],
+                db_name=QT_CONFIG['test_db_name']
+        )
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
             if self.test_ds.table_data_exists(table):
@@ -1190,7 +1190,7 @@ class TestLiveTrade(unittest.TestCase):
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         self.assertEqual(signal_detail['status'], 'submitted')
-        self.assertIsInstance(signal_detail['submitted_time'], str)
+        self.assertIsInstance(signal_detail['submitted_time'], (str, pd.Timestamp))
 
         # create second batch of signals, quantity exceeds available amount
         parsed_signals_batch_2 = (
@@ -1784,8 +1784,8 @@ class TestLiveTrade(unittest.TestCase):
         trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
         # check cash availability
         own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
-        self.assertEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
-        self.assertEqual(available_cash, 50025 + 100 * 90.0 - 5.5)
+        self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
+        self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
         own_qty, available_qty = get_account_position_availabilities(
@@ -1820,8 +1820,8 @@ class TestLiveTrade(unittest.TestCase):
               f'{read_trade_results_by_order_id(9, data_source=self.test_ds).loc[7].to_dict()}')
         # check cash availability
         own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
-        self.assertEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 100 * 191.0 - 23.9)
-        self.assertEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
+        self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 100 * 191.0 - 23.9)
+        self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
         own_qty, available_qty = get_account_position_availabilities(
