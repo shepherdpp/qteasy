@@ -27,7 +27,7 @@ from qteasy.trading import query_trade_signals, submit_signal, output_trade_sign
 from qteasy.trading import get_position_ids, read_trade_signal_detail, save_parsed_trade_signals
 from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities, submit_signal
 from qteasy.trading import write_trade_result, read_trade_result_by_id, read_trade_results_by_signal_id
-from qteasy.trading import process_trade_result, update_trade_result
+from qteasy.trading import process_trade_result, process_trade_delivery, update_trade_result
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -681,9 +681,8 @@ class TestLiveTrade(unittest.TestCase):
             update_trade_signal(1, status='submitted', data_source=self.test_ds, raise_if_status_wrong=True)
             update_trade_signal(1, status='partial-filled', data_source=self.test_ds, raise_if_status_wrong=True)
             update_trade_signal(1, status='filled', data_source=self.test_ds, raise_if_status_wrong=True)
-        self.assertIsNone(
-                update_trade_signal(1, status='test', data_source=self.test_ds, raise_if_status_wrong=False)
-        )
+            update_trade_signal(1, status='test', data_source=self.test_ds, raise_if_status_wrong=False)
+
         self.assertIsNone(
                 update_trade_signal(1, status='created', data_source=self.test_ds, raise_if_status_wrong=False)
         )
@@ -1421,17 +1420,6 @@ class TestLiveTrade(unittest.TestCase):
                 'filled_qty': 200.0,
                 'price': 10.5,
                 'transaction_fee': 5.0,
-                'execution_time': 'now',
-                'canceled_qty': 0.0,
-                'delivery_amount': 200.0,
-                'delivery_status': 'ND',
-            }, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
-            write_trade_result({
-                'signal_id': 1,
-                'filled_qty': 200.0,
-                'price': 10.5,
-                'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': '0.0',
                 'delivery_amount': 200.0,
@@ -1505,6 +1493,10 @@ class TestLiveTrade(unittest.TestCase):
         if self.test_ds.table_data_exists('sys_op_trade_results'):
             self.test_ds.drop_table_data('sys_op_trade_results')
         # 重新创建account及trade_signal数据, position会在submit_signal中自动创建
+        delivery_config = {
+            'cash_delivery_period': 0,
+            'stock_delivery_period': 0,
+        }
         # create test accounts
         new_account('test_user1', 100000, self.test_ds)
         # create test trade signals
@@ -1553,7 +1545,9 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+
         # 生成交易结果并逐个处理, 注意raw_results没有execution_time字段
+        # signal 1 is filled with 100 shares at 60.5, transaction fee is 5.0
         raw_trade_result = {
             'signal_id': 1,
             'filled_qty': 100,
@@ -1561,7 +1555,283 @@ class TestLiveTrade(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty': 0.0,
         }
-        process_trade_result(raw_trade_result, data_source=self.test_ds)
+        print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
+              f'before processing trade result 1, trade signal: \n'
+              f'{read_trade_signal_detail(1, data_source=self.test_ds)}\n')
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 1, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 1: \n'
+              f'{read_trade_signal_detail(1, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 1: \n'
+              f'{read_trade_results_by_signal_id(1, data_source=self.test_ds).loc[1].to_dict()}')
+        trade_result = read_trade_result_by_id(1, data_source=self.test_ds)
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0)
+        self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
+        trade_signal_detail = read_trade_signal_detail(1, data_source=self.test_ds)
+        # check available qty availability
+        own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 0.0 + 100.0)
+        self.assertEqual(int(available_qty), 0.0 + 0.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'filled')
+        # check trade result status
+        self.assertEqual(trade_result['delivery_amount'], 100)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+
+        # signal 2 is cancled with no transaction fee
+        raw_trade_result = {
+            'signal_id': 2,
+            'filled_qty': 0,
+            'price': 0.0,
+            'transaction_fee': 0.0,
+            'canceled_qty': 100.0,
+        }
+        print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
+              f'before processing trade result 2, trade signal: \n'
+              f'{read_trade_signal_detail(2, data_source=self.test_ds)}\n')
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 2, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 2: \n'
+              f'{read_trade_signal_detail(2, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 2: \n'
+              f'{read_trade_results_by_signal_id(2, data_source=self.test_ds).loc[2].to_dict()}')
+        trade_result = read_trade_result_by_id(2, data_source=self.test_ds)
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0)
+        self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
+        trade_signal_detail = read_trade_signal_detail(2, data_source=self.test_ds)
+        # check available qty availability
+        own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 0.0 + 0.0)
+        self.assertEqual(int(available_qty), 0.0 + 0.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'canceled')
+        # check trade result status
+        self.assertEqual(trade_result['delivery_amount'], 0)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+
+        # signal 3 is partially filled with 100 shares bought at 81, with transaction fee 12.5
+        raw_trade_result = {
+            'signal_id': 3,
+            'filled_qty': 100.0,
+            'price': 81.0,
+            'transaction_fee': 12.5,
+            'canceled_qty': 0.0,
+        }
+        print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
+              f'before processing trade result 3, trade signal: \n'
+              f'{read_trade_signal_detail(3, data_source=self.test_ds)}\n')
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 3, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 3: \n'
+              f'{read_trade_signal_detail(3, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 3: \n'
+              f'{read_trade_results_by_signal_id(3, data_source=self.test_ds).loc[3].to_dict()}')
+        trade_result = read_trade_result_by_id(3, data_source=self.test_ds)
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5)
+        self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5)
+        trade_signal_detail = read_trade_signal_detail(3, data_source=self.test_ds)
+        # check available qty availability
+        own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 0.0 + 100.0)
+        self.assertEqual(int(available_qty), 0.0 + 0.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'partial-filled')
+        # check trade result status
+        self.assertEqual(trade_result['delivery_amount'], 100)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+
+        # signal 4 is filled with 400 shares bought at 89.5, with transaction fee 7.5
+        raw_trade_result = {
+            'signal_id': 4,
+            'filled_qty': 400.0,
+            'price': 89.5,
+            'transaction_fee': 7.5,
+            'canceled_qty': 0.0,
+        }
+        print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
+              f'before processing trade result 4, trade signal: \n'
+              f'{read_trade_signal_detail(4, data_source=self.test_ds)}\n')
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 4, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 4: \n'
+              f'{read_trade_signal_detail(4, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 4: \n'
+              f'{read_trade_results_by_signal_id(4, data_source=self.test_ds).loc[4].to_dict()}')
+
+        # create more test signals, with sell signals
+        parsed_signals_batch_1 = (
+            ['AAPL', 'GOOG', 'MSFT', 'AMZN', 'FB', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['sell', 'sell', 'sell', 'sell', 'sell'],
+            [100, 100, 300, 400, 500],
+            [90.0, 90.0, 90.0, 120.0, 30.0],
+        )
+        # save first batch of signals
+        signal_ids = save_parsed_trade_signals(
+                account_id=1,
+                symbols=parsed_signals_batch_1[0],
+                positions=parsed_signals_batch_1[1],
+                directions=parsed_signals_batch_1[2],
+                quantities=parsed_signals_batch_1[3],
+                prices=parsed_signals_batch_1[4],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(signal_ids, [6, 7, 8, 9, 10])
+        # 逐个提交交易信号并打印相关余额的变化, 重复提交信号不会成功，只会返回None
+        self.assertIsNone(submit_signal(1, data_source=self.test_ds))
+        self.assertEqual(submit_signal(6, data_source=self.test_ds), 6)
+        self.assertEqual(submit_signal(7, data_source=self.test_ds), 7)
+        self.assertEqual(submit_signal(9, data_source=self.test_ds), 9)
+
+        # signal 7 is filled with 100 shares sold at 90.0, with transaction fee 5.5
+        raw_trade_result = {
+            'signal_id': 7,
+            'filled_qty': 100.0,
+            'price': 90.0,
+            'transaction_fee': 5.5,
+            'canceled_qty': 0.0,
+        }
+        print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
+              f'before processing trade result 7, trade signal: \n'
+              f'{read_trade_signal_detail(7, data_source=self.test_ds)}\n')
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 7, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 7: \n'
+              f'{read_trade_signal_detail(7, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 7: \n'
+              f'{read_trade_results_by_signal_id(7, data_source=self.test_ds).loc[5].to_dict()}')
+        trade_result = read_trade_result_by_id(5, data_source=self.test_ds)
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5 + 100 * 90.0 - 5.5)
+        self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
+        trade_signal_detail = read_trade_signal_detail(7, data_source=self.test_ds)
+        # check available qty availability
+        own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 100.0 - 100.0)
+        self.assertEqual(int(available_qty), 100.0 - 100.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'filled')
+        # check trade result status
+        self.assertEqual(trade_result['delivery_amount'], 8994.5)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+
+        # signal 9 is partially filled with 300 shares sold at 140.0, with transaction fee 65.3
+        raw_trade_result = {
+            'signal_id': 9,
+            'filled_qty': 300.0,
+            'price': 140.0,
+            'transaction_fee': 65.3,
+            'canceled_qty': 0.0,
+        }
+        print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
+              f'before processing trade result 9, trade signal: \n'
+              f'{read_trade_signal_detail(9, data_source=self.test_ds)}\n')
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 9, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 9: \n'
+              f'{read_trade_signal_detail(9, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 9: \n'
+              f'{read_trade_results_by_signal_id(9, data_source=self.test_ds).loc[6].to_dict()}')
+        trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
+        self.assertEqual(available_cash, 50025 + 100 * 90.0 - 5.5)
+        trade_signal_detail = read_trade_signal_detail(9, data_source=self.test_ds)
+        # check available qty availability
+        own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 400.0 - 300.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'partial-filled')
+        # check trade result status
+        self.assertEqual(trade_result['delivery_amount'], 41934.7)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+
+        # fully fill signal 9
+        raw_trade_result = {
+            'signal_id':       9,
+            'filled_qty':      100.0,
+            'price':           191.0,
+            'transaction_fee': 23.9,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        print(f'after processing trade result 9, position data of account_id == 1: \n'
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}\n'
+              f'trade_signal_detail of signal_id == 9: \n'
+              f'{read_trade_signal_detail(9, data_source=self.test_ds)}\n'
+              f'trade_result_detail of signal_id == 9: \n'
+              f'{read_trade_results_by_signal_id(9, data_source=self.test_ds).loc[7].to_dict()}')
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 100 * 191.0 - 23.9)
+        self.assertEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
+        trade_signal_detail = read_trade_signal_detail(9, data_source=self.test_ds)
+        # check available qty availability
+        own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 400.0 - 300.0 - 100.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0 - 100.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'filled')
+        # check trade result status
+        trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
+        self.assertEqual(trade_result['delivery_amount'], 41934.7)
+        self.assertEqual(trade_result['delivery_status'], 'DL')
+        trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
+        self.assertEqual(trade_result['delivery_amount'], 19076.1)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
 
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):

@@ -1567,6 +1567,8 @@ class TestDataSource(unittest.TestCase):
             'transaction_fee': 0.0,
             'execution_time': pd.to_datetime('20230220'),
             'canceled_qty': 0,
+            'delivery_amount': 0.0,
+            'delivery_status': 'ND',
         }
         test_account_data = {
             'user_name': 'John Doe',
@@ -1581,6 +1583,15 @@ class TestDataSource(unittest.TestCase):
             'qty': 100,
             'available_qty': 100.
         }
+        test_shuffled_signal_data = {
+            'pos_id': 1,
+            'qty': 300,
+            'status': 'filled',
+            'order_type': 'market',
+            'price': 15.0,
+            'direction': 'sell',
+            'submitted_time': pd.to_datetime('20230223'),
+        }  # test if shuffled data can be inserted into database
         # 生成五条不同的模拟信号数据
         test_multiple_signal_data = [
             {
@@ -1637,6 +1648,8 @@ class TestDataSource(unittest.TestCase):
                 'transaction_fee': 0.0,
                 'execution_time': pd.to_datetime('20230220'),
                 'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
             },
             {
                 'signal_id': 2,
@@ -1645,6 +1658,8 @@ class TestDataSource(unittest.TestCase):
                 'transaction_fee': 0.0,
                 'execution_time': pd.to_datetime('20230220'),
                 'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
             },
             {
                 'signal_id': 3,
@@ -1653,6 +1668,8 @@ class TestDataSource(unittest.TestCase):
                 'transaction_fee': 0.0,
                 'execution_time': pd.to_datetime('20230221'),
                 'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
             },
             {
                 'signal_id': 4,
@@ -1661,6 +1678,8 @@ class TestDataSource(unittest.TestCase):
                 'transaction_fee': 0.0,
                 'execution_time': pd.to_datetime('20230221'),
                 'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
             },
             {
                 'signal_id': 5,
@@ -1669,6 +1688,8 @@ class TestDataSource(unittest.TestCase):
                 'transaction_fee': 0.0,
                 'execution_time': pd.to_datetime('20230221'),
                 'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
             },
 
         ]
@@ -1808,6 +1829,21 @@ class TestDataSource(unittest.TestCase):
                         self.assertEqual(origin, pd.to_datetime(read))
                     else:
                         self.assertEqual(origin, read)
+                # if ds.table_data_exists(table):
+                #     ds.drop_table_data(table)
+                print(f'write and read shuffled data')
+                ds.insert_sys_table_data('sys_op_trade_signals', **test_shuffled_signal_data)
+                last_id = ds.get_sys_table_last_id('sys_op_trade_signals')
+                res = ds.read_sys_table_data('sys_op_trade_signals', record_id=last_id)
+                print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
+                      f'{res}\n')
+                self.assertIsNotNone(res)
+                self.assertEqual(test_shuffled_signal_data['pos_id'], res['pos_id'])
+                self.assertEqual(test_shuffled_signal_data['order_type'], res['order_type'])
+                self.assertEqual(test_shuffled_signal_data['status'], res['status'])
+                self.assertEqual(test_shuffled_signal_data['direction'], res['direction'])
+                self.assertEqual(test_shuffled_signal_data['price'], res['price'])
+                self.assertEqual(test_shuffled_signal_data['qty'], res['qty'])
 
             # 测试传入无效的id时是否引发KeyError异常
             print(f'test passing invalid id to read_sys_table_data')

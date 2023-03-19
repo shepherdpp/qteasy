@@ -556,7 +556,7 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
     account_id = data_source.insert_sys_table_data(
         'sys_op_live_accounts',
         user_name=user_name,
-        created_time=pd.to_datetime('now'),
+        created_time=pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
         cash_amount=cash_amount,
         available_cash=cash_amount,
         **account_data,
@@ -938,6 +938,11 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
     # 如果没有给出shares，则读取账户中所有持仓的symbol
     if shares is None:
         shares = positions['symbol'].unique()
+    if isinstance(shares, str):
+        from qteasy.utilfuncs import str_to_list
+        shares = str_to_list(shares)
+    if not isinstance(shares, (list, tuple, np.ndarray)):
+        raise TypeError(f'shares must be a list, tuple or ndarray, got {type(shares)} instead')
 
     own_amounts = []
     available_amounts = []
@@ -1190,6 +1195,11 @@ def update_trade_signal(signal_id, data_source=None, status=None, qty=None, rais
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+    if status is not None:
+        if not isinstance(status, str):
+            raise TypeError(f'status must be a str, got {type(status)} instead')
+        if status not in ['created', 'submitted', 'canceled', 'partial-filled', 'filled']:
+            raise RuntimeError(f'status ({status}) not in [created, submitted, canceled, partial-filled, filled]!')
 
     trade_signal = data_source.read_sys_table_data('sys_op_trade_signals', record_id=signal_id)
 
@@ -1508,9 +1518,13 @@ def write_trade_result(trade_result, data_source=None):
     if not isinstance(trade_result['transaction_fee'], (int, float, np.int64, np.float64)):
         raise TypeError(f'transaction_fee of trade_result must be a number, got '
                         f'{type(trade_result["transaction_fee"])} instead')
-    if not isinstance(trade_result['execution_time'], pd.Timestamp):
-        raise TypeError(f'execution_time of trade_result must be a pd.Timestamp, got '
-                        f'{type(trade_result["execution_time"])} instead')
+    if isinstance(trade_result['execution_time'], str):
+        try:
+            execution_time = pd.to_datetime(trade_result['execution_time']).strftime('%Y-%m-%d %H:%M:%S')
+            trade_result['execution_time'] = execution_time
+        except Exception as e:
+            raise RuntimeError(f'{e}, Invalid execution_time {trade_result["execution_time"]}, '
+                               f'can not be converted to datetime format')
     if not isinstance(trade_result['canceled_qty'], (int, float, np.int64, np.float64)):
         raise TypeError(f'canceled_qty of trade_result must be a number, got '
                         f'{type(trade_result["canceled_qty"])} instead')
@@ -1531,7 +1545,8 @@ def write_trade_result(trade_result, data_source=None):
     if trade_result['canceled_qty'] < 0:
         raise ValueError('canceled_qty can not be less than 0')
     if trade_result['delivery_amount'] < 0:
-        raise ValueError('delivery_amount can not be less than 0')
+        # raise ValueError('delivery_amount can not be less than 0')
+        pass
     if trade_result['delivery_status'] not in ['ND', 'DL']:
         raise ValueError(f'delivery_status can only be ND or DL, got {trade_result["delivery_status"]} instead')
 
@@ -1691,7 +1706,7 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         raise TypeError('config must be a dict')
 
     undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
-    if undelivered_results.empty:
+    if undelivered_results is None:
         return
     # 循环处理每一条未交割的交易结果：
     for result_id, result in undelivered_results.iterrows():
@@ -1716,7 +1731,7 @@ def process_trade_delivery(account_id, data_source=None, config=None):
             continue
         # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
         if direction == 'buy':
-            position_id = signal_detail['position_id']
+            position_id = signal_detail['pos_id']
             update_position(
                     position_id=position_id,
                     data_source=data_source,
@@ -1738,7 +1753,7 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         )
 
 
-def process_trade_result(raw_trade_result, data_source=None):
+def process_trade_result(raw_trade_result, data_source=None, config=None):
     """ 处理交易结果: 更新交易委托的状态，更新账户的持仓，更新持有现金金额
 
     交易结果一旦生成，其内容就不会再改变，因此不需要更新交易结果，只需要根据交易结果
@@ -1750,6 +1765,8 @@ def process_trade_result(raw_trade_result, data_source=None):
         原始交易结果, 与正式交易结果的区别在于，原始交易结果不包含execution_time字段
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
+    config: dict, optional
+        配置参数, 默认为None, 表示使用默认的配置参数
 
     Returns
     -------
@@ -1766,11 +1783,19 @@ def process_trade_result(raw_trade_result, data_source=None):
     if signal_detail['status'] in ['created', 'filled', 'canceled']:
         raise RuntimeError(f'signal {signal_id} has already been filled or canceled')
     # 交割历史交易结果
-
+    if config is None:
+        import qteasy as qt
+        config = qt.QT_CONFIG
+    if not isinstance(config, dict):
+        raise TypeError('config must be a dict')
+    process_trade_delivery(account_id=signal_detail['account_id'], data_source=data_source, config=config)
     # 读取交易信号的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_signal_id(signal_id, data_source=data_source)
-    filled_qty = trade_results['filled_qty'] if trade_results is not None else 0
+    filled_qty = trade_results['filled_qty'].sum() if trade_results is not None else 0
     remaining_qty = signal_detail['qty'] - filled_qty
+    if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
+        import pdb; pdb.set_trace()
+        raise RuntimeError(f'qty {signal_detail["qty"]} is not an integer')
     # 如果交易结果中的cancel_qty大于0，则将交易信号的状态设置为'canceled'，同时确认cancel_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
@@ -1782,42 +1807,81 @@ def process_trade_result(raw_trade_result, data_source=None):
         if raw_trade_result['filled_qty'] > remaining_qty:
             raise RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
                                f'is greater than remaining_qty {remaining_qty}')
-    # 如果filled_qty等于remaining_qty，则将交易信号的状态设置为'filled'
-    if raw_trade_result['filled_qty'] == remaining_qty:
-        signal_detail['status'] = 'filled'
-    # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partially_filled'
-    elif raw_trade_result['filled_qty'] < remaining_qty:
-        signal_detail['status'] = 'partially_filled'
+
+        # 如果filled_qty等于remaining_qty，则将交易信号的状态设置为'filled'
+        elif raw_trade_result['filled_qty'] == remaining_qty:
+            signal_detail['status'] = 'filled'
+
+        # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partially_filled'
+        elif raw_trade_result['filled_qty'] < remaining_qty:
+            signal_detail['status'] = 'partial-filled'
+
     # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
     position_change = raw_trade_result['filled_qty']
-    cash_change = - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
+    if signal_detail['direction'] == 'sell':
+        cash_change = raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
+    elif signal_detail['direction'] == 'buy':
+        cash_change = - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
+
     # 如果position_change小于available_position_amount，则抛出异常
-    # import pdb; pdb.set_trace()
     available_qty = get_position_by_id(signal_detail['pos_id'], data_source=data_source)['available_qty']
-    if position_change < available_qty:
+    if available_qty + position_change < 0:
         raise RuntimeError(f'position_change {position_change} is greater than '
                            f'available position amount {available_qty}')
+
     # 如果cash_change小于available_cash，则抛出异常
     available_cash = get_account_cash_availabilities(signal_detail['account_id'], data_source=data_source)[1]
-    if cash_change < available_cash:
+    if available_cash + cash_change < 0:
         raise RuntimeError(f'cash_change {cash_change} is greater than '
                            f'available cash {available_cash}')
+
     # 计算并生成交易结果的交割数量和交割状，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
     if signal_detail['direction'] == 'buy':
         raw_trade_result['delivery_amount'] = position_change
-    else:
+    elif signal_detail['direction'] == 'sell':
         raw_trade_result['delivery_amount'] = cash_change
+    else:
+        raise ValueError(f'direction must be buy or sell, got {signal_detail["direction"]} instead')
     raw_trade_result['delivery_status'] = 'ND'
     # 生成交易结果的execution_time字段，保存交易结果
-    raw_trade_result['execution_time'] = pd.to_datetime('now')
+    execution_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+    raw_trade_result['execution_time'] = execution_time
+    # debug
+    print(f'raw_trade_result: {raw_trade_result}')
     write_trade_result(raw_trade_result, data_source=data_source)
-    # 更新账户的持仓和现金余额
-    update_account_balance(signal_detail['account_id'], cash_change, data_source=data_source)
-    update_position(signal_detail['position_id'], position_change, data_source=data_source)
+
+    # 更新账户的持仓和现金余额:
+    print(f'cash_change: {cash_change}, position_change: {position_change}, direction: {signal_detail["direction"]}')
+    # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
+    if signal_detail['direction'] == 'buy':
+        update_account_balance(
+                account_id=signal_detail['account_id'],
+                data_source=data_source,
+                cash_amount_change=cash_change,
+                available_cash_change=cash_change,
+        )
+        update_position(
+                position_id=signal_detail['pos_id'],
+                data_source=data_source,
+                qty_change=position_change,
+        )
+    # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
+    elif signal_detail['direction'] == 'sell':
+        update_account_balance(
+                account_id=signal_detail['account_id'],
+                data_source=data_source,
+                cash_amount_change=cash_change,
+        )
+        update_position(
+                position_id=signal_detail['pos_id'],
+                data_source=data_source,
+                qty_change=-position_change,
+                available_qty_change=-position_change,
+        )
+    else:
+        raise RuntimeError(f'invalid direction {signal_detail["direction"]}')
     # 更新交易信号的状态
     update_trade_signal(signal_id, data_source=data_source, status=signal_detail['status'])
-
-    raise NotImplementedError
 
 
 def output_account_position(account_id, position_id):

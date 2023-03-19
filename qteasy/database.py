@@ -1330,7 +1330,7 @@ TABLE_SCHEMA = {
     'sys_op_trade_signals':  # 交易信号表 TODO: 应该将此表重命名为交易订单表sys_op_trade_orders
         {'columns':    ['signal_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
                         'submitted_time', 'status'],
-         'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(5)', 'float', 'float',
+         'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'float', 'float',
                         'datetime', 'varchar(10)'],
          'remarks':    ['交易信号ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
                         '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
@@ -3606,10 +3606,11 @@ class DataSource:
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         data_columns = [col for col in columns if col not in primary_keys]
         # 检查data的key是否与data_column完全一致，如果不一致，则抛出异常
-        if list(data.keys()) != data_columns:
+        if any(k not in data_columns for k in data.keys()) or any(k not in data.keys() for k in data_columns):
             raise KeyError(f'Input data keys must be the same as the table data columns, '
                            f'got {list(data.keys())} vs {data_columns}')
         df = pd.DataFrame(data, index=[record_id], columns=data.keys())
+        df = df.reindex(columns=columns)
         df.index.name = primary_keys[0]
 
         # 插入数据
