@@ -1313,21 +1313,21 @@ TABLE_MASTERS = {
 TABLE_SCHEMA = {
 
     # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
-    'sys_op_live_accounts':
+    'sys_op_live_accounts':  # 交易账户表
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash'],
          'dtypes':     ['int', 'varchar(20)', 'datetime', 'float', 'float'],
          'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额'],
          'prime_keys': [0]
          },
 
-    'sys_op_positions':
+    'sys_op_positions':  # 持仓表
         {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty'],
          'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'float', 'float'],
          'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量'],
          'prime_keys': [0]
          },
 
-    'sys_op_trade_signals':
+    'sys_op_trade_signals':  # 交易信号表 TODO: 应该将此表重命名为交易订单表sys_op_trade_orders
         {'columns':    ['signal_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
                         'submitted_time', 'status'],
          'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(5)', 'float', 'float',
@@ -1337,15 +1337,22 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'sys_op_trade_results':
+    'sys_op_trade_results':  # 交易结果表
         {'columns':    ['result_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
-                        'canceled_qty'],
+                        'canceled_qty', 'delivery_amount', 'delivery_status'],
          'dtypes':     ['int', 'int', 'float', 'float', 'float', 'datetime',
-                        'float'],
+                        'float', 'float', 'varchar(2)'],
          'remarks':    ['交易结果ID', '交易信号ID', '成交数量', '成交价格', '交易费用', '成交时间',
-                        '取消交易数量'],
-         'prime_keys': [0]
+                        '取消交易数量', '交割数量(现金或证券)', '交割状态{ND, DL}'],
+         'prime_keys': [0],
          },
+    # TODO: 是否要将交易结果交割表独立出来？后面再考虑
+    # 'sys_op_deliveries':  # 交易结果交割表
+    #     {'columns':    ['delivery_id', 'result_id', 'delivery_type', 'amount', 'execution_time', 'status'],
+    #      'dtypes':     ['int', 'int', 'varchar(10)', 'float', 'datetime', 'varchar(15)'],
+    #      'remarks':    ['交割ID', '交易结果ID', '交割类型(cash/position)', '交割数量', '交割时间', '交割状态'],
+    #      'prime_keys': [0],
+    #      },
 
     'trade_calendar':
         {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],

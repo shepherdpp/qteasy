@@ -27,7 +27,7 @@ from qteasy.trading import query_trade_signals, submit_signal, output_trade_sign
 from qteasy.trading import get_position_ids, read_trade_signal_detail, save_parsed_trade_signals
 from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities, submit_signal
 from qteasy.trading import write_trade_result, read_trade_result_by_id, read_trade_results_by_signal_id
-from qteasy.trading import process_trade_result
+from qteasy.trading import process_trade_result, update_trade_result
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -1114,7 +1114,7 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60)
+        self.assertEqual(cash_availabilities[1], 100000)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty']
         aqty = position['available_qty']
@@ -1128,12 +1128,12 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60)
+        self.assertEqual(cash_availabilities[1], 100000)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [100, 100, 300, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_signal(3, data_source=self.test_ds)
         print(f'after submitting signal 3, position data of account_id == 1: \n'
@@ -1142,12 +1142,12 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60)
+        self.assertEqual(cash_availabilities[1], 100000)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [100, 100, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_signal(4, data_source=self.test_ds)
         print(f'after submitting signal 4, position data of account_id == 1: \n'
@@ -1156,12 +1156,12 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90)
+        self.assertEqual(cash_availabilities[1], 100000)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [100, 100, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_signal(5, data_source=self.test_ds)
         print(f'after submitting signal 5, position data of account_id == 1: \n'
@@ -1170,12 +1170,12 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        self.assertEqual(cash_availabilities[1], 100000)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [100, 100, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         # check status of all signals
         signal_detail = read_trade_signal_detail(1, data_source=self.test_ds)
@@ -1214,62 +1214,62 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        self.assertEqual(cash_availabilities[1], 100000)
         signal = read_trade_signal_detail(6, data_source=self.test_ds)
         self.assertEqual(signal['qty'], 100)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [0, 100, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        submit_signal(7, data_source=self.test_ds)  # 此时需要卖出700股，但只有100股可用
+        submit_signal(7, data_source=self.test_ds)  # 此时需要卖出700股，但只有100股可用，按新规仅warning
         print(f'after submitting signal 7, position data of account_id == 1: \n'
-                f'{get_account_positions(1, data_source=self.test_ds)}\n'
-                f'cash availability of account_id == 1: \n'
-                f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+              f'{get_account_positions(1, data_source=self.test_ds)}\n'
+              f'cash availability of account_id == 1: \n'
+              f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        self.assertEqual(cash_availabilities[1], 100000)
         signal = read_trade_signal_detail(7, data_source=self.test_ds)
-        self.assertEqual(signal['qty'], 100)
+        self.assertEqual(signal['qty'], 700)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        submit_signal(8, data_source=self.test_ds)  # 此时需要卖出800股，但已经没有可用股份
+        submit_signal(8, data_source=self.test_ds)  # 此时需要卖出800股，但已经没有可用股份，按新规则仅warning
         print(f'after submitting signal 8, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100)
+        self.assertEqual(cash_availabilities[1], 100000)
         signal = read_trade_signal_detail(8, data_source=self.test_ds)
-        self.assertEqual(signal['qty'], 0)  # TODO, quantity is 0, 是否应该允许这种情况？
+        self.assertEqual(signal['qty'], 800)  # TODO, quantity is 0, 是否应该允许这种情况？
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        submit_signal(9, data_source=self.test_ds)  # 此时需要买入900股，但可用现金仅够买入200股
+        submit_signal(9, data_source=self.test_ds)  # 此时需要买入900股，但可用现金仅够买入200股，新规则仅warning
         print(f'after submitting signal 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100 - 200 * 40)
+        self.assertEqual(cash_availabilities[1], 100000)
         signal = read_trade_signal_detail(9, data_source=self.test_ds)
-        self.assertEqual(signal['qty'], 200)
+        self.assertEqual(signal['qty'], 900)
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_signal(10, data_source=self.test_ds)  # 此时已经没有可用现金
         print(f'after submitting signal 10, position data of account_id == 1: \n'
@@ -1278,14 +1278,14 @@ class TestLiveTrade(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         cash_availabilities = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(cash_availabilities[0], 100000)
-        self.assertEqual(cash_availabilities[1], 100000 - 100 * 60 - 400 * 90 - 500 * 100 - 200 * 40)
+        self.assertEqual(cash_availabilities[1], 100000)
         signal = read_trade_signal_detail(10, data_source=self.test_ds)
-        self.assertEqual(signal['qty'], 0)  # TODO, quantity is 0, 是否应该允许这种情况？
+        self.assertEqual(signal['qty'], 1000)  # TODO, quantity is 0, 是否应该允许这种情况？
         position = get_account_positions(1, data_source=self.test_ds)
         qty = position['qty'].sort_index()
         aqty = position['available_qty'].sort_index()
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
-        self.assertTrue(np.allclose(aqty, [0, 0, 0, 400, 500]))
+        self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
     def test_output_signal(self):
         """ test output_trade_signal function """
@@ -1304,6 +1304,8 @@ class TestLiveTrade(unittest.TestCase):
             'transaction_fee': 5.0,
             'execution_time': pd.to_datetime('now'),
             'canceled_qty': 0.0,
+            'delivery_amount': 100.0,
+            'delivery_status': 'ND',
         }
         # 将trade_result写入datasource
         result_id = write_trade_result(trade_result, data_source=self.test_ds)
@@ -1324,6 +1326,8 @@ class TestLiveTrade(unittest.TestCase):
             'transaction_fee': 5.0,
             'execution_time': pd.to_datetime('now'),
             'canceled_qty': 0.0,
+            'delivery_amount': 200.0,
+            'delivery_status': 'ND',
         }
         result_id = write_trade_result(trade_result, data_source=self.test_ds)
         self.assertEqual(result_id, 2)
@@ -1334,6 +1338,8 @@ class TestLiveTrade(unittest.TestCase):
             'transaction_fee': 5.0,
             'execution_time': pd.to_datetime('now'),
             'canceled_qty': 100.0,
+            'delivery_amount': 0.0,
+            'delivery_status': 'ND',
         }
         result_id = write_trade_result(trade_result, data_source=self.test_ds)
         self.assertEqual(result_id, 3)
@@ -1350,6 +1356,19 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(trade_results['transaction_fee'].loc[2], 5.0)
         self.assertEqual(trade_results['canceled_qty'].loc[1], 0.0)
         self.assertEqual(trade_results['canceled_qty'].loc[2], 0.0)
+        # test update_trade_result
+        trade_result = read_trade_result_by_id(1, data_source=self.test_ds)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+        update_trade_result(1, delivery_status='DL', data_source=self.test_ds)
+        trade_result = read_trade_result_by_id(1, data_source=self.test_ds)
+        self.assertEqual(trade_result['delivery_status'], 'DL')
+        # test update trade result with bad input
+        with self.assertRaises(TypeError):
+            update_trade_result(None, delivery_status='DL', data_source=self.test_ds)
+        with self.assertRaises(TypeError):
+            update_trade_result(1, delivery_status=2, data_source=self.test_ds)
+        with self.assertRaises(ValueError):
+            update_trade_result(1, delivery_status='Invalid Status', data_source=None)
 
         # test write_trade_result with bad input
         with self.assertRaises(TypeError):
@@ -1362,6 +1381,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
@@ -1380,6 +1401,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
@@ -1389,6 +1412,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': '5.0',
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
@@ -1398,6 +1423,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': 'now',
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
@@ -1407,6 +1434,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': '0.0',
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
@@ -1416,6 +1445,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
@@ -1425,6 +1456,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
@@ -1434,6 +1467,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
@@ -1443,6 +1478,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': -5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': 0.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
@@ -1452,6 +1489,8 @@ class TestLiveTrade(unittest.TestCase):
                 'transaction_fee': 5.0,
                 'execution_time': pd.to_datetime('now'),
                 'canceled_qty': -100.0,
+                'delivery_amount': 200.0,
+                'delivery_status': 'ND',
             }, data_source=self.test_ds)
 
     def test_process_trade_signals(self):
@@ -1518,7 +1557,7 @@ class TestLiveTrade(unittest.TestCase):
         raw_trade_result = {
             'signal_id': 1,
             'filled_qty': 100,
-            'price': 60.0,
+            'price': 60.5,
             'transaction_fee': 5.0,
             'canceled_qty': 0.0,
         }
