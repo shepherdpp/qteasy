@@ -1315,14 +1315,14 @@ TABLE_SCHEMA = {
     # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
     'sys_op_live_accounts':  # 交易账户表
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash'],
-         'dtypes':     ['int', 'varchar(20)', 'datetime', 'float', 'float'],
+         'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double'],
          'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额'],
          'prime_keys': [0]
          },
 
     'sys_op_positions':  # 持仓表
         {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty'],
-         'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'float', 'float'],
+         'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'double', 'double'],
          'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量'],
          'prime_keys': [0]
          },
@@ -1330,7 +1330,7 @@ TABLE_SCHEMA = {
     'sys_op_trade_orders':  # 交易订单表
         {'columns':    ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
                         'submitted_time', 'status'],
-         'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'float', 'float',
+         'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'double', 'double',
                         'datetime', 'varchar(15)'],
          'remarks':    ['交易订单ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
                         '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
@@ -1340,8 +1340,8 @@ TABLE_SCHEMA = {
     'sys_op_trade_results':  # 交易结果表
         {'columns':    ['result_id', 'order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                         'canceled_qty', 'delivery_amount', 'delivery_status'],
-         'dtypes':     ['int', 'int', 'float', 'float', 'float', 'datetime',
-                        'float', 'float', 'varchar(2)'],
+         'dtypes':     ['int', 'int', 'double', 'double', 'double', 'datetime',
+                        'double', 'double', 'varchar(2)'],
          'remarks':    ['交易结果ID', '交易订单ID', '成交数量', '成交价格', '交易费用', '成交时间',
                         '取消交易数量', '交割数量(现金或证券)', '交割状态{ND, DL}'],
          'prime_keys': [0],
