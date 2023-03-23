@@ -2731,16 +2731,16 @@ def _evaluate_all_parameters(par_generator,
     # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
-        proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_evaluate_one_parameter,
-                                    par,
-                                    op,
-                                    trade_price_list,
-                                    benchmark_history_data,
-                                    benchmark_history_data_type,
-                                    config,
-                                    stage): par for par in
-                   par_generator}
+        with ProcessPoolExecutor() as proc_pool:
+            futures = {proc_pool.submit(_evaluate_one_parameter,
+                                        par,
+                                        op,
+                                        trade_price_list,
+                                        benchmark_history_data,
+                                        benchmark_history_data_type,
+                                        config,
+                                        stage): par for par in
+                       par_generator}
         for f in as_completed(futures):
             eval_dict = f.result()
             target_value = eval_dict[opti_target]
