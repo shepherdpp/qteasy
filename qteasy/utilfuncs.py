@@ -789,20 +789,6 @@ def is_number_like(key: [str, int, float]) -> bool:
     if NUMBER_IDENTIFIER.match(key):
         return True
     return False
-    # if len(key) == 0:
-    #     return False
-    # if all(ch in '-0123456789.' for ch in key):
-    #     if key.count('.') + key.count('-') == len(key):
-    #         return False
-    #     if key.count('.') > 1 or key.count('-') > 1:
-    #         return False
-    #     if key.count('-') == 1 and key[0] != '-':
-    #         return False
-    #     if len(key) >= 2:
-    #         if key[0] == '0' and key[1] != '.':
-    #             return False
-    #     return True
-    # return False
 
 
 def is_integer_like(key: [str, int]) -> bool:
