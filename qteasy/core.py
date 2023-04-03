@@ -375,7 +375,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: apply_loop应该纯numpy化，删除operator作为传入参数，仅处理回测结果，将回测结果传出
+# TODO: 删除operator作为传入参数，仅处理回测结果，将回测结果传出
 #  函数后再处理为pandas.DataFrame，并在函数以外进行进一步的记录和处理，这里仅仅使用与回测相关
 #  的参数
 def apply_loop(operator: Operator,
@@ -421,7 +421,7 @@ def apply_loop(operator: Operator,
         每次交易卖出的最小份额单位
     inflation_rate: float, Default: 0.03
         现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
-    pt_signal_timing: str, {'lazy', 'eager'}  # TODO: 将参数值'aggressive'改为'eager'
+    pt_signal_timing: str, {'lazy', 'eager', 'aggressive'}  # TODO: 增加参数值 'aggressive' 的alias 'eager'
         控制PT模式下交易信号产生的时机
     pt_buy_threshold: float, Default: 0.1
         PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
