@@ -1367,7 +1367,7 @@ def refill_data_source(data_source=None, **kwargs):
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
     **kwargs
         DataSource.refill_local_source()的数据下载参数：
-        tables: str or list of str
+        tables: str or list of str, default: None
             需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
             例如，下面两种方式都合法且相同：
                 table='stock_indicator, stock_daily, income, stock_adj_factor'
@@ -1381,20 +1381,20 @@ def refill_data_source(data_source=None, **kwargs):
                 - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
                 - 'report'  : 财务报表
                 - 'comp'    : 指数成分表
-        dtypes: str or list of str
+        dtypes: str or list of str, default: None
             通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
             如果给出了tables，则dtypes参数会被忽略
-        freqs: str
+        freqs: str, default: None
             通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
             如果tables != all时，给出freq会排除掉freq与之不符的数据表
-        asset_types: Str of List of Str
+        asset_types: Str of List of Str, default: None
             通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
             如果tables != all时，给出asset_type会排除掉与之不符的数据表
-        start_date: DateTime Like
+        start_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        end_date: DateTime Like
+        end_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        code_range: str or list of str
+        code_range: str or list of str, default: None
             **注意，不是所有情况下code_range参数都有效
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
@@ -1406,21 +1406,21 @@ def refill_data_source(data_source=None, **kwargs):
                 两种写法等效，列表中列举出的证券数据会被下载
             - '000001:000300'
                 从'000001'开始到'000300'之间的所有证券数据都会被下载
-        merge_type: str
+        merge_type: str, default: 'ignore'
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
             - 'ignore' 默认值，不下载重复的数据
             - 'update' 下载并更新本地数据的重复部分
-        reversed_par_seq: Bool
+        reversed_par_seq: Bool, default: False
             是否逆序参数下载数据， 默认False
             - True:  逆序参数下载数据
             - False: 顺序参数下载数据
-        parallel: Bool
+        parallel: Bool, default: True
             是否启用多线程下载数据，默认True
             - True:  启用多线程下载数据
             - False: 禁用多线程下载
-        process_count: int
+        process_count: int, default: None
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
-        chunk_size: int
+        chunk_size: int, default: 100
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
 

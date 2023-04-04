@@ -1955,7 +1955,6 @@ class TestDataSource(unittest.TestCase):
                         position='long',
                 )
                 print(f'res: {res}')
-                raise NotImplementedError
 
 
 if __name__ == '__main__':

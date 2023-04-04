@@ -22,46 +22,45 @@ from qteasy import logger_core as logger
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
 
+
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
 #  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
 async def process_trade_signal(signal):
     # 将交易信号提交给交易平台或用户以获取交易结果
-    trade_results = await submit_order(signal)
-    # 更新交易信号状态并更新TUI
-    update_signal_status(order_id=signal['order_id'], status=trade_results['status'])
-    output_trade_order()
-    # 更新账户的持仓
-    update_account_position(account_id=signal['account_id'], position=trade_results['position_type'])
-    # 更新账户的可用资金
-    update_account(account_id=signal['account_id'], trade_results=trade_results)
-    # 刷新TUI
-    output_account_position()
+    raw_trade_results = await generate_trade_result(order_id, account_id=1)
+    # 处理交易结果
+    process_trade_result(raw_trade_result=raw_trade_results, config=config)
 
 
 async def live_trade_signals():
     while True:
         # 检查交易策略的运行状态：
         # 当有交易策略处于"运行"状态时，生成交易信号
-        signal = generate_signal()
+        signals = generate_signal()
         # 解析交易信号，将其转换为标准的交易信号
-        signal = parse_trade_signal(signal, config)
-        # 检查账户的可用资金是否充足
-        if not check_account_availability(account_id=signal['account_id']):
-            continue
-        # 检查账户的持仓是否允许下单
-        if not check_position_availability(account_id=signal['account_id']):
-            continue
-        # 将交易信号写入数据库
-        order_id = record_trade_signal(signal)
-        # 读取交易信号并将其显示在界面上
-        display_trade_signal(read_trade_order(order_id=order_id))
+        order_elements = parse_trade_signal(
+                signals=signals,
+                signal_type=signal_type,
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                config=config,
+        )
+
+        order_ids = save_parsed_trade_orders(
+                account_id=account_id,
+                **order_elements,
+        )
         # 提交交易信号并等待结果
-        asyncio.create_task(process_trade_signal(signal))
+        for order_id in order_ids:
+            asyncio.create_task(submit_order(order_id))
         # 继续生成后续交易信号
         await asyncio.sleep(1)
 
-#
-# asyncio.run(live_trade_signals())
+
+def live_trade():
+    asyncio.run(live_trade_signals())
 
 
 # all functions for live trade
