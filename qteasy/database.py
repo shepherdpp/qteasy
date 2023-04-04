@@ -1051,7 +1051,7 @@ DATA_TABLE_MAP = {
     ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '股票技术指标 - 近3月涨幅'],
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
-
+# Table_masters，用于存储表的基本信息
 TABLE_MASTER_COLUMNS = ['schema', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                         'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                         'start_end_chunk_size']
@@ -1309,7 +1309,7 @@ TABLE_MASTERS = {
          'Y', ''],
 
 }
-# 定义Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
+# Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_SCHEMA = {
 
     # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
@@ -2940,26 +2940,59 @@ class DataSource:
 
         return df
 
-    # TODO: 为什么需要这个函数？为什么不能用read_table_data+write_table_data()来实现？
-    def export_table_data(self, table, shares=None, start=None, end=None):
-        """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据
+    def export_table_data(self, table, file_name=None, file_path=None, shares=None, start=None, end=None):
+        """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据或察看数据
+
+        使用这个函数时，用户可以不用理会数据源的类型，只需要指定数据表名称，以及筛选条件即可
+        导出的数据会被保存为csv文件，用户可以自行指定文件名以及文件存储路径，如果不指定文件名，
+        则默认使用数据表名称作为文件名，如果不指定文件存储路径，则默认使用当前工作目录作为
+        文件存储路径
 
         Parameters
         ----------
         table: str
             数据表名称
-        shares: list，
+        file_name: str, optional
+            导出的文件名，如果不指定，则默认使用数据表名称作为文件名
+        file_path: str, optional
+            导出的文件存储路径，如果不指定，则默认使用当前工作目录作为文件存储路径
+        shares: list of str, optional
             ts_code筛选条件，为空时给出所有记录
-        start: str，
+        start: DateTime like, optional
             YYYYMMDD格式日期，为空时不筛选
-        end: str，
+        end: Datetime like，optional
             YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
 
         Returns
         -------
-        None
+        file_path_name: str
+            导出的文件的完整路径
         """
-        raise NotImplementedError
+        # 如果table不合法，则抛出异常
+        table_master = self.get_table_master()
+        non_sys_tables = table_master[table_master['table_usage'] != 'sys'].index.to_list()
+        if table not in non_sys_tables:
+            raise ValueError(f'Invalid table name: {table}!')
+
+        # 检查file_name是否合法
+        if file_name is None:
+            file_name = table
+        if file_path is None:
+            file_path = os.getcwd()
+        # 检查file_path_name是否存在，如果已经存在，则抛出异常
+        file_path_name = path.join(file_path, file_name)
+        if os.path.exists(file_path_name):
+            raise FileExistsError(f'File {file_path_name} already exists!')
+
+        # 读取table数据
+        df = self.read_table_data(table=table, shares=shares, start=start, end=end)
+        # 将数据写入文件
+        try:
+            df.to_csv(file_path_name)
+        except Exception as e:
+            raise RuntimeError(f'{e}, Failed to export table {table} to file {file_path_name}!')
+
+        return file_path_name
 
     def write_table_data(self, df, table, on_duplicate='ignore'):
         """ 将df中的数据写入本地数据表(本地文件或数据库)
@@ -5171,16 +5204,31 @@ def get_dtype_map():
 
 @lru_cache(maxsize=1)
 def get_table_map():
-    """ 获取所有内置数据表的清单
+    """ 获取所有内置数据表的清单，to be deprecated
 
     Returns
     -------
     pd.DataFrame
     数据表清单
     """
+    warnings.warn('get_table_map() is deprecated, use get_table_master() instead', DeprecationWarning)
     table_map = pd.DataFrame(TABLE_MASTERS).T
     table_map.columns = TABLE_MASTER_COLUMNS
     return table_map
+
+
+@lru_cache(maxsize=1)
+def get_table_master():
+    """ 获取所有内置数据表的清单
+
+    Returns
+    -------
+    table_masters: pd.DataFrame
+    数据表清单, 包含以下字段:
+    """
+    table_master = pd.DataFrame(TABLE_MASTERS).T
+    table_master.columns = TABLE_MASTER_COLUMNS
+    return table_master
 
 
 def find_history_data(s, fuzzy=False, match_description=False):
