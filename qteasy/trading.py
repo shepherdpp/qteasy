@@ -5,9 +5,10 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-02-20
 # Desc:
-#   functions that generates, submits
-# operation signals and processes
-# their results in live trade mode.
+#   functions related to live-trading,
+# including scheduling, data-acquisition
+# signal-to-ordering, and result
+# processing.
 # ======================================
 
 import asyncio
@@ -230,7 +231,7 @@ def parse_trade_signal(signals,
         cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
 
     # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = itemize_trade_signals(
+    symbols, positions, directions, quantities = signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,
@@ -404,13 +405,13 @@ def parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
-def itemize_trade_signals(shares,
-                          cash_to_spend,
-                          amounts_to_sell,
-                          prices,
-                          available_cash,
-                          available_amounts,
-                          allow_sell_short=False):
+def signal_to_order_elements(shares,
+                             cash_to_spend,
+                             amounts_to_sell,
+                             prices,
+                             available_cash,
+                             available_amounts,
+                             allow_sell_short=False):
     """ 逐个计算每一只资产的买入和卖出的数量，将parse_pt/ps/vs_signal函数计算出的交易信号逐项转化为
     交易订单 trade_orders
 

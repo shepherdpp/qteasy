@@ -18,7 +18,7 @@ import numpy as np
 
 from qteasy.database import DataSource
 
-from qteasy.trading import parse_pt_signals, parse_ps_signals, parse_vs_signals, itemize_trade_signals
+from qteasy.trading import parse_pt_signals, parse_ps_signals, parse_vs_signals, signal_to_order_elements
 from qteasy.trading import parse_trade_signal
 from qteasy.trading import new_account, get_account, update_account, update_account_balance, get_or_create_position
 from qteasy.trading import update_position, get_account_positions, check_account_availability
@@ -2033,7 +2033,7 @@ class TestLiveTrade(unittest.TestCase):
 
     def test_itemize_trade_signals(self):
         """ test itemize trade signals"""
-        # test itemize_trade_signals with only one symbol, buy 500 shares in long position
+        # test signal_to_order_elements with only one symbol, buy 500 shares in long position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([5000.0])
@@ -2041,7 +2041,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2056,13 +2056,13 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        # test itemize_trade_signals with only one symbol, sell 500 shares in long position
+        # test signal_to_order_elements with only one symbol, sell 500 shares in long position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
         amounts_to_sell = np.array([-500.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2075,7 +2075,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
 
-        # test itemize_trade_signals with only one symbol, sell 500 shares in short position
+        # test signal_to_order_elements with only one symbol, sell 500 shares in short position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -2083,7 +2083,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2097,7 +2097,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
 
-        # test itemize_trade_signals with only one symbol, buy 500 shares in short position
+        # test signal_to_order_elements with only one symbol, buy 500 shares in short position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([-5000.0])
@@ -2105,7 +2105,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2119,7 +2119,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
 
-        # test itemize_trade_signals with only one symbol, sell 1000 shares while only 500 shares available
+        # test signal_to_order_elements with only one symbol, sell 1000 shares while only 500 shares available
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -2127,7 +2127,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([700.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2141,7 +2141,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
 
-        # test itemize_trade_signals with only one symbol, sell 1000 short shares while only 500 short shares available
+        # test signal_to_order_elements with only one symbol, sell 1000 short shares while only 500 short shares available
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -2149,7 +2149,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([-700.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2163,7 +2163,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
 
-        # test itemize_trade_signals with only one symbol, buy shares with not enough cash
+        # test signal_to_order_elements with only one symbol, buy shares with not enough cash
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([10000.0])
@@ -2171,7 +2171,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 5000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2184,7 +2184,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
 
-        # test itemize_trade_signals with multiple symbols
+        # test signal_to_order_elements with multiple symbols
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
         prices = np.array([10., 10., 10., 10., 10., 10.])
         cash_to_spend = np.array([5000.0, 0.0, 0.0, 3500.0, -1000.0, 0.0])
@@ -2192,7 +2192,7 @@ class TestLiveTrade(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0])
 
-        symbols, positions, directions, quantities = itemize_trade_signals(
+        symbols, positions, directions, quantities = signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2206,7 +2206,7 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
 
-        # test itemize_trade_signals with multiple symbols, with a few sell amounts exceeding available amounts
+        # test signal_to_order_elements with multiple symbols, with a few sell amounts exceeding available amounts
 
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""
