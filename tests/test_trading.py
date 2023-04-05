@@ -19,15 +19,16 @@ import numpy as np
 from qteasy.database import DataSource
 
 from qteasy.trading import parse_pt_signals, parse_ps_signals, parse_vs_signals, signal_to_order_elements
-from qteasy.trading import parse_trade_signal
-from qteasy.trading import new_account, get_account, update_account, update_account_balance, get_or_create_position
-from qteasy.trading import update_position, get_account_positions, check_account_availability
-from qteasy.trading import check_position_availability, record_trade_signal, update_trade_order, read_trade_order
-from qteasy.trading import query_trade_orders, submit_order, output_trade_order, get_position_by_id
-from qteasy.trading import get_position_ids, read_trade_order_detail, save_parsed_trade_orders
-from qteasy.trading import get_account_cash_availabilities, get_account_position_availabilities, submit_order
-from qteasy.trading import write_trade_result, read_trade_result_by_id, read_trade_results_by_order_id
-from qteasy.trading import process_trade_result, process_trade_delivery, update_trade_result
+from qteasy.trading import parse_trade_signal, submit_order, output_trade_order
+from qteasy.trading import process_trade_result, process_trade_delivery
+
+from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
+from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
+from qteasy.trade_recording import record_trade_order, update_trade_order, read_trade_order
+from qteasy.trade_recording import query_trade_orders, get_position_by_id, update_trade_result
+from qteasy.trade_recording import get_position_ids, read_trade_order_detail, save_parsed_trade_orders
+from qteasy.trade_recording import get_account_cash_availabilities, get_account_position_availabilities
+from qteasy.trade_recording import write_trade_result, read_trade_result_by_id, read_trade_results_by_order_id
 
 
 class TestLiveTrade(unittest.TestCase):
@@ -301,104 +302,7 @@ class TestLiveTrade(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             update_position(100, data_source=self.test_ds, qty_change=100, available_qty_change=100)
 
-    # test 2nd foundational function: check_account_availability / check_position_availability
-    def test_check_availability(self):
-        """ test check_account_availability and position availability functions """
-        # clear existing accounts and positions, add test accounts and positions
-        if self.test_ds.table_data_exists('sys_op_live_accounts'):
-            self.test_ds.drop_table_data('sys_op_live_accounts')
-        if self.test_ds.table_data_exists('sys_op_positions'):
-            self.test_ds.drop_table_data('sys_op_positions')
-        # add test accounts
-        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
-        new_account(user_name='test_user2', cash_amount=100000, data_source=self.test_ds)
-        # add test positions
-        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
-        get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
-        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
-        get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
-        get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
-        get_or_create_position(2, 'MSFT', 'short', data_source=self.test_ds)
-        get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
-        get_or_create_position(2, 'GOOG', 'short', data_source=self.test_ds)
-        # set cash amount and available amounts for test accounts
-        update_account_balance(1, data_source=self.test_ds, cash_amount_change=100000, available_cash_change=100000)
-        update_account_balance(2, data_source=self.test_ds, cash_amount_change=200000, available_cash_change=200000)
-        # set position qty and available qty for test positions
-        update_position(1, data_source=self.test_ds, qty_change=100, available_qty_change=100)
-        update_position(2, data_source=self.test_ds, qty_change=200, available_qty_change=200)
-        update_position(3, data_source=self.test_ds, qty_change=300, available_qty_change=300)
-        update_position(4, data_source=self.test_ds, qty_change=400, available_qty_change=400)
-        update_position(5, data_source=self.test_ds, qty_change=500, available_qty_change=500)
-        update_position(6, data_source=self.test_ds, qty_change=600, available_qty_change=600)
-        update_position(7, data_source=self.test_ds, qty_change=700, available_qty_change=700)
-        update_position(8, data_source=self.test_ds, qty_change=800, available_qty_change=800)
-
-        # test check_account_availability function
-        res = check_account_availability(1, 10000, data_source=self.test_ds)
-        self.assertEqual(res, 1.0)
-        res = check_account_availability(1, 100000, data_source=self.test_ds)
-        self.assertEqual(res, 1.0)
-        res = check_account_availability(1, 400000, data_source=self.test_ds)
-        self.assertEqual(res, 0.5)
-        res = check_account_availability(2, 1000000, data_source=self.test_ds)
-        self.assertEqual(res, 0.3)
-
-        # test check_account_availability function with bad parameters
-        with self.assertRaises(TypeError):
-            check_account_availability('not an id', 10000, data_source=self.test_ds)
-        with self.assertRaises(ValueError):
-            check_account_availability(None, 10000, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_account_availability(0, 10000, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_account_availability(-1, 10000, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
-            check_account_availability(1, 'not a number', data_source=self.test_ds)
-        with self.assertRaises(TypeError):
-            check_account_availability(1, None, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_account_availability(1, -10000, data_source=self.test_ds)
-
-        # test check_position_availability function
-        res = check_position_availability(1, 'AAPL', 'long', 100, data_source=self.test_ds)
-        self.assertEqual(res, 1.0)
-        res = check_position_availability(1, 'AAPL', 'long', 1000, data_source=self.test_ds)
-        self.assertEqual(res, 0.1)
-        res = check_position_availability(1, 'AAPL', 'short', 400, data_source=self.test_ds)
-        self.assertEqual(res, 0.5)
-        res = check_position_availability(1, 'AAPL', 'short', 1000, data_source=self.test_ds)
-        self.assertEqual(res, 0.2)
-        res = check_position_availability(1, 'AAPL', 'short', 0, data_source=self.test_ds)
-        self.assertEqual(res, 1)
-        # test check_position_availability function with not existing position
-        with self.assertRaises(RuntimeError):
-            res = check_position_availability(1, 'MSFT', 'long', 100, data_source=self.test_ds)
-
-        # test check_position_availability function with bad parameters
-        with self.assertRaises(RuntimeError):
-            check_position_availability('not an id', 'AAPL', 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(None, 'AAPL', 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(0, 'AAPL', 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(-1, 'AAPL', 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(1, 1, 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(1, None, 'long', 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(1, 'AAPL', 1, 100, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(1, 'AAPL', None, 100, data_source=self.test_ds)
-        with self.assertRaises(TypeError):
-            check_position_availability(1, 'AAPL', 'long', 'not a number', data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(1, 'AAPL', 'long', None, data_source=self.test_ds)
-        with self.assertRaises(RuntimeError):
-            check_position_availability(1, 'AAPL', 'long', -100, data_source=self.test_ds)
-
+    # test 2nd foundational function: get_account_availability / get_position_availability
     def test_get_account_cash_and_position_availabilities(self):
         """ test function get_account_cash_availabilities and get_account_position_availabilities """
         # clear existing accounts and positions, add test accounts and positions
@@ -512,7 +416,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status': 'created',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id': 2,
             'direction': 'buy',
@@ -522,7 +426,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status': 'created',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id': 3,
             'direction': 'sell',
@@ -532,7 +436,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status': 'created',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         signal = read_trade_order(1, data_source=self.test_ds)
         self.assertIsInstance(signal, dict)
         self.assertEqual(signal['pos_id'], 1)
@@ -559,11 +463,11 @@ class TestLiveTrade(unittest.TestCase):
         self.assertEqual(signal['status'], 'created')
         # test record signal with bad input
         with self.assertRaises(TypeError):
-            record_trade_signal(None, data_source=self.test_ds)
+            record_trade_order(None, data_source=self.test_ds)
         with self.assertRaises(TypeError):
-            record_trade_signal(1, data_source=self.test_ds)
+            record_trade_order(1, data_source=self.test_ds)
         with self.assertRaises(TypeError):
-            record_trade_signal('test', data_source=self.test_ds)
+            record_trade_order('test', data_source=self.test_ds)
         bad_signal = {
             'account_id': 'a',
             'pos_id': 'a',
@@ -574,7 +478,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
         }
         with self.assertRaises(TypeError):
-            record_trade_signal(bad_signal, data_source=self.test_ds)
+            record_trade_order(bad_signal, data_source=self.test_ds)
         bad_signal = {
             'account_id': 1,
             'pos_id': 1,
@@ -585,7 +489,7 @@ class TestLiveTrade(unittest.TestCase):
             'status': 'created',
         }
         with self.assertRaises(RuntimeError):
-            record_trade_signal(bad_signal, data_source=self.test_ds)
+            record_trade_order(bad_signal, data_source=self.test_ds)
         # test read signal with bad input
         # self.assertIsNone(read_trade_order(None, data_source=self.test_ds))  # will return all signals
         with self.assertRaises(TypeError):
@@ -734,7 +638,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'created',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id':         2,
             'direction':      'buy',
@@ -744,7 +648,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'submitted',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id':         3,
             'direction':      'sell',
@@ -754,7 +658,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'filled',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id':         2,
             'direction':      'buy',
@@ -764,7 +668,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'submitted',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id':         3,
             'direction':      'buy',
@@ -774,7 +678,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'canceled',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id':         3,
             'direction':      'sell',
@@ -784,7 +688,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'partial-filled',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
             'pos_id':         2,
             'direction':      'sell',
@@ -794,7 +698,7 @@ class TestLiveTrade(unittest.TestCase):
             'submitted_time': None,
             'status':         'partial-filled',
         }
-        record_trade_signal(test_signal, data_source=self.test_ds)
+        record_trade_order(test_signal, data_source=self.test_ds)
 
         # test query all signals for a symbol and direction
         signals = query_trade_orders(1, symbol='AAPL', position='long', data_source=self.test_ds)
