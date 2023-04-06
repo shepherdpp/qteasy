@@ -217,61 +217,108 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
+    #
+    # str_element = []
+    # enough_accuracy = False
+    # if t >= 86400 and not enough_accuracy:
+    #     if estimation:
+    #         enough_accuracy = True
+    #     days = t // 86400
+    #     t = t - days * 86400
+    #     str_element.append(str(int(days)))
+    #     if short_form:
+    #         str_element.append('D')
+    #     else:
+    #         str_element.append('days ')
+    # if t >= 3600 and not enough_accuracy:
+    #     if estimation:
+    #         enough_accuracy = True
+    #     hours = t // 3600
+    #     t = t - hours * 3600
+    #     str_element.append(str(int(hours)))
+    #     if short_form:
+    #         str_element.append('H')
+    #     else:
+    #         str_element.append('hrs ')
+    # if t >= 60 and not enough_accuracy:
+    #     if estimation:
+    #         enough_accuracy = True
+    #     minutes = t // 60
+    #     t = t - minutes * 60
+    #     str_element.append(str(int(minutes)))
+    #     if short_form:
+    #         str_element.append('\'')
+    #     else:
+    #         str_element.append('min ')
+    # if t >= 1 and not enough_accuracy:
+    #     if estimation:
+    #         enough_accuracy = True
+    #     seconds = np.floor(t)
+    #     t = t - seconds
+    #     str_element.append(str(int(seconds)))
+    #     if short_form:
+    #         str_element.append('\"')
+    #     else:
+    #         str_element.append('s ')
+    # if not enough_accuracy:
+    #     milliseconds = np.round(t * 1000, 1)
+    #     if short_form:
+    #         str_element.append(f'{int(np.round(milliseconds)):03d}')
+    #     else:
+    #         str_element.append(str(milliseconds))
+    #         str_element.append('ms')
+    #
+    # return ''.join(str_element)
+    milliseconds = int(t * 1000)
 
-    str_element = []
-    enough_accuracy = False
-    if t >= 86400 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        days = t // 86400
-        t = t - days * 86400
-        str_element.append(str(int(days)))
-        if short_form:
-            str_element.append('D')
-        else:
-            str_element.append('days ')
-    if t >= 3600 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        hours = t // 3600
-        t = t - hours * 3600
-        str_element.append(str(int(hours)))
-        if short_form:
-            str_element.append('H')
-        else:
-            str_element.append('hrs ')
-    if t >= 60 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        minutes = t // 60
-        t = t - minutes * 60
-        str_element.append(str(int(minutes)))
-        if short_form:
-            str_element.append('\'')
-        else:
-            str_element.append('min ')
-    if t >= 1 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        seconds = np.floor(t)
-        t = t - seconds
-        str_element.append(str(int(seconds)))
-        if short_form:
-            str_element.append('\"')
-        else:
-            str_element.append('s ')
-    if not enough_accuracy:
-        milliseconds = np.round(t * 1000, 1)
-        if short_form:
-            str_element.append(f'{int(np.round(milliseconds)):03d}')
-        else:
-            str_element.append(str(milliseconds))
-            str_element.append('ms')
+    seconds, milliseconds = divmod(milliseconds, 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
 
-    return ''.join(str_element)
+    if short_form:
+        if estimation:
+            if days > 0:
+                return f'{days}D'
+            elif hours > 0:
+                return f'{hours}H'
+            elif minutes > 0:
+                return f'{minutes}\'{seconds:02}"'
+            else:
+                return f'{seconds:.03f}"'
+        else:
+            time_str = ""
+            if days > 0:
+                time_str += f"{days}D"
+            if hours > 0:
+                time_str += f"{hours}H"
+            if minutes > 0:
+                time_str += f"{minutes}'"
+            if seconds > 0:
+                time_str += f'{seconds}"'
+            if milliseconds > 0 or not time_str:
+                ms_str = f'.{milliseconds:03d}' if time_str else f'0.{milliseconds:03d}'
+                time_str += ms_str
+            return time_str
+    else:
+        time_str = ""
+        if days > 0:
+            days_str = f"{days} days " if days > 1 else f"{days} day "
+            time_str += days_str
+        if hours > 0:
+            hour_str = f"{hours} hours " if hours > 1 else f"{hours} hour "
+            time_str += hour_str
+        if minutes > 0:
+            time_str += f"{minutes} min "
+        if seconds > 0:
+            time_str += f"{seconds} sec "
+        if milliseconds > 0 or not time_str:
+            time_str += f"{milliseconds} ms"
+
+        return time_str
 
 
-def list_or_slice(unknown_input: Union[slice, int, str, list], str_int_dict):
+def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
     """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
 
     1，当输入item为slice时，直接返回slice
