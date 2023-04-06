@@ -271,7 +271,7 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
     return ''.join(str_element)
 
 
-def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
+def list_or_slice(unknown_input: Union[slice, int, str, list], str_int_dict):
     """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
 
     1，当输入item为slice时，直接返回slice
@@ -352,17 +352,18 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 
     Returns
     -------
+    dict of {label: index}
 
     Examples
     --------
     例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
     现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
-    使用labels_to_dict函数生成一个字典ID如下：
-    ID:  {'first' : 0
-          'second': 1
-          'third' : 2}
+    使用labels_to_dict函数生成一个字典如下：
+    find_idx:  {'first' : 0
+                'second': 1
+                'third' : 2}
     通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
-    target_list[ID['first']] == target_list[0] == 100
+    target_list[find_idx['first']] == target_list[0] == 100
 
     """
     if isinstance(input_labels, str):
@@ -384,13 +385,13 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     ----------
     input_string: str:
         需要分割的字符串
-    sep_char: str:
+    sep_char: str, default: ','
         字符串分隔符， 默认','
-    case: str
+    case: str, Optional
         默认None, 是否改变大小写，upper输出全大写, lower输出全小写
-    dim: int
+    dim: int, Optional
         需要生成的目标list的元素数量
-    padder: str
+    padder: str, Optional
         当元素数量不足的时候用来补充的元素
 
     Returns
