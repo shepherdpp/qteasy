@@ -197,6 +197,19 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
     Returns
     -------
     str: 时间字符串格式
+
+    Examples
+    --------
+    >>> time_str_format(86400)
+    '1 day '
+    >>> time_str_format(86400, short_form=True)
+    '1D'
+    >>> time_str_format(86399)
+    '23 hours 59 min 59 sec'
+    >>> time_str_format(86399, short_form=True)
+    '23H 59'59.000"
+    >>> time_str_format(86399, estimation=True)
+    '1 day '
     """
 
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
