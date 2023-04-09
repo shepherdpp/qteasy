@@ -1981,7 +1981,7 @@ def reset_config(config=None):
 
 # TODO: Bug检查：
 #   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
-#   sample_freq='m',
+#   strategy_run_freq='m',
 #   data_freq='m',
 #   window_length=6,
 def check_and_prepare_hist_data(oper, config):

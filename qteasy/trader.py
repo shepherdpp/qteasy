@@ -90,9 +90,9 @@ class TaskScheduler(object):
             交易系统的配置信息
         """
         self.account_id = account_id
-        self.broker = broker
-        self.operator = operator
-        self.config = config
+        self._broker = broker
+        self._operator = operator
+        self._config = config
 
         self.task_queue = Queue()
         self.task_daily_agenda = []
@@ -164,7 +164,7 @@ class TaskScheduler(object):
         if not self.is_market_open:
             return
         # set up operator, run operator strategies, and get signals
-        self.operator.create_signal()
+        self._operator.create_signal()
 
     def _market_open(self):
         """ 开市 """
@@ -188,7 +188,7 @@ class TaskScheduler(object):
         """ 检查当前日期是否是交易日 """
         current_date = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).date()
         from qteasy.utilfuncs import is_market_trade_day
-        self.is_trade_day = is_market_trade_day(current_date, self.config['market'])
+        self.is_trade_day = is_market_trade_day(current_date, self._config['market'])
 
     def _add_task_from_agenda(self, current_time):
         """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务

@@ -5,9 +5,11 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-02-20
 # Desc:
-#   Unittest for all functionalities
-#   related to live trade.
+#   Unittest for functions related to
+# live trade, including trade data
+# recording and utility functions
 # ======================================
+
 import unittest
 
 import os

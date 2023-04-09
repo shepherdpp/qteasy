@@ -24,21 +24,23 @@ class BaseStrategy:
                                 'buy1', 'buy2', 'buy3', 'buy4', 'buy5',
                                 'sell1', 'sell2', 'sell3', 'sell4', 'sell5']
 
-    def __init__(self,
-                 pars: any = None,
-                 opt_tag: int = 0,
-                 stg_type: str = 'strategy type',
-                 name: str = 'strategy name',
-                 description: str = 'intro text of strategy',
-                 par_count: int = None,
-                 par_types: [list, str] = None,
-                 par_range: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'd',
-                 window_length: int = 270,
-                 data_types: [str, list] = 'close',
-                 bt_price_type: str = 'close',
-                 reference_data_types: [str, list] = ''):
+    def __init__(
+            self,
+            pars: any = None,
+            opt_tag: int = 0,
+            stg_type: str = 'strategy type',
+            name: str = 'strategy name',
+            description: str = 'intro text of strategy',
+            par_count: int = None,
+            par_types: [list, str] = None,
+            par_range: [list, tuple] = None,
+            strategy_run_freq: str = 'd',
+            strategy_run_timing: str = 'close',
+            strategy_data_types: [str, list] = 'close',
+            reference_data_types: [str, list] = '',
+            data_freq: str = 'd',
+            window_length: int = 270,
+    ):
         """ 初始化策略
 
         Parameters
@@ -59,18 +61,26 @@ class BaseStrategy:
             策略可调参数的类型，每个参数的类型可以是int, float或enum
         par_range: list or tuple
             策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
-        data_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略使用的数据频率，可以是日频、周频、月频、季频或年频
-        sample_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略使用的采样频率，可以是日频、周频、月频、季频或年频
-        window_length: int
-            策略使用的数据窗口长度，即策略使用的历史数据的长度
-        data_types: str or list of str
+        strategy_run_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
+            TODO: 如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
+        strategy_run_timing: datetime-like or str
+            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
+            例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
+            如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
+            例如，如果运行频率为'h', 假设股市9：30开市，15：30收市
+            则策略运行时间为
+            ['09:30:00', '10:30:00',
+             '11:30:00', '13:00:00',
+             '14:00:00', '15:00:00',]
+        strategy_data_types: str or list of str
             策略使用的数据类型，例如close, open, high, low等
-        bt_price_type: str {'open', 'high', 'low', 'close'}
-            策略回测时使用的价格类型，可以是开盘价、收盘价、最高价、最低价等
         reference_data_types: str or list of str
             策略使用的参考数据类型，例如close, open, high, low等
+        data_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略使用的数据频率，可以是日频、周频、月频、季频或年频
+        window_length: int
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
 
         Returns
         -------
@@ -181,10 +191,10 @@ class BaseStrategy:
 
         # 其他的几个参数都通过参数赋值方法赋值，在赋值方法内会进行参数合法性检，这里只需确保所有参数不是None即可
         assert data_freq is not None
-        assert sample_freq is not None
+        assert strategy_run_freq is not None
         assert window_length is not None
-        assert data_types is not None
-        assert bt_price_type is not None
+        assert strategy_data_types is not None
+        assert strategy_run_timing is not None
         assert reference_data_types is not None
         self._data_freq = None
         self._sample_freq = None
@@ -193,13 +203,13 @@ class BaseStrategy:
         self._bt_price_type = None
         self._reference_data_types = None
         self.set_hist_pars(data_freq=data_freq,
-                           sample_freq=sample_freq,
+                           sample_freq=strategy_run_freq,
                            window_length=window_length,
-                           data_types=data_types,
-                           bt_price_type=bt_price_type,
+                           data_types=strategy_data_types,
+                           bt_price_type=strategy_run_timing,
                            reference_data_types=reference_data_types)
-        logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, sample_freq={sample_freq},'
-                         f' window_length={window_length}, bt_price_type={bt_price_type}, '
+        logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
+                         f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
                          f'reference_data_types={reference_data_types}')
 
     @property
@@ -715,7 +725,7 @@ class GeneralStg(BaseStrategy):
             example_strategy = ExampleStrategy(pars=<example pars>,
                                                name='example',
                                                description='example strategy',
-                                               data_types='close'
+                                               strategy_data_types='close'
                                                ...
                                                )
             在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -730,10 +740,10 @@ class GeneralStg(BaseStrategy):
             par_types: tuple/list,  策略参数类型
             par_range:              策略参数取值范围
             data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
-            sample_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
+            strategy_run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
             window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-            bt_price_type:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+            strategy_data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+            strategy_run_timing:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
             reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
 
@@ -765,7 +775,7 @@ class GeneralStg(BaseStrategy):
                         - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
                         - data_freq = 'd'
                         - window_length = 100
-                        - data_types = "open, high, low, close, pe"
+                        - strategy_data_types = "open, high, low, close, pe"
 
                     以下例子都基于前面给出的参数设定
                     例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -916,7 +926,7 @@ class FactorSorter(BaseStrategy):
         example_strategy = ExampleStrategy(pars=<example pars>,
                                            name='example',
                                            description='example strategy',
-                                           data_types='close'
+                                           strategy_data_types='close'
                                            ...
                                            )
         在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -932,10 +942,10 @@ class FactorSorter(BaseStrategy):
         par_types:          tuple,  策略参数类型
         par_range:          tuple,  策略参数取值范围
         data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-        sample_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
+        strategy_run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
         window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-        data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-        bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+        strategy_data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+        strategy_run_timing:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
         reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
         *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
@@ -983,7 +993,7 @@ class FactorSorter(BaseStrategy):
                     - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
                     - data_freq = 'd'
                     - window_length = 100
-                    - data_types = "open, high, low, close, pe"
+                    - strategy_data_types = "open, high, low, close, pe"
 
                 以下例子都基于前面给出的参数设定
                 例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -1260,13 +1270,13 @@ class RuleIterator(BaseStrategy):
         策略参数取值范围
     data_freq:          str:
         数据频率，用于生成策略输出所需的历史数据的频率
-    sample_freq:
+    strategy_run_freq:
         策略运行采样频率，即相邻两次策略生成的间隔频率。
     window_length:
         历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-    data_types:
+    strategy_data_types:
         静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-    bt_price_type:
+    strategy_run_timing:
         策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
     reference_data_types:
         参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有
@@ -1290,7 +1300,7 @@ class RuleIterator(BaseStrategy):
         example_strategy = ExampleStrategy(pars=<example pars>,
                                            name='example',
                                            description='example strategy',
-                                           data_types='close'
+                                           strategy_data_types='close'
                                            ...
                                            )
         在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略

@@ -44,7 +44,13 @@ def create_daily_task_agenda(operator, config=None):
     task_agenda: dict {time: task_type}
         每日任务日程
     """
-    pass
+    # 检查输入数据的类型是否正确
+    if not isinstance(operator, Operator):
+        raise TypeError(f'operator must be an Operator object, got {type(operator)} instead.')
+    if not isinstance(config, dict):
+        raise TypeError(f'config must be a dict object, got {type(config)} instead.')
+
+    market_open_time = config['market_open_time']
 
 
 # all functions for live trade
