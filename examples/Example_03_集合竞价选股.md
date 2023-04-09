@@ -99,7 +99,7 @@ alpha = GroupPS(pars=(10,),
                 name='GroupPS',
                 description='本策略每隔1个月定时触发, 从SHSE.000300成份股中选择过去30天内开盘价大于前收盘价的天数大于10天的股票买入',
                 data_types='open, close',
-                sample_freq='m',
+                strategy_run_freq='m',
                 data_freq='d',
                 window_length=32)  
 op = qt.Operator(alpha, signal_type='PS')
@@ -243,7 +243,7 @@ alpha = GroupPT(pars=(10,),
                 name='GroupPS',
                 description='本策略每隔1个月定时触发, 从SHSE.000300成份股中选择过去30天内开盘价大于前收盘价的天数大于10天的股票买入',
                 data_types='open, close',
-                sample_freq='m',
+                strategy_run_freq='m',
                 data_freq='d',
                 window_length=32)  
 op = qt.Operator(alpha, signal_type='PT')

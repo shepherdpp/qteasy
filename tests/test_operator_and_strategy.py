@@ -858,7 +858,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'All IDs of strategies:\n'
               f'{stg_all}\n'
               f'All price types of strategies:\n'
-              f'{[stg.bt_price_type for stg in op.strategies]}')
+              f'{[stg.strategy_run_timing for stg in op.strategies]}')
         self.assertEqual(stg_close, ['dma', 'trix'])
         self.assertEqual(stg_open, ['macd', 'dma_1'])
         self.assertEqual(stg_high, ['macd_1'])
@@ -1738,8 +1738,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
                               bt_price_type='open')
         self.op.set_parameter(stg_id='custom_3',
                               bt_price_type='open')
-        self.assertEqual(self.op['custom'].bt_price_type, 'close')
-        self.assertEqual(self.op['custom_2'].bt_price_type, 'open')
+        self.assertEqual(self.op['custom'].strategy_run_timing, 'close')
+        self.assertEqual(self.op['custom_2'].strategy_run_timing, 'open')
         self.op.set_parameter(stg_id='custom_2',
                               pars={'000010': (5, 10.),
                                     '000030': (5, 10.),
@@ -2370,7 +2370,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(self.stg.par_count, self.par_count)
         self.assertEqual(self.stg.opt_tag, self.opt_tag)
         self.assertEqual(self.stg.data_freq, self.data_freq)
-        self.assertEqual(self.stg.sample_freq, self.sample_freq)
+        self.assertEqual(self.stg.strategy_run_freq, self.sample_freq)
         self.assertEqual(self.stg.data_types, self.data_types)
         self.assertEqual(self.stg.window_length, self.window_length)
         self.stg.name = 'NEW NAME'
@@ -2996,7 +2996,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         stg.set_pars(stg_pars)
         stg.window_length = 5
         stg.data_freq = 'd'
-        stg.sample_freq = '10d'
+        stg.strategy_run_freq = '10d'
         stg.sort_ascending = False
         stg.condition = 'greater'
         stg.lbound = 0
@@ -3006,7 +3006,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_pars, (False, 'even', 'greater', 0, 0, 0.67))
         self.assertEqual(stg.window_length, 5)
         self.assertEqual(stg.data_freq, 'd')
-        self.assertEqual(stg.sample_freq, '10d')
+        self.assertEqual(stg.strategy_run_freq, '10d')
         self.assertEqual(stg.sort_ascending, False)
         self.assertEqual(stg.condition, 'greater')
         self.assertEqual(stg.lbound, 0)

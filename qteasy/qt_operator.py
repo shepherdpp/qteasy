@@ -443,7 +443,7 @@ class Operator:
     @property
     def bt_price_types(self):
         """返回operator对象所有策略子对象的回测价格类型"""
-        p_types = [item.bt_price_type for item in self.strategies]
+        p_types = [item.strategy_run_timing for item in self.strategies]
         p_types = list(set(p_types))
         p_types.sort()
         return p_types
@@ -809,7 +809,7 @@ class Operator:
         if price_type is None:
             return self.strategies
         else:
-            return [stg for stg in self.strategies if stg.bt_price_type == price_type]
+            return [stg for stg in self.strategies if stg.strategy_run_timing == price_type]
 
     def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
@@ -893,7 +893,7 @@ class Operator:
         else:
             res = []
             for stg, stg_id in zip(self.strategies, all_ids):
-                if stg.bt_price_type == price_type:
+                if stg.strategy_run_timing == price_type:
                     res.append(stg_id)
             return res
 
@@ -1273,9 +1273,9 @@ class Operator:
             for stg_id, stg in self.get_strategy_id_pairs():
                 print(f'{truncate_string(stg_id, 10):<10}'
                       f'{truncate_string(stg.name, 15):<15}'
-                      f'{truncate_string(stg.bt_price_type, 15):^15}'
+                      f'{truncate_string(stg.strategy_run_timing, 15):^15}'
                       f'{truncate_string(stg.data_freq, 10):^10}'
-                      f'{truncate_string(stg.sample_freq, 10):^10}'
+                      f'{truncate_string(stg.strategy_run_freq, 10):^10}'
                       f'{stg.data_types}')
             print('=' * 70)
         # 打印blender的信息：
@@ -1515,7 +1515,7 @@ class Operator:
             )[window_length_offset:-1] if ref_data_val else None
 
             # 根据策略运行频率sample_freq生成信号生成采样点序列
-            freq = stg.sample_freq
+            freq = stg.strategy_run_freq
             # 根据sample_freq生成一个策略运行采样日期序列
             # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
             #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后

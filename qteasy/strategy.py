@@ -197,10 +197,10 @@ class BaseStrategy:
         assert strategy_run_timing is not None
         assert reference_data_types is not None
         self._data_freq = None
-        self._sample_freq = None
+        self._strategy_run_freq = None
         self._window_length = None
         self._data_types = None
-        self._bt_price_type = None
+        self._strategy_run_timing = None
         self._reference_data_types = None
         self.set_hist_pars(data_freq=data_freq,
                            sample_freq=strategy_run_freq,
@@ -317,12 +317,12 @@ class BaseStrategy:
         self.set_hist_pars(data_freq=data_freq)
 
     @property
-    def sample_freq(self):
+    def strategy_run_freq(self):
         """策略生成的采样频率"""
-        return self._sample_freq
+        return self._strategy_run_freq
 
-    @sample_freq.setter
-    def sample_freq(self, sample_freq):
+    @strategy_run_freq.setter
+    def strategy_run_freq(self, sample_freq):
         self.set_hist_pars(sample_freq=sample_freq)
 
     @property
@@ -353,19 +353,19 @@ class BaseStrategy:
         self.set_hist_pars(data_types=data_types)
 
     @property
-    def bt_price_type(self):
+    def strategy_run_timing(self):
         """策略回测时所使用的价格类型"""
-        return self._bt_price_type
+        return self._strategy_run_timing
 
-    @bt_price_type.setter
-    def bt_price_type(self, price_type):
+    @strategy_run_timing.setter
+    def strategy_run_timing(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
         self.set_hist_pars(bt_price_type=price_type)
 
     @property
     def bt_price_types(self):
         """策略回测时所使用的价格类型，bt_price_type的别名"""
-        return self._bt_price_type
+        return self._strategy_run_timing
 
     @bt_price_types.setter
     def bt_price_types(self, price_type):
@@ -443,7 +443,7 @@ class BaseStrategy:
                   f'Parameter types         {self.par_types}\n'
                   f'Parameter range         {self.par_range}\n'
                   f'Data frequency          {self.data_freq}\n'
-                  f'Sample frequency        {self.sample_freq}\n'
+                  f'Sample frequency        {self.strategy_run_freq}\n'
                   f'Window length           {self.window_length}\n' 
                   f'Data types              {self.data_types}')
             if stg_type == 'FactorSorter':
@@ -590,7 +590,7 @@ class BaseStrategy:
             if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', sample_freq.lower()):
                 raise ValueError(f"{sample_freq} is not a valid frequency string,"
                                  f"sample freq can only be like '10d' or '2w'")
-            self._sample_freq = sample_freq
+            self._strategy_run_freq = sample_freq
         if window_length is not None:
             assert isinstance(window_length, int), \
                 f'TypeError, window length should an integer, got {type(window_length)} instead'
@@ -607,7 +607,7 @@ class BaseStrategy:
                               str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
             assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a ' \
                                                                    f'valid price type'
-            self._bt_price_type = bt_price_type
+            self._strategy_run_timing = bt_price_type
         if reference_data_types is not None:
             if isinstance(reference_data_types, str):
                 reference_data_types = str_to_list(reference_data_types, ',')

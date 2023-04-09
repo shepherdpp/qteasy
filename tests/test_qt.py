@@ -923,7 +923,7 @@ class TestQT(unittest.TestCase):
         stg2 = TestSelStrategy()
         stg1.window_length = 100
         stg2.window_length = 100
-        stg2.sample_freq = '2w'
+        stg2.strategy_run_freq = '2w'
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
         op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
         par_stg1 = {'000100': (20, 10),
