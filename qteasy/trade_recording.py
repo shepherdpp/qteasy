@@ -22,6 +22,8 @@ from qteasy import logger_core as logger
 TIMEZONE = 'Asia/Shanghai'
 
 
+# TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
+#  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
 # 9 foundational functions for account and position management
 def new_account(user_name, cash_amount, data_source=None, **account_data):
     """ 创建一个新的账户

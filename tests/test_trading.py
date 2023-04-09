@@ -18,9 +18,9 @@ import numpy as np
 
 from qteasy.database import DataSource
 
-from qteasy.trading import parse_pt_signals, parse_ps_signals, parse_vs_signals, signal_to_order_elements
-from qteasy.trading import parse_trade_signal, submit_order, output_trade_order
-from qteasy.trading import process_trade_result, process_trade_delivery
+from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, signal_to_order_elements
+from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order
+from qteasy.trading_util import process_trade_result, process_trade_delivery
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position

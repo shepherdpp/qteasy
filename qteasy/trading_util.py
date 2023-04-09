@@ -1,17 +1,15 @@
 # coding=utf-8
 # ======================================
-# File:     trading.py
+# File:     trading_util.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-02-20
 # Desc:
-#   functions related to live-trading,
-# including scheduling, data-acquisition
-# signal-to-ordering, and result
-# processing.
+#   utility functions that may be shared
+# between live-trading, back-testing, 
+# optimization and other trading-related
+# modules.
 # ======================================
-
-import asyncio
 
 import pandas as pd
 import numpy as np
@@ -28,44 +26,47 @@ from qteasy.trade_recording import update_account_balance, update_position, upda
 TIMEZONE = 'Asia/Shanghai'
 
 
-# TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
-#  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
-async def process_trade_signal(signal):
-    # 将交易信号提交给交易平台或用户以获取交易结果
-    raw_trade_results = await generate_trade_result(order_id, account_id=1)
-    # 处理交易结果
-    process_trade_result(raw_trade_result=raw_trade_results, config=config)
+class TradeLoop():
+    """ 交易循环，用于实时交易
+    """
+    def __init__(self, operator, config=None):
+        """ 初始化交易循环
+        """
+        self.is_trade_day = False
+        self.is_market_open = False
+        self.running_status = 'sleep'
+
+    def run(self):
+        """ 交易循环，用于实时交易
+        """
+        while True:
+            # 1. 检查交易日
+            # 2. 检查交易时间
+            # 3. 检查交易状态
+            # 4. 检查交易信号
+            # 5. 检查交易订单
+            pass
 
 
-async def live_trade_signals():
-    while True:
-        # 检查交易策略的运行状态：
-        # 当有交易策略处于"运行"状态时，生成交易信号
-        signals = generate_signal()
-        # 解析交易信号，将其转换为标准的交易信号
-        order_elements = parse_trade_signal(
-                signals=signals,
-                signal_type=signal_type,
-                shares=shares,
-                prices=prices,
-                own_amounts=own_amounts,
-                own_cash=own_cash,
-                config=config,
-        )
+def create_daily_task_agenda(operator, config=None):
+    """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
-        order_ids = save_parsed_trade_orders(
-                account_id=account_id,
-                **order_elements,
-        )
-        # 提交交易信号并等待结果
-        for order_id in order_ids:
-            asyncio.create_task(submit_order(order_id))
-        # 继续生成后续交易信号
-        await asyncio.sleep(1)
+    每日任务日程包括含 sleep / wake_up / run_stg 等所有有效任务类型的任务列表，
+    以及每项任务在正常交易日内的执行时间
 
+    Parameters
+    ----------
+    operator: Operator
+        交易策略的Operator对象
+    config: dict, optional
+        qteasy的配置环境变量, 如果为None, 则使用qteasy.QT_CONFIG
 
-def live_trade():
-    asyncio.run(live_trade_signals())
+    Returns
+    -------
+    task_agenda: dict {time: task_type}
+        每日任务日程
+    """
+    pass
 
 
 # all functions for live trade
