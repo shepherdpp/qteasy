@@ -26,28 +26,6 @@ from qteasy.trade_recording import update_account_balance, update_position, upda
 TIMEZONE = 'Asia/Shanghai'
 
 
-class TradeLoop():
-    """ 交易循环，用于实时交易
-    """
-    def __init__(self, operator, config=None):
-        """ 初始化交易循环
-        """
-        self.is_trade_day = False
-        self.is_market_open = False
-        self.running_status = 'sleep'
-
-    def run(self):
-        """ 交易循环，用于实时交易
-        """
-        while True:
-            # 1. 检查交易日
-            # 2. 检查交易时间
-            # 3. 检查交易状态
-            # 4. 检查交易信号
-            # 5. 检查交易订单
-            pass
-
-
 def create_daily_task_agenda(operator, config=None):
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 

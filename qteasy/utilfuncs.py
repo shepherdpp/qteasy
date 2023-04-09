@@ -15,7 +15,7 @@ import re
 import qteasy
 import time
 from numba import njit
-from functools import wraps
+from functools import wraps, lru_cache
 
 TIME_FREQ_LEVELS = {
     'Y':      10,
@@ -548,6 +548,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         sys.stdout.flush()
 
 
+lru_cache(maxsize=16)
 def maybe_trade_day(date):
     """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）准确率有限但是效率高
 
@@ -610,6 +611,7 @@ def next_trade_day(date):
     return next
 
 
+lru_cache(maxsize=16)
 def is_market_trade_day(date, exchange: str = 'SSE'):
     """ 根据交易所发布的交易日历判断一个日期是否是交易日，
 
