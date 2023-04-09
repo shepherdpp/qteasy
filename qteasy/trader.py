@@ -101,7 +101,6 @@ class TaskScheduler(object):
         self.is_trade_day = False
         self.status = 'stopped'
 
-        self._initialize_agenda(operator, config)
         self._read_account_info(account_id)
 
     def run(self):
@@ -159,12 +158,22 @@ class TaskScheduler(object):
         """ 恢复交易系统 """
         self.status = 'running'
 
-    def _run_strategy(self):
-        """ 运行策略 """
+    def _run_strategy(self, strategy_ids=None):
+        """ 运行交易策略，生成交易信号，解析信号为交易订单，并将交易订单发送给交易所
+
+        Parameters
+        ----------
+        strategy_ids: tuple of int
+            交易策略ID列表
+        """
         if not self.is_market_open:
             return
-        # set up operator, run operator strategies, and get signals
+        # TODO: set up operator, run operator strategies, and get signals
         self._operator.create_signal()
+
+    def _pre_open(self):
+        """ 开市前 """
+        self._initialize_agenda(operator, config)
 
     def _market_open(self):
         """ 开市 """
@@ -174,8 +183,17 @@ class TaskScheduler(object):
         """ 收市 """
         self.is_market_open = False
 
-    def _run_task(self, task):
-        """ 运行任务 """
+    def _run_task(self, task, **kwargs):
+        """ 运行任务
+
+        Parameters
+        ----------
+        task: str
+            任务名称
+        **kwargs: dict
+            任务参数
+        """
+
         if task is None:
             return
         if not isinstance(task, str):
@@ -184,11 +202,24 @@ class TaskScheduler(object):
         if task not in AVAILABLE_TASKS.keys():
             raise ValueError(f'Invalid task name: {task}')
 
+        task_func = AVAILABLE_TASKS[task]
+        task_func(self, **kwargs)
+
     def _check_trade_day(self):
         """ 检查当前日期是否是交易日 """
         current_date = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).date()
         from qteasy.utilfuncs import is_market_trade_day
         self.is_trade_day = is_market_trade_day(current_date, self._config['market'])
+
+    def _add_task_to_queue(self, task):
+        """ 添加任务到任务队列
+
+        Parameters
+        ----------
+        task: str
+            任务名称
+        """
+        self.task_queue.put(task)
 
     def _add_task_from_agenda(self, current_time):
         """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务
@@ -198,7 +229,10 @@ class TaskScheduler(object):
         current_time: datetime.time
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
         """
-        pass
+        # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列
+        for task_time, task in self.task_daily_agenda:
+            if task_time <= current_time:
+                self._add_task_to_queue(task)
 
     def _initialize_agenda(self, operator, config):
         """ 初始化交易日的任务日程 """
@@ -216,8 +250,10 @@ class TaskScheduler(object):
         pass
 
     AVAILABLE_TASKS = {
+        'pre_open':     _pre_open,
         'open_market':  _market_open,
         'close_market': _market_close,
+        'post_close':   _post_close,
         'run_strategy': _run_strategy,
         'start':        _start,
         'stop':         _stop,

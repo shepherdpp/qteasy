@@ -22,7 +22,7 @@ from qteasy.database import DataSource
 
 from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order
-from qteasy.trading_util import process_trade_result, process_trade_delivery
+from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_agenda
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -33,7 +33,7 @@ from qteasy.trade_recording import get_account_cash_availabilities, get_account_
 from qteasy.trade_recording import write_trade_result, read_trade_result_by_id, read_trade_results_by_order_id
 
 
-class TestLiveTrade(unittest.TestCase):
+class TestTradeRecording(unittest.TestCase):
 
     def setUp(self) -> None:
         """ execute before each test"""
@@ -2372,6 +2372,27 @@ class TestLiveTrade(unittest.TestCase):
         )
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
+
+
+class TestTradingUtilFuncs(unittest.TestCase):
+    """ test trading util funcs """
+
+    def test_create_daily_task_agenda(self):
+        """ test function create_daily_task_agenda """
+        # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
+        op = qt.Operator(strategies='macd')
+        stg = op.strategies[0]
+        import pdb; pdb.set_trace()
+        self.assertEqual(stg.strategy_run_freq, 'd')
+        self.assertEqual(stg.strategy_run_timing, 'close')
+        config = {
+            'market_open_time_am': '09:30:00',
+            'market_close_time_pm': '15:30:00',
+            'market_open_time_pm': '13:00:00',
+            'market_close_time_am': '11:30:00',
+        }
+        agenda = create_daily_task_agenda(op, config)
+        print(f'agenda: {agenda}')
 
 
 if __name__ == '__main__':

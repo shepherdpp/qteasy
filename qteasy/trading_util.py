@@ -14,7 +14,6 @@
 import pandas as pd
 import numpy as np
 
-from qteasy.database import DataSource
 from qteasy import logger_core as logger
 
 from qteasy.trade_recording import read_trade_order, get_position_by_id, get_account, update_trade_order
@@ -41,8 +40,8 @@ def create_daily_task_agenda(operator, config=None):
 
     Returns
     -------
-    task_agenda: dict {time: task_type}
-        每日任务日程
+    task_agenda: list of tuple [(datetime.time, str, optional: list of str)]
+        每日任务日程, 每项任务是一个tuple, 包含任务的执行时间, 任务的名称, 以及任务的参数列表(optional)
     """
     # 检查输入数据的类型是否正确
     if not isinstance(operator, Operator):
@@ -50,7 +49,62 @@ def create_daily_task_agenda(operator, config=None):
     if not isinstance(config, dict):
         raise TypeError(f'config must be a dict object, got {type(config)} instead.')
 
-    market_open_time = config['market_open_time']
+    task_agenda = []
+
+    today = pd.Timestamp.now(tz=TIMEZONE).date()
+
+    market_open_time_am = config['market_open_time_am']
+    market_close_time_am = config['market_close_time_am']
+    market_open_time_pm = config['market_open_time_pm']
+    market_close_time_pm = config['market_close_time_pm']
+
+    # 添加交易市场开市和收市任务，开市时产生wakeup任务，收市时产生sleep任务，早晚收盘时产生open_market/close_market任务
+    task_agenda.append((market_open_time_am, 'open_market'))
+    task_agenda.append((market_open_time_am, 'wakeup'))
+    task_agenda.append((market_close_time_am, 'sleep'))
+    task_agenda.append((market_open_time_pm, 'wakeup'))
+    task_agenda.append((market_close_time_pm, 'sleep'))
+
+    # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
+    for stg_id, stg in operator.get_strategy_id_pairs():
+        timing = stg.strategy_run_timing
+        freq = stg.strategy_run_freq
+        if freq.lower() in ['1m', '5m', '15m', '30m', 'h']:
+            run_time_index = _trade_time_index(
+                    start=today,
+                    end=today,
+                    freq=freq,
+                    start_am=market_open_time_am,
+                    end_am=market_close_time_am,
+                    include_start_am=True,
+                    include_end_am=True,
+                    start_pm=market_open_time_pm,
+                    end_pm=market_close_time_pm,
+                    include_start_pm=True,
+                    include_end_pm=True,
+            ).tolist()
+        else:
+            if timing == 'open':
+                run_time_index = [market_open_time_am]
+            elif timing == 'close':
+                run_time_index = [market_close_time_pm]
+            else:
+                run_time_index = pd.to_datetime(timing).time()
+
+        for t in run_time_index:
+            if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_stg')):
+                # 如果同时发生的'run_stg'任务已经存在，则修改该任务，将stg_id添加到列表中
+                task_to_update = [item for item in task_agenda if (item[0] == t) and (item[1] == 'run_stg')]
+                task_idx_to_update = task_agenda.index(task_to_update[0])
+                task_agenda[task_idx_to_update][2].append(stg_id)
+            else:
+                # 否则，则直接添加任务
+                task_agenda.append((t, 'run_stg', [stg_id]))
+
+    # 对任务日程进行排序 （其实排序并不一定需要）
+    task_agenda.sort(key=lambda x: x[0])
+
+    return task_agenda
 
 
 # all functions for live trade
@@ -828,4 +882,113 @@ def generate_trade_result(order_id, account_id):
         交易结果
     """
     pass
+
+
+def _trade_time_index(start=None,
+                      end=None,
+                      periods=None,
+                      freq=None,
+                      include_start=True,
+                      include_end=True,
+                      start_am='9:30:00',
+                      end_am='11:30:00',
+                      include_start_am=True,
+                      include_end_am=True,
+                      start_pm='13:00:00',
+                      end_pm='15:00:00',
+                      include_start_pm=False,
+                      include_end_pm=True):
+    """ 生成一个符合交易时间段的datetime index
+
+    Parameters
+    ----------
+    start: datetime like str,
+        日期时间序列的开始日期/时间
+    end: datetime like str,
+        日期时间序列的终止日期/时间
+    periods: int
+        日期时间序列的分段数量
+    freq: str, {'min', 'h', 'd', 'M'}
+        日期时间序列的频率
+    include_start: bool, Default True
+        日期时间序列是否包含开始日期/时间
+    include_end: bool, Default True
+        日期时间序列是否包含结束日期/时间
+    start_am: datetime like str, Default '9:30:00'
+        早晨交易时段的开始时间
+    end_am: datetime like str, Default '11:30:00'
+        早晨交易时段的结束时间
+    include_start_am: bool, Default True
+        早晨交易时段是否包括开始时间
+    include_end_am: bool, Default True
+        早晨交易时段是否包括结束时间
+    start_pm: datetime like str, Default '13:00:00'
+        下午交易时段的开始时间
+    end_pm: datetime like str, Default '15:00:00'
+        下午交易时段的结束时间
+    include_start_pm: bool, Default False
+        下午交易时段是否包含开始时间
+    include_end_pm: bool, Default True
+        下午交易时段是否包含结束时间
+
+    Returns
+    -------
+    time_index: pd.DatetimeIndex
+
+    Examples
+    --------
+    >>> _trade_time_index(start='2020-01-01', end='2020-01-02', freq='h')
+    DatetimeIndex(['2020-01-01 09:30:00', '2020-01-01 10:30:00',
+                   '2020-01-01 11:30:00', '2020-01-01 13:00:00',
+                   '2020-01-01 14:00:00', '2020-01-01 15:00:00',
+                   '2020-01-02 09:30:00', '2020-01-02 10:30:00',
+                   '2020-01-02 11:30:00', '2020-01-02 13:00:00',
+                   '2020-01-02 14:00:00', '2020-01-02 15:00:00'],
+                    dtype='datetime64[ns]', freq=None)
+    """
+    # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
+    if freq is not None:
+        freq = str(freq).lower()
+    # 检查时间序列区间的开闭状况
+    closed = None
+    if include_start:
+        closed = 'left'
+    if include_end:
+        closed = 'right'
+    if include_start and include_end:
+        closed = None
+
+    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
+    # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
+    if time_index.freqstr is not None:
+        freq_str = time_index.freqstr.lower().split('-')[0]
+    else:
+        freq_str = time_index.inferred_freq
+        if freq_str is not None:
+            freq_str = freq_str.lower()
+        else:
+            time_delta = time_index[1] - time_index[0]
+            if time_delta < pd.Timedelta(1, 'd'):
+                freq_str = 'h'
+            else:
+                freq_str = 'd'
+    ''' freq_str有以下几种不同的情况：
+        min:        T
+        hour:       H
+        day:        D
+        week:       W-SUN/...
+        month:      M
+        quarter:    Q-DEC/...
+        year:       A-DEC/...
+        由于周、季、年三种情况存在复合字符串，因此需要split
+    '''
+    if freq_str[-1:] in ['t', 'h']:
+        idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
+                                                 include_start=include_start_am, include_end=include_end_am)
+        idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
+                                                 include_start=include_start_pm, include_end=include_end_pm)
+        idxer = np.union1d(idx_am, idx_pm)
+        return time_index[idxer]
+    else:
+        return time_index
 

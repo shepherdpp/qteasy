@@ -555,6 +555,34 @@ def _valid_qt_kwargs():
              'text':      '回测时买入股票后的股票交割周期，用一个数字N代表交易日后第N天可以完成资产交割。\n'
                           '获得股票后立即计入总资产，但尚未交割的股票不能用于下一笔交易'},
 
+        'market_open_time_am':
+            {'Default':   '09:30:00',
+             'Validator': lambda value: isinstance(value, str)
+                                         and _is_timelike(value),
+             'level':     3,
+             'text':      '交易市场上午开市时间'},
+
+        'market_close_time_am':
+            {'Default':   '11:30:00',
+             'Validator': lambda value: isinstance(value, str)
+                                         and _is_timelike(value),
+             'level':     3,
+             'text':      '交易市场上午收市时间'},
+
+        'market_open_time_pm':
+            {'Default':   '13:00:00',
+             'Validator': lambda value: isinstance(value, str)
+                                         and _is_timelike(value),
+             'level':     3,
+             'text':      '交易市场下午开市时间'},
+
+        'market_close_time_pm':
+            {'Default':   '15:00:00',
+             'Validator': lambda value: isinstance(value, str)
+                                         and _is_timelike(value),
+             'level':     3,
+             'text':      '交易市场下午收市时间'},
+
         'opti_start':
             {'Default':   '20160405',
              'Validator': lambda value: isinstance(value, str)
