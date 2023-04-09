@@ -11,6 +11,9 @@
 
 import numpy as np
 from abc import abstractmethod, ABCMeta
+
+import pandas as pd
+
 from .utilfuncs import str_to_list
 from .utilfuncs import TIME_FREQ_STRINGS
 
@@ -20,9 +23,7 @@ class BaseStrategy:
     """
     __mataclass__ = ABCMeta
 
-    AVAILABLE_BT_PRICE_TYPES = ['open', 'high', 'low', 'close',
-                                'buy1', 'buy2', 'buy3', 'buy4', 'buy5',
-                                'sell1', 'sell2', 'sell3', 'sell4', 'sell5']
+    AVAILABLE_STG_RUN_TIMING = ['open', 'close']
 
     def __init__(
             self,
@@ -203,10 +204,10 @@ class BaseStrategy:
         self._strategy_run_timing = None
         self._reference_data_types = None
         self.set_hist_pars(data_freq=data_freq,
-                           sample_freq=strategy_run_freq,
+                           strategy_run_freq=strategy_run_freq,
                            window_length=window_length,
                            data_types=strategy_data_types,
-                           bt_price_type=strategy_run_timing,
+                           strategy_run_timing=strategy_run_timing,
                            reference_data_types=reference_data_types)
         logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
                          f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
@@ -323,7 +324,7 @@ class BaseStrategy:
 
     @strategy_run_freq.setter
     def strategy_run_freq(self, sample_freq):
-        self.set_hist_pars(sample_freq=sample_freq)
+        self.set_hist_pars(strategy_run_freq=sample_freq)
 
     @property
     def window_length(self):
@@ -360,7 +361,7 @@ class BaseStrategy:
     @strategy_run_timing.setter
     def strategy_run_timing(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
-        self.set_hist_pars(bt_price_type=price_type)
+        self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def bt_price_types(self):
@@ -370,7 +371,7 @@ class BaseStrategy:
     @bt_price_types.setter
     def bt_price_types(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
-        self.set_hist_pars(bt_price_type=price_type)
+        self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def ref_types(self):
@@ -551,10 +552,10 @@ class BaseStrategy:
 
     def set_hist_pars(self,
                       data_freq=None,
-                      sample_freq=None,
+                      strategy_run_freq=None,
                       window_length=None,
                       data_types=None,
-                      bt_price_type=None,
+                      strategy_run_timing=None,
                       reference_data_types=None):
         """ 设置策略的历史数据回测相关属性
 
@@ -562,13 +563,13 @@ class BaseStrategy:
         ----------
         data_freq: str
             数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        sample_freq: str
-            采样频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+        strategy_run_freq: str
+            策略运行频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
         window_length: int
             回测时需要用到的历史数据窗口的长度
         data_types: str
             需要用到的历史数据类型
-        bt_price_type: str
+        strategy_run_timing: str
             需要用到的历史数据回测价格类型
         reference_data_types: str
             策略运行参考数据类型
@@ -583,14 +584,14 @@ class BaseStrategy:
             assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
                                                            f'string'
             self._data_freq = data_freq
-        if sample_freq is not None:
-            assert isinstance(sample_freq, str), \
-                f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
+        if strategy_run_freq is not None:
+            assert isinstance(strategy_run_freq, str), \
+                f'TypeError, sample frequency should be a string, got {type(strategy_run_freq)} instead'
             import re
-            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', sample_freq.lower()):
-                raise ValueError(f"{sample_freq} is not a valid frequency string,"
+            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', strategy_run_freq.lower()):
+                raise ValueError(f"{strategy_run_freq} is not a valid frequency string,"
                                  f"sample freq can only be like '10d' or '2w'")
-            self._strategy_run_freq = sample_freq
+            self._strategy_run_freq = strategy_run_freq
         if window_length is not None:
             assert isinstance(window_length, int), \
                 f'TypeError, window length should an integer, got {type(window_length)} instead'
@@ -602,12 +603,17 @@ class BaseStrategy:
             assert isinstance(data_types, list), \
                 f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
-        if bt_price_type is not None:
-            assert isinstance(bt_price_type,
-                              str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
-            assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a ' \
-                                                                   f'valid price type'
-            self._strategy_run_timing = bt_price_type
+        if strategy_run_timing is not None:
+            assert isinstance(strategy_run_timing,
+                              str), f'Wrong input type, price_type should be a string, got {type(strategy_run_timing)}'
+            try:
+                pd.to_datetime(strategy_run_timing)
+            except Exception as e:
+                if strategy_run_timing not in self.AVAILABLE_STG_RUN_TIMING:
+                    raise ValueError(f'Invalid price type, should be one of {self.AVAILABLE_STG_RUN_TIMING}, '
+                                     f'got {strategy_run_timing} instead')
+
+            self._strategy_run_timing = strategy_run_timing
         if reference_data_types is not None:
             if isinstance(reference_data_types, str):
                 reference_data_types = str_to_list(reference_data_types, ',')

@@ -548,7 +548,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         sys.stdout.flush()
 
 
-lru_cache(maxsize=16)
+@lru_cache(maxsize=16)
 def maybe_trade_day(date):
     """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）准确率有限但是效率高
 
@@ -611,7 +611,7 @@ def next_trade_day(date):
     return next
 
 
-lru_cache(maxsize=16)
+@lru_cache(maxsize=16)
 def is_market_trade_day(date, exchange: str = 'SSE'):
     """ 根据交易所发布的交易日历判断一个日期是否是交易日，
 
@@ -661,6 +661,39 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         raise NotImplementedError
 
 
+@lru_cache(maxsize=4)
+def last_known_market_trade_day(exchange: str = 'SSE'):
+    """ 返回交易日列表中的最后一个已知交易日
+
+    Parameters
+    ----------
+    exchange: str
+        交易所代码:
+            SSE:    上交所, SZSE:   深交所,
+            CFFEX:  中金所, SHFE:   上期所,
+            CZCE:   郑商所, DCE:    大商所,
+            INE:    上能源, IB:     银行间,
+            XHKG:   港交所
+
+    Returns
+    -------
+    datetime-like
+        最后一个已知交易日的日期
+    """
+    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
+                                                      'DCE', 'INE', 'IB', 'XHKG']:
+        raise TypeError(f'exchange \'{exchange}\' is not a valid input')
+    if qteasy.QT_TRADE_CALENDAR is not None:
+        try:
+            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        except KeyError as e:
+            raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
+        return exchange_trade_cal[exchange_trade_cal.is_open == 1].index[-1]
+    else:
+        raise NotImplementedError
+
+
+@lru_cache(maxsize=16)
 def prev_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的上一交易日，需要提前准备QT_TRADE_CALENDAR数据
 
@@ -700,6 +733,7 @@ def prev_market_trade_day(date, exchange='SSE'):
         raise NotImplementedError
 
 
+@lru_cache(maxsize=16)
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
 
@@ -727,8 +761,8 @@ def nearest_market_trade_day(date, exchange='SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    # TODO: 这里有bug: _date的上限和下限需要从trade_calendar中动态读取，而不能硬编码到源代码中
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20231231'):
+    last_known_trade_day = last_known_market_trade_day(exchange)
+    if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
     if is_market_trade_day(_date, exchange):
         return _date
@@ -739,6 +773,7 @@ def nearest_market_trade_day(date, exchange='SSE'):
         return prev
 
 
+@lru_cache(maxsize=16)
 def next_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
 
@@ -766,7 +801,8 @@ def next_market_trade_day(date, exchange='SSE'):
     except Exception:
         raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
     assert _date is not None, f'{date} is not a valide date'
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
+    last_known_trade_day = last_known_market_trade_day(exchange)
+    if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
     if is_market_trade_day(_date, exchange):
         return _date

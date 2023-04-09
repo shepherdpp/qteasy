@@ -14,7 +14,7 @@
 import pandas as pd
 import numpy as np
 
-from qteasy import logger_core as logger
+from qteasy import logger_core as logger, Operator
 
 from qteasy.trade_recording import read_trade_order, get_position_by_id, get_account, update_trade_order
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
@@ -57,22 +57,45 @@ def create_daily_task_agenda(operator, config=None):
     market_close_time_am = config['market_close_time_am']
     market_open_time_pm = config['market_open_time_pm']
     market_close_time_pm = config['market_close_time_pm']
+    exchange_market = config['exchange']
+
+    # 调整任务时间，开盘任务在开盘时执行，收盘任务在收盘时执行，sleep和wakeup任务在开盘前后5分钟执行
+    # TODO: 开收盘任务执行提前期或sleep/wakeup任务执行延后期，应该是可配置的
+    open_close_lead = 0
+    sleep_wakeup_delay = 5
+    market_open_time = (pd.to_datetime(market_open_time_am) -
+                        pd.Timedelta(minutes=open_close_lead)).strftime('%H:%M:%S')
+    market_close_time = (pd.to_datetime(market_close_time_pm) +
+                         pd.Timedelta(minutes=open_close_lead)).strftime('%H:%M:%S')
+    wakeup_time_am = (pd.to_datetime(market_open_time_am) -
+                      pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+    wakeup_time_pm = (pd.to_datetime(market_open_time_pm) -
+                      pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+    sleep_time_am = (pd.to_datetime(market_close_time_am) +
+                     pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+    sleep_time_pm = (pd.to_datetime(market_close_time_pm) +
+                     pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
 
     # 添加交易市场开市和收市任务，开市时产生wakeup任务，收市时产生sleep任务，早晚收盘时产生open_market/close_market任务
-    task_agenda.append((market_open_time_am, 'open_market'))
-    task_agenda.append((market_open_time_am, 'wakeup'))
-    task_agenda.append((market_close_time_am, 'sleep'))
-    task_agenda.append((market_open_time_pm, 'wakeup'))
-    task_agenda.append((market_close_time_pm, 'sleep'))
+    task_agenda.append((market_open_time, 'open_market'))
+    task_agenda.append((wakeup_time_am, 'wakeup'))
+    task_agenda.append((sleep_time_am, 'sleep'))
+    task_agenda.append((wakeup_time_pm, 'wakeup'))
+    task_agenda.append((sleep_time_pm, 'sleep'))
+    task_agenda.append((market_close_time, 'close_market'))
 
     # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
     for stg_id, stg in operator.get_strategy_id_pairs():
         timing = stg.strategy_run_timing
         freq = stg.strategy_run_freq
-        if freq.lower() in ['1m', '5m', '15m', '30m', 'h']:
+        if freq.lower() in ['1min', '5min', '15min', '30min', 'h']:
+            # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
+            from qteasy.utilfuncs import next_market_trade_day
+            a_trade_day = next_market_trade_day(today, exchange=exchange_market)
+            the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
             run_time_index = _trade_time_index(
-                    start=today,
-                    end=today,
+                    start=a_trade_day,
+                    end=the_next_day,
                     freq=freq,
                     start_am=market_open_time_am,
                     end_am=market_close_time_am,
@@ -82,14 +105,29 @@ def create_daily_task_agenda(operator, config=None):
                     end_pm=market_close_time_pm,
                     include_start_pm=True,
                     include_end_pm=True,
-            ).tolist()
+            ).strftime('%H:%M:%S').tolist()
         else:
             if timing == 'open':
-                run_time_index = [market_open_time_am]
+                # 开盘时运行策略即在开盘后1分钟运行
+                stg_run_time = (pd.to_datetime(market_open_time_am) +
+                                        pd.Timedelta(minutes=1)).strftime('%H:%M:%S')
             elif timing == 'close':
-                run_time_index = [market_close_time_pm]
+                # 收盘时运行策略即在收盘前1分钟运行
+                stg_run_time = (pd.to_datetime(market_close_time_pm) -
+                                         pd.Timedelta(minutes=1)).strftime('%H:%M:%S')
             else:
-                run_time_index = pd.to_datetime(timing).time()
+                # 其他情况，直接使用timing参数, 除非timing参数不是时间字符串，或者timing参数不在交易市场的开市时间内
+                try:
+                    stg_run_time = pd.to_datetime(timing).time()
+                except ValueError:
+                    raise ValueError(f'Invalid strategy_run_timing: {timing}')
+                if (stg_run_time < pd.to_datetime(market_open_time_am).time()) or \
+                        (stg_run_time > pd.to_datetime(market_close_time_pm).time()):
+                    # timing 不在交易市场的开市时间内，此时调整timing为收盘前1分钟
+                    stg_run_time = (pd.to_datetime(market_close_time_pm) -
+                                            pd.Timedelta(minutes=1))
+                stg_run_time = stg_run_time.strftime('%H:%M:%S')
+            run_time_index = [stg_run_time]
 
         for t in run_time_index:
             if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_stg')):
@@ -982,7 +1020,7 @@ def _trade_time_index(start=None,
         year:       A-DEC/...
         由于周、季、年三种情况存在复合字符串，因此需要split
     '''
-    if freq_str[-1:] in ['t', 'h']:
+    if freq_str[-1:].lower() in ['t', 'h']:
         idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
                                                  include_start=include_start_am, include_end=include_end_am)
         idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,

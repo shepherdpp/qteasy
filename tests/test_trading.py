@@ -2382,7 +2382,6 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
-        import pdb; pdb.set_trace()
         self.assertEqual(stg.strategy_run_freq, 'd')
         self.assertEqual(stg.strategy_run_timing, 'close')
         config = {
@@ -2390,9 +2389,48 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_pm': '15:30:00',
             'market_open_time_pm': '13:00:00',
             'market_close_time_am': '11:30:00',
+            'exchange': 'SSE',
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
+
+        # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
+        op = qt.Operator(strategies='macd')
+        stg = op.strategies[0]
+        stg.strategy_run_freq = 'h'
+        stg.strategy_run_timing = 'open'
+        config = {
+            'market_open_time_am': '09:30:00',
+            'market_close_time_pm': '15:30:00',
+            'market_open_time_pm': '13:00:00',
+            'market_close_time_am': '11:30:00',
+            'exchange': 'SSE',
+        }
+        agenda = create_daily_task_agenda(op, config)
+        print(f'agenda: {agenda}')
+
+        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
+        op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
+        stg = op.strategies[0]
+        stg.strategy_run_freq = 'h'
+        stg.strategy_run_timing = 'open'
+        stg = op.strategies[1]
+        stg.strategy_run_freq = '30min'
+        stg.strategy_run_timing = 'open'
+        stg = op.strategies[2]
+        stg.strategy_run_freq = 'd'
+        stg.strategy_run_timing = '10:30'
+        config = {
+            'market_open_time_am': '09:30:00',
+            'market_close_time_pm': '15:30:00',
+            'market_open_time_pm': '13:00:00',
+            'market_close_time_am': '11:30:00',
+            'exchange': 'SSE',
+        }
+        agenda = create_daily_task_agenda(op, config)
+        print(f'agenda: {agenda}')
+
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
