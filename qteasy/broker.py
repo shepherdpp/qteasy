@@ -12,10 +12,8 @@
 # different trading platforms or brokers
 # ======================================
 
-
+from queue import Queue
 from abc import abstractmethod, ABCMeta
-
-from qteasy.trader import TaskScheduler
 
 
 class BaseBroker(object):
@@ -37,3 +35,22 @@ class BaseBroker(object):
         """ 交易所处理交易订单并获取交易结果 """
         pass
 
+
+class QuickBroker(BaseBroker):
+    """ QuickBroker接到交易订单后，立即返回交易结果，且结果永远是全部成交
+    """
+    def __init__(self):
+        super(QuickBroker, self).__init__()
+
+    def get_result(self):
+        orders = self.order_queue.get()
+        results = []
+        for order in orders:
+            results.append(self._quick_trade(order))
+        self.result_queue.put(results)
+        return results
+
+    @staticmethod
+    def _quick_trade(order):
+        """ 交易所处理交易订单并获取交易结果 """
+        return order

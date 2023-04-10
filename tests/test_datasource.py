@@ -17,9 +17,10 @@ from pandas import Timestamp
 import numpy as np
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.trading_util import _trade_time_index
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import get_primary_key_range, htype_to_table_col
 from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
 from qteasy.database import get_main_freq
 

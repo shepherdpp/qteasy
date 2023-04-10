@@ -12,12 +12,15 @@
 # ======================================
 
 import time
-import pandas as pd
-
+import sys
+from threading import Thread
 from queue import Queue
 from functools import lru_cache
 
-from qteasy import Operator
+import pandas as pd
+
+from qteasy import Operator, DataSource
+from qteasy.broker import BaseBroker, QuickBroker
 
 
 TIME_ZONE = 'Asia/Shanghai'
@@ -59,23 +62,15 @@ class TaskScheduler(object):
 
     Methods
     -------
-    init_task_daily_agenda()
-        初始化每天的任务日程
-    start()
-        启动交易系统
-    stop()
-        停止交易系统
-    sleep()
-        休眠交易系统
-    wakeup()
-        唤醒交易系统
-    pause()
-        暂停交易系统
-    resume()
-        恢复交易系统
+    run() -> None
+        交易系统的main loop
+    add_task(task) -> None
+        添加任务到任务队列
+    run_task(task) -> None
+        执行任务
     """
 
-    def __init__(self, account_id, operator, broker, config):
+    def __init__(self, account_id, operator, broker, config, datasource):
         """ 初始化TaskScheduler
 
         Parameters
@@ -88,7 +83,20 @@ class TaskScheduler(object):
             交易所对象，接受交易订单并返回交易结果
         config: dict
             交易系统的配置信息
+        datasource: DataSource
+            数据源对象，从数据源获取数据
         """
+        if not isinstance(account_id, int):
+            raise TypeError(f'account_id must be int, got {type(account_id)} instead')
+        if not isinstance(operator, Operator):
+            raise TypeError(f'operator must be Operator, got {type(operator)} instead')
+        if not isinstance(broker, BaseBroker):
+            raise TypeError(f'broker must be Broker, got {type(broker)} instead')
+        if not isinstance(config, dict):
+            raise TypeError(f'config must be dict, got {type(config)} instead')
+        if not isinstance(datasource, DataSource):
+            raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
+
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
@@ -102,6 +110,7 @@ class TaskScheduler(object):
         self.status = 'stopped'
 
         self._read_account_info(account_id)
+        self._initialize_agenda(operator, config)
 
     def run(self):
         """ 交易系统的main loop """
@@ -110,29 +119,56 @@ class TaskScheduler(object):
             sleep_interval = MARKET_CLOSE_DAY_LOOP_INTERVAL if not self.is_trade_day else MARKET_OPEN_DAY_LOOP_INTERVAL
             # 只有当交易系统处于'running'状态时，才会执行任务
             if self.status != 'running':
+                sys.stdout.write(f'TaskScheduler is {self.status}, Nothing will happen...')
+                sys.stdout.flush()
                 time.sleep(1)
                 continue
             # 如果交易日，检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
             if not self.task_queue.empty():
                 # 如果任务队列不为空，执行任务
                 task = self.task_queue.get()
-                self._run_task(task)
+                sys.stdout.write(f'run task: {task}')
+                self.run_task(task)
                 self.task_queue.task_done()
                 if self.status == 'stopped':
+                    sys.stdout.write(f'TaskScheduler is {self.status}, exit main loop')
                     break
                 else:
                     continue
 
             # 非交易日会执行任务，但是不会从任务日程中添加任务到任务队列，sleep后继续循环
             if not self.is_trade_day:
-                print('Today is not a trade day, sleep for a while...')
+                print('Today is not a trade day, Nothing will be done')
                 time.sleep(sleep_interval)
                 continue
 
             # 从任务日程中添加任务到任务队列，sleep后继续循环
-            current_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).time()
+            current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
             self._add_task_from_agenda(current_time)
             time.sleep(sleep_interval)
+
+    def add_task(self, task, **kwargs):
+        """ 添加任务到任务队列
+
+        Parameters
+        ----------
+        task: str
+            任务名称
+        **kwargs: dict
+            任务参数
+        """
+        if not isinstance(task, str):
+            raise TypeError('task should be a str')
+        if not isinstance(kwargs, dict):
+            raise TypeError('kwargs should be a dict')
+
+        if task not in self.AVAILABLE_TASKS:
+            raise ValueError('task {} is not available'.format(task))
+
+        if kwargs:
+            task = (task, kwargs)
+
+        self._add_task_to_queue(task)
 
     def _start(self):
         """ 启动交易系统 """
@@ -169,11 +205,15 @@ class TaskScheduler(object):
         if not self.is_market_open:
             return
         # TODO: set up operator, run operator strategies, and get signals
-        self._operator.create_signal()
+        print(f'runing strategy: {strategy_ids}')
 
     def _pre_open(self):
         """ 开市前 """
-        self._initialize_agenda(operator, config)
+        pass
+
+    def _post_close(self):
+        """ 收市后 """
+        pass
 
     def _market_open(self):
         """ 开市 """
@@ -183,7 +223,7 @@ class TaskScheduler(object):
         """ 收市 """
         self.is_market_open = False
 
-    def _run_task(self, task, **kwargs):
+    def run_task(self, task, **kwargs):
         """ 运行任务
 
         Parameters
@@ -199,17 +239,17 @@ class TaskScheduler(object):
         if not isinstance(task, str):
             raise ValueError(f'task must be a string, got {type(task)} instead.')
 
-        if task not in AVAILABLE_TASKS.keys():
+        if task not in self.AVAILABLE_TASKS.keys():
             raise ValueError(f'Invalid task name: {task}')
 
-        task_func = AVAILABLE_TASKS[task]
+        task_func = self.AVAILABLE_TASKS[task]
         task_func(self, **kwargs)
 
     def _check_trade_day(self):
         """ 检查当前日期是否是交易日 """
-        current_date = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).date()
+        current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()
         from qteasy.utilfuncs import is_market_trade_day
-        self.is_trade_day = is_market_trade_day(current_date, self._config['market'])
+        self.is_trade_day = is_market_trade_day(current_date, self._config['exchange'])
 
     def _add_task_to_queue(self, task):
         """ 添加任务到任务队列
@@ -230,8 +270,14 @@ class TaskScheduler(object):
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
         """
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列
-        for task_time, task in self.task_daily_agenda:
+        for task_tuple in self.task_daily_agenda:
+            task_time = task_tuple[0]
             if task_time <= current_time:
+                if len(task_tuple) > 2:
+                    task = task_tuple[1, 2]
+                else:
+                    task = task_tuple[1]
+
                 self._add_task_to_queue(task)
 
     def _initialize_agenda(self, operator, config):
@@ -262,3 +308,5 @@ class TaskScheduler(object):
         'pause':        _pause,
         'resume':       _resume,
     }
+
+

@@ -4487,6 +4487,7 @@ def _resample_data(hist_data, target_freq,
             target_freq = 'B'
 
     # 如果要求去掉非交易时段的数据
+    from qteasy.trading_util import _trade_time_index
     if trade_time_only:
         expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
     else:
