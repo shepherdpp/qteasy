@@ -114,20 +114,21 @@ class TaskScheduler(object):
 
     def run(self):
         """ 交易系统的main loop """
+        self.status = 'running'
         while True:
             self._check_trade_day()
             sleep_interval = MARKET_CLOSE_DAY_LOOP_INTERVAL if not self.is_trade_day else MARKET_OPEN_DAY_LOOP_INTERVAL
             # 只有当交易系统处于'running'状态时，才会执行任务
-            if self.status != 'running':
-                sys.stdout.write(f'TaskScheduler is {self.status}, Nothing will happen...')
-                sys.stdout.flush()
-                time.sleep(1)
-                continue
+            # if self.status != 'running':
+            #     sys.stdout.write(f'TaskScheduler is {self.status}, Nothing will happen...')
+            #     sys.stdout.flush()
+            #     time.sleep(1)
+            #     continue
             # 如果交易日，检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
             if not self.task_queue.empty():
                 # 如果任务队列不为空，执行任务
                 task = self.task_queue.get()
-                sys.stdout.write(f'run task: {task}')
+                sys.stdout.write(f'will run task: {task}')
                 self.run_task(task)
                 self.task_queue.task_done()
                 if self.status == 'stopped':
@@ -167,7 +168,7 @@ class TaskScheduler(object):
 
         if kwargs:
             task = (task, kwargs)
-
+        print('\nadding task: {}'.format(task))
         self._add_task_to_queue(task)
 
     def _start(self):
@@ -243,6 +244,7 @@ class TaskScheduler(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func = self.AVAILABLE_TASKS[task]
+        print(f'running task: {task_func.__name__}')
         task_func(self, **kwargs)
 
     def _check_trade_day(self):
@@ -272,6 +274,7 @@ class TaskScheduler(object):
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列
         for task_tuple in self.task_daily_agenda:
             task_time = task_tuple[0]
+            task_time = pd.to_datetime(task_time, utc=True).tz_convert(TIME_ZONE).time()
             if task_time <= current_time:
                 if len(task_tuple) > 2:
                     task = task_tuple[1, 2]

@@ -36,10 +36,23 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(ts, TaskScheduler)
         Thread(target=ts.run).start()
         time.sleep(1)
-        sys.stdout.write(f'current status: {ts.status}')
-        ts.add_task('start')
-        time.sleep(10)
-        sys.stdout.write(f'current status: {ts.status}')
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('sleep')
+        time.sleep(5)
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('wakeup')
+        time.sleep(5)
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('pause')
+        time.sleep(5)
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('resume')
+        time.sleep(5)
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('stop')
+        time.sleep(5)
+        print(f'\ncurrent status: {ts.status}')
+
 
     def test_run_task(self):
         """Test function run_task"""
@@ -54,7 +67,22 @@ class TestTrader(unittest.TestCase):
         }
         datasource = qteasy.QT_DATA_SOURCE
         ts = TaskScheduler(1, operator, broker, config, datasource)
-        ts.run_task('open_market')
+        self.assertIsInstance(ts, TaskScheduler)
+        self.assertEqual(ts.status, 'stopped')
+        ts.run_task('start')
+        self.assertEqual(ts.status, 'running')
+        ts.run_task('stop')
+        self.assertEqual(ts.status, 'stopped')
+        ts.run_task('start')
+        self.assertEqual(ts.status, 'running')
+        ts.run_task('sleep')
+        self.assertEqual(ts.status, 'sleeping')
+        ts.run_task('wakeup')
+        self.assertEqual(ts.status, 'running')
+        ts.run_task('pause')
+        self.assertEqual(ts.status, 'paused')
+        ts.run_task('resume')
+        self.assertEqual(ts.status, 'running')
 
 
 if __name__ == '__main__':
