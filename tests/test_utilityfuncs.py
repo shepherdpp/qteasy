@@ -52,18 +52,18 @@ class TestUtilityFuncs(unittest.TestCase):
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')
         t = 3.14
-        self.assertEqual(time_str_format(t), '3s 140.0ms')
-        self.assertEqual(time_str_format(t, estimation=True), '3s ')
+        self.assertEqual(time_str_format(t), '3 sec 140.0 ms')
+        self.assertEqual(time_str_format(t, estimation=True), '3 sec ')
         self.assertEqual(time_str_format(t, short_form=True), '3"140')
         self.assertEqual(time_str_format(t, estimation=True, short_form=True), '3"')
         t = 300.14
-        self.assertEqual(time_str_format(t), '5min 140.0ms')
-        self.assertEqual(time_str_format(t, estimation=True), '5min ')
+        self.assertEqual(time_str_format(t), '5 min 140.0 ms')
+        self.assertEqual(time_str_format(t, estimation=True), '5 min ')
         self.assertEqual(time_str_format(t, short_form=True), "5'140")
         self.assertEqual(time_str_format(t, estimation=True, short_form=True), "5'")
         t = 7435.0014
-        self.assertEqual(time_str_format(t), '2hrs 3min 55s 1.4ms')
-        self.assertEqual(time_str_format(t, estimation=True), '2hrs ')
+        self.assertEqual(time_str_format(t), '2 hours 3 min 55 sec 1.4ms')
+        self.assertEqual(time_str_format(t, estimation=True), '2 hours ')
         self.assertEqual(time_str_format(t, short_form=True), "2H3'55\"001")
         self.assertEqual(time_str_format(t, estimation=True, short_form=True), "2H")
         t = 88425.0509

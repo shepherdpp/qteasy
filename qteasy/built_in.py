@@ -227,7 +227,7 @@ class BBand(RuleIterator):
                          name='BBand',
                          description='BBand strategy, determine long/short position according to Bollinger bands',
                          data_freq='d',
-                         sample_freq='d',
+                         strategy_run_freq='d',
                          window_length=270,
                          strategy_data_types=['close'])
 
@@ -1745,7 +1745,7 @@ class TRIX(RuleIterator):
                          description='TRIX strategy, determine long/short position according to triple exponential '
                                      'weighted moving average prices',
                          data_freq='d',
-                         sample_freq='d',
+                         strategy_run_freq='d',
                          window_length=270,
                          strategy_data_types='close')
 
@@ -3241,7 +3241,7 @@ class SelectingAvgIndicator(FactorSorter):
                          name='FINANCE',
                          description='GeneralStg share_pool according to financial report EPS indicator',
                          data_freq='d',
-                         sample_freq='y',
+                         strategy_run_freq='y',
                          window_length=90,
                          strategy_data_types='eps')
 
@@ -3300,7 +3300,7 @@ class SelectingNDayLast(FactorSorter):
                          name='N-DAY LAST',
                          description='Select stocks according their previous prices',
                          data_freq='d',
-                         sample_freq='m',
+                         strategy_run_freq='m',
                          window_length=100,
                          strategy_data_types='close')
 
@@ -3361,7 +3361,7 @@ class SelectingNDayAvg(FactorSorter):
                          name='N-DAY AVG',
                          description='Select stocks by its N day average open price',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
                          strategy_data_types='close')
 
@@ -3423,7 +3423,7 @@ class SelectingNDayChange(FactorSorter):
                          name='N-DAY CHANGE',
                          description='Select stocks by its N day price change',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
                          strategy_data_types='close')
 
@@ -3486,7 +3486,7 @@ class SelectingNDayRateChange(FactorSorter):
                          name='N-DAY RATE',
                          description='Select stocks by its N day price change',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
                          strategy_data_types='close')
 
@@ -3548,7 +3548,7 @@ class SelectingNDayVolatility(FactorSorter):
                          name='N-DAY VOL',
                          description='Select stocks by its N day price change',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
                          strategy_data_types='high,low,close')
 

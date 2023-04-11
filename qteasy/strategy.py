@@ -206,7 +206,7 @@ class BaseStrategy:
         self.set_hist_pars(data_freq=data_freq,
                            strategy_run_freq=strategy_run_freq,
                            window_length=window_length,
-                           data_types=strategy_data_types,
+                           strategy_data_types=strategy_data_types,
                            strategy_run_timing=strategy_run_timing,
                            reference_data_types=reference_data_types)
         logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
@@ -342,7 +342,7 @@ class BaseStrategy:
 
     @data_types.setter
     def data_types(self, data_types):
-        self.set_hist_pars(data_types=data_types)
+        self.set_hist_pars(strategy_data_types=data_types)
 
     @property
     def history_data_types(self):
@@ -351,7 +351,7 @@ class BaseStrategy:
 
     @history_data_types.setter
     def history_data_types(self, data_types):
-        self.set_hist_pars(data_types=data_types)
+        self.set_hist_pars(strategy_data_types=data_types)
 
     @property
     def strategy_run_timing(self):
@@ -554,7 +554,7 @@ class BaseStrategy:
                       data_freq=None,
                       strategy_run_freq=None,
                       window_length=None,
-                      data_types=None,
+                      strategy_data_types=None,
                       strategy_run_timing=None,
                       reference_data_types=None):
         """ 设置策略的历史数据回测相关属性
@@ -567,7 +567,7 @@ class BaseStrategy:
             策略运行频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
         window_length: int
             回测时需要用到的历史数据窗口的长度
-        data_types: str
+        strategy_data_types: str
             需要用到的历史数据类型
         strategy_run_timing: str
             需要用到的历史数据回测价格类型
@@ -597,12 +597,12 @@ class BaseStrategy:
                 f'TypeError, window length should an integer, got {type(window_length)} instead'
             assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
             self._window_length = window_length
-        if data_types is not None:
-            if isinstance(data_types, str):
-                data_types = str_to_list(data_types, ',')
-            assert isinstance(data_types, list), \
-                f'TypeError, data type should be a list, got {type(data_types)} instead'
-            self._data_types = data_types
+        if strategy_data_types is not None:
+            if isinstance(strategy_data_types, str):
+                strategy_data_types = str_to_list(strategy_data_types, ',')
+            assert isinstance(strategy_data_types, list), \
+                f'TypeError, data type should be a list, got {type(strategy_data_types)} instead'
+            self._data_types = strategy_data_types
         if strategy_run_timing is not None:
             assert isinstance(strategy_run_timing,
                               str), f'Wrong input type, price_type should be a string, got {type(strategy_run_timing)}'
@@ -1130,7 +1130,7 @@ class FactorSorter(BaseStrategy):
         input:
             :param h_seg: np.ndarray
             :param ref_seg:
-            :param trade_date:
+            :param trade_data:
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
         """

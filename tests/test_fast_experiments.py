@@ -78,9 +78,11 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import get_primary_key_range, htype_to_table_col
 from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
 from qteasy.database import get_main_freq
+
+from qteasy.trading_util import _trade_time_index
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 

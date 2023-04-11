@@ -40,7 +40,7 @@ class TestLSStrategy(RuleIterator):
                          par_count=2,
                          par_types='discr, conti',
                          par_range=([1, 20], [2, 20]),
-                         data_types='close, open, high, low',
+                         strategy_data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
         pass
@@ -99,9 +99,9 @@ class TestSelStrategy(GeneralStg):
                          par_count=0,
                          par_types='',
                          par_range=(),
-                         data_types='high, low, close',
+                         strategy_data_types='high, low, close',
                          data_freq='d',
-                         sample_freq='10d',
+                         strategy_run_freq='10d',
                          window_length=5,
                          )
         pass
@@ -160,7 +160,7 @@ class Cross_SMA_PS(qt.RuleIterator):
                 par_range=[(10, 250), (10, 250), (0.0, 0.5)],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types='close',
+                strategy_data_types='close',
                 window_length=200,
         )
 
@@ -217,7 +217,7 @@ class Cross_SMA_PT(qt.RuleIterator):
                 par_range=[(10, 250), (10, 250), (0.0, 0.5)],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types='close',
+                strategy_data_types='close',
                 window_length=200,
         )
 
@@ -796,8 +796,8 @@ class TestQT(unittest.TestCase):
                      trade_log=True)
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
-                         sample_freq='Q',
-                         data_types='pe',
+                         strategy_run_freq='Q',
+                         strategy_data_types='pe',
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
@@ -848,8 +848,8 @@ class TestQT(unittest.TestCase):
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 30),
-                         sample_freq='Q',
-                         data_types='basic_eps',
+                         strategy_run_freq='Q',
+                         strategy_data_types='basic_eps',
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',

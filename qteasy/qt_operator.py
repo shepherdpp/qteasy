@@ -1159,10 +1159,10 @@ class Operator:
                       par_range: [tuple, list] = None,
                       par_types: [list, str] = None,
                       data_freq: str = None,
-                      sample_freq: str = None,
+                      strategy_run_freq: str = None,
                       window_length: int = None,
-                      data_types: [str, list] = None,
-                      bt_price_type: str = None,
+                      strategy_data_types: [str, list] = None,
+                      strategy_run_timing: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
             将函数参数中给定的策略参数赋值给相应的策略
@@ -1188,17 +1188,17 @@ class Operator:
             :param data_freq:
                 :type data_freq: str, 数据频率，策略本身所使用的数据的采样频率
 
-            :param sample_freq:
-                :type sample_freq: str, 采样频率，策略运行时进行信号生成的采样频率，该采样频率决定了信号的频率
+            :param strategy_run_freq:
+                :type strategy_run_freq: str, 采样频率，策略运行时进行信号生成的采样频率，该采样频率决定了信号的频率
 
             :param window_length:
                 :type window_length: int, 窗口长度：策略计算的前视窗口长度
 
-            :param data_types:
-                :type data_types: str or list, 策略计算所需历史数据的数据类型
+            :param strategy_data_types:
+                :type strategy_data_types: str or list, 策略计算所需历史数据的数据类型
 
-            :param bt_price_type:
-                :type bt_price_type: str, 策略回测交易时使用的交易价格类型
+            :param strategy_run_timing:
+                :type strategy_run_timing: str, 策略回测交易时使用的交易价格类型
 
             :return:
         """
@@ -1221,16 +1221,16 @@ class Operator:
         if par_types is not None:  # 设置策略的参数类型
             strategy.par_types = par_types
         has_df = data_freq is not None
-        has_sf = sample_freq is not None
+        has_sf = strategy_run_freq is not None
         has_wl = window_length is not None
-        has_dt = data_types is not None
-        has_pt = bt_price_type is not None
+        has_dt = strategy_data_types is not None
+        has_pt = strategy_run_timing is not None
         if has_df or has_sf or has_wl or has_dt or has_pt:
             strategy.set_hist_pars(data_freq=data_freq,
-                                   sample_freq=sample_freq,
+                                   strategy_run_freq=strategy_run_freq,
                                    window_length=window_length,
-                                   data_types=data_types,
-                                   bt_price_type=bt_price_type)
+                                   strategy_data_types=strategy_data_types,
+                                   strategy_run_timing=strategy_run_timing)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 
@@ -1514,9 +1514,9 @@ class Operator:
                     axis=0
             )[window_length_offset:-1] if ref_data_val else None
 
-            # 根据策略运行频率sample_freq生成信号生成采样点序列
+            # 根据策略运行频率strategy_run_freq生成信号生成采样点序列
             freq = stg.strategy_run_freq
-            # 根据sample_freq生成一个策略运行采样日期序列
+            # 根据strategy_run_freq生成一个策略运行采样日期序列
             # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
             #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
             #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
@@ -1531,7 +1531,7 @@ class Operator:
             #  诸如此类
             temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
             if len(temp_date_series) <= 1:
-                # 如果sample_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
+                # 如果strategy_run_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
                 sample_pos = np.zeros(shape=(1,), dtype='int')
                 sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
                 self._op_sample_indices[stg_id] = sample_pos

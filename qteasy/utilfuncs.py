@@ -285,7 +285,7 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
             elif minutes > 0:
                 return f'{minutes}\'{seconds:02}"'
             else:
-                return f'{seconds:.03f}"'
+                return f'{seconds:.01f}"'
         else:
             time_str = ""
             if days > 0:
@@ -297,7 +297,7 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
             if seconds > 0:
                 time_str += f'{seconds}"'
             if milliseconds > 0 or not time_str:
-                ms_str = f'.{milliseconds:03d}' if time_str else f'0.{milliseconds:03d}'
+                ms_str = f'.{milliseconds:0.1f}' if time_str else f'0.{milliseconds:0.1f}'
                 time_str += ms_str
             return time_str
     else:
@@ -313,7 +313,7 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
         if seconds > 0:
             time_str += f"{seconds} sec "
         if milliseconds > 0 or not time_str:
-            time_str += f"{milliseconds} ms"
+            time_str += f"{milliseconds:0.1f} ms"
 
         return time_str
 
