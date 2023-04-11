@@ -36,8 +36,11 @@ class BaseStrategy:
             par_types: [list, str] = None,
             par_range: [list, tuple] = None,
             strategy_run_freq: str = 'd',
+            sample_freq: str = None,
             strategy_run_timing: str = 'close',
+            bt_price_type: str = None,
             strategy_data_types: [str, list] = 'close',
+            data_types: [str, list] = None,
             reference_data_types: [str, list] = '',
             data_freq: str = 'd',
             window_length: int = 270,
@@ -65,6 +68,8 @@ class BaseStrategy:
         strategy_run_freq: str {'d', 'w', 'm', 'q', 'y'}
             策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
             TODO: 如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
+        sample_freq: str, deprecated
+            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
         strategy_run_timing: datetime-like or str
             策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
             例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
@@ -74,7 +79,11 @@ class BaseStrategy:
             ['09:30:00', '10:30:00',
              '11:30:00', '13:00:00',
              '14:00:00', '15:00:00',]
+        bt_price_type: str, deprecated
+            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
         strategy_data_types: str or list of str
+            策略使用的数据类型，例如close, open, high, low等
+        data_types: str or list of str, deprecated
             策略使用的数据类型，例如close, open, high, low等
         reference_data_types: str or list of str
             策略使用的参考数据类型，例如close, open, high, low等
@@ -87,6 +96,17 @@ class BaseStrategy:
         -------
         None
         """
+        # 关于已经废弃的参数，给出警告信息，并赋值给新的参数
+        if sample_freq is not None:
+            warnings.warn('sample_freq is deprecated, use strategy_run_freq instead')
+            strategy_run_freq = sample_freq
+        if bt_price_type is not None:
+            warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
+            strategy_run_timing = bt_price_type
+        if data_types is not None:
+            warnings.warn('data_types is deprecated, use strategy_data_types instead')
+            strategy_data_types = data_types
+
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
@@ -318,6 +338,17 @@ class BaseStrategy:
         self.set_hist_pars(data_freq=data_freq)
 
     @property
+    def sample_freq(self):
+        """策略生成的采样频率"""
+        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
+        return self._strategy_run_freq
+
+    @sample_freq.setter
+    def sample_freq(self, sample_freq):
+        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
+        self.set_hist_pars(strategy_run_freq=sample_freq)
+
+    @property
     def strategy_run_freq(self):
         """策略生成的采样频率"""
         return self._strategy_run_freq
@@ -338,10 +369,21 @@ class BaseStrategy:
     @property
     def data_types(self):
         """策略依赖的历史数据类型"""
+        warnings.warn('data_types is deprecated, use history_data_types instead', DeprecationWarning)
         return self._data_types
 
     @data_types.setter
     def data_types(self, data_types):
+        warnings.warn('data_types is deprecated, use history_data_types instead', DeprecationWarning)
+        self.set_hist_pars(strategy_data_types=data_types)
+
+    @property
+    def strategy_data_types(self):
+        """data_types的别名"""
+        return self._data_types
+
+    @strategy_data_types.setter
+    def strategy_data_types(self, data_types):
         self.set_hist_pars(strategy_data_types=data_types)
 
     @property
@@ -364,13 +406,27 @@ class BaseStrategy:
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
+    def bt_price_type(self):
+        """策略回测时所使用的价格类型，bt_price_type的别名"""
+        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
+        return self._strategy_run_timing
+
+    @bt_price_type.setter
+    def bt_price_type(self, price_type):
+        """ 设置策略回测室所使用的价格类型"""
+        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
+        self.set_hist_pars(strategy_run_timing=price_type)
+
+    @property
     def bt_price_types(self):
         """策略回测时所使用的价格类型，bt_price_type的别名"""
+        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
         return self._strategy_run_timing
 
     @bt_price_types.setter
     def bt_price_types(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
+        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property

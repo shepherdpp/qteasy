@@ -1074,7 +1074,23 @@ def _validate_asset_type(value):
 
 
 def _is_datelike(value):
+    """ return True if value is a date-like object
+    """
     if isinstance(value, (pd.Timestamp, datetime.datetime, datetime.date)):
+        return True
+    if isinstance(value, str):
+        try:
+            dt = pd.to_datetime(value)
+            return True
+        except:
+            return False
+    return False
+
+
+def _is_timelike(value):
+    """ return True if value is a time-like object
+    """
+    if isinstance(value, (pd.Timestamp, datetime.datetime, datetime.time)):
         return True
     if isinstance(value, str):
         try:

@@ -53,7 +53,6 @@ class TestTrader(unittest.TestCase):
         time.sleep(5)
         print(f'\ncurrent status: {ts.status}')
 
-
     def test_run_task(self):
         """Test function run_task"""
         operator = qteasy.Operator(strategies=['macd', 'dma'])

@@ -2394,7 +2394,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 6)
+        self.assertEqual(len(agenda), 7)
         self.assertEqual(agenda[0], ('09:30:00', 'wakeup'))
         self.assertEqual(agenda[1], ('09:30:00', 'open'))
         self.assertEqual(agenda[3], ('15:30:00', 'macd'))
