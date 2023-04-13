@@ -103,6 +103,8 @@ class TaskScheduler(object):
         self._config = config
 
         self.task_queue = Queue()
+        self.message_queue = Queue()
+
         self.task_daily_agenda = []
 
         self.is_market_open = False
@@ -118,16 +120,15 @@ class TaskScheduler(object):
         while True:
             self._check_trade_day()
             sleep_interval = MARKET_CLOSE_DAY_LOOP_INTERVAL if not self.is_trade_day else MARKET_OPEN_DAY_LOOP_INTERVAL
-            # 只有当交易系统处于'running'状态时，才会执行任务
-            # if self.status != 'running':
-            #     sys.stdout.write(f'TaskScheduler is {self.status}, Nothing will happen...')
-            #     sys.stdout.flush()
-            #     time.sleep(1)
-            #     continue
-            # 如果交易日，检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
+            # 检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
             if not self.task_queue.empty():
                 # 如果任务队列不为空，执行任务
+                white_listed_tasks = self.TASK_WHITELIST[self.status]
                 task = self.task_queue.get()
+                if task not in white_listed_tasks:
+                    sys.stdout.write(f'task: {task} cannot be executed in current status: {self.status}')
+                    self.task_queue.task_done()
+                    continue
                 sys.stdout.write(f'will run task: {task}')
                 self.run_task(task)
                 self.task_queue.task_done()
@@ -136,12 +137,6 @@ class TaskScheduler(object):
                     break
                 else:
                     continue
-
-            # 非交易日会执行任务，但是不会从任务日程中添加任务到任务队列，sleep后继续循环
-            if not self.is_trade_day:
-                print('Today is not a trade day, Nothing will be done')
-                time.sleep(sleep_interval)
-                continue
 
             # 从任务日程中添加任务到任务队列，sleep后继续循环
             current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
@@ -244,8 +239,10 @@ class TaskScheduler(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func = self.AVAILABLE_TASKS[task]
-        print(f'running task: {task_func.__name__}')
-        task_func(self, **kwargs)
+        if kwargs:
+            task_func(self, **kwargs)
+        else:
+            task_func(self)
 
     def _check_trade_day(self):
         """ 检查当前日期是否是交易日 """
@@ -312,4 +309,11 @@ class TaskScheduler(object):
         'resume':       _resume,
     }
 
+    TASK_WHITELIST = {
+        'stopped':     ['start'],
+        'running':     ['stop', 'sleep', 'pause', 'run_strategy', 'pre_open',
+                        'post_close', 'open_market', 'close_market'],
+        'sleeping':    ['wakeup', 'stop'],
+        'paused':      ['resume', 'stop'],
+    }
 
