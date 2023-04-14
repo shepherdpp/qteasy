@@ -15,13 +15,13 @@ import sys
 from threading import Thread
 
 import qteasy
-from qteasy.trader import TaskScheduler
+from qteasy.trader import Trader
 from qteasy.broker import QuickBroker
 
 
 class TestTrader(unittest.TestCase):
     def test_class(self):
-        """Test class TaskScheduler"""
+        """Test class Trader"""
         operator = qteasy.Operator(strategies=['macd', 'dma'])
         broker = QuickBroker()
         config = {
@@ -32,8 +32,8 @@ class TestTrader(unittest.TestCase):
             'exchange': 'SSE',
         }
         datasource = qteasy.QT_DATA_SOURCE
-        ts = TaskScheduler(1, operator, broker, config, datasource)
-        self.assertIsInstance(ts, TaskScheduler)
+        ts = Trader(1, operator, broker, config, datasource)
+        self.assertIsInstance(ts, Trader)
         Thread(target=ts.run).start()
         time.sleep(1)
         self.assertEqual(ts.status, 'running')
@@ -63,7 +63,7 @@ class TestTrader(unittest.TestCase):
         ts.add_task('stop')
         time.sleep(1)
         print(f'\ncurrent status: {ts.status}')
-        
+
         raise NotImplementedError('TestTrader.test_class not completed')
 
     def test_run_task(self):
@@ -78,8 +78,8 @@ class TestTrader(unittest.TestCase):
             'exchange': 'SSE',
         }
         datasource = qteasy.QT_DATA_SOURCE
-        ts = TaskScheduler(1, operator, broker, config, datasource)
-        self.assertIsInstance(ts, TaskScheduler)
+        ts = Trader(1, operator, broker, config, datasource)
+        self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
         self.assertEqual(ts.status, 'running')

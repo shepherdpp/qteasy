@@ -5,52 +5,126 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-04-09
 # Desc:
-#   class BaseBroker for trader to submit
+#   class Broker for trader to submit
 # trading orders and get trading results
 # Broker classes are supposed to be
-# inherited from BaseBroker, representing
+# inherited from Broker, representing
 # different trading platforms or brokers
 # ======================================
 
 from queue import Queue
 from abc import abstractmethod, ABCMeta
+from concurrent.futures import ThreadPoolExecutor
+
+import pandas as pd
 
 
-class BaseBroker(object):
+class Broker(object):
     """ Broker是交易所的抽象，它接受交易订单并返回交易结果
 
     BaseBroker定义了Broker的基本接口，所有的Broker都必须继承自BaseBroker，
     以实现不同交易所的接口
+
+    Attributes:
+    -----------
+    order_queue: Queue
+        交易订单队列，每个交易订单都是一个list，包含多个交易订单
+    result_queue: Queue
+        交易结果队列，每个交易结果都是一个list，包含多个交易结果
+    status: str
+        Broker的状态，可以是'init', 'running', 'stopped'
+
+    Methods:
+    --------
+    run()
+        Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
+    get_result(order): abstract method
+        交易所处理交易订单并获取交易结果,在子类中必须实现这个方法
     """
     __metaclass__ = ABCMeta
 
     def __init__(self):
+        self.broker_name = 'BaseBroker'
+        self.user_name = ''
+        self.password = ''
+        self.token = ''
+        self.status = 'init'
+
         self.order_queue = Queue()
         self.result_queue = Queue()
 
-    def submit_order(self, orders):
-        self.order_queue.put(orders)
+    def run(self):
+        """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
+        order_queue中的每一个交易订单都由get_result函数来处理并获取交易结果，get_result函数
+        的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
+        """
 
-    def get_result(self):
-        """ 交易所处理交易订单并获取交易结果 """
+        if self.status == 'stopped':
+            self.status = 'running'
+        while self.status == 'running':
+            # 从order_queue中获取交易订单
+            if self.order_queue.empty():
+                continue
+            # 使用ThreadPoolExecutor并行调用get_result函数处理交易订单，将结果put到result_queue中
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                while not self.order_queue.empty():
+                    executor.submit(self.get_result, self.order_queue.get())
+                # 获取交易结果并将其放入result_queue中
+            for future in executor.as_completed():
+                self.result_queue.put(future.result())
+
+    @abstractmethod
+    def get_result(self, order):
+        """ 交易所处理交易订单并获取交易结果
+
+        抽象方法，必须在子类中实现
+
+        Parameters:
+        -----------
+        order: dict
+            交易订单dict的key包括 ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
+                     'submitted_time', 'status']
+
+        Returns:
+        --------
+        result: dict
+            交易结果dict的key包括 ['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+                        'canceled_qty', 'delivery_amount', 'delivery_status'
+        """
         pass
 
 
-class QuickBroker(BaseBroker):
+class QuickBroker(Broker):
     """ QuickBroker接到交易订单后，立即返回交易结果，且结果永远是全部成交
+
+    交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
     """
-    def __init__(self):
+    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003):
         super(QuickBroker, self).__init__()
+        self.broker_name = 'QuickBroker'
+        self.fee_rate_buy = fee_rate_buy
+        self.fee_rate_sell = fee_rate_sell
 
-    def get_result(self):
-        orders = self.order_queue.get()
-        results = []
-        for order in orders:
-            results.append(self._quick_trade(order))
-        self.result_queue.put(results)
-        return results
+    def get_result(self, order):
+        """ 订单立即全部成交 """
+        from qteasy.trading_util import TIMEZONE
+        qty = order['qty']
+        price = order['price']
+        if order['direction'] == 'buy':
+            transaction_fee = qty * price * self.fee_rate_buy
+        elif order['direction'] == 'sell':
+            transaction_fee = qty * price * self.fee_rate_sell
+        else:
+            raise RuntimeError('invalid direction: {}'.format(order['direction']))
+        result = {
+            'order_id': order['order_id'],
+            'filled_qty': qty,
+            'price': price,
+            'transaction_fee': transaction_fee,
+            'execution_time': pd.to_datetime('now').tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
+            'canceled_qty': 0,
+            'delivery_amount': 0,
+            'delivery_status': 'ND',
+        }
 
-    @staticmethod
-    def _quick_trade(order):
-        """ 交易所处理交易订单并获取交易结果 """
-        return order
+        return result
