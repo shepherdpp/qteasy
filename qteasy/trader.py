@@ -169,10 +169,15 @@ class Trader(object):
                 self.task_queue.task_done()
                 continue
 
-            # 从任务日程中添加任务到任务队列，sleep后继续循环
+            # 从任务日程中添加任务到任务队列
             current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
             self._add_task_from_agenda(current_time)
             time.sleep(sleep_interval)
+
+            # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
+            if not self.broker.result_queue.empty():
+                result = self.broker.result_queue.get()
+                self.add_task('process_result', result=result)
 
     def post_message(self, message):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
@@ -210,6 +215,7 @@ class Trader(object):
         self.post_message('\nadding task: {}'.format(task))
         self._add_task_to_queue(task)
 
+    # definition of tasks
     def _start(self):
         """ 启动交易系统 """
         self.post_message('starting Trader')
@@ -259,7 +265,7 @@ class Trader(object):
 
         self.post_message(f'runing strategy: {strategy_ids}')
 
-    def _process_result(self):
+    def _process_result(self, result):
         """ 从result_queue中读取并处理交易结果
 
         1，保存交易结果到数据库
@@ -271,16 +277,25 @@ class Trader(object):
 
     def _pre_open(self):
         """ 开市前, 生成交易日的任务计划，生成消息发送到消息队列"""
-        pass
+        self._initialize_agenda(operator=self.operator, config=self.config)
 
     def _post_close(self):
         """ 收市后例行操作：
 
         1，处理当日未完成的交易信号，生成取消订单，并记录订单取消结果
-        2，处理当日已成觉的订单结果的交割，记录交割结果
+        2，处理当日已成交觉的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
-        pass
+        # 检查task_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
+        if not self.task_queue.empty():
+            self.post_message('processing unprocessed signals')
+            while not self.task_queue.empty():
+                task = self.task_queue.get()
+                self.run_task(task)  # TODO: 这里需要修改，生成取消订单
+                self.task_queue.task_done()
+        # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
+
+        # 检查今日成交结果，执行交割
 
     def _market_open(self):
         """ 开市时操作：
