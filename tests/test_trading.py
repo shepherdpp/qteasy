@@ -20,7 +20,7 @@ import numpy as np
 
 from qteasy.database import DataSource
 
-from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, signal_to_order_elements
+from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order
 from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_agenda
 
@@ -1939,7 +1939,7 @@ class TestTradeRecording(unittest.TestCase):
 
     def test_itemize_trade_signals(self):
         """ test itemize trade signals"""
-        # test signal_to_order_elements with only one symbol, buy 500 shares in long position
+        # test _signal_to_order_elements with only one symbol, buy 500 shares in long position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([5000.0])
@@ -1947,7 +1947,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -1962,13 +1962,13 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        # test signal_to_order_elements with only one symbol, sell 500 shares in long position
+        # test _signal_to_order_elements with only one symbol, sell 500 shares in long position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
         amounts_to_sell = np.array([-500.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -1981,7 +1981,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
 
-        # test signal_to_order_elements with only one symbol, sell 500 shares in short position
+        # test _signal_to_order_elements with only one symbol, sell 500 shares in short position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -1989,7 +1989,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2003,7 +2003,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
 
-        # test signal_to_order_elements with only one symbol, buy 500 shares in short position
+        # test _signal_to_order_elements with only one symbol, buy 500 shares in short position
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([-5000.0])
@@ -2011,7 +2011,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2025,7 +2025,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
 
-        # test signal_to_order_elements with only one symbol, sell 1000 shares while only 500 shares available
+        # test _signal_to_order_elements with only one symbol, sell 1000 shares while only 500 shares available
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -2033,7 +2033,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([700.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2047,7 +2047,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
 
-        # test signal_to_order_elements with only one symbol, sell 1000 short shares while only 500 short shares available
+        # test _signal_to_order_elements with only one symbol, sell 1000 short shares while only 500 short shares available
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -2055,7 +2055,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([-700.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2069,7 +2069,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
 
-        # test signal_to_order_elements with only one symbol, buy shares with not enough cash
+        # test _signal_to_order_elements with only one symbol, buy shares with not enough cash
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([10000.0])
@@ -2077,7 +2077,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 5000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2090,7 +2090,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
 
-        # test signal_to_order_elements with multiple symbols
+        # test _signal_to_order_elements with multiple symbols
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
         prices = np.array([10., 10., 10., 10., 10., 10.])
         cash_to_spend = np.array([5000.0, 0.0, 0.0, 3500.0, -1000.0, 0.0])
@@ -2098,7 +2098,7 @@ class TestTradeRecording(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0])
 
-        symbols, positions, directions, quantities = signal_to_order_elements(
+        symbols, positions, directions, quantities = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2112,7 +2112,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
 
-        # test signal_to_order_elements with multiple symbols, with a few sell amounts exceeding available amounts
+        # test _signal_to_order_elements with multiple symbols, with a few sell amounts exceeding available amounts
 
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""
@@ -2124,7 +2124,7 @@ class TestTradeRecording(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2144,7 +2144,7 @@ class TestTradeRecording(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2164,7 +2164,7 @@ class TestTradeRecording(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2184,7 +2184,7 @@ class TestTradeRecording(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2205,7 +2205,7 @@ class TestTradeRecording(unittest.TestCase):
         pt_buy_threshold = 0.1
         pt_sell_threshold = 0.1
 
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2218,14 +2218,14 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 155.0])
 
     def test_parse_ps_signals(self):
-        """ test parse_ps_signals function """
+        """ test _parse_ps_signals function """
         # test parsing ps buy long signal with only one symbol
         signals = np.array([1])
         prices = np.array([10.])
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2241,7 +2241,7 @@ class TestTradeRecording(unittest.TestCase):
         own_amounts = np.array([500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2257,7 +2257,7 @@ class TestTradeRecording(unittest.TestCase):
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2273,7 +2273,7 @@ class TestTradeRecording(unittest.TestCase):
         own_amounts = np.array([-500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2290,7 +2290,7 @@ class TestTradeRecording(unittest.TestCase):
         own_amounts = np.array([0.0, 0.0, 500.0, 150.0, 0.0, -500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2301,13 +2301,13 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
     def test_parse_vs_signals(self):
-        """ test parse_vs_signals function """
+        """ test _parse_vs_signals function """
         # test parsing vs buy long signal with only one symbol
         signals = np.array([500])
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2321,7 +2321,7 @@ class TestTradeRecording(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([500.0])
 
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2335,7 +2335,7 @@ class TestTradeRecording(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2349,7 +2349,7 @@ class TestTradeRecording(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2364,7 +2364,7 @@ class TestTradeRecording(unittest.TestCase):
         prices = np.array([10., 10., 10., 10., 10., 10.])
         own_amounts = np.array([0.0, 0.0, 500.0, -250.0, 0.0, -500.0])
 
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,

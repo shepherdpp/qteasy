@@ -66,7 +66,7 @@ class TestTrader(unittest.TestCase):
 
         raise NotImplementedError('TestTrader.test_class not completed')
 
-    def test_run_task(self):
+    def test_run_status_tasks(self):
         """Test function run_task"""
         operator = qteasy.Operator(strategies=['macd', 'dma'])
         broker = QuickBroker()
@@ -95,6 +95,14 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.status, 'paused')
         ts.run_task('resume')
         self.assertEqual(ts.status, 'running')
+
+    def test_run_info_tasks(self):
+        """ running tasks that retrieve trader and account information"""
+        raise NotImplementedError
+
+    def test_run_strategy(self):
+        """ running task that runs strategy"""
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

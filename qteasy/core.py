@@ -2489,7 +2489,7 @@ def run(operator, **kwargs):
         operator.assign_hist_data(hist_data=hist_op, reference_data=hist_ref, cash_plan=invest_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
-            raise KeyError(f'Operator can not work in real time mode when its operation type is "batch", set '
+            raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
                            f'"Operator.op_type = \'step\'"')
         else:
             op_list = operator.create_signal(

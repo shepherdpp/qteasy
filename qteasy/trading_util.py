@@ -19,7 +19,7 @@ from qteasy import logger_core as logger, Operator
 from qteasy.trade_recording import read_trade_order, get_position_by_id, get_account, update_trade_order
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
 from qteasy.trade_recording import read_trade_results_by_order_id, get_account_cash_availabilities
-from qteasy.trade_recording import update_account_balance, update_position, update_trade_result
+from qteasy.trade_recording import update_account_balance, update_position, update_trade_result, record_trade_order
 
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -145,72 +145,7 @@ def create_daily_task_agenda(operator, config=None):
     return task_agenda
 
 
-# all functions for live trade
-
-def generate_signal(operator, signal_type, shares, prices, own_amounts, own_cash, config):
-    """ 从Operator对象中生成qt交易信号
-
-    Parameters
-    ----------
-    operator: Operator
-        交易策略的Operator对象
-    signal_type: str, {'PT', 'PS', 'VS'}
-        交易信号类型
-    shares: list of str
-        股票代码
-    prices: np.ndarray
-        股票价格
-    own_amounts: np.ndarray
-        股票持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
-    own_cash: float
-        账户可用资金
-    config: dict
-        交易信号的配置
-
-    Returns
-    -------
-    int, 提交的交易信号的数量
-    """
-    # 从Operator对象中读取交易信号
-    op_signal = operator.create_signal()
-    # 解析交易信号
-    symbols, positions, directions, quantities = parse_trade_signal(
-        signals=op_signal,
-        signal_type=signal_type,
-        shares=shares,
-        prices=prices,
-        own_amounts=own_amounts,
-        own_cash=own_cash,
-        config=config
-    )
-    submitted_qty = 0
-    for sym, pos, d, qty in zip(symbols, positions, directions, quantities):
-        pos_id = get_position_ids(account_id=account_id,
-                                  symbol=sym,
-                                  position_type=pos,
-                                  data_source=data_source)
-
-        # 生成交易信号dict
-        trade_signal = {
-            'pos_id': pos_id,
-            'direction': d,
-            'order_type': order_type,
-            'qty': qty,
-            'price': get_price(),
-            'submitted_time': None,
-            'status': 'created',
-        }
-        record_trade_order(trade_signal)
-        # 逐一提交交易信号
-        if submit_order(trade_signal) is not None:
-
-            # 记录已提交的交易数量
-            submitted_qty += qty
-
-    return submitted_qty
-
-
-# Work functions for live trade
+# Utility functions for live trade
 def parse_trade_signal(signals,
                        signal_type,
                        shares,
@@ -270,7 +205,7 @@ def parse_trade_signal(signals,
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
-        cash_to_spend, amounts_to_sell = parse_pt_signals(
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
@@ -284,7 +219,7 @@ def parse_trade_signal(signals,
     # 解析PS/VS交易信号
     # 直接根据交易信号确定计划买进和卖出的数量
     elif signal_type.lower() == 'ps':
-        cash_to_spend, amounts_to_sell = parse_ps_signals(
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
@@ -292,7 +227,7 @@ def parse_trade_signal(signals,
             allow_sell_short=config['allow_sell_short']
         )
     elif signal_type.lower() == 'vs':
-        cash_to_spend, amounts_to_sell = parse_vs_signals(
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
@@ -312,7 +247,7 @@ def parse_trade_signal(signals,
         cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
 
     # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = signal_to_order_elements(
+    symbols, positions, directions, quantities = _signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,
@@ -339,13 +274,13 @@ def parse_trade_signal(signals,
 #  4. 空头卖出信号：负数amounts_to_sell
 #  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
 #  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
-def parse_pt_signals(signals,
-                     prices,
-                     own_amounts,
-                     own_cash,
-                     pt_buy_threshold,
-                     pt_sell_threshold,
-                     allow_sell_short):
+def _parse_pt_signals(signals,
+                      prices,
+                      own_amounts,
+                      own_cash,
+                      pt_buy_threshold,
+                      pt_sell_threshold,
+                      allow_sell_short):
     """ 解析PT类型的交易信号
 
     Parameters
@@ -404,7 +339,7 @@ def parse_pt_signals(signals,
     return cash_to_spend, amounts_to_sell
 
 
-def parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
+def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     """ 解析PS类型的交易信号
 
     Parameters
@@ -447,7 +382,7 @@ def parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
-def parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
+def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     """ 解析VS类型的交易信号
 
     Parameters
@@ -486,13 +421,13 @@ def parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
-def signal_to_order_elements(shares,
-                             cash_to_spend,
-                             amounts_to_sell,
-                             prices,
-                             available_cash,
-                             available_amounts,
-                             allow_sell_short=False):
+def _signal_to_order_elements(shares,
+                              cash_to_spend,
+                              amounts_to_sell,
+                              prices,
+                              available_cash,
+                              available_amounts,
+                              allow_sell_short=False):
     """ 逐个计算每一只资产的买入和卖出的数量，将parse_pt/ps/vs_signal函数计算出的交易信号逐项转化为
     交易订单 trade_orders
 
@@ -635,11 +570,7 @@ def submit_order(order_id, data_source=None):
     Returns
     -------
     int, 交易信号的id
-
-    Raises
-    ------
-    RuntimeError
-        如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
+    None, 如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
     """
 
     # 读取交易信号
@@ -851,7 +782,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # 生成交易结果的execution_time字段，保存交易结果
     execution_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
     raw_trade_result['execution_time'] = execution_time
-    write_trade_result(raw_trade_result, data_source=data_source)
+    result_id = write_trade_result(raw_trade_result, data_source=data_source)
 
     # 更新账户的持仓和现金余额:
 
@@ -885,6 +816,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         raise RuntimeError(f'invalid direction {order_detail["direction"]}')
     # 更新交易信号的状态
     update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
+
+    return result_id
 
 
 def output_account_position(account_id, position_id):

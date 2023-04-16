@@ -21,6 +21,9 @@ import pandas as pd
 
 from qteasy import Operator, DataSource
 from qteasy.broker import Broker, QuickBroker
+from qteasy.trade_recording import get_account, get_account_positions, get_account_position_availabilities
+from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids
+from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
 
 
 TIME_ZONE = 'Asia/Shanghai'
@@ -101,6 +104,7 @@ class Trader(object):
         self._broker = broker
         self._operator = operator
         self._config = config
+        self._datasource = datasource
 
         self.task_queue = Queue()
         self.message_queue = Queue()
@@ -111,7 +115,7 @@ class Trader(object):
         self.is_trade_day = False
         self.status = 'stopped'
 
-        self._read_account_info(account_id)
+        self.account = self._read_account_info()
         self._initialize_agenda(operator, config)
 
     @property
@@ -119,16 +123,26 @@ class Trader(object):
         return self._broker
 
     @property
+    def asset_pool(self):
+        """ 账户的资产池，一个list，包含所有允许投资的股票代码 """
+        return self._config['asset_pool']
+
+    @property
     def account_cash(self):
-        """ 账户的现金 """
+        """ 账户的现金, 包括持有现金和可用现金 """
         from qteasy.trade_recording import get_account_cash_availabilities
         return get_account_cash_availabilities(self.account_id)
 
     @property
     def account_positions(self):
-        """ 账户的持仓 """
+        """ 账户的持仓，一个tuple,包含两个ndarray，包括每种股票的持有数量和可用数量 """
         from qteasy.trade_recording import get_account_position_availabilities
-        return get_account_position_availabilities(self.account_id)
+        shares = self.asset_pool
+        return get_account_position_availabilities(
+                self.account_id,
+                shares=shares,
+                data_source=self._datasource
+        )
 
     @property
     def history_orders(self):
@@ -151,7 +165,7 @@ class Trader(object):
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
         self.status = 'running'
-        message = f'Trader is running'
+        self.post_message(f'Trader is running with account_id: {self.account_id}')
         while self.status != 'stopped':
             self._check_trade_day()
             sleep_interval = MARKET_CLOSE_DAY_LOOP_INTERVAL if not self.is_trade_day else MARKET_OPEN_DAY_LOOP_INTERVAL
@@ -263,7 +277,64 @@ class Trader(object):
         if not self.is_market_open:
             return
 
-        self.post_message(f'runing strategy: {strategy_ids}')
+        operator = self._operator
+        signal_type = operator.signal_type
+        shares = self.asset_pool
+        prices = get_current_prices()  # 获取实时价格 TODO: implement get_current_prices
+        own_amounts = self.account_positions
+        own_cash = self.account_cash
+        config = self._config
+        # 读取实时数据,设置operator的数据分配,创建trade_data
+        hist_op, hist_ref, invest_cash_plan = check_and_prepare_real_time_data(operator, config)
+        self.post_message(f'read real time data and set operator data allocation')
+
+        if operator.op_type == 'batch':
+            raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
+                           f'"Operator.op_type = \'step\'"')
+        else:
+            op_signal = operator.create_signal(
+                    trade_data=trade_data,
+                    sample_idx=-1,
+                    price_type_idx=0
+            )  # 生成交易清单
+            self.post_message(f'ran strategy and created signal: {op_signal}')
+
+        # 解析交易信号
+        symbols, positions, directions, quantities = parse_trade_signal(
+                signals=op_signal,
+                signal_type=signal_type,
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                config=config
+        )
+        submitted_qty = 0
+        for sym, pos, d, qty in zip(symbols, positions, directions, quantities):
+            pos_id = get_position_ids(account_id=account_id,
+                                      symbol=sym,
+                                      position_type=pos,
+                                      data_source=data_source)
+
+            # 生成交易订单dict
+            trade_order = {
+                'pos_id':         pos_id,
+                'direction':      d,
+                'order_type':     order_type,
+                'qty':            qty,
+                'price':          get_price(),
+                'submitted_time': None,
+                'status':         'created',
+            }
+            order_id = record_trade_order(trade_order, data_source=self._datasource)
+            # 逐一提交交易信号
+            if submit_order(order_id=order_id, data_source=self._datasource) is not None:
+                self._broker.order_queue.put(trade_order)
+                self.post_message(f'submitted order to broker: {trade_order}')
+                # 记录已提交的交易数量
+                submitted_qty += qty
+
+        return submitted_qty
 
     def _process_result(self, result):
         """ 从result_queue中读取并处理交易结果
@@ -273,11 +344,13 @@ class Trader(object):
         3，根据交易结果更新账户信息
         4，生成交易结果信息推送到信息队列
         """
-        pass
+        process_trade_result(result, data_source=self._datasource)
+        self.post_message(f'processed trade result: {result}')
 
     def _pre_open(self):
         """ 开市前, 生成交易日的任务计划，生成消息发送到消息队列"""
         self._initialize_agenda(operator=self.operator, config=self.config)
+        self.post_message('initialized daily task agenda')
 
     def _post_close(self):
         """ 收市后例行操作：
@@ -383,7 +456,7 @@ class Trader(object):
         from qteasy.trading_util import create_daily_task_agenda
         self.task_daily_agenda = create_daily_task_agenda(operator, config)
 
-    def _read_account_info(self, account_id):
+    def _read_account_info(self):
         """ 读取账户信息
 
         Parameters
@@ -391,7 +464,7 @@ class Trader(object):
         account_id: int
             账户ID
         """
-        pass
+        return get_account(self.account_id, self._datasource)
 
     AVAILABLE_TASKS = {
         'pre_open':         _pre_open,
