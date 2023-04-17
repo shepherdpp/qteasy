@@ -367,7 +367,8 @@ class Trader(object):
                 self.run_task(task)  # TODO: 这里需要修改，生成取消订单
                 self.task_queue.task_done()
         # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
-
+        self.post_message('processing partially filled orders')
+        partially_filled_orders = get_trade_orders  # TODO: implement get_trade_orders
         # 检查今日成交结果，执行交割
 
     def _market_open(self):
