@@ -678,8 +678,8 @@ def query_trade_orders(account_id,
 
     Returns
     -------
-    signals: list
-        交易信号列表
+    signals: list of dict
+        交易订单列表，包含所有符合查询条件的订单的字典形式
     """
 
     import qteasy as qt

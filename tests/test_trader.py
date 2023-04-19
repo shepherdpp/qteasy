@@ -104,6 +104,10 @@ class TestTrader(unittest.TestCase):
         """ running task that runs strategy"""
         raise NotImplementedError
 
+    def test_process_result(self):
+        """ running task that processes result """
+        raise NotImplementedError
+
 
 if __name__ == '__main__':
     unittest.main()

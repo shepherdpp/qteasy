@@ -22,7 +22,8 @@ import pandas as pd
 from qteasy import Operator, DataSource
 from qteasy.broker import Broker, QuickBroker
 from qteasy.trade_recording import get_account, get_account_positions, get_account_position_availabilities
-from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids
+from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
+from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_order_id
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
 
 
@@ -356,7 +357,7 @@ class Trader(object):
         """ 收市后例行操作：
 
         1，处理当日未完成的交易信号，生成取消订单，并记录订单取消结果
-        2，处理当日已成交觉的订单结果的交割，记录交割结果
+        2，处理当日已成交的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
         # 检查task_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
@@ -368,8 +369,41 @@ class Trader(object):
                 self.task_queue.task_done()
         # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         self.post_message('processing partially filled orders')
-        partially_filled_orders = get_trade_orders  # TODO: implement get_trade_orders
-        # 检查今日成交结果，执行交割
+        partially_filled_orders = query_trade_orders(
+                account_id=self.account_id,
+                status='partially-filled',
+                data_source=self._datasource,
+        )
+        if order in partially_filled_orders:
+            # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
+            order_id = order['order_id']
+            order_details = read_trade_order_detail(order_id=order_id, data_source=self._datasource)
+            order_results = read_trade_results_by_order_id(order_id=order_id, data_source=self._datasource)
+            total_filled_qty = order_results['filled_qty'].sum()
+            already_canceled_qty = order_results['canceled_qty'].sum()
+            if already_canceled_qty > 0:
+                raise RuntimeError(f'order status wrong: canceled qty should be 0 unless order is canceled!')
+            remaining_qty = order_details['qty'] - total_filled_qty
+            if remaining_qty <= 0:
+                raise RuntimeError(f'order status wrong: remaining qty should be larger than '
+                                   f'when order is partially filled')
+            result_of_cancel = {
+                'order_id': order['order_id'],
+                'filled_qty': total_filled_qty,
+                'price': order_details['price'],
+                'transaction_fee': 0.,
+                'canceled_qty': remaining_qty,
+                'delivery_amount': 0,
+                'delivery_status': 'ND',
+            }
+            process_trade_result(
+                    raw_trade_result=result_of_cancel,
+                    data_source=self._datasource,
+                    config=self._config
+            )
+        # 检查今日成交结果，完成交易结果的交割
+
+        # 记录交割结果
 
     def _market_open(self):
         """ 开市时操作：
