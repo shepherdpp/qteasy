@@ -772,7 +772,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                            f'available cash {available_cash}')
 
     # TODO: 将结果交割的过程与结果处理过程分开
-    
+
     # 计算并生成交易结果的交割数量和交割状，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
     if order_detail['direction'] == 'buy':
         raw_trade_result['delivery_amount'] = position_change

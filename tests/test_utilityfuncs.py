@@ -504,7 +504,16 @@ class TestUtilityFuncs(unittest.TestCase):
     def test_rolling_window(self):
         """ 测试含税rolling_window()"""
         # test 1d array
-        arr = np.array([1, 2, 3, 4, 5])
+        arr = np.array([1, 2, 3, 4, 5]).astype('int64')
+        window = rolling_window(arr, window=3, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[1, 2, 3],
+                           [2, 3, 4],
+                           [3, 4, 5]])
+        self.assertTrue(np.allclose(window, target))
+        # test 1d array with int32 dtype
+        arr = np.array([1, 2, 3, 4, 5]).astype('int32')
         window = rolling_window(arr, window=3, axis=0)
         print(f'origin array: \n{arr}\n'
               f'rolling window: \n{window}')
@@ -516,6 +525,28 @@ class TestUtilityFuncs(unittest.TestCase):
         arr = np.array([[1, 2, 3, 4],
                         [5, 6, 7, 8],
                         [9, 0, 1, 2]])
+        window = rolling_window(arr, window=2, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3, 4],
+                            [5, 6, 7, 8]],
+                           [[5, 6, 7, 8],
+                            [9, 0, 1, 2]]]).astype('int64')
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=3, axis=1)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3],
+                            [5, 6, 7],
+                            [9, 0, 1]],
+                           [[2, 3, 4],
+                            [6, 7, 8],
+                            [0, 1, 2]]])
+        self.assertTrue(np.allclose(window, target))
+        # test 2d array with int32 dtype
+        arr = np.array([[1, 2, 3, 4],
+                        [5, 6, 7, 8],
+                        [9, 0, 1, 2]]).astype('int32')
         window = rolling_window(arr, window=2, axis=0)
         print(f'origin array: \n{arr}\n'
               f'rolling window: \n{window}')
