@@ -122,7 +122,7 @@ def create_daily_task_agenda(operator, config=None):
             run_time_index = [stg_run_time.strftime('%H:%M:%S')]
 
         # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
-        strategy_open_close_timing_offset = 1
+        strategy_open_close_timing_offset = config['strategy_open_close_timing_offset']
         # TODO: strategy_open_close_timing_offset应该是可配置，代表策略运行时间在开盘或收盘时的偏移量
         for idx in range(len(run_time_index)):
             stg_run_time = pd.to_datetime(run_time_index[idx])
@@ -717,7 +717,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     -------
     None
     """
-    # TODO: 将交易结果的交割单独放到一个函数process_result_delivery中处理
 
     if not isinstance(raw_trade_result, dict):
         raise TypeError(f'raw_trade_result must be a dict, got {type(raw_trade_result)} instead')

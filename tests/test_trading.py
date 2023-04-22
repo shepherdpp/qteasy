@@ -30,6 +30,7 @@ from qteasy.trade_recording import record_trade_order, update_trade_order, read_
 from qteasy.trade_recording import query_trade_orders, get_position_by_id, update_trade_result
 from qteasy.trade_recording import get_position_ids, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_account_cash_availabilities, get_account_position_availabilities
+from qteasy.trade_recording import get_account_position_details
 from qteasy.trade_recording import write_trade_result, read_trade_result_by_id, read_trade_results_by_order_id
 
 
@@ -352,45 +353,67 @@ class TestTradeRecording(unittest.TestCase):
         # test get_account_position_availabilities function
         res = get_account_position_availabilities(account_id=1, shares=['AAPL', 'GOOG'], data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 2)
-        self.assertIsInstance(res[0], np.ndarray)
+        self.assertEqual(len(res), 3)
+        self.assertIsInstance(res[0], list)
         self.assertIsInstance(res[1], np.ndarray)
-        self.assertEqual(res[0].shape, (2,))
+        self.assertIsInstance(res[2], np.ndarray)
         self.assertEqual(res[1].shape, (2,))
+        self.assertEqual(res[2].shape, (2,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertTrue(np.allclose(res[0], np.array([1000, -1000])))
-        self.assertTrue(np.allclose(res[1], np.array([1000, -300])))
+        self.assertEqual(res[0], ['AAPL', 'GOOG'])
+        self.assertTrue(np.allclose(res[1], np.array([1000, -1000])))
+        self.assertTrue(np.allclose(res[2], np.array([1000, -300])))
         res = get_account_position_availabilities(account_id=2, shares=['AAPL', 'GOOG', 'MSFT', 'AMZN'],
                                                   data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 2)
-        self.assertIsInstance(res[0], np.ndarray)
+        self.assertEqual(len(res), 3)
         self.assertIsInstance(res[1], np.ndarray)
-        self.assertEqual(res[0].shape, (4,))
+        self.assertIsInstance(res[2], np.ndarray)
         self.assertEqual(res[1].shape, (4,))
+        self.assertEqual(res[2].shape, (4,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertTrue(np.allclose(res[0], np.array([1000, 1000, -1000, -1000])))
-        self.assertTrue(np.allclose(res[1], np.array([500, 1000, -700, -600])))
-        res = get_account_position_availabilities(account_id=2, shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
-                                                    data_source=self.test_ds)
+        self.assertEqual(res[0], ['AAPL', 'GOOG', 'MSFT', 'AMZN'])
+        self.assertTrue(np.allclose(res[1], np.array([1000, 1000, -1000, -1000])))
+        self.assertTrue(np.allclose(res[2], np.array([500, 1000, -700, -600])))
+        res = get_account_position_availabilities(account_id=2,
+                                                  shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
+                                                  data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 2)
-        self.assertIsInstance(res[0], np.ndarray)
+        self.assertEqual(len(res), 3)
         self.assertIsInstance(res[1], np.ndarray)
-        self.assertEqual(res[0].shape, (5,))
+        self.assertIsInstance(res[2], np.ndarray)
         self.assertEqual(res[1].shape, (5,))
+        self.assertEqual(res[2].shape, (5,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertTrue(np.allclose(res[0], np.array([1000, 0, -1000, -1000, 0])))
-        self.assertTrue(np.allclose(res[1], np.array([500, 0, -700, -600, 0])))
+        self.assertEqual(res[0], ['AAPL', 'FB', 'MSFT', 'AMZN', '000001'])
+        self.assertTrue(np.allclose(res[1], np.array([1000, 0, -1000, -1000, 0])))
+        self.assertTrue(np.allclose(res[2], np.array([500, 0, -700, -600, 0])))
+        positions = get_account_position_details(account_id=2,
+                                                 shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
+                                                 data_source=self.test_ds)
+        self.assertIsInstance(positions, pd.DataFrame)
+        print(f'get_account_position_details result: {positions}')
+        self.assertEqual(positions.shape, (2, 5))
+        self.assertEqual(positions.columns.to_list(), ['AAPL', 'FB', 'MSFT', 'AMZN', '000001'])
+        self.assertTrue(np.allclose(positions.loc['qty'], np.array([1000, 0, -1000, -1000, 0])))
+        self.assertTrue(np.allclose(positions.loc['available_qty'], np.array([500, 0, -700, -600, 0])))
+
         res = get_account_position_availabilities(account_id=2, data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 2)
-        self.assertIsInstance(res[0], np.ndarray)
+        self.assertEqual(len(res), 3)
         self.assertIsInstance(res[1], np.ndarray)
-        self.assertEqual(res[0].shape, (4,))
+        self.assertIsInstance(res[2], np.ndarray)
+        self.assertEqual(res[1].shape, (4,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertTrue(np.allclose(res[0], np.array([1000, -1000, 1000, -1000])))
-        self.assertTrue(np.allclose(res[1], np.array([500, -700, 1000, -600])))
+        self.assertTrue(np.allclose(res[1], np.array([1000, -1000, 1000, -1000])))
+        self.assertTrue(np.allclose(res[2], np.array([500, -700, 1000, -600])))
+        positions = get_account_position_details(account_id=2, data_source=self.test_ds)
+        self.assertIsInstance(positions, pd.DataFrame)
+        print(f'get_account_position_details result: {positions}')
+        self.assertEqual(positions.shape, (2, 4))
+        self.assertEqual(positions.columns.to_list(), ['AAPL', 'MSFT', 'GOOG', 'AMZN'])
+        self.assertTrue(np.allclose(positions.loc['qty'], np.array([1000, -1000, 1000, -1000])))
+        self.assertTrue(np.allclose(positions.loc['available_qty'], np.array([500, -700, 1000, -600])))
 
     # test foundational functions related to signal generation and submission
     def test_record_read_and_update_signal(self):
@@ -1395,8 +1418,129 @@ class TestTradeRecording(unittest.TestCase):
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
 
+
+class TestTradingUtilFuncs(unittest.TestCase):
+    """ test trading util funcs """
+
+    def setUp(self):
+        """ execute before each test"""
+        from qteasy import QT_ROOT_PATH, QT_CONFIG
+        self.qt_root_path = QT_ROOT_PATH
+        self.data_test_dir = 'data_test/'
+        # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
+        # self.test_ds = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
+        self.test_ds = DataSource(
+                'db',
+                host=QT_CONFIG['test_db_host'],
+                port=QT_CONFIG['test_db_port'],
+                user=QT_CONFIG['test_db_user'],
+                password=QT_CONFIG['test_db_password'],
+                db_name=QT_CONFIG['test_db_name']
+        )
+        # 清空测试数据源中的所有相关表格数据
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
+            if self.test_ds.table_data_exists(table):
+                self.test_ds.drop_table_data(table)
+
+    def test_create_daily_task_agenda(self):
+        """ test function create_daily_task_agenda """
+        # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
+        op = qt.Operator(strategies='macd')
+        stg = op.strategies[0]
+        self.assertEqual(stg.strategy_run_freq, 'd')
+        self.assertEqual(stg.strategy_run_timing, 'close')
+        config = {
+            'market_open_time_am': '09:30:00',
+            'market_close_time_pm': '15:30:00',
+            'market_open_time_pm': '13:00:00',
+            'market_close_time_am': '11:30:00',
+            'exchange': 'SSE',
+            'strategy_open_close_timing_offset': 1,
+        }
+        agenda = create_daily_task_agenda(op, config)
+        print(f'agenda: {agenda}')
+        self.assertIsInstance(agenda, list)
+        self.assertEqual(len(agenda), 7)
+        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
+        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
+        self.assertEqual(agenda[2], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[3], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[4], ('15:29:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[5], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[6], ('15:35:00', 'post_close'))
+
+        # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
+        op = qt.Operator(strategies='macd')
+        stg = op.strategies[0]
+        stg.strategy_run_freq = 'h'
+        stg.strategy_run_timing = 'open'
+        config = {
+            'market_open_time_am': '09:30:00',
+            'market_close_time_pm': '15:30:00',
+            'market_open_time_pm': '13:00:00',
+            'market_close_time_am': '11:30:00',
+            'exchange': 'SSE',
+            'strategy_open_close_timing_offset': 1,
+        }
+        agenda = create_daily_task_agenda(op, config)
+        print(f'agenda: {agenda}')
+        self.assertIsInstance(agenda, list)
+        self.assertEqual(len(agenda), 11)
+        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
+        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
+        self.assertEqual(agenda[2], ('10:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[3], ('11:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[4], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[5], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[6], ('13:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[7], ('14:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[8], ('15:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[9], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[10], ('15:35:00', 'post_close'))
+
+        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
+        op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
+        stg = op.strategies[0]
+        stg.strategy_run_freq = 'h'
+        stg.strategy_run_timing = 'open'
+        stg = op.strategies[1]
+        stg.strategy_run_freq = '30min'
+        stg.strategy_run_timing = 'open'
+        stg = op.strategies[2]
+        stg.strategy_run_freq = 'd'
+        stg.strategy_run_timing = '10:30'
+        config = {
+            'market_open_time_am': '09:30:00',
+            'market_close_time_pm': '15:30:00',
+            'market_open_time_pm': '13:00:00',
+            'market_close_time_am': '11:30:00',
+            'exchange': 'SSE',
+            'strategy_open_close_timing_offset': 1,
+        }
+        agenda = create_daily_task_agenda(op, config)
+        print(f'agenda: {agenda}')
+        self.assertIsInstance(agenda, list)
+        self.assertEqual(len(agenda), 17)
+        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
+        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
+        self.assertEqual(agenda[2], ('09:31:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[3], ('10:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[4], ('10:30:00', 'run_stg', ['rsi', 'dma']))
+        self.assertEqual(agenda[5], ('11:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[6], ('11:30:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[7], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[8], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[9], ('13:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[10], ('13:30:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[11], ('14:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[12], ('14:30:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[13], ('15:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[14], ('15:29:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[15], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[16], ('15:35:00', 'post_close'))
+
     def test_process_trade_signals(self):
-        """ test full process of trade signal generation, submission and result recording"""
+        """ test full process of trade signal order generation, submission, result processing and delivery"""
         # 检查datasource中的数据表，删除所有的account, positions, trade_signal, trade_result数据
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
             self.test_ds.drop_table_data('sys_op_live_accounts')
@@ -1488,7 +1632,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
         trade_signal_detail = read_trade_order_detail(1, data_source=self.test_ds)
         # check available qty availability
-        own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1528,7 +1672,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
         trade_signal_detail = read_trade_order_detail(2, data_source=self.test_ds)
         # check available qty availability
-        own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1568,7 +1712,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5)
         trade_signal_detail = read_trade_order_detail(3, data_source=self.test_ds)
         # check available qty availability
-        own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1654,7 +1798,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
         trade_signal_detail = read_trade_order_detail(7, data_source=self.test_ds)
         # check available qty availability
-        own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1694,7 +1838,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
-        own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1730,7 +1874,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
-        own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1746,6 +1890,26 @@ class TestTradeRecording(unittest.TestCase):
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 19076.1)
         self.assertEqual(trade_result['delivery_status'], 'ND')
+
+        # process trade result delivery for the last order
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        # check available qty availability
+        symbols, own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 400.0 - 300.0 - 100.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0 - 100.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'filled')
+        # check trade result status
+        trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
+        self.assertEqual(trade_result['delivery_amount'], 41934.7)
+        self.assertEqual(trade_result['delivery_status'], 'DL')
+        trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
+        self.assertEqual(trade_result['delivery_amount'], 19076.1)
+        self.assertEqual(trade_result['delivery_status'], 'DL')
 
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):
@@ -2372,104 +2536,6 @@ class TestTradeRecording(unittest.TestCase):
         )
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
-
-
-class TestTradingUtilFuncs(unittest.TestCase):
-    """ test trading util funcs """
-
-    def test_create_daily_task_agenda(self):
-        """ test function create_daily_task_agenda """
-        # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
-        op = qt.Operator(strategies='macd')
-        stg = op.strategies[0]
-        self.assertEqual(stg.strategy_run_freq, 'd')
-        self.assertEqual(stg.strategy_run_timing, 'close')
-        config = {
-            'market_open_time_am': '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm': '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange': 'SSE',
-        }
-        agenda = create_daily_task_agenda(op, config)
-        print(f'agenda: {agenda}')
-        self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 7)
-        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
-        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[3], ('12:55:00', 'wakeup'))
-        self.assertEqual(agenda[4], ('15:29:00', 'run_stg', ['macd']))
-        self.assertEqual(agenda[5], ('15:30:00', 'close_market'))
-        self.assertEqual(agenda[6], ('15:35:00', 'post_close'))
-
-        # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
-        op = qt.Operator(strategies='macd')
-        stg = op.strategies[0]
-        stg.strategy_run_freq = 'h'
-        stg.strategy_run_timing = 'open'
-        config = {
-            'market_open_time_am': '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm': '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange': 'SSE',
-        }
-        agenda = create_daily_task_agenda(op, config)
-        print(f'agenda: {agenda}')
-        self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 11)
-        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
-        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('10:00:00', 'run_stg', ['macd']))
-        self.assertEqual(agenda[3], ('11:00:00', 'run_stg', ['macd']))
-        self.assertEqual(agenda[4], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[5], ('12:55:00', 'wakeup'))
-        self.assertEqual(agenda[6], ('13:00:00', 'run_stg', ['macd']))
-        self.assertEqual(agenda[7], ('14:00:00', 'run_stg', ['macd']))
-        self.assertEqual(agenda[8], ('15:00:00', 'run_stg', ['macd']))
-        self.assertEqual(agenda[9], ('15:30:00', 'close_market'))
-        self.assertEqual(agenda[10], ('15:35:00', 'post_close'))
-
-        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
-        op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
-        stg = op.strategies[0]
-        stg.strategy_run_freq = 'h'
-        stg.strategy_run_timing = 'open'
-        stg = op.strategies[1]
-        stg.strategy_run_freq = '30min'
-        stg.strategy_run_timing = 'open'
-        stg = op.strategies[2]
-        stg.strategy_run_freq = 'd'
-        stg.strategy_run_timing = '10:30'
-        config = {
-            'market_open_time_am': '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm': '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange': 'SSE',
-        }
-        agenda = create_daily_task_agenda(op, config)
-        print(f'agenda: {agenda}')
-        self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 17)
-        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
-        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('09:31:00', 'run_stg', ['rsi']))
-        self.assertEqual(agenda[3], ('10:00:00', 'run_stg', ['macd', 'rsi']))
-        self.assertEqual(agenda[4], ('10:30:00', 'run_stg', ['rsi', 'dma']))
-        self.assertEqual(agenda[5], ('11:00:00', 'run_stg', ['macd', 'rsi']))
-        self.assertEqual(agenda[6], ('11:30:00', 'run_stg', ['rsi']))
-        self.assertEqual(agenda[7], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[8], ('12:55:00', 'wakeup'))
-        self.assertEqual(agenda[9], ('13:00:00', 'run_stg', ['macd', 'rsi']))
-        self.assertEqual(agenda[10], ('13:30:00', 'run_stg', ['rsi']))
-        self.assertEqual(agenda[11], ('14:00:00', 'run_stg', ['macd', 'rsi']))
-        self.assertEqual(agenda[12], ('14:30:00', 'run_stg', ['rsi']))
-        self.assertEqual(agenda[13], ('15:00:00', 'run_stg', ['macd', 'rsi']))
-        self.assertEqual(agenda[14], ('15:29:00', 'run_stg', ['rsi']))
-        self.assertEqual(agenda[15], ('15:30:00', 'close_market'))
-        self.assertEqual(agenda[16], ('15:35:00', 'post_close'))
 
 
 if __name__ == '__main__':

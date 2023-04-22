@@ -2890,7 +2890,7 @@ class DataSource:
                 date_like_pk = primary_key[pk_dtypes.index(date_like_dtype)]
             except Exception as e:
                 warnings.warn(f'{e}\ncan not find date-like primary key in the table {table}!\n'
-                              f'passed start and end arguments will be ignored!', RuntimeWarning)
+                              f'passed start({start}) and end({end}) arguments will be ignored!', RuntimeWarning)
 
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
@@ -3649,7 +3649,7 @@ class DataSource:
         df.index.name = primary_keys[0]
 
         # 插入数据
-        self.update_table_data(table, df, merge_type='ignore')
+        self.update_table_data(table, df, merge_type='update')  # TODO: 这里为什么要用'ignore'而不是'update'?
 
         return record_id
 

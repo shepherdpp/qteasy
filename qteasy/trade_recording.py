@@ -17,6 +17,7 @@ import numpy as np
 from qteasy.database import DataSource
 from qteasy.qt_operator import Operator
 from qteasy import logger_core as logger
+from qteasy.utilfuncs import str_to_list
 
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -373,7 +374,9 @@ def get_account_positions(account_id, data_source=None):
 
     Returns
     -------
-    pandas.DataFrame or None: 账户的所有持仓
+    positions: pandas.DataFrame
+        账户的所有持仓
+    None: 如果账户不存在或持仓不存在，则返回None
     """
 
     import qteasy as qt
@@ -427,14 +430,17 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
 
     Returns
     -------
-    tuple of two numpy.ndarray: 每一个share对应的持仓的数量和可用数量
+    (symbols, own_amounts, available_amounts): tuple, (list, ndarray, ndarray)
+        symbols: 持仓share的symbol列表
+        own_amounts: 每一个share对应的持仓的数量
+        available_amounts: 每一个share对应的持仓的可用数量
     """
 
     # 根据account_id读取账户的全部持仓
     positions = get_account_positions(account_id=account_id, data_source=data_source)
 
-    if positions.empty:
-        return np.zeros(len(shares)), np.zeros(len(shares))
+    if positions is None:
+        return list(), np.zeros(len(shares)), np.zeros(len(shares))
     # 如果没有给出shares，则读取账户中所有持仓的symbol
     if shares is None:
         shares = positions['symbol'].unique()
@@ -474,7 +480,43 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
     # 将列表转换为ndarray并返回
-    return np.array(own_amounts).astype('float'), np.array(available_amounts).astype('float')
+    return shares, np.array(own_amounts).astype('float'), np.array(available_amounts).astype('float')
+
+
+def get_account_position_details(account_id, shares=None, data_source=None):
+    """ 根据account_id读取账户的持仓，筛选出与shares相同的symbol的持仓，返回一个DataFrame，包含
+    每一个share对应的持仓的symbol，position，qty和可用数量。
+
+    Parameters
+    ----------
+    account_id: int
+        账户的id
+    shares: list of str, optional
+        需要输出的持仓的symbol列表, 如果不给出shares，则返回所有持仓的数量和可用数量
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    positions: DataFrame
+        account持仓的symbol，position，qty和available_qty, symbol与shares的顺序一致
+    """
+
+    # 根据account_id读取账户的全部持仓
+    symbols, amounts, available_amounts = get_account_position_availabilities(
+            account_id=account_id,
+            shares=shares,
+            data_source=data_source
+    )
+    # 将symbol，position，qty和available_qty放入DataFrame并返回
+    positions = pd.DataFrame(
+            {
+                'qty': amounts,
+                'available_qty': available_amounts,
+            },
+            index=symbols,
+    ).T
+    return positions
 
 
 # 4 foundational functions for trade order
