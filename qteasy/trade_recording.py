@@ -87,7 +87,7 @@ def get_account(account_id, data_source=None):
 
     account = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
     if account is None:
-        raise RuntimeError('Account not found!')
+        raise RuntimeError(f'Account (id={account_id}) not found!')
     return account
 
 

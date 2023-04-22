@@ -78,10 +78,10 @@ def create_daily_task_agenda(operator, config=None):
 
     # 添加交易市场开市和收市任务，开市时产生wakeup任务，收市时产生sleep任务，早晚收盘时产生open_market/close_market任务
     task_agenda.append((market_open_time, 'open_market'))
-    task_agenda.append((wakeup_time_am, 'wakeup'))
+    task_agenda.append((wakeup_time_am, 'pre_open'))
     task_agenda.append((sleep_time_am, 'sleep'))
     task_agenda.append((wakeup_time_pm, 'wakeup'))
-    task_agenda.append((sleep_time_pm, 'sleep'))
+    task_agenda.append((sleep_time_pm, 'post_close'))
     task_agenda.append((market_close_time, 'close_market'))
 
     # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
@@ -108,27 +108,37 @@ def create_daily_task_agenda(operator, config=None):
             ).strftime('%H:%M:%S').tolist()
         else:
             if timing == 'open':
-                # 开盘时运行策略即在开盘后1分钟运行
-                stg_run_time = (pd.to_datetime(market_open_time_am) +
-                                        pd.Timedelta(minutes=1)).strftime('%H:%M:%S')
+                # 'open'表示开盘时运行策略即在开盘时运行
+                stg_run_time = (pd.to_datetime(market_open_time_am))
             elif timing == 'close':
-                # 收盘时运行策略即在收盘前1分钟运行
-                stg_run_time = (pd.to_datetime(market_close_time_pm) -
-                                         pd.Timedelta(minutes=1)).strftime('%H:%M:%S')
+                # 'close' 表示收盘时运行策略即在收盘时运行
+                stg_run_time = (pd.to_datetime(market_close_time_pm))
             else:
                 # 其他情况，直接使用timing参数, 除非timing参数不是时间字符串，或者timing参数不在交易市场的开市时间内
                 try:
-                    stg_run_time = pd.to_datetime(timing).time()
+                    stg_run_time = pd.to_datetime(timing)
                 except ValueError:
                     raise ValueError(f'Invalid strategy_run_timing: {timing}')
-                if (stg_run_time < pd.to_datetime(market_open_time_am).time()) or \
-                        (stg_run_time > pd.to_datetime(market_close_time_pm).time()):
-                    # timing 不在交易市场的开市时间内，此时调整timing为收盘前1分钟
-                    stg_run_time = (pd.to_datetime(market_close_time_pm) -
-                                            pd.Timedelta(minutes=1))
-                stg_run_time = stg_run_time.strftime('%H:%M:%S')
-            run_time_index = [stg_run_time]
+            run_time_index = [stg_run_time.strftime('%H:%M:%S')]
 
+        # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
+        strategy_open_close_timing_offset = 1
+        # TODO: strategy_open_close_timing_offset应该是可配置，代表策略运行时间在开盘或收盘时的偏移量
+        for idx in range(len(run_time_index)):
+            stg_run_time = pd.to_datetime(run_time_index[idx])
+            market_open_time = pd.to_datetime(market_open_time_am)
+            market_close_time = pd.to_datetime(market_close_time_pm)
+            if stg_run_time <= market_open_time:
+                # timing 在交易市场的开盘时间或以前，此时调整timing为开盘后1分钟
+                stg_run_time = market_open_time + pd.Timedelta(minutes=strategy_open_close_timing_offset)
+                run_time_index[idx] = stg_run_time.strftime('%H:%M:%S')
+                continue
+            if stg_run_time >= market_close_time:
+                # timing 在交易市场的收盘时间或以后，此时调整timing为收盘前1分钟
+                stg_run_time = market_close_time - pd.Timedelta(minutes=strategy_open_close_timing_offset)
+                run_time_index[idx] = stg_run_time.strftime('%H:%M:%S')
+
+        # 将策略的运行时间添加到任务日程，生成任务日程
         for t in run_time_index:
             if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_stg')):
                 # 如果同时发生的'run_stg'任务已经存在，则修改该任务，将stg_id添加到列表中
@@ -707,6 +717,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     -------
     None
     """
+    # TODO: 将交易结果的交割单独放到一个函数process_result_delivery中处理
 
     if not isinstance(raw_trade_result, dict):
         raise TypeError(f'raw_trade_result must be a dict, got {type(raw_trade_result)} instead')
@@ -770,8 +781,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     if available_cash + cash_change < 0:
         raise RuntimeError(f'cash_change {cash_change} is greater than '
                            f'available cash {available_cash}')
-
-    # TODO: 将结果交割的过程与结果处理过程分开
 
     # 计算并生成交易结果的交割数量和交割状，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
     if order_detail['direction'] == 'buy':

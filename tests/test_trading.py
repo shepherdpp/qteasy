@@ -2395,9 +2395,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
         self.assertEqual(len(agenda), 7)
-        self.assertEqual(agenda[0], ('09:30:00', 'wakeup'))
-        self.assertEqual(agenda[1], ('09:30:00', 'open'))
-        self.assertEqual(agenda[3], ('15:30:00', 'macd'))
+        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
+        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
+        self.assertEqual(agenda[2], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[3], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[4], ('15:29:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[5], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[6], ('15:35:00', 'post_close'))
 
         # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
         op = qt.Operator(strategies='macd')
@@ -2413,6 +2417,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
+        self.assertIsInstance(agenda, list)
+        self.assertEqual(len(agenda), 11)
+        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
+        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
+        self.assertEqual(agenda[2], ('10:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[3], ('11:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[4], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[5], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[6], ('13:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[7], ('14:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[8], ('15:00:00', 'run_stg', ['macd']))
+        self.assertEqual(agenda[9], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[10], ('15:35:00', 'post_close'))
 
         # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
         op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
@@ -2434,8 +2451,25 @@ class TestTradingUtilFuncs(unittest.TestCase):
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
-
-        raise NotImplementedError
+        self.assertIsInstance(agenda, list)
+        self.assertEqual(len(agenda), 17)
+        self.assertEqual(agenda[0], ('09:25:00', 'pre_open'))
+        self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
+        self.assertEqual(agenda[2], ('09:31:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[3], ('10:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[4], ('10:30:00', 'run_stg', ['rsi', 'dma']))
+        self.assertEqual(agenda[5], ('11:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[6], ('11:30:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[7], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[8], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[9], ('13:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[10], ('13:30:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[11], ('14:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[12], ('14:30:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[13], ('15:00:00', 'run_stg', ['macd', 'rsi']))
+        self.assertEqual(agenda[14], ('15:29:00', 'run_stg', ['rsi']))
+        self.assertEqual(agenda[15], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[16], ('15:35:00', 'post_close'))
 
 
 if __name__ == '__main__':
