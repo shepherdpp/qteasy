@@ -3649,8 +3649,9 @@ class DataSource:
         df.index.name = primary_keys[0]
 
         # 插入数据
-        self.update_table_data(table, df, merge_type='update')  # TODO: 这里为什么要用'ignore'而不是'update'?
-
+        self.update_table_data(table, df, merge_type='update')
+        # TODO: 这里为什么要用'ignore'而不是'update'? 现在改为'update'，
+        #  test_database和test_trading测试都能通过，后续完整测试
         return record_id
 
     # ==============

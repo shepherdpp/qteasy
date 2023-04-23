@@ -55,12 +55,14 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     account_id = data_source.insert_sys_table_data(
-        'sys_op_live_accounts',
-        user_name=user_name,
-        created_time=pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
-        cash_amount=cash_amount,
-        available_cash=cash_amount,
-        **account_data,
+            'sys_op_live_accounts',
+            **{
+                'user_name': user_name,
+                'created_time': pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
+                'cash_amount': cash_amount,
+                'available_cash': cash_amount,
+            },
+            **account_data,
     )
     return account_id
 
@@ -287,22 +289,26 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
         raise TypeError(f'position_type must be a str, got {type(position_type)} instead')
     if position_type not in ('long', 'short'):
         raise ValueError(f'position_type must be "long" or "short", got {position_type} instead')
-    print(f'account_id: {account_id}, symbol: {symbol}, position_type: {position_type}')
+    # print(f'account_id: {account_id}, symbol: {symbol}, position_type: {position_type}')
     position = data_source.read_sys_table_data(
             table='sys_op_positions',
             record_id=None,
-            account_id=account_id,
-            symbol=symbol,
-            position=position_type
+            **{
+                'account_id': account_id,
+                'symbol': symbol,
+                'position': position_type,
+            },
     )
     if position is None:
         return data_source.insert_sys_table_data(
                 table='sys_op_positions',
-                account_id=account_id,
-                symbol=symbol,
-                position=position_type,
-                qty=0,
-                available_qty=0
+                **{
+                    'account_id':account_id,
+                    'symbol': symbol,
+                    'position': position_type,
+                    'qty': 0,
+                    'available_qty': 0,
+                },
         )
     # position已存在，此时position中只能有一条记录，否则说明记录重复，报错
     if len(position) > 1:
@@ -388,7 +394,7 @@ def get_account_positions(account_id, data_source=None):
     positions = data_source.read_sys_table_data(
             'sys_op_positions',
             record_id=None,
-            account_id=account_id,
+            **{'account_id': account_id},
     )
     return positions
 
@@ -959,7 +965,11 @@ def update_trade_result(result_id, delivery_status, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    data_source.update_sys_table_data('sys_op_trade_results', result_id, delivery_status=delivery_status)
+    data_source.update_sys_table_data(
+            'sys_op_trade_results',
+            result_id,
+            **{'delivery_status': delivery_status},
+    )
 
 
 def read_trade_result_by_id(result_id, data_source=None):
@@ -1014,7 +1024,10 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    trade_results = data_source.read_sys_table_data('sys_op_trade_results', order_id=order_id)
+    trade_results = data_source.read_sys_table_data(
+            'sys_op_trade_results',
+            **{'order_id': order_id},
+    )
     return trade_results
 
 
@@ -1044,5 +1057,8 @@ def read_trade_results_by_delivery_status(delivery_status, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    trade_results = data_source.read_sys_table_data('sys_op_trade_results', delivery_status=delivery_status)
+    trade_results = data_source.read_sys_table_data(
+            'sys_op_trade_results',
+            **{'delivery_status': delivery_status},
+    )
     return trade_results

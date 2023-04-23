@@ -74,15 +74,27 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(ts, Trader)
         Thread(target=ts.run).start()
         time.sleep(1)
+        self.assertEqual(ts.status, 'sleeping')
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('wakeup')
+        time.sleep(1)
         self.assertEqual(ts.status, 'running')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('sleep')
         time.sleep(1)
         self.assertEqual(ts.status, 'sleeping')
         print(f'\ncurrent status: {ts.status}')
-        ts.add_task('pause')  # should be ignored
+        ts.add_task('pause')
+        time.sleep(1)
+        self.assertEqual(ts.status, 'paused')
+        ts.add_task('wakeup')  # should be ignored
+        time.sleep(1)
+        self.assertEqual(ts.status, 'paused')
+        print(f'\ncurrent status: {ts.status}')
+        ts.add_task('resume')  # resume to previous status: sleeping
         time.sleep(1)
         self.assertEqual(ts.status, 'sleeping')
+        print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
         time.sleep(1)
         self.assertEqual(ts.status, 'running')
@@ -90,19 +102,19 @@ class TestTrader(unittest.TestCase):
         ts.add_task('pause')
         time.sleep(1)
         self.assertEqual(ts.status, 'paused')
-        print(f'\ncurrent status: {ts.status}')
         ts.add_task('sleep')  # should be ignored
         time.sleep(1)
         self.assertEqual(ts.status, 'paused')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('resume')
+        ts.add_task('resume')  # resume to previous status: running
         time.sleep(1)
+        self.assertEqual(ts.status, 'running')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('stop')
         time.sleep(1)
+        self.assertEqual(ts.status, 'stopped')
         print(f'\ncurrent status: {ts.status}')
 
-        print(f'test function run_task')
+        print(f'test function run_task, as running tasks off-line')
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
         self.assertEqual(ts.status, 'running')
@@ -125,7 +137,7 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
-        self.assertEqual(ts.status, 'running')
+        self.assertEqual(ts.status, 'sleeping')
 
         print('test properties account and account id')
         print(ts.account_id, ts.account)
@@ -153,26 +165,65 @@ class TestTrader(unittest.TestCase):
         print(f'cash: {ts.account_cash}\npositions: \n{ts.account_positions}')
         self.assertEqual(ts.account_cash, (100000, 100000))
         self.assertIsInstance(ts.account_positions, pd.DataFrame)
-        self.assertTrue(np.allclose(ts.account_positions.loc['qty'], [200.0, 200.0, -200.0, 200.0, 0.0, 0.0]))
-        self.assertTrue(np.allclose(ts.account_positions.loc['available_qty'], [100.0, 100.0, -100.0, 100.0, 0.0, 0.0]))
-        print(f'overview: {ts.account_overview}')
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [200.0, 200.0, -200.0, 200.0, 0.0, 0.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, -100.0, 100.0, 0.0, 0.0]))
+        self.assertIsInstance(ts.non_zero_positions, pd.DataFrame)
+        self.assertTrue(np.allclose(ts.non_zero_positions['qty'], [200.0, 200.0, -200.0, 200.0]))
+        self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, -100.0, 100.0]))
 
-        raise NotImplementedError
-
-    def test_run_info_tasks(self):
-        """ running tasks that retrieve trader and account information"""
-        raise NotImplementedError
-
-    def test_run_strategy(self):
-        """ running task that runs strategy"""
-        raise NotImplementedError
-
-    def test_process_result(self):
-        """ running task that processes result """
-        raise NotImplementedError
+        ts.info()
 
     def test_run(self):
-        """Test function run"""
+        """Test full-fledged run with all tasks manually added"""
+        ts = self.ts
+        Thread(target=ts.run).start()  # start the trader
+        time.sleep(1)
+        # 依次执行start, pre_open, open_market, run_stg - macd, run_stg - dma, close_market, post_close, stop
+        ts.add_task('start')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('pre_open')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('open_market')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('run_strategy', {'strategy_ids': ['macd']})
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('run_strategy', {'strategy_ids': ['dma']})
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('sleep')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('wakeup')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('run_strategy', {'strategy_ids': ['macd', 'dma']})
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('close_market')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('post_close')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        ts.add_task('stop')
+        time.sleep(1)
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+
         raise NotImplementedError
 
 

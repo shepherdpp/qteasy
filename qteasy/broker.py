@@ -32,7 +32,11 @@ class Broker(object):
     result_queue: Queue
         交易结果队列，每个交易结果都是一个list，包含多个交易结果
     status: str
-        Broker的状态，可以是'init', 'running', 'stopped'
+        Broker的状态，可以是 'init', 'running', 'stopped', 'paused'
+        - init: Broker刚刚创建，还没有开始运行
+        - running: Broker正在运行, 接受交易订单并返回交易结果
+        - stopped: Broker已经停止运行, 停止所有操作，未完成的订单将被丢弃，并退出主循环
+        - paused: Broker暂停运行，未完成的订单将被暂停，可以接受交易订单，但不会返回交易结果
 
     Methods:
     --------
@@ -48,7 +52,7 @@ class Broker(object):
         self.user_name = ''
         self.password = ''
         self.token = ''
-        self.status = 'init'
+        self.status = 'init'  # init, running, stopped, paused
 
         self.order_queue = Queue()
         self.result_queue = Queue()
@@ -58,11 +62,14 @@ class Broker(object):
         order_queue中的每一个交易订单都由get_result函数来处理并获取交易结果，get_result函数
         的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
         """
-
-        if self.status == 'stopped':
+        if self.status == 'init':
             self.status = 'running'
-        while self.status == 'running':
-            # 从order_queue中获取交易订单
+
+        while self.status != 'stopped':
+            # 如果Broker处于暂停状态，则不处理交易订单
+            if self.status == 'paused':
+                continue
+            # 如果order_queue为空，则不处理交易订单
             if self.order_queue.empty():
                 continue
             # 使用ThreadPoolExecutor并行调用get_result函数处理交易订单，将结果put到result_queue中
@@ -107,6 +114,8 @@ class QuickBroker(Broker):
 
     def get_result(self, order):
         """ 订单立即全部成交 """
+        from time import sleep
+        from random import random
         from qteasy.trading_util import TIMEZONE
         qty = order['qty']
         price = order['price']
@@ -126,5 +135,5 @@ class QuickBroker(Broker):
             'delivery_amount': 0,
             'delivery_status': 'ND',
         }
-
+        sleep(random() * 5)  # 模拟交易所处理订单的时间
         return result

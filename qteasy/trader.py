@@ -20,9 +20,11 @@ from functools import lru_cache
 import pandas as pd
 
 from qteasy import Operator, DataSource
+from qteasy.core import check_and_prepare_real_time_data
 from qteasy.utilfuncs import str_to_list
 from qteasy.broker import Broker, QuickBroker
 from qteasy.trade_recording import get_account, get_account_positions, get_account_position_details
+from qteasy.trade_recording import get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_order_id
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
@@ -30,6 +32,7 @@ from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
+
 
 class Trader(object):
     """ Trader是交易系统的核心，它负责调度交易任务，根据交易日历和策略规则生成交易订单并提交给Broker
@@ -103,16 +106,16 @@ class Trader(object):
             raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
         default_config = {
-            'market_open_time_am':  '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm':  '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange':             'SSE',
-            'cash_delivery_period':  0,
-            'stock_delivery_period': 0,
-            'asset_pool':           None,
-            'market_close_day_loop_interval': 0,
-            'market_open_day_loop_interval': 0,
+            'market_open_time_am':              '09:30:00',
+            'market_close_time_pm':             '15:30:00',
+            'market_open_time_pm':              '13:00:00',
+            'market_close_time_am':             '11:30:00',
+            'exchange':                         'SSE',
+            'cash_delivery_period':             0,
+            'stock_delivery_period':            0,
+            'asset_pool':                       None,
+            'market_close_day_loop_interval':   0,
+            'market_open_day_loop_interval':    0,
             'strategy_open_close_timing_offset': 1,  # minutes, 策略在开盘和收盘运行时的偏移量
         }
 
@@ -130,11 +133,27 @@ class Trader(object):
         self.task_daily_agenda = []
 
         self.is_trade_day = False
-        self.status = 'stopped'
+        self._status = 'stopped'
+        self._prev_status = None
 
         self.account = get_account(self.account_id, self._datasource)
 
         self.debug = debug
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, value):
+        if value not in ['running', 'sleeping', 'paused', 'stopped']:
+            raise ValueError(f'invalid status: {value}')
+        self._prev_status = self._status
+        self._status = value
+
+    @property
+    def prev_status(self):
+        return self._prev_status
 
     @property
     def operator(self):
@@ -150,23 +169,13 @@ class Trader(object):
         return self._asset_pool
 
     @property
-    def account_overview(self):
-        """ 账户的概览，包括账户的现金和持仓 """
-        return {
-            'cash': self.account_cash,
-            'positions': self.account_positions
-        }
-
-    @property
     def account_cash(self):
         """ 账户的现金, 包括持有现金和可用现金 """
-        from qteasy.trade_recording import get_account_cash_availabilities
         return get_account_cash_availabilities(self.account_id, data_source=self._datasource)
 
     @property
     def account_positions(self):
         """ 账户的持仓，一个tuple,包含两个ndarray，包括每种股票的持有数量和可用数量 """
-        from qteasy.trade_recording import get_account_position_availabilities
         shares = self.asset_pool
 
         positions = get_account_position_details(
@@ -174,13 +183,31 @@ class Trader(object):
                 shares=shares,
                 data_source=self._datasource
         )
-        return positions
+        return positions.T
+
+    @property
+    def non_zero_positions(self):
+        """ 账户当前的持仓，一个tuple，当前持有非零的股票仓位symbol，持有数量和可用数量 """
+        positions = self.account_positions
+        return positions.loc[positions['qty'] != 0]
+
 
     @property
     def history_orders(self):
         """ 账户的历史订单 """
         from qteasy.trade_recording import query_trade_orders
         return query_trade_orders(self.account_id, data_source=self._datasource)
+
+    def info(self):
+        """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息 """
+        print('Account Overview:')
+        print('-----------------')
+        print(f'Account ID: {self.account_id}')
+        print(f'User Name: {self.account["user_name"]}')
+        print(f'Created on: {self.account["created_time"]}')
+        print(f'Own Cash/Available: {self.account_cash[0]} / {self.account_cash[1]}')
+        print(f'Own / Available Positions: \n{self.non_zero_positions}')
+        return None
 
     def trade_results(self):
         """ 账户的交易结果 """
@@ -200,9 +227,8 @@ class Trader(object):
         2，如果当前是交易日，检查当前时间是否在task_daily_agenda中，如果在，则将任务添加到task_queue中
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
-        self._check_trade_day()
         self._initialize_agenda()
-        self.status = 'running'
+        self.status = 'sleeping'
         self.post_message(f'Trader is running with account_id: {self.account_id}')
         market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         market_close_day_loop_interval = self._config['market_close_day_loop_interval']
@@ -214,13 +240,25 @@ class Trader(object):
                 # 如果任务队列不为空，执行任务
                 white_listed_tasks = self.TASK_WHITELIST[self.status]
                 task = self.task_queue.get()
-                self.post_message(f'task queue is not empty, taking next task from queue: {task}')
-                if task not in white_listed_tasks:
+                if isinstance(task, tuple):
+                    task_name = task[0]
+                    kwargs = task[1]
+                else:
+                    task_name = task
+                    kwargs = None
+                self.post_message(f'task queue is not empty, taking next task from queue: {task_name}')
+                if task_name not in white_listed_tasks:
                     message = f'task: {task} cannot be executed in current status: {self.status}'
                     self.post_message(message)
                     self.task_queue.task_done()
                     continue
-                self.run_task(task)
+                try:
+                    if kwargs:
+                        self.run_task(task_name, **kwargs)
+                    else:
+                        self.run_task(task_name)
+                except Exception as e:
+                    self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
                 self.task_queue.task_done()
                 continue
 
@@ -231,7 +269,9 @@ class Trader(object):
             # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
             if not self.broker.result_queue.empty():
                 result = self.broker.result_queue.get()
-                self.add_task('process_result', result=result)
+                self.post_message(f'got new result from broker for order {result["order_id"]}, '
+                                  f'adding process_result task to queue')
+                self.add_task('process_result', {'result': result})
 
             time.sleep(sleep_interval)
 
@@ -251,7 +291,7 @@ class Trader(object):
             print(message)
         self.message_queue.put(message)
 
-    def add_task(self, task, **kwargs):
+    def add_task(self, task, kwargs=None):
         """ 添加任务到任务队列
 
         Parameters
@@ -263,7 +303,7 @@ class Trader(object):
         """
         if not isinstance(task, str):
             raise TypeError('task should be a str')
-        if not isinstance(kwargs, dict):
+        if kwargs and (not isinstance(kwargs, dict)):
             raise TypeError('kwargs should be a dict')
 
         if task not in self.AVAILABLE_TASKS:
@@ -278,22 +318,25 @@ class Trader(object):
     def _start(self):
         """ 启动交易系统 """
         self.post_message('starting Trader')
-        self.status = 'running'
+        self.status = 'sleeping'
 
     def _stop(self):
         """ 停止交易系统 """
-        self.post_message('stopping Trader')
+        self.post_message('stopping Trader, the broker will be stopped as well')
+        self._broker.status = 'stopped'
         self.status = 'stopped'
 
     def _sleep(self):
         """ 休眠交易系统 """
         self.post_message('Putting Trader to sleep')
         self.status = 'sleeping'
+        self.broker.status = 'paused'
 
     def _wakeup(self):
         """ 唤醒交易系统 """
         self.post_message('Waking up Trader')
         self.status = 'running'
+        self.broker.status = 'running'
 
     def _pause(self):
         """ 暂停交易系统 """
@@ -303,7 +346,7 @@ class Trader(object):
     def _resume(self):
         """ 恢复交易系统 """
         self.post_message('Resuming Trader')
-        self.status = 'running'
+        self.status = self.prev_status
 
     def _run_strategy(self, strategy_ids=None):
         """ 运行交易策略
@@ -326,8 +369,8 @@ class Trader(object):
         signal_type = operator.signal_type
         shares = self.asset_pool
         prices = get_current_prices()  # 获取实时价格 TODO: implement get_current_prices
-        own_amounts = self.account_positions
-        own_cash = self.account_cash
+        own_amounts = self.account_positions['qty']
+        own_cash = self.account_cash[0]
         config = self._config
         # 读取实时数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_real_time_data(operator, config)
@@ -408,6 +451,8 @@ class Trader(object):
         2，处理当日已成交的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
+        # 停止broker
+        self.broker.status = 'stopped'
         # 检查task_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
         if not self.task_queue.empty():
             self.post_message('processing unprocessed signals')
@@ -473,6 +518,7 @@ class Trader(object):
         self.is_market_open = True
         self.post_message('market is open')
         Thread(target=self.broker.run).start()
+        self.run_task('wakeup')
 
     def _market_close(self):
         """ 收市时操作：
@@ -482,7 +528,7 @@ class Trader(object):
         """
         self.is_market_open = False
         self.post_message('market is closed')
-        self.broker.status = 'stopped'
+        self.run_task('sleep')
 
     def run_task(self, task, **kwargs):
         """ 运行任务
@@ -544,7 +590,8 @@ class Trader(object):
                     task = task_tuple[1, 2]
                 else:
                     task = task_tuple[1]
-                self.post_message(f'current time {current_time} >= task time {task_time} adding task: {task} from agenda')
+                self.post_message(f'current time {current_time} >= task time {task_time}, '
+                                  f'adding task: {task} from agenda')
                 self._add_task_to_queue(task)
 
     def _initialize_agenda(self):
@@ -578,8 +625,8 @@ class Trader(object):
     TASK_WHITELIST = {
         'stopped':     ['start'],
         'running':     ['stop', 'sleep', 'pause', 'run_strategy', 'process_result', 'pre_open',
-                        'post_close', 'open_market', 'close_market'],
-        'sleeping':    ['wakeup', 'stop'],
+                        'open_market', 'close_market'],
+        'sleeping':    ['wakeup', 'stop', 'pause', 'pre_open', 'open_market', 'post_close'],
         'paused':      ['resume', 'stop'],
     }
 

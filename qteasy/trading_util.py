@@ -123,7 +123,6 @@ def create_daily_task_agenda(operator, config=None):
 
         # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
         strategy_open_close_timing_offset = config['strategy_open_close_timing_offset']
-        # TODO: strategy_open_close_timing_offset应该是可配置，代表策略运行时间在开盘或收盘时的偏移量
         for idx in range(len(run_time_index)):
             stg_run_time = pd.to_datetime(run_time_index[idx])
             market_open_time = pd.to_datetime(market_open_time_am)
@@ -140,14 +139,14 @@ def create_daily_task_agenda(operator, config=None):
 
         # 将策略的运行时间添加到任务日程，生成任务日程
         for t in run_time_index:
-            if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_stg')):
+            if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_strategy')):
                 # 如果同时发生的'run_stg'任务已经存在，则修改该任务，将stg_id添加到列表中
-                task_to_update = [item for item in task_agenda if (item[0] == t) and (item[1] == 'run_stg')]
+                task_to_update = [item for item in task_agenda if (item[0] == t) and (item[1] == 'run_strategy')]
                 task_idx_to_update = task_agenda.index(task_to_update[0])
                 task_agenda[task_idx_to_update][2].append(stg_id)
             else:
                 # 否则，则直接添加任务
-                task_agenda.append((t, 'run_stg', [stg_id]))
+                task_agenda.append((t, 'run_strategy', [stg_id]))
 
     # 对任务日程进行排序 （其实排序并不一定需要）
     task_agenda.sort(key=lambda x: x[0])
