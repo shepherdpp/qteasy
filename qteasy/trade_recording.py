@@ -726,8 +726,8 @@ def query_trade_orders(account_id,
 
     Returns
     -------
-    signals: list of dict
-        交易订单列表，包含所有符合查询条件的订单的字典形式
+    pd.DataFrame
+        交易订单列表，包含所有符合查询条件的订单的DataFrame
     """
 
     import qteasy as qt
@@ -759,7 +759,7 @@ def query_trade_orders(account_id,
                 )
         )
     if all(r is None for r in res):
-        return None
+        return pd.DataFrame()
     return pd.concat(res)
 
 

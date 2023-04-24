@@ -75,7 +75,9 @@ class Broker(object):
             # 使用ThreadPoolExecutor并行调用get_result函数处理交易订单，将结果put到result_queue中
             with ThreadPoolExecutor(max_workers=10) as executor:
                 while not self.order_queue.empty():
-                    executor.submit(self.get_result, self.order_queue.get())
+                    order = self.order_queue.get()
+                    executor.submit(self.get_result, order)
+                    self.order_queue.task_done()
                 # 获取交易结果并将其放入result_queue中
             for future in executor.as_completed():
                 self.result_queue.put(future.result())

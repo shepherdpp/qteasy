@@ -28,7 +28,7 @@ from qteasy.trade_recording import get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_order_id
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
-from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda
+from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
@@ -453,15 +453,17 @@ class Trader(object):
         """
         # 停止broker
         self.broker.status = 'stopped'
-        # 检查task_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
-        if not self.task_queue.empty():
-            self.post_message('processing unprocessed signals')
-            while not self.task_queue.empty():
-                task = self.task_queue.get()
-                self.run_task(task)  # TODO: 这里需要修改，生成取消订单
-                self.task_queue.task_done()
-        # 检查今日成交订单，确认是否有"部分成交"以及"已提交"的订单，如果有，生成取消订单，取消尚未成交的部分
-        self.post_message('processing partially filled orders')
+        # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
+        order_queue = self.broker.order_queue
+        if not order_queue.empty():
+            self.post_message('unprocessed orders found, processing them')
+            while not order_queue.empty():
+                order = order_queue.get()
+                order_id = order['order_id']
+                cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
+                self.post_message(f'canceled unprocessed order: {order_id}')
+                order_queue.task_done()
+        # 检查今日成交订单，确认是否有"部分成交"以及"未成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         partially_filled_orders = query_trade_orders(
                 account_id=self.account_id,
                 status='partially-filled',
@@ -472,35 +474,14 @@ class Trader(object):
                 status='submitted',
                 data_source=self._datasource,
         )
-        orders_to_be_canceled = partially_filled_orders + unfilled_orders
-        if order in orders_to_be_canceled:
+        orders_to_be_canceled = pd.concat([partially_filled_orders, unfilled_orders])
+        for order in orders_to_be_canceled:
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
+            self.post_message('partially filled orders found, processing them')
             order_id = order['order_id']
-            order_details = read_trade_order_detail(order_id=order_id, data_source=self._datasource)
-            order_results = read_trade_results_by_order_id(order_id=order_id, data_source=self._datasource)
-            total_filled_qty = order_results['filled_qty'].sum()
-            already_canceled_qty = order_results['canceled_qty'].sum()
-            if already_canceled_qty > 0:
-                raise RuntimeError(f'order status wrong: canceled qty should be 0 unless order is canceled!')
-            remaining_qty = order_details['qty'] - total_filled_qty
-            if remaining_qty <= 0:
-                raise RuntimeError(f'order status wrong: remaining qty should be larger than '
-                                   f'when order is partially filled')
-            result_of_cancel = {
-                'order_id': order['order_id'],
-                'filled_qty': total_filled_qty,
-                'price': order_details['price'],
-                'transaction_fee': 0.,
-                'canceled_qty': remaining_qty,
-                'delivery_amount': 0,
-                'delivery_status': 'ND',
-            }
-            process_trade_result(
-                    raw_trade_result=result_of_cancel,
-                    data_source=self._datasource,
-                    config=self._config
-            )
-            self.post_message(f'processed trade result: {result_of_cancel}')
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.post_message(f'canceled unfilled order: {order_id}')
+
         # 检查今日成交结果，完成交易结果的交割
         process_trade_delivery(
                 account_id=self.account_id,

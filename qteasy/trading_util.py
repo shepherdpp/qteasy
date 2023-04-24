@@ -617,6 +617,54 @@ def submit_order(order_id, data_source=None):
     return order_id
 
 
+def cancel_order(order_id, data_source=None):
+    """ 取消交易订单
+
+    对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为'cancelled'
+    取消订单时，生成这个订单的交易结果，交易结果的"canceled_qty"为订单的"qty"，交易结果的"status"为"cancelled"
+    如果订单的状态为部分成交partially_filled，生成的交易结果的quantity为订单的数量减去已经成交的数量
+
+    Parameters
+    ----------
+    order_id: int
+        交易信号的id
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    int, 交易信号的id
+    """
+    order_details = read_trade_order_detail(order_id=order_id, data_source=data_source)
+    order_status = order_details['status']
+    if order_status not in ['submitted', 'partially_filled']:
+        raise RuntimeError(f'order status wrong: {order_status} cannot be canceled')
+
+    order_results = read_trade_results_by_order_id(order_id=order_id, data_source=data_source)
+    total_filled_qty = order_results['filled_qty'].sum()
+    already_canceled_qty = order_results['canceled_qty'].sum()
+    if already_canceled_qty > 0:
+        raise RuntimeError(f'order status wrong: canceled qty should be 0 unless order is canceled!')
+    remaining_qty = order_details['qty'] - total_filled_qty
+    if remaining_qty <= 0:
+        raise RuntimeError(f'order status wrong: remaining qty should be larger than '
+                           f'when order is partially filled')
+    result_of_cancel = {
+        'order_id':        order['order_id'],
+        'filled_qty':      total_filled_qty,
+        'price':           order_details['price'],
+        'transaction_fee': 0.,
+        'canceled_qty':    remaining_qty,
+        'delivery_amount': 0,
+        'delivery_status': 'ND',
+    }
+    process_trade_result(
+            raw_trade_result=result_of_cancel,
+            data_source=self._datasource,
+            config=self._config
+    )
+
+
 def process_trade_delivery(account_id, data_source=None, config=None):
     """ 处理account_id账户中所有持仓和现金的交割
 
