@@ -2104,17 +2104,26 @@ def check_and_prepare_hist_data(oper, config):
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
 
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
-    hist_op = get_history_panel(htypes=oper.all_price_and_data_types, shares=config.asset_pool,
-                                start=regulate_date_format(
-                                        pd.to_datetime(invest_start) - window_offset), end=invest_end,
-                                freq=oper.op_data_freq, asset_type=config.asset_type, adj=config.backtest_price_adj) \
-        if run_mode <= 1 else HistoryPanel()
+    hist_op = get_history_panel(
+            htypes=oper.all_price_and_data_types,
+            shares=config.asset_pool,
+            start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),
+            end=invest_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+    ) if run_mode <= 1 else HistoryPanel()
 
     # 解析参考数据类型，获取参考数据
-    hist_ref = get_history_panel(htypes=oper.op_ref_types, shares=None, start=regulate_date_format(
-            pd.to_datetime(invest_start) - window_offset), end=invest_end, freq=oper.op_data_freq,
-                                 asset_type=config.asset_type,
-                                 adj=config.backtest_price_adj)  # .slice_to_dataframe(share='none')
+    hist_ref = get_history_panel(
+            htypes=oper.op_ref_types,
+            shares=None,
+            start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),
+            end=invest_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+    )  # .slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.bt_price_types
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -2122,16 +2131,26 @@ def check_and_prepare_hist_data(oper, config):
     back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
-    hist_opti = get_history_panel(htypes=oper.all_price_and_data_types, shares=config.asset_pool,
-                                  start=regulate_date_format(
-                                          pd.to_datetime(opti_test_start) - window_offset), end=opti_test_end,
-                                  freq=oper.op_data_freq, asset_type=config.asset_type,
-                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
+    hist_opti = get_history_panel(
+            htypes=oper.all_price_and_data_types,
+            shares=config.asset_pool,
+            start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
+            end=opti_test_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+    ) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
-    hist_opti_ref = get_history_panel(htypes=oper.op_ref_types, shares=None, start=regulate_date_format(
-            pd.to_datetime(opti_test_start) - window_offset), end=opti_test_end, freq=oper.op_data_freq,
-                                      asset_type=config.asset_type, adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
+    hist_opti_ref = get_history_panel(
+            htypes=oper.op_ref_types,
+            shares=None,
+            start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
+            end=opti_test_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj
+    ) if run_mode == 2 else HistoryPanel()
 
     opti_trade_prices = hist_opti.slice(htypes=bt_price_types)
     opti_trade_prices.fillinf(0)
@@ -2143,10 +2162,15 @@ def check_and_prepare_hist_data(oper, config):
     benchmark_start = regulate_date_format(min(all_starts))
     benchmark_end = regulate_date_format(max(all_ends))
 
-    hist_benchmark = get_history_panel(htypes=config.benchmark_dtype, shares=config.benchmark_asset,
-                                       start=benchmark_start, end=benchmark_end, freq=oper.op_data_freq,
-                                       asset_type=config.benchmark_asset_type,
-                                       adj=config.backtest_price_adj).slice_to_dataframe(htype='close')
+    hist_benchmark = get_history_panel(
+            htypes=config.benchmark_dtype,
+            shares=config.benchmark_asset,
+            start=benchmark_start,
+            end=benchmark_end,
+            freq=oper.op_data_freq,
+            asset_type=config.benchmark_asset_type,
+            adj=config.backtest_price_adj,
+    ).slice_to_dataframe(htype='close')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan

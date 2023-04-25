@@ -10,9 +10,9 @@
 # ======================================
 
 import numpy as np
-from abc import abstractmethod, ABCMeta
-
 import pandas as pd
+from abc import abstractmethod, ABCMeta
+import warnings
 
 from .utilfuncs import str_to_list
 from .utilfuncs import TIME_FREQ_STRINGS

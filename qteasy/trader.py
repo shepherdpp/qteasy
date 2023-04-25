@@ -34,6 +34,151 @@ from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda
 TIME_ZONE = 'Asia/Shanghai'
 
 
+class Trader_Controler(object):
+    """
+
+    """
+
+    def __init__(self, trader):
+        self._trader = trader
+
+    def parse_commands(self, command_string):
+        """ 解析命令行字符串，返回命令和参数
+
+        Parameters:
+        -----------
+        command_string: str
+            命令行字符串，格式为 'command [arg1, arg2, ...]'
+
+        Returns:
+        --------
+        command: str
+            命令
+        args: list
+            参数列表
+        """
+        # TODO: parse command line with package cmd
+        pass
+
+    def do_commands(self, command, args):
+        """ 执行命令
+
+        Parameters:
+        -----------
+        command: str
+            命令
+        args: list
+            参数列表
+        """
+        pass
+
+    def run(self):
+        from threading import Thread
+
+        Thread(target=self._trader.run).start()
+        current_mode = 'dashboard'
+
+        while True:
+            try:
+                if current_mode == 'dashboard':
+                    # check trader message queue and display messages
+                    if not self._trader.message_queue.empty():
+                        message = self._trader.message_queue.get()
+                        print(message)
+                else:
+                    # get user command input and do commands
+                    command_string = input('Please input command: ')
+                    command, args = self.parse_commands(command_string)
+                    self.do_command(command, args)
+            except KeyboardInterrupt:
+                # ask user if he/she wants to: [1], command mode; [2], stop trader; [other], resume dashboard mode
+                option = input('Do you want to: [1], command mode; [2], stop trader; [other], resume dashboard mode? ')
+                if option == '1':
+                    current_mode = 'command'
+                elif option == '2':
+                    self._trader.run_task('stop')
+                    break
+                else:
+                    pass
+
+    QT_COMMANDS = {
+        'help': {
+            'abbr': 'h',
+            'desc': 'show help information and list of all commands',
+            'usage': 'help [command]',
+            'func': 'show_help',
+        },
+        'pause': {
+            'abbr': 'p',
+            'desc': 'pause trader, strategies will not be executed, orders will not be submitted\n'
+                    'but submitted orders will be paused, and executed when trader resumes or wakes up',
+            'usage': 'pause',
+            'func': 'pause_trader',
+        },
+        'resume': {
+            'abbr': 'r',
+            'desc': 'resume trader to previous status',
+            'usage': 'resume',
+            'func': 'resume_trader',
+        },
+        'stop': {
+            'abbr': 's',
+            'desc': 'stop trader, strategies will not be executed, orders will not be submitted and executed\n'
+                    'submitted and unfilled orders will be canceled, broker will be shutdown',
+            'usage': 'stop',
+            'func': 'stop_trader',
+        },
+        'sleep': {
+            'abbr': 'sl',
+            'desc': 'sleep trader, strategies will not be executed, orders can still be submitted and executed\n',
+            'usage': 'sleep',
+            'func': 'sleep_trader',
+        },
+        'wakeup': {
+            'abbr': 'w',
+            'desc': 'wakeup trader',
+            'usage': 'wakeup',
+            'func': 'wakeup_trader',
+        },
+        'overview': {
+            'abbr': 'o',
+            'desc': 'show trader overview, including account, cash, positions, orders, etc.',
+            'usage': 'overview [d, detail]',
+            'func': 'show_trader_overview',
+        },
+        'info': {
+            'abbr': 'i',
+            'desc': 'show trader information, including account and cashes',
+            'usage': 'info [d, detail]',
+            'func': 'show_trader_info',
+        },
+        'positions': {
+            'abbr': 'pos',
+            'desc': 'show trader positions',
+            'usage': 'positions [d, detail]',
+            'func': 'show_trader_positions',
+        },
+        'orders': {
+            'abbr': 'ord',
+            'desc': 'show trader orders, in default, show today\'s orders',
+            'usage': 'orders [d, detail] [t, today] [3, 3days] [w, week] [m, month] [y, year] [a, all]',
+            'func': 'show_trader_orders',
+        },
+        'change': {
+            'abbr': 'c',
+            'desc': 'change account cash, position, and broker settings',
+            'usage': 'change [c, cash] [p, positions] [t, task] [o, operator] [b, broker]',
+            'func': 'change_data',
+        },
+        'dashboard': {
+            'abbr': 'd',
+            'desc': 'show trader dashboard',
+            'usage': 'dashboard',
+            'func': 'show_trader_dashboard',
+        },
+    }
+
+
 class Trader(object):
     """ Trader是交易系统的核心，它负责调度交易任务，根据交易日历和策略规则生成交易订单并提交给Broker
 
@@ -191,7 +336,6 @@ class Trader(object):
         positions = self.account_positions
         return positions.loc[positions['qty'] != 0]
 
-
     @property
     def history_orders(self):
         """ 账户的历史订单 """
@@ -232,48 +376,52 @@ class Trader(object):
         self.post_message(f'Trader is running with account_id: {self.account_id}')
         market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         market_close_day_loop_interval = self._config['market_close_day_loop_interval']
-        while self.status != 'stopped':
-            self._check_trade_day()
-            sleep_interval = market_close_day_loop_interval if not self.is_trade_day else market_open_day_loop_interval
-            # 检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
-            if not self.task_queue.empty():
-                # 如果任务队列不为空，执行任务
-                white_listed_tasks = self.TASK_WHITELIST[self.status]
-                task = self.task_queue.get()
-                if isinstance(task, tuple):
-                    task_name = task[0]
-                    kwargs = task[1]
-                else:
-                    task_name = task
-                    kwargs = None
-                self.post_message(f'task queue is not empty, taking next task from queue: {task_name}')
-                if task_name not in white_listed_tasks:
-                    message = f'task: {task} cannot be executed in current status: {self.status}'
-                    self.post_message(message)
+        try:
+            while self.status != 'stopped':
+                self._check_trade_day()
+                sleep_interval = market_close_day_loop_interval if not self.is_trade_day else market_open_day_loop_interval
+                # 检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
+                if not self.task_queue.empty():
+                    # 如果任务队列不为空，执行任务
+                    white_listed_tasks = self.TASK_WHITELIST[self.status]
+                    task = self.task_queue.get()
+                    if isinstance(task, tuple):
+                        task_name = task[0]
+                        kwargs = task[1]
+                    else:
+                        task_name = task
+                        kwargs = None
+                    self.post_message(f'task queue is not empty, taking next task from queue: {task_name}')
+                    if task_name not in white_listed_tasks:
+                        message = f'task: {task} cannot be executed in current status: {self.status}'
+                        self.post_message(message)
+                        self.task_queue.task_done()
+                        continue
+                    try:
+                        if kwargs:
+                            self.run_task(task_name, **kwargs)
+                        else:
+                            self.run_task(task_name)
+                    except Exception as e:
+                        self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
                     self.task_queue.task_done()
                     continue
-                try:
-                    if kwargs:
-                        self.run_task(task_name, **kwargs)
-                    else:
-                        self.run_task(task_name)
-                except Exception as e:
-                    self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
-                self.task_queue.task_done()
-                continue
 
-            # 从任务日程中添加任务到任务队列
-            current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
-            self._add_task_from_agenda(current_time)
+                # 从任务日程中添加任务到任务队列
+                current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+                self._add_task_from_agenda(current_time)
 
-            # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
-            if not self.broker.result_queue.empty():
-                result = self.broker.result_queue.get()
-                self.post_message(f'got new result from broker for order {result["order_id"]}, '
-                                  f'adding process_result task to queue')
-                self.add_task('process_result', {'result': result})
+                # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
+                if not self.broker.result_queue.empty():
+                    result = self.broker.result_queue.get()
+                    self.post_message(f'got new result from broker for order {result["order_id"]}, '
+                                      f'adding process_result task to queue')
+                    self.add_task('process_result', {'result': result})
 
-            time.sleep(sleep_interval)
+                time.sleep(sleep_interval)
+        except KeyboardInterrupt:
+            self.post_message('KeyboardInterrupt, stopping trader')
+            self.run_task('stop')
 
     def post_message(self, message):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
