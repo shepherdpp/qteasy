@@ -13,11 +13,12 @@
 
 import time
 import sys
+import pandas as pd
+
 from threading import Thread
 from queue import Queue
 from functools import lru_cache
-
-import pandas as pd
+from cmd import Cmd
 
 from qteasy import Operator, DataSource
 from qteasy.core import check_and_prepare_real_time_data
@@ -34,149 +35,183 @@ from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda
 TIME_ZONE = 'Asia/Shanghai'
 
 
-class Trader_Controler(object):
+class TraderShell(Cmd):
     """
 
     """
+    intro = 'Welcome to the qteasy shell. Type help or ? to list commands.\n' \
+            'Type "help <command>" to get help on a specific command.\n'
+    prompt = '(qteasy) '
+    use_rawinput = False
 
     def __init__(self, trader):
+        super().__init__()
         self._trader = trader
+        self._status = None
 
-    def parse_commands(self, command_string):
-        """ 解析命令行字符串，返回命令和参数
+    # ----- basic commands -----
+    def do_pause(self, arg):
+        """ Pause trader
 
-        Parameters:
-        -----------
-        command_string: str
-            命令行字符串，格式为 'command [arg1, arg2, ...]'
+        When trader is paused, strategies will not be executed, orders will not be submitted,
+        submitted orders will be suspended until trader is resumed
 
-        Returns:
-        --------
-        command: str
-            命令
-        args: list
-            参数列表
+        Usage:
+        ------
+        pause
         """
-        # TODO: parse command line with package cmd
-        pass
+        self._trader.run_task('pause')
+        sys.stdout.write('trader is paused\n')
 
-    def do_commands(self, command, args):
-        """ 执行命令
+    def do_resume(self, arg):
+        """ Resume trader
 
-        Parameters:
-        -----------
-        command: str
-            命令
-        args: list
-            参数列表
+        When trader is resumed, strategies will be executed, orders will be submitted,
+        suspended orders will be resumed
+
+        Usage:
+        ------
+        resume
         """
-        pass
+        self._trader.run_task('resume')
+        sys.stdout.write('trader is resumed\n')
+
+    def do_bye(self, arg):
+        """ Stop trader and exit shell
+
+        When trader is stopped, strategies will not be executed, orders will not be submitted,
+        submitted orders will be suspended until trader is resumed
+
+        Usage:
+        ------
+        stop
+        """
+        self._trader.run_task('stop')
+        self._status = 'stop'
+        return True
+
+    def do_info(self, arg):
+        """ Get trader info, same as overview
+
+        Get trader info, including basic information of current account, and
+        current cash and positions.
+
+        Usage:
+        ------
+        info [detail]
+        """
+        self._trader.info()
+
+    def do_positions(self, arg):
+        """ Get account positions
+
+        Get account positions, including all positions and available positions
+
+        Usage:
+        ------
+        positions
+        """
+        print(self._trader.account_positions)
+
+    def do_overview(self, arg):
+        """ Get trader overview, same as info
+
+        Get trader overview, including basic information of current account, and
+        current cash and positions.
+
+        Usage:
+        ------
+        overview [detail]
+        """
+        self._trader.info()
+
+    def do_history(self, arg):
+        """ Get trader history
+
+        Get trader history, including all orders, all trades, all cash and positions.
+
+        Usage:
+        ------
+        history
+        """
+        print(f'{self} running history with arg: {arg}')
+
+    def do_orders(self, arg):
+        """ Get trader orders
+
+        Get trader orders, use arg to specify orders to get, default is today's orders
+
+        Usage:
+        ------
+        orders [today] [3day] [week] [month] [year]
+        """
+        if arg is None or arg == '':
+            arg = 'today'
+        if not isinstance(arg, str):
+            print('Please input a valid argument.')
+            return
+        print(f'{self} getting orders with arg: {arg}')
+
+        print(self._trader.history_orders)
+
+    def do_change(self, arg):
+        """ Change trader cash and positions
+
+        Change trader settings
+
+        Usage:
+        ------
+        change
+        """
+        print(f'{self} running change with arg: {arg}')
+
+    def do_dashboard(self, arg):
+        """ Change to dashboard mode
+
+        Change to dashboard mode
+
+        Usage:
+        ------
+        dashboard
+        """
+        self._status = 'dashboard'
+        print('\nWelcome to trader dashboard! live status will be displayed here.')
+        return True
 
     def run(self):
         from threading import Thread
 
+        self.do_dashboard('')
         Thread(target=self._trader.run).start()
-        current_mode = 'dashboard'
 
-        while True:
+        while self._status != 'stop':
             try:
-                if current_mode == 'dashboard':
+                if self._status == 'dashboard':
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
-                        print(message)
-                else:
+                        sys.stdout.write(str(message)+"\n")
+                elif self._status == 'command':
                     # get user command input and do commands
-                    command_string = input('Please input command: ')
-                    command, args = self.parse_commands(command_string)
-                    self.do_command(command, args)
-            except KeyboardInterrupt:
-                # ask user if he/she wants to: [1], command mode; [2], stop trader; [other], resume dashboard mode
-                option = input('Do you want to: [1], command mode; [2], stop trader; [other], resume dashboard mode? ')
-                if option == '1':
-                    current_mode = 'command'
-                elif option == '2':
-                    self._trader.run_task('stop')
-                    break
+                    sys.stdout.write('will start cmdloop\n')
+                    self.cmdloop()
                 else:
-                    pass
+                    sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
+                    do_bye('')
+            except KeyboardInterrupt:
+                # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
+                option = input('\nWhat do you want? input number to select from below options: \n'
+                               '[1], Enter command mode; \n'
+                               '[2], Exit and stop the trader; \n'
+                               '[3], Stay in dashboard mode. ')
+                if option == '1':
+                    self._status = 'command'
+                elif option == '2':
+                    self.do_bye('')
+                else:
+                    self.do_dashboard('')
 
-    QT_COMMANDS = {
-        'help': {
-            'abbr': 'h',
-            'desc': 'show help information and list of all commands',
-            'usage': 'help [command]',
-            'func': 'show_help',
-        },
-        'pause': {
-            'abbr': 'p',
-            'desc': 'pause trader, strategies will not be executed, orders will not be submitted\n'
-                    'but submitted orders will be paused, and executed when trader resumes or wakes up',
-            'usage': 'pause',
-            'func': 'pause_trader',
-        },
-        'resume': {
-            'abbr': 'r',
-            'desc': 'resume trader to previous status',
-            'usage': 'resume',
-            'func': 'resume_trader',
-        },
-        'stop': {
-            'abbr': 's',
-            'desc': 'stop trader, strategies will not be executed, orders will not be submitted and executed\n'
-                    'submitted and unfilled orders will be canceled, broker will be shutdown',
-            'usage': 'stop',
-            'func': 'stop_trader',
-        },
-        'sleep': {
-            'abbr': 'sl',
-            'desc': 'sleep trader, strategies will not be executed, orders can still be submitted and executed\n',
-            'usage': 'sleep',
-            'func': 'sleep_trader',
-        },
-        'wakeup': {
-            'abbr': 'w',
-            'desc': 'wakeup trader',
-            'usage': 'wakeup',
-            'func': 'wakeup_trader',
-        },
-        'overview': {
-            'abbr': 'o',
-            'desc': 'show trader overview, including account, cash, positions, orders, etc.',
-            'usage': 'overview [d, detail]',
-            'func': 'show_trader_overview',
-        },
-        'info': {
-            'abbr': 'i',
-            'desc': 'show trader information, including account and cashes',
-            'usage': 'info [d, detail]',
-            'func': 'show_trader_info',
-        },
-        'positions': {
-            'abbr': 'pos',
-            'desc': 'show trader positions',
-            'usage': 'positions [d, detail]',
-            'func': 'show_trader_positions',
-        },
-        'orders': {
-            'abbr': 'ord',
-            'desc': 'show trader orders, in default, show today\'s orders',
-            'usage': 'orders [d, detail] [t, today] [3, 3days] [w, week] [m, month] [y, year] [a, all]',
-            'func': 'show_trader_orders',
-        },
-        'change': {
-            'abbr': 'c',
-            'desc': 'change account cash, position, and broker settings',
-            'usage': 'change [c, cash] [p, positions] [t, task] [o, operator] [b, broker]',
-            'func': 'change_data',
-        },
-        'dashboard': {
-            'abbr': 'd',
-            'desc': 'show trader dashboard',
-            'usage': 'dashboard',
-            'func': 'show_trader_dashboard',
-        },
-    }
+        sys.stdout.write('Thank you for using qteasy!\n')
 
 
 class Trader(object):

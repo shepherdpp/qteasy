@@ -19,7 +19,7 @@ import numpy as np
 
 from qteasy import QT_CONFIG, DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position
-from qteasy.trader import Trader
+from qteasy.trader import Trader, TraderShell
 from qteasy.broker import QuickBroker, Broker
 
 
@@ -68,7 +68,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
         self.ts = Trader(1, operator, broker, config, test_ds, debug=True)
 
-    def test_class(self):
+    def test_trader(self):
         """Test class Trader"""
         ts = self.ts
         self.assertIsInstance(ts, Trader)
@@ -139,7 +139,7 @@ class TestTrader(unittest.TestCase):
         ts.run_task('resume')
         self.assertEqual(ts.status, 'sleeping')
 
-    def test_class_properties(self):
+    def test_trader_properties(self):
         """Test function run_task"""
         ts = self.ts
         self.assertIsInstance(ts, Trader)
@@ -181,7 +181,7 @@ class TestTrader(unittest.TestCase):
 
         ts.info()
 
-    def test_run(self):
+    def test_trader_run(self):
         """Test full-fledged run with all tasks manually added"""
         ts = self.ts
         Thread(target=ts.run).start()  # start the trader
@@ -253,6 +253,11 @@ class TestTrader(unittest.TestCase):
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')
+
+    def test_shell(self):
+        """Test trader shell"""
+        ts = self.ts
+        TraderShell(ts).run()
 
         raise NotImplementedError
 
