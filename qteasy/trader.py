@@ -84,10 +84,10 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        stop
+        bye
         """
         self._trader.run_task('stop')
-        self._status = 'stop'
+        self._status = 'stopped'
         return True
 
     def do_info(self, arg):
@@ -123,7 +123,13 @@ class TraderShell(Cmd):
         ------
         overview [detail]
         """
-        self._trader.info()
+        detail = False
+        if arg is not None:
+            if arg in ['detail', 'd']:
+                detail = True
+            else:
+                print('argument not valid, input "detail" or "d" to get detailed info')
+        self._trader.info(detail)
 
     def do_history(self, arg):
         """ Get trader history
@@ -157,18 +163,14 @@ class TraderShell(Cmd):
     def do_change(self, arg):
         """ Change trader cash and positions
 
-        Change trader settings
-
         Usage:
         ------
-        change
+        change [cash] [positions]
         """
         print(f'{self} running change with arg: {arg}')
 
     def do_dashboard(self, arg):
-        """ Change to dashboard mode
-
-        Change to dashboard mode
+        """ Enter dashboard mode, live status will be displayed
 
         Usage:
         ------
@@ -177,6 +179,36 @@ class TraderShell(Cmd):
         self._status = 'dashboard'
         print('\nWelcome to trader dashboard! live status will be displayed here.')
         return True
+
+    # ----- complete commands -----
+    def complete_pause(self, text, line, begidx, endidx):
+        return []
+
+    def complete_resume(self, text, line, begidx, endidx):
+        return []
+
+    def complete_bye(self, text, line, begidx, endidx):
+        return []
+
+    def complete_info(self, text, line, begidx, endidx):
+        return []
+
+    def complete_positions(self, text, line, begidx, endidx):
+        return []
+
+    def complete_overview(self, text, line, begidx, endidx):
+        return []
+
+    def complete_history(self, text, line, begidx, endidx):
+        return []
+
+    def complete_orders(self, text, line, begidx, endidx):
+        return []
+
+    # ----- overridden methods -----
+    def precmd(self, line: str) -> str:
+        line = line.lower()
+        return line
 
     def run(self):
         from threading import Thread
@@ -377,15 +409,26 @@ class Trader(object):
         from qteasy.trade_recording import query_trade_orders
         return query_trade_orders(self.account_id, data_source=self._datasource)
 
-    def info(self):
-        """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息 """
+    def info(self, detail=False):
+        """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
+
+        Parameters:
+        -----------
+        detail: bool, default False
+            是否打印持仓的详细信息
+
+        Returns:
+        --------
+        None
+        """
         print('Account Overview:')
         print('-----------------')
         print(f'Account ID: {self.account_id}')
         print(f'User Name: {self.account["user_name"]}')
         print(f'Created on: {self.account["created_time"]}')
-        print(f'Own Cash/Available: {self.account_cash[0]} / {self.account_cash[1]}')
-        print(f'Own / Available Positions: \n{self.non_zero_positions}')
+        if detail:
+            print(f'Own Cash/Available: {self.account_cash[0]} / {self.account_cash[1]}')
+            print(f'Own / Available Positions: \n{self.non_zero_positions}')
         return None
 
     def trade_results(self):

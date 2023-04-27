@@ -66,7 +66,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=100)
         update_position(position_id=3, data_source=test_ds, qty_change=200, available_qty_change=100)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
-        self.ts = Trader(1, operator, broker, config, test_ds, debug=True)
+        self.ts = Trader(1, operator, broker, config, test_ds, debug=False)
 
     def test_trader(self):
         """Test class Trader"""
