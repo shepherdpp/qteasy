@@ -1639,7 +1639,7 @@ class Operator:
 
         :param price_type_idx: None, int
             回测价格类型序号
-            如果给出sample_ix，必须给出这个参数
+            如果给出sample_idx，必须给出这个参数
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
 

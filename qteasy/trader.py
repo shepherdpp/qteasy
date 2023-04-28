@@ -39,9 +39,9 @@ class TraderShell(Cmd):
     """
 
     """
-    intro = 'Welcome to the qteasy shell. Type help or ? to list commands.\n' \
+    intro = 'Welcome to the trader shell. Type help or ? to list commands.\n' \
             'Type "help <command>" to get help on a specific command.\n'
-    prompt = '(qteasy) '
+    prompt = '(trader) '
     use_rawinput = False
 
     def __init__(self, trader):
@@ -203,7 +203,12 @@ class TraderShell(Cmd):
         return []
 
     def complete_orders(self, text, line, begidx, endidx):
-        return []
+        """ complete orders command
+        """
+        if text:
+            return [i for i in ['today', '3day', 'week', 'month', 'year'] if i.startswith(text)]
+        else:
+            return ['today', '3day', 'week', 'month', 'year']
 
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
@@ -216,7 +221,7 @@ class TraderShell(Cmd):
         self.do_dashboard('')
         Thread(target=self._trader.run).start()
 
-        while self._status != 'stop':
+        while self._status != 'stopped':
             try:
                 if self._status == 'dashboard':
                     # check trader message queue and display messages
@@ -229,13 +234,14 @@ class TraderShell(Cmd):
                     self.cmdloop()
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
-                    do_bye('')
+                    self.do_bye('')
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
                 option = input('\nWhat do you want? input number to select from below options: \n'
                                '[1], Enter command mode; \n'
                                '[2], Exit and stop the trader; \n'
-                               '[3], Stay in dashboard mode. ')
+                               '[3], Stay in dashboard mode. \n'
+                               'please input your choice:')
                 if option == '1':
                     self._status = 'command'
                 elif option == '2':
