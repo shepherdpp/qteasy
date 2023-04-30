@@ -138,9 +138,19 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        history
+        history [orders] [cash] [positions] [today] [3day] [week] [month] [year] [details]
         """
+        if arg is None or arg == '':
+            arg = 'today'
+        if not isinstance(arg, str):
+            print('Please input a valid argument.')
+            return
         print(f'{self} running history with arg: {arg}')
+
+        if 'orders' in arg:
+            print(self._trader.history_orders)
+        if 'cash' in arg:
+            print(self._trader.history_cashes)
 
     def do_orders(self, arg):
         """ Get trader orders
@@ -149,7 +159,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders [today] [3day] [week] [month] [year]
+        orders [today] [3day] [week] [month] [year] [details]
         """
         if arg is None or arg == '':
             arg = 'today'
@@ -414,6 +424,16 @@ class Trader(object):
         """ 账户的历史订单 """
         from qteasy.trade_recording import query_trade_orders
         return query_trade_orders(self.account_id, data_source=self._datasource)
+
+    def history_cashes(self, start_date=None, end_date=None):
+        """ 账户的历史现金流水 """
+        from qteasy.trade_recording import query_cash_flows
+        return query_cash_flows(self.account_id, start_date, end_date, data_source=self._datasource)
+
+    def history_positions(self, start_date=None, end_date=None):
+        """ 账户的历史持仓 """
+        from qteasy.trade_recording import query_positions
+        return query_positions(self.account_id, start_date, end_date, data_source=self._datasource)
 
     def info(self, detail=False):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
