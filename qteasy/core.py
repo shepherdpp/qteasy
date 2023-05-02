@@ -1434,6 +1434,7 @@ def refill_data_source(data_source=None, **kwargs):
         data_source = qteasy.QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
+    print(f'Filling data source {data_source} ...')
     data_source.refill_local_source(**kwargs)
 
 
@@ -2078,10 +2079,22 @@ def check_and_prepare_hist_data(oper, config):
                  f' date will be used!',
                  RuntimeWarning)
 
+    # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
+    window_length = oper.max_window_length
+    window_offset_freq = oper.op_data_freq
+    if isinstance(window_offset_freq, list):
+        raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
+                                  f'multiple data frequency in one operator is currently not supported')
+    if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
+        window_offset_freq = 'd'
+    window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
+
     # 设定投资结束日期
     if run_mode == 0:
-        # 实时模式下，设置结束日期为现在
+        # 实时模式下，设置结束日期为现在，并下载最新的数据（下载的数据仅包含最小所需）
         invest_end = regulate_date_format(current_datetime)
+        # 开始日期时间为现在往前推window_offset
+        invest_start = regulate_date_format(current_datetime - window_offset)
     else:
         invest_end = config.invest_end
     # 设置优化区间和测试区间的结束日期
@@ -2092,16 +2105,6 @@ def check_and_prepare_hist_data(oper, config):
     # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
     opti_test_start = opti_start if pd.to_datetime(opti_start) < pd.to_datetime(test_start) else test_start
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
-
-    # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
-    window_length = oper.max_window_length
-    window_offset_freq = oper.op_data_freq
-    if isinstance(window_offset_freq, list):
-        raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
-                                  f'multiple data frequency in one operator is currently not supported')
-    if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
-        window_offset_freq = 'd'
-    window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
 
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
     hist_op = get_history_panel(
@@ -2125,7 +2128,7 @@ def check_and_prepare_hist_data(oper, config):
             adj=config.backtest_price_adj,
     )  # .slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    bt_price_types = oper.bt_price_types
+    bt_price_types = oper.strategy_timings
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in back_trade_prices to prevent from result in nan in value
     back_trade_prices.fillinf(0)
@@ -2197,7 +2200,7 @@ def reconnect_ds(data_source=None):
 
 
 # TODO: 将check_and_prepare_data()的代码拆分后移植到下面三个方法中
-def check_and_prepare_real_time_data(operator, config):
+def check_and_prepare_live_trade_data(operator, config):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
     Returns
@@ -2475,8 +2478,8 @@ def run(operator, **kwargs):
     configure(config=config, **kwargs)
 
     # 赋值给参考数据和运行模式
-    benchmark_data_type = config.benchmark_asset
-    run_mode = config.mode
+    benchmark_data_type = config['benchmark_asset']
+    run_mode = config['mode']
     """
     用于交易信号生成、数据回测、策略优化、结果测试以及结果评价参考的历史数据:
     hist_op:            信号生成数据，根据策略的运行方式，信号生成数据可能包含量价数据、基本面数据、指数、财务指标等等
@@ -2504,7 +2507,7 @@ def run(operator, **kwargs):
         holdings = get_realtime_holdings()
         trade_result = get_realtime_trades()
         trade_data = build_trade_data(holdings, trade_result)
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_real_time_data(operator, config)
+        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
         # TODO: 这里采用临时处理方式，使用mode1所用的hist_op/hist_ref以及invest_cash_plan
         #  数据来进行实时信号生成，但是这里需要大改进：自动获取当前最新的数据，生成一个足够一个周期
         #  的交易信号生成即可
@@ -2523,7 +2526,7 @@ def run(operator, **kwargs):
             )  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
-        if config.report:
+        if config['report']:
             # TODO: 研究：是否需要用qt.config.report参数来控制实时信号显示的报告
             pass
         _print_operation_signal(
@@ -2559,7 +2562,7 @@ def run(operator, **kwargs):
                 config=config,
                 stage='loop'
         )
-        if config.report:
+        if config['report']:
             # 格式化输出回测结果
             _print_loop_result(loop_result, config)
         if config.visual:
@@ -2612,14 +2615,14 @@ def run(operator, **kwargs):
         )
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
-        if config.report:
+        if config['report']:
             _print_test_result(opti_eval_res, config=config)
-        if config.visual:
+        if config['visual']:
             pass
             # _plot_test_result(opti_eval_res, config=config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果，此时operator的交易数据已经分配好，无需再次分配
-        if config.test_type in ['single', 'multiple']:
+        if config['test_type'] in ['single', 'multiple']:
             result_pool = _evaluate_all_parameters(
                     par_generator=optimal_pars,
                     total=config.opti_output_count,
@@ -2638,7 +2641,7 @@ def run(operator, **kwargs):
             if config.visual:
                 _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
 
-        elif config.test_type == 'montecarlo':
+        elif config['test_type'] == 'montecarlo':
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测

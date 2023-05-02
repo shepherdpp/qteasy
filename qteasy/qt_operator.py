@@ -400,7 +400,7 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需历史数据类型的集合"""
-        d_types = [typ for item in self.strategies for typ in item.data_types]
+        d_types = [typ for item in self.strategies for typ in item.history_data_types]
         d_types = list(set(d_types))
         d_types.sort()
         return d_types
@@ -441,8 +441,8 @@ class Operator:
         return d_freq
 
     @property
-    def bt_price_types(self):
-        """返回operator对象所有策略子对象的回测价格类型"""
+    def strategy_timings(self):
+        """返回operator对象所有策略子对象的运行时间类型"""
         p_types = [item.strategy_run_timing for item in self.strategies]
         p_types = list(set(p_types))
         p_types.sort()
@@ -451,7 +451,7 @@ class Operator:
     @property
     def all_price_and_data_types(self):
         """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
-        all_types = set(self.op_data_types).union(self.bt_price_types)
+        all_types = set(self.op_data_types).union(self.strategy_timings)
         return list(all_types)
 
     @property
@@ -531,7 +531,7 @@ class Operator:
         """ 计算operator对象中所有子策略的不同回测价格类型的数量
         :return: int
         """
-        return len(self.bt_price_types)
+        return len(self.strategy_timings)
 
     @property
     def op_list(self):
@@ -913,7 +913,7 @@ class Operator:
                             'H': 'high',
                             'L': 'low',
                             'C': 'close'}
-        price_types = self.bt_price_types
+        price_types = self.strategy_timings
         for p_type in priority.upper():
             price_type_name = price_type_table[p_type]
             if price_type_name not in price_types:
@@ -930,7 +930,7 @@ class Operator:
         :return:
             list
         """
-        price_types = self.bt_price_types
+        price_types = self.strategy_timings
         price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
         return [price_types[i] for i in price_priority_list]
 
@@ -1089,7 +1089,7 @@ class Operator:
                 len_diff = self.bt_price_type_count - len(blender)
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
-                for bldr, pt in zip(blender, self.bt_price_types):
+                for bldr, pt in zip(blender, self.strategy_timings):
                     self.set_blender(price_type=pt, blender=bldr)
             else:
                 raise TypeError(f'Wrong type of blender, a string or a list of strings should be given,'
@@ -1097,12 +1097,12 @@ class Operator:
             return
         if isinstance(price_type, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
-            if price_type not in self.bt_price_types:
+            if price_type not in self.strategy_timings:
                 warnings.warn(
                         f'\n'
                         f'Given price type \'{price_type}\' is not in valid price type list of \n'
                         f'current Operator, no blender will be created!\n'
-                        f'current valid price type list as following:\n{self.bt_price_types}')
+                        f'current valid price type list as following:\n{self.strategy_timings}')
                 return
             if isinstance(blender, str):
                 try:
@@ -1128,7 +1128,7 @@ class Operator:
         """
         if price_type is None:
             return self._stg_blender
-        if price_type not in self.bt_price_types:
+        if price_type not in self.strategy_timings:
             return None
         if price_type not in self._stg_blender:
             return None
@@ -1146,7 +1146,7 @@ class Operator:
         #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
         if price_type is None:
             return self._stg_blender_strings
-        if price_type not in self.bt_price_types:
+        if price_type not in self.strategy_timings:
             return None
         if price_type not in self._stg_blender:
             return None
@@ -1279,7 +1279,7 @@ class Operator:
                       f'{stg.data_types}')
             print('=' * 70)
         # 打印blender的信息：
-        for price_type in self.bt_price_types:
+        for price_type in self.strategy_timings:
             print(f'for backtest histoty price type - {price_type}:')
             if self.strategy_blenders != {}:
                 print(f'signal blenders: {self.view_blender(price_type)}')
@@ -1326,7 +1326,14 @@ class Operator:
     # TODO: 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
     # TODO: 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
-    def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
+    def assign_hist_data(
+            self,
+            hist_data: HistoryPanel,
+            cash_plan: CashPlan,
+            reference_data=None,
+            live_mode=False,
+            live_runing_stgs=None,
+    ):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
             检查hist_data历史数据的类型正确；
@@ -1349,8 +1356,11 @@ class Operator:
                     交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
                 self._op_sample_idx:
                     交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
+                    在live模式下，该序号为[1]或者[0]，[1]表示该策略会被运行，[0]表示该策略不会被运行
 
-        :param hist_data:
+        Parameters:
+        -----------
+        hist_data:
             :type hist_data: HistoryPanel
             历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
             个股所有类型的数据，
@@ -1364,11 +1374,11 @@ class Operator:
             hist_data中就应该包含close、open、high、eps四种类型的数据
             数据覆盖的时间段和时间频率也必须符合上述要求
 
-        :param cash_plan:
+        cash_plan:
             :type cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
 
-        :param reference_data:
+        reference_data:
             :type reference_data: HistoryPanel
             参考数据，默认None。一个HistoryPanel对象，这些数据被operator对象中的策略用于生成交易信号，但是与history_data
             不同，参考数据与个股无关，可以被所有个股同时使用，例如大盘指数、宏观经济数据等都可以作为参考数据，某一个个股
@@ -1383,8 +1393,19 @@ class Operator:
             reference_data中就应该包含000300.SH(IDX), 601993.SH(IDX)四种类型的数据
             数据覆盖的时间段和时间频率也必须符合上述要求
 
-        :return:
-            None
+        live_mode: bool, default False
+            是否为实盘模式，如果为True，则不需要根据stg_timing设置op_sample_idx，而是直接根据live_running_stgs提供
+            的策略序号来设置op_sample_idx，如果为False，则根据stg_timing设置op_sample_idx
+
+        live_running_stgs: list, optional
+            在live模式下，live_running_stgs提供了一个策略序号列表，用于指定哪些策略会被运行，哪些策略不会被运行，
+            当live_mode为True时，live_running_stgs必须提供，否则会报错
+            live_running_stgs为一个包含若干策略id的列表，列表中的策略的op_sample_idx会被设置为[1]，其他策略的
+            op_sample_idx会被设置为[0]
+
+        Returns:
+        --------
+        None
         """
         from qteasy import logger_core
         logger_core.debug(f'starting prepare operator history data')
@@ -1408,6 +1429,18 @@ class Operator:
             if reference_data.is_empty:
                 reference_data = None
             # 确保reference_data与hist_data的数据量相同
+        # 检查live_mode和live_running_stgs的合法性
+        if live_mode:
+            if live_running_stgs is None:
+                raise ValueError(f'live_running_stgs must be provided when live_mode is True')
+            if not isinstance(live_running_stgs, list):
+                raise TypeError(f'live_running_stgs must be a list, got {type(live_running_stgs)} instead')
+            if len(live_running_stgs) == 0:
+                raise ValueError(f'live_running_stgs can not be empty')
+            if not all(stg_id in self.strategy_ids for stg_id in live_running_stgs):
+                raise TypeError(f'live_running_stgs must contain valid strategy ids, got '
+                                f'{[stg_id for stg_id in live_runing_stgs if stg_id not in self.strategy_ids]} '
+                                f'in the list')
         # TODO 从这里开始下面的操作都应该移动到core.py中，从而吧CashPlan从Operator的设置过程中去掉
         #  使Operator与CashPlan无关。使二者脱钩
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
@@ -1463,7 +1496,7 @@ class Operator:
             logger_core.info(f'User-defined Signal blenders do not exist, default ones will be created!')
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
-            for price_type in self.bt_price_types:
+            for price_type in self.strategy_timings:
                 stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
                 strategy_indices = ('s' + idx for idx in map(str, range(stg_count_for_price_type)))
                 self.set_blender(price_type=price_type,
@@ -1514,37 +1547,43 @@ class Operator:
                     axis=0
             )[window_length_offset:-1] if ref_data_val else None
 
-            # 根据策略运行频率strategy_run_freq生成信号生成采样点序列
-            freq = stg.strategy_run_freq
-            # 根据strategy_run_freq生成一个策略运行采样日期序列
-            # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
-            #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
-            #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
-            #  注：
-            #  需要生成每月第一天，则freq='MS'，
-            #  生成每月最后一天，freq='M'，
-            #  生成每月第N天，则pd.date_range(freq='MS') + pd.DateOffset(days=N)
-            #  甚至，还应该进一步允许定义时间，
-            #  例如：
-            #  运行在每日9:00，则此时没有当天数据可用
-            #  运行在每日10:00，则每日有开盘价可用，但收盘价不可用
-            #  诸如此类
-            temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
-            if len(temp_date_series) <= 1:
-                # 如果strategy_run_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
-                sample_pos = np.zeros(shape=(1,), dtype='int')
-                sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
-                self._op_sample_indices[stg_id] = sample_pos
+            if live_mode:
+                # 如果是live_trade，根据live_running_stgs生成每个策略的信号生成采样点序列
+                self._op_sample_indices[stg_id] = [1] if stg_id in live_running_stgs else []
             else:
-                # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
-                # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
-                target_dates = temp_date_series - (temp_date_series[0] - op_list_hdates[0])
-                # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
-                sample_pos = np.searchsorted(op_list_hdates, target_dates)
-                # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
-                # 这里使用一种较快的技巧方法去掉重复值
-                sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
-                self._op_sample_indices[stg_id] = sample_pos
+                # 如果不是live_trade，根据策略运行频率strategy_run_freq生成信号生成采样点序列
+                freq = stg.strategy_run_freq
+                # 根据strategy_run_freq生成一个策略运行采样日期序列
+                # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
+                #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
+                #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
+                #  注：
+                #  需要生成每月第一天，则freq='MS'，
+                #  生成每月最后一天，freq='M'，
+                #  生成每月第N天，则pd.date_range(freq='MS') + pd.DateOffset(days=N)
+                #  甚至，还应该进一步允许定义时间，
+                #  例如：
+                #  运行在每日9:00，则此时没有当天数据可用
+                #  运行在每日10:00，则每日有开盘价可用，但收盘价不可用
+                #  诸如此类
+                # TODO: 另外，在live-trade模式下，策略运行采样日期时间序列决定了本次策略是否会
+                #  运行，规则是：如果需要某策略运行，则将其采样时间序列设置为[1]，如果不需要某策略运行，
+                #  则将其采样时间序列设置为[0]。这时，在运行op.create_signal时，传入参数sample_idx=1
+                #  即可。
+                temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
+                if len(temp_date_series) <= 1:
+                    # 如果strategy_run_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
+                    sample_pos = np.zeros(shape=(1,), dtype='int')
+                    sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
+                    self._op_sample_indices[stg_id] = sample_pos
+                else:
+                    # pd.date_range生成的时间序列是从op_dates未来某一天开始的，因此需要使用pd.Timedelta将它平移到op_dates第一天。
+                    target_dates = temp_date_series - (temp_date_series[0] - op_list_hdates[0])
+                    # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
+                    sample_pos = np.searchsorted(op_list_hdates, target_dates)
+                    # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值，这里使用一种较快的技巧方法去重
+                    sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
+                    self._op_sample_indices[stg_id] = sample_pos
 
         # TODO: 检查生成的数据滑窗是否有问题，如果有问题则提出改进建议，
         #  例如：检查是否有部分滑窗存在全NaN数据？
@@ -1566,14 +1605,14 @@ class Operator:
         share_count, hdate_count, htype_count = hist_data.shape
         self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
-        self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
+        self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.strategy_timings,
                                                                                 range(self.bt_price_type_count))}
 
         # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
         for price_type_idx in range(self.bt_price_type_count):
             # 按照price_type_idx逐个生成数据并填充
-            # TODO: 在realtime模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
-            price_type = self.bt_price_types[price_type_idx]
+            # TODO: 在live模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
+            price_type = self.strategy_timings[price_type_idx]
             stg_count = self.get_strategy_count_by_price_type(price_type)
             self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
             self._op_signal_indices_by_price_type_idx[price_type_idx] = [0] * stg_count
@@ -1659,9 +1698,9 @@ class Operator:
         # 如果price_type_idx给出时，只计算这个price_type的交易信号
         signal_out = {}
         if price_type_idx is None:
-            bt_price_types = self.bt_price_types
+            bt_price_types = self.strategy_timings
         else:
-            bt_price_types = [self.bt_price_types[price_type_idx]]
+            bt_price_types = [self.strategy_timings[price_type_idx]]
         bt_price_type_count = len(bt_price_types)
         all_zero_signal = np.zeros(len(self._op_list_shares), dtype='float')
         for bt_price_type in bt_price_types:
@@ -1693,8 +1732,7 @@ class Operator:
                                            self.get_op_sample_indices_by_price_type(
                                                    price_type=bt_price_type
                                            )]
-            # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            ###############
+            # 依次使用策略队列中的所有策略逐个生成交易信号
             op_signals = [
                 stg.generate(hist_data=hd,
                              ref_data=rd,

@@ -17,17 +17,15 @@ import pandas as pd
 
 from threading import Thread
 from queue import Queue
-from functools import lru_cache
 from cmd import Cmd
 
-from qteasy import Operator, DataSource
-from qteasy.core import check_and_prepare_real_time_data
+import qteasy
+from qteasy import Operator, DataSource, ConfigDict
+from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list
-from qteasy.broker import Broker, QuickBroker
-from qteasy.trade_recording import get_account, get_account_positions, get_account_position_details
-from qteasy.trade_recording import get_account_position_availabilities
+from qteasy.broker import Broker
+from qteasy.trade_recording import get_account, get_account_position_details
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
-from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_order_id
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
 from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
 
@@ -333,24 +331,26 @@ class Trader(object):
         if not isinstance(datasource, DataSource):
             raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
-        default_config = {
-            'market_open_time_am':              '09:30:00',
-            'market_close_time_pm':             '15:30:00',
-            'market_open_time_pm':              '13:00:00',
-            'market_close_time_am':             '11:30:00',
-            'exchange':                         'SSE',
-            'cash_delivery_period':             0,
-            'stock_delivery_period':            0,
-            'asset_pool':                       None,
-            'market_close_day_loop_interval':   0,
-            'market_open_day_loop_interval':    0,
-            'strategy_open_close_timing_offset': 1,  # minutes, 策略在开盘和收盘运行时的偏移量
-        }
+        default_config = ConfigDict(
+                {
+                        'market_open_time_am':              '09:30:00',
+                        'market_close_time_pm':             '15:30:00',
+                        'market_open_time_pm':              '13:00:00',
+                        'market_close_time_am':             '11:30:00',
+                        'exchange':                         'SSE',
+                        'cash_delivery_period':             0,
+                        'stock_delivery_period':            0,
+                        'asset_pool':                       None,
+                        'market_close_day_loop_interval':   0,
+                        'market_open_day_loop_interval':    0,
+                        'strategy_open_close_timing_offset': 1,  # minutes, 策略在开盘和收盘运行时的偏移量
+                }
+        )
 
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        self._config = default_config
+        self._config = qteasy.QT_CONFIG.copy()
         self._config.update(config)
         self._datasource = datasource
         self._asset_pool = str_to_list(self._config['asset_pool'])
@@ -427,11 +427,13 @@ class Trader(object):
 
     def history_cashes(self, start_date=None, end_date=None):
         """ 账户的历史现金流水 """
+        # TODO: implement this function
         from qteasy.trade_recording import query_cash_flows
         return query_cash_flows(self.account_id, start_date, end_date, data_source=self._datasource)
 
     def history_positions(self, start_date=None, end_date=None):
         """ 账户的历史持仓 """
+        # TODO: implement this function
         from qteasy.trade_recording import query_positions
         return query_positions(self.account_id, start_date, end_date, data_source=self._datasource)
 
@@ -611,23 +613,38 @@ class Trader(object):
 
         Parameters
         ----------
-        strategy_ids: tuple of int
+        strategy_ids: list of str
             交易策略ID列表
         """
-        if not self.is_market_open:
-            return
-
         operator = self._operator
         signal_type = operator.signal_type
         shares = self.asset_pool
-        prices = get_current_prices()  # 获取实时价格 TODO: implement get_current_prices
         own_amounts = self.account_positions['qty']
         own_cash = self.account_cash[0]
         config = self._config
+        # 下载最小所需实时历史数据
+        import pdb; pdb.set_trace()
+        self._datasource.refill_local_source(
+                dtypes=operator.op_data_types,
+                freqs=operator.op_data_freq,
+                asset_types='E',
+                start_date='20221231',
+                end_date='20230428',
+                code_range=self.asset_pool,
+                parallel=False,
+        )
         # 读取实时数据,设置operator的数据分配,创建trade_data
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_real_time_data(operator, config)
+        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
         self.post_message(f'read real time data and set operator data allocation')
-
+        operator.assign_hist_data(
+                hist_data=hist_op,
+                cash_plan=invest_cash_plan,
+                reference_data=hist_ref,
+                live_mode=True,
+                live_runing_stgs=strategy_ids
+        )
+        import pdb
+        pdb.set_trace()
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
                            f'"Operator.op_type = \'step\'"')

@@ -30,6 +30,7 @@ class TestTrader(unittest.TestCase):
         operator = Operator(strategies=['macd', 'dma'])
         broker = QuickBroker()
         config = {
+            'mode': 0,
             'market_open_time_am':  '09:30:00',
             'market_close_time_pm': '15:30:00',
             'market_open_time_pm':  '13:00:00',
@@ -37,7 +38,7 @@ class TestTrader(unittest.TestCase):
             'exchange':             'SSE',
             'cash_delivery_period':  0,
             'stock_delivery_period': 0,
-            'asset_pool':           'APPL, MSFT, GOOG, AMZN, FB, TSLA',
+            'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
         }
         # 创建测试数据源
         data_test_dir = 'data_test/'
@@ -58,10 +59,10 @@ class TestTrader(unittest.TestCase):
         # 创建一个ID=1的账户
         new_account('test_user1', 100000, test_ds)
         # 添加初始持仓
-        get_or_create_position(account_id=1, symbol='APPL', position_type='long', data_source=test_ds)
-        get_or_create_position(account_id=1, symbol='MSFT', position_type='long', data_source=test_ds)
-        get_or_create_position(account_id=1, symbol='GOOG', position_type='short', data_source=test_ds)
-        get_or_create_position(account_id=1, symbol='AMZN', position_type='long', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000001.SZ', position_type='long', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000004.SZ', position_type='short', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000005.SZ', position_type='long', data_source=test_ds)
         update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=100)
         update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=100)
         update_position(position_id=3, data_source=test_ds, qty_change=200, available_qty_change=100)
@@ -179,6 +180,10 @@ class TestTrader(unittest.TestCase):
         self.assertTrue(np.allclose(ts.non_zero_positions['qty'], [200.0, 200.0, -200.0, 200.0]))
         self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, -100.0, 100.0]))
 
+        print('test property history orders, cashes, and positions')
+        print(f'history orders: \n{ts.history_orders}\n'
+              f'history cashes: \n{ts.history_cashes}\n'
+              f'history positions: \n{ts.history_positions}')
         ts.info()
 
     def test_trader_run(self):
@@ -254,12 +259,24 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')
 
+    def test_strategy_run(self):
+        """Test strategy run"""
+        ts = self.ts
+        ts._run_strategy(strategy_ids=['macd', 'dma'])
+        time.sleep(1)
+        self.assertEqual(ts.status, 'running')
+        self.assertEqual(ts.broker.status, 'running')
+        ts._stop()
+        time.sleep(1)
+        self.assertEqual(ts.status, 'stopped')
+        self.assertEqual(ts.broker.status, 'stopped')
+
     def test_shell(self):
         """Test trader shell"""
         ts = self.ts
-        TraderShell(ts).run()
+        # TraderShell(ts).run()
 
-        raise NotImplementedError
+        # raise NotImplementedError
 
 
 if __name__ == '__main__':

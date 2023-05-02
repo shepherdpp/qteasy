@@ -2240,7 +2240,7 @@ class DataSource:
         pd.DataFrame, 包含所有数据表的数据状态
         """
 
-        all_tables = get_table_map()
+        all_tables = get_table_master()
         if not include_sys_tables:
             all_tables = all_tables[all_tables['table_usage'] != 'sys']
         all_table_names = all_tables.index
@@ -3712,7 +3712,7 @@ class DataSource:
                 asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
-        table_map = get_table_map()
+        table_master = get_table_master()
         # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
         tables_to_read = htype_to_table_col(
                 htypes=htypes,
@@ -3766,7 +3766,7 @@ class DataSource:
                           f'{conflict_cols}', DataConflictWarning)
         # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
         if all(df.empty for df in df_by_htypes.values()):
-            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please '
+            raise RuntimeError(f'Empty data by type {htypes} extracted from DataSource {self.connection_type}, Please '
                                f'check data source availability: \n'
                                f'check availability of all tables:  qt.get_table_overview()\nor\n'
                                f'check specific table:              qt.get_table_info(\'table_name\')\n'
@@ -3776,8 +3776,8 @@ class DataSource:
         adj_factors = {}
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
-            adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
-                                               table_map.asset_type.isin(asset_type)].index.to_list()
+            adj_tables_to_read = table_master.loc[(table_master.table_usage == 'adj') &
+                                               table_master.asset_type.isin(asset_type)].index.to_list()
             for tbl in adj_tables_to_read:
                 adj_df = self.read_table_data(tbl, shares=shares, start=start, end=end)
                 if not adj_df.empty:
@@ -3884,7 +3884,7 @@ class DataSource:
                             parallel=True,
                             process_count=None,
                             chunk_size=100,
-                            save_log=False):
+                            log=False):
         """ 批量补充本地数据，手动或自动运行补充本地数据库
 
         Parameters
@@ -3944,6 +3944,8 @@ class DataSource:
         chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
+        log: Bool, Default False
+            是否记录数据下载日志
 
         Returns
         -------
@@ -3985,7 +3987,7 @@ class DataSource:
                     code_range = str_to_list(code_range, ',')
 
         # 2 生成需要处理的数据表清单 tables
-        table_map = get_table_map()
+        table_master = get_table_master()
         tables_to_refill = set()
         tables = [item.lower() for item in tables]
         if 'all' in tables:
@@ -3996,10 +3998,10 @@ class DataSource:
                     tables_to_refill.add(item)
                 elif item in TABLE_USAGES:
                     tables_to_refill.update(
-                            table_map.loc[table_map.table_usage == item.lower()].index.to_list()
+                            table_master.loc[table_master.table_usage == item.lower()].index.to_list()
                     )
             for item in dtypes:
-                for tbl, schema in table_map.schema.iteritems():
+                for tbl, schema in table_master.schema.iteritems():
                     if item.lower() in TABLE_SCHEMA[schema]['columns']:
                         tables_to_refill.add(tbl)
 
@@ -4007,7 +4009,7 @@ class DataSource:
                 tables_to_keep = set()
                 for freq in str_to_list(freqs):
                     tables_to_keep.update(
-                            table_map.loc[table_map.freq == freq.lower()].index.to_list()
+                            table_master.loc[table_master.freq == freq.lower()].index.to_list()
                     )
                 tables_to_refill.intersection_update(
                         tables_to_keep
@@ -4016,7 +4018,7 @@ class DataSource:
                 tables_to_keep = set()
                 for a_type in str_to_list(asset_types):
                     tables_to_keep.update(
-                            table_map.loc[table_map.asset_type == a_type.upper()].index.to_list()
+                            table_master.loc[table_master.asset_type == a_type.upper()].index.to_list()
                     )
                 tables_to_refill.intersection_update(
                         tables_to_keep
@@ -4024,7 +4026,7 @@ class DataSource:
 
             dependent_tables = set()
             for table in tables_to_refill:
-                cur_table = table_map.loc[table]
+                cur_table = table_master.loc[table]
                 fill_type = cur_table.fill_arg_type
                 if fill_type == 'trade_date':
                     dependent_tables.add('trade_calendar')
@@ -4035,13 +4037,12 @@ class DataSource:
             if 'trade_calendar' not in tables_to_refill:
                 tables_to_refill.add('trade_calendar')
         import time
-        for table in table_map.index:
+        for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
             if table not in tables_to_refill:
                 continue
-            cur_table_info = table_map.loc[table]
+            cur_table_info = table_master.loc[table]
             # 3 生成数据下载参数序列
-            # print(f'refilling data for table: {table}')
             arg_name = cur_table_info.fill_arg_name
             fill_type = cur_table_info.fill_arg_type
             freq = cur_table_info.freq
@@ -5198,7 +5199,7 @@ def find_history_data(s, fuzzy=False, match_description=False):
     else:
         is_ascii = True
 
-    table_map = get_table_map()
+    table_master = get_table_master()
     items_found = {'h_data':  [],
                    'dtype':   [],
                    'table':   [],
@@ -5207,11 +5208,11 @@ def find_history_data(s, fuzzy=False, match_description=False):
                    'plot':    [],
                    'remarks': []
                    }
-    for table in table_map.index:
-        table_schema_name = table_map['schema'].loc[table]
+    for table in table_master.index:
+        table_schema_name = table_master['schema'].loc[table]
         table_schema = TABLE_SCHEMA[table_schema_name]
-        asset_type = table_map['asset_type'].loc[table]
-        data_freq = table_map['freq'].loc[table]
+        asset_type = table_master['asset_type'].loc[table]
+        data_freq = table_master['freq'].loc[table]
 
         columns = table_schema['columns']
         dtypes = table_schema['dtypes']

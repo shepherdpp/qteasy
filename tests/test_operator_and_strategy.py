@@ -972,7 +972,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
-        self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
+        self.assertEqual(op.strategy_timings, ['close', 'high', 'open'])
         self.assertEqual(op.get_blender(), {'close': ['+', '1', '1'],
                                             'open':  ['+', '1', '1'],
                                             'high':  ['+', '1', '1']})
@@ -1134,19 +1134,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(dtf[1], 'm')
 
     def test_property_bt_price_types(self):
-        """ test property bt_price_types"""
+        """ test property strategy_timings"""
         print('------test property bt_price_tyeps-------')
         op = qt.Operator()
-        self.assertIsInstance(op.bt_price_types, list)
-        self.assertEqual(len(op.bt_price_types), 0)
-        self.assertEqual(op.bt_price_types, [])
+        self.assertIsInstance(op.strategy_timings, list)
+        self.assertEqual(len(op.strategy_timings), 0)
+        self.assertEqual(op.strategy_timings, [])
 
         op = qt.Operator('macd, dma, trix')
-        btp = op.bt_price_types
+        btp = op.strategy_timings
         self.assertIsInstance(btp, list)
         self.assertEqual(btp[0], 'close')
         op.set_parameter('macd', strategy_run_timing='open')
-        btp = op.bt_price_types
+        btp = op.strategy_timings
         btpc = op.bt_price_type_count
         print(f'price_types are \n{btp}')
         self.assertIsInstance(btp, list)
@@ -1157,7 +1157,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op.add_strategies(['dma', 'macd'])
         op.set_parameter('dma_1', strategy_run_timing='high')
-        btp = op.bt_price_types
+        btp = op.strategy_timings
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'high')
@@ -1165,14 +1165,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(btpc, 3)
 
         op.remove_strategy('dma_1')
-        btp = op.bt_price_types
+        btp = op.strategy_timings
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
         self.assertEqual(btpc, 2)
 
         op.remove_strategy('macd_1')
-        btp = op.bt_price_types
+        btp = op.strategy_timings
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
@@ -1924,7 +1924,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # test setting blenders to different price types
 
         # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
-        self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
+        self.assertEqual(op.strategy_timings, ['close', 'high', 'open'])
         op.set_blender('s0 and s1 or s2', 'open')
         self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
         op.set_blender('(s0ors1) & s2', 'high')

@@ -32,7 +32,7 @@ from .built_in import built_ins, built_in_list, built_in_strategies, get_built_i
 from .visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
-from ._arg_validators import QT_CONFIG
+from ._arg_validators import QT_CONFIG, ConfigDict
 
 
 # 解析qteasy的本地安装路径
