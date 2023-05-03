@@ -2019,7 +2019,7 @@ def check_and_prepare_hist_data(oper, config):
         用于优化模式下，策略测试区间的资金投入计划
     """
     run_mode = config.mode
-    # 如果run_mode=0，实时获取最新的历史数据（如果无法加载，则警告），并加载最新的历史数据
+    # 如果run_mode=0，设置历史数据的开始日期为window length，结束日期为当前日期
     current_datetime = datetime.datetime.now()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数

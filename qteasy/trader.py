@@ -14,6 +14,7 @@
 import time
 import sys
 import pandas as pd
+import numpy as np
 
 from threading import Thread
 from queue import Queue
@@ -624,7 +625,10 @@ class Trader(object):
         own_cash = self.account_cash[0]
         config = self._config
 
-        # 下载最小所需实时历史数据 TODO: 需要完善数据读取的时间区间
+        # 下载最小所需实时历史数据
+        # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
+        #  1，需要完善数据读取的时间区间，根据策略的运行频率，以及本地已经读取的数据内容来决定数据区间（避免重复读取浪费时间或读取不足）
+        #  2，需要解决parallel读取的问题，在目前的测试中，parallel读取会导致数据读取失败
         self._datasource.refill_local_source(
                 dtypes=operator.op_data_types,
                 freqs=operator.op_data_freq,
@@ -641,13 +645,16 @@ class Trader(object):
                                   live_mode=True, live_running_stgs=strategy_ids)
         import pdb
         pdb.set_trace()
-        # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前交易价格、最近成交量、最近成交价格
+        # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
         trade_data = np.zeros(shape=(len(shares), 5))
         position_availabilities = get_account_position_availabilities(
                 account_id=self.account_id,
                 shares=self.asset_pool,
                 data_source=self._datasource,
         )
+        # 当前价格是hist_op的最后一行  # TODO: 需要根据strategy_timing获取价格的类型（如open价格或close价格）
+        timing_type = operator[strategy_ids[0]].strategy_timing
+        current_prices = hist_op[timing_type, :, -1].squeeze()
         last_trade_result_summary = get_last_trade_result_summary(
                 account_id=self.account_id,
                 shares=self.asset_pool,
@@ -655,7 +662,7 @@ class Trader(object):
         )
         trade_data[:, 0] = position_availabilities[1]
         trade_data[:, 1] = position_availabilities[2]
-        trade_data[:, 2] = current_prices  # TODO: how to get current prices?
+        trade_data[:, 2] = current_prices
         trade_data[:, 3] = last_trade_result_summary[1]
         trade_data[:, 4] = last_trade_result_summary[2]
         if operator.op_type == 'batch':

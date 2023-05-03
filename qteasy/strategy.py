@@ -397,35 +397,45 @@ class BaseStrategy:
 
     @property
     def strategy_run_timing(self):
-        """策略回测时所使用的价格类型"""
+        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         return self._strategy_run_timing
 
     @strategy_run_timing.setter
     def strategy_run_timing(self, price_type):
-        """ 设置策略回测室所使用的价格类型"""
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        self.set_hist_pars(strategy_run_timing=price_type)
+
+    @property
+    def strategy_timing(self):
+        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        return self._strategy_run_timing
+
+    @strategy_timing.setter
+    def strategy_timing(self, price_type):
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def bt_price_type(self):
-        """策略回测时所使用的价格类型，bt_price_type的别名"""
+        """策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
         warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
         return self._strategy_run_timing
 
     @bt_price_type.setter
     def bt_price_type(self, price_type):
-        """ 设置策略回测室所使用的价格类型"""
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def bt_price_types(self):
-        """策略回测时所使用的价格类型，bt_price_type的别名"""
+        """ 策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
         warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
         return self._strategy_run_timing
 
     @bt_price_types.setter
     def bt_price_types(self, price_type):
-        """ 设置策略回测室所使用的价格类型"""
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
         self.set_hist_pars(strategy_run_timing=price_type)
 

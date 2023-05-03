@@ -215,7 +215,7 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
     account_id: int
         账户的id
     symbol: str, optional
-        交易标的的代码
+        交易标的的代码，一次只能提供一个symbol
     position_type: str, optional, {'long', 'short'}
         持仓类型, 'long' 表示多头持仓, 'short' 表示空头持仓
     data_source: str, optional
@@ -715,7 +715,7 @@ def query_trade_orders(account_id,
     symbol: str, optional
         交易标的
     position: str, optional, {'long', 'short'}
-        交易方向, 默认为None, 表示不限制, 'long' 表示多头, 'short' 表示空头
+        持仓方向, 默认为None, 表示不限制, 'long' 表示多头, 'short' 表示空头
     direction: str, optional, {'buy', 'sell'}
         交易方向, 默认为None, 表示不限制, 'buy' 表示买入, 'sell' 表示卖出
     order_type: str, optional, {'market', 'limit', 'stop', 'stop_limit'}
@@ -730,6 +730,9 @@ def query_trade_orders(account_id,
     pd.DataFrame
         交易订单列表，包含所有符合查询条件的订单的DataFrame
     """
+
+    # TODO: move this function to trading_util.py
+    # TODO: allow list of str as input for symbol, position, direction, order_type, status
 
     import qteasy as qt
     if data_source is None:

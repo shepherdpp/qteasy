@@ -1481,8 +1481,8 @@ class Operator:
             if not all(invest_dates_in_hist):
                 nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
                 cash_plan.reset_dates(nearest_next)
-                logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
-                                    f'trade dates')
+                logger_core.warning(f'not all dates in cash plan are on trade dates, '
+                                    f'they are moved to their nearest next trade dates')
         # TODO 到这里为止上面的操作都应该移动到core.py中
         # 确保输入的history_data有足够的htypes
         hist_data_types = hist_data.htypes

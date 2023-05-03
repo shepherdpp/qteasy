@@ -2546,6 +2546,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
+    def test_get_last_trade_summary(self):
+        """ test function get_last_trade_result_summary()"""
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

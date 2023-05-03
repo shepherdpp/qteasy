@@ -20,6 +20,7 @@ from qteasy.trade_recording import read_trade_order, get_position_by_id, get_acc
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
 from qteasy.trade_recording import read_trade_results_by_order_id, get_account_cash_availabilities
 from qteasy.trade_recording import update_account_balance, update_position, update_trade_result, record_trade_order
+from qteasy.trade_recording import query_trade_orders
 
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -879,6 +880,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
 def get_last_trade_result_summary(account_id, shares, data_source):
     """ 获取指定账户的最近的交易结果汇总，获取的结果为ndarray，按照shares的顺序排列
+
     结果包含最近一次成交量（正数表示买入，负数表示卖出）以及最近一次成交价格，如果最近没有成交，
     则返回值为0/0
 
@@ -887,7 +889,7 @@ def get_last_trade_result_summary(account_id, shares, data_source):
     account_id: str,
         账户ID
     shares: list of str,
-        股票代码列表
+        股票代码列表, 如果不给出股票代码列表，则返回所有持仓股票的最近一次成交量和成交价格
     data_source: str,
         数据源名称
 
@@ -901,7 +903,12 @@ def get_last_trade_result_summary(account_id, shares, data_source):
     trade_prices: ndarray of float,
         最近一次成交价格
     """
-    pass
+    # read all filled and partially filled orders
+    all_orders = query_trade_orders(
+            account_id=account_id,
+            data_source=data_source,
+    )
+    
 
 
 def _trade_time_index(start=None,

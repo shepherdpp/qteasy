@@ -4198,6 +4198,37 @@ class DataSource:
                               f'{total_written} rows downloaded, will proceed with next table!')
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                
+    def acquire_latest_live_data(self,
+                                 table,
+                                 dtypes=None,
+                                 freqs=None,
+                                 asset_type=None,
+                                 start_date=None,
+                                 end_date=None,
+                                 symbols=None,
+                                 source='tushare'):
+        """ 获取最新的实时数据
+
+        Parameters
+        ----------
+        table: str
+            数据表名称
+        source: str, Default 'tushare'
+            数据源名称
+
+        Returns
+        -------
+        DataFrame
+        """
+        if source.lower() == 'tushare':
+            return self.tushare.acquire_latest_live_data(table, **kwargs)
+        elif source.lower() == 'joinquant':
+            return self.joinquant.acquire_latest_live_data(table, **kwargs)
+        else:
+            raise ValueError(f'Unsupported data source: {source}')
+        
+        pass
 
     def get_all_basic_table_data(self, refresh_cache=False):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
