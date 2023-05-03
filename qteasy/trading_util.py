@@ -877,37 +877,29 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     return result_id
 
 
-def output_account_position(account_id, position_id):
-    """ 将账户的持仓输出到终端或TUI
+def get_last_trade_result_summary(account_id, shares, data_source):
+    """ 获取指定账户的最近的交易结果汇总，获取的结果为ndarray，按照shares的顺序排列
+    结果包含最近一次成交量（正数表示买入，负数表示卖出）以及最近一次成交价格，如果最近没有成交，
+    则返回值为0/0
 
     Parameters
     ----------
-    account_id: int
-        账户的id
-    position_id: int
-        持仓的id
+    account_id: str,
+        账户ID
+    shares: list of str,
+        股票代码列表
+    data_source: str,
+        数据源名称
 
     Returns
     -------
-    None
-    """
-    pass
-
-
-def generate_trade_result(order_id, account_id):
-    """ 生成交易结果
-
-    Parameters
-    ----------
-    order_id: int
-        交易信号的id
-    account_id: int
-        账户的id
-
-    Returns
-    -------
-    trade_results: dict
-        交易结果
+    tuple: (symbols, amounts_changed, trade_prices)
+    symbols: ndarray of str,
+        股票代码列表
+    amounts_changed: ndarray of float,
+        最近一次成交量
+    trade_prices: ndarray of float,
+        最近一次成交价格
     """
     pass
 
@@ -926,7 +918,8 @@ def _trade_time_index(start=None,
                       end_pm='15:00:00',
                       include_start_pm=False,
                       include_end_pm=True):
-    """ 生成一个符合交易时间段的datetime index
+    """ 通过start/end/periods/freq生成一个符合交易时间段的datetime series，这个序列中的
+    每一个时间都在交易时段内
 
     Parameters
     ----------
@@ -1011,10 +1004,18 @@ def _trade_time_index(start=None,
         由于周、季、年三种情况存在复合字符串，因此需要split
     '''
     if freq_str[-1:].lower() in ['t', 'h']:
-        idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
-                                                 include_start=include_start_am, include_end=include_end_am)
-        idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
-                                                 include_start=include_start_pm, include_end=include_end_pm)
+        idx_am = time_index.indexer_between_time(
+                start_time=start_am,
+                end_time=end_am,
+                include_start=include_start_am,
+                include_end=include_end_am,
+        ).values
+        idx_pm = time_index.indexer_between_time(
+                start_time=start_pm,
+                end_time=end_pm,
+                include_start=include_start_pm,
+                include_end=include_end_pm,
+        ).values
         idxer = np.union1d(idx_am, idx_pm)
         return time_index[idxer]
     else:

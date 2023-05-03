@@ -24,10 +24,11 @@ from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list
 from qteasy.broker import Broker
-from qteasy.trade_recording import get_account, get_account_position_details
+from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
 from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
+from qteasy.trading_util import get_last_trade_result_summary
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
@@ -622,13 +623,13 @@ class Trader(object):
         own_amounts = self.account_positions['qty']
         own_cash = self.account_cash[0]
         config = self._config
-        # 下载最小所需实时历史数据
-        import pdb; pdb.set_trace()
+
+        # 下载最小所需实时历史数据 TODO: 需要完善数据读取的时间区间
         self._datasource.refill_local_source(
                 dtypes=operator.op_data_types,
                 freqs=operator.op_data_freq,
                 asset_types='E',
-                start_date='20221231',
+                start_date='20230421',
                 end_date='20230428',
                 code_range=self.asset_pool,
                 parallel=False,
@@ -636,22 +637,34 @@ class Trader(object):
         # 读取实时数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
         self.post_message(f'read real time data and set operator data allocation')
-        operator.assign_hist_data(
-                hist_data=hist_op,
-                cash_plan=invest_cash_plan,
-                reference_data=hist_ref,
-                live_mode=True,
-                live_runing_stgs=strategy_ids
-        )
+        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref,
+                                  live_mode=True, live_running_stgs=strategy_ids)
         import pdb
         pdb.set_trace()
+        # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前交易价格、最近成交量、最近成交价格
+        trade_data = np.zeros(shape=(len(shares), 5))
+        position_availabilities = get_account_position_availabilities(
+                account_id=self.account_id,
+                shares=self.asset_pool,
+                data_source=self._datasource,
+        )
+        last_trade_result_summary = get_last_trade_result_summary(
+                account_id=self.account_id,
+                shares=self.asset_pool,
+                data_source=self._datasource,
+        )
+        trade_data[:, 0] = position_availabilities[1]
+        trade_data[:, 1] = position_availabilities[2]
+        trade_data[:, 2] = current_prices  # TODO: how to get current prices?
+        trade_data[:, 3] = last_trade_result_summary[1]
+        trade_data[:, 4] = last_trade_result_summary[2]
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
-                           f'"Operator.op_type = \'step\'"')
+                           f'"Operator.op_type = "step"')
         else:
             op_signal = operator.create_signal(
                     trade_data=trade_data,
-                    sample_idx=-1,
+                    sample_idx=1,
                     price_type_idx=0
             )  # 生成交易清单
             self.post_message(f'ran strategy and created signal: {op_signal}')

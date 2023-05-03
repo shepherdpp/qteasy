@@ -888,7 +888,7 @@ class GeneralStg(BaseStrategy):
                 - 5列,  交易数据类型轴
                     - 0, own_amounts:              当前持有每种股票的份额
                     - 1, available_amounts:        当前可用的每种股票的份额
-                    - 2, current_prices:           当前的交易价格
+                    - 2, current_prices:           当前的股票价格
                     - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
                     - 4, recent_trade_prices:      最近一次成交价格
 

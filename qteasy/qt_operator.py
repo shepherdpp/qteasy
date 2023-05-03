@@ -528,8 +528,18 @@ class Operator:
 
     @property
     def bt_price_type_count(self):
-        """ 计算operator对象中所有子策略的不同回测价格类型的数量
+        """ 计算operator对象中所有子策略的不同回测价格类型的数量 to be deprecated
         :return: int
+        """
+        warnings.warn("This property will be deprecated in future versions. Use strategy_timing_count instead",)
+        return len(self.strategy_timings)
+
+    @property
+    def strategy_timing_count(self):
+        """ 计算operator对象中所有子策略的不同回测价格类型的数量
+        Returns
+        -------
+        int
         """
         return len(self.strategy_timings)
 
@@ -1332,36 +1342,35 @@ class Operator:
             cash_plan: CashPlan,
             reference_data=None,
             live_mode=False,
-            live_runing_stgs=None,
+            live_running_stgs=None,
     ):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
-            检查hist_data历史数据的类型正确；
-            检查cash_plan投资计划的类型正确；
-            检查hist_data是否为空（要求不为空）；
-            在hist_data中找到cash_plan投资计划中投资时间点的具体位置
-            检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
-            检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
-            检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
-            从hist_data中根据各个量化策略的参数选取正确的历史数据切片放入各个策略数据仓库中
-            检查op_signal混合器的设置，根据op的属性设置正确的混合器，如果没有设置混合器，则生成一个
-                基础混合器（blender）
+        检查hist_data历史数据的类型正确；
+        检查cash_plan投资计划的类型正确；
+        检查hist_data是否为空（要求不为空）；
+        在hist_data中找到cash_plan投资计划中投资时间点的具体位置
+        检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
+        检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
+        检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
+        从hist_data中根据各个量化策略的参数选取正确的历史数据切片放入各个策略数据仓库中
+        检查op_signal混合器的设置，根据op的属性设置正确的混合器，如果没有设置混合器，则生成一个
+            基础混合器（blender）
 
-            然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
-            切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。包括：
+        然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
+        切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。包括：
 
-                self._op_hist_data:
-                    交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
-                self._op_ref_data:
-                    交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
-                self._op_sample_idx:
-                    交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
-                    在live模式下，该序号为[1]或者[0]，[1]表示该策略会被运行，[0]表示该策略不会被运行
+            self._op_hist_data:
+                交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
+            self._op_ref_data:
+                交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
+            self._op_sample_idx:
+                交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
+                在live模式下，该序号为[1]或者[0]，[1]表示该策略会被运行，[0]表示该策略不会被运行
 
         Parameters:
         -----------
-        hist_data:
-            :type hist_data: HistoryPanel
+        hist_data: HistoryPanel
             历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
             个股所有类型的数据，
 
@@ -1373,13 +1382,9 @@ class Operator:
 
             hist_data中就应该包含close、open、high、eps四种类型的数据
             数据覆盖的时间段和时间频率也必须符合上述要求
-
-        cash_plan:
-            :type cash_plan: CashPlan
+        cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
-
-        reference_data:
-            :type reference_data: HistoryPanel
+        reference_data: HistoryPanel
             参考数据，默认None。一个HistoryPanel对象，这些数据被operator对象中的策略用于生成交易信号，但是与history_data
             不同，参考数据与个股无关，可以被所有个股同时使用，例如大盘指数、宏观经济数据等都可以作为参考数据，某一个个股
             的历史数据也可以被用作参考数据，参考数据可以被所有个股共享。reference_data包含所有策略所需的参考数据。
@@ -1392,11 +1397,9 @@ class Operator:
 
             reference_data中就应该包含000300.SH(IDX), 601993.SH(IDX)四种类型的数据
             数据覆盖的时间段和时间频率也必须符合上述要求
-
         live_mode: bool, default False
             是否为实盘模式，如果为True，则不需要根据stg_timing设置op_sample_idx，而是直接根据live_running_stgs提供
             的策略序号来设置op_sample_idx，如果为False，则根据stg_timing设置op_sample_idx
-
         live_running_stgs: list, optional
             在live模式下，live_running_stgs提供了一个策略序号列表，用于指定哪些策略会被运行，哪些策略不会被运行，
             当live_mode为True时，live_running_stgs必须提供，否则会报错
@@ -1439,7 +1442,7 @@ class Operator:
                 raise ValueError(f'live_running_stgs can not be empty')
             if not all(stg_id in self.strategy_ids for stg_id in live_running_stgs):
                 raise TypeError(f'live_running_stgs must contain valid strategy ids, got '
-                                f'{[stg_id for stg_id in live_runing_stgs if stg_id not in self.strategy_ids]} '
+                                f'{[stg_id for stg_id in live_running_stgs if stg_id not in self.strategy_ids]} '
                                 f'in the list')
         # TODO 从这里开始下面的操作都应该移动到core.py中，从而吧CashPlan从Operator的设置过程中去掉
         #  使Operator与CashPlan无关。使二者脱钩
@@ -1449,36 +1452,37 @@ class Operator:
         operator_window_length = self.max_window_length
         op_list_hdates = hist_data.hdates[operator_window_length:]
 
-        # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
-        if first_cash_pos < self.max_window_length:
-            message = f'History data starts on {hist_data.hdates[0]} does not have' \
-                      f' enough data to cover first cash date {cash_plan.first_day}, ' \
-                      f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
-            logger_core.error(message)
-            raise ValueError(message)
-        # 如果第一个投资日不在输入的历史数据范围内，raise
-        if first_cash_pos >= len(hist_data.hdates):
-            message = f'Investment plan falls out of historical data range,' \
-                      f' history data ends on {hist_data.hdates[-1]}, first investment ' \
-                      f'on {cash_plan.last_day}'
-            logger_core.error(message)
-            raise ValueError(message)
-        # 如果最后一个投资日不在输入的历史数据范围内，不raise，只记录错误信息
-        if last_cash_pos >= len(hist_data.hdates):
-            message = f'Not enough history data record to cover complete investment plan,' \
-                      f' history data ends on {hist_data.hdates[-1]}, last investment ' \
-                      f'on {cash_plan.last_day}'
-            logger_core.error(message)
-            # raise ValueError(message)
-        # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
-        hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
-        invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
-        # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
-        if not all(invest_dates_in_hist):
-            nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
-            cash_plan.reset_dates(nearest_next)
-            logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
-                                f'trade dates')
+        if not live_mode:
+            # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
+            if first_cash_pos < self.max_window_length:
+                message = f'History data starts on {hist_data.hdates[0]} does not have' \
+                          f' enough data to cover first cash date {cash_plan.first_day}, ' \
+                          f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
+                logger_core.error(message)
+                raise ValueError(message)
+            # 如果第一个投资日不在输入的历史数据范围内，raise
+            if first_cash_pos >= len(hist_data.hdates):
+                message = f'Investment plan falls out of historical data range,' \
+                          f' history data ends on {hist_data.hdates[-1]}, first investment ' \
+                          f'on {cash_plan.last_day}'
+                logger_core.error(message)
+                raise ValueError(message)
+            # 如果最后一个投资日不在输入的历史数据范围内，不raise，只记录错误信息
+            if last_cash_pos >= len(hist_data.hdates):
+                message = f'Not enough history data record to cover complete investment plan,' \
+                          f' history data ends on {hist_data.hdates[-1]}, last investment ' \
+                          f'on {cash_plan.last_day}'
+                logger_core.error(message)
+                # raise ValueError(message)
+            # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
+            hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
+            invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
+            # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
+            if not all(invest_dates_in_hist):
+                nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
+                cash_plan.reset_dates(nearest_next)
+                logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
+                                    f'trade dates')
         # TODO 到这里为止上面的操作都应该移动到core.py中
         # 确保输入的history_data有足够的htypes
         hist_data_types = hist_data.htypes

@@ -1499,8 +1499,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
         self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
-        self.op.assign_hist_data(hist_data=self.hp1,
-                                 cash_plan=on_spot_cash)
+        self.op.assign_hist_data(hist_data=self.hp1, cash_plan=on_spot_cash)
         # test if all historical data related properties are set
         self.assertIsInstance(self.op._op_list_shares, dict)
         self.assertIsInstance(self.op._op_list_hdates, dict)
@@ -1658,8 +1657,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id=1,
                               pars=())
-        self.op.assign_hist_data(hist_data=self.hp1,
-                                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(hist_data=self.hp1, cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
@@ -1747,8 +1745,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
         self.op.set_blender(blender='s0 or s1', price_type='open')
-        self.op.assign_hist_data(hist_data=self.hp1,
-                                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(hist_data=self.hp1, cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,

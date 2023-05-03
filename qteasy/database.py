@@ -3766,11 +3766,15 @@ class DataSource:
                           f'{conflict_cols}', DataConflictWarning)
         # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
         if all(df.empty for df in df_by_htypes.values()):
-            raise RuntimeError(f'Empty data by type {htypes} extracted from DataSource {self.connection_type}, Please '
-                               f'check data source availability: \n'
-                               f'check availability of all tables:  qt.get_table_overview()\nor\n'
-                               f'check specific table:              qt.get_table_info(\'table_name\')\n'
-                               f'fill datasource:                   qt.refill_data_source(table=\'table_name\', '
+            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type} with parameters:\n'
+                               f'shares: {shares}\n'
+                               f'htypes: {htypes}\n'
+                               f'start/end/freq: {start}/{end}/"{freq}"\n'
+                               f'asset_type/adj: {asset_type} / {adj}\n'
+                               f'To check data availability, use one of the following:\n'
+                               f'Availability of all tables:     qt.get_table_overview()\nor\n'
+                               f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
+                               f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         adj_factors = {}

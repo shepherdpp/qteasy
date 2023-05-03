@@ -27,7 +27,7 @@ class TestTrader(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures, if any."""
-        operator = Operator(strategies=['macd', 'dma'])
+        operator = Operator(strategies=['macd', 'dma'], op_type='step')
         broker = QuickBroker()
         config = {
             'mode': 0,
@@ -39,6 +39,7 @@ class TestTrader(unittest.TestCase):
             'cash_delivery_period':  0,
             'stock_delivery_period': 0,
             'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+            'asset_type':           'E',
         }
         # 创建测试数据源
         data_test_dir = 'data_test/'

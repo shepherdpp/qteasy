@@ -2513,7 +2513,7 @@ def run(operator, **kwargs):
         #  的交易信号生成即可
         # empty_cash_plan = CashPlan([], [])
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_ref, cash_plan=invest_cash_plan)
+        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref)
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
@@ -2587,11 +2587,7 @@ def run(operator, **kwargs):
                 operator=operator,
                 config=config
         )
-        operator.assign_hist_data(  # 在生成交易信号之前准备历史数据
-                hist_data=hist_opti,
-                cash_plan=opti_cash_plan,
-                reference_data=hist_opti_ref
-        )
+        operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan, reference_data=hist_opti_ref)
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config.opti_method
         optimal_pars, perfs = optimization_methods[how](
@@ -2647,10 +2643,7 @@ def run(operator, **kwargs):
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_opti)
                 print(f'config.test_cash_dates is {config.test_cash_dates}')
-                operator.assign_hist_data(
-                        hist_data=mock_hist,
-                        cash_plan=test_cash_plan
-                )
+                operator.assign_hist_data(hist_data=mock_hist, cash_plan=test_cash_plan)
                 mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(
                         par_generator=optimal_pars,

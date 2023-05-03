@@ -20,6 +20,7 @@ from qteasy import logger_core as logger
 from qteasy.utilfuncs import str_to_list
 
 # TODO: add TIMEZONE to qt config arguments
+# TODO: move all secondary functions to trading_util.py
 TIMEZONE = 'Asia/Shanghai'
 
 
