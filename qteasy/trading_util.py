@@ -16,11 +16,13 @@ import numpy as np
 
 from qteasy import logger_core as logger, Operator
 
+from qteasy.utilfuncs import str_to_list
+
 from qteasy.trade_recording import read_trade_order, get_position_by_id, get_account, update_trade_order
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
 from qteasy.trade_recording import read_trade_results_by_order_id, get_account_cash_availabilities
 from qteasy.trade_recording import update_account_balance, update_position, update_trade_result, record_trade_order
-from qteasy.trade_recording import query_trade_orders
+from qteasy.trade_recording import query_trade_orders, get_position_ids
 
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -564,10 +566,10 @@ def output_trade_order():
 def submit_order(order_id, data_source=None):
     """ 将交易订单提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
 
-    只有刚刚创建的交易信号（status == 'created'）才能提交，否则不需要再次提交
-    在提交交易信号以前，对于买入信号，会检查账户的现金是否足够，如果不足，则会按比例调整交易信号的委托数量
-    对于卖出信号，会检查账户的持仓是否足够，如果不足，则会按比例调整交易信号的委托数量
-    交易信号提交后，会将交易信号的状态设置为submitted，同时将交易信号保存到数据库中
+    只有刚刚创建的交易订单（status == 'created'）才能提交，否则不需要再次提交
+    在提交交易订单以前，对于买入订单，会检查账户的现金是否足够，如果不足，则会按比例调整交易订单的委托数量
+    对于卖出订单，会检查账户的持仓是否足够，如果不足，则会按比例调整交易订单的委托数量
+    交易订单提交后，会将交易订单的状态设置为submitted，同时将交易订单保存到数据库中
     - 只有使用submit_signal才能将信号保存到数据库中，同时调整相应的账户和持仓信息
 
     Parameters
@@ -618,7 +620,7 @@ def submit_order(order_id, data_source=None):
     return order_id
 
 
-def cancel_order(order_id, data_source=None):
+def cancel_order(order_id, data_source=None, config=None):
     """ 取消交易订单
 
     对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为'cancelled'
@@ -631,6 +633,8 @@ def cancel_order(order_id, data_source=None):
         交易信号的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
+    config: dict, optional
+        配置参数，主要包含股票和现金交割周期信息，如果为None，则使用默认的配置参数
 
     Returns
     -------
@@ -642,8 +646,12 @@ def cancel_order(order_id, data_source=None):
         raise RuntimeError(f'order status wrong: {order_status} cannot be canceled')
 
     order_results = read_trade_results_by_order_id(order_id=order_id, data_source=data_source)
-    total_filled_qty = order_results['filled_qty'].sum()
-    already_canceled_qty = order_results['canceled_qty'].sum()
+    if order_results:
+        total_filled_qty = order_results['filled_qty'].sum()
+        already_canceled_qty = order_results['canceled_qty'].sum()
+    else:
+        total_filled_qty = 0
+        already_canceled_qty = 0
     if already_canceled_qty > 0:
         raise RuntimeError(f'order status wrong: canceled qty should be 0 unless order is canceled!')
     remaining_qty = order_details['qty'] - total_filled_qty
@@ -651,7 +659,7 @@ def cancel_order(order_id, data_source=None):
         raise RuntimeError(f'order status wrong: remaining qty should be larger than '
                            f'when order is partially filled')
     result_of_cancel = {
-        'order_id':        order['order_id'],
+        'order_id':        order_id,
         'filled_qty':      total_filled_qty,
         'price':           order_details['price'],
         'transaction_fee': 0.,
@@ -661,8 +669,8 @@ def cancel_order(order_id, data_source=None):
     }
     process_trade_result(
             raw_trade_result=result_of_cancel,
-            data_source=self._datasource,
-            config=self._config
+            data_source=data_source,
+            config=config
     )
 
 
@@ -773,8 +781,10 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     order_detail = read_trade_order_detail(order_id, data_source=data_source)
 
     # 确认交易信号的状态不为 'created'. 'filled' or 'canceled'，如果是，则抛出异常
-    if order_detail['status'] in ['created', 'filled', 'canceled']:
-        raise RuntimeError(f'signal {order_id} has already been filled or canceled')
+    if order_detail['status'] in ['created']:
+        raise RuntimeError(f'order {order_id} is noy submitted yet')
+    if order_detail['status'] in ['filled', 'canceled']:
+        raise RuntimeError(f'order {order_id} has already been filled or canceled')
     # 交割历史交易结果
     if config is None:
         import qteasy as qt
@@ -878,7 +888,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     return result_id
 
 
-def get_last_trade_result_summary(account_id, shares, data_source):
+def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     """ 获取指定账户的最近的交易结果汇总，获取的结果为ndarray，按照shares的顺序排列
 
     结果包含最近一次成交量（正数表示买入，负数表示卖出）以及最近一次成交价格，如果最近没有成交，
@@ -903,12 +913,22 @@ def get_last_trade_result_summary(account_id, shares, data_source):
     trade_prices: ndarray of float,
         最近一次成交价格
     """
+    if shares is None:
+        shares = get_position_ids(account_id, data_source=data_source)
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
+    if not isinstance(shares, list):
+        raise ValueError(f'shares must be list or str, got {type(shares)} instead')
+
     # read all filled and partially filled orders
     all_orders = query_trade_orders(
             account_id=account_id,
             data_source=data_source,
     )
-    
+    all_orders = all_orders[all_orders['status'].isin(['filled', 'partial-filled'])]
+    # TODO: currently working on this function, need to finish it
+    import pdb; pdb.set_trace()
+    raise NotImplementedError
 
 
 def _trade_time_index(start=None,
@@ -1016,13 +1036,13 @@ def _trade_time_index(start=None,
                 end_time=end_am,
                 include_start=include_start_am,
                 include_end=include_end_am,
-        ).values
+        )
         idx_pm = time_index.indexer_between_time(
                 start_time=start_pm,
                 end_time=end_pm,
                 include_start=include_start_pm,
                 include_end=include_end_pm,
-        ).values
+        )
         idxer = np.union1d(idx_am, idx_pm)
         return time_index[idxer]
     else:

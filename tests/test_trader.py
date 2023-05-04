@@ -18,7 +18,8 @@ import pandas as pd
 import numpy as np
 
 from qteasy import QT_CONFIG, DataSource, Operator, BaseStrategy
-from qteasy.trade_recording import new_account, get_or_create_position, update_position
+from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
+from qteasy.trading_util import submit_order, process_trade_result, cancel_order
 from qteasy.trader import Trader, TraderShell
 from qteasy.broker import QuickBroker, Broker
 
@@ -27,6 +28,7 @@ class TestTrader(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures, if any."""
+        print('Setting up test Trader...')
         operator = Operator(strategies=['macd', 'dma'], op_type='step')
         broker = QuickBroker()
         config = {
@@ -54,7 +56,7 @@ class TestTrader(unittest.TestCase):
                 db_name=QT_CONFIG['test_db_name']
         )
         # 清空测试数据源中的所有相关表格数据
-        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
             if test_ds.table_data_exists(table):
                 test_ds.drop_table_data(table)
         # 创建一个ID=1的账户
@@ -62,57 +64,200 @@ class TestTrader(unittest.TestCase):
         # 添加初始持仓
         get_or_create_position(account_id=1, symbol='000001.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)
-        get_or_create_position(account_id=1, symbol='000004.SZ', position_type='short', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000004.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000005.SZ', position_type='long', data_source=test_ds)
-        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=100)
-        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=100)
-        update_position(position_id=3, data_source=test_ds, qty_change=200, available_qty_change=100)
+        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
+        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
+        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
-        self.ts = Trader(1, operator, broker, config, test_ds, debug=False)
+
+        self.stoppage = 0.5
+        # 添加测试交易订单以及交易结果
+        print('Adding test trade orders and results...')
+        parsed_signals_batch = (
+            ['000001.SZ', '000002.SZ', '000004.SZ', '000006.SZ', '000007.SZ', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'sell', 'sell', 'buy', 'buy'],
+            [100, 100, 300, 400, 500],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        # save first batch of signals
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=parsed_signals_batch[0],
+                positions=parsed_signals_batch[1],
+                directions=parsed_signals_batch[2],
+                quantities=parsed_signals_batch[3],
+                prices=parsed_signals_batch[4],
+                data_source=test_ds,
+        )
+        # submit orders
+        for order_id in order_ids:
+            submit_order(order_id, test_ds)
+        time.sleep(self.stoppage)
+        parsed_signals_batch = (
+            ['000001.SZ', '000004.SZ', '000005.SZ', '000007.SZ', ],
+            ['long', 'long', 'long', 'long'],
+            ['sell', 'buy', 'buy', 'sell'],
+            [200, 200, 100, 300],
+            [70.0, 30.0, 56.0, 79.0],
+        )
+        # save first batch of signals
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=parsed_signals_batch[0],
+                positions=parsed_signals_batch[1],
+                directions=parsed_signals_batch[2],
+                quantities=parsed_signals_batch[3],
+                prices=parsed_signals_batch[4],
+                data_source=test_ds,
+        )
+        # submit orders
+        for order_id in order_ids:
+            submit_order(order_id, test_ds)
+
+        # 添加交易订单执行结果
+        delivery_config = {
+            'cash_delivery_period':  0,
+            'stock_delivery_period': 0,
+        }
+        raw_trade_result = {
+            'order_id':        1,
+            'filled_qty':      100,
+            'price':           60.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        2,
+            'filled_qty':      100,
+            'price':           70.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        3,
+            'filled_qty':      200,
+            'price':           80.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        4,
+            'filled_qty':      400,
+            'price':           89.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        5,
+            'filled_qty':      500,
+            'price':           100.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        3,
+            'filled_qty':      100,
+            'price':           78.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        6,
+            'filled_qty':      200,
+            'price':           69.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        7,
+            'filled_qty':      200,
+            'price':           31.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        9,
+            'filled_qty':      300,
+            'price':           91.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        # order 8 is canceled
+        cancel_order(8, test_ds, delivery_config)
+
+        print('creating Trader object...')
+        # 生成Trader对象
+        self.ts = Trader(
+                account_id=1,
+                operator=operator,
+                broker=broker,
+                config=config,
+                datasource=test_ds,
+                debug=False
+        )
 
     def test_trader(self):
         """Test class Trader"""
         ts = self.ts
         self.assertIsInstance(ts, Trader)
         Thread(target=ts.run).start()
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'running')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('sleep')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('pause')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'paused')
         ts.add_task('wakeup')  # should be ignored
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'paused')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('resume')  # resume to previous status: sleeping
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'running')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('pause')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'paused')
         ts.add_task('sleep')  # should be ignored
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'paused')
         ts.add_task('resume')  # resume to previous status: running
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'running')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('stop')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'stopped')
         print(f'\ncurrent status: {ts.status}')
 
@@ -191,70 +336,70 @@ class TestTrader(unittest.TestCase):
         """Test full-fledged run with all tasks manually added"""
         ts = self.ts
         Thread(target=ts.run).start()  # start the trader
-        time.sleep(1)
+        time.sleep(self.stoppage)
         # 依次执行start, pre_open, open_market, run_stg - macd, run_stg - dma, close_market, post_close, stop
         ts.add_task('start')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         ts.add_task('pre_open')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         ts.add_task('open_market')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('run_strategy', {'strategy_ids': ['macd']})
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('run_strategy', {'strategy_ids': ['dma']})
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('sleep')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'paused')
         ts.add_task('wakeup')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('run_strategy', {'strategy_ids': ['macd', 'dma']})
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('close_market')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'paused')
         ts.add_task('post_close')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'stopped')
         ts.add_task('stop')
-        time.sleep(1)
+        time.sleep(self.stoppage)
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'stopped')
@@ -264,11 +409,11 @@ class TestTrader(unittest.TestCase):
         """Test strategy run"""
         ts = self.ts
         ts._run_strategy(strategy_ids=['macd', 'dma'])
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts._stop()
-        time.sleep(1)
+        time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')
 

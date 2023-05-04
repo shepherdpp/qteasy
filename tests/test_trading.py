@@ -416,7 +416,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(positions.loc['available_qty'], np.array([500, -700, 1000, -600])))
 
     # test foundational functions related to signal generation and submission
-    def test_record_read_and_update_signal(self):
+    def test_record_read_and_update_orders(self):
         """ test record_and_read_signal function """
         # clear tables in test datasource if they existed
         if self.test_ds.table_data_exists('sys_op_trade_orders'):
@@ -637,7 +637,7 @@ class TestTradeRecording(unittest.TestCase):
         with self.assertRaises(TypeError):
             update_trade_order('test', data_source=self.test_ds, status='submitted')
 
-    def test_query_trade_signals(self):
+    def test_query_trade_orders(self):
         """ test query_trade_orders function """
         # clear tables in test datasource if they existed
         if self.test_ds.table_data_exists('sys_op_trade_orders'):
@@ -835,7 +835,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(signals.empty)
 
     # test 2nd foundational functions: save_parsed_signals / submit_order / output_trade_order
-    def test_save_parsed_signals(self):
+    def test_save_parsed_orders(self):
         """ test save_parsed_signals function """
         # remove all data in test datasource
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
@@ -987,7 +987,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(signal_detail['status'], 'created')
         # check position detail
 
-    def test_submit_signal(self):
+    def test_submit_orders(self):
         """ test submit_order function """
         # remove all data in test datasource
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
@@ -1232,7 +1232,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-    def test_output_signal(self):
+    def test_output_orders(self):
         """ test output_trade_order function """
         pass
 
@@ -1548,7 +1548,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[15], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[16], ('15:35:00', 'post_close'))
 
-    def test_process_trade_signals(self):
+    def test_process_trade_orders(self):
         """ test full process of trade signal order generation, submission, result processing and delivery"""
         # 检查datasource中的数据表，删除所有的account, positions, trade_signal, trade_result数据
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
@@ -1919,6 +1919,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 19076.1)
         self.assertEqual(trade_result['delivery_status'], 'DL')
+
+    def test_cancel_orders(self):
+        """ test cancel_orders function """
+        pass
 
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):

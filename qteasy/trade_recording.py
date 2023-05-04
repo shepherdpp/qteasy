@@ -818,7 +818,6 @@ def read_trade_order_detail(order_id, data_source=None):
 
 def save_parsed_trade_orders(account_id, symbols, positions, directions, quantities, prices, data_source=None):
     """ 根据parse_trade_signal的结果，将交易订单要素组装成完整的交易订单dict，并将交易信号保存到数据库
-    # TODO: 这个function好像没有什么用
 
     Parameters
     ----------

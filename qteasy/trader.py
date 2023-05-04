@@ -643,8 +643,7 @@ class Trader(object):
         self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref,
                                   live_mode=True, live_running_stgs=strategy_ids)
-        import pdb
-        pdb.set_trace()
+
         # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
         trade_data = np.zeros(shape=(len(shares), 5))
         position_availabilities = get_account_position_availabilities(
