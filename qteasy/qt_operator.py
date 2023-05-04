@@ -531,7 +531,7 @@ class Operator:
         """ 计算operator对象中所有子策略的不同回测价格类型的数量 to be deprecated
         :return: int
         """
-        warnings.warn("This property will be deprecated in future versions. Use strategy_timing_count instead",)
+        warnings.warn("bt_price_type_count will be deprecated in future versions. Use strategy_timing_count instead",)
         return len(self.strategy_timings)
 
     @property

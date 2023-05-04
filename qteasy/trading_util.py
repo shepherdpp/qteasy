@@ -22,7 +22,7 @@ from qteasy.trade_recording import read_trade_order, get_position_by_id, get_acc
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
 from qteasy.trade_recording import read_trade_results_by_order_id, get_account_cash_availabilities
 from qteasy.trade_recording import update_account_balance, update_position, update_trade_result, record_trade_order
-from qteasy.trade_recording import query_trade_orders, get_position_ids
+from qteasy.trade_recording import query_trade_orders, get_position_ids, get_account_positions
 
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -913,12 +913,6 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     trade_prices: ndarray of float,
         最近一次成交价格
     """
-    if shares is None:
-        shares = get_position_ids(account_id, data_source=data_source)
-    if isinstance(shares, str):
-        shares = str_to_list(shares)
-    if not isinstance(shares, list):
-        raise ValueError(f'shares must be list or str, got {type(shares)} instead')
 
     # read all filled and partially filled orders
     all_orders = query_trade_orders(
@@ -926,9 +920,45 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
             data_source=data_source,
     )
     all_orders = all_orders[all_orders['status'].isin(['filled', 'partial-filled'])]
+
+    all_positions = get_account_positions(account_id=account_id, data_source=data_source)
+    all_position_symbols = all_positions['symbol'].to_dict()
     # TODO: currently working on this function, need to finish it
-    import pdb; pdb.set_trace()
-    raise NotImplementedError
+    all_results = read_trade_results_by_delivery_status('DL', data_source=data_source)
+
+    all_order_results = all_orders.join(all_results, on='order_id', how='left', lsuffix='-order', rsuffix='-exec')
+    all_order_results = all_order_results.sort_values(by='execution_time')
+    # 所有卖出的交易结果的filled_qty为负数，所有买入的交易结果的filled_qty为正数
+    all_order_results['filled_qty'] = np.where(
+            all_order_results['direction'] == 'sell',
+            -all_order_results['filled_qty'],
+            all_order_results['filled_qty']
+    )
+
+    last_trades_by_pos = all_order_results.groupby('pos_id').last()
+
+    last_filled_qty = last_trades_by_pos['filled_qty'].to_dict()
+    last_filled_price = last_trades_by_pos['price-exec'].to_dict()
+
+    last_filled_qty = {all_position_symbols[k]: v for k, v in last_filled_qty.items()}
+    last_filled_price = {all_position_symbols[k]: v for k, v in last_filled_price.items()}
+    if shares is None:
+        shares = list(last_filled_qty.keys())
+    else:
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
+        if not isinstance(shares, list):
+            raise ValueError(f'shares must be list or str, got {type(shares)} instead')
+        shares_filled_qty = {k: 0 for k in shares}
+        shares_filled_price = {k: 0 for k in shares}
+        shares_filled_price.update(last_filled_price)
+        shares_filled_qty.update(last_filled_qty)
+        last_filled_qty = shares_filled_qty
+        last_filled_price = shares_filled_price
+
+    amounts_changed = np.array(list(last_filled_qty.values()), dtype='float')
+    trade_prices = np.array(list(last_filled_price.values()), dtype='float')
+    return shares, amounts_changed, trade_prices
 
 
 def _trade_time_index(start=None,

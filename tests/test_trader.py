@@ -71,7 +71,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        self.stoppage = 0.5
+        self.stoppage = 1
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (

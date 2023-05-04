@@ -680,7 +680,7 @@ class Trader(object):
                 signals=op_signal,
                 signal_type=signal_type,
                 shares=shares,
-                prices=prices,
+                prices=current_prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
                 config=config
