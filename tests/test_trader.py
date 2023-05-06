@@ -74,7 +74,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        self.stoppage = 1
+        self.stoppage = 0.1
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (
@@ -215,7 +215,7 @@ class TestTrader(unittest.TestCase):
                 broker=broker,
                 config=config,
                 datasource=test_ds,
-                debug=False
+                debug=True,
         )
 
     def test_trader(self):
@@ -411,10 +411,14 @@ class TestTrader(unittest.TestCase):
     def test_strategy_run(self):
         """Test strategy run"""
         ts = self.ts
+        ts.run_task('start')
+        time.sleep(self.stoppage)
+        self.assertEqual(ts.status, 'sleeping')
+        self.assertEqual(ts.broker.status, 'init')
         ts._run_strategy(strategy_ids=['macd', 'dma'])
         time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
+        self.assertEqual(ts.status, 'sleeping')
+        self.assertEqual(ts.broker.status, 'init')
         ts._stop()
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'stopped')

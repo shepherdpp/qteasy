@@ -686,6 +686,12 @@ class Trader(object):
                 config=config
         )
         submitted_qty = 0
+        # debug
+        print(f'symbols: {symbols}\n'
+              f'positions: {positions}\n'
+              f'directions: {directions}\n'
+              f'quantities: {quantities}\n'
+              f'current_prices: {current_prices}\n')
         for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, current_prices):
             pos_id = get_position_ids(account_id=self.account_id,
                                       symbol=sym,
@@ -694,7 +700,7 @@ class Trader(object):
 
             # 生成交易订单dict
             trade_order = {
-                'pos_id':         pos_id,
+                'pos_id':         pos_id[0],
                 'direction':      d,
                 'order_type':     'market',  # TODO: order type is to be properly defined
                 'qty':            qty,
@@ -702,6 +708,7 @@ class Trader(object):
                 'submitted_time': None,
                 'status':         'created',
             }
+
             order_id = record_trade_order(trade_order, data_source=self._datasource)
             # 逐一提交交易信号
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
