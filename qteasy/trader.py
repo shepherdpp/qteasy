@@ -686,19 +686,19 @@ class Trader(object):
                 config=config
         )
         submitted_qty = 0
-        for sym, pos, d, qty in zip(symbols, positions, directions, quantities):
-            pos_id = get_position_ids(account_id=account_id,
+        for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, current_prices):
+            pos_id = get_position_ids(account_id=self.account_id,
                                       symbol=sym,
                                       position_type=pos,
-                                      data_source=data_source)
+                                      data_source=self._datasource)
 
             # 生成交易订单dict
             trade_order = {
                 'pos_id':         pos_id,
                 'direction':      d,
-                'order_type':     order_type,
+                'order_type':     'market',  # TODO: order type is to be properly defined
                 'qty':            qty,
-                'price':          get_price(),
+                'price':          price,
                 'submitted_time': None,
                 'status':         'created',
             }

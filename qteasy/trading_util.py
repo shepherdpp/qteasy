@@ -210,8 +210,8 @@ def parse_trade_signal(signals,
     if config is None:
         from qteasy import QT_CONFIG
         config = {
-            'pt_buy_threshold': QT_CONFIG['pt_buy_threshold'],
-            'pt_sell_threshold': QT_CONFIG['pt_sell_threshold'],
+            'PT_buy_threshold': QT_CONFIG['PT_buy_threshold'],
+            'PT_sell_threshold': QT_CONFIG['PT_sell_threshold'],
             'allow_sell_short': QT_CONFIG['allow_sell_short'],
         }
 
@@ -222,8 +222,8 @@ def parse_trade_signal(signals,
             prices=prices,
             own_amounts=own_amounts,
             own_cash=own_cash,
-            pt_buy_threshold=config['pt_buy_threshold'],
-            pt_sell_threshold=config['pt_sell_threshold'],
+            pt_buy_threshold=config['PT_buy_threshold'],
+            pt_sell_threshold=config['PT_sell_threshold'],
             allow_sell_short=config['allow_sell_short']
         )
     # 解析PT交易信号：

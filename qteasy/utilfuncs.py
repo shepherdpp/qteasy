@@ -655,10 +655,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
             raise ValueError(f'The date {_date} is out of trade calendar range, please refill data')
         return is_open == 1
     else:
-        # TODO: Not yet implemented
-        #  提供一种足够简单但不太精确的方式大致估算交易日期；
-        #  或者直接使用maybe_trade_day()函数
-        raise NotImplementedError
+        warnings.warn('Trade Calendar is not available, will use maybe_trade_day instead to check trade day')
+        return maybe_trade_day(_date)
 
 
 @lru_cache(maxsize=4)

@@ -42,6 +42,9 @@ class TestTrader(unittest.TestCase):
             'stock_delivery_period': 0,
             'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
             'asset_type':           'E',
+            'PT_buy_threshold':     0.05,
+            'PT_sell_threshold':    0.05,
+            'allow_sell_short':     False,
         }
         # 创建测试数据源
         data_test_dir = 'data_test/'
