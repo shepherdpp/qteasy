@@ -24,9 +24,10 @@ import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS
-from qteasy.broker import Broker
+from qteasy.broker import Broker, QuickBroker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
+from qteasy.trade_recording import new_account, get_or_create_position, update_position
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
 from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
 from qteasy.trading_util import get_last_trade_result_summary
@@ -487,7 +488,9 @@ class Trader(object):
         try:
             while self.status != 'stopped':
                 self._check_trade_day()
-                sleep_interval = market_close_day_loop_interval if not self.is_trade_day else market_open_day_loop_interval
+                sleep_interval = market_close_day_loop_interval if not \
+                    self.is_trade_day else \
+                    market_open_day_loop_interval
                 # 检查任务队列，如果有任务，执行任务，否则添加任务到任务队列
                 if not self.task_queue.empty():
                     # 如果任务队列不为空，执行任务
@@ -637,7 +640,6 @@ class Trader(object):
                 max_strategy_freq = freq
         data_start_time = data_end_time + pd.Timedelta(1, max_strategy_freq)
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
-        import pdb; pdb.set_trace()
         # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
         #  1，需要完善数据读取的时间区间，根据策略的运行频率，以及本地已经读取的数据内容来决定数据区间（避免重复读取浪费时间或读取不足）
         #  2，需要解决parallel读取的问题，在目前的测试中，parallel读取会导致数据读取失败
@@ -806,7 +808,7 @@ class Trader(object):
         """
         self.is_market_open = True
         self.post_message('market is open')
-        Thread(target=self.broker.run).start()
+        Thread(target=self.broker.run).start()  # TODO：此处有误，broker应该随Trader启动一次，而不是每次开市都启动
         self.run_task('wakeup')
 
     def _market_close(self):
@@ -918,4 +920,92 @@ class Trader(object):
         'sleeping':    ['wakeup', 'stop', 'pause', 'pre_open', 'open_market', 'post_close'],
         'paused':      ['resume', 'stop'],
     }
+
+
+def start_trader(
+        operator,
+        account_id=None,
+        user_name=None,
+        init_cash=None,
+        init_holdings=None,
+        datasource=None,
+        config=None,
+):
+    """ 启动交易。根据配置信息生成Trader对象，并启动TraderShell
+
+    Parameters
+    ----------
+    operator: Operator
+        交易员 object
+    account_id: str, optional
+        交易账户ID
+    user_name: str, optional
+        交易账户用户名，如果未给出账户ID，则需要新建一个账户，此时必须给出用户名
+    init_cash: float, optional
+        初始资金，只有创建新账户时有效
+    init_holdings: dict of {str: int}, optional
+        初始持仓股票代码和数量的字典{'symbol': amount}，只有创建新账户时有效
+    datasource: DataSource, optional
+        数据源 object
+    config: dict, optional
+        配置信息字典
+
+    Returns
+    -------
+    trader: Trader
+    """
+    if not isinstance(operator, Operator):
+        raise ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
+
+    # if account_id is None then create a new account
+    if account_id is None:
+        if user_name is None:
+            raise ValueError('if account_id is None, user_name must be given.')
+        account_id = new_account(
+                user_name=user_name,
+                cash_amount=init_cash,
+                data_source=datasource,
+        )
+        # if init_holdings is not None then add holdings to account
+        if init_holdings is not None:
+            if not isinstance(init_holdings, dict):
+                raise ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+            for symbol, amount in init_holdings.items():
+                pos_id = get_or_create_position(
+                        account_id=account_id,
+                        symbol=symbol,
+                        position_type='long' if amount > 0 else 'short',
+                        data_source=datasource,
+                )
+                update_position(
+                        position_id=pos_id,
+                        data_source=datasource,
+                        **{
+                            'qty_change': abs(amount),
+                            'available_qty_change': abs(amount),
+                        }
+                )
+    try:
+        _ = get_account(account_id, datasource)
+    except Exception as e:
+        raise ValueError(f'{e}\naccount {account_id} does not exist.')
+
+    # if account is ready then create trader and broker
+    broker = QuickBroker(
+            fee_rate_buy=0.0001,
+            fee_rate_sell=0.0003,
+    )
+    trader = Trader(
+            account_id=account_id,
+            operator=operator,
+            broker=broker,
+            config=config,
+            datasource=datasource,
+    )
+    # refill data source
+    datasource.refill_local_source(
+
+    )
+
+    TraderShell(trader).run()
 
