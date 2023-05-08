@@ -3888,7 +3888,9 @@ class DataSource:
                             parallel=True,
                             process_count=None,
                             chunk_size=100,
-                            log=False):
+                            refresh_trade_calendar=True,
+                            log=False,
+                            ):
         """ 批量补充本地数据，手动或自动运行补充本地数据库
 
         Parameters
@@ -3948,6 +3950,8 @@ class DataSource:
         chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
+        refresh_trade_calendar: Bool, Default True
+            是否刷新交易日历，默认True
         log: Bool, Default False
             是否记录数据下载日志
 
@@ -4032,13 +4036,13 @@ class DataSource:
             for table in tables_to_refill:
                 cur_table = table_master.loc[table]
                 fill_type = cur_table.fill_arg_type
-                if fill_type == 'trade_date':
+                if fill_type == 'trade_date' and refresh_trade_calendar:
                     dependent_tables.add('trade_calendar')
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
-            if 'trade_calendar' not in tables_to_refill:
+            if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
         import time
         for table in table_master.index:
@@ -4162,6 +4166,8 @@ class DataSource:
                         total_written += self.update_table_data(table, dnld_data)
                 else:
                     for kwargs in all_kwargs:
+                        #debug
+                        print(f'function acquire_data for table {table} with kwargs: {kwargs}')
                         df = self.acquire_table_data(table, 'tushare', **kwargs)
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])

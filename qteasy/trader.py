@@ -23,7 +23,7 @@ from cmd import Cmd
 import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list
+from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS
 from qteasy.broker import Broker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
@@ -626,6 +626,18 @@ class Trader(object):
         config = self._config
 
         # 下载最小所需实时历史数据
+        # 在run_strategy过程中，可以假定需要下载的数据为最小所需数据，即只需要下载最近一个周期内的交易数据
+        # 数据下载区间结束时间是现在，数据下载周期为所有策略中最大运行周期（最低频率），开始时间是结束时间减去周期
+        data_end_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+        max_strategy_freq = 'T'
+        for strategy_id in strategy_ids:
+            strategy = operator[strategy_id]
+            freq = strategy.strategy_run_freq.upper()
+            if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
+                max_strategy_freq = freq
+        data_start_time = data_end_time + pd.Timedelta(1, max_strategy_freq)
+        # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
+        import pdb; pdb.set_trace()
         # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
         #  1，需要完善数据读取的时间区间，根据策略的运行频率，以及本地已经读取的数据内容来决定数据区间（避免重复读取浪费时间或读取不足）
         #  2，需要解决parallel读取的问题，在目前的测试中，parallel读取会导致数据读取失败
@@ -633,10 +645,11 @@ class Trader(object):
                 dtypes=operator.op_data_types,
                 freqs=operator.op_data_freq,
                 asset_types='E',
-                start_date='20230421',
-                end_date='20230428',
+                start_date=data_start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                end_date=data_end_time.strftime('%Y-%m-%d %H:%M:%S'),
                 code_range=self.asset_pool,
                 parallel=False,
+                refresh_trade_calendar=False,
         )
         # 读取实时数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)

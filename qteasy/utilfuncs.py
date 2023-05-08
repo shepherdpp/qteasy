@@ -31,7 +31,7 @@ TIME_FREQ_LEVELS = {
     'MIN':    100,
     'T':      110,
     'TICK':   110,
-}
+}  # TODO: 最好是将所有的frequency封装为一个类，确保字符串大小写正确，且引入复合频率的比较和处理
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
 AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
 PROGRESS_BAR = {0:  '----------------------------------------', 1: '#---------------------------------------',
