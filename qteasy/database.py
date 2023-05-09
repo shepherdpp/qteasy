@@ -3875,22 +3875,9 @@ class DataSource:
             df_by_index['wt-' + idx] = weight_df
         return df_by_index
 
-    def refill_local_source(self,
-                            tables=None,
-                            dtypes=None,
-                            freqs=None,
-                            asset_types=None,
-                            start_date=None,
-                            end_date=None,
-                            code_range=None,
-                            merge_type='update',
-                            reversed_par_seq=False,
-                            parallel=True,
-                            process_count=None,
-                            chunk_size=100,
-                            refresh_trade_calendar=True,
-                            log=False,
-                            ):
+    def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
+                            end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
+                            process_count=None, chunk_size=100, refresh_trade_calendar=True, log=False):
         """ 批量补充本地数据，手动或自动运行补充本地数据库
 
         Parameters
@@ -3922,7 +3909,7 @@ class DataSource:
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
         end_date: str YYYYMMDD
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        code_range: str or list of str
+        symbols: str or list of str
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'
@@ -3984,15 +3971,15 @@ class DataSource:
 
         code_start = None
         code_end = None
-        if code_range is not None:
-            if not isinstance(code_range, (str, list)):
-                raise TypeError(f'code_range should be a string or list, got {type(code_range)} instead.')
-            if isinstance(code_range, str):
-                if len(str_to_list(code_range, ':')) == 2:
-                    code_start, code_end = str_to_list(code_range, ':')
-                    code_range = None
+        if symbols is not None:
+            if not isinstance(symbols, (str, list)):
+                raise TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
+            if isinstance(symbols, str):
+                if len(str_to_list(symbols, ':')) == 2:
+                    code_start, code_end = str_to_list(symbols, ':')
+                    symbols = None
                 else:
-                    code_range = str_to_list(code_range, ',')
+                    symbols = str_to_list(symbols, ',')
 
         # 2 生成需要处理的数据表清单 tables
         table_master = get_table_master()
@@ -4113,8 +4100,8 @@ class DataSource:
                 arg_coverage = source_table.index.to_list()
                 if code_start is not None:
                     arg_coverage = [code for code in arg_coverage if (code_start <= code.split('.')[0] <= code_end)]
-                if code_range is not None:
-                    arg_coverage = [code for code in arg_coverage if code.split('.')[0] in code_range]
+                if symbols is not None:
+                    arg_coverage = [code for code in arg_coverage if code.split('.')[0] in symbols]
                 if suffix:
                     arg_coverage = [code for code in arg_coverage if code.split('.')[1] in suffix]
             else:

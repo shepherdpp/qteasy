@@ -33,7 +33,8 @@ from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda
 from qteasy.trading_util import get_last_trade_result_summary
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
-TIME_ZONE = 'Asia/Shanghai'
+# TIME_ZONE = 'Asia/Shanghai'
+TIME_ZONE = 'UTC'
 
 
 class TraderShell(Cmd):
@@ -50,7 +51,24 @@ class TraderShell(Cmd):
         self._trader = trader
         self._status = None
 
+    @property
+    def trader(self):
+        return self._trader
+
+    @property
+    def status(self):
+        return self._status
+
     # ----- basic commands -----
+    def do_status(self, arg):
+        """ Show trader status
+
+        Usage:
+        ------
+        status
+        """
+        sys.stdout.write(f'current trader status: {self.trader.status} \n')
+
     def do_pause(self, arg):
         """ Pause trader
 
@@ -62,7 +80,7 @@ class TraderShell(Cmd):
         pause
         """
         self._trader.run_task('pause')
-        sys.stdout.write('trader is paused\n')
+        sys.stdout.write(f'current trader status: {self.trader.status} \n')
 
     def do_resume(self, arg):
         """ Resume trader
@@ -75,7 +93,7 @@ class TraderShell(Cmd):
         resume
         """
         self._trader.run_task('resume')
-        sys.stdout.write('trader is resumed\n')
+        sys.stdout.write(f'current trader status: {self.trader.status} \n')
 
     def do_bye(self, arg):
         """ Stop trader and exit shell
@@ -101,7 +119,8 @@ class TraderShell(Cmd):
         ------
         info [detail]
         """
-        self._trader.info()
+        sys.stdout.write(f'current trader status: {self.trader.status} \n')
+        self.trader.info()
 
     def do_positions(self, arg):
         """ Get account positions
@@ -191,6 +210,24 @@ class TraderShell(Cmd):
         print('\nWelcome to trader dashboard! live status will be displayed here.')
         return True
 
+    def do_strategies(self, arg):
+        """ Show strategies
+
+        Usage:
+        ------
+        strategies
+        """
+        print(f'All running strategies -- {self.trader.operator.strategies}')
+
+    def do_agenda(self, arg):
+        """ Show plan
+
+        Usage:
+        ------
+        plan
+        """
+        print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
+
     # ----- complete commands -----
     def complete_pause(self, text, line, begidx, endidx):
         return []
@@ -232,14 +269,14 @@ class TraderShell(Cmd):
         self.do_dashboard('')
         Thread(target=self._trader.run).start()
 
-        while self._status != 'stopped':
+        while self.status != 'stopped':
             try:
-                if self._status == 'dashboard':
+                if self.status == 'dashboard':
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
                         sys.stdout.write(str(message)+"\n")
-                elif self._status == 'command':
+                elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will start cmdloop\n')
                     self.cmdloop()
@@ -356,7 +393,10 @@ class Trader(object):
         self._config = qteasy.QT_CONFIG.copy()
         self._config.update(config)
         self._datasource = datasource
-        self._asset_pool = str_to_list(self._config['asset_pool'])
+        asset_pool = self._config['asset_pool']
+        if isinstance(asset_pool, str):
+            asset_pool = str_to_list(asset_pool)
+        self._asset_pool = asset_pool
 
         self.task_queue = Queue()
         self.message_queue = Queue()
@@ -428,6 +468,10 @@ class Trader(object):
         from qteasy.trade_recording import query_trade_orders
         return query_trade_orders(self.account_id, data_source=self._datasource)
 
+    @property
+    def datasource(self):
+        return self._datasource
+
     def history_cashes(self, start_date=None, end_date=None):
         """ 账户的历史现金流水 """
         # TODO: implement this function
@@ -483,8 +527,10 @@ class Trader(object):
         self._initialize_agenda()
         self.status = 'sleeping'
         self.post_message(f'Trader is running with account_id: {self.account_id}')
-        market_open_day_loop_interval = self._config['market_open_day_loop_interval']
-        market_close_day_loop_interval = self._config['market_close_day_loop_interval']
+        # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
+        # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
+        market_open_day_loop_interval = 1
+        market_close_day_loop_interval = 10
         try:
             while self.status != 'stopped':
                 self._check_trade_day()
@@ -649,9 +695,9 @@ class Trader(object):
                 asset_types='E',
                 start_date=data_start_time.strftime('%Y-%m-%d %H:%M:%S'),
                 end_date=data_end_time.strftime('%Y-%m-%d %H:%M:%S'),
-                code_range=self.asset_pool,
+                symbols=self.asset_pool,
                 parallel=False,
-                refresh_trade_calendar=False,
+                refresh_trade_calendar=False
         )
         # 读取实时数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
@@ -851,7 +897,9 @@ class Trader(object):
         """ 检查当前日期是否是交易日 """
         current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()
         from qteasy.utilfuncs import is_market_trade_day
-        self.is_trade_day = is_market_trade_day(current_date, self._config['exchange'])
+        # exchange = self._config['exchange']  # TODO: should we add exchange to config?
+        exchange = 'SSE'
+        self.is_trade_day = is_market_trade_day(current_date, exchange)
 
     def _add_task_to_queue(self, task):
         """ 添加任务到任务队列
@@ -1003,9 +1051,7 @@ def start_trader(
             datasource=datasource,
     )
     # refill data source
-    datasource.refill_local_source(
-
-    )
+    # datasource.refill_local_source(dtypes=None, freqs=None, asset_types=None, start_date=None, end_date=None)
 
     TraderShell(trader).run()
 

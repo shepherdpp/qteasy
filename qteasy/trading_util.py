@@ -25,7 +25,8 @@ from qteasy.trade_recording import update_account_balance, update_position, upda
 from qteasy.trade_recording import query_trade_orders, get_position_ids, get_account_positions
 
 # TODO: add TIMEZONE to qt config arguments
-TIMEZONE = 'Asia/Shanghai'
+# TIMEZONE = 'Asia/Shanghai'
+TIMEZONE = 'UTC'
 
 
 def create_daily_task_agenda(operator, config=None):

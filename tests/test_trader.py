@@ -17,6 +17,7 @@ from threading import Thread
 import pandas as pd
 import numpy as np
 
+import qteasy
 from qteasy import QT_CONFIG, DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order
@@ -218,7 +219,7 @@ class TestTrader(unittest.TestCase):
                 debug=True,
         )
 
-    def test_trader(self):
+    def test_trader_status(self):
         """Test class Trader"""
         ts = self.ts
         self.assertIsInstance(ts, Trader)
@@ -424,12 +425,32 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')
 
-    def test_shell(self):
-        """Test trader shell"""
-        ts = self.ts
-        # TraderShell(ts).run()
-
-        # raise NotImplementedError
+    def test_trader(self):
+        """Test trader in a full-fledged run"""
+        # create an operator with two strategies that runing very 5min and 30min respectively
+        op = Operator(strategies=['macd', 'dma'], op_type='step')
+        op['macd'].set_hist_pars(
+                strategy_run_freq='5min',
+                strategy_run_timing='close',
+                window_length=60,
+        )
+        op['dma'].set_hist_pars(
+                strategy_run_freq='30min',
+                strategy_run_timing='close',
+                window_length=60,
+        )
+        qteasy.configure(
+                mode=0,
+                asset_pool=['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ'],
+        )
+        datasource = self.ts.datasource
+        # test trader with existing operator
+        qteasy.trader.start_trader(
+                operator=op,
+                account_id=1,
+                datasource=datasource,
+                config=QT_CONFIG,
+        )
 
 
 if __name__ == '__main__':
