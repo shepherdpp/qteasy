@@ -583,6 +583,14 @@ def _valid_qt_kwargs():
              'level':     3,
              'text':      '交易市场下午收市时间'},
 
+        'strategy_open_close_timing_offset':
+            {'Default':   1,
+             'Validator': lambda value: isinstance(value, int)
+                                         and value in range(5),
+             'level':     3,
+             'text':      '策略信号的开盘/收盘运行时间偏移量，单位为分钟，当策略信号运行时机为开盘/收盘，需要提前/推迟\n'
+                          '一个偏移量运行，避免无法交易。'},
+
         'opti_start':
             {'Default':   '20160405',
              'Validator': lambda value: isinstance(value, str)

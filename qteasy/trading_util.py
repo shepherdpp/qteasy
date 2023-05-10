@@ -25,8 +25,8 @@ from qteasy.trade_recording import update_account_balance, update_position, upda
 from qteasy.trade_recording import query_trade_orders, get_position_ids, get_account_positions
 
 # TODO: add TIMEZONE to qt config arguments
-# TIMEZONE = 'Asia/Shanghai'
-TIMEZONE = 'UTC'
+TIMEZONE = 'Asia/Shanghai'
+# TIMEZONE = 'UTC'
 
 
 def create_daily_task_agenda(operator, config=None):
@@ -61,7 +61,8 @@ def create_daily_task_agenda(operator, config=None):
     market_close_time_am = config['market_close_time_am']
     market_open_time_pm = config['market_open_time_pm']
     market_close_time_pm = config['market_close_time_pm']
-    exchange_market = config['exchange']
+    # exchange_market = config['exchange']
+    exchange_market = 'SSE'
 
     # 调整任务时间，开盘任务在开盘时执行，收盘任务在收盘时执行，sleep和wakeup任务在开盘前后5分钟执行
     # TODO: 开收盘任务执行提前期或sleep/wakeup任务执行延后期，应该是可配置的

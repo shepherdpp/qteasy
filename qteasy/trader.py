@@ -33,8 +33,8 @@ from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda
 from qteasy.trading_util import get_last_trade_result_summary
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
-# TIME_ZONE = 'Asia/Shanghai'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
+# TIME_ZONE = 'UTC'
 
 
 class TraderShell(Cmd):
@@ -79,7 +79,7 @@ class TraderShell(Cmd):
         ------
         pause
         """
-        self._trader.run_task('pause')
+        self.trader.add_task('pause')
         sys.stdout.write(f'current trader status: {self.trader.status} \n')
 
     def do_resume(self, arg):
@@ -92,7 +92,7 @@ class TraderShell(Cmd):
         ------
         resume
         """
-        self._trader.run_task('resume')
+        self.trader.add_task('resume')
         sys.stdout.write(f'current trader status: {self.trader.status} \n')
 
     def do_bye(self, arg):
@@ -105,7 +105,7 @@ class TraderShell(Cmd):
         ------
         bye
         """
-        self._trader.run_task('stop')
+        self.trader.add_task('stop')
         self._status = 'stopped'
         return True
 
@@ -220,7 +220,7 @@ class TraderShell(Cmd):
         print(f'All running strategies -- {self.trader.operator.strategies}')
 
     def do_agenda(self, arg):
-        """ Show plan
+        """ Show current strategy task agenda
 
         Usage:
         ------
@@ -371,6 +371,7 @@ class Trader(object):
         if not isinstance(datasource, DataSource):
             raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
+        # TODO: 确定所有的config都在QT_CONFIG中后，default_config就不再需要了
         default_config = ConfigDict(
                 {
                         'market_open_time_am':              '09:30:00',
@@ -390,7 +391,7 @@ class Trader(object):
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        self._config = qteasy.QT_CONFIG.copy()
+        self._config = default_config.update(qteasy.QT_CONFIG.copy())
         self._config.update(config)
         self._datasource = datasource
         asset_pool = self._config['asset_pool']
@@ -524,9 +525,14 @@ class Trader(object):
         2，如果当前是交易日，检查当前时间是否在task_daily_agenda中，如果在，则将任务添加到task_queue中
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
+        self._check_trade_day()
         self._initialize_agenda()
         self.status = 'sleeping'
-        self.post_message(f'Trader is running with account_id: {self.account_id}')
+        self.post_message(f'Trader is running with account_id: {self.account_id}\n'
+                          f'current date / time: '
+                          f'{pd.to_datetime("now", utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")}\n'
+                          f'current day is trade day: {self.is_trade_day}\n'
+                          f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
         market_open_day_loop_interval = 1
@@ -921,12 +927,15 @@ class Trader(object):
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
         """
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列
+        # TODO： 这种做法有问题，
+        self.post_message(f'checking task agenda, current time: {current_time}')
         for task_tuple in self.task_daily_agenda:
             task_time = task_tuple[0]
-            task_time = pd.to_datetime(task_time, utc=True).tz_convert(TIME_ZONE).time()
-            if task_time <= current_time:
+            task_time = pd.to_datetime(task_time, utc=True)
+            # 当task_time大于current_time一个很小的阈值时，添加task，但又不能重复添加
+            if task_time >= current_time:
                 if len(task_tuple) > 2:
-                    task = task_tuple[1, 2]
+                    task = task_tuple[1: 2]
                 else:
                     task = task_tuple[1]
                 self.post_message(f'current time {current_time} >= task time {task_time}, '
@@ -934,17 +943,48 @@ class Trader(object):
                 self._add_task_to_queue(task)
 
     def _initialize_agenda(self):
-        """ 初始化交易日的任务日程 """
+        """ 初始化交易日的任务日程
+
+        任务日程有两种类型：1：静态日程，在初始化Trader的时候即创建一次，不做修改；2：动态日程，除初始化时创建外，每交易日0:00时创建一次
+        静态日程是静态的，因此从agenda中提取task时的判断为当前时间与计划时间足够接近，才会触发任务，第二天循环从agenda中提取task。
+         在trader主循环中需要判断当天是否交易日，只有交易日才会触发任务；另外，第一天进入主循环时，需要判断当前时间是否已经在开盘后
+         如果在开盘后，则需主动运行pre_open任务，确保pre_open总会被执行。
+         TODO：静态日程的设计有问题，一旦时间判断有误差，可能会导致任务不被触发或者多次触发
+        动态日程是动态的，当agenda的时间晚于当前时间时，触发任务，同时将该任务从agenda中删除。第二天重新生成新的agenda。
+         在第一次生成agenda时，需要判断当前时间，并把已经过期的task删除，才能确保正常运行，同时添加pre_open任务确保pre_open总会被执行
+
+        现在采用静态agenda方式设计
+
+        """
         # 如果不是交易日，直接返回
         if not self.is_trade_day:
             return
-        if self.task_daily_agenda is not None:
-            # 如果任务日程已经初始化，直接返回
+        if self.task_daily_agenda:
+            # 如果任务日程非空列表，直接返回
             return
+        # TODO：生成任务日程后，需要根据当前时间，将已经过去的任务从agenda中清除，
+        #  但同时要考虑当前时间是在开盘期间还是在休市期间，如果在开盘期间需要处理开盘前任务，如果在收盘后需要处理收盘后任务
         self.task_daily_agenda = create_daily_task_agenda(
                 self.operator,
                 self._config
         )
+        # # 计算当前时间
+        # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+        # moa = self._config['market_open_time_am']
+        # mca = self._config['market_close_time_am']
+        # moc = self._config['market_open_time_pm']
+        # mcc = self._config['market_close_time_pm']
+        # if current_time < moa:  # before market morning open
+        #     pass
+        # elif moa < current_time < mca:  # morning market open time
+        #     pass
+        # elif mca < current_time < moc:  # during noon market break
+        #     pass
+        # elif moc < current_time < mcc:  # afternoon market open time
+        #     pass
+        # elif mcc < current_time:  # after market close
+        #     pass
+
 
     AVAILABLE_TASKS = {
         'pre_open':         _pre_open,
