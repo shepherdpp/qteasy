@@ -391,7 +391,8 @@ class Trader(object):
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        self._config = default_config.update(qteasy.QT_CONFIG.copy())
+        self._config = default_config
+        self._config.update(qteasy.QT_CONFIG.copy())
         self._config.update(config)
         self._datasource = datasource
         asset_pool = self._config['asset_pool']
@@ -403,6 +404,10 @@ class Trader(object):
         self.message_queue = Queue()
 
         self.task_daily_agenda = []
+        """任务日程是动态的，当agenda的时间晚于当前时间时，触发任务，同时将该任务从agenda中删除。第二天0:00重新生成新的agenda。
+         在第一次生成agenda时，需要判断当前时间，并把已经过期的task删除，才能确保正常运行，同时添加pre_open任务确保pre_open总会被执行
+
+        现在采用动态agenda方式设计的原因是，如果采用静态agenda，在交易mainloop中可能重复执行任务或者漏掉任务。"""
 
         self.is_trade_day = False
         self._status = 'stopped'
@@ -537,9 +542,11 @@ class Trader(object):
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
         market_open_day_loop_interval = 1
         market_close_day_loop_interval = 10
+        current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+        current_date = current_date_time.date()
         try:
             while self.status != 'stopped':
-                self._check_trade_day()
+                pre_date = current_date
                 sleep_interval = market_close_day_loop_interval if not \
                     self.is_trade_day else \
                     market_open_day_loop_interval
@@ -571,8 +578,14 @@ class Trader(object):
                     continue
 
                 # 从任务日程中添加任务到任务队列
-                current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+                current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+                current_time = current_date_time.time()
+                current_date = current_date_time.date()
                 self._add_task_from_agenda(current_time)
+                # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
+                if current_date != pre_date:
+                    self._check_trade_day()
+                    self._initialize_agenda()
 
                 # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
                 if not self.broker.result_queue.empty():
@@ -598,8 +611,6 @@ class Trader(object):
             raise TypeError('message should be a str')
         time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')
         message = f'[{time_string}]-{self.status}: {message}'
-        if self.debug:
-            print(message)
         self.message_queue.put(message)
 
     def add_task(self, task, kwargs=None):
@@ -673,6 +684,8 @@ class Trader(object):
         strategy_ids: list of str
             交易策略ID列表
         """
+        if self.debug:
+            print(f'debug mode: running task run strategy: {strategy_ids}')
         operator = self._operator
         signal_type = operator.signal_type
         shares = self.asset_pool
@@ -793,6 +806,8 @@ class Trader(object):
         2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
         4，生成交易结果信息推送到信息队列
         """
+        if self.debug:
+            self.post_message('debug mode, running task process_result')
         process_trade_result(result, data_source=self._datasource)
         self.post_message(f'processed trade result: {result}')
         process_trade_delivery(
@@ -803,7 +818,6 @@ class Trader(object):
 
     def _pre_open(self):
         """ 开市前, 生成交易日的任务计划，生成消息发送到消息队列"""
-        self._initialize_agenda()
         self.post_message('initialized daily task agenda')
 
     def _post_close(self):
@@ -813,12 +827,15 @@ class Trader(object):
         2，处理当日已成交的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
+        if self.debug:
+            self.post_message('debug mode, running task post_close')
+
         # 停止broker
         self.broker.status = 'stopped'
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
         order_queue = self.broker.order_queue
         if not order_queue.empty():
-            self.post_message('unprocessed orders found, processing them')
+            self.post_message('unprocessed orders found, these orders will be canceled')
             while not order_queue.empty():
                 order = order_queue.get()
                 order_id = order['order_id']
@@ -839,7 +856,7 @@ class Trader(object):
         orders_to_be_canceled = pd.concat([partially_filled_orders, unfilled_orders])
         for order in orders_to_be_canceled:
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
-            self.post_message('partially filled orders found, processing them')
+            self.post_message('partially filled orders found, unfilled part will be canceled')
             order_id = order['order_id']
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.post_message(f'canceled unfilled order: {order_id}')
@@ -858,6 +875,8 @@ class Trader(object):
         1，启动broker的主循环，将broker的status设置为running
         2，生成消息发送到消息队列
         """
+        if self.debug:
+            self.post_message('debug mode, running task: market open')
         self.is_market_open = True
         self.post_message('market is open')
         Thread(target=self.broker.run).start()  # TODO：此处有误，broker应该随Trader启动一次，而不是每次开市都启动
@@ -869,6 +888,8 @@ class Trader(object):
         1，停止broker的主循环，将broker的status设置为stopped
         2，生成消息发送到消息队列
         """
+        if self.debug:
+            self.post_message('debug mode, running task: market close')
         self.is_market_open = False
         self.post_message('market is closed')
         self.run_task('sleep')
@@ -915,7 +936,8 @@ class Trader(object):
         task: str
             任务名称
         """
-        self.post_message(f'putting task {task} into task queue')
+        if self.debug:
+            self.post_message(f'debug mode, putting task {task} into task queue')
         self.task_queue.put(task)
 
     def _add_task_from_agenda(self, current_time):
@@ -926,18 +948,20 @@ class Trader(object):
         current_time: datetime.time
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
         """
-        # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列
-        # TODO： 这种做法有问题，
-        self.post_message(f'checking task agenda, current time: {current_time}')
-        for task_tuple in self.task_daily_agenda:
-            task_time = task_tuple[0]
-            task_time = pd.to_datetime(task_time, utc=True)
-            # 当task_time大于current_time一个很小的阈值时，添加task，但又不能重复添加
-            if task_time >= current_time:
-                if len(task_tuple) > 2:
-                    task = task_tuple[1: 2]
+
+        # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
+        for idx, task in enumerate(self.task_daily_agenda):
+            task_time = pd.to_datetime(task[0], utc=True).time()
+            # 当task_time小于等于current_time时，添加task，同时删除该task
+            if task_time <= current_time:
+                task_tuple = self.task_daily_agenda.pop(idx)
+
+                if len(task_tuple) == 3:
+                    task = task_tuple[1:2]
+                elif len(task_tuple) == 2:
+                    task = task[1]
                 else:
-                    task = task_tuple[1]
+                    raise ValueError(f'Invalid task tuple: No task found in {task_tuple}')
                 self.post_message(f'current time {current_time} >= task time {task_time}, '
                                   f'adding task: {task} from agenda')
                 self._add_task_to_queue(task)
@@ -945,46 +969,43 @@ class Trader(object):
     def _initialize_agenda(self):
         """ 初始化交易日的任务日程
 
-        任务日程有两种类型：1：静态日程，在初始化Trader的时候即创建一次，不做修改；2：动态日程，除初始化时创建外，每交易日0:00时创建一次
-        静态日程是静态的，因此从agenda中提取task时的判断为当前时间与计划时间足够接近，才会触发任务，第二天循环从agenda中提取task。
-         在trader主循环中需要判断当天是否交易日，只有交易日才会触发任务；另外，第一天进入主循环时，需要判断当前时间是否已经在开盘后
-         如果在开盘后，则需主动运行pre_open任务，确保pre_open总会被执行。
-         TODO：静态日程的设计有问题，一旦时间判断有误差，可能会导致任务不被触发或者多次触发
-        动态日程是动态的，当agenda的时间晚于当前时间时，触发任务，同时将该任务从agenda中删除。第二天重新生成新的agenda。
-         在第一次生成agenda时，需要判断当前时间，并把已经过期的task删除，才能确保正常运行，同时添加pre_open任务确保pre_open总会被执行
-
-        现在采用静态agenda方式设计
-
         """
+        if self.debug:
+            self.post_message('debug mode, initializing agenda')
         # 如果不是交易日，直接返回
         if not self.is_trade_day:
+            if self.debug:
+                self.post_message('not a trade day, no need to initialize agenda')
             return
         if self.task_daily_agenda:
             # 如果任务日程非空列表，直接返回
+            if self.debug:
+                self.post_message('task agenda is not empty, no need to initialize agenda')
             return
-        # TODO：生成任务日程后，需要根据当前时间，将已经过去的任务从agenda中清除，
-        #  但同时要考虑当前时间是在开盘期间还是在休市期间，如果在开盘期间需要处理开盘前任务，如果在收盘后需要处理收盘后任务
         self.task_daily_agenda = create_daily_task_agenda(
                 self.operator,
                 self._config
         )
-        # # 计算当前时间
-        # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
-        # moa = self._config['market_open_time_am']
-        # mca = self._config['market_close_time_am']
-        # moc = self._config['market_open_time_pm']
-        # mcc = self._config['market_close_time_pm']
-        # if current_time < moa:  # before market morning open
-        #     pass
-        # elif moa < current_time < mca:  # morning market open time
-        #     pass
-        # elif mca < current_time < moc:  # during noon market break
-        #     pass
-        # elif moc < current_time < mcc:  # afternoon market open time
-        #     pass
-        # elif mcc < current_time:  # after market close
-        #     pass
+        # 计算当前时间
+        current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+        moa = pd.to_datetime(self._config['market_open_time_am']).time()
+        mcc = pd.to_datetime(self._config['market_close_time_pm']).time()
 
+        if current_time < moa:  # before market morning open, keep all tasks
+            if self.debug:
+                self.post_message('before market morning open, keeping all tasks')
+        elif moa < current_time < mcc:  # market open time, remove all task before current time except pre_open
+            if self.debug:
+                self.post_message('market open, removing all tasks before current time except pre_open')
+            self.task_daily_agenda = [task for task in self.task_daily_agenda if
+                                        (pd.to_datetime(task[0]).time() >= current_time) or (task[1] == 'pre_open')]
+        elif mcc < current_time:  # after market close, remove all task before current time except post_close
+            if self.debug:
+                self.post_message('market closed, removing all tasks before current time except post_close')
+            self.task_daily_agenda = [task for task in self.task_daily_agenda if
+                                      (pd.to_datetime(task[0]).time() >= current_time) or (task[1] == 'post_close')]
+        else:
+            raise ValueError(f'Invalid current time: {current_time}')
 
     AVAILABLE_TASKS = {
         'pre_open':         _pre_open,
@@ -1089,6 +1110,7 @@ def start_trader(
             broker=broker,
             config=config,
             datasource=datasource,
+            debug=True,
     )
     # refill data source
     # datasource.refill_local_source(dtypes=None, freqs=None, asset_types=None, start_date=None, end_date=None)
