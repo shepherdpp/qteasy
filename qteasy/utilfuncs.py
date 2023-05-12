@@ -68,6 +68,171 @@ AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
 AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
 
 
+def freq_dither(freq, freq_list):
+    """ 频率抖动，将一个目标频率抖动到频率列表中的一个频率上，
+
+    Parameters
+    ----------
+    freq: str
+        目标频率
+    freq_list: list of str
+        频率列表
+
+    Returns
+    -------
+    dithered_freq: str
+        抖动后的频率
+
+    Examples
+    --------
+    >>> freq_dither('M', ['Q', 'A'])
+    'Q'
+    >>> freq_dither('Q', ['M', 'A'])
+    'M'
+    >>> freq_dither('A', ['M', 'Q'])
+    'M'
+    >>> freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm'])
+    '15MIN'
+    """
+    """抖动算法如下：
+            0，从频率string中提取目标qty，目标主频、副频
+            3，设定当前频率 = 目标主频，开始查找：
+            # 4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
+            # 5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
+            # 6，否则从低频列表中取最高主频，返回它
+            另一种方法
+            4，逐次升高
+    """
+
+    qty, main_freq, sub_freq = parse_freq_string(freq)
+
+    freq_list = [parse_freq_string(freq_string)[1] for freq_string in freq_list]
+    level_list = np.array([get_main_freq_level(freq_string) for freq_string in freq_list])
+    freq_level = get_main_freq_level(freq)
+
+    level_list_sorter = level_list.argsort()
+    insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
+    upper_level_arg_list = level_list_sorter[insert_pos:]
+    lower_level_arg_list = level_list_sorter[:insert_pos]
+
+    if len(upper_level_arg_list) > 0:
+        # 在upper_list中位于第一位的可能是freq的同级频率，
+        # 如果输出同级频率，需要确保该频率与freq一致，否则就需要跳过它
+        maybe_found = freq_list[upper_level_arg_list[0]]
+        if (get_main_freq_level(maybe_found) > freq_level) or (maybe_found == main_freq):
+            return maybe_found
+        # 查找下一个maybe_found
+        return freq_list[upper_level_arg_list[1]]
+
+    if len(lower_level_arg_list) > 0:
+        return freq_list[lower_level_arg_list[-1]]
+    return None
+
+
+def parse_freq_string(freq, std_freq_only=False):
+    """ 解析freqstring，找出其中的主频率、副频率，以及主频率的倍数
+
+    Parameters
+    ----------
+    freq: str
+        一个频率字符串
+    std_freq_only: bool, default True
+        是否使用复合频率，如果为True，则仅使用MIN/H等标准频率作为主频率，否则可使用5MIN/15MIN等复合频率作为主频率
+        复合频率的定义TIME_FREQ_LEVELS
+
+    Returns
+    -------
+    tuple: 包含三个元素(qty, main_freq, sub_freq)
+    qty, int 主频率的倍数
+    main_freq, str 主频率
+    sub_freq, str 副频率
+
+    Examples
+    --------
+    >>> parse_freq_string('25d')
+    (25, 'D', '')
+    >>> parse_freq_string('w-Fri')
+    (1, 'W', 'Fri')
+    >>> parse_freq_string('75min')
+    (5, '15MIN', '')
+    >>> parse_freq_string('90min')
+    (3, '30MIN', '')
+    >>> parse_freq_string('15min')
+    (1, '15MIN', '')
+    >>> parse_freq_string('15min', std_freq_only=True)
+    (15, 'MIN', '')
+    """
+
+    import re
+
+    freq_split = freq.split('-')
+    qty = 1
+    main_freq = freq_split[0].upper()
+    sub_freq = ''
+    if len(freq_split) >= 2:
+        sub_freq = freq_split[1].upper()
+
+    # 继续拆分main_freq与qty_part
+    if len(main_freq) > 1:
+        maybe_qty = ''.join(re.findall('\d+', main_freq))
+        # 另外一种处理方法
+        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
+        qty_len = len(maybe_qty)
+        if qty_len > 0:
+            main_freq = main_freq[qty_len:]
+            qty = int(maybe_qty)
+
+    if main_freq not in TIME_FREQ_STRINGS:
+        return None, None, None
+
+    if (main_freq == 'MIN') and not std_freq_only:
+        available_qty = [''.join(re.findall('\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
+        available_qty = [int(item) for item in available_qty if len(item) > 0]
+        qty_fitness = [qty % item for item in available_qty]
+        min_qty = available_qty[qty_fitness.index(0)]
+        main_freq = str(min_qty) + main_freq
+        qty = qty // min_qty
+
+    return qty, main_freq, sub_freq
+
+
+def get_main_freq_level(freq):
+    """ 确定并返回freqency的级别
+
+    :param freq:
+    :return:
+    """
+    qty, main_freq, sub_freq = parse_freq_string(freq)
+    if main_freq in TIME_FREQ_STRINGS:
+        return TIME_FREQ_LEVELS[main_freq]
+    else:
+        return None
+
+
+def next_main_freq(freq, direction='up'):
+    """ 在可用freq清单中找到下一个可用的freq字符串
+
+    :param freq: main_freq string
+    :param direction: 'up' / 'down'
+    :return:
+    """
+    freq = freq.upper()
+    if freq not in TIME_FREQ_STRINGS:
+        return None
+    qty, main_freq, sub_freq = parse_freq_string(freq)
+    level = get_main_freq_level(freq)
+    freqs = list(TIME_FREQ_LEVELS.keys())
+    target_pos = freqs.index(main_freq)
+    while True:
+        target_freq = freqs[target_pos]
+        if direction == 'up':
+            target_pos += 1
+        elif direction == 'down':
+            target_pos -= 1
+        if get_main_freq_level(target_freq) != level:
+            return target_freq
+
+
 def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 

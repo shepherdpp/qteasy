@@ -416,7 +416,7 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts._run_strategy(strategy_ids=['macd', 'dma'])
+        ts.run_task('run_strategy', ['macd', 'dma'])
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')

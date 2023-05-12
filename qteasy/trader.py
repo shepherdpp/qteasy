@@ -23,7 +23,7 @@ from cmd import Cmd
 import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS
+from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, time_str_format
 from qteasy.broker import Broker, QuickBroker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
@@ -228,36 +228,6 @@ class TraderShell(Cmd):
         """
         print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
 
-    # ----- complete commands -----
-    def complete_pause(self, text, line, begidx, endidx):
-        return []
-
-    def complete_resume(self, text, line, begidx, endidx):
-        return []
-
-    def complete_bye(self, text, line, begidx, endidx):
-        return []
-
-    def complete_info(self, text, line, begidx, endidx):
-        return []
-
-    def complete_positions(self, text, line, begidx, endidx):
-        return []
-
-    def complete_overview(self, text, line, begidx, endidx):
-        return []
-
-    def complete_history(self, text, line, begidx, endidx):
-        return []
-
-    def complete_orders(self, text, line, begidx, endidx):
-        """ complete orders command
-        """
-        if text:
-            return [i for i in ['today', '3day', 'week', 'month', 'year'] if i.startswith(text)]
-        else:
-            return ['today', '3day', 'week', 'month', 'year']
-
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
         line = line.lower()
@@ -275,7 +245,12 @@ class TraderShell(Cmd):
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
-                        sys.stdout.write(str(message)+"\n")
+                        if message[-1] == '\r':
+                            print(message, end='\r')
+                        else:
+                            print(message)
+                        # sys.stdout.write(str(message))
+                        # sys.stdout.flush()
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will start cmdloop\n')
@@ -417,6 +392,7 @@ class Trader(object):
 
         self.debug = debug
 
+    # ================== properties ==================
     @property
     def status(self):
         return self._status
@@ -478,6 +454,7 @@ class Trader(object):
     def datasource(self):
         return self._datasource
 
+    # ================== methods ==================
     def history_cashes(self, start_date=None, end_date=None):
         """ 账户的历史现金流水 """
         # TODO: implement this function
@@ -556,11 +533,14 @@ class Trader(object):
                     white_listed_tasks = self.TASK_WHITELIST[self.status]
                     task = self.task_queue.get()
                     if isinstance(task, tuple):
+                        if self.debug:
+                            self.post_message(f'tuple task: {task} is taken from task queue, task[0]: {task[0]}'
+                                              f'task[1]: {task[1]}')
                         task_name = task[0]
-                        kwargs = task[1]
+                        args = task[1]
                     else:
                         task_name = task
-                        kwargs = None
+                        args = None
                     self.post_message(f'task queue is not empty, taking next task from queue: {task_name}')
                     if task_name not in white_listed_tasks:
                         message = f'task: {task} cannot be executed in current status: {self.status}'
@@ -568,14 +548,15 @@ class Trader(object):
                         self.task_queue.task_done()
                         continue
                     try:
-                        if kwargs:
-                            self.run_task(task_name, **kwargs)
+                        if args:
+                            self.run_task(task_name, args)
                         else:
                             self.run_task(task_name)
                     except Exception as e:
                         self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
+                        if self.debug:
+                            raise e
                     self.task_queue.task_done()
-                    continue
 
                 # 从任务日程中添加任务到任务队列
                 current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
@@ -599,18 +580,25 @@ class Trader(object):
             self.post_message('KeyboardInterrupt, stopping trader')
             self.run_task('stop')
 
-    def post_message(self, message):
+    def post_message(self, message, new_line=True):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
 
         Parameters
         ----------
         message: str
             消息内容
+        new_line: bool, default True
+            是否在消息后添加换行符
         """
         if not isinstance(message, str):
             raise TypeError('message should be a str')
         time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')
         message = f'[{time_string}]-{self.status}: {message}'
+        if new_line:
+            # message += '\n'
+            pass
+        else:
+            message += '\r'
         self.message_queue.put(message)
 
     def add_task(self, task, kwargs=None):
@@ -636,7 +624,24 @@ class Trader(object):
         self.post_message(f'adding task: {task}')
         self._add_task_to_queue(task)
 
-    # definition of tasks
+    def _process_result(self, result):
+        """ 从result_queue中读取并处理交易结果
+
+        1，处理交易结果，更新账户和持仓信息
+        2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
+        4，生成交易结果信息推送到信息队列
+        """
+        if self.debug:
+            self.post_message('debug mode, running task process_result')
+        process_trade_result(result, data_source=self._datasource)
+        self.post_message(f'processed trade result: {result}')
+        process_trade_delivery(
+                account_id=self.account_id,
+                data_source=self._datasource,
+                config=self._config,
+        )
+
+    # ============ definition of tasks ================
     def _start(self):
         """ 启动交易系统 """
         self.post_message('starting Trader')
@@ -656,14 +661,14 @@ class Trader(object):
 
     def _wakeup(self):
         """ 唤醒交易系统 """
-        self.post_message('Waking up Trader')
         self.status = 'running'
         self.broker.status = 'running'
+        self.post_message('Trader is awake, broker is running')
 
     def _pause(self):
         """ 暂停交易系统 """
-        self.post_message('Pausing Trader')
         self.status = 'paused'
+        self.post_message('Pausing Trader')
 
     def _resume(self):
         """ 恢复交易系统 """
@@ -703,7 +708,10 @@ class Trader(object):
             freq = strategy.strategy_run_freq.upper()
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
-        data_start_time = data_end_time + pd.Timedelta(1, max_strategy_freq)
+        # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
+        duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
+        print(f'duration: {duration}, unit: {unit}')
+        data_start_time = data_end_time + pd.Timedelta(duration, unit)
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
         # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
         #  1，需要完善数据读取的时间区间，根据策略的运行频率，以及本地已经读取的数据内容来决定数据区间（避免重复读取浪费时间或读取不足）
@@ -799,23 +807,6 @@ class Trader(object):
 
         return submitted_qty
 
-    def _process_result(self, result):
-        """ 从result_queue中读取并处理交易结果
-
-        1，处理交易结果，更新账户和持仓信息
-        2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
-        4，生成交易结果信息推送到信息队列
-        """
-        if self.debug:
-            self.post_message('debug mode, running task process_result')
-        process_trade_result(result, data_source=self._datasource)
-        self.post_message(f'processed trade result: {result}')
-        process_trade_delivery(
-                account_id=self.account_id,
-                data_source=self._datasource,
-                config=self._config,
-        )
-
     def _pre_open(self):
         """ 开市前, 生成交易日的任务计划，生成消息发送到消息队列"""
         self.post_message('initialized daily task agenda')
@@ -894,7 +885,8 @@ class Trader(object):
         self.post_message('market is closed')
         self.run_task('sleep')
 
-    def run_task(self, task, **kwargs):
+    # ================ task operations =================
+    def run_task(self, task, *args):
         """ 运行任务
 
         Parameters
@@ -914,9 +906,9 @@ class Trader(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func = self.AVAILABLE_TASKS[task]
-        self.post_message(f'will run task: {task} with kwargs: {kwargs} in function: {task_func.__name__}')
-        if kwargs:
-            task_func(self, **kwargs)
+        self.post_message(f'will run task: {task} with args: {args} in function: {task_func.__name__}')
+        if args:
+            task_func(self, *args)
         else:
             task_func(self)
 
@@ -949,15 +941,22 @@ class Trader(object):
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
         """
 
+        count_down_to_next_task = 9999.0  # 到下一个最近任务的倒计时，单位为秒
+        task_added = False  # 是否添加了任务
+        next_task = 'None'
+        import datetime as dt
+        convenience_date = dt.datetime(2000, 1, 1)
+        current_datetime = dt.datetime.combine(convenience_date, current_time)
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
         for idx, task in enumerate(self.task_daily_agenda):
             task_time = pd.to_datetime(task[0], utc=True).time()
             # 当task_time小于等于current_time时，添加task，同时删除该task
             if task_time <= current_time:
                 task_tuple = self.task_daily_agenda.pop(idx)
-
+                if self.debug:
+                    print(f'adding task: {task_tuple} from agenda')
                 if len(task_tuple) == 3:
-                    task = task_tuple[1:2]
+                    task = task_tuple[1:3]
                 elif len(task_tuple) == 2:
                     task = task[1]
                 else:
@@ -965,6 +964,18 @@ class Trader(object):
                 self.post_message(f'current time {current_time} >= task time {task_time}, '
                                   f'adding task: {task} from agenda')
                 self._add_task_to_queue(task)
+                task_added = True
+            # 计算count_down_to_next_task秒数
+            else:
+                task_datetime = dt.datetime.combine(convenience_date, task_time)
+                count_down_sec = (task_datetime - current_datetime).total_seconds()
+                if count_down_sec < count_down_to_next_task:
+                    count_down_to_next_task = count_down_sec
+                    next_task = task
+        if not task_added:
+            self.post_message(f'will execute next task:({next_task}) in '
+                              f'{time_str_format(count_down_to_next_task, estimation=True)}',
+                              new_line=False)
 
     def _initialize_agenda(self):
         """ 初始化交易日的任务日程
@@ -989,17 +1000,38 @@ class Trader(object):
         # 计算当前时间
         current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
         moa = pd.to_datetime(self._config['market_open_time_am']).time()
+        mca = pd.to_datetime(self._config['market_close_time_am']).time()
+        moc = pd.to_datetime(self._config['market_open_time_pm']).time()
         mcc = pd.to_datetime(self._config['market_close_time_pm']).time()
-
-        if current_time < moa:  # before market morning open, keep all tasks
+        if current_time < moa:
+            # before market morning open, keep all tasks
             if self.debug:
                 self.post_message('before market morning open, keeping all tasks')
-        elif moa < current_time < mcc:  # market open time, remove all task before current time except pre_open
+        elif moa < current_time < mca:
+            # market open time, remove all task before current time except pre_open
             if self.debug:
-                self.post_message('market open, removing all tasks before current time except pre_open')
+                self.post_message('market open, removing all tasks before current time except pre_open and open_market')
             self.task_daily_agenda = [task for task in self.task_daily_agenda if
-                                        (pd.to_datetime(task[0]).time() >= current_time) or (task[1] == 'pre_open')]
-        elif mcc < current_time:  # after market close, remove all task before current time except post_close
+                                        (pd.to_datetime(task[0]).time() >= current_time) or
+                                      (task[1] in ['pre_open', 'open_market'])]
+        elif mca < current_time < moc:
+            # before market afternoon open, remove all task before current time except pre_open, open_market and sleep
+            if self.debug:
+                self.post_message('before market afternoon open, removing all tasks before current time '
+                                  'except pre_open, open_market and sleep')
+            self.task_daily_agenda = [task for task in self.task_daily_agenda if
+                                        (pd.to_datetime(task[0]).time() >= current_time) or
+                                          (task[1] in ['pre_open', 'open_market', 'sleep'])]
+        elif moc < current_time < mcc:
+            # market afternoon open, remove all task before current time except pre_open, open_market, sleep, and wakeup
+            if self.debug:
+                self.post_message('market afternoon open, removing all tasks before current time '
+                                  'except pre_open, open_market, sleep and wakeup')
+            self.task_daily_agenda = [task for task in self.task_daily_agenda if
+                                        (pd.to_datetime(task[0]).time() >= current_time) or
+                                          (task[1] in ['pre_open', 'open_market'])]
+        elif mcc < current_time:
+            # after market close, remove all task before current time except post_close
             if self.debug:
                 self.post_message('market closed, removing all tasks before current time except post_close')
             self.task_daily_agenda = [task for task in self.task_daily_agenda if
