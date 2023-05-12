@@ -245,12 +245,11 @@ class TraderShell(Cmd):
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
-                        if message[-1] == '\r':
-                            print(message, end='\r')
+                        if message[-2:] == '_R':
+                            print(message[:-2], end='\r')
                         else:
                             print(message)
-                        # sys.stdout.write(str(message))
-                        # sys.stdout.flush()
+
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will start cmdloop\n')
@@ -598,7 +597,8 @@ class Trader(object):
             # message += '\n'
             pass
         else:
-            message += '\r'
+            message += '_R'
+            pass
         self.message_queue.put(message)
 
     def add_task(self, task, kwargs=None):
@@ -710,7 +710,6 @@ class Trader(object):
                 max_strategy_freq = freq
         # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
-        print(f'duration: {duration}, unit: {unit}')
         data_start_time = data_end_time + pd.Timedelta(duration, unit)
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
         # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
@@ -941,12 +940,15 @@ class Trader(object):
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
         """
 
-        count_down_to_next_task = 9999.0  # 到下一个最近任务的倒计时，单位为秒
         task_added = False  # 是否添加了任务
         next_task = 'None'
         import datetime as dt
         convenience_date = dt.datetime(2000, 1, 1)
         current_datetime = dt.datetime.combine(convenience_date, current_time)
+        end_of_the_day = dt.datetime.combine(convenience_date, dt.time(23, 59, 59))
+        count_down_to_next_task = (end_of_the_day - current_datetime).total_seconds()  # 到下一个最近任务的倒计时，单位为秒
+        if count_down_to_next_task <= 0:
+            count_down_to_next_task = 1
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
         for idx, task in enumerate(self.task_daily_agenda):
             task_time = pd.to_datetime(task[0], utc=True).time()
@@ -961,7 +963,9 @@ class Trader(object):
                     task = task[1]
                 else:
                     raise ValueError(f'Invalid task tuple: No task found in {task_tuple}')
-                self.post_message(f'current time {current_time} >= task time {task_time}, '
+                
+                if self.debug:
+                    self.post_message(f'current time {current_time} >= task time {task_time}, '
                                   f'adding task: {task} from agenda')
                 self._add_task_to_queue(task)
                 task_added = True
@@ -974,7 +978,7 @@ class Trader(object):
                     next_task = task
         if not task_added:
             self.post_message(f'will execute next task:({next_task}) in '
-                              f'{time_str_format(count_down_to_next_task, estimation=True)}',
+                              f'{time_str_format(count_down_to_next_task, estimation=True, short_form=True)}',
                               new_line=False)
 
     def _initialize_agenda(self):
@@ -1071,6 +1075,7 @@ def start_trader(
         init_holdings=None,
         datasource=None,
         config=None,
+        debug=False,
 ):
     """ 启动交易。根据配置信息生成Trader对象，并启动TraderShell
 
@@ -1090,6 +1095,8 @@ def start_trader(
         数据源 object
     config: dict, optional
         配置信息字典
+    debug: bool, optional
+        是否进入debug模式
 
     Returns
     -------
@@ -1142,7 +1149,7 @@ def start_trader(
             broker=broker,
             config=config,
             datasource=datasource,
-            debug=True,
+            debug=debug,
     )
     # refill data source
     # datasource.refill_local_source(dtypes=None, freqs=None, asset_types=None, start_date=None, end_date=None)
