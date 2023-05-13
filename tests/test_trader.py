@@ -31,6 +31,16 @@ class TestTrader(unittest.TestCase):
         """Set up test fixtures, if any."""
         print('Setting up test Trader...')
         operator = Operator(strategies=['macd', 'dma'], op_type='step')
+        operator.set_parameter(
+                stg_id='dma',
+                window_length=20,
+                strategy_run_freq='H'
+        )
+        operator.set_parameter(
+                stg_id='macd',
+                window_length=30,
+                strategy_run_freq='30min',
+        )
         broker = QuickBroker()
         config = {
             'mode': 0,
@@ -75,7 +85,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        self.stoppage = 0.1
+        self.stoppage = 1.5
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (
@@ -216,7 +226,7 @@ class TestTrader(unittest.TestCase):
                 broker=broker,
                 config=config,
                 datasource=test_ds,
-                debug=True,
+                debug=False,
         )
 
     def test_trader_status(self):
@@ -344,66 +354,77 @@ class TestTrader(unittest.TestCase):
         # 依次执行start, pre_open, open_market, run_stg - macd, run_stg - dma, close_market, post_close, stop
         ts.add_task('start')
         time.sleep(self.stoppage)
+        print('added task start')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         ts.add_task('pre_open')
         time.sleep(self.stoppage)
+        print('added task pre_open')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         ts.add_task('open_market')
         time.sleep(self.stoppage)
+        print('added task open_market')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('run_strategy', {'strategy_ids': ['macd']})
         time.sleep(self.stoppage)
+        print('added task run_strategy - macd')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('run_strategy', {'strategy_ids': ['dma']})
         time.sleep(self.stoppage)
+        print('added task run_strategy - dma')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('sleep')
         time.sleep(self.stoppage)
+        print('added task sleep')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'paused')
         ts.add_task('wakeup')
         time.sleep(self.stoppage)
+        print('added task wakeup')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('run_strategy', {'strategy_ids': ['macd', 'dma']})
         time.sleep(self.stoppage)
+        print('added task run_strategy - macd, dma')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, 'running')
         ts.add_task('close_market')
         time.sleep(self.stoppage)
+        print('added task close_market')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'paused')
         ts.add_task('post_close')
         time.sleep(self.stoppage)
+        print('added task post_close')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'stopped')
         ts.add_task('stop')
         time.sleep(self.stoppage)
+        print('added task stop')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'stopped')
@@ -426,31 +447,102 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.broker.status, 'stopped')
 
     def test_trader(self):
-        """Test trader in a full-fledged run"""
-        # create an operator with two strategies that runing very 5min and 30min respectively
-        op = Operator(strategies=['macd', 'dma'], op_type='step')
-        op['macd'].set_hist_pars(
-                strategy_run_freq='5min',
-                strategy_run_timing='close',
-                window_length=60,
-        )
-        op['dma'].set_hist_pars(
-                strategy_run_freq='30min',
-                strategy_run_timing='close',
-                window_length=60,
-        )
-        qteasy.configure(
-                mode=0,
-                asset_pool=['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ'],
-        )
-        datasource = self.ts.datasource
-        # test trader with existing operator
-        qteasy.trader.start_trader(
-                operator=op,
-                account_id=1,
-                datasource=datasource,
-                config=QT_CONFIG,
-        )
+        """Test trader in a full-fledged simulation run"""
+        # start the trader and broker in separate threads, set the trader to debug mode
+        # and then manually generate task agenda and add task from agenda with twisted
+        # current time, thus to test the trader in simulated real-time run.
+
+        # 1, use trader._check_trade_day(sim_date) to simulate a trade day or non-trade day
+        # 2, use trader._initialize_agenda(sim_time) to generate task agenda at a simulated time
+        # 3, use trader._add_task_from_agenda(sim_time) to add task from agenda at a simulated time
+
+        import datetime as dt
+
+        ts = self.ts
+        ts.debug = True
+        Thread(target=ts.run).start()
+        Thread(target=ts.broker.run).start()
+
+        # generate task agenda in a non-trade day and empty list will be generated
+        sim_date = dt.date(2019, 1, 1)  # a non-trade day
+        sim_time = dt.time(0, 0, 0)  # midnight
+        ts._check_trade_day(sim_date)
+        ts._initialize_agenda(sim_time)
+        ts._add_task_from_agenda(sim_time)
+
+        print(f'trader status: {ts.status}')
+        print(f'broker status: {ts.broker.status}')
+        print(f'trade day bool: {ts.is_trade_day}')
+        print(f'task daily agenda: {ts.task_daily_agenda}')
+        self.assertEqual(ts.status, 'sleeping')
+        self.assertEqual(ts.broker.status, 'init')
+        self.assertEqual(ts.is_trade_day, False)
+        self.assertEqual(ts.task_daily_agenda, [])
+
+        # generate task agenda in a trade day and complete agenda will be generated depending on generate time
+        sim_date = dt.date(2023, 5, 10)  # a trade day
+        sim_time = dt.time(7, 0, 0)  # before morning market open
+        ts._check_trade_day(sim_date)
+        self.assertEqual(ts.is_trade_day, True)
+        ts._initialize_agenda(sim_time)  # should generate complete agenda
+        print(ts.task_daily_agenda)
+        target_agenda = [
+            ('09:25:00', 'pre_open'),
+            ('09:30:00', 'open_market'),
+            ('09:31:00', 'run_strategy', ['macd']),
+            ('10:00:00', 'run_strategy', ['macd', 'dma']),
+            ('10:30:00', 'run_strategy', ['macd']),
+            ('11:00:00', 'run_strategy', ['macd', 'dma']),
+            ('11:30:00', 'run_strategy', ['macd']),
+            ('11:35:00', 'sleep'),
+            ('12:55:00', 'wakeup'),
+            ('13:00:00', 'run_strategy', ['macd', 'dma']),
+            ('13:30:00', 'run_strategy', ['macd']),
+            ('14:00:00', 'run_strategy', ['macd', 'dma']),
+            ('14:30:00', 'run_strategy', ['macd']),
+            ('15:00:00', 'run_strategy', ['macd', 'dma']),
+            ('15:29:00', 'run_strategy', ['macd']),
+            ('15:30:00', 'close_market'),
+            ('15:35:00', 'post_close'),
+        ]
+        self.assertEqual(ts.task_daily_agenda, target_agenda)
+        # re_initialize_agenda at 10:35:27
+        sim_time = dt.time(10, 35, 27)
+        ts.task_daily_agenda = []
+        ts._initialize_agenda(sim_time)
+        print(ts.task_daily_agenda)
+        target_agenda = [
+            ('09:25:00', 'pre_open'),
+            ('09:30:00', 'open_market'),
+            ('11:00:00', 'run_strategy', ['macd', 'dma']),
+            ('11:30:00', 'run_strategy', ['macd']),
+            ('11:35:00', 'sleep'),
+            ('12:55:00', 'wakeup'),
+            ('13:00:00', 'run_strategy', ['macd', 'dma']),
+            ('13:30:00', 'run_strategy', ['macd']),
+            ('14:00:00', 'run_strategy', ['macd', 'dma']),
+            ('14:30:00', 'run_strategy', ['macd']),
+            ('15:00:00', 'run_strategy', ['macd', 'dma']),
+            ('15:29:00', 'run_strategy', ['macd']),
+            ('15:30:00', 'close_market'),
+            ('15:35:00', 'post_close'),
+        ]
+        self.assertEqual(ts.task_daily_agenda, target_agenda)
+
+        # third, create a task agenda and execute tasks from the agenda at sim times
+        sim_time = dt.time(10, 35, 27)
+        ts.task_daily_agenda = []
+        ts._initialize_agenda(sim_time)
+        sim_time = dt.time(10, 35, 0)  # should run strategy macd
+        ts._add_task_from_agenda(sim_time)
+        sim_time = dt.time(11, 0, 0)  # should run strategy macd and dma
+        ts._add_task_from_agenda(sim_time)
+
+        # finally, stop the trader and broker
+        ts.run_task('stop')
+
+        self.assertEqual(ts.status, 'stopped')
+        self.assertEqual(ts.broker.status, 'stopped')
 
 
 if __name__ == '__main__':

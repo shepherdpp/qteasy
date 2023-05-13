@@ -240,7 +240,8 @@ class TraderShell(Cmd):
         from threading import Thread
 
         self.do_dashboard('')
-        Thread(target=self._trader.run).start()
+        Thread(target=self.trader.run).start()
+        Thread(target=self.trader.broker.run).start()
 
         while self.status != 'stopped':
             try:
@@ -509,18 +510,18 @@ class Trader(object):
         2，如果当前是交易日，检查当前时间是否在task_daily_agenda中，如果在，则将任务添加到task_queue中
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
+        self.status = 'sleeping'
         self._check_trade_day()
         self._initialize_agenda()
-        self.status = 'sleeping'
         self.post_message(f'Trader is running with account_id: {self.account_id}\n'
-                          f'current date / time: '
+                          f'Initialized on date / time: '
                           f'{pd.to_datetime("now", utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")}\n'
                           f'current day is trade day: {self.is_trade_day}\n'
                           f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
-        market_open_day_loop_interval = 1
-        market_close_day_loop_interval = 10
+        market_open_day_loop_interval = 0.1
+        market_close_day_loop_interval = 0.1
         current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
         current_date = current_date_time.date()
         try:
@@ -543,10 +544,11 @@ class Trader(object):
                     else:
                         task_name = task
                         args = None
-                    self.post_message(f'task queue is not empty, taking next task from queue: {task_name}')
+                    if self.debug:
+                        self.post_message(f'task queue is not empty, taking next task from queue: {task_name}')
                     if task_name not in white_listed_tasks:
-                        message = f'task: {task} cannot be executed in current status: {self.status}'
-                        self.post_message(message)
+                        if self.debug:
+                            self.post_message(f'task: {task} cannot be executed in current status: {self.status}')
                         self.task_queue.task_done()
                         continue
                     try:
@@ -556,8 +558,6 @@ class Trader(object):
                             self.run_task(task_name)
                     except Exception as e:
                         self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
-                        if self.debug:
-                            raise e
                     self.task_queue.task_done()
 
                 # 从任务日程中添加任务到任务队列
@@ -568,7 +568,7 @@ class Trader(object):
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
                 if current_date != pre_date:
                     self._check_trade_day()
-                    self._initialize_agenda()
+                    self._initialize_agenda(current_time)
 
                 # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
                 if not self.broker.result_queue.empty():
@@ -596,12 +596,11 @@ class Trader(object):
             raise TypeError('message should be a str')
         time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')
         message = f'[{time_string}]-{self.status}: {message}'
-        if new_line:
-            # message += '\n'
-            pass
-        else:
+        if not (new_line or self.debug):
             message += '_R'
             pass
+        if self.debug:
+            print(f'debug mode: {message}')
         self.message_queue.put(message)
 
     def add_task(self, task, kwargs=None):
@@ -635,7 +634,7 @@ class Trader(object):
         4，生成交易结果信息推送到信息队列
         """
         if self.debug:
-            self.post_message('debug mode, running task process_result')
+            self.post_message('running task process_result')
         process_trade_result(result, data_source=self._datasource)
         self.post_message(f'processed trade result: {result}')
         process_trade_delivery(
@@ -671,12 +670,12 @@ class Trader(object):
     def _pause(self):
         """ 暂停交易系统 """
         self.status = 'paused'
-        self.post_message('Pausing Trader')
+        self.post_message('Trader is Paused, broker is still running')
 
     def _resume(self):
         """ 恢复交易系统 """
-        self.post_message('Resuming Trader')
         self.status = self.prev_status
+        self.post_message(f'Trader is resumed to previous status({self.status})')
 
     def _run_strategy(self, strategy_ids=None):
         """ 运行交易策略
@@ -693,7 +692,7 @@ class Trader(object):
             交易策略ID列表
         """
         if self.debug:
-            print(f'debug mode: running task run strategy: {strategy_ids}')
+            print(f'running task run strategy: {strategy_ids}')
         operator = self._operator
         signal_type = operator.signal_type
         shares = self.asset_pool
@@ -716,8 +715,9 @@ class Trader(object):
         data_start_time = data_end_time + pd.Timedelta(duration, unit)
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
         # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
-        #  1，需要完善数据读取的时间区间，根据策略的运行频率，以及本地已经读取的数据内容来决定数据区间（避免重复读取浪费时间或读取不足）
         #  2，需要解决parallel读取的问题，在目前的测试中，parallel读取会导致数据读取失败
+        if self.debug:
+            self.post_message(f'downloading data from {data_start_time} to {data_end_time}')
         self._datasource.refill_local_source(
                 dtypes=operator.op_data_types,
                 freqs=operator.op_data_freq,
@@ -730,7 +730,8 @@ class Trader(object):
         )
         # 读取实时数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
-        self.post_message(f'read real time data and set operator data allocation')
+        if self.debug:
+            self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref,
                                   live_mode=True, live_running_stgs=strategy_ids)
 
@@ -763,6 +764,7 @@ class Trader(object):
                     sample_idx=1,
                     price_type_idx=0
             )  # 生成交易清单
+        if self.debug:
             self.post_message(f'ran strategy and created signal: {op_signal}')
 
         # 解析交易信号
@@ -776,12 +778,12 @@ class Trader(object):
                 config=config
         )
         submitted_qty = 0
-        # debug
-        print(f'symbols: {symbols}\n'
-              f'positions: {positions}\n'
-              f'directions: {directions}\n'
-              f'quantities: {quantities}\n'
-              f'current_prices: {current_prices}\n')
+        if self.debug:
+            self.post_message(f'symbols: {symbols}\n'
+                              f'positions: {positions}\n'
+                              f'directions: {directions}\n'
+                              f'quantities: {quantities}\n'
+                              f'current_prices: {current_prices}\n')
         for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, current_prices):
             pos_id = get_position_ids(account_id=self.account_id,
                                       symbol=sym,
@@ -803,7 +805,7 @@ class Trader(object):
             # 逐一提交交易信号
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
                 self._broker.order_queue.put(trade_order)
-                self.post_message(f'submitted order to broker: {trade_order}')
+                self.post_message(f'Submitted order to broker: {trade_order}')
                 # 记录已提交的交易数量
                 submitted_qty += qty
 
@@ -821,7 +823,7 @@ class Trader(object):
         3，生成消息发送到消息队列
         """
         if self.debug:
-            self.post_message('debug mode, running task post_close')
+            self.post_message('running task post_close')
 
         # 停止broker
         self.broker.status = 'stopped'
@@ -869,11 +871,11 @@ class Trader(object):
         2，生成消息发送到消息队列
         """
         if self.debug:
-            self.post_message('debug mode, running task: market open')
+            self.post_message('running task: market open')
         self.is_market_open = True
-        self.post_message('market is open')
-        Thread(target=self.broker.run).start()  # TODO：此处有误，broker应该随Trader启动一次，而不是每次开市都启动
-        self.run_task('wakeup')
+        self.status = 'running'
+        self.broker.status = 'running'
+        self.post_message('market is open, trader is running, broker is running')
 
     def _market_close(self):
         """ 收市时操作：
@@ -882,7 +884,7 @@ class Trader(object):
         2，生成消息发送到消息队列
         """
         if self.debug:
-            self.post_message('debug mode, running task: market close')
+            self.post_message('running task: market close')
         self.is_market_open = False
         self.post_message('market is closed')
         self.run_task('sleep')
@@ -908,15 +910,27 @@ class Trader(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func = self.AVAILABLE_TASKS[task]
-        self.post_message(f'will run task: {task} with args: {args} in function: {task_func.__name__}')
+        if self.debug:
+            self.post_message(f'will run task: {task} with args: {args} in function: {task_func.__name__}')
         if args:
             task_func(self, *args)
         else:
             task_func(self)
 
-    def _check_trade_day(self):
-        """ 检查当前日期是否是交易日 """
-        current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()
+    def _check_trade_day(self, current_date=None):
+        """ 检查当前日期是否是交易日
+
+        Parameters
+        ----------
+        current_date: datetime.date, optional
+            当前日期，默认为None，即当前日期为今天，指定日期用于测试
+
+        Returns
+        -------
+        None
+        """
+        if current_date is None:
+            current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()
         from qteasy.utilfuncs import is_market_trade_day
         # exchange = self._config['exchange']  # TODO: should we add exchange to config?
         exchange = 'SSE'
@@ -931,7 +945,7 @@ class Trader(object):
             任务名称
         """
         if self.debug:
-            self.post_message(f'debug mode, putting task {task} into task queue')
+            self.post_message(f'putting task {task} into task queue')
         self.task_queue.put(task)
 
     def _add_task_from_agenda(self, current_time=None):
@@ -983,7 +997,7 @@ class Trader(object):
                     next_task = task
         if not task_added:
             self.post_message(f'will execute next task:({next_task}) in '
-                              f'{time_str_format(count_down_to_next_task, estimation=True, short_form=True)}',
+                              f'{time_str_format(count_down_to_next_task, estimation=True)}',
                               new_line=False)
 
     def _initialize_agenda(self, current_time=None):
@@ -999,7 +1013,7 @@ class Trader(object):
         if current_time is None:
             current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
         if self.debug:
-            self.post_message('debug mode, initializing agenda')
+            self.post_message('initializing agenda')
         # 如果不是交易日，直接返回
         if not self.is_trade_day:
             if self.debug:
@@ -1174,7 +1188,7 @@ def start_trader(
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
             symbols=config['asset_pool'],
             parallel=True,
-            refresh_trade_calendar=False,
+            refresh_trade_calendar=True,
     )
 
     TraderShell(trader).run()

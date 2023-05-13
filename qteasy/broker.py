@@ -62,8 +62,6 @@ class Broker(object):
         order_queue中的每一个交易订单都由get_result函数来处理并获取交易结果，get_result函数
         的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
         """
-        if self.status == 'init':
-            self.status = 'running'
 
         while self.status != 'stopped':
             # 如果Broker处于暂停状态，则不处理交易订单

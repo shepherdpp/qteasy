@@ -1542,7 +1542,7 @@ def rolling_window(arr, window, axis=0):
     from numpy.lib.stride_tricks import as_strided
     if not isinstance(arr, np.ndarray):
         raise TypeError(f'arr should be an ndarray, got {type(arr)} instead.')
-    if not isinstance(window, (int, np.int)):
+    if not isinstance(window, int):
         raise TypeError(f'window should be an integer, got {type(window)} instead.')
     if not isinstance(axis, int):
         raise TypeError(f'axis should be an integer, got {type(axis)} instead.')
@@ -1551,7 +1551,6 @@ def rolling_window(arr, window, axis=0):
     if (axis < 0) or (axis >= arr.ndim):
         raise ValueError(f'Invalid axis({axis})')
 
-    ndim = arr.ndim
     shape = list(arr.shape)
     strides = arr.strides
     axis_length = shape[axis]
