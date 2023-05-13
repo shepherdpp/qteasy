@@ -206,6 +206,9 @@ class TraderShell(Cmd):
         ------
         dashboard
         """
+        import os
+        # check os type of current system, and then clear screen
+        os.system('cls' if os.name == 'nt' else 'clear')
         self._status = 'dashboard'
         print('\nWelcome to trader dashboard! live status will be displayed here.')
         return True
@@ -931,15 +934,17 @@ class Trader(object):
             self.post_message(f'debug mode, putting task {task} into task queue')
         self.task_queue.put(task)
 
-    def _add_task_from_agenda(self, current_time):
+    def _add_task_from_agenda(self, current_time=None):
         """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务
 
         Parameters
         ----------
-        current_time: datetime.time
+        current_time: datetime.time, optional
             当前时间, 只有任务计划时间小于等于当前时间时才添加任务
+            如果current_time为None，则使用当前系统时间，给出current_time的目的是为了方便测试
         """
-
+        if current_time is None:
+            current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
         task_added = False  # 是否添加了任务
         next_task = 'None'
         import datetime as dt
@@ -963,7 +968,7 @@ class Trader(object):
                     task = task[1]
                 else:
                     raise ValueError(f'Invalid task tuple: No task found in {task_tuple}')
-                
+
                 if self.debug:
                     self.post_message(f'current time {current_time} >= task time {task_time}, '
                                   f'adding task: {task} from agenda')
@@ -981,10 +986,18 @@ class Trader(object):
                               f'{time_str_format(count_down_to_next_task, estimation=True, short_form=True)}',
                               new_line=False)
 
-    def _initialize_agenda(self):
+    def _initialize_agenda(self, current_time=None):
         """ 初始化交易日的任务日程
 
+        Parameters
+        ----------
+        current_time: datetime.time, optional
+            当前时间, 生成任务计划后，需要将当天已经过期的任务删除，即计划时间早于current_time的任务
+            如果current_time为None，则使用当前系统时间，给出current_time的目的是为了方便测试
         """
+        # if current_time is None then use current system time
+        if current_time is None:
+            current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
         if self.debug:
             self.post_message('debug mode, initializing agenda')
         # 如果不是交易日，直接返回
@@ -1001,8 +1014,7 @@ class Trader(object):
                 self.operator,
                 self._config
         )
-        # 计算当前时间
-        current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+        # 根据当前时间删除过期的任务
         moa = pd.to_datetime(self._config['market_open_time_am']).time()
         mca = pd.to_datetime(self._config['market_close_time_am']).time()
         moc = pd.to_datetime(self._config['market_open_time_pm']).time()
@@ -1100,7 +1112,7 @@ def start_trader(
 
     Returns
     -------
-    trader: Trader
+    None
     """
     if not isinstance(operator, Operator):
         raise ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
@@ -1151,8 +1163,18 @@ def start_trader(
             datasource=datasource,
             debug=debug,
     )
-    # refill data source
-    # datasource.refill_local_source(dtypes=None, freqs=None, asset_types=None, start_date=None, end_date=None)
+    # refill data source, start date is window length before today
+    end_date = pd.to_datetime('today')
+    start_date = end_date - pd.Timedelta(days=operator.max_window_length)
+    datasource.refill_local_source(
+            dtypes=operator.op_data_types,
+            freqs=operator.op_data_freq,
+            asset_types='E',  # only support equities for now
+            start_date=start_date.strftime('%Y%m%d'),
+            end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
+            symbols=config['asset_pool'],
+            parallel=True,
+            refresh_trade_calendar=False,
+    )
 
     TraderShell(trader).run()
-
