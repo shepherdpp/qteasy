@@ -501,8 +501,8 @@ class Trader(object):
                 status=status,
                 data_source=self._datasource
         )
-        import pdb; pdb.set_trace()
-        order_ids = trade_orders.order_id.values
+        print(f'in function trade_results, trade_orders: {trade_orders}')
+        order_ids = trade_orders.index.values
         return list(map(read_trade_results_by_order_id, order_ids))
 
     def run(self):
@@ -562,11 +562,12 @@ class Trader(object):
                         self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
                     self.task_queue.task_done()
 
-                # 从任务日程中添加任务到任务队列
+                # 如果没有暂停，从任务日程中添加任务到任务队列
                 current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
                 current_time = current_date_time.time()
                 current_date = current_date_time.date()
-                self._add_task_from_agenda(current_time)
+                if self.status != 'paused':
+                    self._add_task_from_agenda(current_time)
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
                 if current_date != pre_date:
                     self._check_trade_day()
