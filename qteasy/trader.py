@@ -492,15 +492,17 @@ class Trader(object):
             print(f'Own / Available Positions: \n{self.non_zero_positions}')
         return None
 
-    def trade_results(self):
+    def trade_results(self, status='filled'):
         """ 账户的交易结果 """
         from qteasy.trade_recording import read_trade_results_by_order_id
         from qteasy.trade_recording import query_trade_orders
-        order_ids = query_trade_orders(
+        trade_orders = query_trade_orders(
                 self.account_id,
-                status='filled',
+                status=status,
                 data_source=self._datasource
-        ).order_id.values
+        )
+        import pdb; pdb.set_trace()
+        order_ids = trade_orders.order_id.values
         return list(map(read_trade_results_by_order_id, order_ids))
 
     def run(self):
@@ -520,8 +522,8 @@ class Trader(object):
                           f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
-        market_open_day_loop_interval = 0.1
-        market_close_day_loop_interval = 0.1
+        market_open_day_loop_interval = 1
+        market_close_day_loop_interval = 1
         current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
         current_date = current_date_time.date()
         try:
@@ -578,6 +580,9 @@ class Trader(object):
                     self.add_task('process_result', {'result': result})
 
                 time.sleep(sleep_interval)
+            else:
+                # process trader when trader is normally stopped
+                self.post_message('Trader completed and exited.')
         except KeyboardInterrupt:
             self.post_message('KeyboardInterrupt, stopping trader')
             self.run_task('stop')

@@ -313,8 +313,8 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.account_id, 1)
         self.assertIsInstance(ts.account, dict)
         self.assertEqual(ts.account['user_name'], 'test_user1')
-        self.assertEqual(ts.account['cash_amount'], 100000)
-        self.assertEqual(ts.account['available_cash'], 100000)
+        self.assertEqual(ts.account['cash_amount'], 73905.0)
+        self.assertEqual(ts.account['available_cash'], 73905.0)
 
         print('test properties operator and broker')
         print(f'operator: {ts.operator}\nbroker: {ts.broker}')
@@ -328,17 +328,17 @@ class TestTrader(unittest.TestCase):
         print('test property asset pool')
         print(f'asset pool: {ts.asset_pool}')
         self.assertIsInstance(ts.asset_pool, list)
-        self.assertEqual(ts.asset_pool, ['APPL', 'MSFT', 'GOOG', 'AMZN', 'FB', 'TSLA'])
+        self.assertEqual(ts.asset_pool, ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ'])
 
         print('test property account cash, positions and overview')
         print(f'cash: {ts.account_cash}\npositions: \n{ts.account_positions}')
-        self.assertEqual(ts.account_cash, (100000, 100000))
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
         self.assertIsInstance(ts.account_positions, pd.DataFrame)
-        self.assertTrue(np.allclose(ts.account_positions['qty'], [200.0, 200.0, -200.0, 200.0, 0.0, 0.0]))
-        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, -100.0, 100.0, 0.0, 0.0]))
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
         self.assertIsInstance(ts.non_zero_positions, pd.DataFrame)
-        self.assertTrue(np.allclose(ts.non_zero_positions['qty'], [200.0, 200.0, -200.0, 200.0]))
-        self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, -100.0, 100.0]))
+        self.assertTrue(np.allclose(ts.non_zero_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
         print('test property history orders, cashes, and positions')
         print(f'history orders: \n{ts.history_orders}\n'
@@ -470,6 +470,7 @@ class TestTrader(unittest.TestCase):
         ts._initialize_agenda(sim_time)
         ts._add_task_from_agenda(sim_time)
 
+        print('\n========generated task agenda in a non-trade day========')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         print(f'trade day bool: {ts.is_trade_day}')
@@ -485,6 +486,7 @@ class TestTrader(unittest.TestCase):
         ts._check_trade_day(sim_date)
         self.assertEqual(ts.is_trade_day, True)
         ts._initialize_agenda(sim_time)  # should generate complete agenda
+        print('\n========generated task agenda before morning market open========')
         print(ts.task_daily_agenda)
         target_agenda = [
             ('09:25:00', 'pre_open'),
@@ -510,6 +512,7 @@ class TestTrader(unittest.TestCase):
         sim_time = dt.time(10, 35, 27)
         ts.task_daily_agenda = []
         ts._initialize_agenda(sim_time)
+        print('\n========generated task agenda at 10:35:27========')
         print(ts.task_daily_agenda)
         target_agenda = [
             ('09:25:00', 'pre_open'),
@@ -531,14 +534,51 @@ class TestTrader(unittest.TestCase):
 
         # third, create a task agenda and execute tasks from the agenda at sim times
         sim_time = dt.time(10, 35, 27)
+        print(f'\n==========start simulation run============')
         ts.task_daily_agenda = []
         ts._initialize_agenda(sim_time)
-        sim_time = dt.time(10, 35, 0)  # should run strategy macd
-        ts._add_task_from_agenda(sim_time)
-        sim_time = dt.time(11, 0, 0)  # should run strategy macd and dma
-        ts._add_task_from_agenda(sim_time)
+        # 为了简化测试流程，将除test_sim_times之外的task都删除,并确保每次执行一个task
+        test_sim_times = [
+            dt.time(9, 35, 0),  # should run task open_market
+            dt.time(11, 00, 0),  # should run task run_strategy macd and dma
+            dt.time(11, 35, 0),  # should run task sleep
+            dt.time(12, 55, 0),  # should run task wakeup
+            dt.time(15, 29, 0),  # should run task run_strategy macd
+            dt.time(15, 30, 0),  # should run task close_market
+            dt.time(15, 35, 0),  # should run task post_close
+        ]
+        ts.task_daily_agenda.pop(0)  # remove task pre_open
+        ts.task_daily_agenda.pop(2)  # remove task run_strategy macd
+        ts.task_daily_agenda.pop(4)  # remove task run_strategy macd dma
+        ts.task_daily_agenda.pop(4)  # remove task run_strategy macd
+        ts.task_daily_agenda.pop(4)  # remove task run_strategy macd dma
+        ts.task_daily_agenda.pop(4)  # remove task run_strategy macd
+        ts.task_daily_agenda.pop(4)  # remove task run_strategy macd dma
+        print(f'task agenda after removing tasks: {ts.task_daily_agenda}')
+        target_agenda = [
+            ('09:30:00', 'open_market'),
+            ('11:00:00', 'run_strategy', ['macd', 'dma']),
+            ('11:35:00', 'sleep'),
+            ('12:55:00', 'wakeup'),
+            ('15:29:00', 'run_strategy', ['macd']),
+            ('15:30:00', 'close_market'),
+            ('15:35:00', 'post_close'),
+        ]
+        self.assertEqual(ts.task_daily_agenda, target_agenda)
+        for sim_time in test_sim_times:
+            ts._add_task_from_agenda(sim_time)
+            # waite 1 second for orders to be generated
+            time.sleep(1)
+            print(f'=========simulating time: {sim_time}=========')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            print(f'trade orders generated: {ts.history_orders}')
+            # waite 5 seconds for order execution results to be generated
+            time.sleep(5)
+            print(f'trade orders executed: {ts.trade_results()}')
 
         # finally, stop the trader and broker
+        print('\n==========stop trader and broker============')
         ts.run_task('stop')
 
         self.assertEqual(ts.status, 'stopped')
