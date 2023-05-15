@@ -583,7 +583,7 @@ class TestTrader(unittest.TestCase):
             time.sleep(2)
             print(f'trader status: {ts.status}')
             print(f'broker status: {ts.broker.status}')
-            print(f'trade orders submitted to queue: {ts.broker.order_queue}')
+            print(f'trade orders submitted to queue: {ts.broker.order_queue.unfinished_tasks} tasks unfinished')
             print(f'trade orders generated: {ts.history_orders}')
             # waite 5 seconds for order execution results to be generated
             time.sleep(5)

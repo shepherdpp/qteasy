@@ -73,7 +73,11 @@ class Broker(object):
                 # 使用ThreadPoolExecutor并行调用get_result函数处理交易订单，将结果put到result_queue中
                 with ThreadPoolExecutor(max_workers=10) as executor:
                     while not self.order_queue.empty():
+                        # debug
+                        print(f'Broker {self.broker_name} is running, got order from order queue, taking order...')
                         order = self.order_queue.get()
+                        # debug
+                        print(f'Broker {self.broker_name} is running, will submit order {order} to get result...')
                         executor.submit(self.get_result, order)
                         self.order_queue.task_done()
                     # 获取交易结果并将其放入result_queue中
@@ -132,6 +136,8 @@ class QuickBroker(Broker):
         from time import sleep
         from random import random
         from qteasy.trading_util import TIMEZONE
+        # debug
+        print(f'QuickBroker: get_result: got order: \n{order}')
         qty = order['qty']
         price = order['price']
         if order['direction'] == 'buy':
@@ -150,5 +156,7 @@ class QuickBroker(Broker):
             'delivery_amount': 0,
             'delivery_status': 'ND',
         }
+        # debug
+        print(f'QuickBroker: get_result: return result: \n{result}')
         sleep(random() * 5)  # 模拟交易所处理订单的时间,最长5，平均2.5秒
         return result

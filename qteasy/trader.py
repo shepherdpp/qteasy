@@ -501,7 +501,6 @@ class Trader(object):
                 status=status,
                 data_source=self._datasource
         )
-        print(f'in function trade_results, trade_orders: {trade_orders}')
         order_ids = trade_orders.index.values
         return list(map(read_trade_results_by_order_id, order_ids))
 
