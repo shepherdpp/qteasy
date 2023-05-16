@@ -14,9 +14,10 @@
 
 from queue import Queue
 from abc import abstractmethod, ABCMeta
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
+import time
 
 
 class Broker(object):
@@ -62,8 +63,14 @@ class Broker(object):
         order_queue中的每一个交易订单都由get_result函数来处理并获取交易结果，get_result函数
         的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
         """
+        # debug
+        print(f'Broker {self.broker_name} is running...')
+        self.status = 'init'
         try:
             while self.status != 'stopped':
+                # debug
+                print(f'running broker {self.broker_name}, sleep 1 second...')
+                time.sleep(1)
                 # 如果Broker处于暂停状态，则不处理交易订单
                 if self.status == 'paused':
                     continue
@@ -72,20 +79,28 @@ class Broker(object):
                     continue
                 # 使用ThreadPoolExecutor并行调用get_result函数处理交易订单，将结果put到result_queue中
                 with ThreadPoolExecutor(max_workers=10) as executor:
+                    futures = []
                     while not self.order_queue.empty():
                         # debug
-                        print(f'Broker {self.broker_name} is running, got order from order queue, taking order...')
+                        print(f'Broker {self.broker_name} is running, '
+                              f'got order from order queue, taking order from queue'
+                              f'({self.order_queue.unfinished_tasks} orders)...')
                         order = self.order_queue.get()
                         # debug
                         print(f'Broker {self.broker_name} is running, will submit order {order} to get result...')
-                        executor.submit(self.get_result, order)
+                        futures.append(executor.submit(self.get_result, order))
                         self.order_queue.task_done()
                     # 获取交易结果并将其放入result_queue中
-                for future in executor.as_completed():
-                    self.result_queue.put(future.result())
+                    for future in as_completed(futures):
+                        # debug
+                        result = future.result()
+                        print(f'Broker {self.broker_name} is running, got result {result} and put to result queue...')
+                        self.result_queue.put(result)
             else:
                 # 如果Broker正常退出，处理尚未完成的交易订单
                 # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
+                # debug
+                print(f'Broker {self.broker_name} is stopped, will process unfinished orders...')
                 while not self.order_queue.empty():
                     order = self.order_queue.get()
                     self.result_queue.put(self.get_result(order))
@@ -93,11 +108,19 @@ class Broker(object):
         except KeyboardInterrupt:
             # 如果Broker被用户强制退出，处理尚未完成的交易订单
             # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
+            # debug
+            print('Broker is stopped by user, will stop broker and process unfinished orders...')
             self.status = 'stopped'
             while not self.order_queue.empty():
                 order = self.order_queue.get()
                 self.result_queue.put(self.get_result(order))
                 self.order_queue.task_done()
+        except Exception as e:
+            # 如果Broker出现异常，处理尚未完成的交易订单
+            # debug
+            print(f'Broker is stopped by exception{e}, will stop broker and process unfinished orders...')
+            self.status = 'stopped'
+            raise e
 
     @abstractmethod
     def get_result(self, order):
@@ -125,6 +148,7 @@ class QuickBroker(Broker):
 
     交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
     """
+
     def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003):
         super(QuickBroker, self).__init__()
         self.broker_name = 'QuickBroker'
@@ -133,11 +157,12 @@ class QuickBroker(Broker):
 
     def get_result(self, order):
         """ 订单立即全部成交 """
+        # TODO: this is an abstract method, simplify and specify the work that user needs to do
         from time import sleep
         from random import random
         from qteasy.trading_util import TIMEZONE
         # debug
-        print(f'QuickBroker: get_result: got order: \n{order}')
+        print(f'Broker({self.broker_name}) get_result: got order: \n{order}')
         qty = order['qty']
         price = order['price']
         if order['direction'] == 'buy':
@@ -146,17 +171,18 @@ class QuickBroker(Broker):
             transaction_fee = qty * price * self.fee_rate_sell
         else:
             raise RuntimeError('invalid direction: {}'.format(order['direction']))
+        current_datetime = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE)
         result = {
-            'order_id': order['order_id'],
-            'filled_qty': qty,
-            'price': price,
+            'order_id':        order['order_id'],
+            'filled_qty':      qty,
+            'price':           price,
             'transaction_fee': transaction_fee,
-            'execution_time': pd.to_datetime('now').tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
-            'canceled_qty': 0,
+            'execution_time':  current_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+            'canceled_qty':    0,
             'delivery_amount': 0,
             'delivery_status': 'ND',
         }
         # debug
-        print(f'QuickBroker: get_result: return result: \n{result}')
+        print(f'Broker({self.broker_name}) get_result: return result: \n{result}')
         sleep(random() * 5)  # 模拟交易所处理订单的时间,最长5，平均2.5秒
         return result

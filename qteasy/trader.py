@@ -577,7 +577,7 @@ class Trader(object):
                     result = self.broker.result_queue.get()
                     self.post_message(f'got new result from broker for order {result["order_id"]}, '
                                       f'adding process_result task to queue')
-                    self.add_task('process_result', {'result': result})
+                    self.add_task('process_result', result)
 
                 time.sleep(sleep_interval)
             else:
@@ -640,8 +640,10 @@ class Trader(object):
         """
         if self.debug:
             self.post_message('running task process_result')
+        # debug
+        print(f'process_result: got result: \n{result}')
         process_trade_result(result, data_source=self._datasource)
-        self.post_message(f'processed trade result: {result}')
+        self.post_message(f'processed trade result: \n{result}')
         process_trade_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
@@ -784,7 +786,8 @@ class Trader(object):
         )
         submitted_qty = 0
         if self.debug:
-            self.post_message(f'symbols: {symbols}\n'
+            self.post_message(f'generated trade signals:\n'
+                              f'symbols: {symbols}\n'
                               f'positions: {positions}\n'
                               f'directions: {directions}\n'
                               f'quantities: {quantities}\n'
@@ -809,6 +812,7 @@ class Trader(object):
             order_id = record_trade_order(trade_order, data_source=self._datasource)
             # 逐一提交交易信号
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
+                trade_order['order_id'] = order_id
                 self._broker.order_queue.put(trade_order)
                 self.post_message(f'Submitted order to broker: {trade_order}')
                 # 记录已提交的交易数量
