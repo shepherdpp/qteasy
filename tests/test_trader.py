@@ -22,7 +22,7 @@ from qteasy import QT_CONFIG, DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order
 from qteasy.trader import Trader, TraderShell
-from qteasy.broker import QuickBroker, Broker
+from qteasy.broker import RandomBroker, Broker
 
 
 class TestTrader(unittest.TestCase):
@@ -41,7 +41,7 @@ class TestTrader(unittest.TestCase):
                 window_length=30,
                 strategy_run_freq='30min',
         )
-        broker = QuickBroker()
+        broker = RandomBroker()
         config = {
             'mode': 0,
             'market_open_time_am':  '09:30:00',

@@ -2203,6 +2203,11 @@ class DataSource:
             self.file_loc = file_loc
             self.connection_type = f'file://{file_type}@qt_root/{file_loc}'
 
+    def __del__(self):
+        """ 关闭数据库连接 """
+        if self.source_type == 'db':
+            self.con.close()
+
     @property
     def tables(self):
         """ 所有已经建立的tables的清单"""

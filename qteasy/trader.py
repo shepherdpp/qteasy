@@ -24,7 +24,7 @@ import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, time_str_format
-from qteasy.broker import Broker, QuickBroker
+from qteasy.broker import Broker, RandomBroker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
 from qteasy.trade_recording import new_account, get_or_create_position, update_position
@@ -1174,7 +1174,7 @@ def start_trader(
         raise ValueError(f'{e}\naccount {account_id} does not exist.')
 
     # if account is ready then create trader and broker
-    broker = QuickBroker(
+    broker = RandomBroker(
             fee_rate_buy=0.0001,
             fee_rate_sell=0.0003,
     )

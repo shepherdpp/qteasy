@@ -122,11 +122,10 @@ class Broker(object):
             self.status = 'stopped'
             raise e
 
-    @abstractmethod
     def get_result(self, order):
         """ 交易所处理交易订单并获取交易结果
 
-        抽象方法，必须在子类中实现
+        抽象方法，可以由用户在子类中实现，返回的信息包括filled_qty, transaction_fee, canceled_qty
 
         Parameters:
         -----------
@@ -140,49 +139,152 @@ class Broker(object):
             交易结果dict的key包括 ['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                         'canceled_qty', 'delivery_amount', 'delivery_status'
         """
-        pass
-
-
-class QuickBroker(Broker):
-    """ QuickBroker接到交易订单后，立即返回交易结果，且结果永远是全部成交
-
-    交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
-    """
-
-    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003):
-        super(QuickBroker, self).__init__()
-        self.broker_name = 'QuickBroker'
-        self.fee_rate_buy = fee_rate_buy
-        self.fee_rate_sell = fee_rate_sell
-
-    def get_result(self, order):
-        """ 订单立即全部成交 """
-        # TODO: this is an abstract method, simplify and specify the work that user needs to do
         from time import sleep
-        from random import random
+        from random import random, choice
         from qteasy.trading_util import TIMEZONE
         # debug
         print(f'Broker({self.broker_name}) get_result: got order: \n{order}')
-        qty = order['qty']
-        price = order['price']
-        if order['direction'] == 'buy':
-            transaction_fee = qty * price * self.fee_rate_buy
-        elif order['direction'] == 'sell':
-            transaction_fee = qty * price * self.fee_rate_sell
+        result_type, qty, filled_price, fee = transaction_result(
+                order_qty=order['qty'],
+                order_price=order['price'],
+                direction=order['direction'],
+        )
+        # 圆整qty、filled_qty和fee # TODO: 这里的round函数小数位数应该是可配置的
+        qty = round(qty, 2)
+        filled_price = round(filled_price, 2)
+        transaction_fee = round(fee, 2)
+
+        filled_qty = 0
+        canceled_qty = 0
+        if result_type == 'filled':
+            filled_qty = qty
+        elif result_type == 'canceled':
+            canceled_qty = qty
         else:
-            raise RuntimeError('invalid direction: {}'.format(order['direction']))
+            raise ValueError(f'Unknown result_type: {result_type}, should be one of ["filled", "canceled"]')
+
         current_datetime = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE)
         result = {
             'order_id':        order['order_id'],
-            'filled_qty':      qty,
-            'price':           price,
+            'filled_qty':      filled_qty,
+            'price':           filled_price,
             'transaction_fee': transaction_fee,
             'execution_time':  current_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-            'canceled_qty':    0,
+            'canceled_qty':    canceled_qty,
             'delivery_amount': 0,
             'delivery_status': 'ND',
         }
         # debug
         print(f'Broker({self.broker_name}) get_result: return result: \n{result}')
-        sleep(random() * 5)  # 模拟交易所处理订单的时间,最长5，平均2.5秒
         return result
+
+
+    @abstractmethod
+    def transaction_result(self, order_qty, order_price, direction):
+        """ 交易所处理交易订单并获取交易结果, 抽象方法，需要由用户在子类中实现
+
+        Parameters:
+        -----------
+        order_qty: float
+            交易订单数量
+        order_price: float
+            交易订单价格
+        direction: str
+            交易订单方向，'buy' 或者 'sell'
+
+        Returns:
+        --------
+        result_type: str
+            交易结果类型，'filled' - 成交, 'canceled' - 取消
+        qty: float
+            成交/取消数量
+        price: float
+            成交价格, 如果是取消交易，价格为0或任意数字
+        fee: float
+            交易费用
+        """
+        pass
+
+
+class SimpleBroker(Broker):
+    """ SimpleBroker接到交易订单后，立即返回交易结果
+    交易结果总是完全成交，交易费用固定为5元
+    """
+
+        def __init__(self):
+            super(SimpleBroker, self).__init__()
+            self.broker_name = 'SimpleBroker'
+
+        def transaction_result(self, order_qty, order_price, direction):
+            """ 订单立即成交
+
+            Returns:
+            --------
+            result_type: str
+                交易结果类型，'filled' - 成交
+            qty: float
+                成交数量
+            price: float
+                成交价格
+            fee: float
+                交易费用
+            """
+            qty = order_qty
+            price = order_price
+            fee: float = 5.
+            return 'filled', qty, price, fee
+
+
+class RandomBroker(Broker):
+    """ RandomBroker接到交易订单后，随机等待一段时间再返回交易结果。交易结果随机，包含完全成交、部分成交和取消交易
+
+    交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
+    """
+
+    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003):
+        super(RandomBroker, self).__init__()
+        self.broker_name = 'RandomBroker'
+        self.fee_rate_buy = fee_rate_buy
+        self.fee_rate_sell = fee_rate_sell
+
+    def transaction_result(self, order_qty, order_price, direction):
+        """ 订单随机成交
+
+        Returns:
+        --------
+        result_type: str
+            交易结果类型，'filled' - 成交, 'canceled' - 取消
+        qty: float
+            成交/取消数量
+        price: float
+            成交价格, 如果是取消交易，价格为0或任意数字
+        fee: float
+            交易费用
+        """
+        from time import sleep
+        from random import random, choice
+        from qteasy.trading_util import TIMEZONE
+        result_type = choice(['filled', 'canceled'])
+        trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
+        price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
+        # debug
+        print(f'Broker({self.broker_name}) get_result: got order: \n{order}')
+        sleep(trade_delay)
+
+        if result_type == 'filled':
+            filled_proportion = choice([0.5, 0.75, 1.0])  # 模拟交易所的部分成交，最多成交1.0，最少成交0.5
+            qty = order_qty * filled_proportion
+            if direction == 'buy':
+                order_price = order_price * (1 + price_deviation)
+                transaction_fee = qty * order_price * self.fee_rate_buy
+            elif direction == 'sell':
+                order_price = order_price * (1 - price_deviation)
+                transaction_fee = qty * order_price * self.fee_rate_sell
+            else:
+                raise RuntimeError('invalid direction: {}'.format(order['direction']))
+        else: # result_type == 'canceled'
+            transaction_fee = 0
+            order_price = 0
+            qty = order_qty
+
+        return result_type, qty, order_price, transaction_fee
