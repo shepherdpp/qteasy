@@ -387,37 +387,38 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
 
-    milliseconds = int(t * 1000)
+    milliseconds = t * 1000
 
     if estimation:
         # 大致估算时间，精确到最高时间单位，如天、小时、分钟、秒等
         seconds = round(milliseconds / 1000.0)
         if seconds <= 59:
-            time_str = f'~{seconds:.d}"' if short_form else f'about {seconds:.01f} sec '
+            time_str = f'~{seconds:.0f}"' if short_form else f'about {seconds:.0f} sec'
             return time_str
         minutes = round(seconds / 60.0)
         if minutes <= 59:
-            time_str = f'~{minutes:d}\'' if short_form else f'about {minutes:.01f} min '
+            time_str = f'~{minutes:.0f}\'' if short_form else f'about {minutes:.0f} min'
             return time_str
         hours = round(seconds / 3600.0)
         if hours <= 23:
-            time_str = f'~{hours:d}H' \
+            time_str = f'~{hours:.0f}H' \
                 if short_form \
-                else f'about {hours:d} hour' \
+                else f'about {hours:.0f} hour' \
                 if hours == 1 \
-                else f'about {hours:d} hours'
+                else f'about {hours:.0f} hours'
             return time_str
         days, hours = divmod(hours, 24)
-        time_str = f'~{days:d}D{hours:d}H ' \
-            if short_form \
-            else f'about {days:.01f} day' \
-            if hours == 0 \
-            else f'about {days:.01f} day {hours:d} hour' \
-            if days == 1 \
-            else f'about {days:.01f} days {hours:d} hours'
-        return time_str
+        if short_form:
+            return f'~{days:.0f}D' if hours == 0 else f'~{days:.0f}D{hours:.0f}H'
+        else:
+            return f'about {days:.0f} day' \
+                    if hours == 0 \
+                    else f'about {days:.0f} day {hours:.0f} hour' \
+                    if days == 1 \
+                    else f'about {days:.0f} days {hours:.0f} hours'
     else:  # estimation:
-        seconds, milliseconds = divmod(milliseconds, 1000)
+        seconds = int(milliseconds / 1000)
+        milliseconds = milliseconds - seconds * 1000
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
         days, hours = divmod(hours, 24)
@@ -425,29 +426,29 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
         if short_form:
             time_str = ""
             if days > 0:
-                time_str += f"{days}D"
+                time_str += f"{days:.0f}D"
             if hours > 0:
-                time_str += f"{hours}H"
+                time_str += f"{hours:.0f}H"
             if minutes > 0:
-                time_str += f"{minutes}'"
+                time_str += f"{minutes:.0f}'"
             if seconds > 0:
-                time_str += f'{seconds}"'
+                time_str += f'{seconds:.0f}"'
             if milliseconds > 0 or not time_str:
-                ms_str = f'.{milliseconds:0.1f}' if time_str else f'0.{milliseconds:0.1f}'
+                ms_str = f'{milliseconds:03.0f}' if time_str else f'0"{milliseconds:03.0f}'
                 time_str += ms_str
             return time_str
         else:
             time_str = ""
             if days > 0:
-                days_str = f"{days} days " if days > 1 else f"{days} day "
+                days_str = f"{days:.0f} days " if days > 1 else f"{days:.0f} day "
                 time_str += days_str
             if hours > 0:
-                hour_str = f"{hours} hours " if hours > 1 else f"{hours} hour "
+                hour_str = f"{hours:.0f} hours " if hours > 1 else f"{hours:.0f} hour "
                 time_str += hour_str
             if minutes > 0:
-                time_str += f"{minutes} min "
+                time_str += f"{minutes:.0f} min "
             if seconds > 0:
-                time_str += f"{seconds} sec "
+                time_str += f"{seconds:.0f} sec "
             if milliseconds > 0 or not time_str:
                 time_str += f"{milliseconds:0.1f} ms"
 

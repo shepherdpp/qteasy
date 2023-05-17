@@ -53,24 +53,34 @@ class TestUtilityFuncs(unittest.TestCase):
         print('Testing qt.time_string_format() function:')
         t = 3.14
         self.assertEqual(sec_to_duration(t), '3 sec 140.0 ms')
-        self.assertEqual(sec_to_duration(t, estimation=True), 'about 3 sec ')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 3 sec')
         self.assertEqual(sec_to_duration(t, short_form=True), '3"140')
         self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), '~3"')
         t = 300.14
         self.assertEqual(sec_to_duration(t), '5 min 140.0 ms')
-        self.assertEqual(sec_to_duration(t, estimation=True), '5 min ')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 5 min')
         self.assertEqual(sec_to_duration(t, short_form=True), "5'140")
         self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~5'")
         t = 7435.0014
-        self.assertEqual(sec_to_duration(t), '2 hours 3 min 55 sec 1.4ms')
-        self.assertEqual(sec_to_duration(t, estimation=True), '2 hours ')
+        self.assertEqual(sec_to_duration(t), '2 hours 3 min 55 sec 1.4 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 2 hours')
         self.assertEqual(sec_to_duration(t, short_form=True), "2H3'55\"001")
         self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~2H")
-        t = 88425.0509
-        self.assertEqual(sec_to_duration(t), '1days 33min 45s 50.9ms')
+        t = 86120.0509
+        self.assertEqual(sec_to_duration(t), '23 hours 55 min 20 sec 50.9 ms')
         self.assertEqual(sec_to_duration(t, estimation=True), 'about 1 day')
-        self.assertEqual(sec_to_duration(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(sec_to_duration(t, short_form=True), "23H55'20\"051")
         self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~1D")
+        t = 88425.0509
+        self.assertEqual(sec_to_duration(t), '1 day 33 min 45 sec 50.9 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 1 day 1 hour')
+        self.assertEqual(sec_to_duration(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~1D1H")
+        t = 288425.0509
+        self.assertEqual(sec_to_duration(t), '3 days 8 hours 7 min 5 sec 50.9 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 3 days 8 hours')
+        self.assertEqual(sec_to_duration(t, short_form=True), "3D8H7'5\"051")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~3D8H")
 
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])

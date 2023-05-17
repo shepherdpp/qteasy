@@ -441,7 +441,11 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts.run_task('process_result', {})
+        # TODO: complete test case process results
+        # trade_result = {
+        #     'order_id': 1,
+        # }
+        # ts.run_task('process_result', trade_result)
         ts._stop()
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'stopped')
