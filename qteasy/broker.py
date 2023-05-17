@@ -144,7 +144,7 @@ class Broker(object):
         from qteasy.trading_util import TIMEZONE
         # debug
         print(f'Broker({self.broker_name}) get_result: got order: \n{order}')
-        result_type, qty, filled_price, fee = transaction_result(
+        result_type, qty, filled_price, fee = self.transaction_result(
                 order_qty=order['qty'],
                 order_price=order['price'],
                 direction=order['direction'],
@@ -178,7 +178,6 @@ class Broker(object):
         print(f'Broker({self.broker_name}) get_result: return result: \n{result}')
         return result
 
-
     @abstractmethod
     def transaction_result(self, order_qty, order_price, direction):
         """ 交易所处理交易订单并获取交易结果, 抽象方法，需要由用户在子类中实现
@@ -211,28 +210,28 @@ class SimpleBroker(Broker):
     交易结果总是完全成交，交易费用固定为5元
     """
 
-        def __init__(self):
-            super(SimpleBroker, self).__init__()
-            self.broker_name = 'SimpleBroker'
+    def __init__(self):
+        super(SimpleBroker, self).__init__()
+        self.broker_name = 'SimpleBroker'
 
-        def transaction_result(self, order_qty, order_price, direction):
-            """ 订单立即成交
+    def transaction_result(self, order_qty, order_price, direction):
+        """ 订单立即成交
 
-            Returns:
-            --------
-            result_type: str
-                交易结果类型，'filled' - 成交
-            qty: float
-                成交数量
-            price: float
-                成交价格
-            fee: float
-                交易费用
-            """
-            qty = order_qty
-            price = order_price
-            fee: float = 5.
-            return 'filled', qty, price, fee
+        Returns:
+        --------
+        result_type: str
+            交易结果类型，'filled' - 成交
+        qty: float
+            成交数量
+        price: float
+            成交价格
+        fee: float
+            交易费用
+        """
+        qty = order_qty
+        price = order_price
+        fee: float = 5.
+        return 'filled', qty, price, fee
 
 
 class RandomBroker(Broker):

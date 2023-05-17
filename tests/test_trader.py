@@ -533,18 +533,19 @@ class TestTrader(unittest.TestCase):
             ('15:35:00', 'post_close'),
         ]
         self.assertEqual(ts.task_daily_agenda, target_agenda)
+        ts.task_queue.empty()  # clear task queue
 
         # third, create simulated task agenda and execute tasks from the agenda at sim times
         # 为了避免测试过程中trader自动触发task，手动生成一个task agenda，将所有测试时间设置为current_time的10分钟以后，并间隔1分钟
         # 如果当天已经过了23：40：00，可能没有足够时间测试，则等待20分钟后再次测试（此时已经是第二日凌晨）
+        # stop trader and broker, and restart them
+        ts.run_task('stop')
+
         current_time = dt.datetime.now()
         if current_time.time() > dt.time(23, 40, 0):
             print(f'current time is {current_time}, wait 20 minutes to test')
             time.sleep(1200)
             current_time = dt.datetime.now()
-        # stop trader and broker, and restart them
-        ts.run_task('stop')
-        ts.task_queue.empty()  # clear task queue
 
         ts.debug = True
         ts.broker.broker_name = 'test_simulation_broker'

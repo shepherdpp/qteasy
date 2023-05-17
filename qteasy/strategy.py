@@ -676,6 +676,7 @@ class BaseStrategy:
                 pd.to_datetime(strategy_run_timing)
             except Exception as e:
                 if strategy_run_timing not in self.AVAILABLE_STG_RUN_TIMING:
+                    # TODO: add deprecation warning: 以前定义的bt_price_type的部分允许值已经不再适用，需要更新
                     raise ValueError(f'Invalid price type, should be one of {self.AVAILABLE_STG_RUN_TIMING}, '
                                      f'got {strategy_run_timing} instead')
 
