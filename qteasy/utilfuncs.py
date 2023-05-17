@@ -344,7 +344,7 @@ def unify(arr):
     raise TypeError(f'Input should be ndarray! got {type(arr)}')
 
 
-def time_str_format(t: float, estimation: bool = False, short_form: bool = False):
+def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
     Parameters
@@ -364,94 +364,65 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
 
     Examples
     --------
-    >>> time_str_format(86400)
+    >>> sec_to_duration(86400)
     '1 day '
-    >>> time_str_format(86400, short_form=True)
+    >>> sec_to_duration(86400, short_form=True)
     '1D'
-    >>> time_str_format(86400, estimation=True)
-    '1 day '
-    >>> time_str_format(86399)
+    >>> sec_to_duration(86400, estimation=True)
+    'about 1 day '
+    >>> sec_to_duration(86399)
     '23 hour 59 min 59 sec'
-    >>> time_str_format(86399, short_form=True)
+    >>> sec_to_duration(86399, short_form=True)
     '23H 59'59".000"
-    >>> time_str_format(86399, estimation=True)
-    '1 day '
+    >>> sec_to_duration(86399, estimation=True)
+    'about 1 day '
+    >>> sec_to_duration(86399, estimation=True, short_form=True)
+    '~ 1D'
     """
 
-    # TODO: 此函数在estimation=True时，输出结果不准确，需要修正，例如，86399秒应该输出为1天，而不是23小时
+    # TODO: 此函数在estimation=True时，输出结果不准确，需要修正，例如，86399秒应该输出为1天，
+    #  而不是23小时
+    # TODO: 修正函数输出值的错，在estimation=True时，输出结果不正确）
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
-    #
-    # str_element = []
-    # enough_accuracy = False
-    # if t >= 86400 and not enough_accuracy:
-    #     if estimation:
-    #         enough_accuracy = True
-    #     days = t // 86400
-    #     t = t - days * 86400
-    #     str_element.append(str(int(days)))
-    #     if short_form:
-    #         str_element.append('D')
-    #     else:
-    #         str_element.append('days ')
-    # if t >= 3600 and not enough_accuracy:
-    #     if estimation:
-    #         enough_accuracy = True
-    #     hours = t // 3600
-    #     t = t - hours * 3600
-    #     str_element.append(str(int(hours)))
-    #     if short_form:
-    #         str_element.append('H')
-    #     else:
-    #         str_element.append('hrs ')
-    # if t >= 60 and not enough_accuracy:
-    #     if estimation:
-    #         enough_accuracy = True
-    #     minutes = t // 60
-    #     t = t - minutes * 60
-    #     str_element.append(str(int(minutes)))
-    #     if short_form:
-    #         str_element.append('\'')
-    #     else:
-    #         str_element.append('min ')
-    # if t >= 1 and not enough_accuracy:
-    #     if estimation:
-    #         enough_accuracy = True
-    #     seconds = np.floor(t)
-    #     t = t - seconds
-    #     str_element.append(str(int(seconds)))
-    #     if short_form:
-    #         str_element.append('\"')
-    #     else:
-    #         str_element.append('s ')
-    # if not enough_accuracy:
-    #     milliseconds = np.round(t * 1000, 1)
-    #     if short_form:
-    #         str_element.append(f'{int(np.round(milliseconds)):03d}')
-    #     else:
-    #         str_element.append(str(milliseconds))
-    #         str_element.append('ms')
-    #
-    # return ''.join(str_element)
+
     milliseconds = int(t * 1000)
 
-    seconds, milliseconds = divmod(milliseconds, 1000)
-    minutes, seconds = divmod(seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    days, hours = divmod(hours, 24)
+    if estimation:
+        # 大致估算时间，精确到最高时间单位，如天、小时、分钟、秒等
+        seconds = round(milliseconds / 1000.0)
+        if seconds <= 59:
+            time_str = f'~{seconds:.d}"' if short_form else f'about {seconds:.01f} sec '
+            return time_str
+        minutes = round(seconds / 60.0)
+        if minutes <= 59:
+            time_str = f'~{minutes:d}\'' if short_form else f'about {minutes:.01f} min '
+            return time_str
+        hours = round(seconds / 3600.0)
+        if hours <= 23:
+            time_str = f'~{hours:d}H' \
+                if short_form \
+                else f'about {hours:d} hour' \
+                if hours == 1 \
+                else f'about {hours:d} hours'
+            return time_str
+        days, hours = divmod(hours, 24)
+        time_str = f'~{days:d}D{hours:d}H ' \
+            if short_form \
+            else f'about {days:.01f} day' \
+            if hours == 0 \
+            else f'about {days:.01f} day {hours:d} hour' \
+            if days == 1 \
+            else f'about {days:.01f} days {hours:d} hours'
+        return time_str
+    else:  # estimation:
+        seconds, milliseconds = divmod(milliseconds, 1000)
+        minutes, seconds = divmod(seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
 
-    if short_form:
-        if estimation:
-            if days > 0:
-                return f'{days}D'
-            elif hours > 0:
-                return f'{hours}H'
-            elif minutes > 0:
-                return f'{minutes}\'{seconds:02}"'
-            else:
-                return f'{seconds:.01f}"'
-        else:
+        if short_form:
             time_str = ""
             if days > 0:
                 time_str += f"{days}D"
@@ -465,20 +436,20 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
                 ms_str = f'.{milliseconds:0.1f}' if time_str else f'0.{milliseconds:0.1f}'
                 time_str += ms_str
             return time_str
-    else:
-        time_str = ""
-        if days > 0:
-            days_str = f"{days} days " if days > 1 else f"{days} day "
-            time_str += days_str
-        if hours > 0:
-            hour_str = f"{hours} hours " if hours > 1 else f"{hours} hour "
-            time_str += hour_str
-        if minutes > 0:
-            time_str += f"{minutes} min "
-        if seconds > 0:
-            time_str += f"{seconds} sec "
-        if milliseconds > 0 or not time_str:
-            time_str += f"{milliseconds:0.1f} ms"
+        else:
+            time_str = ""
+            if days > 0:
+                days_str = f"{days} days " if days > 1 else f"{days} day "
+                time_str += days_str
+            if hours > 0:
+                hour_str = f"{hours} hours " if hours > 1 else f"{hours} hour "
+                time_str += hour_str
+            if minutes > 0:
+                time_str += f"{minutes} min "
+            if seconds > 0:
+                time_str += f"{seconds} sec "
+            if milliseconds > 0 or not time_str:
+                time_str += f"{milliseconds:0.1f} ms"
 
         return time_str
 

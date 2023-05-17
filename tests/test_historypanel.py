@@ -15,7 +15,7 @@ import pandas as pd
 from pandas import Timestamp
 import numpy as np
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 

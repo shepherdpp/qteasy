@@ -749,9 +749,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', strategy_run_timing='open')
         op.set_parameter('dma', strategy_run_timing='close')
         op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategies_by_price_type('close')
-        stg_open = op.get_strategies_by_price_type('open')
-        stg_high = op.get_strategies_by_price_type('high')
+        stg_close = op.get_strategies_by_run_timing('close')
+        stg_open = op.get_strategies_by_run_timing('open')
+        stg_high = op.get_strategies_by_run_timing('high')
 
         self.assertIsInstance(stg_close, list)
         self.assertIsInstance(stg_open, list)
@@ -761,12 +761,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_open, [op.strategies[0], op.strategies[2]])
         self.assertEqual(stg_high, [])
 
-        stg_wrong = op.get_strategies_by_price_type(123)
+        stg_wrong = op.get_strategies_by_run_timing(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
-    def test_get_strategy_count_by_price_type(self):
-        """ test get_strategy_count_by_price_type"""
+    def test_get_strategy_count_by_run_timing(self):
+        """ test get_strategy_count_by_run_timing"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
@@ -776,9 +776,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', strategy_run_timing='open')
         op.set_parameter('dma', strategy_run_timing='close')
         op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategy_count_by_price_type('close')
-        stg_open = op.get_strategy_count_by_price_type('open')
-        stg_high = op.get_strategy_count_by_price_type('high')
+        stg_close = op.get_strategy_count_by_run_timing('close')
+        stg_open = op.get_strategy_count_by_run_timing('open')
+        stg_high = op.get_strategy_count_by_run_timing('high')
 
         self.assertIsInstance(stg_close, int)
         self.assertIsInstance(stg_open, int)
@@ -788,7 +788,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_open, 2)
         self.assertEqual(stg_high, 0)
 
-        stg_wrong = op.get_strategy_count_by_price_type(123)
+        stg_wrong = op.get_strategy_count_by_run_timing(123)
         self.assertIsInstance(stg_wrong, int)
         self.assertEqual(stg_wrong, 0)
 
@@ -803,9 +803,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', strategy_run_timing='open')
         op.set_parameter('dma', strategy_run_timing='close')
         op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategy_names_by_price_type('close')
-        stg_open = op.get_strategy_names_by_price_type('open')
-        stg_high = op.get_strategy_names_by_price_type('high')
+        stg_close = op.get_strategy_names_by_run_timing('close')
+        stg_open = op.get_strategy_names_by_run_timing('open')
+        stg_high = op.get_strategy_names_by_run_timing('high')
 
         self.assertIsInstance(stg_close, list)
         self.assertIsInstance(stg_open, list)
@@ -815,7 +815,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_open, ['MACD', 'TRIX'])
         self.assertEqual(stg_high, [])
 
-        stg_wrong = op.get_strategy_names_by_price_type(123)
+        stg_wrong = op.get_strategy_names_by_run_timing(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
@@ -831,9 +831,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', strategy_run_timing='open')
         op.set_parameter('dma', strategy_run_timing='close')
         op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategy_id_by_price_type('close')
-        stg_open = op.get_strategy_id_by_price_type('open')
-        stg_high = op.get_strategy_id_by_price_type('high')
+        stg_close = op.get_strategy_id_by_run_timing('close')
+        stg_open = op.get_strategy_id_by_run_timing('open')
+        stg_high = op.get_strategy_id_by_run_timing('high')
 
         self.assertIsInstance(stg_close, list)
         self.assertIsInstance(stg_open, list)
@@ -851,19 +851,17 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Operator strategy id:\n'
               f'{op.strategies} on memory pos:\n'
               f'{[id(stg) for stg in op.strategies]}')
-        stg_close = op.get_strategy_id_by_price_type('close')
-        stg_open = op.get_strategy_id_by_price_type('open')
-        stg_high = op.get_strategy_id_by_price_type('close')
-        stg_all = op.get_strategy_id_by_price_type()
+        stg_close = op.get_strategy_id_by_run_timing('close')
+        stg_open = op.get_strategy_id_by_run_timing('open')
+        stg_all = op.get_strategy_id_by_run_timing()
         print(f'All IDs of strategies:\n'
               f'{stg_all}\n'
               f'All price types of strategies:\n'
               f'{[stg.strategy_run_timing for stg in op.strategies]}')
-        self.assertEqual(stg_close, ['dma', 'trix'])
+        self.assertEqual(stg_close, ['dma', 'trix', 'macd_1'])
         self.assertEqual(stg_open, ['macd', 'dma_1'])
-        self.assertEqual(stg_high, ['macd_1'])
 
-        stg_wrong = op.get_strategy_id_by_price_type(123)
+        stg_wrong = op.get_strategy_id_by_run_timing(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
@@ -886,15 +884,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(strategies[2], CDL)
 
     def test_property_strategy_count(self):
-        """ test Property strategy_count, and the method get_strategy_count_by_price_type()"""
+        """ test Property strategy_count, and the method get_strategy_count_by_run_timing()"""
         self.assertEqual(self.op.strategy_count, 1)
         self.assertEqual(self.op2.strategy_count, 3)
-        self.assertEqual(self.op.get_strategy_count_by_price_type(), 1)
-        self.assertEqual(self.op2.get_strategy_count_by_price_type(), 3)
-        self.assertEqual(self.op.get_strategy_count_by_price_type('close'), 1)
-        self.assertEqual(self.op.get_strategy_count_by_price_type('high'), 0)
-        self.assertEqual(self.op2.get_strategy_count_by_price_type('close'), 3)
-        self.assertEqual(self.op2.get_strategy_count_by_price_type('open'), 0)
+        self.assertEqual(self.op.get_strategy_count_by_run_timing(), 1)
+        self.assertEqual(self.op2.get_strategy_count_by_run_timing(), 3)
+        self.assertEqual(self.op.get_strategy_count_by_run_timing('close'), 1)
+        self.assertEqual(self.op.get_strategy_count_by_run_timing('high'), 0)
+        self.assertEqual(self.op2.get_strategy_count_by_run_timing('close'), 3)
+        self.assertEqual(self.op2.get_strategy_count_by_run_timing('open'), 0)
 
     def test_property_strategy_names(self):
         """ test property strategy_ids"""
@@ -942,7 +940,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_blenders, {})
         op.add_strategies('dma, trix, macd, dma')
         op.set_parameter('dma', strategy_run_timing='open')
-        op.set_parameter('trix', strategy_run_timing='high')
+        op.set_parameter('trix', strategy_run_timing='close')
 
         op.set_blender('1+2', 'open')
         blender_open = op.get_blender('open')
@@ -1156,11 +1154,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(btpc, 2)
 
         op.add_strategies(['dma', 'macd'])
-        op.set_parameter('dma_1', strategy_run_timing='high')
+        op.set_parameter('dma_1', strategy_run_timing='close')
         btp = op.strategy_timings
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'high')
+        self.assertEqual(btp[1], 'close')
         self.assertEqual(btp[2], 'open')
         self.assertEqual(btpc, 3)
 
@@ -1896,7 +1894,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          pars=(5, 10, 5))
         op.set_parameter('all',
                          window_length=20)
-        op.set_parameter('all', strategy_run_timing='high')
+        op.set_parameter('all', strategy_run_timing='close')
         print(f'Can also set up strategy parameters by strategy index')
         op.set_parameter(2, strategy_run_timing='open')
         op.set_parameter(2,

@@ -16,7 +16,7 @@ import pandas as pd
 from pandas import Timestamp
 import numpy as np
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.trading_util import _trade_time_index
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame

@@ -1936,8 +1936,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_amounts = np.array([500., 500., 1000.])
         available_cash = 100000.0
         test_config = {
-            'pt_buy_threshold': 0.0,
-            'pt_sell_threshold': 0.0,
+            'PT_buy_threshold': 0.0,
+            'PT_sell_threshold': 0.0,
             'allow_sell_short': True,
         }
         # create test data for PT signal and parse it
@@ -2050,8 +2050,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # test allow_sell_short = False
         test_config = {
-            'pt_buy_threshold': 0.1,
-            'pt_sell_threshold': -0.1,
+            'PT_buy_threshold': 0.1,
+            'PT_sell_threshold': -0.1,
             'allow_sell_short': False,
         }
         # test pt signal previously used

@@ -16,7 +16,7 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day, input_to_list
+from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
 from .utilfuncs import freq_dither, parse_freq_string, next_main_freq, get_main_freq_level
@@ -4151,7 +4151,7 @@ class DataSource:
                             completed += 1
                             total_written += rows_affected
                             time_elapsed = time.time() - st
-                            time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                            time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
                             progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
                                                            f'{total_written}wrtn/{time_remain}left')
@@ -4159,8 +4159,6 @@ class DataSource:
                         total_written += self.update_table_data(table, dnld_data)
                 else:
                     for kwargs in all_kwargs:
-                        #debug
-                        print(f'function acquire_data for table {table} with kwargs: {kwargs}')
                         df = self.acquire_table_data(table, 'tushare', **kwargs)
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
@@ -4171,7 +4169,7 @@ class DataSource:
                         completed += 1
                         total_written += rows_affected
                         time_elapsed = time.time() - st
-                        time_remain = time_str_format(
+                        time_remain = sec_to_duration(
                                 (total - completed) * time_elapsed / completed,
                                 estimation=True,
                                 short_form=False
@@ -4179,7 +4177,7 @@ class DataSource:
                         progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
                                                        f'{total_written}wrtn/{time_remain}left')
                     total_written += self.update_table_data(table, dnld_data)
-                strftime_elapsed = time_str_format(
+                strftime_elapsed = sec_to_duration(
                         time_elapsed,
                         estimation=True,
                         short_form=True
@@ -4196,7 +4194,7 @@ class DataSource:
                               f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n'
                               f'{total_written} rows downloaded, will proceed with next table!')
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
-                #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
                 
     def acquire_latest_live_data(self,
                                  table,

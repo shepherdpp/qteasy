@@ -816,10 +816,26 @@ class Operator:
         :param price_type: str 一个可用的price_type
 
         """
+        warnings.warn('get_strategies_by_price_type is deprecated, '
+                      'use get_strategies_by_run_timing instead', DeprecationWarning)
         if price_type is None:
             return self.strategies
         else:
             return [stg for stg in self.strategies if stg.strategy_run_timing == price_type]
+
+    def get_strategies_by_run_timing(self, timing=None):
+        """返回operator对象中的strategy对象, timing为一个可选参数，
+        如果给出timing时，返回使用该timing的交易策略
+
+        Parameters
+        ----------
+        timing : str, optional
+            一个可用的timing, by default None
+        """
+        if timing is None:
+            return self.strategies
+        else:
+            return [stg for stg in self.strategies if stg.strategy_run_timing == timing]
 
     def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
@@ -829,6 +845,8 @@ class Operator:
         :param get_rolling_window: True时返回rolling_window数据，否则直接返回历史数据
         :return List
         """
+        warnings.warn('get_op_history_data_by_price_type is deprecated, '
+                        'use get_op_history_data_by_run_timing instead', DeprecationWarning)
         if get_rolling_window:
             all_hist_data = self._op_hist_data_rolling_windows
         else:
@@ -839,6 +857,31 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
+    def get_op_history_data_by_run_timing(self, timing=None, get_rolling_window=True):
+        """ 返回Operator对象中每个strategy对应的交易信号历史数据，timing是一个可选参数
+        如果给出timing时，返回使用该timing的所有策略的历史数据的rolling window
+
+        Parameters
+        ----------
+        timing : str, optional
+            一个可用的timing, by default None
+        get_rolling_window : bool, optional
+            True时返回rolling_window数据，否则直接返回历史数据, by default True
+
+        Returns
+        -------
+        List
+        """
+        if get_rolling_window:
+            all_hist_data = self._op_hist_data_rolling_windows
+        else:
+            all_hist_data = self._op_history_data
+        if timing is None:
+            return list(all_hist_data.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
+            return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
+
     def get_op_ref_data_by_price_type(self, price_type=None, get_rolling_window=True):
         """ 返回Operator对象中每个strategy对应的交易信号参考数据，price_type是一个可选参数
         如果给出price_type时，返回使用该price_type的所有策略的参考数据
@@ -847,6 +890,8 @@ class Operator:
         :param get_rolling_window: True时返回rolling_window数据，否则直接返回历史数据
         :return: List
         """
+        warnings.warn('get_op_ref_data_by_price_type is deprecated, '
+                        'use get_op_ref_data_by_run_timing instead', DeprecationWarning)
         if get_rolling_window:
             all_ref_data = self._op_ref_data_rolling_windows
         else:
@@ -857,6 +902,31 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
+    def get_op_ref_data_by_run_timing(self, timing=None, get_rolling_window=True):
+        """ 返回Operator对象中每个strategy对应的交易信号参考数据，timing是一个可选参数
+        如果给出timing时，返回使用该timing的所有策略的参考数据
+
+        Parameters
+        ----------
+        timing : str, optional
+        一个可用的timing, by default None
+        get_rolling_window : bool, optional
+        True时返回rolling_window数据，否则直接返回历史数据, by default True
+
+        Returns
+        -------
+        List
+        """
+        if get_rolling_window:
+            all_ref_data = self._op_ref_data_rolling_windows
+        else:
+            all_ref_data = self._op_reference_data
+        if timing is None:
+            return list(all_ref_data.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
+            return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
+
     def get_op_sample_indices_by_price_type(self, price_type=None):
         """ 返回Operator对象中每个strategy对应的交易信号采样点序列，price_type是一个可选参数
         如果给出price_type时，返回使用该price_type的所有策略的信号采样点序列
@@ -864,11 +934,33 @@ class Operator:
         :param price_type: str 一个可用的price_type
         :return: List
         """
+        warnings.warn('get_op_sample_indices_by_price_type is deprecated, '
+                        'use get_op_sample_indices_by_run_timing instead', DeprecationWarning)
         all_sample_indices = self._op_sample_indices
         if price_type is None:
             return list(all_sample_indices.values())
         else:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
+
+    def get_op_sample_indices_by_run_timing(self, timing=None):
+        """ 返回Operator对象中每个strategy对应的交易信号采样点序列，timing是一个可选参数
+        如果给出timing时，返回使用该timing的所有策略的信号采样点序列
+
+        Parameters
+        ----------
+        timing : str, optional
+        一个可用的timing, by default None
+
+        Returns
+        -------
+        List
+        """
+        all_sample_indices = self._op_sample_indices
+        if timing is None:
+            return list(all_sample_indices.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
             return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_combined_sample_indices(self):
@@ -885,18 +977,36 @@ class Operator:
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
+        warnings.warn('get_strategy_count_by_price_type is deprecated, '
+                        'use get_strategy_count_by_run_timing instead', DeprecationWarning)
         return len(self.get_strategies_by_price_type(price_type))
+
+    def get_strategy_count_by_run_timing(self, timing=None):
+        """返回operator中的交易策略的数量, timing为一个可选参数，
+        如果给出timing时，返回使用该timing的交易策略数量"""
+        return len(self.get_strategies_by_run_timing(timing))
 
     def get_strategy_names_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
         注意，strategy name并没有实际的作用，未来将被去掉
         在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
         如果给出price_type时，返回使用该price_type的交易策略名称"""
+        warnings.warn('get_strategy_names_by_price_type is deprecated, '
+                        'use get_strategy_names_by_run_timing instead', DeprecationWarning)
         return [stg.name for stg in self.get_strategies_by_price_type(price_type)]
+
+    def get_strategy_names_by_run_timing(self, timing=None):
+        """返回operator对象中所有交易策略对象的名称, timing为一个可选参数，
+        注意，strategy name并没有实际的作用，未来将被去掉
+        在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
+        如果给出timing时，返回使用该timing的交易策略名称"""
+        return [stg.name for stg in self.get_strategies_by_run_timing(timing)]
 
     def get_strategy_id_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的ID, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
+        warnings.warn('get_strategy_id_by_price_type is deprecated, '
+                        'use get_strategy_id_by_run_timing instead', DeprecationWarning)
         all_ids = self._strategy_id
         if price_type is None:
             return all_ids
@@ -904,6 +1014,19 @@ class Operator:
             res = []
             for stg, stg_id in zip(self.strategies, all_ids):
                 if stg.strategy_run_timing == price_type:
+                    res.append(stg_id)
+            return res
+
+    def get_strategy_id_by_run_timing(self, timing=None):
+        """返回operator对象中所有交易策略对象的ID, timing为一个可选参数，
+        如果给出timing时，返回使用该timing的交易策略名称"""
+        all_ids = self._strategy_id
+        if timing is None:
+            return all_ids
+        else:
+            res = []
+            for stg, stg_id in zip(self.strategies, all_ids):
+                if stg.strategy_run_timing == timing:
                     res.append(stg_id)
             return res
 

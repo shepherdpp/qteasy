@@ -21,7 +21,7 @@ import datetime
 
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
-from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
+from .utilfuncs import sec_to_duration, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
@@ -3120,7 +3120,7 @@ def _search_grid(hist, benchmark, benchmark_type, op, config):
                                     stage='optimize')
     pool.cut(config.maximize_target)
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs
 
 
@@ -3161,7 +3161,7 @@ def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
                                     stage='optimize')
     pool.cut(config.maximize_target)
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st, short_form=True)}')
+    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
     return pool.items, pool.perfs
 
 
@@ -3284,7 +3284,7 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
         space_count_in_round = len(spaces)
         progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs
 
 

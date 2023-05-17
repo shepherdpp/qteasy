@@ -12,7 +12,7 @@ import unittest
 
 import pandas as pd
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite

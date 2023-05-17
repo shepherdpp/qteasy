@@ -23,7 +23,7 @@ from cmd import Cmd
 import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, time_str_format
+from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration
 from qteasy.broker import Broker, RandomBroker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
@@ -1006,7 +1006,7 @@ class Trader(object):
                     next_task = task
         if not task_added:
             self.post_message(f'will execute next task:({next_task}) in '
-                              f'{time_str_format(count_down_to_next_task, estimation=True)}',
+                              f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
                               new_line=False)
 
     def _initialize_agenda(self, current_time=None):

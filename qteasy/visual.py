@@ -19,7 +19,7 @@ import numpy as np
 
 import qteasy
 from .history import get_history_panel
-from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
+from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
@@ -900,8 +900,8 @@ def _plot_loop_result(loop_results: dict, config):
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
                           f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}       '
-                          f'  time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
-                          f'  back test:{time_str_format(loop_results["loop_run_time"])}')
+                          f'  time consumed:   signal creation: {sec_to_duration(loop_results["op_run_time"])};'
+                          f'  back test:{sec_to_duration(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.90, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
@@ -1210,14 +1210,14 @@ def _plot_test_result(opti_eval_res: list,
                          f'from: {valid_opti_eval_res[0]["loop_start"].date()} to '
                          f'{valid_opti_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:'
-                         f'  signal creation: {time_str_format(valid_opti_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(valid_opti_eval_res[0]["loop_run_time"])}\n'
+                         f'  signal creation: {sec_to_duration(valid_opti_eval_res[0]["op_run_time"])};'
+                         f'  back test:{sec_to_duration(valid_opti_eval_res[0]["loop_run_time"])}\n'
                          f'test periods: {valid_test_eval_res[0]["years"]:.1f} years, '
                          f'from: {valid_test_eval_res[0]["loop_start"].date()} to '
                          f'{valid_test_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:'
-                         f'  signal creation: {time_str_format(valid_test_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(valid_test_eval_res[0]["loop_run_time"])}')
+                         f'  signal creation: {sec_to_duration(valid_test_eval_res[0]["op_run_time"])};'
+                         f'  back test:{sec_to_duration(valid_test_eval_res[0]["loop_run_time"])}')
 
     # 确定参考数据在起始日的数据，以便计算参考数据在整个历史区间内的原因
     ref_start_value = complete_reference.iloc[0]
@@ -1406,7 +1406,7 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'Operation list is created on history data: \n'
           f'starts:     {h_dates[0]}\n'
           f'end:        {h_dates[-1]}')
-    print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
+    print(f'time consumption for operate signal creation: {sec_to_duration(run_time_prepare_data)}\n')
     # print(f'Operation signals are generated on {op_dates[0]}\nends on {op_dates[-1]}\n'
     #       f'Total signals generated: {len(op_dates)}.')
     print(f'Operation signal for shares on {op_dates.date()}\n')
@@ -1457,8 +1457,8 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'     |                                  |\n'
           f'     ====================================')
     print(f'\nqteasy running mode: 1 - History back testing\n'
-          f'time consumption for operate signal creation: {time_str_format(loop_results["op_run_time"])}\n'
-          f'time consumption for operation back looping:  {time_str_format(loop_results["loop_run_time"])}\n')
+          f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n'
+          f'time consumption for operation back looping:  {sec_to_duration(loop_results["loop_run_time"])}\n')
     print(f'investment starts on      {looped_values.index[0]}\n'
           f'ends on                   {looped_values.index[-1]}\n'
           f'Total looped periods:     {loop_results["years"]:.1f} years.')
