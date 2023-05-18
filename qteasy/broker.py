@@ -54,6 +54,7 @@ class Broker(object):
         self.password = ''
         self.token = ''
         self.status = 'init'  # init, running, stopped, paused
+        self.debug = False
 
         self.order_queue = Queue()
         self.result_queue = Queue()
@@ -63,13 +64,11 @@ class Broker(object):
         order_queue中的每一个交易订单都由get_result函数来处理并获取交易结果，get_result函数
         的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
         """
-        # debug
-        print(f'Broker {self.broker_name} is running...')
+        if self.debug:
+            print(f'[DEBUG]: Broker {self.broker_name} is running...')
         self.status = 'init'
         try:
             while self.status != 'stopped':
-                # debug
-                print(f'running broker {self.broker_name}, sleep 1 second...')
                 time.sleep(1)
                 # 如果Broker处于暂停状态，则不处理交易订单
                 if self.status == 'paused':
@@ -81,26 +80,26 @@ class Broker(object):
                 with ThreadPoolExecutor(max_workers=10) as executor:
                     futures = []
                     while not self.order_queue.empty():
-                        # debug
-                        print(f'Broker {self.broker_name} is running, '
-                              f'got order from order queue, taking order from queue'
-                              f'({self.order_queue.unfinished_tasks} orders)...')
+                        if self.debug:
+                            print(f'[DEBUG]: Broker {self.broker_name} is running, '
+                                  f'got order from order queue, taking order from queue'
+                                  f'({self.order_queue.unfinished_tasks} orders)...')
                         order = self.order_queue.get()
-                        # debug
-                        print(f'Broker {self.broker_name} is running, will submit order {order} to get result...')
+                        if self.debug:
+                            print(f'[DEBUG]: Broker {self.broker_name} is running, will submit order {order} to get result...')
                         futures.append(executor.submit(self.get_result, order))
                         self.order_queue.task_done()
                     # 获取交易结果并将其放入result_queue中
                     for future in as_completed(futures):
-                        # debug
                         result = future.result()
-                        print(f'Broker {self.broker_name} is running, got result {result} and put to result queue...')
+                        if self.debug:
+                            print(f'[DEBUG]: Broker {self.broker_name} is running, got result {result} and put to result queue...')
                         self.result_queue.put(result)
             else:
                 # 如果Broker正常退出，处理尚未完成的交易订单
                 # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
-                # debug
-                print(f'Broker {self.broker_name} is stopped, will process unfinished orders...')
+                if self.debug:
+                    print(f'[DEBUG]: Broker {self.broker_name} is stopped, will process unfinished orders...')
                 while not self.order_queue.empty():
                     order = self.order_queue.get()
                     self.result_queue.put(self.get_result(order))
@@ -108,8 +107,8 @@ class Broker(object):
         except KeyboardInterrupt:
             # 如果Broker被用户强制退出，处理尚未完成的交易订单
             # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
-            # debug
-            print('Broker is stopped by user, will stop broker and process unfinished orders...')
+            if self.debug:
+                print('B[DEBUG]: roker is stopped by user, will stop broker and process unfinished orders...')
             self.status = 'stopped'
             while not self.order_queue.empty():
                 order = self.order_queue.get()
@@ -117,8 +116,10 @@ class Broker(object):
                 self.order_queue.task_done()
         except Exception as e:
             # 如果Broker出现异常，处理尚未完成的交易订单
-            # debug
-            print(f'Broker is stopped by exception{e}, will stop broker and process unfinished orders...')
+            if self.debug:
+                print(f'[DEBUG]: Broker is stopped by exception{e}, will stop broker and process unfinished orders...')
+                import traceback
+                traceback.print_exc()
             self.status = 'stopped'
             raise e
 
@@ -142,8 +143,8 @@ class Broker(object):
         from time import sleep
         from random import random, choice
         from qteasy.trading_util import TIMEZONE
-        # debug
-        print(f'Broker({self.broker_name}) get_result: got order: \n{order}')
+        if self.debug:
+            print(f'[DEBUG]: Broker({self.broker_name}) get_result: got order: \n{order}')
         result_type, qty, filled_price, fee = self.transaction_result(
                 order_qty=order['qty'],
                 order_price=order['price'],
@@ -174,8 +175,8 @@ class Broker(object):
             'delivery_amount': 0,
             'delivery_status': 'ND',
         }
-        # debug
-        print(f'Broker({self.broker_name}) get_result: return result: \n{result}')
+        if self.debug:
+            print(f'[DEBUG]: Broker({self.broker_name}) get_result: return result: \n{result}')
         return result
 
     @abstractmethod
@@ -266,8 +267,8 @@ class RandomBroker(Broker):
         result_type = choice(['filled', 'canceled'])
         trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
         price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
-        # debug
-        print(f'Broker({self.broker_name}) get_result: got order: \n{order}')
+        if self.debug:
+            print(f'[DEBUG]: Broker({self.broker_name}) get_result: got order: \n{order}')
         sleep(trade_delay)
 
         if result_type == 'filled':

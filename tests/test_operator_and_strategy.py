@@ -989,7 +989,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender_close = op.get_blender('close')
         self.assertEqual(blender_open, ['*', '3', '2'])
         self.assertEqual(blender_close, ['+', '2', '1'])
-        self.assertEqual(op.view_blender('open'), '1+4')
+        self.assertEqual(op.view_blender('open'), '2*3')
         self.assertEqual(op.view_blender('close'), '1+2')
 
         # test error inputs:
@@ -999,13 +999,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_blender('1+3', 'volume')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['+', '4', '1'])
+        self.assertEqual(blender_open, ['*', '3', '2'])
         self.assertEqual(blender_close, ['+', '2', '1'])
         # price_type not valid, no change is made
-        op.set_blender('1+2', 'closee')
+        op.set_blender('1+2', 'wrong_timing')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['+', '4', '1'])
+        self.assertEqual(blender_open, ['*', '3', '2'])
         self.assertEqual(blender_close, ['+', '2', '1'])
         # wrong type of blender, set to empty list
         op.set_blender(55, 'open')
@@ -1025,7 +1025,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender_close = op.get_blender('close')
         self.assertEqual(blender_open, [])
         self.assertEqual(blender_close, [])
-        self.assertEqual(blender_high, [])
+        self.assertIs(blender_high, None)
 
     def test_property_singal_type(self):
         """ test property signal_type"""
@@ -1887,7 +1887,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
         self.assertEqual(op.strategies[2].pars, (9, -0.09))
         self.assertEqual(op.op_data_freq, 'd')
-        self.assertEqual(op.op_data_types, ['close', 'open'])
+        self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))

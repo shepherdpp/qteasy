@@ -595,9 +595,13 @@ def submit_order(order_id, data_source=None):
         return None
 
     # 实际上在parse_trade_signal的时候就已经检查过总买入数量与可用现金之间的关系了，这里不再检察
-    # 如果交易方向为buy，则需要检查账户的现金是否足够 TODO: position为short时做法不同，需要进一步调整
+    # 如果交易方向为buy，则需要检查账户的现金是否足够
     position_id = trade_order['pos_id']
     position = get_position_by_id(position_id, data_source=data_source)
+    pos_type = position['position']
+    if pos_type == 'short':
+        # TODO: position为short时做法不同，需要进一步调整
+        raise NotImplementedError('short position orders submission is not realized')
     if trade_order['direction'] == 'buy':
         account_id = position['account_id']
         account = get_account(account_id, data_source=data_source)
@@ -607,7 +611,7 @@ def submit_order(order_id, data_source=None):
                            f'{trade_order}'
                            f'trade order might not be executed!')
 
-    # 如果交易方向为sell，则需要检查账户的持仓是否足够 TODO: position为short时做法不一样，需要考虑
+    # 如果交易方向为sell，则需要检查账户的持仓是否足够
     elif trade_order['direction'] == 'sell':
         # 如果账户的持仓不足，则输出警告信息
         if position['available_qty'] < trade_order['qty']:
@@ -642,6 +646,8 @@ def cancel_order(order_id, data_source=None, config=None):
     -------
     int, 交易信号的id
     """
+    # TODO: further test this function
+
     order_details = read_trade_order_detail(order_id=order_id, data_source=data_source)
     order_status = order_details['status']
     if order_status not in ['submitted', 'partially_filled']:
@@ -696,6 +702,7 @@ def process_trade_delivery(account_id, data_source=None, config=None):
     -------
     None
     """
+    # TODO: further test this function
 
     if not isinstance(account_id, (int, np.int64)):
         raise TypeError('account_id must be an int')

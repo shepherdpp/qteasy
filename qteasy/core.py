@@ -1985,7 +1985,7 @@ def reset_config(config=None):
 #   strategy_run_freq='m',
 #   data_freq='m',
 #   window_length=6,
-def check_and_prepare_hist_data(oper, config):
+def check_and_prepare_hist_data(oper, config, datasource=None):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     Parameters
@@ -1994,6 +1994,8 @@ def check_and_prepare_hist_data(oper, config):
         需要设置数据的Operator对象
     config: ConfigDict
         用于设置Operator对象的环境参数变量
+    datasource: DataSource
+        用于下载数据的DataSource对象
 
     Returns
     -------
@@ -2115,6 +2117,7 @@ def check_and_prepare_hist_data(oper, config):
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj,
+            data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
 
     # 解析参考数据类型，获取参考数据
@@ -2126,6 +2129,7 @@ def check_and_prepare_hist_data(oper, config):
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj,
+            data_source=datasource,
     )  # .slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.strategy_timings
@@ -2142,6 +2146,7 @@ def check_and_prepare_hist_data(oper, config):
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj,
+            data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
@@ -2152,7 +2157,8 @@ def check_and_prepare_hist_data(oper, config):
             end=opti_test_end,
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
-            adj=config.backtest_price_adj
+            adj=config.backtest_price_adj,
+            data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
     opti_trade_prices = hist_opti.slice(htypes=bt_price_types)
@@ -2173,6 +2179,7 @@ def check_and_prepare_hist_data(oper, config):
             freq=oper.op_data_freq,
             asset_type=config.benchmark_asset_type,
             adj=config.backtest_price_adj,
+            data_source=datasource,
     ).slice_to_dataframe(htype='close')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
@@ -2200,7 +2207,7 @@ def reconnect_ds(data_source=None):
 
 
 # TODO: 将check_and_prepare_data()的代码拆分后移植到下面三个方法中
-def check_and_prepare_live_trade_data(operator, config):
+def check_and_prepare_live_trade_data(operator, config, datasource=None):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
     Returns
@@ -2221,7 +2228,7 @@ def check_and_prepare_live_trade_data(operator, config):
     return hist_op, hist_ref, invest_cash_plan
 
 
-def check_and_prepare_backtest_data(operator, config):
+def check_and_prepare_backtest_data(operator, config, datasource=None):
     """ 在run_mode == 1的回测模式情况下准备相应的历史数据
 
     Returns
@@ -2242,8 +2249,17 @@ def check_and_prepare_backtest_data(operator, config):
     return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
 
 
-def check_and_prepare_optimize_data(operator, config):
+def check_and_prepare_optimize_data(operator, config, datasource=None):
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
+
+    Parameters
+    ----------
+    operator: qteasy.Operator
+        运算器对象
+    config: qteasy.Config
+        配置对象
+    datasource: qteasy.DataSource
+        数据源对象
 
     Returns
     -------

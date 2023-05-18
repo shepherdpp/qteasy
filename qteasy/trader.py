@@ -274,6 +274,11 @@ class TraderShell(Cmd):
                     self.do_bye('')
                 else:
                     self.do_dashboard('')
+            except Exception as e:
+                self.stdout.write(f'Unexpected Error: {e}\n')
+                import traceback
+                traceback.print_exc()
+                self.do_bye()
 
         sys.stdout.write('Thank you for using qteasy!\n')
 
@@ -559,6 +564,9 @@ class Trader(object):
                             self.run_task(task_name)
                     except Exception as e:
                         self.post_message(f'error occurred when executing task: {task_name}, error: {e}')
+                        if self.debug:
+                            import traceback
+                            traceback.print_exc()
                     self.task_queue.task_done()
 
                 # 如果没有暂停，从任务日程中添加任务到任务队列
@@ -586,6 +594,11 @@ class Trader(object):
         except KeyboardInterrupt:
             self.post_message('KeyboardInterrupt, stopping trader')
             self.run_task('stop')
+        except Exception as e:
+            self.post_message(f'error occurred when running trader, error: {e}')
+            if self.debug:
+                import traceback
+                traceback.print_exc()
 
     def post_message(self, message, new_line=True):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
@@ -601,11 +614,10 @@ class Trader(object):
             raise TypeError('message should be a str')
         time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')
         message = f'[{time_string}]-{self.status}: {message}'
-        if not (new_line or self.debug):
+        if not new_line:
             message += '_R'
-            pass
         if self.debug:
-            print(f'debug mode: {message}')
+            message = f'[DEBUG]-{message}'
         self.message_queue.put(message)
 
     def add_task(self, task, kwargs=None):
@@ -640,8 +652,8 @@ class Trader(object):
         """
         if self.debug:
             self.post_message('running task process_result')
-        # debug
-        print(f'process_result: got result: \n{result}')
+        if self.debug:
+            self.post_message(f'process_result: got result: \n{result}')
         process_trade_result(result, data_source=self._datasource)
         self.post_message(f'processed trade result: \n{result}')
         process_trade_delivery(
@@ -699,7 +711,7 @@ class Trader(object):
             交易策略ID列表
         """
         if self.debug:
-            print(f'running task run strategy: {strategy_ids}')
+            self.post_message(f'running task run strategy: {strategy_ids}')
         operator = self._operator
         signal_type = operator.signal_type
         shares = self.asset_pool
@@ -984,7 +996,7 @@ class Trader(object):
             if task_time <= current_time:
                 task_tuple = self.task_daily_agenda.pop(idx)
                 if self.debug:
-                    print(f'adding task: {task_tuple} from agenda')
+                    self.post_message(f'adding task: {task_tuple} from agenda')
                 if len(task_tuple) == 3:
                     task = task_tuple[1:3]
                 elif len(task_tuple) == 2:
@@ -1186,6 +1198,7 @@ def start_trader(
             datasource=datasource,
             debug=debug,
     )
+    trader.broker.debug = debug
     # refill data source, start date is window length before today
     end_date = pd.to_datetime('today')
     start_date = end_date - pd.Timedelta(days=operator.max_window_length)
