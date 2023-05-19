@@ -1993,6 +1993,24 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result status
         self.assertEqual(trade_result['delivery_amount'], 41934.7)
         self.assertEqual(trade_result['delivery_status'], 'ND')
+        # check trade result summary with no share
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [-100, 0, 100, -300, 0])
+        self.assertEqual(list(summary[2]), [90, 0, 81, 140, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, -100, -300])
+        self.assertEqual(list(summary[2]), [0, 90, 140])
+        # check trade result summary with share that out of range
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        self.assertEqual(list(summary[1]), [0, -100, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
         # fully fill signal 9
         raw_trade_result = {
@@ -2053,8 +2071,26 @@ class TestTradingUtilFuncs(unittest.TestCase):
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 19076.1)
         self.assertEqual(trade_result['delivery_status'], 'DL')
+        # check trade result summary with no share
+        # in the summary, filled amount will be total amount in order, and price will be average filled price
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [-100, 0, 100, -400, 0])
+        self.assertEqual(list(summary[2]), [90, 0, 81, 165.5, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, -100, -400])
+        self.assertEqual(list(summary[2]), [0, 90, 165.5])
+        # check trade result summary with share that out of range
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        self.assertEqual(list(summary[1]), [0, -100, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
-        raise NotImplementedError
 
     def test_cancel_orders(self):
         """ test cancel_orders function """

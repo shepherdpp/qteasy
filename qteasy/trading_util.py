@@ -948,25 +948,31 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     if all_orders.empty or (all_results is None):
         return shares, np.zeros(shape=(len(shares),)), np.zeros(shape=(len(shares),))
 
-    all_order_results = all_orders.join(all_results, on='order_id', how='left', lsuffix='-order', rsuffix='-exec')
+    # 将交易订单和交易结果合并生成订单交易记录
+    all_order_results = all_orders.join(
+            all_results.set_index('order_id'),
+            how='left',
+            lsuffix='-o',
+            rsuffix='-e',
+    )
     all_order_results = all_order_results.sort_values(by='execution_time')
     # 所有卖出的交易结果的filled_qty为负数，所有买入的交易结果的filled_qty为正数
-    # all_order_results['filled_qty'] = np.where(
-    #         all_order_results['direction'] == 'sell',
-    #         -all_order_results['filled_qty'],
-    #         all_order_results['filled_qty']
-    # )
+    all_order_results['filled_qty'] = np.where(
+            all_order_results['direction'] == 'sell',
+            -all_order_results['filled_qty'],
+            all_order_results['filled_qty']
+    )
 
+    # 如果同一个order有多次成交记录，则需计算多次成交记录的总数量，并计算多次成交的平均价格
+    all_order_results['filled_qty'] = all_order_results['filled_qty'].groupby('order_id').sum()
+    all_order_results['price-e'] = all_order_results['price-e'].groupby('order_id').mean()
+
+    # 然后按照position分组并选取时间最后的交易结果记录
     last_trades_by_pos = all_order_results.groupby('pos_id').last()
-    # import pdb; pdb.set_trace()
-    print(f'==[debug in func get_last_trade_result_summary() in trading_util.py]==: \n'
-          f'last_trades_by_pos: \n'
-          f'{last_trades_by_pos["direction", "filled_qty", "price_exec", "transaction_fee", "execution_time"]}\n'
-          f'all_order_results: \n'
-          f'{all_order_results["pos_id", "direction", "filled_qty", "price_exec", "transaction_fee", "execution_time"]}\n')
+    # 从结果中读取成交量和平均成交价格
     last_filled_qty = last_trades_by_pos['filled_qty'].to_dict()
-    last_filled_price = last_trades_by_pos['price-exec'].to_dict()
-
+    last_filled_price = last_trades_by_pos['price-e'].to_dict()
+    # 重新整理key的顺序
     last_filled_qty = {all_position_symbols[k]: v for k, v in last_filled_qty.items()}
     last_filled_price = {all_position_symbols[k]: v for k, v in last_filled_price.items()}
 
@@ -982,14 +988,12 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     last_filled_qty = shares_filled_qty
     last_filled_price = shares_filled_price
 
-    # remove shares that are not in the shares list
+    # 删除生成的结果中不需要的shares
     last_filled_qty = {k: v for k, v in last_filled_qty.items() if k in shares}
     last_filled_price = {k: v for k, v in last_filled_price.items() if k in shares}
 
     amounts_changed = np.array(list(last_filled_qty.values()), dtype='float')
     trade_prices = np.array(list(last_filled_price.values()), dtype='float')
-    if len(shares) != len(amounts_changed):
-        import pdb; pdb.set_trace()
     return shares, amounts_changed, trade_prices
 
 
