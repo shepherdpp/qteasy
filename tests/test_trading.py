@@ -21,7 +21,7 @@ import numpy as np
 from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
-from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order
+from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order, get_last_trade_result_summary
 from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_agenda
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
@@ -1053,7 +1053,7 @@ class TestTradeRecording(unittest.TestCase):
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         # submit first batch of signals one by one
         submit_order(1, data_source=self.test_ds)
-        print(f'after submitting signal 1, position data of account_id == 1: \n'
+        print(f'after submitting order 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1067,7 +1067,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(2, data_source=self.test_ds)
-        print(f'after submitting signal 2, position data of account_id == 1: \n'
+        print(f'after submitting order 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1081,7 +1081,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(3, data_source=self.test_ds)
-        print(f'after submitting signal 3, position data of account_id == 1: \n'
+        print(f'after submitting order 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1095,7 +1095,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(4, data_source=self.test_ds)
-        print(f'after submitting signal 4, position data of account_id == 1: \n'
+        print(f'after submitting order 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1109,7 +1109,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(5, data_source=self.test_ds)
-        print(f'after submitting signal 5, position data of account_id == 1: \n'
+        print(f'after submitting order 5, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1153,7 +1153,7 @@ class TestTradeRecording(unittest.TestCase):
               f'{get_account_positions(1, data_source=self.test_ds)}')
         # submit second batch of signals one by one
         submit_order(6, data_source=self.test_ds)
-        print(f'after submitting signal 6, position data of account_id == 1: \n'
+        print(f'after submitting order 6, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1169,7 +1169,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(7, data_source=self.test_ds)  # 此时需要卖出700股，但只有100股可用，按新规仅warning
-        print(f'after submitting signal 7, position data of account_id == 1: \n'
+        print(f'after submitting order 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1185,7 +1185,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(8, data_source=self.test_ds)  # 此时需要卖出800股，但已经没有可用股份，按新规则仅warning
-        print(f'after submitting signal 8, position data of account_id == 1: \n'
+        print(f'after submitting order 8, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1201,7 +1201,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(9, data_source=self.test_ds)  # 此时需要买入900股，但可用现金仅够买入200股，新规则仅warning
-        print(f'after submitting signal 9, position data of account_id == 1: \n'
+        print(f'after submitting order 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1217,7 +1217,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
         submit_order(10, data_source=self.test_ds)  # 此时已经没有可用现金
-        print(f'after submitting signal 10, position data of account_id == 1: \n'
+        print(f'after submitting order 10, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
@@ -1549,7 +1549,12 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[16], ('15:35:00', 'post_close'))
 
     def test_process_trade_orders(self):
-        """ test full process of trade signal order generation, submission, result processing and delivery"""
+        """ test full process of trading:
+        1, order generation,
+        2, order submission,
+        3, result processing and delivery
+        4, last_trade_result_summary
+        """
         # 检查datasource中的数据表，删除所有的account, positions, trade_signal, trade_result数据
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
             self.test_ds.drop_table_data('sys_op_live_accounts')
@@ -1588,30 +1593,56 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(order_ids, [1, 2, 3, 4, 5])
         # 逐个提交交易信号并打印相关余额的变化
         submit_order(1, data_source=self.test_ds)
-        print(f'after submitting signal 1, position data of account_id == 1: \n'
+        print(f'after submitting order 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         submit_order(2, data_source=self.test_ds)
-        print(f'after submitting signal 2, position data of account_id == 1: \n'
+        print(f'after submitting order 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         submit_order(3, data_source=self.test_ds)
-        print(f'after submitting signal 3, position data of account_id == 1: \n'
+        print(f'after submitting order 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         submit_order(4, data_source=self.test_ds)
-        print(f'after submitting signal 4, position data of account_id == 1: \n'
+        print(f'after submitting order 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         submit_order(5, data_source=self.test_ds)
-        print(f'after submitting signal 5, position data of account_id == 1: \n'
+        print(f'after submitting order 5, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
+
+        # test last_trade_result_summary with no share (at this moment, there is no trade result yet, all zero values)
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ])
+        self.assertEqual(list(summary[1]), [0, 0, 0, 0, 0])
+        self.assertEqual(list(summary[2]), [0, 0, 0, 0, 0])
+
+        # test last_trade_result_summary with share
+        summary = get_last_trade_result_summary(1, shares=['GOOG', 'AAPL', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'AMZN', ])
+        self.assertEqual(list(summary[1]), [0, 0, 0])
+        self.assertEqual(list(summary[2]), [0, 0, 0])
+        summary = get_last_trade_result_summary(1, shares=['FB', 'AAPL', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["FB", "GOOG", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['FB', 'AAPL', 'FB', ])
+        self.assertEqual(list(summary[1]), [0, 0, 0])
+        self.assertEqual(list(summary[2]), [0, 0, 0])
+
+        # test last_trade_result_summary with share out of range
+        summary = get_last_trade_result_summary(1, shares=['GOOG', 'AMZN', 'TSLA'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["AAPL", "GOOG", "TSLA"]: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AMZN', 'TSLA', ])
+        self.assertEqual(list(summary[1]), [0, 0, 0])
+        self.assertEqual(list(summary[2]), [0, 0, 0])
 
         # 生成交易结果并逐个处理, 注意raw_results没有execution_time字段
         # signal 1 is filled with 100 shares at 60.5, transaction fee is 5.0
@@ -1653,8 +1684,20 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result status
         self.assertEqual(trade_result['delivery_amount'], 100)
         self.assertEqual(trade_result['delivery_status'], 'ND')
+        # check trade result summary with no share
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [100, 0, 0, 0, 0])
+        self.assertEqual(list(summary[2]), [60.5, 0, 0, 0, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 60.5, 0])
 
-        # signal 2 is cancled with no transaction fee
+        # order 2 is canceled with no transaction fee
         raw_trade_result = {
             'order_id': 2,
             'filled_qty': 0,
@@ -1693,6 +1736,24 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result status
         self.assertEqual(trade_result['delivery_amount'], 0)
         self.assertEqual(trade_result['delivery_status'], 'ND')
+        # check trade result summary with no share
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [100, 0, 0, 0, 0])
+        self.assertEqual(list(summary[2]), [60.5, 0, 0, 0, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 60.5, 0])
+        # check trade result summary with share that out of range
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [0, 100, 0, 0])
+        self.assertEqual(list(summary[2]), [0, 60.5, 0, 0])
 
         # signal 3 is partially filled with 100 shares bought at 81, with transaction fee 12.5
         raw_trade_result = {
@@ -1733,6 +1794,24 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result status
         self.assertEqual(trade_result['delivery_amount'], 100)
         self.assertEqual(trade_result['delivery_status'], 'ND')
+        # check trade result summary with no share
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [100, 0, 100, 0, 0])
+        self.assertEqual(list(summary[2]), [60.5, 0, 81, 0, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 60.5, 0])
+        # check trade result summary with share that out of range
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        self.assertEqual(list(summary[1]), [0, 100, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 60.5, 81, 0])
 
         # signal 4 is filled with 400 shares bought at 89.5, with transaction fee 7.5
         raw_trade_result = {
@@ -1754,8 +1833,45 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_order_detail(4, data_source=self.test_ds)}\n'
               f'trade_result_detail of order_id == 4: \n'
               f'{read_trade_results_by_order_id(4, data_source=self.test_ds).loc[4].to_dict()}')
+        trade_result = read_trade_result_by_id(4, data_source=self.test_ds)
+        # check cash availability
+        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
+        self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
+        trade_signal_detail = read_trade_order_detail(4, data_source=self.test_ds)
+        # check available qty availability
+        symbols, own_qty, available_qty = get_account_position_availabilities(
+                1,
+                trade_signal_detail['symbol'],
+                data_source=self.test_ds,
+        )
+        self.assertEqual(int(own_qty), 0.0 + 400.0)
+        self.assertEqual(int(available_qty), 0.0 + 0.0)
+        # check trade_signal status
+        self.assertEqual(trade_signal_detail['status'], 'filled')
+        # check trade result status
+        self.assertEqual(trade_result['delivery_amount'], 400)
+        self.assertEqual(trade_result['delivery_status'], 'ND')
+        # check trade result summary with no share
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [100, 0, 100, 400, 0])
+        self.assertEqual(list(summary[2]), [60.5, 0, 81, 89.5, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, 100, 400])
+        self.assertEqual(list(summary[2]), [0, 60.5, 89.5])
+        # check trade result summary with share that out of range
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        self.assertEqual(list(summary[1]), [0, 100, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 60.5, 81, 0])
 
-        # create more test signals, with sell signals
+        # create more test orders, with sell orders
         parsed_signals_batch_1 = (
             ['AAPL', 'GOOG', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
@@ -1819,6 +1935,24 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result status
         self.assertEqual(trade_result['delivery_amount'], 8994.5)
         self.assertEqual(trade_result['delivery_status'], 'ND')
+        # check trade result summary with no share
+        summary = get_last_trade_result_summary(1, data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(list(summary[1]), [-100, 0, 100, 400, 0])
+        self.assertEqual(list(summary[2]), [90, 0, 81, 89.5, 0])
+        # check trade result summary with share
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        self.assertEqual(list(summary[1]), [0, -100, 400])
+        self.assertEqual(list(summary[2]), [0, 90, 89.5])
+        # check trade result summary with share that out of range
+        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        self.assertEqual(list(summary[1]), [0, -100, 100, 0])
+        self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
         # signal 9 is partially filled with 300 shares sold at 140.0, with transaction fee 65.3
         raw_trade_result = {
@@ -1919,6 +2053,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 19076.1)
         self.assertEqual(trade_result['delivery_status'], 'DL')
+
+        raise NotImplementedError
 
     def test_cancel_orders(self):
         """ test cancel_orders function """
@@ -2549,10 +2685,6 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
-
-    def test_get_last_trade_summary(self):
-        """ test function get_last_trade_result_summary()"""
-        pass
 
 
 if __name__ == '__main__':

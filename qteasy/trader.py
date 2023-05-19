@@ -748,7 +748,11 @@ class Trader(object):
                 refresh_trade_calendar=False
         )
         # 读取实时数据,设置operator的数据分配,创建trade_data
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
+        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
+                operator=operator,
+                config=config,
+                datasource=self._datasource,
+        )
         if self.debug:
             self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref,
@@ -758,7 +762,7 @@ class Trader(object):
         trade_data = np.zeros(shape=(len(shares), 5))
         position_availabilities = get_account_position_availabilities(
                 account_id=self.account_id,
-                shares=self.asset_pool,
+                shares=shares,
                 data_source=self._datasource,
         )
         # 当前价格是hist_op的最后一行  # TODO: 需要根据strategy_timing获取价格的类型（如open价格或close价格）
@@ -766,9 +770,14 @@ class Trader(object):
         current_prices = hist_op[timing_type, :, -1].squeeze()
         last_trade_result_summary = get_last_trade_result_summary(
                 account_id=self.account_id,
-                shares=self.asset_pool,
+                shares=shares,
                 data_source=self._datasource,
         )
+        if self.debug:
+            self.post_message(f'generating trade data from position availabilities, current prices and last trade:\n'
+                              f'position_availabilities: \n{position_availabilities}\n'
+                              f'current_prices: {current_prices}\n'
+                              f'last_trade_result_summary: \n{last_trade_result_summary}')
         trade_data[:, 0] = position_availabilities[1]
         trade_data[:, 1] = position_availabilities[2]
         trade_data[:, 2] = current_prices
@@ -833,8 +842,13 @@ class Trader(object):
         return submitted_qty
 
     def _pre_open(self):
-        """ 开市前, 生成交易日的任务计划，生成消息发送到消息队列"""
-        self.post_message('initialized daily task agenda')
+        """ 开市前, 确保data_source重新连接"""
+        for retry in range(3):
+            if self._datasource.reconnect():
+                break
+            else:
+                self._datasource.reconnect()
+        self.post_message('data source reconnected')
 
     def _post_close(self):
         """ 收市后例行操作：
@@ -918,7 +932,7 @@ class Trader(object):
         ----------
         task: str
             任务名称
-        **kwargs: dict
+        *args: tuple
             任务参数
         """
 
