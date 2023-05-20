@@ -1019,7 +1019,8 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     交易结果
     """
     if not isinstance(order_id, (int, np.int64, np.ndarray, list, )):
-        raise TypeError('order_id must be an integer, a list of integers or a numpy array of integers')
+        raise TypeError(f'order_id must be an integer, a list of integers or a numpy array of integers, '
+                        f'got {type(order_id)} instead')
     if isinstance(order_id, np.ndarray):
         order_id = order_id.tolist()
     if isinstance(order_id, list):

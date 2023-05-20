@@ -342,7 +342,7 @@ class TestTrader(unittest.TestCase):
         self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
         print('test property history orders, cashes, and positions')
-        print(f'history orders: \n{ts.history_orders}\n'
+        print(f'history orders: \n{ts.history_orders.to_string()}\n'
               f'history cashes: \n{ts.history_cashes}\n'
               f'history positions: \n{ts.history_positions}')
         ts.info()
@@ -553,7 +553,8 @@ class TestTrader(unittest.TestCase):
             time.sleep(1200)
             current_time = dt.datetime.now()
 
-        ts.debug = True
+        ts.debug = True  # 设置debug模式，在不使用TrderShell的情况下没有效果
+        ts.broker.debug = True
         ts.broker.broker_name = 'test_simulation_broker'
         ts.broker.status = 'init'
         Thread(target=ts.run).start()
@@ -601,15 +602,15 @@ class TestTrader(unittest.TestCase):
             ts._add_task_from_agenda(sim_time)
             # waite 1 second for orders to be generated
             time.sleep(2)
-            print(f'trader status: {ts.status}')
-            print(f'broker status: {ts.broker.status}')
+            print(f'current trader status: {ts.status}')
+            print(f'current broker status: {ts.broker.status}')
             print(f'current cash and positions: \n{ts.account_positions}, \n{ts.account_cash}')
-            print(f'current orders: \n{ts.history_orders.to_string()}')
             print(f'count of trade orders in queue: {ts.broker.order_queue.unfinished_tasks} orders unprocessed')
             print(f'count of trade results in queue: {ts.broker.result_queue.unfinished_tasks} results generated')
             # waite 5 seconds for order execution results to be generated
             time.sleep(5)
-            print(f'recent trade results: {ts.trade_results()}')
+            print(f'current orders: \n{ts.history_orders.to_string()}')
+            print(f'recent trade results: \n{ts.trade_results().to_string()}')
 
         # finally, stop the trader and broker
         print('\n==========stop trader and broker============\n')

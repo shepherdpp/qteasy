@@ -43,7 +43,7 @@ class TraderShell(Cmd):
     """
     intro = 'Welcome to the trader shell. Type help or ? to list commands.\n' \
             'Type "help <command>" to get help on a specific command.\n'
-    prompt = '(trader) '
+    prompt = '(QTEASY) '
     use_rawinput = False
 
     def __init__(self, trader):
@@ -453,10 +453,41 @@ class Trader(object):
         return positions.loc[positions['qty'] != 0]
 
     @property
-    def history_orders(self):
-        """ 账户的历史订单 """
-        from qteasy.trade_recording import query_trade_orders
-        return query_trade_orders(self.account_id, data_source=self._datasource)
+    def history_orders(self, with_trade_results=True):
+        """ 账户的历史订单详细信息
+
+        Parameters
+        ----------
+        with_trade_results: bool, default False
+            是否包含订单的成交结果
+
+        Returns
+        -------
+        order_details: DataFrame:
+        order_result_details: DataFrame
+        """
+        from qteasy.trade_recording import query_trade_orders, get_account_positions, read_trade_results_by_order_id
+        orders = query_trade_orders(self.account_id, data_source=self._datasource)
+        positions = get_account_positions(self.account_id, data_source=self._datasource)
+        order_details = orders.join(positions, on='pos_id', rsuffix='_p')
+        order_details.drop(columns=['pos_id', 'account_id', 'qty_p', 'available_qty'], inplace=True)
+        order_details = order_details.reindex(
+                columns=['symbol', 'position', 'direction', 'order_type',
+                           'qty', 'price',
+                           'submitted_time', 'status']
+        )
+        if not with_trade_results:
+            return order_details
+        results = read_trade_results_by_order_id(orders.index.to_list(), data_source=self._datasource)
+        order_result_details = order_details.join(results.set_index('order_id'), lsuffix='_quoted', rsuffix='_filled')
+        # order_result_details.drop(columns=['delivery_amount', ], inplace=True)
+        order_result_details = order_result_details.reindex(
+                columns=['symbol', 'position', 'direction', 'order_type',
+                           'qty', 'price_quoted', 'submitted_time', 'status',
+                           'price_filled', 'filled_qty', 'canceled_qty', 'execution_time',
+                           'delivery_status'],
+        )
+        return order_result_details
 
     @property
     def datasource(self):

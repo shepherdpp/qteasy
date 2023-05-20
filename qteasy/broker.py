@@ -17,6 +17,7 @@ from abc import abstractmethod, ABCMeta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
+import numpy as np
 import time
 
 
@@ -268,14 +269,14 @@ class RandomBroker(Broker):
         from time import sleep
         from random import random, choice
         from qteasy.trading_util import TIMEZONE
-        result_type = choice(['filled', 'canceled'])
+        result_type = np.random.choice(['filled', 'canceled'], p=[0.8, 0.2])
         trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
         price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
 
         sleep(trade_delay)
 
         if result_type == 'filled':
-            filled_proportion = choice([0.5, 0.75, 1.0])  # 模拟交易所的部分成交，最多成交1.0，最少成交0.5
+            filled_proportion = np.random.choice([0.5, 0.75, 1.0], p=[0.3, 0.4, 0.3])  # 模拟交易所的部分成交，最多成交1.0，最少成交0.5
             qty = order_qty * filled_proportion
             if direction == 'buy':
                 order_price = order_price * (1 + price_deviation)

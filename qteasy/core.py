@@ -2286,26 +2286,15 @@ def run(operator, **kwargs):
     接受operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
     根据QT_CONFIG环境变量中的设置和运行模式（mode）进行不同的操作：
     mode == 0:
-        进入实时信号生成模式：
-        根据Config实时策略运行所需的历史数据，根据历史数据实时生成操作信号
-        策略参数不能为空
+        进入实时信号生成模式：实盘运行模式是一个无限循环：
+        根据Config以及Operator中策略的设置定时启动相应的交易策略，读取最新的实时数据，生成交易信号，并将交易信号解析为
+        交易指令，发送到交易所Broker对象执行。
+        所有的交易结果和实时持仓都会被记录到数据库中，如果数据库中已经有了相应的记录，新的实盘运行结果可以在已经有的记录上
+        继续运行，或者用户也可以选择新建一个实盘账户，重新开始运行。
 
-        根据生成的执行器历史数据hist_op，应用operator对象中定义的投资策略生成当前的投资组合和各投资产品的头寸及仓位
-        连接交易执行模块登陆交易平台，获取当前账号的交易平台上的实际持仓组合和持仓仓位
-        将生成的投资组合和持有仓位与实际仓位比较，生成交易信号
-        交易信号为一个tuple，包含以下组分信息：
-         1，交易品种：str，需要交易的目标投资产品，可能为股票、基金、期货或其他，根据建立或设置的投资组合产品池确定
-         2，交易位置：int，分别为多头头寸：1，或空头仓位： -1 （空头头寸只有在期货或期权交易时才会涉及到）
-         3，交易方向：int，分别为开仓：1， 平仓：0 （股票和基金的交易只能开多仓（买入）和平多仓（卖出），基金可以开、平空头）
-         4，交易类型：int，分为市价单：1，限价单：0
-         5，交易价格：float，仅当交易类型为限价单时有效，市价单
-         6，交易量：float，当交易方向为开仓（买入）时，交易量代表计划现金投入量，当交易方向为平仓（卖出）时，交易量代表卖出的产品份额
+        实盘运行的过程会显示在屏幕上，用户可以在实盘运行过程中隋时进入交互模式，查看实盘运行的状态，或者修改运行参数。
 
-         上述交易信号被传入交易执行模块，连接券商服务器执行交易命令，执行成功后返回1，否则返回0
-         若交易执行模块交易成功，返回实际成交的品种、位置、方向、价格及成交数量（交易量），另外还返回交易后的实际持仓数额，资金余额
-         交易费用等信息
-
-         以上信息被记录到log对象中，并最终存储在磁盘上
+        用户需要在Terminal中以命令行的方式运行qteasy的实盘模式，通过tradershell查看运行过程并进行交互。
 
     mode == 1:
         回测模式：
@@ -2512,47 +2501,42 @@ def run(operator, **kwargs):
     test_cssh_plan:
     """
 
-    if run_mode == 0 or run_mode == 'signal':
+    if run_mode == 0 or run_mode == 'live':
         '''进入实时信号生成模式：
         
+        进入实盘交易模式后，会启动TraderShell，以实时显示策略交易的过程，同时允许用户隋时进入交互模式
+        查看交易结果或修改交易过程中的现金或持仓数量。
+        
         '''
-        # TODO: mode0 应该是自动定时运行，预留实盘交易接口
-        #   循环定时运行由QT级别的参数设定，设定快捷键，通过快捷键进行常用控制
-        #   定时运行时自动打印交易状态变量和交易信号
-        #   如果实现实盘交易接口，则在获取授权后自动发送 / 接收交易信号并监控交易结果
-        holdings = get_realtime_holdings()
-        trade_result = get_realtime_trades()
-        trade_data = build_trade_data(holdings, trade_result)
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(operator, config)
-        # TODO: 这里采用临时处理方式，使用mode1所用的hist_op/hist_ref以及invest_cash_plan
-        #  数据来进行实时信号生成，但是这里需要大改进：自动获取当前最新的数据，生成一个足够一个周期
-        #  的交易信号生成即可
-        # empty_cash_plan = CashPlan([], [])
-        # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref)
-        st = time.time()  # 记录交易信号生成耗时
-        if operator.op_type == 'batch':
-            raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
-                           f'"Operator.op_type = \'step\'"')
-        else:
-            op_list = operator.create_signal(
-                    trade_data=trade_data,
-                    sample_idx=-1,
-                    price_type_idx=0
-            )  # 生成交易清单
-        et = time.time()
-        run_time_prepare_data = (et - st)
-        if config['report']:
-            # TODO: 研究：是否需要用qt.config.report参数来控制实时信号显示的报告
-            pass
-        _print_operation_signal(
-                op_list=op_list,
-                run_time_prepare_data=run_time_prepare_data,
-                operator=operator,
-                history_data=hist_op
-        )
+        # 显示当前系统中已经存在的实盘账号信息，询问用户是否使用已有账号或重新创建账号运行
+        from qteasy.trading_util import get_account
+        all_accounts = get_account()
 
-        return op_list
+        print('Trader Shell will be started, please check the following account information:')
+        print('-----------------------------------------------------------------------------')
+        print('Account Name\t\tAccount ID\t\tAccount Type\t\tAccount Status')
+        print('-----------------------------------------------------------------------------')
+        for account in all_accounts:
+            print(f'{account.account_name}\t\t{account.account_id}\t\t{account.account_type}\t\t{account.account_status}')
+        print('-----------------------------------------------------------------------------')
+        print('Please input the account name you want to use, or input "new" to create a new account:')
+        account_name = input()
+        if account_name == 'new':
+            pass
+        else:
+            pass
+
+        # 启动交易shell
+        from qteasy.trader import start_trader
+        start_trader(
+                operator=operator,
+                account_id=account_id,
+                user_name=user_name,
+                init_cash=init_cash,
+                init_holdings=init_holdings,
+                config=config,
+                datasource=None,
+        )
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
