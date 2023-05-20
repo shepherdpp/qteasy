@@ -322,7 +322,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_too_early)),
                          None)
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_too_late)),
-                         None)
+                         pd.to_datetime(date_too_late))  # data too late is not any more a problem
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'SSE')),
                          pd.to_datetime(date_christmas))
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'XHKG')),

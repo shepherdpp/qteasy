@@ -507,7 +507,7 @@ class Trader(object):
                 data_source=self._datasource
         )
         order_ids = trade_orders.index.values
-        return list(map(read_trade_results_by_order_id, order_ids))
+        return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
 
     def run(self):
         """ 交易系统的main loop：

@@ -69,6 +69,7 @@ class TestTrader(unittest.TestCase):
                 password=QT_CONFIG['test_db_password'],
                 db_name=QT_CONFIG['test_db_name']
         )
+        test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
             if test_ds.table_data_exists(table):
@@ -452,7 +453,7 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.broker.status, 'stopped')
 
     def test_trader(self):
-        """Test trader in a full-fledged simulation run"""
+        """Test trader with simulated live trade task agenda"""
         # start the trader and broker in separate threads, set the trader to debug mode
         # and then manually generate task agenda and add task from agenda with twisted
         # current time, thus to test the trader in simulated real-time run.
@@ -465,6 +466,7 @@ class TestTrader(unittest.TestCase):
 
         ts = self.ts
         ts.debug = True
+        ts.broker.debug = True
         ts.broker.broker_name = 'test_broker'
         Thread(target=ts.run).start()
         Thread(target=ts.broker.run).start()
@@ -602,12 +604,12 @@ class TestTrader(unittest.TestCase):
             print(f'trader status: {ts.status}')
             print(f'broker status: {ts.broker.status}')
             print(f'current cash and positions: \n{ts.account_positions}, \n{ts.account_cash}')
-            print(f'current orders: \n{ts.history_orders}')
-            print(f'trade orders submitted to queue: {ts.broker.order_queue.unfinished_tasks} tasks unfinished')
-            print(f'trade order results in queue: {ts.broker.result_queue.unfinished_tasks} results generated')
+            print(f'current orders: \n{ts.history_orders.to_string()}')
+            print(f'count of trade orders in queue: {ts.broker.order_queue.unfinished_tasks} orders unprocessed')
+            print(f'count of trade results in queue: {ts.broker.result_queue.unfinished_tasks} results generated')
             # waite 5 seconds for order execution results to be generated
             time.sleep(5)
-            print(f'trade orders executed: {ts.trade_results()}')
+            print(f'recent trade results: {ts.trade_results()}')
 
         # finally, stop the trader and broker
         print('\n==========stop trader and broker============\n')

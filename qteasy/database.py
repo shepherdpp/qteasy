@@ -1334,7 +1334,7 @@ TABLE_SCHEMA = {
          'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'double', 'double',
                         'datetime', 'varchar(15)'],
          'remarks':    ['交易订单ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
-                        '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
+                        '委托时间', '状态(提交submitted/部分成交partial-filled/全部成交filled/取消canceled)'],
          'prime_keys': [0]
          },
 
@@ -2206,7 +2206,11 @@ class DataSource:
     def __del__(self):
         """ 关闭数据库连接 """
         if self.source_type == 'db':
-            self.con.close()
+            print(f'closing database connection to {self.host}:{self.port}')
+            print(f'self.con is {self.con}')
+            if self.con is not None:
+                # self.con.close()
+                print('connection closed')
 
     @property
     def tables(self):
@@ -2702,6 +2706,7 @@ class DataSource:
             raise RuntimeError('can not connect to database while source type is "file"')
         sql = f"SHOW TABLES LIKE '{db_table}'"
         try:
+            self.con.ping(reconnect=True)
             self.cursor.execute(sql)
             self.con.commit()
             res = self.cursor.fetchall()

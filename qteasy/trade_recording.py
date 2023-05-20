@@ -1018,8 +1018,10 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     trade_results: pd.DataFrame
     交易结果
     """
-    if not isinstance(order_id, (int, list)):
-        raise TypeError('order_id must be an int or a list of int')
+    if not isinstance(order_id, (int, np.int64, np.ndarray, list, )):
+        raise TypeError('order_id must be an integer, a list of integers or a numpy array of integers')
+    if isinstance(order_id, np.ndarray):
+        order_id = order_id.tolist()
     if isinstance(order_id, list):
         if not all([isinstance(i, (int, np.int64)) for i in order_id]):
             raise TypeError('order_id must be an int or a list of int')
@@ -1030,18 +1032,18 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    if isinstance(order_id, list):
+    if isinstance(order_id, (int, np.int64)):
+        trade_results = data_source.read_sys_table_data(
+                'sys_op_trade_results',
+                **{'order_id': order_id},
+        )
+    else:  # order_id is a list
         trade_results = data_source.read_sys_table_data(
             'sys_op_trade_results',
         )
         if trade_results is None:
             return trade_results
         trade_results = trade_results[trade_results['order_id'].isin(order_id)]
-    else:
-        trade_results = data_source.read_sys_table_data(
-                'sys_op_trade_results',
-                **{'order_id': order_id},
-        )
     return trade_results
 
 

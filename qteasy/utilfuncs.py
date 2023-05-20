@@ -910,7 +910,7 @@ def nearest_market_trade_day(date, exchange='SSE'):
 
 @lru_cache(maxsize=16)
 def next_market_trade_day(date, exchange='SSE'):
-    """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
+    """ 根据交易所发布的交易日历找到它的后一个交易日，准确性高但需要提前准备QT_TRADE_CALENDAR数据
 
     Parameters
     ----------

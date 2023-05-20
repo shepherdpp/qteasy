@@ -457,7 +457,7 @@ class Operator:
     @property
     def op_data_type_list(self):
         """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
-        return [stg.data_types for stg in self.strategies]
+        return [stg.history_data_types for stg in self.strategies]
 
     @property
     def op_history_data(self):
@@ -652,7 +652,7 @@ class Operator:
         if self.strategy_count == 0:
             message.append(f'No strategy -- add strategies to Operator!')
             is_ready = False
-        if len(self.strategy_blenders) < self.bt_price_type_count:
+        if len(self.strategy_blenders) < self.strategy_timing_count:
             message.append(f'No blender -- some of the strategies will not be used for signal, add blender')
             is_ready = False
         else:
@@ -854,7 +854,7 @@ class Operator:
         if price_type is None:
             return list(all_hist_data.values())
         else:
-            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=price_type)
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_history_data_by_run_timing(self, timing=None, get_rolling_window=True):
@@ -899,7 +899,7 @@ class Operator:
         if price_type is None:
             return list(all_ref_data.values())
         else:
-            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=price_type)
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_ref_data_by_run_timing(self, timing=None, get_rolling_window=True):
@@ -940,7 +940,7 @@ class Operator:
         if price_type is None:
             return list(all_sample_indices.values())
         else:
-            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=price_type)
             return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_sample_indices_by_run_timing(self, timing=None):
@@ -969,7 +969,7 @@ class Operator:
         :return:
         """
         combined_indices = []
-        all_sample_indices = self.get_op_sample_indices_by_price_type()
+        all_sample_indices = self.get_op_sample_indices_by_run_timing()
         for item in all_sample_indices:
             combined_indices = np.union1d(combined_indices, item)
         return combined_indices
@@ -979,7 +979,7 @@ class Operator:
         如果给出price_type时，返回使用该price_type的交易策略数量"""
         warnings.warn('get_strategy_count_by_price_type is deprecated, '
                         'use get_strategy_count_by_run_timing instead', DeprecationWarning)
-        return len(self.get_strategies_by_price_type(price_type))
+        return len(self.get_strategies_by_run_timing(price_type))
 
     def get_strategy_count_by_run_timing(self, timing=None):
         """返回operator中的交易策略的数量, timing为一个可选参数，
@@ -993,7 +993,7 @@ class Operator:
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         warnings.warn('get_strategy_names_by_price_type is deprecated, '
                         'use get_strategy_names_by_run_timing instead', DeprecationWarning)
-        return [stg.name for stg in self.get_strategies_by_price_type(price_type)]
+        return [stg.name for stg in self.get_strategies_by_run_timing(price_type)]
 
     def get_strategy_names_by_run_timing(self, timing=None):
         """返回operator对象中所有交易策略对象的名称, timing为一个可选参数，
@@ -1219,7 +1219,7 @@ class Operator:
                 blender = [blender]
             if isinstance(blender, list):
                 # 将列表中的blender补齐数量后，递归调用本函数，分别赋予所有的price_type
-                len_diff = self.bt_price_type_count - len(blender)
+                len_diff = self.strategy_timing_count - len(blender)
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
                 for bldr, pt in zip(blender, self.strategy_timings):
@@ -1409,7 +1409,7 @@ class Operator:
                       f'{truncate_string(stg.strategy_run_timing, 15):^15}'
                       f'{truncate_string(stg.data_freq, 10):^10}'
                       f'{truncate_string(stg.strategy_run_freq, 10):^10}'
-                      f'{stg.data_types}')
+                      f'{stg.history_data_types}')
             print('=' * 70)
         # 打印blender的信息：
         for price_type in self.strategy_timings:
@@ -1624,13 +1624,13 @@ class Operator:
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
             for price_type in self.strategy_timings:
-                stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
+                stg_count_for_price_type = self.get_strategy_count_by_run_timing(price_type)
                 strategy_indices = ('s' + idx for idx in map(str, range(stg_count_for_price_type)))
                 self.set_blender(price_type=price_type,
                                  blender='+'.join(strategy_indices))
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
-            stg_id: hist_data[stg.data_types, :, :]
+            stg_id: hist_data[stg.history_data_types, :, :]
             for stg_id, stg in self.get_strategy_id_pairs()
         }
         # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
@@ -1720,12 +1720,12 @@ class Operator:
         self._op_signals_by_price_type_idx = {
             price_type_idx: [] for
             price_type_idx in
-            range(self.bt_price_type_count)
+            range(self.strategy_timing_count)
         }
         self._op_signal_indices_by_price_type_idx = {
             price_type_idx: [] for
             price_type_idx in
-            range(self.bt_price_type_count)
+            range(self.strategy_timing_count)
         }
 
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
@@ -1733,14 +1733,14 @@ class Operator:
         self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
         self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.strategy_timings,
-                                                                                range(self.bt_price_type_count))}
+                                                                                range(self.strategy_timing_count))}
 
         # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
-        for price_type_idx in range(self.bt_price_type_count):
+        for price_type_idx in range(self.strategy_timing_count):
             # 按照price_type_idx逐个生成数据并填充
             # TODO: 在live模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
             price_type = self.strategy_timings[price_type_idx]
-            stg_count = self.get_strategy_count_by_price_type(price_type)
+            stg_count = self.get_strategy_count_by_run_timing(price_type)
             self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
             self._op_signal_indices_by_price_type_idx[price_type_idx] = [0] * stg_count
 
@@ -1825,20 +1825,20 @@ class Operator:
         # 如果price_type_idx给出时，只计算这个price_type的交易信号
         signal_out = {}
         if price_type_idx is None:
-            bt_price_types = self.strategy_timings
+            run_timings = self.strategy_timings
         else:
-            bt_price_types = [self.strategy_timings[price_type_idx]]
-        bt_price_type_count = len(bt_price_types)
+            run_timings = [self.strategy_timings[price_type_idx]]
+        bt_price_type_count = len(run_timings)
         all_zero_signal = np.zeros(len(self._op_list_shares), dtype='float')
-        for bt_price_type in bt_price_types:
+        for timing in run_timings:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
-            relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
-            relevant_hist_data = self.get_op_history_data_by_price_type(
-                    price_type=bt_price_type,
+            relevant_strategies = self.get_strategies_by_run_timing(timing=timing)
+            relevant_hist_data = self.get_op_history_data_by_run_timing(
+                    timing=timing,
                     get_rolling_window=True
             )
-            relevant_ref_data = self.get_op_ref_data_by_price_type(
-                    price_type=bt_price_type,
+            relevant_ref_data = self.get_op_ref_data_by_run_timing(
+                    timing=timing,
                     get_rolling_window=True
             )
             if sample_idx is None:
@@ -1849,15 +1849,15 @@ class Operator:
                 #  - 在生成信号之前检查sample_idx的类型，并加以调整
                 #  - 根据op_type确定运行模式
                 signal_mode = 'batch'   # TODO: self.op_type == 'batch'
-                relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
+                relevant_sample_indices = self.get_op_sample_indices_by_run_timing(timing=timing)
             else:
                 # stepwise运行，此时逐个比较sample_idx与op_sample_indices_by_price_type，只有sample_idx在其中时，才运行
                 # 此时strategy必须配套修改：当sample_idx为None时，策略输出也为None，即不运行
                 signal_mode = 'stepwise'
                 relevant_sample_indices = [sample_idx if sample_idx in _ else None
                                            for _ in
-                                           self.get_op_sample_indices_by_price_type(
-                                                   price_type=bt_price_type
+                                           self.get_op_sample_indices_by_run_timing(
+                                                   timing=timing
                                            )]
             # 依次使用策略队列中的所有策略逐个生成交易信号
             op_signals = [
@@ -1908,19 +1908,19 @@ class Operator:
             # 根据蒙板混合前缀表达式混合所有蒙板
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
-            signal_blender = self.get_blender(bt_price_type)
+            signal_blender = self.get_blender(timing)
             blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
                 self._op_signal = blended_signal
                 self._op_signal_index = sample_idx
-                self._op_signal_price_type_idx = bt_price_type
+                self._op_signal_price_type_idx = timing
                 return blended_signal
-            signal_out[bt_price_type] = blended_signal
+            signal_out[timing] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股
         signal_shape = blended_signal.T.shape
         signal_value = np.empty((*signal_shape, bt_price_type_count), dtype='float')
-        for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
-            signal_value[:, :, i] = signal_out[bt_price_type].T
+        for i, timing in zip(range(bt_price_type_count), run_timings):
+            signal_value[:, :, i] = signal_out[timing].T
         self._op_list = signal_value
         return signal_value

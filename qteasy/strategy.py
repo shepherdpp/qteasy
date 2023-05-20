@@ -369,7 +369,6 @@ class BaseStrategy:
     @property
     def data_types(self):
         """策略依赖的历史数据类型"""
-        warnings.warn('data_types is deprecated, use history_data_types instead', DeprecationWarning)
         return self._data_types
 
     @data_types.setter
@@ -512,7 +511,7 @@ class BaseStrategy:
                   f'Data frequency          {self.data_freq}\n'
                   f'Sample frequency        {self.strategy_run_freq}\n'
                   f'Window length           {self.window_length}\n' 
-                  f'Data types              {self.data_types}')
+                  f'Data types              {self.history_data_types}')
             if stg_type == 'FactorSorter':
                 print(f'Max select count        {self.max_sel_count}\n'
                       f'Sort Ascending:         {self.sort_ascending}\n'

@@ -144,12 +144,16 @@ class Broker(object):
         from random import random, choice
         from qteasy.trading_util import TIMEZONE
         if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) get_result: got order: \n{order}')
+            print(f'[DEBUG]: Broker({self.broker_name}) method: get_result():\nsubmit order components:\n'
+                  f'quantity:{order["qty"]}\norder_price={order["price"]}\norder_direction={order["direction"]}\n')
         result_type, qty, filled_price, fee = self.transaction_result(
                 order_qty=order['qty'],
                 order_price=order['price'],
                 direction=order['direction'],
         )
+        if self.debug:
+            print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
+                  f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
         # 圆整qty、filled_qty和fee # TODO: 这里的round函数小数位数应该是可配置的
         qty = round(qty, 2)
         filled_price = round(filled_price, 2)
@@ -176,7 +180,7 @@ class Broker(object):
             'delivery_status': 'ND',
         }
         if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) get_result: return result: \n{result}')
+            print(f'[DEBUG]: Broker({self.broker_name}) method get_result(): built up result:\n{result}')
         return result
 
     @abstractmethod
@@ -267,8 +271,7 @@ class RandomBroker(Broker):
         result_type = choice(['filled', 'canceled'])
         trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
         price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
-        if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) get_result: got order: \n{order}')
+
         sleep(trade_delay)
 
         if result_type == 'filled':

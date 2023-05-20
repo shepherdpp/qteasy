@@ -537,7 +537,7 @@ def _valid_qt_kwargs():
                           '- "normal"：  优先处理更接近成交价的报价，如卖1/买1等\n'
                           '- "reverse"： 优先处理更远离成交价的报价，如卖5/买5等'},
 
-        'cash_deliver_period':
+        'cash_delivery_period':
             {'Default':   0,
              'Validator': lambda value: isinstance(value, int)
                                         and value in range(5),
@@ -547,7 +547,7 @@ def _valid_qt_kwargs():
                           '当现金交割期为零时，可以选择在同一轮交易中先卖出资产获得尽可能多的现金用于本轮\n'
                           '买入'},
 
-        'stock_deliver_period':
+        'stock_delivery_period':
             {'Default':   1,
              'Validator': lambda value: isinstance(value, int)
                                         and value in range(5),
