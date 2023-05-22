@@ -14,7 +14,7 @@
 import pandas as pd
 import numpy as np
 
-from qteasy import logger_core as logger, Operator
+from qteasy import logger_core as logger, Operator, QT_CONFIG
 
 from qteasy.utilfuncs import str_to_list
 
@@ -27,7 +27,8 @@ from qteasy.trade_recording import query_trade_orders, get_position_ids, get_acc
 # TODO: add TIMEZONE to qt config arguments
 TIMEZONE = 'Asia/Shanghai'
 # TIMEZONE = 'UTC'
-
+CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
+AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 def create_daily_task_agenda(operator, config=None):
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
@@ -215,6 +216,8 @@ def parse_trade_signal(signals,
             'PT_buy_threshold': QT_CONFIG['PT_buy_threshold'],
             'PT_sell_threshold': QT_CONFIG['PT_sell_threshold'],
             'allow_sell_short': QT_CONFIG['allow_sell_short'],
+            'cash_decimal_places': QT_CONFIG['cash_decimal_places'],
+            'amount_decimal_places': QT_CONFIG['amount_decimal_places']
         }
 
     # PT交易信号和PS/VS交易信号需要分开解析
@@ -250,12 +253,8 @@ def parse_trade_signal(signals,
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
 
-    # 将计划买进金额和计划卖出数量四舍五入到小数点后3位  # TODO: 可以考虑增加一个qt参数，用于控制小数点后的位数
-    cash_to_spend = np.round(cash_to_spend, 3)
-    amounts_to_sell = np.round(amounts_to_sell, 3)
-
     # 确认总现金是否足够执行交易，如果不足，则将计划买入金额调整为可用的最大值，可用持仓检查可以分别进行
-    total_cash_to_spend = np.sum(cash_to_spend)  # 计划买进的总金额 TODO: 仅对多头持仓有效，空头买入需要另外处理
+    total_cash_to_spend = np.sum(cash_to_spend)  # 计划买进的总金额
     if total_cash_to_spend > own_cash:
         # 将计划买入的金额调整为可用的最大值
         cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
@@ -474,6 +473,8 @@ def _signal_to_order_elements(shares,
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
     """
+    # TODO: 在此函数中圆整交易元素的小数位数到QT_CONFIG中的要求
+
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
     if total_cash_to_spend > available_cash:
@@ -489,7 +490,7 @@ def _signal_to_order_elements(shares,
         # 计算多头买入的数量
         if cash_to_spend[i] > 0.001:
             # 计算买入的数量
-            quantity = cash_to_spend[i] / prices[i]
+            quantity = np.round(cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
             symbols.append(sym)
             positions.append('long')
             directions.append('buy')
@@ -497,7 +498,7 @@ def _signal_to_order_elements(shares,
         # 计算空头买入的数量
         if (cash_to_spend[i] < -0.001) and allow_sell_short:
             # 计算买入的数量
-            quantity = -cash_to_spend[i] / prices[i]
+            quantity = np.round(-cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
             symbols.append(sym)
             positions.append('short')
             directions.append('buy')
@@ -507,21 +508,21 @@ def _signal_to_order_elements(shares,
             # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
             if amounts_to_sell[i] < -available_amounts[i]:
                 # 计算卖出的数量
-                quantity = available_amounts[i]
+                quantity = np.round(available_amounts[i], AMOUNT_DECIMAL_PLACES)
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('sell')
                 quantities.append(quantity)
                 # 如果allow_sell_short，增加反向头寸的买入信号
                 if allow_sell_short:
-                    quantity = - amounts_to_sell[i] - available_amounts[i]
+                    quantity = np.round(- amounts_to_sell[i] - available_amounts[i], AMOUNT_DECIMAL_PLACES)
                     symbols.append(sym)
                     positions.append('short')
                     directions.append('buy')
                     quantities.append(quantity)
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
-                quantity = -amounts_to_sell[i]
+                quantity = np.round(-amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('sell')
@@ -531,20 +532,20 @@ def _signal_to_order_elements(shares,
             # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
             if amounts_to_sell[i] > available_amounts[i]:
                 # 计算卖出的数量
-                quantity = - available_amounts[i]
+                quantity = np.round(- available_amounts[i], 2)
                 symbols.append(sym)
                 positions.append('short')
                 directions.append('sell')
                 quantities.append(quantity)
                 # 增加反向头寸的买入信号
-                quantity = amounts_to_sell[i] + available_amounts[i]
+                quantity = np.round(amounts_to_sell[i] + available_amounts[i], AMOUNT_DECIMAL_PLACES)
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('buy')
                 quantities.append(quantity)
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
-                quantity = amounts_to_sell[i]
+                quantity = np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
                 symbols.append(sym)
                 positions.append('short')
                 directions.append('sell')

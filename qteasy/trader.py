@@ -41,8 +41,10 @@ class TraderShell(Cmd):
     """
 
     """
-    intro = 'Welcome to the trader shell. Type help or ? to list commands.\n' \
-            'Type "help <command>" to get help on a specific command.\n'
+    intro = 'Welcome to the trader shell interactive mode. Type help or ? to list commands.\n' \
+            'Type "bye" to stop trader and exit shell.\n' \
+            'Type "dashboard" to leave interactive mode and enter dashboard.\n' \
+            'Type "help <command>" to get help for more commands.\n'
     prompt = '(QTEASY) '
     use_rawinput = False
 
@@ -210,7 +212,9 @@ class TraderShell(Cmd):
         # check os type of current system, and then clear screen
         os.system('cls' if os.name == 'nt' else 'clear')
         self._status = 'dashboard'
-        print('\nWelcome to trader dashboard! live status will be displayed here.')
+        print('\nWelcome to TraderShell! currently in dashboard mode, live status will be displayed here.\n'
+              'You can not input commands in this mode, if you want to enter interactive mode, please'
+              'press "Ctrl+C" to exit dashboard mode and select from prompted options.\n')
         return True
 
     def do_strategies(self, arg):
@@ -256,7 +260,7 @@ class TraderShell(Cmd):
 
                 elif self.status == 'command':
                     # get user command input and do commands
-                    sys.stdout.write('will start cmdloop\n')
+                    sys.stdout.write('will enter interactive mode.\n')
                     self.cmdloop()
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')

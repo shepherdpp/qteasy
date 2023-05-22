@@ -193,6 +193,22 @@ def _valid_qt_kwargs():
              'text':      '如果True，策略参数寻优时使用GPU加速计算\n'
                           '<本功能目前尚未实现! NotImplemented>'},
 
+        'cash_decimal_places':
+            {'Default':   2,
+             'Validator': lambda value: isinstance(value, int) and value >= 0,
+             'level':     1,
+             'text':      '现金的小数位数，例如：\n'
+                          '0: 现金只能为整数\n'
+                          '2: 保留小数点后两位数字\n'},
+
+        'amount_decimal_places':
+            {'Default':   2,
+             'Validator': lambda value: isinstance(value, int) and value >= 0,
+             'level':     1,
+             'text':      '投资产品的份额的小数位数，例如：\n'
+                          '0: 份额只能为整数\n'
+                          '2: 保留小数点后两位数字\n'},
+
         'local_data_source':
             {'Default':   'file',
              'Validator': lambda value: isinstance(value, str) and value in ['file',

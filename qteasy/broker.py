@@ -20,6 +20,11 @@ import pandas as pd
 import numpy as np
 import time
 
+from qteasy import QT_CONFIG
+
+CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
+AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
+
 
 class Broker(object):
     """ Broker是交易所的抽象，它接受交易订单并返回交易结果
@@ -156,9 +161,9 @@ class Broker(object):
             print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
                   f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
         # 圆整qty、filled_qty和fee # TODO: 这里的round函数小数位数应该是可配置的
-        qty = round(qty, 2)
-        filled_price = round(filled_price, 2)
-        transaction_fee = round(fee, 2)
+        qty = round(qty, AMOUNT_DECIMAL_PLACES)
+        filled_price = round(filled_price, CASH_DECIMAL_PLACES)
+        transaction_fee = round(fee, CASH_DECIMAL_PLACES)
 
         filled_qty = 0
         canceled_qty = 0
