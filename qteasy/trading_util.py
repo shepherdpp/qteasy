@@ -933,14 +933,14 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     # read all filled and partially filled orders
 
     all_positions = get_account_positions(account_id=account_id, data_source=data_source)
-    if all_positions.empty and shares is None:
+    if (all_positions is None) and (shares is None):
         return [], np.array([]), np.array([])
-    all_position_symbols = all_positions['symbol'].to_dict()
+    elif (all_positions is not None) and (shares is None):
+        all_position_symbols = all_positions['symbol'].to_dict()
+        shares = list(all_position_symbols.values())
 
     if isinstance(shares, str):
         shares = str_to_list(shares)
-    if shares is None:
-        shares = list(all_position_symbols.values())
     else:
         if not isinstance(shares, list):
             raise ValueError(f'shares must be a list of symbols, got {type(shares)} instead')

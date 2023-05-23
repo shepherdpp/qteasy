@@ -81,6 +81,10 @@ def get_account(account_id, data_source=None):
     Returns
     -------
     dict: 账户的信息
+
+    Raises
+    ------
+    RuntimeError: 如果账户不存在，则抛出异常
     """
 
     import qteasy as qt
@@ -193,6 +197,10 @@ def get_position_by_id(pos_id, data_source=None):
     Returns
     -------
     dict: 持仓的信息
+
+    Raises
+    ------
+    RuntimeError: 如果持仓不存在，则报错
     """
 
     import qteasy as qt
@@ -223,8 +231,7 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
 
     Returns
     -------
-    position_ids: list of int: 持仓的id列表
-    None: 如果没有持仓, 则返回None
+    position_ids: list of int: 持仓的id列表, 如果没有持仓, 则返回空列表
     """
 
     import qteasy as qt
@@ -381,8 +388,13 @@ def get_account_positions(account_id, data_source=None):
 
     Returns
     -------
-    positions: pandas.DataFrame
+    positions: pandas.DataFrame, columns=['account_id', 'symbol', 'position', 'qty', 'available_qty']
         账户的所有持仓
+        account_id: int, 账户的id
+        symbol: str, 股票代码
+        position: str, 持仓类型，'long'表示多头持仓，'short'表示空头持仓
+        qty: int, 持仓数量
+        available_qty: int, 可用数量
     None: 如果账户不存在或持仓不存在，则返回None
     """
 
@@ -397,6 +409,7 @@ def get_account_positions(account_id, data_source=None):
             record_id=None,
             **{'account_id': account_id},
     )
+    # TODO: 如果持仓不存在，则返回empty DataFrame
     return positions
 
 
@@ -1046,7 +1059,7 @@ def read_trade_results_by_order_id(order_id, data_source=None):
             'sys_op_trade_results',
         )
         if trade_results is None:
-            return trade_results
+            return pd.DataFrame(columns=['order_id', 'result_id', 'delivery_status'])
         trade_results = trade_results[trade_results['order_id'].isin(order_id)]
     return trade_results
 

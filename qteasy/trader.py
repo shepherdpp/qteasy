@@ -260,7 +260,7 @@ class TraderShell(Cmd):
         if not strategies:
             print('Please input a valid strategy id, use "strategies" to view all ids.')
             return
-        all_strategy_ids = self.trader.operator.strategies.keys()
+        all_strategy_ids = self.trader.operator.strategy_ids
         if not all([strategy in all_strategy_ids for strategy in strategies]):
             print('Please input a valid strategy id, use "strategies" to view all ids.')
             return
@@ -270,13 +270,17 @@ class TraderShell(Cmd):
 
         self.trader.status = 'running'
         self.trader.broker.status = 'running'
+        print(f'[DEBUG] running strategy: {strategies}')
 
         try:
-            self.trader.run_task(('run_strategy', strategies))
+            self.trader.run_task('run_strategy', strategies)
         except Exception as e:
+            import traceback
             print(f'Error in running strategy: {e}')
-            pring(traceback.format_exc())
+            print(traceback.format_exc())
 
+        import time
+        time.sleep(2)
         self.trader.status = current_trader_status
         self.trader.broker.status = current_broker_status
 
@@ -962,10 +966,10 @@ class Trader(object):
                 data_source=self._datasource,
         )
         orders_to_be_canceled = pd.concat([partially_filled_orders, unfilled_orders])
-        for order in orders_to_be_canceled:
+        print(f'[DEBUG] partially filled orders found, they are to be canceled: {orders_to_be_canceled}')
+        for order_id in orders_to_be_canceled.index:
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
             self.post_message('partially filled orders found, unfilled part will be canceled')
-            order_id = order['order_id']
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.post_message(f'canceled unfilled order: {order_id}')
 
