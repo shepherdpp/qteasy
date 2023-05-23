@@ -196,11 +196,12 @@ def parse_trade_signal(signals,
 
     Returns
     -------
-    order_elements: tuple, (symbols, positions, directions, quantities)
+    order_elements: tuple, (symbols, positions, directions, quantities, quoted_prices)
         symbols: list of str, 交易信号对应的股票代码
         positions: list of str, 交易信号对应的持仓类型
         directions: list of str, 交易信号对应的交易方向
         quantities: list of float, 交易信号对应的交易数量
+        quoted_prices: list of float, 交易信号对应的交易价格
     """
 
     # 处理optional参数:
@@ -260,7 +261,7 @@ def parse_trade_signal(signals,
         cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
 
     # 将计算出的买入和卖出的数量转换为交易信号
-    symbols, positions, directions, quantities = _signal_to_order_elements(
+    symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,
@@ -269,7 +270,7 @@ def parse_trade_signal(signals,
         available_amounts=available_amounts,
         allow_sell_short=config['allow_sell_short']
     )
-    return symbols, positions, directions, quantities
+    return symbols, positions, directions, quantities, quoted_prices
 
 
 # TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loopstep中直接引用这三个函数的返回值
@@ -476,7 +477,11 @@ def _signal_to_order_elements(shares,
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
+    print(f'[DEBUG] in function signal_to_order_elements(), got total cash to spend: {total_cash_to_spend} ')
     if total_cash_to_spend > available_cash:
+        print(f'[DEBUG] in function signal_to_order_elements(), because total cash to spend is greater than'
+              f'available cash ({available_cash}), then total cash to spend is adjusted to: '
+              f'{cash_to_spend * available_cash / total_cash_to_spend} ')
         cash_to_spend = cash_to_spend * available_cash / total_cash_to_spend
 
     # 逐个计算每一只资产的买入和卖出的数量
@@ -484,10 +489,12 @@ def _signal_to_order_elements(shares,
     positions = []
     directions = []
     quantities = []
+    quoted_prices = []
 
     for i, sym in enumerate(shares):
         print(f'[DEBUG] in function signal_to_order_elements(), got signals for each symbol: \n'
-              f'symbol: {sym} - cash to spend: {cash_to_spend[i]} / amounts to sell: {amounts_to_sell[i]}')
+              f'symbol: {sym} - cash to spend: {cash_to_spend[i]} / amounts to sell: {amounts_to_sell[i]}\n'
+              f'available cash: {available_cash} / available amounts: {available_amounts[i]}')
         # 计算多头买入的数量
         if cash_to_spend[i] > 0.001:
             # 计算买入的数量
@@ -496,6 +503,7 @@ def _signal_to_order_elements(shares,
             positions.append('long')
             directions.append('buy')
             quantities.append(quantity)
+            quoted_prices.append(prices[i])
         # 计算空头买入的数量
         if (cash_to_spend[i] < -0.001) and allow_sell_short:
             # 计算买入的数量
@@ -504,6 +512,7 @@ def _signal_to_order_elements(shares,
             positions.append('short')
             directions.append('buy')
             quantities.append(quantity)
+            quoted_prices.append(prices[i])
         # 计算多头卖出的数量
         if amounts_to_sell[i] < -0.001:
             # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
@@ -514,6 +523,7 @@ def _signal_to_order_elements(shares,
                 positions.append('long')
                 directions.append('sell')
                 quantities.append(quantity)
+                quoted_prices.append(prices[i])
                 # 如果allow_sell_short，增加反向头寸的买入信号
                 if allow_sell_short:
                     quantity = np.round(- amounts_to_sell[i] - available_amounts[i], AMOUNT_DECIMAL_PLACES)
@@ -521,6 +531,7 @@ def _signal_to_order_elements(shares,
                     positions.append('short')
                     directions.append('buy')
                     quantities.append(quantity)
+                    quoted_prices.append(prices[i])
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(-amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
@@ -528,6 +539,7 @@ def _signal_to_order_elements(shares,
                 positions.append('long')
                 directions.append('sell')
                 quantities.append(quantity)
+                quoted_prices.append(prices[i])
         # 计算空头卖出的数量
         if (amounts_to_sell[i] > 0.001) and allow_sell_short:
             # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
@@ -538,12 +550,14 @@ def _signal_to_order_elements(shares,
                 positions.append('short')
                 directions.append('sell')
                 quantities.append(quantity)
+                quoted_prices.append(prices[i])
                 # 增加反向头寸的买入信号
                 quantity = np.round(amounts_to_sell[i] + available_amounts[i], AMOUNT_DECIMAL_PLACES)
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('buy')
                 quantities.append(quantity)
+                quoted_prices.append(prices[i])
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
@@ -551,12 +565,15 @@ def _signal_to_order_elements(shares,
                 positions.append('short')
                 directions.append('sell')
                 quantities.append(quantity)
+                quoted_prices.append(prices[i])
 
     print(f'[DEBUG] in function signal_to_order_elements(), got orders for each symbol: \n'
-          f'- symbols: {symbols} \n- position: {positions[-1]} '
-          f'\n- direction: {directions[-1]} \n- quantity: {quantities}')
+          f'- symbols: {symbols} \n- position: {positions} '
+          f'\n- direction: {directions} \n- quantity: {quantities}'
+          f'\n- prices: {prices} \n- cash to spend: {cash_to_spend} \n'
+          f'- amounts to sell: {amounts_to_sell}')
 
-    order_elements = (symbols, positions, directions, quantities)
+    order_elements = (symbols, positions, directions, quantities, quoted_prices)
     return order_elements
 
 
@@ -933,10 +950,11 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     # read all filled and partially filled orders
 
     all_positions = get_account_positions(account_id=account_id, data_source=data_source)
-    if (all_positions is None) and (shares is None):
+    if all_positions.empty and (shares is None):
         return [], np.array([]), np.array([])
-    elif (all_positions is not None) and (shares is None):
-        all_position_symbols = all_positions['symbol'].to_dict()
+
+    all_position_symbols = all_positions['symbol'].to_dict()
+    if shares is None:
         shares = list(all_position_symbols.values())
 
     if isinstance(shares, str):

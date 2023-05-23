@@ -280,7 +280,7 @@ class TraderShell(Cmd):
             print(traceback.format_exc())
 
         import time
-        time.sleep(2)
+        time.sleep(10)
         self.trader.status = current_trader_status
         self.trader.broker.status = current_broker_status
 
@@ -880,7 +880,7 @@ class Trader(object):
             self.post_message(f'ran strategy and created signal: {op_signal}')
 
         # 解析交易信号
-        symbols, positions, directions, quantities = parse_trade_signal(
+        symbols, positions, directions, quantities, quoted_prices = parse_trade_signal(
                 signals=op_signal,
                 signal_type=signal_type,
                 shares=shares,
@@ -896,8 +896,8 @@ class Trader(object):
                               f'positions: {positions}\n'
                               f'directions: {directions}\n'
                               f'quantities: {quantities}\n'
-                              f'current_prices: {current_prices}\n')
-        for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, current_prices):
+                              f'current_prices: {quoted_prices}\n')
+        for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, quoted_prices):
             pos_id = get_or_create_position(account_id=self.account_id,
                                               symbol=sym,
                                               position_type=pos,
@@ -966,7 +966,8 @@ class Trader(object):
                 data_source=self._datasource,
         )
         orders_to_be_canceled = pd.concat([partially_filled_orders, unfilled_orders])
-        print(f'[DEBUG] partially filled orders found, they are to be canceled: {orders_to_be_canceled}')
+        if self.debug:
+            self.post_message(f'partially filled orders found, they are to be canceled: \n{orders_to_be_canceled}')
         for order_id in orders_to_be_canceled.index:
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
             self.post_message('partially filled orders found, unfilled part will be canceled')

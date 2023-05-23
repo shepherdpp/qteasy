@@ -409,7 +409,8 @@ def get_account_positions(account_id, data_source=None):
             record_id=None,
             **{'account_id': account_id},
     )
-    # TODO: 如果持仓不存在，则返回empty DataFrame
+    if positions is None:
+        return pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
     return positions
 
 
@@ -743,7 +744,7 @@ def query_trade_orders(account_id,
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame, columns = ['pos_id', 'direction', 'order_type', 'qty', 'price', 'submitted_time', 'status']
         交易订单列表，包含所有符合查询条件的订单的DataFrame
     """
 
@@ -759,7 +760,7 @@ def query_trade_orders(account_id,
     # 从数据库中读取position的id
     pos_ids = get_position_ids(account_id, symbol, position, data_source=data_source)
     if pos_ids is None:
-        return None
+        return pd.DataFrame(columns=['pos_id', 'direction', 'order_type', 'qty', 'price', 'submitted_time', 'status'])
 
     data_filter = {}
     if direction is not None:
@@ -779,7 +780,8 @@ def query_trade_orders(account_id,
                 )
         )
     if all(r is None for r in res):
-        return pd.DataFrame()
+        return pd.DataFrame(columns=['pos_id', 'direction', 'order_type', 'qty', 'price', 'submitted_time', 'status'])
+
     return pd.concat(res)
 
 
@@ -1031,8 +1033,17 @@ def read_trade_results_by_order_id(order_id, data_source=None):
 
     Returns
     -------
-    trade_results: pd.DataFrame
-    交易结果
+    trade_results: pd.DataFrame, columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+                        'canceled_qty', 'delivery_amount', 'delivery_status']
+    交易结果:
+    order_id: int 交易信号的id
+    filled_qty: int 成交数量
+    price: float 成交价格
+    transaction_fee: float 交易费用
+    execution_time: datetime.datetime 成交时间
+    canceled_qty: int 撤单数量
+    delivery_amount: float 交割金额
+    delivery_status: str 交割状态
     """
     if not isinstance(order_id, (int, np.int64, np.ndarray, list, )):
         raise TypeError(f'order_id must be an integer, a list of integers or a numpy array of integers, '
@@ -1059,7 +1070,8 @@ def read_trade_results_by_order_id(order_id, data_source=None):
             'sys_op_trade_results',
         )
         if trade_results is None:
-            return pd.DataFrame(columns=['order_id', 'result_id', 'delivery_status'])
+            return pd.DataFrame(columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+                                         'canceled_qty', 'delivery_amount', 'delivery_status'])
         trade_results = trade_results[trade_results['order_id'].isin(order_id)]
     return trade_results
 

@@ -2206,7 +2206,7 @@ class DataSource:
     def __del__(self):
         """ 关闭数据库连接 """
         if self.source_type == 'db':
-            print(f'closing database connection to {self.host}:{self.port}')
+            print(f'closing database connection to {self.connection_type}')
             print(f'self.con is {self.con}')
             if self.con is not None:
                 # self.con.close()
