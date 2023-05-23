@@ -69,7 +69,10 @@ class TraderShell(Cmd):
         ------
         status
         """
-        sys.stdout.write(f'current trader status: {self.trader.status} \n')
+        sys.stdout.write(f'current trader status: {self.trader.status} \n'
+                         f'current broker name: {self.trader.broker.broker_name} \n'
+                         f'current broker status: {self.trader.broker.status} \n'
+                         f'current day is trade day: {self.trader.is_trade_day} \n')
 
     def do_pause(self, arg):
         """ Pause trader
@@ -134,6 +137,7 @@ class TraderShell(Cmd):
         positions
         """
         print(self._trader.account_positions)
+        # TODO: 打印持仓的股票名称，显示持仓收益情况
 
     def do_overview(self, arg):
         """ Get trader overview, same as info
@@ -152,6 +156,7 @@ class TraderShell(Cmd):
             else:
                 print('argument not valid, input "detail" or "d" to get detailed info')
         self._trader.info(detail)
+        # TODO: 打印持仓的股票名称，显示持仓收益情况，显示总投资金额和总收益率
 
     def do_history(self, arg):
         """ Get trader history
@@ -235,6 +240,46 @@ class TraderShell(Cmd):
         """
         print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
 
+    def do_run(self, arg):
+        """ To run a strategy in current setup, only available in DEBUG mode.
+        strategy id can be found in strategies command.
+
+        Usage:
+        ------
+        run [strategy id]
+        """
+        if not self.trader.debug:
+            print('Only available in DEBUG mode')
+            return
+        strategies = arg
+        if isinstance(strategies, str):
+            strategies = str_to_list(arg)
+        if not isinstance(strategies, list):
+            print('Please input a valid strategy id, use "strategies" to view all ids.')
+            return
+        if not strategies:
+            print('Please input a valid strategy id, use "strategies" to view all ids.')
+            return
+        all_strategy_ids = self.trader.operator.strategies.keys()
+        if not all([strategy in all_strategy_ids for strategy in strategies]):
+            print('Please input a valid strategy id, use "strategies" to view all ids.')
+            return
+
+        current_trader_status = self.trader.status
+        current_broker_status = self.trader.broker.status
+
+        self.trader.status = 'running'
+        self.trader.broker.status = 'running'
+
+        try:
+            self.trader.run_task(('run_strategy', strategies))
+        except Exception as e:
+            print(f'Error in running strategy: {e}')
+            pring(traceback.format_exc())
+
+        self.trader.status = current_trader_status
+        self.trader.broker.status = current_broker_status
+
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
         line = line.lower()
@@ -282,7 +327,7 @@ class TraderShell(Cmd):
                 self.stdout.write(f'Unexpected Error: {e}\n')
                 import traceback
                 traceback.print_exc()
-                self.do_bye()
+                self.do_bye('')
 
         sys.stdout.write('Thank you for using qteasy!\n')
 
@@ -849,14 +894,14 @@ class Trader(object):
                               f'quantities: {quantities}\n'
                               f'current_prices: {current_prices}\n')
         for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, current_prices):
-            pos_id = get_position_ids(account_id=self.account_id,
-                                      symbol=sym,
-                                      position_type=pos,
-                                      data_source=self._datasource)
+            pos_id = get_or_create_position(account_id=self.account_id,
+                                              symbol=sym,
+                                              position_type=pos,
+                                              data_source=self._datasource)
 
             # 生成交易订单dict
             trade_order = {
-                'pos_id':         pos_id[0],
+                'pos_id':         pos_id,
                 'direction':      d,
                 'order_type':     'market',  # TODO: order type is to be properly defined
                 'qty':            qty,
@@ -895,8 +940,6 @@ class Trader(object):
         if self.debug:
             self.post_message('running task post_close')
 
-        # 停止broker
-        self.broker.status = 'stopped'
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
         order_queue = self.broker.order_queue
         if not order_queue.empty():
@@ -943,8 +986,7 @@ class Trader(object):
         if self.debug:
             self.post_message('running task: market open')
         self.is_market_open = True
-        self.status = 'running'
-        self.broker.status = 'running'
+        self.run_task('wakeup')
         self.post_message('market is open, trader is running, broker is running')
 
     def _market_close(self):
@@ -956,8 +998,8 @@ class Trader(object):
         if self.debug:
             self.post_message('running task: market close')
         self.is_market_open = False
-        self.post_message('market is closed')
         self.run_task('sleep')
+        self.post_message('market is closed, trader is slept, broker is paused')
 
     # ================ task operations =================
     def run_task(self, task, *args):

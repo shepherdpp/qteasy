@@ -987,36 +987,6 @@ def process_loop_results(operator,
     return value_history
 
 
-def get_realtime_holdings():
-    """ 获取当前持有的产品在手数量
-
-    Returns
-    -------
-    tuple:
-    """
-    return None
-
-
-def get_realtime_trades():
-    """ 获取最近的交易记录
-
-    Returns
-    -------
-    """
-    return None
-
-
-def build_trade_data(holdings, recent_trades):
-    """ 生成符合格式的trade_data用于交易信号生成
-
-    :param holdings: tuple
-    :param recent_trades: tuple
-    Returns
-    -------
-    """
-    return None
-
-
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     """根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame
 
@@ -2116,7 +2086,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             end=invest_end,
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
-            adj=config.backtest_price_adj,
+            adj=config.backtest_price_adj if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
 

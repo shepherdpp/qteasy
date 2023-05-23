@@ -254,7 +254,7 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
     return position.index.tolist()
 
 
-def get_or_create_position(account_id: int, symbol: str, position_type: str, data_source: DataSource=None):
+def get_or_create_position(account_id: int, symbol: str, position_type: str, data_source: DataSource = None):
     """ 获取账户的持仓, 如果持仓不存在，则创建一条新的持仓记录
 
     Parameters
@@ -447,7 +447,7 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
     positions = get_account_positions(account_id=account_id, data_source=data_source)
 
     if positions is None:
-        return list(), np.zeros(len(shares)), np.zeros(len(shares))
+        return shares, np.zeros(len(shares)), np.zeros(len(shares))
     # 如果没有给出shares，则读取账户中所有持仓的symbol
     if shares is None:
         shares = positions['symbol'].unique()
@@ -487,6 +487,7 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
     # 将列表转换为ndarray并返回
+
     return shares, np.array(own_amounts).astype('float'), np.array(available_amounts).astype('float')
 
 
@@ -516,6 +517,8 @@ def get_account_position_details(account_id, shares=None, data_source=None):
             data_source=data_source
     )
     # 将symbol，position，qty和available_qty放入DataFrame并返回
+    print(f'[DEBUG]: in function get_account_position_details, \n'
+          f'symbols: {symbols}, amounts: {amounts}, available_amounts: {available_amounts}')
     positions = pd.DataFrame(
             {
                 'qty': amounts,

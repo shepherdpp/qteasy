@@ -114,7 +114,7 @@ class Broker(object):
             # 如果Broker被用户强制退出，处理尚未完成的交易订单
             # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
             if self.debug:
-                print('B[DEBUG]: roker is stopped by user, will stop broker and process unfinished orders...')
+                print('[DEBUG]: Broker is stopped by user, will stop broker and process unfinished orders...')
             self.status = 'stopped'
             while not self.order_queue.empty():
                 order = self.order_queue.get()
@@ -160,7 +160,7 @@ class Broker(object):
         if self.debug:
             print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
                   f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
-        # 圆整qty、filled_qty和fee # TODO: 这里的round函数小数位数应该是可配置的
+        # 圆整qty、filled_qty和fee
         qty = round(qty, AMOUNT_DECIMAL_PLACES)
         filled_price = round(filled_price, CASH_DECIMAL_PLACES)
         transaction_fee = round(fee, CASH_DECIMAL_PLACES)

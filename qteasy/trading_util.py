@@ -473,7 +473,6 @@ def _signal_to_order_elements(shares,
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
     """
-    # TODO: 在此函数中圆整交易元素的小数位数到QT_CONFIG中的要求
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
@@ -487,6 +486,8 @@ def _signal_to_order_elements(shares,
     quantities = []
 
     for i, sym in enumerate(shares):
+        print(f'[DEBUG] in function signal_to_order_elements(), got signals for each symbol: \n'
+              f'symbol: {sym} - cash to spend: {cash_to_spend[i]} / amounts to sell: {amounts_to_sell[i]}')
         # 计算多头买入的数量
         if cash_to_spend[i] > 0.001:
             # 计算买入的数量
@@ -550,6 +551,10 @@ def _signal_to_order_elements(shares,
                 positions.append('short')
                 directions.append('sell')
                 quantities.append(quantity)
+
+    print(f'[DEBUG] in function signal_to_order_elements(), got orders for each symbol: \n'
+          f'- symbols: {symbols} \n- position: {positions[-1]} '
+          f'\n- direction: {directions[-1]} \n- quantity: {quantities}')
 
     order_elements = (symbols, positions, directions, quantities)
     return order_elements
@@ -926,20 +931,27 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     # TODO: test this function, causing error in live mode
 
     # read all filled and partially filled orders
-    all_orders = query_trade_orders(
-            account_id=account_id,
-            data_source=data_source,
-    )
-    all_orders = all_orders[all_orders['status'].isin(['filled', 'partial-filled'])]
 
     all_positions = get_account_positions(account_id=account_id, data_source=data_source)
+    if all_positions.empty and shares is None:
+        return [], np.array([]), np.array([])
     all_position_symbols = all_positions['symbol'].to_dict()
 
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
     if shares is None:
         shares = list(all_position_symbols.values())
     else:
         if not isinstance(shares, list):
             raise ValueError(f'shares must be a list of symbols, got {type(shares)} instead')
+
+    all_orders = query_trade_orders(
+            account_id=account_id,
+            data_source=data_source,
+    )
+    if all_orders.empty:
+        return shares, np.zeros(shape=(len(shares),)), np.zeros(shape=(len(shares),))
+    all_orders = all_orders[all_orders['status'].isin(['filled', 'partial-filled'])]
 
     all_results = read_trade_results_by_order_id(
             order_id=all_orders.index.tolist(),
@@ -977,10 +989,6 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     last_filled_qty = {all_position_symbols[k]: v for k, v in last_filled_qty.items()}
     last_filled_price = {all_position_symbols[k]: v for k, v in last_filled_price.items()}
 
-    if isinstance(shares, str):
-        shares = str_to_list(shares)
-    if not isinstance(shares, list):
-        raise ValueError(f'shares must be list or str, got {type(shares)} instead')
     # update filled qty and filled prices with last filled qty and last filled price
     shares_filled_qty = {k: 0 for k in shares}
     shares_filled_price = {k: 0 for k in shares}
