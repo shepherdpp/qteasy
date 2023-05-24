@@ -957,7 +957,7 @@ class Trader(object):
         # 检查今日成交订单，确认是否有"部分成交"以及"未成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         partially_filled_orders = query_trade_orders(
                 account_id=self.account_id,
-                status='partially-filled',
+                status='partial-filled',
                 data_source=self._datasource,
         )
         unfilled_orders = query_trade_orders(
@@ -1005,6 +1005,30 @@ class Trader(object):
         self.is_market_open = False
         self.run_task('sleep')
         self.post_message('market is closed, trader is slept, broker is paused')
+
+    def _refill(self, tables, freq):
+        """ 补充数据库内的历史数据 """
+        if self.debug:
+            self.post_message('running task: refill, this task will be done only during sleeping')
+        # 更新数据源中的数据，不同频率的数据表可以不同时机更新，每次更新时仅更新当天或最近一个freq的数据
+        # 例如，freq为H或min的数据，更新当天的数据，freq为W的数据，更新最近一周
+        # 在arg中必须给出freq以及tables两个参数，tables参数直接传入refill_local_source函数
+        # freq被用于计算start_date和end_date
+        end_date = datetime.now().date()
+        if freq == 'D':
+            start_date = end_date
+        elif freq == 'W':
+            start_date = end_date - timedelta(days=7)
+        elif freq == 'M':
+            start_date = end_date - timedelta(days=30)
+        else:
+            raise ValueError(f'invalid freq: {freq}')
+        self._datasource.refill_local_source(
+                tables=tables,
+                start_date=start_date,
+                end_date=end_date,
+                merge_type='update',
+        )
 
     # ================ task operations =================
     def run_task(self, task, *args):
@@ -1118,7 +1142,10 @@ class Trader(object):
                               new_line=False)
 
     def _initialize_agenda(self, current_time=None):
-        """ 初始化交易日的任务日程
+        """ 初始化交易日的任务日程, 在任务清单中添加以下任务：
+        1. 每日固定事件如开盘、收盘、交割等
+        2. 每日需要定时执行的交易策略
+        3. 需要定期下载的历史数据（这部分信息需要在QT_CONFIG中定义）
 
         Parameters
         ----------
@@ -1199,13 +1226,14 @@ class Trader(object):
         'wakeup':           _wakeup,
         'pause':            _pause,
         'resume':           _resume,
+        'refill':           _refill,
     }
 
     TASK_WHITELIST = {
         'stopped':     ['start'],
         'running':     ['stop', 'sleep', 'pause', 'run_strategy', 'process_result', 'pre_open',
                         'open_market', 'close_market'],
-        'sleeping':    ['wakeup', 'stop', 'pause', 'pre_open', 'open_market', 'post_close'],
+        'sleeping':    ['wakeup', 'stop', 'pause', 'pre_open', 'open_market', 'post_close', 'refill'],
         'paused':      ['resume', 'stop'],
     }
 

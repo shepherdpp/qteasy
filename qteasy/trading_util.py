@@ -477,11 +477,11 @@ def _signal_to_order_elements(shares,
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
-    print(f'[DEBUG] in function signal_to_order_elements(), got total cash to spend: {total_cash_to_spend} ')
+    # print(f'[DEBUG] in function signal_to_order_elements(), got total cash to spend: {total_cash_to_spend} ')
     if total_cash_to_spend > available_cash:
-        print(f'[DEBUG] in function signal_to_order_elements(), because total cash to spend is greater than'
-              f'available cash ({available_cash}), then total cash to spend is adjusted to: '
-              f'{cash_to_spend * available_cash / total_cash_to_spend} ')
+        # print(f'[DEBUG] in function signal_to_order_elements(), because total cash to spend is greater than'
+        #       f'available cash ({available_cash}), then total cash to spend is adjusted to: '
+        #       f'{cash_to_spend * available_cash / total_cash_to_spend} ')
         cash_to_spend = cash_to_spend * available_cash / total_cash_to_spend
 
     # 逐个计算每一只资产的买入和卖出的数量
@@ -492,9 +492,9 @@ def _signal_to_order_elements(shares,
     quoted_prices = []
 
     for i, sym in enumerate(shares):
-        print(f'[DEBUG] in function signal_to_order_elements(), got signals for each symbol: \n'
-              f'symbol: {sym} - cash to spend: {cash_to_spend[i]} / amounts to sell: {amounts_to_sell[i]}\n'
-              f'available cash: {available_cash} / available amounts: {available_amounts[i]}')
+        # print(f'[DEBUG] in function signal_to_order_elements(), got signals for each symbol: \n'
+        #       f'symbol: {sym} - cash to spend: {cash_to_spend[i]} / amounts to sell: {amounts_to_sell[i]}\n'
+        #       f'available cash: {available_cash} / available amounts: {available_amounts[i]}')
         # 计算多头买入的数量
         if cash_to_spend[i] > 0.001:
             # 计算买入的数量
@@ -567,11 +567,11 @@ def _signal_to_order_elements(shares,
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
 
-    print(f'[DEBUG] in function signal_to_order_elements(), got orders for each symbol: \n'
-          f'- symbols: {symbols} \n- position: {positions} '
-          f'\n- direction: {directions} \n- quantity: {quantities}'
-          f'\n- prices: {prices} \n- cash to spend: {cash_to_spend} \n'
-          f'- amounts to sell: {amounts_to_sell}')
+    # print(f'[DEBUG] in function signal_to_order_elements(), got orders for each symbol: \n'
+    #       f'- symbols: {symbols} \n- position: {positions} '
+    #       f'\n- direction: {directions} \n- quantity: {quantities}'
+    #       f'\n- prices: {prices} \n- cash to spend: {cash_to_spend} \n'
+    #       f'- amounts to sell: {amounts_to_sell}')
 
     order_elements = (symbols, positions, directions, quantities, quoted_prices)
     return order_elements
@@ -654,7 +654,7 @@ def cancel_order(order_id, data_source=None, config=None):
 
     对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为'cancelled'
     取消订单时，生成这个订单的交易结果，交易结果的"canceled_qty"为订单的"qty"，交易结果的"status"为"cancelled"
-    如果订单的状态为部分成交partially_filled，生成的交易结果的quantity为订单的数量减去已经成交的数量
+    如果订单的状态为部分成交partial-filled，生成的交易结果的quantity为订单的数量减去已经成交的数量
 
     Parameters
     ----------
@@ -673,19 +673,32 @@ def cancel_order(order_id, data_source=None, config=None):
 
     order_details = read_trade_order_detail(order_id=order_id, data_source=data_source)
     order_status = order_details['status']
-    if order_status not in ['submitted', 'partially_filled']:
+    if order_status not in ['submitted', 'partial-filled']:
         raise RuntimeError(f'order status wrong: {order_status} cannot be canceled')
 
     order_results = read_trade_results_by_order_id(order_id=order_id, data_source=data_source)
-    if order_results:
-        total_filled_qty = order_results['filled_qty'].sum()
-        already_canceled_qty = order_results['canceled_qty'].sum()
+    if not order_results.empty:
+        total_filled_qty = np.round(
+                order_results['filled_qty'].sum(),
+                AMOUNT_DECIMAL_PLACES,
+        )
+        already_canceled_qty = np.round(
+                order_results['canceled_qty'].sum(),
+                AMOUNT_DECIMAL_PLACES,
+        )
+        print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
+              f'total filled qty: {total_filled_qty}\n'
+              f'already canceled qty: {already_canceled_qty}')
     else:
-        total_filled_qty = 0
-        already_canceled_qty = 0
+        total_filled_qty = 0.
+        already_canceled_qty = 0.
     if already_canceled_qty > 0:
-        raise RuntimeError(f'order status wrong: canceled qty should be 0 unless order is canceled!')
-    remaining_qty = order_details['qty'] - total_filled_qty
+        raise RuntimeError(f'order status wrong: canceled qty should be 0 '
+                           f'unless order is canceled! actual: {already_canceled_qty}')
+    remaining_qty = np.round(
+            order_details['qty'] - total_filled_qty,
+            AMOUNT_DECIMAL_PLACES,
+    )
     if remaining_qty <= 0:
         raise RuntimeError(f'order status wrong: remaining qty should be larger than '
                            f'when order is partially filled')
@@ -827,8 +840,14 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     # 读取交易信号的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
-    filled_qty = trade_results['filled_qty'].sum() if trade_results is not None else 0
-    remaining_qty = order_detail['qty'] - filled_qty
+    filled_qty = np.round(
+            trade_results['filled_qty'].sum(),
+            AMOUNT_DECIMAL_PLACES
+    ) if trade_results is not None else 0
+    remaining_qty = np.round(
+            order_detail['qty'] - filled_qty,
+            AMOUNT_DECIMAL_PLACES,
+    )
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
         import pdb; pdb.set_trace()
         raise RuntimeError(f'qty {order_detail["qty"]} is not an integer')
@@ -848,16 +867,24 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         elif raw_trade_result['filled_qty'] == remaining_qty:
             order_detail['status'] = 'filled'
 
-        # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partially_filled'
+        # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partial-filled'
         elif raw_trade_result['filled_qty'] < remaining_qty:
             order_detail['status'] = 'partial-filled'
 
     # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
     position_change = raw_trade_result['filled_qty']
     if order_detail['direction'] == 'sell':
-        cash_change = raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
+        cash_change = np.round(
+                raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
+                CASH_DECIMAL_PLACES,
+        )
     elif order_detail['direction'] == 'buy':
-        cash_change = - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee']
+        cash_change = np.round(
+                - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
+                CASH_DECIMAL_PLACES,
+        )
+    else:  # for any other unexpected direction
+        raise ValueError(f'Invalid direction: {order_detail["direction"]}')
 
     # 如果position_change小于available_position_amount，则抛出异常
     available_qty = get_position_by_id(order_detail['pos_id'], data_source=data_source)['available_qty']

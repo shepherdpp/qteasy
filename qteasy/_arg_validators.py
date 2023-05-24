@@ -63,7 +63,7 @@ def _valid_qt_kwargs():
              'Validator': lambda value: value in (0, 1, 2, 3),
              'level':     0,
              'text':      'qteasy 的运行模式: \n'
-                          '0: 实时信号生成模式\n'
+                          '0: 实盘运行模式\n'
                           '1: 回测-评价模式\n'
                           '2: 策略优化模式\n'
                           '3: 统计预测模式\n'},
@@ -124,6 +124,22 @@ def _valid_qt_kwargs():
                           '1. : 只能购买整数份额的投资产品\n'
                           '100: 可以购买100的整数倍份额投资产品\n'
                           'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数\n'},
+
+        'cash_decimal_places':
+            {'Default':   2,
+             'Validator': lambda value: isinstance(value, int) and value >= 0,
+             'level':     1,
+             'text':      '现金的小数位数，例如：\n'
+                          '0: 现金只能为整数\n'
+                          '2: 保留小数点后两位数字\n'},
+
+        'amount_decimal_places':
+            {'Default':   2,
+             'Validator': lambda value: isinstance(value, int) and value >= 0,
+             'level':     1,
+             'text':      '投资产品的份额的小数位数，例如：\n'
+                          '0: 份额只能为整数\n'
+                          '2: 保留小数点后两位数字\n'},
 
         'riskfree_ir':
             {'Default':   0.0035,
@@ -186,28 +202,21 @@ def _valid_qt_kwargs():
                           '例如，设置hist_dnld_backoff = 2时，每次重试失败\n'
                           '后延迟时间会变为前一次的2倍'},
 
+        'auto_dnld_hist_tables':
+            {'Default':   [],
+             'Validator': lambda value: isinstance(value, list) and
+                          all(isinstance(item, str) for item in value),
+             'level':     4,
+             'text':      '在实盘运行时自动下载的历史数据表名列表，例如：\n'
+                          '["stock_daily", "index_weekly", "stock_monthly"]\n'
+                          '如果列表为空，则不自动下载任何历史数据'},
+
         'gpu':
             {'Default':   False,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
              'text':      '如果True，策略参数寻优时使用GPU加速计算\n'
                           '<本功能目前尚未实现! NotImplemented>'},
-
-        'cash_decimal_places':
-            {'Default':   2,
-             'Validator': lambda value: isinstance(value, int) and value >= 0,
-             'level':     1,
-             'text':      '现金的小数位数，例如：\n'
-                          '0: 现金只能为整数\n'
-                          '2: 保留小数点后两位数字\n'},
-
-        'amount_decimal_places':
-            {'Default':   2,
-             'Validator': lambda value: isinstance(value, int) and value >= 0,
-             'level':     1,
-             'text':      '投资产品的份额的小数位数，例如：\n'
-                          '0: 份额只能为整数\n'
-                          '2: 保留小数点后两位数字\n'},
 
         'local_data_source':
             {'Default':   'file',
