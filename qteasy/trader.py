@@ -13,6 +13,8 @@
 
 import time
 import sys
+from typing import Any, Callable, List, Union
+
 import pandas as pd
 import numpy as np
 
@@ -186,16 +188,67 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders [today] [3day] [week] [month] [year] [details]
+        orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)last_hour] [(T)today]
+        [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
         """
         if arg is None or arg == '':
-            arg = 'today'
+            arg = 'all'
         if not isinstance(arg, str):
             print('Please input a valid argument.')
             return
         print(f'{self} getting orders with arg: {arg}')
+        args = arg.split(' ')
+        print(f'[DEBUG] args: {args}')
+        order_details = self._trader.history_orders()
 
-        print(self._trader.history_orders)
+        for argument in args:
+            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+            # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
+            if argument in ['last_hour', 'L', 'today', 'T', '3day', '3', 'week', 'W', 'month', 'M']:
+                # create order time ranges
+                end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")
+                if argument in ['last_hour', 'L']:
+                    start = pd.to_datetime(end) - pd.Timedelta(hours=1)
+                elif argument in ['today', 'T']:
+                    start = pd.to_datetime('today', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d 00:00:00")
+                elif argument in ['3day', '3']:
+                    start = pd.to_datetime(end) - pd.Timedelta(days=3)
+                elif argument in ['week', 'W']:
+                    start = pd.to_datetime(end) - pd.Timedelta(days=7)
+                elif argument in ['month', 'M']:
+                    start = pd.to_datetime(end) - pd.Timedelta(days=30)
+                else:
+                    start = pd.to_datetime(end) - pd.Timedelta(hours=1)
+                # select orders by time range
+                order_details = order_details[(order_details['submitted_time'] >= start) &
+                                                (order_details['submitted_time'] <= end)]
+            # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
+            elif argument in ['filled', 'F', 'canceled', 'C', 'partial-filled', 'P']:
+                if argument in ['filled', 'F']:
+                    order_details = order_details[order_details['status'] == 'filled']
+                elif argument in ['canceled', 'C']:
+                    order_details = order_details[order_details['status'] == 'canceled']
+                elif argument in ['partial-filled', 'P']:
+                    order_details = order_details[order_details['status'] == 'partial-filled']
+            # select orders by order side arguments like 'long', 'short'
+            elif argument in ['long', 'short']:
+                if argument in ['long']:
+                    order_details = order_details[order_details['direction'] == 'long']
+                elif argument in ['short']:
+                    order_details = order_details[order_details['direction'] == 'short']
+            # select orders by order side arguments like 'buy', 'sell'
+            elif argument in ['buy', 'B', 'sell', 'S']:
+                if argument in ['buy', 'B']:
+                    order_details = order_details[order_details['direction'] == 'buy']
+                elif argument in ['sell', 'S']:
+                    order_details = order_details[order_details['direction'] == 'sell']
+            # select orders by order symbol arguments like '000001.SZ'
+            elif is_complete_cn_stock_symbol_like(argument):
+                order_details = order_details[order_details['symbol'] == argument]
+            else:
+                pass
+
+        print(order_details.to_string(index=False))
 
     def do_change(self, arg):
         """ Change trader cash and positions
@@ -506,93 +559,10 @@ class Trader(object):
         return positions.loc[positions['qty'] != 0]
 
     @property
-    def history_orders(self, with_trade_results=True):
-        """ 账户的历史订单详细信息
-
-        Parameters
-        ----------
-        with_trade_results: bool, default False
-            是否包含订单的成交结果
-
-        Returns
-        -------
-        order_details: DataFrame:
-        order_result_details: DataFrame
-        """
-        from qteasy.trade_recording import query_trade_orders, get_account_positions, read_trade_results_by_order_id
-        orders = query_trade_orders(self.account_id, data_source=self._datasource)
-        positions = get_account_positions(self.account_id, data_source=self._datasource)
-        order_details = orders.join(positions, on='pos_id', rsuffix='_p')
-        order_details.drop(columns=['pos_id', 'account_id', 'qty_p', 'available_qty'], inplace=True)
-        order_details = order_details.reindex(
-                columns=['symbol', 'position', 'direction', 'order_type',
-                           'qty', 'price',
-                           'submitted_time', 'status']
-        )
-        if not with_trade_results:
-            return order_details
-        results = read_trade_results_by_order_id(orders.index.to_list(), data_source=self._datasource)
-        order_result_details = order_details.join(results.set_index('order_id'), lsuffix='_quoted', rsuffix='_filled')
-        # order_result_details.drop(columns=['delivery_amount', ], inplace=True)
-        order_result_details = order_result_details.reindex(
-                columns=['symbol', 'position', 'direction', 'order_type',
-                           'qty', 'price_quoted', 'submitted_time', 'status',
-                           'price_filled', 'filled_qty', 'canceled_qty', 'execution_time',
-                           'delivery_status'],
-        )
-        return order_result_details
-
-    @property
     def datasource(self):
         return self._datasource
 
     # ================== methods ==================
-    def history_cashes(self, start_date=None, end_date=None):
-        """ 账户的历史现金流水 """
-        # TODO: implement this function
-        from qteasy.trade_recording import query_cash_flows
-        return query_cash_flows(self.account_id, start_date, end_date, data_source=self._datasource)
-
-    def history_positions(self, start_date=None, end_date=None):
-        """ 账户的历史持仓 """
-        # TODO: implement this function
-        from qteasy.trade_recording import query_positions
-        return query_positions(self.account_id, start_date, end_date, data_source=self._datasource)
-
-    def info(self, detail=False):
-        """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
-
-        Parameters:
-        -----------
-        detail: bool, default False
-            是否打印持仓的详细信息
-
-        Returns:
-        --------
-        None
-        """
-        print('Account Overview:')
-        print('-----------------')
-        print(f'Account ID: {self.account_id}')
-        print(f'User Name: {self.account["user_name"]}')
-        print(f'Created on: {self.account["created_time"]}')
-        if detail:
-            print(f'Own Cash/Available: {self.account_cash[0]} / {self.account_cash[1]}')
-            print(f'Own / Available Positions: \n{self.non_zero_positions}')
-        return None
-
-    def trade_results(self, status='filled'):
-        """ 账户的交易结果 """
-        from qteasy.trade_recording import read_trade_results_by_order_id
-        from qteasy.trade_recording import query_trade_orders
-        trade_orders = query_trade_orders(
-                self.account_id,
-                status=status,
-                data_source=self._datasource
-        )
-        order_ids = trade_orders.index.values
-        return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
-
     def run(self):
         """ 交易系统的main loop：
 
@@ -684,6 +654,52 @@ class Trader(object):
                 import traceback
                 traceback.print_exc()
 
+    def history_cashes(self, start_date=None, end_date=None):
+        """ 账户的历史现金流水 """
+        # TODO: implement this function
+        from qteasy.trade_recording import query_cash_flows
+        return query_cash_flows(self.account_id, start_date, end_date, data_source=self._datasource)
+
+    def history_positions(self, start_date=None, end_date=None):
+        """ 账户的历史持仓 """
+        # TODO: implement this function
+        from qteasy.trade_recording import query_positions
+        return query_positions(self.account_id, start_date, end_date, data_source=self._datasource)
+
+    def info(self, detail=False):
+        """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
+
+        Parameters:
+        -----------
+        detail: bool, default False
+            是否打印持仓的详细信息
+
+        Returns:
+        --------
+        None
+        """
+        print('Account Overview:')
+        print('-----------------')
+        print(f'Account ID: {self.account_id}')
+        print(f'User Name: {self.account["user_name"]}')
+        print(f'Created on: {self.account["created_time"]}')
+        if detail:
+            print(f'Own Cash/Available: {self.account_cash[0]} / {self.account_cash[1]}')
+            print(f'Own / Available Positions: \n{self.non_zero_positions}')
+        return None
+
+    def trade_results(self, status='filled'):
+        """ 账户的交易结果 """
+        from qteasy.trade_recording import read_trade_results_by_order_id
+        from qteasy.trade_recording import query_trade_orders
+        trade_orders = query_trade_orders(
+                self.account_id,
+                status=status,
+                data_source=self._datasource
+        )
+        order_ids = trade_orders.index.values
+        return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
+
     def post_message(self, message, new_line=True):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
 
@@ -745,6 +761,65 @@ class Trader(object):
                 data_source=self._datasource,
                 config=self._config,
         )
+
+    def history_orders(self, with_trade_results=True):
+        """ 账户的历史订单详细信息
+
+        Parameters
+        ----------
+        with_trade_results: bool, default False
+            是否包含订单的成交结果
+
+        Returns
+        -------
+        order_details: DataFrame:
+            如果with_trade_results=False, 不包含成交结果信息：仅包含以下列
+            - symbol: str, 交易标的股票代码
+            - position: str, 交易标的的持仓方向，long/short
+            - direction: str, 交易方向，buy/sell
+            - order_type: str, 订单类型，market/limit
+            - qty: int, 订单数量
+            - price: float, 订单价格
+            - submitted_time: datetime, 订单提交时间
+            - status: str, 订单状态，filled/canceled
+
+        order_result_details: DataFrame
+            如果with_trade_results=True, 包含成交结果信息：包含以下列
+            - symbol: str, 交易标的股票代码
+            - position: str, 交易标的的持仓方向，long/short
+            - direction: str, 交易方向，buy/sell
+            - order_type: str, 订单类型，market/limit
+            - qty: int, 订单数量
+            - price: float, 订单价格
+            - submitted_time: datetime, 订单提交时间
+            - status: str, 订单状态，filled/canceled/partial-filled
+            - price_filled: float, 成交价格
+            - filled_qty: int, 成交数量
+            - canceled_qty: int, 撤单数量
+            - execution_time: datetime, 成交时间
+            - delivery_status: str, 交割状态，D/ND
+        """
+        from qteasy.trade_recording import query_trade_orders, get_account_positions, read_trade_results_by_order_id
+        orders = query_trade_orders(self.account_id, data_source=self._datasource)
+        positions = get_account_positions(self.account_id, data_source=self._datasource)
+        order_details = orders.join(positions, on='pos_id', rsuffix='_p')
+        order_details.drop(columns=['pos_id', 'account_id', 'qty_p', 'available_qty'], inplace=True)
+        order_details = order_details.reindex(
+                columns=['symbol', 'position', 'direction', 'order_type',
+                           'qty', 'price',
+                           'submitted_time', 'status']
+        )
+        if not with_trade_results:
+            return order_details
+        results = read_trade_results_by_order_id(orders.index.to_list(), data_source=self._datasource)
+        order_result_details = order_details.join(results.set_index('order_id'), lsuffix='_quoted', rsuffix='_filled')
+        order_result_details = order_result_details.reindex(
+                columns=['symbol', 'position', 'direction', 'order_type',
+                           'qty', 'price_quoted', 'submitted_time', 'status',
+                           'price_filled', 'filled_qty', 'canceled_qty', 'execution_time',
+                           'delivery_status'],
+        )
+        return order_result_details
 
     # ============ definition of tasks ================
     def _start(self):
@@ -1050,7 +1125,7 @@ class Trader(object):
         if task not in self.AVAILABLE_TASKS.keys():
             raise ValueError(f'Invalid task name: {task}')
 
-        task_func = self.AVAILABLE_TASKS[task]
+        task_func: Union[Union[Callable, None], Any] = self.AVAILABLE_TASKS[task]
         if self.debug:
             self.post_message(f'will run task: {task} with args: {args} in function: {task_func.__name__}')
         if args:

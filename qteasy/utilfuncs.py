@@ -60,6 +60,9 @@ NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 INTEGER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)$')
 FLOAT_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
+CN_STOCK_SYMBOL_IDENTIFIER = re.compile(r'^[0-9]{6}$')
+# re identifier that matches string of 6 digits or 6 digits followed by a dot and "SZ" or "SH"
+CN_STOCK_SYMBOL_IDENTIFIER2 = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ)$')
 ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
 AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
@@ -1072,6 +1075,44 @@ def is_float_like(key: [str, int, float]) -> bool:
     if not isinstance(key, str):
         return False
     if FLOAT_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_cn_stock_symbol_like(key: str) -> bool:
+    """ 判断一个字符串是否是一个合法的A股股票代码，不含市场标识符
+
+    Parameters
+    ----------
+    key: str, 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    # TODO: test this function
+    if not isinstance(key, str):
+        return False
+    if CN_STOCK_SYMBOL_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_complete_cn_stock_symbol_like(key: str) -> bool:
+    """ 判断一个字符串是否是一个合法的A股股票代码, 必须包含市场标识符如SH或SZ
+
+    Parameters
+    ----------
+    key: str, 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    # TODO: test this function
+    if not isinstance(key, str):
+        return False
+    if CN_STOCK_SYMBOL_IDENTIFIER2.match(key):
         return True
     return False
 

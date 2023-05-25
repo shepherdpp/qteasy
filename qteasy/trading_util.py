@@ -691,7 +691,7 @@ def cancel_order(order_id, data_source=None, config=None):
         already_canceled_qty = 0.
     if already_canceled_qty > 0:
         raise RuntimeError(f'order status wrong: canceled qty should be 0 '
-                           f'unless order is canceled! actual: {already_canceled_qty}')
+                           f'unless order is canceled! actual: {already_canceled_qty} for order \n{order_results}')
     remaining_qty = np.round(
             order_details['qty'] - total_filled_qty,
             AMOUNT_DECIMAL_PLACES,
