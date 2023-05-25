@@ -686,9 +686,6 @@ def cancel_order(order_id, data_source=None, config=None):
                 order_results['canceled_qty'].sum(),
                 AMOUNT_DECIMAL_PLACES,
         )
-        print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
-              f'total filled qty: {total_filled_qty}\n'
-              f'already canceled qty: {already_canceled_qty}')
     else:
         total_filled_qty = 0.
         already_canceled_qty = 0.
@@ -699,12 +696,18 @@ def cancel_order(order_id, data_source=None, config=None):
             order_details['qty'] - total_filled_qty,
             AMOUNT_DECIMAL_PLACES,
     )
+
+    print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
+          f'total filled qty: {total_filled_qty}\n'
+          f'already canceled qty: {already_canceled_qty}\n'
+          f'remaining qty: {remaining_qty}\n')
+
     if remaining_qty <= 0:
-        raise RuntimeError(f'order status wrong: remaining qty should be larger than '
-                           f'when order is partially filled')
+        raise RuntimeError(f'order status wrong: remaining qty should be larger than 0'
+                           f'when order is partially filled, got {remaining_qty}')
     result_of_cancel = {
         'order_id':        order_id,
-        'filled_qty':      total_filled_qty,
+        'filled_qty':      0.,
         'price':           order_details['price'],
         'transaction_fee': 0.,
         'canceled_qty':    remaining_qty,
@@ -886,14 +889,22 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     else:  # for any other unexpected direction
         raise ValueError(f'Invalid direction: {order_detail["direction"]}')
 
-    # 如果position_change小于available_position_amount，则抛出异常
     available_qty = get_position_by_id(order_detail['pos_id'], data_source=data_source)['available_qty']
+
+    available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
+
+    print(f'[DEBUG]: updating account balance and position for order {order_id}...\n'
+          f'result: {raw_trade_result}\n'
+          f'position_change: {position_change}\n'
+          f'cash_change: {cash_change}\n'
+          f'available_qty: {available_qty}\n'
+          f'available_cash: {available_cash}\n')
+
+    # 如果position_change小于available_position_amount，则抛出异常
     if available_qty + position_change < 0:
         raise RuntimeError(f'position_change {position_change} is greater than '
                            f'available position amount {available_qty}')
-
     # 如果cash_change小于available_cash，则抛出异常
-    available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
     if available_cash + cash_change < 0:
         raise RuntimeError(f'cash_change {cash_change} is greater than '
                            f'available cash {available_cash}')

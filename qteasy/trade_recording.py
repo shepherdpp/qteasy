@@ -156,12 +156,12 @@ def update_account_balance(account_id, data_source=None, **cash_change):
         raise RuntimeError('Account not found!')
 
     cash_amount_change = cash_change.get('cash_amount_change', 0.0)
-    if not isinstance(cash_amount_change, (int, float)):
+    if not isinstance(cash_amount_change, (int, float, np.int, np.float)):
         raise TypeError(f'cash_amount_change must be a number, got {type(cash_amount_change)} instead')
     cash_amount = account_data['cash_amount'] + cash_amount_change
 
     available_cash_change = cash_change.get('available_cash_change', 0.0)
-    if not isinstance(available_cash_change, (int, float)):
+    if not isinstance(available_cash_change, (int, float, np.int, np.float)):
         raise TypeError(f'available_cash_change must be a number, got {type(available_cash_change)} instead')
     available_cash = account_data['available_cash'] + available_cash_change
 

@@ -1334,7 +1334,7 @@ def start_trader(
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
             symbols=config['asset_pool'],
             parallel=True,
-            refresh_trade_calendar=True,
+            refresh_trade_calendar=False,
     )
 
     TraderShell(trader).run()
