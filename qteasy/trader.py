@@ -210,7 +210,8 @@ class TraderShell(Cmd):
                 if argument in ['last_hour', 'L']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
                 elif argument in ['today', 'T']:
-                    start = pd.to_datetime('today', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d 00:00:00")
+                    start = pd.to_datetime(end) - pd.Timedelta(days=1)
+                    start = start.strftime("%Y-%m-%d 00:00:00")
                 elif argument in ['3day', '3']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=3)
                 elif argument in ['week', 'W']:
@@ -233,9 +234,9 @@ class TraderShell(Cmd):
             # select orders by order side arguments like 'long', 'short'
             elif argument in ['long', 'short']:
                 if argument in ['long']:
-                    order_details = order_details[order_details['direction'] == 'long']
+                    order_details = order_details[order_details['position'] == 'long']
                 elif argument in ['short']:
-                    order_details = order_details[order_details['direction'] == 'short']
+                    order_details = order_details[order_details['position'] == 'short']
             # select orders by order side arguments like 'buy', 'sell'
             elif argument in ['buy', 'B', 'sell', 'S']:
                 if argument in ['buy', 'B']:
@@ -244,7 +245,8 @@ class TraderShell(Cmd):
                     order_details = order_details[order_details['direction'] == 'sell']
             # select orders by order symbol arguments like '000001.SZ'
             elif is_complete_cn_stock_symbol_like(argument):
-                order_details = order_details[order_details['symbol'] == argument]
+                print(f'[DEBUG] symbol argument: {argument}')
+                order_details = order_details[order_details['symbol'] == argument.upper()]
             else:
                 pass
 
@@ -359,7 +361,7 @@ class TraderShell(Cmd):
                             print(message[:-2], end='\r')
                         else:
                             print(message)
-
+    
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
@@ -1007,7 +1009,7 @@ class Trader(object):
                 break
             else:
                 self._datasource.reconnect()
-        self.post_message('data source reconnected')
+        self.post_message(f'data source reconnected, connection status: {self._datasource.con.db}')
 
     def _post_close(self):
         """ 收市后例行操作：
@@ -1083,6 +1085,7 @@ class Trader(object):
 
     def _refill(self, tables, freq):
         """ 补充数据库内的历史数据 """
+        # TODO： implement this function
         if self.debug:
             self.post_message('running task: refill, this task will be done only during sleeping')
         # 更新数据源中的数据，不同频率的数据表可以不同时机更新，每次更新时仅更新当天或最近一个freq的数据

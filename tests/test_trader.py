@@ -342,9 +342,18 @@ class TestTrader(unittest.TestCase):
         self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
         print('test property history orders, cashes, and positions')
-        print(f'history orders: \n{ts.history_orders.to_string()}\n'
+        print(f'history orders: \n{ts.history_orders()}\n'
               f'history cashes: \n{ts.history_cashes}\n'
               f'history positions: \n{ts.history_positions}')
+        # test history orders without results
+        history_orders = ts.history_orders(with_trade_results=False)
+        self.assertIsInstance(ts.history_orders(), pd.DataFrame)
+        self.assertEqual(history_orders.shape, (9, 8))
+        self.assertEqual(history_orders.columns.tolist(), ['symbol', 'position', 'direction', 'order_type',
+                                                           'qty', 'price',
+                                                           'submitted_time', 'status'])
+        import pdb; pdb.set_trace()
+
         ts.info()
 
     def test_trader_run(self):

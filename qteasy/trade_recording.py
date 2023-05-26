@@ -1069,10 +1069,12 @@ def read_trade_results_by_order_id(order_id, data_source=None):
         trade_results = data_source.read_sys_table_data(
             'sys_op_trade_results',
         )
-        if trade_results is None:
-            return pd.DataFrame(columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
-                                         'canceled_qty', 'delivery_amount', 'delivery_status'])
+    if trade_results is None:
+        return pd.DataFrame(columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+                                     'canceled_qty', 'delivery_amount', 'delivery_status'])
+    if isinstance(order_id, list):
         trade_results = trade_results[trade_results['order_id'].isin(order_id)]
+
     return trade_results
 
 

@@ -2755,7 +2755,7 @@ class DataSource:
             # 如果primary key多于一个，则创建KEY INDEX
             if len(primary_key) > 1:
                 sql += ",\nKEY (`" + '`),\nKEY (`'.join(primary_key[1:]) + "`)"
-        sql += '\n)'
+        sql += '\n);'
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -2774,7 +2774,7 @@ class DataSource:
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'" \
-              f"ORDER BY ordinal_position"
+              f"ORDER BY ordinal_position;"
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -2798,7 +2798,7 @@ class DataSource:
             raise TypeError(f'Datasource is not connected to a database')
         if not isinstance(db_table, str):
             raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
-        sql = f"DROP TABLE IF EXISTS {db_table}"
+        sql = f"DROP TABLE IF EXISTS {db_table};"
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -2817,7 +2817,7 @@ class DataSource:
         sql = "SELECT table_rows, data_length + index_length " \
               "FROM information_schema.tables " \
               "WHERE table_schema = %s " \
-              "AND table_name = %s"
+              "AND table_name = %s;"
         try:
             self.cursor.execute(sql, (self.db_name, db_table))
             self.con.commit()
@@ -4303,9 +4303,15 @@ class DataSource:
             return True
         try:
             self.con.ping(reconnect=True)
-            sql = f"USE {self.db_name}"
+            self.cursor = self.con.cursor()
+            # sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
+            # self.cursor.execute(sql)
+            # self.con.commit()
+            sql = f"USE `{self.db_name}`;"
             self.cursor.execute(sql)
             self.con.commit()
+            # self.con.select_db(self.db_name)
+            print(f'{self.connection_type} reconnected! used database: {self.con.db} == {self.db_name}')
             return True
         except Exception as e:
             print(f'{e} on {self.connection_type}, please check your connection')
