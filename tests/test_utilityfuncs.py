@@ -21,6 +21,7 @@ from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 from qteasy.utilfuncs import reindent, truncate_string, is_float_like, is_integer_like
+from qteasy.utilfuncs import is_cn_stock_symbol_like, is_complete_cn_stock_symbol_like
 
 
 class RetryableError(Exception):
@@ -383,6 +384,29 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_float_like('abc'))
         self.assertFalse(is_float_like('0.32a'))
         self.assertFalse(is_float_like('0-2'))
+
+    def test_is_stock_symbol_like(self):
+        """ test functions is_cn_stock_symbol_like() and is_complete_cn_stock_symbol_like() """
+        self.assertTrue(is_cn_stock_symbol_like('000001'))
+        self.assertTrue(is_cn_stock_symbol_like('100001'))
+        self.assertFalse(is_cn_stock_symbol_like('0000001'))
+        self.assertFalse(is_cn_stock_symbol_like('00001'))
+        self.assertFalse(is_cn_stock_symbol_like('00001a'))
+        self.assertFalse(is_cn_stock_symbol_like('00001A'))
+        self.assertFalse(is_cn_stock_symbol_like('00001.'))
+        self.assertFalse(is_cn_stock_symbol_like('00001.0'))
+        self.assertFalse(is_cn_stock_symbol_like('00001.00'))
+
+        self.assertTrue(is_complete_cn_stock_symbol_like('000001.SZ'))
+        self.assertTrue(is_complete_cn_stock_symbol_like('100001.SZ'))
+        self.assertTrue(is_complete_cn_stock_symbol_like('000001.SH'))
+        self.assertTrue(is_complete_cn_stock_symbol_like('100001.BJ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('0000001.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('000011'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001a.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001A.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001.ZH'))
 
     def test_retry_decorator(self):
         """ test the retry decorator"""

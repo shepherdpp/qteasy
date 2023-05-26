@@ -196,13 +196,12 @@ class TraderShell(Cmd):
         if not isinstance(arg, str):
             print('Please input a valid argument.')
             return
-        print(f'{self} getting orders with arg: {arg}')
         args = arg.split(' ')
-        print(f'[DEBUG] args: {args}')
         order_details = self._trader.history_orders()
 
         for argument in args:
-            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+            argument = argument.upper()
+            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
             # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
             if argument in ['last_hour', 'L', 'today', 'T', '3day', '3', 'week', 'W', 'month', 'M']:
                 # create order time ranges
@@ -245,8 +244,13 @@ class TraderShell(Cmd):
                     order_details = order_details[order_details['direction'] == 'sell']
             # select orders by order symbol arguments like '000001.SZ'
             elif is_complete_cn_stock_symbol_like(argument):
-                print(f'[DEBUG] symbol argument: {argument}')
-                order_details = order_details[order_details['symbol'] == argument.upper()]
+                print(f'[DEBUG] got complete CN symbol argument: {argument}')
+                order_details = order_details[order_details['symbol'] == argument]
+            # select orders by order symbol arguments like '000001'
+            elif is_cn_stock_symbol_like(argument):
+                print(f'[DEBUG] got CN symbol argument: {argument}')
+                possible_complete_symbols = [argument+'.SH', argument+'.SZ', argument+'.BJ']
+                order_details = order_details[order_details['symbol'].isin(possible_complete_symbols)]
             else:
                 pass
 
