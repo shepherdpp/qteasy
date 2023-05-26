@@ -200,22 +200,21 @@ class TraderShell(Cmd):
         order_details = self._trader.history_orders()
 
         for argument in args:
-            argument = argument.upper()
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
             # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-            if argument in ['last_hour', 'L', 'today', 'T', '3day', '3', 'week', 'W', 'month', 'M']:
+            if argument in ['last_hour', 'l', 'today', 't', '3day', '3', 'week', 'w', 'month', 'm']:
                 # create order time ranges
                 end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")
-                if argument in ['last_hour', 'L']:
+                if argument in ['last_hour', 'l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
-                elif argument in ['today', 'T']:
+                elif argument in ['today', 't']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=1)
                     start = start.strftime("%Y-%m-%d 00:00:00")
                 elif argument in ['3day', '3']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=3)
-                elif argument in ['week', 'W']:
+                elif argument in ['week', 'w']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=7)
-                elif argument in ['month', 'M']:
+                elif argument in ['month', 'm']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=30)
                 else:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
@@ -223,12 +222,12 @@ class TraderShell(Cmd):
                 order_details = order_details[(order_details['submitted_time'] >= start) &
                                                 (order_details['submitted_time'] <= end)]
             # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
-            elif argument in ['filled', 'F', 'canceled', 'C', 'partial-filled', 'P']:
-                if argument in ['filled', 'F']:
+            elif argument in ['filled', 'f', 'canceled', 'c', 'partial-filled', 'p']:
+                if argument in ['filled', 'f']:
                     order_details = order_details[order_details['status'] == 'filled']
-                elif argument in ['canceled', 'C']:
+                elif argument in ['canceled', 'c']:
                     order_details = order_details[order_details['status'] == 'canceled']
-                elif argument in ['partial-filled', 'P']:
+                elif argument in ['partial-filled', 'p']:
                     order_details = order_details[order_details['status'] == 'partial-filled']
             # select orders by order side arguments like 'long', 'short'
             elif argument in ['long', 'short']:
@@ -237,18 +236,16 @@ class TraderShell(Cmd):
                 elif argument in ['short']:
                     order_details = order_details[order_details['position'] == 'short']
             # select orders by order side arguments like 'buy', 'sell'
-            elif argument in ['buy', 'B', 'sell', 'S']:
-                if argument in ['buy', 'B']:
+            elif argument in ['buy', 'b', 'sell', 's']:
+                if argument in ['buy', 'b']:
                     order_details = order_details[order_details['direction'] == 'buy']
-                elif argument in ['sell', 'S']:
+                elif argument in ['sell', 's']:
                     order_details = order_details[order_details['direction'] == 'sell']
             # select orders by order symbol arguments like '000001.SZ'
-            elif is_complete_cn_stock_symbol_like(argument):
-                print(f'[DEBUG] got complete CN symbol argument: {argument}')
-                order_details = order_details[order_details['symbol'] == argument]
+            elif is_complete_cn_stock_symbol_like(argument.upper()):
+                order_details = order_details[order_details['symbol'] == argument.upper()]
             # select orders by order symbol arguments like '000001'
             elif is_cn_stock_symbol_like(argument):
-                print(f'[DEBUG] got CN symbol argument: {argument}')
                 possible_complete_symbols = [argument+'.SH', argument+'.SZ', argument+'.BJ']
                 order_details = order_details[order_details['symbol'].isin(possible_complete_symbols)]
             else:
@@ -308,7 +305,7 @@ class TraderShell(Cmd):
         run [strategy id]
         """
         if not self.trader.debug:
-            print('Only available in DEBUG mode')
+            print('Running strategy manually is only available in DEBUG mode')
             return
         strategies = arg
         if isinstance(strategies, str):
