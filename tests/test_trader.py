@@ -477,8 +477,10 @@ class TestTrader(unittest.TestCase):
         ts.debug = True
         ts.broker.debug = True
         ts.broker.broker_name = 'test_broker'
-        Thread(target=ts.run).start()
-        Thread(target=ts.broker.run).start()
+        trader_thread = Thread(target=ts.run)
+        broker_thread = Thread(target=ts.broker.run)
+        trader_thread.start()
+        broker_thread.start()
 
         # generate task agenda in a non-trade day and empty list will be generated
         sim_date = dt.date(2023, 1, 1)  # a non-trade day
@@ -618,7 +620,7 @@ class TestTrader(unittest.TestCase):
             print(f'count of trade results in queue: {ts.broker.result_queue.unfinished_tasks} results generated')
             # waite 5 seconds for order execution results to be generated
             time.sleep(5)
-            print(f'current orders: \n{ts.history_orders.to_string()}')
+            print(f'current orders: \n{ts.history_orders().to_string()}')
             print(f'recent trade results: \n{ts.trade_results().to_string()}')
 
         # finally, stop the trader and broker

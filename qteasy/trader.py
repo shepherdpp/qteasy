@@ -192,10 +192,7 @@ class TraderShell(Cmd):
         [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
         """
         if arg is None or arg == '':
-            arg = 'all'
-        if not isinstance(arg, str):
-            print('Please input a valid argument.')
-            return
+            arg = 'last_hour'
         args = arg.split(' ')
         order_details = self._trader.history_orders()
 
@@ -255,12 +252,110 @@ class TraderShell(Cmd):
 
     def do_change(self, arg):
         """ Change trader cash and positions
+        to change cash, amount must be given
+        to change a position, amount and symbol must be given, price is used to update cost,
+        if not given, current price will be used, side is used to specify long or short side,
+        if not given, long side will be used
 
         Usage:
         ------
-        change [cash] [positions]
+        change cash/c <amount>
+        change <symbol> <amount> [price] [long/l/short/s]
+
+        Examples:
+        ---------
+        change cash/c 1000000:
+            add 1000000 cash to trader account
+        change 000001.SZ 1000 10.5:
+            add 1000 shares of 000001.SZ to trader account with price 10.5 on long side (default)
         """
         print(f'{self} running change with arg: {arg}')
+        args = arg.split(' ')
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
+        if len(args) < 2:
+            print('Please input valid arguments.')
+            return
+
+        if args[0] in ['cash', 'c']:
+            # change cash
+            if len(args) < 2:
+                print('Please input cash value to increase (+) or to decrease (-).')
+                return
+            try:
+                amount = float(args[1])
+            except ValueError:
+                print('Please input cash value to increase (+) or to decrease (-).')
+                return
+            from qteasy.trade_recording import update_account_balance
+            amount_change = {
+                'cash_amount_change': amount,
+                'available_cash_change': amount,
+                'total_investment_change': amount,
+            }
+            update_account_balance(self.trader.account_id, **amount_change)
+            print(f'Cash amount changed to {self.trader.account_cash}')
+            return
+
+        symbol = None
+        if is_cn_stock_symbol_like(args[0]):
+            # check if input matches one of symbols in trader asset pool
+            asset_pool = self.trader.asset_pool
+            asset_pool_striped = [symbol.split('.')[0] for symbol in asset_pool]
+            if args[0] not in asset_pool_striped:
+                print(f'symbol {args[0]} not in trader asset pool, please check your input.')
+                return
+            symbol = asset_pool[asset_pool_striped.index(args[0])]
+
+        if is_complete_cn_stock_symbol_like(args[0]):
+            symbol = args[0]
+
+        if symbol is None:
+            print(f'"{args[0]}" invalid: Please input a valid symbol.')
+            return
+
+        # change position
+        try:
+            volume = float(args[1])
+            current_price = self.trader.datasource.get_history_data(
+                        shares=[symbol],
+                        htypes='close',
+                        start=pd.to_datetime('today'),
+                        end=pd.to_datetime('now'),
+                        freq=self.trader.operator.op_data_freq,
+            )['close'][symbol][-1]
+            if len(args) == 3 and args[2] in ['long', 'short', 'l', 's']:
+                price = current_price
+                side = args[2]
+            elif len(args) == 3 and is_number_like(args[2]):
+                price = float(args[2])
+                side = 'long'
+            else:  # len(args) == 4
+                price = float(args[2]) if is_number_like(args[2]) else float(args[3])
+                side = args[3] if args[2] in ['long', 'short', 'l', 's'] else args[2]
+        except Exception as e:
+            print(f'Error: {e}, please check your input.')
+            return
+
+        from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position
+        position_id = get_or_create_position(
+                account_id=self.trader.account_id,
+                symbol=symbol,
+                position_type=side,
+                data_source=self.trader.datasource,
+        )
+        position = get_position_by_id(pos_id=position_id)
+        current_total_cost = position['cost'] * position['qty']
+        additional_cost = np.round(price * float(volume), 2)
+        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + volume), 2)
+        position_data = {
+            'qty_change': volume,
+            'available_qty_change': volume,
+            'cost': new_average_cost,
+        }
+        update_position(
+                pos_id=position_id,
+                **position_data
+        )
 
     def do_dashboard(self, arg):
         """ Enter dashboard mode, live status will be displayed
@@ -342,7 +437,15 @@ class TraderShell(Cmd):
 
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
+        """ Make all commands case-insensitive,
+            remove trailing spaces,
+            remove commas between arguments,
+            and remove redundant spaces between words
+        """
         line = line.lower()
+        line = line.strip()
+        line = line.replace(',', ' ')
+        line = ' '.join(line.split())
         return line
 
     def run(self):

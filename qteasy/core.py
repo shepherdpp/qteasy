@@ -2193,7 +2193,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
      invest_cash_plan,
      opti_cash_plan,
      test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config)
+     ) = check_and_prepare_hist_data(operator, config, datasource)
 
     return hist_op, hist_ref, invest_cash_plan
 
@@ -2214,7 +2214,7 @@ def check_and_prepare_backtest_data(operator, config, datasource=None):
      invest_cash_plan,
      opti_cash_plan,
      test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config)
+     ) = check_and_prepare_hist_data(operator, config, datasource)
 
     return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
 
@@ -2244,7 +2244,7 @@ def check_and_prepare_optimize_data(operator, config, datasource=None):
      invest_cash_plan,
      opti_cash_plan,
      test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config)
+     ) = check_and_prepare_hist_data(operator, config, datasource)
 
     return hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, opti_cash_plan, test_cash_plan
 

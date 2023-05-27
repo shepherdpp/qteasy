@@ -1315,17 +1315,17 @@ TABLE_SCHEMA = {
 
     # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
     'sys_op_live_accounts':  # 交易账户表
-        {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash'],
-         'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double'],
-         'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额'],
-         'prime_keys': [0]
+        {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash', 'total_invest'],
+         'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double', 'double'],
+         'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额', '总投资额'],
+         'prime_keys': [0],
          },
 
     'sys_op_positions':  # 持仓表
-        {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty'],
-         'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'double', 'double'],
-         'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量'],
-         'prime_keys': [0]
+        {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty', 'cost'],
+         'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'double', 'double', 'double'],
+         'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量', '持仓成本'],
+         'prime_keys': [0],
          },
 
     'sys_op_trade_orders':  # 交易订单表
@@ -3709,7 +3709,7 @@ class DataSource:
 
         Returns
         -------
-        Dict of DataFrame
+        Dict of DataFrame: {htype: DataFrame[shares]}
             一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
@@ -4223,14 +4223,14 @@ class DataSource:
         -------
         DataFrame
         """
-        if source.lower() == 'tushare':
-            return self.tushare.acquire_latest_live_data(table, **kwargs)
-        elif source.lower() == 'joinquant':
-            return self.joinquant.acquire_latest_live_data(table, **kwargs)
-        else:
-            raise ValueError(f'Unsupported data source: {source}')
-        
-        pass
+        # TODO: implement this function
+        raise NotImplementedError('This function is not implemented yet!')
+        # if source.lower() == 'tushare':
+        #     return self.tushare.acquire_latest_live_data(table, **kwargs)
+        # elif source.lower() == 'joinquant':
+        #     return self.joinquant.acquire_latest_live_data(table, **kwargs)
+        # else:
+        #     raise ValueError(f'Unsupported data source: {source}')
 
     def get_all_basic_table_data(self, refresh_cache=False):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度

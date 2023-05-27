@@ -62,6 +62,7 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
                 'created_time': pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
                 'cash_amount': cash_amount,
                 'available_cash': cash_amount,
+                'total_invest': cash_amount,
             },
             **account_data,
     )
@@ -129,7 +130,7 @@ def update_account(account_id, data_source=None, **account_data):
 
 
 def update_account_balance(account_id, data_source=None, **cash_change):
-    """ 更新账户的资金总额和可用资金, 为了避免误操作，仅允许修改现金总额和可用现金，其他字段不可修改
+    """ 更新账户的资金总额和可用资金, 为了避免误操作，仅允许修改现金总额、可用现金和总投资额，其他字段不可修改
 
     Parameters
     ----------
@@ -137,13 +138,18 @@ def update_account_balance(account_id, data_source=None, **cash_change):
         账户的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
-    cash_change: dict, optional {'cash_amount_change': float, 'available_cash_change': float}
+    cash_change: dict, optional {'cash_amount_change': float,
+                                 'available_cash_change': float,
+                                 'total_investment_change': float}
         可用资金的变化，其余字段不可用此函数修改
 
     Returns
     -------
     None
     """
+    # TODO: refract this function, allow only one cash value as input argument for cash change, and
+    #  change available cash and total investment according to two more input arguments:
+    #  update_available_cash: bool default False and update_total_investment: bool default False
 
     import qteasy as qt
     if data_source is None:
@@ -153,7 +159,7 @@ def update_account_balance(account_id, data_source=None, **cash_change):
 
     account_data = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
     if account_data is None:
-        raise RuntimeError('Account not found!')
+        raise RuntimeError(f'Account not found! account id: {account_id}')
 
     cash_amount_change = cash_change.get('cash_amount_change', 0.0)
     if not isinstance(cash_amount_change, (int, float, np.int64, np.float64)):
@@ -164,6 +170,11 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     if not isinstance(available_cash_change, (int, float, np.int64, np.float64)):
         raise TypeError(f'available_cash_change must be a number, got {type(available_cash_change)} instead')
     available_cash = account_data['available_cash'] + available_cash_change
+
+    total_investment_change = cash_change.get('total_investment_change', 0.0)
+    if not isinstance(total_investment_change, (int, float, np.int64, np.float64)):
+        raise TypeError(f'total_investment_change must be a number, got {type(total_investment_change)} instead')
+    total_investment = account_data['total_invest'] + total_investment_change
 
     # 如果可用现金超过现金总额，则报错
     if available_cash > cash_amount:
@@ -180,7 +191,8 @@ def update_account_balance(account_id, data_source=None, **cash_change):
             'sys_op_live_accounts',
             record_id=account_id,
             cash_amount=cash_amount,
-            available_cash=available_cash
+            available_cash=available_cash,
+            total_invest=total_investment,
     )
 
 
@@ -316,6 +328,7 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
                     'position': position_type,
                     'qty': 0,
                     'available_qty': 0,
+                    'cost': 0,
                 },
         )
     # position已存在，此时position中只能有一条记录，否则说明记录重复，报错
@@ -333,13 +346,16 @@ def update_position(position_id, data_source=None, **position_data):
         持仓的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
-    position_data: dict, optional, {'qty_change': int, 'available_qty_change': int}
+    position_data: dict, optional, {'qty_change': float, 'available_qty_change': float, 'cost': float}
         持仓的数据，只能修改qty, available_qty两类数据中的任意一个或多个
 
     Returns
     -------
     None
     """
+    # TODO: (maybe) refract this function, require only one change value as argument, change
+    #       the available qty according to boolean argument 'change_available_qty', and change
+    #       the cost automatically according to the average cost of increased qty
 
     import qteasy as qt
     if data_source is None:
@@ -361,6 +377,12 @@ def update_position(position_id, data_source=None, **position_data):
     if not isinstance(available_qty_change, (int, float, np.int64, np.float64)):
         raise TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
     position['available_qty'] += available_qty_change
+
+    cost = position_data.get('cost', None)
+    if cost is not None:
+        if not isinstance(cost, (int, float, np.int64, np.float64)):
+            raise TypeError(f'cost must be a int or float, got {type(cost)} instead')
+        position['cost'] = cost
 
     # 如果可用数量超过持仓数量，则报错
     if position['available_qty'] > position['qty']:
