@@ -938,7 +938,7 @@ def next_market_trade_day(date, exchange='SSE'):
         _date = pd.to_datetime(date)
     except Exception:
         raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
-    assert _date is not None, f'{date} is not a valide date'
+    assert _date is not None, f'{date} is not a valid date'
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None

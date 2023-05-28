@@ -98,7 +98,11 @@ def create_daily_task_agenda(operator, config=None):
             # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
             from qteasy.utilfuncs import next_market_trade_day
             a_trade_day = next_market_trade_day(today, exchange=exchange_market)
-            the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            print(f'in trading_util: function create_daily_task_agenda(): next trade day of today({today}) is {a_trade_day}')
+            if a_trade_day is not None:
+                the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            else:
+                raise ValueError(f'no next trade day of today({today})')
             run_time_index = _trade_time_index(
                     start=a_trade_day,
                     end=the_next_day,

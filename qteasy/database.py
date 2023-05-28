@@ -3717,7 +3717,7 @@ class DataSource:
             shares = str_to_list(shares)
         if isinstance(asset_type, str):
             if asset_type.lower() == 'any':
-                from utilfuncs import AVAILABLE_ASSET_TYPES
+                from qteasy.utilfuncs import AVAILABLE_ASSET_TYPES
                 asset_type = AVAILABLE_ASSET_TYPES
             else:
                 asset_type = str_to_list(asset_type)
@@ -4201,22 +4201,15 @@ class DataSource:
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
                 
-    def acquire_latest_live_data(self,
-                                 table,
-                                 dtypes=None,
-                                 freqs=None,
-                                 asset_type=None,
-                                 start_date=None,
-                                 end_date=None,
-                                 symbols=None,
-                                 source='tushare'):
-        """ 获取最新的实时数据
+    def acquire_latest_available_data(self, table=None, symbols=None, htypes=None, freqs=None, asset_type=None,
+                                      adj=None):
+        """ 获取最新的可用数据，从已经保存在本地数据源的数据表中读取指定数据类型、频率和资产类型的最新数据
 
         Parameters
         ----------
         table: str
             数据表名称
-        source: str, Default 'tushare'
+        channel: str, Default 'tushare'
             数据源名称
 
         Returns

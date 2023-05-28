@@ -272,9 +272,6 @@ class TraderShell(Cmd):
         print(f'{self} running change with arg: {arg}')
         args = arg.split(' ')
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
-        if len(args) < 2:
-            print('Please input valid arguments.')
-            return
 
         if args[0] in ['cash', 'c']:
             # change cash
@@ -286,18 +283,29 @@ class TraderShell(Cmd):
             except ValueError:
                 print('Please input cash value to increase (+) or to decrease (-).')
                 return
-            from qteasy.trade_recording import update_account_balance
+            from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
+            cash_amount, available_cash = get_account_cash_availabilities(
+                account_id=self.trader.account_id,
+                data_source=self.trader.datasource
+            )
+            if amount < -available_cash:
+                print(f'Not enough cash to decrease, available cash: {available_cash}')
+                return
             amount_change = {
                 'cash_amount_change': amount,
                 'available_cash_change': amount,
                 'total_investment_change': amount,
             }
-            update_account_balance(self.trader.account_id, **amount_change)
+            update_account_balance(
+                    account_id=self.trader.account_id,
+                    data_source=self.trader.datasource,
+                    **amount_change
+            )
             print(f'Cash amount changed to {self.trader.account_cash}')
             return
 
         symbol = None
-        if is_cn_stock_symbol_like(args[0]):
+        if is_cn_stock_symbol_like(args[0].upper()):
             # check if input matches one of symbols in trader asset pool
             asset_pool = self.trader.asset_pool
             asset_pool_striped = [symbol.split('.')[0] for symbol in asset_pool]
@@ -306,36 +314,61 @@ class TraderShell(Cmd):
                 return
             symbol = asset_pool[asset_pool_striped.index(args[0])]
 
-        if is_complete_cn_stock_symbol_like(args[0]):
-            symbol = args[0]
+        if is_complete_cn_stock_symbol_like(args[0].upper()):
+            symbol = args[0].upper()
 
         if symbol is None:
-            print(f'"{args[0]}" invalid: Please input a valid symbol.')
+            print(f'"{args[0]}" invalid: Please input a valid symbol to change position holdings.')
+            return
+
+        if len(args) < 2:
+            print('Please input valid arguments.')
             return
 
         # change position
+        volume = float(args[1])
         try:
-            volume = float(args[1])
-            current_price = self.trader.datasource.get_history_data(
+            freq = self.trader.operator.op_data_freq
+            end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+            start = end - pd.Timedelta(100, freq)
+            last_available_data = self.trader.datasource.get_history_data(
                         shares=[symbol],
                         htypes='close',
-                        start=pd.to_datetime('today'),
-                        end=pd.to_datetime('now'),
-                        freq=self.trader.operator.op_data_freq,
-            )['close'][symbol][-1]
-            if len(args) == 3 and args[2] in ['long', 'short', 'l', 's']:
-                price = current_price
-                side = args[2]
-            elif len(args) == 3 and is_number_like(args[2]):
-                price = float(args[2])
-                side = 'long'
-            else:  # len(args) == 4
-                price = float(args[2]) if is_number_like(args[2]) else float(args[3])
-                side = args[3] if args[2] in ['long', 'short', 'l', 's'] else args[2]
+                        asset_type=self.trader.asset_type,
+                        start=start,
+                        end=end,
+                        freq=freq,
+            )
+            current_price = last_available_data['close'][symbol][-1]
         except Exception as e:
-            print(f'Error: {e}, please check your input.')
+            print(f'Error: {e}, latest available data can not be donwloaded. 10.00 will be used as current price.')
+            import traceback
+            traceback.print_exc()
+            current_price = 10.00
+        if len(args) == 2:
+            price = current_price
+            side = 'long'
+        elif (len(args) == 3) and (args[2] in ['long', 'short', 'l', 's']):
+            print(f'[DEBUG] Price not given, current price {current_price} will be used. side = args[2]({args[2]})')
+            price = current_price
+            side = 'long' if args[2] in ['long', 'l'] else 'short'
+        elif (len(args) == 3) and (is_number_like(args[2])):
+            print(f'[DEBUG] Price = args[2]({args[2]}) will be used. side is not given, "long" will be used')
+            price = float(args[2])
+            side = 'long'
+        elif (len(args) == 4) and (is_number_like(args[2])) and (args[3] in ['long', 'short', 'l', 's']):
+            print(f'[DEBUG] 4 arguments are provided: ({args[2]}, {args[3]}) '
+                  f'Price = args[2]({args[2]}) will be used. side = args[3]({args[3]})')
+            price = float(args[2])
+            side = 'long' if args[3] in ['long', 'l'] else 'short'
+        elif (len(args) == 4) and (is_number_like(args[3])) and (args[2] in ['long', 'short', 'l', 's']):
+            print(f'[DEBUG] 4 arguments are provided: ({args[2]}, {args[3]}) '
+                  f'Price = args[3]({args[3]}) will be used. side = args[2]({args[2]})')
+            price = float(args[3])
+            side = 'long' if args[2] in ['long', 'l'] else 'short'
+        else:  # not a valid input
+            print(f'{args} is not a valid input, Please input valid arguments.')
             return
-
         from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position
         position_id = get_or_create_position(
                 account_id=self.trader.account_id,
@@ -343,7 +376,10 @@ class TraderShell(Cmd):
                 position_type=side,
                 data_source=self.trader.datasource,
         )
-        position = get_position_by_id(pos_id=position_id)
+        position = get_position_by_id(
+                pos_id=position_id,
+                data_source=self.trader.datasource,
+        )
         current_total_cost = position['cost'] * position['qty']
         additional_cost = np.round(price * float(volume), 2)
         new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + volume), 2)
@@ -353,7 +389,8 @@ class TraderShell(Cmd):
             'cost': new_average_cost,
         }
         update_position(
-                pos_id=position_id,
+                position_id=position_id,
+                data_source=self.trader.datasource,
                 **position_data
         )
 
@@ -475,11 +512,11 @@ class TraderShell(Cmd):
                     self.do_bye('')
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
-                option = input('\nWhat do you want? input number to select from below options: \n'
+                option = input('\nWhat would you like? input number to select from below options: \n'
                                '[1], Enter command mode; \n'
                                '[2], Exit and stop the trader; \n'
-                               '[3], Stay in dashboard mode. \n'
-                               'please input your choice:')
+                               '[3], Enter dashboard mode. \n'
+                               'please input your choice: ')
                 if option == '1':
                     self._status = 'command'
                 elif option == '2':
@@ -591,9 +628,11 @@ class Trader(object):
         self._config.update(config)
         self._datasource = datasource
         asset_pool = self._config['asset_pool']
+        asset_type = self._config['asset_type']
         if isinstance(asset_pool, str):
             asset_pool = str_to_list(asset_pool)
         self._asset_pool = asset_pool
+        self._asset_type = asset_type
 
         self.task_queue = Queue()
         self.message_queue = Queue()
@@ -640,6 +679,11 @@ class Trader(object):
     def asset_pool(self):
         """ 账户的资产池，一个list，包含所有允许投资的股票代码 """
         return self._asset_pool
+
+    @property
+    def asset_type(self):
+        """ 账户的资产类型，一个str，包含所有允许投资的资产类型 """
+        return self._asset_type
 
     @property
     def account_cash(self):
@@ -1113,6 +1157,11 @@ class Trader(object):
                 break
             else:
                 self._datasource.reconnect()
+        # test if data source is connected
+        self._datasource.reconnect()
+        self._datasource.get_all_basic_table_data(
+                refresh_cache=True,
+        )
         self.post_message(f'data source reconnected, connection status: {self._datasource.con.db}')
 
     def _post_close(self):
@@ -1516,7 +1565,7 @@ def start_trader(
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
             symbols=config['asset_pool'],
             parallel=True,
-            refresh_trade_calendar=False,
+            refresh_trade_calendar=True,
     )
 
     TraderShell(trader).run()
