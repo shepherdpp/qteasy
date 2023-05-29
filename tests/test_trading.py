@@ -2091,7 +2091,6 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(summary[1]), [0, -100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
-
     def test_cancel_orders(self):
         """ test cancel_orders function """
         pass

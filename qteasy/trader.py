@@ -283,25 +283,8 @@ class TraderShell(Cmd):
             except ValueError:
                 print('Please input cash value to increase (+) or to decrease (-).')
                 return
-            from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
-            cash_amount, available_cash = get_account_cash_availabilities(
-                account_id=self.trader.account_id,
-                data_source=self.trader.datasource
-            )
-            if amount < -available_cash:
-                print(f'Not enough cash to decrease, available cash: {available_cash}')
-                return
-            amount_change = {
-                'cash_amount_change': amount,
-                'available_cash_change': amount,
-                'total_investment_change': amount,
-            }
-            update_account_balance(
-                    account_id=self.trader.account_id,
-                    data_source=self.trader.datasource,
-                    **amount_change
-            )
-            print(f'Cash amount changed to {self.trader.account_cash}')
+
+            self.trader.change_cash(amount)
             return
 
         symbol = None
@@ -325,7 +308,10 @@ class TraderShell(Cmd):
             print('Please input valid arguments.')
             return
 
-        # change position
+        # change positions: amount and symbol must be given, minus sign decrease. price is used to update cost,
+        # if not given, current price will be used, side is used to specify long or short side, if not given,
+        # current none-zero side will be used, if both sides are zero, long side will be used. if none-zero side
+        # existed, the other side can not be changed.
         volume = float(args[1])
         try:
             freq = self.trader.operator.op_data_freq
@@ -346,52 +332,34 @@ class TraderShell(Cmd):
             traceback.print_exc()
             current_price = 10.00
         if len(args) == 2:
+            # 只给出两个参数，默认使用最新价格、side为已有的非零持仓
             price = current_price
-            side = 'long'
+            side = None
         elif (len(args) == 3) and (args[2] in ['long', 'short', 'l', 's']):
-            print(f'[DEBUG] Price not given, current price {current_price} will be used. side = args[2]({args[2]})')
+            # 只给出side参数，默认使用最新价格
             price = current_price
             side = 'long' if args[2] in ['long', 'l'] else 'short'
         elif (len(args) == 3) and (is_number_like(args[2])):
-            print(f'[DEBUG] Price = args[2]({args[2]}) will be used. side is not given, "long" will be used')
+            # 只给出price参数，默认使用已有的非零持仓side
             price = float(args[2])
-            side = 'long'
+            side = None
         elif (len(args) == 4) and (is_number_like(args[2])) and (args[3] in ['long', 'short', 'l', 's']):
-            print(f'[DEBUG] 4 arguments are provided: ({args[2]}, {args[3]}) '
-                  f'Price = args[2]({args[2]}) will be used. side = args[3]({args[3]})')
+            # 既给出了价格，又给出了side
             price = float(args[2])
             side = 'long' if args[3] in ['long', 'l'] else 'short'
         elif (len(args) == 4) and (is_number_like(args[3])) and (args[2] in ['long', 'short', 'l', 's']):
-            print(f'[DEBUG] 4 arguments are provided: ({args[2]}, {args[3]}) '
-                  f'Price = args[3]({args[3]}) will be used. side = args[2]({args[2]})')
+            # 既给出了价格，又给出了side
             price = float(args[3])
             side = 'long' if args[2] in ['long', 'l'] else 'short'
         else:  # not a valid input
             print(f'{args} is not a valid input, Please input valid arguments.')
             return
-        from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position
-        position_id = get_or_create_position(
-                account_id=self.trader.account_id,
-                symbol=symbol,
-                position_type=side,
-                data_source=self.trader.datasource,
-        )
-        position = get_position_by_id(
-                pos_id=position_id,
-                data_source=self.trader.datasource,
-        )
-        current_total_cost = position['cost'] * position['qty']
-        additional_cost = np.round(price * float(volume), 2)
-        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + volume), 2)
-        position_data = {
-            'qty_change': volume,
-            'available_qty_change': volume,
-            'cost': new_average_cost,
-        }
-        update_position(
-                position_id=position_id,
-                data_source=self.trader.datasource,
-                **position_data
+
+        self._trader.change_position(
+            symbol=symbol,
+            quantity=volume,
+            price=price,
+            side=side,
         )
 
     def do_dashboard(self, arg):
@@ -1289,6 +1257,8 @@ class Trader(object):
         else:
             task_func(self)
 
+    # =============== internal methods =================
+
     def _check_trade_day(self, current_date=None):
         """ 检查当前日期是否是交易日
 
@@ -1443,6 +1413,135 @@ class Trader(object):
                                       (pd.to_datetime(task[0]).time() >= current_time) or (task[1] == 'post_close')]
         else:
             raise ValueError(f'Invalid current time: {current_time}')
+
+    def change_cash(self, amount):
+        """ 手动修改现金，用于在运行过程中用户手动修改现金，如调仓、止盈止损等
+
+        Parameters
+        ----------
+        amount: float
+            现金
+        """
+        from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
+
+        cash_amount, available_cash = get_account_cash_availabilities(
+                account_id=self.account_id,
+                data_source=self.datasource
+        )
+        if amount < -available_cash:
+            print(f'Not enough cash to decrease, available cash: {available_cash}, change amount: {amount}')
+            return
+        amount_change = {
+            'cash_amount_change':      amount,
+            'available_cash_change':   amount,
+            'total_investment_change': amount,
+        }
+        update_account_balance(
+                account_id=self.account_id,
+                data_source=self.datasource,
+                **amount_change
+        )
+        print(f'Cash amount changed to {self.account_cash}')
+
+    def change_position(self, symbol, quantity, price, side=None):
+        """ 手动修改仓位，查找指定标的的仓位，如果没有则创建，如果有则修改
+
+        Parameters
+        ----------
+        symbol: str
+            交易标的代码
+        quantity: float
+            交易数量，正数表示买入，负数表示卖出
+        price: float
+            交易价格，用来计算新的持仓成本
+        side: str, optional
+            交易方向，'long' 表示买入，'short' 表示卖出, None表示取已有的不为0的仓位
+        """
+
+        from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position, get_position_ids
+
+        position_ids = get_position_ids(
+                account_id=self.account_id,
+                symbol=symbol,
+                data_source=self.datasource,
+        )
+        position_id = None
+        if len(position_ids) == 0:
+            # no position found, create a new one
+            if side is None:
+                side = 'long'
+            position_id = get_or_create_position(
+                    account_id=self.account_id,
+                    symbol=symbol,
+                    position_type=side,
+                    data_source=self.datasource,
+            )
+        elif len(position_ids) == 1:
+            # found one position, use it, if side is not consistent, create a new one on the other side
+            position_id = position_ids[0]
+            position = get_position_by_id(
+                    pos_id=position_id,
+                    data_source=self.datasource,
+            )
+            if side is None:
+                side = position['position']
+            if side != position['position']:
+                if position['qty'] != 0:
+                    print(f'Position {position_id} is not empty, cannot change side')
+                    return
+                else:
+                    position_id = get_or_create_position(
+                            account_id=self.account_id,
+                            symbol=symbol,
+                            position_type=side,
+                            data_source=self.datasource,
+                    )
+        else:  # len(position_ids) > 1
+            # more than one position found, find the one with none-zero side
+            for pos_id in position_ids:
+                position = get_position_by_id(
+                        pos_id=pos_id,
+                        data_source=self.datasource,
+                )
+                if position['qty'] != 0:
+                    position_id = pos_id
+                    break
+            # in case both sides are zero, use the "side" one, unless "side" is "none-zero"
+            if position_id is None:
+                if side is None:
+                    side = 'long'
+                position_id = get_or_create_position(
+                        account_id=self.trader.account_id,
+                        symbol=symbol,
+                        position_type=side,
+                        data_source=self.datasource,
+                )
+        position = get_position_by_id(
+                pos_id=position_id,
+                data_source=self.datasource,
+        )
+        print(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
+              f'from {position["qty"]} to {position["qty"] + quantity}')
+        # 如果减少持仓，则可用持仓数量必须足够，否则退出
+        if quantity < 0 and position['available_qty'] < -quantity:
+            print(f'Not enough position to decrease, available position: {position["available_qty"]}')
+            return
+        current_total_cost = position['cost'] * position['qty']
+        additional_cost = np.round(price * float(quantity), 2)
+        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
+        if np.isinf(new_average_cost):
+            new_average_cost = 0
+        position_data = {
+            'qty_change':           quantity,
+            'available_qty_change': quantity,
+            'cost':                 new_average_cost,
+        }
+        update_position(
+                position_id=position_id,
+                data_source=self.datasource,
+                **position_data
+        )
+        print(f'[DEBUG] position {position_id} changed with data: {position_data}')
 
     AVAILABLE_TASKS = {
         'pre_open':         _pre_open,

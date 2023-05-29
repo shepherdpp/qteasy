@@ -301,7 +301,7 @@ class TestTrader(unittest.TestCase):
         ts.run_task('resume')
         self.assertEqual(ts.status, 'sleeping')
 
-    def test_trader_properties(self):
+    def test_trader_properties_methods(self):
         """Test function run_task"""
         ts = self.ts
         self.assertIsInstance(ts, Trader)
@@ -352,6 +352,37 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(history_orders.columns.tolist(), ['symbol', 'position', 'direction', 'order_type',
                                                            'qty', 'price',
                                                            'submitted_time', 'status'])
+        # test manual change of cashes and positions
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+        ts.change_cash(10000.0)
+        self.assertEqual(ts.account_cash, (83905.0, 83905.0))
+        ts.change_cash(-10000.0)
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+        # test too large cash change
+        ts.change_cash(-100000.0)
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        ts.change_position('000001.SZ', 200.0, 10.0)
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [300.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [300.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        ts.change_position('000001.SZ', -100.0, 10.0)
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [200.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [200.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        ts.change_position('000001.SZ', -100.0, 10.0, 'long')
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        ts.change_position('000001.SZ', -100.0, 10.0, 'short')
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        ts.change_position('000001.SZ', -100.0, 10.0, 'long')
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [0.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [0.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        ts.change_position('000001.SZ', 100.0, 10.0, 'short')
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+
         ts.info()
 
     def test_trader_run(self):

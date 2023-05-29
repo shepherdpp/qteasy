@@ -513,8 +513,8 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
             continue
         # 如果存在空头持仓，则将空头持仓的数量和可用数量乘以-1并放入列表
         if position['position'] == 'short':
-            own_amounts.append(-position['qty'])
-            available_amounts.append(-position['available_qty'])
+            own_amounts.append(-1 * position['qty'])
+            available_amounts.append(-1 * position['available_qty'])
             continue
     # 如果列表长度与shares长度不相等，则报错
     if len(own_amounts) != len(shares):
@@ -553,8 +553,8 @@ def get_account_position_details(account_id, shares=None, data_source=None):
             data_source=data_source
     )
     # 将symbol，position，qty和available_qty放入DataFrame并返回
-    print(f'[DEBUG]: in function get_account_position_details, \n'
-          f'symbols: {symbols}, amounts: {amounts}, available_amounts: {available_amounts}')
+    # print(f'[DEBUG]: in function get_account_position_details, \n'
+    #       f'symbols: {symbols}, amounts: {amounts}, available_amounts: {available_amounts}')
     positions = pd.DataFrame(
             {
                 'qty': amounts,
