@@ -352,8 +352,6 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(history_orders.columns.tolist(), ['symbol', 'position', 'direction', 'order_type',
                                                            'qty', 'price',
                                                            'submitted_time', 'status'])
-        import pdb; pdb.set_trace()
-
         ts.info()
 
     def test_trader_run(self):
@@ -431,7 +429,7 @@ class TestTrader(unittest.TestCase):
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'stopped')
+        self.assertEqual(ts.broker.status, 'paused')
         ts.add_task('stop')
         time.sleep(self.stoppage)
         print('added task stop')

@@ -51,7 +51,7 @@ class TestConfig(unittest.TestCase):
         qt.configure(
                 mode=2,
                 opti_type='multiple',
-                cash_deliver_period=1,
+                cash_delivery_period=1,
                 backtest_price_adj='b',
                 invest_start='20191010',
                 cost_rate_buy=0.005,
@@ -59,7 +59,7 @@ class TestConfig(unittest.TestCase):
         )
         self.assertEqual(QT_CONFIG.mode, 2)
         self.assertEqual(QT_CONFIG.opti_type, 'multiple')
-        self.assertEqual(QT_CONFIG.cash_deliver_period, 1)
+        self.assertEqual(QT_CONFIG.cash_delivery_period, 1)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'b')
         self.assertEqual(QT_CONFIG.invest_start, '20191010')
         self.assertEqual(QT_CONFIG.cost_rate_buy, 0.005)
@@ -70,7 +70,7 @@ class TestConfig(unittest.TestCase):
         # illegal values
         self.assertRaises(Exception, qt.configure, mode=5)
         self.assertRaises(Exception, qt.configure, opti_type='mul')
-        self.assertRaises(Exception, qt.configure, cash_deliver_period='abc')
+        self.assertRaises(Exception, qt.configure, cash_delivery_period='abc')
         self.assertRaises(Exception, qt.configure, backtest_price_adj='wrong')
         self.assertRaises(Exception, qt.configure, invest_start=None)
         self.assertRaises(Exception, qt.configure, benchmark_asset=15)

@@ -1576,14 +1576,16 @@ class TestDataSource(unittest.TestCase):
             'user_name': 'John Doe',
             'created_time': pd.to_datetime('20221223'),
             'cash_amount': 40000.0,
-            'available_cash': 40000.0
+            'available_cash': 40000.0,
+            'total_invest': 40000.0,
         }
         test_position = {
             'account_id': 1, 
             'symbol': '000001.SZ',
             'position': 'long',
             'qty': 100,
-            'available_qty': 100.
+            'available_qty': 100.,
+            'cost': 10.0,
         }
         test_shuffled_signal_data = {
             'pos_id': 1,
@@ -1700,31 +1702,36 @@ class TestDataSource(unittest.TestCase):
                 'user_name': 'John Doe',
                 'created_time': pd.to_datetime('20221223'),
                 'cash_amount': 40000.0,
-                'available_cash': 40000.0
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
             },
             {
                 'user_name': 'John Doe1',
                 'created_time': pd.to_datetime('20221223'),
                 'cash_amount': 40000.0,
-                'available_cash': 40000.0
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
             },
             {
                 'user_name': 'John Doe2',
                 'created_time': pd.to_datetime('20221221'),
                 'cash_amount': 40000.0,
-                'available_cash': 40000.0
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
             },
             {
                 'user_name': 'John Doe3',
                 'created_time': pd.to_datetime('20221222'),
                 'cash_amount': 40000.0,
-                'available_cash': 40000.0
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
             },
             {
                 'user_name': 'John Doe4',
                 'created_time': pd.to_datetime('20221224'),
                 'cash_amount': 40000.0,
-                'available_cash': 40000.0
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
             },
         ]
         test_multiple_position = [
@@ -1733,35 +1740,40 @@ class TestDataSource(unittest.TestCase):
                 'symbol': '000001.SZ',
                 'position': 'long',
                 'qty': 100,
-                'available_qty': 100.
+                'available_qty': 100.,
+                'cost': 10.0,
             },
             {
                 'account_id': 1,
                 'symbol': '000002.SZ',
                 'position': 'long',
                 'qty': 200,
-                'available_qty': 100.
+                'available_qty': 100.,
+                'cost': 10.0,
             },
             {
                 'account_id': 1,
                 'symbol': '000003.SZ',
                 'position': 'long',
                 'qty': 300,
-                'available_qty': 100.
+                'available_qty': 100.,
+                'cost': 10.0,
             },
             {
                 'account_id': 2,
                 'symbol': '000004.SZ',
                 'position': 'long',
                 'qty': 400,
-                'available_qty': 100.
+                'available_qty': 100.,
+                'cost': 10.0,
             },
             {
                 'account_id': 2,
                 'symbol': '000005.SZ',
                 'position': 'long',
                 'qty': 500,
-                'available_qty': 100.
+                'available_qty': 100.,
+                'cost': 10.0,
             },
         ]
 
@@ -1867,10 +1879,13 @@ class TestDataSource(unittest.TestCase):
             # 测试写入不正确的dict时是否返回错误
             print(f'test writing wrong data fields into table')
             with self.assertRaises(Exception):
-                ds.insert_sys_table_data(table, {
-                    'wrong_key1': 'wrong_value',
-                    'wrong_key2': 321,
-                })
+                ds.insert_sys_table_data(
+                    table,
+                    **{
+                        'wrong_key1': 'wrong_value',
+                        'wrong_key2': 321,
+                    }
+                )
 
         # 测试读取指定id的记录
         # 循环使用所有的示例数据在所有的sys表上进行测试，测试覆盖所有的source_type

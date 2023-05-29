@@ -472,11 +472,12 @@ def _signal_to_order_elements(shares,
 
     Returns
     -------
-    order_elements: tuple, (symbols, positions, directions, quantities)
+    order_elements: tuple, (symbols, positions, directions, quantities, quoted_prices)
     - symbols: list of str, 产生交易信号的资产代码
     - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
+    - quoted_prices: list of float, 所有交易信号的交易报价
     """
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金

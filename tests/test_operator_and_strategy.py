@@ -3393,6 +3393,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                  '399006.SZ'],
                      asset_type='IDX')
         res = qt.run(op,
+                     mode=1,
                      visual=True,
                      trade_log=True,
                      invest_start='20110725',
@@ -3442,6 +3443,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      visual=True,
                      trade_log=False)
         res = qt.run(op_min,
+                     mode=1,
                      visual=True,
                      trade_log=False,
                      invest_start='20160225',

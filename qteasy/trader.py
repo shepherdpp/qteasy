@@ -192,7 +192,7 @@ class TraderShell(Cmd):
         [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
         """
         if arg is None or arg == '':
-            arg = 'last_hour'
+            arg = 'today'
         args = arg.split(' ')
         order_details = self._trader.history_orders()
 
@@ -1558,9 +1558,10 @@ def start_trader(
     end_date = pd.to_datetime('today')
     start_date = end_date - pd.Timedelta(days=operator.max_window_length)
     datasource.refill_local_source(
+            tables='index_daily',
             dtypes=operator.op_data_types,
             freqs=operator.op_data_freq,
-            asset_types='E',  # only support equities for now
+            asset_types='E, IDX',  # only support equities for now
             start_date=start_date.strftime('%Y%m%d'),
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
             symbols=config['asset_pool'],
