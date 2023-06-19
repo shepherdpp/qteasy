@@ -24,7 +24,7 @@ from qteasy.trade_recording import read_trade_results_by_order_id, get_account_c
 from qteasy.trade_recording import update_account_balance, update_position, update_trade_result, record_trade_order
 from qteasy.trade_recording import query_trade_orders, get_position_ids, get_account_positions
 
-# TODO: add TIMEZONE to qt config arguments
+# TODO: read TIMEZONE from qt config arguments
 TIMEZONE = 'Asia/Shanghai'
 # TIMEZONE = 'UTC'
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']

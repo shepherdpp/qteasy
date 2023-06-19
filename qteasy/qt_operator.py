@@ -1659,6 +1659,17 @@ class Operator:
             # 一个offset变量用来调整生成滑窗的总数量，确保不管window_length如何变化，滑窗数量相同
             window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]
+            # debug
+            if shape(hist_data_val)[1] <= window_length:
+                print(f'[DEBUG] in function assign_hist_data(), \n'
+                      f'got hist_data_val for strategy ({stg_id}) shape: {shape(hist_data_val)} \n'
+                      f'while window_length: {window_length}\n'
+                      f'function arguments: \n'
+                      f'hist_data ({shape(hist_data)}): \n{hist_data}\n'
+                      f'reference_data ({shape(hist_data)}): \n{reference_data}\n'
+                      f'cash_plan: {cash_plan}\n'
+                      f'live_mode: {live_mode}\n'
+                      f'live_running_stgs: {live_running_stgs}\n')
             self._op_hist_data_rolling_windows[stg_id] = rolling_window(
                     hist_data_val,
                     window=window_length,

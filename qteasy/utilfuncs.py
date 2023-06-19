@@ -1576,7 +1576,7 @@ def rolling_window(arr, window, axis=0):
     strides = arr.strides
     axis_length = shape[axis]
     if window > axis_length:
-        raise ValueError(f'window too long, should be less than or equal to axis_length ({axis_length})')
+        raise ValueError(f'window too long ({window}), should be <= axis_length ({axis_length}), array shape ({shape})')
     window_count = axis_length - window + 1
     shape[axis] = window
     target_shape = (window_count, *shape)

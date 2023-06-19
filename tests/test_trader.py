@@ -373,13 +373,19 @@ class TestTrader(unittest.TestCase):
         ts.change_position('000001.SZ', -100.0, 10.0, 'long')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        # wrong side of position change will be ignored
         ts.change_position('000001.SZ', -100.0, 10.0, 'short')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        # the other side of position change can be done when this side is cleared
         ts.change_position('000001.SZ', -100.0, 10.0, 'long')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [0.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [0.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
         ts.change_position('000001.SZ', 100.0, 10.0, 'short')
+        self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
+        self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
+        # if reduced qty is larger than current qty, the change will be ignored
+        ts.change_position('000001.SZ', -200.0, 10.0, 'short')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 

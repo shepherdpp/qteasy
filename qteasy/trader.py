@@ -461,6 +461,11 @@ class TraderShell(Cmd):
         Thread(target=self.trader.broker.run).start()
 
         while self.status != 'stopped':
+            # it looks to me that while loop should be within the try block
+            # but it is not, because if it is, the KeyboardInterrupt will not be caught
+            # and the shell will not be able to exit.
+            # but sometimes the KeyboardInterrupt will not be caught when the program is running
+            # exactly on the line of try, and will cause the program to fail.
             try:
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
@@ -474,6 +479,9 @@ class TraderShell(Cmd):
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
+                    # check if data source is connected here, if not, reconnect
+                    # if not self.trader.datasource.connected:
+                    #     self.trader.datasource.reconnect()
                     self.cmdloop()
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
@@ -1415,12 +1423,19 @@ class Trader(object):
             raise ValueError(f'Invalid current time: {current_time}')
 
     def change_cash(self, amount):
-        """ 手动修改现金，用于在运行过程中用户手动修改现金，如调仓、止盈止损等
+        """ 手动修改现金，根据amount的正负号，增加或减少现金
+
+        修改后持有现金/可用现金/总投资金额都会发生变化
+        如果amount为负，且绝对值大于可用现金时，忽略该操作
 
         Parameters
         ----------
         amount: float
             现金
+
+        Returns
+        -------
+        None
         """
         from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
 
@@ -1442,9 +1457,16 @@ class Trader(object):
                 **amount_change
         )
         print(f'Cash amount changed to {self.account_cash}')
+        return
 
     def change_position(self, symbol, quantity, price, side=None):
-        """ 手动修改仓位，查找指定标的的仓位，如果没有则创建，如果有则修改
+        """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
+
+        修改后持仓的数量 = 原持仓数量 + quantity
+        如果找不到指定标的和方向的仓位，则创建一个新的仓位
+        如果不指定方向，则查找当前持有的非零仓位，使用持有仓位的方向，如果没有持有非零仓位，则默认为'long'方向
+        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作
+        如果quantity为负且绝对值大于可用数量，则忽略该操作
 
         Parameters
         ----------
@@ -1456,6 +1478,10 @@ class Trader(object):
             交易价格，用来计算新的持仓成本
         side: str, optional
             交易方向，'long' 表示买入，'short' 表示卖出, None表示取已有的不为0的仓位
+
+        Returns
+        -------
+        None
         """
 
         from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position, get_position_ids
@@ -1542,6 +1568,7 @@ class Trader(object):
                 **position_data
         )
         print(f'[DEBUG] position {position_id} changed with data: {position_data}')
+        return
 
     AVAILABLE_TASKS = {
         'pre_open':         _pre_open,
@@ -1663,7 +1690,7 @@ def start_trader(
             asset_types='E, IDX',  # only support equities for now
             start_date=start_date.strftime('%Y%m%d'),
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
-            symbols=config['asset_pool'],
+            symbols=config['asset_pool'].extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ']),
             parallel=True,
             refresh_trade_calendar=True,
     )
