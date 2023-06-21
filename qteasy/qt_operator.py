@@ -1660,16 +1660,22 @@ class Operator:
             window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]
             # debug
-            if shape(hist_data_val)[1] <= window_length:
-                print(f'[DEBUG] in function assign_hist_data(), \n'
-                      f'got hist_data_val for strategy ({stg_id}) shape: {shape(hist_data_val)} \n'
-                      f'while window_length: {window_length}\n'
-                      f'function arguments: \n'
-                      f'hist_data ({shape(hist_data)}): \n{hist_data}\n'
-                      f'reference_data ({shape(hist_data)}): \n{reference_data}\n'
-                      f'cash_plan: {cash_plan}\n'
-                      f'live_mode: {live_mode}\n'
-                      f'live_running_stgs: {live_running_stgs}\n')
+            # 这里会产生window_length比hist_data_val更长的错误，原因是没有取到足够长的历史数据窗口
+            # 检查原因，可能跟config中的invest_start参数有关，在core.py的函数check_and_prepare_hist_data()
+            # 中，在1999行，
+            # axis_length = list(hist_data_val.shape)[1]
+            # if axis_length <= window_length:
+            #     print(f'[DEBUG] in function assign_hist_data(), \n'
+            #           f'got hist_data_val for strategy ({stg_id}) shape: '
+            #           f'{hist_data_val.shape} \n'
+            #           f'while window_length: {window_length}\n'
+            #           f'function arguments: \n'
+            #           f'hist_data ({hist_data.shape}): \n{hist_data}\n'
+            #           f'reference_data ({reference_data.shape if reference_data is not None else None}): '
+            #           f'\n{reference_data}\n'
+            #           f'cash_plan: {cash_plan}\n'
+            #           f'live_mode: {live_mode}\n'
+            #           f'live_running_stgs: {live_running_stgs}\n')
             self._op_hist_data_rolling_windows[stg_id] = rolling_window(
                     hist_data_val,
                     window=window_length,

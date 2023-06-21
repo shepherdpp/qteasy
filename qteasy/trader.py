@@ -1682,7 +1682,7 @@ def start_trader(
     trader.broker.debug = debug
     # refill data source, start date is window length before today
     end_date = pd.to_datetime('today')
-    start_date = end_date - pd.Timedelta(days=operator.max_window_length)
+    start_date = end_date - pd.Timedelta(days=operator.max_window_length * 2)
     datasource.refill_local_source(
             tables='index_daily',
             dtypes=operator.op_data_types,
