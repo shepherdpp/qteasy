@@ -2093,6 +2093,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
     def test_cancel_orders(self):
         """ test cancel_orders function """
+        # TODO: implement this function to test if partial-filled orders can be partially cancelled
+        #  and unfilled orders can be fully cancelled
         pass
 
     # test top level functions related to signal generation and submission

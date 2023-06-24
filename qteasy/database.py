@@ -4305,6 +4305,7 @@ class DataSource:
             self.cursor.execute(sql)
             self.con.commit()
             # self.con.select_db(self.db_name)
+            # debug
             print(f'{self.connection_type} reconnected! used database: {self.con.db} == {self.db_name}')
             return True
         except Exception as e:

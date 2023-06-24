@@ -436,7 +436,7 @@ class TraderShell(Cmd):
             print(traceback.format_exc())
 
         import time
-        time.sleep(10)
+        time.sleep(20)
         self.trader.status = current_trader_status
         self.trader.broker.status = current_broker_status
 
@@ -480,8 +480,8 @@ class TraderShell(Cmd):
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
                     # check if data source is connected here, if not, reconnect
-                    # if not self.trader.datasource.connected:
-                    #     self.trader.datasource.reconnect()
+                    self.trader.datasource.reconnect()
+                    self.trader.datasource.reconnect()
                     self.cmdloop()
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
@@ -810,7 +810,8 @@ class Trader(object):
         print(f'User Name: {self.account["user_name"]}')
         print(f'Created on: {self.account["created_time"]}')
         if detail:
-            print(f'Own Cash/Available: {self.account_cash[0]} / {self.account_cash[1]}')
+            print(f'Own Cash/Available: {np.round(self.account_cash[0], 2)} '
+                  f'/ {np.round(self.account_cash[1], 2)}')
             print(f'Own / Available Positions: \n{self.non_zero_positions}')
         return None
 
@@ -1099,6 +1100,9 @@ class Trader(object):
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n')
         for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, quoted_prices):
+            # DEBUG TODO: 在生成交易订单之前，需要忽略买入/卖出数量为0的交易信号
+            if qty <= 0.001:
+                continue
             pos_id = get_or_create_position(account_id=self.account_id,
                                               symbol=sym,
                                               position_type=pos,
@@ -1687,7 +1691,7 @@ def start_trader(
             tables='index_daily',
             dtypes=operator.op_data_types,
             freqs=operator.op_data_freq,
-            asset_types='E, IDX',  # only support equities for now
+            asset_types='E, IDX',
             start_date=start_date.strftime('%Y%m%d'),
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
             symbols=config['asset_pool'].extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ']),
