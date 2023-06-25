@@ -460,13 +460,12 @@ class TraderShell(Cmd):
         Thread(target=self.trader.run).start()
         Thread(target=self.trader.broker.run).start()
 
-        while self.status != 'stopped':
-            # it looks to me that while loop should be within the try block
-            # but it is not, because if it is, the KeyboardInterrupt will not be caught
-            # and the shell will not be able to exit.
-            # but sometimes the KeyboardInterrupt will not be caught when the program is running
-            # exactly on the line of try, and will cause the program to fail.
+        while True:
+            # enter shell loop
             try:
+                if self.status == 'stopped':
+                    # if trader is stopped, shell will exit
+                    break
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
@@ -479,7 +478,10 @@ class TraderShell(Cmd):
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
-                    # check if data source is connected here, if not, reconnect
+                    import os
+                    # check os type of current system, and then clear screen
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    # check if data source is connected here, if not, reconnect before entering interactive mode
                     self.trader.datasource.reconnect()
                     self.trader.datasource.reconnect()
                     self.cmdloop()
@@ -499,6 +501,7 @@ class TraderShell(Cmd):
                     self.do_bye('')
                 else:
                     self.do_dashboard('')
+            # looks like finally block is better than except block here
             except Exception as e:
                 self.stdout.write(f'Unexpected Error: {e}\n')
                 import traceback
@@ -506,6 +509,7 @@ class TraderShell(Cmd):
                 self.do_bye('')
 
         sys.stdout.write('Thank you for using qteasy!\n')
+        self.do_bye('')
 
 
 class Trader(object):
@@ -1691,7 +1695,7 @@ def start_trader(
             tables='index_daily',
             dtypes=operator.op_data_types,
             freqs=operator.op_data_freq,
-            asset_types='E, IDX',
+            asset_types='E',  #, IDX',
             start_date=start_date.strftime('%Y%m%d'),
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
             symbols=config['asset_pool'].extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ']),
