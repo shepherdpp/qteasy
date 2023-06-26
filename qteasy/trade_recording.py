@@ -473,10 +473,11 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
 
     Returns
     -------
-    (symbols, own_amounts, available_amounts): tuple, (list, ndarray, ndarray)
+    (symbols, own_amounts, available_amounts, costs): tuple, (list, ndarray, ndarray, ndarray)
         symbols: 持仓share的symbol列表
         own_amounts: 每一个share对应的持仓的数量
         available_amounts: 每一个share对应的持仓的可用数量
+        costs: 每一个share对应的持仓的成本
     """
 
     # 根据account_id读取账户的全部持仓
@@ -495,6 +496,7 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
 
     own_amounts = []
     available_amounts = []
+    costs = []
     for share in shares:
         # 检查symbol为share的持仓是否存在
         position = positions[(positions['symbol'] == share) & (positions['qty'] > 0)]
@@ -510,11 +512,13 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         if position['position'] == 'long':
             own_amounts.append(position['qty'])
             available_amounts.append(position['available_qty'])
+            costs.append(position['cost'])
             continue
         # 如果存在空头持仓，则将空头持仓的数量和可用数量乘以-1并放入列表
         if position['position'] == 'short':
             own_amounts.append(-1 * position['qty'])
             available_amounts.append(-1 * position['available_qty'])
+            costs.append(position['cost'])
             continue
     # 如果列表长度与shares长度不相等，则报错
     if len(own_amounts) != len(shares):
@@ -522,9 +526,17 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
     if len(available_amounts) != len(shares):
         raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
+    if len(costs) != len(shares):
+        raise RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
     # 将列表转换为ndarray并返回
+    result = (
+        shares,
+        np.array(own_amounts).astype('float'),
+        np.array(available_amounts).astype('float'),
+        np.array(costs).astype('float')
+    )
 
-    return shares, np.array(own_amounts).astype('float'), np.array(available_amounts).astype('float')
+    return result
 
 
 def get_account_position_details(account_id, shares=None, data_source=None):
@@ -542,12 +554,12 @@ def get_account_position_details(account_id, shares=None, data_source=None):
 
     Returns
     -------
-    positions: DataFrame
-        account持仓的symbol，position，qty和available_qty, symbol与shares的顺序一致
+    positions: DataFrame, columns=['symbol', 'qty', 'available_qty']
+        account持仓的symbol，qty, available_qty和cost, symbol与shares的顺序一致
     """
 
     # 根据account_id读取账户的全部持仓
-    symbols, amounts, available_amounts = get_account_position_availabilities(
+    symbols, amounts, available_amounts, costs = get_account_position_availabilities(
             account_id=account_id,
             shares=shares,
             data_source=data_source
@@ -559,6 +571,7 @@ def get_account_position_details(account_id, shares=None, data_source=None):
             {
                 'qty': amounts,
                 'available_qty': available_amounts,
+                'cost': costs,
             },
             index=symbols,
     ).T

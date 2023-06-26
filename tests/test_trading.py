@@ -353,7 +353,7 @@ class TestTradeRecording(unittest.TestCase):
         # test get_account_position_availabilities function
         res = get_account_position_availabilities(account_id=1, shares=['AAPL', 'GOOG'], data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 3)
+        self.assertEqual(len(res), 4)
         self.assertIsInstance(res[0], list)
         self.assertIsInstance(res[1], np.ndarray)
         self.assertIsInstance(res[2], np.ndarray)
@@ -366,7 +366,7 @@ class TestTradeRecording(unittest.TestCase):
         res = get_account_position_availabilities(account_id=2, shares=['AAPL', 'GOOG', 'MSFT', 'AMZN'],
                                                   data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 3)
+        self.assertEqual(len(res), 4)
         self.assertIsInstance(res[1], np.ndarray)
         self.assertIsInstance(res[2], np.ndarray)
         self.assertEqual(res[1].shape, (4,))
@@ -379,7 +379,7 @@ class TestTradeRecording(unittest.TestCase):
                                                   shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
                                                   data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 3)
+        self.assertEqual(len(res), 4)
         self.assertIsInstance(res[1], np.ndarray)
         self.assertIsInstance(res[2], np.ndarray)
         self.assertEqual(res[1].shape, (5,))
@@ -400,7 +400,7 @@ class TestTradeRecording(unittest.TestCase):
 
         res = get_account_position_availabilities(account_id=2, data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 3)
+        self.assertEqual(len(res), 4)
         self.assertIsInstance(res[1], np.ndarray)
         self.assertIsInstance(res[2], np.ndarray)
         self.assertEqual(res[1].shape, (4,))
@@ -1672,7 +1672,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
         trade_signal_detail = read_trade_order_detail(1, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1724,7 +1724,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
         trade_signal_detail = read_trade_order_detail(2, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1782,7 +1782,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5)
         trade_signal_detail = read_trade_order_detail(3, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1840,7 +1840,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
         trade_signal_detail = read_trade_order_detail(4, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1923,7 +1923,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
         trade_signal_detail = read_trade_order_detail(7, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -1981,7 +1981,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -2035,7 +2035,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
@@ -2055,7 +2055,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # process trade result delivery for the last order
         process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         # check available qty availability
-        symbols, own_qty, available_qty = get_account_position_availabilities(
+        symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,

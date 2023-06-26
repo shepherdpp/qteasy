@@ -190,6 +190,13 @@ class TraderShell(Cmd):
         ------
         orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)last_hour] [(T)today]
         [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
+
+        Examples:
+        ---------
+        orders 000001
+        - display all orders of stock 000001
+        orders filled today 000001
+        - display all filled orders of stock 000001 executed today
         """
         if arg is None or arg == '':
             arg = 'today'
@@ -248,6 +255,8 @@ class TraderShell(Cmd):
             else:
                 pass
 
+        if order_details.empty:
+            print(f'No orders found with argument ({args}). try other arguments.')
         print(order_details.to_string(index=False))
 
     def do_change(self, arg):
@@ -687,6 +696,14 @@ class Trader(object):
         """ 账户当前的持仓，一个tuple，当前持有非零的股票仓位symbol，持有数量和可用数量 """
         positions = self.account_positions
         return positions.loc[positions['qty'] != 0]
+
+    @property
+    def account_position_info(self):
+        """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
+        positions = self.account_positions
+        # TODO: 从datasource中获取当前价格
+        #  计算当前持仓市值、根据成本计算持仓成本和盈亏金额和比率
+        return positions
 
     @property
     def datasource(self):
