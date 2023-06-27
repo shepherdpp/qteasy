@@ -138,7 +138,7 @@ class TraderShell(Cmd):
         ------
         positions
         """
-        print(self._trader.account_positions)
+        print(self._trader.account_position_info)
         # TODO: 打印持仓的股票名称，显示持仓收益情况
 
     def do_overview(self, arg):
@@ -701,9 +701,19 @@ class Trader(object):
     def account_position_info(self):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
-        # TODO: 从datasource中获取当前价格
-        #  计算当前持仓市值、根据成本计算持仓成本和盈亏金额和比率
-        return positions
+        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
+                operator=self._operator,
+                config=self._config,
+                datasource=self._datasource,
+        )
+        current_prices = hist_op['close', :, -1].squeeze()
+        positions['current_price'] = current_prices
+        positions['total_cost'] = positions['qty'] * positions['cost']
+        # TODO: make sure that cost is updated correctly every update
+        positions['market_value'] = positions['qty'] * positions['current_price']
+        positions['profit'] = positions['market_value'] - positions['total_cost']
+        positions['profit_ratio'] = positions['profit'] / positions['total_cost']
+        return positions.loc[positions['qty'] != 0]
 
     @property
     def datasource(self):
@@ -909,6 +919,7 @@ class Trader(object):
                 data_source=self._datasource,
                 config=self._config,
         )
+        self.post_message(f'processed trade delivery: \n{self.account_position_info}')
 
     def history_orders(self, with_trade_results=True):
         """ 账户的历史订单详细信息
@@ -1481,7 +1492,7 @@ class Trader(object):
                 data_source=self.datasource,
                 **amount_change
         )
-        print(f'Cash amount changed to {self.account_cash}')
+        self.post_message(f'Cash amount changed to {self.account_cash}')
         return
 
     def change_position(self, symbol, quantity, price, side=None):

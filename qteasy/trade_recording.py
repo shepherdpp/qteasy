@@ -208,7 +208,14 @@ def get_position_by_id(pos_id, data_source=None):
 
     Returns
     -------
-    dict: 持仓的信息
+    持仓的信息
+    dict: {'account_id': int,
+           'symbol': str,
+           'position': str,
+           'qty': float,
+           'available_qty': float,
+           'cost': float,
+           }
 
     Raises
     ------
@@ -347,7 +354,7 @@ def update_position(position_id, data_source=None, **position_data):
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
     position_data: dict, optional, {'qty_change': float, 'available_qty_change': float, 'cost': float}
-        持仓的数据，只能修改qty, available_qty两类数据中的任意一个或多个
+        持仓的数据，只能修改qty, available_qty, cost 这三类数据中的任意一个或多个
 
     Returns
     -------
@@ -503,6 +510,7 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         if position.empty:
             own_amounts.append(0.0)
             available_amounts.append(0.0)
+            costs.append(0.0)
             continue
         # 如果同时存在多头和空头持仓，则报错
         if len(position) > 1:
@@ -527,6 +535,7 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
     if len(costs) != len(shares):
+        import pdb; pdb.set_trace()
         raise RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
     # 将列表转换为ndarray并返回
     result = (

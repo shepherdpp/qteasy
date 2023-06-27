@@ -894,7 +894,10 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     else:  # for any other unexpected direction
         raise ValueError(f'Invalid direction: {order_detail["direction"]}')
 
-    available_qty = get_position_by_id(order_detail['pos_id'], data_source=data_source)['available_qty']
+    position_info = get_position_by_id(order_detail['pos_id'], data_source=data_source)
+    owned_qty = position_info['qty']
+    available_qty = position_info['available_qty']
+    position_cost = position_info['cost']
 
     available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
 
@@ -937,10 +940,18 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 cash_amount_change=cash_change,
                 available_cash_change=cash_change,
         )
+        # calculate new cost
+        prev_cost = position_cost * owned_qty
+        additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
+        new_cost = np.round(
+                (prev_cost + additional_cost) / (owned_qty + position_change),
+                CASH_DECIMAL_PLACES
+        )
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,
                 qty_change=position_change,
+                cost=new_cost,
         )
     # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
     elif order_detail['direction'] == 'sell':
@@ -949,11 +960,19 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 data_source=data_source,
                 cash_amount_change=cash_change,
         )
+        # calculate new cost
+        prev_cost = position_cost * owned_qty
+        additional_cost = -position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
+        new_cost = np.round(
+                (prev_cost + additional_cost) / (owned_qty - position_change),
+                CASH_DECIMAL_PLACES
+        )
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,
                 qty_change=-position_change,
                 available_qty_change=-position_change,
+                cost=new_cost,
         )
     else:
         raise RuntimeError(f'invalid direction {order_detail["direction"]}')
