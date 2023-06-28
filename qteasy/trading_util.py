@@ -900,6 +900,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     owned_qty = position_info['qty']
     available_qty = position_info['available_qty']
     position_cost = position_info['cost']
+    if position_cost is None:
+        position_cost = 0
 
     available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
 
