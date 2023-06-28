@@ -138,8 +138,21 @@ class TraderShell(Cmd):
         ------
         positions
         """
-        print(self._trader.account_position_info)
-        # TODO: 打印持仓的股票名称，显示持仓收益情况
+        print(
+                self._trader.account_position_info.to_string(
+                        columns=['qty', 'available_qty',  'cost', 'current_price',
+                                 'market_value', 'profit', 'profit_ratio'],
+                        header=['qty', 'available',  'cost', 'price', 'market_value', 'profit', 'profit_ratio'],
+                        formatters={'qty': '{:,.2f}'.format,
+                                    'available_qty': '{:,.2f}'.format,
+                                    'cost': '{:,.2f}'.format,
+                                    'current_price': '{:,.2f}'.format,
+                                    'market_value': '{:,.2f}'.format,
+                                    'profit': '{:,.2f}'.format,
+                                    'profit_ratio': '{:.2%}'.format},
+                        justify='right',
+                )
+        )
 
     def do_overview(self, arg):
         """ Get trader overview, same as info
