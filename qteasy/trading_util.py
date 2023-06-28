@@ -264,7 +264,7 @@ def parse_trade_signal(signals,
         # 将计划买入的金额调整为可用的最大值
         cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
 
-    # 将计算出的买入和卖出的数量转换为交易信号
+    # 将计算出的买入和卖出的数量转换为交易订单
     symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
@@ -583,12 +583,12 @@ def _signal_to_order_elements(shares,
 
 
 def output_trade_order():
-    """ 将交易信号输出到终端或TUI
+    """ 将交易订单输出到终端或TUI
 
     Returns
     -------
     order_id: int
-        交易信号的id
+        交易订单的id
     """
     pass
 
@@ -605,20 +605,20 @@ def submit_order(order_id, data_source=None):
     Parameters
     ----------
     order_id: int
-        交易信号的id
+        交易订单的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
-    int, 交易信号的id
-    None, 如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
+    int, 交易订单的id
+    None, 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
     """
 
-    # 读取交易信号
+    # 读取交易订单
     trade_order = read_trade_order(order_id, data_source=data_source)
 
-    # 如果交易信号的状态不为created，则说明交易信号已经提交过，不需要再次提交
+    # 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
     if trade_order['status'] != 'created':
         return None
 
@@ -649,7 +649,7 @@ def submit_order(order_id, data_source=None):
 
     # 将signal的status改为"submitted"，并将trade_signal写入数据库
     order_id = update_trade_order(order_id=order_id, data_source=data_source, status='submitted')
-    # 检查交易信号
+    # 检查交易订单
 
     return order_id
 
@@ -657,14 +657,14 @@ def submit_order(order_id, data_source=None):
 def cancel_order(order_id, data_source=None, config=None):
     """ 取消交易订单
 
-    对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为'cancelled'
-    取消订单时，生成这个订单的交易结果，交易结果的"canceled_qty"为订单的"qty"，交易结果的"status"为"cancelled"
+    对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为 'canceled'
+    取消订单时，生成这个订单的交易结果，交易结果的"canceled_qty"为订单的"qty"，交易结果的 "status" 为 "canceled"
     如果订单的状态为部分成交partial-filled，生成的交易结果的quantity为订单的数量减去已经成交的数量
 
     Parameters
     ----------
     order_id: int
-        交易信号的id
+        交易订单的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
     config: dict, optional
@@ -672,7 +672,7 @@ def cancel_order(order_id, data_source=None, config=None):
 
     Returns
     -------
-    int, 交易信号的id
+    int, 交易订单的id
     """
     # TODO: further test this function
 
@@ -695,8 +695,10 @@ def cancel_order(order_id, data_source=None, config=None):
         total_filled_qty = 0.
         already_canceled_qty = 0.
     if already_canceled_qty > 0:
+        # TODO: there is a bug: if order status is submitted, then canceled_qty should be 0
         raise RuntimeError(f'order status wrong: canceled qty should be 0 '
-                           f'unless order is canceled! actual: {already_canceled_qty} for order \n{order_results}')
+                           f'unless order is canceled! actual: {already_canceled_qty} for order \n{order_details}\n'
+                           f'and result: \n{order_results}')
     remaining_qty = np.round(
             order_details['qty'] - total_filled_qty,
             AMOUNT_DECIMAL_PLACES,
@@ -811,7 +813,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     """ 处理交易结果: 更新交易委托的状态，更新账户的持仓，更新持有现金金额
 
     交易结果一旦生成，其内容就不会再改变，因此不需要更新交易结果，只需要根据交易结果
-    更新相应交易信号（委托）的状态，更新账户的持仓，更新账户的现金余额
+    更新相应交易订单（委托）的状态，更新账户的持仓，更新账户的现金余额
 
     Parameters
     ----------
@@ -833,7 +835,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     order_id = raw_trade_result['order_id']
     order_detail = read_trade_order_detail(order_id, data_source=data_source)
 
-    # 确认交易信号的状态不为 'created'. 'filled' or 'canceled'，如果是，则抛出异常
+    # 确认交易订单的状态不为 'created'. 'filled' or 'canceled'，如果是，则抛出异常
     if order_detail['status'] in ['created']:
         raise RuntimeError(f'order {order_id} is noy submitted yet')
     if order_detail['status'] in ['filled', 'canceled']:
@@ -846,7 +848,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         raise TypeError('config must be a dict')
     process_trade_delivery(account_id=order_detail['account_id'], data_source=data_source, config=config)
 
-    # 读取交易信号的历史交易记录，计算尚未成交的数量：remaining_qty
+    # 读取交易订单的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
     filled_qty = np.round(
             trade_results['filled_qty'].sum(),
@@ -857,9 +859,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
             AMOUNT_DECIMAL_PLACES,
     )
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
-        import pdb; pdb.set_trace()
         raise RuntimeError(f'qty {order_detail["qty"]} is not an integer')
-    # 如果交易结果中的cancel_qty大于0，则将交易信号的状态设置为'canceled'，同时确认cancel_qty等于remaining_qty
+    # 如果交易结果中的cancel_qty大于0，则将交易订单的状态设置为 'canceled'，同时确认 canceled_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
             raise RuntimeError(f'canceled_qty {raw_trade_result["canceled_qty"]} '
@@ -871,22 +872,23 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
             raise RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
                                f'is greater than remaining_qty {remaining_qty}')
 
-        # 如果filled_qty等于remaining_qty，则将交易信号的状态设置为'filled'
+        # 如果filled_qty等于remaining_qty，则将交易订单的状态设置为 'filled'
         elif raw_trade_result['filled_qty'] == remaining_qty:
             order_detail['status'] = 'filled'
 
-        # 如果filled_qty小于remaining_qty，则将交易信号的状态设置为'partial-filled'
+        # 如果filled_qty小于remaining_qty，则将交易订单的状态设置为 'partial-filled'
         elif raw_trade_result['filled_qty'] < remaining_qty:
             order_detail['status'] = 'partial-filled'
 
     # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
-    position_change = raw_trade_result['filled_qty']
     if order_detail['direction'] == 'sell':
+        position_change = - raw_trade_result['filled_qty']
         cash_change = np.round(
                 raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
                 CASH_DECIMAL_PLACES,
         )
     elif order_detail['direction'] == 'buy':
+        position_change = raw_trade_result['filled_qty']
         cash_change = np.round(
                 - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
                 CASH_DECIMAL_PLACES,
@@ -917,7 +919,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         raise RuntimeError(f'cash_change {cash_change} is greater than '
                            f'available cash {available_cash}')
 
-    # 计算并生成交易结果的交割数量和交割状，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
+    # 计算并生成交易结果的交割数量和交割状态，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
     if order_detail['direction'] == 'buy':
         raw_trade_result['delivery_amount'] = position_change
     elif order_detail['direction'] == 'sell':
@@ -925,12 +927,15 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     else:
         raise ValueError(f'direction must be buy or sell, got {order_detail["direction"]} instead')
     raw_trade_result['delivery_status'] = 'ND'
-    # 生成交易结果的execution_time字段，保存交易结果
+
+    # 至此，如果前面所有步骤都没有发生错误，则交易结果有效，生成交易结果的execution_time字段，正式保存交易结果
     execution_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
     raw_trade_result['execution_time'] = execution_time
     result_id = write_trade_result(raw_trade_result, data_source=data_source)
 
-    # 更新账户的持仓和现金余额:
+    # 更新账户的持仓和现金余额和订单状态
+    # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
+    #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
 
     # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
     if order_detail['direction'] == 'buy':
@@ -954,7 +959,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 cost=new_cost,
         )
     # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
-    elif order_detail['direction'] == 'sell':
+    else:  # order_detail['direction'] == 'sell', 因为其他情况已经在前面raise ValueError了
         update_account_balance(
                 account_id=order_detail['account_id'],
                 data_source=data_source,
@@ -974,9 +979,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 available_qty_change=-position_change,
                 cost=new_cost,
         )
-    else:
-        raise RuntimeError(f'invalid direction {order_detail["direction"]}')
-    # 更新交易信号的状态
+    # 更新交易订单的状态
     update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
 
     return result_id

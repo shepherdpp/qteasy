@@ -136,15 +136,28 @@ class Broker(object):
 
         Parameters:
         -----------
-        order: dict
-            交易订单dict的key包括 ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
-                     'submitted_time', 'status']
+        order: dict 交易订单dict，详细信息如下:
+            {'order_id': 订单ID,
+             'pos_id': position ID,
+             'direction',
+             'order_type',
+             'qty',
+             'price',
+             'submitted_time',
+             'status'}
 
         Returns:
         --------
-        result: dict
-            交易结果dict的key包括 ['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
-                        'canceled_qty', 'delivery_amount', 'delivery_status'
+        raw_trade_result: dict, 初步交易结果dict,详细信息如下：
+            {'order_id',
+             'filled_qty',
+             'price',
+             'transaction_fee',
+             'execution_time',
+             'canceled_qty',
+             'delivery_amount',
+             'delivery_status'
+             }
         """
         from time import sleep
         from random import random, choice
@@ -157,6 +170,34 @@ class Broker(object):
                 order_price=order['price'],
                 direction=order['direction'],
         )
+        # 从用户自定义函数获取数据，需要检查result_type、qty、filled_price和fee的类型是否正确，数据是否符合基本要求：
+        #  1. result_type应该是'filled'或者'canceled'
+        #  2. qty应该是一个大于0的数，且小于等于order['qty']
+        #  3. filled_price应该是一个大于等于0的数(仅当result_type为'canceled'时，filled_price可以为0)
+        #  4. fee应该是一个大于等于0的数
+
+        if not isinstance(result_type, str):
+            raise TypeError(f'result_type should be str, but got {type(result_type)}')
+        if result_type not in ['filled', 'canceled']:
+            raise ValueError(f'result_type should be one of ["filled", "canceled"], but got {result_type}')
+        if not isinstance(qty, (int, float)):
+            raise TypeError(f'qty should be int or float, but got {type(qty)}')
+        if qty <= 0:
+            raise ValueError(f'qty should be greater than 0, but got {qty}')
+        if qty > order['qty']:
+            raise ValueError(f'qty should be less than or equal to order["qty"], but got {qty}')
+        if not isinstance(filled_price, (int, float)):
+            raise TypeError(f'filled_price should be int or float, but got {type(filled_price)}')
+        if filled_price < 0:
+            raise ValueError(f'filled_price should be greater than 0, but got {filled_price}')
+        if result_type == 'canceled' and filled_price != 0:
+            raise ValueError(f'filled_price should be 0 when result_type is "canceled", but got {filled_price}')
+        if not isinstance(fee, (int, float)):
+            raise TypeError(f'fee should be int or float, but got {type(fee)}')
+        if fee < 0:
+            raise ValueError(f'fee should be greater than 0, but got {fee}')
+
+        # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
         if self.debug:
             print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
                   f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
@@ -175,7 +216,7 @@ class Broker(object):
             raise ValueError(f'Unknown result_type: {result_type}, should be one of ["filled", "canceled"]')
 
         current_datetime = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE)
-        result = {
+        raw_trade_result = {
             'order_id':        order['order_id'],
             'filled_qty':      filled_qty,
             'price':           filled_price,
@@ -186,8 +227,8 @@ class Broker(object):
             'delivery_status': 'ND',
         }
         if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) method get_result(): built up result:\n{result}')
-        return result
+            print(f'[DEBUG]: Broker({self.broker_name}) method get_result(): raw trade result:\n{raw_trade_result}')
+        return raw_trade_result
 
     @abstractmethod
     def transaction_result(self, order_qty, order_price, direction):
@@ -207,11 +248,11 @@ class Broker(object):
         result_type: str
             交易结果类型，'filled' - 成交, 'canceled' - 取消
         qty: float
-            成交/取消数量
+            成交/取消数量，这个数字应该小于等于order_qty，且大于等于0
         price: float
             成交价格, 如果是取消交易，价格为0或任意数字
         fee: float
-            交易费用
+            交易费用，交易费用应该大于等于0
         """
         pass
 

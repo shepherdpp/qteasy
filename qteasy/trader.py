@@ -676,12 +676,26 @@ class Trader(object):
 
     @property
     def account_cash(self):
-        """ 账户的现金, 包括持有现金和可用现金 """
+        """ 账户的现金, 包括持有现金和可用现金
+
+        Returns
+        -------
+        cash_availabilities: tuple
+            (cash_amount: float, 账户的可用资金
+            available_cash: float, 账户的资金总额
+            )
+        """
         return get_account_cash_availabilities(self.account_id, data_source=self._datasource)
 
     @property
     def account_positions(self):
-        """ 账户的持仓，一个tuple,包含两个ndarray，包括每种股票的持有数量和可用数量 """
+        """ 账户的持仓，一个tuple,包含两个ndarray，包括每种股票的持有数量和可用数量
+
+        Returns
+        -------
+        positions: DataFrame, columns=['symbol', 'qty', 'available_qty'， 'cost']
+            account持仓的symbol，qty, available_qty和cost, symbol与shares的顺序一致
+        """
         shares = self.asset_pool
 
         positions = get_account_position_details(
@@ -709,7 +723,6 @@ class Trader(object):
         current_prices = hist_op['close', :, -1].squeeze()
         positions['current_price'] = current_prices
         positions['total_cost'] = positions['qty'] * positions['cost']
-        # TODO: make sure that cost is updated correctly every update
         positions['market_value'] = positions['qty'] * positions['current_price']
         positions['profit'] = positions['market_value'] - positions['total_cost']
         positions['profit_ratio'] = positions['profit'] / positions['total_cost']
@@ -919,7 +932,8 @@ class Trader(object):
                 data_source=self._datasource,
                 config=self._config,
         )
-        self.post_message(f'processed trade delivery: \n{self.account_position_info}')
+        self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
+        self.post_message(f'processed trade delivery: positions \n{self.account_position_info}')
 
     def history_orders(self, with_trade_results=True):
         """ 账户的历史订单详细信息
@@ -1034,7 +1048,9 @@ class Trader(object):
         signal_type = operator.signal_type
         shares = self.asset_pool
         own_amounts = self.account_positions['qty']
+        available_amounts = self.account_positions['available_qty']
         own_cash = self.account_cash[0]
+        available_cash = self.account_cash[1]
         config = self._config
 
         # 下载最小所需实时历史数据
@@ -1121,6 +1137,8 @@ class Trader(object):
                 prices=current_prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
+                available_amounts=available_amounts,  # 这里给出了available_amounts和available_cash，就不会产生超额交易订单
+                available_cash=available_cash,
                 config=config
         )
         submitted_qty = 0
@@ -1213,6 +1231,7 @@ class Trader(object):
         for order_id in orders_to_be_canceled.index:
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
             self.post_message('partially filled orders found, unfilled part will be canceled')
+            # TODO: here "submitted" orders can not be canceled, need to be fixed
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.post_message(f'canceled unfilled order: {order_id}')
 

@@ -457,8 +457,10 @@ def get_account_cash_availabilities(account_id, data_source=None):
 
     Returns
     -------
-    cash_availabilities: tuple, (float, float)
-        账户的可用资金和资金总额
+    cash_availabilities: tuple
+        (cash_amount: float, 账户的可用资金
+        available_cash: float, 账户的资金总额
+        )
     """
 
     account = get_account(account_id=account_id, data_source=data_source)
@@ -563,7 +565,7 @@ def get_account_position_details(account_id, shares=None, data_source=None):
 
     Returns
     -------
-    positions: DataFrame, columns=['symbol', 'qty', 'available_qty']
+    positions: DataFrame, columns=['symbol', 'qty', 'available_qty'， 'cost']
         account持仓的symbol，qty, available_qty和cost, symbol与shares的顺序一致
     """
 
@@ -583,7 +585,7 @@ def get_account_position_details(account_id, shares=None, data_source=None):
                 'cost': costs,
             },
             index=symbols,
-    ).T
+    ).T  # TODO: ?? 为什么要转置
     return positions
 
 
