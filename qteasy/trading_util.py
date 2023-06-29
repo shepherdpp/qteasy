@@ -704,10 +704,10 @@ def cancel_order(order_id, data_source=None, config=None):
             AMOUNT_DECIMAL_PLACES,
     )
 
-    print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
-          f'total filled qty: {total_filled_qty}\n'
-          f'already canceled qty: {already_canceled_qty}\n'
-          f'remaining qty: {remaining_qty}\n')
+    # print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
+    #       f'total filled qty: {total_filled_qty}\n'
+    #       f'already canceled qty: {already_canceled_qty}\n'
+    #       f'remaining qty: {remaining_qty}\n')
 
     if remaining_qty <= 0:
         raise RuntimeError(f'order status wrong: remaining qty should be larger than 0'
@@ -905,12 +905,12 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
 
-    print(f'[DEBUG]: updating account balance and position for order {order_id}...\n'
-          f'result: {raw_trade_result}\n'
-          f'position_change: {position_change}\n'
-          f'cash_change: {cash_change}\n'
-          f'available_qty: {available_qty}\n'
-          f'available_cash: {available_cash}\n')
+    # print(f'[DEBUG]: updating account balance and position for order {order_id}...\n'
+    #       f'result: {raw_trade_result}\n'
+    #       f'position_change: {position_change}\n'
+    #       f'cash_change: {cash_change}\n'
+    #       f'available_qty: {available_qty}\n'
+    #       f'available_cash: {available_cash}\n')
 
     # 如果position_change小于available_position_amount，则抛出异常
     if available_qty + position_change < 0:

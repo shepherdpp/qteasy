@@ -138,6 +138,7 @@ class TraderShell(Cmd):
         ------
         positions
         """
+        print(f'current positions: \n')
         print(
                 self._trader.account_position_info.to_string(
                         columns=['qty', 'available_qty',  'cost', 'current_price',
@@ -171,7 +172,6 @@ class TraderShell(Cmd):
             else:
                 print('argument not valid, input "detail" or "d" to get detailed info')
         self._trader.info(detail)
-        # TODO: 打印持仓的股票名称，显示持仓收益情况，显示总投资金额和总收益率
 
     def do_history(self, arg):
         """ Get trader history
@@ -448,7 +448,7 @@ class TraderShell(Cmd):
 
         self.trader.status = 'running'
         self.trader.broker.status = 'running'
-        print(f'[DEBUG] running strategy: {strategies}')
+        # print(f'[DEBUG] running strategy: {strategies}')
 
         try:
             self.trader.run_task('run_strategy', strategies)
@@ -867,9 +867,37 @@ class Trader(object):
         print(f'User Name: {self.account["user_name"]}')
         print(f'Created on: {self.account["created_time"]}')
         if detail:
-            print(f'Own Cash/Available: {np.round(self.account_cash[0], 2)} '
-                  f'/ {np.round(self.account_cash[1], 2)}')
-            print(f'Own / Available Positions: \n{self.non_zero_positions}')
+            own_cash = self.account_cash[0]
+            available_cash = self.account_cash[1]
+            position_info = self.account_position_info
+            total_market_value = position_info['market_value'].sum()
+            total_profit = position_info['profit'].sum()
+            total_value = total_market_value + own_cash
+            position_level = total_market_value / total_value
+            total_profit_ratio = total_profit / total_value
+            print(f'Own Cash: {own_cash:.2f} \n'
+                  f'Available Cash: {available_cash:.2f}\n'
+                  f'Total Value: {total_value:.2f}\n'
+                  f'Total Market Value: {total_market_value:.2f}\n'
+                  f'Total Profit: {total_profit:.2f}\n'
+                  f'Position Level: {position_level:.2%}\n'
+                  f'Total Profit Ratio: {total_profit_ratio:.2%}\n')
+            print(f'current positions: \n')
+            print(
+                    position_info.to_string(
+                            columns=['qty', 'available_qty', 'cost', 'current_price',
+                                     'market_value', 'profit', 'profit_ratio'],
+                            header=['qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio'],
+                            formatters={'qty':           '{:,.2f}'.format,
+                                        'available_qty': '{:,.2f}'.format,
+                                        'cost':          '{:,.2f}'.format,
+                                        'current_price': '{:,.2f}'.format,
+                                        'market_value':  '{:,.2f}'.format,
+                                        'profit':        '{:,.2f}'.format,
+                                        'profit_ratio':  '{:.2%}'.format},
+                            justify='right',
+                    )
+            )
         return None
 
     def trade_results(self, status='filled'):
@@ -1635,7 +1663,7 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        print(f'[DEBUG] position {position_id} changed with data: {position_data}')
+        # print(f'[DEBUG] position {position_id} changed with data: {position_data}')
         return
 
     AVAILABLE_TASKS = {
