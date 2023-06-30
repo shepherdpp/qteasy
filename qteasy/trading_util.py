@@ -30,6 +30,7 @@ TIMEZONE = 'Asia/Shanghai'
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
+
 def create_daily_task_agenda(operator, config=None):
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
@@ -98,7 +99,8 @@ def create_daily_task_agenda(operator, config=None):
             # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
             from qteasy.utilfuncs import next_market_trade_day
             a_trade_day = next_market_trade_day(today, exchange=exchange_market)
-            print(f'in trading_util: function create_daily_task_agenda(): next trade day of today({today}) is {a_trade_day}')
+            # print(f'[DEBUG]: in trading_util: function create_daily_task_agenda(): '
+            #       f'next trade day of today({today}) is {a_trade_day}')
             if a_trade_day is not None:
                 the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
             else:
@@ -772,13 +774,13 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         if order_detail['account_id'] != account_id:
             continue
         # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
-        direction = order_detail['direction']
-        if direction == 'buy':
+        trade_direction = order_detail['direction']
+        if trade_direction == 'buy':
             delivery_period = config['stock_delivery_period']
-        elif direction == 'sell':
+        elif trade_direction == 'sell':
             delivery_period = config['cash_delivery_period']
         else:
-            raise ValueError(f'Invalid direction: {direction}')
+            raise ValueError(f'Invalid direction: {trade_direction}')
         # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
         execution_date = pd.to_datetime(result.execution_time).date()
         current_date = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).date()
@@ -786,14 +788,14 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         if day_diff < delivery_period:
             continue
         # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
-        if direction == 'buy':
+        if trade_direction == 'buy':
             position_id = order_detail['pos_id']
             update_position(
                     position_id=position_id,
                     data_source=data_source,
                     available_qty_change=result.delivery_amount,
             )
-        elif direction == 'sell':
+        elif trade_direction == 'sell':
             account_id = order_detail['account_id']
             update_account_balance(
                     account_id=account_id,
@@ -801,7 +803,7 @@ def process_trade_delivery(account_id, data_source=None, config=None):
                     available_cash_change=result.delivery_amount,
             )
         else:
-            raise ValueError(f'Invalid direction: {direction}')
+            raise ValueError(f'Invalid direction: {trade_direction}')
         update_trade_result(
                 result_id=result_id,
                 data_source=data_source,
