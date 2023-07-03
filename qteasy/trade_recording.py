@@ -186,6 +186,10 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     if cash_amount < 0:
         raise RuntimeError(f'cash_amount cannot be less than 0!')
 
+    print(f'[DEBUG]: update account balance for id: {account_id} \n'
+          f'cash_amount: {account_data["cash_amount"]} -> {cash_amount}, \n'
+          f'available_cash: {account_data["available_cash"]} -> {available_cash} \n'
+          f'total_investment: {account_data["total_invest"]} -> {total_investment}')
     # 更新账户的资金总额和可用资金
     data_source.update_sys_table_data(
             'sys_op_live_accounts',
@@ -459,12 +463,13 @@ def get_account_cash_availabilities(account_id, data_source=None):
     -------
     cash_availabilities: tuple
         (cash_amount: float, 账户的可用资金
-        available_cash: float, 账户的资金总额
+         available_cash: float, 账户的资金总额
+         total_invest: float, 账户的总投入
         )
     """
 
     account = get_account(account_id=account_id, data_source=data_source)
-    return account['cash_amount'], account['available_cash']
+    return account['cash_amount'], account['available_cash'], account['total_invest']
 
 
 def get_account_position_availabilities(account_id, shares=None, data_source=None):

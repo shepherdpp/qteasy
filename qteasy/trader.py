@@ -391,9 +391,11 @@ class TraderShell(Cmd):
         ------
         dashboard
         """
-        import os
-        # check os type of current system, and then clear screen
-        os.system('cls' if os.name == 'nt' else 'clear')
+
+        if not self.trader.debug:
+            import os
+            # check os type of current system, and then clear screen
+            os.system('cls' if os.name == 'nt' else 'clear')
         self._status = 'dashboard'
         print('\nWelcome to TraderShell! currently in dashboard mode, live status will be displayed here.\n'
               'You can not input commands in this mode, if you want to enter interactive mode, please'
@@ -500,9 +502,10 @@ class TraderShell(Cmd):
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
-                    import os
-                    # check os type of current system, and then clear screen
-                    os.system('cls' if os.name == 'nt' else 'clear')
+                    if not self.trader.debug:
+                        import os
+                        # check os type of current system, and then clear screen
+                        os.system('cls' if os.name == 'nt' else 'clear')
                     # check if data source is connected here, if not, reconnect before entering interactive mode
                     self.trader.datasource.reconnect()
                     self.trader.datasource.reconnect()
@@ -689,13 +692,14 @@ class Trader(object):
 
     @property
     def account_cash(self):
-        """ 账户的现金, 包括持有现金和可用现金
+        """ 账户的现金, 包括持有现金和可用现金和总投资金额
 
         Returns
         -------
         cash_availabilities: tuple
             (cash_amount: float, 账户的可用资金
-            available_cash: float, 账户的资金总额
+             available_cash: float, 账户的资金总额
+             total_invest: float, 账户的总投资额
             )
         """
         return get_account_cash_availabilities(self.account_id, data_source=self._datasource)
@@ -861,25 +865,32 @@ class Trader(object):
         --------
         None
         """
+
+        position_info = self.account_position_info
+        total_market_value = position_info['market_value'].sum()
+        own_cash = self.account_cash[0]
+        available_cash = self.account_cash[1]
+        total_profit = position_info['profit'].sum()
+        total_investment = self.account_cash[2]
+        total_value = total_market_value + own_cash
+        total_return_of_investment = total_value - total_investment
+        total_roi_rate = total_return_of_investment / total_investment
         print('Account Overview:')
         print('-----------------')
         print(f'Account ID: {self.account_id}')
         print(f'User Name: {self.account["user_name"]}')
         print(f'Created on: {self.account["created_time"]}')
+        print(f'Own Cash: {own_cash:.2f} \n'
+              f'Available Cash: {available_cash:.2f}\n'
+              f'Total Investment: {total_investment:.2f}\n'
+              f'Total Value: {total_value:.2f}\n'
+              f'Total Stock Value: {total_market_value:.2f}\n'
+              f'Total Profit: {total_profit:.2f}\n')
         if detail:
-            own_cash = self.account_cash[0]
-            available_cash = self.account_cash[1]
-            position_info = self.account_position_info
-            total_market_value = position_info['market_value'].sum()
-            total_profit = position_info['profit'].sum()
-            total_value = total_market_value + own_cash
             position_level = total_market_value / total_value
             total_profit_ratio = total_profit / total_value
-            print(f'Own Cash: {own_cash:.2f} \n'
-                  f'Available Cash: {available_cash:.2f}\n'
-                  f'Total Value: {total_value:.2f}\n'
-                  f'Total Market Value: {total_market_value:.2f}\n'
-                  f'Total Profit: {total_profit:.2f}\n'
+            print(f'Total Return of Investment: {total_return_of_investment:.2f}\n'
+                  f'Total ROI Rate: {total_roi_rate:.2%}\n'
                   f'Position Level: {position_level:.2%}\n'
                   f'Total Profit Ratio: {total_profit_ratio:.2%}\n')
             print(f'current positions: \n')
@@ -1535,7 +1546,7 @@ class Trader(object):
         """
         from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
 
-        cash_amount, available_cash = get_account_cash_availabilities(
+        cash_amount, available_cash, total_invest = get_account_cash_availabilities(
                 account_id=self.account_id,
                 data_source=self.datasource
         )

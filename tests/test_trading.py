@@ -341,14 +341,16 @@ class TestTradeRecording(unittest.TestCase):
         # test get_account_cash_availabilities function
         res = get_account_cash_availabilities(account_id=1, data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 2)
+        self.assertEqual(len(res), 3)
         self.assertEqual(res[0], 100000)
         self.assertEqual(res[1], 80000)
+        self.assertEqual(res[2], 100000)
         res = get_account_cash_availabilities(account_id=2, data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
-        self.assertEqual(len(res), 2)
+        self.assertEqual(len(res), 3)
         self.assertEqual(res[0], 100000)
         self.assertEqual(res[1], 50000)
+        self.assertEqual(res[2], 100000)
 
         # test get_account_position_availabilities function
         res = get_account_position_availabilities(account_id=1, shares=['AAPL', 'GOOG'], data_source=self.test_ds)
@@ -1667,9 +1669,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(1, data_source=self.test_ds).loc[1].to_dict()}')
         trade_result = read_trade_result_by_id(1, data_source=self.test_ds)
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0)
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
+        self.assertEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(1, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
@@ -1719,9 +1722,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(2, data_source=self.test_ds).loc[2].to_dict()}')
         trade_result = read_trade_result_by_id(2, data_source=self.test_ds)
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0)
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0)
+        self.assertEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(2, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
@@ -1777,9 +1781,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(3, data_source=self.test_ds).loc[3].to_dict()}')
         trade_result = read_trade_result_by_id(3, data_source=self.test_ds)
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5)
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5)
+        self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(3, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
@@ -1835,9 +1840,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(4, data_source=self.test_ds).loc[4].to_dict()}')
         trade_result = read_trade_result_by_id(4, data_source=self.test_ds)
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
+        self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(4, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
@@ -1918,9 +1924,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(7, data_source=self.test_ds).loc[5].to_dict()}')
         trade_result = read_trade_result_by_id(5, data_source=self.test_ds)
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5 + 100 * 90.0 - 5.5)
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
+        self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(7, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
@@ -1976,9 +1983,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(9, data_source=self.test_ds).loc[6].to_dict()}')
         trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5)
+        self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
@@ -2030,9 +2038,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'trade_result_detail of order_id == 9: \n'
               f'{read_trade_results_by_order_id(9, data_source=self.test_ds).loc[7].to_dict()}')
         # check cash availability
-        own_cash, available_cash = get_account_cash_availabilities(1, data_source=self.test_ds)
+        own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
         self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 100 * 191.0 - 23.9)
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
+        self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
