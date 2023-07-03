@@ -661,7 +661,7 @@ def cancel_order(order_id, data_source=None, config=None):
 
     对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为 'canceled'
     取消订单时，生成这个订单的交易结果，交易结果的"canceled_qty"为订单的"qty"，交易结果的 "status" 为 "canceled"
-    如果订单的状态为部分成交partial-filled，生成的交易结果的quantity为订单的数量减去已经成交的数量
+    如果订单的状态为部分成交partial- filled，生成的交易结果的quantity为订单的数量减去已经成交的数量
 
     Parameters
     ----------
@@ -889,12 +889,18 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
                 CASH_DECIMAL_PLACES,
         )
+        # print(f'[DEBUG]: in process_trade_result(): selling stock, position_change: {position_change}\n'
+        #       f'cash_change = {raw_trade_result["filled_qty"]} * {raw_trade_result["price"]} - '
+        #       f'{raw_trade_result["transaction_fee"]} = {cash_change}, ')
     elif order_detail['direction'] == 'buy':
         position_change = raw_trade_result['filled_qty']
         cash_change = np.round(
                 - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
                 CASH_DECIMAL_PLACES,
         )
+        # print(f'[DEBUG]: in process_trade_result(): buying stock, position_change: {position_change}\n'
+        #       f'cash_change = - {raw_trade_result["filled_qty"]} * {raw_trade_result["price"]} - '
+        #       f'{raw_trade_result["transaction_fee"]} = {cash_change}, ')
     else:  # for any other unexpected direction
         raise ValueError(f'Invalid direction: {order_detail["direction"]}')
 
@@ -979,8 +985,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,
-                qty_change=-position_change,
-                available_qty_change=-position_change,
+                qty_change=position_change,
+                available_qty_change=position_change,
                 cost=new_cost,
         )
     # 更新交易订单的状态

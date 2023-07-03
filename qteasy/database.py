@@ -1347,13 +1347,6 @@ TABLE_SCHEMA = {
                         '取消交易数量', '交割数量(现金或证券)', '交割状态{ND, DL}'],
          'prime_keys': [0],
          },
-    # TODO: 是否要将交易结果交割表独立出来？后面再考虑
-    # 'sys_op_deliveries':  # 交易结果交割表
-    #     {'columns':    ['delivery_id', 'result_id', 'delivery_type', 'amount', 'execution_time', 'status'],
-    #      'dtypes':     ['int', 'int', 'varchar(10)', 'float', 'datetime', 'varchar(15)'],
-    #      'remarks':    ['交割ID', '交易结果ID', '交割类型(cash/position)', '交割数量', '交割时间', '交割状态'],
-    #      'prime_keys': [0],
-    #      },
 
     'trade_calendar':
         {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
