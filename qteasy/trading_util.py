@@ -210,6 +210,7 @@ def parse_trade_signal(signals,
         quoted_prices: list of float, 交易信号对应的交易价格
     """
 
+    # TODO: 还需要考虑交易批量的限制，如只能买卖整数股或整百股等
     # 处理optional参数:
     # 如果没有提供可用资金和持仓数量，使用当前的资金和持仓数量
     if available_amounts is None:
@@ -224,7 +225,9 @@ def parse_trade_signal(signals,
             'PT_sell_threshold': QT_CONFIG['PT_sell_threshold'],
             'allow_sell_short': QT_CONFIG['allow_sell_short'],
             'cash_decimal_places': QT_CONFIG['cash_decimal_places'],
-            'amount_decimal_places': QT_CONFIG['amount_decimal_places']
+            'amount_decimal_places': QT_CONFIG['amount_decimal_places'],
+            'trade_batch_size': QT_CONFIG['trade_batch_size'],
+            'sell_batch_size': QT_CONFIG['sell_batch_size']
         }
 
     # PT交易信号和PS/VS交易信号需要分开解析
@@ -274,7 +277,9 @@ def parse_trade_signal(signals,
         prices=prices,
         available_cash=available_cash,
         available_amounts=available_amounts,
-        allow_sell_short=config['allow_sell_short']
+        moq_buy=config['trade_batch_size'],
+        moq_sell=config['sell_batch_size'],
+        allow_sell_short=config['allow_sell_short'],
     )
     return symbols, positions, directions, quantities, quoted_prices
 
@@ -447,6 +452,8 @@ def _signal_to_order_elements(shares,
                               prices,
                               available_cash,
                               available_amounts,
+                              moq_buy=0,
+                              moq_sell=0,
                               allow_sell_short=False):
     """ 逐个计算每一只资产的买入和卖出的数量，将parse_pt/ps/vs_signal函数计算出的交易信号逐项转化为
     交易订单 trade_orders
@@ -469,6 +476,10 @@ def _signal_to_order_elements(shares,
         可用现金
     available_amounts: np.ndarray
         可用资产的数量
+    moq_buy: float, default 0
+        买入的最小交易单位
+    moq_sell: float, default 0
+        卖出的最小交易单位
     allow_sell_short: bool, default False
         是否允许卖空，如果允许，当可用资产不足时，会增加空头买入信号
 
@@ -481,6 +492,8 @@ def _signal_to_order_elements(shares,
     - quantities: list of float, 所有交易信号的交易数量
     - quoted_prices: list of float, 所有交易信号的交易报价
     """
+
+    # TODO: add moq calculation for amounts to buy/sell
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
@@ -506,6 +519,8 @@ def _signal_to_order_elements(shares,
         if cash_to_spend[i] > 0.001:
             # 计算买入的数量
             quantity = np.round(cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
+            if moq_buy > 0:
+                quantity = np.trunc(quantity / moq_buy) * moq_buy
             symbols.append(sym)
             positions.append('long')
             directions.append('buy')
@@ -515,6 +530,8 @@ def _signal_to_order_elements(shares,
         if (cash_to_spend[i] < -0.001) and allow_sell_short:
             # 计算买入的数量
             quantity = np.round(-cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
+            if moq_buy > 0:
+                quantity = np.trunc(quantity / moq_buy) * moq_buy
             symbols.append(sym)
             positions.append('short')
             directions.append('buy')
@@ -526,6 +543,8 @@ def _signal_to_order_elements(shares,
             if amounts_to_sell[i] < -available_amounts[i]:
                 # 计算卖出的数量
                 quantity = np.round(available_amounts[i], AMOUNT_DECIMAL_PLACES)
+                if moq_sell > 0:
+                    quantity = np.trunc(quantity / moq_sell) * moq_sell
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('sell')
@@ -534,6 +553,8 @@ def _signal_to_order_elements(shares,
                 # 如果allow_sell_short，增加反向头寸的买入信号
                 if allow_sell_short:
                     quantity = np.round(- amounts_to_sell[i] - available_amounts[i], AMOUNT_DECIMAL_PLACES)
+                    if moq_sell > 0:
+                        quantity =np.trunc(quantity / moq_sell) * moq_sell
                     symbols.append(sym)
                     positions.append('short')
                     directions.append('buy')
@@ -542,6 +563,8 @@ def _signal_to_order_elements(shares,
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(-amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
+                if moq_sell > 0:
+                    quantity = np.trunc(quantity / moq_sell) * moq_sell
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('sell')
@@ -553,6 +576,8 @@ def _signal_to_order_elements(shares,
             if amounts_to_sell[i] > available_amounts[i]:
                 # 计算卖出的数量
                 quantity = np.round(- available_amounts[i], 2)
+                if moq_sell > 0:
+                    quantity = np.trunc(quantity / moq_sell) * moq_sell
                 symbols.append(sym)
                 positions.append('short')
                 directions.append('sell')
@@ -560,6 +585,8 @@ def _signal_to_order_elements(shares,
                 quoted_prices.append(prices[i])
                 # 增加反向头寸的买入信号
                 quantity = np.round(amounts_to_sell[i] + available_amounts[i], AMOUNT_DECIMAL_PLACES)
+                if moq_sell > 0:
+                    quantity = np.trunc(quantity / moq_sell) * moq_sell
                 symbols.append(sym)
                 positions.append('long')
                 directions.append('buy')
@@ -568,6 +595,8 @@ def _signal_to_order_elements(shares,
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
+                if moq_sell > 0:
+                    quantity = np.trunc(quantity / moq_sell) * moq_sell
                 symbols.append(sym)
                 positions.append('short')
                 directions.append('sell')

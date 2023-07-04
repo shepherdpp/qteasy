@@ -2121,6 +2121,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'PT_buy_threshold': 0.0,
             'PT_sell_threshold': 0.0,
             'allow_sell_short': True,
+            'trade_batch_size': 100.,
+            'sell_batch_size': 1.,
         }
         # create test data for PT signal and parse it
         pt_signal = np.array([0.1, 0.1, 0.1])
@@ -2235,6 +2237,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'PT_buy_threshold': 0.1,
             'PT_sell_threshold': -0.1,
             'allow_sell_short': False,
+            'trade_batch_size': 0.,
+            'sell_batch_size': 0.,
         }
         # test pt signal previously used
         pt_signal = np.array([-0.1, 0.2, 0.3])
@@ -2388,7 +2392,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
 
-        # test _signal_to_order_elements with only one symbol, sell 1000 shares while only 500 shares available
+        # test _signal_to_order_elements with only one symbol, sell 1000 shares while only 700 shares available
         shares = ['000001']
         prices = np.array([10.])
         cash_to_spend = np.array([0.0])
@@ -2405,6 +2409,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 available_amounts=available_amounts,
                 allow_sell_short=True,
         )
+
         self.assertEqual(symbols, ['000001', '000001'])
         self.assertEqual(positions, ['long', 'short'])
         self.assertEqual(directions, ['sell', 'buy'])
@@ -2480,7 +2485,56 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
 
-        # test _signal_to_order_elements with multiple symbols, with a few sell amounts exceeding available amounts
+        # test _signal_to_order_elements with multiple symbols, with buy and sell moq = 0.0
+        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
+        prices = np.array([10., 10., 10., 10., 10., 10.])
+        cash_to_spend = np.array([5050.0, 0.0, 0.0, 3524.0, -1001.0, 0.0])
+        amounts_to_sell = np.array([0.0, 0.0, 525.0, 153.8, 0.0, 500.0])
+        available_cash = 10000.0
+        available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 650.0])
+
+        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices,
+                available_cash=available_cash,
+                available_amounts=available_amounts,
+                moq_buy=0.0,
+                moq_sell=0.0,
+                allow_sell_short=True,
+        )
+        self.assertEqual(symbols, ['000001', '000003', '000004', '000004', '000005', '000006'])
+        self.assertEqual(positions, ['long', 'short', 'long', 'short', 'short', 'short'])
+        self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
+        self.assertEqual(quantities, [505.0, 525.0, 352.4, 153.8, 100.1, 500.0])
+        self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+
+        # test _signal_to_order_elements with multiple symbols, with buy moq = 100 and sell moq = 10.0
+        shares = ['000001', '000002', '000003', '000004', '000005', '000006']
+        prices = np.array([10., 10., 10., 10., 10., 10.])
+        cash_to_spend = np.array([5050.0, 0.0, 0.0, 3524.0, -1001.0, 0.0])
+        amounts_to_sell = np.array([0.0, 0.0, 525.0, 153.8, 0.0, 500.0])
+        available_cash = 10000.0
+        available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 650.0])
+
+        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices,
+                available_cash=available_cash,
+                available_amounts=available_amounts,
+                moq_buy=100.0,
+                moq_sell=10.0,
+                allow_sell_short=True,
+        )
+        self.assertEqual(symbols, ['000001', '000003', '000004', '000004', '000005', '000006'])
+        self.assertEqual(positions, ['long', 'short', 'long', 'short', 'short', 'short'])
+        self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
+        self.assertEqual(quantities, [500.0, 520.0, 300.0, 150.0, 100.0, 500.0])
+        self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+
 
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""

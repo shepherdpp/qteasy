@@ -259,7 +259,7 @@ class Broker(object):
 
 class SimpleBroker(Broker):
     """ SimpleBroker接到交易订单后，立即返回交易结果
-    交易结果总是完全成交，交易费用固定为5元
+    交易结果总是完全成交，根据moq调整交易批量，根据设定的交易费率计算交易费用，滑点是按照百分比计算的
     """
 
     def __init__(self):
@@ -322,7 +322,7 @@ class RandomBroker(Broker):
         sleep(trade_delay)
 
         if result_type == 'filled':
-            filled_proportion = np.random.choice([0.5, 0.75, 1.0], p=[0.3, 0.4, 0.3])  # 模拟交易所的部分成交，最多成交1.0，最少成交0.5
+            filled_proportion = np.random.choice([0.5, 0.75, 1.0], p=[0.3, 0.5, 0.2])  # 模拟交易所的部分成交，最多成交1.0，最少成交0.5
             qty = order_qty * filled_proportion
             if direction == 'buy':
                 order_price = order_price * (1 + price_deviation)
