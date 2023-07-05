@@ -2535,7 +2535,6 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(quantities, [500.0, 520.0, 300.0, 150.0, 100.0, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
 
-
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""
         # test parsing pt buy long signal with only one symbol

@@ -92,15 +92,18 @@ class Broker(object):
                                   f'({self.order_queue.unfinished_tasks} orders)...')
                         order = self.order_queue.get()
                         if self.debug:
-                            print(f'[DEBUG]: Broker {self.broker_name} is running, will submit order {order} to get result...')
+                            print(f'[DEBUG]: Broker {self.broker_name} is running, will submit order {order} '
+                                  f'to get result...')
                         futures.append(executor.submit(self.get_result, order))
                         self.order_queue.task_done()
                     # 获取交易结果并将其放入result_queue中
                     for future in as_completed(futures):
-                        result = future.result()
+                        results = future.result()
                         if self.debug:
-                            print(f'[DEBUG]: Broker {self.broker_name} is running, got result {result} and put to result queue...')
-                        self.result_queue.put(result)
+                            print(f'[DEBUG]: Broker {self.broker_name} is running, got result {results} '
+                                  f'and put to result queue...')
+                        for result in results:
+                            self.result_queue.put(result)
             else:
                 # 如果Broker正常退出，处理尚未完成的交易订单
                 # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
@@ -131,8 +134,6 @@ class Broker(object):
 
     def get_result(self, order):
         """ 交易所处理交易订单并获取交易结果
-
-        抽象方法，可以由用户在子类中实现，返回的信息包括filled_qty, transaction_fee, canceled_qty
 
         Parameters:
         -----------
@@ -165,70 +166,71 @@ class Broker(object):
         if self.debug:
             print(f'[DEBUG]: Broker({self.broker_name}) method: get_result():\nsubmit order components:\n'
                   f'quantity:{order["qty"]}\norder_price={order["price"]}\norder_direction={order["direction"]}\n')
-        result_type, qty, filled_price, fee = self.transaction_result(
+        trade_results = self.transaction_result(
                 order_qty=order['qty'],
                 order_price=order['price'],
                 direction=order['direction'],
         )
-        # 从用户自定义函数获取数据，需要检查result_type、qty、filled_price和fee的类型是否正确，数据是否符合基本要求：
-        #  1. result_type应该是'filled'或者'canceled'
-        #  2. qty应该是一个大于0的数，且小于等于order['qty']
-        #  3. filled_price应该是一个大于等于0的数(仅当result_type为'canceled'时，filled_price可以为0)
-        #  4. fee应该是一个大于等于0的数
+        raw_trade_results = []
+        for trade_result in trade_results:
+            result_type, qty, filled_price, fee = trade_result
 
-        if not isinstance(result_type, str):
-            raise TypeError(f'result_type should be str, but got {type(result_type)}')
-        if result_type not in ['filled', 'canceled']:
-            raise ValueError(f'result_type should be one of ["filled", "canceled"], but got {result_type}')
-        if not isinstance(qty, (int, float)):
-            raise TypeError(f'qty should be int or float, but got {type(qty)}')
-        if qty <= 0:
-            raise ValueError(f'qty should be greater than 0, but got {qty}')
-        if qty > order['qty']:
-            raise ValueError(f'qty should be less than or equal to order["qty"], but got {qty}')
-        if not isinstance(filled_price, (int, float)):
-            raise TypeError(f'filled_price should be int or float, but got {type(filled_price)}')
-        if filled_price < 0:
-            raise ValueError(f'filled_price should be greater than 0, but got {filled_price}')
-        if result_type == 'canceled' and filled_price != 0:
-            raise ValueError(f'filled_price should be 0 when result_type is "canceled", but got {filled_price}')
-        if not isinstance(fee, (int, float)):
-            raise TypeError(f'fee should be int or float, but got {type(fee)}')
-        if fee < 0:
-            raise ValueError(f'fee should be greater than 0, but got {fee}')
+            if not isinstance(result_type, str):
+                raise TypeError(f'result_type should be str, but got {type(result_type)}')
+            if result_type not in ['filled', 'partial-filled', 'canceled']:
+                raise ValueError(f'result_type should be one of ["filled", "canceled"], but got {result_type}')
+            if not isinstance(qty, (int, float)):
+                raise TypeError(f'qty should be int or float, but got {type(qty)}')
+            if qty <= 0:
+                raise ValueError(f'qty should be greater than 0, but got {qty}')
+            if qty > order['qty']:
+                raise ValueError(f'qty should be less than or equal to order["qty"], but got {qty}')
+            if not isinstance(filled_price, (int, float)):
+                raise TypeError(f'filled_price should be int or float, but got {type(filled_price)}')
+            if filled_price < 0:
+                raise ValueError(f'filled_price should be greater than 0, but got {filled_price}')
+            if result_type == 'canceled' and filled_price != 0:
+                raise ValueError(f'filled_price should be 0 when result_type is "canceled", but got {filled_price}')
+            if not isinstance(fee, (int, float)):
+                raise TypeError(f'fee should be int or float, but got {type(fee)}')
+            if fee < 0:
+                raise ValueError(f'fee should be greater than 0, but got {fee}')
 
-        # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
-        if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
-                  f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
-        # 圆整qty、filled_qty和fee
-        qty = round(qty, AMOUNT_DECIMAL_PLACES)
-        filled_price = round(filled_price, CASH_DECIMAL_PLACES)
-        transaction_fee = round(fee, CASH_DECIMAL_PLACES)
+            # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
+            if self.debug:
+                print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
+                      f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
+            # 圆整qty、filled_qty和fee
+            qty = round(qty, AMOUNT_DECIMAL_PLACES)
+            filled_price = round(filled_price, CASH_DECIMAL_PLACES)
+            transaction_fee = round(fee, CASH_DECIMAL_PLACES)
 
-        filled_qty = 0
-        canceled_qty = 0
-        if result_type == 'filled':
-            filled_qty = qty
-        elif result_type == 'canceled':
-            canceled_qty = qty
-        else:
-            raise ValueError(f'Unknown result_type: {result_type}, should be one of ["filled", "canceled"]')
+            filled_qty = 0
+            canceled_qty = 0
+            if result_type in ['filled', 'partial-filled']:
+                filled_qty = qty
+            elif result_type == 'canceled':
+                canceled_qty = qty
+            else:
+                raise ValueError(f'Unknown result_type: {result_type}, should be one of ["filled", "canceled"]')
 
-        current_datetime = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE)
-        raw_trade_result = {
-            'order_id':        order['order_id'],
-            'filled_qty':      filled_qty,
-            'price':           filled_price,
-            'transaction_fee': transaction_fee,
-            'execution_time':  current_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-            'canceled_qty':    canceled_qty,
-            'delivery_amount': 0,
-            'delivery_status': 'ND',
-        }
-        if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) method get_result(): raw trade result:\n{raw_trade_result}')
-        return raw_trade_result
+            current_datetime = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE)
+            raw_trade_result = {
+                'order_id':        order['order_id'],
+                'filled_qty':      filled_qty,
+                'price':           filled_price,
+                'transaction_fee': transaction_fee,
+                'execution_time':  current_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                'canceled_qty':    canceled_qty,
+                'delivery_amount': 0,
+                'delivery_status': 'ND',
+            }
+            if self.debug:
+                print(f'[DEBUG]: Broker({self.broker_name}) method get_result(): raw trade result:\n{raw_trade_result}')
+
+            raw_trade_results.append(raw_trade_result)
+
+        return raw_trade_results
 
     @abstractmethod
     def transaction_result(self, order_qty, order_price, direction):
@@ -245,14 +247,43 @@ class Broker(object):
 
         Returns:
         --------
-        result_type: str
-            交易结果类型，'filled' - 成交, 'canceled' - 取消
-        qty: float
-            成交/取消数量，这个数字应该小于等于order_qty，且大于等于0
-        price: float
-            成交价格, 如果是取消交易，价格为0或任意数字
-        fee: float
-            交易费用，交易费用应该大于等于0
+        tuple of tuples: ((result_type, qty, price, fee), (...), ...)
+            result_type: str 交易结果类型:
+                'filled' - 成交,
+                'partial_filled' - 部分成交,
+                'canceled' - 取消
+                'failed' - 失败
+            qty: float
+                成交/取消数量，这个数字应该小于等于order_qty，且大于等于0
+            price: float
+                成交价格, 如果是取消交易，价格为0或任意数字
+            fee: float
+                交易费用，交易费用应该大于等于0
+
+        Notes:
+        ------
+        1. 如果交易所返回的交易结果是部分成交，返回部分成交的结果
+        2. 如果交易所返回的交易结果是分批成交，返回所有成交的结果
+        3. 如果交易所返回的交易结果是取消，返回取消的结果
+        4. 如果交易所返回的交易结果是失败，返回失败的结果
+
+        Examples:
+        ---------
+        >>> # 交易所返回完全成交结果
+        >>> broker.transaction_result(100, 10, 'buy')
+        (('filled', 100, 10, 5),)
+        >>> # 交易所返回部分成交结果
+        >>> broker.transaction_result(100, 10, 'buy')
+        (('partial_filled', 50, 10, 5),)
+        >>> # 交易所返回分批成交结果
+        >>> broker.transaction_result(200, 10, 'buy')
+        (('partial_filled', 100, 10, 5), ('filled', 100, 10, 5))
+        >>> # 交易所返回取消结果
+        >>> broker.transaction_result(100, 10, 'buy')
+        (('canceled', 100, 0, 0),)
+        >>> # 交易所返回失败结果
+        >>> broker.transaction_result(100, 10, 'buy')
+        (('failed', 0, 0, 0),)
         """
         pass
 
@@ -292,11 +323,12 @@ class RandomBroker(Broker):
     交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
     """
 
-    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003):
+    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003, moq=100):
         super(RandomBroker, self).__init__()
         self.broker_name = 'RandomBroker'
         self.fee_rate_buy = fee_rate_buy
         self.fee_rate_sell = fee_rate_sell
+        self.moq = moq
 
     def transaction_result(self, order_qty, order_price, direction):
         """ 订单随机成交
@@ -304,7 +336,7 @@ class RandomBroker(Broker):
         Returns:
         --------
         result_type: str
-            交易结果类型，'filled' - 成交, 'canceled' - 取消
+            交易结果类型，'filled' - 成交, 'partial-filled' - 部分成交, 'canceled' - 取消
         qty: float
             成交/取消数量
         price: float
@@ -315,26 +347,39 @@ class RandomBroker(Broker):
         from time import sleep
         from random import random, choice
         from qteasy.trading_util import TIMEZONE
-        result_type = np.random.choice(['filled', 'canceled'], p=[0.8, 0.2])
-        trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
-        price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
 
-        sleep(trade_delay)
+        remain_qty = order_qty
+        order_results = []
 
-        if result_type == 'filled':
-            filled_proportion = np.random.choice([0.5, 0.75, 1.0], p=[0.3, 0.5, 0.2])  # 模拟交易所的部分成交，最多成交1.0，最少成交0.5
-            qty = order_qty * filled_proportion
-            if direction == 'buy':
-                order_price = order_price * (1 + price_deviation)
-                transaction_fee = qty * order_price * self.fee_rate_buy
-            elif direction == 'sell':
-                order_price = order_price * (1 - price_deviation)
-                transaction_fee = qty * order_price * self.fee_rate_sell
-            else:
-                raise RuntimeError('invalid direction: {}'.format(order['direction']))
-        else: # result_type == 'canceled'
-            transaction_fee = 0
-            order_price = 0
-            qty = order_qty
+        while remain_qty > 0:
 
-        return result_type, qty, order_price, transaction_fee
+            result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=[0.5, 0.3, 0.2])
+            trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
+            price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
+
+            sleep(trade_delay)
+
+            if result_type in ['filled', 'partial-filled']:
+                filled_proportion = 1
+                if result_type == 'partial-filled':
+                    filled_proportion = np.random.choice([0.25, 0.5, 0.75], p=[0.3, 0.5, 0.2])  # 模拟交易所的部分成交
+                qty = remain_qty * filled_proportion
+                if self.moq > 0:
+                    qty = np.trunc(qty / self.moq) * self.moq
+                if direction == 'buy':
+                    order_price = order_price * (1 + price_deviation)
+                    transaction_fee = qty * order_price * self.fee_rate_buy
+                elif direction == 'sell':
+                    order_price = order_price * (1 - price_deviation)
+                    transaction_fee = qty * order_price * self.fee_rate_sell
+                else:
+                    raise RuntimeError('invalid direction: {}'.format(order['direction']))
+            else: # result_type == 'canceled'
+                transaction_fee = 0
+                order_price = 0
+                qty = remain_qty
+
+            remain_qty -= qty
+            order_results.append((result_type, qty, order_price, transaction_fee))
+
+        return tuple(order_results)
