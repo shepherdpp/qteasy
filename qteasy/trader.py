@@ -183,17 +183,59 @@ class TraderShell(Cmd):
         ------
         history [symbol]
         """
-        if arg is None or arg == '':
-            arg = 'today'
-        if not isinstance(arg, str):
-            print('Please input a valid argument.')
-            return
-        print(f'{self} running history with arg: {arg}')
 
-        if 'orders' in arg:
-            print(self._trader.history_orders())
-        if 'cash' in arg:
-            print(self._trader.history_cashes)
+        if arg is None or arg == '':
+            arg = '000001'  # TODO: check the first stock in account position and use it as default
+        args = arg.split(' ')
+        history = self._trader.history_orders()
+
+        for argument in args:
+            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
+            if is_complete_cn_stock_symbol_like(argument.upper()):
+                history = history[history['symbol'] == argument.upper()]
+                # select orders by order symbol arguments like '000001'
+            elif is_cn_stock_symbol_like(argument):
+                possible_complete_symbols = [argument + '.SH', argument + '.SZ', argument + '.BJ']
+                history = history[history['symbol'].isin(possible_complete_symbols)]
+            else:
+                # if argument is not a symbol, use the first available symbol in order details
+                history = history[history['symbol'] == history['symbol'].iloc[0]]
+
+        # remove rows whose value in column 'filled_qty' is 0, and sort by 'filled_time'
+        history = history[history['filled_qty'] != 0]
+        history.sort_values(by='execution_time', inplace=True)
+        # change the quantity to negative if it is a sell-out
+        history['filled_qty'] = np.where(history['direction'] == 'sell',
+                                         -history['filled_qty'],
+                                         history['filled_qty'])
+        # calculate rows: cum_qty, trade_cost, cum_cost, value, share_cost, earnings, and earning rate
+        history['cum_qty'] = history['filled_qty'].cumsum()
+        history['trade_cost'] = history['filled_qty'] * history['price_filled']
+        history['cum_cost'] = history['trade_cost'].cumsum()
+        history['value'] = history['cum_qty'] * history['price_filled']
+        history['share_cost'] = history['cum_cost'] / history['cum_qty']
+        history['earnings'] = history['value'] - history['cum_cost']
+        history['earning_rate'] = history['earnings'] / history['cum_cost']
+
+        # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
+        # for earning rate
+        print(
+                history.to_string(
+                        columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled', 'cum_qty',
+                                 'value', 'share_cost', 'earnings', 'earning_rate'],
+                        header=['time', 'symbol', 'operation', 'qty', 'price', 'holdings',
+                                'holding value', 'cost', 'earnings', 'earning_rate'],
+                        formatters={'filled_qty': '{:,.2f}'.format,
+                                    'price_filled': '{:,.2f}'.format,
+                                    'cum_qty': '{:,.2f}'.format,
+                                    'value': '{:,.2f}'.format,
+                                    'share_cost': '{:,.2f}'.format,
+                                    'earnings': '{:,.2f}'.format,
+                                    'earning_rate': '{:.3%}'.format},
+                        justify='right',
+                        index=False,
+                )
+             )
 
     def do_orders(self, arg):
         """ Get trader orders
