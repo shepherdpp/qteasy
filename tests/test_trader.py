@@ -343,8 +343,8 @@ class TestTrader(unittest.TestCase):
 
         print('test property history orders, cashes, and positions')
         print(f'history orders: \n{ts.history_orders()}\n'
-              f'history cashes: \n{ts.history_cashes}\n'
-              f'history positions: \n{ts.history_positions}')
+              f'history cashes: \n{ts.history_cashes()}\n'
+              f'history positions: \n{ts.history_positions()}')
         # test history orders without results
         history_orders = ts.history_orders(with_trade_results=False)
         self.assertIsInstance(ts.history_orders(), pd.DataFrame)

@@ -347,7 +347,7 @@ class Operator:
     @strategy_blenders.setter
     def strategy_blenders(self, blenders):
         """ setting blenders of strategy"""
-        self.set_blender(blender=blenders, price_type=None)
+        self.set_blender(blender=blenders, run_timing=None)
 
     @property
     def signal_type(self):
@@ -1167,14 +1167,14 @@ class Operator:
                 stg.update_pars(opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
-    def set_blender(self, blender=None, price_type=None):
+    def set_blender(self, blender=None, run_timing=None):
         """ 统一的blender混合器属性设置入口
 
         :param blender:
             :type blender: str, 一个合法的交易信号混合表达式
                                 当price_type为None时，可以接受list为参数，同时为所有的price_type设置混合表达式
-        :param price_type:
-            :type price_type: str, 一个字符串，用于指定需要混合的交易信号的价格类型，
+        :param run_timing:
+            :type run_timing: str, 一个字符串，用于指定需要混合的交易信号的价格类型，
                                 如果给出price_type且price_type存在，则设置该price_type的策略的混合表达式
                                 如果给出price_type而price_type不存在，则给出warning并返回
                                 如果给出的price_type不是正确的类型，则报错
@@ -1185,8 +1185,8 @@ class Operator:
 
         :example:
             >>> op = Operator('dma, macd')
-            >>> op.set_parameter('dma', price_type='close')
-            >>> op.set_parameter('macd', price_type='open')
+            >>> op.set_parameter('dma', run_timing='close')
+            >>> op.set_parameter('macd', run_timing='open')
 
             >>> # 设置open的策略混合模式
             >>> op.set_blender('1+2', 'open')
@@ -1209,7 +1209,7 @@ class Operator:
         """
         if self.strategy_count == 0:
             return
-        if price_type is None:
+        if run_timing is None:
             # 当price_type没有显式给出时，同时为所有的price_type设置blender，此时区分多种情况：
             if blender is None:
                 # price_type和blender都为空，退出
@@ -1223,67 +1223,67 @@ class Operator:
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
                 for bldr, pt in zip(blender, self.strategy_timings):
-                    self.set_blender(price_type=pt, blender=bldr)
+                    self.set_blender(blender=bldr, run_timing=pt)
             else:
                 raise TypeError(f'Wrong type of blender, a string or a list of strings should be given,'
                                 f' got {type(blender)} instead')
             return
-        if isinstance(price_type, str):
+        if isinstance(run_timing, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
-            if price_type not in self.strategy_timings:
+            if run_timing not in self.strategy_timings:
                 warnings.warn(
                         f'\n'
-                        f'Given price type \'{price_type}\' is not in valid price type list of \n'
+                        f'Given price type \'{run_timing}\' is not in valid price type list of \n'
                         f'current Operator, no blender will be created!\n'
                         f'current valid price type list as following:\n{self.strategy_timings}')
                 return
             if isinstance(blender, str):
                 try:
                     parsed_blender = blender_parser(blender)
-                    self._stg_blender[price_type] = parsed_blender
-                    self._stg_blender_strings[price_type] = blender
+                    self._stg_blender[run_timing] = parsed_blender
+                    self._stg_blender_strings[run_timing] = blender
                 except:
-                    self._stg_blender_strings[price_type] = None
-                    self._stg_blender[price_type] = []
+                    self._stg_blender_strings[run_timing] = None
+                    self._stg_blender[run_timing] = []
             else:
                 # 忽略类型不正确的blender输入
-                self._stg_blender_strings[price_type] = None
-                self._stg_blender[price_type] = []
+                self._stg_blender_strings[run_timing] = None
+                self._stg_blender[run_timing] = []
         else:
-            raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
+            raise TypeError(f'price_type should be a string, got {type(run_timing)} instead')
         return
 
-    def get_blender(self, price_type=None):
+    def get_blender(self, run_timing=None):
         """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
 
-        :param price_type: str 一个可用的price_type
+        :param run_timing: str 一个可用的price_type
         :return Dict
         """
-        if price_type is None:
+        if run_timing is None:
             return self._stg_blender
-        if price_type not in self.strategy_timings:
+        if run_timing not in self.strategy_timings:
             return None
-        if price_type not in self._stg_blender:
+        if run_timing not in self._stg_blender:
             return None
-        return self._stg_blender[price_type]
+        return self._stg_blender[run_timing]
 
-    def view_blender(self, price_type=None):
+    def view_blender(self, run_timing=None):
         """ TODO: 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
              版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
 
-        :param price_type: str 一个可用的price_type
+        :param run_timing: str 一个可用的price_type
 
         """
         # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
         #  例如： blender string: 's0 + s1 + s2'
         #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
-        if price_type is None:
+        if run_timing is None:
             return self._stg_blender_strings
-        if price_type not in self.strategy_timings:
+        if run_timing not in self.strategy_timings:
             return None
-        if price_type not in self._stg_blender:
+        if run_timing not in self._stg_blender:
             return None
-        return self._stg_blender_strings[price_type]
+        return self._stg_blender_strings[run_timing]
 
     def set_parameter(self,
                       stg_id: [str, int],
@@ -1389,42 +1389,43 @@ class Operator:
             'stepwise': 'History op signals are generated one by one, every piece of signal will be back tested before '
                         'the next signal being generated.'
         }
-        print(f'    ----------Operator Information----------\n'
+        print(f'       -----------------------Operator Information-----------------------\n'
               f'Strategies:  {self.strategy_count} Strategies\n'
               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
               f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
-        # 打印各个子模块的信息：
-        if self.strategy_count > 0:
-            print(f'    ---------------Strategies---------------\n'
-                  f'{"id":<10}'
-                  f'{"name":<15}'
-                  f'{"back_test_price":<15}'
-                  f'{"d_freq":^10}'
-                  f'{"s_freq":^10}'
-                  f'{"date_types":<10}\n'
-                  f'{"_" * 70}')
-            for stg_id, stg in self.get_strategy_id_pairs():
-                print(f'{truncate_string(stg_id, 10):<10}'
-                      f'{truncate_string(stg.name, 15):<15}'
-                      f'{truncate_string(stg.strategy_run_timing, 15):^15}'
-                      f'{truncate_string(stg.data_freq, 10):^10}'
-                      f'{truncate_string(stg.strategy_run_freq, 10):^10}'
-                      f'{stg.history_data_types}')
-            print('=' * 70)
         # 打印blender的信息：
-        for price_type in self.strategy_timings:
-            print(f'for backtest histoty price type - {price_type}:')
+        for run_timing in self.strategy_timings:
+            print(f'       ------------------------Strategy blenders-------------------------')
+            print(f'for strategy running timing - {run_timing}:')
             if self.strategy_blenders != {}:
-                print(f'signal blenders: {self.view_blender(price_type)}')
+                print(f'signal blenders: {self.view_blender(run_timing)}\n')
             else:
-                print(f'no blender')
+                print(f'no blender\n')
+        # 打印各个strategy的基本信息：
+        if (self.strategy_count > 0) and (not verbose):
+            print(f'       ----------------------------Strategies----------------------------\n'
+                  f'{"id":<10}'
+                  f'{"name":<19}'
+                  f'{"run type":^16}'
+                  f'{"run freq":^10}'
+                  f'{"data types":^25}\n'
+                  f'{"_" * 80}')
+            for stg_id, stg in self.get_strategy_id_pairs():
+                run_type_str = stg.strategy_run_freq + ' @ ' + stg.strategy_run_timing
+                data_type_str = str(stg.window_length) + ' ' + stg.data_freq
+                print(f'{truncate_string(stg_id, 10):<10}'
+                      f'{truncate_string(stg.name, 19):<19}'
+                      f'{truncate_string(run_type_str, 16):^16}'
+                      f'{truncate_string(data_type_str, 10):^10}'
+                      f'{truncate_string(str(stg.history_data_types), 25):^25}')
+            print('=' * 80)
         # 打印每个strategy的详细信息
-        if verbose:
-            print('\n    ------------Strategy Details------------')
+        if (self.strategy_count > 0) and verbose:
+            print('       -------------------------Strategy Details-------------------------')
             for stg_id, stg in self.get_strategy_id_pairs():
                 print(f'Strategy_ID:        {stg_id}')
                 stg.info()
-            print('=' * 70)
+            print('=' * 80)
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
@@ -1626,8 +1627,7 @@ class Operator:
             for price_type in self.strategy_timings:
                 stg_count_for_price_type = self.get_strategy_count_by_run_timing(price_type)
                 strategy_indices = ('s' + idx for idx in map(str, range(stg_count_for_price_type)))
-                self.set_blender(price_type=price_type,
-                                 blender='+'.join(strategy_indices))
+                self.set_blender(blender='+'.join(strategy_indices), run_timing=price_type)
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
             stg_id: hist_data[stg.history_data_types, :, :]

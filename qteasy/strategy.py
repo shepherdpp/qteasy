@@ -492,6 +492,7 @@ class BaseStrategy:
         """打印所有相关信息和主要属性"""
         # TODO: 重新设计strategy.info()，更加简明扼要地输出关键信息，
         #  还要兼顾operator.info()的需要
+
         stg_type = self.__class__.__bases__[0].__name__
         print(f'Strategy_type:      {stg_type}\n'
               f'Strategy name:      {self.name}\n'
@@ -502,16 +503,18 @@ class BaseStrategy:
             print('Strategy Parameter: No Parameter!')
         # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
         if verbose:
+            run_type_str = self.strategy_run_freq + ' @ ' + self.strategy_run_timing
+            data_type_str = str(self.window_length) + ' ' + self.data_freq
             print(f'\n'
                   f'Strategy Properties     Property Value\n'
-                  f'---------------------------------------\n'
-                  f'Parameter count         {self.par_count}\n'
-                  f'Parameter types         {self.par_types}\n'
-                  f'Parameter range         {self.par_range}\n'
-                  f'Data frequency          {self.data_freq}\n'
-                  f'Sample frequency        {self.strategy_run_freq}\n'
-                  f'Window length           {self.window_length}\n' 
-                  f'Data types              {self.history_data_types}')
+                  f'-------------------------------------------------\n'
+                  f'Param. count            {self.par_count}\n'
+                  f'Param. types            {self.par_types}\n'
+                  f'Param. range            {self.par_range}\n'
+                  f'Run parameters          {run_type_str}\n'
+                  f'Data types              {self.history_data_types}\n'
+                  f'Data parameters         {data_type_str}'
+                  )
             if stg_type == 'FactorSorter':
                 print(f'Max select count        {self.max_sel_count}\n'
                       f'Sort Ascending:         {self.sort_ascending}\n'

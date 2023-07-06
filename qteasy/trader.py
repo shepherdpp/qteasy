@@ -174,13 +174,14 @@ class TraderShell(Cmd):
         self._trader.info(detail)
 
     def do_history(self, arg):
-        """ Get trader history
+        """ List trade history of a stock
 
-        Get trader history, including all orders, all trades, all cash and positions.
+        List all trade history of one particular stock, displaying every buy-in and sell-out
+        in a table format. a symbol is required.
 
         Usage:
         ------
-        history [orders] [cash] [positions] [today] [3day] [week] [month] [year] [details]
+        history [symbol]
         """
         if arg is None or arg == '':
             arg = 'today'
@@ -190,7 +191,7 @@ class TraderShell(Cmd):
         print(f'{self} running history with arg: {arg}')
 
         if 'orders' in arg:
-            print(self._trader.history_orders)
+            print(self._trader.history_orders())
         if 'cash' in arg:
             print(self._trader.history_cashes)
 
@@ -291,7 +292,7 @@ class TraderShell(Cmd):
         change 000001.SZ 1000 10.5:
             add 1000 shares of 000001.SZ to trader account with price 10.5 on long side (default)
         """
-        print(f'{self} running change with arg: {arg}')
+
         args = arg.split(' ')
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
@@ -409,7 +410,15 @@ class TraderShell(Cmd):
         ------
         strategies
         """
-        print(f'All running strategies -- {self.trader.operator.strategies}')
+
+        args = str_to_list(arg)
+        if not args:
+            args = ['']
+
+        if args[0] in ['d', 'detail']:
+            self.trader.operator.info(verbose=True)
+        else:
+            self.trader.operator.info()
 
     def do_agenda(self, arg):
         """ Show current strategy task agenda
@@ -977,7 +986,13 @@ class Trader(object):
             self.post_message('running task process_result')
         if self.debug:
             self.post_message(f'process_result: got result: \n{result}')
-        process_trade_result(result, data_source=self._datasource)
+        # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
+        try:
+            process_trade_result(result, data_source=self._datasource)
+        except Exception as e:
+            self.post_message(f'{e} Error occurred during processing trade result, result will be ignored')
+            return
+
         self.post_message(f'processed trade result: \n{result}')
         process_trade_delivery(
                 account_id=self.account_id,
@@ -1234,12 +1249,7 @@ class Trader(object):
 
     def _pre_open(self):
         """ 开市前, 确保data_source重新连接"""
-        for retry in range(3):
-            if self._datasource.reconnect():
-                break
-            else:
-                self._datasource.reconnect()
-        # test if data source is connected
+        self._datasource.reconnect()
         self._datasource.reconnect()
         self._datasource.get_all_basic_table_data(
                 refresh_cache=True,

@@ -972,7 +972,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender_high = op.get_blender('high')
         self.assertEqual(op.strategy_timings, ['close', 'open'])
         self.assertEqual(op.get_blender(), {'close': ['+', '1', '1'],
-                                            'open':  ['+', '1', '1'],})
+                                            'open':  ['+', '1', '1'], })
         self.assertEqual(blender_open, ['+', '1', '1'])
         self.assertEqual(blender_close, ['+', '1', '1'])
 
@@ -1724,7 +1724,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
-        self.op.set_blender(blender='s0 or s1', price_type='open')
+        self.op.set_blender(blender='s0 or s1', run_timing='open')
         self.op.assign_hist_data(hist_data=self.hp1, cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()

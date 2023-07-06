@@ -868,9 +868,9 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     # 确认交易订单的状态不为 'created'. 'filled' or 'canceled'，如果是，则抛出异常
     if order_detail['status'] in ['created']:
-        raise RuntimeError(f'order {order_id} is noy submitted yet')
+        raise AttributeError(f'order {order_id} is noy submitted yet')
     if order_detail['status'] in ['filled', 'canceled']:
-        raise RuntimeError(f'order {order_id} has already been filled or canceled')
+        raise AttributeError(f'order {order_id} has already been filled or canceled')
     # 交割历史交易结果
     if config is None:
         import qteasy as qt
@@ -890,7 +890,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
             AMOUNT_DECIMAL_PLACES,
     )
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
-        raise RuntimeError(f'qty {order_detail["qty"]} is not an integer')
+        raise TypeError(f'qty {order_detail["qty"]} is not an integer')
     # 如果交易结果中的cancel_qty大于0，则将交易订单的状态设置为 'canceled'，同时确认 canceled_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
