@@ -18,7 +18,7 @@ from typing import Any, Callable, List, Union
 import pandas as pd
 import numpy as np
 
-from threading import Thread
+from threading import Thread, Timer
 from queue import Queue
 from cmd import Cmd
 
@@ -566,17 +566,24 @@ class TraderShell(Cmd):
                     self.do_bye('')
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
-                option = input('\nWhat would you like? input number to select from below options: \n'
+                t = Timer(5, lambda: print(
+                          "\nNo input in 5 seconds, press Enter to continue current mode. "))
+                t.start()
+                option = input('\nCurrent mode interrupted, Input 1 or 2 or 3 for below options: \n'
                                '[1], Enter command mode; \n'
-                               '[2], Exit and stop the trader; \n'
-                               '[3], Enter dashboard mode. \n'
+                               '[2], Enter dashboard mode. \n'
+                               '[3], Exit and stop the trader; \n'
                                'please input your choice: ')
                 if option == '1':
                     self._status = 'command'
                 elif option == '2':
+                    self.do_dashboard('')
+                elif option == '3':
                     self.do_bye('')
                 else:
-                    self.do_dashboard('')
+                    continue
+                t.cancel()
+                continue
             # looks like finally block is better than except block here
             except Exception as e:
                 self.stdout.write(f'Unexpected Error: {e}\n')
@@ -1040,9 +1047,10 @@ class Trader(object):
             order_id = result_detail['order_id']
             order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
             pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
-            status = result_detail['status']
+            status = order_detail['status']
             filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
-            self.post_message(f'[ORDER EXECUTED {order_id}]: {d} {sym} {pos} - {status} {filled_qty} @ {filled_price}')
+            self.post_message(f'[ORDER EXECUTED {order_id}]: '
+                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
         self.post_message(f'processed trade result: {result_id}')
         if self.debug:
             self.post_message(f'processed trade result: \n{result}')
@@ -1293,7 +1301,7 @@ class Trader(object):
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
                 trade_order['order_id'] = order_id
                 self._broker.order_queue.put(trade_order)
-                self.post_message(f'[NEW ORDER {order_id}]: {d} {qty} {pos} {sym} @ {price}')
+                self.post_message(f'[NEW ORDER {order_id}]: {d}-{pos} {qty} of {sym} @ {price}')
                 # 记录已提交的交易数量
                 submitted_qty += qty
 
