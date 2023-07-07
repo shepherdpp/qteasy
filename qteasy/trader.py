@@ -185,7 +185,7 @@ class TraderShell(Cmd):
         """
 
         if arg is None or arg == '':
-            arg = '000001'  # TODO: check the first stock in account position and use it as default
+            arg = 'none'  # TODO: check the first stock in account position and use it as default
         args = arg.split(' ')
         history = self._trader.history_orders()
 
@@ -1030,19 +1030,30 @@ class Trader(object):
             self.post_message(f'process_result: got result: \n{result}')
         # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
         try:
-            process_trade_result(result, data_source=self._datasource)
+            result_id = process_trade_result(result, data_source=self._datasource)
         except Exception as e:
             self.post_message(f'{e} Error occurred during processing trade result, result will be ignored')
             return
-
-        self.post_message(f'processed trade result: \n{result}')
+        if result_id is not None:
+            from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail
+            result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
+            order_id = result_detail['order_id']
+            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
+            pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
+            status = result_detail['status']
+            filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
+            self.post_message(f'[ORDER EXECUTED {order_id}]: {d} {sym} {pos} - {status} {filled_qty} @ {filled_price}')
+        self.post_message(f'processed trade result: {result_id}')
+        if self.debug:
+            self.post_message(f'processed trade result: \n{result}')
         process_trade_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
                 config=self._config,
         )
-        self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
-        self.post_message(f'processed trade delivery: positions \n{self.account_position_info}')
+        if self.debug:
+            self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
+            self.post_message(f'processed trade delivery: positions \n{self.account_position_info}')
 
     def history_orders(self, with_trade_results=True):
         """ 账户的历史订单详细信息
@@ -1259,7 +1270,6 @@ class Trader(object):
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n')
         for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, quoted_prices):
-            # DEBUG TODO: 在生成交易订单之前，需要忽略买入/卖出数量为0的交易信号
             if qty <= 0.001:
                 continue
             pos_id = get_or_create_position(account_id=self.account_id,
@@ -1283,7 +1293,7 @@ class Trader(object):
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
                 trade_order['order_id'] = order_id
                 self._broker.order_queue.put(trade_order)
-                self.post_message(f'Submitted order to broker: {trade_order}')
+                self.post_message(f'[NEW ORDER {order_id}]: {d} {qty} {pos} {sym} @ {price}')
                 # 记录已提交的交易数量
                 submitted_qty += qty
 
@@ -1296,7 +1306,7 @@ class Trader(object):
         self._datasource.get_all_basic_table_data(
                 refresh_cache=True,
         )
-        self.post_message(f'data source reconnected, connection status: {self._datasource.con.db}')
+        self.post_message(f'data source reconnected, ready for market open')
 
     def _post_close(self):
         """ 收市后例行操作：
@@ -1334,10 +1344,9 @@ class Trader(object):
             self.post_message(f'partially filled orders found, they are to be canceled: \n{orders_to_be_canceled}')
         for order_id in orders_to_be_canceled.index:
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
-            self.post_message('partially filled orders found, unfilled part will be canceled')
             # TODO: here "submitted" orders can not be canceled, need to be fixed
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.post_message(f'canceled unfilled order: {order_id}')
+            self.post_message(f'canceled unfilled orders')
 
         # 检查今日成交结果，完成交易结果的交割
         process_trade_delivery(

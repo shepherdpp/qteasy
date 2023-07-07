@@ -857,7 +857,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     Returns
     -------
-    None
+    result_id: int
+        交易结果的id
     """
 
     if not isinstance(raw_trade_result, dict):

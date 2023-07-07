@@ -1056,8 +1056,15 @@ def read_trade_result_by_id(result_id, data_source=None):
 
     Returns
     -------
-    trade_result: dict
-        交易结果
+    trade_result: dict 交易结果
+        {'order_id': int,  # 交易结果对应的order_id
+        'filled_qty': float,  # 交易结果的成交数量
+        'price': float,  # 交易结果的成交价格
+        'transaction_fee': float,  # 交易结果的交易费用
+        'execution_time': str,  # 交易结果的成交时间
+        'canceled_qty': float,  # 交易结果的撤单数量
+        'delivery_amount': float,  # 交易结果的交割数量
+        'delivery_status': str}  # 交易结果的交割状态
     """
     if not isinstance(result_id, (int, np.int64)):
         raise TypeError('result_id must be an int')
