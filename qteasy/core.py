@@ -2184,6 +2184,8 @@ def reconnect_ds(data_source=None):
     if not isinstance(data_source, qteasy.DataSource):
         raise TypeError(f'data source not recognized!')
 
+    # reconnect twice to make sure the connection is established
+    data_source.reconnect()
     data_source.reconnect()
 
 
@@ -2368,7 +2370,7 @@ def run(operator, **kwargs):
 
                     关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
 
-                3，Incremental_steped_searching          递进搜索法
+                3，Incremental_step_searching            递进搜索法
 
                     递进步长法的基本思想是对参数空间进行多轮递进式的搜索，每一轮搜索方法与蒙特卡洛法相同但是每一轮搜索后都将搜索
                     范围缩小到更希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
@@ -2441,7 +2443,7 @@ def run(operator, **kwargs):
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
-    #TODO: 在运行过程中适当位置加入log信息
+
     try:
         # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
         operator.is_ready()
@@ -2490,22 +2492,18 @@ def run(operator, **kwargs):
         
         '''
         # 显示当前系统中已经存在的实盘账号信息，询问用户是否使用已有账号或重新创建账号运行
-        from qteasy.trading_util import get_account
-        all_accounts = get_account()
-
-        print('Trader Shell will be started, please check the following account information:')
-        print('-----------------------------------------------------------------------------')
-        print('Account Name\t\tAccount ID\t\tAccount Type\t\tAccount Status')
-        print('-----------------------------------------------------------------------------')
-        for account in all_accounts:
-            print(f'{account.account_name}\t\t{account.account_id}\t\t{account.account_type}\t\t{account.account_status}')
-        print('-----------------------------------------------------------------------------')
-        print('Please input the account name you want to use, or input "new" to create a new account:')
-        account_name = input()
-        if account_name == 'new':
-            pass
-        else:
-            pass
+        from qteasy.trading_util import get_account, new_account
+        account_id = 1  # 默认使用第一个账号, 如果没有账号，需要创建一个账号
+        try:
+            account = get_account(account_id=account_id)
+            account_id = account['account_id']
+            user_name = account['user_name']
+            init_cash = 0
+            init_holdings = []
+        except KeyError as e:
+            user_name = 'un-named_user'
+            init_cash = config['invest_cash_amounts'][0]
+            init_holdings = []
 
         # 启动交易shell
         from qteasy.trader import start_trader

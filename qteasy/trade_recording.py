@@ -85,7 +85,7 @@ def get_account(account_id, data_source=None):
 
     Raises
     ------
-    RuntimeError: 如果账户不存在，则抛出异常
+    KeyError: 如果账户不存在，则抛出异常
     """
 
     import qteasy as qt
@@ -96,7 +96,7 @@ def get_account(account_id, data_source=None):
 
     account = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
     if account is None:
-        raise RuntimeError(f'Account (id={account_id}) not found!')
+        raise KeyError(f'Account (id={account_id}) not found!')
     return account
 
 

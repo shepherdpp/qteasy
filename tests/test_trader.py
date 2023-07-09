@@ -333,7 +333,7 @@ class TestTrader(unittest.TestCase):
 
         print('test property account cash, positions and overview')
         print(f'cash: {ts.account_cash}\npositions: \n{ts.account_positions}')
-        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
         self.assertIsInstance(ts.account_positions, pd.DataFrame)
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
@@ -342,9 +342,7 @@ class TestTrader(unittest.TestCase):
         self.assertTrue(np.allclose(ts.non_zero_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
         print('test property history orders, cashes, and positions')
-        print(f'history orders: \n{ts.history_orders()}\n'
-              f'history cashes: \n{ts.history_cashes()}\n'
-              f'history positions: \n{ts.history_positions()}')
+        print(f'history orders: \n{ts.history_orders()}')
         # test history orders without results
         history_orders = ts.history_orders(with_trade_results=False)
         self.assertIsInstance(ts.history_orders(), pd.DataFrame)
@@ -353,14 +351,14 @@ class TestTrader(unittest.TestCase):
                                                            'qty', 'price',
                                                            'submitted_time', 'status'])
         # test manual change of cashes and positions
-        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
         ts.change_cash(10000.0)
-        self.assertEqual(ts.account_cash, (83905.0, 83905.0))
+        self.assertEqual(ts.account_cash, (83905.0, 83905.0, 110000.0))
         ts.change_cash(-10000.0)
-        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
         # test too large cash change
         ts.change_cash(-100000.0)
-        self.assertEqual(ts.account_cash, (73905.0, 73905.0))
+        self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
 
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))

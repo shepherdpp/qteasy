@@ -189,6 +189,10 @@ class TraderShell(Cmd):
         args = arg.split(' ')
         history = self._trader.history_orders()
 
+        if history.empty:
+            print('No trade history found.')
+            return
+
         for argument in args:
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
             if is_complete_cn_stock_symbol_like(argument.upper()):
@@ -795,6 +799,7 @@ class Trader(object):
                 config=self._config,
                 datasource=self._datasource,
         )
+        import pdb; pdb.set_trace()
         current_prices = hist_op['close', :, -1].squeeze()
         positions['current_price'] = current_prices
         positions['total_cost'] = positions['qty'] * positions['cost']
@@ -898,18 +903,6 @@ class Trader(object):
             if self.debug:
                 import traceback
                 traceback.print_exc()
-
-    def history_cashes(self, start_date=None, end_date=None):
-        """ 账户的历史现金流水 """
-        # TODO: implement this function
-        from qteasy.trade_recording import query_cash_flows
-        return query_cash_flows(self.account_id, start_date, end_date, data_source=self._datasource)
-
-    def history_positions(self, start_date=None, end_date=None):
-        """ 账户的历史持仓 """
-        # TODO: implement this function
-        from qteasy.trade_recording import query_positions
-        return query_positions(self.account_id, start_date, end_date, data_source=self._datasource)
 
     def info(self, detail=False):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
