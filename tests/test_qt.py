@@ -354,7 +354,8 @@ class TestQT(unittest.TestCase):
         op = qt.Operator(strategies=['stema'], op_type='stepwise')
         op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
-        qt.run(op)
+        # qt.run(op)
+        # TODO: running qteasy in mode 0 will enter interactive shell, which is not testable
 
     def test_run_mode_1(self):
         """测试策略的回测模式,结果打印但不可视化"""

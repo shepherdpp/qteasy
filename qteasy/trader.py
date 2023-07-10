@@ -794,13 +794,16 @@ class Trader(object):
     def account_position_info(self):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
-                operator=self._operator,
-                config=self._config,
-                datasource=self._datasource,
-        )
-        import pdb; pdb.set_trace()
-        current_prices = hist_op['close', :, -1].squeeze()
+        try:
+            hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
+                    operator=self._operator,
+                    config=self._config,
+                    datasource=self._datasource,
+            )
+            current_prices = hist_op['close', :, -1].squeeze()
+        except Exception as e:
+            current_prices = [np.nan] * len(positions)
+
         positions['current_price'] = current_prices
         positions['total_cost'] = positions['qty'] * positions['cost']
         positions['market_value'] = positions['qty'] * positions['current_price']
@@ -1852,14 +1855,20 @@ def start_trader(
     # refill data source, start date is window length before today
     end_date = pd.to_datetime('today')
     start_date = end_date - pd.Timedelta(days=operator.max_window_length * 2)
+    if isinstance(config['asset_pool'], str):
+        symbol_list = str_to_list(config['asset_pool'])
+    else:
+        symbol_list = config['asset_pool']
+    symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
+
     datasource.refill_local_source(
             tables='index_daily',
             dtypes=operator.op_data_types,
             freqs=operator.op_data_freq,
-            asset_types='E',  #, IDX',
+            asset_types='E',
             start_date=start_date.strftime('%Y%m%d'),
             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
-            symbols=config['asset_pool'].extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ']),
+            symbols=symbol_list,
             parallel=True,
             refresh_trade_calendar=True,
     )

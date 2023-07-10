@@ -985,7 +985,7 @@ class FactorSorter(BaseStrategy):
 
     推荐使用下面的方法创建策略类：
 
-        Class ExampleStrategy(GeneralStg):
+        Class ExampleStrategy(FactorSorter):
 
             def realize(self, h, r=None, t=None, pars=None):
 
@@ -1046,12 +1046,20 @@ class FactorSorter(BaseStrategy):
 
         def realize(self,
                     h: np.ndarray,
-                    r: np.ndarray,
-                    t: np.ndarray):
+                    r: np.ndarray = None,
+                    t: np.ndarray = None,
+                    pars: tuple = None
+                    ):
 
     realize()中获取策略参数：
 
             par_1, par_2, ..., par_n = self.pars
+
+    或者：
+            if pars is not None:
+                par_1, par_2, ..., par_n = pars
+            else:
+                par_1, par_2, ..., par_n = self.pars
 
     realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
 
@@ -1359,7 +1367,7 @@ class RuleIterator(BaseStrategy):
 
     Examples
     --------
-        Class ExampleStrategy(GeneralStg):
+        Class ExampleStrategy(RuleIterator):
 
             def realize(self, h, r=None, t=None, pars=None):
 
@@ -1386,8 +1394,10 @@ class RuleIterator(BaseStrategy):
 
         def realize(self,
                     h: np.ndarray,
-                    r: np.ndarray,
-                    t: np.ndarray):
+                    r: np.ndarray = None,
+                    t: np.ndarray = None,
+                    pars: tuple = None
+                    ):
 
     realize()中获取策略参数：
 

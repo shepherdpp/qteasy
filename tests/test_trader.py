@@ -387,7 +387,7 @@ class TestTrader(unittest.TestCase):
         self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
-        ts.info()
+        ts.info(detail=True)
 
     def test_trader_run(self):
         """Test full-fledged run with all tasks manually added"""
@@ -484,11 +484,6 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        # TODO: complete test case process results
-        # trade_result = {
-        #     'order_id': 1,
-        # }
-        # ts.run_task('process_result', trade_result)
         ts._stop()
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'stopped')
