@@ -1424,43 +1424,43 @@ class Operator:
                       data_types: [str, list] = None,
                       bt_price_type: str = None,
                       **kwargs):
-        """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
-            将函数参数中给定的策略参数赋值给相应的策略
+        """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
 
-            这里应该有本函数的详细介绍
-
-            :param stg_id:
-                :type stg_id: str, 策略的名称（ID），根据ID定位需要修改参数的策略
-
-            :param pars:
-                :type pars: tuple or dict , 需要设置的策略参数，格式为tuple
-
-            :param opt_tag:
-                :type opt_tag: int, 优化类型，0: 不参加优化，1: 参加优化, 2: 以枚举类型参加优化
-
-            :param par_range:
-                :type par_range: tuple or list, 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
+        Parameters
+        ----------
+        stg_id: str,
+            策略的名称（ID），根据ID定位需要修改参数的策略
+        pars: tuple or dict, optional
+            可调策略参数，格式为tuple
+            在创建一个策略的时候，可以设置部分策略参数为"可调参数"，这些参数的取值范围可以在策略优化
+            过程中进行调整，通过调整这些参数的组合，可以找到最优的策略参数组合，从而找到最优的策略
+        opt_tag: int, optional
+            优化类型：
+            0: 不参加优化，在策略优化过程中不调整该策略的可调参数
+            1: 参加优化，在策略优化过程中根据优化算法主动调整策略参数以寻找最佳参数组合
+            2: 以枚举类型参加优化，在策略优化过程中仅从给定的参数组合种选取最优的参数组合
+        par_range: tuple or list, optional
+            可调参数取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
                 [(0, 1), (0, 100), (0, 100)]
+        par_types: str or list of str,
+            可调参数类型列表，与par_range配合确定策略参数取值范围类型
+            int - 整数类型
+            float - 浮点数类型
+            enum - 枚举类型或给定列表中的元素
+        data_freq: str,
+            数据频率，策略本身所使用的数据的采样频率
+        sample_freq: str,
+            采样频率，策略运行时进行信号生成的采样频率，该采样频率决定了信号的频率
+        window_length: int,
+            窗口长度：策略计算的前视窗口长度
+        data_types: str or list,
+            策略计算所需历史数据的数据类型
+        bt_price_type: str,
+            策略回测交易时使用的交易价格类型
 
-            :param par_types:
-                :type par_types: str or list, 策略参数类型列表，与par_boes配合确定策略参数取值范围类型，详情参见Space类的介绍
-
-            :param data_freq:
-                :type data_freq: str, 数据频率，策略本身所使用的数据的采样频率
-
-            :param sample_freq:
-                :type sample_freq: str, 采样频率，策略运行时进行信号生成的采样频率，该采样频率决定了信号的频率
-
-            :param window_length:
-                :type window_length: int, 窗口长度：策略计算的前视窗口长度
-
-            :param data_types:
-                :type data_types: str or list, 策略计算所需历史数据的数据类型
-
-            :param bt_price_type:
-                :type bt_price_type: str, 策略回测交易时使用的交易价格类型
-
-            :return:
+        Returns
+        -------
+        None
         """
         assert isinstance(stg_id, (int, str)), f'stg_id should be a int or a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象

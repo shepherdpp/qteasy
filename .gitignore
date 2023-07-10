@@ -55,3 +55,4 @@ UNKNOWN.egg-info/
 dist/
 qteasy.egg-info/
 data_test/
+/question.py
