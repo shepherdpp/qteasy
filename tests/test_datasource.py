@@ -16,12 +16,13 @@ import pandas as pd
 from pandas import Timestamp
 import numpy as np
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
+from qteasy.trading_util import _trade_time_index
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import get_primary_key_range, htype_to_table_col
 from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
-from qteasy.database import get_main_freq
+from qteasy.database import parse_freq_string
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -35,11 +36,13 @@ class TestDataSource(unittest.TestCase):
         self.data_test_dir = 'data_test/'
         # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
         # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
+        # TODO: do not explicitly leave password and user in the code
         from qteasy import QT_CONFIG
+
         self.ds_db = DataSource(
                 'db',
                 host=QT_CONFIG['test_db_host'],
-                port=3306,
+                port=QT_CONFIG['test_db_port'],
                 user=QT_CONFIG['test_db_user'],
                 password=QT_CONFIG['test_db_password'],
                 db_name=QT_CONFIG['test_db_name']
@@ -518,121 +521,128 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(cov,
                          ['20211112', '20211113', 2])
 
-        # test reading dataframe from local csv files with selection
-        print(f'Read a dataframe from local csv files with selecting shares and start/end')
-        df_res = set_primary_key_frame(self.built_in_df,
-                                       primary_key=['ts_code', 'trade_date'],
-                                       pk_dtypes=['varchar', 'date'])
-        set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
-        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
-              f'{df_res}')
-        self.ds_csv.write_file(df_res, 'test_csv_file_chunk')
-        self.assertTrue(self.ds_csv.file_exists('test_csv_file_chunk'))
-        shares = ['000001.SZ', '000003.SZ']
-        start = '20211112'
-        end = '20211113'
-        loaded_df = self.ds_csv.read_file('test_csv_file_chunk',
-                                          primary_key=['ts_code', 'trade_date'],
-                                          pk_dtypes=['varchar', 'date'],
-                                          share_like_pk='ts_code',
-                                          shares=shares,
-                                          date_like_pk='trade_date',
-                                          start=start,
-                                          end=end,
-                                          chunk_size=5)
-        target_df = df_res.loc[df_res.index.isin(shares, level='ts_code')]
-        m1 = target_df.index.get_level_values('trade_date') >= start
-        m2 = target_df.index.get_level_values('trade_date') <= end
-        target_df = target_df[m1 & m2]
-        target_index = target_df.index.values
-        loaded_index = loaded_df.index.values
-        target_values = np.array(target_df.values)
-        loaded_values = np.array(loaded_df.values)
-        print(
-                f'df retrieved by chunk from saved csv file selecting both shares {shares} and trade_dates {start}/'
-                f'{end}\n'
-                f'{loaded_df}\n')
-        for i in range(len(target_index)):
-            self.assertEqual(target_index[i], loaded_index[i])
-        rows, cols = target_values.shape
-        for i in range(rows):
-            for j in range(cols):
-                self.assertEqual(target_values[i, j], loaded_values[i, j])
-        self.assertEqual(list(df_res.columns), list(loaded_df.columns))
+        for ds in [self.ds_csv, self.ds_hdf, self.ds_fth]:
+            # test reading dataframe from all datasources with selection
+            print(f'Read a dataframe from datasource {ds} with selecting shares and start/end')
+            df_res = set_primary_key_frame(self.built_in_df,
+                                           primary_key=['ts_code', 'trade_date'],
+                                           pk_dtypes=['varchar', 'date'])
+            set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
+            print(f'following dataframe with multiple index will be written to {ds}:\n'
+                  f'{df_res}')
+            ds.write_file(df_res, 'test_csv_file_chunk')
+            self.assertTrue(ds.file_exists('test_csv_file_chunk'))
+            shares = ['000001.SZ', '000003.SZ']
+            start = '20211112'
+            end = '20211113'
+            loaded_df = ds.read_file(
+                    'test_csv_file_chunk',
+                    primary_key=['ts_code', 'trade_date'],
+                    pk_dtypes=['varchar', 'date'],
+                    share_like_pk='ts_code',
+                    shares=shares,
+                    date_like_pk='trade_date',
+                    start=start,
+                    end=end,
+                    chunk_size=5
+            )
+            target_df = df_res.loc[df_res.index.isin(shares, level='ts_code')]
+            m1 = target_df.index.get_level_values('trade_date') >= start
+            m2 = target_df.index.get_level_values('trade_date') <= end
+            target_df = target_df[m1 & m2]
+            target_index = target_df.index.values
+            loaded_index = loaded_df.index.values
+            target_values = np.array(target_df.values)
+            loaded_values = np.array(loaded_df.values)
+            print(
+                    f'df retrieved from {ds} selecting both shares {shares} and trade_dates {start}/'
+                    f'{end}\n'
+                    f'{loaded_df}\n')
+            for i in range(len(target_index)):
+                self.assertEqual(target_index[i], loaded_index[i])
+            rows, cols = target_values.shape
+            for i in range(rows):
+                for j in range(cols):
+                    self.assertEqual(target_values[i, j], loaded_values[i, j])
+            self.assertEqual(list(df_res.columns), list(loaded_df.columns))
 
-        # #################################################################
-        print(f'Read a dataframe from local csv files with selecting shares and NO start/end')
-        df_res = set_primary_key_frame(self.built_in_df,
-                                       primary_key=['ts_code', 'trade_date'],
-                                       pk_dtypes=['varchar', 'date'])
-        set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
-        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
-              f'{df_res}')
-        self.ds_csv.write_file(df_res, 'test_csv_file_chunk')
-        self.assertTrue(self.ds_csv.file_exists('test_csv_file_chunk'))
-        shares = ['000001.SZ', '000003.SZ']
-        start = '20211112'
-        end = '20211113'
-        loaded_df = self.ds_csv.read_file('test_csv_file_chunk',
-                                          primary_key=['ts_code', 'trade_date'],
-                                          pk_dtypes=['varchar', 'date'],
-                                          share_like_pk='ts_code',
-                                          shares=shares,
-                                          chunk_size=5)
+            # #################################################################
+            print(f'Read a dataframe from {ds} with selecting shares {shares} and NO start/end')
+            df_res = set_primary_key_frame(self.built_in_df,
+                                           primary_key=['ts_code', 'trade_date'],
+                                           pk_dtypes=['varchar', 'date'])
+            set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
+            print(f'following dataframe will be written to {ds} in all formats:\n'
+                  f'{df_res}')
+            ds.write_file(df_res, 'test_csv_file_chunk')
+            self.assertTrue(ds.file_exists('test_csv_file_chunk'))
+            shares = ['000001.SZ', '000003.SZ']
+            start = '20211112'
+            end = '20211113'
+            loaded_df = ds.read_file(
+                    file_name='test_csv_file_chunk',
+                    primary_key=['ts_code', 'trade_date'],
+                    pk_dtypes=['varchar', 'date'],
+                    share_like_pk='ts_code',
+                    shares=shares,
+                    chunk_size=5
+            )
 
-        target_df = df_res.loc[df_res.index.isin(shares, level='ts_code')]
-        target_index = target_df.index.values
-        loaded_index = loaded_df.index.values
-        target_values = np.array(target_df.values)
-        loaded_values = np.array(loaded_df.values)
-        print(f'df retrieved by chunk from saved csv file selecting only shares {shares}\n'
-              f'{loaded_df}\n')
-        for i in range(len(target_index)):
-            self.assertEqual(target_index[i], loaded_index[i])
-        rows, cols = target_values.shape
-        for i in range(rows):
-            for j in range(cols):
-                self.assertEqual(target_values[i, j], loaded_values[i, j])
-        self.assertEqual(list(df_res.columns), list(loaded_df.columns))
+            target_df = df_res.loc[df_res.index.isin(shares, level='ts_code')]
+            target_index = target_df.index.values
+            loaded_index = loaded_df.index.values
+            target_values = np.array(target_df.values)
+            loaded_values = np.array(loaded_df.values)
+            print(f'df retrieved from {ds} selecting only shares {shares}\n'
+                  f'{loaded_df}\n')
+            for i in range(len(target_index)):
+                self.assertEqual(target_index[i], loaded_index[i])
+            rows, cols = target_values.shape
+            for i in range(rows):
+                for j in range(cols):
+                    self.assertEqual(target_values[i, j], loaded_values[i, j])
+            self.assertEqual(list(df_res.columns), list(loaded_df.columns))
 
-        # #################################################################
-        print(f'Read a dataframe from local csv files with selecting NO shares and ONLY start/end')
-        df_res = set_primary_key_frame(self.built_in_df,
-                                       primary_key=['ts_code', 'trade_date'],
-                                       pk_dtypes=['varchar', 'date'])
-        set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
-        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
-              f'{df_res}')
-        self.ds_csv.write_file(df_res, 'test_csv_file_chunk')
-        self.assertTrue(self.ds_csv.file_exists('test_csv_file_chunk'))
-        shares = ['000001.SZ', '000003.SZ']
-        start = '20211112'
-        end = '20211113'
-        loaded_df = self.ds_csv.read_file('test_csv_file_chunk',
-                                          primary_key=['ts_code', 'trade_date'],
-                                          pk_dtypes=['varchar', 'date'],
-                                          date_like_pk='trade_date',
-                                          start=start,
-                                          end=end,
-                                          chunk_size=5)
+            # #################################################################
+            print(f'Read a dataframe from {ds} with selecting NO shares and ONLY start/end')
+            df_res = set_primary_key_frame(self.built_in_df,
+                                           primary_key=['ts_code', 'trade_date'],
+                                           pk_dtypes=['varchar', 'date'])
+            set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
+            print(f'following dataframe will be written to {ds} in all formats:\n'
+                  f'{df_res}')
+            ds.write_file(df_res, 'test_csv_file_chunk')
+            self.assertTrue(ds.file_exists('test_csv_file_chunk'))
+            shares = ['000001.SZ', '000003.SZ']
+            start = '20211112'
+            end = '20211113'
+            loaded_df = ds.read_file(
+                    'test_csv_file_chunk',
+                    primary_key=['ts_code', 'trade_date'],
+                    pk_dtypes=['varchar', 'date'],
+                    date_like_pk='trade_date',
+                    start=start,
+                    end=end,
+                    chunk_size=5
+            )
 
-        target_df = df_res.copy()
-        m1 = target_df.index.get_level_values('trade_date') >= start
-        m2 = target_df.index.get_level_values('trade_date') <= end
-        target_df = target_df[m1 & m2]
-        target_index = target_df.index.values
-        loaded_index = loaded_df.index.values
-        target_values = np.array(target_df.values)
-        loaded_values = np.array(loaded_df.values)
-        print(f'df retrieved by chunk from saved csv file selecting ONLY trade_dates: {start}/{end}\n'
-              f'{loaded_df}\n')
-        for i in range(len(target_index)):
-            self.assertEqual(target_index[i], loaded_index[i])
-        rows, cols = target_values.shape
-        for i in range(rows):
-            for j in range(cols):
-                self.assertEqual(target_values[i, j], loaded_values[i, j])
-        self.assertEqual(list(df_res.columns), list(loaded_df.columns))
+            target_df = df_res.copy()
+            m1 = target_df.index.get_level_values('trade_date') >= start
+            m2 = target_df.index.get_level_values('trade_date') <= end
+            target_df = target_df[m1 & m2]
+            target_index = target_df.index.values
+            loaded_index = loaded_df.index.values
+            target_values = np.array(target_df.values)
+            loaded_values = np.array(loaded_df.values)
+            print(f'df retrieved from {ds} selecting ONLY trade_dates: {start}/{end}\n'
+                  f'{loaded_df}\n')
+            for i in range(len(target_index)):
+                self.assertEqual(target_index[i], loaded_index[i])
+            rows, cols = target_values.shape
+            for i in range(rows):
+                for j in range(cols):
+                    self.assertEqual(target_values[i, j], loaded_values[i, j])
+            self.assertEqual(list(df_res.columns), list(loaded_df.columns))
 
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""
@@ -648,7 +658,6 @@ class TestDataSource(unittest.TestCase):
         cursor.execute(sql)
         con.commit()
         # 为确保update顺利进行，建立新表并设置primary_key
-
         self.ds_db.write_database(df, table_name)
         loaded_df = self.ds_db.read_database(table_name)
         saved_index = df.index.values
@@ -675,7 +684,7 @@ class TestDataSource(unittest.TestCase):
         print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ"]\n'
               f'start/end = 20211112/20211112\n'
-              f'df retrieved from saved csv file is\n'
+              f'df retrieved from database is\n'
               f'{loaded_df}\n')
         saved_index = df.index.values
         saved_values = np.array(df.values)
@@ -753,7 +762,7 @@ class TestDataSource(unittest.TestCase):
                                        pk_dtypes=['str', 'TimeStamp'])
         df_res = set_primary_key_frame(self.df_res, primary_key=['ts_code', 'trade_date'],
                                        pk_dtypes=['str', 'TimeStamp'])
-        print(f'following dataframe with be written to an empty database table:\n'
+        print(f'following dataframe with be written to an empty data-table:\n'
               f'{df}\n'
               f'and following dataframe will be used to updated that database table\n'
               f'{df_add}')
@@ -1033,11 +1042,23 @@ class TestDataSource(unittest.TestCase):
 
     def test_table_overview(self):
         """ 所有数据表的基本信息打印"""
-        ds = qt.QT_DATA_SOURCE
-        ov = ds.overview()
-        print(ov[['has_data', 'size', 'records']])
-        print(ov[['pk1', 'min1', 'max1']])
-        print(ov[['pk2', 'min2', 'max2']])
+        qt_ds = qt.QT_DATA_SOURCE
+        df_trade_calendar = qt_ds.read_table_data('trade_calendar',
+                                                  start='20200101',
+                                                  end='20200201')
+        df_stock_basic = qt_ds.read_table_data('stock_basic',
+                                               shares=['000001.SZ', '000002.SZ'],
+                                               start='20200101', end='20200201')
+        for ds in [self.ds_csv, self.ds_db, self.ds_hdf, self.ds_db]:
+            print(f'-- {ds.source_type}-{ds.connection_type} --')
+            print('write data to datasource')
+            ds.update_table_data('trade_calendar', df_trade_calendar)
+            ds.update_table_data('stock_basic', df_stock_basic)
+
+            ov = ds.overview()
+            print(ov[['has_data', 'size', 'records']])
+            print(ov[['pk1', 'min1', 'max1']])
+            print(ov[['pk2', 'min2', 'max2']])
 
     def test_get_related_tables(self):
         """根据数据名称查找相关数据表及数据列名称"""
@@ -1485,18 +1506,19 @@ class TestDataSource(unittest.TestCase):
 
     def test_freq_manipulations(self):
         """ 测试频率操作函数"""
-        print('test get_main_freq function')
-        self.assertEqual(get_main_freq('t'), (1, 'T', ''))
-        self.assertEqual(get_main_freq('min'), (1, '1MIN', ''))
-        self.assertEqual(get_main_freq('15min'), (1, '15MIN', ''))
-        self.assertEqual(get_main_freq('75min'), (5, '15MIN', ''))
-        self.assertEqual(get_main_freq('90min'), (3, '30MIN', ''))
-        self.assertEqual(get_main_freq('60min'), (2, '30MIN', ''))
-        self.assertEqual(get_main_freq('H'), (1, 'H', ''))
-        self.assertEqual(get_main_freq('14d'), (14, 'D', ''))
-        self.assertEqual(get_main_freq('2w-Fri'), (2, 'W', 'FRI'))
-        self.assertEqual(get_main_freq('w'), (1, 'W', ''))
-        self.assertEqual(get_main_freq('wrong_input'), (None, None, None))
+        print('test parse_freq_string function')
+        self.assertEqual(parse_freq_string('t'), (1, 'T', ''))
+        self.assertEqual(parse_freq_string('min'), (1, '1MIN', ''))
+        self.assertEqual(parse_freq_string('15min'), (1, '15MIN', ''))
+        self.assertEqual(parse_freq_string('15min', std_freq_only=True), (15, 'MIN', ''))
+        self.assertEqual(parse_freq_string('75min'), (5, '15MIN', ''))
+        self.assertEqual(parse_freq_string('90min'), (3, '30MIN', ''))
+        self.assertEqual(parse_freq_string('60min'), (2, '30MIN', ''))
+        self.assertEqual(parse_freq_string('H'), (1, 'H', ''))
+        self.assertEqual(parse_freq_string('14d'), (14, 'D', ''))
+        self.assertEqual(parse_freq_string('2w-Fri'), (2, 'W', 'FRI'))
+        self.assertEqual(parse_freq_string('w'), (1, 'W', ''))
+        self.assertEqual(parse_freq_string('wrong_input'), (None, None, None))
 
         print('test get_main_freq_level function')
         self.assertEqual(get_main_freq_level('5min'), 90)
@@ -1528,6 +1550,428 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
         self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
         self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
+
+    def test_insert_read_sys_table_data(self):
+        # 测试正常情况下写入及读取表的数据
+        test_order_data = {
+                    'pos_id': 1,
+                    'direction': 'buy',
+                    'order_type': 'limit',
+                    'qty': 100,
+                    'price': 10.0,
+                    'submitted_time': pd.to_datetime('20230220'),
+                    'status': 'submitted',
+        }
+        test_result_data = {
+            'order_id': 1,
+            'filled_qty': 100,
+            'price': 10.0,
+            'transaction_fee': 0.0,
+            'execution_time': pd.to_datetime('20230220'),
+            'canceled_qty': 0,
+            'delivery_amount': 0.0,
+            'delivery_status': 'ND',
+        }
+        test_account_data = {
+            'user_name': 'John Doe',
+            'created_time': pd.to_datetime('20221223'),
+            'cash_amount': 40000.0,
+            'available_cash': 40000.0,
+            'total_invest': 40000.0,
+        }
+        test_position = {
+            'account_id': 1, 
+            'symbol': '000001.SZ',
+            'position': 'long',
+            'qty': 100,
+            'available_qty': 100.,
+            'cost': 10.0,
+        }
+        test_shuffled_signal_data = {
+            'pos_id': 1,
+            'qty': 300,
+            'status': 'filled',
+            'order_type': 'market',
+            'price': 15.0,
+            'direction': 'sell',
+            'submitted_time': pd.to_datetime('20230223'),
+        }  # test if shuffled data can be inserted into database
+        # 生成五条不同的模拟信号数据
+        test_multiple_signal_data = [
+            {
+                'pos_id': 1,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 100,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            },
+            {
+                'pos_id': 2,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 200,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            },
+            {
+                'pos_id': 3,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 300,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            },
+            {
+                'pos_id': 4,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 400,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            },
+            {
+                'pos_id': 5,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 500,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            },
+        ]
+        test_multiple_result_data = [
+            {
+                'order_id': 1,
+                'filled_qty': 100,
+                'price': 10.0,
+                'transaction_fee': 0.0,
+                'execution_time': pd.to_datetime('20230220'),
+                'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
+            },
+            {
+                'order_id': 2,
+                'filled_qty': 200,
+                'price': 10.0,
+                'transaction_fee': 0.0,
+                'execution_time': pd.to_datetime('20230220'),
+                'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
+            },
+            {
+                'order_id': 3,
+                'filled_qty': 300,
+                'price': 10.0,
+                'transaction_fee': 0.0,
+                'execution_time': pd.to_datetime('20230221'),
+                'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
+            },
+            {
+                'order_id': 4,
+                'filled_qty': 400,
+                'price': 10.0,
+                'transaction_fee': 0.0,
+                'execution_time': pd.to_datetime('20230221'),
+                'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
+            },
+            {
+                'order_id': 5,
+                'filled_qty': 500,
+                'price': 10.0,
+                'transaction_fee': 0.0,
+                'execution_time': pd.to_datetime('20230221'),
+                'canceled_qty': 0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
+            },
+
+        ]
+        test_multiple_account_data = [
+            {
+                'user_name': 'John Doe',
+                'created_time': pd.to_datetime('20221223'),
+                'cash_amount': 40000.0,
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
+            },
+            {
+                'user_name': 'John Doe1',
+                'created_time': pd.to_datetime('20221223'),
+                'cash_amount': 40000.0,
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
+            },
+            {
+                'user_name': 'John Doe2',
+                'created_time': pd.to_datetime('20221221'),
+                'cash_amount': 40000.0,
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
+            },
+            {
+                'user_name': 'John Doe3',
+                'created_time': pd.to_datetime('20221222'),
+                'cash_amount': 40000.0,
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
+            },
+            {
+                'user_name': 'John Doe4',
+                'created_time': pd.to_datetime('20221224'),
+                'cash_amount': 40000.0,
+                'available_cash': 40000.0,
+                'total_invest': 40000.0,
+            },
+        ]
+        test_multiple_position = [
+            {
+                'account_id': 1,
+                'symbol': '000001.SZ',
+                'position': 'long',
+                'qty': 100,
+                'available_qty': 100.,
+                'cost': 10.0,
+            },
+            {
+                'account_id': 1,
+                'symbol': '000002.SZ',
+                'position': 'long',
+                'qty': 200,
+                'available_qty': 100.,
+                'cost': 10.0,
+            },
+            {
+                'account_id': 1,
+                'symbol': '000003.SZ',
+                'position': 'long',
+                'qty': 300,
+                'available_qty': 100.,
+                'cost': 10.0,
+            },
+            {
+                'account_id': 2,
+                'symbol': '000004.SZ',
+                'position': 'long',
+                'qty': 400,
+                'available_qty': 100.,
+                'cost': 10.0,
+            },
+            {
+                'account_id': 2,
+                'symbol': '000005.SZ',
+                'position': 'long',
+                'qty': 500,
+                'available_qty': 100.,
+                'cost': 10.0,
+            },
+        ]
+
+        sys_table_test_data = [
+            test_account_data,
+            test_position,
+            test_order_data,
+            test_result_data,
+        ]
+        sys_table_test_multiple_data = [
+            test_multiple_account_data,
+            test_multiple_position,
+            test_multiple_signal_data,
+            test_multiple_result_data,
+        ]
+
+        tables_to_be_tested = [
+            'sys_op_live_accounts',
+            'sys_op_positions',
+            'sys_op_trade_orders',
+            'sys_op_trade_results'
+        ]
+        test_kwargs_existed = [
+            {'user_name': 'John Doe'},
+            {'account_id': 1},
+            {'direction': 'buy'},
+            {'order_id': 1}
+        ]
+        test_kwargs_not_existed = [
+            {'user_name': 'Not a user'},
+            {'account_id': 999},
+            {'direction': 'invalid_direction'},
+            {'order_id': 999}
+        ]
+        test_kwargs_to_update = [
+            {'user_name': 'new_user'},
+            {'account_id': 3},
+            {'direction': 'sell'},
+            {'order_id': 3}
+        ]
+
+        datasources_to_be_tested = [
+            self.ds_csv,
+            self.ds_hdf,
+            self.ds_fth,
+            self.ds_db
+        ]
+
+        for table, data in zip(tables_to_be_tested, sys_table_test_data):
+            print(f'\n=============================='
+                  f'\ntest insert and read one piece of data...\n'
+                  f'following table will be tested: {table}\n'
+                  f'with data: {data}')
+            for ds in datasources_to_be_tested:
+                if ds.table_data_exists(table):
+                    ds.drop_table_data(table)
+                print(f'\n----------------------'
+                      f'\ninserting into table {table}@{ds} with following data\n{data}')
+                ds.insert_sys_table_data(table, **data)
+                res = ds.read_sys_table_data(table, 1)
+                print(f'following data are read from table {table}\n'
+                      f'{res}\n')
+                self.assertIsNotNone(res)
+                for origin, read in zip(data.values(), res.values()):
+                    print(f'origin: {origin}->{type(origin)}, read: {read}->{type(read)}')
+                    if isinstance(origin, pd.Timestamp):
+                        self.assertEqual(origin, pd.to_datetime(read))
+                    else:
+                        self.assertEqual(origin, read)
+                # if ds.table_data_exists(table):
+                #     ds.drop_table_data(table)
+                print(f'write and read shuffled data')
+                ds.insert_sys_table_data('sys_op_trade_orders', **test_shuffled_signal_data)
+                last_id = ds.get_sys_table_last_id('sys_op_trade_orders')
+                res = ds.read_sys_table_data('sys_op_trade_orders', record_id=last_id)
+                print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
+                      f'{res}\n')
+                self.assertIsNotNone(res)
+                self.assertEqual(test_shuffled_signal_data['pos_id'], res['pos_id'])
+                self.assertEqual(test_shuffled_signal_data['order_type'], res['order_type'])
+                self.assertEqual(test_shuffled_signal_data['status'], res['status'])
+                self.assertEqual(test_shuffled_signal_data['direction'], res['direction'])
+                self.assertEqual(test_shuffled_signal_data['price'], res['price'])
+                self.assertEqual(test_shuffled_signal_data['qty'], res['qty'])
+
+            # 测试传入无效的id时是否引发KeyError异常
+            print(f'test passing invalid id to read_sys_table_data')
+            res = ds.read_sys_table_data(table, record_id=-1)
+            self.assertIsNone(res)
+            res = ds.read_sys_table_data(table, record_id=0)
+            self.assertIsNone(res)
+            res = ds.read_sys_table_data(table, record_id=999)
+            self.assertIsNone(res)
+
+            # 测试传入无效的表名时是否引发KeyError异常
+            with self.assertRaises(KeyError):
+                ds.read_sys_table_data('invalid_table')
+
+            # 测试传入无效的kwargs时是否引发KeyError异常
+            with self.assertRaises(KeyError):
+                ds.read_sys_table_data('test_table', invalid_column='test')
+
+            # 测试写入不正确的dict时是否返回错误
+            print(f'test writing wrong data fields into table')
+            with self.assertRaises(Exception):
+                ds.insert_sys_table_data(
+                    table,
+                    **{
+                        'wrong_key1': 'wrong_value',
+                        'wrong_key2': 321,
+                    }
+                )
+
+        # 测试读取指定id的记录
+        # 循环使用所有的示例数据在所有的sys表上进行测试，测试覆盖所有的source_type
+        # 首先在数据表中写入五条数据，每条数据稍有变化
+        # 1，测试随机读取一条已经存在的数据，验证是否读取正确
+        # 2，测试传入无效的id时是否返回None
+        # 3，测试传入kwargs筛选数据，验证是否读取正确
+        # 4，测试传入无效的kwargs时是否返回None
+        # table: str, record_id: int=None, **kwargs
+        for table, datas, kw, kwn, kwu in zip(
+                tables_to_be_tested,
+                sys_table_test_multiple_data,
+                test_kwargs_existed,
+                test_kwargs_not_existed,
+                test_kwargs_to_update
+        ):
+            print(f'\n=============================='
+                  f'\ntest insert and read specific data from table...\n'
+                  f'following table will be tested: {table}\n'
+                  f'with multiple data')
+            for ds in datasources_to_be_tested:
+                if ds.table_data_exists(table):
+                    ds.drop_table_data(table)
+                print(f'\n----------------------'
+                      f'\ninserting multiple data into table {table}@{ds} ')
+                for data in datas:
+                    ds.insert_sys_table_data(table, **data)
+                id_to_read = int(np.random.randint(5, size=(1,)))
+                res = ds.read_sys_table_data(table, id_to_read + 1)
+                print(f'\nreading data with "id = {id_to_read}"...\n'
+                      f'following data are read from table {table}\n'
+                      f'{res}\n')
+                self.assertIsNotNone(res)
+                for origin, read in zip(datas[id_to_read].values(), res.values()):
+                    print(f'origin: {origin}->{type(origin)}, read: {read}->{type(read)}')
+                    if isinstance(origin, pd.Timestamp):
+                        self.assertEqual(origin, pd.to_datetime(read))
+                    else:
+                        self.assertEqual(origin, read)
+
+                # 测试传入无效的id时是否返回None
+                res = ds.read_sys_table_data(table, 100)
+                self.assertIsNone(res)
+
+                # 测试传入kwargs筛选数据，验证是否读取正确
+                print(f'\nreading data with kwargs: {kw}...\n')
+                res = ds.read_sys_table_data(table, **kw)
+                self.assertIsNotNone(res)
+                # 检查res是一个pd.DataFrame
+                self.assertIsInstance(res, pd.DataFrame)
+                # 检查res的kw列的值是否都相同且与kw的值相同
+                self.assertTrue((res[kw.keys()].values == list(kw.values())).all())
+                print(f'values read matches kwargs:\n{res[kw.keys()].values}\n{list(kw.values())}')
+
+                # 测试传入不存在的kwargs时是否返回None
+                print(f'\nreading data with not existed kwargs: {kwn}...\n')
+                res = ds.read_sys_table_data(table, **kwn)
+                self.assertIsNone(res)
+
+                # 测试传入无效的kwargs是否返回None
+                with self.assertRaises(KeyError):
+                    ds.read_sys_table_data('test_table', invalid_column='test')
+
+                # 测试update_sys_table_data后数据是否正确地更新
+                print(f'\nupdating {table}@(id = {id_to_read}) with kwargs: {kwu}...\n')
+                before = ds.read_sys_table_data(table, record_id=id_to_read + 1)
+                ds.update_sys_table_data(table, record_id=id_to_read + 1, **kwu)
+                after = ds.read_sys_table_data(table, record_id=id_to_read + 1)
+                print(f'before update:\n{before}\nafter update:\n{after}')
+                for bk_v, ak_v in zip(before.items(), after.items()):
+                    if bk_v[0] in kwu.keys():
+                        self.assertEqual(ak_v[1], kwu[bk_v[0]])
+                    else:
+                        if isinstance(bk_v[0], pd.Timestamp):
+                            self.assertEqual(bk_v[1], pd.to_datetime(ak_v[1]))
+                        else:
+                            self.assertEqual(bk_v[1], ak_v[1])
+
+                res = ds.read_sys_table_data(
+                        table='sys_op_positions',
+                        record_id=None,
+                        account_id=1,
+                        symbol='000001.SZ',
+                        position='long',
+                )
+                print(f'res: {res}')
 
 
 if __name__ == '__main__':

@@ -15,12 +15,13 @@ import numpy as np
 import datetime
 import logging
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
-from qteasy.utilfuncs import reindent, truncate_string
+from qteasy.utilfuncs import reindent, truncate_string, is_float_like, is_integer_like
+from qteasy.utilfuncs import is_cn_stock_symbol_like, is_complete_cn_stock_symbol_like
 
 
 class RetryableError(Exception):
@@ -52,25 +53,35 @@ class TestUtilityFuncs(unittest.TestCase):
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')
         t = 3.14
-        self.assertEqual(time_str_format(t), '3s 140.0ms')
-        self.assertEqual(time_str_format(t, estimation=True), '3s ')
-        self.assertEqual(time_str_format(t, short_form=True), '3"140')
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), '3"')
+        self.assertEqual(sec_to_duration(t), '3 sec 140.0 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 3 sec')
+        self.assertEqual(sec_to_duration(t, short_form=True), '3"140')
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), '~3"')
         t = 300.14
-        self.assertEqual(time_str_format(t), '5min 140.0ms')
-        self.assertEqual(time_str_format(t, estimation=True), '5min ')
-        self.assertEqual(time_str_format(t, short_form=True), "5'140")
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "5'")
+        self.assertEqual(sec_to_duration(t), '5 min 140.0 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 5 min')
+        self.assertEqual(sec_to_duration(t, short_form=True), "5'140")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~5'")
         t = 7435.0014
-        self.assertEqual(time_str_format(t), '2hrs 3min 55s 1.4ms')
-        self.assertEqual(time_str_format(t, estimation=True), '2hrs ')
-        self.assertEqual(time_str_format(t, short_form=True), "2H3'55\"001")
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "2H")
+        self.assertEqual(sec_to_duration(t), '2 hours 3 min 55 sec 1.4 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 2 hours')
+        self.assertEqual(sec_to_duration(t, short_form=True), "2H3'55\"001")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~2H")
+        t = 86120.0509
+        self.assertEqual(sec_to_duration(t), '23 hours 55 min 20 sec 50.9 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 1 day')
+        self.assertEqual(sec_to_duration(t, short_form=True), "23H55'20\"051")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~1D")
         t = 88425.0509
-        self.assertEqual(time_str_format(t), '1days 33min 45s 50.9ms')
-        self.assertEqual(time_str_format(t, estimation=True), '1days ')
-        self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
+        self.assertEqual(sec_to_duration(t), '1 day 33 min 45 sec 50.9 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 1 day 1 hour')
+        self.assertEqual(sec_to_duration(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~1D1H")
+        t = 288425.0509
+        self.assertEqual(sec_to_duration(t), '3 days 8 hours 7 min 5 sec 50.9 ms')
+        self.assertEqual(sec_to_duration(t, estimation=True), 'about 3 days 8 hours')
+        self.assertEqual(sec_to_duration(t, short_form=True), "3D8H7'5\"051")
+        self.assertEqual(sec_to_duration(t, estimation=True, short_form=True), "~3D8H")
 
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
@@ -312,7 +323,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_too_early)),
                          None)
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_too_late)),
-                         None)
+                         pd.to_datetime(date_too_late))  # data too late is not any more a problem
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'SSE')),
                          pd.to_datetime(date_christmas))
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'XHKG')),
@@ -332,6 +343,70 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_number_like('abc'))
         self.assertFalse(is_number_like('0.32a'))
         self.assertFalse(is_number_like('0-2'))
+
+    def test_is_integer_like(self):
+        """test the function: is_integer_like()"""
+        self.assertTrue(is_integer_like(123))
+        self.assertTrue(is_integer_like('123'))
+        self.assertTrue(is_integer_like('-123'))
+        self.assertTrue(is_integer_like('0'))
+        self.assertTrue(is_integer_like('-0'))
+
+        self.assertFalse(is_integer_like('0000'))
+        self.assertFalse(is_integer_like(123.4))
+        self.assertFalse(is_integer_like('123.4'))
+        self.assertFalse(is_integer_like('-123.4'))
+        self.assertFalse(is_integer_like('0.0'))
+        self.assertFalse(is_integer_like('-0.0'))
+        self.assertFalse(is_integer_like('0000.0'))
+        self.assertFalse(is_integer_like('000.0'))
+        self.assertFalse(is_integer_like('abc'))
+        self.assertFalse(is_integer_like('0.32a'))
+        self.assertFalse(is_integer_like('0-2'))
+
+    def test_is_float_like(self):
+        """test the function: is_float_like()"""
+        self.assertTrue(is_float_like(123))
+        self.assertTrue(is_float_like('123'))
+        self.assertTrue(is_float_like('-123'))
+        self.assertTrue(is_float_like('0'))
+        self.assertTrue(is_float_like('-0'))
+        self.assertTrue(is_float_like(123.4))
+        self.assertTrue(is_float_like('123.4'))
+        self.assertTrue(is_float_like('-123.4'))
+        self.assertTrue(is_float_like('0.0'))
+        self.assertTrue(is_float_like('-0.0'))
+
+        self.assertFalse(is_float_like('0000.0'))
+        self.assertFalse(is_float_like('000.0'))
+        self.assertFalse(is_float_like('0000'))
+        self.assertFalse(is_float_like('000'))
+        self.assertFalse(is_float_like('abc'))
+        self.assertFalse(is_float_like('0.32a'))
+        self.assertFalse(is_float_like('0-2'))
+
+    def test_is_stock_symbol_like(self):
+        """ test functions is_cn_stock_symbol_like() and is_complete_cn_stock_symbol_like() """
+        self.assertTrue(is_cn_stock_symbol_like('000001'))
+        self.assertTrue(is_cn_stock_symbol_like('100001'))
+        self.assertFalse(is_cn_stock_symbol_like('0000001'))
+        self.assertFalse(is_cn_stock_symbol_like('00001'))
+        self.assertFalse(is_cn_stock_symbol_like('00001a'))
+        self.assertFalse(is_cn_stock_symbol_like('00001A'))
+        self.assertFalse(is_cn_stock_symbol_like('00001.'))
+        self.assertFalse(is_cn_stock_symbol_like('00001.0'))
+        self.assertFalse(is_cn_stock_symbol_like('00001.00'))
+
+        self.assertTrue(is_complete_cn_stock_symbol_like('000001.SZ'))
+        self.assertTrue(is_complete_cn_stock_symbol_like('100001.SZ'))
+        self.assertTrue(is_complete_cn_stock_symbol_like('000001.SH'))
+        self.assertTrue(is_complete_cn_stock_symbol_like('100001.BJ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('0000001.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('000011'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001a.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001A.SZ'))
+        self.assertFalse(is_complete_cn_stock_symbol_like('00001.ZH'))
 
     def test_retry_decorator(self):
         """ test the retry decorator"""
@@ -463,7 +538,16 @@ class TestUtilityFuncs(unittest.TestCase):
     def test_rolling_window(self):
         """ 测试含税rolling_window()"""
         # test 1d array
-        arr = np.array([1, 2, 3, 4, 5])
+        arr = np.array([1, 2, 3, 4, 5]).astype('int64')
+        window = rolling_window(arr, window=3, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[1, 2, 3],
+                           [2, 3, 4],
+                           [3, 4, 5]])
+        self.assertTrue(np.allclose(window, target))
+        # test 1d array with int32 dtype
+        arr = np.array([1, 2, 3, 4, 5]).astype('int32')
         window = rolling_window(arr, window=3, axis=0)
         print(f'origin array: \n{arr}\n'
               f'rolling window: \n{window}')
@@ -475,6 +559,28 @@ class TestUtilityFuncs(unittest.TestCase):
         arr = np.array([[1, 2, 3, 4],
                         [5, 6, 7, 8],
                         [9, 0, 1, 2]])
+        window = rolling_window(arr, window=2, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3, 4],
+                            [5, 6, 7, 8]],
+                           [[5, 6, 7, 8],
+                            [9, 0, 1, 2]]]).astype('int64')
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=3, axis=1)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3],
+                            [5, 6, 7],
+                            [9, 0, 1]],
+                           [[2, 3, 4],
+                            [6, 7, 8],
+                            [0, 1, 2]]])
+        self.assertTrue(np.allclose(window, target))
+        # test 2d array with int32 dtype
+        arr = np.array([[1, 2, 3, 4],
+                        [5, 6, 7, 8],
+                        [9, 0, 1, 2]]).astype('int32')
         window = rolling_window(arr, window=2, axis=0)
         print(f'origin array: \n{arr}\n'
               f'rolling window: \n{window}')

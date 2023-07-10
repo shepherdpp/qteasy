@@ -140,7 +140,7 @@ stg = op[stg_idx]
 
 ### 设置策略参数或Operator参数
 
-### `op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, sample_freq=None, window_length=None, data_types=None, bt_price_type=None, **kwargs)`
+### `op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, strategy_run_freq=None, window_length=None, data_types=None, strategy_run_timing=None, **kwargs)`
 指定一个交易策略的ID，设置这个交易策略的策略参数或其他属性
 
 ### `op.set_blender(price_type=None, blender=None)` 

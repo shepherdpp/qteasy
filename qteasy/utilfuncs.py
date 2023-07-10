@@ -14,8 +14,9 @@ import sys
 import re
 import qteasy
 import time
+import warnings
 from numba import njit
-from functools import wraps
+from functools import wraps, lru_cache
 
 TIME_FREQ_LEVELS = {
     'Y':      10,
@@ -31,7 +32,7 @@ TIME_FREQ_LEVELS = {
     'MIN':    100,
     'T':      110,
     'TICK':   110,
-}
+}  # TODO: 最好是将所有的frequency封装为一个类，确保字符串大小写正确，且引入复合频率的比较和处理
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
 AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
 PROGRESS_BAR = {0:  '----------------------------------------', 1: '#---------------------------------------',
@@ -60,12 +61,180 @@ NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 INTEGER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)$')
 FLOAT_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
+CN_STOCK_SYMBOL_IDENTIFIER = re.compile(r'^[0-9]{6}$')
+# re identifier that matches string of 6 digits or 6 digits followed by a dot and "SZ" or "SH"
+CN_STOCK_SYMBOL_IDENTIFIER2 = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ)$')
 ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
 AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                           'proportion signal': 'ps',
                           'volume signal':     'vs'}
 AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
+
+
+def freq_dither(freq, freq_list):
+    """ 频率抖动，将一个目标频率抖动到频率列表中的一个频率上，
+
+    Parameters
+    ----------
+    freq: str
+        目标频率
+    freq_list: list of str
+        频率列表
+
+    Returns
+    -------
+    dithered_freq: str
+        抖动后的频率
+
+    Examples
+    --------
+    >>> freq_dither('M', ['Q', 'A'])
+    'Q'
+    >>> freq_dither('Q', ['M', 'A'])
+    'M'
+    >>> freq_dither('A', ['M', 'Q'])
+    'M'
+    >>> freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm'])
+    '15MIN'
+    """
+    """抖动算法如下：
+            0，从频率string中提取目标qty，目标主频、副频
+            3，设定当前频率 = 目标主频，开始查找：
+            # 4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
+            # 5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
+            # 6，否则从低频列表中取最高主频，返回它
+            另一种方法
+            4，逐次升高
+    """
+
+    qty, main_freq, sub_freq = parse_freq_string(freq)
+
+    freq_list = [parse_freq_string(freq_string)[1] for freq_string in freq_list]
+    level_list = np.array([get_main_freq_level(freq_string) for freq_string in freq_list])
+    freq_level = get_main_freq_level(freq)
+
+    level_list_sorter = level_list.argsort()
+    insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
+    upper_level_arg_list = level_list_sorter[insert_pos:]
+    lower_level_arg_list = level_list_sorter[:insert_pos]
+
+    if len(upper_level_arg_list) > 0:
+        # 在upper_list中位于第一位的可能是freq的同级频率，
+        # 如果输出同级频率，需要确保该频率与freq一致，否则就需要跳过它
+        maybe_found = freq_list[upper_level_arg_list[0]]
+        if (get_main_freq_level(maybe_found) > freq_level) or (maybe_found == main_freq):
+            return maybe_found
+        # 查找下一个maybe_found
+        return freq_list[upper_level_arg_list[1]]
+
+    if len(lower_level_arg_list) > 0:
+        return freq_list[lower_level_arg_list[-1]]
+    return None
+
+
+def parse_freq_string(freq, std_freq_only=False):
+    """ 解析freqstring，找出其中的主频率、副频率，以及主频率的倍数
+
+    Parameters
+    ----------
+    freq: str
+        一个频率字符串
+    std_freq_only: bool, default True
+        是否使用复合频率，如果为True，则仅使用MIN/H等标准频率作为主频率，否则可使用5MIN/15MIN等复合频率作为主频率
+        复合频率的定义TIME_FREQ_LEVELS
+
+    Returns
+    -------
+    tuple: 包含三个元素(qty, main_freq, sub_freq)
+    qty, int 主频率的倍数
+    main_freq, str 主频率
+    sub_freq, str 副频率
+
+    Examples
+    --------
+    >>> parse_freq_string('25d')
+    (25, 'D', '')
+    >>> parse_freq_string('w-Fri')
+    (1, 'W', 'Fri')
+    >>> parse_freq_string('75min')
+    (5, '15MIN', '')
+    >>> parse_freq_string('90min')
+    (3, '30MIN', '')
+    >>> parse_freq_string('15min')
+    (1, '15MIN', '')
+    >>> parse_freq_string('15min', std_freq_only=True)
+    (15, 'MIN', '')
+    """
+
+    import re
+
+    freq_split = freq.split('-')
+    qty = 1
+    main_freq = freq_split[0].upper()
+    sub_freq = ''
+    if len(freq_split) >= 2:
+        sub_freq = freq_split[1].upper()
+
+    # 继续拆分main_freq与qty_part
+    if len(main_freq) > 1:
+        maybe_qty = ''.join(re.findall('\d+', main_freq))
+        # 另外一种处理方法
+        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
+        qty_len = len(maybe_qty)
+        if qty_len > 0:
+            main_freq = main_freq[qty_len:]
+            qty = int(maybe_qty)
+
+    if main_freq not in TIME_FREQ_STRINGS:
+        return None, None, None
+
+    if (main_freq == 'MIN') and not std_freq_only:
+        available_qty = [''.join(re.findall('\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
+        available_qty = [int(item) for item in available_qty if len(item) > 0]
+        qty_fitness = [qty % item for item in available_qty]
+        min_qty = available_qty[qty_fitness.index(0)]
+        main_freq = str(min_qty) + main_freq
+        qty = qty // min_qty
+
+    return qty, main_freq, sub_freq
+
+
+def get_main_freq_level(freq):
+    """ 确定并返回freqency的级别
+
+    :param freq:
+    :return:
+    """
+    qty, main_freq, sub_freq = parse_freq_string(freq)
+    if main_freq in TIME_FREQ_STRINGS:
+        return TIME_FREQ_LEVELS[main_freq]
+    else:
+        return None
+
+
+def next_main_freq(freq, direction='up'):
+    """ 在可用freq清单中找到下一个可用的freq字符串
+
+    :param freq: main_freq string
+    :param direction: 'up' / 'down'
+    :return:
+    """
+    freq = freq.upper()
+    if freq not in TIME_FREQ_STRINGS:
+        return None
+    qty, main_freq, sub_freq = parse_freq_string(freq)
+    level = get_main_freq_level(freq)
+    freqs = list(TIME_FREQ_LEVELS.keys())
+    target_pos = freqs.index(main_freq)
+    while True:
+        target_freq = freqs[target_pos]
+        if direction == 'up':
+            target_pos += 1
+        elif direction == 'down':
+            target_pos -= 1
+        if get_main_freq_level(target_freq) != level:
+            return target_freq
 
 
 def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
@@ -96,7 +265,6 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    # import pdb; pdb.set_trace()
                     msg = f'Error in {f.__name__}: {e.__class__}:{str(e)}, Retrying in {mdelay} seconds...'
                     if mute:
                         if logger:
@@ -180,7 +348,7 @@ def unify(arr):
     raise TypeError(f'Input should be ndarray! got {type(arr)}')
 
 
-def time_str_format(t: float, estimation: bool = False, short_form: bool = False):
+def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
     Parameters
@@ -200,73 +368,95 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
 
     Examples
     --------
-    >>> time_str_format(86400)
+    >>> sec_to_duration(86400)
     '1 day '
-    >>> time_str_format(86400, short_form=True)
+    >>> sec_to_duration(86400, short_form=True)
     '1D'
-    >>> time_str_format(86399)
-    '23 hours 59 min 59 sec'
-    >>> time_str_format(86399, short_form=True)
-    '23H 59'59.000"
-    >>> time_str_format(86399, estimation=True)
-    '1 day '
+    >>> sec_to_duration(86400, estimation=True)
+    'about 1 day '
+    >>> sec_to_duration(86399)
+    '23 hour 59 min 59 sec'
+    >>> sec_to_duration(86399, short_form=True)
+    '23H 59'59".000"
+    >>> sec_to_duration(86399, estimation=True)
+    'about 1 day '
+    >>> sec_to_duration(86399, estimation=True, short_form=True)
+    '~ 1D'
     """
 
+    # TODO: 此函数在estimation=True时，输出结果不准确，需要修正，例如，86399秒应该输出为1天，
+    #  而不是23小时
+    # TODO: 修正函数输出值的错，在estimation=True时，输出结果不正确）
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
 
-    str_element = []
-    enough_accuracy = False
-    if t >= 86400 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        days = t // 86400
-        t = t - days * 86400
-        str_element.append(str(int(days)))
-        if short_form:
-            str_element.append('D')
-        else:
-            str_element.append('days ')
-    if t >= 3600 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        hours = t // 3600
-        t = t - hours * 3600
-        str_element.append(str(int(hours)))
-        if short_form:
-            str_element.append('H')
-        else:
-            str_element.append('hrs ')
-    if t >= 60 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        minutes = t // 60
-        t = t - minutes * 60
-        str_element.append(str(int(minutes)))
-        if short_form:
-            str_element.append('\'')
-        else:
-            str_element.append('min ')
-    if t >= 1 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        seconds = np.floor(t)
-        t = t - seconds
-        str_element.append(str(int(seconds)))
-        if short_form:
-            str_element.append('\"')
-        else:
-            str_element.append('s ')
-    if not enough_accuracy:
-        milliseconds = np.round(t * 1000, 1)
-        if short_form:
-            str_element.append(f'{int(np.round(milliseconds)):03d}')
-        else:
-            str_element.append(str(milliseconds))
-            str_element.append('ms')
+    milliseconds = t * 1000
 
-    return ''.join(str_element)
+    if estimation:
+        # 大致估算时间，精确到最高时间单位，如天、小时、分钟、秒等
+        seconds = round(milliseconds / 1000.0)
+        if seconds <= 59:
+            time_str = f'~{seconds:.0f}"' if short_form else f'about {seconds:.0f} sec'
+            return time_str
+        minutes = round(seconds / 60.0)
+        if minutes <= 59:
+            time_str = f'~{minutes:.0f}\'' if short_form else f'about {minutes:.0f} min'
+            return time_str
+        hours = round(seconds / 3600.0)
+        if hours <= 23:
+            time_str = f'~{hours:.0f}H' \
+                if short_form \
+                else f'about {hours:.0f} hour' \
+                if hours == 1 \
+                else f'about {hours:.0f} hours'
+            return time_str
+        days, hours = divmod(hours, 24)
+        if short_form:
+            return f'~{days:.0f}D' if hours == 0 else f'~{days:.0f}D{hours:.0f}H'
+        else:
+            return f'about {days:.0f} day' \
+                    if hours == 0 \
+                    else f'about {days:.0f} day {hours:.0f} hour' \
+                    if days == 1 \
+                    else f'about {days:.0f} days {hours:.0f} hours'
+    else:  # estimation:
+        seconds = int(milliseconds / 1000)
+        milliseconds = milliseconds - seconds * 1000
+        minutes, seconds = divmod(seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
+
+        if short_form:
+            time_str = ""
+            if days > 0:
+                time_str += f"{days:.0f}D"
+            if hours > 0:
+                time_str += f"{hours:.0f}H"
+            if minutes > 0:
+                time_str += f"{minutes:.0f}'"
+            if seconds > 0:
+                time_str += f'{seconds:.0f}"'
+            if milliseconds > 0 or not time_str:
+                ms_str = f'{milliseconds:03.0f}' if time_str else f'0"{milliseconds:03.0f}'
+                time_str += ms_str
+            return time_str
+        else:
+            time_str = ""
+            if days > 0:
+                days_str = f"{days:.0f} days " if days > 1 else f"{days:.0f} day "
+                time_str += days_str
+            if hours > 0:
+                hour_str = f"{hours:.0f} hours " if hours > 1 else f"{hours:.0f} hour "
+                time_str += hour_str
+            if minutes > 0:
+                time_str += f"{minutes:.0f} min "
+            if seconds > 0:
+                time_str += f"{seconds:.0f} sec "
+            if milliseconds > 0 or not time_str:
+                time_str += f"{milliseconds:0.1f} ms"
+
+        return time_str
 
 
 def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
@@ -350,17 +540,18 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 
     Returns
     -------
+    dict of {label: index}
 
     Examples
     --------
     例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
     现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
-    使用labels_to_dict函数生成一个字典ID如下：
-    ID:  {'first' : 0
-          'second': 1
-          'third' : 2}
+    使用labels_to_dict函数生成一个字典如下：
+    find_idx:  {'first' : 0
+                'second': 1
+                'third' : 2}
     通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
-    target_list[ID['first']] == target_list[0] == 100
+    target_list[find_idx['first']] == target_list[0] == 100
 
     """
     if isinstance(input_labels, str):
@@ -382,13 +573,13 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     ----------
     input_string: str:
         需要分割的字符串
-    sep_char: str:
+    sep_char: str, default: ','
         字符串分隔符， 默认','
-    case: str
+    case: str, Optional
         默认None, 是否改变大小写，upper输出全大写, lower输出全小写
-    dim: int
+    dim: int, Optional
         需要生成的目标list的元素数量
-    padder: str
+    padder: str, Optional
         当元素数量不足的时候用来补充的元素
 
     Returns
@@ -524,6 +715,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         sys.stdout.flush()
 
 
+@lru_cache(maxsize=16)
 def maybe_trade_day(date):
     """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）准确率有限但是效率高
 
@@ -620,6 +812,7 @@ def next_trade_day(date):
     return next
 
 
+@lru_cache(maxsize=16)
 def is_market_trade_day(date, exchange: str = 'SSE'):
     """ 根据交易所发布的交易日历判断一个日期是否是交易日，
 
@@ -669,12 +862,43 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
             raise ValueError(f'The date {_date} is out of trade calendar range, please refill data')
         return is_open == 1
     else:
-        # TODO: Not yet implemented
-        #  提供一种足够简单但不太精确的方式大致估算交易日期；
-        #  或者直接使用maybe_trade_day()函数
+        warnings.warn('Trade Calendar is not available, will use maybe_trade_day instead to check trade day')
+        return maybe_trade_day(_date)
+
+
+@lru_cache(maxsize=4)
+def last_known_market_trade_day(exchange: str = 'SSE'):
+    """ 返回交易日列表中的最后一个已知交易日
+
+    Parameters
+    ----------
+    exchange: str
+        交易所代码:
+            SSE:    上交所, SZSE:   深交所,
+            CFFEX:  中金所, SHFE:   上期所,
+            CZCE:   郑商所, DCE:    大商所,
+            INE:    上能源, IB:     银行间,
+            XHKG:   港交所
+
+    Returns
+    -------
+    datetime-like
+        最后一个已知交易日的日期
+    """
+    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
+                                                      'DCE', 'INE', 'IB', 'XHKG']:
+        raise TypeError(f'exchange \'{exchange}\' is not a valid input')
+    if qteasy.QT_TRADE_CALENDAR is not None:
+        try:
+            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        except KeyError as e:
+            raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
+        return exchange_trade_cal[exchange_trade_cal.is_open == 1].index[-1]
+    else:
         raise NotImplementedError
 
 
+@lru_cache(maxsize=16)
 def prev_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的上一交易日，需要提前准备QT_TRADE_CALENDAR数据
 
@@ -714,6 +938,7 @@ def prev_market_trade_day(date, exchange='SSE'):
         raise NotImplementedError
 
 
+@lru_cache(maxsize=16)
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
 
@@ -741,8 +966,8 @@ def nearest_market_trade_day(date, exchange='SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    # TODO: 这里有bug: _date的上限和下限需要从trade_calendar中动态读取，而不能硬编码到源代码中
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20231231'):
+    last_known_trade_day = last_known_market_trade_day(exchange)
+    if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
     if is_market_trade_day(_date, exchange):
         return _date
@@ -753,8 +978,9 @@ def nearest_market_trade_day(date, exchange='SSE'):
         return prev
 
 
+@lru_cache(maxsize=16)
 def next_market_trade_day(date, exchange='SSE'):
-    """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
+    """ 根据交易所发布的交易日历找到它的后一个交易日，准确性高但需要提前准备QT_TRADE_CALENDAR数据
 
     Parameters
     ----------
@@ -779,8 +1005,9 @@ def next_market_trade_day(date, exchange='SSE'):
         _date = pd.to_datetime(date)
     except Exception:
         raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
-    assert _date is not None, f'{date} is not a valide date'
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
+    assert _date is not None, f'{date} is not a valid date'
+    last_known_trade_day = last_known_market_trade_day(exchange)
+    if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
     if is_market_trade_day(_date, exchange):
         return _date
@@ -848,10 +1075,59 @@ def list_truncate(lst, trunc_size):
             begin += trunc_size
             end += trunc_size
         return sub_lists
+    # a different implementation:
+    # return [lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size)]
+    # or a more pythonic way:
+    # return list(map(lambda i: lst[i:i+trunc_size], range(0, len(lst), trunc_size)))
+    # or return a generator:
+    # return (lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size))
+    # or create a generator with yield from:
+    # yield from (lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size))
 
 
 def is_number_like(key: [str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的数字
+
+    Parameters
+    ----------
+    key: [str, int, float], 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+
+    if isinstance(key, (float, int)):
+        return True
+    if not isinstance(key, str):
+        return False
+    if NUMBER_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_integer_like(key: [str, int]) -> bool:
+    """ 判断一个字符串是否是一个合法的整数
+
+    Parameters
+    ----------
+    key: [str, int], 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    if isinstance(key, int):
+        return True
+    if not isinstance(key, str):
+        return False
+    if INTEGER_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_float_like(key: [str, int, float]) -> bool:
+    """ 判断一个字符串是否是一个合法的浮点数
 
     Parameters
     ----------
@@ -874,63 +1150,45 @@ def is_number_like(key: [str, int, float]) -> bool:
         return True
     if not isinstance(key, str):
         return False
-    if NUMBER_IDENTIFIER.match(key):
-        return True
-    return False
-
-
-def is_integer_like(key: [str, int]) -> bool:
-    """ 判断一个字符串是否是一个合法的整数
-
-    Parameters
-    ----------
-    key: [str, int], 需要检查的输入
-
-    Returns
-    -------
-    bool
-
-    Examples
-    --------
-    >>> is_integer_like('123')
-    >>> True
-    >>> is_integer_like('123.456')
-    >>> False
-    """
-    if isinstance(key, int):
-        return True
-    if not isinstance(key, str):
-        return False
-    if INTEGER_IDENTIFIER.match(key):
-        return True
-    return False
-
-
-def is_float_like(key: [str, int, float]) -> bool:
-    """ 判断一个字符串是否是一个合法的浮点数或整数
-
-    Parameters
-    ----------
-    key: [str, int, float], 需要检查的输入
-
-    Returns
-    -------
-    bool
-
-    Examples
-    --------
-    >>> is_float_like('123')
-    True
-    >>> is_float_like('123.456')
-    True
-    >>> is_float_like('123.456.789')
-    False
-    """
-    if isinstance(key, (float, int)):
-        return True
-    if not isinstance(key, str):
-        return False
     if FLOAT_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_cn_stock_symbol_like(key: str) -> bool:
+    """ 判断一个字符串是否是一个合法的A股股票代码，不含市场标识符
+
+    Parameters
+    ----------
+    key: str, 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    # TODO: test this function
+    if not isinstance(key, str):
+        return False
+    if CN_STOCK_SYMBOL_IDENTIFIER.match(key):
+        return True
+    return False
+
+
+def is_complete_cn_stock_symbol_like(key: str) -> bool:
+    """ 判断一个字符串是否是一个合法的A股股票代码, 必须包含市场标识符如SH或SZ
+
+    Parameters
+    ----------
+    key: str, 需要检查的输入
+
+    Returns
+    -------
+    bool
+    """
+    # TODO: test this function
+    if not isinstance(key, str):
+        return False
+    if CN_STOCK_SYMBOL_IDENTIFIER2.match(key):
         return True
     return False
 
@@ -1456,7 +1714,7 @@ def rolling_window(arr, window, axis=0):
     from numpy.lib.stride_tricks import as_strided
     if not isinstance(arr, np.ndarray):
         raise TypeError(f'arr should be an ndarray, got {type(arr)} instead.')
-    if not isinstance(window, (int, np.int)):
+    if not isinstance(window, int):
         raise TypeError(f'window should be an integer, got {type(window)} instead.')
     if not isinstance(axis, int):
         raise TypeError(f'axis should be an integer, got {type(axis)} instead.')
@@ -1465,12 +1723,11 @@ def rolling_window(arr, window, axis=0):
     if (axis < 0) or (axis >= arr.ndim):
         raise ValueError(f'Invalid axis({axis})')
 
-    ndim = arr.ndim
     shape = list(arr.shape)
     strides = arr.strides
     axis_length = shape[axis]
     if window > axis_length:
-        raise ValueError(f'window too long, should be less than or equal to axis_length ({axis_length})')
+        raise ValueError(f'window too long ({window}), should be <= axis_length ({axis_length}), array shape ({shape})')
     window_count = axis_length - window + 1
     shape[axis] = window
     target_shape = (window_count, *shape)

@@ -24,7 +24,7 @@ from qteasy import QT_CONFIG, QT_DATA_SOURCE, CashPlan
 
 from qteasy.finance import get_selling_result, get_purchase_result, calculate
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
@@ -78,9 +78,11 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import get_primary_key_range, htype_to_table_col
 from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
-from qteasy.database import get_main_freq
+from qteasy.database import parse_freq_string
+
+from qteasy.trading_util import _trade_time_index
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 

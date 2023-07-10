@@ -18,15 +18,16 @@ import numpy as np
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+import qteasy.utilfuncs
 from .core import run, set_config, get_configurations, get_config
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import get_basic_info, get_stock_info, get_table_overview, get_data_overview, refill_data_source
-from .core import get_history_data, get_realtime_holdings, get_realtime_trades, filter_stock_codes, filter_stocks
+from .core import get_history_data, filter_stock_codes, filter_stocks
 from .core import reconnect_ds, get_table_info
 from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
 from .qt_operator import Operator
-from .strategy import RuleIterator, GeneralStg, FactorSorter
+from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 from .built_in import built_ins, built_in_list, built_in_strategies, get_built_in_strategy
 from .visual import candle
 from .finance import CashPlan, set_cost, update_cost

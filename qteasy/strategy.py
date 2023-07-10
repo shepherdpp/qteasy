@@ -10,7 +10,10 @@
 # ======================================
 
 import numpy as np
+import pandas as pd
 from abc import abstractmethod, ABCMeta
+import warnings
+
 from .utilfuncs import str_to_list
 from .utilfuncs import TIME_FREQ_STRINGS
 
@@ -67,25 +70,28 @@ class BaseStrategy:
     """
     __mataclass__ = ABCMeta
 
-    AVAILABLE_BT_PRICE_TYPES = ['open', 'high', 'low', 'close',
-                                'buy1', 'buy2', 'buy3', 'buy4', 'buy5',
-                                'sell1', 'sell2', 'sell3', 'sell4', 'sell5']
+    AVAILABLE_STG_RUN_TIMING = ['open', 'close']
 
-    def __init__(self,
-                 pars: any = None,
-                 opt_tag: int = 0,
-                 stg_type: str = 'strategy type',
-                 name: str = 'strategy name',
-                 description: str = 'intro text of strategy',
-                 par_count: int = None,
-                 par_types: [list, str] = None,
-                 par_range: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'd',
-                 window_length: int = 270,
-                 data_types: [str, list] = 'close',
-                 bt_price_type: str = 'close',
-                 reference_data_types: [str, list] = ''):
+    def __init__(
+            self,
+            pars: any = None,
+            opt_tag: int = 0,
+            stg_type: str = 'strategy type',
+            name: str = 'strategy name',
+            description: str = 'intro text of strategy',
+            par_count: int = None,
+            par_types: [list, str] = None,
+            par_range: [list, tuple] = None,
+            strategy_run_freq: str = 'd',
+            sample_freq: str = None,
+            strategy_run_timing: str = 'close',
+            bt_price_type: str = None,
+            strategy_data_types: [str, list] = 'close',
+            data_types: [str, list] = None,
+            reference_data_types: [str, list] = '',
+            data_freq: str = 'd',
+            window_length: int = 270,
+    ):
         """ 初始化策略
 
         Parameters
@@ -106,23 +112,48 @@ class BaseStrategy:
             策略可调参数的类型，每个参数的类型可以是int, float或enum
         par_range: list or tuple
             策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
-        data_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略使用的数据频率，可以是日频、周频、月频、季频或年频
-        sample_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略使用的采样频率，可以是日频、周频、月频、季频或年频
-        window_length: int
-            策略使用的数据窗口长度，即策略使用的历史数据的长度
-        data_types: str or list of str
+        strategy_run_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
+            TODO: 如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
+        sample_freq: str, deprecated
+            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
+        strategy_run_timing: datetime-like or str
+            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
+            例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
+            如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
+            例如，如果运行频率为'h', 假设股市9：30开市，15：30收市
+            则策略运行时间为
+            ['09:30:00', '10:30:00',
+             '11:30:00', '13:00:00',
+             '14:00:00', '15:00:00',]
+        bt_price_type: str, deprecated
+            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
+        strategy_data_types: str or list of str
             策略使用的数据类型，例如close, open, high, low等
-        bt_price_type: str {'open', 'high', 'low', 'close'}
-            策略回测时使用的价格类型，可以是开盘价、收盘价、最高价、最低价等
+        data_types: str or list of str, deprecated
+            策略使用的数据类型，例如close, open, high, low等
         reference_data_types: str or list of str
             策略使用的参考数据类型，例如close, open, high, low等
+        data_freq: str {'d', 'w', 'm', 'q', 'y'}
+            策略使用的数据频率，可以是日频、周频、月频、季频或年频
+        window_length: int
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
 
         Returns
         -------
         None
         """
+        # 关于已经废弃的参数，给出警告信息，并赋值给新的参数
+        if sample_freq is not None:
+            warnings.warn('sample_freq is deprecated, use strategy_run_freq instead')
+            strategy_run_freq = sample_freq
+        if bt_price_type is not None:
+            warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
+            strategy_run_timing = bt_price_type
+        if data_types is not None:
+            warnings.warn('data_types is deprecated, use strategy_data_types instead')
+            strategy_data_types = data_types
+
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
@@ -228,25 +259,25 @@ class BaseStrategy:
 
         # 其他的几个参数都通过参数赋值方法赋值，在赋值方法内会进行参数合法性检，这里只需确保所有参数不是None即可
         assert data_freq is not None
-        assert sample_freq is not None
+        assert strategy_run_freq is not None
         assert window_length is not None
-        assert data_types is not None
-        assert bt_price_type is not None
+        assert strategy_data_types is not None
+        assert strategy_run_timing is not None
         assert reference_data_types is not None
         self._data_freq = None
-        self._sample_freq = None
+        self._strategy_run_freq = None
         self._window_length = None
         self._data_types = None
-        self._bt_price_type = None
+        self._strategy_run_timing = None
         self._reference_data_types = None
         self.set_hist_pars(data_freq=data_freq,
-                           sample_freq=sample_freq,
+                           strategy_run_freq=strategy_run_freq,
                            window_length=window_length,
-                           data_types=data_types,
-                           bt_price_type=bt_price_type,
+                           strategy_data_types=strategy_data_types,
+                           strategy_run_timing=strategy_run_timing,
                            reference_data_types=reference_data_types)
-        logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, sample_freq={sample_freq},'
-                         f' window_length={window_length}, bt_price_type={bt_price_type}, '
+        logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
+                         f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
                          f'reference_data_types={reference_data_types}')
 
     @property
@@ -356,11 +387,22 @@ class BaseStrategy:
     @property
     def sample_freq(self):
         """策略生成的采样频率"""
-        return self._sample_freq
+        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
+        return self._strategy_run_freq
 
     @sample_freq.setter
     def sample_freq(self, sample_freq):
-        self.set_hist_pars(sample_freq=sample_freq)
+        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
+        self.set_hist_pars(strategy_run_freq=sample_freq)
+
+    @property
+    def strategy_run_freq(self):
+        """策略生成的采样频率"""
+        return self._strategy_run_freq
+
+    @strategy_run_freq.setter
+    def strategy_run_freq(self, sample_freq):
+        self.set_hist_pars(strategy_run_freq=sample_freq)
 
     @property
     def window_length(self):
@@ -378,7 +420,17 @@ class BaseStrategy:
 
     @data_types.setter
     def data_types(self, data_types):
-        self.set_hist_pars(data_types=data_types)
+        warnings.warn('data_types is deprecated, use history_data_types instead', DeprecationWarning)
+        self.set_hist_pars(strategy_data_types=data_types)
+
+    @property
+    def strategy_data_types(self):
+        """data_types的别名"""
+        return self._data_types
+
+    @strategy_data_types.setter
+    def strategy_data_types(self, data_types):
+        self.set_hist_pars(strategy_data_types=data_types)
 
     @property
     def history_data_types(self):
@@ -387,27 +439,51 @@ class BaseStrategy:
 
     @history_data_types.setter
     def history_data_types(self, data_types):
-        self.set_hist_pars(data_types=data_types)
+        self.set_hist_pars(strategy_data_types=data_types)
+
+    @property
+    def strategy_run_timing(self):
+        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        return self._strategy_run_timing
+
+    @strategy_run_timing.setter
+    def strategy_run_timing(self, price_type):
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        self.set_hist_pars(strategy_run_timing=price_type)
+
+    @property
+    def strategy_timing(self):
+        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        return self._strategy_run_timing
+
+    @strategy_timing.setter
+    def strategy_timing(self, price_type):
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def bt_price_type(self):
-        """策略回测时所使用的价格类型"""
-        return self._bt_price_type
+        """策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
+        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
+        return self._strategy_run_timing
 
     @bt_price_type.setter
     def bt_price_type(self, price_type):
-        """ 设置策略回测室所使用的价格类型"""
-        self.set_hist_pars(bt_price_type=price_type)
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
+        self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def bt_price_types(self):
-        """策略回测时所使用的价格类型，bt_price_type的别名"""
-        return self._bt_price_type
+        """ 策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
+        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
+        return self._strategy_run_timing
 
     @bt_price_types.setter
     def bt_price_types(self, price_type):
-        """ 设置策略回测室所使用的价格类型"""
-        self.set_hist_pars(bt_price_type=price_type)
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
+        self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def ref_types(self):
@@ -465,6 +541,7 @@ class BaseStrategy:
         """打印所有相关信息和主要属性"""
         # TODO: 重新设计strategy.info()，更加简明扼要地输出关键信息，
         #  还要兼顾operator.info()的需要
+
         stg_type = self.__class__.__bases__[0].__name__
         print(f'Strategy_type:      {stg_type}\n'
               f'Strategy name:      {self.name}\n'
@@ -475,16 +552,18 @@ class BaseStrategy:
             print('Strategy Parameter: No Parameter!')
         # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
         if verbose:
+            run_type_str = self.strategy_run_freq + ' @ ' + self.strategy_run_timing
+            data_type_str = str(self.window_length) + ' ' + self.data_freq
             print(f'\n'
                   f'Strategy Properties     Property Value\n'
-                  f'---------------------------------------\n'
-                  f'Parameter count         {self.par_count}\n'
-                  f'Parameter types         {self.par_types}\n'
-                  f'Parameter range         {self.par_range}\n'
-                  f'Data frequency          {self.data_freq}\n'
-                  f'Sample frequency        {self.sample_freq}\n'
-                  f'Window length           {self.window_length}\n' 
-                  f'Data types              {self.data_types}')
+                  f'-------------------------------------------------\n'
+                  f'Param. count            {self.par_count}\n'
+                  f'Param. types            {self.par_types}\n'
+                  f'Param. range            {self.par_range}\n'
+                  f'Run parameters          {run_type_str}\n'
+                  f'Data types              {self.history_data_types}\n'
+                  f'Data parameters         {data_type_str}'
+                  )
             if stg_type == 'FactorSorter':
                 print(f'Max select count        {self.max_sel_count}\n'
                       f'Sort Ascending:         {self.sort_ascending}\n'
@@ -590,10 +669,10 @@ class BaseStrategy:
 
     def set_hist_pars(self,
                       data_freq=None,
-                      sample_freq=None,
+                      strategy_run_freq=None,
                       window_length=None,
-                      data_types=None,
-                      bt_price_type=None,
+                      strategy_data_types=None,
+                      strategy_run_timing=None,
                       reference_data_types=None):
         """ 设置策略的历史数据回测相关属性
 
@@ -601,13 +680,13 @@ class BaseStrategy:
         ----------
         data_freq: str
             数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        sample_freq: str
-            采样频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+        strategy_run_freq: str
+            策略运行频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
         window_length: int
             回测时需要用到的历史数据窗口的长度
-        data_types: str
+        strategy_data_types: str
             需要用到的历史数据类型
-        bt_price_type: str
+        strategy_run_timing: str
             需要用到的历史数据回测价格类型
         reference_data_types: str
             策略运行参考数据类型
@@ -622,31 +701,37 @@ class BaseStrategy:
             assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
                                                            f'string'
             self._data_freq = data_freq
-        if sample_freq is not None:
-            assert isinstance(sample_freq, str), \
-                f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
+        if strategy_run_freq is not None:
+            assert isinstance(strategy_run_freq, str), \
+                f'TypeError, sample frequency should be a string, got {type(strategy_run_freq)} instead'
             import re
-            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', sample_freq.lower()):
-                raise ValueError(f"{sample_freq} is not a valid frequency string,"
+            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', strategy_run_freq.lower()):
+                raise ValueError(f"{strategy_run_freq} is not a valid frequency string,"
                                  f"sample freq can only be like '10d' or '2w'")
-            self._sample_freq = sample_freq
+            self._strategy_run_freq = strategy_run_freq
         if window_length is not None:
             assert isinstance(window_length, int), \
                 f'TypeError, window length should an integer, got {type(window_length)} instead'
             assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
             self._window_length = window_length
-        if data_types is not None:
-            if isinstance(data_types, str):
-                data_types = str_to_list(data_types, ',')
-            assert isinstance(data_types, list), \
-                f'TypeError, data type should be a list, got {type(data_types)} instead'
-            self._data_types = data_types
-        if bt_price_type is not None:
-            assert isinstance(bt_price_type,
-                              str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
-            assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a ' \
-                                                                   f'valid price type'
-            self._bt_price_type = bt_price_type
+        if strategy_data_types is not None:
+            if isinstance(strategy_data_types, str):
+                strategy_data_types = str_to_list(strategy_data_types, ',')
+            assert isinstance(strategy_data_types, list), \
+                f'TypeError, data type should be a list, got {type(strategy_data_types)} instead'
+            self._data_types = strategy_data_types
+        if strategy_run_timing is not None:
+            assert isinstance(strategy_run_timing,
+                              str), f'Wrong input type, price_type should be a string, got {type(strategy_run_timing)}'
+            try:
+                pd.to_datetime(strategy_run_timing)
+            except Exception as e:
+                if strategy_run_timing not in self.AVAILABLE_STG_RUN_TIMING:
+                    # TODO: add deprecation warning: 以前定义的bt_price_type的部分允许值已经不再适用，需要更新
+                    raise ValueError(f'Invalid price type, should be one of {self.AVAILABLE_STG_RUN_TIMING}, '
+                                     f'got {strategy_run_timing} instead')
+
+            self._strategy_run_timing = strategy_run_timing
         if reference_data_types is not None:
             if isinstance(reference_data_types, str):
                 reference_data_types = str_to_list(reference_data_types, ',')
@@ -720,6 +805,7 @@ class BaseStrategy:
                 trade_data_list = [trade_data] * signal_count
             # 使用map完成快速遍历填充
             signals = list(map(self.generate_one, hist_data_list, ref_data_list, trade_data_list))
+            # 将生成的交易信号填充到清单中对应的位置(data_idx)上
             sig_list[data_idx] = np.array(signals)
             # 将所有分段组合成完整的ndarray
             return sig_list
@@ -763,7 +849,7 @@ class GeneralStg(BaseStrategy):
             example_strategy = ExampleStrategy(pars=<example pars>,
                                                name='example',
                                                description='example strategy',
-                                               data_types='close'
+                                               strategy_data_types='close'
                                                ...
                                                )
             在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -778,10 +864,10 @@ class GeneralStg(BaseStrategy):
             par_types: tuple/list,  策略参数类型
             par_range:              策略参数取值范围
             data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
-            sample_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
+            strategy_run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
             window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-            bt_price_type:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+            strategy_data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+            strategy_run_timing:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
             reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
 
@@ -813,7 +899,7 @@ class GeneralStg(BaseStrategy):
                         - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
                         - data_freq = 'd'
                         - window_length = 100
-                        - data_types = "open, high, low, close, pe"
+                        - strategy_data_types = "open, high, low, close, pe"
 
                     以下例子都基于前面给出的参数设定
                     例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -864,7 +950,7 @@ class GeneralStg(BaseStrategy):
                 - 5列,  交易数据类型轴
                     - 0, own_amounts:              当前持有每种股票的份额
                     - 1, available_amounts:        当前可用的每种股票的份额
-                    - 2, current_prices:           当前的交易价格
+                    - 2, current_prices:           当前的股票价格
                     - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
                     - 4, recent_trade_prices:      最近一次成交价格
 
@@ -948,7 +1034,7 @@ class FactorSorter(BaseStrategy):
 
     推荐使用下面的方法创建策略类：
 
-        Class ExampleStrategy(GeneralStg):
+        Class ExampleStrategy(FactorSorter):
 
             def realize(self, h, r=None, t=None, pars=None):
 
@@ -964,7 +1050,7 @@ class FactorSorter(BaseStrategy):
         example_strategy = ExampleStrategy(pars=<example pars>,
                                            name='example',
                                            description='example strategy',
-                                           data_types='close'
+                                           strategy_data_types='close'
                                            ...
                                            )
         在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -980,10 +1066,10 @@ class FactorSorter(BaseStrategy):
         par_types:          tuple,  策略参数类型
         par_range:          tuple,  策略参数取值范围
         data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-        sample_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
+        strategy_run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
         window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-        data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-        bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+        strategy_data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+        strategy_run_timing:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
         reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
         *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
@@ -1009,12 +1095,20 @@ class FactorSorter(BaseStrategy):
 
         def realize(self,
                     h: np.ndarray,
-                    r: np.ndarray,
-                    t: np.ndarray):
+                    r: np.ndarray = None,
+                    t: np.ndarray = None,
+                    pars: tuple = None
+                    ):
 
     realize()中获取策略参数：
 
             par_1, par_2, ..., par_n = self.pars
+
+    或者：
+            if pars is not None:
+                par_1, par_2, ..., par_n = pars
+            else:
+                par_1, par_2, ..., par_n = self.pars
 
     realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
 
@@ -1031,7 +1125,7 @@ class FactorSorter(BaseStrategy):
                     - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
                     - data_freq = 'd'
                     - window_length = 100
-                    - data_types = "open, high, low, close, pe"
+                    - strategy_data_types = "open, high, low, close, pe"
 
                 以下例子都基于前面给出的参数设定
                 例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -1193,8 +1287,11 @@ class FactorSorter(BaseStrategy):
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
 
         factors = self.realize(h=h_seg, r=ref_seg, t=trade_data)
-        if not factors.shape == (1,):
-            factors = factors.squeeze()
+        # factors必须是一维向量，如果因子是二维向量，允许shape为(N, 1)型，此时将其转换为一维向量，否则报错
+        if factors.ndim == 2:
+            factors = factors.flatten()
+        # if len(factors) != share_count:
+        #     raise ValueError(f'invalid length of factors, expect {share_count}, got {len(factors)} instead')
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -1240,12 +1337,14 @@ class FactorSorter(BaseStrategy):
         if arg_count == 0:
             return chosen
         # 根据投资组合比例分配方式，确定被选中产品的权重
-        if weighting == 'linear':  # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
+
+        # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
+        if weighting == 'linear':
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
         # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
-        # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
-        # 获取比例分配
+        #  与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
+        #  获取比例分配
         elif weighting == 'distance':
             dist = factors[args]
             d_max = dist[-1]
@@ -1280,7 +1379,7 @@ class FactorSorter(BaseStrategy):
                 h,
                 r=None,
                 t=None):
-        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
+        """ h, r, 和 t 都是用于生成交易信号的窗口数据，根据这一段窗口数据
             生成一条交易信号
         """
         pass
@@ -1310,13 +1409,13 @@ class RuleIterator(BaseStrategy):
         策略参数取值范围
     data_freq:          str:
         数据频率，用于生成策略输出所需的历史数据的频率
-    sample_freq:
+    strategy_run_freq:
         策略运行采样频率，即相邻两次策略生成的间隔频率。
     window_length:
         历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-    data_types:
+    strategy_data_types:
         静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-    bt_price_type:
+    strategy_run_timing:
         策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
     reference_data_types:
         参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有
@@ -1324,7 +1423,7 @@ class RuleIterator(BaseStrategy):
 
     Examples
     --------
-        Class ExampleStrategy(GeneralStg):
+        Class ExampleStrategy(RuleIterator):
 
             def realize(self, h, r=None, t=None, pars=None):
 
@@ -1340,7 +1439,7 @@ class RuleIterator(BaseStrategy):
         example_strategy = ExampleStrategy(pars=<example pars>,
                                            name='example',
                                            description='example strategy',
-                                           data_types='close'
+                                           strategy_data_types='close'
                                            ...
                                            )
         在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -1351,8 +1450,10 @@ class RuleIterator(BaseStrategy):
 
         def realize(self,
                     h: np.ndarray,
-                    r: np.ndarray,
-                    t: np.ndarray):
+                    r: np.ndarray = None,
+                    t: np.ndarray = None,
+                    pars: tuple = None
+                    ):
 
     realize()中获取策略参数：
 

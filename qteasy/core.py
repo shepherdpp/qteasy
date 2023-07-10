@@ -21,7 +21,7 @@ import datetime
 
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
-from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
+from .utilfuncs import sec_to_duration, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
@@ -185,17 +185,17 @@ def _loop_step(signal_type: int,
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
+        # 当持有份额大于零时，卖出多仓：卖出数量 = 信号数量，此时持仓份额需大于零
         amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0.)
-        # 当持有份额不小于0时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
+        # 当持有份额不小于0时，买入多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
         cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0.)
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 信号数量 * 资产价格
-            cash_to_spend += np.where((op > 0) & (own_amounts <= 0), op * prices, 0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0.)
+            # 当持有份额小于等于零且交易信号为负，买入空仓：买入空头金额 = 信号数量 * 资产价格
+            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * prices, 0.)
+            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，卖出空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
+            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), -op, 0.)
 
     else:
         raise ValueError('Invalid signal_type')
@@ -998,39 +998,6 @@ def process_loop_results(operator,
     return value_history
 
 
-def get_realtime_holdings():
-    """ 获取当前持有的产品在手数量
-
-    Returns
-    -------
-    tuple:
-    """
-    return None
-
-
-def get_realtime_trades():
-    """ 获取最近的交易记录
-
-    Returns
-    -------
-    """
-    return None
-
-
-def build_trade_data(holdings, recent_trades):
-    """ 生成符合格式的trade_data用于交易信号生成
-
-    Parameters
-    ----------
-    holdings: tuple
-    recent_trades: tuple
-
-    Returns
-    -------
-    """
-    return None
-
-
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     """根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame
 
@@ -1381,7 +1348,7 @@ def refill_data_source(data_source=None, **kwargs):
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
     **kwargs
         DataSource.refill_local_source()的数据下载参数：
-        tables: str or list of str
+        tables: str or list of str, default: None
             需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
             例如，下面两种方式都合法且相同：
                 table='stock_indicator, stock_daily, income, stock_adj_factor'
@@ -1395,20 +1362,20 @@ def refill_data_source(data_source=None, **kwargs):
                 - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
                 - 'report'  : 财务报表
                 - 'comp'    : 指数成分表
-        dtypes: str or list of str
+        dtypes: str or list of str, default: None
             通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
             如果给出了tables，则dtypes参数会被忽略
-        freqs: str
+        freqs: str, default: None
             通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
             如果tables != all时，给出freq会排除掉freq与之不符的数据表
-        asset_types: Str of List of Str
+        asset_types: Str of List of Str, default: None
             通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
             如果tables != all时，给出asset_type会排除掉与之不符的数据表
-        start_date: DateTime Like
+        start_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        end_date: DateTime Like
+        end_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        code_range: str or list of str
+        code_range: str or list of str, default: None
             **注意，不是所有情况下code_range参数都有效
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
@@ -1420,21 +1387,21 @@ def refill_data_source(data_source=None, **kwargs):
                 两种写法等效，列表中列举出的证券数据会被下载
             - '000001:000300'
                 从'000001'开始到'000300'之间的所有证券数据都会被下载
-        merge_type: str
+        merge_type: str, default: 'ignore'
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
             - 'ignore' 默认值，不下载重复的数据
             - 'update' 下载并更新本地数据的重复部分
-        reversed_par_seq: Bool
+        reversed_par_seq: Bool, default: False
             是否逆序参数下载数据， 默认False
             - True:  逆序参数下载数据
             - False: 顺序参数下载数据
-        parallel: Bool
+        parallel: Bool, default: True
             是否启用多线程下载数据，默认True
             - True:  启用多线程下载数据
             - False: 禁用多线程下载
-        process_count: int
+        process_count: int, default: None
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
-        chunk_size: int
+        chunk_size: int, default: 100
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
 
@@ -1448,6 +1415,7 @@ def refill_data_source(data_source=None, **kwargs):
         data_source = qteasy.QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
+    print(f'Filling data source {data_source} ...')
     data_source.refill_local_source(**kwargs)
 
 
@@ -2025,10 +1993,10 @@ def reset_config(config=None):
 
 # TODO: Bug检查：
 #   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
-#   sample_freq='m',
+#   strategy_run_freq='m',
 #   data_freq='m',
 #   window_length=6,
-def check_and_prepare_hist_data(oper, config):
+def check_and_prepare_hist_data(oper, config, datasource=None):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     Parameters
@@ -2037,6 +2005,8 @@ def check_and_prepare_hist_data(oper, config):
         需要设置数据的Operator对象
     config: ConfigDict
         用于设置Operator对象的环境参数变量
+    datasource: DataSource
+        用于下载数据的DataSource对象
 
     Returns
     -------
@@ -2062,7 +2032,7 @@ def check_and_prepare_hist_data(oper, config):
         用于优化模式下，策略测试区间的资金投入计划
     """
     run_mode = config.mode
-    # 如果run_mode=0，实时获取最新的历史数据（如果无法加载，则警告），并加载最新的历史数据
+    # 如果run_mode=0，设置历史数据的开始日期为window length，结束日期为当前日期
     current_datetime = datetime.datetime.now()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
@@ -2122,21 +2092,6 @@ def check_and_prepare_hist_data(oper, config):
                  f' date will be used!',
                  RuntimeWarning)
 
-    # 设定投资结束日期
-    if run_mode == 0:
-        # 实时模式下，设置结束日期为现在
-        invest_end = regulate_date_format(current_datetime)
-    else:
-        invest_end = config.invest_end
-    # 设置优化区间和测试区间的结束日期
-    opti_end = config.opti_end
-    test_end = config.test_end
-
-    # 优化/测试数据是合并读取的，因此设置一个统一的开始/结束日期：
-    # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
-    opti_test_start = opti_start if pd.to_datetime(opti_start) < pd.to_datetime(test_start) else test_start
-    opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
-
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = oper.max_window_length
     window_offset_freq = oper.op_data_freq
@@ -2147,35 +2102,86 @@ def check_and_prepare_hist_data(oper, config):
         window_offset_freq = 'd'
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
 
+    # 设定投资结束日期
+    if run_mode == 0:
+        # 实时模式下，设置结束日期为现在，并下载最新的数据（下载的数据仅包含最小所需）
+        invest_end = regulate_date_format(current_datetime)
+        # 开始日期时间为现在往前推window_offset
+        invest_start = regulate_date_format(current_datetime - window_offset)
+    else:
+        invest_end = config.invest_end
+        invest_start = regulate_date_format(pd.to_datetime(invest_start) - window_offset)
+
+    # debug
+    # 检查invest_start是否正确地被前溯了window_offset
+    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
+    #       f'than invest_start: \n'
+    #       f'current run mode: {run_mode}\n'
+    #       f'current_date = {current_datetime}\n'
+    #       f'window_offset = {window_offset}\n'
+    #       f'invest_start = {invest_start}\n'
+    #       f'invest_end = {invest_end}\n')
+    # 设置优化区间和测试区间的结束日期
+    opti_end = config.opti_end
+    test_end = config.test_end
+
+    # 优化/测试数据是合并读取的，因此设置一个统一的开始/结束日期：
+    # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
+    opti_test_start = opti_start if pd.to_datetime(opti_start) < pd.to_datetime(test_start) else test_start
+    opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
+
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
-    hist_op = get_history_panel(htypes=oper.all_price_and_data_types, shares=config.asset_pool,
-                                start=regulate_date_format(
-                                        pd.to_datetime(invest_start) - window_offset), end=invest_end,
-                                freq=oper.op_data_freq, asset_type=config.asset_type, adj=config.backtest_price_adj) \
-        if run_mode <= 1 else HistoryPanel()
+    hist_op = get_history_panel(
+            htypes=oper.all_price_and_data_types,
+            shares=config.asset_pool,
+            start=invest_start,
+            end=invest_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj if run_mode > 0 else 'none',
+            data_source=datasource,
+    ) if run_mode <= 1 else HistoryPanel()
 
     # 解析参考数据类型，获取参考数据
-    hist_ref = get_history_panel(htypes=oper.op_ref_types, shares=None, start=regulate_date_format(
-            pd.to_datetime(invest_start) - window_offset), end=invest_end, freq=oper.op_data_freq,
-                                 asset_type=config.asset_type,
-                                 adj=config.backtest_price_adj)  # .slice_to_dataframe(share='none')
+    hist_ref = get_history_panel(
+            htypes=oper.op_ref_types,
+            shares=None,
+            start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),
+            end=invest_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+            data_source=datasource,
+    )  # .slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    bt_price_types = oper.bt_price_types
+    bt_price_types = oper.strategy_timings
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in back_trade_prices to prevent from result in nan in value
     back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
-    hist_opti = get_history_panel(htypes=oper.all_price_and_data_types, shares=config.asset_pool,
-                                  start=regulate_date_format(
-                                          pd.to_datetime(opti_test_start) - window_offset), end=opti_test_end,
-                                  freq=oper.op_data_freq, asset_type=config.asset_type,
-                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
+    hist_opti = get_history_panel(
+            htypes=oper.all_price_and_data_types,
+            shares=config.asset_pool,
+            start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
+            end=opti_test_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+            data_source=datasource,
+    ) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
-    hist_opti_ref = get_history_panel(htypes=oper.op_ref_types, shares=None, start=regulate_date_format(
-            pd.to_datetime(opti_test_start) - window_offset), end=opti_test_end, freq=oper.op_data_freq,
-                                      asset_type=config.asset_type, adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
+    hist_opti_ref = get_history_panel(
+            htypes=oper.op_ref_types,
+            shares=None,
+            start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
+            end=opti_test_end,
+            freq=oper.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+            data_source=datasource,
+    ) if run_mode == 2 else HistoryPanel()
 
     opti_trade_prices = hist_opti.slice(htypes=bt_price_types)
     opti_trade_prices.fillinf(0)
@@ -2187,10 +2193,16 @@ def check_and_prepare_hist_data(oper, config):
     benchmark_start = regulate_date_format(min(all_starts))
     benchmark_end = regulate_date_format(max(all_ends))
 
-    hist_benchmark = get_history_panel(htypes=config.benchmark_dtype, shares=config.benchmark_asset,
-                                       start=benchmark_start, end=benchmark_end, freq=oper.op_data_freq,
-                                       asset_type=config.benchmark_asset_type,
-                                       adj=config.backtest_price_adj).slice_to_dataframe(htype='close')
+    hist_benchmark = get_history_panel(
+            htypes=config.benchmark_dtype,
+            shares=config.benchmark_asset,
+            start=benchmark_start,
+            end=benchmark_end,
+            freq=oper.op_data_freq,
+            asset_type=config.benchmark_asset_type,
+            adj=config.backtest_price_adj,
+            data_source=datasource,
+    ).slice_to_dataframe(htype='close')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan
@@ -2213,11 +2225,13 @@ def reconnect_ds(data_source=None):
     if not isinstance(data_source, qteasy.DataSource):
         raise TypeError(f'data source not recognized!')
 
+    # reconnect twice to make sure the connection is established
+    data_source.reconnect()
     data_source.reconnect()
 
 
 # TODO: 将check_and_prepare_data()的代码拆分后移植到下面三个方法中
-def check_and_prepare_real_time_data(operator, config):
+def check_and_prepare_live_trade_data(operator, config, datasource=None):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
     Returns
@@ -2233,12 +2247,12 @@ def check_and_prepare_real_time_data(operator, config):
      invest_cash_plan,
      opti_cash_plan,
      test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config)
+     ) = check_and_prepare_hist_data(operator, config, datasource)
 
     return hist_op, hist_ref, invest_cash_plan
 
 
-def check_and_prepare_backtest_data(operator, config):
+def check_and_prepare_backtest_data(operator, config, datasource=None):
     """ 在run_mode == 1的回测模式情况下准备相应的历史数据
 
     Returns
@@ -2254,13 +2268,22 @@ def check_and_prepare_backtest_data(operator, config):
      invest_cash_plan,
      opti_cash_plan,
      test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config)
+     ) = check_and_prepare_hist_data(operator, config, datasource)
 
     return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
 
 
-def check_and_prepare_optimize_data(operator, config):
+def check_and_prepare_optimize_data(operator, config, datasource=None):
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
+
+    Parameters
+    ----------
+    operator: qteasy.Operator
+        运算器对象
+    config: qteasy.Config
+        配置对象
+    datasource: qteasy.DataSource
+        数据源对象
 
     Returns
     -------
@@ -2275,7 +2298,7 @@ def check_and_prepare_optimize_data(operator, config):
      invest_cash_plan,
      opti_cash_plan,
      test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config)
+     ) = check_and_prepare_hist_data(operator, config, datasource)
 
     return hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, opti_cash_plan, test_cash_plan
 
@@ -2286,27 +2309,16 @@ def run(operator, **kwargs):
 
     接受operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
     根据QT_CONFIG环境变量中的设置和运行模式（mode）进行不同的操作：
-    mode == 0, live_trade mode, 实时交易模式，根据实时数据生成交易信号，执行交易:
-        进入实时信号生成模式：
-        根据Config实时策略运行所需的历史数据，根据历史数据实时生成操作信号
-        策略参数不能为空
+    mode == 0:
+        进入实时信号生成模式：实盘运行模式是一个无限循环：
+        根据Config以及Operator中策略的设置定时启动相应的交易策略，读取最新的实时数据，生成交易信号，并将交易信号解析为
+        交易指令，发送到交易所Broker对象执行。
+        所有的交易结果和实时持仓都会被记录到数据库中，如果数据库中已经有了相应的记录，新的实盘运行结果可以在已经有的记录上
+        继续运行，或者用户也可以选择新建一个实盘账户，重新开始运行。
 
-        根据生成的执行器历史数据hist_op，应用operator对象中定义的投资策略生成当前的投资组合和各投资产品的头寸及仓位
-        连接交易执行模块登陆交易平台，获取当前账号的交易平台上的实际持仓组合和持仓仓位
-        将生成的投资组合和持有仓位与实际仓位比较，生成交易信号
-        交易信号为一个tuple，包含以下组分信息：
-         1，交易品种：str，需要交易的目标投资产品，可能为股票、基金、期货或其他，根据建立或设置的投资组合产品池确定
-         2，交易位置：int，分别为多头头寸：1，或空头仓位： -1 （空头头寸只有在期货或期权交易时才会涉及到）
-         3，交易方向：int，分别为开仓：1， 平仓：0 （股票和基金的交易只能开多仓（买入）和平多仓（卖出），基金可以开、平空头）
-         4，交易类型：int，分为市价单：1，限价单：0
-         5，交易价格：float，仅当交易类型为限价单时有效，市价单
-         6，交易量：float，当交易方向为开仓（买入）时，交易量代表计划现金投入量，当交易方向为平仓（卖出）时，交易量代表卖出的产品份额
+        实盘运行的过程会显示在屏幕上，用户可以在实盘运行过程中隋时进入交互模式，查看实盘运行的状态，或者修改运行参数。
 
-         上述交易信号被传入交易执行模块，连接券商服务器执行交易命令，执行成功后返回1，否则返回0
-         若交易执行模块交易成功，返回实际成交的品种、位置、方向、价格及成交数量（交易量），另外还返回交易后的实际持仓数额，资金余额
-         交易费用等信息
-
-         以上信息被记录到log对象中，并最终存储在磁盘上
+        用户需要在Terminal中以命令行的方式运行qteasy的实盘模式，通过tradershell查看运行过程并进行交互。
 
     mode == 1, backtest mode, 回测模式，根据历史数据生成交易信号，执行交易：
         根据Config规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
@@ -2398,7 +2410,7 @@ def run(operator, **kwargs):
 
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
 
-            3，Incremental_steped_searching          递进搜索法
+                3，Incremental_step_searching            递进搜索法
 
                 递进步长法的基本思想是对参数空间进行多轮递进式的搜索，每一轮搜索方法与蒙特卡洛法相同但是每一轮搜索后都将搜索
                 范围缩小到更希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
@@ -2472,7 +2484,6 @@ def run(operator, **kwargs):
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
 
-    #TODO: 在运行过程中适当位置加入log信息
     try:
         # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
         operator.is_ready()
@@ -2495,8 +2506,8 @@ def run(operator, **kwargs):
     configure(config=config, **kwargs)
 
     # 赋值给参考数据和运行模式
-    benchmark_data_type = config.benchmark_asset
-    run_mode = config.mode
+    benchmark_data_type = config['benchmark_asset']
+    run_mode = config['mode']
     """
     用于交易信号生成、数据回测、策略优化、结果测试以及结果评价参考的历史数据:
     hist_op:            信号生成数据，根据策略的运行方式，信号生成数据可能包含量价数据、基本面数据、指数、财务指标等等
@@ -2513,47 +2524,41 @@ def run(operator, **kwargs):
     test_cssh_plan:
     """
 
-    if run_mode == 0 or run_mode == 'live_trade':
+    if run_mode == 0 or run_mode == 'live':
         '''进入实时信号生成模式：
         
+        进入实盘交易模式后，会启动TraderShell，以实时显示策略交易的过程，同时允许用户隋时进入交互模式
+        查看交易结果或修改交易过程中的现金或持仓数量。
+        
         '''
-        # TODO: mode0 应该是自动定时运行，预留实盘交易接口
-        #   循环定时运行由QT级别的参数设定，设定快捷键，通过快捷键进行常用控制
-        #   定时运行时自动打印交易状态变量和交易信号
-        #   如果实现实盘交易接口，则在获取授权后自动发送 / 接收交易信号并监控交易结果
-        holdings = get_realtime_holdings()
-        trade_result = get_realtime_trades()
-        trade_data = build_trade_data(holdings, trade_result)
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_real_time_data(operator, config)
-        # TODO: 这里采用临时处理方式，使用mode1所用的hist_op/hist_ref以及invest_cash_plan
-        #  数据来进行实时信号生成，但是这里需要大改进：自动获取当前最新的数据，生成一个足够一个周期
-        #  的交易信号生成即可
-        # empty_cash_plan = CashPlan([], [])
-        # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_ref, cash_plan=invest_cash_plan)
-        st = time.time()  # 记录交易信号生成耗时
-        if operator.op_type == 'batch':
-            raise KeyError(f'Operator can not work in real time mode when its operation type is "batch", set '
-                           f'"Operator.op_type = \'step\'"')
-        else:
-            op_list = operator.create_signal(
-                    trade_data=trade_data,
-                    sample_idx=-1,
-                    price_type_idx=0
-            )  # 生成交易清单
-        et = time.time()
-        run_time_prepare_data = (et - st)
-        if config.report:
-            # TODO: 研究：是否需要用qt.config.report参数来控制实时信号显示的报告
-            pass
-        _print_operation_signal(
-                op_list=op_list,
-                run_time_prepare_data=run_time_prepare_data,
-                operator=operator,
-                history_data=hist_op
-        )
+        # 显示当前系统中已经存在的实盘账号信息，询问用户是否使用已有账号或重新创建账号运行
+        from qteasy.trade_recording import get_account, new_account
+        account_id = 1  # 默认使用第一个账号, 如果没有账号，需要创建一个账号
+        try:
+            account = get_account(account_id=account_id)
+            account_id = account['account_id']
+            user_name = account['user_name']
+            init_cash = None
+            init_holdings = None
+        except KeyError as e:
+            print(f'account {account_id} not found, a new account will be created')
+            account_id = None
+            user_name = 'un-named_user'
+            init_cash = config['invest_cash_amounts'][0]
+            init_holdings = {}
 
-        return op_list
+        # 启动交易shell
+        from qteasy.trader import start_trader
+        from qteasy import QT_DATA_SOURCE
+        start_trader(
+                operator=operator,
+                account_id=account_id,
+                user_name=user_name,
+                init_cash=init_cash,
+                init_holdings=init_holdings,
+                config=config,
+                datasource=QT_DATA_SOURCE,
+        )
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
@@ -2579,7 +2584,7 @@ def run(operator, **kwargs):
                 config=config,
                 stage='loop'
         )
-        if config.report:
+        if config['report']:
             # 格式化输出回测结果
             _print_loop_result(loop_result, config)
         if config.visual:
@@ -2604,11 +2609,7 @@ def run(operator, **kwargs):
                 operator=operator,
                 config=config
         )
-        operator.assign_hist_data(  # 在生成交易信号之前准备历史数据
-                hist_data=hist_opti,
-                cash_plan=opti_cash_plan,
-                reference_data=hist_opti_ref
-        )
+        operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan, reference_data=hist_opti_ref)
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config.opti_method
         optimal_pars, perfs = optimization_methods[how](
@@ -2632,14 +2633,14 @@ def run(operator, **kwargs):
         )
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
-        if config.report:
+        if config['report']:
             _print_test_result(opti_eval_res, config=config)
-        if config.visual:
+        if config['visual']:
             pass
             # _plot_test_result(opti_eval_res, config=config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果，此时operator的交易数据已经分配好，无需再次分配
-        if config.test_type in ['single', 'multiple']:
+        if config['test_type'] in ['single', 'multiple']:
             result_pool = _evaluate_all_parameters(
                     par_generator=optimal_pars,
                     total=config.opti_output_count,
@@ -2658,16 +2659,13 @@ def run(operator, **kwargs):
             if config.visual:
                 _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
 
-        elif config.test_type == 'montecarlo':
+        elif config['test_type'] == 'montecarlo':
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_opti)
                 print(f'config.test_cash_dates is {config.test_cash_dates}')
-                operator.assign_hist_data(
-                        hist_data=mock_hist,
-                        cash_plan=test_cash_plan
-                )
+                operator.assign_hist_data(hist_data=mock_hist, cash_plan=test_cash_plan)
                 mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(
                         par_generator=optimal_pars,
@@ -3007,8 +3005,8 @@ def _evaluate_one_parameter(par,
                 pt_signal_timing=config.PT_signal_timing,
                 pt_buy_threshold=config.PT_buy_threshold,
                 pt_sell_threshold=config.PT_sell_threshold,
-                cash_delivery_period=config.cash_deliver_period,
-                stock_delivery_period=config.stock_deliver_period,
+                cash_delivery_period=config.cash_delivery_period,
+                stock_delivery_period=config.stock_delivery_period,
                 allow_sell_short=config.allow_sell_short,
                 long_pos_limit=config.long_position_limit,
                 short_pos_limit=config.short_position_limit,
@@ -3146,7 +3144,7 @@ def _search_grid(hist, benchmark, benchmark_type, op, config):
                                     stage='optimize')
     pool.cut(config.maximize_target)
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs
 
 
@@ -3193,7 +3191,7 @@ def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
                                     stage='optimize')
     pool.cut(config.maximize_target)
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st, short_form=True)}')
+    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
     return pool.items, pool.perfs
 
 
@@ -3319,7 +3317,7 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
         space_count_in_round = len(spaces)
         progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs
 
 

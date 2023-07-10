@@ -40,7 +40,7 @@ class TestLSStrategy(RuleIterator):
                          par_count=2,
                          par_types='discr, conti',
                          par_range=([1, 20], [2, 20]),
-                         data_types='close, open, high, low',
+                         strategy_data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
         pass
@@ -99,9 +99,9 @@ class TestSelStrategy(GeneralStg):
                          par_count=0,
                          par_types='',
                          par_range=(),
-                         data_types='high, low, close',
+                         strategy_data_types='high, low, close',
                          data_freq='d',
-                         sample_freq='10d',
+                         strategy_run_freq='10d',
                          window_length=5,
                          )
         pass
@@ -160,7 +160,7 @@ class Cross_SMA_PS(qt.RuleIterator):
                 par_range=[(10, 250), (10, 250), (0.0, 0.5)],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types='close',
+                strategy_data_types='close',
                 window_length=200,
         )
 
@@ -217,7 +217,7 @@ class Cross_SMA_PT(qt.RuleIterator):
                 par_range=[(10, 250), (10, 250), (0.0, 0.5)],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types='close',
+                strategy_data_types='close',
                 window_length=200,
         )
 
@@ -354,7 +354,8 @@ class TestQT(unittest.TestCase):
         op = qt.Operator(strategies=['stema'], op_type='stepwise')
         op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
-        qt.run(op)
+        # qt.run(op)
+        # TODO: running qteasy in mode 0 will enter interactive shell, which is not testable
 
     def test_run_mode_1(self):
         """测试策略的回测模式,结果打印但不可视化"""
@@ -752,6 +753,27 @@ class TestQT(unittest.TestCase):
 
     def test_built_in_timing(self):
         """测试内置的择时策略"""
+        # 使用以下参数测试所有qt.built_in中的交易策略
+        #   mode=1,
+        #   asset_pool='000300.SH, 399006.SZ',
+        #   start='20200101',
+        #   end='20211231',
+        #   trade_log=False,
+        #   visual=False,
+        # 其他均为默认参数
+        print(f'testing built-in strategies')
+        for strategy in qt.built_in_strategies():
+            print(f'testing strategy {strategy}')
+            op = qt.Operator(strategies=[strategy])
+            qt.run(
+                    op,
+                    mode=1,
+                    asset_pool='000300.SH, 399006.SZ',
+                    invest_start='20200101',
+                    invest_end='20211231',
+                    trade_log=False,
+                    visual=False,
+            )
 
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
@@ -775,8 +797,8 @@ class TestQT(unittest.TestCase):
                      trade_log=True)
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
-                         sample_freq='Q',
-                         data_types='pe',
+                         strategy_run_freq='Q',
+                         strategy_data_types='pe',
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
@@ -827,8 +849,8 @@ class TestQT(unittest.TestCase):
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 30),
-                         sample_freq='Q',
-                         data_types='basic_eps',
+                         strategy_run_freq='Q',
+                         strategy_data_types='basic_eps',
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
@@ -902,7 +924,7 @@ class TestQT(unittest.TestCase):
         stg2 = TestSelStrategy()
         stg1.window_length = 100
         stg2.window_length = 100
-        stg2.sample_freq = '2w'
+        stg2.strategy_run_freq = '2w'
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
         op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
         par_stg1 = {'000100': (20, 10),

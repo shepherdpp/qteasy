@@ -437,24 +437,22 @@ print(f'这些股票的信息为：\n{all_shares[all_shares.ts_code.isin(shares_
     2592  600162.SH  600162  香江控股   深圳     全国地产  19980609
     2602  600173.SH  600173  卧龙地产   浙江     全国地产  19990415
 
-
-
 ```python
 qt.configure(asset_pool=shares_banking[0:20],
              asset_type='E',
              reference_asset='000300.SH',
              ref_asset_type='I',
-             opti_05_back_testing/output_count=50,
-             invest_start='20070101',
-             invest_end='20181130',
-             invest_cash_dates=None,
-             trade_batch_size=1.,
-             mode=1,
-             log=False)
+             opti_05_back_testing / output_count = 50,
+invest_start = '20070101',
+invest_end = '20181130',
+invest_cash_dates = None,
+trade_batch_size = 1.,
+mode = 1,
+log = False)
 op.set_parameter('t-0', pars=())
 op.set_parameter('s-0', pars=(True, 'linear', 'greater', 0, 0, 0.4),
-                 sample_freq='Q',
-                 data_types='basic_eps',
+                 strategy_run_freq='Q',
+                 strategy_data_types='basic_eps',
                  sort_ascending=True,
                  weighting='proportion',
                  condition='greater',

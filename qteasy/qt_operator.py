@@ -360,7 +360,7 @@ class Operator:
     @strategy_blenders.setter
     def strategy_blenders(self, blenders):
         """ setting blenders of strategy"""
-        self.set_blender(blender=blenders, price_type=None)
+        self.set_blender(blender=blenders, run_timing=None)
 
     @property
     def signal_type(self):
@@ -414,7 +414,7 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需历史数据类型的集合"""
-        d_types = [typ for item in self.strategies for typ in item.data_types]
+        d_types = [typ for item in self.strategies for typ in item.history_data_types]
         d_types = list(set(d_types))
         d_types.sort()
         return d_types
@@ -454,9 +454,9 @@ class Operator:
         return d_freq
 
     @property
-    def bt_price_types(self):
-        """返回operator对象所有策略子对象的回测价格类型"""
-        p_types = [item.bt_price_type for item in self.strategies]
+    def strategy_timings(self):
+        """返回operator对象所有策略子对象的运行时间类型"""
+        p_types = [item.strategy_run_timing for item in self.strategies]
         p_types = list(set(p_types))
         p_types.sort()
         return p_types
@@ -464,13 +464,13 @@ class Operator:
     @property
     def all_price_and_data_types(self):
         """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
-        all_types = set(self.op_data_types).union(self.bt_price_types)
+        all_types = set(self.op_data_types).union(self.strategy_timings)
         return list(all_types)
 
     @property
     def op_data_type_list(self):
         """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
-        return [stg.data_types for stg in self.strategies]
+        return [stg.history_data_types for stg in self.strategies]
 
     @property
     def op_history_data(self):
@@ -550,12 +550,25 @@ class Operator:
     @property
     def bt_price_type_count(self):
         """ 计算operator对象中所有子策略的不同回测价格类型的数量
+        to be deprecated
 
         Returns
         -------
-        int, 不同回测价格类型的数量
+        int, operator对象中所有子策略的不同回测价格类型的数量
         """
-        return len(self.bt_price_types)
+        warnings.warn("bt_price_type_count will be deprecated in future versions. "
+                      "Use strategy_timing_count instead", DeprecationWarning)
+        return len(self.strategy_timings)
+
+    @property
+    def strategy_timing_count(self):
+        """ 计算operator对象中所有子策略的不同回测价格类型的数量
+
+        Returns
+        -------
+        int, operator对象中所有子策略的不同回测价格类型的数量
+        """
+        return len(self.strategy_timings)
 
     @property
     def op_list(self):
@@ -692,7 +705,7 @@ class Operator:
         if self.strategy_count == 0:
             message.append(f'No strategy -- add strategies to Operator!')
             is_ready = False
-        if len(self.strategy_blenders) < self.bt_price_type_count:
+        if len(self.strategy_blenders) < self.strategy_timing_count:
             message.append(f'No blender -- some of the strategies will not be used for signal, add blender')
             is_ready = False
         else:
@@ -989,10 +1002,26 @@ class Operator:
         List
             返回一个list，包含operator对象中的strategy对象
         """
+        warnings.warn('get_strategies_by_price_type is deprecated, '
+                      'use get_strategies_by_run_timing instead', DeprecationWarning)
         if price_type is None:
             return self.strategies
         else:
-            return [stg for stg in self.strategies if stg.bt_price_type == price_type]
+            return [stg for stg in self.strategies if stg.strategy_run_timing == price_type]
+
+    def get_strategies_by_run_timing(self, timing=None):
+        """返回operator对象中的strategy对象, timing为一个可选参数，
+        如果给出timing时，返回使用该timing的交易策略
+
+        Parameters
+        ----------
+        timing : str, optional
+            一个可用的timing, by default None
+        """
+        if timing is None:
+            return self.strategies
+        else:
+            return [stg for stg in self.strategies if stg.strategy_run_timing == timing]
 
     def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，按price_type筛选
@@ -1010,6 +1039,8 @@ class Operator:
         list of ndarray
             返回一个list，包含operator对象运行所需的历史数据
         """
+        warnings.warn('get_op_history_data_by_price_type is deprecated, '
+                        'use get_op_history_data_by_run_timing instead', DeprecationWarning)
         if get_rolling_window:
             all_hist_data = self._op_hist_data_rolling_windows
         else:
@@ -1017,7 +1048,32 @@ class Operator:
         if price_type is None:
             return list(all_hist_data.values())
         else:
-            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=price_type)
+            return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
+
+    def get_op_history_data_by_run_timing(self, timing=None, get_rolling_window=True):
+        """ 返回Operator对象中每个strategy对应的交易信号历史数据，timing是一个可选参数
+        如果给出timing时，返回使用该timing的所有策略的历史数据的rolling window
+
+        Parameters
+        ----------
+        timing : str, optional
+            一个可用的timing, by default None
+        get_rolling_window : bool, optional
+            True时返回rolling_window数据，否则直接返回历史数据, by default True
+
+        Returns
+        -------
+        List
+        """
+        if get_rolling_window:
+            all_hist_data = self._op_hist_data_rolling_windows
+        else:
+            all_hist_data = self._op_history_data
+        if timing is None:
+            return list(all_hist_data.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_ref_data_by_price_type(self, price_type=None, get_rolling_window=True):
@@ -1036,6 +1092,8 @@ class Operator:
         List
             返回一个list，包含operator对象运行所需的历史参考数据
         """
+        warnings.warn('get_op_ref_data_by_price_type is deprecated, '
+                        'use get_op_ref_data_by_run_timing instead', DeprecationWarning)
         if get_rolling_window:
             all_ref_data = self._op_ref_data_rolling_windows
         else:
@@ -1043,7 +1101,32 @@ class Operator:
         if price_type is None:
             return list(all_ref_data.values())
         else:
-            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=price_type)
+            return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
+
+    def get_op_ref_data_by_run_timing(self, timing=None, get_rolling_window=True):
+        """ 返回Operator对象中每个strategy对应的交易信号参考数据，timing是一个可选参数
+        如果给出timing时，返回使用该timing的所有策略的参考数据
+
+        Parameters
+        ----------
+        timing : str, optional
+        一个可用的timing, by default None
+        get_rolling_window : bool, optional
+        True时返回rolling_window数据，否则直接返回历史数据, by default True
+
+        Returns
+        -------
+        List
+        """
+        if get_rolling_window:
+            all_ref_data = self._op_ref_data_rolling_windows
+        else:
+            all_ref_data = self._op_reference_data
+        if timing is None:
+            return list(all_ref_data.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_op_sample_indices_by_price_type(self, price_type=None):
@@ -1060,55 +1143,97 @@ class Operator:
         List
             返回一个list，包含operator中的strategy对象所需的交易信号采样点序列
         """
+        warnings.warn('get_op_sample_indices_by_price_type is deprecated, '
+                        'use get_op_sample_indices_by_run_timing instead', DeprecationWarning)
         all_sample_indices = self._op_sample_indices
         if price_type is None:
             return list(all_sample_indices.values())
         else:
-            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=price_type)
+            return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
+
+    def get_op_sample_indices_by_run_timing(self, timing=None):
+        """ 返回Operator对象中每个strategy对应的交易信号采样点序列，timing是一个可选参数
+        如果给出timing时，返回使用该timing的所有策略的信号采样点序列
+
+        Parameters
+        ----------
+        timing : str, optional
+        一个可用的timing, by default None
+
+        Returns
+        -------
+        List
+        """
+        all_sample_indices = self._op_sample_indices
+        if timing is None:
+            return list(all_sample_indices.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
             return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_combined_sample_indices(self):
         """ 返回Operator对象所有交易信号采样点序列的并集
         """
         combined_indices = []
-        all_sample_indices = self.get_op_sample_indices_by_price_type()
+        all_sample_indices = self.get_op_sample_indices_by_run_timing()
         for item in all_sample_indices:
             combined_indices = np.union1d(combined_indices, item)
         return combined_indices
 
     def get_strategy_count_by_price_type(self, price_type=None):
-        """返回operator中的交易策略的数量, 按price_type筛选
+        """返回operator中的交易策略的数量, price_type为一个可选参数，
+        如果给出price_type时，返回使用该price_type的交易策略数量"""
+        warnings.warn('get_strategy_count_by_price_type is deprecated, '
+                        'use get_strategy_count_by_run_timing instead', DeprecationWarning)
+        return len(self.get_strategies_by_run_timing(price_type))
 
-        Parameter
-        ----------
-        price_type: str, optional
-            price_type为一个可选参数，
-            如果给出price_type时，返回使用该price_type的交易策略数量
-
-        Returns
-        -------
-        int
-            返回operator中的交易策略的数量
-        """
-        return len(self.get_strategies_by_price_type(price_type))
+    def get_strategy_count_by_run_timing(self, timing=None):
+        """返回operator中的交易策略的数量, timing为一个可选参数，
+        如果给出timing时，返回使用该timing的交易策略数量"""
+        return len(self.get_strategies_by_run_timing(timing))
 
     def get_strategy_names_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
         注意，strategy name并没有实际的作用，未来将被去掉
         在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
         如果给出price_type时，返回使用该price_type的交易策略名称"""
-        return [stg.name for stg in self.get_strategies_by_price_type(price_type)]
+        warnings.warn('get_strategy_names_by_price_type is deprecated, '
+                        'use get_strategy_names_by_run_timing instead', DeprecationWarning)
+        return [stg.name for stg in self.get_strategies_by_run_timing(price_type)]
+
+    def get_strategy_names_by_run_timing(self, timing=None):
+        """返回operator对象中所有交易策略对象的名称, timing为一个可选参数，
+        注意，strategy name并没有实际的作用，未来将被去掉
+        在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
+        如果给出timing时，返回使用该timing的交易策略名称"""
+        return [stg.name for stg in self.get_strategies_by_run_timing(timing)]
 
     def get_strategy_id_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的ID, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
+        warnings.warn('get_strategy_id_by_price_type is deprecated, '
+                        'use get_strategy_id_by_run_timing instead', DeprecationWarning)
         all_ids = self._strategy_id
         if price_type is None:
             return all_ids
         else:
             res = []
             for stg, stg_id in zip(self.strategies, all_ids):
-                if stg.bt_price_type == price_type:
+                if stg.strategy_run_timing == price_type:
+                    res.append(stg_id)
+            return res
+
+    def get_strategy_id_by_run_timing(self, timing=None):
+        """返回operator对象中所有交易策略对象的ID, timing为一个可选参数，
+        如果给出timing时，返回使用该timing的交易策略名称"""
+        all_ids = self._strategy_id
+        if timing is None:
+            return all_ids
+        else:
+            res = []
+            for stg, stg_id in zip(self.strategies, all_ids):
+                if stg.strategy_run_timing == timing:
                     res.append(stg_id)
             return res
 
@@ -1134,7 +1259,7 @@ class Operator:
                             'H': 'high',
                             'L': 'low',
                             'C': 'close'}
-        price_types = self.bt_price_types
+        price_types = self.strategy_timings
         for p_type in priority.upper():
             price_type_name = price_type_table[p_type]
             if price_type_name not in price_types:
@@ -1157,7 +1282,7 @@ class Operator:
         sequence: list of str
             返回一个list，包含每一个交易策略在回测时的执行先后顺序
         """
-        price_types = self.bt_price_types
+        price_types = self.strategy_timings
         price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
         return [price_types[i] for i in price_priority_list]
 
@@ -1273,7 +1398,7 @@ class Operator:
                 stg.update_pars(opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
-    def set_blender(self, blender=None, price_type=None):
+    def set_blender(self, blender=None, run_timing=None):
         """ 统一的blender混合器属性设置入口
 
         Parameters
@@ -1281,7 +1406,7 @@ class Operator:
         blender: str or list of str
             一个合法的交易信号混合表达式当price_type为None时，可以接受list为参数，
             同时为所有的price_type设置混合表达式
-        price_type: str,
+        run_timing: str,
             一个字符串，用于指定需要混合的交易信号的价格类型，
             如果给出price_type则设置该price_type的策略的混合表达式
             如果price_type为None，则设置所有price_type的策略的混合表达式，此时：
@@ -1305,8 +1430,8 @@ class Operator:
         Examples
         --------
         >>> op = Operator('dma, macd')
-        >>> op.set_parameter('dma', price_type='close')
-        >>> op.set_parameter('macd', price_type='open')
+        >>> op.set_parameter('dma', run_timing='close')
+        >>> op.set_parameter('macd', run_timing='open')
 
         >>> # 设置open的策略混合模式
         >>> op.set_blender('1+2', 'open')
@@ -1325,7 +1450,7 @@ class Operator:
         """
         if self.strategy_count == 0:
             return
-        if price_type is None:
+        if run_timing is None:
             # 当price_type没有显式给出时，同时为所有的price_type设置blender，此时区分多种情况：
             if blender is None:
                 # price_type和blender都为空，退出
@@ -1335,82 +1460,82 @@ class Operator:
                 blender = [blender]
             if isinstance(blender, list):
                 # 将列表中的blender补齐数量后，递归调用本函数，分别赋予所有的price_type
-                len_diff = self.bt_price_type_count - len(blender)
+                len_diff = self.strategy_timing_count - len(blender)
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
-                for bldr, pt in zip(blender, self.bt_price_types):
-                    self.set_blender(price_type=pt, blender=bldr)
+                for bldr, pt in zip(blender, self.strategy_timings):
+                    self.set_blender(blender=bldr, run_timing=pt)
             else:
                 raise TypeError(f'Wrong type of blender, a string or a list of strings should be given,'
                                 f' got {type(blender)} instead')
             return
-        if isinstance(price_type, str):
+        if isinstance(run_timing, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
-            if price_type not in self.bt_price_types:
+            if run_timing not in self.strategy_timings:
                 warnings.warn(
                         f'\n'
-                        f'Given price type \'{price_type}\' is not in valid price type list of \n'
+                        f'Given price type \'{run_timing}\' is not in valid price type list of \n'
                         f'current Operator, no blender will be created!\n'
-                        f'current valid price type list as following:\n{self.bt_price_types}')
+                        f'current valid price type list as following:\n{self.strategy_timings}')
                 return
             if isinstance(blender, str):
                 try:
                     parsed_blender = blender_parser(blender)
-                    self._stg_blender[price_type] = parsed_blender
-                    self._stg_blender_strings[price_type] = blender
+                    self._stg_blender[run_timing] = parsed_blender
+                    self._stg_blender_strings[run_timing] = blender
                 except:
-                    self._stg_blender_strings[price_type] = None
-                    self._stg_blender[price_type] = []
+                    self._stg_blender_strings[run_timing] = None
+                    self._stg_blender[run_timing] = []
             else:
                 # 忽略类型不正确的blender输入
-                self._stg_blender_strings[price_type] = None
-                self._stg_blender[price_type] = []
+                self._stg_blender_strings[run_timing] = None
+                self._stg_blender[run_timing] = []
         else:
-            raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
+            raise TypeError(f'price_type should be a string, got {type(run_timing)} instead')
         return
 
-    def get_blender(self, price_type=None):
+    def get_blender(self, run_timing=None):
         """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
 
         Parameters
         ----------
-        price_type: str
+        run_timing: str
             一个可用的price_type
 
         Returns
         -------
         blender: dict or list
-            如果price_type为None，则返回一个字典，其中包含所有的price_type的blender
-            如果price_type不为None，则返回一个列表，其中包含该price_type的blender
+            如果price_type为None，则返回一个字典，其中包含所有的run_timing的blender
+            如果price_type不为None，则返回一个列表，其中包含该run_timing的blender
         """
-        if price_type is None:
+        if run_timing is None:
             return self._stg_blender
-        if price_type not in self.bt_price_types:
+        if run_timing not in self.strategy_timings:
             return None
-        if price_type not in self._stg_blender:
+        if run_timing not in self._stg_blender:
             return None
-        return self._stg_blender[price_type]
+        return self._stg_blender[run_timing]
 
-    def view_blender(self, price_type=None):
+    def view_blender(self, run_timing=None):
         """ TODO: 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
              版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
 
         Parameters
         ----------
-        price_type: str
-            一个可用的price_type
+        run_timing: str
+            一个可用的run_timing
 
         """
         # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
         #  例如： blender string: 's0 + s1 + s2'
         #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
-        if price_type is None:
+        if run_timing is None:
             return self._stg_blender_strings
-        if price_type not in self.bt_price_types:
+        if run_timing not in self.strategy_timings:
             return None
-        if price_type not in self._stg_blender:
+        if run_timing not in self._stg_blender:
             return None
-        return self._stg_blender_strings[price_type]
+        return self._stg_blender_strings[run_timing]
 
     def set_parameter(self,
                       stg_id: [str, int],
@@ -1419,10 +1544,10 @@ class Operator:
                       par_range: [tuple, list] = None,
                       par_types: [list, str] = None,
                       data_freq: str = None,
-                      sample_freq: str = None,
+                      strategy_run_freq: str = None,
                       window_length: int = None,
-                      data_types: [str, list] = None,
-                      bt_price_type: str = None,
+                      strategy_data_types: [str, list] = None,
+                      strategy_run_timing: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
 
@@ -1449,18 +1574,17 @@ class Operator:
             enum - 枚举类型或给定列表中的元素
         data_freq: str,
             数据频率，策略本身所使用的数据的采样频率
-        sample_freq: str,
-            采样频率，策略运行时进行信号生成的采样频率，该采样频率决定了信号的频率
+        strategy_run_freq: str,
+            运行频率，策略运行时进行信号生成的频率
+        strategy_run_timing: str,
+            策略的运行时机
         window_length: int,
             窗口长度：策略计算的前视窗口长度
-        data_types: str or list,
+        strategy_data_types: str or list,
             策略计算所需历史数据的数据类型
-        bt_price_type: str,
-            策略回测交易时使用的交易价格类型
+        kwargs: dict,
+            其他参数
 
-        Returns
-        -------
-        None
         """
         assert isinstance(stg_id, (int, str)), f'stg_id should be a int or a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
@@ -1481,22 +1605,21 @@ class Operator:
         if par_types is not None:  # 设置策略的参数类型
             strategy.par_types = par_types
         has_df = data_freq is not None
-        has_sf = sample_freq is not None
+        has_sf = strategy_run_freq is not None
         has_wl = window_length is not None
-        has_dt = data_types is not None
-        has_pt = bt_price_type is not None
+        has_dt = strategy_data_types is not None
+        has_pt = strategy_run_timing is not None
         if has_df or has_sf or has_wl or has_dt or has_pt:
             strategy.set_hist_pars(data_freq=data_freq,
-                                   sample_freq=sample_freq,
+                                   strategy_run_freq=strategy_run_freq,
                                    window_length=window_length,
-                                   data_types=data_types,
-                                   bt_price_type=bt_price_type)
+                                   strategy_data_types=strategy_data_types,
+                                   strategy_run_timing=strategy_run_timing)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 
     # =================================================
     # 下面是Operation模块的公有方法：
-    # TODO: 改造operator.info()，采用更加简明扼要的方式显示Operator的关键信息
     def info(self, verbose=False):
         """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
 
@@ -1520,42 +1643,43 @@ class Operator:
             'stepwise': 'History op signals are generated one by one, every piece of signal will be back tested before '
                         'the next signal being generated.'
         }
-        print(f'    ----------Operator Information----------\n'
+        print(f'       -----------------------Operator Information-----------------------\n'
               f'Strategies:  {self.strategy_count} Strategies\n'
               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
               f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
-        # 打印各个子模块的信息：
-        if self.strategy_count > 0:
-            print(f'    ---------------Strategies---------------\n'
-                  f'{"id":<10}'
-                  f'{"name":<15}'
-                  f'{"back_test_price":<15}'
-                  f'{"d_freq":^10}'
-                  f'{"s_freq":^10}'
-                  f'{"date_types":<10}\n'
-                  f'{"_" * 70}')
-            for stg_id, stg in self.get_strategy_id_pairs():
-                print(f'{truncate_string(stg_id, 10):<10}'
-                      f'{truncate_string(stg.name, 15):<15}'
-                      f'{truncate_string(stg.bt_price_type, 15):^15}'
-                      f'{truncate_string(stg.data_freq, 10):^10}'
-                      f'{truncate_string(stg.sample_freq, 10):^10}'
-                      f'{stg.data_types}')
-            print('=' * 70)
         # 打印blender的信息：
-        for price_type in self.bt_price_types:
-            print(f'for backtest histoty price type - {price_type}:')
+        for run_timing in self.strategy_timings:
+            print(f'       ------------------------Strategy blenders-------------------------')
+            print(f'for strategy running timing - {run_timing}:')
             if self.strategy_blenders != {}:
-                print(f'signal blenders: {self.view_blender(price_type)}')
+                print(f'signal blenders: {self.view_blender(run_timing)}\n')
             else:
-                print(f'no blender')
+                print(f'no blender\n')
+        # 打印各个strategy的基本信息：
+        if (self.strategy_count > 0) and (not verbose):
+            print(f'       ----------------------------Strategies----------------------------\n'
+                  f'{"id":<10}'
+                  f'{"name":<19}'
+                  f'{"run type":^16}'
+                  f'{"run freq":^10}'
+                  f'{"data types":^25}\n'
+                  f'{"_" * 80}')
+            for stg_id, stg in self.get_strategy_id_pairs():
+                run_type_str = stg.strategy_run_freq + ' @ ' + stg.strategy_run_timing
+                data_type_str = str(stg.window_length) + ' ' + stg.data_freq
+                print(f'{truncate_string(stg_id, 10):<10}'
+                      f'{truncate_string(stg.name, 19):<19}'
+                      f'{truncate_string(run_type_str, 16):^16}'
+                      f'{truncate_string(data_type_str, 10):^10}'
+                      f'{truncate_string(str(stg.history_data_types), 25):^25}')
+            print('=' * 80)
         # 打印每个strategy的详细信息
-        if verbose:
-            print('\n    ------------Strategy Details------------')
+        if (self.strategy_count > 0) and verbose:
+            print('       -------------------------Strategy Details-------------------------')
             for stg_id, stg in self.get_strategy_id_pairs():
                 print(f'Strategy_ID:        {stg_id}')
                 stg.info()
-            print('=' * 70)
+            print('=' * 80)
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
@@ -1599,7 +1723,14 @@ class Operator:
     # TODO: 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
     # TODO: 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
-    def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
+    def assign_hist_data(
+            self,
+            hist_data: HistoryPanel,
+            cash_plan: CashPlan,
+            reference_data=None,
+            live_mode=False,
+            live_running_stgs=None,
+    ):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
         检查hist_data历史数据的类型正确；
@@ -1616,24 +1747,45 @@ class Operator:
         然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
         切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。包括：
 
-        self._op_hist_data:
-            交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
-        self._op_ref_data:
-            交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
-        self._op_sample_idx:
-            交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
+            self._op_hist_data:
+                交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
+            self._op_ref_data:
+                交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
+            self._op_sample_idx:
+                交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
+                在live模式下，该序号为[1]或者[0]，[1]表示该策略会被运行，[0]表示该策略不会被运行
+
+        Parameters:
+        -----------
         hist_data: HistoryPanel
             历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
             个股所有类型的数据，
+
+            例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
+                策略        所需数据类型
+                ------------------------------
+                策略A:   close, open, high
+                策略B:   close, eps
+
+            hist_data中就应该包含close、open、high、eps四种类型的数据
+            数据覆盖的时间段和时间频率也必须符合上述要求
         cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
         reference_data: HistoryPanel
             参考数据，默认None。一个HistoryPanel对象，这些数据被operator对象中的策略用于生成交易信号，但是与history_data
             不同，参考数据与个股无关，可以被所有个股同时使用，例如大盘指数、宏观经济数据等都可以作为参考数据，某一个个股
             的历史数据也可以被用作参考数据，参考数据可以被所有个股共享。reference_data包含所有策略所需的参考数据。
+        live_mode: bool, default False
+            是否为实盘模式，如果为True，则不需要根据stg_timing设置op_sample_idx，而是直接根据live_running_stgs提供
+            的策略序号来设置op_sample_idx，如果为False，则根据stg_timing设置op_sample_idx
+        live_running_stgs: list, optional
+            在live模式下，live_running_stgs提供了一个策略序号列表，用于指定哪些策略会被运行，哪些策略不会被运行，
+            当live_mode为True时，live_running_stgs必须提供，否则会报错
+            live_running_stgs为一个包含若干策略id的列表，列表中的策略的op_sample_idx会被设置为[1]，其他策略的
+            op_sample_idx会被设置为[0]
 
-        Returns
-        -------
+        Returns:
+        --------
         None
 
         Notes
@@ -1686,6 +1838,18 @@ class Operator:
             if reference_data.is_empty:
                 reference_data = None
             # 确保reference_data与hist_data的数据量相同
+        # 检查live_mode和live_running_stgs的合法性
+        if live_mode:
+            if live_running_stgs is None:
+                raise ValueError(f'live_running_stgs must be provided when live_mode is True')
+            if not isinstance(live_running_stgs, list):
+                raise TypeError(f'live_running_stgs must be a list, got {type(live_running_stgs)} instead')
+            if len(live_running_stgs) == 0:
+                raise ValueError(f'live_running_stgs can not be empty')
+            if not all(stg_id in self.strategy_ids for stg_id in live_running_stgs):
+                raise TypeError(f'live_running_stgs must contain valid strategy ids, got '
+                                f'{[stg_id for stg_id in live_running_stgs if stg_id not in self.strategy_ids]} '
+                                f'in the list')
         # TODO 从这里开始下面的操作都应该移动到core.py中，从而吧CashPlan从Operator的设置过程中去掉
         #  使Operator与CashPlan无关。使二者脱钩
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
@@ -1694,36 +1858,37 @@ class Operator:
         operator_window_length = self.max_window_length
         op_list_hdates = hist_data.hdates[operator_window_length:]
 
-        # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
-        if first_cash_pos < self.max_window_length:
-            message = f'History data starts on {hist_data.hdates[0]} does not have' \
-                      f' enough data to cover first cash date {cash_plan.first_day}, ' \
-                      f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
-            logger_core.error(message)
-            raise ValueError(message)
-        # 如果第一个投资日不在输入的历史数据范围内，raise
-        if first_cash_pos >= len(hist_data.hdates):
-            message = f'Investment plan falls out of historical data range,' \
-                      f' history data ends on {hist_data.hdates[-1]}, first investment ' \
-                      f'on {cash_plan.last_day}'
-            logger_core.error(message)
-            raise ValueError(message)
-        # 如果最后一个投资日不在输入的历史数据范围内，不raise，只记录错误信息
-        if last_cash_pos >= len(hist_data.hdates):
-            message = f'Not enough history data record to cover complete investment plan,' \
-                      f' history data ends on {hist_data.hdates[-1]}, last investment ' \
-                      f'on {cash_plan.last_day}'
-            logger_core.error(message)
-            # raise ValueError(message)
-        # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
-        hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
-        invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
-        # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
-        if not all(invest_dates_in_hist):
-            nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
-            cash_plan.reset_dates(nearest_next)
-            logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
-                                f'trade dates')
+        if not live_mode:
+            # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
+            if first_cash_pos < self.max_window_length:
+                message = f'History data starts on {hist_data.hdates[0]} does not have' \
+                          f' enough data to cover first cash date {cash_plan.first_day}, ' \
+                          f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
+                logger_core.error(message)
+                raise ValueError(message)
+            # 如果第一个投资日不在输入的历史数据范围内，raise
+            if first_cash_pos >= len(hist_data.hdates):
+                message = f'Investment plan falls out of historical data range,' \
+                          f' history data ends on {hist_data.hdates[-1]}, first investment ' \
+                          f'on {cash_plan.last_day}'
+                logger_core.error(message)
+                raise ValueError(message)
+            # 如果最后一个投资日不在输入的历史数据范围内，不raise，只记录错误信息
+            if last_cash_pos >= len(hist_data.hdates):
+                message = f'Not enough history data record to cover complete investment plan,' \
+                          f' history data ends on {hist_data.hdates[-1]}, last investment ' \
+                          f'on {cash_plan.last_day}'
+                logger_core.error(message)
+                # raise ValueError(message)
+            # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
+            hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
+            invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
+            # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
+            if not all(invest_dates_in_hist):
+                nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
+                cash_plan.reset_dates(nearest_next)
+                logger_core.warning(f'not all dates in cash plan are on trade dates, '
+                                    f'they are moved to their nearest next trade dates')
         # TODO 到这里为止上面的操作都应该移动到core.py中
         # 确保输入的history_data有足够的htypes
         hist_data_types = hist_data.htypes
@@ -1741,14 +1906,13 @@ class Operator:
             logger_core.info(f'User-defined Signal blenders do not exist, default ones will be created!')
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
-            for price_type in self.bt_price_types:
-                stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
+            for price_type in self.strategy_timings:
+                stg_count_for_price_type = self.get_strategy_count_by_run_timing(price_type)
                 strategy_indices = ('s' + idx for idx in map(str, range(stg_count_for_price_type)))
-                self.set_blender(price_type=price_type,
-                                 blender='+'.join(strategy_indices))
+                self.set_blender(blender='+'.join(strategy_indices), run_timing=price_type)
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
-            stg_id: hist_data[stg.data_types, :, :]
+            stg_id: hist_data[stg.history_data_types, :, :]
             for stg_id, stg in self.get_strategy_id_pairs()
         }
         # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
@@ -1777,6 +1941,23 @@ class Operator:
             # 一个offset变量用来调整生成滑窗的总数量，确保不管window_length如何变化，滑窗数量相同
             window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]
+            # debug
+            # 这里会产生window_length比hist_data_val更长的错误，原因是没有取到足够长的历史数据窗口
+            # 检查原因，可能跟config中的invest_start参数有关，在core.py的函数check_and_prepare_hist_data()
+            # 中，在1999行，
+            # axis_length = list(hist_data_val.shape)[1]
+            # if axis_length <= window_length:
+            #     print(f'[DEBUG] in function assign_hist_data(), \n'
+            #           f'got hist_data_val for strategy ({stg_id}) shape: '
+            #           f'{hist_data_val.shape} \n'
+            #           f'while window_length: {window_length}\n'
+            #           f'function arguments: \n'
+            #           f'hist_data ({hist_data.shape}): \n{hist_data}\n'
+            #           f'reference_data ({reference_data.shape if reference_data is not None else None}): '
+            #           f'\n{reference_data}\n'
+            #           f'cash_plan: {cash_plan}\n'
+            #           f'live_mode: {live_mode}\n'
+            #           f'live_running_stgs: {live_running_stgs}\n')
             self._op_hist_data_rolling_windows[stg_id] = rolling_window(
                     hist_data_val,
                     window=window_length,
@@ -1792,37 +1973,43 @@ class Operator:
                     axis=0
             )[window_length_offset:-1] if ref_data_val else None
 
-            # 根据策略运行频率sample_freq生成信号生成采样点序列
-            freq = stg.sample_freq
-            # 根据sample_freq生成一个策略运行采样日期序列
-            # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
-            #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
-            #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
-            #  注：
-            #  需要生成每月第一天，则freq='MS'，
-            #  生成每月最后一天，freq='M'，
-            #  生成每月第N天，则pd.date_range(freq='MS') + pd.DateOffset(days=N)
-            #  甚至，还应该进一步允许定义时间，
-            #  例如：
-            #  运行在每日9:00，则此时没有当天数据可用
-            #  运行在每日10:00，则每日有开盘价可用，但收盘价不可用
-            #  诸如此类
-            temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
-            if len(temp_date_series) <= 1:
-                # 如果sample_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
-                sample_pos = np.zeros(shape=(1,), dtype='int')
-                sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
-                self._op_sample_indices[stg_id] = sample_pos
+            if live_mode:
+                # 如果是live_trade，根据live_running_stgs生成每个策略的信号生成采样点序列
+                self._op_sample_indices[stg_id] = [1] if stg_id in live_running_stgs else []
             else:
-                # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
-                # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
-                target_dates = temp_date_series - (temp_date_series[0] - op_list_hdates[0])
-                # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
-                sample_pos = np.searchsorted(op_list_hdates, target_dates)
-                # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
-                # 这里使用一种较快的技巧方法去掉重复值
-                sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
-                self._op_sample_indices[stg_id] = sample_pos
+                # 如果不是live_trade，根据策略运行频率strategy_run_freq生成信号生成采样点序列
+                freq = stg.strategy_run_freq
+                # 根据strategy_run_freq生成一个策略运行采样日期序列
+                # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
+                #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后
+                #  一天，抑或是每月的第三天或第N天。或者每周四、每周二等等。
+                #  注：
+                #  需要生成每月第一天，则freq='MS'，
+                #  生成每月最后一天，freq='M'，
+                #  生成每月第N天，则pd.date_range(freq='MS') + pd.DateOffset(days=N)
+                #  甚至，还应该进一步允许定义时间，
+                #  例如：
+                #  运行在每日9:00，则此时没有当天数据可用
+                #  运行在每日10:00，则每日有开盘价可用，但收盘价不可用
+                #  诸如此类
+                # TODO: 另外，在live-trade模式下，策略运行采样日期时间序列决定了本次策略是否会
+                #  运行，规则是：如果需要某策略运行，则将其采样时间序列设置为[1]，如果不需要某策略运行，
+                #  则将其采样时间序列设置为[0]。这时，在运行op.create_signal时，传入参数sample_idx=1
+                #  即可。
+                temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
+                if len(temp_date_series) <= 1:
+                    # 如果strategy_run_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
+                    sample_pos = np.zeros(shape=(1,), dtype='int')
+                    sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
+                    self._op_sample_indices[stg_id] = sample_pos
+                else:
+                    # pd.date_range生成的时间序列是从op_dates未来某一天开始的，因此需要使用pd.Timedelta将它平移到op_dates第一天。
+                    target_dates = temp_date_series - (temp_date_series[0] - op_list_hdates[0])
+                    # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
+                    sample_pos = np.searchsorted(op_list_hdates, target_dates)
+                    # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值，这里使用一种较快的技巧方法去重
+                    sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
+                    self._op_sample_indices[stg_id] = sample_pos
 
         # TODO: 检查生成的数据滑窗是否有问题，如果有问题则提出改进建议，
         #  例如：检查是否有部分滑窗存在全NaN数据？
@@ -1832,27 +2019,27 @@ class Operator:
         self._op_signals_by_price_type_idx = {
             price_type_idx: [] for
             price_type_idx in
-            range(self.bt_price_type_count)
+            range(self.strategy_timing_count)
         }
         self._op_signal_indices_by_price_type_idx = {
             price_type_idx: [] for
             price_type_idx in
-            range(self.bt_price_type_count)
+            range(self.strategy_timing_count)
         }
 
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
         self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
-        self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
-                                                                                range(self.bt_price_type_count))}
+        self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.strategy_timings,
+                                                                                range(self.strategy_timing_count))}
 
         # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
-        for price_type_idx in range(self.bt_price_type_count):
+        for price_type_idx in range(self.strategy_timing_count):
             # 按照price_type_idx逐个生成数据并填充
-            # TODO: 在realtime模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
-            price_type = self.bt_price_types[price_type_idx]
-            stg_count = self.get_strategy_count_by_price_type(price_type)
+            # TODO: 在live模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
+            price_type = self.strategy_timings[price_type_idx]
+            stg_count = self.get_strategy_count_by_run_timing(price_type)
             self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
             self._op_signal_indices_by_price_type_idx[price_type_idx] = [0] * stg_count
 
@@ -1917,7 +2104,7 @@ class Operator:
             如果参数为array，则计算完整的交易信号清单
         price_type_idx: None, int
             回测价格类型序号
-            如果给出sample_ix，必须给出这个参数
+            如果给出sample_idx，必须给出这个参数
             当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
             一组信号
 
@@ -1938,42 +2125,41 @@ class Operator:
         # 如果price_type_idx给出时，只计算这个price_type的交易信号
         signal_out = {}
         if price_type_idx is None:
-            bt_price_types = self.bt_price_types
+            run_timings = self.strategy_timings
         else:
-            bt_price_types = [self.bt_price_types[price_type_idx]]
-        bt_price_type_count = len(bt_price_types)
+            run_timings = [self.strategy_timings[price_type_idx]]
+        bt_price_type_count = len(run_timings)
         all_zero_signal = np.zeros(len(self._op_list_shares), dtype='float')
-        for bt_price_type in bt_price_types:
+        for timing in run_timings:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
-            relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
-            relevant_hist_data = self.get_op_history_data_by_price_type(
-                    price_type=bt_price_type,
+            relevant_strategies = self.get_strategies_by_run_timing(timing=timing)
+            relevant_hist_data = self.get_op_history_data_by_run_timing(
+                    timing=timing,
                     get_rolling_window=True
             )
-            relevant_ref_data = self.get_op_ref_data_by_price_type(
-                    price_type=bt_price_type,
+            relevant_ref_data = self.get_op_ref_data_by_run_timing(
+                    timing=timing,
                     get_rolling_window=True
             )
             if sample_idx is None:
                 # TODO: 这里的signal_mode实际上就是self.op_type。但是self.op_type并没有
                 #  在create_signal过程中起到任何作用，应该考虑op_type和sample_idx的关系，
                 #  将sample_idx的使用方法简化:
-                #  例如，
+                #  例如:
                 #  - 在生成信号之前检查sample_idx的类型，并加以调整
                 #  - 根据op_type确定运行模式
                 signal_mode = 'batch'   # TODO: self.op_type == 'batch'
-                relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
+                relevant_sample_indices = self.get_op_sample_indices_by_run_timing(timing=timing)
             else:
                 # stepwise运行，此时逐个比较sample_idx与op_sample_indices_by_price_type，只有sample_idx在其中时，才运行
                 # 此时strategy必须配套修改：当sample_idx为None时，策略输出也为None，即不运行
                 signal_mode = 'stepwise'
                 relevant_sample_indices = [sample_idx if sample_idx in _ else None
                                            for _ in
-                                           self.get_op_sample_indices_by_price_type(
-                                                   price_type=bt_price_type
+                                           self.get_op_sample_indices_by_run_timing(
+                                                   timing=timing
                                            )]
-            # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            ###############
+            # 依次使用策略队列中的所有策略逐个生成交易信号
             op_signals = [
                 stg.generate(hist_data=hd,
                              ref_data=rd,
@@ -2022,19 +2208,19 @@ class Operator:
             # 根据蒙板混合前缀表达式混合所有蒙板
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
-            signal_blender = self.get_blender(bt_price_type)
+            signal_blender = self.get_blender(timing)
             blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
                 self._op_signal = blended_signal
                 self._op_signal_index = sample_idx
-                self._op_signal_price_type_idx = bt_price_type
+                self._op_signal_price_type_idx = timing
                 return blended_signal
-            signal_out[bt_price_type] = blended_signal
+            signal_out[timing] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股
         signal_shape = blended_signal.T.shape
         signal_value = np.empty((*signal_shape, bt_price_type_count), dtype='float')
-        for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
-            signal_value[:, :, i] = signal_out[bt_price_type].T
+        for i, timing in zip(range(bt_price_type_count), run_timings):
+            signal_value[:, :, i] = signal_out[timing].T
         self._op_list = signal_value
         return signal_value

@@ -82,7 +82,7 @@ class Crossline(RuleIterator):
                          name='CROSSLINE',
                          description='Moving average crossline strategy, determine long/short position according '
                                      'to the cross point of long and short term moving average prices ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -131,7 +131,7 @@ class CDL(RuleIterator):
                          name='CDL INDICATOR',
                          description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
-                         data_types='open,high,low,close')
+                         strategy_data_types='open,high,low,close')
 
     def realize(self, h, r=None, t=None, pars=None):
         h = h.T
@@ -173,7 +173,7 @@ class SoftBBand(RuleIterator):
                          name='Soft Bolinger Band',
                          description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
                          window_length=200,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -227,9 +227,9 @@ class BBand(RuleIterator):
                          name='BBand',
                          description='BBand strategy, determine long/short position according to Bollinger bands',
                          data_freq='d',
-                         sample_freq='d',
+                         strategy_run_freq='d',
                          window_length=270,
-                         data_types=['close'])
+                         strategy_data_types=['close'])
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -287,7 +287,7 @@ class SCRSSMA(RuleIterator):
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - SMA',
                          description='Single moving average strategy that uses simple moving average as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -330,7 +330,7 @@ class SCRSDEMA(RuleIterator):
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - DEMA',
                          description='Single moving average strategy that uses DEMA as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -373,7 +373,7 @@ class SCRSEMA(RuleIterator):
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - EMA',
                          description='Single moving average strategy that uses EMA as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -416,7 +416,7 @@ class SCRSHT(RuleIterator):
                          par_range=[],
                          name='SINGLE CROSSLINE - HT',
                          description='Single moving average strategy that uses HT line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         h = h.T
@@ -456,7 +456,7 @@ class SCRSKAMA(RuleIterator):
                          name='SINGLE CROSSLINE - KAMA',
                          description='Single moving average strategy that uses KAMA line as the '
                                   'trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -501,7 +501,7 @@ class SCRSMAMA(RuleIterator):
                          name='SINGLE CROSSLINE - MAMA',
                          description='Single moving average strategy that uses MAMA line as the '
                                      'trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -545,7 +545,7 @@ class SCRST3(RuleIterator):
                          par_range=[(2, 20), (0, 1)],
                          name='SINGLE CROSSLINE - T3',
                          description='Single moving average strategy that uses T3 line as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -589,7 +589,7 @@ class SCRSTEMA(RuleIterator):
                          name='SINGLE CROSSLINE - TEMA',
                          description='Single moving average strategy that uses TEMA line as the '
                                      'trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -633,7 +633,7 @@ class SCRSTRIMA(RuleIterator):
                          name='SINGLE CROSSLINE - TRIMA',
                          description='Single moving average strategy that uses TRIMA line as the '
                                      'trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -677,7 +677,7 @@ class SCRSWMA(RuleIterator):
                          name='SINGLE CROSSLINE - WMA',
                          description='Single moving average strategy that uses MAMA line as the '
                                      'trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -730,7 +730,7 @@ class DCRSSMA(RuleIterator):
                          par_range=[(3, 250), (3, 250)],
                          name='SINGLE CROSSLINE - SMA',
                          description='Double moving average strategy that uses simple moving average as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -775,7 +775,7 @@ class DCRSDEMA(RuleIterator):
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - DEMA',
                          description='Double moving average strategy that uses DEMA as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -820,7 +820,7 @@ class DCRSEMA(RuleIterator):
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - EMA',
                          description='Double moving average strategy that uses EMA as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -865,7 +865,7 @@ class DCRSKAMA(RuleIterator):
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - KAMA',
                          description='Double moving average strategy that uses KAMA line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -912,7 +912,7 @@ class DCRSMAMA(RuleIterator):
                          par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
                          name='DOUBLE CROSSLINE - MAMA',
                          description='Double moving average strategy that uses MAMA line as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -959,7 +959,7 @@ class DCRST3(RuleIterator):
                          par_range=[(2, 20), (0, 1), (2, 20), (0, 1)],
                          name='DOUBLE CROSSLINE - T3',
                          description='Double moving average strategy that uses T3 line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1004,7 +1004,7 @@ class DCRSTEMA(RuleIterator):
                          par_range=[(2, 20), (2, 20)],
                          name='DOUBLE CROSSLINE - TEMA',
                          description='Double moving average strategy that uses TEMA line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1049,7 +1049,7 @@ class DCRSTRIMA(RuleIterator):
                          par_range=[(3, 200), (3, 200)],
                          name='DOUBLE CROSSLINE - TRIMA',
                          description='Double moving average strategy that uses TRIMA line as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1094,7 +1094,7 @@ class DCRSWMA(RuleIterator):
                          par_range=[(3, 200), (3, 200)],
                          name='DOUBLE CROSSLINE - WMA',
                          description='Double moving average strategy that uses WMA line as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1148,7 +1148,7 @@ class SLPSMA(RuleIterator):
                          par_range=[(3, 250), (2, 20)],
                          name='SLOPE - SMA',
                          description='Smoothed Curve Slope strategy that uses simple moving average as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1198,7 +1198,7 @@ class SLPDEMA(RuleIterator):
                          par_range=[(3, 250), (2, 20)],
                          name='SLOPE - DEMA',
                          description='Smoothed Curve Slope Strategy that uses DEMA as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1247,7 +1247,7 @@ class SLPEMA(RuleIterator):
                          par_range=[(3, 250), (2, 20)],
                          name='SLOPE - EMA',
                          description='Smoothed Curve Slope Strategy that uses EMA as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1296,7 +1296,7 @@ class SLPHT(RuleIterator):
                          name='SLOPE - HT',
                          description='Smoothed Curve Slope Strategy that uses HT line as the '
                                      'trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1346,7 +1346,7 @@ class SLPKAMA(RuleIterator):
                          name='SLOPE - KAMA',
                          description='Smoothed Curve Slope Strategy that uses KAMA line as the '
                                      'trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1396,7 +1396,7 @@ class SLPMAMA(RuleIterator):
                          par_range=[(0.01, 0.99), (0.01, 0.99), (2, 20)],
                          name='SLOPE - MAMA',
                          description='Smoothed Curve Slope Strategy that uses MAMA line as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1446,7 +1446,7 @@ class SLPT3(RuleIterator):
                          par_range=[(2, 20), (0, 1), (2, 20)],
                          name='SLOPE - T3',
                          description='Smoothed Curve Slope Strategy that uses T3 line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1495,7 +1495,7 @@ class SLPTEMA(RuleIterator):
                          par_range=[(2, 20), (2, 20)],
                          name='SLOPE - TEMA',
                          description='Smoothed Curve Slope Strategy that uses TEMA line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1544,7 +1544,7 @@ class SLPTRIMA(RuleIterator):
                          par_range=[(3, 200), (2, 20)],
                          name='SLOPE - TRIMA',
                          description='Smoothed Curve Slope Strategy that uses TRIMA line as the trade line',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1593,7 +1593,7 @@ class SLPWMA(RuleIterator):
                          par_range=[(3, 200), (2, 20)],
                          name='SLOPE - WMA',
                          description='Smoothed Curve Slope Strategy that uses WMA line as the trade line ',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1644,7 +1644,7 @@ class SAREXT(RuleIterator):
                          name='Parabolic SAREXT',
                          description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
                          window_length=200,
-                         data_types='high, low')
+                         strategy_data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1696,7 +1696,7 @@ class MACD(RuleIterator):
                          name='MACD',
                          description='MACD strategy, determine long/short position according to differences of '
                                      'exponential weighted moving average prices',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1745,9 +1745,9 @@ class TRIX(RuleIterator):
                          description='TRIX strategy, determine long/short position according to triple exponential '
                                      'weighted moving average prices',
                          data_freq='d',
-                         sample_freq='d',
+                         strategy_run_freq='d',
                          window_length=270,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1794,7 +1794,7 @@ class ADX(RuleIterator):
                          name='ADX',
                          description='Average Directional Movement Index, determine buy/sell signals by ADX Indicator',
                          window_length=200,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1848,7 +1848,7 @@ class APO(RuleIterator):
                          name='APO',
                          description='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
                          window_length=200,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1902,7 +1902,7 @@ class AROON(RuleIterator):
                          name='AROON',
                          description='Aroon, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
-                         data_types='high, low')
+                         strategy_data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -1958,7 +1958,7 @@ class AROONOSC(RuleIterator):
                          name='AROON Oscillator',
                          description='Aroon Oscillator, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
-                         data_types='high, low')
+                         strategy_data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2014,7 +2014,7 @@ class CCI(RuleIterator):
                          name='CCI',
                          description='CCI, determine long/short positions according to CC Indicators',
                          window_length=200,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2070,7 +2070,7 @@ class CMO(RuleIterator):
                          name='CMO',
                          description='CMO, determine long/short positions according to CMO Indicators',
                          window_length=200,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2128,7 +2128,7 @@ class MACDEXT(RuleIterator):
                          name='MACD Extension',
                          description='MACD Extension, determine long/short position according to extended MACD',
                          window_length=200,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2175,7 +2175,7 @@ class MFI(RuleIterator):
                          name='MFI',
                          description='MFI, determine buy/sell signals according to MFI Indicators',
                          window_length=200,
-                         data_types='high, low, close, volume')
+                         strategy_data_types='high, low, close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2225,7 +2225,7 @@ class DI(RuleIterator):
                          name='DI',
                          description='DI, determine long/short positions according to +/- DI Indicators',
                          window_length=200,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2278,7 +2278,7 @@ class DM(RuleIterator):
                          name='DM',
                          description='DM, determine long/short positions according to +/- DM Indicators',
                          window_length=200,
-                         data_types='high, low')
+                         strategy_data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2329,7 +2329,7 @@ class MOM(RuleIterator):
                          name='MOM',
                          description='MOM, determine long/short positions according to MOM Indicators',
                          window_length=100,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2382,7 +2382,7 @@ class PPO(RuleIterator):
                          name='PPO',
                          description='PPO, determine long/short positions according to PPO Indicators',
                          window_length=100,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2435,7 +2435,7 @@ class RSI(RuleIterator):
                          name='RSI',
                          description='RSI, determine long/short positions according to RSI Indicators',
                          window_length=100,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2489,7 +2489,7 @@ class STOCH(RuleIterator):
                          name='Stochastic',
                          description='Stochastic, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2541,7 +2541,7 @@ class STOCHF(RuleIterator):
                          name='Fast Stochastic',
                          description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2594,7 +2594,7 @@ class STOCHRSI(RuleIterator):
                          name='Stochastic RSI',
                          description='Stochastic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
                          window_length=100,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2647,7 +2647,7 @@ class ULTOSC(RuleIterator):
                          name='Ultimate Oscillator',
                          description='Ultimate Oscillator, determine buy/sell signals according to multiple momentum',
                          window_length=100,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2698,7 +2698,7 @@ class WILLR(RuleIterator):
                          name='Williams\' R',
                          description='Williams R, determine buy/sell signals according to Williams R',
                          window_length=100,
-                         data_types='high, low, close')
+                         strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2731,7 +2731,7 @@ class AD(RuleIterator):
                          name='AD',
                          description='Accumulation Distribution Line Strategy',
                          window_length=100,
-                         data_types='high, low, close, volume')
+                         strategy_data_types='high, low, close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
         h = h.T
@@ -2757,7 +2757,7 @@ class ADOSC(RuleIterator):
                          name='A/D Oscillator',
                          description='Accumulation Distribution Line Oscillator',
                          window_length=100,
-                         data_types='high, low, close, volume')
+                         strategy_data_types='high, low, close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2787,7 +2787,7 @@ class OBV(RuleIterator):
                          name='AD',
                          description='Accumulation Distribution Line Strategy',
                          window_length=100,
-                         data_types='close, volume')
+                         strategy_data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
         h = h.T
@@ -3052,7 +3052,7 @@ class DMA(RuleIterator):
                          name='DMA',
                          description='Quick DMA strategy, determine long/short position according to differences of '
                                      'moving average prices with simple timing strategy',
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -3241,9 +3241,9 @@ class SelectingAvgIndicator(FactorSorter):
                          name='FINANCE',
                          description='GeneralStg share_pool according to financial report EPS indicator',
                          data_freq='d',
-                         sample_freq='y',
+                         strategy_run_freq='y',
                          window_length=90,
-                         data_types='eps')
+                         strategy_data_types='eps')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is not None:
@@ -3300,9 +3300,9 @@ class SelectingNDayLast(FactorSorter):
                          name='N-DAY LAST',
                          description='Select stocks according their previous prices',
                          data_freq='d',
-                         sample_freq='m',
+                         strategy_run_freq='m',
                          window_length=100,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -3361,9 +3361,9 @@ class SelectingNDayAvg(FactorSorter):
                          name='N-DAY AVG',
                          description='Select stocks by its N day average open price',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -3423,9 +3423,9 @@ class SelectingNDayChange(FactorSorter):
                          name='N-DAY CHANGE',
                          description='Select stocks by its N day price change',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -3486,9 +3486,9 @@ class SelectingNDayRateChange(FactorSorter):
                          name='N-DAY RATE',
                          description='Select stocks by its N day price change',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
-                         data_types='close')
+                         strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -3510,7 +3510,7 @@ class SelectingNDayVolatility(FactorSorter):
     信号类型：
         PT型：百分比持仓比例信号
     信号规则：
-        在每个选股周期使用以前n天的股价波动率作为选股因子进行选股
+        在每个选股周期使用以前n天的股价的ATR波动率作为选股因子进行选股
         通过以下策略属性控制选股方法：
         *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
         *condition:         str ,   确定股票的筛选条件，默认值'any'
@@ -3548,9 +3548,9 @@ class SelectingNDayVolatility(FactorSorter):
                          name='N-DAY VOL',
                          description='Select stocks by its N day price change',
                          data_freq='d',
-                         sample_freq='M',
+                         strategy_run_freq='M',
                          window_length=150,
-                         data_types='high,low,close')
+                         strategy_data_types='high,low,close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -3560,7 +3560,9 @@ class SelectingNDayVolatility(FactorSorter):
         high = h[:, :, 0]
         low = h[:, :, 1]
         close = h[:, :, 2]
-        factors = atr(high, low, close, n)
+
+        # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
+        factors = np.array(list(map(atr, high, low, close, [n]*len(high))))[:, -1]
 
         return factors
 

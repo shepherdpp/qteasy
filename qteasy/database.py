@@ -16,9 +16,10 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day, input_to_list
+from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
+from .utilfuncs import freq_dither, parse_freq_string, next_main_freq, get_main_freq_level
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
@@ -1051,7 +1052,7 @@ DATA_TABLE_MAP = {
     ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '股票技术指标 - 近3月涨幅'],
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
-
+# Table_masters，用于存储表的基本信息
 TABLE_MASTER_COLUMNS = ['schema', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                         'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                         'start_end_chunk_size']
@@ -1063,8 +1064,8 @@ TABLE_MASTERS = {
     'sys_op_positions':
         ['sys_op_positions', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', ''],
 
-    'sys_op_trade_signals':
-        ['sys_op_trade_signals', '实盘运行交易信号记录表', 'sys', '', '', '', '', '', '', '', '', ''],
+    'sys_op_trade_orders':
+        ['sys_op_trade_orders', '实盘运行交易订单记录表', 'sys', '', '', '', '', '', '', '', '', ''],
 
     'sys_op_trade_results':
         ['sys_op_trade_results', '实盘运行交易结果记录表', 'sys', '', '', '', '', '', '', '', '', ''],
@@ -1309,42 +1310,42 @@ TABLE_MASTERS = {
          'Y', ''],
 
 }
-# 定义Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
+# Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_SCHEMA = {
 
     # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
-    'sys_op_live_accounts':
-        {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash'],
-         'dtypes':     ['int', 'varchar(20)', 'datetime', 'float', 'float'],
-         'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额'],
+    'sys_op_live_accounts':  # 交易账户表
+        {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash', 'total_invest'],
+         'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double', 'double'],
+         'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额', '总投资额'],
+         'prime_keys': [0],
+         },
+
+    'sys_op_positions':  # 持仓表
+        {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty', 'cost'],
+         'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'double', 'double', 'double'],
+         'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量', '持仓成本'],
+         'prime_keys': [0],
+         },
+
+    'sys_op_trade_orders':  # 交易订单表
+        {'columns':    ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
+                        'submitted_time', 'status'],
+         'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'double', 'double',
+                        'datetime', 'varchar(15)'],
+         'remarks':    ['交易订单ID', '持仓ID', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)', '委托数量', '委托报价',
+                        '委托时间', '状态(提交submitted/部分成交partial-filled/全部成交filled/取消canceled)'],
          'prime_keys': [0]
          },
 
-    'sys_op_positions':
-        {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty'],
-         'dtypes':     ['int', 'int', 'varchar(20)', 'byte', 'float', 'float'],
-         'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量'],
-         'prime_keys': [0]
-         },
-
-    'sys_op_trade_signals':
-        {'columns':    ['signal_id', 'symbol', 'position', 'direction', 'order_type',
-                        'qty', 'price', 'submitted_time', 'status'],
-         'dtypes':     ['int', 'varchar(20)', 'varchar(5)', 'varchar(10)', 'varchar(5)',
-                        'float', 'float', 'datetime', 'varchar(5)'],
-         'remarks':    ['交易信号ID', '资产代码', '交易头寸(多long/空short)', '交易方向(买Buy/卖Sell)', '委托类型(市价单/限价单)',
-                        '委托数量', '委托报价', '委托时间', '状态(提交S/部分成交P/全部成交F/取消C)'],
-         'prime_keys': [0]
-         },
-
-    'sys_op_trade_results':
-        {'columns':    ['result_id', 'account_id', 'pos_id', 'signal_id', 'filled_qty', 'price', 'transaction_fee',
-                        'execution_time', 'canceled_qty'],
-         'dtypes':     ['int', 'int', 'int', 'int', 'float', 'float', 'float',
-                        'datetime', 'float'],
-         'remarks':    ['结果ID', '运行账号ID', '持仓ID', '交易信号ID', '成交数量', '成交价格', '交易费用',
-                        '成交时间', '取消交易数量'],
-         'prime_keys': [0]
+    'sys_op_trade_results':  # 交易结果表
+        {'columns':    ['result_id', 'order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
+                        'canceled_qty', 'delivery_amount', 'delivery_status'],
+         'dtypes':     ['int', 'int', 'double', 'double', 'double', 'datetime',
+                        'double', 'double', 'varchar(2)'],
+         'remarks':    ['交易结果ID', '交易订单ID', '成交数量', '成交价格', '交易费用', '成交时间',
+                        '取消交易数量', '交割数量(现金或证券)', '交割状态{ND, DL}'],
+         'prime_keys': [0],
          },
 
     'trade_calendar':
@@ -2195,6 +2196,15 @@ class DataSource:
             self.file_loc = file_loc
             self.connection_type = f'file://{file_type}@qt_root/{file_loc}'
 
+    def __del__(self):
+        """ 关闭数据库连接 """
+        if self.source_type == 'db':
+            print(f'closing database connection to {self.connection_type}')
+            print(f'self.con is {self.con}')
+            if self.con is not None:
+                # self.con.close()
+                print('connection closed')
+
     @property
     def tables(self):
         """ 所有已经建立的tables的清单"""
@@ -2218,14 +2228,24 @@ class DataSource:
         """
         raise NotImplementedError
 
-    def overview(self, print_out=True):
+    def overview(self, print_out=True, include_sys_tables=False):
         """ 以表格形式列出所有数据表的当前数据状态
 
-        :param print_out: bool, 是否打印数据表总揽
+        Parameters
+        ----------
+        print_out: bool, Default True
+            是否打印数据表总揽
+        include_sys_tables: bool, Default False
+            是否包含系统表
 
-        :return:
+        Returns
+        -------
+        pd.DataFrame, 包含所有数据表的数据状态
         """
-        all_tables = get_table_map()
+
+        all_tables = get_table_master()
+        if not include_sys_tables:
+            all_tables = all_tables[all_tables['table_usage'] != 'sys']
         all_table_names = all_tables.index
         all_info = []
         print('Analyzing local data source tables... depending on size of tables, it may take a few minutes')
@@ -2302,26 +2322,37 @@ class DataSource:
 
     def read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
                   shares=None, date_like_pk=None, start=None, end=None, chunk_size=50000):
-        """ read the file with name file_name and return the df
+        """ 从文件中读取DataFrame，当文件类型为csv时，支持分块读取且完成数据筛选
 
-        :param file_name: str， 文件名
-        :param primary_key:
-            List, 用于生成primary_key index 的主键
-        :param pk_dtypes:
-            List，primary_key的数据类型
-        :param share_like_pk:
-            str,
-        :param shares:
-            list
-        :param date_like_pk:
-        :param start:
-        :param end:
-        :param chunk_size:
-            int, 分块读取csv大文件时的分块大小
-        :return:
-            DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
+        Parameters
+        ----------
+        file_name: str
+            文件名
+        primary_key: list of str
+            用于生成primary_key index 的主键
+        pk_dtypes: list of str
+            primary_key的数据类型
+        share_like_pk: str
+            用于按值筛选数据的主键
+        shares: list of str
+            用于筛选数据的主键的值
+        date_like_pk: str
+            用于按日期筛选数据的主键
+        start: datetime-like
+            用于按日期筛选数据的起始日期
+        end: datetime-like
+            用于按日期筛选数据的结束日期
+        chunk_size: int
+            分块读取csv大文件时的分块大小
+
+        Returns
+        -------
+        DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
-        # import pdb; pdb.set_trace()
+
+        # TODO: 这里对所有读取的文件都进行筛选，需要考虑是否在read_table_data还需要筛选？
+        #  也就是说，在read_table_data级别筛选数据还是在read_file/read_database级别
+        #  筛选数据？
         file_path_name = self.get_file_path_name(file_name)
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
@@ -2345,26 +2376,56 @@ class DataSource:
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares))] for chunk in df_reader)
             df = pd.concat(df_picker)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
-        elif self.file_type == 'hdf':
-            # hdf5的大文件读取尚未优化
+
+            return df
+
+        if self.file_type == 'hdf':
+            # hdf5/feather的大文件读取尚未优化
             df = pd.read_hdf(file_path_name, 'df')
+            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'fth':
             # feather大文件读取尚未优化
             df = pd.read_feather(file_path_name)
-            set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
+
+        try:
+            # 如果self.file_type 为 hdf/fth，那么需要筛选数据
+            if (share_like_pk is not None) and (date_like_pk is not None):
+                df = df.loc[(df[share_like_pk].isin(shares)) &
+                            (df[date_like_pk] >= start) &
+                            (df[date_like_pk] <= end)]
+            elif (share_like_pk is None) and (date_like_pk is not None):
+                df = df.loc[(df[date_like_pk] >= start) &
+                            (df[date_like_pk] <= end)]
+            elif (share_like_pk is not None) and (date_like_pk is None):
+                df = df.loc[(df[share_like_pk].isin(shares))]
+        except:
+            import pdb; pdb.set_trace()
+
+        set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
 
     def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
 
-        :param table:
-        :param column:
-        :param primary_key
-        :param pk_dtypes
-        :param min_max_only: 仅输出最小、最大以及总数量
-        :return:
+        Parameters
+        ----------
+        table: str
+            数据表名
+        column: str
+            关键列名
+        primary_key: list of str
+            数据表的主键名称列表
+        pk_dtypes: list of str
+            数据表的主键数据类型列表
+        min_max_only: bool
+            为True时仅输出最小、最大以及总数量，False输出完整列表
+
+        Returns
+        -------
+        list of str
+            数据表中存储的数据关键列的清单
         """
         if not self.file_exists(table):
             return list()
@@ -2391,9 +2452,14 @@ class DataSource:
     def drop_file(self, file_name):
         """ 删除本地文件
 
-        :param file_name: 将被删除的文件名
-        :return:
-            None
+        Parameters
+        ----------
+        file_name: str
+            将被删除的文件名
+
+        Returns
+        -------
+        None
         """
         import os
         if self.file_exists(file_name):
@@ -2519,15 +2585,23 @@ class DataSource:
             raise RuntimeError(f'{e}, error in writing data into database.')
 
     def update_database(self, df, db_table, primary_key):
-        """ 用DataFrame中的数据更新数据表中的数据记录，假定
-            df的列与db_table的列相同且顺序也相同
-            在插入数据之前，必须确保表的primary_key已经正确设定
-            如果写入记录的键值存在冲突时，更新数据库中的记录
+        """ 用DataFrame中的数据更新数据表中的数据记录
 
-        :param df: 用于更新数据表的数据DataFrame
-        :param db_table: 需要更新的数据表
-        :param primary_key: 数据表的primary_key，必须定义在数据表中，如果数据库表没有primary_key，将append所有数据
-        :return:
+        假定df的列与db_table的列相同且顺序也相同
+        在插入数据之前，必须确保表的primary_key已经正确设定
+        如果写入记录的键值存在冲突时，更新数据库中的记录
+
+        Parameters
+        ----------
+        df: pd.DataFrame
+            用于更新数据表的数据DataFrame
+        db_table: str
+            需要更新的数据表
+        primary_key: tuple
+            数据表的primary_key，必须定义在数据表中，如果数据库表没有primary_key，将append所有数据
+
+        Returns
+        -------
         int: rows affected
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
@@ -2625,6 +2699,7 @@ class DataSource:
             raise RuntimeError('can not connect to database while source type is "file"')
         sql = f"SHOW TABLES LIKE '{db_table}'"
         try:
+            self.con.ping(reconnect=True)
             self.cursor.execute(sql)
             self.con.commit()
             res = self.cursor.fetchall()
@@ -2673,7 +2748,7 @@ class DataSource:
             # 如果primary key多于一个，则创建KEY INDEX
             if len(primary_key) > 1:
                 sql += ",\nKEY (`" + '`),\nKEY (`'.join(primary_key[1:]) + "`)"
-        sql += '\n)'
+        sql += '\n);'
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -2692,7 +2767,7 @@ class DataSource:
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'" \
-              f"ORDER BY ordinal_position"
+              f"ORDER BY ordinal_position;"
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -2716,7 +2791,7 @@ class DataSource:
             raise TypeError(f'Datasource is not connected to a database')
         if not isinstance(db_table, str):
             raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
-        sql = f"DROP TABLE IF EXISTS {db_table}"
+        sql = f"DROP TABLE IF EXISTS {db_table};"
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -2735,7 +2810,7 @@ class DataSource:
         sql = "SELECT table_rows, data_length + index_length " \
               "FROM information_schema.tables " \
               "WHERE table_schema = %s " \
-              "AND table_name = %s"
+              "AND table_name = %s;"
         try:
             self.cursor.execute(sql, (self.db_name, db_table))
             self.con.commit()
@@ -2819,7 +2894,7 @@ class DataSource:
                 date_like_pk = primary_key[pk_dtypes.index(date_like_dtype)]
             except Exception as e:
                 warnings.warn(f'{e}\ncan not find date-like primary key in the table {table}!\n'
-                              f'passed start and end arguments will be ignored!', RuntimeWarning)
+                              f'passed start({start}) and end({end}) arguments will be ignored!', RuntimeWarning)
 
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
@@ -2869,26 +2944,59 @@ class DataSource:
 
         return df
 
-    # TODO: 为什么需要这个函数？为什么不能用read_table_data+write_table_data()来实现？
-    def export_table_data(self, table, shares=None, start=None, end=None):
-        """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据
+    def export_table_data(self, table, file_name=None, file_path=None, shares=None, start=None, end=None):
+        """ 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据或察看数据
+
+        使用这个函数时，用户可以不用理会数据源的类型，只需要指定数据表名称，以及筛选条件即可
+        导出的数据会被保存为csv文件，用户可以自行指定文件名以及文件存储路径，如果不指定文件名，
+        则默认使用数据表名称作为文件名，如果不指定文件存储路径，则默认使用当前工作目录作为
+        文件存储路径
 
         Parameters
         ----------
         table: str
             数据表名称
-        shares: list，
+        file_name: str, optional
+            导出的文件名，如果不指定，则默认使用数据表名称作为文件名
+        file_path: str, optional
+            导出的文件存储路径，如果不指定，则默认使用当前工作目录作为文件存储路径
+        shares: list of str, optional
             ts_code筛选条件，为空时给出所有记录
-        start: str，
+        start: DateTime like, optional
             YYYYMMDD格式日期，为空时不筛选
-        end: str，
+        end: Datetime like，optional
             YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
 
         Returns
         -------
-        None
+        file_path_name: str
+            导出的文件的完整路径
         """
-        raise NotImplementedError
+        # 如果table不合法，则抛出异常
+        table_master = self.get_table_master()
+        non_sys_tables = table_master[table_master['table_usage'] != 'sys'].index.to_list()
+        if table not in non_sys_tables:
+            raise ValueError(f'Invalid table name: {table}!')
+
+        # 检查file_name是否合法
+        if file_name is None:
+            file_name = table
+        if file_path is None:
+            file_path = os.getcwd()
+        # 检查file_path_name是否存在，如果已经存在，则抛出异常
+        file_path_name = path.join(file_path, file_name)
+        if os.path.exists(file_path_name):
+            raise FileExistsError(f'File {file_path_name} already exists!')
+
+        # 读取table数据
+        df = self.read_table_data(table=table, shares=shares, start=start, end=end)
+        # 将数据写入文件
+        try:
+            df.to_csv(file_path_name)
+        except Exception as e:
+            raise RuntimeError(f'{e}, Failed to export table {table} to file {file_path_name}!')
+
+        return file_path_name
 
     def write_table_data(self, df, table, on_duplicate='ignore'):
         """ 将df中的数据写入本地数据表(本地文件或数据库)
@@ -2909,7 +3017,7 @@ class DataSource:
 
         Returns
         -------
-        int: 写入的数据条数 TODO: 此返回值需要实现
+        int: 写入的数据条数
 
         Notes
         -----
@@ -2923,11 +3031,13 @@ class DataSource:
         if table not in TABLE_MASTERS.keys():
             raise KeyError(f'Invalid table name.')
         columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
+        rows_affected = 0
         if self.source_type == 'file':
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             rows_affected = self.write_file(df, file_name=table)
         elif self.source_type == 'db':
+            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             if not self.db_table_exists(table):
                 self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':
@@ -3303,36 +3413,43 @@ class DataSource:
             return df.index.max()
         # 如果是数据库系统，直接获取最后一个id
         elif self.source_type == 'db':
+            if not self.db_table_exists(table):
+                columns, dtypes, prime_keys, pk_dtypes = get_built_in_table_schema(table)
+                self.new_db_table(table,
+                                  columns=columns,
+                                  dtypes=dtypes,
+                                  primary_key=prime_keys,
+                                  auto_increment_id=True)
+                return 0
             db_name = self.db_name
             sql = f"SELECT AUTO_INCREMENT\n" \
                   f"FROM information_schema.TABLES\n" \
-                  f"WHERE TABLE_SCHEMA = `{db_name}`\n" \
-                  f"AND TABLE_NAME = `table`;"
+                  f"WHERE `TABLE_SCHEMA` = %s\n" \
+                  f"AND `TABLE_NAME` = %s;"
+
             try:
-                self.cursor.execute(sql)
+                self.cursor.execute(sql, (db_name, table))
                 self.con.commit()
                 res = self.cursor.fetchall()
-                output = {}
-                for col, typ in results:
-                    output[col] = typ
-                return output
+                return res[0][0]-1
             except Exception as e:
-                raise RuntimeError(f'{e}, An error occurred when getting last id for table {table} with SQL:\n{sql}')
+                raise RuntimeError(f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
 
-        else: # for other unexpected cases
+        else:  # for other unexpected cases
             pass
         pass
 
-    def read_sys_table_data(self, table, id=None, **kwargs):
+    def read_sys_table_data(self, table, record_id=None, **kwargs):
         """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
 
-        每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列
+        每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列，
+        如果给出id，只返回id行记录（dict），如果不给出id，返回所有记录（DataFrame）
 
         Parameters
         ----------
         table: str
             需要读取的数据表名称
-        id: int, Default: None
+        record_id: int, Default: None
             如果给出id，只返回id行记录
         kwargs: dict
             筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
@@ -3340,59 +3457,62 @@ class DataSource:
         Returns
         -------
         data: dict
-            读取的数据，包括数据表的结构化信息以及数据表中的记录
+            当给出record_id时，读取的数据为dict，包括数据表的结构化信息以及数据表中的记录
+        pd.DataFrame:
+            当不给出record_id时，读取的数据为DataFrame，包括数据表的结构化信息以及数据表中的记录
         None:
             当输入的id或筛选条件没有匹配项时
         """
+
+        # 检查record_id是否合法
+        if record_id is not None and record_id <= 0:
+            return None
+
         ensure_sys_table(table)
 
         # 检查kwargs中是否有不可用的字段
         columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
         if any(k not in columns for k in kwargs):
-            raise KeyError(f'Some of the kwargs is not valid')
+            raise KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
 
-        id_column = p_keys[0] if (len(p_keys) == 1) and (id is not None) else None
-        id_values = [id] if id is not None else None
+        id_column = p_keys[0] if (len(p_keys) == 1) and (record_id is not None) else None
+        id_values = [record_id] if record_id else None
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
             res_df = self.read_database(table, share_like_pk=id_column, shares=id_values)
+            if res_df.empty:
+                return None
+            set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
             res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=id_column, shares=id_values)
         else:  # for other unexpected cases
             res_df = pd.DataFrame()
 
-        # import pdb; pdb.set_trace()
         if res_df.empty:
             return None
 
-        # 筛选ID，如果筛选了ID，则忽略kwargs
-        # if id is not None:
-        #     try:
-        #         return res_df.loc[id]
-        #     except KeyError:
-        #         return None
-        #     except Exception as e:
-        #         raise RuntimeError(f'{e}, An error occurred when get {id} row data from table {table}')
-
         # 筛选数据
-        for k, v in kwargs:
+        for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
 
-        if id:
-            return res_df.loc[id].to_dict()
+        if record_id is not None:
+            return res_df.loc[record_id].to_dict()
         else:
-            return res_df
+            return res_df if not res_df.empty else None
 
-    def update_sys_table_data(self, table, id, data):
+    def update_sys_table_data(self, table, record_id, **data):
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
-        每次只能更新一条数据，可以更新一个或多个字段
+
+        每次只能更新一条数据，数据以dict形式给出
+        可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。
+        id必须存在，否则抛出异常
 
         Parameters
         ----------
         table: str
             需要更新的数据表名称
-        id: int
+        record_id: int
             需要更新的数据的id
         data: dict
             需要更新的数据，包括需要更新的字段如: account_id = 123
@@ -3405,6 +3525,7 @@ class DataSource:
         Raises
         ------
         KeyError: 当给出的id不存在或为None时
+        KeyError: 当给出的字段不存在时
         """
 
         ensure_sys_table(table)
@@ -3426,16 +3547,31 @@ class DataSource:
         """
 
         # 将data构造为一个df，然后调用self.update_table_data()
-        last_id = self.get_sys_table_last_id(table)
-        if id is None or id > last_id:
-            raise KeyError(f'No such id {id} in table {table}')
+        table_data = self.read_sys_table_data(table, record_id=record_id)
+        if table_data is None:
+            raise KeyError(f'record_id({record_id}) not found in table {table}')
 
-        data = pd.DataFrame(data, index=[id])
-        self.update_table_data(table, data, merge_type='update')
-        return id
+        # 当data中有不可用的字段时，会抛出异常
+        columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
+        data_columns = [col for col in columns if col not in p_keys]
+        if any(k not in data_columns for k in data.keys()):
+            raise KeyError(f'kwargs not valid: {[k for k in data.keys() if k not in data_columns]}')
 
-    def insert_sys_table_data(self, table, data):
-        """ 插入系统操作表的数据，一次插入一条记录，不需要给出数据的ID，因为ID会自动生成
+        # 更新original_data
+        table_data.update(data)
+
+        df_data = pd.DataFrame(table_data, index=[record_id])
+        df_data.index.name = p_keys[0]
+        self.update_table_data(table, df_data, merge_type='update')
+        return record_id
+
+    def insert_sys_table_data(self, table, **data):
+        """ 插入系统操作表的数据
+
+        一次插入一条记录，数据以dict形式给出
+        不需要给出数据的ID，因为ID会自动生成
+        如果给出的数据字段不完整，则抛出异常
+        如果给出的数据中有不可用的字段，则抛出异常
 
         Parameters
         ----------
@@ -3446,8 +3582,12 @@ class DataSource:
 
         Returns
         -------
-        id: int
+        record_id: int
             更新的记录ID
+
+        Raises
+        ------
+        KeyError: 当给出的字段不完整或者有不可用的字段时
         """
 
         ensure_sys_table(table)
@@ -3501,14 +3641,22 @@ class DataSource:
 
         # 将data构造为一个df，然后调用self.update_table_data()
         last_id = self.get_sys_table_last_id(table)
-        next_id = last_id + 1 if last_id is not None else 1
-        df = pd.DataFrame(data, index=[next_id], columns=data.keys())
+        record_id = last_id + 1 if last_id is not None else 1
+        columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+        data_columns = [col for col in columns if col not in primary_keys]
+        # 检查data的key是否与data_column完全一致，如果不一致，则抛出异常
+        if any(k not in data_columns for k in data.keys()) or any(k not in data.keys() for k in data_columns):
+            raise KeyError(f'Input data keys must be the same as the table data columns, '
+                           f'got {list(data.keys())} vs {data_columns}')
+        df = pd.DataFrame(data, index=[record_id], columns=data.keys())
+        df = df.reindex(columns=columns)
+        df.index.name = primary_keys[0]
 
-        # import pdb; pdb.set_trace()
         # 插入数据
-        self.update_table_data(table, df, merge_type='ignore')
-
-        return next_id
+        self.update_table_data(table, df, merge_type='update')
+        # TODO: 这里为什么要用'ignore'而不是'update'? 现在改为'update'，
+        #  test_database和test_trading测试都能通过，后续完整测试
+        return record_id
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
@@ -3554,7 +3702,7 @@ class DataSource:
 
         Returns
         -------
-        Dict of DataFrame
+        Dict of DataFrame: {htype: DataFrame[shares]}
             一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
@@ -3562,13 +3710,13 @@ class DataSource:
             shares = str_to_list(shares)
         if isinstance(asset_type, str):
             if asset_type.lower() == 'any':
-                from utilfuncs import AVAILABLE_ASSET_TYPES
+                from qteasy.utilfuncs import AVAILABLE_ASSET_TYPES
                 asset_type = AVAILABLE_ASSET_TYPES
             else:
                 asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
-        table_map = get_table_map()
+        table_master = get_table_master()
         # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
         tables_to_read = htype_to_table_col(
                 htypes=htypes,
@@ -3622,18 +3770,22 @@ class DataSource:
                           f'{conflict_cols}', DataConflictWarning)
         # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
         if all(df.empty for df in df_by_htypes.values()):
-            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please '
-                               f'check data source availability: \n'
-                               f'check availability of all tables:  qt.get_table_overview()\nor\n'
-                               f'check specific table:              qt.get_table_info(\'table_name\')\n'
-                               f'fill datasource:                   qt.refill_data_source(table=\'table_name\', '
+            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type} with parameters:\n'
+                               f'shares: {shares}\n'
+                               f'htypes: {htypes}\n'
+                               f'start/end/freq: {start}/{end}/"{freq}"\n'
+                               f'asset_type/adj: {asset_type} / {adj}\n'
+                               f'To check data availability, use one of the following:\n'
+                               f'Availability of all tables:     qt.get_table_overview()\nor\n'
+                               f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
+                               f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         adj_factors = {}
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
-            adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
-                                               table_map.asset_type.isin(asset_type)].index.to_list()
+            adj_tables_to_read = table_master.loc[(table_master.table_usage == 'adj') &
+                                               table_master.asset_type.isin(asset_type)].index.to_list()
             for tbl in adj_tables_to_read:
                 adj_df = self.read_table_data(tbl, shares=shares, start=start, end=end)
                 if not adj_df.empty:
@@ -3727,20 +3879,9 @@ class DataSource:
             df_by_index['wt-' + idx] = weight_df
         return df_by_index
 
-    def refill_local_source(self,
-                            tables=None,
-                            dtypes=None,
-                            freqs=None,
-                            asset_types=None,
-                            start_date=None,
-                            end_date=None,
-                            code_range=None,
-                            merge_type='update',
-                            reversed_par_seq=False,
-                            parallel=True,
-                            process_count=None,
-                            chunk_size=100,
-                            save_log=False):
+    def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
+                            end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
+                            process_count=None, chunk_size=100, refresh_trade_calendar=True, log=False):
         """ 批量补充本地数据，手动或自动运行补充本地数据库
 
         Parameters
@@ -3772,7 +3913,7 @@ class DataSource:
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
         end_date: str YYYYMMDD
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        code_range: str or list of str
+        symbols: str or list of str
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'
@@ -3800,6 +3941,10 @@ class DataSource:
         chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
+        refresh_trade_calendar: Bool, Default True
+            是否刷新交易日历，默认True
+        log: Bool, Default False
+            是否记录数据下载日志
 
         Returns
         -------
@@ -3830,18 +3975,18 @@ class DataSource:
 
         code_start = None
         code_end = None
-        if code_range is not None:
-            if not isinstance(code_range, (str, list)):
-                raise TypeError(f'code_range should be a string or list, got {type(code_range)} instead.')
-            if isinstance(code_range, str):
-                if len(str_to_list(code_range, ':')) == 2:
-                    code_start, code_end = str_to_list(code_range, ':')
-                    code_range = None
+        if symbols is not None:
+            if not isinstance(symbols, (str, list)):
+                raise TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
+            if isinstance(symbols, str):
+                if len(str_to_list(symbols, ':')) == 2:
+                    code_start, code_end = str_to_list(symbols, ':')
+                    symbols = None
                 else:
-                    code_range = str_to_list(code_range, ',')
+                    symbols = str_to_list(symbols, ',')
 
         # 2 生成需要处理的数据表清单 tables
-        table_map = get_table_map()
+        table_master = get_table_master()
         tables_to_refill = set()
         tables = [item.lower() for item in tables]
         if 'all' in tables:
@@ -3852,10 +3997,10 @@ class DataSource:
                     tables_to_refill.add(item)
                 elif item in TABLE_USAGES:
                     tables_to_refill.update(
-                            table_map.loc[table_map.table_usage == item.lower()].index.to_list()
+                            table_master.loc[table_master.table_usage == item.lower()].index.to_list()
                     )
             for item in dtypes:
-                for tbl, schema in table_map.schema.iteritems():
+                for tbl, schema in table_master.schema.iteritems():
                     if item.lower() in TABLE_SCHEMA[schema]['columns']:
                         tables_to_refill.add(tbl)
 
@@ -3863,7 +4008,7 @@ class DataSource:
                 tables_to_keep = set()
                 for freq in str_to_list(freqs):
                     tables_to_keep.update(
-                            table_map.loc[table_map.freq == freq.lower()].index.to_list()
+                            table_master.loc[table_master.freq == freq.lower()].index.to_list()
                     )
                 tables_to_refill.intersection_update(
                         tables_to_keep
@@ -3872,7 +4017,7 @@ class DataSource:
                 tables_to_keep = set()
                 for a_type in str_to_list(asset_types):
                     tables_to_keep.update(
-                            table_map.loc[table_map.asset_type == a_type.upper()].index.to_list()
+                            table_master.loc[table_master.asset_type == a_type.upper()].index.to_list()
                     )
                 tables_to_refill.intersection_update(
                         tables_to_keep
@@ -3880,24 +4025,24 @@ class DataSource:
 
             dependent_tables = set()
             for table in tables_to_refill:
-                cur_table = table_map.loc[table]
+                cur_table = table_master.loc[table]
                 fill_type = cur_table.fill_arg_type
-                if fill_type == 'trade_date':
+                if fill_type == 'trade_date' and refresh_trade_calendar:
                     dependent_tables.add('trade_calendar')
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
-            if 'trade_calendar' not in tables_to_refill:
+            if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
+        # print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
         import time
-        for table in table_map.index:
+        for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
             if table not in tables_to_refill:
                 continue
-            cur_table_info = table_map.loc[table]
+            cur_table_info = table_master.loc[table]
             # 3 生成数据下载参数序列
-            # print(f'refilling data for table: {table}')
             arg_name = cur_table_info.fill_arg_name
             fill_type = cur_table_info.fill_arg_type
             freq = cur_table_info.freq
@@ -3960,8 +4105,8 @@ class DataSource:
                 arg_coverage = source_table.index.to_list()
                 if code_start is not None:
                     arg_coverage = [code for code in arg_coverage if (code_start <= code.split('.')[0] <= code_end)]
-                if code_range is not None:
-                    arg_coverage = [code for code in arg_coverage if code.split('.')[0] in code_range]
+                if symbols is not None:
+                    arg_coverage = [code for code in arg_coverage if code.split('.')[0] in symbols]
                 if suffix:
                     arg_coverage = [code for code in arg_coverage if code.split('.')[1] in suffix]
             else:
@@ -4005,7 +4150,7 @@ class DataSource:
                             completed += 1
                             total_written += rows_affected
                             time_elapsed = time.time() - st
-                            time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                            time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
                             progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
                                                            f'{total_written}wrtn/{time_remain}left')
@@ -4023,7 +4168,7 @@ class DataSource:
                         completed += 1
                         total_written += rows_affected
                         time_elapsed = time.time() - st
-                        time_remain = time_str_format(
+                        time_remain = sec_to_duration(
                                 (total - completed) * time_elapsed / completed,
                                 estimation=True,
                                 short_form=False
@@ -4031,7 +4176,7 @@ class DataSource:
                         progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
                                                        f'{total_written}wrtn/{time_remain}left')
                     total_written += self.update_table_data(table, dnld_data)
-                strftime_elapsed = time_str_format(
+                strftime_elapsed = sec_to_duration(
                         time_elapsed,
                         estimation=True,
                         short_form=True
@@ -4048,7 +4193,31 @@ class DataSource:
                               f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n'
                               f'{total_written} rows downloaded, will proceed with next table!')
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
-                #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
+                
+    def acquire_latest_available_data(self, table=None, symbols=None, htypes=None, freqs=None, asset_type=None,
+                                      adj=None):
+        """ 获取最新的可用数据，从已经保存在本地数据源的数据表中读取指定数据类型、频率和资产类型的最新数据
+
+        Parameters
+        ----------
+        table: str
+            数据表名称
+        channel: str, Default 'tushare'
+            数据源名称
+
+        Returns
+        -------
+        DataFrame
+        """
+        # TODO: implement this function
+        raise NotImplementedError('This function is not implemented yet!')
+        # if source.lower() == 'tushare':
+        #     return self.tushare.acquire_latest_live_data(table, **kwargs)
+        # elif source.lower() == 'joinquant':
+        #     return self.joinquant.acquire_latest_live_data(table, **kwargs)
+        # else:
+        #     raise ValueError(f'Unsupported data source: {source}')
 
     def get_all_basic_table_data(self, refresh_cache=False):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
@@ -4121,9 +4290,16 @@ class DataSource:
             return True
         try:
             self.con.ping(reconnect=True)
-            sql = f"USE {self.db_name}"
+            self.cursor = self.con.cursor()
+            # sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
+            # self.cursor.execute(sql)
+            # self.con.commit()
+            sql = f"USE `{self.db_name}`;"
             self.cursor.execute(sql)
             self.con.commit()
+            # self.con.select_db(self.db_name)
+            # debug
+            # print(f'{self.connection_type} reconnected! used database: {self.con.db} == {self.db_name}')
             return True
         except Exception as e:
             print(f'{e} on {self.connection_type}, please check your connection')
@@ -4150,11 +4326,14 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     """
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+    if df.empty:
+        return df
     if not isinstance(primary_key, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     all_columns = df.columns
     if not all(item in all_columns for item in primary_key):
-        raise KeyError(f'primary key contains invalid value')
+        raise KeyError(f'primary key contains invalid value: '
+                       f'{[item for item in primary_key if item not in all_columns]}')
 
     # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     set_datetime_format_frame(df, primary_key, pk_dtypes)
@@ -4341,6 +4520,7 @@ def _resample_data(hist_data, target_freq,
             target_freq = 'B'
 
     # 如果要求去掉非交易时段的数据
+    from qteasy.trading_util import _trade_time_index
     if trade_time_only:
         expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
     else:
@@ -4357,104 +4537,6 @@ def _resample_data(hist_data, target_freq,
             resampled.fillna(0, inplace=True)
 
     return resampled
-
-
-def _trade_time_index(start=None,
-                      end=None,
-                      periods=None,
-                      freq=None,
-                      include_start=True,
-                      include_end=True,
-                      start_am='9:30:00',
-                      end_am='11:30:00',
-                      include_start_am=True,
-                      include_end_am=True,
-                      start_pm='13:00:00',
-                      end_pm='15:00:00',
-                      include_start_pm=False,
-                      include_end_pm=True):
-    """ 生成一个符合交易时间段的datetime index
-
-    Parameters
-    ----------
-    start: datetime like str,
-        日期时间序列的开始日期/时间
-    end: datetime like str,
-        日期时间序列的终止日期/时间
-    periods: int
-        日期时间序列的分段数量
-    freq: str, {'min', 'h', 'd', 'M'}
-        日期时间序列的频率
-    include_start: bool, Default True
-        日期时间序列是否包含开始日期/时间
-    include_end: bool, Default True
-        日期时间序列是否包含结束日期/时间
-    start_am: datetime like str, Default '9:30:00'
-        早晨交易时段的开始时间
-    end_am: datetime like str, Default '11:30:00'
-        早晨交易时段的结束时间
-    include_start_am: bool, Default True
-        早晨交易时段是否包括开始时间
-    include_end_am: bool, Default True
-        早晨交易时段是否包括结束时间
-    start_pm: datetime like str, Default '13:00:00'
-        下午交易时段的开始时间
-    end_pm: datetime like str, Default '15:00:00'
-        下午交易时段的结束时间
-    include_start_pm: bool, Default False
-        下午交易时段是否包含开始时间
-    include_end_pm: bool, Default True
-        下午交易时段是否包含结束时间
-
-    Returns
-    -------
-    time_index: pd.DatetimeIndex
-    """
-    # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
-    if freq is not None:
-        freq = str(freq).lower()
-    # 检查时间序列区间的开闭状况
-    closed = None
-    if include_start:
-        closed = 'left'
-    if include_end:
-        closed = 'right'
-    if include_start and include_end:
-        closed = None
-
-    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
-    # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
-    if time_index.freqstr is not None:
-        freq_str = time_index.freqstr.lower().split('-')[0]
-    else:
-        freq_str = time_index.inferred_freq
-        if freq_str is not None:
-            freq_str = freq_str.lower()
-        else:
-            time_delta = time_index[1] - time_index[0]
-            if time_delta < pd.Timedelta(1, 'd'):
-                freq_str = 'h'
-            else:
-                freq_str = 'd'
-    ''' freq_str有以下几种不同的情况：
-        min:        T
-        hour:       H
-        day:        D
-        week:       W-SUN/...
-        month:      M
-        quarter:    Q-DEC/...
-        year:       A-DEC/...
-        由于周、季、年三种情况存在复合字符串，因此需要split
-    '''
-    if freq_str[-1:] in ['t', 'h']:
-        idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
-                                                 include_start=include_start_am, include_end=include_end_am)
-        idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
-                                                 include_start=include_start_pm, include_end=include_end_pm)
-        idxer = np.union1d(idx_am, idx_pm)
-        return time_index[idxer]
-    else:
-        return time_index
 
 
 # noinspection PyUnresolvedReferences
@@ -4475,17 +4557,16 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     -------
     df: pd.DataFrame
 
-    #TODO: 下面的Example由Copilot生成，需要检查
     Examples
     --------
     >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
-    >>> df = set_primary_key_frame(df, ['a'], [int])
+    >>> df = set_primary_key_frame(df, ['a'], ['int'])
     >>> df
          a  b
     0    1  4
     1    2  5
     2    3  6
-    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> set_primary_key_index(df, ['a'], ['int'])
     >>> df
          b
     a
@@ -4493,19 +4574,25 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     2    5
     3    6
 
-
     """
+
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+    if df.empty:
+        return df
     if not isinstance(primary_key, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+    # TODO: 增加检查：primary_key中的元素是否在df.column中存，
+    #  如果不存在，df必须有index，且index.name必须存在且与primary_key中的元素一致
+    #  否则报错
 
     idx_columns = list(df.index.names)
     pk_columns = primary_key
 
     if idx_columns != [None]:
+        # index中有值，需要将index中的值放入DataFrame中
         index_frame = df.index.to_frame()
         for col in idx_columns:
             df[col] = index_frame[col]
@@ -4539,26 +4626,25 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     -------
     None
 
-    # TODO: 下面的Example由Copilot生成，需要检查
     Examples
     --------
     >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
     >>> df = set_primary_key_frame(df, ['a'], [int])
     >>> df
-            a  b
+         a    b
     0    1    4
     1    2    5
     2    3    6
-    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> set_primary_key_index(df, ['a'], ['int'])
     >>> df
-            b
+         b
     a
     1    4
     2    5
     3    6
     >>> set_datetime_format_frame(df, ['a'], ['date'])
     >>> df
-            b
+                                     b
     a
     1970-01-01 00:00:00.000000001    4
     1970-01-01 00:00:00.000000002    5
@@ -4635,7 +4721,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     for pk, dtype in zip(primary_key, pk_dtypes):
         if (dtype == 'str') or (dtype[:7] == 'varchar'):
             res['shares'] = (list(set(df[pk].values)))
-        elif dtype.lower() in ['date', 'timestamp', 'datetime']:
+        elif dtype.lower() in ['date', 'timestamp', 'datetime', 'int', 'float', 'double']:
             res['start'] = df[pk].min()
             res['end'] = df[pk].max()
         else:
@@ -4718,12 +4804,15 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     --------
     >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact')
     {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='permute')
-    {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact', soft_freq=True)
-    {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='permute', soft_freq=True)
-    {'stock_daily': ['close', 'open', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E', method='exact')
+    {'stock_daily': ['close', 'high'], 'stock_monthly': ['open']}
+    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E, IDX', method='exact')
+    {'index_monthly': ['open'], 'stock_daily': ['close', 'high']}
+    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E, IDX', method='permute')
+    {'stock_daily': ['close', 'open', 'high'],
+     'stock_monthly': ['close', 'open', 'high'],
+     'index_daily': ['close', 'open', 'high'],
+     'index_monthly': ['close', 'open', 'high']}
     """
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
@@ -4830,167 +4919,6 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     return matched_tables
 
 
-def freq_dither(freq, freq_list):
-    """ 频率抖动，将一个目标频率抖动到频率列表中的一个频率上，
-
-    Parameters
-    ----------
-    freq: str
-        目标频率
-    freq_list: list of str
-        频率列表
-
-    Returns
-    -------
-    dithered_freq: str
-        抖动后的频率
-
-    Examples
-    --------
-    >>> freq_dither('M', ['Q', 'A'])
-    'Q'
-    >>> freq_dither('Q', ['M', 'A'])
-    'M'
-    >>> freq_dither('A', ['M', 'Q'])
-    'M'
-    >>> freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm'])
-    '15MIN'
-    """
-    """抖动算法如下：
-            0，从频率string中提取目标qty，目标主频、副频
-            3，设定当前频率 = 目标主频，开始查找：
-            # 4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
-            # 5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
-            # 6，否则从低频列表中取最高主频，返回它
-            另一种方法
-            4，逐次升高
-    """
-
-    qty, main_freq, sub_freq = get_main_freq(freq)
-
-    freq_list = [get_main_freq(freq_string)[1] for freq_string in freq_list]
-    level_list = np.array([get_main_freq_level(freq_string) for freq_string in freq_list])
-    freq_level = get_main_freq_level(freq)
-
-    level_list_sorter = level_list.argsort()
-    insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
-    upper_level_arg_list = level_list_sorter[insert_pos:]
-    lower_level_arg_list = level_list_sorter[:insert_pos]
-
-    if len(upper_level_arg_list) > 0:
-        # 在upper_list中位于第一位的可能是freq的同级频率，
-        # 如果输出同级频率，需要确保该频率与freq一致，否则就需要跳过它
-        maybe_found = freq_list[upper_level_arg_list[0]]
-        if (get_main_freq_level(maybe_found) > freq_level) or (maybe_found == main_freq):
-            return maybe_found
-        # 查找下一个maybe_found
-        return freq_list[upper_level_arg_list[1]]
-
-    if len(lower_level_arg_list) > 0:
-        return freq_list[lower_level_arg_list[-1]]
-    return None
-
-
-def get_main_freq(freq):
-    """ 解析freqstring，找出其中的主频率、副频率，以及主频率的倍数
-
-    Parameters
-    ----------
-    freq: str
-        一个频率字符串
-
-    Returns
-    -------
-    tuple: 包含三个元素(qty, main_freq, sub_freq)
-    qty, int 主频率的倍数
-    main_freq, str 主频率
-    sub_freq, str 副频率
-
-    Examples
-    --------
-    >>> get_main_freq('25d')
-    (25, 'D', '')
-    >>> get_main_freq('w-Fri')
-    (1, 'W', 'Fri')
-    >>> get_main_freq('75min')
-    (5, '15MIN', '')
-    >>> get_main_freq('90min')
-    (3, '30MIN', '')
-    """
-
-    import re
-    from .utilfuncs import TIME_FREQ_STRINGS
-
-    freq_split = freq.split('-')
-    qty = 1
-    main_freq = freq_split[0].upper()
-    sub_freq = ''
-    if len(freq_split) >= 2:
-        sub_freq = freq_split[1].upper()
-
-    # 继续拆分main_freq与qty_part
-    if len(main_freq) > 1:
-        maybe_qty = ''.join(re.findall('\d+', main_freq))
-        # 另外一种处理方法
-        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
-        qty_len = len(maybe_qty)
-        if qty_len > 0:
-            main_freq = main_freq[qty_len:]
-            qty = int(maybe_qty)
-
-    if main_freq not in TIME_FREQ_STRINGS:
-        return None, None, None
-
-    if main_freq == 'MIN':
-        available_qty = [''.join(re.findall('\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
-        available_qty = [int(item) for item in available_qty if len(item) > 0]
-        qty_fitness = [qty % item for item in available_qty]
-        min_qty = available_qty[qty_fitness.index(0)]
-        main_freq = str(min_qty) + main_freq
-        qty = qty // min_qty
-
-    return qty, main_freq, sub_freq
-
-
-def get_main_freq_level(freq):
-    """ 确定并返回freqency的级别
-
-    :param freq:
-    :return:
-    """
-    from .utilfuncs import TIME_FREQ_LEVELS, TIME_FREQ_STRINGS
-    qty, main_freq, sub_freq = get_main_freq(freq)
-    if main_freq in TIME_FREQ_STRINGS:
-        return TIME_FREQ_LEVELS[main_freq]
-    else:
-        return None
-
-
-def next_main_freq(freq, direction='up'):
-    """ 在可用freq清单中找到下一个可用的freq字符串
-
-    :param freq: main_freq string
-    :param direction: 'up' / 'down'
-    :return:
-    """
-    from .utilfuncs import TIME_FREQ_STRINGS, TIME_FREQ_LEVELS
-    freq = freq.upper()
-    if freq not in TIME_FREQ_STRINGS:
-        return None
-    qty, main_freq, sub_freq = get_main_freq(freq)
-    level = get_main_freq_level(freq)
-    freqs = list(TIME_FREQ_LEVELS.keys())
-    target_pos = freqs.index(main_freq)
-    while True:
-        target_freq = freqs[target_pos]
-        if direction == 'up':
-            target_pos += 1
-        elif direction == 'down':
-            target_pos -= 1
-        if get_main_freq_level(target_freq) != level:
-            return target_freq
-
-
 # noinspection PyTypeChecker
 @lru_cache(maxsize=16)
 def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
@@ -5051,16 +4979,31 @@ def get_dtype_map():
 
 @lru_cache(maxsize=1)
 def get_table_map():
-    """ 获取所有内置数据表的清单
+    """ 获取所有内置数据表的清单，to be deprecated
 
     Returns
     -------
     pd.DataFrame
     数据表清单
     """
+    warnings.warn('get_table_map() is deprecated, use get_table_master() instead', DeprecationWarning)
     table_map = pd.DataFrame(TABLE_MASTERS).T
     table_map.columns = TABLE_MASTER_COLUMNS
     return table_map
+
+
+@lru_cache(maxsize=1)
+def get_table_master():
+    """ 获取所有内置数据表的清单
+
+    Returns
+    -------
+    table_masters: pd.DataFrame
+    数据表清单, 包含以下字段:
+    """
+    table_master = pd.DataFrame(TABLE_MASTERS).T
+    table_master.columns = TABLE_MASTER_COLUMNS
+    return table_master
 
 
 def find_history_data(s, fuzzy=False, match_description=False):
@@ -5075,13 +5018,13 @@ def find_history_data(s, fuzzy=False, match_description=False):
 
     Parameters
     ----------
-    s: string，
+    s: str
         一个字符串，用于查找或匹配历史数据类型
-    fuzzy: bool, 默认值：False
+    fuzzy: bool, Default: False
         是否模糊匹配数据名称，
          - False: 仅精确匹配数据的名称
          - True:  模糊匹配数据名称以及数据描述
-    match_description, bool, 默认值: False
+    match_description: bool, Default: False
         是否模糊匹配数据描述
          - False: 模糊匹配时不包含数据描述（仅匹配数据名称）
          - True:  模糊匹配时包含数据描述
@@ -5126,7 +5069,7 @@ def find_history_data(s, fuzzy=False, match_description=False):
     else:
         is_ascii = True
 
-    table_map = get_table_map()
+    table_master = get_table_master()
     items_found = {'h_data':  [],
                    'dtype':   [],
                    'table':   [],
@@ -5135,11 +5078,11 @@ def find_history_data(s, fuzzy=False, match_description=False):
                    'plot':    [],
                    'remarks': []
                    }
-    for table in table_map.index:
-        table_schema_name = table_map['schema'].loc[table]
+    for table in table_master.index:
+        table_schema_name = table_master['schema'].loc[table]
         table_schema = TABLE_SCHEMA[table_schema_name]
-        asset_type = table_map['asset_type'].loc[table]
-        data_freq = table_map['freq'].loc[table]
+        asset_type = table_master['asset_type'].loc[table]
+        data_freq = table_master['freq'].loc[table]
 
         columns = table_schema['columns']
         dtypes = table_schema['dtypes']
@@ -5205,3 +5148,4 @@ def ensure_sys_table(table):
         raise KeyError(f'"{e}" is not a valid table name')
     except Exception as e:
         raise RuntimeError(f'{e}: An error occurred when checking table usage')
+    

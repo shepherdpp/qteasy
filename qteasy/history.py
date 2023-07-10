@@ -348,7 +348,7 @@ class HistoryPanel():
         允许的输入包括切片形式的各种输入，包括string、数字列表或切片器对象slice()，返回切片后的ndarray对象
         允许的输入示例，第一个切片代表type切片，第二个是shares，第三个是rows：
         item_key                    output
-        [1:3, :,:]                  输出1～3之间所有htype的历史数据
+        [1:3, :,:]                  输出第1个htype～第3个htype的所有历史数据
         [[0,1,2],:,:]:              输出第0、1、2个htype对应的所有股票全部历史数据
         [['close', 'high']]         输出close、high两个类型的所有历史数据
         [0:1]                       输出0、1两个htype的所有历史数据
