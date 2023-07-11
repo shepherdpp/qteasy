@@ -40,7 +40,26 @@ TIME_ZONE = 'Asia/Shanghai'
 
 
 class TraderShell(Cmd):
-    """
+    """ 基于Cmd的交互式shell，用于实盘交易模式与用户交互
+
+    提供了基本操作命令，包括：
+    - status: 查看交易系统状态
+    - pause: 暂停交易系统
+    - resume: 恢复交易系统
+    - bye: 停止交易系统并退出shell
+    - info: 查看交易系统信息
+    - change: 手动修改交易系统的资金和持仓
+    - positions: 查看账户持仓
+    - orders: 查看账户订单
+    - history: 查看账户历史交易记录
+    - overview: 查看账户概览
+    - dashboard: 退出shell，进入dashboard模式
+    - strategy: 查看策略信息
+    - agenda: 查看交易日程
+    - help: 查看帮助信息
+    - run: 手动运行交易策略，此功能仅在debug模式下可用
+
+    在Shell运行过程中按下 ctrl + c 进入状态选单，用户可以选择进入dashboard模式或者退出shell
 
     """
     intro = 'Welcome to the trader shell interactive mode. Type help or ? to list commands.\n' \

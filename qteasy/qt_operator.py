@@ -927,7 +927,8 @@ class Operator:
         if isinstance(stg, str):
             stg = stg.lower()
             if stg not in BUILT_IN_STRATEGIES:
-                raise KeyError(f'built-in timing strategy \'{stg}\' not found!')
+                raise KeyError(f'built-in strategy \'{stg}\' not found! Use "qteasy.built_ins()" to get '
+                               f'list of all built-in strategies or detail info')
             stg_id = stg
             strategy = BUILT_IN_STRATEGIES[stg]()
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
@@ -957,7 +958,7 @@ class Operator:
             return stg_id
 
     def remove_strategy(self, id_or_pos=None):
-        """从Operator对象中移除一个交易策略"""
+        """从Operator对象中移除一个交易策略, 删除时可以给出策略的id或者策略在Operator中的位置"""
         pos = -1
         if id_or_pos is None:
             pos = -1
@@ -1209,7 +1210,7 @@ class Operator:
         如果给出timing时，返回使用该timing的交易策略名称"""
         return [stg.name for stg in self.get_strategies_by_run_timing(timing)]
 
-    def get_strategy_id_by_price_type(self, price_type=None):
+    def get_strategy_id_by_price_type(self, price_type=None):  # to be deprecated
         """返回operator对象中所有交易策略对象的ID, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         warnings.warn('get_strategy_id_by_price_type is deprecated, '
@@ -1306,8 +1307,15 @@ class Operator:
     def get_hdate_idx(self, hdate):
         """ 给定一个hdate（字符串）返回它对应的index
 
-        :param hdate:
-        :return:
+        Parameters
+        ----------
+        hdate: str
+            hdate为一个字符串，表示交易日期
+
+        Returns
+        -------
+        int
+            返回一个整数，表示hdate对应的index
         """
         if self._op_list_hdates == {}:
             return
@@ -1316,8 +1324,15 @@ class Operator:
     def get_price_type_idx(self, price_type):
         """ 给定一个price_type（字符串）返回它对应的index
 
-        :param price_type:
-        :return:
+        Parameters
+        ----------
+        price_type: str
+            price_type为一个字符串，表示价格类型
+
+        Returns
+        -------
+        int
+            返回一个整数，表示price_type对应的index
         """
         if self._op_list_price_types == {}:
             return

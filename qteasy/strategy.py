@@ -332,8 +332,15 @@ class BaseStrategy:
         输入的par_types可以允许为字符串或列表，当给定类型为字符串时，使用逗号分隔不同的类型，如
         'conti, conti' 代表 ['conti', 'conti']
 
-        :param par_types:
+        Parameters
+        ----------
+        par_types: [list, str]
+            策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum',
+            或者也可以为'int', 'float'分别表示离散型和连续型
 
+        Returns
+        -------
+        None
         """
         if par_types is None:
             # 当没有给出策略参数类型时，参数类型为空列表
@@ -816,10 +823,18 @@ class BaseStrategy:
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """ 抽象方法，在各个Strategy类中实现具体操作
 
-        :param h_seg:
-        :param ref_seg:
-        :param trade_data:
-        :return:
+        Parameters
+        ----------
+        h_seg: np.ndarray
+            策略运行所需的历史数片段，包括价格数据、指标数据等
+        ref_seg: np.ndarray
+            策略运行所需的参考数片段，包括价格数据、指标数据等
+        trade_data: np.ndarray
+            策略运行所需的交易数据片段，包括价格数据、指标数据等
+
+        Returns
+        -------
+        stg_signal: np.ndarray
         """
         pass
 

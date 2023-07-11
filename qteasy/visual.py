@@ -771,9 +771,14 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
         - dma
         - rsi
 
-    :param data:
-    :return:
-        tuple:
+    Parameters
+    ----------
+    data : DataFrame
+        一只股票的历史K线数据，包括O/H/L/C/V五组数据或者O/H/L/C四组数据
+
+    Returns
+    -------
+    tuple: (data, parameter_string)
         (pd.DataFrame, str) 添加指标的价格数据表，所有指标的参数字符串，以"/"分隔
     """
     if mav is None:
@@ -818,7 +823,7 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
 
 
 def _plot_loop_result(loop_results: dict, config):
-    """plot the loop results in a fancy way that displays all information more clearly"""
+    """ 以图表的形式输出回测结果。"""
     # prepare looped_values dataframe
     if not isinstance(loop_results, dict):
         raise TypeError('')
@@ -1160,16 +1165,20 @@ def _plot_loop_result(loop_results: dict, config):
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
                       config=None):
-    """ plot test result of optimization results
+    """ 输出优化后参数的测试结果
 
-    :param test_eval_res:
-        :type test_eval_res: list
+    Parameters
+    ----------
+    opti_eval_res : list
+        优化后参数的测试结果
+    test_eval_res : list optional
+        测试结果
+    config : dict optional
+        配置参数
 
-    :param opti_eval_res:
-        :type opti_eval_res: list
-
-    :param config:
-    :return:
+    Returns
+    -------
+    None
     """
     # 以下评价指标是可以用来比较优化数据集和测试数据集的表现的，只有以下几个评价指标可以使用子图表显示
     plot_compariables = ['annual_rtn',
@@ -1441,11 +1450,20 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
 
-    :param loop_results:
-    :param columns:
-    :param headers:
-    :param formatter:
-    :return:
+    Parameters
+    ----------
+    loop_results: dict
+        回测结果
+    columns: list, optional, to be implemented
+        输出的列名
+    headers: list, optional, to be implemented
+        输出的表头
+    formatter: list, optional, to be implemented
+        输出的格式化函数
+
+    Returns
+    -------
+    None
     """
     if loop_results is None:
         return
@@ -1518,15 +1536,30 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
         以统计结果和表格的形式输出
 
-    :param result:
-    :param columns:
-    :param headers:
-    :param formatter:
-    :return:
+    Parameters
+    ----------
+    result: dict
+        回测结果
+    config: dict, optional
+        输出的列名
+    columns: list, optional, to be implemented
+        输出的列名
+    headers: list, optional, to be implemented
+        输出的表头
+    formatter: list, optional, to be implemented
+        输出的格式化函数
+
+    Returns
+    -------
+    None
     """
     result = pd.DataFrame(result)
     first_res = result.iloc[0]
     ref_rtn, ref_annual_rtn = first_res['ref_rtn'], first_res['ref_annual_rtn']
+    if config is None:
+        from qteasy import QT_CONFIG
+        config = QT_CONFIG
+
     print(f'\n'
           f'==================================== \n'
           f'|                                  |\n'

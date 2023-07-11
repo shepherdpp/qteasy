@@ -20,26 +20,130 @@ from .tafuncs import stochrsi, ultosc, willr, ad, adosc, obv
 # All following strategies can be used to create strategies by referring to its strategy ID
 
 # Built-in Rolling timing strategies:
-def built_in_list(*args, **kwargs):
-    """display information of built-in strategies"""
-    return BUILT_IN_STRATEGIES
+def built_in_list(stg_id=None):
+    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息
+
+    Parameters
+    ----------
+    stg_id: str, optional
+        策略ID，如果给出ID且该策略存在，则显示该策略的docstring
+
+    Returns
+    -------
+    dict: 如果stg_id为None，则返回所有内置策略的字典
+    stg_func: 如果stg_id不为None，则返回该策略的函数对象
+    None: 如果stg_id不为None，但该策略不存在，则返回None
+
+    Examples
+    --------
+    >>> built_in_list()
+    {
+     'crossline': qteasy.built_in.Crossline,
+     'macd': qteasy.built_in.MACD,
+     'dma': qteasy.built_in.DMA,
+     'trix': qteasy.built_in.TRIX,
+     ...
+      'ndaychg': qteasy.built_in.SelectingNDayChange,
+     'ndayvol': qteasy.built_in.SelectingNDayVolatility
+    }
+    >>> stg = built_in_list('macd')
+    MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
+
+    策略参数：
+        s: int, 短周期指数平滑均线计算日期；
+        l: int, 长周期指数平滑均线计算日期；
+        m: int, MACD中间值DEA的计算周期；
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        计算MACD值：
+        1，当MACD值大于0时，设置仓位目标为1
+        2，当MACD值小于0时，设置仓位目标为0
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (5, 250)]
+    策略不支持参考数据，不支持交易数据
+    >>> stg
+    RULE-ITER(MACD)
+    """
+    if stg_id is None:
+        return BUILT_IN_STRATEGIES
+    stg_func = BUILT_IN_STRATEGIES.get(stg_id, None)
+    if stg_func is None:
+        print(f'Strategy Not found! Stg id ({stg_id})')
+        return None
+
+    print(stg_func.__doc__)
+    return stg_func
 
 
-def built_ins(*args, **kwargs):
-    """alias of built_in_list()"""
-    return built_in_list(*args, **kwargs)
+def built_ins(stg_id=None):
+    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息, 等同于 built_in_list()
+
+    Parameters
+    ----------
+    stg_id: str, optional
+        策略ID，如果给出ID且该策略存在，则显示该策略的docstring
+
+    Returns
+    -------
+    dict: 如果stg_id为None，则返回所有内置策略的字典
+    stg_func: 如果stg_id不为None，则返回该策略的函数对象
+    None: 如果stg_id不为None，但该策略不存在，则返回None
+
+    See Also
+    --------
+    built_in_list()
+    """
+    return built_in_list(stg_id)
 
 
-def built_in_strategies(*args, **kwargs):
-    """alias of built_in_list()"""
-    return built_in_list(*args, **kwargs)
+def built_in_strategies(stg_id=None):
+    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息, 等同于 built_in_list()
+
+    Parameters
+    ----------
+    stg_id: str, optional
+        策略ID，如果给出ID且该策略存在，则显示该策略的docstring
+
+    Returns
+    -------
+    dict: 如果stg_id为None，则返回所有内置策略的字典
+    stg_func: 如果stg_id不为None，则返回该策略的函数对象
+    None: 如果stg_id不为None，但该策略不存在，则返回None
+
+    See Also
+    --------
+    built_in_list()
+    """
+    return built_in_list(stg_id)
 
 
 def get_built_in_strategy(id):
     """ 使用ID获取交易策略
 
-    :param id:
-    :return:
+    Parameters
+    ----------
+    id: str
+        策略ID
+
+    Returns
+    -------
+    stg: 内置交易策略对象
+
+    Raises
+    ------
+    TypeError: 如果id不是字符串类型
+    ValueError: 如果id不是内置策略ID
+
+    Examples
+    --------
+    >>> get_built_in_strategy('macd')
+    MACD strategy
     """
     if not isinstance(id, str):
         raise TypeError(f'id should be a string, got {type(id)} instead')
@@ -217,7 +321,7 @@ class BBand(RuleIterator):
     窗口长度：270
     参数范围：[(2, 100), (0.5, 5), (0.5, 5)]
     策略不支持参考数据，不支持交易数据
-        """
+    """
 
     def __init__(self, pars=(20, 2, 2)):
         super().__init__(pars=pars,
