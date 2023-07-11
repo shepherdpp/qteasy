@@ -79,7 +79,7 @@ class TestTradeRecording(unittest.TestCase):
         with self.assertRaises(ValueError):
             new_account('test_user4', -10000, data_source=self.test_ds)
         # test get account with non-existing account id
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(KeyError):
             get_account(4, data_source=self.test_ds)
 
     def test_update_account(self):
@@ -152,7 +152,7 @@ class TestTradeRecording(unittest.TestCase):
         get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'GOOG', 'short', data_source=self.test_ds)
         # test get_or_create_position with non-existing account id
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(KeyError):
             get_or_create_position(4, 'AAPL', 'long', data_source=self.test_ds)
         # test get_or_create_position with incorrect symbol type and direction type/value
         with self.assertRaises(TypeError):
