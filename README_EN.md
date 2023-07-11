@@ -22,11 +22,11 @@
 ![GitHub followers](https://img.shields.io/github/followers/shepherdpp?style=social)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
+
 - Author: **Jackie PENG**
-
-- email: *jackie_pengzhao@163.com* 
-
-- Project created on: 2019, July, 16
+- email: *jackie_pengzhao@163.com*
+- Created: 2019, July, 16
+- Latest Version: `0.0.1.dev7`
 
 ## Installation and dependencies
 This project requires and depends on following packages:

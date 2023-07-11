@@ -32,7 +32,8 @@ from .built_in import built_ins, built_in_list, built_in_strategies, get_built_i
 from .visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
-from ._arg_validators import QT_CONFIG, ConfigDict
+from ._arg_validators import QT_CONFIG
+from .utilfuncs import is_integer_like, is_float_like
 
 
 # 解析qteasy的本地安装路径
@@ -78,9 +79,9 @@ for line in config_lines:
             read_value = False
         elif read_value == 'None':
             read_value = None
-        elif qteasy.utilfuncs.is_integer_like(read_value):
+        elif is_integer_like(read_value):
             read_value = int(read_value)
-        elif qteasy.utilfuncs.is_float_like(read_value):
+        elif is_float_like(read_value):
             read_value = float(read_value)
         else:
             pass

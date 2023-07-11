@@ -288,30 +288,25 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     """完成历史交易回测后，填充完整的历史资产总价值清单，
         同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为Config.benchmark_asset
 
-    input:=====
-        :param looped_value:
-            :type looped_value: pd.DataFrame
-            完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
+    Parameters
+    ----------
+    looped_value: pd.DataFrame
+        完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
+    h_list: pd.DataFrame
+        完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
+    benchmark_list: pd.DataFrame
+        参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
+    with_price: boolean, default False
+        True时在返回的清单中包含历史价格，否则仅返回资产总价值
 
-        :param h_list:
-            :type h_list: pd.DataFrame
-            完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
-
-        :param benchmark_list:
-            :type benchmark_list: pd.DataFrame
-            参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
-
-        :param with_price:
-            :type with_price: boolean
-            True时在返回的清单中包含历史价格，否则仅返回资产总价值
-
-    return: =====
-        pandas.DataFrame:
-        重新填充的完整历史交易日资产总价值清单，包含以下列：
-        - [share-x]:        多列，每种投资产品的持有份额数量
-        - cash:             期末现金金额
-        - fee:              当期交易费用（交易成本）
-        - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
+    Returns
+    -------
+    looped_value: pd.DataFrame:
+    重新填充的完整历史交易日资产总价值清单，包含以下列：
+    - [share-x]:        多列，每种投资产品的持有份额数量
+    - cash:             期末现金金额
+    - fee:              当期交易费用（交易成本）
+    - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
     # 获取价格清单中的投资产品列表
     shares = h_list.shares  # 获取资产清单
@@ -349,18 +344,25 @@ def _get_complete_hist(looped_value: pd.DataFrame,
 
 def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame:
     """将完成的交易信号清单与现金投资计划合并：
-        检查现金投资计划中的日期是否都存在于交易信号清单op_list中，如果op_list中没有相应日期时，当交易信号清单中没有相应日期时，添加空交易
-        信号，以便使op_list中存在相应的日期。
 
-        注意，在目前的设计中，要求invest中的所有投资日期都为交易日（意思是说，投资日期当天资产价格不为np.nan）
-        否则，将会导致回测失败（回测当天取到np.nan作为价格，引起总资产计算失败，引起连锁反应所有的输出结果均为np.nan。
+    检查现金投资计划中的日期是否都存在于交易信号清单op_list中，如果op_list中没有相应日期时，当交易信号清单中没有相应日期时，添加空交易
+    信号，以便使op_list中存在相应的日期。
 
-        需要在CashPlan投资计划类中增加合法性判断
+    注意，在目前的设计中，要求invest中的所有投资日期都为交易日（意思是说，投资日期当天资产价格不为np.nan）
+    否则，将会导致回测失败（回测当天取到np.nan作为价格，引起总资产计算失败，引起连锁反应所有的输出结果均为np.nan。
 
-    :param op_list: 交易信号清单，一个DataFrame。index为Timestamp类型
-    :param invest: CashPlan对象，投资日期和投资金额
+    需要在CashPlan投资计划类中增加合法性判断
+
+    Parameters
+    ----------
+    op_list: pd.DataFrame
+        交易信号清单，一个DataFrame。index为Timestamp类型
+    invest: qt.CashPlan
+        CashPlan对象，投资日期和投资金额
     Returns
     -------
+    op_list: pd.DataFrame
+        合并后的交易信号清单
     """
     if not isinstance(op_list, pd.DataFrame):
         raise TypeError(f'operation list should be a pandas DataFrame, got {type(op_list)} instead')
@@ -375,7 +377,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: apply_loop应该纯numpy化，删除operator作为传入参数，仅处理回测结果，将回测结果传出
+# TODO: 删除operator作为传入参数，仅处理回测结果，将回测结果传出
 #  函数后再处理为pandas.DataFrame，并在函数以外进行进一步的记录和处理，这里仅仅使用与回测相关
 #  的参数
 def apply_loop(operator: Operator,
@@ -421,7 +423,7 @@ def apply_loop(operator: Operator,
         每次交易卖出的最小份额单位
     inflation_rate: float, Default: 0.03
         现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
-    pt_signal_timing: str, {'lazy', 'eager'}  # TODO: 将参数值'aggressive'改为'eager'
+    pt_signal_timing: str, {'lazy', 'eager', 'aggressive'}  # TODO: 增加参数值 'aggressive' 的alias 'eager'
         控制PT模式下交易信号产生的时机
     pt_buy_threshold: float, Default: 0.1
         PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
@@ -894,16 +896,25 @@ def process_loop_results(operator,
 
     Parameters
     ----------
-    operator:
-    loop_results:
-    op_log_matrix:
-    op_summary_matrix:
-    op_list_bt_indices:
-    trade_log:
-    bt_price_priority_ohlc:
+    operator: Operator
+        交易操作对象
+    loop_results: tuple, optional
+        apply_loop函数返回的计算结果
+    op_log_matrix: np.ndarray, optional
+        交易记录矩阵，记录了模拟交易过程中每一笔交易的详细信息
+    op_summary_matrix: np.ndarray, optional
+        交易汇总矩阵，记录了模拟交易过程中每一笔交易的汇总信息
+    op_list_bt_indices: list, optional
+        交易记录矩阵中的交易日期索引
+    trade_log: bool, optional, default False
+        是否保存交易记录，默认为False
+    bt_price_priority_ohlc: str, optional, default 'OHLC'
+        交易记录中的价格优先级，可选'OHLC'、'HLOC'、'LOCH'、'LCOH'、'COHL'、'COLH'
 
     Returns
     -------
+    value_history: pd.DataFrame
+        交易模拟结果数据
     """
     from qteasy import logger_core
     amounts_matrix, cashes, fees, values = loop_results
@@ -1539,7 +1550,37 @@ def get_history_data(htypes,
     Dict of DataFrame:
         如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames
 
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20190101', end='20190131')
+    {'000001.SZ':
+                  open   high    low  close         vol
+     2019-01-02   9.39   9.42   9.16   9.19   539386.32
+     2019-01-03   9.18   9.33   9.15   9.28   415537.95
+     2019-01-04   9.24   9.82   9.22   9.75  1481159.06
+     2019-01-07   9.84   9.85   9.63   9.74   865687.66
+     2019-01-08   9.73   9.74   9.62   9.66   402388.11
+     2019-01-09   9.74  10.08   9.70   9.94  1233486.36
+     2019-01-10   9.87  10.20   9.86  10.10  1071817.66
+     2019-01-11  10.11  10.22  10.05  10.20   696364.55
+     2019-01-14  10.22  10.25  10.07  10.11   500443.59
+     2019-01-15  10.11  10.28  10.09  10.24   542160.55
+     2019-01-16  10.24  10.50  10.23  10.48   977699.37
+     2019-01-17  10.54  10.57  10.17  10.25   882811.92
+     2019-01-18  10.34  10.49  10.28  10.43   738793.26
+     2019-01-21  10.34  10.47  10.32  10.34   659355.76
+     2019-01-22  10.34  10.44  10.26  10.28   424413.57
+     2019-01-23  10.29  10.47  10.29  10.35   537876.63
+     2019-01-24  10.40  10.55  10.37  10.52   679240.88
+     2019-01-25  10.56  11.04  10.55  11.00  2108361.85
+     2019-01-28  11.04  11.14  10.88  10.94  1035909.80
+     2019-01-29  10.96  11.07  10.77  11.00   826631.10
+     2019-01-30  10.95  11.18  10.86  10.95   712001.01
+     2019-01-31  10.98  11.20  10.94  11.10   831622.75
+     }
     """
+
     if htypes is None:
         raise ValueError(f'htype should not be None')
 
@@ -2279,8 +2320,7 @@ def run(operator, **kwargs):
 
         用户需要在Terminal中以命令行的方式运行qteasy的实盘模式，通过tradershell查看运行过程并进行交互。
 
-    mode == 1:
-        回测模式：
+    mode == 1, backtest mode, 回测模式，根据历史数据生成交易信号，执行交易：
         根据Config规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
         生成投资资金模型，模拟在回测区间内使用投资资金模型进行模拟交易的结果
         输出对结果的评价（使用多维度的评价方法）
@@ -2326,7 +2366,7 @@ def run(operator, **kwargs):
         上述所有评价结果和历史区间数据能够以可视化的方式输出到图表中。同时回测的结果数据和回测区间的每一次模拟交易记录也可以被记录到log对象中
         保存在磁盘上供未来调用
 
-    mode == 2:
+    mode == 2, optimization mode, 优化模式，使用一段历史数据区间内的数据来寻找最优的策略参数组合，然后在另一段历史数据区间内进行回测，评价:
         策略优化模式：
         根据Config规定的优化区间和回测区间，使用History模块联机读取或本地读取覆盖整个区间的历史数据
         生成待优化策略的参数空间，并生成投资资金模型
@@ -2349,65 +2389,65 @@ def run(operator, **kwargs):
         优化器的工作基础在于历史数据。它的工作方法从根本上来讲，是通过检验不同的参数在同一组历史区间上的表现来评判参数的优劣的。优化器的
         工作方法可以大体上分为以下两类：
 
-            1，无监督方法类：这一类方法不需要事先知道"最优"或先验信息，从未知开始搜寻最佳参数。这类方法需要大量生成不同的参数组合，并且
-            在同一个历史区间上反复回测，通过比较回测的结果而找到最优或较优的参数。这一类优化方法的假设是，如果这一组参数在过去取得了良好的
-            投资结果，那么很可能在未来也不会太差。
-            这一类方法包括：
-                1，Grid_searching                        网格搜索法：
+        1，无监督方法类：这一类方法不需要事先知道"最优"或先验信息，从未知开始搜寻最佳参数。这类方法需要大量生成不同的参数组合，并且
+        在同一个历史区间上反复回测，通过比较回测的结果而找到最优或较优的参数。这一类优化方法的假设是，如果这一组参数在过去取得了良好的
+        投资结果，那么很可能在未来也不会太差。
+        这一类方法包括：
+            1，Grid_searching                        网格搜索法：
 
-                    网格法是最简单和直接的参数优化方法，在已经定义好的参数空间中，按照一定的间隔均匀地从向量空间中取出一系列的点，
-                    逐个在优化空间中生成交易信号并进行回测，把所有的参数组合都测试完毕后，根据目标函数的值选择排名靠前的参数组合即可。
+                网格法是最简单和直接的参数优化方法，在已经定义好的参数空间中，按照一定的间隔均匀地从向量空间中取出一系列的点，
+                逐个在优化空间中生成交易信号并进行回测，把所有的参数组合都测试完毕后，根据目标函数的值选择排名靠前的参数组合即可。
 
-                    网格法能确保找到参数空间中的全剧最优参数，不过必须逐一测试所有可能的参数点，因此计算量相当大。同时，网格法只
-                    适用于非连续的参数空间，对于连续空间，仍然可以使用网格法，但无法真正"穷尽"所有的参数组合
+                网格法能确保找到参数空间中的全剧最优参数，不过必须逐一测试所有可能的参数点，因此计算量相当大。同时，网格法只
+                适用于非连续的参数空间，对于连续空间，仍然可以使用网格法，但无法真正"穷尽"所有的参数组合
 
-                    关于网格法的具体参数和输出，参见self._search_grid()函数的docstring
+                关于网格法的具体参数和输出，参见self._search_grid()函数的docstring
 
-                2，Montecarlo_searching                  蒙特卡洛法
+            2，Montecarlo_searching                  蒙特卡洛法
 
-                    蒙特卡洛法与网格法类似，也需要检查并测试参数空间中的大量参数组合。不过在蒙特卡洛法中，参数组合是从参数空间中随机
-                    选出的，而且在参数空间中均匀分布。与网格法相比，蒙特卡洛方法不仅更适合于连续参数空间、通常情况下也有更好的性能。
+                蒙特卡洛法与网格法类似，也需要检查并测试参数空间中的大量参数组合。不过在蒙特卡洛法中，参数组合是从参数空间中随机
+                选出的，而且在参数空间中均匀分布。与网格法相比，蒙特卡洛方法不仅更适合于连续参数空间、通常情况下也有更好的性能。
 
-                    关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
+                关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
 
                 3，Incremental_step_searching            递进搜索法
 
-                    递进步长法的基本思想是对参数空间进行多轮递进式的搜索，每一轮搜索方法与蒙特卡洛法相同但是每一轮搜索后都将搜索
-                    范围缩小到更希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
-                    或搜索轮数大于设定值为止。
+                递进步长法的基本思想是对参数空间进行多轮递进式的搜索，每一轮搜索方法与蒙特卡洛法相同但是每一轮搜索后都将搜索
+                范围缩小到更希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
+                或搜索轮数大于设定值为止。
 
-                    使用这种技术，在一个250*250*250的空间中，能够把搜索量从15,000,000降低到10,000左右,缩减到原来的1/1500，
-                    却不太会影响最终搜索的效果。
+                使用这种技术，在一个250*250*250的空间中，能够把搜索量从15,000,000降低到10,000左右,缩减到原来的1/1500，
+                却不太会影响最终搜索的效果。
 
-                    关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
+                关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
 
-                4，Genetic_Algorithm                     遗传算法
+            4，Genetic_Algorithm                     遗传算法 （尚未实现）
 
-                    遗传算法适用于"超大"参数空间的参数寻优。对于有二到三个参数的策略来说，使用蒙特卡洛或网格法是可以承受的选择，
-                    如果参数数量增加到4到5个，递进步长法可以帮助降低计算量，然而如果参数有数百个，而且每一个都有无限取值范围的时
-                    候，任何一种基于网格的方法都没有应用的意义了。如果目标函数在参数空间中是连续且可微的，可以使用基于梯度的方法，
-                    但如果目标函数不可微分，GA方法提供了一个在可以承受的时间内找到全局最优或局部最优的方法。
+                遗传算法适用于"超大"参数空间的参数寻优。对于有二到三个参数的策略来说，使用蒙特卡洛或网格法是可以承受的选择，
+                如果参数数量增加到4到5个，递进步长法可以帮助降低计算量，然而如果参数有数百个，而且每一个都有无限取值范围的时
+                候，任何一种基于网格的方法都没有应用的意义了。如果目标函数在参数空间中是连续且可微的，可以使用基于梯度的方法，
+                但如果目标函数不可微分，GA方法提供了一个在可以承受的时间内找到全局最优或局部最优的方法。
 
-                    GA方法受生物进化论的启发，通过模拟生物在自然选择下的基因进化过程，在复杂的超大参数空间中搜索全局最优或局部最
-                    优参数。GA的基本做法是模拟一个足够大的"生物"种群在自然环境中的演化，这些生物的"基因"是参数空间中的一个点，
-                    在演化过程中，种群中的每一个个体会发生变异、也会通过杂交来改变或保留自己的"基因"，并把变异或杂交后的基因传递到
-                    下一代。在每一代的种群中，优化器会计算每一个个体的目标函数并根据目标函数的大小确定每一个个体的生存几率和生殖几
-                    率。由于表现较差的基因生存和生殖几率较低，因此经过数万乃至数十万带的迭代后，种群中的优秀基因会保留并演化出更
-                    加优秀的基因，最终可能演化出全局最优或至少局部最优的基因。
+                GA方法受生物进化论的启发，通过模拟生物在自然选择下的基因进化过程，在复杂的超大参数空间中搜索全局最优或局部最
+                优参数。GA的基本做法是模拟一个足够大的"生物"种群在自然环境中的演化，这些生物的"基因"是参数空间中的一个点，
+                在演化过程中，种群中的每一个个体会发生变异、也会通过杂交来改变或保留自己的"基因"，并把变异或杂交后的基因传递到
+                下一代。在每一代的种群中，优化器会计算每一个个体的目标函数并根据目标函数的大小确定每一个个体的生存几率和生殖几
+                率。由于表现较差的基因生存和生殖几率较低，因此经过数万乃至数十万带的迭代后，种群中的优秀基因会保留并演化出更
+                加优秀的基因，最终可能演化出全局最优或至少局部最优的基因。
 
-                    关于遗传算法的详细参数和输出，参见self._search_ga()函数的docstring
+                关于遗传算法的详细参数和输出，参见self._search_ga()函数的docstring
 
-                5, Gradient Descendent Algorithm        梯度下降算法
+            5, Gradient Descendent Algorithm        梯度下降算法 （尚未实现）
 
-                    梯度下降算法
+                梯度下降算法
 
-            2，有监督方法类：这一类方法依赖于历史数据上的（有用的）先验信息：比如过去一个区间上的已知交易信号、或者价格变化信息。然后通过
-            优化方法寻找历史数据和有用的先验信息之间的联系（目标联系）。这一类优化方法的假设是，如果这些通过历史数据直接获取先验信息的
-            联系在未来仍然有效，那么我们就可能在未来同样根据这些联系，利用已知的数据推断出对我们有用的信息。
-            这一类方法包括：
-                1，ANN_based_methods                     基于人工神经网络的有监督方法
-                2，SVM                                   支持向量机类方法
-                3，KNN                                   基于KNN的方法
+        2，有监督方法类：这一类方法依赖于历史数据上的（有用的）先验信息：比如过去一个区间上的已知交易信号、或者价格变化信息。然后通过
+        优化方法寻找历史数据和有用的先验信息之间的联系（目标联系）。这一类优化方法的假设是，如果这些通过历史数据直接获取先验信息的
+        联系在未来仍然有效，那么我们就可能在未来同样根据这些联系，利用已知的数据推断出对我们有用的信息。
+        这一类方法包括：
+            1，ANN_based_methods                     基于人工神经网络的有监督方法（尚未实现）
+            2，SVM                                   支持向量机类方法（尚未实现）
+            3，KNN                                   基于KNN的方法（尚未实现）
 
         为了实现上面的方法，优化器需要两组历史数据，分别对应两个不同的历史区间，一个是优化区间，另一个是回测区间。在优化的第一阶段，优化器
         在优化区间上生成交易信号，或建立目标联系，并且在优化区间上找到一个或若干个表现最优的参数组合或目标联系，接下来，在优化的第二阶段，
@@ -2429,17 +2469,17 @@ def run(operator, **kwargs):
         进入评价模式（技术冻结后暂停开发此功能）
         评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学
         表现
+
     Parameters
     ----------
     operator : Operator
         策略执行器对象
-
     **kwargs:
-        可用的kwargs包括：
+        可用的kwargs包括所有合法的qteasy配置参数
 
     Returns
     -------
-        1, 在signal模式或模式0下,返回: op_list
+        1, 在live_trade模式或模式0下,返回: op_list
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
@@ -2703,16 +2743,16 @@ def _evaluate_all_parameters(par_generator,
     # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
-        proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_evaluate_one_parameter,
-                                    par,
-                                    op,
-                                    trade_price_list,
-                                    benchmark_history_data,
-                                    benchmark_history_data_type,
-                                    config,
-                                    stage): par for par in
-                   par_generator}
+        with ProcessPoolExecutor() as proc_pool:
+            futures = {proc_pool.submit(_evaluate_one_parameter,
+                                        par,
+                                        op,
+                                        trade_price_list,
+                                        benchmark_history_data,
+                                        benchmark_history_data_type,
+                                        config,
+                                        stage): par for par in
+                       par_generator}
         for f in as_completed(futures):
             eval_dict = f.result()
             target_value = eval_dict[opti_target]
@@ -2754,71 +2794,67 @@ def _evaluate_one_parameter(par,
                             stage='optimize') -> dict:
     """ 基于op中的交易策略，在给定策略参数par的条件下，计算交易策略在一段历史数据上的交易信号，并对交易信号的交易
         结果进行回测，对回测结果数据进行评价，并给出评价结果。
-        本函数是一个方便的包裹函数，包裹了交易信号生成、交易信号回测以及回测结果评价结果的打包过程，同时，根据QT基
-        本配置的不同，可以在交易信号回测的过程中进行多重回测，即将一段历史区间分成几个子区间，在每一个子区间上分别
-        回测后返回多次回测的综合结果。
 
-    input:
-        :param par: tuple
-            输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且符合op对象中每个交易策
-            略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见qt.operator.set_opt_par()的
-            docstring
+    本函数是一个方便的包裹函数，包裹了交易信号生成、交易信号回测以及回测结果评价结果的打包过程，同时，根据QT基
+    本配置的不同，可以在交易信号回测的过程中进行多重回测，即将一段历史区间分成几个子区间，在每一个子区间上分别
+    回测后返回多次回测的综合结果。
 
-        :param op: qt.Operator
-            一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
-
-        :param trade_price_list: HistoryPanel
-            用于模拟交易回测的历史价格，历史区间覆盖整个模拟交易期间，包含回测所需要的价格信息，可以为收盘价
-            和/或其他回测所需要的历史价格
-
-        :param benchmark_history_data: pd.DataFrame
-            用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
-            产的价格，例如沪深300指数的价格。
-
-        :param benchmark_history_data_type: str
-            用于回测结果评价的参考历史数据种类，通常为收盘价close
-
-        :param config: Config:
-            参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
-                1, config.opti_type/test_type:
-                    优化或测试模式，决定如何利用回测区间
-                    single:     在整个回测区间上进行一次回测
-                    multiple:   将回测区间分割为多个子区间并分别回测
-                    montecarlo: 根据回测区间的数据生成模拟数据进行回测（仅在test模式下）
-                2, config.optimize_target/test_indicators:
-                    优化目标函数（优化模式下）或评价指标（测试模式下）
-                    在优化模式下，使用特定的优化目标函数来确定表现最好的策略参数
-                    在测试模式下，对策略的回测结果进行多重评价并输出评价结果
-                3, config.opti_cash_amounts/test_cash_amounts:
-                    优化/测试投资金额
-                    在多区间回测情况下，投资金额会被调整，初始投资日期会等于每一个回测子区间的第一天
-                4, config.opti_sub_periods/test_sub_periods:
-                    优化/测试区间数量
-                    在多区间回测情况下，在整个回测区间中间隔均匀地取出多个区间，在每个区间上分别回测
-                    每个区间的长度相同，但是起止点不同。每个起点之间的间隔与子区间的长度和数量同时相关，
-                    确保每个区间的起点是均匀分布的，同时所有的子区间正好覆盖整个回测区间。
-                5, config.opti_sub_prd_length/test_sub_prd_length:
-                    优化/测试子区间长度
-                    该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
-                    例如，0.5代表每个子区间的长度是整个区间的一半
-
-        :param stage: str:
-            运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
-                1, 'loop':      运行模式为回测模式，在这种模式下：
-                                使用投资区间回测投资计划
-                                使用config.trade_log来确定是否打印回测结果
-                2, 'optimize':  运行模式为优化模式，在这种模式下：
-                                使用优化区间回测投资计划
-                                回测区间利用方式使用opti_type的设置值
-                                回测区间分段数量和间隔使用opti_sub_periods
-                3, 'test-o':    运行模式为测试模式-opti区间，以便在opti区间上进行一次与test区间完全相同的测试以比较结果
-                                使用优化区间回测投资计划
-                                回测区间利用方式使用test_type的设置值
-                                回测区间分段数量和间隔使用test_sub_periods
-                4, 'test-t':    运行模式为测试模式-test区间
-                                使用测试区间回测投资计划
-                                回测区间利用方式使用test_type的设置值
-                                回测区间分段数量和间隔使用test_sub_periods
+    Parameters
+    ----------
+    par: tuple, list, dict
+        输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且符合op对象中每个交易策
+        略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见qt.operator.set_opt_par()的
+        docstring
+    op: qt.Operator
+        一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
+    trade_price_list: HistoryPanel
+        用于模拟交易回测的历史价格，历史区间覆盖整个模拟交易期间，包含回测所需要的价格信息，可以为收盘价
+        和/或其他回测所需要的历史价格
+    benchmark_history_data: pd.DataFrame
+        用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
+        产的价格，例如沪深300指数的价格。
+    benchmark_history_data_type: str
+        用于回测结果评价的参考历史数据种类，通常为收盘价close，但也可以是其他价格，例如开盘价open
+    config: Config
+        参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
+        1, config.opti_type/test_type:
+            优化或测试模式，决定如何利用回测区间
+            single:     在整个回测区间上进行一次回测
+            multiple:   将回测区间分割为多个子区间并分别回测
+            montecarlo: 根据回测区间的数据生成模拟数据进行回测（仅在test模式下）
+        2, config.optimize_target/test_indicators:
+            优化目标函数（优化模式下）或评价指标（测试模式下）
+            在优化模式下，使用特定的优化目标函数来确定表现最好的策略参数
+            在测试模式下，对策略的回测结果进行多重评价并输出评价结果
+        3, config.opti_cash_amounts/test_cash_amounts:
+            优化/测试投资金额
+            在多区间回测情况下，投资金额会被调整，初始投资日期会等于每一个回测子区间的第一天
+        4, config.opti_sub_periods/test_sub_periods:
+            优化/测试区间数量
+            在多区间回测情况下，在整个回测区间中间隔均匀地取出多个区间，在每个区间上分别回测
+            每个区间的长度相同，但是起止点不同。每个起点之间的间隔与子区间的长度和数量同时相关，
+            确保每个区间的起点是均匀分布的，同时所有的子区间正好覆盖整个回测区间。
+        5, config.opti_sub_prd_length/test_sub_prd_length:
+            优化/测试子区间长度
+            该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
+            例如，0.5代表每个子区间的长度是整个区间的一半
+    stage: str, optional, Default: 'optimize'
+        运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
+        1, 'loop':      运行模式为回测模式，在这种模式下：
+                        使用投资区间回测投资计划
+                        使用config.trade_log来确定是否打印回测结果
+        2, 'optimize':  运行模式为优化模式，在这种模式下：
+                        使用优化区间回测投资计划
+                        回测区间利用方式使用opti_type的设置值
+                        回测区间分段数量和间隔使用opti_sub_periods
+        3, 'test-o':    运行模式为测试模式-opti区间，以便在opti区间上进行一次与test区间完全相同的测试以比较结果
+                        使用优化区间回测投资计划
+                        回测区间利用方式使用test_type的设置值
+                        回测区间分段数量和间隔使用test_sub_periods
+        4, 'test-t':    运行模式为测试模式-test区间
+                        使用测试区间回测投资计划
+                        回测区间利用方式使用test_type的设置值
+                        回测区间分段数量和间隔使用test_sub_periods
     Returns
     -------
     dict:
@@ -2838,6 +2874,7 @@ def _evaluate_one_parameter(par,
          'final_value':     np.NINF}
 
     """
+
     res_dict = {'par':             None,
                 'complete_values': None,
                 'op_run_time':     0,
@@ -3013,14 +3050,15 @@ def _evaluate_one_parameter(par,
 def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     """ 根据输入的历史数据的统计特征，随机生成多组具备同样统计特征的随机序列，用于进行策略收益的蒙特卡洛模拟
 
-        目前仅支持OHLC数据以及VOLUME数据的随机生成，其余种类的数据需要继续研究
-        为了确保生成的数据留有足够的前置数据窗口，生成的伪数据包含两段，第一段长度与最大前置窗口长度相同，这一段
-        为真实历史数据，第二段才是随机生成的模拟数据
-        同时，生成的数据仍然满足OHLC的关系，同时所有的数据在统计上与参考数据是一致的，也就是说，随机生成的数据
-        不仅仅满足K线图的形态要求，其各个参数的均值、标准差与参考数据一致。
+    目前仅支持OHLC数据以及VOLUME数据的随机生成，其余种类的数据需要继续研究
+    为了确保生成的数据留有足够的前置数据窗口，生成的伪数据包含两段，第一段长度与最大前置窗口长度相同，这一段
+    为真实历史数据，第二段才是随机生成的模拟数据
+    同时，生成的数据仍然满足OHLC的关系，同时所有的数据在统计上与参考数据是一致的，也就是说，随机生成的数据
+    不仅仅满足K线图的形态要求，其各个参数的均值、标准差与参考数据一致。
 
-    :param history_data:
-        :type history_data: HistoryPanel
+    Parameters
+    ----------
+    history_data: HistoryPanel
         模拟数据的参考源
 
     Returns
@@ -3067,21 +3105,25 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
 def _search_grid(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法1: 网格搜索法
 
-        在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
-        根据该点的参数生成操作信号、回测后寻找表现最佳的一组或多组参数
-        与该算法相关的设置选项有：
-            grid_size:  网格大小，float/int/list/tuple 当参数为数字时，生成空间所有方向
-                        上都均匀分布的网格；当参数为list或tuple时，可以在空间的不同方向
-                        上生成不同间隔大小的网格。list或tuple的维度须与空间的维度一致
+    在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
+    根据该点的参数生成操作信号、回测后寻找表现最佳的一组或多组参数
+    与该算法相关的设置选项有：
+    grid_size:  网格大小，float/int/list/tuple 当参数为数字时，生成空间所有方向
+                上都均匀分布的网格；当参数为list或tuple时，可以在空间的不同方向
+                上生成不同间隔大小的网格。list或tuple的维度须与空间的维度一致
 
-    input:
-        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param op，object，交易信号生成器对象
-        :param config, object, 用于存储优化参数的上下文对象
+    Parameters
+    ----------
+    hist: HistoryPanel
+        历史数据，优化器的整个优化过程在历史数据上完成
+    op: qt.Operator
+        交易信号生成器对象
+    config: qt.Config
+        用于存储优化参数配置变量
 
     Returns
     -------
-    tuple，包含两个变量
+    tuple: (pool.items, pool.perfs)
         pool.items 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
     """
@@ -3114,16 +3156,22 @@ def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
             sample_size:采样点数量，int 由于采样点的分布是随机的，因此采样点越多，越有可能
                         接近全局最优值
 
-    input:
-        :param hist: object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param benchmark:
-        :param benchmark_type:
-        :param op: object，交易信号生成器对象
-        :param config: object 用于存储相关参数的上下文对象
+    Parameters
+    ----------
+    hist: HistoryPanel
+        历史数据，优化器的整个优化过程在历史数据上完成
+    benchmark:
+        基准数据，用于计算基准收益率
+    benchmark_type:
+        基准数据类型，用于计算基准收益率
+    op: qt.Operator
+        交易信号生成器对象
+    config: qt.Config
+        用于存储交易相关参数的配置变量
 
     Returns
     -------
-    tuple，包含两个变量
+    tuple: (pool.items, pool.perfs)
         pool.items 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
     """
@@ -3172,9 +3220,12 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
 
     Parameters
     ----------
-    hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-    op，object，交易信号生成器对象
-    config, object, 用于存储交易相关参数的上下文对象
+    hist: HistoryPanel
+        历史数据，优化器的整个优化过程在历史数据上完成
+    op: qt.Operator
+        交易信号生成器对象
+    config: qt.Config
+        用于存储交易相关参数的配置变量
 
     Returns
     -------
@@ -3281,8 +3332,10 @@ def _search_ga(hist, benchmark, benchmark_type, op, config):
     让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
     同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
     一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
-    input：
-    hist: object，
+
+    Parameters
+    ----------
+    hist: HistoryPanel
         历史数据，优化器的整个优化过程在历史数据上完成
     benchmark:
 

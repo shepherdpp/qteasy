@@ -20,6 +20,53 @@ from .utilfuncs import TIME_FREQ_STRINGS
 
 class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
+
+    Attributes
+    ----------
+    pars: any
+        策略可调参数，可以是任意类型。策略的优化过程，就是寻找策略可调参数的最优组合的过程。
+    opt_tag: int {0, 1}
+        策略的优化标签，0表示不参与优化，1表示参与优化
+    par_count: int
+        策略可调参数的个数
+    par_types: [list, str]
+        策略可调参数的类型，可以是一个列表，也可以是一个字符串，如果是字符串，则表示所有参数的类型都相同
+    par_range: [list, tuple]
+        策略可调参数的取值范围，可以是一个列表，也可以是一个元组，如果是列表，则表示所有参数的取值范围都相同
+    stg_type: str
+        策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
+    name: str
+        策略名称，用户自定义，用于区分不同的策略
+    description: str
+        策略描述，用户自定义，用于描述策略的基本原理
+    data_freq: str
+        策略所使用的数据的频率，可以是以下几种类型：
+        'd'：日线数据
+        'w'：周线数据
+        'm'：月线数据
+    sample_freq: str
+        策略的采样频率，可以是以下几种类型：
+        'd'：日线数据
+        'w'：周线数据
+        'm'：月线数据
+    window_length: int
+        策略所使用的数据的长度，即策略所使用的数据的长度，例如策略所使用的均线的长度
+    data_types: [str, list]
+        策略所使用的数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
+    reference_data_types: [str, list]
+        策略所使用的参考数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
+    bt_price_type: str
+        策略回测时的价格类型，可以是以下几种类型：
+        'open'：开盘价
+        'high'：最高价
+        'low'：最低价
+        'close'：收盘价
+
+    Methods
+    -------
+    generate(data: np.ndarray, pars: any = None)
+        生成策略信号，该方法是策略的核心方法，所有的策略都必须实现该方法
+
     """
     __mataclass__ = ABCMeta
 
@@ -455,7 +502,9 @@ class BaseStrategy:
     def reference_data_types(self):
         """ ref_types的别名
 
-        :return:
+        Returns
+        -------
+        list: 策略的参考数据类型，如果不需要参考数据，返回空列表
         """
         return self._reference_data_types
 
@@ -1065,11 +1114,11 @@ class FactorSorter(BaseStrategy):
 
         - h(history): 历史数据片段，shape为(M, N, L)，即：
 
-            - M层：   股票类型
+            - M层：   M种股票的数据
 
-            - N行：   交易日期/时间轴
+            - N行：   历史数据时间跨度
 
-            - L列：   历史数据类型轴
+            - L列：   L种历史数据类型
 
             在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
             例如：设定：
@@ -1204,12 +1253,19 @@ class FactorSorter(BaseStrategy):
         选出符合condition的因子，并将这些因子排序，根据次序确定所有因子相应股票的选股权重
         将选股权重传递到generate()方法中，生成最终的选股交易信号
 
-        input:
-            :param h_seg: np.ndarray
-            :param ref_seg:
-            :param trade_data:
-        :return
-            numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
+        Parameters
+        ----------
+        h_seg: np.ndarray
+            一个三维数组，shape为(M, N, L)，代表M个股票在N个交易时间内的L种历史数据
+        ref_seg: np.ndarray
+            一个二维数组，shape为(N, L)，代表N个交易时间内的L种参考数据
+        trade_data: np.ndarray
+            一个二维数组，shape为(N,5)，代表N交易时间内的五种交易相关数据
+
+        Returns
+        -------
+        chosen: numpy.ndarray
+            一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
         """
         pct = self.max_sel_count
         condition = self.condition
@@ -1525,12 +1581,19 @@ class RuleIterator(BaseStrategy):
             对于滚动展开后的矩阵，使用map函数循环调用generate_one函数生成整个历史区间的
             循环回测结果（结果为1维向量， 长度为hist_length - _window_length + 1）
 
-        input:
-            :param h_seg:
-            :param ref_seg:
-            :param trade_data:
-        :return:
-            np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
+        Parameters
+        ----------
+        h_seg: np.ndarray
+            历史数据片段, 二维数组，shape为(N, L)，其中N为历史数据长度，L为历史数据类型轴
+        ref_seg: np.ndarray
+            参考数据片段, 二维数组，shape为(N, L)，其中N为历史数据长度，L为参考数据类型轴
+        trade_data: np.ndarray
+            交易数据片段, 二维数组，shape为(N, 5)，其中N为历史数据长度，5为交易数据类型轴
+
+        Returns
+        -------
+        signal: np.ndarray
+            一维向量。根据策略，在历史上产生的仓位信号或交易信号，具体信号的含义取决于策略类型
         """
         # 生成iterators, 将参数送入realize_no_nan中逐个迭代后返回结果
         share_count, window_length, hdata_count = h_seg.shape

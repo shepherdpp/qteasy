@@ -585,6 +585,21 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     Returns
     -------
     list of str: 字符串分割后的列表
+
+    Examples
+    --------
+    >>> str_to_list('a, b, c, d')
+    ['a', 'b', 'c', 'd']
+    >>> str_to_list('a, b, c, d', sep_char=' ')
+    ['a,', 'b,', 'c,', 'd']
+    >>> str_to_list('a, b, c, d', sep_char=' ', case='upper')
+    ['A,', 'B,', 'C,', 'D']
+    >>> str_to_list('a, b, c, d', sep_char=' ', case='lower')
+    ['a,', 'b,', 'c,', 'd']
+    >>> str_to_list('a, b, c, d', sep_char=' ', case='lower', dim=6)
+    ['a,', 'b,', 'c,', 'd', None, None]
+    >>> str_to_list('a, b, c, d', sep_char=' ', case='lower', dim=6, padder='e')
+    ['a,', 'b,', 'c,', 'd', 'e', 'e']
     """
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     if input_string == "":
@@ -619,6 +634,17 @@ def input_to_list(pars, dim, padder=None):
     Returns
     -------
     items, list 转化好的元素清单
+
+    Examples
+    --------
+    >>> input_to_list(1, 3)
+    [1, 1, 1]
+    >>> input_to_list([1, 2], 3)
+    [1, 2, None]
+    >>> input_to_list([1, 2], 3, padder=3)
+    [1, 2, 3]
+    >>> input_to_list('a', 3)
+    ['a', 'a', 'a']
     """
     if isinstance(pars, (str, int, np.int64)):  # 处理字符串类型的输入
         pars = [pars] * dim
@@ -702,8 +728,18 @@ def maybe_trade_day(date):
     ------
     ValueError, 当字符串无法被转化为datetime时
 
-    :return:
-    bool
+    Returns
+    -------
+    bool, True表示可能是交易日，False表示不是交易日
+
+    Examples
+    --------
+    >>> maybe_trade_day('2019-01-01')
+    False
+    >>> maybe_trade_day('2019-01-02')
+    False
+    >>> maybe_trade_day('2023-04-11')
+    True
     """
     # public_holidays 是一个含两个list的tuple，存储了闭市的公共假期，第一个list是代表月份的数字，第二个list是代表日期的数字
     public_holidays = ([1, 1, 1, 4, 4, 4, 5, 5, 5, 10, 10, 10, 10, 10, 10, 10],
@@ -723,8 +759,20 @@ def maybe_trade_day(date):
 def prev_trade_day(date):
     """ 找到一个日期的前一个或然交易日
 
-    :param date:
-    :return:
+    Parameters
+    ----------
+    date: datetime-like
+        可以转化为时间日期格式的字符串或其他类型对象
+
+    Returns
+    -------
+    prev: pd.Timestamp
+        前一个或然交易日的时间戳
+
+    Examples
+    --------
+    >>> prev_trade_day('2019-01-01')
+    Timestamp('2018-12-28 00:00:00')
     """
     if maybe_trade_day(date):
         return date
@@ -739,8 +787,20 @@ def prev_trade_day(date):
 def next_trade_day(date):
     """ 返回一个日期的下一个或然交易日
 
-    :param date:
-    :return:
+    Parameters
+    ----------
+    date: datetime-like
+        可以转化为时间日期格式的字符串或其他类型对象
+
+    Returns
+    -------
+    next: pd.Timestamp
+        下一个或然交易日的时间戳
+
+    Examples
+    --------
+    >>> next_trade_day('2019-01-01')
+    Timestamp('2019-01-04 00:00:00')
     """
     if maybe_trade_day(date):
         return date
@@ -772,8 +832,14 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     ------
     NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
-    :return:
-    bool
+    Returns
+    -------
+    bool: True表示是交易日，False表示不是交易日
+
+    Examples
+    --------
+    >>> is_market_trade_day('2019-01-01')
+    False
     """
     try:
         _date = pd.to_datetime(date)
@@ -1070,6 +1136,15 @@ def is_float_like(key: [str, int, float]) -> bool:
     Returns
     -------
     bool
+
+    Examples
+    --------
+    >>> is_number_like('123')
+    >>> True
+    >>> is_number_like('123.456')
+    >>> True
+    >>> is_number_like('123.456.789')
+    >>> False
     """
     if isinstance(key, (float, int)):
         return True
@@ -1251,8 +1326,23 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
 def human_file_size(file_size: int) -> str:
     """ 将一个整型数字转化为以GB/MB/KB/Byte为单位的文件大小字符串
 
-    :param file_size: int 表示文件大小的数字，单位为字节
-    :return:
+    Parameters
+    ----------
+    file_size: int
+        表示文件大小的数字，单位为字节
+
+    Returns
+    -------
+    str, 代表文件大小的字符串
+
+    Examples
+    --------
+    >>> human_file_size(1024)
+    '1KB'
+    >>> human_file_size(1024 * 1024)
+    '1.0MB'
+    >>> human_file_size(1024 * 1024 * 1024)
+    '1.00GB'
     """
     if not isinstance(file_size, (float, int)):
         return f'{file_size}'
@@ -1281,6 +1371,13 @@ def human_units(number: int, short_form=True) -> str:
     Returns
     -------
     str: 字符串形式的数字
+
+    Examples
+    --------
+    >>> human_units(1000)
+    '1K'
+    >>> human_units(1000, short_form=False)
+    '1 thousand'
     """
     if not isinstance(number, (float, int)):
         return f'{number}'
@@ -1315,6 +1412,13 @@ def _lev_ratio(s, t):
     Returns
     -------
     float： 两个字符串的levenshtein ratio
+
+    Examples
+    --------
+    >>> _lev_ratio('abc', 'abc')
+    1.0
+    >>> _lev_ratio('abc', 'ab')
+    0.6666666666666666
     """
 
     s = s.lower()
@@ -1358,6 +1462,13 @@ def _partial_lev_ratio(s, t):
     Returns
     -------
     float, 两个字符串的局部相似度值
+
+    Examples
+    --------
+    >>> _partial_lev_ratio('abc', 'abc')
+    1.0
+    >>> _partial_lev_ratio('abc', 'ab')
+    1.0
     """
 
     s = s.lower()
@@ -1382,6 +1493,8 @@ def _partial_lev_ratio(s, t):
 def _wildcard_match(mode, wordlist):
     """ 在字符串列表或序列中搜索符合模式的字符串
 
+    用"?"匹配任意单个字符，用"*"匹配任意多个字符
+
     Parameters
     ----------
     mode: str
@@ -1392,6 +1505,13 @@ def _wildcard_match(mode, wordlist):
     Returns
     -------
     list: 匹配成功的字符串
+
+    Examples
+    --------
+    >>> _wildcard_match('a*b', ['abc', 'aabb', 'ab', 'a'])
+    ['abc', 'aabb', 'ab']
+    >>> _wildcard_match('a?c', ('abc', 'aabb', 'ab', 'a'))
+    ['abc']
     """
     import re
 
@@ -1421,6 +1541,20 @@ def ffill_3d_data(arr, init_val=0.):
     Returns
     -------
     ndarray, 填充后的ndarray
+
+    Examples
+    --------
+    >>> arr = np.array([[[1, 2, 3], [np.nan, np.nan, np.nan], [4, 5, 6]],
+    ...                 [[1, 3, 5], [np.nan, np.nan, np.nan], [4, 5, 6]]])
+    >>> ffill_3d_data(arr)
+    array([[[1., 2., 3.],
+            [1., 2., 3.],
+            [4., 5., 6.]],
+
+           [[1., 3., 5.],
+            [1., 3., 5.],
+            [4., 5., 6.]]])
+
     """
     lv, row, col = arr.shape
     r0 = arr[:, 0, :]
@@ -1449,6 +1583,14 @@ def ffill_2d_data(arr, init_val=0.):
     Returns
     -------
     ndarray, 填充后的ndarray
+
+    Examples
+    --------
+    >>> arr = np.array([[1, 2, 3], [np.nan, np.nan, np.nan], [4, 5, 6]])
+    >>> ffill_2d_data(arr)
+    array([[1., 2., 3.],
+           [1., 2., 3.],
+           [4., 5., 6.]])
     """
     row, col = arr.shape
     r0 = arr[0, :]
@@ -1477,6 +1619,14 @@ def fill_nan_data(arr, fill_val=0.):
     Returns
     -------
     ndarray, 填充后的ndarray
+
+    Examples
+    --------
+    >>> arr = np.array([[1, 2, 3], [np.nan, np.nan, np.nan], [4, 5, 6]])
+    >>> fill_nan_data(arr)
+    array([[1., 2., 3.],
+           [0., 0., 0.],
+           [4., 5., 6.]])
     """
     return np.where(np.isnan(arr), fill_val, arr)
 
@@ -1601,6 +1751,12 @@ def reindent(s, num_spaces=4):
     Returns
     -------
     str
+
+    Examples
+    --------
+    >>> s = 'hello\\nworld'
+    >>> reindent(s)
+    '    hello\\n    world'
     """
     if not isinstance(s, str):
         raise TypeError(f's should be a string, got {type(s)} instead')
@@ -1631,6 +1787,15 @@ def truncate_string(s, n, padder='.'):
     Returns
     -------
     str
+
+    Examples
+    --------
+    >>> truncate_string('hello world', 5)
+    'he...'
+    >>> truncate_string('hello world', 5, padder='*')
+    'he***'
+    >>> truncate_string('hello world', 3)
+    'hel'
     """
     if not isinstance(s, str):
         raise TypeError(f'the first argument should be a string, got {type(s)} instead')
