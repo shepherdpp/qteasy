@@ -290,6 +290,16 @@ class BaseStrategy:
         return self._stg_type
 
     @property
+    def pars(self):
+        """策略参数，是一个列表，列表中的每个元素都是一个参数值"""
+        return self._pars
+
+    @pars.setter
+    def pars(self, new_pars: (tuple, dict)):
+        """设置策略参数，参数的合法性检查在这里进行"""
+        self.set_pars(new_pars)
+
+    @property
     def name(self):
         """策略名称，打印策略信息的时候策略名称会被打印出来"""
         return self._stg_name
@@ -752,6 +762,8 @@ class BaseStrategy:
             if k in self.__dict__:
                 setattr(self, k, v)
             else:
+                # TODO：KeyError: "The strategy does not have property 'data_types'"
+                #  检查此处：data_types应该出现Deprecated Warning，而不是报错
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
     def generate(self,

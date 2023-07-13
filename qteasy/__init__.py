@@ -21,9 +21,9 @@ from logging.handlers import TimedRotatingFileHandler
 import qteasy.utilfuncs
 from .core import run, set_config, get_configurations, get_config
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
-from .core import get_basic_info, get_stock_info, get_table_overview, get_data_overview, refill_data_source
+from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source
 from .core import get_history_data, filter_stock_codes, filter_stocks
-from .core import reconnect_ds, get_table_info
+from .core import reconnect_ds, get_table_info, get_table_overview
 from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
 from .qt_operator import Operator
@@ -33,7 +33,6 @@ from .visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
-from .utilfuncs import is_integer_like, is_float_like
 
 
 # 解析qteasy的本地安装路径
@@ -79,9 +78,9 @@ for line in config_lines:
             read_value = False
         elif read_value == 'None':
             read_value = None
-        elif is_integer_like(read_value):
+        elif qteasy.utilfuncs.is_integer_like(read_value):
             read_value = int(read_value)
-        elif is_float_like(read_value):
+        elif qteasy.utilfuncs.is_float_like(read_value):
             read_value = float(read_value)
         else:
             pass

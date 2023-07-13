@@ -2224,6 +2224,7 @@ class Operator:
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(timing)
+            # TODO: 检查，此处有错误，多策略运行时会报错：AttributeError: 'float' object has no attribute 'astype'
             blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
