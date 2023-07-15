@@ -17,18 +17,24 @@ from .utilfuncs import is_number_like, BLENDER_STRATEGY_INDEX_IDENTIFIER
 # 这里定义可用的交易信号混合函数
 @njit()  # 实测njit版本运行速度是python版本的2倍左右
 def op_sum(*args):
-    """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，
-        虽然并不是所有的信号都有效。在这种模式下，本意是原样保存所有单个输入
-        多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
-        运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
-        combo模式的信号组合进行计算的过程中产生问题。
-        例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
-        100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
-        两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
-        因此combo后的数据需要用clip处理
+    """ 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留,虽然并不是所有的信号都有效。
 
-    :param args:
-    :return:
+    在这种模式下，本意是原样保存所有单个输入
+    多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会
+    运用"比例机制"生成卖出证券占持有份额的比例。这种比例机制会在针对
+    combo模式的信号组合进行计算的过程中产生问题。
+    例如：在将两组信号A和B合并到一起之后，如果A在某一天产生了一个股票
+    100%卖出的信号，紧接着B在接下来的一天又产生了一次股票100%卖出的信号，
+    两个信号叠加的结果，就是产生超出持有股票总数的卖出数量。将导致信号问题
+    因此combo后的数据需要用clip处理
+
+    Parameters
+    ----------
+    args:
+
+    Returns
+    -------
+    ndarray
     """
     # 计算所有交易信号之和
     signal_sum = np.zeros_like(args[0])
@@ -40,13 +46,17 @@ def op_sum(*args):
 # 这个函数本身速度比较快，而且njit版本的运行速度没有任何提升
 def op_avg(*args):
     """ 通常用于PT持仓目标信号。
-        组合后的持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
-        只有所有蒙板均看空时，最终结果才看空所有蒙板的权重相同，因此，如
-        果一共五个蒙板三个看多两个看空时，持仓为60%。更简单的解释是，混
-        合后的多空仓位是所有蒙版仓位的平均值.
 
-    :param args: 以tuple形式传入的所有交易信号
-    :return:
+    组合后的持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，
+    只有所有蒙板均看空时，最终结果才看空所有蒙板的权重相同，因此，如
+    果一共五个蒙板三个看多两个看空时，持仓为60%。更简单的解释是，混
+    合后的多空仓位是所有蒙版仓位的平均值.
+
+    args: 以tuple形式传入的所有交易信号
+
+    Returns
+    -------
+    ndarray
     """
     # 计算所有交易信号之和
     signal_sum = op_sum(*args)
@@ -151,6 +161,11 @@ def op_clip(lbound, ubound, *args):
     Returns
     -------
     ndarray
+
+    Examples
+    --------
+    >>> op_clip(-0.5, 0.5, np.array([-0.6, -0.4, 0.4, 0.6]))
+    array([-0.5, -0.4,  0.4,  0.5])
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -171,6 +186,7 @@ def op_unify(*args):
     Parameters
     ----------
     args: ndarray
+    输入信号，只能输入一组信号作为输入
 
     Returns
     -------
@@ -179,7 +195,7 @@ def op_unify(*args):
     examples
     --------
     >>> op_unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
-    >>> [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
+    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -204,10 +220,16 @@ def op_max(*args):
     Parameters
     ----------
     args: ndarray
+    交易信号，可以输入多组交易信号
 
     Returns
     -------
     ndarray
+
+    Examples
+    --------
+    >>> op_max(np.array([0.1, 0.2, 0.5]), np.array([0.2, 0.3, 0.4]))
+    array([0.2, 0.3, 0.5])
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -237,6 +259,11 @@ def op_min(*args):
     Returns
     -------
     ndarray
+
+    Examples
+    --------
+    >>> op_min(np.array([0.1, 0.2, 0.5]), np.array([0.2, 0.3, 0.4]))
+    array([0.1, 0.2, 0.4])
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -264,8 +291,19 @@ def op_power(*args):
     另外，在生成blender表达式的逆波兰式的时候，power函数的两个
     参数次序会颠倒，因此这里实际需要生成的是second的first次幂
 
-    :param args: args中有且只能有两个参数
-    :return:
+    Parameters
+    ----------
+    args: ndarrays
+    交易信号，接受只接受两组交易信号作为输入
+
+    Returns
+    -------
+    ndarray
+
+    Examples
+    --------
+    >>> op_power(np.array([1., 2., 3.]), np.array([2., 2., 2.]))
+    array([1., 4., 9.])
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -280,13 +318,23 @@ def op_power(*args):
 
 @njit()  # 这个函数本身速度不够快，njit版本的运行速度稍快，实测大约快5%
 def op_exp(*args):
-    """ ，逐个元素操作生成e的signal次幂，效果与np.exp()一致
+    """ 逐个元素操作生成e的signal次幂，效果与np.exp()一致
 
-        np.exp()函数可以接受一个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_exp函数避免第二个参数被传入
+    np.exp()函数可以接受一个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_exp函数避免第二个参数被传入
 
-    :param args: args中有且只能有一个参数
-    :return:
+    Parameters
+    ----------
+    args: args中有且只能有一个参数
+
+    Returns
+    -------
+    ndarray
+
+    Examples
+    --------
+    >>> op_exp(np.array([1., 2., 3.]))
+    array([ 2.71828183,  7.3890561 , 20.08553692])
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -302,11 +350,16 @@ def op_exp(*args):
 def op_log(*args):
     """ ，逐个元素操作生成signal的自然对数，效果与np.log()一致
 
-        np.log()函数可以接受一个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_log函数避免第二个参数被传入
+    np.log()函数可以接受一个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_log函数避免第二个参数被传入
 
-    :param args: args中有且只能有一个参数
-    :return:
+    Parameters
+    ----------
+    args: args中有且只能有一个参数
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -322,11 +375,16 @@ def op_log(*args):
 def op_log10(*args):
     """ ，逐个元素操作生成signal的以10为底的对数，效果与np.log10()一致
 
-        np.log10()函数可以接受一个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_log10函数避免第二个参数被传入
+    np.log10()函数可以接受一个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_log10函数避免第二个参数被传入
 
-    :param args: args中有且只能有一个参数
-    :return:
+    Parameters
+    ----------
+    args: args中有且只能有一个参数
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -342,11 +400,16 @@ def op_log10(*args):
 def op_floor(*args):
     """ 逐个元素操作生成signal的floor，效果与np.floor()一致
 
-        np.floor()函数可以接受一个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_floor函数避免第二个参数被传入
+    np.floor()函数可以接受一个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_floor函数避免第二个参数被传入
 
-    :param args: args中有且只能有一个参数
-    :return:
+    Parameters
+    ----------
+    args: args中有且只能有一个参数
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -362,11 +425,16 @@ def op_floor(*args):
 def op_ceil(*args):
     """ 逐个元素操作生成signal的ceil，效果与np.cail()一致
 
-        np.ceil()函数可以接受一个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_ceil函数避免第二个参数被传入
+    np.ceil()函数可以接受一个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_ceil函数避免第二个参数被传入
 
-    :param args: args中有且只能有一个参数
-    :return:
+    Parameters
+    ----------
+    args: args中有且只能有一个参数
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -385,8 +453,13 @@ def op_sqrt(*args):
         np.sqrt()函数可以接受一个ndarray作为结果，这种操作方式
         是这里不需要的，因此创建op_sqrt函数避免第二个参数被传入
 
-    :param args: args中有且只能有一个参数
-    :return:
+    Parameters
+    ----------
+    args: args中有且只能有一个参数
+
+    Returns
+    -------
+    ndarray
     """
     # 交易信号的个数
     signal_count = len(args)
@@ -428,20 +501,29 @@ _AVAILABLE_FUNCTIONS = {'abs':      abs,
 def run_blend_func(func_str, *args):
     """ 根据func_str（一个代表混合函数的字符串解析出正确的函，并返回正确结果
 
-    :param func_str:
+    Parameters
+    ----------
+    func_str: str
         交易信号混合函数名，额外的交易参数直接包含在函数名中
         含有此类附加参数的函数必须特殊解析后才能使用，即将函数名中的特殊参数
         分离出来后作为参数传入函数。
-        例如：
-        avg_pos-3-0.5(*args)
-        解析后的实际执行效果为：
-        avg_pos(3, 0.5, *args)
-
-    :param args:
+    args:
         作为函数func的参数传入的交易信号
 
-    :return:
-        函数的运行结果
+    Returns
+    -------
+    res,函数的运行结果
+
+    Raises
+    ------
+    TypeError: func_str不是字符串
+    KeyError: func_str不是可用的函数名
+    Exception: func执行时出现异常
+
+    Examples
+    --------
+    >>> run_blend_func('avg_pos-3-0.5', signal)
+    avg_pos(3, 0.5, *args)
     """
     if not isinstance(func_str, str):
         raise TypeError(f'func_str should be a string, got {type(func_str)} instead')
@@ -470,10 +552,16 @@ def blender_parser(blender_string):
     上述表达式虽然便于人类理解，但是不利于快速计算，因此需要转化为前缀表达式，其优势是没有括号
     按照顺序读取并直接计算，便于程序的运行。为了节省系统运行开销，在给出混合表达式的时候直接将它
     转化为前缀表达式的形式并直接存储在blender列表中，在混合时直接调用并计算即可
-    input： =====
-        no input parameter
-    return：===== s2: 前缀表达式
-        :rtype: list: 前缀表达式
+
+    Parameters
+    ----------
+    blender_string: str
+        选股策略混合表达式，中缀表达式，如 's0 + (s1 + s2) * s3'
+
+    Returns
+    -------
+    s2: list
+    blender string的前缀表达式
     """
 
     prio = {'|':    0,
@@ -562,11 +650,14 @@ def blender_parser(blender_string):
 def signal_blend(op_signals, blender):
     """ 选股策略混合器，将各个选股策略生成的选股蒙板按规则混合成一个蒙板
 
-    input:
-        :param op_signals:
-        :param blender:
-    :return:
-        ndarray, 混合完成的选股蒙板
+    Parameters
+    ----------
+    op_signals:
+    blender:
+
+    Returns
+    -------
+    s: ndarray, 混合完成的选股蒙板
     """
     exp = blender[:]  # 混合表达式的逆波兰式，可以直接读取后计算
     s = []  # 信号栈，用来存储所有需要操作的交易信号
@@ -600,7 +691,18 @@ def signal_blend(op_signals, blender):
 def _exp_to_token(string):
     """ 将输入的blender-exp裁切成不同的元素(token)，包括数字、符号、函数等
 
-    :return:
+    Parameters
+    ----------
+    string: str, blender-exp字符串
+
+    Returns
+    -------
+    tokens: list, 元素为token的列表
+
+    Examples
+    --------
+    >>> _exp_to_token('s0|s1')
+    ['s0', '|', 's1']
     """
     if not isinstance(string, str):
         raise TypeError()
@@ -733,12 +835,15 @@ def _exp_to_token(string):
 def _operate(n1, n2, op):
     """混合操作符函数，将两个选股、多空蒙板混合为一个
 
-    input:
-        :param n1: np.ndarray: 第一个输入矩阵
-        :param n2: np.ndarray: 第二个输入矩阵
-        :param op: np.ndarray: 运算符
-    return:
-        :return: np.ndarray
+    Parameters
+    ----------
+    n1: np.ndarray: 第一个输入矩阵
+    n2: np.ndarray: 第二个输入矩阵
+    op: np.ndarray: 运算符
+
+    Returns
+    -------
+        np.ndarray
 
     """
     if op == '+':
