@@ -762,8 +762,32 @@ class BaseStrategy:
             if k in self.__dict__:
                 setattr(self, k, v)
             else:
-                # TODO：KeyError: "The strategy does not have property 'data_types'"
-                #  检查此处：data_types应该出现Deprecated Warning，而不是报错
+                # deprecated key processing warning
+                if k == 'sample_freq':
+                    warnings.warn('sample_freq is deprecated, use strategy_fun_freq instead')
+                    self.set_hist_pars(strategy_run_freq=v)
+                    continue
+                if k == 'bt_price_type':
+                    warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
+                    self.set_hist_pars(strategy_run_timing=v)
+                    continue
+                if k == 'bt_data_type':
+                    warnings.warn('bt_data_type is deprecated, use strategy_data_types instead')
+                    self.set_hist_pars(strategy_run_timing=v)
+                    continue
+                if k == 'data_types':
+                    warnings.warn('data_types is deprecated, use strategy_data_types instead')
+                    self.set_hist_pars(strategy_data_types=v)
+                    continue
+                if k == 'bt_run_freq':
+                    warnings.warn('bt_run_freq is deprecated, use strategy_run_freq instead')
+                    self.set_hist_pars(strategy_run_freq=v)
+                    continue
+                if k == 'proportion_or_quantity':
+                    warnings.warn('proportion_or_quantity is deprecated, use max_sel_count instead')
+                    self.set_custom_pars(max_sel_count=v)
+                    continue
+                import pdb; pdb.set_trace()
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
     def generate(self,

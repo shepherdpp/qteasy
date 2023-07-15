@@ -263,15 +263,15 @@ class Operator:
                                 交易信号表达式以类似于四则运算表达式以及函数式的方式表达，解析后应用
                                 到所有交易信号中
                                 例如：
-                                    {'close':    '0 + 1', 
-                                     'open':     '2*(0+1)'}
+                                    {'close':    's0 + s1', 
+                                     'open':     's2*(s0+s1)'}
 
             _stg_blenders:      "信号混合"字典，包含不同价格类型交易信号的混合操作队列，dict的键对应不同的
                                 交易价格类型，Value为交易信号混合操作队列，操作队列以逆波兰式
                                 存储(RPN, Reversed Polish Notation)
                                 例如：
-                                    {'close':    ['*', '1', '0'], 
-                                     'open':     ['*', '2', '+', '1', '0']}
+                                    {'close':    ['*', 's1', 's0'], 
+                                     'open':     ['*', 's2', '+', 's1', 's0']}
                                      
         第三部分，除上述运行数据外，operator还会保存生成的结果，保存交易清单、清单对应的股票、日期时间以及价格类型
         这些数据会在前两部分数据均准备好后，通过create_signal()方法计算并填充
@@ -1449,19 +1449,19 @@ class Operator:
         >>> op.set_parameter('macd', run_timing='open')
 
         >>> # 设置open的策略混合模式
-        >>> op.set_blender('1+2', 'open')
+        >>> op.set_blender('s1+s2', 'open')
         >>> op.get_blender()
-        >>> {'open': ['+', '2', '1']}
+        >>> {'open': ['+', 's2', 's1']}
 
         >>> # 给所有的交易价格策略设置同样的混合表达式
-        >>> op.set_blender('1 + 2')
+        >>> op.set_blender('s1 + s2')
         >>> op.get_blender()
-        >>> {'close': ['+', '2', '1'], 'open':  ['+', '2', '1']}
+        >>> {'close': ['+', 's2', 's1'], 'open':  ['+', 's2', 's1']}
 
         >>> # 通过一个列表给不同的交易价格策略设置不同的混合表达式（交易价格按照字母顺序从小到大排列）
-        >>> op.set_blender(['1 + 2', '3*4'], None)
+        >>> op.set_blender(['s1 + s2', 's3*s4'], None)
         >>> op.get_blender()
-        >>> {'close': ['+', '2', '1'], 'open':  ['*', '4', '3']}
+        >>> {'close': ['+', 's2', 's1'], 'open':  ['*', 's4', 's3']}
         """
         if self.strategy_count == 0:
             return
@@ -1489,24 +1489,24 @@ class Operator:
             if run_timing not in self.strategy_timings:
                 warnings.warn(
                         f'\n'
-                        f'Given price type \'{run_timing}\' is not in valid price type list of \n'
-                        f'current Operator, no blender will be created!\n'
-                        f'current valid price type list as following:\n{self.strategy_timings}')
+                        f'Given run timing \'{run_timing}\' is not valid, current Operator, \n'
+                        f'no blender will be created! current valid run timings are as following:\n'
+                        f'{self.strategy_timings}')
                 return
             if isinstance(blender, str):
-                try:
-                    parsed_blender = blender_parser(blender)
-                    self._stg_blender[run_timing] = parsed_blender
-                    self._stg_blender_strings[run_timing] = blender
-                except:
-                    self._stg_blender_strings[run_timing] = None
-                    self._stg_blender[run_timing] = []
+                parsed_blender = blender_parser(blender)
+                self._stg_blender[run_timing] = parsed_blender
+                self._stg_blender_strings[run_timing] = blender
+                # except:
+                #     self._stg_blender_strings[run_timing] = None
+                #     self._stg_blender[run_timing] = []
             else:
-                # 忽略类型不正确的blender输入
-                self._stg_blender_strings[run_timing] = None
-                self._stg_blender[run_timing] = []
+                # 如果输入的blender类型不正确，则报错
+                raise TypeError(f'Wrong type of blender, a string should be given, got {type(blender)} instead')
+                # self._stg_blender_strings[run_timing] = None
+                # self._stg_blender[run_timing] = []
         else:
-            raise TypeError(f'price_type should be a string, got {type(run_timing)} instead')
+            raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead')
         return
 
     def get_blender(self, run_timing=None):
@@ -2224,7 +2224,6 @@ class Operator:
             # 针对不同的price-type，应该生成不同的signal，因此不同price-type的signal需要分别混合
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(timing)
-            # TODO: 检查，此处有错误，多策略运行时会报错：AttributeError: 'float' object has no attribute 'astype'
             blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值

@@ -1016,6 +1016,31 @@ def _parse_string_kwargs(value, key, vkwargs):
     return value
 
 
+def _process_deprecated_keys(key):
+    """ 如果key是deprecated的，触发将其转换为新的key
+
+    Parameters
+    ----------
+    key : str
+        需要检查的key
+
+    Returns
+    -------
+    key: str 如果key是deprecated的，返回新的key，否则返回原key
+    """
+
+    deprecated = {
+        'print_trade_log': 'trade_log',
+        'print_backtest_log': 'trade_log',
+    }
+
+    # 处理 deprecated keys, send deprecation warning and use new key
+    new_key = deprecated.get(key, key)
+    if new_key != key:
+        warnings.warn(f'config_key <{key}> is deprecated, please use <{new_key}> instead')
+    return key
+
+
 def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     """ given one key, validate the value according to vkwargs dict
         return True if the value is valid
@@ -1031,6 +1056,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     :return:
     """
     vkwargs = _valid_qt_kwargs()
+
     if (key not in vkwargs) and raise_if_key_not_existed:
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)

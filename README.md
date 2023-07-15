@@ -31,6 +31,7 @@
   - [创建投资策略](#创建一个投资策略，进行回测评价并优化其表现)
   - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
   - [投资策略的优化](#回测并优化交易策略)
+  - [投资策略的实盘运行](#投资策略的实盘运行)
 
 ## QTEASY简介
 
@@ -524,3 +525,34 @@ res = qt.run(op, mode=2, visual=True)
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_15_3.png)   
 
+### 部署并开始交易策略的实盘运行
+
+在完成策略的回测和优化之后，我们可以将策略部署到实盘交易环境中，开始实盘运行。`qteasy`提供了一个`Trader`对象，用于实盘交易的
+部署和运行。
+
+在Operator中设置好交易策略，并配置好交易参数后，启动实盘交易非常容易，只需要设置
+
+```python
+qt.config['mode'] = 0
+qt.run(op, mode=0, visual=True)
+
+```
+此时qteasy会启动一个Trader Shell命令行界面，同时交易策略会自动定时运行，运行的参数随QT_CONFIG而定。在命令行界面中，默认会处于dashboard模式，
+在该模式下，所有交易相关的重要信息都会显示在console中，包括：
+- 产生的交易信号和交易订单
+- 交易订单的成交情况
+- 账户资金变动情况
+- 账户持仓变动情况
+- 开盘和收盘时间预告等
+
+在Trader Shell运行过程中可以随时按Ctrl+C进入Shell选单，此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以通过
+输入命令来控制交易策略的运行，例如：
+
+- 输入`pause` / `resume`可以暂停/重新启动交易策略
+- 输入`change`可以修改当前持仓和现金余额
+- 输入`positions`可以查看当前持仓
+- 输入`orders`可以查看当前订单
+- 输入`history`可以查看历史交易记录
+- 输入`strategies`可以查看当前运行的策略
+
+等等

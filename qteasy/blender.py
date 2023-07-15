@@ -466,7 +466,7 @@ def blender_parser(blender_string):
     """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
 
     系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
-    优先计算，如 '0 + (1 + 2) * 3'; 表达式中的数字0～3代表选股策略列表中的不同策略的索引号
+    优先计算，如 's0 + (s1 + s2) * s3'; 表达式中的数字0～3代表选股策略列表中的不同策略的索引号
     上述表达式虽然便于人类理解，但是不利于快速计算，因此需要转化为前缀表达式，其优势是没有括号
     按照顺序读取并直接计算，便于程序的运行。为了节省系统运行开销，在给出混合表达式的时候直接将它
     转化为前缀表达式的形式并直接存储在blender列表中，在混合时直接调用并计算即可
@@ -548,8 +548,13 @@ def blender_parser(blender_string):
 
         else:  # 扫描到不合法输入
             raise ValueError(f'Blender token can not be parsed"{token}"')
+
     while op_stack:
         output.append(op_stack.pop())
+    # 如果output中的所有token都不是策略序号，则报错
+    if not any([BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token) for token in output]):
+        raise ValueError(f'Invalid blender expression, no strategy index found in expression, '
+                         f'use "s0" , "s1" to represent strategies, see document for details')
     output.reverse()  # 表达式解析完成，生成前缀表达式
     return output
 
