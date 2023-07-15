@@ -1489,17 +1489,17 @@ class Operator:
             if run_timing not in self.strategy_timings:
                 warnings.warn(
                         f'\n'
-                        f'Given run timing \'{run_timing}\' is not valid, current Operator, \n'
+                        f'Given run timing \'{run_timing}\' is not valid in current Operator, \n'
                         f'no blender will be created! current valid run timings are as following:\n'
                         f'{self.strategy_timings}')
                 return
             if isinstance(blender, str):
-                parsed_blender = blender_parser(blender)
-                self._stg_blender[run_timing] = parsed_blender
-                self._stg_blender_strings[run_timing] = blender
-                # except:
-                #     self._stg_blender_strings[run_timing] = None
-                #     self._stg_blender[run_timing] = []
+                try:
+                    parsed_blender = blender_parser(blender)
+                    self._stg_blender[run_timing] = parsed_blender
+                    self._stg_blender_strings[run_timing] = blender
+                except ValueError as e:
+                    raise ValueError(f'Invalid blender expression: "{blender}" - {e}')
             else:
                 # 如果输入的blender类型不正确，则报错
                 raise TypeError(f'Wrong type of blender, a string should be given, got {type(blender)} instead')

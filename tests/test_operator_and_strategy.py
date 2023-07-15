@@ -933,8 +933,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.signal_type, 'ps')
 
         op.add_strategy('dma')
-        op.strategy_blenders = '1+2'
-        self.assertEqual(op.strategy_blenders, {'close': ['+', '2', '1']})
+        op.strategy_blenders = 's1+s2'
+        self.assertEqual(op.strategy_blenders, {'close': ['+', 's2', 's1']})
 
         op.clear_strategies()
         self.assertEqual(op.strategy_blenders, {})
@@ -942,89 +942,87 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('dma', strategy_run_timing='open')
         op.set_parameter('trix', strategy_run_timing='close')
 
-        op.set_blender('1+2', 'open')
+        op.set_blender('s1+s2', 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
-        self.assertEqual(blender_open, ['+', '2', '1'])
+        self.assertEqual(blender_open, ['+', 's2', 's1'])
         self.assertEqual(blender_close, None)
         self.assertEqual(blender_high, None)
 
-        op.set_blender('1+2+3', 'open')
-        op.set_blender('1+2+3', 'abc')
+        op.set_blender('s1+2+3', 'open')
+        op.set_blender('s1+2+3', 'abc')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
         blender_abc = op.get_blender('abc')
-        self.assertEqual(op.strategy_blenders, {'open': ['+', '3', '+', '2', '1']})
-        self.assertEqual(blender_open, ['+', '3', '+', '2', '1'])
+        self.assertEqual(op.strategy_blenders, {'open': ['+', '3', '+', '2', 's1']})
+        self.assertEqual(blender_open, ['+', '3', '+', '2', 's1'])
         self.assertEqual(blender_close, None)
         self.assertEqual(blender_high, None)
         self.assertEqual(blender_abc, None)
 
-        op.set_blender(123, 'open')
-        blender_open = op.get_blender('open')
-        self.assertEqual(blender_open, [])
-
-        op.set_blender('1+1', None)
+        op.set_blender('s1+s1', None)
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
         self.assertEqual(op.strategy_timings, ['close', 'open'])
-        self.assertEqual(op.get_blender(), {'close': ['+', '1', '1'],
-                                            'open':  ['+', '1', '1'], })
-        self.assertEqual(blender_open, ['+', '1', '1'])
-        self.assertEqual(blender_close, ['+', '1', '1'])
+        self.assertEqual(op.get_blender(), {'close': ['+', 's1', 's1'],
+                                            'open':  ['+', 's1', 's1'], })
+        self.assertEqual(blender_open, ['+', 's1', 's1'])
+        self.assertEqual(blender_close, ['+', 's1', 's1'])
 
-        op.set_blender(['1+1', '3+4'])
+        op.set_blender(['s1+1', 's3+4'])
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['+', '4', '3'])
-        self.assertEqual(blender_close, ['+', '1', '1'])
-        self.assertEqual(op.view_blender('open'), '3+4')
-        self.assertEqual(op.view_blender('close'), '1+1')
+        self.assertEqual(blender_open, ['+', '4', 's3'])
+        self.assertEqual(blender_close, ['+', '1', 's1'])
+        self.assertEqual(op.view_blender('open'), 's3+4')
+        self.assertEqual(op.view_blender('close'), 's1+1')
 
-        op.strategy_blenders = (['1+2', '2*3'])
+        op.strategy_blenders = (['s1+2', 's2*3'])
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', '2'])
-        self.assertEqual(blender_close, ['+', '2', '1'])
-        self.assertEqual(op.view_blender('open'), '2*3')
-        self.assertEqual(op.view_blender('close'), '1+2')
+        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_close, ['+', '2', 's1'])
+        self.assertEqual(op.view_blender('open'), 's2*3')
+        self.assertEqual(op.view_blender('close'), 's1+2')
 
         # test error inputs:
+        self.assertRaises(TypeError, op.set_blender, 123, 'open')
         # wrong type of price_type
         self.assertRaises(TypeError, op.set_blender, '1+3', 1)
         # price_type not found, no change is made
         op.set_blender('1+3', 'volume')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', '2'])
-        self.assertEqual(blender_close, ['+', '2', '1'])
+        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_close, ['+', '2', 's1'])
         # price_type not valid, no change is made
         op.set_blender('1+2', 'wrong_timing')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', '2'])
-        self.assertEqual(blender_close, ['+', '2', '1'])
-        # wrong type of blender, set to empty list
-        op.set_blender(55, 'open')
+        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_close, ['+', '2', 's1'])
+        # wrong type of blender, no change is made
+        self.assertRaises(TypeError, op.set_blender, 55, 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, [])
-        self.assertEqual(blender_close, ['+', '2', '1'])
-        # wrong type of blender, set to empty list
-        op.set_blender(['1+2'], 'close')
+        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_close, ['+', '2', 's1'])
+        # wrong type of blender, no change is made
+        self.assertRaises(TypeError, op.set_blender, ['1+2'], 'close')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, [])
-        self.assertEqual(blender_close, [])
-        # can't parse blender, set to empty list
-        op.set_blender('a+bc', 'high')
+        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_close, ['+', '2', 's1'])
+        # can't parse blender, raise and no change is made
+        self.assertWarns(Warning, op.set_blender, 'a+bc', 'high')
+        self.assertRaises(ValueError, op.set_blender, 'a+bc', 'close')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, [])
-        self.assertEqual(blender_close, [])
+        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_close, ['+', '2', 's1'])
         self.assertIs(blender_high, None)
 
     def test_property_singal_type(self):
@@ -1317,16 +1315,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(sb, dict)
         print(f'before setting: strategy_blenders={sb}')
         self.assertEqual(sb, {})
-        op.strategy_blenders = '1+2 * 3'
+        op.strategy_blenders = '1+s2 * 3'
         sb = op.strategy_blenders
         print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '*', '3', '2', '1'],
-                              'open':  ['+', '*', '3', '2', '1']})
-        op.strategy_blenders = ['1+2', '3-4']
+        self.assertEqual(sb, {'close': ['+', '*', '3', 's2', '1'],
+                              'open':  ['+', '*', '3', 's2', '1']})
+        op.strategy_blenders = ['s1+2', '3-s4']
         sb = op.strategy_blenders
         print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '2', '1'],
-                              'open':  ['-', '4', '3']})
+        self.assertEqual(sb, {'close': ['+', '2', 's1'],
+                              'open':  ['-', 's4', '3']})
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
@@ -1914,8 +1912,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
     def test_signal_blend(self):
-        self.assertEqual(blender_parser('0 & 1'), ['&', '1', '0'])
-        self.assertEqual(blender_parser('0 or 1'), ['or', '1', '0'])
+        self.assertEqual(blender_parser('s0 & 1'), ['&', '1', 's0'])
+        self.assertEqual(blender_parser('s0 or 1'), ['or', '1', 's0'])
         self.assertEqual(blender_parser('s0 & s1 | s2'), ['|', 's2', '&', 's1', 's0'])
         blender = blender_parser('s0 & s1 | s2')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
@@ -1927,7 +1925,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([0, 1, 0], blender), 0)
         self.assertEqual(signal_blend([0, 0, 0], blender), 0)
         # parse: '0 & ( 1 | 2 )'
-        self.assertEqual(blender_parser('0 & ( 1 | 2 )'), ['&', '|', '2', '1', '0'])
+        self.assertEqual(blender_parser('s0 & ( s1 | s2 )'), ['&', '|', 's2', 's1', 's0'])
         blender = blender_parser('s0 & ( s1 | s2 )')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
         self.assertEqual(signal_blend([1, 0, 1], blender), 1)
@@ -1952,7 +1950,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(signal_blend([1, 1, 1, 1, 1, 1, 1, 1, 1], blender), 3)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 14)
         # parse: '0/max(2,1,3 + 5)+4'
-        self.assertEqual(blender_parser('0/max(2,1,3 + 5)+4'), ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
+        self.assertEqual(blender_parser('s0/max(s2,s1,s3 + s5)+s4'),
+                         ['+', 's4', '/', 'max(3)', '+', 's5', 's3', 's1', 's2', 's0'])
         blender = blender_parser('s0/max(s2,s1,s3 + 5)+s4')
         self.assertEqual(signal_blend([8.0, 4, 3, 5.0, 0.125, 5], blender), 0.925)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 5.25)
@@ -1960,7 +1959,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print('speed test')
         import time
         st = time.time()
-        blender = blender_parser('0+max(1,2,(3+4)*5, max(6, (7+8)*9), 10-11) * (12+13)')
+        blender = blender_parser('s0+max(s1,s2,(s3+s4)*s5, max(s6, (s7+s8)*s9), s10-s11) * (s12+s13)')
         res = []
         for i in range(10000):
             res = signal_blend([1, 1, 2, 3, 4, 5, 3, 4, 5, 6, 7, 8, 2, 3], blender)

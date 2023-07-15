@@ -593,11 +593,13 @@ def blender_parser(blender_string):
             op_stack.append(token)
         elif token == ')':
             # 3，扫描到")"时，依次弹出所有运算符直到遇到"("或一个函数，并根据遇到的token类型（函数/右括号）来确定下一步
+            if len(op_stack) == 0:
+                raise ValueError(f'missing opening parenthesis!')
             while op_stack[-1][-1] != '(':
                 try:
                     output.append(op_stack.pop())
                 except:  # 如果右括号没有与之配对的左括号，则报错
-                    raise ValueError(f'Invalid expression, missing opening parenthesis!')
+                    raise ValueError(f'missing opening parenthesis!')
             if op_stack[-1] == '(':  # 如果剩余右括号，则弹出右括号，并丢弃这对括号
                 op_stack.pop()
             else:  # 如果剩余一个函数，则将函数的参数+1，并弹出函数，设置函数的参数个数
@@ -624,25 +626,33 @@ def blender_parser(blender_string):
             try:
                 arg_count_stack[-1] += 1
             except:
-                raise ValueError(f'Invalid expression: miss-placed comma!')
+                raise ValueError(f'miss-placed comma!')
             while op_stack[-1][-1] != '(':  # 弹出所有的操作符，直到下一个函数或括号
                 try:
                     output.append(op_stack.pop())
                 except:
-                    raise ValueError(f'Invalid expression, missing opening parenthesis!')
+                    raise ValueError(f'missing opening parenthesis!')
         elif BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
             # 7, 扫描到策略序号index时，将其送入结果队列
             output.append(token)
 
         else:  # 扫描到不合法输入
-            raise ValueError(f'Blender token can not be parsed"{token}"')
+            raise ValueError(f'invalid token: "{token}"')
 
     while op_stack:
         output.append(op_stack.pop())
-    # 如果output中的所有token都不是策略序号，则报错
+
+    # blender 质量检查：
+    # 1，如果output中的所有token都不是策略序号，则报错
     if not any([BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token) for token in output]):
-        raise ValueError(f'Invalid blender expression, no strategy index found in expression, '
-                         f'use "s0" , "s1" to represent strategies, see document for details')
+        raise ValueError(f'no strategy index found in expression, use "s0"/"s1" to represent strategies, '
+                         f'see document for details')
+    # 2，如果output中策略序号大于blender中的最大序号，则报错
+    # if max([int(token[1:]) for token in output if BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token)]) >= len(blender):
+    #     raise ValueError(f'strategy index out of range, count of strategies is {len(blender) - 1}')
+    # 3，如果左右括号不匹配(生成的token中有左括号或右括号)，则报错
+    if any([token in '()' for token in output]):
+        raise ValueError(f'mismatched parenthesis!')
     output.reverse()  # 表达式解析完成，生成前缀表达式
     return output
 
