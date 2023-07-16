@@ -733,7 +733,7 @@ class Trader(object):
         self._status = 'stopped'
         self._prev_status = None
 
-        self.account = get_account(self.account_id, self._datasource)
+        self.account = get_account(self.account_id, data_source=self._datasource)
 
         self.debug = debug
 
@@ -1823,7 +1823,6 @@ def start_trader(
     """
     if not isinstance(operator, Operator):
         raise ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
-
     # if account_id is None then create a new account
     if account_id is None:
         if user_name is None:
@@ -1853,7 +1852,7 @@ def start_trader(
                         }
                 )
     try:
-        _ = get_account(account_id, datasource)
+        _ = get_account(account_id, data_source=datasource)
     except Exception as e:
         raise ValueError(f'{e}\naccount {account_id} does not exist.')
 

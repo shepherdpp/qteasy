@@ -69,13 +69,15 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
     return account_id
 
 
-def get_account(account_id, data_source=None):
-    """ 根据account_id获取账户的信息
+def get_account(account_id, user_name=None, data_source=None):
+    """ 根据account_id, 或者user_name获取账户的信息
 
     Parameters
     ----------
     account_id: int
         账户的id
+    user_name: str, optional
+        用户名, 默认为None, 表示使用account_id, 如果给出了user_name, 则忽略account_id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
 
@@ -93,11 +95,16 @@ def get_account(account_id, data_source=None):
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
-
-    account = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
-    if account is None:
-        raise KeyError(f'Account (id={account_id}) not found!')
-    return account
+    if user_name is None:
+        account = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
+        if account is None:
+            raise KeyError(f'Account (id={account_id}) not found!')
+        return account
+    else:
+        account = data_source.read_sys_table_data('sys_op_live_accounts', user_name=user_name)
+        if account is None:
+            raise KeyError(f'Account (user_name={user_name}) not found!')
+        return account
 
 
 def update_account(account_id, data_source=None, **account_data):
@@ -542,7 +549,6 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
     if len(costs) != len(shares):
-        import pdb; pdb.set_trace()
         raise RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
     # 将列表转换为ndarray并返回
     result = (

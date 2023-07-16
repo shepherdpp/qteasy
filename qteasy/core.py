@@ -2533,10 +2533,19 @@ def run(operator, **kwargs):
         '''
         # 显示当前系统中已经存在的实盘账号信息，询问用户是否使用已有账号或重新创建账号运行
         from qteasy.trade_recording import get_account, new_account
-        account_id = 1  # 默认使用第一个账号, 如果没有账号，需要创建一个账号
+
+        if config.live_trade_account_id is not None:
+            account_id = config.live_trade_account_id
+        elif config.live_trade_account is not None:
+            try:
+                account = get_account(account_id=1, user_name=config.live_trade_account)
+                account_id = account['account_id']
+            except KeyError:
+                account_id = 1
+        else:
+            account_id = 1  # 默认使用第一个账号, 如果没有账号，需要创建一个账号
         try:
             account = get_account(account_id=account_id)
-            account_id = account['account_id']
             user_name = account['user_name']
             init_cash = None
             init_holdings = None
@@ -2558,6 +2567,7 @@ def run(operator, **kwargs):
                 init_holdings=init_holdings,
                 config=config,
                 datasource=QT_DATA_SOURCE,
+                debug=config['live_trade_debug_mode'],
         )
 
     elif run_mode == 1 or run_mode == 'back_test':

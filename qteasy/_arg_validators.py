@@ -106,6 +106,26 @@ def _valid_qt_kwargs():
                           'FT   : 期货\n'
                           'FD   : 基金\n'},
 
+        'live_trade_account_id':
+            {'Default':   None,  # 指定account_id后，实盘交易时会直接使用该账户，除非账户不存在
+             'Validator': lambda value: isinstance(value, int),
+             'level':     0,
+             'text':      '实盘交易账户ID，用于实盘交易，如果指定了该参数，则会直接\n'
+                          '使用该账户，除非账户不存在'},
+
+        'live_trade_account':
+            {'Default':   None,  # 指定account后，会查找该账户对应的account_id并使用该账户，除非账户不存在
+             'Validator': lambda value: isinstance(value, str),
+             'level':     0,
+             'text':      '实盘交易账户名称，用于实盘交易，如果指定了该参数，则会查找该\n'
+                          '账户对应的account_id并使用该账户，除非账户不存在'},
+
+        'live_trade_debug_mode':
+            {'Default':   False,
+             'Validator': lambda value: isinstance(value, bool),
+             'level':     0,
+             'text':      '实盘交易调试模式，True: 调试模式，False: 正常模式'},
+
         'trade_batch_size':
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))
@@ -1108,12 +1128,10 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
-        # warning is suppressed, ignore warning
-        # warn_msg = f'config_key <{key}> is not a built-in parameter key, but might be acceptable because the error ' \
-        #            f'is suppressed by program!'
-        # warnings.warn(warn_msg)
         return True
-
+    # 允许所有value为None
+    if value is None:
+        return True
     try:
         valid = vkwargs[key]['Validator'](value)
     except Exception as ex:
@@ -1125,9 +1143,6 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         raise TypeError(
                 f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
                 f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
-        # ---------------------------------------------------------------
-        #      至此 , 如果没有任何Exception被Raise出来,
-        #      那么我们就认为所有的argument都是valid的.
 
     return True
 
