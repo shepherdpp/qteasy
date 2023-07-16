@@ -450,8 +450,8 @@ def op_ceil(*args):
 def op_sqrt(*args):
     """ ，逐个元素操作生成signal的平方根，效果与np.sqrt()一致
 
-        np.sqrt()函数可以接受一个ndarray作为结果，这种操作方式
-        是这里不需要的，因此创建op_sqrt函数避免第二个参数被传入
+    np.sqrt()函数可以接受一个ndarray作为结果，这种操作方式
+    是这里不需要的，因此创建op_sqrt函数避免第二个参数被传入
 
     Parameters
     ----------
@@ -617,7 +617,7 @@ def blender_parser(blender_string):
             else:
                 # 如果op栈为空，直接将token压入op栈
                 op_stack.append(token)
-        elif (token[0].isalpha) and (token[-1] == '('):
+        elif token[0].isalpha and (token[-1] == '('):
             # 5，扫描到字母开头，且'('结尾的字符串时，说明扫描到函数，将函数压入op栈，并将数字0压入arc_count栈
             op_stack.append(token)
             arg_count_stack.append(0)
@@ -627,6 +627,8 @@ def blender_parser(blender_string):
                 arg_count_stack[-1] += 1
             except:
                 raise ValueError(f'miss-placed comma!')
+            if len(op_stack) == 0:
+                raise ValueError(f'missing opening parenthesis!')
             while op_stack[-1][-1] != '(':  # 弹出所有的操作符，直到下一个函数或括号
                 try:
                     output.append(op_stack.pop())

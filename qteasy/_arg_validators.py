@@ -16,46 +16,49 @@ import warnings
 
 
 class ConfigDict(dict):
-    """ 继承自dict的一个类，用于构造qt.run()函数的参数表字典对象
-        比dict多出一个功能，即通过属性来访问字典的键值，提供访问便利性
+    """ 继承自dict的一个类，用于构造qteasy的参数表字典对象
+    参数字典比dict多出一个功能，即通过属性来访问字典的键值，提供访问便利性
+    即：
+    config_key.attr = config_key['attr']
 
-        即：
-        config_key.attr = config_key['attr']
+    Methods
+    -------
+    copy()
+        返回一个参数字典的深拷贝
     """
 
     def __init__(self, *args, **kwargs):
-        """
+        """ 参数字典的初始化函数，构造方式与dict相同
 
-        :rtype: object
         """
         super(ConfigDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
     def copy(self):
-        """
+        """ 返回一个参数字典的深拷贝
 
-        :return:
+        Returns
+        -------
+        config_copy : ConfigDict
+            参数字典的深拷贝
         """
         return ConfigDict(**self)
 
 
 def _valid_qt_kwargs():
-    """
-    Construct and return the "valid kwargs table" for the qteasy.run() function.
-    A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
-    valid key-words for the function.  The value for each key is a dict containing
-    4 specific keys: "Default", "Validator", "level", and "text" with the following values:
-        "Default"      - The default value for the config_key if none is specified.
-        "Validator"    - A function that takes the caller specified value for the config_key,
-                         and validates that it is the correct type, and (for kwargs with
-                         a limited set of allowed values) may also validate that the
-                         config_key value is one of the allowed values.
-        "level"        - The display level of the key-word, for the user can choose to
-                         display different levels of key-words at a time to save time
-        "text"         - The explanatory text of the key-words, can be displayed for
-                         easy access
+    """ 合法参数列表
 
-    :return:
+    构建一个合法参数列表，用于控制qteasy的运行方式。合法参数列表是一个dict of dict，每一个key是一个合法的参数名，
+    每一个value是一个dict，包含4个key，分别是"Default", "Validator", "level", "text"，对应的value分别是：
+        "Default"      - 如果用户没有指定该参数，则使用该默认值
+        "Validator"    - 一个函数，用于验证用户指定的参数值是否合法
+        "level"        - 该参数的显示级别，用户可以选择显示不同级别的参数，以节省时间
+        "text"         - 该参数的说明文本，用户可以通过显示该文本来了解该参数的含义
+
+    Returns
+    -------
+    vkwargs : dict
+        合法参数列表
     """
     vkwargs = {
         'mode':
@@ -306,7 +309,7 @@ def _valid_qt_kwargs():
         'benchmark_asset':
             {'Default':   '000300.SH',
              'Validator': lambda value: isinstance(value, str)
-                                        and _validate_asset_id(value),
+                                        and _validate_asset_symbol(value),
              'level':     1,
              'text':      '用来产生回测结果评价结果基准收益的资产类型，默认基准为沪深300指数\n'
                           '基准指数用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
@@ -871,11 +874,15 @@ def _valid_qt_kwargs():
 
 
 def _validate_vkwargs_dict(vkwargs):
-    """ Check that we didn't make a typo in any of the things
-        that should be the same for all vkwargs dict items:
+    """ 检查确认vkwargs合法参数列表的格式是否正确
 
-    :param vkwargs:
-    :return:
+    Parameters
+    ----------
+    vkwargs: dict
+        合法参数列表
+
+    Returns
+    -------
     """
     for key, value in vkwargs.items():
         if len(value) != 4:
@@ -891,15 +898,24 @@ def _validate_vkwargs_dict(vkwargs):
 
 
 def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
-    """ Given a list of kwargs, verify that all kwargs are in the valid kwargs,
-        and display their values and other information according to given
-        parameters. return a string with all formulated information
+    """ 给出一个或多个参数名称, 确认他们是否合法参数名称，并显示它们的当前值和其他信息
+    返回一个字符串，包含所有参数的信息
 
-    :param kwargs: list or tuple, kwargs that are to be displayed
-    :param level: int or list of ints, 所有需要输出的kwargs的层级
-    :param info:
-    :param verbose:
-    :return:
+    Parameters
+    ----------
+    kwargs: list or tuple,
+        需要显示的kwargs
+    level: int or list of ints,
+        所有需要输出的kwargs的层级
+    info: bool
+        是否输出基本信息
+    verbose: bool
+        是否输出详细信息
+
+    Returns
+    -------
+    output_strings: list of str
+        包含所有参数信息的字符串
     """
     from qteasy.utilfuncs import reindent
     if isinstance(level, int):
@@ -959,9 +975,13 @@ def _initialize_config_kwargs(kwargs, vkwargs):
         for each config_key, and then substitute in any values that were provided
         as kwargs and return the configuration dictionary.
 
-    :param kwargs: keywords that is given by user
-    :param vkwargs: valid keywords table usd for validating given kwargs
-    :return:
+    Parameters
+    ----------
+    kwargs: keywords that is given by user
+    vkwargs: valid keywords table usd for validating given kwargs
+
+    Returns
+    -------
         config_key: ConfigDict
     """
     # initialize configuration from valid_kwargs_table:
@@ -980,10 +1000,14 @@ def _update_config_kwargs(config, kwargs, raise_if_key_not_existed=False):
     """ given existing configuration dict, verify that all kwargs are valid
         per kwargs table, and update the configuration dictionary
 
-    :param config: configuration dictionary to be updated
-    :param kwargs: kwargs that are to be updated
-    :param raise_if_key_not_existed:  if True, raise when key does not exist in vkwargs
-    :return:
+    Parameters
+    ----------
+    config: configuration dictionary to be updated
+    kwargs: kwargs that are to be updated
+    raise_if_key_not_existed:  if True, raise when key does not exist in vkwargs
+
+    Returns
+    -------
         config_key ConfigDict
     """
     vkwargs = _valid_qt_kwargs()
@@ -996,12 +1020,23 @@ def _update_config_kwargs(config, kwargs, raise_if_key_not_existed=False):
 
 
 def _parse_string_kwargs(value, key, vkwargs):
-    """ correct the type of value to the same of default type
+    """ 如果value是字符串，将其转换为正确的参数类型
 
-    :param value:
-    :param key:
-    :param vkwargs:
-    :return:
+    从text文件中读取的参数都是字符串，需要将其转换为正确的参数类型
+
+    Parameters
+    ----------
+    value: str
+        需要转换的字符串，参数的值
+    key: str
+        参数名称
+    vkwargs: dict
+        有效参数表
+
+    Returns
+    -------
+    value: any
+        转换后的参数值
     """
     # 为防止value的类型不正确，将value修改为正确的类型，与 vkwargs 的
     # Default value 的类型相同
@@ -1042,18 +1077,30 @@ def _process_deprecated_keys(key):
 
 
 def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
-    """ given one key, validate the value according to vkwargs dict
-        return True if the value is valid
-        raise if the value is not valid
-        return False or raise if the key does not exist in vkwargs, depending on
-        argument "raise_if_key_not_existed"
+    """ 给定一个参数, 根据参数的验证方法验证值的正确性
 
-    :param key:
-    :param value:
-    :param raise_if_key_not_existed:    when key does not exist in vkwargs:
-                                        raise if True,
-                                        return False if False and warning
-    :return:
+    验证通过返回True, 否则返回报错
+    如果参数不存在，则根据参数"raise_if_key_not_existed"的值决定报错或返回False
+
+    Parameters
+    ----------
+    key: str
+        需要验证的参数
+    value: any
+        被验证的参数值
+    raise_if_key_not_existed: bool, default False
+        当此参数为False时，如果key不存在，不会报错，而是返回False
+        当此参数为True时，如果key不存在，会报错
+
+    Returns
+    -------
+    bool : True or False
+        如果验证通过，返回True
+        如果参数不存在，且raise_if_key_not_existed为False，返回False
+
+    Raises
+    ------
+    KeyError: 当key不存在且raise_if_key_not_existed为True时，会报错，否则返回False
     """
     vkwargs = _valid_qt_kwargs()
 
@@ -1085,12 +1132,23 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     return True
 
 
-def _validate_asset_id(value):
-    """
+def _validate_asset_symbol(value):
+    """ 检查确认value是一个合法的股票代码
 
-    :param value:
-    :return:
+    Parameters
+    ----------
+    value:
+
+    Returns
+    -------
     """
+    if not isinstance(value, str):
+        return False
+    from qteasy.utilfuncs import CN_STOCK_SYMBOL_IDENTIFIER2
+    import re
+    if re.match(CN_STOCK_SYMBOL_IDENTIFIER2, value) is None:
+        return False
+
     return True
 
 
@@ -1104,8 +1162,12 @@ def _validate_indicator_plot_type(value):
          '3  - violin 类型\n'
          '4  - box 类型'
 
-    :param value:
-    :return: Boolean
+    Parameters
+    ----------
+    value:
+
+    Returns
+     -------Boolean
     """
     if not isinstance(value, (int, str)):
         return False
@@ -1125,11 +1187,41 @@ def _validate_indicator_plot_type(value):
 def _validate_asset_type(value):
     """
 
-    :param value:
-    :return:
+    Parameters
+    ----------
+    value:
+
+    Returns
+    -------
     """
     from .utilfuncs import AVAILABLE_ASSET_TYPES
     return value in AVAILABLE_ASSET_TYPES
+
+
+def _validate_asset_pool(value):
+    """ 校验asset_pool的合法性，asset_pool中每一个元素都必须是一个合法的股票代码
+
+    Parameters
+    ----------
+    value:
+
+    Returns
+    -------
+    """
+    if isinstance(value, str):
+        from qteasy.utilfuncs import str_to_list
+        value = str_to_list(value)
+    if not isinstance(value, list):
+        return False
+    from qteasy.utilfuncs import CN_STOCK_SYMBOL_IDENTIFIER2
+    import re
+    # 每一个元素都必须是一个合法的股票代码，使用CN_STOCK_SYMBOL_IDENTIFIER2检查
+    if any([not isinstance(v, str) for v in value]):
+        return False
+    if any([not re.match(CN_STOCK_SYMBOL_IDENTIFIER2, v) for v in value]):
+        return False
+
+    return True
 
 
 def _is_datelike(value):
@@ -1184,15 +1276,6 @@ def _kwarg_not_implemented(value):
         then use this function as the config_key validator
     """
     raise NotImplementedError('config_key NOT implemented.')
-
-
-def _validate_asset_pool(kwargs):
-    """
-
-    :param kwargs:
-    :return:
-    """
-    return True
 
 
 QT_CONFIG = _initialize_config_kwargs({}, _valid_qt_kwargs())
