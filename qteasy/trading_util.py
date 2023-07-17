@@ -985,13 +985,16 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 cash_amount_change=cash_change,
                 available_cash_change=cash_change,
         )
-        # calculate new cost
+        # calculate new cost if (position_change + owned_qty) is not 0
         prev_cost = position_cost * owned_qty
-        additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
-        new_cost = np.round(
-                (prev_cost + additional_cost) / (owned_qty + position_change),
-                CASH_DECIMAL_PLACES
-        )
+        if position_change + owned_qty == 0:
+            new_cost = prev_cost
+        else:
+            additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
+            new_cost = np.round(
+                    (prev_cost + additional_cost) / (owned_qty + position_change),
+                    CASH_DECIMAL_PLACES
+            )
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,
@@ -1007,11 +1010,14 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         )
         # calculate new cost
         prev_cost = position_cost * owned_qty
-        additional_cost = -position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
-        new_cost = np.round(
-                (prev_cost + additional_cost) / (owned_qty - position_change),
-                CASH_DECIMAL_PLACES
-        )
+        if owned_qty - position_change == 0:
+            new_cost = None
+        else:
+            additional_cost = -position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
+            new_cost = np.round(
+                    (prev_cost + additional_cost) / (owned_qty - position_change),
+                    CASH_DECIMAL_PLACES
+            )
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,

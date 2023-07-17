@@ -126,6 +126,23 @@ def _valid_qt_kwargs():
              'level':     0,
              'text':      '实盘交易调试模式，True: 调试模式，False: 正常模式'},
 
+        'live_trade_init_cash':
+            {'Default':   1000000.0,
+             'Validator': lambda value: isinstance(value, (int, float))
+                                         and value > 0,
+             'level':     0,
+             'text':      '实盘交易账户的初始资金，浮点数，例如：\n'
+                         '1000000.0 : 初始资金为100万\n'
+                         '1000000   : 初始资金为100万\n'},
+
+        'live_trade_init_holdings':
+            {'Default':   None,
+             'Validator': lambda value: isinstance(value, dict),
+             'level':     0,
+             'text':      '实盘交易账户的初始持仓，字典，例如：\n'
+                          "{'000001.SZ': 1000, '000002.SZ': 2000} : 初始持仓为\n"
+                          "000001.SZ: 1000股, 000002.SZ: 2000股\n"},
+
         'trade_batch_size':
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))

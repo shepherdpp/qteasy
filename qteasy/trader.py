@@ -1832,34 +1832,38 @@ def start_trader(
                 cash_amount=init_cash,
                 data_source=datasource,
         )
-        # if init_holdings is not None then add holdings to account
-        if init_holdings is not None:
-            if not isinstance(init_holdings, dict):
-                raise ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
-            for symbol, amount in init_holdings.items():
-                pos_id = get_or_create_position(
-                        account_id=account_id,
-                        symbol=symbol,
-                        position_type='long' if amount > 0 else 'short',
-                        data_source=datasource,
-                )
-                update_position(
-                        position_id=pos_id,
-                        data_source=datasource,
-                        **{
-                            'qty_change': abs(amount),
-                            'available_qty_change': abs(amount),
-                        }
-                )
     try:
         _ = get_account(account_id, data_source=datasource)
     except Exception as e:
-        raise ValueError(f'{e}\naccount {account_id} does not exist.')
+        raise ValueError(f'{e}\naccount {account_id} does not exist. choose a valid account or create a new one.')
+
+    # now we know that account_id is valid
+
+    # if init_holdings is not None then add holdings to account
+    if init_holdings is not None:
+        if not isinstance(init_holdings, dict):
+            raise ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+        for symbol, amount in init_holdings.items():
+            pos_id = get_or_create_position(
+                    account_id=account_id,
+                    symbol=symbol,
+                    position_type='long' if amount > 0 else 'short',
+                    data_source=datasource,
+            )
+            update_position(
+                    position_id=pos_id,
+                    data_source=datasource,
+                    **{
+                        'qty_change':           abs(amount),
+                        'available_qty_change': abs(amount),
+                    }
+            )
 
     # if account is ready then create trader and broker
     broker = RandomBroker(
             fee_rate_buy=0.0001,
             fee_rate_sell=0.0003,
+            moq=config.trade_batch_size,
     )
     trader = Trader(
             account_id=account_id,
@@ -1879,16 +1883,16 @@ def start_trader(
         symbol_list = config['asset_pool']
     symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
 
-    datasource.refill_local_source(
-            tables='index_daily',
-            dtypes=operator.op_data_types,
-            freqs=operator.op_data_freq,
-            asset_types='E',
-            start_date=start_date.strftime('%Y%m%d'),
-            end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
-            symbols=symbol_list,
-            parallel=True,
-            refresh_trade_calendar=True,
-    )
+    # datasource.refill_local_source(
+    #         tables='index_daily',
+    #         dtypes=operator.op_data_types,
+    #         freqs=operator.op_data_freq,
+    #         asset_types='E',
+    #         start_date=start_date.strftime('%Y%m%d'),
+    #         end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
+    #         symbols=symbol_list,
+    #         parallel=True,
+    #         refresh_trade_calendar=True,
+    # )
 
     TraderShell(trader).run()

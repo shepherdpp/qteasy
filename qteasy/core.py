@@ -2525,46 +2525,17 @@ def run(operator, **kwargs):
     """
 
     if run_mode == 0 or run_mode == 'live':
-        '''进入实时信号生成模式：
-        
-        进入实盘交易模式后，会启动TraderShell，以实时显示策略交易的过程，同时允许用户隋时进入交互模式
-        查看交易结果或修改交易过程中的现金或持仓数量。
-        
+        '''进入实时信号生成模式: 
         '''
-        # 显示当前系统中已经存在的实盘账号信息，询问用户是否使用已有账号或重新创建账号运行
-        from qteasy.trade_recording import get_account, new_account
-
-        if config.live_trade_account_id is not None:
-            account_id = config.live_trade_account_id
-        elif config.live_trade_account is not None:
-            try:
-                account = get_account(account_id=1, user_name=config.live_trade_account)
-                account_id = account['account_id']
-            except KeyError:
-                account_id = 1
-        else:
-            account_id = 1  # 默认使用第一个账号, 如果没有账号，需要创建一个账号
-        try:
-            account = get_account(account_id=account_id)
-            user_name = account['user_name']
-            init_cash = None
-            init_holdings = None
-        except KeyError as e:
-            print(f'account {account_id} not found, a new account will be created')
-            account_id = None
-            user_name = 'un-named_user'
-            init_cash = config['invest_cash_amounts'][0]
-            init_holdings = {}
-
         # 启动交易shell
         from qteasy.trader import start_trader
         from qteasy import QT_DATA_SOURCE
         start_trader(
                 operator=operator,
-                account_id=account_id,
-                user_name=user_name,
-                init_cash=init_cash,
-                init_holdings=init_holdings,
+                account_id=config['live_trade_account_id'],
+                user_name=config['live_trade_account'],
+                init_cash=config['live_trade_init_cash'],
+                init_holdings=config['live_trade_init_holdings'],
                 config=config,
                 datasource=QT_DATA_SOURCE,
                 debug=config['live_trade_debug_mode'],
