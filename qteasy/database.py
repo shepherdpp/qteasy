@@ -2224,7 +2224,8 @@ class DataSource:
     def info(self):
         """ 格式化打印database对象的各种主要信息
 
-        :return:
+        Returns
+        -------
         """
         raise NotImplementedError
 
@@ -2294,8 +2295,11 @@ class DataSource:
     def file_exists(self, file_name):
         """ 检查文件是否已存在
 
-        :param file_name: 需要检查的文件名(不含扩展名)
-        :return:
+        Parameters
+        ----------
+        file_name: 需要检查的文件名(不含扩展名)
+        Returns
+        -------
         Boolean: 文件存在时返回真，否则返回假
         """
         file_path_name = self.get_file_path_name(file_name)
@@ -2304,9 +2308,12 @@ class DataSource:
     def write_file(self, df, file_name):
         """ 将df写入本地文件
 
-        :param df: 待写入文件的DataFrame
-        :param file_name: 本地文件名(不含扩展名)
-        :return:
+        Parameters
+        ----------
+        df: 待写入文件的DataFrame
+        file_name: 本地文件名(不含扩展名)
+        Returns
+        -------
         str: file_name 如果数据保存成功，返回完整文件路径名称
         """
         file_path_name = self.get_file_path_name(file_name)
@@ -2469,8 +2476,11 @@ class DataSource:
     def get_file_size(self, file_name):
         """ 获取文件大小，输出
 
-        :param file_name:  str 文件名
-        :return:
+        Parameters
+        ----------
+        file_name:  str 文件名
+        Returns
+        -------
             str representing file size
         """
         import os
@@ -2504,17 +2514,25 @@ class DataSource:
         """ 从一张数据库表中读取数据，读取时根据share(ts_code)和dates筛选
             具体筛选的字段通过share_like_pk和date_like_pk两个字段给出
 
-        :param db_table: 需要读取数据的数据表
-        :param share_like_pk:
+        Parameters
+        ----------
+        db_table: str
+            需要读取数据的数据表
+        share_like_pk: str
             用于筛选证券代码的字段名，不同的表中字段名可能不同，用这个字段筛选不同的证券、如股票、基金、指数等
             当这个参数给出时，必须给出shares参数
-        :param shares: 如果给出shares，则按照"WHERE share_like_pk IN shares"筛选
-        :param date_like_pk:
+        shares: str,
+            如果给出shares，则按照"WHERE share_like_pk IN shares"筛选
+        date_like_pk: str
             用于筛选日期的主键字段名，不同的表中字段名可能不同，用这个字段筛选需要的记录的时间段
             当这个参数给出时，必须给出start和end参数
-        :param start:  如果给出start同时又给出end，按照"WHERE date_like_pk BETWEEN start AND end"的条件筛选
-        :param end:    当没有给出start时，单独给出end无效
-        :return:
+        start: datetime like,
+            如果给出start同时又给出end，按照"WHERE date_like_pk BETWEEN start AND end"的条件筛选
+        end: datetime like,
+            当没有给出start时，单独给出end无效
+
+        Returns
+        -------
             DataFrame，从数据库中读取的DataFrame
         """
         if not self.db_table_exists(db_table):
@@ -2634,9 +2652,15 @@ class DataSource:
     def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
 
-        :param db_table: 数据表名
-        :param column: 数据表的字段名
-        :return:
+        Parameters
+        ----------
+        db_table: str
+            数据表名
+        column: str
+            数据表的字段名
+
+        Returns
+        -------
         """
         import datetime
         if not self.db_table_exists(db_table):
@@ -2661,10 +2685,18 @@ class DataSource:
     def get_db_table_minmax(self, db_table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
 
-        :param db_table: 数据表名
-        :param column: 数据表的字段名
-        :param with_count: 是否返回关键列值的数量，可能非常耗时
-        :return:
+        Parameters
+        ----------
+        db_table: str
+            数据表名
+        column: str
+            数据表的字段名
+        with_count: bool, default False
+            是否返回关键列值的数量，可能非常耗时
+
+        Returns
+        -------
+        list: [min, max, count]
         """
         import datetime
         if not self.db_table_exists(db_table):
@@ -2692,8 +2724,14 @@ class DataSource:
     def db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
 
-        :param db_table:
-        :return:
+        Parameters
+        ----------
+        db_table: str
+            数据表名
+
+        Returns
+        -------
+        bool
         """
         if self.source_type == 'file':
             raise RuntimeError('can not connect to database while source type is "file"')
@@ -2759,8 +2797,13 @@ class DataSource:
     def get_db_table_schema(self, db_table):
         """ 获取数据库表的列名称和数据类型
 
-        :param db_table: 需要获取列名的数据库表
-        :return:
+        Parameters
+        ----------
+        db_table: str
+            需要获取列名的数据库表
+
+        Returns
+        -------
             dict: 一个包含列名和数据类型的Dict: {column1: dtype1, column2: dtype2, ...}
         """
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
@@ -2784,8 +2827,14 @@ class DataSource:
     def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
 
-        :param db_table:
-        :return:
+        Parameters
+        ----------
+        db_table: str
+            数据表名
+
+        Returns
+        -------
+        None
         """
         if self.source_type != 'db':
             raise TypeError(f'Datasource is not connected to a database')
@@ -2802,8 +2851,14 @@ class DataSource:
     def get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
 
-        :param db_table: str 数据库表名称
-        :return:
+        Parameters
+        ----------
+        db_table: str
+            数据库表名称
+
+        Returns
+        -------
+        rows: int
         """
         if not self.db_table_exists(db_table):
             return -1
@@ -2825,8 +2880,13 @@ class DataSource:
     def table_data_exists(self, table):
         """ 逻辑层函数，判断数据表是否存在
 
-        :param table: 数据表名称
-        :return:
+        Parameters
+        ----------
+        table: 数据表名称
+
+        Returns
+        -------
+        bool: True if table exists, False otherwise
         """
         if self.source_type == 'db':
             return self.db_table_exists(db_table=table)
@@ -3212,9 +3272,14 @@ class DataSource:
     def drop_table_data(self, table):
         """ 删除本地存储的数据表(操作不可撤销，谨慎使用)
 
-        :param table: 本地数据表的名称
-        :return:
-            None
+        Parameters
+        ----------
+        table: str,
+            本地数据表的名称
+
+        Returns
+        -------
+        None
         """
         if self.source_type == 'db':
             self.drop_db_table(db_table=table)
@@ -3226,14 +3291,41 @@ class DataSource:
     def get_table_data_coverage(self, table, column, min_max_only=False):
         """ 获取本地数据表内容的覆盖范围，取出数据表的"column"列中的去重值并返回
 
-        :param table: 数据表的名称
-        :param column: 需要去重并返回的数据列
-        :param min_max_only:
+        Parameters
+        ----------
+        table: str,
+            数据表的名称
+        column: list of str
+            需要去重并返回的数据列
+        min_max_only: bool, default False
             为True时不需要返回整个数据列，仅返回最大值和最小值
             如果仅返回最大值和和最小值，返回值为一个包含两个元素的列表，
             第一个元素是最小值，第二个是最大值，第三个是总数量
-        :return:
-            List, 代表数据覆盖范围的列表
+
+        Returns
+        -------
+        List, 代表数据覆盖范围的列表
+
+        Examples
+        --------
+        >>> qt.QT_DATA_SOURCE.get_table_data_coverage('stock_daily', 'ts_code')
+        Out:
+        ['000001.SZ',
+         '000002.SZ',
+         '000003.SZ',
+         '000004.SZ',
+         '000005.SZ',
+         '000006.SZ',
+         ...,
+         '002407.SZ',
+         '002408.SZ',
+         '002409.SZ',
+         '002410.SZ',
+         '002411.SZ',
+         ...]
+        >>> qt.QT_DATA_SOURCE.get_table_data_coverage('stock_daily', 'ts_code', min_max_only=True)
+        Out:
+        ['000001.SZ', '873593.BJ']
         """
         if self.source_type == 'db':
             if min_max_only:
@@ -3249,13 +3341,19 @@ class DataSource:
     def get_data_table_size(self, table, human=True, string_form=True):
         """ 获取数据表占用磁盘空间的大小
 
-        :param table: 数据表名称
-        :param human: True时显示容易阅读的形式，如1.5MB而不是1590868， False时返回字节数
-        :param string_form: True时以字符串形式返回结果，便于打印
-        :return:
-            tuple:
-            size: int / str:
-            row
+        Parameters
+        ----------
+        table: str
+            数据表名称
+        human: bool, default True
+            True时显示容易阅读的形式，如1.5MB而不是1590868， False时返回字节数
+        string_form: bool, default True
+            True时以字符串形式返回结果，便于打印
+
+        Returns
+        -------
+        tuple (size, rows): tuple of int or str:
+
         """
         if self.source_type == 'file':
             size = self.get_file_size(table)
@@ -3826,22 +3924,22 @@ class DataSource:
     def get_index_weights(self, index, start=None, end=None, shares=None):
         """ 从本地数据仓库中获取一个指数的成分权重
 
-        :param index: [str, list]
+        Parameters
+        ----------
+        index: [str, list]
             需要获取成分的指数代码，可以包含多个指数，每个指数
-
-        :param start: str
+        start: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-
-        :param end: str
+        end: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-
-        :param shares: [str, list]
+        shares: [str, list]
             需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
             如以下两种输入方式皆合法且等效：
              - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
              - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
 
-        :return:
+        Returns
+        -------
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
@@ -4969,7 +5067,8 @@ def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
 def get_dtype_map():
     """ 获取所有内置数据类型的清单
 
-    :return:
+    Returns
+    -------
     """
     dtype_map = pd.DataFrame(DATA_TABLE_MAP).T
     dtype_map.columns = DATA_TABLE_MAP_COLUMNS

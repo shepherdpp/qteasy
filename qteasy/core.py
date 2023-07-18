@@ -1138,11 +1138,11 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         - FD    基金
         - FT    期货
         - OPT   期权
-    match_full_name: bool
+    match_full_name: bool, default False
         是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
-    printout: bool
+    printout: bool, default True
         如果为True，打印匹配到的结果
-    verbose: bool
+    verbose: bool, default False
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
@@ -1156,6 +1156,106 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
         - 期货：   期货名称
         - 期权：   期权名称
+
+    Examples
+    --------
+    >>> get_basic_info('000001.SZ')
+    found 1 matches, matched codes are {'E': {'000001.SZ': '平安银行'}, 'count': 1}
+    More information for asset type E:
+    ------------------------------------------
+    ts_code       000001.SZ
+    name               平安银行
+    area                 深圳
+    industry             银行
+    fullname     平安银行股份有限公司
+    list_status           L
+    list_date    1991-04-03
+    -------------------------------------------
+
+    >>> get_basic_info('000001')
+    found 4 matches, matched codes are {'E': {'000001.SZ': '平安银行'}, 'IDX': {'000001.CZC': '农期指数', '000001.SH': '上证指数'}, 'FD': {'000001.OF': '华夏成长'}, 'count': 4}
+    More information for asset type E:
+    ------------------------------------------
+    ts_code       000001.SZ
+    name               平安银行
+    area                 深圳
+    industry             银行
+    fullname     平安银行股份有限公司
+    list_status           L
+    list_date    1991-04-03
+    -------------------------------------------
+    More information for asset type IDX:
+    ------------------------------------------
+    ts_code   000001.CZC   000001.SH
+    name            农期指数        上证指数
+    fullname        农期指数      上证综合指数
+    publisher    郑州商品交易所        中证公司
+    category        商品指数        综合指数
+    list_date       None  1991-07-15
+    -------------------------------------------
+    More information for asset type FD:
+    ------------------------------------------
+    ts_code        000001.OF
+    name                华夏成长
+    management          华夏基金
+    custodian         中国建设银行
+    fund_type            混合型
+    issue_date    2001-11-28
+    issue_amount     32.3683
+    invest_type          成长型
+    type              契约型开放式
+    -------------------------------------------
+
+    >>> get_basic_info('平安银行')
+    found 4 matches, matched codes are {'E': {'000001.SZ': '平安银行', '600928.SH': '西安银行'}, 'IDX': {'802613.SI': '平安银行养老新兴投资指数'}, 'FD': {'700001.OF': '平安行业先锋'}, 'count': 4}
+    More information for asset type E:
+    ------------------------------------------
+    ts_code       000001.SZ   600928.SH
+    name               平安银行        西安银行
+    area                 深圳          陕西
+    industry             银行          银行
+    fullname     平安银行股份有限公司  西安银行股份有限公司
+    list_status           L           L
+    list_date    1991-04-03  2019-03-01
+    -------------------------------------------
+    More information for asset type IDX:
+    ------------------------------------------
+    ts_code       802613.SI
+    name       平安银行养老新兴投资指数
+    fullname   平安银行养老新兴投资指数
+    publisher          申万研究
+    category           价值指数
+    list_date    2017-01-03
+    -------------------------------------------
+    More information for asset type FD:
+    ------------------------------------------
+    ts_code        700001.OF
+    name              平安行业先锋
+    management          平安基金
+    custodian           中国银行
+    fund_type            混合型
+    issue_date    2011-08-15
+    issue_amount     31.9816
+    invest_type          混合型
+    type              契约型开放式
+    -------------------------------------------
+
+    >>> get_basic_info('贵州钢绳', match_full_name=False)
+    No match found! To get better result, you can
+    - pass "match_full_name=True" to match full names of stocks and funds
+
+    >>> get_basic_info('贵州钢绳', match_full_name=True)
+    found 1 matches, matched codes are {'E': {'600992.SH': '贵绳股份'}, 'count': 1}
+    More information for asset type E:
+    ------------------------------------------
+    ts_code       600992.SH
+    name               贵绳股份
+    area                 贵州
+    industry            钢加工
+    fullname     贵州钢绳股份有限公司
+    list_status           L
+    list_date    2004-05-14
+    -------------------------------------------
     """
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
@@ -1257,6 +1357,11 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
         - 期货：   期货名称
         - 期权：   期权名称
+
+    Notes
+    -----
+    用法示例参见：get_basic_info()
+
     """
 
     return get_basic_info(code_or_name=code_or_name,
@@ -1294,6 +1399,10 @@ def get_table_info(table_name, data_source=None, verbose=True):
          pk_count2:     int，数据表第二个主键记录
          pk_min2:       obj，数据表主键2起始记录
          pk_max2:       obj，数据表主键2最终记录)
+
+    Examples
+    --------
+    >>> get_table_info('STOCK_BASIC')
     """
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE
@@ -1313,6 +1422,10 @@ def get_table_overview(data_source=None):
     Returns
     -------
     None
+
+    Notes
+    -----
+    用法示例参见get_data_overview()
     """
 
     from .database import DataSource
@@ -1334,6 +1447,11 @@ def get_data_overview(data_source=None):
     Returns
     -------
     None
+
+    Examples
+    --------
+    >>> get_data_overview()
+
     """
 
     return get_table_overview(data_source=data_source)
@@ -1704,6 +1822,22 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
     Returns
     -------
     None
+
+    Notes
+    -----
+    使用get_config()或configuration()查看当前的QT_CONFIG参数
+
+    Examples
+    --------
+    >>> configure(reset=True)  # 将QT_CONFIG参数设置为默认值
+
+    >>> configure(invest_cash_amounts=[10000, 20000, 30000], invest_cash_dates=['2018-01-01', '2018-02-01', '2018-03-01'])
+    >>> get_config('invest_cash_amounts, invest_cash_dates')
+    No. Config-Key            Cur Val                       Default val
+    -------------------------------------------------------------------
+    1   invest_cash_amounts   [10000, 20000, 30000]         <[100000.0]>
+    2   invest_cash_dates     ['2018-01-01', '2018-02-01'...<None>
+
     """
     if config is None:
         set_config = QT_CONFIG
@@ -1736,6 +1870,10 @@ def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs):
     Returns
     -------
     None
+
+    Notes
+    -----
+    该函数等同于configure()
     """
 
     return configure(config=config, reset=reset, only_built_in_keys=only_built_in_keys, **kwargs)
@@ -1768,6 +1906,10 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
     Returns
     -------
     None
+
+    Notes
+    -----
+    使用示例参见get_config()
     """
     assert isinstance(level, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
     assert isinstance(up_to, int) and (0 <= up_to <= 5), f'InputError, up_to level should be an integer, ' \
@@ -1819,6 +1961,10 @@ def get_configurations(config_key=None, level=0, up_to=0, default=True, verbose=
     Returns
     -------
     None
+
+    Notes
+    -----
+    使用示例参见get_config()
     """
 
     return configuration(config_key=config_key, level=level, up_to=up_to, default=default, verbose=verbose)
@@ -1851,6 +1997,70 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     Returns
     -------
     None
+
+    Examples
+    --------
+    >>> get_config('local_data_source')
+    No. Config-Key            Cur Val        Default val
+    ----------------------------------------------------
+    1   local_data_source     database       <file>
+
+    >>> get_config('local_data_source, local_data_file_type, local_data_file_path')
+    No. Config-Key            Cur Val        Default val
+    ----------------------------------------------------
+    1   local_data_source     database       <file>
+    2   local_data_file_type  csv            <csv>
+    3   local_data_file_path  data/          <data/>
+
+    >>> get_config(level=0, up_to=2)
+    No. Config-Key            Cur Val        Default val
+    ----------------------------------------------------
+    1   mode                  1              <1>
+    2   time_zone             Asia/Shanghai  <Asia/Shanghai>
+    3   asset_pool            000300.SH      <000300.SH>
+    4   asset_type            IDX            <IDX>
+    5   live_trade_account_id None           <None>
+    6   live_trade_account    None           <None>
+    7   live_trade_debug_mode False          <False>
+    8   live_trade_init_cash  1000000.0      <1000000.0>
+    ... (more rows)
+
+    >>> get_config(level=0, up_to=1, verbose=True)
+    No. Config-Key            Cur Val        Default val
+          Description
+    ----------------------------------------------------
+    1   mode                  1              <1>
+          qteasy 的运行模式:
+          0: 实盘运行模式
+          1: 回测-评价模式
+          2: 策略优化模式
+          3: 统计预测模式
+
+
+    2   time_zone             Asia/Shanghai  <Asia/Shanghai>
+          回测时的时区，可以是任意时区，例如：
+          Asia/Shanghai
+          Asia/Hong_Kong
+          US/Eastern
+          US/Pacific
+          Europe/London
+          Europe/Paris
+          Australia/Sydney
+          Australia/Melbourne
+          Pacific/Auckland
+          Pacific/Chatham
+          etc.
+
+
+    3   asset_pool            000300.SH      <000300.SH>
+          可用投资产品池，投资组合基于池中的产品创建
+
+    4   asset_type            IDX            <IDX>
+          投资产品的资产类型，包括：
+          IDX  : 指数
+          E    : 股票
+          FT   : 期货
+          FD   : 基金
     """
 
     return configuration(config_key=config_key, level=level, up_to=up_to, default=default, verbose=verbose)
@@ -1919,10 +2129,11 @@ def load_config(config=None, file_name=None):
     config: ConfigDict 对象
         一个config对象，默认None，如果为None，则保存QT_CONFIG
     file_name: str
-        文件名，默认None，如果为None，文件名为qteasy.cfg
+        文件名，默认None，如果为None，文件名为saved_config.cfg
 
     Returns
     -------
+    None
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
@@ -1963,7 +2174,13 @@ def view_config_files(details=False):
     details: bool, Default: False
         是否显示配置文件的详细内容
 
-    :return:
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    该函数只显示config文件夹下的配置文件，不显示qteasy.cfg中的配置
     """
 
     # TODO: Implement this function and add unittests
@@ -1981,6 +2198,11 @@ def reset_config(config=None):
 
     Returns
     -------
+    None
+
+    Notes
+    -----
+    等同于调用configure(config, reset=True)
     """
     from qteasy import logger_core
     if config is None:
@@ -2475,11 +2697,11 @@ def run(operator, **kwargs):
     operator : Operator
         策略执行器对象
     **kwargs:
-        可用的kwargs包括所有合法的qteasy配置参数
+        可用的kwargs包括所有合法的qteasy配置参数，参见qteasy文档
 
     Returns
     -------
-        1, 在live_trade模式或模式0下,返回: op_list
+        1, 在live_trade模式或模式0下，进入实盘交易Shell
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """

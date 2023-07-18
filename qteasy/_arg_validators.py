@@ -954,7 +954,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     output_strings: list of str
         包含所有参数信息的字符串
     """
-    from qteasy.utilfuncs import reindent
+    from qteasy.utilfuncs import reindent, truncate_string
     if isinstance(level, int):
         levels = [level]
     elif isinstance(level, list):
@@ -963,18 +963,18 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         raise TypeError(f'level should be an integer or list of integers, got {type(level)}')
     assert all(isinstance(item, int) for item in levels), f'TypeError, levels should be a list of integers'
     column_w_key = 22
-    column_w_current = 15
+    column_w_current = 30
     column_offset_description = 4
     vkwargs = _valid_qt_kwargs()
     output_strings = list()
     if info:
-        output_strings.append('No. Config-Key            Cur Val        Default val\n')
+        output_strings.append('No. Config-Key            Cur Val                       Default val\n')
         if verbose:
             output_strings.append('      Description\n')
-        output_strings.append('----------------------------------------------------\n')
+        output_strings.append('-------------------------------------------------------------------\n')
     else:
-        output_strings.append('No. Config-Key            Cur Val        \n')
-        output_strings.append('-----------------------------------------\n')
+        output_strings.append('No. Config-Key            Cur Val             \n')
+        output_strings.append('--------------------------------------------------------\n')
     no = 0
     for key in kwargs:
         if key not in vkwargs:
@@ -994,9 +994,9 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
         no += 1
         output_strings.append(f'{no: <4}')
-        output_strings.append(f'{str(key): <{column_w_key}}')
+        output_strings.append(f'{truncate_string(str(key), column_w_key): <{column_w_key}}')
         if info:
-            output_strings.append(f'{cur_value: <{column_w_current}}'
+            output_strings.append(f'{truncate_string(cur_value, column_w_current): <{column_w_current}}'
                                   f'<{default_value}>\n')
             if verbose:
                 output_strings.append(f'{reindent(description, 6): <{column_w_key + column_w_current * 2}}\n\n')

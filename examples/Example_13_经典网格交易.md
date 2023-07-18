@@ -65,7 +65,7 @@ alpha = GridTrade(pars=(0.5, 200, 0.0),  # 当基准网格为0时，代表首次
                    par_range=[(0.2, 2), (100, 300), (0, 40)],
                    name='GridTrade',
                    description='网格交易策略，当前股票价格波动幅度超过网格尺寸时，产生卖出或买入交易信号，并更新网格',
-                   strategy_data_types='close',
+                   strategy_run_timing='close',
                    strategy_run_freq='5min',
                    data_freq='5min',
                    window_length=20,
