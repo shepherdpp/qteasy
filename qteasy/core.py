@@ -1016,6 +1016,40 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     Returns
     -------
     DataFrame: 筛选出来的股票的基本信息
+
+    Examples
+    --------
+    >>> # 筛选出2019年1月1日以后的上证300指数成分股
+    >>> filter_stocks(date='2019-01-01', index='000300.SH')
+
+    Out:
+               symbol   name area industry market  list_date exchange
+    ts_code
+    000001.SZ  000001   平安银行   深圳       银行     主板 1991-04-03     SZSE
+    000002.SZ  000002    万科A   深圳     全国地产     主板 1991-01-29     SZSE
+    000063.SZ  000063   中兴通讯   深圳     通信设备     主板 1997-11-18     SZSE
+    000069.SZ  000069   华侨城A   深圳     全国地产     主板 1997-09-10     SZSE
+    000100.SZ  000100  TCL科技   广东      元器件     主板 2004-01-30     SZSE
+               ...    ...  ...      ...    ...        ...      ...
+    600732.SH  600732   爱旭股份   上海     电气设备     主板 1996-08-16      SSE
+    600754.SH  600754   锦江酒店   上海     酒店餐饮     主板 1996-10-11      SSE
+    600875.SH  600875   东方电气   四川     电气设备     主板 1995-10-10      SSE
+    601699.SH  601699   潞安环能   山西     煤炭开采     主板 2006-09-22      SSE
+    688223.SH  688223   晶科能源   江西     电气设备    科创板 2022-01-26      SSE
+
+    [440 rows x 7 columns]
+
+    >>> # 筛选出2019年1月1日以后上市的上海银行业的股票
+    >>> filter_stocks(date='2019-01-01', industry='银行', area='上海')
+
+    Out:
+               name area industry market  list_date exchange
+    ts_code
+    600000.SH  浦发银行   上海       银行     主板 1999-11-10      SSE
+    601229.SH  上海银行   上海       银行     主板 2016-11-16      SSE
+    601328.SH  交通银行   上海       银行     主板 2007-05-15      SSE
+
+
     """
     try:
         date = pd.to_datetime(date)
@@ -1160,6 +1194,8 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     Examples
     --------
     >>> get_basic_info('000001.SZ')
+
+    Out:
     found 1 matches, matched codes are {'E': {'000001.SZ': '平安银行'}, 'count': 1}
     More information for asset type E:
     ------------------------------------------
@@ -1173,6 +1209,8 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------------------------------------------
 
     >>> get_basic_info('000001')
+
+    Out:
     found 4 matches, matched codes are {'E': {'000001.SZ': '平安银行'}, 'IDX': {'000001.CZC': '农期指数', '000001.SH': '上证指数'}, 'FD': {'000001.OF': '华夏成长'}, 'count': 4}
     More information for asset type E:
     ------------------------------------------
@@ -1207,6 +1245,8 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------------------------------------------
 
     >>> get_basic_info('平安银行')
+
+    Out:
     found 4 matches, matched codes are {'E': {'000001.SZ': '平安银行', '600928.SH': '西安银行'}, 'IDX': {'802613.SI': '平安银行养老新兴投资指数'}, 'FD': {'700001.OF': '平安行业先锋'}, 'count': 4}
     More information for asset type E:
     ------------------------------------------
@@ -1241,10 +1281,14 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------------------------------------------
 
     >>> get_basic_info('贵州钢绳', match_full_name=False)
+
+    Out:
     No match found! To get better result, you can
     - pass "match_full_name=True" to match full names of stocks and funds
 
     >>> get_basic_info('贵州钢绳', match_full_name=True)
+
+    Out:
     found 1 matches, matched codes are {'E': {'600992.SH': '贵绳股份'}, 'count': 1}
     More information for asset type E:
     ------------------------------------------
@@ -1403,6 +1447,33 @@ def get_table_info(table_name, data_source=None, verbose=True):
     Examples
     --------
     >>> get_table_info('STOCK_BASIC')
+
+    Out:
+    <stock_basic>, 1.5MB/5K records on disc
+    primary keys:
+    -----------------------------------
+    1:  ts_code:
+        <unknown> entries
+        starts: 000001.SZ, end: 873527.BJ
+
+    columns of table:
+    ------------------------------------
+            columns       dtypes remarks
+    0       ts_code   varchar(9)    证券代码
+    1        symbol   varchar(6)    股票代码
+    2          name  varchar(20)    股票名称
+    3          area  varchar(10)      地域
+    4      industry  varchar(10)    所属行业
+    5      fullname  varchar(50)    股票全称
+    6        enname  varchar(80)    英文全称
+    7       cnspell  varchar(40)    拼音缩写
+    8        market   varchar(6)    市场类型
+    9      exchange   varchar(6)   交易所代码
+    10    curr_type   varchar(6)    交易货币
+    11  list_status   varchar(4)    上市状态
+    12    list_date         date    上市日期
+    13  delist_date         date    退市日期
+    14        is_hs   varchar(2)  是否沪深港通
     """
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE
@@ -1439,6 +1510,8 @@ def get_table_overview(data_source=None):
 def get_data_overview(data_source=None):
     """ 显示数据源的数据总览，等同于get_table_overview()
 
+    获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等
+
     Parameters
     ----------
     data_source: Object
@@ -1450,8 +1523,67 @@ def get_data_overview(data_source=None):
 
     Examples
     --------
-    >>> get_data_overview()
+    >>> get_data_overview()  # 获取当前默认数据源的数据总览
 
+    Out:
+
+    Analyzing local data source tables... depending on size of tables, it may take a few minutes
+    [########################################]62/62-100.0%  Analyzing completed!
+    db:mysql://localhost@3306/ts_db
+    Following tables contain local data, to view complete list, print returned DataFrame
+                     Has_data Size_on_disk Record_count Record_start  Record_end
+    table
+    trade_calendar     True        2.5MB         73K     1990-10-12   2023-12-31
+    stock_basic        True        1.5MB          5K           None         None
+    stock_names        True        1.5MB         14K     1990-12-10   2023-07-17
+    stock_company      True       18.5MB          3K           None         None
+    stk_managers       True      150.4MB        126K     2020-01-01   2022-07-27
+    index_basic        True        3.5MB         10K           None         None
+    fund_basic         True        4.5MB         17K           None         None
+    future_basic       True        1.5MB          7K           None         None
+    opt_basic          True       15.5MB         44K           None         None
+    stock_1min         True      42.83GB      273.0M       20220318     20230710
+    stock_5min         True      34.33GB      233.2M       20090105     20230710
+    stock_15min        True      14.45GB      141.2M       20090105     20230710
+    stock_30min        True       7.78GB       77.1M       20090105     20230710
+    stock_hourly       True       4.22GB       42.0M       20090105     20230710
+    stock_daily        True       1.49GB       11.6M     1990-12-19   2023-07-17
+    stock_weekly       True      231.9MB        2.6M     1990-12-21   2023-07-14
+    stock_monthly      True       50.6MB        635K     1990-12-31   2023-06-30
+    index_1min         True       4.25GB       27.6M       20220318     20230712
+    index_5min         True       6.18GB       47.2M       20090105     20230712
+    index_15min        True       2.61GB       26.1M       20090105     20230712
+    index_30min        True      884.0MB       12.9M       20090105     20230712
+    index_hourly       True      536.0MB        7.6M       20090105     20230712
+    index_daily        True      309.0MB        3.7M     1990-12-19   2023-07-10
+    index_weekly       True       61.6MB        674K     1991-07-05   2023-07-14
+    index_monthly      True       13.5MB        158K     1991-07-31   2023-06-30
+    fund_1min          True       5.46GB       55.8M       20220318     20230712
+    fund_5min          True       3.68GB       12.3M       20220318     20230712
+    fund_15min         True      835.9MB        3.9M       20220318     20230712
+    fund_30min         True      385.7MB        1.9M       20220318     20230712
+    fund_hourly        True      124.8MB        1.6M       20210104     20230629
+    fund_daily         True      129.7MB        1.6M     1998-04-07   2023-07-10
+    fund_nav           True      693.0MB       13.6M     2000-01-07   2023-07-07
+    fund_share         True       72.7MB        1.4M     1998-03-27   2023-07-14
+    fund_manager       True      109.7MB         37K     2000-02-22   2023-03-30
+    future_hourly      True         32KB           0           None         None
+    future_daily       True      190.8MB        2.0M     1995-04-17   2023-07-10
+    options_hourly     True         32KB           0           None         None
+    options_daily      True      436.0MB        4.6M     2015-02-09   2023-07-10
+    stock_adj_factor   True      897.0MB       11.8M     1990-12-19   2023-07-12
+    fund_adj_factor    True       74.6MB        1.8M     1998-04-07   2023-07-12
+    stock_indicator    True       2.06GB       11.8M     1999-01-01   2023-07-17
+    stock_indicator2   True      734.8MB        4.1M     2017-06-14   2023-07-10
+    index_indicator    True        4.5MB         45K     2004-01-02   2023-07-10
+    index_weight       True      748.0MB        8.7M     2005-04-08   2023-07-14
+    income             True       59.7MB        213K     1990-12-31   2023-06-30
+    balance            True       97.8MB        218K     1989-12-31   2023-06-30
+    cashflow           True       69.7MB        181K     1998-12-31   2023-06-30
+    financial          True      289.0MB        203K     1989-12-31   2023-06-30
+    forecast           True       32.6MB         98K     1998-12-31   2024-03-31
+    express            True        3.5MB         23K     2004-12-31   2023-06-30
+    shibor             True         16KB         212           None         None
     """
 
     return get_table_overview(data_source=data_source)
@@ -1671,7 +1803,12 @@ def get_history_data(htypes,
     Examples
     --------
     >>> import qteasy as qt
+
+    Out:
+
     >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20190101', end='20190131')
+
+    Out:
     {'000001.SZ':
                   open   high    low  close         vol
      2019-01-02   9.39   9.42   9.16   9.19   539386.32
@@ -1831,8 +1968,15 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
     --------
     >>> configure(reset=True)  # 将QT_CONFIG参数设置为默认值
 
+    Out:
+
     >>> configure(invest_cash_amounts=[10000, 20000, 30000], invest_cash_dates=['2018-01-01', '2018-02-01', '2018-03-01'])
+
+    Out:
+
     >>> get_config('invest_cash_amounts, invest_cash_dates')
+
+    Out:
     No. Config-Key            Cur Val                       Default val
     -------------------------------------------------------------------
     1   invest_cash_amounts   [10000, 20000, 30000]         <[100000.0]>
@@ -2001,11 +2145,15 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     Examples
     --------
     >>> get_config('local_data_source')
+
+    Out:
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
     1   local_data_source     database       <file>
 
     >>> get_config('local_data_source, local_data_file_type, local_data_file_path')
+
+    Out:
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
     1   local_data_source     database       <file>
@@ -2013,6 +2161,8 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     3   local_data_file_path  data/          <data/>
 
     >>> get_config(level=0, up_to=2)
+
+    Out:
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
     1   mode                  1              <1>
@@ -2026,6 +2176,8 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     ... (more rows)
 
     >>> get_config(level=0, up_to=1, verbose=True)
+
+    Out:
     No. Config-Key            Cur Val        Default val
           Description
     ----------------------------------------------------
