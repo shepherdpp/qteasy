@@ -49,6 +49,7 @@ def set_cost(**kwargs):
     Returns
     -------
     cost : dict of float, cost parameters
+
     """
     cost = dict(buy_fix=0.0,
                 sell_fix=0.0,

@@ -1329,9 +1329,9 @@ def dataframe_to_hp(
         需要被转化为HistoryPanel的DataFrame。
     hdates: DatetimeIndex or List of DateTime like, Optional
         如果给出hdates，它会被用于转化后HistoryPanel的日期标签
-    htypes: str, Optional
+    htypes: str or list of str, Optional
         转化后HistoryPanel的历史数据类型标签
-    shares: str, Optional
+    shares: str or list of str, Optional
         转化后HistoryPanel的股票代码标签
     column_type: str, Default None
         DataFrame的column代表的数据类型，可以为 'shares' or 'htype'
@@ -1348,6 +1348,53 @@ def dataframe_to_hp(
         在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出
     2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
     具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
+
+    Examples
+    --------
+    >>> df = pd.DataFrame(
+    >>>     data=np.random.rand(3, 3),
+    >>>     index=pd.date_range(start='2020-01-01', periods=3),
+    >>>     columns=['A', 'B', 'C']
+    >>> )
+    >>> df
+
+    Out:
+                       A         B         C
+    2020-01-01  0.814394  0.284772  0.259304
+    2020-01-02  0.237300  0.483317  0.600886
+    2020-01-03  0.744638  0.255470  0.953640
+
+    >>> hp = dataframe_to_hp(df, htypes=['open', 'close', 'high'], shares='000001')
+    >>> hp
+
+    Out:
+    share 0, label: 000001
+                    open     close      high
+    2020-01-01  0.814394  0.284772  0.259304
+    2020-01-02  0.237300  0.483317  0.600886
+    2020-01-03  0.744638  0.255470  0.953640
+
+    >>> hp = dataframe_to_hp(df, htypes='open', shares=['000001', '000002', '000003'])
+    >>> hp
+
+    Out:
+    share 0, label: 000001
+                    open
+    2020-01-01  0.814394
+    2020-01-02  0.237300
+    2020-01-03  0.744638
+
+    share 1, label: 000002
+                    open
+    2020-01-01  0.284772
+    2020-01-02  0.483317
+    2020-01-03  0.255470
+
+    share 2, label: 000003
+                    open
+    2020-01-01  0.259304
+    2020-01-02  0.600886
+    2020-01-03  0.953640
     """
 
     available_column_types = ['shares', 'htypes', None]

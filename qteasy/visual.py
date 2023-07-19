@@ -444,6 +444,10 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     -------
     pd.DataFrame
         包含相应股票数据的DataFrame
+
+    See Also
+    --------
+    更多介绍参见QTEASY文档
     """
     from qteasy import logger_core
     no_visual = False
