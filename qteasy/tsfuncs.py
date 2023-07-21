@@ -538,6 +538,33 @@ def index_daily_basic(ts_code: object = None,
     return res
 
 
+def realtime_min(ts_code, freq):
+    """ 获取实时分钟行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
+
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    freq: str, 频率，可选值为1/5/15/30/60分钟
+
+    Returns
+    -------
+    pd.DataFrame
+
+    Raises
+    ------
+    KeyError: 如果freq不合法，会Raise KeyError
+    """
+    freq = freq.upper()
+    if freq == 'H':
+        freq = '60MIN'
+
+    pro = ts.pro_api()
+    res = pro.rt_min(ts_code=ts_code, freq=freq)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq={freq}')
+    return res
+
+
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
        tries=data_download_retry_count, delay=data_download_retry_delay,
        backoff=data_download_retry_backoff, logger=logger_core)
@@ -591,6 +618,7 @@ def mins30(ts_code,
            end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
+    ts.pro_bar()
     res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stk_mins with ts_code={ts_code}, freq="30min"'

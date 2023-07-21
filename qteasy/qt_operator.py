@@ -1658,6 +1658,18 @@ class Operator:
             'stepwise': 'History op signals are generated one by one, every piece of signal will be back tested before '
                         'the next signal being generated.'
         }
+        data_freq_name = {
+            'y': 'year',
+            'q': 'quarter',
+            'm': 'month',
+            'w': 'week',
+            'd': 'days',
+            'min': 'min',
+            '5min': '5min',
+            '15min': '15min',
+            '30min': '30min',
+            'h': 'hours',
+        }
         print(f'       -----------------------Operator Information-----------------------\n'
               f'Strategies:  {self.strategy_count} Strategies\n'
               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
@@ -1675,13 +1687,13 @@ class Operator:
             print(f'       ----------------------------Strategies----------------------------\n'
                   f'{"id":<10}'
                   f'{"name":<19}'
-                  f'{"run type":^16}'
-                  f'{"run freq":^10}'
+                  f'{"run timing":^16}'
+                  f'{"data window":^10}'
                   f'{"data types":^25}\n'
                   f'{"_" * 80}')
             for stg_id, stg in self.get_strategy_id_pairs():
-                run_type_str = stg.strategy_run_freq + ' @ ' + stg.strategy_run_timing
-                data_type_str = str(stg.window_length) + ' ' + stg.data_freq
+                run_type_str = data_freq_name[stg.strategy_run_freq] + ' @ ' + stg.strategy_run_timing
+                data_type_str = str(stg.window_length) + ' x ' + data_freq_name[stg.data_freq]
                 print(f'{truncate_string(stg_id, 10):<10}'
                       f'{truncate_string(stg.name, 19):<19}'
                       f'{truncate_string(run_type_str, 16):^16}'

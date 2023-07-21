@@ -1224,7 +1224,7 @@ class Trader(object):
                 parallel=False,
                 refresh_trade_calendar=False
         )
-        # 读取实时数据,设置operator的数据分配,创建trade_data
+        # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
                 operator=operator,
                 config=config,
