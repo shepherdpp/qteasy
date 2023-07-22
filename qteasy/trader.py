@@ -1210,7 +1210,7 @@ class Trader(object):
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
         data_start_time = data_end_time + pd.Timedelta(duration, unit)
         unit_to_table = {
-            'H': 'stock_hourly',
+            'h': 'stock_hourly',
             '30min': 'stock_30min',
             '15min': 'stock_15min',
             '5min': 'stock_5min',
@@ -1220,28 +1220,23 @@ class Trader(object):
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
         if self.debug:
             self.post_message(f'downloading data from {data_start_time} to {data_end_time}')
-        table_to_update = unit_to_table[unit]
+        table_to_update = unit_to_table[unit.lower()]
         real_time_data = self._datasource.fetch_realtime_table_data(
                 table=table_to_update,
                 channel='tushare',
                 symbols=self.asset_pool,
         )
-        # 在real_time_data中数据的trade_time列中增加日期，但是只在交易日这么做，否则会出现日期错误
-        # if self.is_trade_day:
-        #     real_time_data['trade_time'] = real_time_data['trade_time'].apply(
-        #             lambda x: pd.to_datetime(x, utc=True).tz_convert(TIME_ZONE)
-        #     )
-
-        real_time_data['trade_time'] = real_time_data['trade_time'].apply(
-                lambda x: pd.to_datetime(x)
-        )
-        # 将实时数据写入数据库 (仅在交易日这么做)
-        self._datasource.update_table_data(
-                table=table_to_update,
-                df=real_time_data,
-                merge_type='update',
-        )
-        # import pdb; pdb.set_trace()
+        # 在real_time_data中数据的trade_time列中增加日期并写入DataSource，但是只在交易日这么做，否则会出现日期错误
+        if self.is_trade_day:
+            real_time_data['trade_time'] = real_time_data['trade_time'].apply(
+                    lambda x: pd.to_datetime(x)
+            )
+            # 将实时数据写入数据库 (仅在交易日这么做)
+            self._datasource.update_table_data(
+                    table=table_to_update,
+                    df=real_time_data,
+                    merge_type='update',
+            )
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
                 operator=operator,
@@ -1263,6 +1258,8 @@ class Trader(object):
         # 当前价格是hist_op的最后一行  # TODO: 需要根据strategy_timing获取价格的类型（如open价格或close价格）
         timing_type = operator[strategy_ids[0]].strategy_timing
         current_prices = hist_op[timing_type, :, -1].squeeze()
+        if current_prices.ndim == 0:
+            current_prices = np.array([current_prices])
         last_trade_result_summary = get_last_trade_result_summary(
                 account_id=self.account_id,
                 shares=shares,
