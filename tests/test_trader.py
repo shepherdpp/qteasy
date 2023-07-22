@@ -90,6 +90,7 @@ class TestTrader(unittest.TestCase):
 
         # 下载测试所需的基本数据
         print('Downloading test data...')
+        # TODO: 这里如果设置parallel=True，会导致下载数据时死锁，原因不明
         test_ds.refill_local_source(
                 tables='stock_daily',
                 symbols='000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',

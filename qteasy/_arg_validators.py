@@ -76,17 +76,17 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, str),
              'level':     0,
              'text':      '回测时的时区，可以是任意时区，例如：\n'
-                              'Asia/Shanghai\n'
-                              'Asia/Hong_Kong\n'
-                              'US/Eastern\n'
-                              'US/Pacific\n'
-                              'Europe/London\n'
-                              'Europe/Paris\n'
-                              'Australia/Sydney\n'
-                              'Australia/Melbourne\n'
-                              'Pacific/Auckland\n'
-                              'Pacific/Chatham\n'
-                              'etc.\n'},
+                          'Asia/Shanghai\n'
+                          'Asia/Hong_Kong\n'
+                          'US/Eastern\n'
+                          'US/Pacific\n'
+                          'Europe/London\n'
+                          'Europe/Paris\n'
+                          'Australia/Sydney\n'
+                          'Australia/Melbourne\n'
+                          'Pacific/Auckland\n'
+                          'Pacific/Chatham\n'
+                          'etc.\n'},
 
         'asset_pool':
             {'Default':   '000300.SH',  #
@@ -108,14 +108,14 @@ def _valid_qt_kwargs():
 
         'live_trade_account_id':
             {'Default':   None,  # 指定account_id后，实盘交易时会直接使用该账户，除非账户不存在
-             'Validator': lambda value: isinstance(value, int),
+             'Validator': lambda value: isinstance(value, int) or value is None,
              'level':     0,
              'text':      '实盘交易账户ID，用于实盘交易，如果指定了该参数，则会直接\n'
                           '使用该账户，除非账户不存在'},
 
         'live_trade_account':
             {'Default':   None,  # 指定account后，会查找该账户对应的account_id并使用该账户，除非账户不存在
-             'Validator': lambda value: isinstance(value, str),
+             'Validator': lambda value: isinstance(value, str) or value is None,
              'level':     0,
              'text':      '实盘交易账户名称，用于实盘交易，如果指定了该参数，则会查找该\n'
                           '账户对应的account_id并使用该账户，除非账户不存在'},
@@ -129,15 +129,15 @@ def _valid_qt_kwargs():
         'live_trade_init_cash':
             {'Default':   1000000.0,
              'Validator': lambda value: isinstance(value, (int, float))
-                                         and value > 0,
+                                        and value > 0,
              'level':     0,
              'text':      '实盘交易账户的初始资金，浮点数，例如：\n'
-                         '1000000.0 : 初始资金为100万\n'
-                         '1000000   : 初始资金为100万\n'},
+                          '1000000.0 : 初始资金为100万\n'
+                          '1000000   : 初始资金为100万\n'},
 
         'live_trade_init_holdings':
             {'Default':   None,
-             'Validator': lambda value: isinstance(value, dict),
+             'Validator': lambda value: isinstance(value, dict) or value is None,
              'level':     0,
              'text':      '实盘交易账户的初始持仓，字典，例如：\n'
                           "{'000001.SZ': 1000, '000002.SZ': 2000} : 初始持仓为\n"
@@ -245,7 +245,7 @@ def _valid_qt_kwargs():
         'auto_dnld_hist_tables':
             {'Default':   [],
              'Validator': lambda value: isinstance(value, list) and
-                          all(isinstance(item, str) for item in value),
+                                        all(isinstance(item, str) for item in value),
              'level':     4,
              'text':      '在实盘运行时自动下载的历史数据表名列表，例如：\n'
                           '["stock_daily", "index_weekly", "stock_monthly"]\n'
@@ -623,35 +623,35 @@ def _valid_qt_kwargs():
         'market_open_time_am':
             {'Default':   '09:30:00',
              'Validator': lambda value: isinstance(value, str)
-                                         and _is_timelike(value),
+                                        and _is_timelike(value),
              'level':     3,
              'text':      '交易市场上午开市时间'},
 
         'market_close_time_am':
             {'Default':   '11:30:00',
              'Validator': lambda value: isinstance(value, str)
-                                         and _is_timelike(value),
+                                        and _is_timelike(value),
              'level':     3,
              'text':      '交易市场上午收市时间'},
 
         'market_open_time_pm':
             {'Default':   '13:00:00',
              'Validator': lambda value: isinstance(value, str)
-                                         and _is_timelike(value),
+                                        and _is_timelike(value),
              'level':     3,
              'text':      '交易市场下午开市时间'},
 
         'market_close_time_pm':
             {'Default':   '15:00:00',
              'Validator': lambda value: isinstance(value, str)
-                                         and _is_timelike(value),
+                                        and _is_timelike(value),
              'level':     3,
              'text':      '交易市场下午收市时间'},
 
         'strategy_open_close_timing_offset':
             {'Default':   1,
              'Validator': lambda value: isinstance(value, int)
-                                         and value in range(5),
+                                        and value in range(5),
              'level':     3,
              'text':      '策略信号的开盘/收盘运行时间偏移量，单位为分钟，当策略信号运行时机为开盘/收盘，需要提前/推迟\n'
                           '一个偏移量运行，避免无法交易。'},
@@ -761,7 +761,7 @@ def _valid_qt_kwargs():
                           '"20100104,20100202,20100304"'
                           '["20100104", "20100202", "20100304"]'},
 
-        'test_type':            
+        'test_type':
             {'Default':   'single',
              'Validator': lambda value: isinstance(value, str) and
                                         value in ['single', 'multiple', 'montecarlo'],
@@ -1102,7 +1102,7 @@ def _process_deprecated_keys(key):
     """
 
     deprecated = {
-        'print_trade_log': 'trade_log',
+        'print_trade_log':    'trade_log',
         'print_backtest_log': 'trade_log',
     }
 
@@ -1146,9 +1146,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         raise KeyError(err_msg)
     if key not in vkwargs:
         return True
-    # 允许所有value为None
-    if value is None:
-        return True
+
     try:
         valid = vkwargs[key]['Validator'](value)
     except Exception as ex:

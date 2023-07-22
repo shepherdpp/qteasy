@@ -1821,9 +1821,9 @@ def start_trader(
     operator: Operator
         交易员 object
     account_id: str, optional
-        交易账户ID
+        交易账户ID, 如果ID小于0或者未给出，则需要新建一个账户
     user_name: str, optional
-        交易账户用户名，如果未给出账户ID，则需要新建一个账户，此时必须给出用户名
+        交易账户用户名，如果未给出账户ID或为空，则需要新建一个账户，此时必须给出用户名
     init_cash: float, optional
         初始资金，只有创建新账户时有效
     init_holdings: dict of {str: int}, optional
@@ -1842,8 +1842,8 @@ def start_trader(
     if not isinstance(operator, Operator):
         raise ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
     # if account_id is None then create a new account
-    if account_id is None:
-        if user_name is None:
+    if (account_id is None) or (account_id < 0):
+        if (user_name is None) or (user_name == ''):
             raise ValueError('if account_id is None, user_name must be given.')
         account_id = new_account(
                 user_name=user_name,
