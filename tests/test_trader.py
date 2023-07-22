@@ -56,6 +56,8 @@ class TestTrader(unittest.TestCase):
             'PT_buy_threshold':     0.05,
             'PT_sell_threshold':    0.05,
             'allow_sell_short':     False,
+            'invest_start':         '2018-01-01',
+            'opti_start':           '2018-01-01',
         }
         # 创建测试数据源
         data_test_dir = 'data_test/'
@@ -86,6 +88,18 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
+        # 下载测试所需的基本数据
+        print('Downloading test data...')
+        test_ds.refill_local_source(
+                tables='stock_daily',
+                symbols='000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+                start_date='2023-06-04',
+                end_date='2023-07-22',
+                freqs='D',
+                asset_types='E',
+                dtypes='close',
+                parallel=False,
+        )
         self.stoppage = 1.5
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')

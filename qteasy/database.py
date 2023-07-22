@@ -3109,8 +3109,8 @@ class DataSource:
         self._table_list.add(table)
         return rows_affected
 
-    def acquire_table_data(self, table, channel, df=None, f_name=None, **kwargs):
-        """从网络获取本地数据表的数据，并进行内容写入前的预处理：
+    def fetch_history_table_data(self, table, channel='tushare', df=None, f_name=None, **kwargs):
+        """从网络获取本地数据表的历史数据，并进行内容写入前的预处理：
 
         数据预处理包含以下步骤：
         1，根据channel确定数据源，根据table名下载相应的数据表
@@ -3120,7 +3120,7 @@ class DataSource:
         ----------
         table: str,
             数据表名，必须是database中定义的数据表
-        channel:
+        channel: str, optional
             str: 数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
             - 'df'      : 通过参数传递一个df，该df的columns必须与table的定义相同
             - 'csv'     : 通过本地csv文件导入数据，此时必须给出f_name参数
@@ -3175,14 +3175,79 @@ class DataSource:
             raise NotImplementedError
         elif channel == 'tushare':
             # 通过tushare的API下载数据
+            api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
             try:
-                dnld_data = acquire_data(table, **kwargs)
+                dnld_data = acquire_data(api_name, **kwargs)
             except Exception as e:
                 raise Exception(f'data {table} can not be acquired from tushare\n{e}')
         else:
             raise NotImplementedError
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         return res
+
+    def fetch_realtime_table_data(self, table, channel, symbols):
+        """ 获取数据表的实时数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
+        stock_1min/stock_5min/stock_15min/stock_30min/stock_hourly
+
+        Parameters
+        ----------
+        table: str,
+            数据表名，必须是database中定义的数据表
+        channel: str,
+            数据获取渠道，金融数据API，支持以下选项：
+            - 'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分
+            - 'other'   : NotImplemented 其他金融数据API，尚未开发
+        symbols: str or list of str
+            用于下载金融数据的函数参数，在这里只支持ts_code一个参数，表示股票代码
+
+        Returns
+        -------
+        pd.DataFrame:
+            下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
+
+        """
+        # 目前仅支持从tushare获取数据，未来可能增加新的API
+        from .tsfuncs import acquire_data
+        if not isinstance(table, str):
+            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+        if table not in ['stock_1min', 'stock_5min', 'stock_15min', 'stock_30min', 'stock_hourly']:
+            raise KeyError(f'realtime minute data is not available for table {table}')
+
+        if isinstance(symbols, list):
+            symbols = ','.join(symbols)
+
+        table_freq_map = {
+            '1min': '1MIN',
+            '5min': '5MIN',
+            '15min': '15MIN',
+            '30min': '30MIN',
+            'h': '60MIN',
+        }
+
+        table_freq = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('freq')]
+        realtime_data_freq = table_freq_map[table_freq]
+        # 从指定的channel获取数据
+        if channel == 'tushare':
+            # 通过tushare的API下载数据
+            api_name = 'realtime_min'
+            if symbols is None:
+                raise ValueError(f'ts_code must be given while channel == "tushare"')
+            try:
+                dnld_data = acquire_data(api_name, ts_code=symbols, freq=realtime_data_freq)
+            except Exception as e:
+                raise Exception(f'data {table} can not be acquired from tushare\n{e}')
+
+            # 从下载的数据中提取出需要的列
+            dnld_data = dnld_data[['code', 'time', 'open', 'high', 'low', 'close', 'volume', 'amount']]
+            dnld_data = dnld_data.rename(columns={
+                'code': 'ts_code',
+                'time': 'trade_time',
+                'volume': 'vol',
+            })
+        else:
+            raise NotImplementedError
+
+        return dnld_data
 
     def update_table_data(self, table, df, merge_type='update'):
         """ 检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤：
@@ -3219,7 +3284,6 @@ class DataSource:
         if dnld_data.empty:
             return 0
 
-        # import pdb; pdb.set_trace()
         table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         dnld_columns = dnld_data.columns.to_list()
@@ -3263,7 +3327,7 @@ class DataSource:
                 set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
                 dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
             dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-            rows_affected = self.write_table_data(dnld_data, table=table, on_duplicate=merge_type)
+            rows_affected = self.write_table_data(df=dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
             raise KeyError(f'invalid data source type')
 
@@ -3980,7 +4044,7 @@ class DataSource:
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
                             process_count=None, chunk_size=100, refresh_trade_calendar=True, log=False):
-        """ 批量补充本地数据，手动或自动运行补充本地数据库
+        """ 批量下载历史数据并保存到本地数据仓库
 
         Parameters
         ----------
@@ -4212,7 +4276,7 @@ class DataSource:
 
             # 处理数据下载参数序列，剔除已经存在的数据key
             if self.table_data_exists(table) and merge_type.lower() == 'ignore':
-                # 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
+                # 当数据已经存在，且合并模式为"忽略新数据"时，从计划下载的数据范围中剔除已经存在的部分
                 already_existed = self.get_table_data_coverage(table, arg_name)
                 arg_coverage = [arg for arg in arg_coverage if arg not in already_existed]
 
@@ -4235,7 +4299,8 @@ class DataSource:
             try:
                 if parallel and (table != 'trade_calendar'):
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
-                        futures = {proc_pool.submit(acquire_data, table, **kw): kw
+                        # TODO: 这里应该使用fetch_history_table_data而不是acquire_data
+                        futures = {proc_pool.submit(self.fetch_history_table_data, table, **kw): kw
                                    for kw in all_kwargs}
                         for f in as_completed(futures):
                             df = f.result()
@@ -4256,7 +4321,7 @@ class DataSource:
                         total_written += self.update_table_data(table, dnld_data)
                 else:
                     for kwargs in all_kwargs:
-                        df = self.acquire_table_data(table, 'tushare', **kwargs)
+                        df = self.fetch_history_table_data(table, **kwargs)
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
                         else:

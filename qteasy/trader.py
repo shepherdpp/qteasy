@@ -1209,21 +1209,39 @@ class Trader(object):
         # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
         data_start_time = data_end_time + pd.Timedelta(duration, unit)
+        unit_to_table = {
+            'H': 'stock_hourly',
+            '30min': 'stock_30min',
+            '15min': 'stock_15min',
+            '5min': 'stock_5min',
+            '1min': 'stock_1min',
+            'min': 'stock_1min',
+        }
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
-        # TODO: 目前在这里获取最新股票数据的实现方式还有很多问题，需要解决：
-        #  2，需要解决parallel读取的问题，在目前的测试中，parallel读取会导致数据读取失败
         if self.debug:
             self.post_message(f'downloading data from {data_start_time} to {data_end_time}')
-        self._datasource.refill_local_source(
-                dtypes=operator.op_data_types,
-                freqs=operator.op_data_freq,
-                asset_types='E',
-                start_date=data_start_time.strftime('%Y-%m-%d %H:%M:%S'),
-                end_date=data_end_time.strftime('%Y-%m-%d %H:%M:%S'),
+        table_to_update = unit_to_table[unit]
+        real_time_data = self._datasource.fetch_realtime_table_data(
+                table=table_to_update,
+                channel='tushare',
                 symbols=self.asset_pool,
-                parallel=False,
-                refresh_trade_calendar=False
         )
+        # 在real_time_data中数据的trade_time列中增加日期，但是只在交易日这么做，否则会出现日期错误
+        # if self.is_trade_day:
+        #     real_time_data['trade_time'] = real_time_data['trade_time'].apply(
+        #             lambda x: pd.to_datetime(x, utc=True).tz_convert(TIME_ZONE)
+        #     )
+
+        real_time_data['trade_time'] = real_time_data['trade_time'].apply(
+                lambda x: pd.to_datetime(x)
+        )
+        # 将实时数据写入数据库 (仅在交易日这么做)
+        self._datasource.update_table_data(
+                table=table_to_update,
+                df=real_time_data,
+                merge_type='update',
+        )
+        # import pdb; pdb.set_trace()
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
                 operator=operator,

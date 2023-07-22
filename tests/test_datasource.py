@@ -841,7 +841,7 @@ class TestDataSource(unittest.TestCase):
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
-            df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
+            df = data_source.fetch_history_table_data(test_table, 'df', df=self.built_in_add_df)
             data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
             print(f'df read from arr source after updating with merge type IGNORE:\n'
@@ -858,7 +858,7 @@ class TestDataSource(unittest.TestCase):
             data_source.write_table_data(self.built_in_df, test_table)
         # 测试写入新增数据并设置合并类型为"update"
         for data_source in all_data_sources:
-            df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
+            df = data_source.fetch_history_table_data(test_table, 'df', df=self.built_in_add_df)
             data_source.update_table_data(test_table, df, 'update')
             df = data_source.read_table_data(test_table)
             print(f'df read from arr source after updating with merge type UPDATE:\n'
@@ -913,7 +913,7 @@ class TestDataSource(unittest.TestCase):
             # 下载并写入数据到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
-            df = self.ds_csv.acquire_table_data(table, 'tushare', **tables_to_test[table])
+            df = self.ds_csv.fetch_history_table_data(table, 'tushare', **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table arr ({table}) from tushare for '
@@ -935,7 +935,7 @@ class TestDataSource(unittest.TestCase):
             # 下载数据并添加到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
-            df = self.ds_hdf.acquire_table_data(table, 'tushare', **tables_to_add[table])
+            df = self.ds_hdf.fetch_history_table_data(table, 'tushare', **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table arr ({table}) from tushare for '

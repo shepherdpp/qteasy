@@ -25,18 +25,13 @@ data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
 ERRORS_TO_CHECK_ON_RETRY = Exception
 
 
-# tsfuncs interface function
-# call this function to extract data for tables defined in DataSource module
-# interface function should be defined in all data provider modules
-def acquire_data(table, **kwargs):
+# tsfuncs interface function, call this function to extract data
+# TODO: update this funciton:
+#  1, remove parameter "table" and replace it with "api_name" instead (or "api")
+#  tushare的API名称解析应该在database模块中完成，而不是在这里，这里仅仅考虑跟tushare相关的所有函数的接口
+def acquire_data(api_name, **kwargs):
     """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
-    # function map 定义了table与tushare函数之间的对应关系，以便调用正确的函数下载数据
-    from .database import TABLE_MASTERS, TABLE_MASTER_COLUMNS
-    assert isinstance(table, str), TypeError(f'A string should be given as table name, got {type(table)} instead')
-    assert table in TABLE_MASTERS.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
-
-    func_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
-    func = globals()[func_name]
+    func = globals()[api_name]
     res = func(**kwargs)
     return res
 

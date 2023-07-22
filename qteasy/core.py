@@ -2462,9 +2462,9 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
                 interest_rate=config.riskfree_ir)
         test_start = regulate_date_format(test_cash_plan.first_day)
         if pd.to_datetime(test_start) != pd.to_datetime(config.test_start):
-            warn(f'first cash investment on {test_start} differ from invest_start {config.test_start}, first cash'
-                 f' date will be used!',
-                 RuntimeWarning)
+                warn(f'first cash investment on {test_start} differ from invest_start {config.test_start}, first cash'
+                     f' date will be used!',
+                     RuntimeWarning)
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = oper.max_window_length

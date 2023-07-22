@@ -1692,8 +1692,11 @@ class Operator:
                   f'{"data types":^25}\n'
                   f'{"_" * 80}')
             for stg_id, stg in self.get_strategy_id_pairs():
-                run_type_str = data_freq_name[stg.strategy_run_freq] + ' @ ' + stg.strategy_run_timing
-                data_type_str = str(stg.window_length) + ' x ' + data_freq_name[stg.data_freq]
+                from .utilfuncs import parse_freq_string
+                qty, main_freq, sub_freq = parse_freq_string(stg.strategy_run_freq)
+                run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
+                qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
+                data_type_str = str(stg.window_length) + ' x ' + str(qty) + data_freq_name[main_freq.lower()]
                 print(f'{truncate_string(stg_id, 10):<10}'
                       f'{truncate_string(stg.name, 19):<19}'
                       f'{truncate_string(run_type_str, 16):^16}'
