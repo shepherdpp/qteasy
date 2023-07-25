@@ -2473,7 +2473,15 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
         raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
                                   f'multiple data frequency in one operator is currently not supported')
     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
-        window_offset_freq = 'd'
+        from qteasy.utilfuncs import parse_freq_string
+        duration, base_unit, _ = parse_freq_string(window_offset_freq, std_freq_only=True)
+        print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), window_offset_freq is {window_offset_freq}\n'
+              f'it should be converted to {duration} {base_unit}, and window_length and window_offset_freq should be \n'
+              f'adjusted accordingly: \n'
+              f'window_length: {window_length} -> {window_length * duration}\n'
+              f'window_offset_freq: {window_offset_freq} -> {base_unit}')
+        window_length *= duration
+        window_offset_freq = base_unit
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
 
     # 设定投资结束日期

@@ -1195,6 +1195,7 @@ class Trader(object):
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
         config = self._config
+        window_length = self._operator.max_window_length
 
         # 下载最小所需实时历史数据
         # 在run_strategy过程中，可以假定需要下载的数据为最小所需数据，即只需要下载最近一个周期内的交易数据
@@ -1208,7 +1209,8 @@ class Trader(object):
                 max_strategy_freq = freq
         # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, base_unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
-        data_start_time = data_end_time + pd.Timedelta(duration, base_unit)
+        # 设置数据下载的开始和结束日期，开始日期是现在往前数window_length个基本周期，结束日期是现在
+        data_start_time = data_end_time - pd.Timedelta(duration * window_length, base_unit)
         unit_to_table = {
             'h': 'stock_hourly',
             '30min': 'stock_30min',
@@ -1219,8 +1221,8 @@ class Trader(object):
         }
         # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
         if self.debug:
-            self.post_message(f'downloading data from {data_start_time} to {data_end_time}')
-        duration, unit, _ = parse_freq_string(config['window_length'], std_freq_only=False)
+            self.post_message(f'getting live data')
+        duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         table_to_update = unit_to_table[unit.lower()]
         real_time_data = self._datasource.fetch_realtime_table_data(
                 table=table_to_update,
@@ -1242,7 +1244,19 @@ class Trader(object):
                   f'{rows_written} rows are saved in table {table_to_update} \n')
             from qteasy.history import get_history_panel
             print(f'[DEBUG] running strategy, is a trade day, real_time_data is merged in datasource, 10 last \n'
-                  f'updated data: {get_history_panel(data_source=self._datasource, htypes="close", shares=self.asset_pool, start="20230720", end="20230731", freq=max_strategy_freq, asset_type="E", adj="none")}')
+                  f'updated data, start: {data_start_time} - end: {data_end_time}, data:\n')
+            refreshed_data = get_history_panel(
+                    data_source=self._datasource,
+                    htypes="close",
+                    shares=self.asset_pool,
+                    start=data_start_time,
+                    end=data_end_time,
+                    freq=max_strategy_freq,
+                    asset_type="E",
+                    adj="none",
+            )
+
+            print(f'{refreshed_data.tail(10)} \n')
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
                 operator=operator,
@@ -1905,7 +1919,7 @@ def start_trader(
         symbol_list = config['asset_pool']
     symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
 
-    # 这里需要检查历史数据是否已经存在且更新到最新，否则需要下载缺失的数据
+    # TODO: 这里需要检查历史数据是否已经存在且更新到最新，否则需要下载缺失的数据
     # datasource.refill_local_source(
     #         tables='index_daily',
     #         dtypes=operator.op_data_types,
