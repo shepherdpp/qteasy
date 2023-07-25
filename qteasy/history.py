@@ -1723,7 +1723,7 @@ def get_history_panel(
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-    asset_type: str, list
+    asset_type: str, list, optional, default "any"
         限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
         逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
          - any: 可以获取任意资产类型的证券数据(默认值)
@@ -1731,7 +1731,7 @@ def get_history_panel(
          - IDX: 只获取指数类型证券的数据
          - FT:  只获取期货类型证券的数据
          - FD:  只获取基金类型证券的数据
-    adj: str
+    adj: str, optional, default "none"
         对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
          - none / n: 不复权(默认值)
          - back / b: 后复权
@@ -1835,6 +1835,8 @@ def get_history_panel(
         raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
     freq = freq.lower()
 
+    if asset_type is None:
+        asset_type = 'any'
     if not isinstance(asset_type, (str, list)):
         raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
     if isinstance(asset_type, str):
@@ -1847,6 +1849,8 @@ def get_history_panel(
         asset_type = AVAILABLE_ASSET_TYPES
     asset_type = [item.upper() for item in asset_type]
 
+    if adj is None:
+        adj = 'none'
     if not isinstance(adj, str):
         raise TypeError(f'adj type should be a string, got {type(adj)} instead')
     if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:

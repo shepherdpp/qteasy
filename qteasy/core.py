@@ -2488,13 +2488,13 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
 
     # debug
     # 检查invest_start是否正确地被前溯了window_offset
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
-    #       f'than invest_start: \n'
-    #       f'current run mode: {run_mode}\n'
-    #       f'current_date = {current_datetime}\n'
-    #       f'window_offset = {window_offset}\n'
-    #       f'invest_start = {invest_start}\n'
-    #       f'invest_end = {invest_end}\n')
+    print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
+          f'than invest_start: \n'
+          f'current run mode: {run_mode}\n'
+          f'current_date = {current_datetime}\n'
+          f'window_offset = {window_offset}\n'
+          f'invest_start = {invest_start}\n'
+          f'invest_end = {invest_end}\n')
     # 设置优化区间和测试区间的结束日期
     opti_end = config.opti_end
     test_end = config.test_end

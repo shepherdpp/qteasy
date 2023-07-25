@@ -3271,7 +3271,7 @@ class DataSource:
 
         Returns
         -------
-        int, 写入数据表中的数据的行数 TODO: 返回值需要实现
+        int, 写入数据表中的数据的行数
         """
         if not isinstance(df, pd.DataFrame):
             raise TypeError(f'df should be a dataframe, got {type(df)} instead')
