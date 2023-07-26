@@ -1482,13 +1482,17 @@ def get_table_info(table_name, data_source=None, verbose=True):
     return data_source.get_table_info(table=table_name, verbose=verbose)
 
 
-def get_table_overview(data_source=None):
+def get_table_overview(data_source=None, tables=None, include_sys_tables=False):
     """ 显示默认数据源或指定数据源的数据总览
 
     Parameters
     ----------
     data_source: Object
         一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview
+    tables: str or list of str, Default: None
+        需要显示overview的数据表名称，如果为None，则显示所有数据表的overview
+    include_sys_tables: bool, Default: False
+        是否显示系统数据表的overview
 
     Returns
     -------
@@ -1504,10 +1508,10 @@ def get_table_overview(data_source=None):
         data_source = qteasy.QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
-    return data_source.overview()
+    return data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
 
 
-def get_data_overview(data_source=None):
+def get_data_overview(data_source=None, tables=None, include_sys_tables=False):
     """ 显示数据源的数据总览，等同于get_table_overview()
 
     获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等
@@ -1516,6 +1520,10 @@ def get_data_overview(data_source=None):
     ----------
     data_source: Object
         一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview
+    tables: str or list of str, Default: None
+        需要显示overview的数据表名称，如果为None，则显示所有数据表的overview
+    include_sys_tables: bool, Default: False
+        是否显示系统数据表的overview
 
     Returns
     -------
@@ -1586,7 +1594,7 @@ def get_data_overview(data_source=None):
     shibor             True         16KB         212           None         None
     """
 
-    return get_table_overview(data_source=data_source)
+    return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
 def refill_data_source(data_source=None, **kwargs):

@@ -2229,11 +2229,13 @@ class DataSource:
         """
         raise NotImplementedError
 
-    def overview(self, print_out=True, include_sys_tables=False):
+    def overview(self, tables=None, print_out=True, include_sys_tables=False):
         """ 以表格形式列出所有数据表的当前数据状态
 
         Parameters
         ----------
+        tables: str or list of str, Default None
+            指定要列出的数据表，如果为None则列出所有数据表
         print_out: bool, Default True
             是否打印数据表总揽
         include_sys_tables: bool, Default False
@@ -2248,6 +2250,13 @@ class DataSource:
         if not include_sys_tables:
             all_tables = all_tables[all_tables['table_usage'] != 'sys']
         all_table_names = all_tables.index
+        if tables is not None:
+            if isinstance(tables, str):
+                tables = str_to_list(tables)
+            if not isinstance(tables, list):
+                raise TypeError(f'tables should be a list of str, got {type(tables)} instead!')
+            all_table_names = [table_name for table_name in all_table_names if table_name in tables]
+
         all_info = []
         print('Analyzing local data source tables... depending on size of tables, it may take a few minutes')
         total_table_count = len(all_table_names)
@@ -4296,21 +4305,25 @@ class DataSource:
             st = time.time()
             dnld_data = pd.DataFrame()
             time_elapsed = 0
+            rows_affected = 0
             try:
                 if parallel and (table != 'trade_calendar'):
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
-                        # TODO: 这里应该使用fetch_history_table_data而不是acquire_data
-                        futures = {proc_pool.submit(self.fetch_history_table_data, table, **kw): kw
+                        # 这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
+                        #  通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
+                        api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
+                        futures = {proc_pool.submit(acquire_data, api_name, **kw): kw
                                    for kw in all_kwargs}
                         for f in as_completed(futures):
                             df = f.result()
                             cur_kwargs = futures[f]
+                            completed += 1
                             if completed % chunk_size:
                                 dnld_data = pd.concat([dnld_data, df])
                             else:
+                                dnld_data = pd.concat([dnld_data, df])
                                 rows_affected = self.update_table_data(table, dnld_data)
                                 dnld_data = pd.DataFrame()
-                            completed += 1
                             total_written += rows_affected
                             time_elapsed = time.time() - st
                             time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
@@ -4322,13 +4335,13 @@ class DataSource:
                 else:
                     for kwargs in all_kwargs:
                         df = self.fetch_history_table_data(table, **kwargs)
+                        completed += 1
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
                         else:
                             dnld_data = pd.concat([dnld_data, df])
                             rows_affected = self.update_table_data(table, dnld_data)
                             dnld_data = pd.DataFrame()
-                        completed += 1
                         total_written += rows_affected
                         time_elapsed = time.time() - st
                         time_remain = sec_to_duration(
