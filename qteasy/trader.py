@@ -130,9 +130,47 @@ class TraderShell(Cmd):
         Usage:
         ------
         bye
+
+        Aliases:
+        --------
+        exit, stop
         """
         self.trader.add_task('stop')
         self._status = 'stopped'
+        return True
+
+    def do_exit(self, arg):
+        """ Stop trader and exit shell
+
+        When trader is stopped, strategies will not be executed, orders will not be submitted,
+        submitted orders will be suspended until trader is resumed
+
+        Usage:
+        ------
+        exit
+
+        Aliases:
+        --------
+        bye, stop
+        """
+        self.do_bye(arg)
+        return True
+
+    def do_stop(self, arg):
+        """ Stop trader and exit shell
+
+        When trader is stopped, strategies will not be executed, orders will not be submitted,
+        submitted orders will be suspended until trader is resumed
+
+        Usage:
+        ------
+        stop
+
+        Aliases:
+        --------
+        bye, exit
+        """
+        self.do_bye(arg)
         return True
 
     def do_info(self, arg):
@@ -1794,7 +1832,7 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        # print(f'[DEBUG] position {position_id} changed with data: {position_data}')
+        print(f'[DEBUG] position {position_id} changed with data: {position_data}')
         return
 
     AVAILABLE_TASKS = {

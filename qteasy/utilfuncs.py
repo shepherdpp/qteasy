@@ -624,7 +624,7 @@ def input_to_list(pars, dim, padder=None):
 
     Parameters
     ----------
-    pars: int or list of int or list of str
+    pars: str or int or list of int or list of str
         需要转化为list对象的输出对象
     dim: int
         需要生成的目标list的元素数量
@@ -658,16 +658,38 @@ def input_to_list(pars, dim, padder=None):
 
 
 def regulate_date_format(date_str: [str, object]) -> str:
-    """ 把YYYY-MM-DD或YYYY/MM/DD等各种格式的日期转化为YYYYMMDD格式
+    """ 把YYYY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYYMMDD格式
+        将含有时间的日期时间转化为YYYYMMDD HH:MM:SS格式
 
-    :param date_str:
-    :return:
+    Parameters
+    ----------
+    date_str: str, date time like
+        时间日期字符串
+
+    Returns
+    -------
+    date_time: str
+    格式为'%Y%m%d' 或 '%Y%m%d %H:%M:%S'
+
+    Examples
+    --------
+    >>> regulate_date_format('2023/08/01')
+    '20230801'
+    >>> regulate_date_format('2023-08-01')
+    '20230801'
+    >>> regulate_date_format('2023-08-01 11:22:33')
+    '20230801 11:22:33'
     """
     try:
         date_time = pd.to_datetime(date_str)
-        return date_time.strftime('%Y%m%d')
-    except:
-        raise ValueError(f'Input string {date_str} can not be converted to a time format')
+    except Exception as e:
+        raise ValueError(f'{e}: {date_str} is not a valid date-time')
+    from datetime import time
+    if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
+        str_format = '%Y%m%d'
+    else:
+        str_format = '%Y%m%d %H:%M:%S'
+    return date_time.strftime(str_format)
 
 
 def list_to_str_format(str_list: [list, str]) -> str:

@@ -1824,6 +1824,7 @@ def get_history_panel(
     if (start is None) or (end is None):
         raise KeyError(f'both start and end should be some type of datetime or like')
     try:
+        print(f'[DEBUG]: in history.py-get_history_panel(), got start: {start}')
         start = pd.to_datetime(start)
         end = pd.to_datetime(end)
     except Exception:
