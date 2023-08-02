@@ -1824,7 +1824,7 @@ def get_history_panel(
     if (start is None) or (end is None):
         raise KeyError(f'both start and end should be some type of datetime or like')
     try:
-        print(f'[DEBUG]: in history.py-get_history_panel(), got start: {start}')
+        # print(f'[DEBUG]: in history.py-get_history_panel(), got start: {start}')
         start = pd.to_datetime(start)
         end = pd.to_datetime(end)
     except Exception:
@@ -1938,7 +1938,7 @@ def get_history_panel(
 
     # 处理所有的df，根据设定执行以下几个步骤：
     #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
-    #  2，检查整行NaN值得情况，根据设定去掉或保留这些行
+    #  2，检查整行NaN值的情况，根据设定去掉或保留这些行
     #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
     for htyp in htypes:
         if resample_method is not None:

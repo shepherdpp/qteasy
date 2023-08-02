@@ -658,8 +658,8 @@ def input_to_list(pars, dim, padder=None):
 
 
 def regulate_date_format(date_str: [str, object]) -> str:
-    """ 把YYYY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYYMMDD格式
-        将含有时间的日期时间转化为YYYYMMDD HH:MM:SS格式
+    """ 把YY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYY-MM-DD格式
+        将日期时间字符串转化为YYYY-MM-DD HH:MM:SS格式
 
     Parameters
     ----------
@@ -669,16 +669,16 @@ def regulate_date_format(date_str: [str, object]) -> str:
     Returns
     -------
     date_time: str
-    格式为'%Y%m%d' 或 '%Y%m%d %H:%M:%S'
+    格式为'%Y-%m-%d' 或 '%Y-%m-%d %H:%M:%S'
 
     Examples
     --------
     >>> regulate_date_format('2023/08/01')
-    '20230801'
+    '2023-08-01'
     >>> regulate_date_format('2023-08-01')
-    '20230801'
+    '2023-08-01'
     >>> regulate_date_format('2023-08-01 11:22:33')
-    '20230801 11:22:33'
+    '2023-08-01 11:22:33'
     """
     try:
         date_time = pd.to_datetime(date_str)
@@ -686,9 +686,9 @@ def regulate_date_format(date_str: [str, object]) -> str:
         raise ValueError(f'{e}: {date_str} is not a valid date-time')
     from datetime import time
     if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
-        str_format = '%Y%m%d'
+        str_format = '%Y-%m-%d'
     else:
-        str_format = '%Y%m%d %H:%M:%S'
+        str_format = '%Y-%m-%d %H:%M:%S'
     return date_time.strftime(str_format)
 
 

@@ -2910,7 +2910,7 @@ class DataSource:
         sql += ''
         try:
             df = pd.read_sql_query(sql, con=self.engine)
-            print(f'[DEBUG]: reading database table with sql: \n"{sql}"\ngot: \n{df.head()}')
+            # print(f'[DEBUG]: reading database table with SQL: \n{sql}\ngot: \n{df.head()}')
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
@@ -4231,7 +4231,7 @@ class DataSource:
         table_data_columns = {}
         # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
         for tbl, columns in tables_to_read.items():
-            print(f'[DEBUG]: in database.py - get_history_data(), reading table data starting from {start}')
+            # print(f'[DEBUG]: in database.py - get_history_data(), reading table data starting from {start}')
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
                 cols_to_drop = [col for col in df.columns if col not in columns]
@@ -4326,6 +4326,46 @@ class DataSource:
         for htyp, df in df_by_htypes.items():
             df_by_htypes[htyp] = df.reindex(columns=shares)
         return df_by_htypes
+
+    def acquire_latest_available_data(self, symbols=None, dtypes=None, freqs=None, asset_type=None,
+                                      adj=None):
+        """ 获取最新的可用数据，从已经保存在本地数据源的数据表中读取指定数据类型、频率和资产类型的最新数据
+
+        Parameters
+        ----------
+        symbols: str or list of str
+            证券代码或证券代码的列表
+        dtypes: str or list of str
+            历史数据类型的清单
+        freqs: str
+            历史数据的频率
+        asset_type: str
+            资产类型
+        adj: str, optional, default: "none"
+            是否返回复权数据
+
+        Returns
+        -------
+        DataFrame
+        """
+        if isinstance(symbols, str):
+            symbols = str_to_list(symbols)
+        if isinstance(asset_type, str):
+            if asset_type.lower() == 'any':
+                from qteasy.utilfuncs import AVAILABLE_ASSET_TYPES
+                asset_type = AVAILABLE_ASSET_TYPES
+            else:
+                asset_type = str_to_list(asset_type)
+
+        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
+        table_master = get_table_master()
+        # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
+        tables_to_read = htype_to_table_col(
+                htypes=dtypes,
+                freq=freqs,
+                asset_type=asset_type,
+                soft_freq=True
+        )
 
     def get_index_weights(self, index, start=None, end=None, shares=None):
         """ 从本地数据仓库中获取一个指数的成分权重
@@ -4539,7 +4579,7 @@ class DataSource:
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
             if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
-        print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
+        # print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
         import time
         for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
@@ -4703,30 +4743,6 @@ class DataSource:
                               f'{total_written} rows downloaded, will proceed with next table!')
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
-
-    def acquire_latest_available_data(self, table=None, symbols=None, htypes=None, freqs=None, asset_type=None,
-                                      adj=None):
-        """ 获取最新的可用数据，从已经保存在本地数据源的数据表中读取指定数据类型、频率和资产类型的最新数据
-
-        Parameters
-        ----------
-        table: str
-            数据表名称
-        channel: str, Default 'tushare'
-            数据源名称
-
-        Returns
-        -------
-        DataFrame
-        """
-        # TODO: implement this function
-        raise NotImplementedError('This function is not implemented yet!')
-        # if source.lower() == 'tushare':
-        #     return self.tushare.acquire_latest_live_data(table, **kwargs)
-        # elif source.lower() == 'joinquant':
-        #     return self.joinquant.acquire_latest_live_data(table, **kwargs)
-        # else:
-        #     raise ValueError(f'Unsupported data source: {source}')
 
     def get_all_basic_table_data(self, refresh_cache=False):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
