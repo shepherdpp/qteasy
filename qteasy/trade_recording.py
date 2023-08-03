@@ -59,7 +59,7 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
             'sys_op_live_accounts',
             **{
                 'user_name': user_name,
-                'created_time': pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
+                'created_time': pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S'),
                 'cash_amount': cash_amount,
                 'available_cash': cash_amount,
                 'total_invest': cash_amount,
@@ -744,7 +744,7 @@ def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_
             assert qty >= 0, f'qty ({qty}) must be greater than or equal to 0!'
         else:
             qty = trade_signal['qty']
-        submit_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+        submit_time = pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S')
         return data_source.update_sys_table_data(
                 'sys_op_trade_orders',
                 record_id=order_id,

@@ -71,10 +71,10 @@ def _valid_qt_kwargs():
                           '2: 策略优化模式\n'
                           '3: 统计预测模式\n'},
 
-        'time_zone':
+        'time_zone':  # this parameter is now not used
             {'Default':   'Asia/Shanghai',
              'Validator': lambda value: isinstance(value, str),
-             'level':     0,
+             'level':     4,
              'text':      '回测时的时区，可以是任意时区，例如：\n'
                           'Asia/Shanghai\n'
                           'Asia/Hong_Kong\n'

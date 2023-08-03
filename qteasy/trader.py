@@ -325,7 +325,8 @@ class TraderShell(Cmd):
             # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
             if argument in ['last_hour', 'l', 'today', 't', '3day', '3', 'week', 'w', 'month', 'm']:
                 # create order time ranges
-                end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")
+                # end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")  # 产生世界时
+                end = pd.to_datetime('today').strftime("%Y-%m-%d %H:%M:%S")  # 产生本地时区时间
                 if argument in ['last_hour', 'l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
                 elif argument in ['today', 't']:
@@ -441,7 +442,8 @@ class TraderShell(Cmd):
         volume = float(args[1])
         try:
             freq = self.trader.operator.op_data_freq
-            end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+            # end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
+            end = pd.to_datetime('today')  # 产生当地时
             start = end - pd.Timedelta(100, freq)
             last_available_data = self.trader.datasource.get_history_data(
                         shares=[symbol],
@@ -885,14 +887,15 @@ class Trader(object):
         self._initialize_agenda()
         self.post_message(f'Trader is running with account_id: {self.account_id}\n'
                           f'Initialized on date / time: '
-                          f'{pd.to_datetime("now", utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")}\n'
+                          f'{pd.to_datetime("today").strftime("%Y-%m-%d %H:%M:%S")}\n'
                           f'current day is trade day: {self.is_trade_day}\n'
                           f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
         market_open_day_loop_interval = 1
         market_close_day_loop_interval = 1
-        current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+        # current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
+        current_date_time = pd.to_datetime('today')  # 产生当地时间
         current_date = current_date_time.date()
         try:
             while self.status != 'stopped':
@@ -934,7 +937,8 @@ class Trader(object):
                     self.task_queue.task_done()
 
                 # 如果没有暂停，从任务日程中添加任务到任务队列
-                current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+                # current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
+                current_date_time = pd.to_datetime('today')  # 产生本地时间
                 current_time = current_date_time.time()
                 current_date = current_date_time.date()
                 if self.status != 'paused':
@@ -1046,7 +1050,8 @@ class Trader(object):
         """
         if not isinstance(message, str):
             raise TypeError('message should be a str')
-        time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')
+        # time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')  # 产生世界时
+        time_string = pd.to_datetime('today').strftime("%Y-%m-%d %H:%M:%S")  # 本地时间
         message = f'[{time_string}]-{self.status}: {message}'
         if not new_line:
             message += '_R'
@@ -1238,7 +1243,8 @@ class Trader(object):
         # 下载最小所需实时历史数据
         # 在run_strategy过程中，可以假定需要下载的数据为最小所需数据，即只需要下载最近一个周期内的交易数据
         # 数据下载区间结束时间是现在，数据下载周期为所有策略中最大运行周期（最低频率），开始时间是结束时间减去周期
-        data_end_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)
+        # data_end_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生的数据是UTC时间，需要转换为北京时间
+        data_end_time = pd.to_datetime('today')  # 产生本地时间
         max_strategy_freq = 'T'
         for strategy_id in strategy_ids:
             strategy = operator[strategy_id]
@@ -1545,7 +1551,8 @@ class Trader(object):
         None
         """
         if current_date is None:
-            current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()
+            # current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()  # 产生世界时UTC时间
+            current_date = pd.to_datetime('today').date()  # 产生本地时间
         from qteasy.utilfuncs import is_market_trade_day
         # exchange = self._config['exchange']  # TODO: should we add exchange to config?
         exchange = 'SSE'
@@ -1573,7 +1580,8 @@ class Trader(object):
             如果current_time为None，则使用当前系统时间，给出current_time的目的是为了方便测试
         """
         if current_time is None:
-            current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+            # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
+            current_time = pd.to_datetime('today').time()  # 产生本地时间
         task_added = False  # 是否添加了任务
         next_task = 'None'
         import datetime as dt
@@ -1629,7 +1637,8 @@ class Trader(object):
         """
         # if current_time is None then use current system time
         if current_time is None:
-            current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()
+            # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
+            current_time = pd.to_datetime('today').time()  # 产生本地时间
         if self.debug:
             self.post_message('initializing agenda')
         # 如果不是交易日，直接返回

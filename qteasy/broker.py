@@ -214,7 +214,7 @@ class Broker(object):
             else:
                 raise ValueError(f'Unknown result_type: {result_type}, should be one of ["filled", "canceled"]')
 
-            current_datetime = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE)
+            current_datetime = pd.to_datetime('today')
             raw_trade_result = {
                 'order_id':        order['order_id'],
                 'filled_qty':      filled_qty,
