@@ -982,6 +982,8 @@ class HistoryPanel():
             raise ValueError(f'along must be "col" or "row", got {along}')
 
         df_dict = self.to_df_dict(by='share')
+        if self.is_empty:
+            return pd.DataFrame()
         if along in ('col', 'column'):
             return pd.concat(df_dict, axis=1, keys=df_dict.keys())
         if along == 'row':
@@ -1246,17 +1248,93 @@ class HistoryPanel():
 
         return self.to_df_dict(by=by)
 
-    # TODO: implement this method
     def head(self, row_count=5):
-        """打印HistoryPanel的最初几行，默认打印五行"""
+        """打印HistoryPanel的最初几行，默认打印五行
 
-        raise NotImplementedError
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
 
-    # TODO: implement this method
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only first row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含前row_count行
+
+        Examples
+        --------
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.head(3)
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
+        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+        2020-01-03  12.9,   13.0,   1020030 2.9,    3.0,    20030
+        """
+        # TODO: this function is to be tested
+        return self.flatten_to_dataframe(along='col').head(row_count)
+
     def tail(self, row_count=5):
-        """打印HistoryPanel的最末几行，默认打印五行"""
+        """打印HistoryPanel的最末几行，默认打印五行
 
-        raise NotImplementedError
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
+
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only last row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含最后row_count行
+
+        Examples
+        --------
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.tail(3)
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-04  12.3,   12.5,   1020040 2.3,    2.5,    20040
+        2020-01-05  12.6,   13.2,   1020050 2.6,    3.2,    20050
+        2020-01-06  12.9,   13.0,   1020060 2.9,    3.0,    20060
+        """
+        # TODO: this function is to be tested
+        return self.flatten_to_dataframe(along='col').tail(row_count)
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):
@@ -1824,7 +1902,6 @@ def get_history_panel(
     if (start is None) or (end is None):
         raise KeyError(f'both start and end should be some type of datetime or like')
     try:
-        # print(f'[DEBUG]: in history.py-get_history_panel(), got start: {start}')
         start = pd.to_datetime(start)
         end = pd.to_datetime(end)
     except Exception:

@@ -889,7 +889,7 @@ class Operator:
         ----------
         stg: str or int or Strategy
             需要添加的交易策略，也可以是内置交易策略的策略id或策略名称
-        kwargs: dict
+        kwargs:
             任意合法的策略属性，可以在添加策略时直接给该策略属性赋值，
             必须明确指定需要修改的属性名称，包含
             - pars: dict or tuple, 策略可调参数
@@ -1881,11 +1881,11 @@ class Operator:
                 raise TypeError(f'live_running_stgs must contain valid strategy ids, got '
                                 f'{[stg_id for stg_id in live_running_stgs if stg_id not in self.strategy_ids]} '
                                 f'in the list')
-        # TODO 从这里开始下面的操作都应该移动到core.py中，从而吧CashPlan从Operator的设置过程中去掉
+        # TODO 从这里开始下面的操作都应该移动到core.py中，从而把CashPlan从Operator的设置过程中去掉
         #  使Operator与CashPlan无关。使二者脱钩
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
-        first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
-        last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
+        first_cash_pos = np.searchsorted(hist_data.hdates, [cash_plan.first_day])
+        last_cash_pos = np.searchsorted(hist_data.hdates, [cash_plan.last_day])
         operator_window_length = self.max_window_length
         op_list_hdates = hist_data.hdates[operator_window_length:]
 

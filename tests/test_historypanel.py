@@ -1052,6 +1052,37 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(TypeError, hp.flatten_to_dataframe, along=35)
         self.assertRaises(ValueError, hp.flatten_to_dataframe, along='wrong_value')
         self.assertRaises(Exception, hp.flatten_to_dataframe, along='col', drop_nan=True)
+        # test empty history panel
+        hp = HistoryPanel()
+        self.assertRaises(Exception, hp.flatten_to_dataframe)
+
+    def test_head_and_tail(self):
+        """ 测试函数 head() 和 tail() """
+
+        hp = self.hp
+        print('test head()')
+        head = hp.head(3)
+        self.assertIsInstance(head, HistoryPanel)
+        self.assertEqual(head.shape, (3, hp.shape[1], hp.shape[2]))
+        self.assertEqual(head.hdates, hp.hdates[0:3])
+        self.assertEqual(head.htypes, hp.htypes)
+        self.assertEqual(head.shares, hp.shares)
+        self.assertTrue(np.allclose(head.values, hp.values[0:3]))
+
+        print('test tail()')
+        tail = hp.tail(3)
+        self.assertIsInstance(tail, HistoryPanel)
+        self.assertEqual(tail.shape, (3, hp.shape[1], hp.shape[2]))
+        self.assertEqual(tail.hdates, hp.hdates[-3:])
+        self.assertEqual(tail.htypes, hp.htypes)
+        self.assertEqual(tail.shares, hp.shares)
+        self.assertTrue(np.allclose(tail.values, hp.values[-3:]))
+
+        print('test error raises')
+        self.assertRaises(TypeError, hp.head, '3')
+        self.assertRaises(ValueError, hp.head, -1)
+        self.assertRaises(TypeError, hp.tail, '3')
+        self.assertRaises(ValueError, hp.tail, -1)
 
 
 if __name__ == '__main__':

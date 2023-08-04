@@ -2746,7 +2746,7 @@ class DataSource:
             elif (share_like_pk is not None) and (date_like_pk is None):
                 df = df.loc[(df[share_like_pk].isin(shares))]
         except:
-            import pdb;
+            import pdb
             pdb.set_trace()
 
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
@@ -2910,7 +2910,7 @@ class DataSource:
         sql += ''
         try:
             df = pd.read_sql_query(sql, con=self.engine)
-            # print(f'[DEBUG]: reading database table with SQL: \n{sql}\ngot: \n{df.head()}')
+            print(f'[DEBUG]: reading database table with SQL: \n{sql}\ngot: \n{df.head()}')
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
@@ -3525,8 +3525,8 @@ class DataSource:
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         return res
 
-    def fetch_realtime_table_data(self, table, channel, symbols):
-        """ 获取数据表的实时数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
+    def fetch_realtime_price_data(self, table, channel, symbols):
+        """ 获取实时股票价格数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
         stock_1min/stock_5min/stock_15min/stock_30min/stock_hourly
 
         Parameters
@@ -3699,7 +3699,7 @@ class DataSource:
         ----------
         table: str,
             数据表的名称
-        column: list of str
+        column: str or list of str
             需要去重并返回的数据列
         min_max_only: bool, default False
             为True时不需要返回整个数据列，仅返回最大值和最小值
@@ -4231,7 +4231,7 @@ class DataSource:
         table_data_columns = {}
         # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
         for tbl, columns in tables_to_read.items():
-            # print(f'[DEBUG]: in database.py - get_history_data(), reading table data starting from {start}')
+            print(f'[DEBUG]: in database.py - get_history_data(), reading {tbl} data starting {start} ending {end}.')
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
                 cols_to_drop = [col for col in df.columns if col not in columns]
@@ -4579,7 +4579,7 @@ class DataSource:
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
             if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
-        # print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
+        print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
         import time
         for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
@@ -5213,7 +5213,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     0    1    4
     1    2    5
     2    3    6
-    >>> df = set_primary_key_index(df, ['a'], [int])
+    >>> df = set_primary_key_index(df, ['a'], ['int'])
     >>> df
             b
     a
@@ -5416,7 +5416,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
             '''
             dtype_freq_list = set(all_freqs[rematched_dtype_loc])
             atype_freq_list = set(all_freqs[rematched_atype_loc])
-            available_freq_list = dtype_freq_list.intersection(atype_freq_list)
+            available_freq_list = list(dtype_freq_list.intersection(atype_freq_list))
 
             # 当无法找到available freq list时，跳过这一步
             if len(available_freq_list) == 0:

@@ -627,6 +627,7 @@ class TraderShell(Cmd):
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
                     self.do_bye('')
+                time.sleep(0.1)
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
                 t = Timer(5, lambda: print(
@@ -892,7 +893,7 @@ class Trader(object):
                           f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
-        market_open_day_loop_interval = 1
+        market_open_day_loop_interval = 0.3
         market_close_day_loop_interval = 1
         # current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
         current_date_time = pd.to_datetime('today')  # 产生当地时间
@@ -1268,7 +1269,7 @@ class Trader(object):
             self.post_message(f'getting live data')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         table_to_update = unit_to_table[unit.lower()]
-        real_time_data = self._datasource.fetch_realtime_table_data(
+        real_time_data = self._datasource.fetch_realtime_price_data(
                 table=table_to_update,
                 channel='tushare',
                 symbols=self.asset_pool,
@@ -1284,34 +1285,42 @@ class Trader(object):
                     df=real_time_data,
                     merge_type='update',
             )
-            print(f'[DEBUG] running strategy, is a trade day, downloaded real_time_data: \n{real_time_data} \nand '
+            print(f'[DEBUG] trader.py - running strategy, is a trade day, downloaded real_time_data: \n'
+                  f'{real_time_data} \nand '
                   f'{rows_written} rows are saved in table {table_to_update} \n')
             from qteasy.history import get_history_panel
-            print(f'[DEBUG] running strategy, is a trade day, real_time_data is merged in datasource, 10 last \n'
-                  f'updated data, start: {data_start_time} - end: {data_end_time}, data:\n')
-            refreshed_data = get_history_panel(
-                    data_source=self._datasource,
-                    htypes="close",
-                    shares=self.asset_pool,
-                    start=data_start_time,
-                    end=data_end_time,
-                    freq=max_strategy_freq,
-                    asset_type="E",
-                    adj="none",
-            )
-
-            print(f'{refreshed_data.tail(10)} \n')
+            # refreshed_data = get_history_panel(
+            #         data_source=self._datasource,
+            #         htypes="close",
+            #         shares=self.asset_pool,
+            #         start=data_start_time,
+            #         end=data_end_time,
+            #         freq=max_strategy_freq,
+            #         asset_type="E",
+            #         adj="none",
+            # )
+            #
+            # print(f'{refreshed_data} \n')
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
                 operator=operator,
                 config=config,
                 datasource=self._datasource,
         )
-        print(f'[DEBUG] running strategy, downloaded hist_op data from datasource: {hist_op} \n')
+        if not hist_op.is_empty:
+            print(f'[DEBUG] trader.py - running strategy, downloaded hist_op data from datasource: {hist_op} \n')
+        else:
+            print(f'[DEBUG] trader.py - running strategy, empty hist_op is downloaded:\nhist_op: {hist_op} \n'
+                  f'hist_ref: {hist_ref} \ninvest_cash_plan: {invest_cash_plan} \n')
         if self.debug:
             self.post_message(f'read real time data and set operator data allocation')
-        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan, reference_data=hist_ref,
-                                  live_mode=True, live_running_stgs=strategy_ids)
+        operator.assign_hist_data(
+                hist_data=hist_op,
+                cash_plan=invest_cash_plan,
+                reference_data=hist_ref,
+                live_mode=True,
+                live_running_stgs=strategy_ids
+        )
 
         # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
         trade_data = np.zeros(shape=(len(shares), 5))
