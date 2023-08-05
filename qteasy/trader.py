@@ -442,16 +442,12 @@ class TraderShell(Cmd):
         volume = float(args[1])
         try:
             freq = self.trader.operator.op_data_freq
-            # end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
-            end = pd.to_datetime('today')  # 产生当地时
-            start = end - pd.Timedelta(100, freq)
             last_available_data = self.trader.datasource.get_history_data(
                         shares=[symbol],
                         htypes='close',
                         asset_type=self.trader.asset_type,
-                        start=start,
-                        end=end,
                         freq=freq,
+                        row_count=10,
             )
             current_price = last_available_data['close'][symbol][-1]
         except Exception as e:
@@ -855,7 +851,7 @@ class Trader(object):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
         try:
-            hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
+            hist_op, hist_ref = check_and_prepare_live_trade_data(
                     operator=self._operator,
                     config=self._config,
                     datasource=self._datasource,
@@ -1302,7 +1298,7 @@ class Trader(object):
             #
             # print(f'{refreshed_data} \n')
         # 读取最新数据,设置operator的数据分配,创建trade_data
-        hist_op, hist_ref, invest_cash_plan = check_and_prepare_live_trade_data(
+        hist_op, hist_ref = check_and_prepare_live_trade_data(
                 operator=operator,
                 config=config,
                 datasource=self._datasource,
@@ -1316,7 +1312,6 @@ class Trader(object):
             self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(
                 hist_data=hist_op,
-                cash_plan=invest_cash_plan,
                 reference_data=hist_ref,
                 live_mode=True,
                 live_running_stgs=strategy_ids

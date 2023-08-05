@@ -510,14 +510,19 @@ class HistoryPanel():
         Examples
         --------
         >>> hp.info()
-        <class 'quantdigger.datastruct.historypanel.HistoryPanel'>
+        <class 'qteasy.history.HistoryPanel'>
         History Panel at 0x7f8b0c0b0f10
         Datetime Range: 100 entries, 2015-01-05 00:00:00 to 2015-04-24 00:00:00
         Historical Data Types (total 5 data types):
         ['open', 'high', 'low', 'close', 'volume']
         Shares (total 2 shares):
-        ['000001', '000002']
-
+        ['000001', '000002', '000003']
+        non-null values for each share and data type:
+                open   high    low  close volume
+        000001   100    100    100    100    100
+        000002   100    100    100    100    100
+        000003   100    100    100    100    100
+        memory usage: 616 bytes
         """
         import sys
         print(f'\n{type(self)}')
@@ -533,6 +538,10 @@ class HistoryPanel():
             else:
                 print(f'{self.htypes[0:3]} ... {self.htypes[-3:-1]}')
             print(f'Shares (total {self.level_count} shares):')
+            if self.level_count <= 10:
+                print(f'{self.shares}')
+            else:
+                print(f'{self.shares[0:3]} ... {self.shares[-3:-1]}')
             sum_nnan = np.sum(~np.isnan(self.values), 1)
             df = pd.DataFrame(sum_nnan, index=self.shares, columns=self.htypes)
             print('non-null values for each share and data type:')
@@ -1757,9 +1766,10 @@ def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, h
 def get_history_panel(
         htypes,
         shares=None,
+        freq=None,
         start=None,
         end=None,
-        freq=None,
+        rows=None,
         asset_type: str = None,
         adj: str = None,
         data_source=None,
@@ -1793,14 +1803,17 @@ def get_history_panel(
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    start: str
-        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-    end: str
-        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
     freq: str
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+    start: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+    end: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    rows: int
+        获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
+        如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
     asset_type: str, list, optional, default "any"
         限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
         逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
@@ -1964,6 +1977,7 @@ def get_history_panel(
             start=start,
             end=end,
             freq=freq,
+            row_count=rows,
             asset_type=asset_type,
             adj=adj
     ) if normal_htypes else {}
@@ -1981,6 +1995,7 @@ def get_history_panel(
             start=start,
             end=end,
             freq=freq,
+            row_count=rows,
             asset_type=asset_type,
             adj=adj
     ) if htype_code_pairs else {}

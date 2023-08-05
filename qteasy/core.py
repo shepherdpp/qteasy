@@ -1679,9 +1679,11 @@ def refill_data_source(data_source=None, **kwargs):
 
 def get_history_data(htypes,
                      shares=None,
+                     symbols=None,
                      start=None,
                      end=None,
                      freq=None,
+                     rows=10,
                      asset_type=None,
                      adj=None,
                      as_data_frame=None,
@@ -1705,15 +1707,23 @@ def get_history_data(htypes,
          - close-000300.SH:
             给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
             的参考数据
-    shares: [str, list]
+    shares: [str, list] 等同于symbols
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    symbols: [str, list] 等同于shares
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+        - str:     '000001, 000002, 000004, 000005'
+        - list:    ['000001', '000002', '000004', '000005']
     start: str
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
     end: str
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    rows: int, default: 10
+        获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end]
+        如果未指定start和end，则获取数据表中最近的rows条数据
     freq: str
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
@@ -1812,8 +1822,6 @@ def get_history_data(htypes,
     --------
     >>> import qteasy as qt
 
-    Out:
-
     >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20190101', end='20190131')
 
     Out:
@@ -1895,7 +1903,7 @@ def get_history_data(htypes,
     elif group_by in ['htypes', 'htype', 'h']:
         group_by = 'htypes'
     hp = get_history_panel(htypes=htypes, shares=shares, start=start, end=end, freq=freq, asset_type=asset_type,
-                           adj=adj, **kwargs)
+                           symbols=symbols, row_count=rows, adj=adj, **kwargs)
 
     if as_data_frame:
         return hp.unstack(by=group_by)
@@ -2628,20 +2636,40 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
 
     Returns
     -------
+    hist_op: HistoryPanel
+        用于回测的历史数据，包含用于计算交易结果的所有历史价格种类
+    hist_ref: HistoryPanel
+        用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
-    (hist_op,
-     hist_ref,
-     back_trade_prices,
-     hist_opti,
-     hist_opti_ref,
-     opti_trade_prices,
-     hist_benchmark,
-     invest_cash_plan,
-     opti_cash_plan,
-     test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config, datasource)
 
-    return hist_op, hist_ref, invest_cash_plan
+    run_mode = operator.run_mode
+    if run_mode != 0:
+        raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
+    # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
+    hist_op = get_history_panel(
+            htypes=operator.all_price_and_data_types,
+            shares=config.asset_pool,
+            rows=operator.max_window_length,
+            freq=operator.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj if run_mode > 0 else 'none',
+            data_source=datasource,
+    )
+    print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_op is: \n{hist_op}\n')
+
+    # 解析参考数据类型，获取参考数据
+    hist_ref = get_history_panel(
+            htypes=operator.op_ref_types,
+            shares=None,
+            rows=operator.max_window_length,
+            freq=operator.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj,
+            data_source=datasource,
+    )
+    print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_ref is: \n{hist_ref}\n')
+
+    return hist_op, hist_ref
 
 
 def check_and_prepare_backtest_data(operator, config, datasource=None):

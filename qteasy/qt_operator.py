@@ -1757,7 +1757,7 @@ class Operator:
     def assign_hist_data(
             self,
             hist_data: HistoryPanel,
-            cash_plan: CashPlan,
+            cash_plan: CashPlan = None,
             reference_data=None,
             live_mode=False,
             live_running_stgs=None,
@@ -1802,6 +1802,7 @@ class Operator:
             数据覆盖的时间段和时间频率也必须符合上述要求
         cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
+            在live_mode下不需要
         reference_data: HistoryPanel
             参考数据，默认None。一个HistoryPanel对象，这些数据被operator对象中的策略用于生成交易信号，但是与history_data
             不同，参考数据与个股无关，可以被所有个股同时使用，例如大盘指数、宏观经济数据等都可以作为参考数据，某一个个股
@@ -1852,9 +1853,12 @@ class Operator:
         # 确保输入的历史数据是HistoryPanel类型
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Historical data should be a HistoryPanel, got {type(hist_data)} instead.')
-        # 确保cash_plan的数据类型正确
-        if not isinstance(cash_plan, CashPlan):
-            raise TypeError(f'cash plan should be CashPlan object, got {type(cash_plan)}')
+        if not live_mode:
+            if cash_plan is None:
+                raise ValueError(f'cash plan can not be None unless in live mode')
+            # 确保cash_plan的数据类型正确
+            if not isinstance(cash_plan, CashPlan):
+                raise TypeError(f'cash plan should be CashPlan object, got {type(cash_plan)}')
         # 确保输入的历史数据不为空
         if hist_data.is_empty:
             raise ValueError(f'history data can not be empty!')

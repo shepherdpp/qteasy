@@ -4164,13 +4164,20 @@ class DataSource:
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     # ==============
-    def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
+    def get_history_data(self, shares=None, symbols=None, htypes=None, freq='d', start=None, end=None, row_count=100,
+                         asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
             HistoryPanel对象。
 
         Parameters
         ----------
         shares: str or list of str
+            等同于新的symbols参数，为了兼容旧的代码，保留此参数
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+        symbols: str or list of str
             需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
             如以下两种输入方式皆合法且等效：
              - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
@@ -4180,15 +4187,17 @@ class DataSource:
             如以下两种输入方式皆合法且等效：
              - str:     'open, high, low, close'
              - list:    ['open', 'high', 'low', 'close']
-        start: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-        end: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
         freq: str
             获取的历史数据的频率，包括以下选项：
              - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
              - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
              如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+        start: str, optional
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+        end: str, optional
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+        row_count: int, optional, default 10
+            获取的历史数据的行数，如果指定了start和end，则忽略此参数
         asset_type: str or list of str
             限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
             逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
@@ -4209,6 +4218,8 @@ class DataSource:
             一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
+        if symbols is not None:
+            shares = symbols
         if isinstance(shares, str):
             shares = str_to_list(shares)
         if isinstance(asset_type, str):
@@ -4229,6 +4240,9 @@ class DataSource:
         )
         table_data_acquired = {}
         table_data_columns = {}
+        if (start is not None) or (end is not None):
+            # 如果指定了start或end，则忽略row_count参数, 但是如果row_count为None，则默认为-1, 读取所有数据
+            row_count = 0 if row_count is not None else -1
         # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
         for tbl, columns in tables_to_read.items():
             print(f'[DEBUG]: in database.py - get_history_data(), reading {tbl} data starting {start} ending {end}.')
@@ -4236,6 +4250,8 @@ class DataSource:
             if not df.empty:
                 cols_to_drop = [col for col in df.columns if col not in columns]
                 df.drop(columns=cols_to_drop, inplace=True)
+                if row_count > 0:
+                    df = df.tail(row_count)
             table_data_acquired[tbl] = df
             table_data_columns[tbl] = df.columns
         # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
@@ -4326,46 +4342,6 @@ class DataSource:
         for htyp, df in df_by_htypes.items():
             df_by_htypes[htyp] = df.reindex(columns=shares)
         return df_by_htypes
-
-    def acquire_latest_available_data(self, symbols=None, dtypes=None, freqs=None, asset_type=None,
-                                      adj=None):
-        """ 获取最新的可用数据，从已经保存在本地数据源的数据表中读取指定数据类型、频率和资产类型的最新数据
-
-        Parameters
-        ----------
-        symbols: str or list of str
-            证券代码或证券代码的列表
-        dtypes: str or list of str
-            历史数据类型的清单
-        freqs: str
-            历史数据的频率
-        asset_type: str
-            资产类型
-        adj: str, optional, default: "none"
-            是否返回复权数据
-
-        Returns
-        -------
-        DataFrame
-        """
-        if isinstance(symbols, str):
-            symbols = str_to_list(symbols)
-        if isinstance(asset_type, str):
-            if asset_type.lower() == 'any':
-                from qteasy.utilfuncs import AVAILABLE_ASSET_TYPES
-                asset_type = AVAILABLE_ASSET_TYPES
-            else:
-                asset_type = str_to_list(asset_type)
-
-        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
-        table_master = get_table_master()
-        # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
-        tables_to_read = htype_to_table_col(
-                htypes=dtypes,
-                freq=freqs,
-                asset_type=asset_type,
-                soft_freq=True
-        )
 
     def get_index_weights(self, index, start=None, end=None, shares=None):
         """ 从本地数据仓库中获取一个指数的成分权重
