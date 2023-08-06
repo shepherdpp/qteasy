@@ -2513,13 +2513,13 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
 
     # debug
     # 检查invest_start是否正确地被前溯了window_offset
-    print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
-          f'than invest_start: \n'
-          f'current run mode: {run_mode}\n'
-          f'current_date = {current_datetime}\n'
-          f'window_offset = {window_offset}\n'
-          f'invest_start = {invest_start}\n'
-          f'invest_end = {invest_end}\n')
+    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
+    #       f'than invest_start: \n'
+    #       f'current run mode: {run_mode}\n'
+    #       f'current_date = {current_datetime}\n'
+    #       f'window_offset = {window_offset}\n'
+    #       f'invest_start = {invest_start}\n'
+    #       f'invest_end = {invest_end}\n')
     # 设置优化区间和测试区间的结束日期
     opti_end = config.opti_end
     test_end = config.test_end
@@ -2540,7 +2540,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config.backtest_price_adj if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
-    print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_op is: \n{hist_op}\n')
+    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_op is: \n{hist_op}\n')
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
@@ -2553,7 +2553,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config.backtest_price_adj,
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
-    print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_ref is: \n{hist_ref}\n')
+    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_ref is: \n{hist_ref}\n')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.strategy_timings
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -2604,7 +2604,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config.backtest_price_adj,
             data_source=datasource,
     ).slice_to_dataframe(htype='close')
-    print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_benchmark is: \n{hist_benchmark}\n')
+    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_benchmark is: \n{hist_benchmark}\n')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan
@@ -2657,7 +2657,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             adj='none',
             data_source=datasource,
     )
-    print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_op is: \n{hist_op}\n')
+    # print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_op is: \n{hist_op}\n')
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(

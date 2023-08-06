@@ -605,7 +605,19 @@ class TraderShell(Cmd):
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
                         if message[-2:] == '_R':
+                            # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
+                            next_normal_message = None
+                            while True:
+                                if self._trader.message_queue.empty():
+                                    break
+                                next_message = self._trader.message_queue.get()
+                                if message[-2:] != '_R':
+                                    next_normal_message = next_message
+                                    break
+                                message = next_message
                             print(message[:-2], end='\r')
+                            if next_normal_message:
+                                print(next_normal_message)
                         else:
                             print(message)
     
