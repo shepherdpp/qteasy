@@ -518,6 +518,8 @@ class TraderShell(Cmd):
 
         if args[0] in ['d', 'detail']:
             self.trader.operator.info(verbose=True)
+        elif args[0] in ['s', 'set_par']:
+            print('argument not implemented')
         else:
             self.trader.operator.info()
 

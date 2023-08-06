@@ -120,13 +120,15 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(input_to_list([5, 4], 3, 0), [5, 4, 0])
 
     def test_regulate_date_format(self):
-        self.assertEqual(regulate_date_format('2019/11/06'), '20191106')
-        self.assertEqual(regulate_date_format('2019-11-06'), '20191106')
-        self.assertEqual(regulate_date_format('20191106'), '20191106')
-        self.assertEqual(regulate_date_format('191106'), '20061119')
-        self.assertEqual(regulate_date_format('830522'), '19830522')
-        self.assertEqual(regulate_date_format(datetime.datetime(2010, 3, 15)), '20100315')
-        self.assertEqual(regulate_date_format(pd.Timestamp('2010.03.15')), '20100315')
+        self.assertEqual(regulate_date_format('2019/11/06'), '2019-11-06')
+        self.assertEqual(regulate_date_format('2019-11-06'), '2019-11-06')
+        self.assertEqual(regulate_date_format('20191106'), '2019-11-06')
+        self.assertEqual(regulate_date_format('191106'), '2006-11-19')
+        self.assertEqual(regulate_date_format('830522'), '1983-05-22')
+        self.assertEqual(regulate_date_format(datetime.datetime(2010, 3, 15)), '2010-03-15')
+        self.assertEqual(regulate_date_format(datetime.datetime(2010, 3, 15, 12, 12, 23)), '2010-03-15 12:12:23')
+        self.assertEqual(regulate_date_format('20191106 16:20:48'), '2019-11-06 16:20:48')
+        self.assertEqual(regulate_date_format(pd.Timestamp('2010.03.15')), '2010-03-15')
         self.assertRaises(ValueError, regulate_date_format, 'abc')
         self.assertRaises(ValueError, regulate_date_format, '2019/13/43')
 

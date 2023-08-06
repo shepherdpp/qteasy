@@ -1053,8 +1053,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(ValueError, hp.flatten_to_dataframe, along='wrong_value')
         self.assertRaises(Exception, hp.flatten_to_dataframe, along='col', drop_nan=True)
         # test empty history panel
-        hp = HistoryPanel()
-        self.assertRaises(Exception, hp.flatten_to_dataframe)
+        hp = qt.HistoryPanel()
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertIsInstance(hp.flatten_to_dataframe(), pd.DataFrame)
+        self.assertTrue(hp.flatten_to_dataframe().empty)
 
     def test_head_and_tail(self):
         """ 测试函数 head() 和 tail() """
@@ -1062,7 +1064,7 @@ class TestHistoryPanel(unittest.TestCase):
         hp = self.hp
         print('test head()')
         head = hp.head(3)
-        self.assertIsInstance(head, HistoryPanel)
+        self.assertIsInstance(head, pd.DataFrame)
         self.assertEqual(head.shape, (3, hp.shape[1], hp.shape[2]))
         self.assertEqual(head.hdates, hp.hdates[0:3])
         self.assertEqual(head.htypes, hp.htypes)
@@ -1071,7 +1073,7 @@ class TestHistoryPanel(unittest.TestCase):
 
         print('test tail()')
         tail = hp.tail(3)
-        self.assertIsInstance(tail, HistoryPanel)
+        self.assertIsInstance(tail, pd.DataFrame)
         self.assertEqual(tail.shape, (3, hp.shape[1], hp.shape[2]))
         self.assertEqual(tail.hdates, hp.hdates[-3:])
         self.assertEqual(tail.htypes, hp.htypes)

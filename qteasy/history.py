@@ -1766,6 +1766,7 @@ def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, h
 def get_history_panel(
         htypes,
         shares=None,
+        symbols=None,
         freq=None,
         start=None,
         end=None,
@@ -1803,6 +1804,11 @@ def get_history_panel(
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    symbols: [str, list]
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+        - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+        - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
     freq: str
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)

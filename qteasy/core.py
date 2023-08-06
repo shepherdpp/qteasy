@@ -1903,7 +1903,7 @@ def get_history_data(htypes,
     elif group_by in ['htypes', 'htype', 'h']:
         group_by = 'htypes'
     hp = get_history_panel(htypes=htypes, shares=shares, start=start, end=end, freq=freq, asset_type=asset_type,
-                           symbols=symbols, row_count=rows, adj=adj, **kwargs)
+                           symbols=symbols, rows=rows, adj=adj, **kwargs)
 
     if as_data_frame:
         return hp.unstack(by=group_by)

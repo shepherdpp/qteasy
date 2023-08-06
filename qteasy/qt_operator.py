@@ -2000,8 +2000,9 @@ class Operator:
                     window=window_length,
                     axis=1
             )
-            # 在非live模式下，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要, 但是在live模式下，只会生成一组滑窗
-            self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:]if live_mode \
+            # 在非live模式下，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要, 但是在live模式下，只会生成一组(最后一组)滑窗
+            # self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
+            self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-1:]if live_mode \
                 else \
                 the_rolling_window[window_length_offset:-1]
 
@@ -2014,8 +2015,8 @@ class Operator:
                         window=window_length,
                         axis=0
                 )
-
-                self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
+                # self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
+                self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-1:] if live_mode \
                     else \
                     the_rolling_window[window_length_offset:-1]
             else:
