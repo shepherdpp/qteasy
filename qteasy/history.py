@@ -466,6 +466,23 @@ class HistoryPanel():
         new_values = self[:, :, sd_index:ed_index]
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
+    def isegment(self, start_index=None, end_index=None):
+        """ 获取HistoryPanel的一个片段，start_index和end_index都是int数，表示日期序号，返回
+            这两个序号代表的日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
+            htypes的数据
+
+        Parameters
+        ----------
+        start_index: 开始日期序号
+        end_index: 结束日期序号
+
+        Returns
+        -------
+        out : HistoryPanel
+            一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据
+        """
+        raise NotImplementedError
+
     def slice(self, shares=None, htypes=None):
         """ 获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符
             串，表示需要获取的股票或数据的种类。
@@ -552,6 +569,10 @@ class HistoryPanel():
         """ 返回一个新的HistoryPanel对象，其值和本对象相同"""
         # TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
         return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
+
+    def len(self):
+        """ 返回HistoryPanel对象的长度，即日期个数"""
+        return self.row_count
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
         """ 给HistoryPanel对象的层、行、列标签重新赋值
@@ -1257,8 +1278,94 @@ class HistoryPanel():
 
         return self.to_df_dict(by=by)
 
+    def flattened_head(self, row_count=5):
+        """ 以multi-index DataFrame的形式返回HistoryPanel的最初几行，默认五行
+
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
+
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only first row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含前row_count行
+
+        Examples
+        --------
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.flattened_head(3)
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
+        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+        2020-01-03  12.9,   13.0,   1020030 2.9,    3.0,    20030
+        """
+
+        return self.flatten_to_dataframe(along='col').head(row_count)
+
+    def flattened_tail(self, row_count=5):
+        """ 以multi-index DataFrame的形式返回HistoryPanel的最后几行，默认五行
+
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
+
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only last row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含后row_count行
+
+        Examples
+        --------
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.flattened_tail(3)
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-04  12.3,   12.5,   1020040 2.3,    2.5,    20040
+        2020-01-05  12.6,   13.2,   1020050 2.6,    3.2,    20050
+        2020-01-06  12.9,   13.0,   1020060 2.9,    3.0,    20060
+        """
+
     def head(self, row_count=5):
-        """打印HistoryPanel的最初几行，默认打印五行
+        """返回HistoryPanel的最初几行，默认五行
 
         Parameters
         ----------
@@ -1292,17 +1399,26 @@ class HistoryPanel():
         2020-01-06  2.9,    3.0,    20060
 
         >>> hp.head(3)
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
-        2020-01-03  12.9,   13.0,   1020030 2.9,    3.0,    20030
+        share 0, label: 000300
+                    close,  open,   vol,
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+
+        share 1, label: 000001
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
         """
-        # TODO: this function is to be tested
-        return self.flatten_to_dataframe(along='col').head(row_count)
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[0]:
+            row_count = self.shape[0]
+        return self.isegment(0, row_count - 1)
 
     def tail(self, row_count=5):
-        """打印HistoryPanel的最末几行，默认打印五行
+        """返回HistoryPanel的最末几行，默认五行
 
         Parameters
         ----------
@@ -1336,14 +1452,24 @@ class HistoryPanel():
         2020-01-06  2.9,    3.0,    20060
 
         >>> hp.tail(3)
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-04  12.3,   12.5,   1020040 2.3,    2.5,    20040
-        2020-01-05  12.6,   13.2,   1020050 2.6,    3.2,    20050
-        2020-01-06  12.9,   13.0,   1020060 2.9,    3.0,    20060
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
         """
-        # TODO: this function is to be tested
-        return self.flatten_to_dataframe(along='col').tail(row_count)
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        total_rows = self.shape[0]
+        if row_count > total_rows:
+            row_count = total_rows
+        return self.isegment(total_rows - row_count, total_rows)
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):
