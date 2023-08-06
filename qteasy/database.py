@@ -2910,7 +2910,7 @@ class DataSource:
         sql += ''
         try:
             df = pd.read_sql_query(sql, con=self.engine)
-            print(f'[DEBUG]: reading database table with SQL: \n{sql}\ngot: \n{df.head()}')
+            # print(f'[DEBUG]: reading database table with SQL: \n{sql}\ngot: \n{df.head()}')
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
@@ -4245,13 +4245,14 @@ class DataSource:
             row_count = 0 if row_count is not None else -1
         # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
         for tbl, columns in tables_to_read.items():
-            print(f'[DEBUG]: in database.py - get_history_data(), reading {tbl} data starting {start} ending {end}.')
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
                 cols_to_drop = [col for col in df.columns if col not in columns]
                 df.drop(columns=cols_to_drop, inplace=True)
                 if row_count > 0:
                     df = df.tail(row_count)
+            # print(f'[DEBUG]: in database.py - get_history_data(), reading {row_count} rows of '
+            #       f'{tbl} starting {start} ending {end}, got\n{df}')
             table_data_acquired[tbl] = df
             table_data_columns[tbl] = df.columns
         # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
@@ -4341,6 +4342,7 @@ class DataSource:
         # 最后整理数据，确保每一个htype的数据框的columns与shares相同
         for htyp, df in df_by_htypes.items():
             df_by_htypes[htyp] = df.reindex(columns=shares)
+        # print(f'[DEBUG]: in database.py get_history_data() got db_by_htypes:\n{df_by_htypes}')
         return df_by_htypes
 
     def get_index_weights(self, index, start=None, end=None, shares=None):
@@ -4555,7 +4557,7 @@ class DataSource:
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
             if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
-        print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
+        # print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
         import time
         for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
@@ -4798,9 +4800,6 @@ class DataSource:
             sql = f"USE `{self.db_name}`;"
             self.cursor.execute(sql)
             self.con.commit()
-            # self.con.select_db(self.db_name)
-            # debug
-            # print(f'{self.connection_type} reconnected! used database: {self.con.db} == {self.db_name}')
             return True
         except Exception as e:
             print(f'{e} on {self.connection_type}, please check your connection')

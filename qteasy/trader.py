@@ -1235,23 +1235,18 @@ class Trader(object):
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
         config = self._config
-        window_length = self._operator.max_window_length
-
-        # 下载最小所需实时历史数据
-        # 在run_strategy过程中，可以假定需要下载的数据为最小所需数据，即只需要下载最近一个周期内的交易数据
-        # 数据下载区间结束时间是现在，数据下载周期为所有策略中最大运行周期（最低频率），开始时间是结束时间减去周期
-        # data_end_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生的数据是UTC时间，需要转换为北京时间
-        data_end_time = pd.to_datetime('today')  # 产生本地时间
+        # window_length = self._operator.max_window_length
+        #
+        # # 下载最小所需实时历史数据
+        # data_end_time = pd.to_datetime('today')  # 产生本地时间
         max_strategy_freq = 'T'
         for strategy_id in strategy_ids:
             strategy = operator[strategy_id]
             freq = strategy.strategy_run_freq.upper()
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
-        # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
-        duration, base_unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
-        # 设置数据下载的开始和结束日期，开始日期是现在往前数window_length个基本周期，结束日期是现在
-        data_start_time = data_end_time - pd.Timedelta(duration * window_length, base_unit)
+        # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
+        # duration, base_unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
         unit_to_table = {
             'h': 'stock_hourly',
             '30min': 'stock_30min',
@@ -1281,10 +1276,10 @@ class Trader(object):
                     df=real_time_data,
                     merge_type='update',
             )
-            print(f'[DEBUG] trader.py - running strategy, is a trade day, downloaded real_time_data: \n'
-                  f'{real_time_data} \nand '
-                  f'{rows_written} rows are saved in table {table_to_update} \n')
-            from qteasy.history import get_history_panel
+            # print(f'[DEBUG] trader.py - running strategy, is a trade day, downloaded real_time_data: \n'
+            #       f'{real_time_data} \nand '
+            #       f'{rows_written} rows are saved in table {table_to_update} \n')
+            # from qteasy.history import get_history_panel
             # refreshed_data = get_history_panel(
             #         data_source=self._datasource,
             #         htypes="close",
@@ -1303,11 +1298,11 @@ class Trader(object):
                 config=config,
                 datasource=self._datasource,
         )
-        if not hist_op.is_empty:
-            print(f'[DEBUG] trader.py - running strategy, downloaded hist_op data from datasource: {hist_op} \n')
-        else:
-            print(f'[DEBUG] trader.py - running strategy, empty hist_op is downloaded:\nhist_op: {hist_op} \n'
-                  f'hist_ref: {hist_ref} \ninvest_cash_plan: {invest_cash_plan} \n')
+        # if not hist_op.is_empty:
+        #     print(f'[DEBUG] trader.py - running strategy, downloaded hist_op data: {hist_op} \n')
+        # else:
+        #     print(f'[DEBUG] trader.py - running strategy, empty hist_op is downloaded:\nhist_op: {hist_op} \n'
+        #           f'hist_ref: {hist_ref} \n')
         if self.debug:
             self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(
@@ -1344,13 +1339,15 @@ class Trader(object):
         trade_data[:, 2] = current_prices
         trade_data[:, 3] = last_trade_result_summary[1]
         trade_data[:, 4] = last_trade_result_summary[2]
+
+        # print(f'[DEBUG]: to created signal, trade_data: {trade_data}\n')
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
                            f'"Operator.op_type = "step"')
         else:
             op_signal = operator.create_signal(
                     trade_data=trade_data,
-                    sample_idx=1,
+                    sample_idx=0,
                     price_type_idx=0
             )  # 生成交易清单
         if self.debug:
@@ -1845,7 +1842,7 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        print(f'[DEBUG] position {position_id} changed with data: {position_data}')
+        # print(f'[DEBUG] position {position_id} changed with data: {position_data}')
         return
 
     AVAILABLE_TASKS = {

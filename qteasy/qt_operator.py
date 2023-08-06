@@ -1670,13 +1670,13 @@ class Operator:
             '30min': '30min',
             'h': 'hours',
         }
-        print(f'       -----------------------Operator Information-----------------------\n'
+        print(f'            -----------------------Operator Information-----------------------\n'
               f'Strategies:  {self.strategy_count} Strategies\n'
               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
               f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
         # 打印blender的信息：
         for run_timing in self.strategy_timings:
-            print(f'       ------------------------Strategy blenders-------------------------')
+            print(f'            ------------------------Strategy blenders-------------------------')
             print(f'for strategy running timing - {run_timing}:')
             if self.strategy_blenders != {}:
                 print(f'signal blenders: {self.view_blender(run_timing)}\n')
@@ -1684,13 +1684,14 @@ class Operator:
                 print(f'no blender\n')
         # 打印各个strategy的基本信息：
         if (self.strategy_count > 0) and (not verbose):
-            print(f'       ----------------------------Strategies----------------------------\n'
+            print(f'            ----------------------------Strategies----------------------------\n'
                   f'{"id":<10}'
-                  f'{"name":<19}'
-                  f'{"run timing":^16}'
+                  f'{"name":<20}'
+                  f'{"run timing":^15}'
                   f'{"data window":^10}'
-                  f'{"data types":^25}\n'
-                  f'{"_" * 80}')
+                  f'{"data types":^25}'
+                  f'{"parameters":^20}\n'
+                  f'{"_" * 100}')
             for stg_id, stg in self.get_strategy_id_pairs():
                 from .utilfuncs import parse_freq_string
                 qty, main_freq, sub_freq = parse_freq_string(stg.strategy_run_freq)
@@ -1699,18 +1700,19 @@ class Operator:
                 qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
                 data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
                 print(f'{truncate_string(stg_id, 10):<10}'
-                      f'{truncate_string(stg.name, 19):<19}'
-                      f'{truncate_string(run_type_str, 16):^16}'
+                      f'{truncate_string(stg.name, 20):<20}'
+                      f'{truncate_string(run_type_str, 15):^15}'
                       f'{truncate_string(data_type_str, 10):^10}'
-                      f'{truncate_string(str(stg.history_data_types), 25):^25}')
-            print('=' * 80)
+                      f'{truncate_string(str(stg.history_data_types), 25):^25}'
+                      f'{truncate_string(str(stg.pars), 20):^20}')
+            print('=' * 100)
         # 打印每个strategy的详细信息
         if (self.strategy_count > 0) and verbose:
-            print('       -------------------------Strategy Details-------------------------')
+            print('            -------------------------Strategy Details-------------------------')
             for stg_id, stg in self.get_strategy_id_pairs():
                 print(f'Strategy_ID:        {stg_id}')
                 stg.info()
-            print('=' * 80)
+            print('=' * 100)
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
@@ -1888,12 +1890,13 @@ class Operator:
         # TODO 从这里开始下面的操作都应该移动到core.py中，从而把CashPlan从Operator的设置过程中去掉
         #  使Operator与CashPlan无关。使二者脱钩
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
-        first_cash_pos = np.searchsorted(hist_data.hdates, [cash_plan.first_day])
-        last_cash_pos = np.searchsorted(hist_data.hdates, [cash_plan.last_day])
+        # import pdb; pdb.set_trace()
         operator_window_length = self.max_window_length
         op_list_hdates = hist_data.hdates[operator_window_length:]
 
         if not live_mode:
+            first_cash_pos = np.searchsorted(hist_data.hdates, [cash_plan.first_day])
+            last_cash_pos = np.searchsorted(hist_data.hdates, [cash_plan.last_day])
             # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
             if first_cash_pos < self.max_window_length:
                 message = f'History data starts on {hist_data.hdates[0]} does not have' \
@@ -1967,8 +1970,7 @@ class Operator:
         # 清空可能已经存在的数据
         self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
-        # 所有strategy的滑窗数量相同，且不包含最后一组滑窗，原因：每一组信号都是基于前一组滑窗
-        # 的数据生成的，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要
+        # 生成数据滑窗
         max_window_length = self.max_window_length
         for stg_id, stg in self.get_strategy_id_pairs():
             window_length = stg.window_length
@@ -1993,24 +1995,35 @@ class Operator:
             #           f'cash_plan: {cash_plan}\n'
             #           f'live_mode: {live_mode}\n'
             #           f'live_running_stgs: {live_running_stgs}\n')
-            self._op_hist_data_rolling_windows[stg_id] = rolling_window(
+            the_rolling_window = rolling_window(
                     hist_data_val,
                     window=window_length,
                     axis=1
-            )[window_length_offset:-1]
+            )
+            # 在非live模式下，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要, 但是在live模式下，只会生成一组滑窗
+            self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:]if live_mode \
+                else \
+                the_rolling_window[window_length_offset:-1]
 
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
             ref_data_val = self._op_reference_data[stg_id]
-            self._op_ref_data_rolling_windows[stg_id] = rolling_window(
-                    ref_data_val,
-                    window=window_length,
-                    axis=0
-            )[window_length_offset:-1] if ref_data_val else None
+            if ref_data_val:
+                the_rolling_window = rolling_window(
+                        ref_data_val,
+                        window=window_length,
+                        axis=0
+                )
+
+                self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
+                    else \
+                    the_rolling_window[window_length_offset:-1]
+            else:
+                self._op_ref_data_rolling_windows[stg_id] = None
 
             if live_mode:
-                # 如果是live_trade，根据live_running_stgs生成每个策略的信号生成采样点序列
-                self._op_sample_indices[stg_id] = [1] if stg_id in live_running_stgs else []
+                # 如果是live_trade，数据采样点永远是0，取第0组滑窗生成信号
+                self._op_sample_indices[stg_id] = [0] if stg_id in live_running_stgs else []
             else:
                 # 如果不是live_trade，根据策略运行频率strategy_run_freq生成信号生成采样点序列
                 freq = stg.strategy_run_freq

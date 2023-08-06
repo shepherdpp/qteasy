@@ -2490,11 +2490,13 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
         from qteasy.utilfuncs import parse_freq_string
         duration, base_unit, _ = parse_freq_string(window_offset_freq, std_freq_only=True)
-        print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), window_offset_freq is {window_offset_freq}\n'
-              f'it should be converted to {duration} {base_unit}, and window_length and window_offset_freq should be \n'
-              f'adjusted accordingly: \n'
-              f'window_length: {window_length} -> {window_length * duration * 3}\n'
-              f'window_offset_freq: {window_offset_freq} -> {base_unit}')
+        # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), '
+        #       f'window_offset_freq is {window_offset_freq}\n'
+        #       f'it should be converted to {duration} {base_unit}, '
+        #       f'and window_length and window_offset_freq should be \n'
+        #       f'adjusted accordingly: \n'
+        #       f'window_length: {window_length} -> {window_length * duration * 3}\n'
+        #       f'window_offset_freq: {window_offset_freq} -> {base_unit}')
         window_length *= duration * 10  # 临时处理措施，由于交易时段不连续，仅仅前推一个周期可能会导致数据不足
         window_offset_freq = base_unit
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
@@ -2642,7 +2644,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
         用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
 
-    run_mode = operator.run_mode
+    run_mode = config.mode
     if run_mode != 0:
         raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
@@ -2652,7 +2654,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
-            adj=config.backtest_price_adj if run_mode > 0 else 'none',
+            adj='none',
             data_source=datasource,
     )
     print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_op is: \n{hist_op}\n')
@@ -2664,10 +2666,10 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
-            adj=config.backtest_price_adj,
+            adj='none',
             data_source=datasource,
     )
-    print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_ref is: \n{hist_ref}\n')
+    # print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_ref is: \n{hist_ref}\n')
 
     return hist_op, hist_ref
 

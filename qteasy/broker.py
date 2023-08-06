@@ -126,7 +126,7 @@ class Broker(object):
         except Exception as e:
             # 如果Broker出现异常，处理尚未完成的交易订单
             if self.debug:
-                print(f'[DEBUG]: Broker is stopped by exception{e}, will stop broker and process unfinished orders...')
+                print(f'[DEBUG]: Broker is stopped by exception: {e}, will stop broker and process unfinished orders...')
                 import traceback
                 traceback.print_exc()
             self.status = 'stopped'
@@ -374,7 +374,7 @@ class RandomBroker(Broker):
                     transaction_fee = qty * order_price * self.fee_rate_sell
                 else:
                     raise RuntimeError('invalid direction: {}'.format(order['direction']))
-            else: # result_type == 'canceled'
+            else:  # result_type == 'canceled'
                 transaction_fee = 0
                 order_price = 0
                 qty = remain_qty

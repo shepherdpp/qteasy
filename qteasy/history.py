@@ -1898,27 +1898,30 @@ def get_history_panel(
 
     if not isinstance(shares, (str, list)):
         raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+    if not isinstance(htypes, (str, list)):
+        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+
     if isinstance(shares, str):
         shares = str_to_list(shares)
     if isinstance(shares, list):
         if not all(isinstance(item, str) for item in shares):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
-
-    if not isinstance(htypes, (str, list)):
-        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
     if isinstance(htypes, list):
         if not all(isinstance(item, str) for item in htypes):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
 
-    if (start is None) or (end is None):
-        raise KeyError(f'both start and end should be some type of datetime or like')
-    try:
-        start = pd.to_datetime(start)
-        end = pd.to_datetime(end)
-    except Exception:
-        raise Exception(f'both or one of start and end can not be converted to datetime format')
+    if start is not None:
+        try:
+            start = pd.to_datetime(start)
+        except Exception:
+            raise Exception(f'Start date can not be converted to datetime format')
+    if end is not None:
+        try:
+            end = pd.to_datetime(end)
+        except Exception:
+            raise Exception(f'End date can not be converted to datetime format')
 
     if not isinstance(freq, str):
         raise TypeError(f'freq should be a string, got {type(freq)} instead')
