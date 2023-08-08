@@ -538,23 +538,22 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        run [strategy id]
+        run stg1 stg2
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
             return
-        strategies = arg
-        if isinstance(strategies, str):
-            strategies = str_to_list(arg)
+        strategies = str_to_list(arg, sep_char=' ')
         if not isinstance(strategies, list):
-            print('Please input a valid strategy id, use "strategies" to view all ids.')
+            print('Invalid argument, use "strategies" to view all ids.')
             return
         if not strategies:
-            print('Please input a valid strategy id, use "strategies" to view all ids.')
+            print('A valid strategy id must be given, use "strategies" to view all ids.')
             return
         all_strategy_ids = self.trader.operator.strategy_ids
         if not all([strategy in all_strategy_ids for strategy in strategies]):
-            print('Please input a valid strategy id, use "strategies" to view all ids.')
+            invalid_stg = [stg for stg in strategies if stg not in all_strategy_ids]
+            print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
             return
 
         current_trader_status = self.trader.status
@@ -621,6 +620,7 @@ class TraderShell(Cmd):
                             if next_normal_message:
                                 print(next_normal_message)
                         else:
+                            # 需要设法确保：在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             print(message)
     
                 elif self.status == 'command':
@@ -1090,7 +1090,8 @@ class Trader(object):
 
         if kwargs:
             task = (task, kwargs)
-        self.post_message(f'adding task: {task}')
+        if self.debug:
+            self.post_message(f'adding task: {task}')
         self._add_task_to_queue(task)
 
     def _process_result(self, result):
@@ -1120,9 +1121,9 @@ class Trader(object):
             filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
             self.post_message(f'[ORDER EXECUTED {order_id}]: '
                               f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
-        self.post_message(f'processed trade result: {result_id}')
+        # self.post_message(f'processed trade result: {result_id}\n{result}')
         if self.debug:
-            self.post_message(f'processed trade result: \n{result}')
+            self.post_message(f'processed trade result: {result_id}\n{result}')
         process_trade_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
@@ -1413,7 +1414,9 @@ class Trader(object):
                 self._broker.order_queue.put(trade_order)
                 self.post_message(f'[NEW ORDER {order_id}]: {d}-{pos} {qty} of {sym} @ {price}')
                 # 记录已提交的交易数量
-                submitted_qty += qty
+                submitted_qty += 1
+
+        self.post_message(f'[RAN STRATEGY {strategy_ids}]: {submitted_qty} orders submitted in total.')
 
         return submitted_qty
 

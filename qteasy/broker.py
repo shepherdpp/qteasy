@@ -366,8 +366,11 @@ class RandomBroker(Broker):
                 qty = remain_qty * filled_proportion
                 if self.moq > 0:
                     qty = np.trunc(qty / self.moq) * self.moq
-                    if qty < 0.001:
-                        qty = self.moq if remain_qty >= self.moq else remain_qty
+                    if (qty < self.moq) and (remain_qty > self.moq):
+                        qty = self.moq # 如果成交数量小于moq，但是剩余数量大于moq，那么成交数量就是moq
+                    elif (qty < self.moq) and (remain_qty <= self.moq):
+                        qty = remain_qty # 如果成交数量小于moq，且剩余数量也小于moq，那么成交数量就是剩余数量
+                        result_type = 'filled'
                 if direction == 'buy':
                     order_price = order_price * (1 + price_deviation)
                     transaction_fee = qty * order_price * self.fee_rate_buy

@@ -604,7 +604,11 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     if input_string == "":
         return list()
-    res = input_string.replace(' ', '').split(sep_char)
+    input_string = input_string.strip()
+    if sep_char != ' ':
+        input_string = input_string.replace(' ', '')
+    res = input_string.split(sep_char)
+    res = [s for s in res if s != '']
     if case == 'upper':
         res = [string.upper() for string in res]
     elif case == 'lower':
