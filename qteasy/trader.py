@@ -505,21 +505,46 @@ class TraderShell(Cmd):
         return True
 
     def do_strategies(self, arg):
-        """ Show strategies
+        """ Show strategies information
 
         Usage:
         ------
-        strategies
+        strategies [d|detail] [s|set_par <strategy_id> <pars>]
+
         """
 
-        args = str_to_list(arg)
+        args = str_to_list(arg, sep_char=' ')
         if not args:
             args = ['']
 
         if args[0] in ['d', 'detail']:
             self.trader.operator.info(verbose=True)
         elif args[0] in ['s', 'set_par']:
-            print('argument not implemented')
+            if len(args) < 3:
+                print('Please input a valid strategy id and a parameter.\n')
+                self.trader.operator.info()
+                return
+            strategy_id = args[1]
+            pars = args[2:]
+            try:
+                new_pars = eval(','.join(pars))
+            except Exception as e:
+                print(f'Invalid parameter ({",".join(pars)})! Error: {e}')
+                return
+            if not isinstance(new_pars, tuple):
+                print(f'Invalid parameter ({new_pars})! Parameter should be a tuple')
+            if not isinstance(new_pars, tuple):
+                print(f'Invalid parameter ({new_pars})! Please input a valid parameter.')
+                self.trader.operator.info()
+                return
+            try:
+                self.trader.operator.set_parameter(stg_id=strategy_id, pars=new_pars)
+            except Exception as e:
+                print(f'Can not set {new_pars} to {strategy_id}, Error: {e}')
+                self.trader.operator.info()
+                return
+            print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
+            self.trader.operator.info()
         else:
             self.trader.operator.info()
 
@@ -538,7 +563,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        run stg1 stg2
+        run stg1 [stg2] [stg3] ...
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
@@ -595,6 +620,7 @@ class TraderShell(Cmd):
         Thread(target=self.trader.run).start()
         Thread(target=self.trader.broker.run).start()
 
+        prev_message = ''
         while True:
             # enter shell loop
             try:
@@ -620,8 +646,11 @@ class TraderShell(Cmd):
                             if next_normal_message:
                                 print(next_normal_message)
                         else:
-                            # 需要设法确保：在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
+                            # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
+                            if prev_message[-2:] == '_R':
+                                print('\n', end='')
                             print(message)
+                        prev_message = message
     
                 elif self.status == 'command':
                     # get user command input and do commands
