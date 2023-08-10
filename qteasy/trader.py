@@ -1687,7 +1687,7 @@ class Trader(object):
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
             current_time = pd.to_datetime('today').time()  # 产生本地时间
         if self.debug:
-            self.post_message('initializing agenda')
+            self.post_message('initializing agenda...\r')
         # 如果不是交易日，直接返回
         if not self.is_trade_day:
             if self.debug:

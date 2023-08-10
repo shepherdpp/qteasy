@@ -481,7 +481,10 @@ class HistoryPanel():
         out : HistoryPanel
             一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据
         """
-        raise NotImplementedError
+        hdates = np.array(self.hdates)
+        new_dates = list(hdates[start_index:end_index])
+        new_values = self[:, :, start_index:end_index]
+        return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def slice(self, shares=None, htypes=None):
         """ 获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符
@@ -1415,7 +1418,7 @@ class HistoryPanel():
             raise ValueError("row_count should be positive")
         if row_count > self.shape[0]:
             row_count = self.shape[0]
-        return self.isegment(0, row_count - 1)
+        return self.isegment(0, row_count)
 
     def tail(self, row_count=5):
         """返回HistoryPanel的最末几行，默认五行
@@ -1464,12 +1467,7 @@ class HistoryPanel():
         2020-01-05  2.6,    3.2,    20050
         2020-01-06  2.9,    3.0,    20060
         """
-        if row_count <= 0:
-            raise ValueError("row_count should be positive")
-        total_rows = self.shape[0]
-        if row_count > total_rows:
-            row_count = total_rows
-        return self.isegment(total_rows - row_count, total_rows)
+        return self.isegment(- row_count, None)
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):
@@ -2055,6 +2053,8 @@ def get_history_panel(
         except Exception:
             raise Exception(f'End date can not be converted to datetime format')
 
+    # if isinstance(freq, list):
+    #     freq = ','.join(freq)
     if not isinstance(freq, str):
         raise TypeError(f'freq should be a string, got {type(freq)} instead')
     if freq.upper() not in TIME_FREQ_STRINGS:

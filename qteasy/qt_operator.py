@@ -1665,6 +1665,7 @@ class Operator:
             'w': 'week',
             'd': 'days',
             'min': 'min',
+            '1min': 'min',
             '5min': '5min',
             '15min': '15min',
             '30min': '30min',
