@@ -1322,7 +1322,10 @@ class HistoryPanel():
         2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
         2020-01-03  12.9,   13.0,   1020030 2.9,    3.0,    20030
         """
-
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[0]:
+            row_count = self.shape[0]
         return self.flatten_to_dataframe(along='col').head(row_count)
 
     def flattened_tail(self, row_count=5):
@@ -1366,6 +1369,11 @@ class HistoryPanel():
         2020-01-05  12.6,   13.2,   1020050 2.6,    3.2,    20050
         2020-01-06  12.9,   13.0,   1020060 2.9,    3.0,    20060
         """
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[0]:
+            row_count = self.shape[0]
+        return self.flatten_to_dataframe(along='col').tail(row_count)
 
     def head(self, row_count=5):
         """返回HistoryPanel的最初几行，默认五行
@@ -1467,6 +1475,10 @@ class HistoryPanel():
         2020-01-05  2.6,    3.2,    20050
         2020-01-06  2.9,    3.0,    20060
         """
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[0]:
+            row_count = self.shape[0]
         return self.isegment(- row_count, None)
 
     # TODO: implement this method

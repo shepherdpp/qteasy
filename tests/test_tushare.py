@@ -358,7 +358,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
         print(f'test3: find basic info for all funds that are being issued')
-        df = fund_basic(status='I')
+        df = fund_basic(status='L')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
