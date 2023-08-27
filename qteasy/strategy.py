@@ -21,7 +21,7 @@ from .utilfuncs import TIME_FREQ_STRINGS
 class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
-    Attributes
+    Properties
     ----------
     pars: any
         策略可调参数，可以是任意类型。策略的优化过程，就是寻找策略可调参数的最优组合的过程。
@@ -1180,22 +1180,22 @@ class FactorSorter(BaseStrategy):
 
                 以下例子都基于前面给出的参数设定
                 例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
-                    close_last_day = h_seg[:, -1, 3]
-                    close_10_day = h_seg[:, -10, 3]
+                    close_last_day = h[:, -1, 3]
+                    close_10_day = h[:, -10, 3]
                     rate_10 = (close_last_day / close_10_day) - 1
 
                 例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                    max_10_day = h_seg[:, -10:-1, 1].max(axis=1)
-                    close_last_day = h_seg[:, -1, 3]
+                    max_10_day = h[:, -10:-1, 1].max(axis=1)
+                    close_last_day = h[:, -1, 3]
                     penetrate = close_last_day > max_10_day
 
                 例3, 获取股票最近10日市盈率的平均值
-                    pe_10_days = h_seg[:, -10:-1, 4]
+                    pe_10_days = h[:, -10:-1, 4]
                     avg_pe = pe_10_days.mean(axis=1)
 
                 例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                    close_10_days = h_seg[:, -10:-1, 3]
-                    close_50_days = h_seg[:, -50:-1, 3]
+                    close_10_days = h[:, -10:-1, 3]
+                    close_50_days = h[:, -50:-1, 3]
                     ma_10 = close_10_days.mean(axis=1)
                     ma_50 = close_10_days.mean(axis=1)
 

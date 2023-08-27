@@ -451,7 +451,8 @@ class Operator:
         if len(d_freq) == 1:
             return d_freq[0]
         warnings.warn(f'there are multiple history data frequency required by strategies', RuntimeWarning)
-        return d_freq
+        raise ValueError(f'In current version, the data freq of all strategies should be the same, got {d_freq}')
+        # return d_freq
 
     @property
     def strategy_timings(self):

@@ -28,7 +28,7 @@ from .space import Space, ResultPool
 from .finance import CashPlan, get_selling_result, get_purchase_result, set_cost
 from .qt_operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result
-from .visual import _print_operation_signal, _plot_test_result
+from .visual import _plot_test_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _update_config_kwargs, ConfigDict
 

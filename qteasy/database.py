@@ -9,7 +9,6 @@
 # ======================================
 import os
 from os import path
-import numpy as np
 import pandas as pd
 import warnings
 
@@ -19,7 +18,7 @@ from functools import lru_cache
 from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .utilfuncs import freq_dither, parse_freq_string, next_main_freq, get_main_freq_level
+from .utilfuncs import freq_dither
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
@@ -2371,8 +2370,6 @@ class DataSource:
 
     Attributes
     ----------
-    tables:
-        NotImplemented 所有已经创建的数据表的清单
 
     Methods
     -------
@@ -2968,7 +2965,8 @@ class DataSource:
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notna(df), None)
         df_tuple = tuple(df.itertuples(index=False, name=None))
-        sql = f"INSERT INTO `{db_table}` ("
+        sql = f"INSERT INTO "
+        sql += f"`{db_table}` ("
         for col in tbl_columns[:-1]:
             sql += f"`{col}`, "
         sql += f"`{tbl_columns[-1]}`)\nVALUES\n("
@@ -3045,8 +3043,8 @@ class DataSource:
             add_sql = f', COUNT(DISTINCT(`{column}`))'
         else:
             add_sql = ''
-        sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} ' \
-              f'FROM `{db_table}`'
+        sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} '
+        sql += f'FROM `{db_table}`'
         try:
             self.cursor.execute(sql)
             self.con.commit()
@@ -3203,7 +3201,7 @@ class DataSource:
         if not self.db_table_exists(db_table):
             return -1
         sql = "SELECT table_rows, data_length + index_length " \
-              "FROM information_schema.tables " \
+              "FROM INFORMATION_SCHEMA.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s;"
         try:
@@ -3712,7 +3710,8 @@ class DataSource:
 
         Examples
         --------
-        >>> qt.QT_DATA_SOURCE.get_table_data_coverage('stock_daily', 'ts_code')
+        >>> import qteasy
+        >>> qteasy.QT_DATA_SOURCE.get_table_data_coverage('stock_daily', 'ts_code')
         Out:
         ['000001.SZ',
          '000002.SZ',
@@ -3727,6 +3726,7 @@ class DataSource:
          '002410.SZ',
          '002411.SZ',
          ...]
+        >>> import qteasy as qt
         >>> qt.QT_DATA_SOURCE.get_table_data_coverage('stock_daily', 'ts_code', min_max_only=True)
         Out:
         ['000001.SZ', '873593.BJ']

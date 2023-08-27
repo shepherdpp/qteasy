@@ -13,12 +13,12 @@
 
 import time
 import sys
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, Union
 
 import pandas as pd
 import numpy as np
 
-from threading import Thread, Timer
+from threading import Timer
 from queue import Queue
 from cmd import Cmd
 
@@ -28,7 +28,7 @@ from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration
 from qteasy.broker import Broker, RandomBroker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
-from qteasy.trade_recording import get_account_cash_availabilities, get_position_ids, query_trade_orders
+from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders
 from qteasy.trade_recording import new_account, get_or_create_position, update_position
 from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
 from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
@@ -326,7 +326,7 @@ class TraderShell(Cmd):
             if argument in ['last_hour', 'l', 'today', 't', '3day', '3', 'week', 'w', 'month', 'm']:
                 # create order time ranges
                 # end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")  # 产生世界时
-                end = pd.to_datetime('today').strftime("%Y-%m-%d %H:%M:%S")  # 产生本地时区时间
+                end = pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S')  # 产生本地时区时间
                 if argument in ['last_hour', 'l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
                 elif argument in ['today', 't']:
@@ -1858,7 +1858,7 @@ class Trader(object):
                 if side is None:
                     side = 'long'
                 position_id = get_or_create_position(
-                        account_id=self.trader.account_id,
+                        account_id=self.account_id,
                         symbol=symbol,
                         position_type=side,
                         data_source=self.datasource,
@@ -1867,8 +1867,9 @@ class Trader(object):
                 pos_id=position_id,
                 data_source=self.datasource,
         )
-        print(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
-              f'from {position["qty"]} to {position["qty"] + quantity}')
+        if self.debug:
+            print(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
+                  f'from {position["qty"]} to {position["qty"] + quantity}')
         # 如果减少持仓，则可用持仓数量必须足够，否则退出
         if quantity < 0 and position['available_qty'] < -quantity:
             print(f'Not enough position to decrease, available position: {position["available_qty"]}')
@@ -2004,26 +2005,36 @@ def start_trader(
             debug=debug,
     )
     trader.broker.debug = debug
-    # refill data source, start date is window length before today
-    end_date = pd.to_datetime('today')
-    start_date = end_date - pd.Timedelta(days=operator.max_window_length * 2)
-    if isinstance(config['asset_pool'], str):
-        symbol_list = str_to_list(config['asset_pool'])
-    else:
-        symbol_list = config['asset_pool']
-    symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
 
-    # TODO: 这里需要检查历史数据是否已经存在且更新到最新，否则需要下载缺失的数据
-    # datasource.refill_local_source(
-    #         tables='index_daily',
-    #         dtypes=operator.op_data_types,
-    #         freqs=operator.op_data_freq,
-    #         asset_types='E',
-    #         start_date=start_date.strftime('%Y%m%d'),
-    #         end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
-    #         symbols=symbol_list,
-    #         parallel=True,
-    #         refresh_trade_calendar=True,
+    # find out datasource availabilities, refill data source if table data not available
+    # from qteasy.database import htype_to_table_col
+    # related_tables = htype_to_table_col(
+    #         htypes=operator.op_data_types,
+    #         freq=operator.op_freq,
+    #         asset_type=operator.op_asset_type,
+    #
     # )
+    # table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
+    # last_available_date = table_availabilities['max2'].max()
+    # if last_available_date - pd.to_datetime('today') > pd.Timedelta(value=1, unit=freq):
+    #     # no need to refill if data is already filled up til yesterday
+    #
+    #     if isinstance(config['asset_pool'], str):
+    #         symbol_list = str_to_list(config['asset_pool'])
+    #     else:
+    #         symbol_list = config['asset_pool']
+    #     symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
+    #     print(f'[INFO] refilling data source for symbols: {symbol_list}')
+    #     datasource.refill_local_source(
+    #             tables='index_daily',
+    #             dtypes=operator.op_data_types,
+    #             freqs=operator.op_data_freq,
+    #             asset_types='E',
+    #             start_date=start_date.strftime('%Y%m%d'),
+    #             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
+    #             symbols=symbol_list,
+    #             parallel=True,
+    #             refresh_trade_calendar=True,
+    #     )
 
     TraderShell(trader).run()

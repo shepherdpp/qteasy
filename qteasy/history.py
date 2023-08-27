@@ -63,7 +63,7 @@ class HistoryPanel():
         HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
     6, 方便地由多个pandas DataFrame对象组合而成
 
-    Attributes
+    Properties
     ----------
     is_empty: bool, 该属性返回一个bool值，表示HistoryPanel是否为空
     values: np.ndarray, 该属性返回一个numpy ndarray，包含HistoryPanel的全部数据
