@@ -90,6 +90,8 @@ class TraderShell(Cmd):
         ------
         status
         """
+        if arg:
+            sys.stdout.write(f'status command does not accept arguments\n')
         sys.stdout.write(f'current trader status: {self.trader.status} \n'
                          f'current broker name: {self.trader.broker.broker_name} \n'
                          f'current broker status: {self.trader.broker.status} \n'
@@ -105,8 +107,11 @@ class TraderShell(Cmd):
         ------
         pause
         """
+        if arg:
+            sys.stdout.write(f'pause command does not accept arguments\n')
+            return False
         self.trader.add_task('pause')
-        sys.stdout.write(f'current trader status: {self.trader.status} \n')
+        sys.stdout.write(f'Pausing trader...\n')
 
     def do_resume(self, arg):
         """ Resume trader
@@ -118,8 +123,11 @@ class TraderShell(Cmd):
         ------
         resume
         """
+        if arg:
+            sys.stdout.write(f'resume command does not accept arguments\n')
+            return False
         self.trader.add_task('resume')
-        sys.stdout.write(f'current trader status: {self.trader.status} \n')
+        sys.stdout.write(f'Resuming trader...\n')
 
     def do_bye(self, arg):
         """ Stop trader and exit shell
@@ -135,6 +143,9 @@ class TraderShell(Cmd):
         --------
         exit, stop
         """
+        if arg:
+            sys.stdout.write(f'bye command does not accept arguments\n')
+            return False
         self.trader.add_task('stop')
         self._status = 'stopped'
         return True
@@ -183,7 +194,11 @@ class TraderShell(Cmd):
         ------
         info [detail]
         """
-        sys.stdout.write(f'current trader status: {self.trader.status} \n')
+        if arg:
+            if arg == 'detail':
+                self.trader.info(detail=True)
+            else:
+                sys.stdout.write(f'info command does not accept arguments other than "detail"\n')
         self.trader.info()
 
     def do_positions(self, arg):
@@ -195,6 +210,9 @@ class TraderShell(Cmd):
         ------
         positions
         """
+        if arg:
+            sys.stdout.write(f'positions command does not accept arguments\n')
+            return False
         print(f'current positions: \n')
         print(
                 self._trader.account_position_info.to_string(
@@ -493,7 +511,9 @@ class TraderShell(Cmd):
         ------
         dashboard
         """
-
+        if arg:
+            print('dashboard command does not accept arguments.')
+            return False
         if not self.trader.debug:
             import os
             # check os type of current system, and then clear screen
@@ -505,11 +525,20 @@ class TraderShell(Cmd):
         return True
 
     def do_strategies(self, arg):
-        """ Show strategies information
+        """ Show strategies information or set parameters for a strategy
 
         Usage:
         ------
         strategies [d|detail] [s|set_par <strategy_id> <pars>]
+
+        Examples:
+        ---------
+        to display strategies information:
+        strategies
+        to display strategies information in detail:
+        strategies d
+        to set parameters for strategy 1:
+        strategies s 1 (1, 2, 3)
 
         """
 
@@ -555,6 +584,9 @@ class TraderShell(Cmd):
         ------
         plan
         """
+        if arg:
+            print('agenda command does not accept arguments.')
+            return
         print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
 
     def do_run(self, arg):
@@ -1248,12 +1280,12 @@ class Trader(object):
     def _pause(self):
         """ 暂停交易系统 """
         self.status = 'paused'
-        self.post_message('Trader is Paused, broker is still running')
+        sys.stdout.write('Trader is Paused, broker is still running\n')
 
     def _resume(self):
         """ 恢复交易系统 """
         self.status = self.prev_status
-        self.post_message(f'Trader is resumed to previous status({self.status})')
+        sys.stdout.write(f'Trader is resumed to previous status({self.status})\n')
 
     def _run_strategy(self, strategy_ids=None):
         """ 运行交易策略
