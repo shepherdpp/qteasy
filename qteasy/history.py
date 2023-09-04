@@ -529,20 +529,24 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[100, 100, 100, 100, 100]*100]*3]),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=100),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
         >>> hp.info()
         <class 'qteasy.history.HistoryPanel'>
         History Panel at 0x7f8b0c0b0f10
         Datetime Range: 100 entries, 2015-01-05 00:00:00 to 2015-04-24 00:00:00
         Historical Data Types (total 5 data types):
         ['open', 'high', 'low', 'close', 'volume']
-        Shares (total 2 shares):
+        Shares (total 3 shares):
         ['000001', '000002', '000003']
         non-null values for each share and data type:
                 open   high    low  close volume
         000001   100    100    100    100    100
         000002   100    100    100    100    100
         000003   100    100    100    100    100
-        memory usage: 616 bytes
+        memory usage: 12136 bytes
         """
         import sys
         print(f'\n{type(self)}')
@@ -900,9 +904,9 @@ class HistoryPanel():
         --------
         >>> hp = HistoryPanel(values=np.array([[[1, 2, np.nan], [4, 5, 6]],
         ...                                    [[7, 8, np.nan], [np.inf, 11, 12]]]),
-        ...                    levels=['000001', '000002'],
-        ...                    rows=['2019-01-01', '2019-01-02'],
-        ...                    columns=['open', 'high', 'low']))
+        ...                   levels=['000001', '000002'],
+        ...                   rows=['2019-01-01', '2019-01-02'],
+        ...                   columns=['open', 'high', 'low']))
         >>> hp
         share 0, label: 000001
                     open  high  low
@@ -985,29 +989,34 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
-                    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010
-        2020-01-02  12.6,   13.2,   1020020
+                    close  open        vol
+        2020-01-01   12.3  12.5  1020010.0
+        2020-01-02   12.6  13.2  1020020.0
 
-        share 1, label: 000001：
-                    close,  open,   vol
-        2020-01-01  2.3,    2.5,    20010
-        2020-01-02  2.6,    3.2,    20020
+        share 1, label: 000001
+                    close  open      vol
+        2020-01-01    2.3   2.5  20010.0
+        2020-01-02    2.6   3.2  20020.0
 
         >>> hp.flatten_to_dataframe(along='col')
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+                   000300                  000001
+                    close  open        vol  close open      vol
+        2020-01-01   12.3  12.5  1020010.0    2.3  2.5  20010.0
+        2020-01-02   12.6  13.2  1020020.0    2.6  3.2  20020.0
 
         >>> hp.flatten_to_dataframe(along='row')
-                            close,  open,   vol
-        000300  2020-01-01  12.3,   12.5,   1020010
-                2020-01-02  12.6,   13.2,   1020020
-        000001  2020-01-01  2.3,    2.5,    20010
-                2020-01-02  2.6,    3.2,    20020
+                           close  open        vol
+        000300 2020-01-01   12.3  12.5  1020010.0
+               2020-01-02   12.6  13.2  1020020.0
+        000001 2020-01-01    2.3   2.5    20010.0
+               2020-01-02    2.6   3.2    20020.0
         """
         if not isinstance(along, str):
             raise TypeError(f'along must be a string, got {type(along)} instead')
@@ -1037,29 +1046,34 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
-                    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010
-        2020-01-02  12.6,   13.2,   1020020
+                    close  open        vol
+        2020-01-01   12.3  12.5  1020010.0
+        2020-01-02   12.6  13.2  1020020.0
 
-        share 1, label: 000001：
-                    close,  open,   vol
-        2020-01-01  2.3,    2.5,    20010
-        2020-01-02  2.6,    3.2,    20020
+        share 1, label: 000001
+                    close  open      vol
+        2020-01-01    2.3   2.5  20010.0
+        2020-01-02    2.6   3.2  20020.0
 
         >>> hp.to_multi_index_dataframe(along='col')
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+                   000300                  000001
+                    close  open        vol  close open      vol
+        2020-01-01   12.3  12.5  1020010.0    2.3  2.5  20010.0
+        2020-01-02   12.6  13.2  1020020.0    2.6  3.2  20020.0
 
         >>> hp.to_multi_index_dataframe(along='row')
-                            close,  open,   vol
-        000300  2020-01-01  12.3,   12.5,   1020010
-                2020-01-02  12.6,   13.2,   1020020
-        000001  2020-01-01  2.3,    2.5,    20010
-                2020-01-02  2.6,    3.2,    20020
+                           close  open        vol
+        000300 2020-01-01   12.3  12.5  1020010.0
+               2020-01-02   12.6  13.2  1020020.0
+        000001 2020-01-01    2.3   2.5    20010.0
+               2020-01-02    2.6   3.2    20020.0
         """
         return self.flatten_to_dataframe(along=along)
 
@@ -1078,29 +1092,34 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
-                    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010
-        2020-01-02  12.6,   13.2,   1020020
+                    close  open        vol
+        2020-01-01   12.3  12.5  1020010.0
+        2020-01-02   12.6  13.2  1020020.0
 
-        share 1, label: 000001：
-                    close,  open,   vol
-        2020-01-01  2.3,    2.5,    20010
-        2020-01-02  2.6,    3.2,    20020
+        share 1, label: 000001
+                    close  open      vol
+        2020-01-01    2.3   2.5  20010.0
+        2020-01-02    2.6   3.2  20020.0
 
         >>> hp.flatten(along='col')
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+                   000300                  000001
+                    close  open        vol  close open      vol
+        2020-01-01   12.3  12.5  1020010.0    2.3  2.5  20010.0
+        2020-01-02   12.6  13.2  1020020.0    2.6  3.2  20020.0
 
         >>> hp.flatten(along='row')
-                            close,  open,   vol
-        000300  2020-01-01  12.3,   12.5,   1020010
-                2020-01-02  12.6,   13.2,   1020020
-        000001  2020-01-01  2.3,    2.5,    20010
-                2020-01-02  2.6,    3.2,    20020
+                           close  open        vol
+        000300 2020-01-01   12.3  12.5  1020010.0
+               2020-01-02   12.6  13.2  1020020.0
+        000001 2020-01-01    2.3   2.5    20010.0
+               2020-01-02    2.6   3.2    20020.0
         """
         return self.flatten_to_dataframe(along=along)
 
@@ -1123,8 +1142,10 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = HistoryPanel(np.random.randn(2, 3, 4), hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
-        ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
+        >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
+        ...                   hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   shares=['000001', '000002', '000003'],
+        ...                   htypes=['close', 'open', 'high', 'low'])
         >>> hp
         share 0, label: 000001
                     close,  open,   high,   low
@@ -1218,7 +1239,8 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = HistoryPanel(np.random.randn(2, 3, 4), hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
+        >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
+        ...                   hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
         ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
         >>> hp
         share 0, label: 000001
@@ -1296,6 +1318,14 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
                     close,  open,   vol
@@ -1324,8 +1354,8 @@ class HistoryPanel():
         """
         if row_count <= 0:
             raise ValueError("row_count should be positive")
-        if row_count > self.shape[0]:
-            row_count = self.shape[0]
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
         return self.flatten_to_dataframe(along='col').head(row_count)
 
     def flattened_tail(self, row_count=5):
@@ -1343,6 +1373,14 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
                     close,  open,   vol
@@ -1371,8 +1409,8 @@ class HistoryPanel():
         """
         if row_count <= 0:
             raise ValueError("row_count should be positive")
-        if row_count > self.shape[0]:
-            row_count = self.shape[0]
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
         return self.flatten_to_dataframe(along='col').tail(row_count)
 
     def head(self, row_count=5):
@@ -1390,6 +1428,14 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
                     close,  open,   vol
@@ -1424,8 +1470,8 @@ class HistoryPanel():
         """
         if row_count <= 0:
             raise ValueError("row_count should be positive")
-        if row_count > self.shape[0]:
-            row_count = self.shape[0]
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
         return self.isegment(0, row_count)
 
     def tail(self, row_count=5):
@@ -1443,6 +1489,14 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
                     close,  open,   vol
@@ -1477,8 +1531,8 @@ class HistoryPanel():
         """
         if row_count <= 0:
             raise ValueError("row_count should be positive")
-        if row_count > self.shape[0]:
-            row_count = self.shape[0]
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
         return self.isegment(- row_count, None)
 
     # TODO: implement this method

@@ -1571,13 +1571,13 @@ class Trader(object):
         # 例如，freq为H或min的数据，更新当天的数据，freq为W的数据，更新最近一周
         # 在arg中必须给出freq以及tables两个参数，tables参数直接传入refill_local_source函数
         # freq被用于计算start_date和end_date
-        end_date = datetime.now().date()
+        end_date = pd.to_datetime('today').date()
         if freq == 'D':
             start_date = end_date
         elif freq == 'W':
-            start_date = end_date - timedelta(days=7)
+            start_date = end_date - pd.Timedelta(days=7)
         elif freq == 'M':
-            start_date = end_date - timedelta(days=30)
+            start_date = end_date - pd.Timedelta(days=30)
         else:
             raise ValueError(f'invalid freq: {freq}')
         self._datasource.refill_local_source(

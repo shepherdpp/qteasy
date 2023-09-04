@@ -21,8 +21,8 @@ from qteasy.utilfuncs import str_to_list
 from qteasy.trade_recording import read_trade_order, get_position_by_id, get_account, update_trade_order
 from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
 from qteasy.trade_recording import read_trade_results_by_order_id, get_account_cash_availabilities
-from qteasy.trade_recording import update_account_balance, update_position, update_trade_result, record_trade_order
-from qteasy.trade_recording import query_trade_orders, get_position_ids, get_account_positions
+from qteasy.trade_recording import update_account_balance, update_position, update_trade_result
+from qteasy.trade_recording import query_trade_orders, get_account_positions
 
 # TODO: read TIMEZONE from qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -812,7 +812,6 @@ def process_trade_delivery(account_id, data_source=None, config=None):
             raise ValueError(f'Invalid direction: {trade_direction}')
         # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
         execution_date = pd.to_datetime(result.execution_time).date()
-        # current_date = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).date()  # 产生世界时，需要转化为本地时间
         current_date = pd.to_datetime('today').date()
         day_diff = (current_date - execution_date).days
         if day_diff < delivery_period:
@@ -970,7 +969,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     raw_trade_result['delivery_status'] = 'ND'
 
     # 至此，如果前面所有步骤都没有发生错误，则交易结果有效，生成交易结果的execution_time字段，正式保存交易结果
-    # execution_time = pd.to_datetime('now', utc=True).tz_convert(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')  # 产生世界时
     execution_time = pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S')  # 产生本地时区时间
     raw_trade_result['execution_time'] = execution_time
     result_id = write_trade_result(raw_trade_result, data_source=data_source)
