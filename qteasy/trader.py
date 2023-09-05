@@ -28,9 +28,9 @@ from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration
 from qteasy.broker import Broker, RandomBroker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
-from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders
+from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
 from qteasy.trade_recording import new_account, get_or_create_position, update_position
-from qteasy.trading_util import parse_trade_signal, submit_order, record_trade_order, process_trade_result
+from qteasy.trading_util import parse_trade_signal, submit_order, process_trade_result
 from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
 from qteasy.trading_util import get_last_trade_result_summary
 

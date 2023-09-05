@@ -1143,9 +1143,9 @@ class HistoryPanel():
         Examples
         --------
         >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
-        ...                   hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
-        ...                   shares=['000001', '000002', '000003'],
-        ...                   htypes=['close', 'open', 'high', 'low'])
+        ...                   rows=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   columns=['close', 'open', 'high', 'low'])
         >>> hp
         share 0, label: 000001
                     close,  open,   high,   low
@@ -1240,8 +1240,9 @@ class HistoryPanel():
         Examples
         --------
         >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
-        ...                   hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
-        ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
+        ...                   rows=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   columns=['close', 'open', 'high', 'low'])v
         >>> hp
         share 0, label: 000001
                     close,  open,   high,   low
@@ -1628,12 +1629,12 @@ def dataframe_to_hp(
 
     Examples
     --------
-    >>> df = pd.DataFrame(
-    >>>     data=np.random.rand(3, 3),
-    >>>     index=pd.date_range(start='2020-01-01', periods=3),
-    >>>     columns=['A', 'B', 'C']
-    >>> )
-    >>> df
+    >>> dataframe = pd.DataFrame(
+    ...     data=np.random.rand(3, 3),
+    ...     index=pd.date_range(start='2020-01-01', periods=3),
+    ...     columns=['A', 'B', 'C']
+    ... )
+    >>> dataframe
 
     Out:
                        A         B         C
@@ -1641,7 +1642,7 @@ def dataframe_to_hp(
     2020-01-02  0.237300  0.483317  0.600886
     2020-01-03  0.744638  0.255470  0.953640
 
-    >>> hp = dataframe_to_hp(df, htypes=['open', 'close', 'high'], shares='000001')
+    >>> hp = dataframe_to_hp(dataframe, htypes=['open', 'close', 'high'], shares='000001')
     >>> hp
 
     Out:
@@ -1651,7 +1652,7 @@ def dataframe_to_hp(
     2020-01-02  0.237300  0.483317  0.600886
     2020-01-03  0.744638  0.255470  0.953640
 
-    >>> hp = dataframe_to_hp(df, htypes='open', shares=['000001', '000002', '000003'])
+    >>> hp = dataframe_to_hp(dataframe, htypes='open', shares=['000001', '000002', '000003'])
     >>> hp
 
     Out:
@@ -1838,8 +1839,8 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
     >>> df1 = pd.DataFrame([[1, 2, 3], [4, 5, 6]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
     >>> df2 = pd.DataFrame([[7, 8, 9], [10, 11, 12]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
     >>> df3 = pd.DataFrame([[13, 14, 15], [16, 17, 18]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
-    >>> dfs = [df1, df2, df3]
-    >>> hp = stack_dataframes(dfs, dataframe_as='shares', shares='000001.SZ, 000002.SZ, 000003.SZ')
+    >>> dataframes = [df1, df2, df3]
+    >>> hp = stack_dataframes(dataframes, dataframe_as='shares', shares='000001.SZ, 000002.SZ, 000003.SZ')
     >>> hp
     share 0, label: 000001.SZ
              open  close   low

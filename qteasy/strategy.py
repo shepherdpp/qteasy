@@ -1442,7 +1442,7 @@ class RuleIterator(BaseStrategy):
     这类策略要求用户针对投资组合中的一个投资品种设计交易规则，在realize()方法定义该交易规则，
     策略可以把同样的交易规则应用推广到投资组合中的所有投资品种上，同时可以采用不同的策略参数。
 
-    Attributes
+    Properties
     ----------
     pars:               tuple,
         策略参数

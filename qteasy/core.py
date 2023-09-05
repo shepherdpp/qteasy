@@ -2421,63 +2421,63 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     test_cash_plan: CashPlan,
         用于优化模式下，策略测试区间的资金投入计划
     """
-    run_mode = config.mode
+    run_mode = config['mode']
     # 如果run_mode=0，设置历史数据的开始日期为window length，结束日期为当前日期
     current_datetime = datetime.datetime.now()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    if config.invest_cash_dates is None:
-        invest_start = next_market_trade_day(config.invest_start).strftime('%Y%m%d')
+    if config['invest_cash_dates'] is None:
+        invest_start = next_market_trade_day(config['invest_start']).strftime('%Y%m%d')
         invest_cash_plan = CashPlan(invest_start,
-                                    config.invest_cash_amounts[0],
-                                    config.riskfree_ir)
+                                    config['invest_cash_amounts'][0],
+                                    config['riskfree_ir'])
     else:
-        cash_dates = str_to_list(config.invest_cash_dates)
+        cash_dates = str_to_list(config['invest_cash_dates'])
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
         invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                    amounts=config.invest_cash_amounts,
-                                    interest_rate=config.riskfree_ir)
+                                    amounts=config['invest_cash_amounts'],
+                                    interest_rate=config['riskfree_ir'])
         invest_start = regulate_date_format(invest_cash_plan.first_day)
-        if pd.to_datetime(invest_start) != pd.to_datetime(config.invest_start):
-            warn(f'first cash investment on {invest_start} differ from invest_start {config.invest_start}, first cash'
+        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
+            warn(f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
                  f' date will be used!',
                  RuntimeWarning)
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    if config.opti_cash_dates is None:
-        opti_start = next_market_trade_day(config.opti_start).strftime('%Y%m%d')
+    if config['opti_cash_dates'] is None:
+        opti_start = next_market_trade_day(config['opti_start']).strftime('%Y%m%d')
         opti_cash_plan = CashPlan(opti_start,
-                                  config.opti_cash_amounts[0],
-                                  config.riskfree_ir)
+                                  config['opti_cash_amounts'][0],
+                                  config['riskfree_ir'])
     else:
-        cash_dates = str_to_list(config.opti_cash_dates)
+        cash_dates = str_to_list(config['opti_cash_dates'])
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
         opti_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                  amounts=config.opti_cash_amounts,
-                                  interest_rate=config.riskfree_ir)
+                                  amounts=config['opti_cash_amounts'],
+                                  interest_rate=config['riskfree_ir'])
         opti_start = regulate_date_format(opti_cash_plan.first_day)
-        if pd.to_datetime(opti_start) != pd.to_datetime(config.opti_start):
-            warn(f'first cash investment on {opti_start} differ from invest_start {config.opti_start}, first cash'
+        if pd.to_datetime(opti_start) != pd.to_datetime(config['opti_start']):
+            warn(f'first cash investment on {opti_start} differ from invest_start {config["opti_start"]}, first cash'
                  f' date will be used!',
                  RuntimeWarning)
 
     # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    if config.test_cash_dates is None:
-        test_start = next_market_trade_day(config.test_start).strftime('%Y%m%d')
+    if config['test_cash_dates'] is None:
+        test_start = next_market_trade_day(config['test_start']).strftime('%Y%m%d')
         test_cash_plan = CashPlan(
                 test_start,
-                config.test_cash_amounts[0],
-                config.riskfree_ir)
+                config['test_cash_amounts'][0],
+                config['riskfree_ir'])
     else:
-        cash_dates = str_to_list(config.test_cash_dates)
+        cash_dates = str_to_list(config['test_cash_dates'])
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
         test_cash_plan = CashPlan(
                 dates=adjusted_cash_dates,
-                amounts=config.test_cash_amounts,
-                interest_rate=config.riskfree_ir)
+                amounts=config['test_cash_amounts'],
+                interest_rate=config['riskfree_ir'])
         test_start = regulate_date_format(test_cash_plan.first_day)
-        if pd.to_datetime(test_start) != pd.to_datetime(config.test_start):
-                warn(f'first cash investment on {test_start} differ from invest_start {config.test_start}, first cash'
+        if pd.to_datetime(test_start) != pd.to_datetime(config['test_start']):
+                warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
                      f' date will be used!',
                      RuntimeWarning)
 
@@ -2508,7 +2508,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
         # 开始日期时间为现在往前推window_offset
         invest_start = regulate_date_format(current_datetime - window_offset)
     else:
-        invest_end = config.invest_end
+        invest_end = config['invest_end']
         invest_start = regulate_date_format(pd.to_datetime(invest_start) - window_offset)
 
     # debug
@@ -2521,8 +2521,8 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     #       f'invest_start = {invest_start}\n'
     #       f'invest_end = {invest_end}\n')
     # 设置优化区间和测试区间的结束日期
-    opti_end = config.opti_end
-    test_end = config.test_end
+    opti_end = config['opti_end']
+    test_end = config['test_end']
 
     # 优化/测试数据是合并读取的，因此设置一个统一的开始/结束日期：
     # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
@@ -2532,12 +2532,12 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
     hist_op = get_history_panel(
             htypes=oper.all_price_and_data_types,
-            shares=config.asset_pool,
+            shares=config['asset_pool'],
             start=invest_start,
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj if run_mode > 0 else 'none',
+            asset_type=config['asset_type'],
+            adj=config['backtest_price_adj'] if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
     # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_op is: \n{hist_op}\n')
@@ -2549,8 +2549,8 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),  # TODO: 已经offset过了，为什么还要offset？
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj,
+            asset_type=config['asset_type'],
+            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
     # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_ref is: \n{hist_ref}\n')
@@ -2563,12 +2563,12 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
     hist_opti = get_history_panel(
             htypes=oper.all_price_and_data_types,
-            shares=config.asset_pool,
+            shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj,
+            asset_type=config['asset_type'],
+            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
@@ -2579,8 +2579,8 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj,
+            asset_type=config['asset_type'],
+            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
@@ -2595,13 +2595,13 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     benchmark_end = regulate_date_format(max(all_ends))
 
     hist_benchmark = get_history_panel(
-            htypes=config.benchmark_dtype,
-            shares=config.benchmark_asset,
+            htypes=config['benchmark_dtype'],
+            shares=config['benchmark_asset'],
             start=benchmark_start,
             end=benchmark_end,
             freq=oper.op_data_freq,
-            asset_type=config.benchmark_asset_type,
-            adj=config.backtest_price_adj,
+            asset_type=config['benchmark_asset_type'],
+            adj=config['backtest_price_adj'],
             data_source=datasource,
     ).slice_to_dataframe(htype='close')
     # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_benchmark is: \n{hist_benchmark}\n')
@@ -2913,7 +2913,6 @@ def run(operator, **kwargs):
         raise ValueError(f'operator object is not ready for running, please check following info:\n'
                          f'{e}')
 
-    import time
     optimization_methods = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,
@@ -2990,7 +2989,7 @@ def run(operator, **kwargs):
         if config['report']:
             # 格式化输出回测结果
             _print_loop_result(loop_result, config)
-        if config.visual:
+        if config['visual']:
             # 图表输出投资回报历史曲线
             _plot_loop_result(loop_result, config)
 
@@ -3014,7 +3013,7 @@ def run(operator, **kwargs):
         )
         operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan, reference_data=hist_opti_ref)
         # 使用how确定优化方法并生成优化后的参数和性能数据
-        how = config.opti_method
+        how = config['opti_method']
         optimal_pars, perfs = optimization_methods[how](
                 hist=hist_opti,
                 benchmark=hist_benchmark,
@@ -3026,7 +3025,7 @@ def run(operator, **kwargs):
         hist_opti_loop = hist_opti.fillna(0)
         result_pool = _evaluate_all_parameters(
                 par_generator=optimal_pars,
-                total=config.opti_output_count,
+                total=config['opti_output_count'],
                 op=operator,
                 trade_price_list=hist_opti_loop,
                 benchmark_history_data=hist_benchmark,
@@ -3046,7 +3045,7 @@ def run(operator, **kwargs):
         if config['test_type'] in ['single', 'multiple']:
             result_pool = _evaluate_all_parameters(
                     par_generator=optimal_pars,
-                    total=config.opti_output_count,
+                    total=config['opti_output_count'],
                     op=operator,
                     trade_price_list=opti_trade_prices,
                     benchmark_history_data=hist_benchmark,
@@ -3057,22 +3056,22 @@ def run(operator, **kwargs):
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
             test_eval_res = result_pool.extra
-            if config.report:
+            if config['report']:
                 _print_test_result(test_eval_res, config)
-            if config.visual:
+            if config['visual']:
                 _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
 
         elif config['test_type'] == 'montecarlo':
-            for i in range(config.test_cycle_count):
+            for i in range(config['test_cycle_count']):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_opti)
-                print(f'config.test_cash_dates is {config.test_cash_dates}')
+                print(f'config.test_cash_dates is {config["test_cash_dates"]}')
                 operator.assign_hist_data(hist_data=mock_hist, cash_plan=test_cash_plan)
                 mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(
                         par_generator=optimal_pars,
-                        total=config.opti_output_count,
+                        total=config['opti_output_count'],
                         op=operator,
                         trade_price_list=mock_hist,
                         benchmark_history_data=mock_hist_loop,
@@ -3083,10 +3082,10 @@ def run(operator, **kwargs):
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
                 test_eval_res = result_pool.extra
-                if config.report:
+                if config['report']:
                     # TODO: 应该有一个专门的函数print_montecarlo_test_report
                     _print_test_result(test_eval_res, config)
-                if config.visual:  # 如果config.visual == True
+                if config['visual']:  # 如果config.visual == True
                     # TODO: 应该有一个专门的函数plot_montecarlo_test_result
                     pass
 
@@ -3113,10 +3112,6 @@ def _evaluate_all_parameters(par_generator,
         一个迭代器对象，生成所有需要迭代测试的策略参数
     op: Operator
         一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
-    op_history_data:  qt.HistoryPanel
-        用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
-        历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
-        价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
     trade_price_list: pd.DataFrame
         用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
         （假设交易价格为收盘价）
@@ -3768,8 +3763,8 @@ def _search_gradient(hist, benchmark, benchmark_type, op, config):
     hist，object，历史数据，优化器的整个优化过程在历史数据上完成
     benchmark:
     benchmark_type:
-    op，object，交易信号生成器对象
-    config, object, 用于存储交易相关参数配置对象
+    op: object，交易信号生成器对象
+    config: object, 用于存储交易相关参数配置对象
 
     Returns
     -------
@@ -3785,8 +3780,8 @@ def _search_pso(hist, benchmark, benchmark_type, op, config):
     hist，object，历史数据，优化器的整个优化过程在历史数据上完成
     benchmark:
     benchmark_type:
-    op，object，交易信号生成器对象
-    config, object, 用于存储交易相关参数配置对象
+    op: object，交易信号生成器对象
+    config: object, 用于存储交易相关参数配置对象
 
     Returns
     -------
@@ -3803,7 +3798,7 @@ def _search_aco(hist, benchmark, benchmark_type, op, config):
     benchmark:
     benchmark_type:
     op，object，交易信号生成器对象
-    config, object, 用于存储交易相关参数配置对象
+    config: object, 用于存储交易相关参数配置对象
 
     Returns
     -------

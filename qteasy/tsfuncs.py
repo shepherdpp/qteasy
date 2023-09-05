@@ -14,7 +14,6 @@ import tushare as ts
 from qteasy import logger_core, QT_CONFIG
 from .utilfuncs import regulate_date_format, list_to_str_format
 from .utilfuncs import retry
-from requests.exceptions import ProxyError
 
 data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
 data_download_retry_delay = QT_CONFIG.hist_dnld_retry_delay
@@ -456,7 +455,7 @@ def daily_basic2(ts_code: object = None,
     trade_date: str, 交易日期
     start: 记录开始日期
     end: 记录结束日期
-    TODO: 以下字段需要进一步确认
+
     Returns
     -------
     pd.DataFrame
@@ -1778,7 +1777,7 @@ def indicators(ts_code: str,
 
     Examples
     --------
-    >>> indicator(ts_code='600000.SH', fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps')
+    >>> indicators(ts_code='600000.SH', fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps')
     output:
               ts_code  ann_date    eps  dt_eps  total_revenue_ps  revenue_ps
         0   600000.SH  20191030  1.620    1.62            4.9873      4.9873
@@ -2357,7 +2356,7 @@ def fund_net_value(ts_code: str = None,
 
     Examples
     --------
-    >>> fund_neg_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
+    >>> fund_net_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
     output:
         ts_code   adj_nav
         0     165509.SZ  1.827306

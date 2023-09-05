@@ -15,9 +15,6 @@ import pandas as pd
 import numpy as np
 
 from qteasy.database import DataSource
-from qteasy.qt_operator import Operator
-from qteasy import logger_core as logger
-from qteasy.utilfuncs import str_to_list
 
 # TODO: add TIMEZONE to qt config arguments
 # TODO: move all secondary functions to trading_util.py
