@@ -2039,34 +2039,49 @@ def start_trader(
     trader.broker.debug = debug
 
     # find out datasource availabilities, refill data source if table data not available
-    # from qteasy.database import htype_to_table_col
-    # related_tables = htype_to_table_col(
-    #         htypes=operator.op_data_types,
-    #         freq=operator.op_freq,
-    #         asset_type=operator.op_asset_type,
-    #
-    # )
-    # table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
-    # last_available_date = table_availabilities['max2'].max()
-    # if last_available_date - pd.to_datetime('today') > pd.Timedelta(value=1, unit=freq):
-    #     # no need to refill if data is already filled up til yesterday
-    #
-    #     if isinstance(config['asset_pool'], str):
-    #         symbol_list = str_to_list(config['asset_pool'])
-    #     else:
-    #         symbol_list = config['asset_pool']
-    #     symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
-    #     print(f'[INFO] refilling data source for symbols: {symbol_list}')
-    #     datasource.refill_local_source(
-    #             tables='index_daily',
-    #             dtypes=operator.op_data_types,
-    #             freqs=operator.op_data_freq,
-    #             asset_types='E',
-    #             start_date=start_date.strftime('%Y%m%d'),
-    #             end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
-    #             symbols=symbol_list,
-    #             parallel=True,
-    #             refresh_trade_calendar=True,
-    #     )
+    from qteasy.database import htype_to_table_col
+    op_data_types = operator.op_data_types
+    op_data_freq = operator.op_data_freq
+    related_tables = htype_to_table_col(
+            htypes=op_data_types,
+            freq=op_data_freq,
+            asset_type=config['asset_type'],
+
+    )
+    table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
+    last_available_date = table_availabilities['max2'].max()
+    from qteasy.utilfuncs import last_known_market_trade_day
+    last_trade_day = last_known_market_trade_day() - pd.Timedelta(value=1, unit='d')
+
+    print(f'[DEBUG] data source availability checked: \n'
+          f'last available date: {last_available_date}\n'
+          f'last trade day: {last_trade_day}\n')
+    if last_available_date < last_trade_day:
+        # no need to refill if data is already filled up til yesterday
+
+        if isinstance(config['asset_pool'], str):
+            symbol_list = str_to_list(config['asset_pool'])
+        else:
+            symbol_list = config['asset_pool']
+        symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
+        start_date = last_available_date
+        end_date = pd.to_datetime('today')
+        # debug
+        print(f'[DEBUG] refilling data source: \n'
+              f'symbols: {symbol_list}\n'
+              f'start_date: {start_date}\n'
+              f'end_date: {end_date}\n'
+              f'data_type and freq: {op_data_types} / {op_data_freq}\n')
+        datasource.refill_local_source(
+                tables='index_daily',
+                dtypes=op_data_types,
+                freqs=op_data_freq,
+                asset_types='E',
+                start_date=start_date.strftime('%Y%m%d'),
+                end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
+                symbols=symbol_list,
+                parallel=True,
+                refresh_trade_calendar=True,
+        )
 
     TraderShell(trader).run()

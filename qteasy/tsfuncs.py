@@ -783,7 +783,7 @@ def monthly(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_daily(ts_code=None,
                 trade_date=None,
