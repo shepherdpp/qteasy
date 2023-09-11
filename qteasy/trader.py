@@ -2048,6 +2048,12 @@ def start_trader(
             asset_type=config['asset_type'],
 
     )
+    related_tables = [table for table in related_tables]
+    if len(related_tables) == 0:
+        print(f'[DEBUG] no related tables found for data type: {op_data_types} and freq: {op_data_freq}')
+        related_tables = ['stock_daily']
+    elif len(related_tables) >= 1:
+        print(f'[DEBUG] related tables found for data type: {op_data_types} and freq: {op_data_freq}: {related_tables}')
     table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
     last_available_date = table_availabilities['max2'].max()
     from qteasy.utilfuncs import last_known_market_trade_day
