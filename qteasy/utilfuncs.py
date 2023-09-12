@@ -771,7 +771,7 @@ def maybe_trade_day(date):
     public_holidays = ([1, 1, 1, 4, 4, 4, 5, 5, 5, 10, 10, 10, 10, 10, 10, 10],
                        [1, 2, 3, 3, 4, 5, 1, 2, 3, 1, 2, 3, 4, 5, 6, 7])
     try:
-        date = pd.to_datetime(date)
+        date = pd.to_datetime(date).floor(freq='d')
     except Exception:
         raise ValueError('date is not a valid date time format, cannot be converted to timestamp')
     if date.weekday() > 4:
@@ -803,7 +803,7 @@ def prev_trade_day(date):
     if maybe_trade_day(date):
         return date
 
-    d = pd.to_datetime(date)
+    d = pd.to_datetime(date).floor(freq='d')
     prev = d - pd.Timedelta(1, 'd')
     while not maybe_trade_day(prev):
         prev = prev - pd.Timedelta(1, 'd')
@@ -831,7 +831,7 @@ def next_trade_day(date):
     if maybe_trade_day(date):
         return date
 
-    d = pd.to_datetime(date)
+    d = pd.to_datetime(date).floor(freq='d')
     next = d + pd.Timedelta(1, 'd')
     while not maybe_trade_day(next):
         next = next + pd.Timedelta(1, 'd')
@@ -868,7 +868,7 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     False
     """
     try:
-        _date = pd.to_datetime(date)
+        _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
@@ -952,7 +952,7 @@ def prev_market_trade_day(date, exchange='SSE'):
     is_market_trade_day()
     """
     try:
-        _date = pd.to_datetime(date)
+        _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
@@ -987,7 +987,7 @@ def nearest_market_trade_day(date, exchange='SSE'):
     is_market_trade_day()
     """
     try:
-        _date = pd.to_datetime(date)
+        _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
@@ -1028,7 +1028,7 @@ def next_market_trade_day(date, exchange='SSE'):
     is_market_trade_day()
     """
     try:
-        _date = pd.to_datetime(date)
+        _date = pd.to_datetime(date).floor(freq='d')
     except Exception:
         raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
     assert _date is not None, f'{date} is not a valid date'

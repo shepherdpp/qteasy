@@ -1331,18 +1331,21 @@ class Trader(object):
             '1min': 'stock_1min',
             'min': 'stock_1min',
         }
-        # 由于在每次strategy_run的时候仅下载最近一个周期的数据，因此在live_trade开始前都需要下载足够多的数据（至少是window_length）
+        # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
         if self.debug:
             self.post_message(f'getting live data')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
-        table_to_update = unit_to_table[unit.lower()]
-        real_time_data = self._datasource.fetch_realtime_price_data(
-                table=table_to_update,
-                channel='tushare',
-                symbols=self.asset_pool,
-        )
-        # 在real_time_data中数据的trade_time列中增加日期并写入DataSource，但是只在交易日这么做，否则会出现日期错误
-        if self.is_trade_day:
+        if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
+            # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据
+            table_to_update = unit_to_table[unit.lower()]
+            real_time_data = self._datasource.fetch_realtime_price_data(
+                    table=table_to_update,
+                    channel='tushare',
+                    symbols=self.asset_pool,
+            )
+
+            # 将real_time_data写入DataSource
+            # 在real_time_data中数据的trade_time列中增加日期并写入DataSource，但是只在交易日这么做，否则会出现日期错误
             real_time_data['trade_time'] = real_time_data['trade_time'].apply(
                     lambda x: pd.to_datetime(x)
             )
@@ -1368,6 +1371,11 @@ class Trader(object):
             # )
             #
             # print(f'{refreshed_data} \n')
+
+        # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的最新数据
+        else:  # TIME_FREQ >= 'D':
+            # 如果"use_realtime_price_as_close"为True，则将实时数据的close列作为当前所需价格
+            pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref = check_and_prepare_live_trade_data(
                 operator=operator,
@@ -2056,12 +2064,13 @@ def start_trader(
         print(f'[DEBUG] related tables found for data type: {op_data_types} and freq: {op_data_freq}: {related_tables}')
     table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
     last_available_date = table_availabilities['max2'].max()
-    from qteasy.utilfuncs import last_known_market_trade_day
-    last_trade_day = last_known_market_trade_day() - pd.Timedelta(value=1, unit='d')
+    from qteasy.utilfuncs import prev_market_trade_day
+    today = pd.to_datetime('today').strftime('%Y%m%d')
+    last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
 
     print(f'[DEBUG] data source availability checked: \n'
           f'last available date: {last_available_date}\n'
-          f'last trade day: {last_trade_day}\n')
+          f'prev trade day: {last_trade_day}\n')
     if last_available_date < last_trade_day:
         # no need to refill if data is already filled up til yesterday
 
