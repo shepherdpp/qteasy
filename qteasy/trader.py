@@ -221,10 +221,10 @@ class TraderShell(Cmd):
                         header=['qty', 'available',  'cost', 'price', 'market_value', 'profit', 'profit_ratio'],
                         formatters={'qty': '{:,.2f}'.format,
                                     'available_qty': '{:,.2f}'.format,
-                                    'cost': '{:,.2f}'.format,
-                                    'current_price': '{:,.2f}'.format,
-                                    'market_value': '{:,.2f}'.format,
-                                    'profit': '{:,.2f}'.format,
+                                    'cost': '¥{:,.2f}'.format,
+                                    'current_price': '¥{:,.2f}'.format,
+                                    'market_value': '¥{:,.2f}'.format,
+                                    'profit': '¥{:,.2f}'.format,
                                     'profit_ratio': '{:.2%}'.format},
                         justify='right',
                 )
@@ -1064,22 +1064,22 @@ class Trader(object):
         total_roi_rate = total_return_of_investment / total_investment
         print('Account Overview:')
         print('-----------------')
-        print(f'Account ID: {self.account_id}')
-        print(f'User Name: {self.account["user_name"]}')
-        print(f'Created on: {self.account["created_time"]}')
-        print(f'Own Cash: {own_cash:.2f} \n'
-              f'Available Cash: {available_cash:.2f}\n'
-              f'Total Investment: {total_investment:.2f}\n'
-              f'Total Value: {total_value:.2f}\n'
-              f'Total Stock Value: {total_market_value:.2f}\n'
-              f'Total Profit: {total_profit:.2f}\n')
+        print(f'Account ID:                     {self.account_id}')
+        print(f'User Name:                      {self.account["user_name"]}')
+        print(f'Created on:                     {self.account["created_time"]}')
+        print(f'Own Cash:                       ¥ {own_cash:,.2f} \n'
+              f'Available Cash:                 ¥ {available_cash:,.2f}\n'
+              f'Total Investment:               ¥ {total_investment:,.2f}\n'
+              f'Total Value:                    ¥ {total_value:,.2f}\n'
+              f'Total Stock Value:              ¥ {total_market_value:,.2f}\n'
+              f'Total Profit:                   ¥ {total_profit:,.2f}\n')
         if detail:
             position_level = total_market_value / total_value
             total_profit_ratio = total_profit / total_value
-            print(f'Total Return of Investment: {total_return_of_investment:.2f}\n'
-                  f'Total ROI Rate: {total_roi_rate:.2%}\n'
-                  f'Position Level: {position_level:.2%}\n'
-                  f'Total Profit Ratio: {total_profit_ratio:.2%}\n')
+            print(f'Total Return of Investment:     ¥ {total_return_of_investment:,.2f}\n'
+                  f'Total ROI Rate:                 {total_roi_rate:.2%}\n'
+                  f'Position Level:                 {position_level:.2%}\n'
+                  f'Total Profit Ratio:             {total_profit_ratio:.2%}\n')
             print(f'current positions: \n')
             print(
                     position_info.to_string(
@@ -1088,10 +1088,10 @@ class Trader(object):
                             header=['qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio'],
                             formatters={'qty':           '{:,.2f}'.format,
                                         'available_qty': '{:,.2f}'.format,
-                                        'cost':          '{:,.2f}'.format,
-                                        'current_price': '{:,.2f}'.format,
-                                        'market_value':  '{:,.2f}'.format,
-                                        'profit':        '{:,.2f}'.format,
+                                        'cost':          '¥{:,.2f}'.format,
+                                        'current_price': '¥{:,.2f}'.format,
+                                        'market_value':  '¥{:,.2f}'.format,
+                                        'profit':        '¥{:,.2f}'.format,
                                         'profit_ratio':  '{:.2%}'.format},
                             justify='right',
                     )
@@ -1414,10 +1414,13 @@ class Trader(object):
                 data_source=self._datasource,
         )
         if self.debug:
-            self.post_message(f'generating trade data from position availabilities, current prices and last trade:\n'
-                              f'position_availabilities: \n{position_availabilities}\n'
+            self.post_message(f'[DEBUG]: generating trade data from position availabilities, '
+                              f'current prices and last trade:\n'
+                              f'position_availabilities: (symbols, own_amounts, available_amounts, costs) '
+                              f'\n{position_availabilities}\n'
                               f'current_prices: {current_prices}\n'
-                              f'last_trade_result_summary: \n{last_trade_result_summary}')
+                              f'last_trade_result_summary: (symbols, amounts_changed, trade_prices) '
+                              f'\n{last_trade_result_summary}')
         trade_data[:, 0] = position_availabilities[1]
         trade_data[:, 1] = position_availabilities[2]
         trade_data[:, 2] = current_prices

@@ -297,7 +297,7 @@ def mask_to_signal(lst):
 
     Parameters
     ----------
-    lst，ndarray
+    lst: ndarray
         持仓蒙板
 
     Returns

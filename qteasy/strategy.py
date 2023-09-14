@@ -276,9 +276,10 @@ class BaseStrategy:
                            strategy_data_types=strategy_data_types,
                            strategy_run_timing=strategy_run_timing,
                            reference_data_types=reference_data_types)
-        logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
-                         f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
-                         f'reference_data_types={reference_data_types}')
+        logger_core.info(
+            f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
+            f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
+            f'reference_data_types={reference_data_types}')
 
     @property
     def stg_type(self):
@@ -581,13 +582,6 @@ class BaseStrategy:
                   f'Data types              {self.history_data_types}\n'
                   f'Data parameters         {data_type_str}'
                   )
-            if stg_type == 'FactorSorter':
-                print(f'Max select count        {self.max_sel_count}\n'
-                      f'Sort Ascending:         {self.sort_ascending}\n'
-                      f'Weighting               {self.weighting}\n'
-                      f'Filter Condition        {self.condition}\n'
-                      f'Filter ubound           {self.ubound}\n'
-                      f'Filter lbound           {self.lbound}')
         print()
 
     def set_pars(self, pars: (tuple, dict)) -> int:
@@ -787,7 +781,8 @@ class BaseStrategy:
                     warnings.warn('proportion_or_quantity is deprecated, use max_sel_count instead')
                     self.set_custom_pars(max_sel_count=v)
                     continue
-                import pdb; pdb.set_trace()
+                import pdb;
+                pdb.set_trace()
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
     def generate(self,
@@ -1297,6 +1292,17 @@ class FactorSorter(BaseStrategy):
         self.ubound = ubound
         self.sort_ascending = sort_ascending
         self.weighting = weighting
+
+    def info(self, verbose: bool = True):
+        """ display more FactorSorter-specific properties
+        """
+        super().info(verbose=verbose)
+        print(f'Max select count        {self.max_sel_count}\n'
+              f'Sort Ascending:         {self.sort_ascending}\n'
+              f'Weighting               {self.weighting}\n'
+              f'Filter Condition        {self.condition}\n'
+              f'Filter ubound           {self.ubound}\n'
+              f'Filter lbound           {self.lbound}')
 
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """处理从_realize()方法传递过来的选股因子
