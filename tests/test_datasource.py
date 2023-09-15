@@ -1016,17 +1016,16 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history data:\n{dfs}')
-        import pdb; pdb.set_trace()
         dfs = ds.get_history_data(shares=shares,
-                                  htypes='close',
+                                  htypes='close, high',
                                   start=None,
                                   end=None,
                                   row_count=20,
-                                  asset_type='E',
+                                  asset_type='E, IDX, FD',
                                   freq='d',
                                   adj='none')
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['close'])
+        self.assertEqual(list(dfs.keys()), ['close', 'high'])
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history data:\n{dfs}')
 

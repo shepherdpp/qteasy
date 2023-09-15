@@ -4252,9 +4252,8 @@ class DataSource:
                 cols_to_drop = [col for col in df.columns if col not in columns]
                 df.drop(columns=cols_to_drop, inplace=True)
                 if row_count > 0:
-                    df = df.tail(row_count)
-            # print(f'[DEBUG]: in database.py - get_history_data(), reading {row_count} rows of '
-            #       f'{tbl} starting {start} ending {end}, got\n{df}')
+                    # 读取每一个ts_code的最后row_count行数据
+                    df = df.groupby('ts_code').tail(row_count)
             table_data_acquired[tbl] = df
             table_data_columns[tbl] = df.columns
         # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
