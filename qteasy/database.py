@@ -4220,6 +4220,8 @@ class DataSource:
         """
         if symbols is not None:
             shares = symbols
+        if isinstance(htypes, str):
+            htypes = str_to_list(htypes)
         if isinstance(shares, str):
             shares = str_to_list(shares)
         if isinstance(asset_type, str):

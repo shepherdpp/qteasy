@@ -2158,6 +2158,8 @@ def get_history_panel(
         if not isinstance(data_source, qteasy.DataSource):
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
+
+    import pdb; pdb.set_trace()
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
     htype_splits = [itm.split('-') for itm in htypes]
     if shares:

@@ -1414,7 +1414,7 @@ class Trader(object):
                 data_source=self._datasource,
         )
         if self.debug:
-            self.post_message(f'[DEBUG]: generating trade data from position availabilities, '
+            self.post_message(f'[DEBUG]: in trader.py: generating trade data from position availabilities, '
                               f'current prices and last trade:\n'
                               f'position_availabilities: (symbols, own_amounts, available_amounts, costs) '
                               f'\n{position_availabilities}\n'

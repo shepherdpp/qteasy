@@ -16,13 +16,13 @@ import pandas as pd
 from pandas import Timestamp
 import numpy as np
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
+from qteasy.utilfuncs import str_to_list
 from qteasy.trading_util import _trade_time_index
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, htype_to_table_col
-from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
-from qteasy.database import parse_freq_string
+from qteasy.database import _resample_data, freq_dither
+from qteasy.utilfuncs import get_main_freq_level, next_main_freq, parse_freq_string
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -1014,6 +1014,19 @@ class TestDataSource(unittest.TestCase):
                                   adj='forward')
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history data:\n{dfs}')
+        import pdb; pdb.set_trace()
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes='close',
+                                  start=None,
+                                  end=None,
+                                  row_count=20,
+                                  asset_type='E',
+                                  freq='d',
+                                  adj='none')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), ['close'])
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history data:\n{dfs}')
 
