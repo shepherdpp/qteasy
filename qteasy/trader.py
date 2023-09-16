@@ -146,6 +146,9 @@ class TraderShell(Cmd):
         if arg:
             sys.stdout.write(f'bye command does not accept arguments\n')
             return False
+        print(f'canceling all unfinished orders')
+        self.trader.add_task('post_close')
+        print(f'stopping trader')
         self.trader.add_task('stop')
         self._status = 'stopped'
         return True

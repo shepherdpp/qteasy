@@ -1242,7 +1242,7 @@ class HistoryPanel():
         >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
         ...                   rows=['2020-01-01', '2020-01-02', '2020-01-03'],
         ...                   levels=['000001', '000002', '000003'],
-        ...                   columns=['close', 'open', 'high', 'low'])v
+        ...                   columns=['close', 'open', 'high', 'low'])
         >>> hp
         share 0, label: 000001
                     close,  open,   high,   low
