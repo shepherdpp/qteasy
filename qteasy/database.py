@@ -3524,7 +3524,7 @@ class DataSource:
         return res
 
     def fetch_realtime_price_data(self, table, channel, symbols):
-        """ 获取实时股票价格数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
+        """ 获取分钟级实时股票价格数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
         stock_1min/stock_5min/stock_15min/stock_30min/stock_hourly
 
         Parameters

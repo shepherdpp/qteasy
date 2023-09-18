@@ -160,9 +160,7 @@ class Broker(object):
              'delivery_status'
              }
         """
-        from time import sleep
-        from random import random, choice
-        from qteasy.trading_util import TIMEZONE
+
         if self.debug:
             print(f'[DEBUG]: Broker({self.broker_name}) method: get_result():\nsubmit order components:\n'
                   f'quantity:{order["qty"]}\norder_price={order["price"]}\norder_direction={order["direction"]}\n')
@@ -269,6 +267,7 @@ class Broker(object):
 
         Examples:
         ---------
+        >>> broker = Broker()
         >>> # 交易所返回完全成交结果
         >>> broker.transaction_result(100, 10, 'buy')
         (('filled', 100, 10, 5),)
@@ -345,14 +344,12 @@ class RandomBroker(Broker):
             交易费用
         """
         from time import sleep
-        from random import random, choice
-        from qteasy.trading_util import TIMEZONE
+        from random import random
 
         remain_qty = order_qty
         order_results = []
 
         while remain_qty > 0.001:
-            # print(f'[DEBUG]: in broker.py transaction_result(), remaining qty: {remain_qty}')
             result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=[0.8, 0.15, 0.05])
             trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
             price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
@@ -378,11 +375,8 @@ class RandomBroker(Broker):
                     order_price = order_price * (1 - price_deviation)
                     transaction_fee = qty * order_price * self.fee_rate_sell
                 else:
-                    raise RuntimeError('invalid direction: {}'.format(order['direction']))
-                # print(f'[DEBUG]: in broker.py, transaction_result(), generated trade result:\n'
-                #       f'result type: {result_type}\n'
-                #       f'qty: {qty}\nfilled price: {order_price}\n'
-                #       f'transaction fee: {transaction_fee}\n')
+                    raise RuntimeError(f'invalid direction: {direction}')
+
             else:  # result_type == 'canceled'
                 transaction_fee = 0
                 order_price = 0

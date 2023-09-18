@@ -1496,13 +1496,26 @@ class Trader(object):
         return submitted_qty
 
     def _pre_open(self):
-        """ 开市前, 确保data_source重新连接"""
-        self._datasource.reconnect()
-        self._datasource.reconnect()
-        self._datasource.get_all_basic_table_data(
+        """ 开市前, 确保data_source重新连接, 并扫描数据源，下载缺失的数据"""
+        datasource = self._datasource
+        config = self._config
+        operator = self._operator
+
+        datasource.reconnect()
+        datasource.reconnect()
+        datasource.get_all_basic_table_data(
                 refresh_cache=True,
         )
-        self.post_message(f'data source reconnected, ready for market open')
+        self.post_message(f'data source reconnected...')
+
+        # 扫描数据源，下载缺失的日频或以上数据
+
+        refill_missing_datasource_data(
+                operator=operator,
+                trader=self,
+                config=config,
+                datasource=datasource,
+        )
 
     def _post_close(self):
         """ 收市后例行操作：
@@ -2053,6 +2066,32 @@ def start_trader(
     trader.broker.debug = debug
 
     # find out datasource availabilities, refill data source if table data not available
+    refill_missing_datasource_data(
+            operator=operator,
+            trader=trader,
+            config=config,
+            datasource=datasource,
+    )
+
+    TraderShell(trader).run()
+
+
+def refill_missing_datasource_data(operator, trader, config, datasource):
+    """ 针对日频或以上的数据，检查数据源中的数据可用性，下载缺失的数据到数据源
+
+    Parameters
+    ----------
+    operator: qt.Operator
+    trader: Trader
+    config: qt.Config
+    datasource: qt.Datasource
+
+    Returns
+    -------
+    None
+    """
+
+    # find out datasource availabilities, refill data source if table data not available
     from qteasy.database import htype_to_table_col
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
@@ -2064,19 +2103,15 @@ def start_trader(
     )
     related_tables = [table for table in related_tables]
     if len(related_tables) == 0:
-        print(f'[DEBUG] no related tables found for data type: {op_data_types} and freq: {op_data_freq}')
         related_tables = ['stock_daily']
     elif len(related_tables) >= 1:
-        print(f'[DEBUG] related tables found for data type: {op_data_types} and freq: {op_data_freq}: {related_tables}')
+        pass
     table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
     last_available_date = table_availabilities['max2'].max()
     from qteasy.utilfuncs import prev_market_trade_day
     today = pd.to_datetime('today').strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
 
-    print(f'[DEBUG] data source availability checked: \n'
-          f'last available date: {last_available_date}\n'
-          f'prev trade day: {last_trade_day}\n')
     if last_available_date < last_trade_day:
         # no need to refill if data is already filled up til yesterday
 
@@ -2087,12 +2122,7 @@ def start_trader(
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
         start_date = last_available_date
         end_date = pd.to_datetime('today')
-        # debug
-        print(f'[DEBUG] refilling data source: \n'
-              f'symbols: {symbol_list}\n'
-              f'start_date: {start_date}\n'
-              f'end_date: {end_date}\n'
-              f'data_type and freq: {op_data_types} / {op_data_freq}\n')
+
         datasource.refill_local_source(
                 tables='index_daily',
                 dtypes=op_data_types,
@@ -2105,4 +2135,4 @@ def start_trader(
                 refresh_trade_calendar=True,
         )
 
-    TraderShell(trader).run()
+    return
