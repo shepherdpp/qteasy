@@ -434,7 +434,64 @@ DMA是一个内置策略，qteasy已经定义好了交易规则：
 在默认情况下，三个**可调参数**为：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
 不同的策略运行周期。
 
-除了DMA策略以外，`qteasy`还提供了其他择时策略，详细的列表可以参见`qteasy`的手册。
+除了DMA策略以外，`qteasy`还提供了其他择时策略，使用qt.built_ins()可以查看所有内置策略的清单，或者某一个内置策略的详细信息：
+
+```python
+import qteasy as qt
+
+qt.built_ins('finance')
+```
+得到：
+
+```
+ 以股票过去一段时间内的财务指标的平均值作为选股因子选股
+        基础选股策略：以股票的历史指标的平均值作为选股因子，因子排序参数可以作为策略参数传入
+        改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入
+
+    策略参数：(参数含义与FactorSorter策略的属性一致)
+        sort_ascending: enum, 是否升序排列因子
+        weighting, enum, 股票仓位分配比例权重
+        condition, enum, 股票筛选条件
+        lbound: float, 股票筛选下限值
+        ubound: float, 股票筛选上限值
+        max_sel_count: float, 抽取的股票的数量(p>=1)或比例(p<1)
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        使用data_types指定一种数据类型，将股票过去的datatypes数据取平均值，将该平均值作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
+
+    策略属性缺省值：
+    默认参数：(True, 'even', 'greater', 0, 0, 0.25)
+    数据类型：eps 每股收益，单数据输入
+    采样频率：年
+    窗口长度：270
+    参数范围：[(True, False),
+             ('even', 'linear', 'proportion'),
+             ('any', 'greater', 'less', 'between', 'not_between'),
+             (-np.inf, np.inf),
+             (-np.inf, np.inf),
+             (0, 1.)]
+    策略不支持参考数据，不支持交易数据
+```
 
 传递策略参数到`op`对象中：
 
