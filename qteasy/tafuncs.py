@@ -50,13 +50,16 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
         BOLU=MA(TP,n)+m∗σ[TP,n]
         BOLD=MA(TP,n)−m∗σ[TP,n]
 
-    input:
-        :param close:
-        :param timeperiod:
-        :param nbdevup:
-        :param nbdevdn:
-        :param matype:
-    :return:
+    Parameters
+    ----------
+        close: float,收盘价
+        timeperiod:
+        nbdevup:
+        nbdevdn:
+        matype:
+
+    Return
+    ------
         :upperband,
         :middleband,
         :lowerband: np.ndarray
@@ -77,9 +80,11 @@ def dema(close, period: int = 30):
 
         DEMA=2×EMA_N − EMA of EMA_N
 
-    :param close:
-    :param period:
-    :return:
+    close: float,收盘价
+    period:
+
+    Return
+    ------
     """
     return DEMA(close, period)
 
@@ -98,8 +103,8 @@ def ema(close, span: int = 30):
         EMA=Price(t)×k+EMA(y)×(1−k)
 
     input：
-        :param close: 1-D ndarray, 输入数据，一维矩阵
-        :param span: int, optional, 1 < span, 跨度
+        close: float,收盘价 1-D ndarray, 输入数据，一维矩阵
+        span: int, optional, 1 < span, 跨度
     output：=====
         :return: 1-D ndarray; 输入数据的指数平滑移动平均值
     """
@@ -115,8 +120,10 @@ def ht(close):
     This linear operator is given by convolution with the function
     1/(πt):
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
     """
     return HT_TRENDLINE(close)
 
@@ -156,10 +163,13 @@ def kama(close, timeperiod: int = 30):
 
     Current KAMA = Prior KAMA + SC x (Price - Prior KAMA)
 
-    input:
-    :param close:
-    :param timeperiod:
-    :return:
+    Parameters
+    ----------
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
 
     """
     return KAMA(close, timeperiod)
@@ -172,9 +182,9 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     points over a given period divided by the number of periods.
 
     input：
-        :param close: type: 1-D np.ndarray 输入数据，一维矩阵
-        :param timeperiod: type: int, 1 < window, 时间滑动窗口
-        :param matype: type: int:
+        close: float,收盘价 type: 1-D np.ndarray 输入数据，一维矩阵
+        timeperiod: type: int, 1 < window, 时间滑动窗口
+        matype: type: int:
     return：
         :return: ndarray, 完成计算的移动平均序列
     """
@@ -192,11 +202,14 @@ def mama(close, fastlimit=0, slowlimit=0):
     responds to price changes and holds the average value until the next
     bars close.
 
-    input:
-    :param close:
-    :param fastlimit:
-    :param slowlimit:
-    :return:
+    Parameters
+    ----------
+    close: float,收盘价
+    fastlimit:
+    slowlimit:
+
+    Return
+    ------
         :mama,
         :fama:
     """
@@ -206,12 +219,14 @@ def mama(close, fastlimit=0, slowlimit=0):
 def mavp(close, periods, minperiod: int = 2, maxperiod: int = 30, matype: int = 0):
     """Moving average with variable period 可变周期的移动平均线
 
-    :param close:
-    :param periods:
-    :param minperiod:
-    :param maxperiod:
-    :param matype: 0 ~ 8
-    :return:
+    close: float,收盘价
+    periods:
+    minperiod:
+    maxperiod:
+    matype: 0 ~ 8
+
+    Return
+    ------
     """
     return MAVP(close, periods, minperiod, maxperiod, matype)
 
@@ -219,9 +234,11 @@ def mavp(close, periods, minperiod: int = 2, maxperiod: int = 30, matype: int = 
 def mid_point(close, timeperiod=14):
     """MidPoint over period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return MIDPOINT(close, timeperiod)
 
@@ -229,10 +246,12 @@ def mid_point(close, timeperiod=14):
 def mid_price(high, low, timeperiod: int = 14):
     """Midpoint Price over period 期间中点价格
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
     """
     return MIDPRICE(high, low, timeperiod)
 
@@ -252,11 +271,13 @@ def sar(high, low, acceleration=0, maximum=0):
 
 
 
-    :param high:
-    :param low:
-    :param acceleration:
-    :param maximum:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    acceleration:
+    maximum:
+
+    Return
+    ------
     """
     return SAR(high, low, acceleration, maximum)
 
@@ -276,11 +297,13 @@ def sarext(high, low, acceleration=0, maximum=0):
         BUY signals are generated when the indicator is above 0;
         SELL signals are generated when the indicator is below 0.
 
-    :param high:
-    :param low:
-    :param acceleration:
-    :param maximum:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    acceleration:
+    maximum:
+
+    Return
+    ------
     """
     return SAREXT(high, low, acceleration, maximum)
 
@@ -291,9 +314,11 @@ def sma(close, timeperiod=30):
     For a simple moving average, the formula is the sum of the data
     points over a given period divided by the number of periods.
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return SMA(close, timeperiod)
 
@@ -301,10 +326,12 @@ def sma(close, timeperiod=30):
 def t3(close, timeperiod=5, vfactor=0):
     """Triple Exponential Moving Average 三重指数移动平均线
 
-    :param close:
-    :param timeperiod:
-    :param vfactor:
-    :return:
+    close: float,收盘价
+    timeperiod:
+    vfactor:
+
+    Return
+    ------
     """
     return T3(close, timeperiod, vfactor)
 
@@ -319,9 +346,11 @@ def tema(close, timeperiod=30):
     of the original EMA and subtracting out some of the lag.
 
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return TEMA(close, timeperiod)
 
@@ -340,9 +369,11 @@ def trima(close, timeperiod=30):
     TMA = SUM (SMA values) / N
     SMA = (P1 + P2 + P3 + P4 + ... + PN) / N
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return TRIMA(close, timeperiod)
 
@@ -361,9 +392,11 @@ def wma(close, timeperiod=30):
 
     WMA = (P1 * N + P2 * (N-1) + ... + PN) / (N * (N + 1))/2
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return WMA(close, timeperiod)
 
@@ -406,11 +439,13 @@ def adx(high, low, close, timeperiod=14):
     movement (changing trend slope). If the trend is a constant slope then
     the ADX value tends to flatten out.
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ADX(high, low, close, timeperiod)
 
@@ -425,11 +460,13 @@ def adxr(high, low, close, timeperiod=14):
 
     ADXR = (ADX + ADX n-periods ago) / 2
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ADXR(high, low, close, timeperiod)
 
@@ -455,11 +492,13 @@ def apo(close, fastperiod=12, slowperiod=26, matype=0):
 
     APO = Shorter Period EMA – Longer Period EMA
 
-    :param close:
-    :param fastperiod:
-    :param slowperiod:
-    :param matype:
-    :return:
+    close: float,收盘价
+    fastperiod:
+    slowperiod:
+    matype:
+
+    Return
+    ------
     """
     return APO(close, fastperiod, slowperiod, matype)
 
@@ -490,10 +529,12 @@ def aroon(high, low, timeperiod=14):
     Aroon-Up = [(Period Specified – Periods Since the Highest High within Period Specified) / Period Specified] x 100
     Aroon-Down = [(Period Specified – Periods Since the Lowest Low for Period Specified) / Period Specified] x 100
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
         aroondown,
         aroonup
     """
@@ -512,10 +553,12 @@ def aroonosc(high, low, timeperiod=14):
     potential trend changes. They also watch for big moves, above
     50 or below -50 to signal strong price moves.
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
     """
     return AROONOSC(high, low, timeperiod)
 
@@ -523,11 +566,13 @@ def aroonosc(high, low, timeperiod=14):
 def bop(opn, high, low, close):
     """Balance Of Power:
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return BOP(opn, high, low, close)
 
@@ -544,11 +589,13 @@ def cci(high, low, close, timeperiod=14):
     or add to an existing position. In this way, the indicator can
     be used to provide trade signals when it acts in a certain way.
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return CCI(high, low, close, timeperiod)
 
@@ -593,9 +640,11 @@ def cmo(close, timeperiod=14):
     period. Down days are days when the current close is less than the
     previous close.
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return CMO(close, timeperiod)
 
@@ -673,11 +722,13 @@ def dx(high, low, close, timeperiod=14):
     Finally the Directional Movement Rating (ADXR) is calculated by the averaging the
     current ADX and the ADX value n-periods ago.
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return DX(high, low, close, timeperiod)
 
@@ -715,12 +766,15 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
     causes MACD to oscillate around the zero level. A signal line is created with
     a 9 period EMA of the MACD line.
 
-    input
-        :param close:
-        :param fastperiod:
-        :param slowperiod:
-        :param signalperiod:
-    :return:
+    Parameters
+    ----------
+        close: float,收盘价
+        fastperiod:
+        slowperiod:
+        signalperiod:
+
+    Return
+    ------
         macd,
         macdsignal,
         macdhist
@@ -733,15 +787,18 @@ def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, sig
 
     MACD extention: different ma types can be applied.
 
-    input:
-        :param close:
-        :param fastperiod:
-        :param fastmatype:
-        :param slowperiod:
-        :param slowmatype:
-        :param signalperiod:
-        :param signalmatype:
-    :return:
+    Parameters
+    ----------
+        close: float,收盘价
+        fastperiod:
+        fastmatype:
+        slowperiod:
+        slowmatype:
+        signalperiod:
+        signalmatype:
+
+    Return
+    ------
         :macd,
         :macdsignal,
         :macdhist
@@ -752,10 +809,13 @@ def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, sig
 def macdfix(close, signalperiod=9):
     """Moving Average Convergence/Divergence Fix 12/26
 
-    input:
-        :param close:
-        :param signalperiod:
-    :return:
+    Parameters
+    ----------
+        close: float,收盘价
+        signalperiod:
+
+    Return
+    ------
         macd,
         macdsignal,
         macdhist
@@ -804,13 +864,16 @@ def mfi(high, low, close, volume, timeperiod=14):
     - Money Ratio = Positive Money Flow / Negative Money Flow
     - Finally, the Money Flow Index is calculated using the Money Ratio.
 
-    input:
-        :param high:
-        :param low:
-        :param close:
-        :param volume:
-        :param timeperiod:
-    :return:
+    Parameters
+    ----------
+        high: float, 最高价
+        low: float, 最低价
+        close: float,收盘价
+        volume:
+        timeperiod:
+
+    Return
+    ------
     """
     return MFI(high, low, close, volume, timeperiod)
 
@@ -850,12 +913,15 @@ def minus_di(high, low, close, timeperiod=14):
     - Next, divide the smoothed -DM value by the smoothed TR (or ATR) value
     to get -DI. Multiply by 100.
 
-    input:
-        :param high:
-        :param low:
-        :param close:
-        :param timeperiod:
-    :return:
+    Parameters
+    ----------
+        high: float, 最高价
+        low: float, 最低价
+        close: float,收盘价
+        timeperiod:
+
+    Return
+    ------
     """
     return MINUS_DI(high, low, close, timeperiod)
 
@@ -902,10 +968,12 @@ def minus_dm(high, low, timeperiod=14):
     - The optional Directional Movement Index (DX) is +DI minus -DI, divided by the sum of +DI
     and -DI (all absolute values). Multiply by 100.
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
     """
     return MINUS_DM(high, low, timeperiod)
 
@@ -920,15 +988,16 @@ def mom(close, timeperiod=10):
 
     The momentum of a price is very easy to calculate. There are couple different versions
     of the formula, but whichever one is used, the momentum (M) is a comparison between the
-    current closing price (CP) and a closing price "n" periods ago (CPn).1
-﻿    You determine the value of "n."
+    current closing price (CP) and a closing price "n" periods ago (CPn).1 You determine the value of "n."
     M = CP – CPn
     or
     M = (CP / CPn) * 100
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return MOM(close, timeperiod)
 
@@ -967,11 +1036,13 @@ def plus_di(high, low, close, timeperiod=14):
     - Next 14-period +DM value = First 14 +DM value - (Prior 14 DM/14) + Current +DM
     - Next, divide the smoothed +DM value by the ATR value to get +DI. Multiply by 100.
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return PLUS_DI(high, low, close, timeperiod)
 
@@ -1000,20 +1071,22 @@ def plus_dm(high, low, timeperiod=14):
     - +DM = Current High - Previous High.
     - Any period is counted as a +DM if the Current High - Previous High > Previous Low -
     Current Low. Use -DM when Previous Low - Current Low > Current High - Previous High.
-    - TR is the greater of the Current High - Current Low, Current High - Previous Close,
+    - TR is the greatest of the Current High - Current Low, Current High - Previous Close,
     or Current Low - Previous Close.
     - Smooth the 14-periods of +DM and TR using the formula below. Substitute TR for +DM
     to calculate ATR. [The calculation below shows a smoothed TR formula, which is
-    slightly different than the official ATR formula. Either formula can be used, but use
+    slightly different from the official ATR formula. Either formula can be used, but use
     one consistently].
     - First 14-period +DM = Sum of first 14 +DM readings.
     - Next 14-period +DM value = First 14 +DM value - (Prior 14 DM/14) + Current +DM
     - Next, divide the smoothed +DM value by the ATR value to get +DI. Multiply by 100.
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
     """
     return PLUS_DM(high, low, timeperiod)
 
@@ -1054,11 +1127,13 @@ def ppo(close, fastperiod=12, slowperiod=26, matype=0):
     line value. The histogram is an optional visual representation of the distance between
     these two config_lines.
 
-    :param close:
-    :param fastperiod:
-    :param slowperiod:
-    :param matype:
-    :return:
+    close: float,收盘价
+    fastperiod:
+    slowperiod:
+    matype:
+
+    Return
+    ------
     """
     return PPO(close, fastperiod, slowperiod, matype)
 
@@ -1066,9 +1141,11 @@ def ppo(close, fastperiod=12, slowperiod=26, matype=0):
 def roc(close, timeperiod=10):
     """Rate of change : ((price/prevPrice)-1)*100
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ROC(close, timeperiod)
 
@@ -1076,9 +1153,11 @@ def roc(close, timeperiod=10):
 def rocp(close, timeperiod=10):
     """Rate of change Percentage: (price-prevPrice)/prevPrice
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ROCP(close, timeperiod)
 
@@ -1086,9 +1165,11 @@ def rocp(close, timeperiod=10):
 def rocr(close, timeperiod=10):
     """Rate of change ratio: (price/prevPrice)
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ROCR(close, timeperiod)
 
@@ -1096,9 +1177,11 @@ def rocr(close, timeperiod=10):
 def rocr100(close, timeperiod=10):
     """Rate of change ratio 100 scale: (price/prevPrice)*100
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ROCR100(close, timeperiod)
 
@@ -1118,9 +1201,11 @@ def rsi(close, timeperiod=14):
 
     
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return RSI(close, timeperiod)
 
@@ -1155,19 +1240,21 @@ def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slow
 
     %D = 3-day SMA of %K
 
-    Lowest Low = lowest low of the specified time period
+    Lowest Low = the lowest low of the specified time period
 
-    Highest High = highest high of the specified time period
+    Highest High = the highest high of the specified time period
 
-    :param high:
-    :param low:
-    :param close:
-    :param fastk_period:
-    :param slowk_period:
-    :param slowk_matype:
-    :param slowd_period:
-    :param slowd_matype:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    fastk_period:
+    slowk_period:
+    slowk_matype:
+    slowd_period:
+    slowd_matype:
+
+    Return
+    ------
         slowk,
         slowd
     """
@@ -1184,13 +1271,15 @@ def stochf(high, low, close, fastk_period=5, fastd_period=3, fastd_matype=0):
 
 
 
-    :param high:
-    :param low:
-    :param close:
-    :param fastk_period:
-    :param fastd_period:
-    :param fastd_matype:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    fastk_period:
+    fastd_period:
+    fastd_matype:
+
+    Return
+    ------
         fastk,
         fastd
     """
@@ -1239,12 +1328,14 @@ def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=
     - As each period ends compute the new StochRSI value, only using the last 14 RSI
     values.
 
-    :param close:
-    :param timeperiod:
-    :param fastk_period:
-    :param fastd_period:
-    :param fastd_matype:
-    :return:
+    close: float,收盘价
+    timeperiod:
+    fastk_period:
+    fastd_period:
+    fastd_matype:
+
+    Return
+    ------
     fastk,
     fastd
     """
@@ -1254,9 +1345,11 @@ def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=
 def trix(close, timeperiod=30):
     """1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return TRIX(close, timeperiod)
 
@@ -1331,13 +1424,15 @@ def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):
     - 使用平均 7、14 和 28 值计算终极振荡器。平均 7 的权重为 4，平均 14 的权重为 2，平均 28 的权重为 1。
     将分母中的权重相加（在这种情况下，和为 7，或 4+2+1）。其他计算完成后乘以 100。
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod1:
-    :param timeperiod2:
-    :param timeperiod3:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod1:
+    timeperiod2:
+    timeperiod3:
+
+    Return
+    ------
     """
     return ULTOSC(high, low, close, timeperiod1, timeperiod2, timeperiod3)
 
@@ -1379,11 +1474,13 @@ def willr(high, low, close, timeperiod=14):
     - As each period ends compute the new Williams %R, only using the last 14 periods
     of data.
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return WILLR(high, low, close, timeperiod)
 
@@ -1410,11 +1507,13 @@ def ad(high, low, close, volume):
     data to calculate a user-defined Moving Average and uses the direction of the MA to
     signal buys and sells.
 
-    :param high:
-    :param low:
-    :param close:
-    :param volume:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    volume:
+
+    Return
+    ------
     """
     return AD(high, low, close, volume)
 
@@ -1448,13 +1547,15 @@ def adosc(high, low, close, volume, fastperiod=3, slowperiod=10):
     - Compute the difference between 10 period and 3 period exponential moving averages
     to calculate the Chaikin oscillator.
 
-    :param high:
-    :param low:
-    :param close:
-    :param volume:
-    :param fastperiod:
-    :param slowperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    volume:
+    fastperiod:
+    slowperiod:
+
+    Return
+    ------
     """
     return ADOSC(high, low, close, volume, fastperiod, slowperiod)
 
@@ -1487,9 +1588,11 @@ def obv(close, volume):
     - If today's closing price equals yesterday's closing price, then:
     Current OBV = Previous OBV
 
-    :param close:
-    :param volume:
-    :return:
+    close: float,收盘价
+    volume:
+
+    Return
+    ------
     """
     return OBV(close, volume)
 
@@ -1535,11 +1638,13 @@ def atr(high, low, close, timeperiod=14):
         - The absolute value of today's high minus yesterday's close
         - The absolute value of today's low minus yesterday's close
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return ATR(high, low, close, timeperiod)
 
@@ -1548,7 +1653,7 @@ def natr(high, low, close, timeperiod=14):
     """Normalized Average True Range:
 
     Normalized Average True Range (NATR) attempts to normalize the average true range values
-    across instruments by using the formula below:
+    across instruments by using the formula below: float, 最低价
 
     Formula
 
@@ -1558,11 +1663,13 @@ def natr(high, low, close, timeperiod=14):
 
  periods.
 
-    :param high:
-    :param low:
-    :param close:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
     """
     return NATR(high, low, close, timeperiod)
 
@@ -1581,10 +1688,12 @@ def trange(high, low, close):
     True Range (ATR). The True Range can be smoothed using a variety of moving average types,
     including Simple, Exponential, Welles Wilder, etc.
 
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return TRANGE(high, low, close)
 
@@ -1601,11 +1710,13 @@ def avgprice(opn, high, low, close):
     that is calculated by taking the sum of the values and dividing it by the number of
     prices being examined.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return AVGPRICE(opn, high, low, close)
 
@@ -1619,9 +1730,11 @@ def medprice(high, low):
     single-line chart of the day's "average price." This average price is useful when you
     want a simpler view of prices.
 
-    :param high:
-    :param low:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+
+    Return
+    ------
     """
     return MEDPRICE(high, low)
 
@@ -1636,10 +1749,12 @@ def typprice(high, low, close):
 
     - Typical Price = ( High + Low + Close ) / 3
 
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return TYPPRICE(high, low, close)
 
@@ -1652,10 +1767,12 @@ def wclprice(high, low, close):
     Typical Price are similar indicators. ... The result is the average price with extra
     weight given to the closing price.
 
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return WCLPRICE(high, low, close)
 
@@ -1697,8 +1814,10 @@ def ht_dcperiod(close):
 
     Return the Hilbert Transform Period measured at the current bar
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
     """
     return HT_DCPERIOD(close)
 
@@ -1750,8 +1869,10 @@ def ht_dcphase(close):
     Advance the Sine by 45 degrees to compute the HT Lead Sine
     Return the Lead Sine of the Dominant Cycle Phase at the current bar of the Hilbert Transform Period measured at that bar
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
     """
     return HT_DCPHASE(close)
 
@@ -1759,8 +1880,10 @@ def ht_dcphase(close):
 def ht_phasor(close):
     """Hilbert Transform - Phasor Components
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
     inphase,
     quadrature
     """
@@ -1770,8 +1893,10 @@ def ht_phasor(close):
 def ht_sine(close):
     """Hilbert Transform - SineWave
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
     """
     return HT_SINE(close)
 
@@ -1779,8 +1904,10 @@ def ht_sine(close):
 def ht_trendmode(close):
     """Hilbert Transform - Trend vs Cycle Mode
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
     """
     return HT_TRENDMODE(close)
 
@@ -1815,11 +1942,13 @@ def cdl2crows(opn, high, low, close):
     - the opening price within the prior body
     - the closing price within the body of the first line (gap close)
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL2CROWS(opn, high, low, close)
 
@@ -1841,11 +1970,13 @@ def cdl3blackcrows(opn, high, low, close):
     - The opposite pattern of three black crows is three white soldiers indicating a
     reversal of a downtrend.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL3BLACKCROWS(opn, high, low, close)
 
@@ -1872,11 +2003,13 @@ def cdl3inside(opn, high, low, close):
     - Consider using the pattern within the context of an overall trend. For example, use
     the three inside up during a pullback in an overall uptrend
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL3INSIDE(opn, high, low, close)
 
@@ -1891,11 +2024,13 @@ def cdl3linestrike(opn, high, low, close):
     bar. According to Bulkowski, this reversal predicts higher prices with an 83% accuracy
     rate.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL3LINESTRIKE(opn, high, low, close)
 
@@ -1915,11 +2050,13 @@ def cdl3outside(opn, high, low, close):
 
     - Each tries to leverage market psychology in order to read near-term changes in sentiment.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL3OUTSIDE(opn, high, low, close)
 
@@ -1951,11 +2088,13 @@ def cdl3starsinsouth(opn, high, low, close):
     candlestick charts. It may appear after a decline, and it signals that the bearishness is
     fading. The pattern is very rare.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL3STARSINSOUTH(opn, high, low, close)
 
@@ -1979,11 +2118,13 @@ def cdl3whitesoldiers(opn, high, low, close):
     - The opposite pattern of three white soldiers is three black crows, which indicates
     a reversal of an uptrend.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDL3WHITESOLDIERS(opn, high, low, close)
 
@@ -2008,11 +2149,13 @@ def cdlabandonedbaby(opn, high, low, close):
     may not be present after the first or second candle. But the overall psychology of
     the pattern should still be
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLABANDONEDBABY(opn, high, low, close)
 
@@ -2033,11 +2176,13 @@ def cdladvanceblock(opn, high, low, close):
 
     - Reversals are more prevalent when this pattern occurs in a larger downward trend.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLADVANCEBLOCK(opn, high, low, close)
 
@@ -2066,11 +2211,13 @@ def cdlbelthold(opn, high, low, close):
     - The stock price declines throughout the day, resulting in a long black candlestick
     with a short lower shadow and no upper shadow.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLBELTHOLD(opn, high, low, close)
 
@@ -2102,11 +2249,13 @@ def cdlbreakaway(opn, high, low, close):
     - candle closes below the second line's opening price and above the first line's closing price
     - the price gap formed between the first and the second line is not closed
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLBREAKAWAY(opn, high, low, close)
 
@@ -2125,17 +2274,19 @@ def cdlclosingmarubozu(opn, high, low, close):
     upper shadow smaller than the body
     appears as a short or long line
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLCLOSINGMARUBOZU(opn, high, low, close)
 
 
 def cdlconcealbabyswall(opn, high, low, close):
-    """Concealing Baby Swallow:
+    """Concealing Baby Swallow: float, 最低价
 
     Forecast: bullish reversal
     Trend prior to the pattern: downtrend
@@ -2158,11 +2309,13 @@ def cdlconcealbabyswall(opn, high, low, close):
     - black body
     - candle’s body engulfs the prior candle’s body including the shadows
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLCONCEALBABYSWALL(opn, high, low, close)
 
@@ -2182,11 +2335,13 @@ def cdlcounterattack(opn, high, low, close):
     candle, and the second candle gaps higher but then closes lower, near the close of
     the first candle.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLCOUNTERATTACK(opn, high, low, close)
 
@@ -2214,11 +2369,13 @@ def cdldarkcloudcover(opn, high, low, close):
     - Traders typically see if the candle following the bearish candle also shows declining
     prices. A further price decline following the bearish candle is called confirmation.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLDARKCLOUDCOVER(opn, high, low, close)
 
@@ -2231,11 +2388,13 @@ def cdldoji(opn, high, low, close):
     patterns. Doji candlesticks look like a cross, inverted cross or plus sign. Alone, doji
     are neutral patterns that are also featured in a number of important patterns.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLDOJI(opn, high, low, close)
 
@@ -2256,11 +2415,13 @@ def cdldojistar(opn, high, low, close):
     - a doji candle
     - a body below the first candle's body
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLDOJISTAR(opn, high, low, close)
 
@@ -2289,11 +2450,13 @@ def cdldragonflydoji(opn, high, low, close):
     - Candlestick traders typically wait for the confirmation candle before acting on the
     dragonfly doji.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLDRAGONFLYDOJI(opn, high, low, close)
 
@@ -2343,11 +2506,13 @@ def cdlengulfing(opn, high, low, close):
 
     - The pattern has far less significance in choppy markets.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLENGULFING(opn, high, low, close)
 
@@ -2378,11 +2543,13 @@ def cdleveningdojistar(opn, high, low, close):
     - candle body below the previous candle body
     - the closing price below the midpoint of the first candle body
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLEVENINGDOJISTAR(opn, high, low, close)
 
@@ -2407,11 +2574,13 @@ def cdleveningstar(opn, high, low, close):
     - The Evening Star is the opposite of the Morning Star pattern. The two are bearish
     and bullish indicators, respectively.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLEVENINGSTAR(opn, high, low, close)
 
@@ -2437,11 +2606,13 @@ def cdlgapsidesidewhite(opn, high, low, close):
     pattern, but quite often the price move after the pattern will be muted, indicating
     it is not a highly significant pattern.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLGAPSIDESIDEWHITE(opn, high, low, close)
 
@@ -2463,11 +2634,13 @@ def cdlgravestonedoji(opn, high, low, close):
 
     - The opposite of a gravestone doji is a dragonfly doji
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLGRAVESTONEDOJI(opn, high, low, close)
 
@@ -2498,11 +2671,13 @@ def cdlhammer(opn, high, low, close):
     - Hammer candlesticks indicate a potential price reversal to the upside. The price
     must start moving up following the hammer; this is called confirmation.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHAMMER(opn, high, low, close)
 
@@ -2535,11 +2710,13 @@ def cdlhangingman(opn, high, low, close):
     - Traders typically exit long trades or enter short trades during or after the
     confirmation candle, not before.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHANGINGMAN(opn, high, low, close)
 
@@ -2573,11 +2750,13 @@ def cdlharami(opn, high, low, close):
     - Traders can use technical indicators, such as the relative strength index (RSI) and the
     stochastic oscillator with a bearish harami to increase the chance of a successful trade.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHARAMI(opn, high, low, close)
 
@@ -2600,11 +2779,13 @@ def cdlharamicross(opn, high, low, close):
 
     - The bearish pattern is confirmed by a price move lower following the pattern.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHARAMICROSS(opn, high, low, close)
 
@@ -2628,11 +2809,13 @@ def cdlhighwave(opn, high, low, close):
     - appears on as a long line
     - the length of at least one shadows is at least 3 times larger than the body
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHIGHWAVE(opn, high, low, close)
 
@@ -2655,11 +2838,13 @@ def cdlhikkake(opn, high, low, close):
 
     - The bullish variation is more frequently observed
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHIKKAKE(opn, high, low, close)
 
@@ -2684,11 +2869,13 @@ def cdlhikkakemod(opn, high, low, close):
     range than the prior candle. This followed by an inside bar, then a candle with a lower high
     and lower low. The pattern completes when the price rises above the inside bar high.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHIKKAKEMOD(opn, high, low, close)
 
@@ -2713,11 +2900,13 @@ def cdlhomingpigeon(opn, high, low, close):
     - Bullish homing pigeon patterns don't provide profit targets, and a stop loss is typically
     placed below the bottom of the pattern after an upside move is confirmed.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLHOMINGPIGEON(opn, high, low, close)
 
@@ -2744,11 +2933,13 @@ def cdlidentical3crows(opn, high, low, close):
     - black body
     - the opening price at or near the prior close
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLIDENTICAL3CROWS(opn, high, low, close)
 
@@ -2777,11 +2968,13 @@ def cdlinneck(opn, high, low, close):
     - the opening price below the previous closing price
     - the closing price is slightly above the previous closing price (up to 15% of the first line body)
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLINNECK(opn, high, low, close)
 
@@ -2795,11 +2988,13 @@ def cdlinvertedhammer(opn, high, low, close):
 
 
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLINVERTEDHAMMER(opn, high, low, close)
 
@@ -2824,11 +3019,13 @@ def cdlkicking(opn, high, low, close):
     and opens below the previous day’s opening price. This second day candlestick is a bearish
     marabozu. There is a gap between day one’s bearish candlestick and day two’s bullish candlestick.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLKICKING(opn, high, low, close)
 
@@ -2836,11 +3033,13 @@ def cdlkicking(opn, high, low, close):
 def cdlkickingbylength(opn, high, low, close):
     """Kicking - bull/bear determined by the longer marubozu
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLKICKINGBYLENGTH(opn, high, low, close)
 
@@ -2868,11 +3067,13 @@ def cdlladderbottom(opn, high, low, close):
 
     - The pattern is quite rare, so opportunities for trading the pattern are limited.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLLADDERBOTTOM(opn, high, low, close)
 
@@ -2900,11 +3101,13 @@ def cdllongleggeddoji(opn, high, low, close):
     could mark the start of a consolidation period, or it may just end up being an
     insignificant blip in the current trend
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLLONGLEGGEDDOJI(opn, high, low, close)
 
@@ -2912,11 +3115,13 @@ def cdllongleggeddoji(opn, high, low, close):
 def cdllongline(opn, high, low, close):
     """Long Line Candle
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLLONGLINE(opn, high, low, close)
 
@@ -2940,17 +3145,19 @@ def cdlmarubozu(opn, high, low, close):
     - If a Black Marubozu occurs at the end of a downtrend, a continuation is likely.
     - If a Black Marubozu occurs at the end of an uptrend, a reversal is likely.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLMARUBOZU(opn, high, low, close)
 
 
 def cdlmatchinglow(opn, high, low, close):
-    """Matching Low:
+    """Matching Low: float, 最低价
 
     A matching low is a two-candle bullish reversal pattern that appears on candlestick
     charts. It occurs after a downtrend and, in theory, signals a potential end to the
@@ -2968,11 +3175,13 @@ def cdlmatchinglow(opn, high, low, close):
     - In reality, the price could go either direction following the pattern, and more
     often it continues to the downside.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLMATCHINGLOW(opn, high, low, close)
 
@@ -2989,11 +3198,13 @@ def cdlmathold(opn, high, low, close):
     day then continues the first day's trend, pushing higher or lower, in the same
     direction as the first day's movement.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLMATHOLD(opn, high, low, close)
 
@@ -3021,11 +3232,13 @@ def cdlmorningdojistar(opn, high, low, close):
     - candle body above the previous candle body
     - the closing price above the midpoint of the first candle body
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLMORNINGDOJISTAR(opn, high, low, close)
 
@@ -3049,11 +3262,13 @@ def cdlmorningstar(opn, high, low, close):
     - The opposite pattern to a morning star is the evening star, which signals a reversal of
     an uptrend into a downtrend.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLMORNINGSTAR(opn, high, low, close)
 
@@ -3078,11 +3293,13 @@ def cdlonneck(opn, high, low, close):
 
     - Trading on the pattern could result in any number of variations.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLONNECK(opn, high, low, close)
 
@@ -3105,11 +3322,13 @@ def cdlpiercing(opn, high, low, close):
     - Three characteristics of this pattern include a downward trend before the pattern, a gap
     after the first day, and a strong reversal as the second candle in the pattern.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLPIERCING(opn, high, low, close)
 
@@ -3132,11 +3351,13 @@ def cdlrickshawman(opn, high, low, close):
     - The rickshaw man has long upper and lower shadows, with a small real body near the center
     of the candle.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLRICKSHAWMAN(opn, high, low, close)
 
@@ -3176,11 +3397,13 @@ def cdlrisefall3methods(opn, high, low, close):
     do not have enough conviction to reverse the trend and it is used by some active traders as a
     signal to initiate new, or add to their existing, short positions.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLRISEFALL3METHODS(opn, high, low, close)
 
@@ -3207,11 +3430,13 @@ def cdlseparatinglines(opn, high, low, close):
     will not have an upper wick.
 
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLSEPARATINGLINES(opn, high, low, close)
 
@@ -3240,11 +3465,13 @@ def cdlshootingstar(opn, high, low, close):
     - If the price rises after a shooting star, the formation may have been a false signal or the
     candle is marking a potential resistance area around the price range of the candle.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLSHOOTINGSTAR(opn, high, low, close)
 
@@ -3269,11 +3496,13 @@ def cdlshortline(opn, high, low, close):
     - Short-body candles may indicate a period of consolidation in a stock or other asset, but
     their interpretation will vary based on what other price action has preceded and follows it.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLSHORTLINE(opn, high, low, close)
 
@@ -3307,11 +3536,13 @@ def cdlspinningtop(opn, high, low, close):
     top could be the start of a reversal, the next candle should confirm. If the spinning top is
     showing indecision, then the next candle should also move sideways within the range.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLSPINNINGTOP(opn, high, low, close)
 
@@ -3334,11 +3565,13 @@ def cdlstalledpattern(opn, high, low, close):
     candles. Finally, the third candle must have a tall upper shadow, and an open that is near
     the close of the second candle.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLSTALLEDPATTERN(opn, high, low, close)
 
@@ -3362,11 +3595,13 @@ def cdlsticksandwich(opn, high, low, close):
     - These patterns may indicate either bullish or bearish trends, and so should be used in
     conjunction with other methods of signals
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLSTICKSANDWICH(opn, high, low, close)
 
@@ -3396,11 +3631,13 @@ def cdltakuri(opn, high, low, close):
     - if the gap is created at the opening or at the closing, it makes the signal stronger
     - appears as a long line
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLTAKURI(opn, high, low, close)
 
@@ -3437,11 +3674,13 @@ def cdltasukigap(opn, high, low, close):
     important to note that the white candle does not need to fully close the gap.
 
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLTASUKIGAP(opn, high, low, close)
 
@@ -3466,11 +3705,13 @@ def cdlthrusting(opn, high, low, close):
     - Thrusting patterns are fairly common, don't necessarily result in large price moves, and are
     most useful when combined with other types of evidence.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLTHRUSTING(opn, high, low, close)
 
@@ -3490,11 +3731,13 @@ def cdltristar(opn, high, low, close):
     - A tri-star pattern near a significant support or resistance level increases the probability of a
     successful trade.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLTRISTAR(opn, high, low, close)
 
@@ -3518,11 +3761,13 @@ def cdlunique3river(opn, high, low, close):
     - Traders often use the direction of a confirmation candle, which is the fourth candle, to
     signal which direction the price is likely to move following the pattern.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLUNIQUE3RIVER(opn, high, low, close)
 
@@ -3545,11 +3790,13 @@ def cdlupsidegap2crows(opn, high, low, close):
     receive confirmation that provides enough confidence to step forward and make a successful
     trade. Without confirmation, the upside gap two crows is simply a small pause in an uptrend.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLUPSIDEGAP2CROWS(opn, high, low, close)
 
@@ -3587,11 +3834,13 @@ def cdlxsidegap3methods(opn, high, low, close):
     - The third bar is a white candle that has an open within the real body of the second candle and a
     close within the real body of the first candle.
 
-    :param opn:
-    :param high:
-    :param low:
-    :param close:
-    :return:
+    opn: float, 开盘价
+    high: float, 最高价
+    low: float, 最低价
+    close: float,收盘价
+
+    Return
+    ------
     """
     return CDLXSIDEGAP3METHODS(opn, high, low, close)
 
@@ -3603,10 +3852,12 @@ def cdlxsidegap3methods(opn, high, low, close):
 def beta(high, low, timeperiod=5):
     """Beta
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return BETA(high, low, timeperiod)
@@ -3615,10 +3866,12 @@ def beta(high, low, timeperiod=5):
 def correl(high, low, timeperiod=30):
     """Pearson's Correlation Coefficient (r)
 
-    :param high:
-    :param low:
-    :param timeperiod:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return CORREL(high, low, timeperiod)
@@ -3627,9 +3880,11 @@ def correl(high, low, timeperiod=30):
 def linearreg(close, timeperiod=14):
     """Linear Regression
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return LINEARREG(close, timeperiod)
@@ -3638,9 +3893,11 @@ def linearreg(close, timeperiod=14):
 def linearreg_angle(close, timeperiod=14):
     """Linear Regression Angle
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return LINEARREG_ANGLE(close, timeperiod)
@@ -3649,9 +3906,11 @@ def linearreg_angle(close, timeperiod=14):
 def linearreg_intercept(close, timeperiod=14):
     """Linear Regression Intercept
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return LINEARREG_INTERCEPT(close, timeperiod)
@@ -3660,9 +3919,11 @@ def linearreg_intercept(close, timeperiod=14):
 def linearreg_slope(close, timeperiod=14):
     """Linear Regression Slope
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return LINEARREG_SLOPE(close, timeperiod)
@@ -3671,10 +3932,12 @@ def linearreg_slope(close, timeperiod=14):
 def stddev(close, timeperiod=5, nbdev=1):
     """Standard Deviation
 
-    :param close:
-    :param timeperiod:
-    :param nbdev:
-    :return:
+    close: float,收盘价
+    timeperiod:
+    nbdev:
+
+    Return
+    ------
         :real:
     """
     return STDDEV(close, timeperiod, nbdev)
@@ -3683,9 +3946,11 @@ def stddev(close, timeperiod=5, nbdev=1):
 def tsf(close, timeperiod=14):
     """Time Series Forecast
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return TSF(close, timeperiod)
@@ -3694,10 +3959,12 @@ def tsf(close, timeperiod=14):
 def var(close, timeperiod=5, nbdev=1):
     """Variance
 
-    :param close:
-    :param timeperiod:
-    :param nbdev:
-    :return:
+    close: float,收盘价
+    timeperiod:
+    nbdev:
+
+    Return
+    ------
         :real:
     """
     return VAR(close, timeperiod, nbdev)
@@ -3710,8 +3977,10 @@ def var(close, timeperiod=5, nbdev=1):
 def acos(close):
     """Vector Trigonometric ACos
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return ACOS(close)
@@ -3720,8 +3989,10 @@ def acos(close):
 def asin(close):
     """Vector Trigonometric ASin
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return ASIN(close)
@@ -3730,8 +4001,10 @@ def asin(close):
 def atan(close):
     """Vector Trigonometric ATan
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return ATAN(close)
@@ -3740,8 +4013,10 @@ def atan(close):
 def ceil(close):
     """Vector Ceil
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return CEIL(close)
@@ -3750,8 +4025,10 @@ def ceil(close):
 def cos(close):
     """Vector Trigonometric Cos
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return COS(close)
@@ -3760,8 +4037,10 @@ def cos(close):
 def cosh(close):
     """Vector Trigonometric Cosh
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return COSH(close)
@@ -3770,8 +4049,10 @@ def cosh(close):
 def exp(close):
     """Vector Arithmetic Exp
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return EXP(close)
@@ -3780,8 +4061,10 @@ def exp(close):
 def floor(close):
     """Vector Floor
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return FLOOR(close)
@@ -3790,8 +4073,10 @@ def floor(close):
 def ln(close):
     """Vector Log Natural
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return LN(close)
@@ -3800,8 +4085,10 @@ def ln(close):
 def log10(close):
     """Vector Log10
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return LOG10(close)
@@ -3810,8 +4097,10 @@ def log10(close):
 def sin(close):
     """Vector Trigonometric Sin
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return SIN(close)
@@ -3820,8 +4109,10 @@ def sin(close):
 def sinh(close):
     """Vector Trigonometric Sinh
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return SINH(close)
@@ -3830,8 +4121,10 @@ def sinh(close):
 def sqrt(close):
     """Vector Square Root
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return SQRT(close)
@@ -3840,8 +4133,10 @@ def sqrt(close):
 def tan(close):
     """Vector Trigonometric Tan
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return TAN(close)
@@ -3850,8 +4145,10 @@ def tan(close):
 def tanh(close):
     """Vector Trigonometric Tanh
 
-    :param close:
-    :return:
+    close: float,收盘价
+
+    Return
+    ------
         :real:
     """
     return TANH(close)
@@ -3860,9 +4157,11 @@ def tanh(close):
 def add(high, low):
     """Vector Arithmetic Add
 
-    :param high:
-    :param low:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+
+    Return
+    ------
         :real:
     """
     return ADD(high, low)
@@ -3871,9 +4170,11 @@ def add(high, low):
 def div(high, low):
     """Vector Arithmetic Div
 
-    :param high:
-    :param low:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+
+    Return
+    ------
         :real:
     """
     return DIV(high, low)
@@ -3882,9 +4183,11 @@ def div(high, low):
 def max(close, timeperiod=30):
     """Highest value over a specified period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return MAX(close, timeperiod)
@@ -3893,9 +4196,11 @@ def max(close, timeperiod=30):
 def maxindex(close, timeperiod=30):
     """Index of highest value over a specified period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :integer:
     """
     return MAXINDEX(close, timeperiod)
@@ -3904,9 +4209,11 @@ def maxindex(close, timeperiod=30):
 def min(close, timeperiod=30):
     """Lowest value over a specified period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return MIN(close, timeperiod)
@@ -3915,9 +4222,11 @@ def min(close, timeperiod=30):
 def minindex(close, timeperiod=30):
     """Index of lowest value over a specified period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :integer:
     """
     return MININDEX(close, timeperiod)
@@ -3926,9 +4235,11 @@ def minindex(close, timeperiod=30):
 def minmax(close, timeperiod=30):
     """Lowest and highest values over a specified period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :min:
         :max:
     """
@@ -3938,9 +4249,11 @@ def minmax(close, timeperiod=30):
 def minmaxindex(close, timeperiod=30):
     """Indexes of lowest and highest values over a specified period
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
         :minidx:
         :maxidx:
     """
@@ -3950,9 +4263,11 @@ def minmaxindex(close, timeperiod=30):
 def mult(high, low):
     """Vector Arithmetic Mult
 
-    :param high:
-    :param low:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+
+    Return
+    ------
         :real:
     """
     return MULT(high, low)
@@ -3961,9 +4276,11 @@ def mult(high, low):
 def sub(high, low):
     """Vector Arithmetic Substraction
 
-    :param high:
-    :param low:
-    :return:
+    high: float, 最高价
+    low: float, 最低价
+
+    Return
+    ------
         :real:
     """
     return SUB(high, low)
@@ -3972,9 +4289,11 @@ def sub(high, low):
 def sum(close, timeperiod=30):
     """Summation
 
-    :param close:
-    :param timeperiod:
-    :return:
+    close: float, 收盘价
+    timeperiod:
+
+    Return
+    ------
         :real:
     """
     return SUM(close, timeperiod)

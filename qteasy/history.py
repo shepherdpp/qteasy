@@ -63,7 +63,7 @@ class HistoryPanel():
         HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
     6, 方便地由多个pandas DataFrame对象组合而成
 
-    Attributes
+    Properties
     ----------
     is_empty: bool, 该属性返回一个bool值，表示HistoryPanel是否为空
     values: np.ndarray, 该属性返回一个numpy ndarray，包含HistoryPanel的全部数据
@@ -348,7 +348,7 @@ class HistoryPanel():
         允许的输入包括切片形式的各种输入，包括string、数字列表或切片器对象slice()，返回切片后的ndarray对象
         允许的输入示例，第一个切片代表type切片，第二个是shares，第三个是rows：
         item_key                    output
-        [1:3, :,:]                  输出1～3之间所有htype的历史数据
+        [1:3, :,:]                  输出第1个htype～第3个htype的所有历史数据
         [[0,1,2],:,:]:              输出第0、1、2个htype对应的所有股票全部历史数据
         [['close', 'high']]         输出close、high两个类型的所有历史数据
         [0:1]                       输出0、1两个htype的所有历史数据
@@ -466,6 +466,26 @@ class HistoryPanel():
         new_values = self[:, :, sd_index:ed_index]
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
+    def isegment(self, start_index=None, end_index=None):
+        """ 获取HistoryPanel的一个片段，start_index和end_index都是int数，表示日期序号，返回
+            这两个序号代表的日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
+            htypes的数据
+
+        Parameters
+        ----------
+        start_index: 开始日期序号
+        end_index: 结束日期序号
+
+        Returns
+        -------
+        out : HistoryPanel
+            一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据
+        """
+        hdates = np.array(self.hdates)
+        new_dates = list(hdates[start_index:end_index])
+        new_values = self[:, :, start_index:end_index]
+        return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
+
     def slice(self, shares=None, htypes=None):
         """ 获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符
             串，表示需要获取的股票或数据的种类。
@@ -509,15 +529,24 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[100, 100, 100, 100, 100]*100]*3]),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=100),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
         >>> hp.info()
-        <class 'quantdigger.datastruct.historypanel.HistoryPanel'>
+        <class 'qteasy.history.HistoryPanel'>
         History Panel at 0x7f8b0c0b0f10
         Datetime Range: 100 entries, 2015-01-05 00:00:00 to 2015-04-24 00:00:00
         Historical Data Types (total 5 data types):
         ['open', 'high', 'low', 'close', 'volume']
-        Shares (total 2 shares):
-        ['000001', '000002']
-
+        Shares (total 3 shares):
+        ['000001', '000002', '000003']
+        non-null values for each share and data type:
+                open   high    low  close volume
+        000001   100    100    100    100    100
+        000002   100    100    100    100    100
+        000003   100    100    100    100    100
+        memory usage: 12136 bytes
         """
         import sys
         print(f'\n{type(self)}')
@@ -533,6 +562,10 @@ class HistoryPanel():
             else:
                 print(f'{self.htypes[0:3]} ... {self.htypes[-3:-1]}')
             print(f'Shares (total {self.level_count} shares):')
+            if self.level_count <= 10:
+                print(f'{self.shares}')
+            else:
+                print(f'{self.shares[0:3]} ... {self.shares[-3:-1]}')
             sum_nnan = np.sum(~np.isnan(self.values), 1)
             df = pd.DataFrame(sum_nnan, index=self.shares, columns=self.htypes)
             print('non-null values for each share and data type:')
@@ -543,6 +576,10 @@ class HistoryPanel():
         """ 返回一个新的HistoryPanel对象，其值和本对象相同"""
         # TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
         return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
+
+    def len(self):
+        """ 返回HistoryPanel对象的长度，即日期个数"""
+        return self.row_count
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
         """ 给HistoryPanel对象的层、行、列标签重新赋值
@@ -867,9 +904,9 @@ class HistoryPanel():
         --------
         >>> hp = HistoryPanel(values=np.array([[[1, 2, np.nan], [4, 5, 6]],
         ...                                    [[7, 8, np.nan], [np.inf, 11, 12]]]),
-        ...                    levels=['000001', '000002'],
-        ...                    rows=['2019-01-01', '2019-01-02'],
-        ...                    columns=['open', 'high', 'low']))
+        ...                   levels=['000001', '000002'],
+        ...                   rows=['2019-01-01', '2019-01-02'],
+        ...                   columns=['open', 'high', 'low']))
         >>> hp
         share 0, label: 000001
                     open  high  low
@@ -952,29 +989,34 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
-                    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010
-        2020-01-02  12.6,   13.2,   1020020
+                    close  open        vol
+        2020-01-01   12.3  12.5  1020010.0
+        2020-01-02   12.6  13.2  1020020.0
 
-        share 1, label: 000001：
-                    close,  open,   vol
-        2020-01-01  2.3,    2.5,    20010
-        2020-01-02  2.6,    3.2,    20020
+        share 1, label: 000001
+                    close  open      vol
+        2020-01-01    2.3   2.5  20010.0
+        2020-01-02    2.6   3.2  20020.0
 
         >>> hp.flatten_to_dataframe(along='col')
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+                   000300                  000001
+                    close  open        vol  close open      vol
+        2020-01-01   12.3  12.5  1020010.0    2.3  2.5  20010.0
+        2020-01-02   12.6  13.2  1020020.0    2.6  3.2  20020.0
 
         >>> hp.flatten_to_dataframe(along='row')
-                            close,  open,   vol
-        000300  2020-01-01  12.3,   12.5,   1020010
-                2020-01-02  12.6,   13.2,   1020020
-        000001  2020-01-01  2.3,    2.5,    20010
-                2020-01-02  2.6,    3.2,    20020
+                           close  open        vol
+        000300 2020-01-01   12.3  12.5  1020010.0
+               2020-01-02   12.6  13.2  1020020.0
+        000001 2020-01-01    2.3   2.5    20010.0
+               2020-01-02    2.6   3.2    20020.0
         """
         if not isinstance(along, str):
             raise TypeError(f'along must be a string, got {type(along)} instead')
@@ -982,6 +1024,8 @@ class HistoryPanel():
             raise ValueError(f'along must be "col" or "row", got {along}')
 
         df_dict = self.to_df_dict(by='share')
+        if self.is_empty:
+            return pd.DataFrame()
         if along in ('col', 'column'):
             return pd.concat(df_dict, axis=1, keys=df_dict.keys())
         if along == 'row':
@@ -1002,29 +1046,34 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
-                    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010
-        2020-01-02  12.6,   13.2,   1020020
+                    close  open        vol
+        2020-01-01   12.3  12.5  1020010.0
+        2020-01-02   12.6  13.2  1020020.0
 
-        share 1, label: 000001：
-                    close,  open,   vol
-        2020-01-01  2.3,    2.5,    20010
-        2020-01-02  2.6,    3.2,    20020
+        share 1, label: 000001
+                    close  open      vol
+        2020-01-01    2.3   2.5  20010.0
+        2020-01-02    2.6   3.2  20020.0
 
         >>> hp.to_multi_index_dataframe(along='col')
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+                   000300                  000001
+                    close  open        vol  close open      vol
+        2020-01-01   12.3  12.5  1020010.0    2.3  2.5  20010.0
+        2020-01-02   12.6  13.2  1020020.0    2.6  3.2  20020.0
 
         >>> hp.to_multi_index_dataframe(along='row')
-                            close,  open,   vol
-        000300  2020-01-01  12.3,   12.5,   1020010
-                2020-01-02  12.6,   13.2,   1020020
-        000001  2020-01-01  2.3,    2.5,    20010
-                2020-01-02  2.6,    3.2,    20020
+                           close  open        vol
+        000300 2020-01-01   12.3  12.5  1020010.0
+               2020-01-02   12.6  13.2  1020020.0
+        000001 2020-01-01    2.3   2.5    20010.0
+               2020-01-02    2.6   3.2    20020.0
         """
         return self.flatten_to_dataframe(along=along)
 
@@ -1043,29 +1092,34 @@ class HistoryPanel():
 
         Examples
         --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
         >>> hp
         share 0, label: 000300
-                    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010
-        2020-01-02  12.6,   13.2,   1020020
+                    close  open        vol
+        2020-01-01   12.3  12.5  1020010.0
+        2020-01-02   12.6  13.2  1020020.0
 
-        share 1, label: 000001：
-                    close,  open,   vol
-        2020-01-01  2.3,    2.5,    20010
-        2020-01-02  2.6,    3.2,    20020
+        share 1, label: 000001
+                    close  open      vol
+        2020-01-01    2.3   2.5  20010.0
+        2020-01-02    2.6   3.2  20020.0
 
         >>> hp.flatten(along='col')
-                    000300                  000001
-                    close,  open,   vol,    close,  open,   vol
-        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
-        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+                   000300                  000001
+                    close  open        vol  close open      vol
+        2020-01-01   12.3  12.5  1020010.0    2.3  2.5  20010.0
+        2020-01-02   12.6  13.2  1020020.0    2.6  3.2  20020.0
 
         >>> hp.flatten(along='row')
-                            close,  open,   vol
-        000300  2020-01-01  12.3,   12.5,   1020010
-                2020-01-02  12.6,   13.2,   1020020
-        000001  2020-01-01  2.3,    2.5,    20010
-                2020-01-02  2.6,    3.2,    20020
+                           close  open        vol
+        000300 2020-01-01   12.3  12.5  1020010.0
+               2020-01-02   12.6  13.2  1020020.0
+        000001 2020-01-01    2.3   2.5    20010.0
+               2020-01-02    2.6   3.2    20020.0
         """
         return self.flatten_to_dataframe(along=along)
 
@@ -1088,8 +1142,10 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = HistoryPanel(np.random.randn(2, 3, 4), hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
-        ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
+        >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
+        ...                   rows=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   columns=['close', 'open', 'high', 'low'])
         >>> hp
         share 0, label: 000001
                     close,  open,   high,   low
@@ -1183,8 +1239,10 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = HistoryPanel(np.random.randn(2, 3, 4), hdates=['2020-01-01', '2020-01-02', '2020-01-03'],
-        ...                   shares=['000001', '000002', '000003'], htypes=['close', 'open', 'high', 'low'])
+        >>> hp = HistoryPanel(np.random.randn(2, 3, 4),
+        ...                   rows=['2020-01-01', '2020-01-02', '2020-01-03'],
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   columns=['close', 'open', 'high', 'low'])
         >>> hp
         share 0, label: 000001
                     close,  open,   high,   low
@@ -1246,17 +1304,237 @@ class HistoryPanel():
 
         return self.to_df_dict(by=by)
 
-    # TODO: implement this method
+    def flattened_head(self, row_count=5):
+        """ 以multi-index DataFrame的形式返回HistoryPanel的最初几行，默认五行
+
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
+
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only first row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含前row_count行
+
+        Examples
+        --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.flattened_head(3)
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010 2.3,    2.5,    20010
+        2020-01-02  12.6,   13.2,   1020020 2.6,    3.2,    20020
+        2020-01-03  12.9,   13.0,   1020030 2.9,    3.0,    20030
+        """
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
+        return self.flatten_to_dataframe(along='col').head(row_count)
+
+    def flattened_tail(self, row_count=5):
+        """ 以multi-index DataFrame的形式返回HistoryPanel的最后几行，默认五行
+
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
+
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only last row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含后row_count行
+
+        Examples
+        --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.flattened_tail(3)
+                    000300                  000001
+                    close,  open,   vol,    close,  open,   vol
+        2020-01-04  12.3,   12.5,   1020040 2.3,    2.5,    20040
+        2020-01-05  12.6,   13.2,   1020050 2.6,    3.2,    20050
+        2020-01-06  12.9,   13.0,   1020060 2.9,    3.0,    20060
+        """
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
+        return self.flatten_to_dataframe(along='col').tail(row_count)
+
     def head(self, row_count=5):
-        """打印HistoryPanel的最初几行，默认打印五行"""
+        """返回HistoryPanel的最初几行，默认五行
 
-        raise NotImplementedError
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
 
-    # TODO: implement this method
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only first row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含前row_count行
+
+        Examples
+        --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.head(3)
+        share 0, label: 000300
+                    close,  open,   vol,
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+
+        share 1, label: 000001
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        """
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
+        return self.isegment(0, row_count)
+
     def tail(self, row_count=5):
-        """打印HistoryPanel的最末几行，默认打印五行"""
+        """返回HistoryPanel的最末几行，默认五行
 
-        raise NotImplementedError
+        Parameters
+        ----------
+        row_count: int, default 5
+            打印的行数
+
+        Returns
+        -------
+        dataframe, multi-indexed by share and htype as columns, with only last row_count rows
+        一个dataframe，以share和htype为列的多重索引，只包含最后row_count行
+
+        Examples
+        --------
+        >>> data = np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020], [12.9, 13.0, 1020030],
+        ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
+        ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
+        ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
+        >>> hp = qteasy.HistoryPanel(values=data,
+        ...                          levels=['000300', '000001'],
+        ...                          rows=pd.date_range('2020-01-01', periods=6),
+        ...                          columns=['close', 'open', 'vol'])
+        >>> hp
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-01  12.3,   12.5,   1020010
+        2020-01-02  12.6,   13.2,   1020020
+        2020-01-03  12.9,   13.0,   1020030
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-01  2.3,    2.5,    20010
+        2020-01-02  2.6,    3.2,    20020
+        2020-01-03  2.9,    3.0,    20030
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+
+        >>> hp.tail(3)
+        share 0, label: 000300
+                    close,  open,   vol
+        2020-01-04  12.3,   12.5,   1020040
+        2020-01-05  12.6,   13.2,   1020050
+        2020-01-06  12.9,   13.0,   1020060
+
+        share 1, label: 000001：
+                    close,  open,   vol
+        2020-01-04  2.3,    2.5,    20040
+        2020-01-05  2.6,    3.2,    20050
+        2020-01-06  2.9,    3.0,    20060
+        """
+        if row_count <= 0:
+            raise ValueError("row_count should be positive")
+        if row_count > self.shape[1]:
+            row_count = self.shape[1]
+        return self.isegment(- row_count, None)
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):
@@ -1329,9 +1607,9 @@ def dataframe_to_hp(
         需要被转化为HistoryPanel的DataFrame。
     hdates: DatetimeIndex or List of DateTime like, Optional
         如果给出hdates，它会被用于转化后HistoryPanel的日期标签
-    htypes: str, Optional
+    htypes: str or list of str, Optional
         转化后HistoryPanel的历史数据类型标签
-    shares: str, Optional
+    shares: str or list of str, Optional
         转化后HistoryPanel的股票代码标签
     column_type: str, Default None
         DataFrame的column代表的数据类型，可以为 'shares' or 'htype'
@@ -1348,6 +1626,53 @@ def dataframe_to_hp(
         在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出
     2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
     具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
+
+    Examples
+    --------
+    >>> dataframe = pd.DataFrame(
+    ...     data=np.random.rand(3, 3),
+    ...     index=pd.date_range(start='2020-01-01', periods=3),
+    ...     columns=['A', 'B', 'C']
+    ... )
+    >>> dataframe
+
+    Out:
+                       A         B         C
+    2020-01-01  0.814394  0.284772  0.259304
+    2020-01-02  0.237300  0.483317  0.600886
+    2020-01-03  0.744638  0.255470  0.953640
+
+    >>> hp = dataframe_to_hp(dataframe, htypes=['open', 'close', 'high'], shares='000001')
+    >>> hp
+
+    Out:
+    share 0, label: 000001
+                    open     close      high
+    2020-01-01  0.814394  0.284772  0.259304
+    2020-01-02  0.237300  0.483317  0.600886
+    2020-01-03  0.744638  0.255470  0.953640
+
+    >>> hp = dataframe_to_hp(dataframe, htypes='open', shares=['000001', '000002', '000003'])
+    >>> hp
+
+    Out:
+    share 0, label: 000001
+                    open
+    2020-01-01  0.814394
+    2020-01-02  0.237300
+    2020-01-03  0.744638
+
+    share 1, label: 000002
+                    open
+    2020-01-01  0.284772
+    2020-01-02  0.483317
+    2020-01-03  0.255470
+
+    share 2, label: 000003
+                    open
+    2020-01-01  0.259304
+    2020-01-02  0.600886
+    2020-01-03  0.953640
     """
 
     available_column_types = ['shares', 'htypes', None]
@@ -1514,8 +1839,8 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
     >>> df1 = pd.DataFrame([[1, 2, 3], [4, 5, 6]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
     >>> df2 = pd.DataFrame([[7, 8, 9], [10, 11, 12]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
     >>> df3 = pd.DataFrame([[13, 14, 15], [16, 17, 18]], index=['20210101', '20210102'], columns=['open', 'close', 'low'])
-    >>> dfs = [df1, df2, df3]
-    >>> hp = stack_dataframes(dfs, dataframe_as='shares', shares='000001.SZ, 000002.SZ, 000003.SZ')
+    >>> dataframes = [df1, df2, df3]
+    >>> hp = stack_dataframes(dataframes, dataframe_as='shares', shares='000001.SZ, 000002.SZ, 000003.SZ')
     >>> hp
     share 0, label: 000001.SZ
              open  close   low
@@ -1632,9 +1957,11 @@ def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, h
 def get_history_panel(
         htypes,
         shares=None,
+        symbols=None,
+        freq=None,
         start=None,
         end=None,
-        freq=None,
+        rows=None,
         asset_type: str = None,
         adj: str = None,
         data_source=None,
@@ -1668,15 +1995,23 @@ def get_history_panel(
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    start: str
-        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-    end: str
-        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    symbols: [str, list]
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+        - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+        - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
     freq: str
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-    asset_type: str, list
+    start: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+    end: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    rows: int
+        获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
+        如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
+    asset_type: str, list, optional, default "any"
         限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
         逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
          - any: 可以获取任意资产类型的证券数据(默认值)
@@ -1684,7 +2019,7 @@ def get_history_panel(
          - IDX: 只获取指数类型证券的数据
          - FT:  只获取期货类型证券的数据
          - FD:  只获取基金类型证券的数据
-    adj: str
+    adj: str, optional, default "none"
         对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
          - none / n: 不复权(默认值)
          - back / b: 后复权
@@ -1760,34 +2095,41 @@ def get_history_panel(
 
     if not isinstance(shares, (str, list)):
         raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+    if not isinstance(htypes, (str, list)):
+        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+
     if isinstance(shares, str):
         shares = str_to_list(shares)
     if isinstance(shares, list):
         if not all(isinstance(item, str) for item in shares):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
-
-    if not isinstance(htypes, (str, list)):
-        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
     if isinstance(htypes, list):
         if not all(isinstance(item, str) for item in htypes):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
 
-    if (start is None) or (end is None):
-        raise KeyError(f'both start and end should be some type of datetime or like')
-    try:
-        start = pd.to_datetime(start)
-        end = pd.to_datetime(end)
-    except Exception:
-        raise Exception(f'both or one of start and end can not be converted to datetime format')
+    if start is not None:
+        try:
+            start = pd.to_datetime(start)
+        except Exception:
+            raise Exception(f'Start date can not be converted to datetime format')
+    if end is not None:
+        try:
+            end = pd.to_datetime(end)
+        except Exception:
+            raise Exception(f'End date can not be converted to datetime format')
 
+    # if isinstance(freq, list):
+    #     freq = ','.join(freq)
     if not isinstance(freq, str):
         raise TypeError(f'freq should be a string, got {type(freq)} instead')
     if freq.upper() not in TIME_FREQ_STRINGS:
         raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
     freq = freq.lower()
 
+    if asset_type is None:
+        asset_type = 'any'
     if not isinstance(asset_type, (str, list)):
         raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
     if isinstance(asset_type, str):
@@ -1800,6 +2142,8 @@ def get_history_panel(
         asset_type = AVAILABLE_ASSET_TYPES
     asset_type = [item.upper() for item in asset_type]
 
+    if adj is None:
+        adj = 'none'
     if not isinstance(adj, str):
         raise TypeError(f'adj type should be a string, got {type(adj)} instead')
     if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
@@ -1814,6 +2158,7 @@ def get_history_panel(
         if not isinstance(data_source, qteasy.DataSource):
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
+
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
     htype_splits = [itm.split('-') for itm in htypes]
     if shares:
@@ -1835,6 +2180,7 @@ def get_history_panel(
             start=start,
             end=end,
             freq=freq,
+            row_count=rows,
             asset_type=asset_type,
             adj=adj
     ) if normal_htypes else {}
@@ -1852,6 +2198,7 @@ def get_history_panel(
             start=start,
             end=end,
             freq=freq,
+            row_count=rows,
             asset_type=asset_type,
             adj=adj
     ) if htype_code_pairs else {}
@@ -1886,7 +2233,7 @@ def get_history_panel(
 
     # 处理所有的df，根据设定执行以下几个步骤：
     #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
-    #  2，检查整行NaN值得情况，根据设定去掉或保留这些行
+    #  2，检查整行NaN值的情况，根据设定去掉或保留这些行
     #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
     for htyp in htypes:
         if resample_method is not None:

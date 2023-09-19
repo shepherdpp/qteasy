@@ -12,7 +12,7 @@ import unittest
 
 import pandas as pd
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
@@ -358,7 +358,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
         print(f'test3: find basic info for all funds that are being issued')
-        df = fund_basic(status='I')
+        df = fund_basic(status='L')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)

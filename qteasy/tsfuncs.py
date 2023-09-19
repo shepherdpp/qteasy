@@ -14,7 +14,6 @@ import tushare as ts
 from qteasy import logger_core, QT_CONFIG
 from .utilfuncs import regulate_date_format, list_to_str_format
 from .utilfuncs import retry
-from requests.exceptions import ProxyError
 
 data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
 data_download_retry_delay = QT_CONFIG.hist_dnld_retry_delay
@@ -25,18 +24,13 @@ data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
 ERRORS_TO_CHECK_ON_RETRY = Exception
 
 
-# tsfuncs interface function
-# call this function to extract data for tables defined in DataSource module
-# interface function should be defined in all data provider modules
-def acquire_data(table, **kwargs):
+# tsfuncs interface function, call this function to extract data
+# TODO: update this funciton:
+#  1, remove parameter "table" and replace it with "api_name" instead (or "api")
+#  tushare的API名称解析应该在database模块中完成，而不是在这里，这里仅仅考虑跟tushare相关的所有函数的接口
+def acquire_data(api_name, **kwargs):
     """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
-    # function map 定义了table与tushare函数之间的对应关系，以便调用正确的函数下载数据
-    from .database import TABLE_MASTERS, TABLE_MASTER_COLUMNS
-    assert isinstance(table, str), TypeError(f'A string should be given as table name, got {type(table)} instead')
-    assert table in TABLE_MASTERS.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
-
-    func_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
-    func = globals()[func_name]
+    func = globals()[api_name]
     res = func(**kwargs)
     return res
 
@@ -461,7 +455,7 @@ def daily_basic2(ts_code: object = None,
     trade_date: str, 交易日期
     start: 记录开始日期
     end: 记录结束日期
-    TODO: 以下字段需要进一步确认
+
     Returns
     -------
     pd.DataFrame
@@ -538,6 +532,33 @@ def index_daily_basic(ts_code: object = None,
     return res
 
 
+def realtime_min(ts_code, freq):
+    """ 获取实时分钟行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
+
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    freq: str, 频率，可选值为1/5/15/30/60分钟
+
+    Returns
+    -------
+    pd.DataFrame
+
+    Raises
+    ------
+    KeyError: 如果freq不合法，会Raise KeyError
+    """
+    freq = freq.upper()
+    if freq == 'H':
+        freq = '60MIN'
+
+    pro = ts.pro_api()
+    res = pro.rt_min(ts_code=ts_code, freq=freq)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq={freq}')
+    return res
+
+
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
        tries=data_download_retry_count, delay=data_download_retry_delay,
        backoff=data_download_retry_backoff, logger=logger_core)
@@ -591,6 +612,7 @@ def mins30(ts_code,
            end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
+    ts.pro_bar()
     res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stk_mins with ts_code={ts_code}, freq="30min"'
@@ -761,7 +783,7 @@ def monthly(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_daily(ts_code=None,
                 trade_date=None,
@@ -1755,7 +1777,7 @@ def indicators(ts_code: str,
 
     Examples
     --------
-    >>> indicator(ts_code='600000.SH', fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps')
+    >>> indicators(ts_code='600000.SH', fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps')
     output:
               ts_code  ann_date    eps  dt_eps  total_revenue_ps  revenue_ps
         0   600000.SH  20191030  1.620    1.62            4.9873      4.9873
@@ -2334,7 +2356,7 @@ def fund_net_value(ts_code: str = None,
 
     Examples
     --------
-    >>> fund_neg_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
+    >>> fund_net_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
     output:
         ts_code   adj_nav
         0     165509.SZ  1.827306

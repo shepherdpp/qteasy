@@ -19,7 +19,7 @@ import numpy as np
 
 import qteasy
 from .history import get_history_panel
-from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
+from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
@@ -444,6 +444,10 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     -------
     pd.DataFrame
         包含相应股票数据的DataFrame
+
+    See Also
+    --------
+    更多介绍参见QTEASY文档
     """
     from qteasy import logger_core
     no_visual = False
@@ -771,9 +775,14 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
         - dma
         - rsi
 
-    :param data:
-    :return:
-        tuple:
+    Parameters
+    ----------
+    data : DataFrame
+        一只股票的历史K线数据，包括O/H/L/C/V五组数据或者O/H/L/C四组数据
+
+    Returns
+    -------
+    tuple: (data, parameter_string)
         (pd.DataFrame, str) 添加指标的价格数据表，所有指标的参数字符串，以"/"分隔
     """
     if mav is None:
@@ -818,7 +827,7 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
 
 
 def _plot_loop_result(loop_results: dict, config):
-    """plot the loop results in a fancy way that displays all information more clearly"""
+    """ 以图表的形式输出回测结果。"""
     # prepare looped_values dataframe
     if not isinstance(loop_results, dict):
         raise TypeError('')
@@ -900,8 +909,8 @@ def _plot_loop_result(loop_results: dict, config):
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
                           f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}       '
-                          f'  time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
-                          f'  back test:{time_str_format(loop_results["loop_run_time"])}')
+                          f'  time consumed:   signal creation: {sec_to_duration(loop_results["op_run_time"])};'
+                          f'  back test:{sec_to_duration(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.90, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
@@ -1160,16 +1169,20 @@ def _plot_loop_result(loop_results: dict, config):
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
                       config=None):
-    """ plot test result of optimization results
+    """ 输出优化后参数的测试结果
 
-    :param test_eval_res:
-        :type test_eval_res: list
+    Parameters
+    ----------
+    opti_eval_res : list
+        优化后参数的测试结果
+    test_eval_res : list optional
+        测试结果
+    config : dict optional
+        配置参数
 
-    :param opti_eval_res:
-        :type opti_eval_res: list
-
-    :param config:
-    :return:
+    Returns
+    -------
+    None
     """
     # 以下评价指标是可以用来比较优化数据集和测试数据集的表现的，只有以下几个评价指标可以使用子图表显示
     plot_compariables = ['annual_rtn',
@@ -1210,14 +1223,14 @@ def _plot_test_result(opti_eval_res: list,
                          f'from: {valid_opti_eval_res[0]["loop_start"].date()} to '
                          f'{valid_opti_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:'
-                         f'  signal creation: {time_str_format(valid_opti_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(valid_opti_eval_res[0]["loop_run_time"])}\n'
+                         f'  signal creation: {sec_to_duration(valid_opti_eval_res[0]["op_run_time"])};'
+                         f'  back test:{sec_to_duration(valid_opti_eval_res[0]["loop_run_time"])}\n'
                          f'test periods: {valid_test_eval_res[0]["years"]:.1f} years, '
                          f'from: {valid_test_eval_res[0]["loop_start"].date()} to '
                          f'{valid_test_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:'
-                         f'  signal creation: {time_str_format(valid_test_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(valid_test_eval_res[0]["loop_run_time"])}')
+                         f'  signal creation: {sec_to_duration(valid_test_eval_res[0]["op_run_time"])};'
+                         f'  back test:{sec_to_duration(valid_test_eval_res[0]["loop_run_time"])}')
 
     # 确定参考数据在起始日的数据，以便计算参考数据在整个历史区间内的原因
     ref_start_value = complete_reference.iloc[0]
@@ -1406,7 +1419,7 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'Operation list is created on history data: \n'
           f'starts:     {h_dates[0]}\n'
           f'end:        {h_dates[-1]}')
-    print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
+    print(f'time consumption for operate signal creation: {sec_to_duration(run_time_prepare_data)}\n')
     # print(f'Operation signals are generated on {op_dates[0]}\nends on {op_dates[-1]}\n'
     #       f'Total signals generated: {len(op_dates)}.')
     print(f'Operation signal for shares on {op_dates.date()}\n')
@@ -1441,11 +1454,20 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
 
-    :param loop_results:
-    :param columns:
-    :param headers:
-    :param formatter:
-    :return:
+    Parameters
+    ----------
+    loop_results: dict
+        回测结果
+    columns: list, optional, to be implemented
+        输出的列名
+    headers: list, optional, to be implemented
+        输出的表头
+    formatter: list, optional, to be implemented
+        输出的格式化函数
+
+    Returns
+    -------
+    None
     """
     if loop_results is None:
         return
@@ -1457,8 +1479,8 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'     |                                  |\n'
           f'     ====================================')
     print(f'\nqteasy running mode: 1 - History back testing\n'
-          f'time consumption for operate signal creation: {time_str_format(loop_results["op_run_time"])}\n'
-          f'time consumption for operation back looping:  {time_str_format(loop_results["loop_run_time"])}\n')
+          f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n'
+          f'time consumption for operation back looping:  {sec_to_duration(loop_results["loop_run_time"])}\n')
     print(f'investment starts on      {looped_values.index[0]}\n'
           f'ends on                   {looped_values.index[-1]}\n'
           f'Total looped periods:     {loop_results["years"]:.1f} years.')
@@ -1518,15 +1540,30 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
         以统计结果和表格的形式输出
 
-    :param result:
-    :param columns:
-    :param headers:
-    :param formatter:
-    :return:
+    Parameters
+    ----------
+    result: dict
+        回测结果
+    config: dict, optional
+        输出的列名
+    columns: list, optional, to be implemented
+        输出的列名
+    headers: list, optional, to be implemented
+        输出的表头
+    formatter: list, optional, to be implemented
+        输出的格式化函数
+
+    Returns
+    -------
+    None
     """
     result = pd.DataFrame(result)
     first_res = result.iloc[0]
     ref_rtn, ref_annual_rtn = first_res['ref_rtn'], first_res['ref_annual_rtn']
+    if config is None:
+        from qteasy import QT_CONFIG
+        config = QT_CONFIG
+
     print(f'\n'
           f'==================================== \n'
           f'|                                  |\n'

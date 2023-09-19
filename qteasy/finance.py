@@ -49,6 +49,7 @@ def set_cost(**kwargs):
     Returns
     -------
     cost : dict of float, cost parameters
+
     """
     cost = dict(buy_fix=0.0,
                 sell_fix=0.0,
@@ -396,12 +397,12 @@ class CashPlan:
     CashPlan(['20200101', '20200201', '20200304', '20200404'], [10000, 20000, 10000, 20000], 0.0)
     """
 
-    def __init__(self, dates: (str, [str]), amounts: (int, float, [int], [float]), interest_rate: float = 0.0):
+    def __init__(self, dates, amounts: (int, float, [int], [float]), interest_rate: float = 0.0):
         """ 初始化投资计划
 
         Parameters
         ----------
-        dates: str or list of str
+        dates: str, datetime, list of str or list of datetime
             投资的日期，可以是一个日期字符串，也可以是一个日期字符串列表
         amounts: int, float, list of int or float
             投资的金额，可以是一个数字，也可以是一个数字列表

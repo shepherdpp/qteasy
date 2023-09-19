@@ -226,9 +226,9 @@ class Space:
         interval_or_qty: int
             从空间中每个轴上需要提取数据的步长或坐标数量
         how: str, default 'interval', {'interval', 'intv', 'step', 'rand', 'random'}
-            有两个合法参数：
+            合法参数：
             interval/intv/step,以间隔步长的方式提取坐标，这时候interval_or_qty代表步长
-            rand / random, 以随机方式提取坐标，这时候interval_or_qty代表提取数量
+            rand/random, 以随机方式提取坐标，这时候interval_or_qty代表提取数量
 
         Returns
         -------
@@ -469,11 +469,13 @@ class Axis:
                 self._new_continuous_axis(boe[0], boe[1])
 
     def __repr__(self):
-        if self._axis_type == 'enum':
-            return 'Enum Axis({})'.format(self._enum_val)
-        if self._axis_type == 'int':
-            return 'Int Axis({}~{})'.format(self._lbound, self._ubound)
-        return 'Float Axis({}~{})'.format(self._lbound, self._ubound)
+        """输出数轴的字符串表示"""
+        if self.axis_type == 'enum':
+            return 'Enum Axis({})'.format(self.axis_boe)
+        elif self.axis_type == 'float':
+            return 'Float Axis({}, {})'.format(self._lbound, self._ubound)
+        else:
+            return 'Int Axis({}, {})'.format(self._lbound, self._ubound)
 
     @property
     def count(self):

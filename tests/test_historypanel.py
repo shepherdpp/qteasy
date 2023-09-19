@@ -15,7 +15,7 @@ import pandas as pd
 from pandas import Timestamp
 import numpy as np
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 
@@ -1052,6 +1052,70 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(TypeError, hp.flatten_to_dataframe, along=35)
         self.assertRaises(ValueError, hp.flatten_to_dataframe, along='wrong_value')
         self.assertRaises(Exception, hp.flatten_to_dataframe, along='col', drop_nan=True)
+        # test empty history panel
+        hp = qt.HistoryPanel()
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertIsInstance(hp.flatten_to_dataframe(), pd.DataFrame)
+        self.assertTrue(hp.flatten_to_dataframe().empty)
+
+    def test_head_and_tail(self):
+        """ 测试函数 head() 和 tail() """
+
+        hp = self.hp
+
+        head = hp.head(3)
+        print(f'test head()\nhp is {hp}\nhead(3) is {head}')
+        self.assertIsInstance(head, qt.HistoryPanel)
+        self.assertEqual(head.shape, (hp.shape[0], 3, hp.shape[2]))
+        self.assertEqual(head.hdates, hp.hdates[0:3])
+        self.assertEqual(head.htypes, hp.htypes)
+        self.assertEqual(head.shares, hp.shares)
+        self.assertTrue(np.allclose(head.values, hp.values[:, 0:3]))
+
+        tail = hp.tail(3)
+        print(f'test tail()\nhp is {hp}\ntail(3) is {tail}')
+        self.assertIsInstance(tail, qt.HistoryPanel)
+        self.assertEqual(tail.shape, (hp.shape[0], 3, hp.shape[2]))
+        self.assertEqual(tail.hdates, hp.hdates[-3:])
+        self.assertEqual(tail.htypes, hp.htypes)
+        self.assertEqual(tail.shares, hp.shares)
+        self.assertTrue(np.allclose(tail.values, hp.values[:, -3:]))
+
+        head = hp.flattened_head(3)
+        print(f'test flattened_head()\nhp is \n{hp}\n flattened_head(3):\n{head}')
+        self.assertIsInstance(head, pd.DataFrame)
+        self.assertEqual(head.shape, (3, hp.shape[0] * hp.shape[2]))
+        self.assertEqual(list(head.index), hp.hdates[0:3])
+        self.assertEqual(head.columns.unique(level=1).to_list(), hp.htypes)
+        self.assertEqual(head.columns.unique(level=0).to_list(), hp.shares)
+        self.assertTrue(np.allclose(head['000100'].values, hp.values[0, 0:3]))
+        self.assertTrue(np.allclose(head['000101'].values, hp.values[1, 0:3]))
+        self.assertTrue(np.allclose(head['000102'].values, hp.values[2, 0:3]))
+        self.assertTrue(np.allclose(head['000103'].values, hp.values[3, 0:3]))
+        self.assertTrue(np.allclose(head['000104'].values, hp.values[4, 0:3]))
+
+        tail = hp.flattened_tail(3)
+        print(f'test flattened_tail()\nhp is \n{hp}\n flattened_tail(3):\n{tail}')
+        self.assertIsInstance(tail, pd.DataFrame)
+        self.assertEqual(tail.shape, (3, hp.shape[0] * hp.shape[2]))
+        self.assertEqual(list(tail.index), list(hp.hdates[-3:]))
+        self.assertEqual(tail.columns.unique(level=1).to_list(), hp.htypes)
+        self.assertEqual(tail.columns.unique(level=0).to_list(), hp.shares)
+        self.assertTrue(np.allclose(tail['000100'].values, hp.values[0, -3:]))
+        self.assertTrue(np.allclose(tail['000101'].values, hp.values[1, -3:]))
+        self.assertTrue(np.allclose(tail['000102'].values, hp.values[2, -3:]))
+        self.assertTrue(np.allclose(tail['000103'].values, hp.values[3, -3:]))
+        self.assertTrue(np.allclose(tail['000104'].values, hp.values[4, -3:]))
+
+        print('test error raises')
+        self.assertRaises(TypeError, hp.head, '3')
+        self.assertRaises(ValueError, hp.head, -1)
+        self.assertRaises(TypeError, hp.tail, '3')
+        self.assertRaises(ValueError, hp.tail, -1)
+        self.assertRaises(TypeError, hp.flattened_head, '3')
+        self.assertRaises(ValueError, hp.flattened_head, -1)
+        self.assertRaises(TypeError, hp.flattened_tail, '3')
+        self.assertRaises(ValueError, hp.flattened_tail, -1)
 
 
 if __name__ == '__main__':
