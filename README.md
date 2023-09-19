@@ -28,17 +28,17 @@
 - [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
   - [初始配置——本地数据源](#配置本地数据源)
   - [下载股票价格并可视化](#下载股票价格数据并将其可视化)
-  - [创建投资策略](#创建一个投资策略，进行回测评价并优化其表现)
+  - [创建投资策略](#创建一个投资策略)
   - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
-  - [投资策略的优化](#回测并优化交易策略)
   - [投资策略的实盘运行](#投资策略的实盘运行)
+  - [投资策略的优化](#回测并优化交易策略)
 
 ## QTEASY简介
 
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.1.0`
+- Latest Version: `1.0.0`
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -156,6 +156,7 @@ test_db_name = test_db <或其他用于测试的临时数据库>
 要下载数据，使用`qt.refill_data_source()`函数。下面的代码下载一年内所有股票的日K线数据：
 
 ```python
+import qteasy as qt
 qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
 ```
 
@@ -175,7 +176,8 @@ qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='202
 数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。
 
 ```python
-qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
+import qteasy as qt
+
 qt.get_history_data(htypes='open, high, low, close', 
                     shares='000001.SZ, 000005.SZ',
                     start='20210101',
@@ -188,21 +190,7 @@ qt.get_history_data(htypes='open, high, low, close',
  2021-01-04  19.10  19.10  18.44  18.60
  2021-01-05  18.40  18.48  17.80  18.17
  2021-01-06  18.08  19.56  18.00  19.56
- 2021-01-07  19.52  19.98  19.23  19.90
- 2021-01-08  19.90  20.10  19.31  19.85
- 2021-01-11  20.00  20.64  20.00  20.38
- 2021-01-12  20.39  21.00  20.18  21.00
- 2021-01-13  21.00  21.01  20.40  20.70
- 2021-01-14  20.68  20.89  19.95  20.17
- 2021-01-15  21.00  21.95  20.82  21.00
- 2021-01-18  21.20  22.78  21.20  22.70
- 2021-01-19  22.51  22.84  22.05  22.34
- 2021-01-20  22.15  22.97  22.12  22.47
- 2021-01-21  22.50  22.80  22.15  22.23
- 2021-01-22  22.23  22.23  21.51  22.03
- 2021-01-25  21.72  22.60  21.43  22.49
- 2021-01-26  22.30  23.32  22.30  22.37
- 2021-01-27  22.31  23.47  22.31  23.08
+ ... 
  2021-01-28  22.78  23.18  22.45  22.81
  2021-01-29  22.81  23.54  22.71  23.09
  2021-02-01  23.00  24.99  22.70  24.55,
@@ -212,21 +200,7 @@ qt.get_history_data(htypes='open, high, low, close',
  2021-01-04  2.53  2.53  2.51   2.52
  2021-01-05  2.52  2.52  2.46   2.47
  2021-01-06  2.47  2.48  2.39   2.40
- 2021-01-07  2.40  2.43  2.36   2.38
- 2021-01-08  2.36  2.38  2.32   2.37
- 2021-01-11  2.37  2.37  2.29   2.29
- 2021-01-12  2.30  2.32  2.29   2.30
- 2021-01-13  2.31  2.31  2.17   2.20
- 2021-01-14  2.19  2.23  2.15   2.20
- 2021-01-15  2.20  2.28  2.20   2.26
- 2021-01-18  2.25  2.30  2.25   2.28
- 2021-01-19  2.28  2.36  2.26   2.32
- 2021-01-20  2.32  2.39  2.31   2.32
- 2021-01-21  2.31  2.34  2.29   2.32
- 2021-01-22  2.31  2.32  2.26   2.26
- 2021-01-25  2.25  2.26  2.20   2.21
- 2021-01-26  2.20  2.23  2.17   2.18
- 2021-01-27  2.17  2.21  2.17   2.20
+ ...
  2021-01-28  2.18  2.23  2.18   2.20
  2021-01-29  2.19  2.21  2.11   2.14
  2021-02-01  2.08  2.09  1.93   1.94
@@ -237,6 +211,8 @@ qt.get_history_data(htypes='open, high, low, close',
 股票数据下载后，使用`qt.get_table_info()`可以检查下载后数据表的信息，以及数据表中已经下载的数据量、占用空间、起止时间等信息：
 
 ```python
+import qteasy as qt
+
 qt.get_table_info('stock_daily')
 ```
 
@@ -268,7 +244,68 @@ columns of table:
 ```
 也可以使用`qt.get_table_overview()`来检查所有数据表的信息：
 ```python
+import qteasy as qt
+
 qt.get_table_overview()
+```
+```
+Analyzing local data source tables... depending on size of tables, it may take a few minutes
+[########################################]62/62-100.0%  Analyzing completed!
+db:mysql://localhost@3306/ts_db
+Following tables contain local data, to view complete list, print returned DataFrame
+                 Has_data Size_on_disk Record_count Record_start  Record_end
+table                                                                       
+trade_calendar     True        2.5MB         73K     1990-10-12   2023-12-31
+stock_basic        True        1.5MB          5K           None         None
+stock_names        True        1.5MB         14K     1990-12-10   2023-07-17
+stock_company      True       18.5MB          3K           None         None
+stk_managers       True      150.4MB        126K     2020-01-01   2022-07-27
+index_basic        True        3.5MB         10K           None         None
+fund_basic         True        4.5MB         17K           None         None
+future_basic       True        1.5MB          7K           None         None
+opt_basic          True       15.5MB         44K           None         None
+stock_1min         True      42.83GB      264.2M       20220318     20230904
+stock_5min         True      34.33GB      231.4M       20090105     20230904
+stock_15min        True      14.45GB      140.5M       20090105     20230904
+stock_30min        True       7.78GB       76.8M       20090105     20230904
+stock_hourly       True       4.22GB       41.9M       20090105     20230904
+stock_daily        True       1.49GB       11.6M     1990-12-19   2023-09-18
+stock_weekly       True      231.9MB        2.6M     1990-12-21   2023-07-14
+stock_monthly      True       50.6MB        624K     1990-12-31   2023-06-30
+index_1min         True       4.25GB       25.4M       20220318     20230904
+index_5min         True       6.18GB       46.7M       20090105     20230904
+index_15min        True       2.61GB       25.9M       20090105     20230904
+index_30min        True      884.0MB       12.9M       20090105     20230904
+index_hourly       True      536.0MB        7.6M       20090105     20230904
+index_daily        True      309.0MB        3.7M     1990-12-19   2023-09-14
+index_weekly       True       61.6MB        663K     1991-07-05   2023-07-14
+index_monthly      True       13.5MB        156K     1991-07-31   2023-06-30
+fund_1min          True      11.89GB       75.4M       20220318     20230904
+fund_5min          True       3.68GB       12.3M       20220318     20230904
+fund_15min         True       1.57GB        6.6M       20220318     20230904
+fund_30min         True      750.9MB        2.9M       20220318     20230904
+fund_hourly        True      124.8MB        1.5M       20210104     20230904
+fund_daily         True      129.7MB        1.6M     1998-04-07   2023-09-14
+fund_nav           True      693.0MB       13.9M     2000-01-07   2023-09-13
+fund_share         True       72.7MB        1.4M     1998-03-27   2023-07-14
+fund_manager       True      109.7MB         37K     2000-02-22   2023-03-30
+future_hourly      True         32KB           0           None         None
+future_daily       True      190.8MB        2.0M     1995-04-17   2023-09-14
+options_hourly     True         32KB           0           None         None
+options_daily      True      436.0MB        4.6M     2015-02-09   2023-09-14
+stock_adj_factor   True      897.0MB       11.8M     1990-12-19   2023-09-14
+fund_adj_factor    True       74.6MB        1.8M     1998-04-07   2023-09-14
+stock_indicator    True       2.06GB       11.7M     1999-01-01   2023-09-18
+stock_indicator2   True      734.8MB        4.1M     2017-06-14   2023-09-14
+index_indicator    True        4.5MB         45K     2004-01-02   2023-09-14
+index_weight       True      748.0MB        8.5M     2005-04-08   2023-07-14
+income             True       59.7MB        213K     1990-12-31   2023-06-30
+balance            True       97.8MB        218K     1989-12-31   2023-06-30
+cashflow           True       69.7MB        181K     1998-12-31   2023-06-30
+financial          True      289.0MB        203K     1989-12-31   2023-06-30
+forecast           True       32.6MB         96K     1998-12-31   2024-03-31
+express            True        3.5MB         23K     2004-12-31   2023-06-30
+shibor             True         16KB         212           None         None
 ```
 
 股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。
@@ -329,47 +366,53 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 
 关于`DataSource`对象的更多详细介绍，请参见[qteasy教程](https://github.com/shepherdpp/qteasy/tutorials)
 
-###  创建一个投资策略，进行回测评价并优化其表现
-
-`queasy`提供了多种内置交易策略可供用户使用，因此用户不需要手工创建这些策略，可以直接使用内置策略（关于所有内置策略的介绍，请参
-见详细文档）。复合策略可以通过多个简单的策略混合而成。当复合策略无法达到预计的效果时，可以通过`qteasy.Strategy`类来自定义一个策略。
-
-### 生成一个DMA均线择时交易策略
-
 `qteasy`中的所有交易策略都是通过`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略，哪怕这些交易策略有不同的运行时机和运行频率，或者不同的用途，例如一个策略用于选股、另一个策略用于大盘择时，再一个策
 略用于风险控制，用户可以非常灵活地添加或修改`Operator`对象中的策略。
 
 将策略交给`Operator`后，只要设置好交易的资产类别，资产池的大小，设定好每个策略的运行时机和频率后，`Operator`对象就会在合适的时间启动相应的
-交易策略，生成策略信号，并将所有的策略信号混合(`blend`)后解析成为交易信号。交易信号如何解析，由`op_type`来控制。在默认情况下，`Operator`
-对象会认为所有的策略生成的是"`PT`"信号，也就是持仓目标百分比（100%表示目前应该100%持有股票，而0%表示应完全卖出股票，100%持有现金，
-`Operator`会根据当前实际持有的股票和现金数量解析策略信号，并将其转化为买入股票或卖出股票的交易信号）。
+交易策略，生成策略信号，并将所有的策略信号混合(`blend`)后解析成为交易信号。
 
-在后面的章节中我们可以详细介绍每一种信号类型以及交易策略，在这里，我们将使用一个内置的`DMA`均线择时策略来生成一个最简单的大盘择时交易系统。
+关于`Operator`对象的更多介绍，请参见`qteasy`文档
 
-创建一个`Operator`对象，并在创建时传入参数：`strategies='DMA'`，新建一个`DMA`双均线择时交易策略。
+###  创建一个投资策略
 
-```python
-op = qt.Operator(strategies='dma')
-```
+`queasy`提供了两种方式创建交易策略：
+
+- *使用内置交易策略组合*：
+  - `qteasy`提供多种内置交易策略可供用户使用，不需要手工创建。通过引用内置策略的名称（关于所有内置策略的介绍，请参
+  见详细文档）用户可以快速建立策略，还可以通过多个简单的策略混合成较为复杂的复合策略。
+- *通过策略类自行创建策略*： 
+  - 当用户的策略非常复杂时，可以通过`qteasy.Strategy`类来自定义一个策略。
+
+### 生成一个DMA均线择时交易策略
+在这里，我们将使用一个内置的`DMA`均线择时策略来生成一个最简单的大盘择时交易系统。所有内置交易策略的清单和详细说明请参见文档。
+
+创建`Operator`对象时传入参数：`strategies='DMA'`，新建一个`DMA`双均线择时交易策略。
 创建好`Operator`对象后，可以用`op.info()`来查看它的信息。
 
 ```python
+import qteasy as qt
+
+op = qt.Operator(strategies='dma')
 op.info()
 ```
 ```
-    ----------Operator Information----------
+            -----------------------Operator Information-----------------------
 Strategies:  1 Strategies
 Run Mode:    batch - All history operation signals are generated before back testing
 Signal Type: pt - Position Target, signal represents position holdings in percentage of total value
 
-    ---------------Strategies---------------
-id        name           back_test_price  d_freq    s_freq  date_types
-______________________________________________________________________
-dma       DMA                 close         d         d     ['close']
-======================================================================
-for backtest histoty price type - close:
+            ------------------------Strategy blenders-------------------------
+for strategy running timing - close:
 no blender
+
+            ----------------------------Strategies----------------------------
+id        name                  run timing   data window       data types             parameters     
+____________________________________________________________________________________________________
+dma       DMA                  days @ close  270 x days        ['close']            (12, 26, 9)     
+====================================================================================================
+
 ```
 `Operator`中每一个交易策略都会被赋予一个唯一的`ID`，我们看到`op`中有一个交易策略，ID是`dma`，我们在`Operator`层面设置或修改策略的参数
 时，都需要引用这个`ID`。
@@ -463,7 +506,7 @@ Max drawdown:                    35.04%
 
 ===========END OF REPORT=============
 ```
-
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_14_3.png)
 整个回测过程耗时0.4s左右，其中交易信号生成共耗费3.3ms，交易回测耗时348ms
 
 根据上面结果，系统使用了沪深300指数从2008年到2021年共13.1年的历史数据来测试策略，在这段时间内，模拟2008年1月1日投入10万元投资
@@ -492,7 +535,6 @@ Max drawdown:                    35.04%
 - 历史回撤分析（显示五次最大的回撤）
 - 历史收益率热力图、山积图等图表
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_14_3.png)
 
 `qteasy`提供了丰富的策略回测选项，例如：
 
@@ -501,6 +543,115 @@ Max drawdown:                    35.04%
 - 回测时是否允许持有负数仓位（用于模拟期货交易卖空行为，也可以使用专门的期货交易模拟算法）
 
 更多的选项请参见详细文档
+
+
+### 部署并开始交易策略的实盘运行
+
+`qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
+
+在`Operator`中设置好交易策略，并配置好交易参数后，可以直接启动实盘交易：
+
+```python
+import qteasy as qt
+
+# 创建一个交易策略alpha
+alpha = qt.get_built_in_strategy('ndayrate')  # 创建一个N日股价涨幅交易策略
+
+# 设置策略的运行参数
+alpha.strategy_run_freq = 'd'  # 每日运行
+alpha.data_freq = 'd' # 策略使用日频数据
+alpha.window_length = 20  # 数据窗口长度
+alpha.sort_ascending = False  # 优先选择涨幅最大的股票
+alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
+alpha.ubound = 0.005  # 筛选出涨幅大于0.5%的股票
+alpha.sel_count = 7  # 每次选出7支股票
+
+# 创建一个交易员对象，运行alpha策略
+op = qt.Operator(alpha, signal_type='PT', op_type='step')
+
+# 设置策略运行参数
+# 交易股票池包括所有的银行股和家用电器股
+asset_pool = qt.filter_stock_codes(industry='银行, 家用电器', exchange='SSE, SZSE')
+
+qt.configure(
+        mode=0,  # 交易模式为实盘运行
+        asset_type='E',  # 交易的标的类型为股票
+        asset_pool=asset_pool,  # 交易股票池为所有银行股和家用电器股
+        trade_batch_size=100,  # 交易批量为100股的整数倍
+        sell_batch_size=1,  # 卖出数量为1股的整数倍
+        live_trade_account_id=1,  # 实盘交易账户ID
+        live_trade_account='user name',  # 实盘交易用户名
+)
+
+qt.run(op)
+```
+此时`qteasy`会启动一个`Trader Shell`命令行界面，同时交易策略会自动定时运行，运行的参数随`QT_CONFIG`而定。启动TraderShell后，所有交易相关的重要信息都会显示在console中：
+
+
+```commandline
+Welcome to TraderShell! currently in dashboard mode, live status will be displayed here.
+You can not input commands in this mode, if you want to enter interactive mode, pleasepress "Ctrl+C" to exit dashboard mode and select from prompted options.
+
+[2023-09-19 22:04:19]-sleeping: will execute next task:(None) in about 2 hours
+
+```
+此时控制台上会显示当前交易执行状态：
+- 当前日期、时间、运行状态
+- 产生的交易信号和交易订单
+- 交易订单的成交情况
+- 账户资金变动情况
+- 账户持仓变动情况
+- 开盘和收盘时间预告等
+
+在`TraderShell`运行过程中可以随时按`Ctrl+C`进入Shell选单：
+```commandline
+Current mode interrupted, Input 1 or 2 or 3 for below options: 
+[1], Enter command mode; 
+[2], Enter dashboard mode. 
+[3], Exit and stop the trader; 
+please input your choice: 
+```
+
+此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以在(QTEASY)命令行提示符后输入
+命令来控制交易策略的运行：
+
+```commandline
+Welcome to the trader shell interactive mode. Type help or ? to list commands.
+Type "bye" to stop trader and exit shell.
+Type "dashboard" to leave interactive mode and enter dashboard.
+Type "help <command>" to get help for more commands.
+
+(QTEASY) overview
+Account Overview:
+-----------------
+Account ID:                     1
+User Name:                      user_name
+Created on:                     2023-07-20 22:37:35
+Own Cash:                       ¥ 740,003.49 
+Available Cash:                 ¥ 740,003.49
+Total Investment:               ¥ 1,000,000.00
+Total Value:                    ¥ 966,584.64
+Total Stock Value:              ¥ 226,581.15
+Total Profit:                   ¥ -682.76
+
+(QTEASY) orders 000651 today
+    symbol position direction order_type      qty  price_quoted      submitted_time    status  price_filled  filled_qty  canceled_qty      execution_time delivery_status
+ 000651.SZ     long      sell     market  15260.0         36.28 2023-09-18 14:59:07  canceled         36.28         0.0       15260.0 2023-09-18 15:05:01              DL
+ 000651.SZ     long      sell     market  15259.0         36.15 2023-09-19 14:59:07    filled         36.06      7600.0           0.0 2023-09-19 14:59:15              DL
+ 000651.SZ     long      sell     market  15259.0         36.15 2023-09-19 14:59:07    filled         35.82      7600.0           0.0 2023-09-19 14:59:16              DL
+ 000651.SZ     long      sell     market  15259.0         36.15 2023-09-19 14:59:07    filled         35.48        59.0           0.0 2023-09-19 14:59:17              DL
+(QTEASY) 
+
+```
+在命令行模式下可以与`TraderShell`实现交互，操作当前账户，查询交易历史、修改状态等：
+
+- `pause` / `resume`: 暂停/重新启动交易策略
+- `change`: 修改当前持仓和现金余额
+- `positions`: 查看当前持仓
+- `orders`: 查看当前订单
+- `history`: 查看历史交易记录
+- `exit`: 退出TraderShell
+- ... 更多`TraderShell`命令参见`QTEASY`文档
 
 ### 回测并优化交易策略
 
@@ -512,6 +663,9 @@ Max drawdown:                    35.04%
 对某些策略的可调参数进行优化的同时，其他策略的参数保持不变。然后运行`qt.run()`,并配置环境变量`mode=2`即可:
 
 ```python
+import qteasy as qt
+
+op = qt.Operator(strategies='dma')
 op.set_parameter('dma', opt_tag=1)
 res = qt.run(op, mode=2, visual=True)
 ```
@@ -524,35 +678,3 @@ res = qt.run(op, mode=2, visual=True)
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_15_3.png)   
-
-### 部署并开始交易策略的实盘运行
-
-在完成策略的回测和优化之后，我们可以将策略部署到实盘交易环境中，开始实盘运行。`qteasy`提供了一个`Trader`对象，用于实盘交易的
-部署和运行。
-
-在Operator中设置好交易策略，并配置好交易参数后，启动实盘交易非常容易，只需要设置
-
-```python
-qt.config['mode'] = 0
-qt.run(op, mode=0, visual=True)
-
-```
-此时qteasy会启动一个Trader Shell命令行界面，同时交易策略会自动定时运行，运行的参数随QT_CONFIG而定。在命令行界面中，默认会处于dashboard模式，
-在该模式下，所有交易相关的重要信息都会显示在console中，包括：
-- 产生的交易信号和交易订单
-- 交易订单的成交情况
-- 账户资金变动情况
-- 账户持仓变动情况
-- 开盘和收盘时间预告等
-
-在Trader Shell运行过程中可以随时按Ctrl+C进入Shell选单，此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以通过
-输入命令来控制交易策略的运行，例如：
-
-- 输入`pause` / `resume`可以暂停/重新启动交易策略
-- 输入`change`可以修改当前持仓和现金余额
-- 输入`positions`可以查看当前持仓
-- 输入`orders`可以查看当前订单
-- 输入`history`可以查看历史交易记录
-- 输入`strategies`可以查看当前运行的策略
-
-等等
