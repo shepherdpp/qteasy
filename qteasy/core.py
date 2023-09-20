@@ -2632,7 +2632,7 @@ def reconnect_ds(data_source=None):
     data_source.reconnect()
 
 
-# TODO: 将check_and_prepare_data()的代码拆分后移植到下面三个方法中
+# TODO: this function is very slow, find out why
 def check_and_prepare_live_trade_data(operator, config, datasource=None):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
@@ -2657,7 +2657,6 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             adj='none',
             data_source=datasource,
     )
-    # print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_op is: \n{hist_op}\n')
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
@@ -2669,7 +2668,6 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             adj='none',
             data_source=datasource,
     )
-    # print(f'[DEBUG]: in core.py function check_and_prepare_live_trade_data(), hist_ref is: \n{hist_ref}\n')
 
     return hist_op, hist_ref
 
