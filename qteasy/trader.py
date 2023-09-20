@@ -326,7 +326,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)last_hour] [(T)today]
+        orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)ast_(H)our] [(T)today]
         [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
 
         Examples:
@@ -338,29 +338,33 @@ class TraderShell(Cmd):
         """
         if arg is None or arg == '':
             arg = 'today'
-        args = arg.split(' ')
+        args = arg.lower().split(' ')
         order_details = self._trader.history_orders()
 
         for argument in args:
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
             # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-            if argument in ['last_hour', 'l', 'today', 't', '3day', '3', 'week', 'w', 'month', 'm']:
+            if argument in ['last_hour', 'l', 'h', 'today', 't', '3day', '3', 'week', 'w', 'month', 'm']:
                 # create order time ranges
-                # end = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S")  # 产生世界时
                 end = pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S')  # 产生本地时区时间
                 if argument in ['last_hour', 'l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
                 elif argument in ['today', 't']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = start.strftime("%Y-%m-%d 00:00:00")
+                    start = start.strftime("%Y-%m-%d 23:59:59")
                 elif argument in ['3day', '3']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=3)
+                    start = start.strftime("%Y-%m-%d 23:59:59")
                 elif argument in ['week', 'w']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=7)
+                    start = start.strftime("%Y-%m-%d 23:59:59")
                 elif argument in ['month', 'm']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=30)
+                    start = start.strftime("%Y-%m-%d 23:59:59")
                 else:
-                    start = pd.to_datetime(end) - pd.Timedelta(hours=1)
+                    start = pd.to_datetime(end) - pd.Timedelta(days=1)
+                    start = start.strftime("%Y-%m-%d 23:59:59")
+
                 # select orders by time range
                 order_details = order_details[(order_details['submitted_time'] >= start) &
                                                 (order_details['submitted_time'] <= end)]
@@ -396,7 +400,8 @@ class TraderShell(Cmd):
 
         if order_details.empty:
             print(f'No orders found with argument ({args}). try other arguments.')
-        print(order_details.to_string(index=False))
+        else:
+            print(order_details.to_string(index=False))
 
     def do_change(self, arg):
         """ Change trader cash and positions
