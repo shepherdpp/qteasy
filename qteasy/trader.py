@@ -326,7 +326,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)ast_(H)our] [(T)today]
+        orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)ast_(H)our] [(T)today] [(Y)yesterday]
         [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
 
         Examples:
@@ -344,14 +344,19 @@ class TraderShell(Cmd):
         for argument in args:
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
             # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-            if argument in ['last_hour', 'l', 'h', 'today', 't', '3day', '3', 'week', 'w', 'month', 'm']:
+            if argument in ['last_hour', 'l', 'h', 'today', 't', 'yesterday', 'y',
+                            '3day', '3', 'week', 'w', 'month', 'm']:
                 # create order time ranges
-                end = pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S')  # 产生本地时区时间
+                end = pd.to_datetime('today')   # 产生本地时区时间
                 if argument in ['last_hour', 'l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
                 elif argument in ['today', 't']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=1)
                     start = start.strftime("%Y-%m-%d 23:59:59")
+                elif argument in ['yesterday', 'y']:
+                    yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
+                    start = yesterday.strftime("%Y-%m-%d 00:00:00")
+                    end = yesterday.strftime("%Y-%m-%d 23:59:59")
                 elif argument in ['3day', '3']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=3)
                     start = start.strftime("%Y-%m-%d 23:59:59")
@@ -542,11 +547,11 @@ class TraderShell(Cmd):
         Examples:
         ---------
         to display strategies information:
-        strategies
+        (QTEASY): strategies
         to display strategies information in detail:
-        strategies d
-        to set parameters for strategy 1:
-        strategies s 1 (1, 2, 3)
+        (QTEASY): strategies d
+        to set parameters for strategy "stg":
+        (QTEASY): strategies s stg (1, 2, 3)
 
         """
 
@@ -558,8 +563,9 @@ class TraderShell(Cmd):
             self.trader.operator.info(verbose=True)
         elif args[0] in ['s', 'set_par']:
             if len(args) < 3:
-                print('Please input a valid strategy id and a parameter.\n')
-                self.trader.operator.info()
+                print('To set up variable parameter of a strategy, input a valid strategy id and a parameter:\n'
+                      'For Example, to set (1, 2, 3) as the parameter of strategy "custom", use:\n'
+                      '(QTEASY): strategies s custom (1, 2, 3)')
                 return
             strategy_id = args[1]
             pars = args[2:]
@@ -572,7 +578,6 @@ class TraderShell(Cmd):
                 print(f'Invalid parameter ({new_pars})! Parameter should be a tuple')
             if not isinstance(new_pars, tuple):
                 print(f'Invalid parameter ({new_pars})! Please input a valid parameter.')
-                self.trader.operator.info()
                 return
             try:
                 self.trader.operator.set_parameter(stg_id=strategy_id, pars=new_pars)
