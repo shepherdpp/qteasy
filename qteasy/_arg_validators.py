@@ -143,6 +143,21 @@ def _valid_qt_kwargs():
                           "{'000001.SZ': 1000, '000002.SZ': 2000} : 初始持仓为\n"
                           "000001.SZ: 1000股, 000002.SZ: 2000股\n"},
 
+        'live_trade_broker_type':
+            {'Default':   'simple',
+             'Validator': lambda value: isinstance(value, str) and value in ['simple', 'random', 'manual'],
+             'level':     1,
+             'text':      '实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、'
+                          '手动输入结果或者连接到交易代理商的交易接口\n'},
+
+        'live_trade_broker_params':
+            {'Default':   None,
+             'Validator': lambda value: isinstance(value, dict) or value is None,
+             'level':     1,
+             'text':      '实盘交易账户的交易代理商参数，字典，例如：\n'
+                          "{'host': 'localhost', 'port': 8888} : 交易代理商的主机名和端口号\n"
+                          "具体的参数设置请参考交易代理商的文档\n"},
+
         'trade_batch_size':
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))

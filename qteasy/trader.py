@@ -2060,11 +2060,13 @@ def start_trader(
             )
 
     # if account is ready then create trader and broker
-    broker = RandomBroker(
-            fee_rate_buy=0.0001,
-            fee_rate_sell=0.0003,
-            moq=config.trade_batch_size,
+    broker_type = config['live_trade_broker_type']
+    broker_params = config['live_trade_broker_params']
+    from qteasy.broker import ALL_BROKERS, NotImplementedBroker
+    broker = ALL_BROKERS.get(broker_type, default=NotImplementedBroker)(
+            **broker_params
     )
+
     trader = Trader(
             account_id=account_id,
             operator=operator,

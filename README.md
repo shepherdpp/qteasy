@@ -62,7 +62,7 @@
 - *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`TA-lib` version == 0.4.18*    `pip install ta-lib==0.4.18`
+- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 
