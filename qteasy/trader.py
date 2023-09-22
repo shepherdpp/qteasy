@@ -711,7 +711,7 @@ class TraderShell(Cmd):
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
                     self.do_bye('')
-                time.sleep(0.1)
+                time.sleep(0.05)
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
                 t = Timer(5, lambda: print(
@@ -977,7 +977,7 @@ class Trader(object):
                           f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
-        market_open_day_loop_interval = 0.3
+        market_open_day_loop_interval = 0.1
         market_close_day_loop_interval = 1
         # current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
         current_date_time = pd.to_datetime('today')  # 产生当地时间
@@ -2060,11 +2060,13 @@ def start_trader(
             )
 
     # if account is ready then create trader and broker
-    broker = RandomBroker(
-            fee_rate_buy=0.0001,
-            fee_rate_sell=0.0003,
-            moq=config.trade_batch_size,
+    broker_type = config['live_trade_broker_type']
+    broker_params = config['live_trade_broker_params']
+    from qteasy.broker import ALL_BROKERS, NotImplementedBroker
+    broker = ALL_BROKERS.get(broker_type, NotImplementedBroker)(
+            **broker_params
     )
+
     trader = Trader(
             account_id=account_id,
             operator=operator,

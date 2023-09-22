@@ -75,7 +75,7 @@ class Broker(object):
         self.status = 'init'
         try:
             while self.status != 'stopped':
-                time.sleep(1)
+                time.sleep(0.05)
                 # 如果Broker处于暂停状态，则不处理交易订单
                 if self.status == 'paused':
                     continue
@@ -290,6 +290,9 @@ class Broker(object):
 class SimpleBroker(Broker):
     """ SimpleBroker接到交易订单后，立即返回交易结果
     交易结果总是完全成交，根据moq调整交易批量，根据设定的交易费率计算交易费用，滑点是按照百分比计算的
+
+    Parameters
+    ----------
     """
 
     def __init__(self):
@@ -320,14 +323,34 @@ class RandomBroker(Broker):
     """ RandomBroker接到交易订单后，随机等待一段时间再返回交易结果。交易结果随机，包含完全成交、部分成交和取消交易
 
     交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
+
+    Parameters
+    ----------
+    fee_rate_buy: float, default 0.0001
+        买入交易费率，比如0.0001表示万分之一
+    fee_rate_sell: float, default 0.0003
+        卖出交易费率，比如0.0003表示万分之三
+    moq: float, default 100
+        最小交易数量，比如100表示最小交易数量为100股，如果交易数量不是100的整数倍，那么会被圆整到100的整数倍
+    delay: float, default 5.0
+        交易所处理订单的时间，单位是秒
+    price_deviation: float, default 0.01
+        实际交易价格和报价之间的差异，比如0.01表示1%
+    probabilities: list of float, default [0.8, 0.15, 0.05]
+        交易结果的概率，比如[0.8, 0.15, 0.05]表示交易结果为'filled'的概率为80%，为'partial-filled'的概率为15%，为'canceled'的概率为5%
+
     """
 
-    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003, moq=100):
+    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003, moq=100, delay=5.0, price_deviation=0.01,
+                 probabilities=[0.8, 0.15, 0.05]):
         super(RandomBroker, self).__init__()
         self.broker_name = 'RandomBroker'
         self.fee_rate_buy = fee_rate_buy
         self.fee_rate_sell = fee_rate_sell
         self.moq = moq
+        self.delay = delay
+        self.price_deviation = price_deviation
+        self.probabilities = probabilities
 
     def transaction_result(self, order_qty, order_price, direction):
         """ 订单随机成交
@@ -350,9 +373,9 @@ class RandomBroker(Broker):
         order_results = []
 
         while remain_qty > 0.001:
-            result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=[0.8, 0.15, 0.05])
-            trade_delay = random() * 5  # 模拟交易所处理订单的时间,最长5，平均2.5秒
-            price_deviation = random() * 0.01  # 模拟交易所的滑点，最大1%，平均0.5%
+            result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
+            trade_delay = random() * self.delay  # 模拟交易所处理订单的时间
+            price_deviation = random() * self.price_deviation  # 模拟成交价格与报价之间的差异
 
             sleep(trade_delay)
 
@@ -386,3 +409,20 @@ class RandomBroker(Broker):
             order_results.append((result_type, qty, order_price, transaction_fee))
 
         return tuple(order_results)
+
+
+class NotImplementedBroker(Broker):
+    """ NotImplementedBroker raises NotImplementedError when __init__() is called
+    """
+
+    def __init__(self):
+        super(NotImplementedBroker, self).__init__()
+        raise NotImplementedError('NotImplementedBroker is not implemented yet')
+
+
+ALL_BROKERS = {
+    'simple': SimpleBroker,
+    'random': RandomBroker,
+    'manual': NotImplementedBroker,
+    'simulator': NotImplementedBroker,
+}
