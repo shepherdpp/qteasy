@@ -75,7 +75,7 @@ class Broker(object):
         self.status = 'init'
         try:
             while self.status != 'stopped':
-                time.sleep(1)
+                time.sleep(0.05)
                 # 如果Broker处于暂停状态，则不处理交易订单
                 if self.status == 'paused':
                     continue
