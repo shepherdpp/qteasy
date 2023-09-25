@@ -64,6 +64,7 @@ class Broker(object):
 
         self.order_queue = Queue()
         self.result_queue = Queue()
+        self.broker_messages = Queue()
 
     def run(self):
         """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
@@ -71,7 +72,7 @@ class Broker(object):
         的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
         """
         if self.debug:
-            print(f'[DEBUG]: Broker {self.broker_name} is running...')
+            self.post_message(f'is running...')
         self.status = 'init'
         try:
             while self.status != 'stopped':
@@ -87,37 +88,35 @@ class Broker(object):
                     futures = []
                     while not self.order_queue.empty():
                         if self.debug:
-                            print(f'[DEBUG]: Broker {self.broker_name} is running, '
-                                  f'got order from order queue, taking order from queue'
-                                  f'({self.order_queue.unfinished_tasks} orders)...')
+                            self.post_message(f'is running, '
+                                              f'got order from order queue, taking order from queue'
+                                              f'({self.order_queue.unfinished_tasks} orders)...')
                         order = self.order_queue.get()
                         if self.debug:
-                            print(f'[DEBUG]: Broker {self.broker_name} is running, will submit order {order} '
-                                  f'to get result...')
+                            self.post_message(f'is running, will submit order {order} '
+                                              f'to get result...')
                         futures.append(executor.submit(self.get_result, order))
                         self.order_queue.task_done()
                     # 获取交易结果并将其放入result_queue中
                     for future in as_completed(futures):
                         results = future.result()
                         if self.debug:
-                            print(f'[DEBUG]: Broker {self.broker_name} is running, got result {results} '
-                                  f'and put to result queue...')
+                            self.post_message(f'is running, got result {results} '
+                                              f'and put to result queue...')
                         for result in results:
                             self.result_queue.put(result)
             else:
                 # 如果Broker正常退出，处理尚未完成的交易订单
-                # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
                 if self.debug:
-                    print(f'[DEBUG]: Broker {self.broker_name} is stopped, will process unfinished orders...')
+                    self.post_message(f'is stopped, will process unfinished orders...')
                 while not self.order_queue.empty():
                     order = self.order_queue.get()
                     self.result_queue.put(self.get_result(order))
                     self.order_queue.task_done()
         except KeyboardInterrupt:
             # 如果Broker被用户强制退出，处理尚未完成的交易订单
-            # TODO: 完善下面的代码，下面代码由Github Copilot自动生成，但是还不完善
             if self.debug:
-                print('[DEBUG]: Broker is stopped by user, will stop broker and process unfinished orders...')
+                self.post_message('is stopped by user, will stop broker and process unfinished orders...')
             self.status = 'stopped'
             while not self.order_queue.empty():
                 order = self.order_queue.get()
@@ -126,11 +125,19 @@ class Broker(object):
         except Exception as e:
             # 如果Broker出现异常，处理尚未完成的交易订单
             if self.debug:
-                print(f'[DEBUG]: Broker is stopped by exception: {e}, will stop broker and process unfinished orders...')
+                self.post_message(f'is stopped by exception: {e}, will stop broker and process unfinished orders...')
                 import traceback
                 traceback.print_exc()
             self.status = 'stopped'
             raise e
+
+    def post_message(self, message: str):
+        """ 将消息放入消息队列
+        """
+        if self.debug:
+            message = f'[DEBUG]-{message}'
+        message = f'[{self.broker_name}]: {message}'
+        self.broker_messages.put(message)
 
     def get_result(self, order):
         """ 交易所处理交易订单并获取交易结果
@@ -162,8 +169,9 @@ class Broker(object):
         """
 
         if self.debug:
-            print(f'[DEBUG]: Broker({self.broker_name}) method: get_result():\nsubmit order components:\n'
-                  f'quantity:{order["qty"]}\norder_price={order["price"]}\norder_direction={order["direction"]}\n')
+            self.post_message(f'get_result():\nsubmit order components:\n'
+                              f'quantity:{order["qty"]}\norder_price={order["price"]}\n'
+                              f'order_direction={order["direction"]}\n')
         trade_results = self.transaction_result(
                 order_qty=order['qty'],
                 order_price=order['price'],
@@ -196,8 +204,9 @@ class Broker(object):
 
             # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
             if self.debug:
-                print(f'[DEBUG]: Broker({self.broker_name}) method: get_result(): got transaction result\n'
-                      f'result_type={result_type}, \nqty={qty}, \nfilled_price={filled_price}, \nfee={fee}')
+                self.post_message(f'method: get_result(): got transaction result\n'
+                                  f'result_type={result_type}, \nqty={qty}, \n'
+                                  f'filled_price={filled_price}, \nfee={fee}')
             # 圆整qty、filled_qty和fee
             qty = round(qty, AMOUNT_DECIMAL_PLACES)
             filled_price = round(filled_price, CASH_DECIMAL_PLACES)
@@ -224,7 +233,7 @@ class Broker(object):
                 'delivery_status': 'ND',
             }
             if self.debug:
-                print(f'[DEBUG]: Broker({self.broker_name}) method get_result(): raw trade result:\n{raw_trade_result}')
+                self.post_message(f'method get_result(): raw trade result:\n{raw_trade_result}')
 
             raw_trade_results.append(raw_trade_result)
 

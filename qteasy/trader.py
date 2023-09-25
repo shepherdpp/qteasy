@@ -977,9 +977,8 @@ class Trader(object):
                           f'running agenda: {self.task_daily_agenda}')
         # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
         # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
-        market_open_day_loop_interval = 0.1
+        market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
-        # current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
         current_date_time = pd.to_datetime('today')  # 产生当地时间
         current_date = current_date_time.date()
         try:
@@ -1022,7 +1021,6 @@ class Trader(object):
                     self.task_queue.task_done()
 
                 # 如果没有暂停，从任务日程中添加任务到任务队列
-                # current_date_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE)  # 产生世界时
                 current_date_time = pd.to_datetime('today')  # 产生本地时间
                 current_time = current_date_time.time()
                 current_date = current_date_time.date()
@@ -1039,6 +1037,11 @@ class Trader(object):
                     self.post_message(f'got new result from broker for order {result["order_id"]}, '
                                       f'adding process_result task to queue')
                     self.add_task('process_result', result)
+                # 检查broker的message_queue中是否有消息，如果有，则处理消息，通常情况将消息添加到消息队列中
+                if not self.broker.broker_messages.empty():
+                    message = self.broker.broker_messages.get()
+                    self.post_message(message)
+                    self.broker.broker_messages.task_done()
 
                 time.sleep(sleep_interval)
             else:
@@ -1112,7 +1115,18 @@ class Trader(object):
         return None
 
     def trade_results(self, status='filled'):
-        """ 账户的交易结果 """
+        """ 返回账户的交易结果
+
+        Parameters
+        ----------
+        status: str, default 'filled'
+            交易结果的状态，包括'filled', 'cancelled', 'rejected', 'all'
+
+        Returns
+        -------
+        trade_results: DataFrame
+            交易结果
+        """
         from qteasy.trade_recording import read_trade_results_by_order_id
         from qteasy.trade_recording import query_trade_orders
         trade_orders = query_trade_orders(
@@ -1123,7 +1137,7 @@ class Trader(object):
         order_ids = trade_orders.index.values
         return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
 
-    def post_message(self, message, new_line=True):
+    def post_message(self, message: str, new_line=True):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
 
         Parameters
@@ -1133,9 +1147,6 @@ class Trader(object):
         new_line: bool, default True
             是否在消息后添加换行符
         """
-        if not isinstance(message, str):
-            raise TypeError('message should be a str')
-        # time_string = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S')  # 产生世界时
         time_string = pd.to_datetime('today').strftime("%Y-%m-%d %H:%M:%S")  # 本地时间
         message = f'[{time_string}]-{self.status}: {message}'
         if not new_line:
@@ -1981,7 +1992,9 @@ class Trader(object):
         'stopped':     ['start'],
         'running':     ['stop', 'sleep', 'pause', 'run_strategy', 'process_result', 'pre_open',
                         'open_market', 'close_market'],
-        'sleeping':    ['wakeup', 'stop', 'pause', 'pre_open', 'open_market', 'post_close', 'refill'],
+        'sleeping':    ['wakeup', 'stop', 'pause', 'pre_open',
+                        'process_result',  # 如果交易结果已经产生，哪怕处理时Trader已经处于sleeping状态，也应该处理完所有结果
+                        'open_market', 'post_close', 'refill'],
         'paused':      ['resume', 'stop'],
     }
 
@@ -2066,7 +2079,7 @@ def start_trader(
     broker = ALL_BROKERS.get(broker_type, NotImplementedBroker)(
             **broker_params
     )
-
+    print(f'[DEBUG], broker created: {broker}')
     trader = Trader(
             account_id=account_id,
             operator=operator,

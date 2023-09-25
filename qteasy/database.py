@@ -2472,6 +2472,7 @@ class DataSource:
                 self.cursor.execute(sql)
                 self.con.commit()
                 sql = f"USE {db_name}"
+                print(f'[DEBUG INFO] using database {db_name} done!')
                 self.cursor.execute(sql)
                 self.con.commit()
                 # if cursor and connect created then create sqlalchemy engine for dataframe
@@ -4795,10 +4796,8 @@ class DataSource:
         try:
             self.con.ping(reconnect=True)
             self.cursor = self.con.cursor()
-            # sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
-            # self.cursor.execute(sql)
-            # self.con.commit()
             sql = f"USE `{self.db_name}`;"
+            print(f'[DEBUG INFO] reconnecting to database {self.db_name}')
             self.cursor.execute(sql)
             self.con.commit()
             return True
