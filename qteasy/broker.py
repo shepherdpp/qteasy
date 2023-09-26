@@ -87,14 +87,12 @@ class Broker(object):
                 with ThreadPoolExecutor(max_workers=10) as executor:
                     futures = []
                     while not self.order_queue.empty():
-                        if self.debug:
-                            self.post_message(f'is running, '
-                                              f'got order from order queue, taking order from queue'
-                                              f'({self.order_queue.unfinished_tasks} orders)...')
+                        # TODO: 此处改进，只有order_queue中的订单被Broker读取后，才修改订单的状态为'submitted'，之前状态为'created'
                         order = self.order_queue.get()
                         if self.debug:
-                            self.post_message(f'is running, will submit order {order} '
-                                              f'to get result...')
+                            self.post_message(f'is running, '
+                                              f'got order(ID) {order["order_id"]} from order queue'
+                                              f'({self.order_queue.unfinished_tasks} orders left in the queue)...')
                         futures.append(executor.submit(self.get_result, order))
                         self.order_queue.task_done()
                     # 获取交易结果并将其放入result_queue中
@@ -111,6 +109,7 @@ class Broker(object):
                     self.post_message(f'is stopped, will process unfinished orders...')
                 while not self.order_queue.empty():
                     order = self.order_queue.get()
+                    # TODO: 如果Broker正常退出，应该将未完成的交易订单返回给用户，并提示用户后取消订单
                     self.result_queue.put(self.get_result(order))
                     self.order_queue.task_done()
         except KeyboardInterrupt:
@@ -120,6 +119,7 @@ class Broker(object):
             self.status = 'stopped'
             while not self.order_queue.empty():
                 order = self.order_queue.get()
+                # TODO: 如果Broker被用户强制退出，应该将未完成的交易订单返回给用户，并提示用户后取消订单
                 self.result_queue.put(self.get_result(order))
                 self.order_queue.task_done()
         except Exception as e:
@@ -169,7 +169,7 @@ class Broker(object):
         """
 
         if self.debug:
-            self.post_message(f'get_result():\nsubmit order components:\n'
+            self.post_message(f'get_result():\nsubmit order components of order(ID) {order["order_id"]}:\n'
                               f'quantity:{order["qty"]}\norder_price={order["price"]}\n'
                               f'order_direction={order["direction"]}\n')
         trade_results = self.transaction_result(
@@ -204,7 +204,7 @@ class Broker(object):
 
             # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
             if self.debug:
-                self.post_message(f'method: get_result(): got transaction result\n'
+                self.post_message(f'method: get_result(): got transaction result for order(ID) {order["order_id"]}\n'
                                   f'result_type={result_type}, \nqty={qty}, \n'
                                   f'filled_price={filled_price}, \nfee={fee}')
             # 圆整qty、filled_qty和fee
@@ -233,7 +233,8 @@ class Broker(object):
                 'delivery_status': 'ND',
             }
             if self.debug:
-                self.post_message(f'method get_result(): raw trade result:\n{raw_trade_result}')
+                self.post_message(f'method get_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
+                                  f'{raw_trade_result}')
 
             raw_trade_results.append(raw_trade_result)
 

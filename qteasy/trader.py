@@ -1216,7 +1216,7 @@ class Trader(object):
         )
         if self.debug:
             self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
-            self.post_message(f'processed trade delivery: positions \n{self.account_position_info}')
+            self.post_message(f'processed trade delivery: positions \n{self.non_zero_positions}')
 
     def history_orders(self, with_trade_results=True):
         """ 账户的历史订单详细信息
@@ -1550,6 +1550,9 @@ class Trader(object):
 
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
         order_queue = self.broker.order_queue
+        # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
+        #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
+        #   result_queue中的结果全部处理完毕，或者超过一定时间
         if not order_queue.empty():
             self.post_message('unprocessed orders found, these orders will be canceled')
             while not order_queue.empty():
@@ -1579,6 +1582,7 @@ class Trader(object):
             self.post_message(f'canceled unfilled orders')
 
         # 检查今日成交结果，完成交易结果的交割
+        # TODO: 成交结果的交割完全可以等到临近午夜时再进行，这样可以避免在交易时间内的交易结果的交割
         process_trade_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,

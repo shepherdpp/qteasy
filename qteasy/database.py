@@ -2447,6 +2447,7 @@ class DataSource:
         if source_type.lower() in ['db', 'database']:
             # optional packages to be imported
             try:
+                # TODO: 尽量避免使用sqlalchemy，直接使用pymysql，未来将去除对sqlalchemy的依赖
                 import pymysql
                 from sqlalchemy import create_engine
             except ImportError:
@@ -2472,12 +2473,12 @@ class DataSource:
                 self.cursor.execute(sql)
                 self.con.commit()
                 sql = f"USE {db_name}"
-                print(f'[DEBUG INFO] using database {db_name} done!')
                 self.cursor.execute(sql)
                 self.con.commit()
                 # if cursor and connect created then create sqlalchemy engine for dataframe
                 self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}')
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
+                print(f'[DEBUG INFO] used database {db_name} in DataSource: {self.connection_type}')
                 self.host = host
                 self.port = port
                 self.db_name = db_name

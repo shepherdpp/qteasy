@@ -70,26 +70,28 @@ def create_daily_task_agenda(operator, config=None):
     # TODO: 开收盘任务执行提前期或sleep/wakeup任务执行延后期，应该是可配置的
     open_close_lead = 0
     sleep_wakeup_delay = 5
+    pre_open_lead = 15
+    post_close_delay = 15
     market_open_time = (pd.to_datetime(market_open_time_am) -
                         pd.Timedelta(minutes=open_close_lead)).strftime('%H:%M:%S')
     market_close_time = (pd.to_datetime(market_close_time_pm) +
                          pd.Timedelta(minutes=open_close_lead)).strftime('%H:%M:%S')
-    wakeup_time_am = (pd.to_datetime(market_open_time_am) -
-                      pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+    pre_open_time = (pd.to_datetime(market_open_time_am) -
+                      pd.Timedelta(minutes=pre_open_lead)).strftime('%H:%M:%S')
     wakeup_time_pm = (pd.to_datetime(market_open_time_pm) -
                       pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
     sleep_time_am = (pd.to_datetime(market_close_time_am) +
                      pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
-    sleep_time_pm = (pd.to_datetime(market_close_time_pm) +
-                     pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+    post_close_time = (pd.to_datetime(market_close_time_pm) +
+                     pd.Timedelta(minutes=post_close_delay)).strftime('%H:%M:%S')
 
     # 添加交易市场开市和收市任务，开市时产生wakeup任务，收市时产生sleep任务，早晚收盘时产生open_market/close_market任务
     task_agenda.append((market_open_time, 'open_market'))
-    task_agenda.append((wakeup_time_am, 'pre_open'))
+    task_agenda.append((pre_open_time, 'pre_open'))
     task_agenda.append((sleep_time_am, 'sleep'))
     task_agenda.append((wakeup_time_pm, 'wakeup'))
-    task_agenda.append((sleep_time_pm, 'post_close'))
     task_agenda.append((market_close_time, 'close_market'))
+    task_agenda.append((post_close_time, 'post_close'))
 
     # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
     for stg_id, stg in operator.get_strategy_id_pairs():
