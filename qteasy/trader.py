@@ -47,6 +47,8 @@ class TraderShell(Cmd):
     - pause: 暂停交易系统
     - resume: 恢复交易系统
     - bye: 停止交易系统并退出shell
+    - exit: 停止交易系统并退出shell
+    - stop: 停止交易系统并退出shell
     - info: 查看交易系统信息
     - change: 手动修改交易系统的资金和持仓
     - positions: 查看账户持仓
@@ -54,7 +56,7 @@ class TraderShell(Cmd):
     - history: 查看账户历史交易记录
     - overview: 查看账户概览
     - dashboard: 退出shell，进入dashboard模式
-    - strategy: 查看策略信息
+    - strategies: 查看策略信息，或者修改策略参数
     - agenda: 查看交易日程
     - help: 查看帮助信息
     - run: 手动运行交易策略，此功能仅在debug模式下可用
@@ -954,6 +956,10 @@ class Trader(object):
         positions['profit'] = positions['market_value'] - positions['total_cost']
         positions['profit_ratio'] = positions['profit'] / positions['total_cost']
         return positions.loc[positions['qty'] != 0]
+
+    def show_agenda(self):
+        """ 显示当前的任务日程 """
+        print(f'Execution Agenda -- {self.task_daily_agenda}')
 
     @property
     def datasource(self):
