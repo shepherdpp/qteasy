@@ -5508,118 +5508,162 @@ def get_table_master():
     return table_master
 
 
-def find_history_data(s, fuzzy=False, match_description=False):
-    """ 根据输入的字符串，查找或匹配历史数据类型
-
-    用户可以使用qt.datasource.find_history_data()形式查找可用的历史数据
-    并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
+def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):
+    """ 根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
     查找匹配的历史数据类型。
-    例如，输入"pe"或"市盈率"都可以匹配到市盈率数据类型，并且提供该数据类型的相关信息
-    相关信息如：
-    调用名称、中文简介、所属数据表、数据频率、证券类型等等
 
     Parameters
     ----------
     s: str
         一个字符串，用于查找或匹配历史数据类型
-    fuzzy: bool, Default: False
-        是否模糊匹配数据名称，
-         - False: 仅精确匹配数据的名称
-         - True:  模糊匹配数据名称以及数据描述
     match_description: bool, Default: False
-        是否模糊匹配数据描述
-         - False: 模糊匹配时不包含数据描述（仅匹配数据名称）
-         - True:  模糊匹配时包含数据描述
+        是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True
+         - False: 仅匹配数据名称
+         - True:  同时匹配数据描述
+    fuzzy: bool, Default: False
+        是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True
+         - False: 精确匹配数据名称
+         - True:  模糊匹配数据名称或数据描述
+    freq: str, Default: None
+        数据频率，如果提供，则只匹配该频率的数据
+        可以输入单个频率，也可以输入逗号分隔的多个频率
+    asset_type: str, Default: None
+        证券类型，如果提供，则只匹配该证券类型的数据
+        可以输入单个证券类型，也可以输入逗号分隔的多个证券类型
+    match_threshold: float, default 0.85
+        匹配度阈值，匹配度超过该阈值的项目会被判断为匹配
 
     Returns
     -------
-    None
+    data_id: list
+        匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据
 
     Examples
     --------
     >>> import qteasy as qt
     >>> qt.find_history_data('pe')
     matched following history data,
-    use "qt.get_history_panel()" to load these data:
+    use "qt.get_history_data()" to load these historical data by its data_id:
     ------------------------------------------------------------------------
-      h_data   dtype             table asset freq plottable                remarks
-    0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
-    1     pe  double  stock_indicator2     E    d        No                  市盈(动)
-    2     pe   float   index_indicator   IDX    d        No                    市盈率
+               freq asset             table                            desc
+    data_id
+    initial_pe    d     E         new_share                  新股上市信息 - 发行市盈率
+    pe            d   IDX   index_indicator                    指数技术指标 - 市盈率
+    pe            d     E   stock_indicator  股票技术指标 - 市盈率（总市值/净利润， 亏损的PE为空）
+    pe_2          d     E  stock_indicator2                  股票技术指标 - 动态市盈率
+    ========================================================================
+
+    >>> qt.find_history_data('ep*')
+    matched following history data,
+    use "qt.get_history_data()" to load these historical data by its data_id:
+    ------------------------------------------------------------------------
+                  freq asset      table                 desc
+    data_id
+    eps_last_year    q     E    express  上市公司业绩快报 - 去年同期每股收益
+    eps              q     E  financial    上市公司财务指标 - 基本每股收益
+    ========================================================================
+
+    >>> qt.find_history_data('每股收益')
+    matched following history data,
+    use "qt.get_history_data()" to load these historical data by its data_id:
+    ------------------------------------------------------------------------
+                    freq asset      table                 desc
+    data_id
+    basic_eps              q     E     income           上市公司利润表 - 基本每股收益
+    diluted_eps            q     E     income           上市公司利润表 - 稀释每股收益
+    express_diluted_eps    q     E    express     上市公司业绩快报 - 每股收益(摊薄)(元)
+    yoy_eps                q     E    express    上市公司业绩快报 - 同比增长率:基本每股收益
+    eps_last_year          q     E    express        上市公司业绩快报 - 去年同期每股收益
+    eps                    q     E  financial          上市公司财务指标 - 基本每股收益
+    dt_eps                 q     E  financial          上市公司财务指标 - 稀释每股收益
+    diluted2_eps           q     E  financial        上市公司财务指标 - 期末摊薄每股收益
+    q_eps                  q     E  financial       上市公司财务指标 - 每股收益(单季度)
+    basic_eps_yoy          q     E  financial  上市公司财务指标 - 基本每股收益同比增长率(%)
+    dt_eps_yoy             q     E  financial  上市公司财务指标 - 稀释每股收益同比增长率(%)
     ========================================================================
 
     Raises
     ------
-
+    TypeError: 输入的s不是字符串，或者freq/asset_type不是字符串或列表
     """
 
-    # TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
-    #  方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
-    #  存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
-    #  指导如何精确定位数据，至于数据列名仅作为参考信息存在。
-    #
-    # TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
-    #
-    # TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
     if not isinstance(s, str):
         raise TypeError(f'input should be a string, got {type(s)} instead.')
     # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述
     try:
         s.encode('ascii')
     except UnicodeEncodeError:
-        is_ascii = False
+        # is_ascii = False, 此时强制匹配description, 并且fuzzy匹配
+        match_description = True
+        fuzzy = True
+    if match_description:
+        fuzzy = True
+    if ('?' in s) or ('*' in s):
+        fuzzy = True  # 给出通配符时强制fuzzy匹配
+
+    data_table_map = get_dtype_map()
+    data_table_map['freq'] = data_table_map.index.get_level_values(level=1)
+    data_table_map['asset_type'] = data_table_map.index.get_level_values(level=2)
+
+    if freq is not None:
+        if isinstance(freq, str):
+            freq = str_to_list(freq)
+        if not isinstance(freq, list):
+            raise TypeError(f'freq should be a string or a list, got {type(freq)} instead')
+        data_table_map = data_table_map.loc[data_table_map['freq'].isin(freq)]
+    if asset_type is not None:
+        if isinstance(asset_type, str):
+            asset_type = str_to_list(asset_type)
+        if not isinstance(asset_type, list):
+            raise TypeError(f'asset_type should be a string or a list, got {type(asset_type)} instead')
+        data_table_map = data_table_map.loc[data_table_map['asset_type'].isin(asset_type)]
+
+    data_table_map['n_matched'] = 0  # name列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
+    data_table_map['d_matched'] = 0  # description列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
+
+    if (not fuzzy) and (not match_description):
+        data_table_map['n_matched'] = data_table_map['column'] == s
+        data_table_map['n_matched'] = data_table_map['n_matched'].astype('int')
     else:
-        is_ascii = True
-
-    table_master = get_table_master()
-    items_found = {'h_data':  [],
-                   'dtype':   [],
-                   'table':   [],
-                   'asset':   [],
-                   'freq':    [],
-                   'plot':    [],
-                   'remarks': []
-                   }
-    for table in table_master.index:
-        table_schema_name = table_master['schema'].loc[table]
-        table_schema = TABLE_SCHEMA[table_schema_name]
-        asset_type = table_master['asset_type'].loc[table]
-        data_freq = table_master['freq'].loc[table]
-
-        columns = table_schema['columns']
-        dtypes = table_schema['dtypes']
-        remarks = table_schema['remarks']
-
-        if is_ascii:
-            where_to_look = columns
-            match_how = _lev_ratio
+        if match_description:
+            where_to_look = ['column', 'description']
+            match_how = [_lev_ratio, _partial_lev_ratio]
+            result_columns = ['n_matched', 'd_matched']
         else:
-            where_to_look = remarks
-            match_how = _partial_lev_ratio
-        if ('?' in s) or ('*' in s):
-            matched = _wildcard_match(s, where_to_look)
-        else:
-            match_values = list(map(match_how, [s] * len(where_to_look), where_to_look))
-            matched = [where_to_look[i] for i in range(len(where_to_look)) if match_values[i] >= 0.9]
+            where_to_look = ['column']
+            match_how = [_lev_ratio]
+            result_columns = ['n_matched']
 
-        if len(matched) > 0:
-            matched_index = [where_to_look.index(item) for item in matched]
-            matched_count = len(matched_index)
-            items_found['h_data'].extend([columns[i] for i in matched_index])
-            items_found['remarks'].extend([remarks[i] for i in matched_index])
-            items_found['dtype'].extend([dtypes[i] for i in matched_index])
-            items_found['table'].extend([table] * matched_count)
-            items_found['asset'].extend([asset_type] * matched_count)
-            items_found['freq'].extend([data_freq] * matched_count)
-            items_found['plot'].extend(['No'] * matched_count)
+        for where, how, res in zip(where_to_look, match_how, result_columns):
+            if ('?' in s) or ('*' in s):
+                matched = _wildcard_match(s, data_table_map[where])
+                match_values = [1 if item in matched else 0 for item in data_table_map[where]]
+            else:
+                match_values = list(map(how, [s] * len(data_table_map[where]), data_table_map[where]))
+            data_table_map[res] = match_values
 
-    df = pd.DataFrame(items_found)
+    data_table_map['matched'] = data_table_map['n_matched'] + data_table_map['d_matched']
+    data_table_map = data_table_map.loc[data_table_map['matched'] >= match_threshold]
+    data_table_map.drop(columns=['n_matched', 'd_matched', 'matched'], inplace=True)
+    data_table_map.index = data_table_map.index.get_level_values(level=0)
+    data_table_map.index.name = 'data_id'
     print(f'matched following history data, \n'
-          f'use "qt.get_history_panel()" to load these data:\n'
-          f'------------------------------------------------------------------------\n{df}\n'
-          f'========================================================================')
-
-    return list(df.index)
+          f'use "qt.get_history_data()" to load these historical data by its data_id:\n'
+          f'------------------------------------------------------------------------')
+    print(
+            data_table_map.to_string(
+                    columns=['freq',
+                             'asset_type',
+                             'table_name',
+                             'description'],
+                    header=['freq',
+                            'asset',
+                            'table',
+                            'desc'],
+            )
+    )
+    print(f'========================================================================')
+    return list(data_table_map.index)
 
 
 def ensure_sys_table(table):

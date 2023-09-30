@@ -14,11 +14,9 @@ import qteasy as qt
 import pandas as pd
 import numpy as np
 
-from qteasy import QT_CONFIG, QT_DATA_SOURCE, CashPlan
+from qteasy import QT_DATA_SOURCE
 
-from qteasy.utilfuncs import list_to_str_format
-
-from qteasy.space import Space, Axis, space_around_centre, ResultPool
+from qteasy.space import Space, space_around_centre
 
 
 class TestCoreSubFuncs(unittest.TestCase):
