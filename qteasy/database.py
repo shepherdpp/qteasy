@@ -2478,7 +2478,7 @@ class DataSource:
                 # if cursor and connect created then create sqlalchemy engine for dataframe
                 self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}')
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
-                print(f'[DEBUG INFO] used database {db_name} in DataSource: {self.connection_type}')
+                # print(f'[DEBUG INFO] used database {db_name} in DataSource: {self.connection_type}')
                 self.host = host
                 self.port = port
                 self.db_name = db_name
@@ -4798,7 +4798,7 @@ class DataSource:
             self.con.ping(reconnect=True)
             self.cursor = self.con.cursor()
             sql = f"USE `{self.db_name}`;"
-            print(f'[DEBUG INFO] reconnecting to database {self.db_name}')
+            # print(f'[DEBUG INFO] reconnecting to database {self.db_name}')
             self.cursor.execute(sql)
             self.con.commit()
             return True

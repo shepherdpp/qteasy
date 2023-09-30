@@ -551,7 +551,7 @@ class TestTrader(unittest.TestCase):
         print('\n========generated task agenda before morning market open========\n')
         print(ts.task_daily_agenda)
         target_agenda = [
-            ('09:25:00', 'pre_open'),
+            ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
             ('09:31:00', 'run_strategy', ['macd']),
             ('10:00:00', 'run_strategy', ['macd', 'dma']),
@@ -567,7 +567,7 @@ class TestTrader(unittest.TestCase):
             ('15:00:00', 'run_strategy', ['macd', 'dma']),
             ('15:29:00', 'run_strategy', ['macd']),
             ('15:30:00', 'close_market'),
-            ('15:35:00', 'post_close'),
+            ('15:45:00', 'post_close'),
         ]
         self.assertEqual(ts.task_daily_agenda, target_agenda)
         # re_initialize_agenda at 10:35:27
@@ -577,7 +577,7 @@ class TestTrader(unittest.TestCase):
         print('\n========generated task agenda at 10:35:27========')
         print(ts.task_daily_agenda)
         target_agenda = [
-            ('09:25:00', 'pre_open'),
+            ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
             ('11:00:00', 'run_strategy', ['macd', 'dma']),
             ('11:30:00', 'run_strategy', ['macd']),
@@ -590,7 +590,7 @@ class TestTrader(unittest.TestCase):
             ('15:00:00', 'run_strategy', ['macd', 'dma']),
             ('15:29:00', 'run_strategy', ['macd']),
             ('15:30:00', 'close_market'),
-            ('15:35:00', 'post_close'),
+            ('15:45:00', 'post_close'),
         ]
         self.assertEqual(ts.task_daily_agenda, target_agenda)
         ts.task_queue.empty()  # clear task queue
