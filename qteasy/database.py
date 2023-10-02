@@ -5629,6 +5629,10 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
             where_to_look = ['column', 'description']
             match_how = [_lev_ratio, _partial_lev_ratio]
             result_columns = ['n_matched', 'd_matched']
+        elif fuzzy:
+            where_to_look = ['column']
+            match_how = [_partial_lev_ratio]
+            result_columns = ['n_matched']
         else:
             where_to_look = ['column']
             match_how = [_lev_ratio]

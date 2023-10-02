@@ -325,6 +325,7 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 
 
 ```python
+import qteasy as qt
 # 场内基金的小时K线图
 qt.candle('159601', start = '20220121', freq='h')
 # 沪深300指数的日K线图

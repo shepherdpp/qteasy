@@ -372,7 +372,7 @@ class HistoryPanel():
         if self.is_empty:
             return None
         else:
-            key_is_None = keys is None
+            key_is_none = keys is None
             key_is_tuple = isinstance(keys, tuple)
             key_is_list = isinstance(keys, list)
             key_is_slice = isinstance(keys, slice)
@@ -393,7 +393,7 @@ class HistoryPanel():
                 htype_slice = keys
                 share_slice = slice(None, None, None)
                 hdate_slice = slice(None, None, None)
-            elif key_is_None:
+            elif key_is_none:
                 htype_slice = slice(None, None, None)
                 share_slice = slice(None, None, None)
                 hdate_slice = slice(None, None, None)
@@ -437,6 +437,34 @@ class HistoryPanel():
 
     def __repr__(self):
         return self.__str__()
+
+    def __add__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values += other
+
+    def __sub__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values -= other
+
+    def __mul__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values *= other
+
+    def __truediv__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values /= other
+
+    def __floordiv__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values //= other
+
+    def __mod__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values %= other
+
+    def __pow__(self, other):
+        if isinstance(other, (float, int, np.ndarray)):
+            self._values **= other
 
     def segment(self, start_date=None, end_date=None):
         """ 获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回
