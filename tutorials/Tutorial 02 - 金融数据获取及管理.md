@@ -86,8 +86,61 @@ qt.QT_DATA_SOURCE
 
     DataSource('db', 'localhost', 3306)
 
+## 历史数据类型
 
+qteasy可以管理多种不同的数据类型，自动下载这些类型的数据并储存在本地，供交易策略调用。每一种数据都有一个内置的数据id（data_id），根据这个data_id，用户可以查看、读取、下载相应的数据。
 
+### `qt.find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85,)`
+`qt.find_history_data()`可以查找qteasy内置的所有数据类型，列出数据的id，资产类型和频率，以及数据的详细说明。
+使用`qt.get_history_data()`并将找到的数据id作为参数传入，则可以直接查看已经下载的历史数据
+
+```python
+import qteasy as qt
+qt.find_history_data('pe')
+```
+
+输出如下：
+```commandline
+matched following history data, 
+use "qt.get_history_data()" to load these historical data by its data_id:
+------------------------------------------------------------------------
+           freq asset             table                            desc
+data_id                                                                
+initial_pe    d     E         new_share                  新股上市信息 - 发行市盈率
+pe            d   IDX   index_indicator                    指数技术指标 - 市盈率
+pe            d     E   stock_indicator  股票技术指标 - 市盈率（总市值/净利润， 亏损的PE为空）
+pe_2          d     E  stock_indicator2                  股票技术指标 - 动态市盈率
+========================================================================
+```
+```python
+import qteasy as qt
+qt.get_history_data('pe', '000001.SZ', start="20220101", end="20220201")
+```
+```commandline
+Out[16]: 
+{'000001.SZ':                  pe
+ 2022-01-04  11.1761
+ 2022-01-05  11.5048
+ 2022-01-06  11.4847
+ 2022-01-07  11.5384
+ 2022-01-10  11.5317
+ 2022-01-11  11.6792
+ 2022-01-12  11.4042
+ 2022-01-13  11.3908
+ 2022-01-14  10.9547
+ 2022-01-17  10.8809
+ 2022-01-18  11.0822
+ 2022-01-19  11.0688
+ 2022-01-20  11.6256
+ 2022-01-21  11.6390
+ 2022-01-24  11.5384
+ 2022-01-25  11.3036
+ 2022-01-26  11.1694
+ 2022-01-27  10.9346
+ 2022-01-28  10.6193
+ 2022-01-31  10.6193
+ 2022-02-01  10.6193}
+```
 ## 检查本地数据源的数据
 使用`qt.get_table_overview()`可以查看当前数据源中已经下载的数据量
 当数据量较大时，需要花费几分钟时间分析所有的数据，并打印本地数据源中数据表的数据量、占用磁盘空间以及数据范围
