@@ -2031,9 +2031,9 @@ def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs):
     -------
     None
 
-    Notes
-    -----
-    该函数等同于configure()
+    Examples
+    --------
+    参见 configure()
     """
 
     return configure(config=config, reset=reset, only_built_in_keys=only_built_in_keys, **kwargs)
@@ -2122,8 +2122,8 @@ def get_configurations(config_key=None, level=0, up_to=0, default=True, verbose=
     -------
     None
 
-    Notes
-    -----
+    Examples
+    --------
     使用示例参见get_config()
     """
 
@@ -2234,6 +2234,32 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     return configuration(config_key=config_key, level=level, up_to=up_to, default=default, verbose=verbose)
 
 
+def _check_config_file_name(file_name, allow_default_name=False):
+    """ 检查配置文件名是否合法，如果合法或可以转化为合法，返回合法文件名，否则raise
+
+    parameters
+    ----------
+    file_name: str
+        配置文件名，可以是一个文件名，也可以是不带后缀的文件名，不可以是一个路径
+    allow_default_name: bool
+        是否允许使用默认的配置文件名qteasy.cfg
+    """
+
+    if file_name is None:
+        file_name = 'saved_config.cfg'
+    if not isinstance(file_name, str):
+        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
+    import re
+    if re.match('[a-zA-Z_]\w+$', file_name):
+        file_name = file_name + '.cfg'  # add .cfg suffix if not given
+    if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
+        raise ValueError(f'invalid file name given: {file_name}')
+    if (file_name == 'qteasy.cfg') and (not allow_default_name):
+        # TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
+        raise NotImplementedError(f'functionality not implemented yet, please use another file name.')
+    return file_name
+
+
 def save_config(config=None, file_name=None, overwrite=True, initial_config=False):
     """ 将config保存为一个文件
     尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
@@ -2254,7 +2280,6 @@ def save_config(config=None, file_name=None, overwrite=True, initial_config=Fals
     None
     """
 
-    # TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
     import pickle
@@ -2265,13 +2290,7 @@ def save_config(config=None, file_name=None, overwrite=True, initial_config=Fals
     if not isinstance(config, (ConfigDict, dict)):
         raise TypeError(f'config should be a ConfigDict or a dict, got {type(config)} instead.')
 
-    if file_name is None:
-        file_name = 'saved_config.cfg'
-    if not isinstance(file_name, str):
-        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
-    import re
-    if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
-        raise ValueError(f'invalid file name: {file_name}, file name must be like "filename.cfg".')
+    file_name = _check_config_file_name(file_name=file_name, allow_default_name=initial_config)
 
     config_path = os.path.join(QT_ROOT_PATH, 'config/')
     if not os.path.exists(config_path):
@@ -2312,13 +2331,7 @@ def load_config(config=None, file_name=None):
     if not isinstance(config, ConfigDict):
         raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
 
-    if file_name is None:
-        file_name = 'saved_config.cfg'
-    if not isinstance(file_name, str):
-        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
-    import re
-    if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
-        raise ValueError(f'invalid file name given: {file_name}')
+    file_name = _check_config_file_name(file_name=file_name, allow_default_name=False)
 
     config_path = os.path.join(QT_ROOT_PATH, 'config/')
     try:
