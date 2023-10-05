@@ -289,8 +289,7 @@ qt.built_ins('dma')
 queasy可以使用历史数据回测策略表现并输出图表如下：
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_14_3.png)
 
-使用默认参数回测策略在历史数据上的表现，可以使用`op.run()`。
-注意如果
+使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
 
 ```python
 res = op.run(
@@ -306,7 +305,6 @@ res = op.run(
         trade_log=True                  # 打印交易日志
 )
 ```
-
 输出结果如下：
 ```
      ====================================
@@ -486,34 +484,8 @@ please input your choice:
 此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以在(QTEASY)命令行提示符后输入
 命令来控制交易策略的运行：
 
-```commandline
-Welcome to the trader shell interactive mode. Type help or ? to list commands.
-Type "bye" to stop trader and exit shell.
-Type "dashboard" to leave interactive mode and enter dashboard.
-Type "help <command>" to get help for more commands.
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_28_1.png)   
 
-(QTEASY) overview
-Account Overview:
------------------
-Account ID:                     1
-User Name:                      user_name
-Created on:                     2023-07-20 22:37:35
-Own Cash:                       ¥ 740,003.49 
-Available Cash:                 ¥ 740,003.49
-Total Investment:               ¥ 1,000,000.00
-Total Value:                    ¥ 966,584.64
-Total Stock Value:              ¥ 226,581.15
-Total Profit:                   ¥ -682.76
-
-(QTEASY) orders 000651 today
-    symbol position direction order_type      qty  price_quoted      submitted_time    status  price_filled  filled_qty  canceled_qty      execution_time delivery_status
- 000651.SZ     long      sell     market  15260.0         36.28 2023-09-18 14:59:07  canceled         36.28         0.0       15260.0 2023-09-18 15:05:01              DL
- 000651.SZ     long      sell     market  15259.0         36.15 2023-09-19 14:59:07    filled         36.06      7600.0           0.0 2023-09-19 14:59:15              DL
- 000651.SZ     long      sell     market  15259.0         36.15 2023-09-19 14:59:07    filled         35.82      7600.0           0.0 2023-09-19 14:59:16              DL
- 000651.SZ     long      sell     market  15259.0         36.15 2023-09-19 14:59:07    filled         35.48        59.0           0.0 2023-09-19 14:59:17              DL
-(QTEASY) 
-
-```
 在命令行模式下可以与`TraderShell`实现交互，操作当前账户，查询交易历史、修改状态等：
 
 - `pause` / `resume`: 暂停/重新启动交易策略
