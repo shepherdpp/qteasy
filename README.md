@@ -156,8 +156,7 @@ test_db_name = test_db <或其他用于测试的临时数据库>
 要下载数据，使用`qt.refill_data_source()`函数。下面的代码下载一年内所有股票的日K线数据：
 
 ```python
-import qteasy as qt
-qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
+qt.refill_data_source(tables='stock_daily, basics', start_date='20210101', end_date='20220101')
 ```
 
 > `qt.refill_data_source()`的`tables`参数指定需要补充的数据表；
@@ -176,8 +175,6 @@ qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='202
 数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。
 
 ```python
-import qteasy as qt
-
 qt.get_history_data(htypes='open, high, low, close', 
                     shares='000001.SZ, 000005.SZ',
                     start='20210101',
@@ -321,7 +318,7 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持显示股票、基金、期货的K线，同时也可以传入`adj=b/f`参数显示复权价格，或传入`freq`参数改变K显得频率，显示分钟、
 周或月K线，还可以传入更多的参数修改K线图上的
-指标类型、移动均线类型以及参数，详细的用法请参考文档，示例如下：
+指标类型、移动均线类型以及参数，详细的用法请参考文档，示例如下(请先使用`qt.refill_data_source()下载相应的历史数据)：
 
 
 ```python

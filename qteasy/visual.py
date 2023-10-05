@@ -700,7 +700,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     if basic_info.empty:
         raise ValueError(f'Can not load basic information for asset type: "{name_of[asset_type]}" from data source '
                          f'"{ds.connection_type}". \n'
-                         f'call "DataSource.get_table_info()" to check if data table exists')
+                         f'use "datasource.refill_data_source(tables=\'basics\')" to download basic information')
     try:
         this_stock = basic_info.loc[stock]
     except Exception as e:

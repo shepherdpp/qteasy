@@ -4300,7 +4300,7 @@ class DataSource:
                                f'start/end/freq: {start}/{end}/"{freq}"\n'
                                f'asset_type/adj: {asset_type} / {adj}\n'
                                f'To check data availability, use one of the following:\n'
-                               f'Availability of all tables:     qt.get_table_overview()\nor\n'
+                               f'Availability of all tables:     qt.get_table_overview()，or\n'
                                f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
                                f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
                                f'**kwargs)')
