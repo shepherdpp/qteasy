@@ -959,7 +959,7 @@ def prev_market_trade_day(date, exchange='SSE'):
     if qteasy.QT_TRADE_CALENDAR is not None:
         exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
-        return pretrade_date
+        return pd.to_datetime(pretrade_date)
     else:
         raise NotImplementedError
 

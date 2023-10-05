@@ -2143,6 +2143,10 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
         pass
     table_availabilities = trader.datasource.overview(tables=related_tables, print_out=False)
     last_available_date = table_availabilities['max2'].max()
+    try:
+        last_available_date = pd.to_datetime(last_available_date)
+    except:
+        last_available_date = pd.to_datetime('today') - pd.Timedelta(value=100, unit='d')
     from qteasy.utilfuncs import prev_market_trade_day
     today = pd.to_datetime('today').strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')

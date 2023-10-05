@@ -72,6 +72,8 @@ def built_in_list(stg_id=None):
     """
     if stg_id is None:
         return BUILT_IN_STRATEGIES
+    if isinstance(stg_id, str):
+        stg_id = stg_id.lower()
     stg_func = BUILT_IN_STRATEGIES.get(stg_id, None)
     if stg_func is None:
         print(f'Strategy Not found! Stg id ({stg_id})')
@@ -147,8 +149,8 @@ def get_built_in_strategy(id):
     """
     if not isinstance(id, str):
         raise TypeError(f'id should be a string, got {type(id)} instead')
-
-    if not id in BUILT_IN_STRATEGIES.keys():
+    id = id.lower()
+    if id not in BUILT_IN_STRATEGIES.keys():
         raise ValueError(f'id ({id}) is not valid, please check your input')
 
     return BUILT_IN_STRATEGIES[id]()
