@@ -289,8 +289,7 @@ qt.built_ins('dma')
 queasy可以使用历史数据回测策略表现并输出图表如下：
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_14_3.png)
 
-使用默认参数回测策略在历史数据上的表现，可以使用`op.run()`。
-注意如果
+使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
 
 ```python
 res = op.run(
@@ -306,7 +305,6 @@ res = op.run(
         trade_log=True                  # 打印交易日志
 )
 ```
-
 输出结果如下：
 ```
      ====================================
