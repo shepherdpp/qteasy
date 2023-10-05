@@ -3330,7 +3330,7 @@ def _evaluate_one_parameter(par,
         period_count = config.opti_sub_periods
         period_length = config.opti_sub_prd_length
         indicators = config.optimize_target
-    elif stage == 'test-o':
+    elif stage == 'test-o':  # 在优化过程中，在优化区间上测试参数的性能
         invest_cash_amounts = config.test_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
         invest_cash_dates = pd.to_datetime(config.opti_start) if \
@@ -3340,7 +3340,7 @@ def _evaluate_one_parameter(par,
         period_count = config.test_sub_periods
         period_length = config.test_sub_prd_length
         indicators = config.test_indicators
-    else:  # stage == 'test-t':
+    else:  # stage == 'test-t':  # 在优化结束后，在测试区间上测试找到的最优参数的性能
         invest_cash_amounts = config.test_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
         invest_cash_dates = pd.to_datetime(config.test_start) if \
