@@ -919,7 +919,7 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
             exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
         except KeyError as e:
             raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
-        return exchange_trade_cal[exchange_trade_cal.is_open == 1].index[-1]
+        return exchange_trade_cal[exchange_trade_cal.is_open == 1].index.max()
     else:
         raise NotImplementedError
 
@@ -995,6 +995,8 @@ def nearest_market_trade_day(date, exchange='SSE'):
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
+        # raise ValueError(f'{date} is out of trade calendar range ({last_known_trade_day}), '
+        #                  f'refill trade calendar with "refill_data_source(tables=[\'trade_calendar\'])"')
     if is_market_trade_day(_date, exchange):
         return _date
     else:
@@ -1035,6 +1037,8 @@ def next_market_trade_day(date, exchange='SSE'):
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
+        # raise ValueError(f'{date} is out of trade calendar range ({last_known_trade_day}), '
+        #                  f'refill trade calendar with "refill_data_source(tables=[\'trade_calendar\'])"')
     if is_market_trade_day(_date, exchange):
         return _date
     else:

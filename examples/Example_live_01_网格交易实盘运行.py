@@ -6,8 +6,42 @@ import qteasy as qt
 from qteasy import QT_CONFIG, DataSource, Operator, RuleIterator
 
 
-if __name__ == '__main__':
+class GridTrade(qt.RuleIterator):
+    """网格交易策略"""
 
+    def realize(self, h, r=None, t=None, pars=None):
+
+        # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
+        grid_size, trade_batch, base_grid = self.pars
+
+        # 读取最新价格
+        price = h[-1, 0]  # 最近一个K线周期的close价格
+        # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
+        if base_grid <= 0.01:
+            # 基准网格尚未设置，此时为首次运行，首次买入2000股并设置基准网格为当前价格（精确到0.1元）
+            result = 2000
+            base_grid = np.round(price / 0.1) * 0.1
+        elif price - base_grid > grid_size:
+            # 触及卖出网格线，产生卖出信号
+            result = - trade_batch  # 交易信号等于交易数量，必须使用VS信号类型
+            # 重新计算基准网格
+            base_grid += grid_size
+        elif base_grid - price > grid_size:
+            # 触及买入网格线，产生买入信号
+            result = trade_batch + 10.
+            # 重新计算基准网格
+            base_grid -= grid_size
+        else:
+            result = 0.
+
+        # 使用新的基准网格更新交易参数
+        base_grid = np.round(base_grid, 2)
+        self.pars = (grid_size, trade_batch, base_grid)
+
+        return result
+
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--account', type=int, help='start trader with the given account id')
     parser.add_argument('-n', '--new_account', type=str, default=None,

@@ -156,8 +156,7 @@ test_db_name = test_db <或其他用于测试的临时数据库>
 要下载数据，使用`qt.refill_data_source()`函数。下面的代码下载一年内所有股票的日K线数据：
 
 ```python
-import qteasy as qt
-qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='20220101')
+qt.refill_data_source(tables='stock_daily, basics', start_date='20210101', end_date='20220101')
 ```
 
 > `qt.refill_data_source()`的`tables`参数指定需要补充的数据表；
@@ -176,8 +175,6 @@ qt.refill_data_source(tables='stock_daily', start_date='20210101', end_date='202
 数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。
 
 ```python
-import qteasy as qt
-
 qt.get_history_data(htypes='open, high, low, close', 
                     shares='000001.SZ, 000005.SZ',
                     start='20210101',
@@ -321,10 +318,11 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持显示股票、基金、期货的K线，同时也可以传入`adj=b/f`参数显示复权价格，或传入`freq`参数改变K显得频率，显示分钟、
 周或月K线，还可以传入更多的参数修改K线图上的
-指标类型、移动均线类型以及参数，详细的用法请参考文档，示例如下：
+指标类型、移动均线类型以及参数，详细的用法请参考文档，示例如下(请先使用`qt.refill_data_source()下载相应的历史数据)：
 
 
 ```python
+import qteasy as qt
 # 场内基金的小时K线图
 qt.candle('159601', start = '20220121', freq='h')
 # 沪深300指数的日K线图
@@ -601,6 +599,35 @@ Max drawdown:                    35.04%
 
 更多的选项请参见详细文档
 
+### 回测并优化交易策略
+
+交易策略的表现往往与参数有关，如果输入不同的参数，策略回报相差会非常大。因此我们在定义策略的时候，可以将这些参数定义为"可调参数"。
+定义好可调参数后，`qteasy`就可以用多种不同的优化算法，帮助搜索最优的策略参数，并且提供多种不同的策略参数检验方法，为策略参数的表
+现提供独立检验。
+
+要使用策略优化功能，需要设置交易策略的优化标记`opt_tag=1`，这样可以单独开启`Operator`对象中某一个或某几个策略的优化标记，从而在
+对某些策略的可调参数进行优化的同时，其他策略的参数保持不变。然后运行`qt.run()`,并配置环境变量`mode=2`即可:
+
+```python
+import qteasy as qt
+
+op = qt.Operator(strategies='dma')
+op.set_parameter('dma', opt_tag=1)
+res = qt.run(op, mode=2, visual=True)
+```
+
+默认情况下，`qteasy`将在同一段历史数据上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据上进行独立测试，并显
+示独立测试的结果，同时输出可视化结果如下：
+
+这里忽略详细的参数对比数据，详细的结果解读和说明参见详细文档
+
+关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_15_3.png)   
+
+
+
+
 
 ### 部署并开始交易策略的实盘运行
 
@@ -709,29 +736,3 @@ Total Profit:                   ¥ -682.76
 - `history`: 查看历史交易记录
 - `exit`: 退出TraderShell
 - ... 更多`TraderShell`命令参见`QTEASY`文档
-
-### 回测并优化交易策略
-
-交易策略的表现往往与参数有关，如果输入不同的参数，策略回报相差会非常大。因此我们在定义策略的时候，可以将这些参数定义为"可调参数"。
-定义好可调参数后，`qteasy`就可以用多种不同的优化算法，帮助搜索最优的策略参数，并且提供多种不同的策略参数检验方法，为策略参数的表
-现提供独立检验。
-
-要使用策略优化功能，需要设置交易策略的优化标记`opt_tag=1`，这样可以单独开启`Operator`对象中某一个或某几个策略的优化标记，从而在
-对某些策略的可调参数进行优化的同时，其他策略的参数保持不变。然后运行`qt.run()`,并配置环境变量`mode=2`即可:
-
-```python
-import qteasy as qt
-
-op = qt.Operator(strategies='dma')
-op.set_parameter('dma', opt_tag=1)
-res = qt.run(op, mode=2, visual=True)
-```
-
-默认情况下，`qteasy`将在同一段历史数据上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据上进行独立测试，并显
-示独立测试的结果，同时输出可视化结果如下：
-
-这里忽略详细的参数对比数据，详细的结果解读和说明参见详细文档
-
-关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
-
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_15_3.png)   
