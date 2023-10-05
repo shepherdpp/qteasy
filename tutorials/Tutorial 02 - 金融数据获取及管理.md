@@ -275,13 +275,6 @@ ds_csv.update_table_data('stock_basic', df)
 ds_csv.table_data_exists('stock_basic')
 ```
 
-
-
-
-    True
-
-
-
 ### 通过tushare获取数据，并保存到DataSource中：
 `tushare`是一个网络金融数据API，提供了大量的金融数据，不过某些数据需要积分才能获取，请自行申请`tushare`账号并获取相应积分
 `tushare`的说明文档在这里：https://tushare.pro/document/2
@@ -294,10 +287,6 @@ ds_csv.update_table_data('trade_calendar', df)
 ds_csv.table_data_exists('trade_calendar')
 ```
 
-
-    True
-
-
 ## 连接`tushare`下载数据并保存到本地数据源
 
 `qteasy`提供了`tushare`数据接口，在获取相应`tushare`权限后，可以直接从`tushare`批量下载金融数据，并将数据更新到本地数据源中
@@ -307,7 +296,24 @@ ds_csv.table_data_exists('trade_calendar')
 ### `qt.refill_data_source(data_source, *args, **kwargs)`
 
 连接到`tushare`下载所需的数据并保存到相应的数据表，给出需要下载的数据表名称，通过`start_date`和`end_date`限定数据的范围，同时可以通过`freq`、`asset_type`等指定不同的数据类型，即可下载表格数据并保存到合适的位置。
-重复的数据会被忽略或覆盖已有的数据
+重复的数据会被忽略或覆盖已有的数据。
+
+
+> `qt.refill_data_source()`的`tables`参数指定需要补充的数据表；
+> 除了直接给出表名称以外，还可以通过表类型同时下载多个数据表的数据：
+> 
+> - `cal`     : 交易日历表，各个交易所的交易日历
+> - `basics`  : 所有的基础信息表，包括股票、基金、指数、期货、期权的基本信息表
+> - `adj`     : 所有的复权因子表，包括股票、基金的复权因子，用于生成复权价格
+> - `data`    : 所有的历史数据表，包括股票、基金、指数、期货、期权的日K线数据以及周、月K线数据
+> - `events`  : 所有的历史事件表，包括股票更名、更换基金经理、基金份额变动等数据
+> - `report`  : 财务报表，包括财务指标、三大财务报表、财务快报、月报、季报以及年报
+> - `comp`    : 指数成分表，包括各个指数的成份股及其百分比
+> - `all`     : 所有的数据表，以上所有数据表，由于数据量大，建议分批下载
+
+
+数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。
+
 
 
 例如，通过检查发现，`stock_daily`表中的数据不够完整，最新的数据仅更新到2022年3月22日，数据共有1210万行：

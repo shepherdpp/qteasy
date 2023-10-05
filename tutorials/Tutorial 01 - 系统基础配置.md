@@ -16,15 +16,29 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 
 ### 1，依赖包
 
-`qteasy`依赖以下`python`包，推荐使用`Anaconda`搭建一个运行环境：
-
-- *`pandas` version 0.25*
-- *`numpy` version 0.19*
-- *`TA-lib` version 0.4*
-- *`tushare pro` version 1.24.1*
-- *`matplotlib.mplfinance` version 0.12*
+`qteasy`依赖以下`python`包，有些安装包可能不能在安装`qteasy`的时候自动安装，此时推荐使用`Anaconda`搭建运行环境并手动安装依赖包：
+:
+- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
+- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
+- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
+- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
+- *`tushare` version >= 1.2.89*    `pip install tushare`
+- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 
 上面的包中，`TA-lib`需要用户自行安装，大部份的`qteasy`内置交易策略都是基于`TA-lib`提供的金融数据函数创建的，如果`TA-lib`没有正确安装，将会导致大部份内置交易策略无法使用。
+
+### 2可选依赖包
+使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包
+#### 如果使用mysql数据库作为本地数据源
+- *`pymysql` version >= 1.0.0*    `pip install pymysql` / `conda install -c anaconda pymysql`
+- *`sqlalchemy` version >= 1.4.18, <=1.4.23*   `pip install sqlalchemy` / `conda install sqlalchemy`
+
+#### 如果使用hdf文件作为本地数据源 
+- *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
+
+#### 如果使用feather文件作为本地数据源
+- *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
+
 
 ### 2，数据管理环境（本地数据源）
 
@@ -43,15 +57,26 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 
 未来计划增加其他金融数据提供商的API，以扩大数据来源。
 
-## 配置环境变量
 
-qteasy的运行依赖于一系列的环境配置变量，通过环境配置变量，用户可以控制qteasy运行的方方面面。qteasy在运行时允许存在多组不同的环境配置变量对象Config，每一组Config对应一组环境配置变量。在默认情况下，qteasy初始化会创建一个默认环境变量QT_CONFIG并始终使用这个配置变量。
+## 使用`QTEASY`
 
-推荐使用以下方式倒入qteasy：
+当qteasy的所有依赖包正确安装后，即可使用以下方式导入`qteasy`：
 
 ```python
 import qteasy as qt
 ```
+第一次安装的qteasy会自动初始化，初始化过程会创建一个`qteasy.cnf`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改qteasy的环境配置变量。
+
+默认情况下，qteasy使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用qteasy，用户还应该完成本地数据源的基本配置。
+
+
+## 配置环境变量和数据源
+
+qteasy的运行依赖于一系列的环境配置变量，通过环境配置变量，用户可以控制qteasy运行的方方面面。qteasy在运行时允许存在多组不同的环境配置变量对象Config，每一组Config对应一组环境配置变量。在默认情况下，qteasy初始化会创建一个默认环境变量QT_CONFIG并始终使用这个配置变量。
+
+> - 使用`qt.QT_ROOT_PATH`可以查看qteasy的根目录
+> - 使用`qt.QT_CONFIG`可以查看当前使用的环境配置变量
+> - `tushare` 的`API token`可以到[tushare pro主页](https://tushare.pro)免费申请
 
 所有的环境参数变量值都可以通过`qt.Configuration()`查看，并通过`qt.Configure()`来设置。
 
@@ -88,9 +113,25 @@ local_data_source = file
 local_data_file_type = csv  # 或者hdf/fth分别代表hdf5文件或feather文件
 local_data_file_path = data  # 或者其他指定的文件存储目录
 ```
-完成上述配置后，`qteasy`会将上述配置读取后写入**`QT_CONFIG`**，这样在运行中就会使用这一组配置变量。
+完成上述配置后，`qteasy`会将上述配置读取后写入`qt.QT_CONFIG`环境变量，这样在运行中就会使用这一组配置变量。
 
-### 运行时修改环境变量
+### 测试数据源的配置
+qteasy在测试开发环境中需要用到测试数据源，测试数据源可以与正式数据源不同，以免污染正式运行数据。
+将以下配置写入配置文件可以设置测试环境数据源：
+```commandline
+# 如果要使用tests目录下的测试数据，需要设置：
+test_db_host = <host name>
+test_db_port = <port number>
+test_db_user = <user name>
+test_db_password = <password>
+test_db_name = test_db <或其他用于测试的临时数据库>
+```
+根据你选择的本地数据源类型，可能需要安装对应的依赖包，参见[安装及依赖](#安装环境及依赖包)
+
+如果日常使用的数据量大，建议设置`data_source_type = database`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
+间， 分钟级别数据将占用350GB甚至更多的磁盘空间。
+
+### 运行时查看和修改环境变量
 
 `qteasy`运行时可以使用以下几个函数查看或修改系统环境变量
 
@@ -180,5 +221,3 @@ qt.configuration(config_key='mode, asset_pool, report, visual', default=True, ve
           为True时使用图表显示可视化运行结果
           （回测模式显示回测报告，优化模式显示优化结果报告）
 
-
-​    

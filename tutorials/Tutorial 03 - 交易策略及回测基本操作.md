@@ -1,5 +1,23 @@
 # QTEASY使用教程03——创建交易策略并评价回测结果
 
+`qteasy`中的所有交易策略都是通过`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
+管理多个不同的交易策略，哪怕这些交易策略有不同的运行时机和运行频率，或者不同的用途，例如一个策略用于选股、另一个策略用于大盘择时，再一个策
+略用于风险控制，用户可以非常灵活地添加或修改`Operator`对象中的策略。
+
+将策略交给`Operator`后，只要设置好交易的资产类别，资产池的大小，设定好每个策略的运行时机和频率后，`Operator`对象就会在合适的时间启动相应的
+交易策略，生成策略信号，并将所有的策略信号混合(`blend`)后解析成为交易信号。
+
+关于`Operator`对象的更多介绍，请参见`qteasy`文档
+
+`queasy`提供了两种方式创建交易策略：
+
+- *使用内置交易策略组合*：
+  - `qteasy`提供多种内置交易策略可供用户使用，不需要手工创建。通过引用内置策略的名称（关于所有内置策略的介绍，请参
+  见详细文档）用户可以快速建立策略，还可以通过多个简单的策略混合成较为复杂的复合策略。
+- *通过策略类自行创建策略*： 
+  - 当用户的策略非常复杂时，可以通过`qteasy.Strategy`类来自定义一个策略。
+
+
 创建交易策略，并且使用历史数据回溯测试交易策略的交易结果，并对交易结果进行评价是qteasy的核心功能之一。
 qteasy通过一个交易员对象（Operator）汇总一系列的交易策略，并且通过qt.run()函数在一段设定好的历史时间段内模拟交易策略的运行，生成交易信号，使用历史价格进行模拟交易，生成交易结果，计算评价指标，并以可视化形式输出为图表。
 
@@ -10,14 +28,6 @@ qteasy通过一个交易员对象（Operator）汇总一系列的交易策略，
 
 首先我们导入qteasy模块
 为了在线打印图表，使用`matplotlib inline`设置图表打印模式为在线打印
-
-
-```python
-import sys
-sys.path.append('../')
-import qteasy as qt
-%matplotlib inline
-```
 
 
 ## 创建Strategy对象和Operator对象
@@ -33,27 +43,28 @@ qteasy中的每一个交易策略都被定义为交易策略（Strategy）对象
 创建Strategy对象的最简单方法是使用qt.built_in模块, 也可以在创建Operator对象的时候同时创建。
 
 ```python
+import qteasy as qt
+%matplotlib inline
 # 通过qt内置策略模块创建一个DMA则时策略
 stg = qt.built_in.DMA()
 # 通过stg.info()可以查看策略的主要信息：
 stg.info()
 ```
+```commandline
+Strategy_type:      RuleIterator
+Strategy name:      DMA
+Description:        Quick DMA strategy, determine long/short position according to differences of moving average prices with simple timing strategy
+Strategy Parameter: (12, 26, 9)
 
-    Strategy_type:      RuleIterator
-    Strategy name:      DMA
-    Description:        Quick DMA strategy, determine long/short position according to differences of moving average prices with simple timing strategy
-    Strategy Parameter: (12, 26, 9)
-    
-    Strategy Properties     Property Value
-    ---------------------------------------
-    Parameter count         3
-    Parameter types         ['int', 'int', 'int']
-    Parameter range         [(10, 250), (10, 250), (10, 250)]
-    Data frequency          d
-    Sample frequency        d
-    Window length           270
-    Data types              ['close']
-
+Strategy Properties     Property Value
+-------------------------------------------------
+Param. count            3
+Param. types            ['int', 'int', 'int']
+Param. range            [(10, 250), (10, 250), (5, 250)]
+Run parameters          d @ close
+Data types              ['close']
+Data parameters         270 d
+```
 
 
 从上面的输出可以看到这个交易策略的基本信息。除了名称、描述以外，比较重要的信息包括：
@@ -319,7 +330,36 @@ qt.run(op)
 
 ![png](img/output_12_2.png)
     
+在`qteasy`模拟的交易过程中，可以设置丰富的参数，例如：
 
+- 投入资金的数量、日期、或者设置分批多次投入资金；
+- 买入和卖出交易的费用、包括佣金费率、最低费用、固定费用、以及滑点。各种费率都可以针对买入和卖出分别设定
+- 买入和卖出交易的交割时间，也就是T+N日交割制度
+- 买入和卖出交易的最小批量，例如是否允许分数份额交易、还是必须整数份额、甚至整百份交易
+
+最终打印的回测结果是考虑上述所有交易参数之后的最终结果，因此可以看到总交易成本。详细的交易参数设置请参见详细文档。
+
+另外，`qteasy`还给给出了关于策略表现的几个指标：
+如alpha和beta分别是0.067和1.002，而夏普率为0.041。最大回撤发生在2009年8月3日到2014年7月10日，回撤了35.0%，且到了2014年12月16日才翻盘。
+
+在上面的回测结果中我们给出了参数`visual=False`，如果令`visual=True`，就能得到可视化的回测结果，以图表的形式给出，并提供可视化信息：
+
+- 投资策略的历史资金曲线
+- 参考数据（沪深300指数）的历史曲线
+- 买点和卖点（在参考数据上以红色、绿色箭头显示）
+- 持仓区间（绿色表示持仓）
+- 投资策略的评价指标（alpha、sharp等）
+- 历史回撤分析（显示五次最大的回撤）
+- 历史收益率热力图、山积图等图表
+
+
+`qteasy`提供了丰富的策略回测选项，例如：
+
+- 回测开始结束日期
+- 回测结果评价指标
+- 回测时是否允许持有负数仓位（用于模拟期货交易卖空行为，也可以使用专门的期货交易模拟算法）
+
+更多的选项请参见详细文档
 
 ### 单择时策略的优化
 显然，没有经过优化的参数无法得到理想的回测结果，因此我们需要进行一次优化
