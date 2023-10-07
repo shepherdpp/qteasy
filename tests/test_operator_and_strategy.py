@@ -725,7 +725,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIs(op.get_strategy_by_id('trix'), op.strategies[2])
 
     def test_get_items(self):
-        """ test method __getitem__(), it should be the same as geting strategies by id"""
+        """ test method __getitem__(), it should be the same as geting strategies by stg_id"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
