@@ -10,19 +10,46 @@ qteasy提供了多种内置交易策略，用户可以很容易地直接使用�
 import qteasy as qt
 ```
 
-    /Users/jackie/Library/CloudStorage/OneDrive-Personal/Projects/PycharmProjects/qteasy/qteasy/_arg_validators.py:829: UserWarning: config_key <tushare_token> is not a built-in parameter key, please check your input!
-      warnings.warn(err_msg)
-
 
 `qteasy`的内置交易策略可以通过qteasy.built_in模块来访问，通过以下几个方法可以获取内置策略的清单：
 
-### `qt.built_ins()`
+### `qt.built_ins(stg_id=None)`
 
-### `qt.built_in_strategies()`
+### `qt.built_in_strategies(stg_id=None)`
 
-### `qt.built_in_list()`
+### `qt.built_in_list(stg_id=None)`
 
 上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。
+如果给出stg_id，则打印出指定的交易策略的详细信息。例如：
+
+```python
+# 获取内置交易策略的清单
+stg_list = qt.built_ins('dma')
+```
+打印如下信息：
+
+    DMA择时策略
+
+    策略参数：
+        s, int, 短均线周期
+        l, int, 长均线周期
+        d, int, DMA周期
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        在下面情况下产生买入信号：
+        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1
+        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0
+        3， DMA与股价发生背离时的交叉信号，可信度较高
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (8, 250)]
+    策略不支持参考数据，不支持交易数据
+
 
 ### `qt.get_built_in_strategy(id)`
 
@@ -113,7 +140,7 @@ stg_macd.info()
 目前qteasy支持的内置交易策略如下：
 
 | ID    | 策略名称    | 说明                                                                                                                                                                                                                                                 | 
-|:------- |:--------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|:-------|:--------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | crossline | `TimingCrossline` | crossline择时策略类，利用长短均线的交叉确定多空状态<br />1，当短均线位于长均线上方，且距离大于l\*m%时，设置仓位目标为1<br />2，当短均线位于长均线下方，且距离大于l\*m%时，设置仓位目标为-1<br />3，当长短均线之间的距离不大于l\*m%时，设置仓位目标为0                                                                                                |
 | macd | `TimingMACD` | MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br />2，当MACD值小于0时，设置仓位目标为0                                                                                                                                                              |
 | dma | `TimingDMA` | DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0                                                                                                                                                |
@@ -183,12 +210,9 @@ stg_macd.info()
 | ndayavg | `SelectingNDayAvg` | 以股票过去N天的价格或数据指标的平均值作为选股因子选股                                                                                                                                                                                                                        |
 | ndayrate | `SelectingNDayRateChange` | 以股票过去N天的价格或数据指标的变动比例作为选股因子选股                                                                                                                                                                                                                       |
 | ndaychg | `SelectingNDayChange` | 以股票过去N天的价格或数据指标的变动值作为选股因子选股                                                                                                                                                                                                                        |
-| ndayvol | `SelectingNDayVolatility` | 根据股票以前N天的股价波动率作为选股因子                                                                                                                                                                                                                               
+| ndayvol | `SelectingNDayVolatility` | 根据股票以前N天的股价波动率作为选股因子                                                                                                                                                                                                                               |
 
 
-```python
-
-```
 
 如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的Doc-string：
 
@@ -226,7 +250,7 @@ Type:           type
 Subclasses:     
 ```
 
-又例如：
+在ipython等交互式python环境中，也可以使用?来显示内置交易策略的详细信息，例如：
 
 ```python
 qt.built_in.SelectingNDayRateChange?
@@ -287,6 +311,9 @@ Subclasses:
 
 上述交易策略组合中，每一个独立的交易策略都很简单，很容易定义，而将他们组合起来，又能发挥更大的作用。同时每一个子策略都是独立的，可以自由组合出复杂的综合性交易策略。这样可以避免不断地重复开发策略，只需要对子策略重新排列组合，重新定义组合方式，就可以快速地搭建一系列的复杂综合性交易策略。相信这样能够极大地提高交易策略的搭建效率，缩短周期。时间就是金钱。
 
+不过，在一个Operator对象中，不同策略生成的交易信号可能运行的交易价格是不同的，例如，某些策略生成开盘价交易信号，而另一些策略生成的是收盘价交易策略，那么不同的交易价格信号当然不应该混合。但除此之外，只要是交易价格相同的信号，都应该全部混合。
+
+交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个ndarray的函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。
 ### 定义策略组合方式`blender`
 
 `qteasy`中的组合策略是由`blender`实现的。在一个`Operator`中，如果策略的数量多于1个，就必须定义一个`blender`。如果没有明确定义`blender`，而策略的数量超过1个时，`qteasy`会在运行`Operator`的时候创建一个默认的`blender`，但是为了让多重策略正确运行，用户需要自行定义`blender`。
@@ -563,5 +590,5 @@ res = qt.run(op, mode=1)
 
 
 
-![png](img/output_12_1 2.png)
+![png](img/output_12_1_2.png)
     

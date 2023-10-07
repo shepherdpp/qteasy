@@ -76,7 +76,7 @@ def built_in_list(stg_id=None):
         stg_id = stg_id.lower()
     stg_func = BUILT_IN_STRATEGIES.get(stg_id, None)
     if stg_func is None:
-        print(f'Strategy Not found! Stg id ({stg_id})')
+        print(f'Strategy Not found! Stg stg_id: ({stg_id})')
         return None
 
     print(stg_func.__doc__)
@@ -125,12 +125,12 @@ def built_in_strategies(stg_id=None):
     return built_in_list(stg_id)
 
 
-def get_built_in_strategy(id):
+def get_built_in_strategy(stg_id):
     """ 使用ID获取交易策略
 
     Parameters
     ----------
-    id: str
+    stg_id: str
         策略ID
 
     Returns
@@ -147,13 +147,13 @@ def get_built_in_strategy(id):
     >>> get_built_in_strategy('macd')
     MACD strategy
     """
-    if not isinstance(id, str):
-        raise TypeError(f'id should be a string, got {type(id)} instead')
-    id = id.lower()
-    if id not in BUILT_IN_STRATEGIES.keys():
-        raise ValueError(f'id ({id}) is not valid, please check your input')
+    if not isinstance(stg_id, str):
+        raise TypeError(f'stg_id should be a string, got {type(stg_id)} instead')
+    stg_id = stg_id.lower()
+    if stg_id not in BUILT_IN_STRATEGIES.keys():
+        raise ValueError(f'stg_id ({stg_id}) is not valid, please check your input')
 
-    return BUILT_IN_STRATEGIES[id]()
+    return BUILT_IN_STRATEGIES[stg_id]()
 
 
 # Basic technical analysis based Timing strategies

@@ -81,9 +81,6 @@ qt.QT_DATA_SOURCE
     2   local_data_file_type  csv
     3   local_data_file_path  qteasy/data/
 
-
-
-
     DataSource('db', 'localhost', 3306)
 
 ## 历史数据类型
@@ -118,7 +115,8 @@ qt.get_history_data('pe', '000001.SZ', start="20220101", end="20220201")
 ```
 ```commandline
 Out[16]: 
-{'000001.SZ':                  pe
+{'000001.SZ':
+                  pe
  2022-01-04  11.1761
  2022-01-05  11.5048
  2022-01-06  11.4847
@@ -957,7 +955,7 @@ data = qt.candle('000004.SZ')
 ```
 
 
-![png](img/output_20_2.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_20_2.png)
     
 
 
@@ -969,7 +967,7 @@ data = qt.candle('000004.SZ', start='20220110', end='20220318', adj='b', freq='H
 ```
 
 
-![png](img/output_22_2.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_22_2.png)
     
 
 
@@ -981,10 +979,11 @@ data = qt.candle('国华网安', start='20220110', end='20220318', adj='b', freq
 ```
 
 
-![png](img/output_24_2.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_24_2.png)
 
 下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等
 ```python
+import qteasy as qt
 df = qt.candle('159601', start='20210420', freq='d')
 df = qt.candle('000001.SH', start = '20211221', asset_type='IDX', plot_type='c')
 df = qt.candle('000300.SH', start = '20220331', asset_type='IDX', mav=[], plot_type='c')
@@ -999,67 +998,35 @@ df = qt.candle('110025', asset_type='FD', adj='f', mav=[9, 28])
 df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
 ```
 
-
-
-![png](img/output_18_1.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_1.png)
     
 
-
-
-
-![png](img/output_18_2.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_2.png)
     
 
-
-
-
-![png](img/output_18_3 copy.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_3_copy.png)
     
 
-
-
-
-![png](img/output_18_4.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_4.png)
     
 
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_5.png)
 
 
-
-![png](img/output_18_5.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_6.png)
     
 
-
-
-
-![png](img/output_18_6.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_7.png)
     
 
-
-
-
-![png](img/output_18_7.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_8.png)
     
 
-
-
-
-![png](img/output_18_8.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_9.png)
     
 
-
-
-
-![png](img/output_18_9.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_10.png)
     
 
-
-
-
-![png](img/output_18_10.png)
-    
-
-
-
-
-![png](img/output_18_11.png)
+![png](http://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_11.png)
     
