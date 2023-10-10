@@ -449,7 +449,7 @@ def _valid_qt_kwargs():
                           '默认值为万分之一'},
 
         'cost_min_buy':
-            {'Default':   5.0,
+            {'Default':   0.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,
@@ -552,15 +552,15 @@ def _valid_qt_kwargs():
                           '- adj    - 使用前复权价格回测。\n'},
 
         'maximize_cash_usage':
-            {'Default':   False,
+            {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
              'text':      '回测交易时是否最大化利用同一批次交易获得的现金。即优先卖出股票并将获得的现金立即\n'
                           '用于同一批次的买入交易，以便最大限度利用可用现金。当现金的交割期大于0时无效。\n'
-                          '- False - 默认值，同批次买入和卖出信号同时处理，不立即使用卖出资产的现金\n'
-                          '          将同一批次交易委托同时提交时，这是正常情况\n'
-                          '- True -  首先处理同一批次交易中的卖出信号，并在可能时将获得的现金立即用于\n'
-                          '          本次买入'},
+                          '- True -  默认值，首先处理同一批次交易中的卖出信号，并在可能时将获得的现金\n'
+                          '          立即用于本次买入\n'
+                          '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
+                          '          次交易委托同时提交时，这是正常情况'},
 
         'PT_signal_timing':
             {'Default':   'lazy',
