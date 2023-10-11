@@ -1149,18 +1149,25 @@ class Operator:
             返回一个list，包含每一个交易策略在回测时的执行先后顺序
         """
         if priority is None:
-            priority = 'OHLC'
+            priority = 'OHLCAN'
         price_priority_list = []
-        price_type_table = {'O': 'open',
-                            'H': 'high',
-                            'L': 'low',
-                            'C': 'close'}
+        price_type_table = {
+            'O': ['open'],
+            'H': ['high'],
+            'L': ['low'],
+            'C': ['close', 'unit_nav', 'accum_nav'],
+        }
         price_types = self.strategy_timings
         for p_type in priority.upper():
-            price_type_name = price_type_table[p_type]
-            if price_type_name not in price_types:
+            price_type_names = price_type_table[p_type]
+            if all(price_type_name not in price_types for price_type_name in price_type_names):
                 continue
-            price_priority_list.append(price_types.index(price_type_table[p_type]))
+            found_price_type_name = [price_type_name
+                                     for
+                                     price_type_name in price_type_names
+                                     if
+                                     price_type_name in price_types][0]
+            price_priority_list.append(price_types.index(found_price_type_name))
         return price_priority_list
 
     def get_bt_price_types_in_priority(self, priority=None):

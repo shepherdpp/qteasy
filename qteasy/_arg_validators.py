@@ -384,7 +384,9 @@ def _valid_qt_kwargs():
                                                   'high',
                                                   'low',
                                                   'close',
-                                                  'vol'],
+                                                  'vol',
+                                                  'unit_nav',
+                                                  'accum_nav'],
              'level':     1,
              'text':      '作为基准收益的资产的价格类型。'},
 
@@ -600,11 +602,11 @@ def _valid_qt_kwargs():
                                         and all(item.upper() in 'OHLC'
                                                 for item in value)
                                         and all(item.upper() in value
-                                                for item in 'OHLC'),
+                                                for item in 'OHLCA'),
              'level':     3,
              'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
                           '不同的价格信号的优先级。\n'
-                          '输入类型为字符串，包括O、H、L、C四个字母的所有可能组合'},
+                          '输入类型为字符串，包括O、H、L、C六个字母的所有可能组合'},
 
         'price_priority_quote':
             {'Default':   'normal',
@@ -1157,7 +1159,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     vkwargs = _valid_qt_kwargs()
 
     if (key not in vkwargs) and raise_if_key_not_existed:
-        err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
+        err_msg = f'config_key: <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
         return True
@@ -1165,14 +1167,15 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     try:
         valid = vkwargs[key]['Validator'](value)
     except Exception as ex:
-        ex.extra_info = f'config_key {key} validator raised exception to value: {str(value)}'
+        ex.extra_info = f'Invalid value: ({str(value)}) for config_key: <{key}>.'
         raise ex
     if not valid:
         import inspect
         v = inspect.getsource(vkwargs[key]['Validator']).strip()
         raise TypeError(
-                f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
-                f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
+                f'Invalid value: ({str(value)}) of type: ({type(value)}) for config_key: <{key}>\n'
+                f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v
+        )
 
     return True
 
@@ -1189,9 +1192,9 @@ def _validate_asset_symbol(value):
     """
     if not isinstance(value, str):
         return False
-    from qteasy.utilfuncs import CN_STOCK_SYMBOL_IDENTIFIER2
+    from qteasy.utilfuncs import TS_CODE_IDENTIFIER_ALL
     import re
-    if re.match(CN_STOCK_SYMBOL_IDENTIFIER2, value) is None:
+    if re.match(TS_CODE_IDENTIFIER_ALL, value) is None:
         return False
 
     return True
@@ -1258,12 +1261,7 @@ def _validate_asset_pool(value):
         value = str_to_list(value)
     if not isinstance(value, list):
         return False
-    from qteasy.utilfuncs import CN_STOCK_SYMBOL_IDENTIFIER2
-    import re
-    # 每一个元素都必须是一个合法的股票代码，使用CN_STOCK_SYMBOL_IDENTIFIER2检查
-    if any([not isinstance(v, str) for v in value]):
-        return False
-    if any([not re.match(CN_STOCK_SYMBOL_IDENTIFIER2, v) for v in value]):
+    if any(not _validate_asset_symbol(v) for v in value):
         return False
 
     return True

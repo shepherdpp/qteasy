@@ -2616,8 +2616,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             asset_type=config['benchmark_asset_type'],
             adj=config['backtest_price_adj'],
             data_source=datasource,
-    ).slice_to_dataframe(htype='close')
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_benchmark is: \n{hist_benchmark}\n')
+    ).slice_to_dataframe(htype=config['benchmark_dtype'])
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan
