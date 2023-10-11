@@ -384,7 +384,9 @@ def _valid_qt_kwargs():
                                                   'high',
                                                   'low',
                                                   'close',
-                                                  'vol'],
+                                                  'vol',
+                                                  'unit_nav',
+                                                  'accum_nav'],
              'level':     1,
              'text':      '作为基准收益的资产的价格类型。'},
 
@@ -449,7 +451,7 @@ def _valid_qt_kwargs():
                           '默认值为万分之一'},
 
         'cost_min_buy':
-            {'Default':   5.0,
+            {'Default':   0.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,
@@ -552,15 +554,15 @@ def _valid_qt_kwargs():
                           '- adj    - 使用前复权价格回测。\n'},
 
         'maximize_cash_usage':
-            {'Default':   False,
+            {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
              'text':      '回测交易时是否最大化利用同一批次交易获得的现金。即优先卖出股票并将获得的现金立即\n'
                           '用于同一批次的买入交易，以便最大限度利用可用现金。当现金的交割期大于0时无效。\n'
-                          '- False - 默认值，同批次买入和卖出信号同时处理，不立即使用卖出资产的现金\n'
-                          '          将同一批次交易委托同时提交时，这是正常情况\n'
-                          '- True -  首先处理同一批次交易中的卖出信号，并在可能时将获得的现金立即用于\n'
-                          '          本次买入'},
+                          '- True -  默认值，首先处理同一批次交易中的卖出信号，并在可能时将获得的现金\n'
+                          '          立即用于本次买入\n'
+                          '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
+                          '          次交易委托同时提交时，这是正常情况'},
 
         'PT_signal_timing':
             {'Default':   'lazy',
@@ -600,11 +602,11 @@ def _valid_qt_kwargs():
                                         and all(item.upper() in 'OHLC'
                                                 for item in value)
                                         and all(item.upper() in value
-                                                for item in 'OHLC'),
+                                                for item in 'OHLCA'),
              'level':     3,
              'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
                           '不同的价格信号的优先级。\n'
-                          '输入类型为字符串，包括O、H、L、C四个字母的所有可能组合'},
+                          '输入类型为字符串，包括O、H、L、C六个字母的所有可能组合'},
 
         'price_priority_quote':
             {'Default':   'normal',
@@ -1157,7 +1159,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     vkwargs = _valid_qt_kwargs()
 
     if (key not in vkwargs) and raise_if_key_not_existed:
-        err_msg = f'config_key <{key}> is not a built-in parameter key, please check your input!'
+        err_msg = f'config_key: <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
         return True
@@ -1165,14 +1167,15 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     try:
         valid = vkwargs[key]['Validator'](value)
     except Exception as ex:
-        ex.extra_info = f'config_key {key} validator raised exception to value: {str(value)}'
+        ex.extra_info = f'Invalid value: ({str(value)}) for config_key: <{key}>.'
         raise ex
     if not valid:
         import inspect
         v = inspect.getsource(vkwargs[key]['Validator']).strip()
         raise TypeError(
-                f'config_key {key} validator returned False for value: {str(value)} of type {type(value)}\n'
-                f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
+                f'Invalid value: ({str(value)}) of type: ({type(value)}) for config_key: <{key}>\n'
+                f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v
+        )
 
     return True
 
@@ -1189,9 +1192,9 @@ def _validate_asset_symbol(value):
     """
     if not isinstance(value, str):
         return False
-    from qteasy.utilfuncs import CN_STOCK_SYMBOL_IDENTIFIER2
+    from qteasy.utilfuncs import TS_CODE_IDENTIFIER_ALL
     import re
-    if re.match(CN_STOCK_SYMBOL_IDENTIFIER2, value) is None:
+    if re.match(TS_CODE_IDENTIFIER_ALL, value) is None:
         return False
 
     return True
@@ -1258,12 +1261,7 @@ def _validate_asset_pool(value):
         value = str_to_list(value)
     if not isinstance(value, list):
         return False
-    from qteasy.utilfuncs import CN_STOCK_SYMBOL_IDENTIFIER2
-    import re
-    # 每一个元素都必须是一个合法的股票代码，使用CN_STOCK_SYMBOL_IDENTIFIER2检查
-    if any([not isinstance(v, str) for v in value]):
-        return False
-    if any([not re.match(CN_STOCK_SYMBOL_IDENTIFIER2, v) for v in value]):
+    if any(not _validate_asset_symbol(v) for v in value):
         return False
 
     return True

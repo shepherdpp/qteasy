@@ -70,7 +70,7 @@ class BaseStrategy:
     """
     __mataclass__ = ABCMeta
 
-    AVAILABLE_STG_RUN_TIMING = ['open', 'close']
+    AVAILABLE_STG_RUN_TIMING = ['open', 'close', 'unit_nav', 'accum_nav']
 
     def __init__(
             self,
@@ -781,8 +781,6 @@ class BaseStrategy:
                     warnings.warn('proportion_or_quantity is deprecated, use max_sel_count instead')
                     self.set_custom_pars(max_sel_count=v)
                     continue
-                import pdb;
-                pdb.set_trace()
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
     def generate(self,

@@ -63,7 +63,10 @@ FLOAT_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 BLENDER_STRATEGY_INDEX_IDENTIFIER = re.compile(r's\d*\d$')
 CN_STOCK_SYMBOL_IDENTIFIER = re.compile(r'^[0-9]{6}$')
 # re identifier that matches string of 6 digits or 6 digits followed by a dot and "SZ" or "SH"
-CN_STOCK_SYMBOL_IDENTIFIER2 = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ)$')
+TS_CODE_IDENTIFIER_CN_STOCK = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ)$')
+TS_CODE_IDENTIFIER_CN_INDEX = re.compile(r'^[0-9]{6}(\.SH|\.SZ)$')
+TS_CODE_IDENTIFIER_CN_FUND = re.compile(r'^[0-9]{6}(\.OF)$')
+TS_CODE_IDENTIFIER_ALL = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ|\.OF)$')
 ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
 AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
@@ -1218,7 +1221,7 @@ def is_complete_cn_stock_symbol_like(key: str) -> bool:
     # TODO: test this function
     if not isinstance(key, str):
         return False
-    if CN_STOCK_SYMBOL_IDENTIFIER2.match(key):
+    if TS_CODE_IDENTIFIER_CN_STOCK.match(key):
         return True
     return False
 
