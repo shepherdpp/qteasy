@@ -26,7 +26,7 @@ import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration
-from qteasy.broker import Broker, RandomBroker
+from qteasy.broker import Broker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
 from qteasy.trade_recording import new_account, get_or_create_position, update_position
@@ -36,7 +36,6 @@ from qteasy.trading_util import get_last_trade_result_summary
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
-# TIME_ZONE = 'UTC'
 
 
 class TraderShell(Cmd):
@@ -55,6 +54,7 @@ class TraderShell(Cmd):
     - orders: 查看账户订单
     - history: 查看账户历史交易记录
     - overview: 查看账户概览
+    - config: 查看或修改qt_config配置信息
     - dashboard: 退出shell，进入dashboard模式
     - strategies: 查看策略信息，或者修改策略参数
     - agenda: 查看交易日程
@@ -252,6 +252,50 @@ class TraderShell(Cmd):
             else:
                 print('argument not valid, input "detail" or "d" to get detailed info')
         self._trader.info(detail)
+
+    def do_config(self, arg):
+        """ Show or change qteasy configurations
+
+        Display current qt configurations to designated level, if level is not given, display
+        until level 2.
+        if configure key is given and value is not given, display current value, default value
+        and explanation of the configure key.
+        if configure key and a value is given, change the configure key to the given value.
+
+        Usage:
+        ------
+        config [level] [key] [value]
+
+        Examples:
+        ---------
+        config 3
+        - display all qt configurations to level 3
+        config mode
+        - display current value, default value and explanation of configure key 'mode'
+        config mode 2
+        - change configure key 'mode' to value 2
+        """
+
+        args = arg.split(' ')
+        if len(args) <= 1:
+            config = self.trader.config()
+        elif len(args) == 2:
+            key = args[0]
+            value = args[1]
+            try:
+                self.trader.update_config(key, value)
+            except Exception as e:
+                print(f'Error: {e}')
+            return
+        else:
+            sys.stdout.write(f'config command does not accept more than 2 arguments\n')
+            return
+
+        # display config to level
+        from qteasy._arg_validators import 
+        if len(args) == 0:
+            level = 2
+
 
     def do_history(self, arg):
         """ List trade history of a stock
@@ -819,17 +863,9 @@ class Trader(object):
         # TODO: 确定所有的config都在QT_CONFIG中后，default_config就不再需要了
         default_config = ConfigDict(
                 {
-                        'market_open_time_am':              '09:30:00',
-                        'market_close_time_pm':             '15:30:00',
-                        'market_open_time_pm':              '13:00:00',
-                        'market_close_time_am':             '11:30:00',
                         'exchange':                         'SSE',
-                        'cash_delivery_period':             0,
-                        'stock_delivery_period':            0,
-                        'asset_pool':                       None,
                         'market_close_day_loop_interval':   0,
                         'market_open_day_loop_interval':    0,
-                        'strategy_open_close_timing_offset': 1,  # minutes, 策略在开盘和收盘运行时的偏移量
                 }
         )
 
@@ -957,15 +993,31 @@ class Trader(object):
         positions['profit_ratio'] = positions['profit'] / positions['total_cost']
         return positions.loc[positions['qty'] != 0]
 
-    def show_agenda(self):
-        """ 显示当前的任务日程 """
-        print(f'Execution Agenda -- {self.task_daily_agenda}')
-
     @property
     def datasource(self):
         return self._datasource
 
     # ================== methods ==================
+    def config(self, key):
+        """ 返回交易系统的配置信息"""
+        if key is not None:
+            return self._config.get(key)
+        else:
+            return self._config
+
+    def update_config(self, key, value):
+        """ 更新交易系统的配置信息 """
+        if key not in self._config:
+            return None
+        from qteasy._arg_validators import _update_config_kwargs
+        new_kwarg = {key: value}
+        _update_config_kwargs(self._config, **new_kwarg, raise_if_key_not_existed=True)
+        return self._config[key]
+
+    def show_agenda(self):
+        """ 显示当前的任务日程 """
+        print(f'Execution Agenda -- {self.task_daily_agenda}')
+
     def run(self):
         """ 交易系统的main loop：
 

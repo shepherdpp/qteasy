@@ -1100,6 +1100,7 @@ def _parse_string_kwargs(value, key, vkwargs):
         return value
     default_value = vkwargs[key]['Default']
     if (not isinstance(default_value, str)) and (default_value is not None):
+        # TODO: ast is not safe, need to find a better way to parse string
         import ast
         value = ast.literal_eval(value)
     return value
