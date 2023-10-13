@@ -292,10 +292,18 @@ class TraderShell(Cmd):
             return
 
         # display config to level
-        from qteasy._arg_validators import 
+        from qteasy._arg_validators import _vkwargs_to_text
         if len(args) == 0:
-            level = 2
-
+            _vkwargs_to_text(config, level=[0, 1, 2], info=True, verbose=False)
+        else:  # len(args) == 1
+            if args[0].isdigit():  # arg is level
+                level = int(args[0])
+                _vkwargs_to_text(config, level=list(range(0, level + 1)), info=True, verbose=False)
+            else:  # arg is key
+                key = args[0]
+                value = config[key]
+                kwarg = {key: value}
+                _vkwargs_to_text(**kwarg, info=True, verbose=True)
 
     def do_history(self, arg):
         """ List trade history of a stock
