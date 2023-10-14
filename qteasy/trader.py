@@ -38,6 +38,34 @@ from qteasy.trading_util import get_last_trade_result_summary
 TIME_ZONE = 'Asia/Shanghai'
 
 
+def parse_shell_argument(arg: str = None) -> list:
+    """ 解析输入的参数, 返回解析后的参数列表，
+
+    解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
+    首先删除多余的空格，将字符串全部转化为小写，再将字符串以空格分割成参数列表。如果输入是空字符串，转化为空列表。
+    参数列表中所有参数的类型都是字符串，在调用时各自转换为相应的类型
+
+    Parameters:
+    -----------
+    arg: 输入的参数
+    arg_type: 参数类型，可选值为 'str', 'int', 'float', 'bool', 'list'
+
+    Returns:
+    --------
+    args: list
+        解析后的参数
+    """
+    if arg is None:
+        return []
+    arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
+    while '  ' in arg:
+        arg = arg.replace('  ', ' ')  # 删除字符间多余的空格
+    if arg == '':
+        return []
+    args = arg.split(' ')
+    return args
+
+
 class TraderShell(Cmd):
     """ 基于Cmd的交互式shell，用于实盘交易模式与用户交互
 
@@ -150,7 +178,7 @@ class TraderShell(Cmd):
             return False
         print(f'canceling all unfinished orders')
         self.trader.add_task('post_close')
-        print(f'stopping trader')
+        print(f'stopping trader...')
         self.trader.add_task('stop')
         self._status = 'stopped'
         return True
@@ -246,8 +274,9 @@ class TraderShell(Cmd):
         overview [detail]
         """
         detail = False
-        if arg is not None:
-            if arg in ['detail', 'd']:
+        args = parse_shell_argument(arg)
+        if args:
+            if args[0] in ['detail', 'd']:
                 detail = True
             else:
                 print('argument not valid, input "detail" or "d" to get detailed info')
@@ -264,7 +293,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        config [level] [key] [value]
+        config [level]|[key] [value]
 
         Examples:
         ---------
@@ -276,34 +305,39 @@ class TraderShell(Cmd):
         - change configure key 'mode' to value 2
         """
 
-        args = arg.split(' ')
-        if len(args) <= 1:
+        from qteasy._arg_validators import _vkwargs_to_text
+        args = parse_shell_argument(arg)
+        if len(args) == 0:
             config = self.trader.config()
+            print(_vkwargs_to_text(config, level=[0], info=True, verbose=False))
+        elif len(args) == 1:
+            if args[0].isdigit():  # arg is level
+                config = self.trader.config()
+                level = int(args[0])
+                print(_vkwargs_to_text(config, level=list(range(0, level + 1)), info=True, verbose=False))
+            else:  # arg is key
+                config = self.trader.config(args[0])
+                key = args[0]
+                value = config[key]
+                if value is None:
+                    print(f'configure key "{key}" not found.')
+                    return
+                print(_vkwargs_to_text(config, level='all', info=True, verbose=True))
         elif len(args) == 2:
             key = args[0]
             value = args[1]
             try:
-                self.trader.update_config(key, value)
+                result = self.trader.update_config(key, value)
+                if result:
+                    print(f'configure key "{key}" has been changed to "{value}".')
+                else:
+                    print(f'configure key "{key}" can not be changed to "{value}".')
             except Exception as e:
                 print(f'Error: {e}')
             return
         else:
             sys.stdout.write(f'config command does not accept more than 2 arguments\n')
             return
-
-        # display config to level
-        from qteasy._arg_validators import _vkwargs_to_text
-        if len(args) == 0:
-            _vkwargs_to_text(config, level=[0, 1, 2], info=True, verbose=False)
-        else:  # len(args) == 1
-            if args[0].isdigit():  # arg is level
-                level = int(args[0])
-                _vkwargs_to_text(config, level=list(range(0, level + 1)), info=True, verbose=False)
-            else:  # arg is key
-                key = args[0]
-                value = config[key]
-                kwarg = {key: value}
-                _vkwargs_to_text(**kwarg, info=True, verbose=True)
 
     def do_history(self, arg):
         """ List trade history of a stock
@@ -869,18 +903,18 @@ class Trader(object):
             raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
         # TODO: 确定所有的config都在QT_CONFIG中后，default_config就不再需要了
-        default_config = ConfigDict(
-                {
-                        'exchange':                         'SSE',
-                        'market_close_day_loop_interval':   0,
-                        'market_open_day_loop_interval':    0,
-                }
-        )
+        # default_config = ConfigDict(
+        #         {
+        #                 'exchange':                         'SSE',
+        #                 'market_close_day_loop_interval':   0,
+        #                 'market_open_day_loop_interval':    0,
+        #         }
+        # )
 
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        self._config = default_config
+        self._config = ConfigDict()
         self._config.update(qteasy.QT_CONFIG.copy())
         self._config.update(config)
         self._datasource = datasource
@@ -1006,20 +1040,20 @@ class Trader(object):
         return self._datasource
 
     # ================== methods ==================
-    def config(self, key):
-        """ 返回交易系统的配置信息"""
+    def config(self, key=None):
+        """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
         if key is not None:
-            return self._config.get(key)
+            return {key: self._config.get(key)}
         else:
             return self._config
 
-    def update_config(self, key, value):
+    def update_config(self, key=None, value=None):
         """ 更新交易系统的配置信息 """
         if key not in self._config:
             return None
         from qteasy._arg_validators import _update_config_kwargs
         new_kwarg = {key: value}
-        _update_config_kwargs(self._config, **new_kwarg, raise_if_key_not_existed=True)
+        _update_config_kwargs(self._config, new_kwarg, raise_if_key_not_existed=True)
         return self._config[key]
 
     def show_agenda(self):
@@ -1041,8 +1075,6 @@ class Trader(object):
                           f'{pd.to_datetime("today").strftime("%Y-%m-%d %H:%M:%S")}\n'
                           f'current day is trade day: {self.is_trade_day}\n'
                           f'running agenda: {self.task_daily_agenda}')
-        # market_open_day_loop_interval = self._config['market_open_day_loop_interval']
-        # market_close_day_loop_interval = self._config['market_close_day_loop_interval']
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
         current_date_time = pd.to_datetime('today')  # 产生当地时间
@@ -1114,7 +1146,7 @@ class Trader(object):
                 # process trader when trader is normally stopped
                 self.post_message('Trader completed and exited.')
         except KeyboardInterrupt:
-            self.post_message('KeyboardInterrupt, stopping trader')
+            self.post_message('KeyboardInterrupt, stopping trader...')
             self.run_task('stop')
         except Exception as e:
             self.post_message(f'error occurred when running trader, error: {e}')
@@ -1351,7 +1383,7 @@ class Trader(object):
 
     def _stop(self):
         """ 停止交易系统 """
-        self.post_message('stopping Trader, the broker will be stopped as well')
+        self.post_message('stopping Trader, the broker will be stopped as well...')
         self._broker.status = 'stopped'
         self.status = 'stopped'
 

@@ -123,14 +123,14 @@ def _valid_qt_kwargs():
         'live_trade_debug_mode':
             {'Default':   False,
              'Validator': lambda value: isinstance(value, bool),
-             'level':     0,
+             'level':     1,
              'text':      '实盘交易调试模式，True: 调试模式，False: 正常模式'},
 
         'live_trade_init_cash':
             {'Default':   1000000.0,
              'Validator': lambda value: isinstance(value, (int, float))
                                         and value > 0,
-             'level':     0,
+             'level':     1,
              'text':      '实盘交易账户的初始资金，浮点数，例如：\n'
                           '1000000.0 : 初始资金为100万\n'
                           '1000000   : 初始资金为100万\n'},
@@ -138,7 +138,7 @@ def _valid_qt_kwargs():
         'live_trade_init_holdings':
             {'Default':   None,
              'Validator': lambda value: isinstance(value, dict) or value is None,
-             'level':     0,
+             'level':     1,
              'text':      '实盘交易账户的初始持仓，字典，例如：\n'
                           "{'000001.SZ': 1000, '000002.SZ': 2000} : 初始持仓为\n"
                           "000001.SZ: 1000股, 000002.SZ: 2000股\n"},
@@ -162,7 +162,7 @@ def _valid_qt_kwargs():
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))
                                         and value >= 0,
-             'level':     1,
+             'level':     0,
              'text':      '投资产品的最小申购批量大小，浮点数，例如：\n'
                           '0. : 可以购买任意份额的投资产品，包括小数份额\n'
                           '1. : 只能购买整数份额的投资产品\n'
@@ -173,7 +173,7 @@ def _valid_qt_kwargs():
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))
                                         and value >= 0,
-             'level':     1,
+             'level':     0,
              'text':      '投资产品的最小卖出或赎回批量大小，浮点数，例如：\n'
                           '0. : 可以购买任意份额的投资产品，包括小数份额\n'
                           '1. : 只能购买整数份额的投资产品\n'
@@ -183,7 +183,7 @@ def _valid_qt_kwargs():
         'cash_decimal_places':
             {'Default':   2,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
-             'level':     1,
+             'level':     2,
              'text':      '现金的小数位数，例如：\n'
                           '0: 现金只能为整数\n'
                           '2: 保留小数点后两位数字\n'},
@@ -191,7 +191,7 @@ def _valid_qt_kwargs():
         'amount_decimal_places':
             {'Default':   2,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
-             'level':     1,
+             'level':     2,
              'text':      '投资产品的份额的小数位数，例如：\n'
                           '0: 份额只能为整数\n'
                           '2: 保留小数点后两位数字\n'},
@@ -200,7 +200,7 @@ def _valid_qt_kwargs():
             {'Default':   0.0035,
              'Validator': lambda value: isinstance(value, float)
                                         and 0 <= value < 1,
-             'level':     2,
+             'level':     1,
              'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
 
         'parallel':
@@ -278,7 +278,7 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, str) and value in ['file',
                                                                              'database',
                                                                              'db'],
-             'level':     4,
+             'level':     1,
              'text':      '确定本地历史数据存储方式：\n'
                           'file     - 历史数据以本地文件的形式存储，\n'
                           '           文件格式在"local_data_file_type"属性中指定，包括csv/hdf等多种选项\n'
@@ -402,7 +402,7 @@ def _valid_qt_kwargs():
         'visual':
             {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
-             'level':     1,
+             'level':     0,
              'text':      '为True时使用图表显示可视化运行结果\n'
                           '（回测模式显示回测报告，优化模式显示优化结果报告）'},
 
@@ -968,7 +968,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
     Returns
     -------
-    output_strings: list of str
+    output_strings: str
         包含所有参数信息的字符串
     """
     from qteasy.utilfuncs import reindent, truncate_string
@@ -976,6 +976,8 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         levels = [level]
     elif isinstance(level, list):
         levels = level
+    elif level == 'all':
+        levels = [0, 1, 2, 3, 4]
     else:
         raise TypeError(f'level should be an integer or list of integers, got {type(level)}')
     assert all(isinstance(item, int) for item in levels), f'TypeError, levels should be a list of integers'
@@ -996,14 +998,14 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     for key in kwargs:
         if key not in vkwargs:
             from qteasy import logger_core
-            logger_core.warning(f'Unrecognized config_key={str(key)}')
-            cur_value = str(QT_CONFIG[key])
+            logger_core.warning(f'Unrecognized config_key: <{str(key)}>')
+            cur_value = str(kwargs[key])
             default_value = 'N/A'
-            description = 'Customer defined argument key'
+            description = 'User-defined configuration key'
         else:
             cur_level = vkwargs[key]['level']
             if cur_level in levels:  # only display kwargs that are in the list of levels
-                cur_value = str(QT_CONFIG[key])
+                cur_value = str(kwargs[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
             else:
@@ -1016,7 +1018,10 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
             output_strings.append(f'{truncate_string(cur_value, column_w_current): <{column_w_current}}'
                                   f'<{default_value}>\n')
             if verbose:
-                output_strings.append(f'{reindent(description, 6): <{column_w_key + column_w_current * 2}}\n\n')
+                output_strings.append(
+                        f'{reindent(description, column_offset_description): <{column_w_key + column_w_current * 2}}'
+                        f'\n\n'
+                )
         else:
             output_strings.append(f'{cur_value}\n')
     return ''.join(output_strings)
@@ -1211,12 +1216,13 @@ def _validate_indicator_plot_type(value):
          '3  - violin 类型\n'
          '4  - box 类型'
 
-    Parameters
+    Parameters:
     ----------
-    value:
+    value: int or str
 
-    Returns
-     -------Boolean
+    Returns:
+    -------
+    Boolean
     """
     if not isinstance(value, (int, str)):
         return False
@@ -1305,7 +1311,7 @@ def _num_or_seq_of_num(value):
 
 def _bypass_kwarg_validation(value):
     """ For some kwargs, we either don't know enough, or
-        the validation is too complex to make it worth while,
+        the validation is too complex to make it worthwhile,
         so we bypass config_key validation.  If the config_key is
         invalid, then eventually an exception will be
         raised at the time the config_key value is actually used.
