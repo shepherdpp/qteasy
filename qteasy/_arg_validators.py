@@ -602,11 +602,11 @@ def _valid_qt_kwargs():
                                         and all(item.upper() in 'OHLCA'
                                                 for item in value)
                                         and all(item.upper() in value
-                                                for item in 'OHLCA'),
+                                                for item in 'OHLC'),
              'level':     3,
              'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
                           '不同的价格信号的优先级。\n'
-                          '输入类型为字符串，包括O、H、L、C六个字母的所有可能组合'},
+                          '输入类型为字符串，O、H、L、C、A分别代表Open,High,Low,Close,Nav\n'},
 
         'price_priority_quote':
             {'Default':   'normal',
@@ -1105,9 +1105,33 @@ def _parse_string_kwargs(value, key, vkwargs):
         return value
     default_value = vkwargs[key]['Default']
     if (not isinstance(default_value, str)) and (default_value is not None):
-        # TODO: ast is not safe, need to find a better way to parse string
-        import ast
-        value = ast.literal_eval(value)
+        try:
+            if isinstance(default_value, int):
+                value = int(value)
+            elif isinstance(default_value, float):
+                value = float(value)
+            elif isinstance(default_value, bool):
+                if value.lower() == 'true':
+                    value = True
+                elif value.lower() == 'false':
+                    value = False
+                else:
+                    raise TypeError(f'Invalid value: ({str(value)}) can not be converted to a boolean value')
+            elif isinstance(default_value, (tuple, list)):
+                default_list_value = default_value[0]
+                values = value.strip('[](){}').split(',')
+                if isinstance(default_list_value, int):
+                    value = [int(item) for item in values]
+                elif isinstance(default_list_value, float):
+                    value = [float(item) for item in values]
+                elif isinstance(default_list_value, str):
+                    value = [str(item) for item in values]
+                else:
+                    raise TypeError(f'Invalid value: ({str(value)}) can not be converted to a list or tuple')
+
+        except Exception as e:
+            raise TypeError(f'({str(value)}) can not be converted to a valid value for config_key: <{key}>.\n'
+                            f'Extra information: \n{vkwargs[key]["text"]}\n    {e}')
     return value
 
 
