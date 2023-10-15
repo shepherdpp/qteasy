@@ -957,7 +957,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
     Parameters
     ----------
-    kwargs: list or tuple,
+    kwargs: dict,
         需要显示的kwargs
     level: int or list of ints,
         所有需要输出的kwargs的层级

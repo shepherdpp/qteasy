@@ -2083,14 +2083,14 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
         level = list(range(level, up_to + 1))
 
     if config_key is None:
-        kwargs = QT_CONFIG.keys()
+        kwargs = QT_CONFIG
     else:
         if isinstance(config_key, str):
             config_key = str_to_list(config_key)
         if not isinstance(config_key, list):
             raise TypeError(f'config_key should be a string or list of strings, got {type(config_key)}')
         assert all(isinstance(item, str) for item in config_key)
-        kwargs = config_key
+        kwargs = {key: QT_CONFIG[config_key] for key in config_key}
         level = [0, 1, 2, 3, 4, 5]
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
