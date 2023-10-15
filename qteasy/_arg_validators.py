@@ -145,7 +145,7 @@ def _valid_qt_kwargs():
 
         'live_trade_broker_type':
             {'Default':   'simple',
-             'Validator': lambda value: isinstance(value, str) and value in ['simple', 'random', 'manual'],
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simple', 'random', 'manual'],
              'level':     1,
              'text':      '实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、'
                           '手动输入结果或者连接到交易代理商的交易接口\n'},
@@ -275,9 +275,9 @@ def _valid_qt_kwargs():
 
         'local_data_source':
             {'Default':   'file',
-             'Validator': lambda value: isinstance(value, str) and value in ['file',
-                                                                             'database',
-                                                                             'db'],
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['file',
+                                                                                     'database',
+                                                                                     'db'],
              'level':     1,
              'text':      '确定本地历史数据存储方式：\n'
                           'file     - 历史数据以本地文件的形式存储，\n'
@@ -288,10 +288,10 @@ def _valid_qt_kwargs():
 
         'local_data_file_type':
             {'Default':   'csv',
-             'Validator': lambda value: isinstance(value, str) and value in ['csv',
-                                                                             'hdf',
-                                                                             'feather',
-                                                                             'fth'],
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['csv',
+                                                                                     'hdf',
+                                                                                     'feather',
+                                                                                     'fth'],
              'level':     4,
              'text':      '确定本地历史数据文件的存储格式：\n'
                           'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
@@ -380,13 +380,13 @@ def _valid_qt_kwargs():
 
         'benchmark_dtype':
             {'Default':   'close',
-             'Validator': lambda value: value in ['open',
-                                                  'high',
-                                                  'low',
-                                                  'close',
-                                                  'vol',
-                                                  'unit_nav',
-                                                  'accum_nav'],
+             'Validator': lambda value: value.lower() in ['open',
+                                                          'high',
+                                                          'low',
+                                                          'close',
+                                                          'vol',
+                                                          'unit_nav',
+                                                          'accum_nav'],
              'level':     1,
              'text':      '作为基准收益的资产的价格类型。'},
 
@@ -542,7 +542,7 @@ def _valid_qt_kwargs():
         'backtest_price_adj':
             {'Default':   'back',
              'Validator': lambda value: isinstance(value, str)
-                                        and value in ['none', 'n', 'back', 'b', 'adj'],
+                                        and value.lower() in ['none', 'n', 'back', 'b', 'adj'],
              'level':     4,
              'text':      '回测时的复权价格处理方法：\n'
                           '股票分红除权的处理，正常来说，应该在股票分红除权时计算分红和派息对持仓\n'
@@ -566,7 +566,7 @@ def _valid_qt_kwargs():
 
         'PT_signal_timing':
             {'Default':   'lazy',
-             'Validator': lambda value: value in ['aggressive', 'lazy'],
+             'Validator': lambda value: value.lower() in ['aggressive', 'lazy'],
              'level':     3,
              'text':      '回测信号模式为PT（position target）时，控制检查实际持仓比例并自动生成交易\n'
                           '信号的时机，默认normal\n'
@@ -599,7 +599,7 @@ def _valid_qt_kwargs():
         'price_priority_OHLC':
             {'Default':   'OHLC',
              'Validator': lambda value: isinstance(value, str)
-                                        and all(item.upper() in 'OHLC'
+                                        and all(item.upper() in 'OHLCA'
                                                 for item in value)
                                         and all(item.upper() in value
                                                 for item in 'OHLCA'),
@@ -1198,6 +1198,7 @@ def _validate_asset_symbol(value):
     """
     if not isinstance(value, str):
         return False
+    value = value.upper()
     from qteasy.utilfuncs import TS_CODE_IDENTIFIER_ALL
     import re
     if re.match(TS_CODE_IDENTIFIER_ALL, value) is None:
@@ -1239,7 +1240,7 @@ def _validate_indicator_plot_type(value):
     return True
 
 
-def _validate_asset_type(value):
+def _validate_asset_type(value: str):
     """
 
     Parameters
@@ -1250,7 +1251,7 @@ def _validate_asset_type(value):
     -------
     """
     from .utilfuncs import AVAILABLE_ASSET_TYPES
-    return value in AVAILABLE_ASSET_TYPES
+    return value.upper() in AVAILABLE_ASSET_TYPES
 
 
 def _validate_asset_pool(value):
