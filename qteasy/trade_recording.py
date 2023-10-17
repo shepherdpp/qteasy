@@ -584,8 +584,6 @@ def get_account_position_details(account_id, shares=None, data_source=None):
             data_source=data_source
     )
     # 将symbol，position，qty和available_qty放入DataFrame并返回
-    # print(f'[DEBUG]: in function get_account_position_details, \n'
-    #       f'symbols: {symbols}, amounts: {amounts}, available_amounts: {available_amounts}')
     positions = pd.DataFrame(
             {
                 'qty': amounts,
