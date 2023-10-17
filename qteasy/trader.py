@@ -38,7 +38,7 @@ from qteasy.trading_util import get_last_trade_result_summary
 TIME_ZONE = 'Asia/Shanghai'
 
 
-def parse_shell_argument(arg: str = None) -> list:
+def parse_shell_argument(arg: str = None, no_arg=False) -> list:
     """ 解析输入的参数, 返回解析后的参数列表，
 
     解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
@@ -48,7 +48,7 @@ def parse_shell_argument(arg: str = None) -> list:
     Parameters:
     -----------
     arg: 输入的参数
-    arg_type: 参数类型，可选值为 'str', 'int', 'float', 'bool', 'list'
+    no_arg: 是否不允许输入参数，如果为True，且输入参数时，返回空列表并提示错误
 
     Returns:
     --------
@@ -243,6 +243,8 @@ class TraderShell(Cmd):
         ------
         positions
         """
+
+        # TODO: add stock name in the output for version 1.0.6
         if arg:
             sys.stdout.write(f'positions command does not accept arguments\n')
             return False
@@ -349,6 +351,7 @@ class TraderShell(Cmd):
         ------
         history [symbol]
         """
+        # TODO: add stock name in the output for version 1.0.6
 
         if arg is None or arg == '':
             arg = 'none'  # TODO: check the first stock in account position and use it as default
@@ -424,6 +427,7 @@ class TraderShell(Cmd):
         orders filled today 000001
         - display all filled orders of stock 000001 executed today
         """
+        # TODO: add stock name in the output for version 1.0.6
         if arg is None or arg == '':
             arg = 'today'
         args = arg.lower().split(' ')
@@ -642,10 +646,9 @@ class TraderShell(Cmd):
         (QTEASY): strategies s stg (1, 2, 3)
 
         """
+        # TODO: show more strategy configurations in version 1.0.6
 
-        args = str_to_list(arg, sep_char=' ')
-        if not args:
-            args = ['']
+        args = parse_shell_argument(arg)
 
         if args[0] in ['d', 'detail']:
             self.trader.operator.info(verbose=True)
