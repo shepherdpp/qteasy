@@ -429,7 +429,6 @@ class TraderShell(Cmd):
         orders filled today 000001
         - display all filled orders of stock 000001 executed today
         """
-        # TODO: add stock name in the output for version 1.0.6
         if arg is None or arg == '':
             arg = 'today'
         args = arg.lower().split(' ')
@@ -500,7 +499,28 @@ class TraderShell(Cmd):
         if order_details.empty:
             print(f'No orders found with argument ({args}). try other arguments.')
         else:
-            print(order_details.to_string(index=False))
+            symbols = order_details['symbol'].tolist()
+            names = get_symbol_names(datasource=self.trader.datasource, symbols=symbols)
+            order_details['name'] = names
+            print(order_details.to_string(
+                    index=False,
+                    columns=['execution_time','symbol', 'name', 'position', 'direction', 'qty', 'price_quoted',
+                             'submitted_time', 'status', 'price_filled', 'filled_qty', 'canceled_qty',
+                             'delivery_status'],
+                    header=['time', 'symbol', 'name', 'pos', 'buy/sell', 'qty', 'price',
+                            'submitted', 'status', 'filled_price', 'filled', 'canceled',
+                            'delivery'],
+                    formatters={'name':           '{:8s}'.format,
+                                'qty':            '{:,.2f}'.format,
+                                'price_quoted':   '{:,.2f}'.format,
+                                'price_filled':   '{:,.2f}'.format,
+                                'filled_qty':     '{:,.2f}'.format,
+                                'canceled_qty':   '{:,.2f}'.format,
+                                'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                                'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
+                                },
+                    justify='right',
+            ))
 
     def do_change(self, arg):
         """ Change trader cash and positions
