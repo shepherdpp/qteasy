@@ -203,9 +203,14 @@ def op_unify(*args):
         raise ValueError(f'only one array of signals can be passed to blend function "unify", please check '
                          f'your input')
     signal_arr = args[0]
-    s = signal_arr.sum(1)
-    shape = (s.shape[0], 1)
-    signal_res = signal_arr / s.reshape(shape)
+    if signal_arr.ndim == 1:
+        # 如果输入的是一维数组，按一维数组处理
+        s = signal_arr.sum()
+        signal_res = signal_arr / s
+    else:
+        s = signal_arr.sum(1)
+        shape = (s.shape[0], 1)
+        signal_res = signal_arr / s.reshape(shape)
     # 如果原信号中有全0的情况，会导致NaN出现，下面将所有NaN填充为0
     signal_res = np.where(np.isnan(signal_res), 0., signal_res)
     return signal_res
@@ -522,7 +527,7 @@ def run_blend_func(func_str, *args):
 
     Examples
     --------
-    >>> run_blend_func('avg_pos-3-0.5', signal)
+    >>> run_blend_func('avg_pos-3-0.5', args)
     avg_pos(3, 0.5, *args)
     """
     if not isinstance(func_str, str):
@@ -539,6 +544,8 @@ def run_blend_func(func_str, *args):
     try:
         res = func(*additional_args, *args)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise Exception(f'Error raised while executing blending function {func_name}({additional_args}, {args}), '
                         f'error message: \n{e}')
     return res

@@ -671,8 +671,9 @@ class TraderShell(Cmd):
         # TODO: show more strategy configurations in version 1.0.6
 
         args = parse_shell_argument(arg)
-
-        if args[0] in ['d', 'detail']:
+        if not args:
+            self.trader.operator.info()
+        elif args[0] in ['d', 'detail']:
             self.trader.operator.info(verbose=True)
         elif args[0] in ['s', 'set_par']:
             if len(args) < 3:
@@ -700,8 +701,6 @@ class TraderShell(Cmd):
                 return
             print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
             self.trader.operator.info()
-        else:
-            self.trader.operator.info()
 
     def do_agenda(self, arg):
         """ Show current strategy task agenda
@@ -728,10 +727,12 @@ class TraderShell(Cmd):
             return
         strategies = str_to_list(arg, sep_char=' ')
         if not isinstance(strategies, list):
-            print('Invalid argument, use "strategies" to view all ids.')
+            print('Invalid argument, use "strategies" to view all strategy ids.\n'
+                  'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
         if not strategies:
-            print('A valid strategy id must be given, use "strategies" to view all ids.')
+            print('A valid strategy id must be given, use "strategies" to view all ids.\n'
+                  'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
         all_strategy_ids = self.trader.operator.strategy_ids
         if not all([strategy in all_strategy_ids for strategy in strategies]):
@@ -744,7 +745,6 @@ class TraderShell(Cmd):
 
         self.trader.status = 'running'
         self.trader.broker.status = 'running'
-        # print(f'[DEBUG] running strategy: {strategies}')
 
         try:
             self.trader.run_task('run_strategy', strategies)
@@ -1281,7 +1281,10 @@ class Trader(object):
             message += '_R'
         if self.debug:
             message = f'[DEBUG]-{message}'
-        self.message_queue.put(message)
+        if self.debug and (message[-2:] != '_R'):
+            print(message)  # 如果在debug模式下且不是覆盖型信息，直接打印
+        else:
+            self.message_queue.put(message)
 
     def add_task(self, task, kwargs=None):
         """ 添加任务到任务队列
@@ -1453,6 +1456,8 @@ class Trader(object):
         strategy_ids: list of str
             交易策略ID列表
         """
+
+        # TODO: 这里应该可以允许用户输入blender，从而灵活地测试不同交易策略的组合和混合方式
         if self.debug:
             self.post_message(f'running task run strategy: {strategy_ids}')
         operator = self._operator
@@ -1485,7 +1490,7 @@ class Trader(object):
         }
         # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
         if self.debug:
-            self.post_message(f'getting live data')
+            self.post_message(f'getting live data...')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据

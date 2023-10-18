@@ -1855,7 +1855,8 @@ def get_history_data(htypes,
 
     if htypes is None:
         raise ValueError(f'htype should not be None')
-
+    if symbols is not None and shares is None:
+        shares = symbols
     if shares is None:
         shares = qteasy.QT_CONFIG.asset_pool
 
