@@ -32,7 +32,7 @@ class Operator:
     创建一个Operator对象时，需要给出一组交易策略，并设定好交易员的交易模式和信号模式，交易模式和信号模式都是Operator对象最重要
     的属性，他们共同决定了交易员的行为模式:
 
-    Attributes
+    Properties
     ----------
     strategies:
         一个列表，Operator对象包含的策略对象，可以给出自定义策略对象或内置
@@ -88,6 +88,7 @@ class Operator:
 
         Examples
         --------
+        >>> import qteasy as qt
         >>> op = Operator('dma, macd')
         Operator([dma, macd], 'pt', 'batch')
         >>> op = Operator(['dma', 'macd'])
@@ -2162,6 +2163,11 @@ class Operator:
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(timing)
             blended_signal = signal_blend(op_signals, blender=signal_blender).astype('float')
+            # debug
+            # print(f'[DEBUG] in function create_signal(), \n'
+            #       f'got op_signals: \n{op_signals}\n'
+            #       f'got signal_blender: \n{signal_blender}\n'
+            #       f'got blended_signal: \n{blended_signal}\n')
             if signal_mode == 'stepwise':
                 # stepwise mode, 返回混合好的signal，并给operator的信号缓存赋值
                 self._op_signal = blended_signal

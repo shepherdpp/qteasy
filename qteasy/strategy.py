@@ -1295,8 +1295,11 @@ class FactorSorter(BaseStrategy):
         """ display more FactorSorter-specific properties
         """
         super().info(verbose=verbose)
-        print(f'Max select count        {self.max_sel_count}\n'
-              f'Sort Ascending:         {self.sort_ascending}\n'
+        if self.max_sel_count > 1:
+            print(f'Max select count        {int(self.max_sel_count)}')
+        else:
+            print(f'Max select count        {self.max_sel_count:.1%}')
+        print(f'Sort Ascending:         {self.sort_ascending}\n'
               f'Weighting               {self.weighting}\n'
               f'Filter Condition        {self.condition}\n'
               f'Filter ubound           {self.ubound}\n'
@@ -1393,8 +1396,11 @@ class FactorSorter(BaseStrategy):
             return chosen
         # 根据投资组合比例分配方式，确定被选中产品的权重
 
+        # ones：全1分配，所有中选股票在组合中权重相同且全部为1
+        if weighting == 'ones':
+            chosen[args] = 1.
         # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
-        if weighting == 'linear':
+        elif weighting == 'linear':
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
         # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
@@ -1426,7 +1432,7 @@ class FactorSorter(BaseStrategy):
             chosen[args] = 1. / arg_count
         else:
             raise KeyError(f'invalid weighting type: "{weighting}". '
-                           f'should be one of ["linear", "proportion", "even"]')
+                           f'should be one of ["ones", "linear", "distance", "proportion", "even"]')
         return chosen
 
     @abstractmethod

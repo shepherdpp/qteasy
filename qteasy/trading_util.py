@@ -1254,3 +1254,73 @@ def _trade_time_index(start=None,
     else:
         return time_index
 
+
+def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: bool = False):
+    """ 获取股票代码对应的股票名称, 必须给出完整的代码，如果代码错误，返回值为'N/A'，如果代码正确但
+    基础数据表未下载，则返回值为'N/A'
+
+    Parameters
+    ----------
+    datasource: DataSource
+        数据源
+    symbols: str or list of str
+        股票代码列表
+    asset_types: list, default None
+        资产类型列表，如果给出，则只返回给定资产类型的股票名称，如果不给出，则返回所有资产类型的股票名称
+    refresh: bool, default False
+        是否刷新缓存，默认情况下从缓存数据中读取基本信息以加快速度，如果数据源中的数据已更新，需要刷新缓存
+
+    Returns
+    -------
+    names: list
+        股票名称列表
+
+    Examples
+    --------
+    >>> get_symbol_names(datasource, '000001.SZ')
+    ['平安银行']
+    >>> get_symbol_names(datasource, ['000001.SZ', '000002.SZ'])
+    ['平安银行', '万科A']
+    """
+
+    if isinstance(symbols, str):
+        symbols = str_to_list(symbols)
+    if not isinstance(symbols, list):
+        raise TypeError(f'symbols must be str or list of str, got {type(symbols)} instead')
+
+    if asset_types is None:
+        asset_types = ['stock', 'index', 'fund', 'future', 'option']
+    else:
+        if isinstance(asset_types, str):
+            asset_types = str_to_list(asset_types)
+        if not isinstance(asset_types, list):
+            raise TypeError(f'asset_types must be str or list of str, got {type(asset_types)} instead')
+        asset_types = [asset_type.lower() for asset_type in asset_types]
+        if not all([asset_type in ['stock', 'index', 'fund', 'future', 'option'] for asset_type in asset_types]):
+            raise ValueError(f'invalid asset_types: {asset_types}, must be one of '
+                             f'["stock", "index", "fund", "future", "option"]')
+
+    df_s, df_i, df_f, df_ft, df_o = datasource.get_all_basic_table_data(
+            raise_error=False,
+            refresh_cache=refresh,
+    )
+    all_data_types = {
+        'stock':  df_s[['name']] if not df_s.empty else pd.DataFrame(),
+        'index':  df_i[['name']] if not df_i.empty else pd.DataFrame(),
+        'fund':   df_f[['name']] if not df_f.empty else pd.DataFrame(),
+        'future': df_ft[['name']] if not df_ft.empty else pd.DataFrame(),
+        'option': df_o[['name']] if not df_o.empty else pd.DataFrame(),
+    }
+    all_basics = pd.concat(
+            (
+                all_data_types[asset_type.lower()] for asset_type in asset_types
+            ),
+    )
+    try:
+        names_found = all_basics.reindex(index=symbols).name.tolist()
+    except Exception as e:
+        raise RuntimeError(f'Error in get_symbol_names(): {e}')
+    # replace all nan with 'N/A'
+    names_found = ['N/A' if pd.isna(name) else name for name in names_found]
+
+    return names_found
