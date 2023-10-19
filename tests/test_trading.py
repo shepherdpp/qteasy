@@ -22,7 +22,7 @@ from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order, get_last_trade_result_summary
-from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_agenda
+from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_agenda, get_symbol_names
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -2793,6 +2793,86 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
+
+    def test_get_symbol_names(self):
+        """ test function get_symbol_names """
+
+        for table in ['stock_basic', 'index_basic', 'fund_basic', 'future_basic', 'opt_basic']:
+            if self.test_ds.table_data_exists(table):
+                self.test_ds.drop_table_data(table)
+
+        self.test_ds.refill_local_source(
+                tables='stock_basic, index_basic',
+                parallel=False,
+        )
+        # test get_symbol_names with only stock symbols
+        print('test get_symbol_names with only stock symbols')
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000002.SZ', '000004.SZ', '600251.SH', '000006.SZ', '000008.SZ']
+        )
+        print(symbol_names)
+        self.assertEqual(symbol_names, ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'])
+
+        # test get_symbol_names with repeated symbols
+        print('test get_symbol_names with repeated symbols')
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000001.SZ', '000001.SZ', '600251.SH', '600251.SH', '600251.SH']
+        )
+        print(symbol_names)
+        self.assertEqual(symbol_names, ['平安银行', '平安银行', '平安银行', '冠农股份', '冠农股份', '冠农股份'])
+
+        # test get_symbol_names with stock and index mixed symbols
+        print('test get_symbol_names with stock and index mixed symbols')
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000002.SZ', '000004.SZ', '000001.SH', '000002.SH', '000004.SH',
+                 '600251.SH', '000006.SZ', '000008.SZ', '600251.SH', '000006.SH', '000008.SH']
+        )
+        print(symbol_names)
+        self.assertEqual(symbol_names, ['平安银行', '万科A', '国华网安', '上证指数', '上证A指', '上证工业类指数',
+                                        '冠农股份', '深振业A', '神州高铁', '冠农股份', '上证房地产指数',
+                                        '上证综合股指数'])
+
+        # "N/A" will be returned for symbols not found or not a symbol
+        print('test get_symbol_names with symbols not found or not a symbol')
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000002.SZ', '000000.SZ', 'Not_symbol']
+        )
+        print(symbol_names)
+        self.assertEqual(symbol_names, ['平安银行', '万科A', 'N/A', 'N/A'])
+
+        # "N/A" will be returned for symbols whose basic data is not downloaded, at this moment, fund symbols
+        print('test get_symbol_names with symbols whose basic data is not downloaded')
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000002.SZ', '000001.OF', '000002.OF']
+        )
+        print(symbol_names)
+        self.assertEqual(symbol_names, ['平安银行', '万科A', 'N/A', 'N/A'])
+
+        # download func basic data and names will be returned after refresh
+        print('test get_symbol_names with symbols whose basic data is now downloaded but not refreshed')
+        self.test_ds.refill_local_source(
+                tables='fund_basic',
+                parallel=False
+        )
+        print(symbol_names)
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000002.SZ', '000606.OF', '000291.OF']
+        )
+        self.assertEqual(symbol_names, ['平安银行', '万科A', 'N/A', 'N/A'])
+        print('after refresh the names are returned')
+        symbol_names = get_symbol_names(
+                self.test_ds,
+                ['000001.SZ', '000002.SZ', '000606.OF', '000291.OF'],
+                refresh=True,
+        )
+        print(symbol_names)
+        self.assertEqual(symbol_names, ['平安银行', '万科A', '天弘优选', '鹏华普悦'])
 
 
 if __name__ == '__main__':

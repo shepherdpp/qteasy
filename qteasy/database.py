@@ -1684,14 +1684,15 @@ TABLE_SCHEMA = {
          },
 
     'stock_basic':
-        {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
-                        'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
-                        'delist_date', 'is_hs'],
-         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)',
-                        'varchar(50)', 'varchar(80)', 'varchar(40)', 'varchar(6)', 'varchar(6)',
-                        'varchar(6)', 'varchar(4)', 'date', 'date', 'varchar(2)'],
-         'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
-                        '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
+        {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname',
+                        'enname', 'cnspell', 'market', 'exchange', 'curr_type', 'list_status',
+                        'list_date', 'delist_date', 'is_hs'],
+         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)', 'varchar(50)',
+                        'varchar(120)', 'varchar(40)', 'varchar(6)', 'varchar(6)', 'varchar(6)', 'varchar(4)',
+                        'date', 'date', 'varchar(2)'],
+         'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称',
+                        '英文全称', '拼音缩写', '市场类型', '交易所代码', '交易货币', '上市状态',
+                        '上市日期', '退市日期', '是否沪深港通'],
          'prime_keys': [0]
          },
 
@@ -4725,7 +4726,7 @@ class DataSource:
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
 
-    def get_all_basic_table_data(self, refresh_cache=False):
+    def get_all_basic_table_data(self, refresh_cache=False, raise_error=True):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
         如果设置refresh_cache为True，则清空缓存并重新下载数据
 
@@ -4733,6 +4734,8 @@ class DataSource:
         ----------
         refresh_cache: Bool, Default False
             如果为True，则清空缓存并重新下载数据
+        raise_error: Bool, Default True
+            如果为True，则在数据表为空时抛出ValueError
 
         Returns
         -------
@@ -4741,11 +4744,16 @@ class DataSource:
 
         if refresh_cache:
             self._get_all_basic_table_data.cache_clear()
-        return self._get_all_basic_table_data()
+        return self._get_all_basic_table_data(raise_error=raise_error)
 
     @lru_cache(maxsize=1)
-    def _get_all_basic_table_data(self):
+    def _get_all_basic_table_data(self, raise_error=True):
         """ 获取所有basic数据表
+
+        Parameters
+        ----------
+        raise_error: Bool, Default True
+            如果为True，则在数据表为空时抛出ValueError
 
         Returns
         -------
@@ -4762,23 +4770,23 @@ class DataSource:
             如果任意一个数据表为空，则抛出ValueError
         """
         df_s = self.read_table_data('stock_basic')
-        if df_s.empty:
+        if df_s.empty and raise_error:
             raise ValueError('stock_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="stock_basic")"')
         df_i = self.read_table_data('index_basic')
-        if df_i.empty:
+        if df_i.empty and raise_error:
             raise ValueError('index_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="index_basic")"')
         df_f = self.read_table_data('fund_basic')
-        if df_f.empty:
+        if df_f.empty and raise_error:
             raise ValueError('fund_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="fund_basic")"')
         df_ft = self.read_table_data('future_basic')
-        if df_ft.empty:
+        if df_ft.empty and raise_error:
             raise ValueError('future_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="future_basic")"')
         df_o = self.read_table_data('opt_basic')
-        if df_o.empty:
+        if df_o.empty and raise_error:
             raise ValueError('opt_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="opt_basic")"')
         return df_s, df_i, df_f, df_ft, df_o
@@ -4798,9 +4806,10 @@ class DataSource:
             self.con.ping(reconnect=True)
             self.cursor = self.con.cursor()
             sql = f"USE `{self.db_name}`;"
-            # print(f'[DEBUG INFO] reconnecting to database {self.db_name}')
+
             self.cursor.execute(sql)
             self.con.commit()
+            self.con.ping()  # check if connection is still alive
             return True
         except Exception as e:
             print(f'{e} on {self.connection_type}, please check your connection')

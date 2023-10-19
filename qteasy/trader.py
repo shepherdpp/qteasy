@@ -32,7 +32,7 @@ from qteasy.trade_recording import get_account_cash_availabilities, query_trade_
 from qteasy.trade_recording import new_account, get_or_create_position, update_position
 from qteasy.trading_util import parse_trade_signal, submit_order, process_trade_result
 from qteasy.trading_util import process_trade_delivery, create_daily_task_agenda, cancel_order
-from qteasy.trading_util import get_last_trade_result_summary
+from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
@@ -668,7 +668,6 @@ class TraderShell(Cmd):
         (QTEASY): strategies s stg (1, 2, 3)
 
         """
-        # TODO: show more strategy configurations in version 1.0.6
 
         args = parse_shell_argument(arg)
         if not args:
@@ -2303,55 +2302,3 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
 
     return
 
-
-def get_symbol_names(datasource, symbols, asset_types: list = None):
-    """ 获取股票代码对应的股票名称
-
-    Parameters
-    ----------
-    datasource: DataSource
-        数据源
-    symbols: str or list of str
-        股票代码列表
-    asset_types: list, default None
-        资产类型列表，如果给出，则只返回给定资产类型的股票名称，如果不给出，则返回所有资产类型的股票名称
-
-    Returns
-    -------
-    names: list
-        股票名称列表
-    """
-    # TODO: test this function
-
-    if isinstance(symbols, str):
-        symbols = str_to_list(symbols)
-    if not isinstance(symbols, list):
-        raise TypeError(f'symbols must be str or list of str, got {type(symbols)} instead')
-
-    if asset_types is None:
-        asset_types = ['stock', 'bond', 'fund', 'future', 'option']
-    else:
-        if isinstance(asset_types, str):
-            asset_types = str_to_list(asset_types)
-        if not isinstance(asset_types, list):
-            raise TypeError(f'asset_types must be str or list of str, got {type(asset_types)} instead')
-        asset_types = [asset_type.lower() for asset_type in asset_types]
-        if not all([asset_type in ['stock', 'bond', 'fund', 'future', 'option'] for asset_type in asset_types]):
-            raise ValueError(f'invalid asset_types: {asset_types}, must be one of '
-                             f'["stock", "bond", "fund", "future", "option"]')
-
-    ds = datasource
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
-    all_asset_types = {'stock': df_s, 'bond': df_i, 'fund': df_f, 'future': df_ft, 'option': df_o}
-    names = []
-    for asset_type in asset_types:
-        if asset_type not in all_asset_types:
-            continue
-        df = all_asset_types[asset_type]
-        try:
-            names_found = df.loc[symbols].name.tolist()
-            names += names_found
-        except KeyError:
-            pass
-
-    return names
