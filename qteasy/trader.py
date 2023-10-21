@@ -651,7 +651,7 @@ class TraderShell(Cmd):
               'press "Ctrl+C" to exit dashboard mode and select from prompted options.\n')
         return True
 
-    def do_strategies(self, arg):
+    def do_strategies(self, arg: str):
         """ Show strategies information or set parameters for a strategy
 
         Usage:
@@ -713,7 +713,7 @@ class TraderShell(Cmd):
             return
         print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
 
-    def do_run(self, arg):
+    def do_run(self, arg: str):
         """ To run a strategy in current setup, only available in DEBUG mode.
         strategy id can be found in strategies command.
 

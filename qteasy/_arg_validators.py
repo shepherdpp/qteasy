@@ -564,6 +564,17 @@ def _valid_qt_kwargs():
                           '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
                           '          次交易委托同时提交时，这是正常情况'},
 
+        'backtest_allow_trade_at_close':  # TODO: 未实现
+            {'Default':   True,
+             'Validator': lambda value: isinstance(value, bool),
+             'level':     4,
+             'text':      ' - Not Implemented - \n'
+                          '在回测时是否允许在收盘时进行交易，如果不允许，则在收盘时产生的交易信号会\n'
+                          '推迟到下一个交易区间的开盘价进行交易，如果交易频率较低，则延迟会很大。\n'
+                          '如果允许在收盘时交易，利用收盘价生成的交易信号会立即交易，交易价格为收盘价\n'
+                          '在实际交易中，如果在收盘时产生交易信号，有可能会来不及提交交易订单，不过这种\n'
+                          '情况可以在实盘时通过使用收盘前一刻的价格作为收盘价生成交易信号来实现\n'},
+
         'PT_signal_timing':
             {'Default':   'lazy',
              'Validator': lambda value: value.lower() in ['aggressive', 'lazy'],
@@ -971,7 +982,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     output_strings: str
         包含所有参数信息的字符串
     """
-    from qteasy.utilfuncs import reindent, truncate_string
+    from qteasy.utilfuncs import reindent, adjust_string_length
     if isinstance(level, int):
         levels = [level]
     elif isinstance(level, list):
@@ -1013,9 +1024,9 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
         no += 1
         output_strings.append(f'{no: <4}')
-        output_strings.append(f'{truncate_string(str(key), column_w_key): <{column_w_key}}')
+        output_strings.append(f'{adjust_string_length(str(key), column_w_key): <{column_w_key}}')
         if info:
-            output_strings.append(f'{truncate_string(cur_value, column_w_current): <{column_w_current}}'
+            output_strings.append(f'{adjust_string_length(cur_value, column_w_current): <{column_w_current}}'
                                   f'<{default_value}>\n')
             if verbose:
                 output_strings.append(

@@ -1550,7 +1550,7 @@ class Operator:
         verbose: bool, Default False
             是否打印出策略的详细信息, 如果为True, 则会打印出策略的详细信息，包括选股策略的信息等
         """
-        from .utilfuncs import truncate_string
+        from .utilfuncs import adjust_string_length
         signal_type_descriptions = {
             'pt': 'Position Target, signal represents position holdings in percentage of total value',
             'ps': 'Percentage trade signal, represents buy/sell stock in percentage of total value',
@@ -1603,12 +1603,12 @@ class Operator:
                 run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
                 qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
                 data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
-                print(f'{truncate_string(stg_id, 10):<10}'
-                      f'{truncate_string(stg.name, 20):<20}'
-                      f'{truncate_string(run_type_str, 15):^15}'
-                      f'{truncate_string(data_type_str, 10):^10}'
-                      f'{truncate_string(str(stg.history_data_types), 25):^25}'
-                      f'{truncate_string(str(stg.pars), 20):^20}')
+                print(f'{adjust_string_length(stg_id, 10):<10}'
+                      f'{adjust_string_length(stg.name, 20):<20}'
+                      f'{adjust_string_length(run_type_str, 15):^15}'
+                      f'{adjust_string_length(data_type_str, 10):^10}'
+                      f'{adjust_string_length(str(stg.history_data_types), 25):^25}'
+                      f'{adjust_string_length(str(stg.pars), 20):^20}')
             print('=' * 100)
         # 打印每个strategy的详细信息
         if (self.strategy_count > 0) and verbose:

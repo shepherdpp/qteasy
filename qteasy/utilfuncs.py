@@ -1803,10 +1803,9 @@ def reindent(s, num_spaces=4):
     return s
 
 
-def truncate_string(s, n, padder='.'):
-    """ 如果字符串超过指定长度，则将字符串截短到制定的长度，并确保字符串的末尾有三个句点
-        如果n<=4，则句点的数量相应减少
-        如果n<0则报错
+def truncate_string(s, n, padder='.'):  # to be deprecated
+    """ to be deprecated, 调整字符串为指定长度，为了保证兼容性，暂时保留此函数
+    以后使用adjust_string_length代替
 
     Parameters
     ----------
@@ -1814,8 +1813,8 @@ def truncate_string(s, n, padder='.'):
         字符串
     n: int
         需要保留的长度
-    padder: str, Default: '.'
-        作为省略号填充在字符串末尾的字符
+    padder: str, Default: '...'
+        填充在截短的字符串后用于表示省略号的字符，默认为'.'
 
     Returns
     -------
@@ -1828,23 +1827,116 @@ def truncate_string(s, n, padder='.'):
     >>> truncate_string('hello world', 5, padder='*')
     'he***'
     >>> truncate_string('hello world', 3)
+    'h..'
+    """
+    warnings.warn('truncate_string will be deprecated, use adjust_string_length instead', DeprecationWarning)
+    return adjust_string_length(s, n, tail=padder)
+
+
+def adjust_string_length(s, n, tail='.', padder=' ', hans_aware=True):
+    """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
+        如果字符串过短则在末尾添加空格补齐长度
+
+        默认情况下，认为汉字的长度为2，英文字符的长度为1，可以通过hans_aware参数设置是否考虑汉字的长度
+
+    Parameters
+    ----------
+    s: str
+        字符串
+    n: int
+        需要保留的长度
+    tail: str, Default: '.'
+        填充在截短的字符串后用于表示省略号的字符，默认为'.'
+    padder: str, Default: ' '
+        填充在字符串末尾补充长度的字符，默认为空格
+    hans_aware: bool, Default: False
+        是否考虑汉字的长度，如果为True，则汉字的长度为2，否则为1
+
+    Returns
+    -------
+    str
+
+    Examples
+    --------
+    >>> adjust_string_length('hello world', 5)
+    'he...'
+    >>> adjust_string_length('hello world', 5, padder='*')
+    'he***'
+    >>> adjust_string_length('hello world', 3)
     'hel'
+    >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=False)
+    '中文字符占据...'
+    >>> adjust_string_length('中文字符占据2个位置', 9)
+    '中文字...'
     """
     if not isinstance(s, str):
         raise TypeError(f'the first argument should be a string, got {type(s)} instead')
     if not isinstance(n, int):
         raise TypeError(f'the second argument should be an integer, got {type(n)} instead')
+    if not isinstance(tail, str):
+        raise TypeError(f'the padder should be a character, got {type(tail)} instead')
+    if not len(tail) == 1:
+        raise ValueError(f'the padder should be a single character, got {len(tail)} characters')
     if not isinstance(padder, str):
         raise TypeError(f'the padder should be a character, got {type(padder)} instead')
     if not len(padder) == 1:
         raise ValueError(f'the padder should be a single character, got {len(padder)} characters')
-    if n <= 1:
+    if n < 1:
         raise ValueError(f'the expected length should be larger than 0, got {n}')
-    if len(s) <= n:
-        return s
-    padder_count = 3
-    if n < 3:
-        padder_count = n
-    return s[:n-padder_count] + padder * padder_count
+
+    length = len(s)
+    if hans_aware:
+        length += count_hans(s)
+
+    if length <= n:
+        return s + padder * (n - length)
+
+    tail_count = 3
+    if n == 3:
+        tail_count = 2
+    elif n < 3:
+        tail_count = n
+    remainder = n - tail_count
+    if hans_aware:
+        print_width = 0
+        for char in s:
+            if '\u4e00' <= char <= '\u9fff':
+                print_width += 2
+                remainder -= 1
+            else:
+                print_width += 1
+            if print_width >= (n - tail_count):
+                break
+        if ((print_width + tail_count) > n) and (n >= 3):
+            remainder += 1
+            tail_count -= 1
+    return s[:remainder] + tail * tail_count
 
 
+def count_hans(s: str):
+    """ 统计字符串中汉字的数量 (unicode 4E00-9FFF)
+
+    Parameters
+    ----------
+    s: str
+        字符串
+
+    Returns
+    -------
+    int, 汉字的数量
+
+    Examples
+    --------
+    >>> count_hans('hello world')
+    0
+    >>> count_hans('你好，世界')
+    4
+    """
+    # for loop is faster than list comprehension and regex
+    if not isinstance(s, str):
+        raise TypeError(f'the argument should be a string, got {type(s)} instead')
+    hans_total = 0
+    for char in s:
+        if '\u4e00' <= char <= '\u9fff':
+            hans_total += 1
+    return hans_total

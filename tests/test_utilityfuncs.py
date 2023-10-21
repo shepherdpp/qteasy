@@ -20,7 +20,7 @@ from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_da
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
-from qteasy.utilfuncs import reindent, truncate_string, is_float_like, is_integer_like
+from qteasy.utilfuncs import reindent, adjust_string_length, is_float_like, is_integer_like
 from qteasy.utilfuncs import is_cn_stock_symbol_like, is_complete_cn_stock_symbol_like
 
 
@@ -720,17 +720,39 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_truncate_string(self):
         """ 测试函数truncates_string"""
-        self.assertEqual(truncate_string('this is a long string', 2), '..')
-        self.assertEqual(truncate_string('this is a long string', 7), 'this...')
-        self.assertEqual(truncate_string('this is a long string', 21), 'this is a long string')
-        self.assertEqual(truncate_string('this is a long string', 20), 'this is a long st...')
+        self.assertEqual(adjust_string_length('this is a long string', 1), '.')
+        self.assertEqual(adjust_string_length('this is a long string', 2), '..')
+        self.assertEqual(adjust_string_length('this is a long string', 3), 't..')
+        self.assertEqual(adjust_string_length('this is a long string', 7), 'this...')
+        self.assertEqual(adjust_string_length('this is a long string', 21), 'this is a long string')
+        self.assertEqual(adjust_string_length('this is a long string', 20), 'this is a long st...')
 
-        self.assertEqual(truncate_string('this is a long string', 10, '*'), 'this is***')
-        self.assertRaises(TypeError, truncate_string, 123, 10)
-        self.assertRaises(TypeError, truncate_string, 123, 'this ia a string')
-        self.assertRaises(ValueError, truncate_string, 'this is a long string', 5, '__')
+        self.assertEqual(adjust_string_length('this is a long string', 10, '*'), 'this is***')
+        self.assertEqual(adjust_string_length('short string', 15), 'short string   ')
 
-        self.assertRaises(ValueError, truncate_string, 'this is a long string', 0)
+        self.assertEqual(adjust_string_length('this is a 含有中文字符的 string', 20, hans_aware=False),
+                         'this is a 含有中文字符的...')
+        self.assertEqual(adjust_string_length('this is a 含有中文字符的 string', 20, hans_aware=True),
+                         'this is a 含有中文..')
+        self.assertEqual(adjust_string_length('含有中文字符的 string', 20, hans_aware=True),
+                         '含有中文字符的 st...')
+        self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=True),
+                         '中文字符string      ')
+        self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=False),
+                         '中文字符string          ')
+        self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=True, padder='*'),
+                         '中文字符string******')
+        self.assertEqual(adjust_string_length('中国平安', 8, hans_aware=True),
+                         '中国平安')
+        self.assertEqual(adjust_string_length('中国龙A', 8, hans_aware=True),
+                         '中国龙A ')
+        self.assertEqual(adjust_string_length('ST中国', 8, hans_aware=True),
+                         'ST中国  ')
+
+        self.assertRaises(TypeError, adjust_string_length, 123, 10)
+        self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')
+        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, '__')
+        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 0)
 
 
 if __name__ == '__main__':

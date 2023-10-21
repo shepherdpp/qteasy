@@ -293,7 +293,7 @@ class StgBuyOpen(GeneralStg):
         # buy_pos = np.nanargmax(factors)
         # sig[buy_pos] = 1
         # return sig
-        if np.all(factors <= 0.0):
+        if np.all(factors <= 0.002):
             # 如果所有的选股指标都小于0，则全部卖出
             # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
             return sig
@@ -324,7 +324,7 @@ class StgSelClose(GeneralStg):
         sig = -np.ones_like(factors)
         # sig[np.nanargmax(factors)] = 0
         # return sig
-        if np.all(factors <= 0.0):
+        if np.all(factors <= 0.002):
             # 如果所有的选股指标都小于0，则全部卖出
             return sig
         else:
@@ -3368,25 +3368,30 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # to be added
 
     def test_stg_trading_different_prices(self):
-        """测试op包含的策略有不同的交易价格，以开盘价买入，以收盘价卖出"""
-        qt.get_basic_info('000899.SZ')
+        """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
+        # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
+        print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
         stg_buy = StgBuyOpen()
         stg_sel = StgSelClose()
         op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        op.set_parameter(0,
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         strategy_data_types='close',
-                         strategy_run_timing='open')
-        op.set_parameter(1,
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         strategy_data_types='close',
-                         strategy_run_timing='close')
+        op.set_parameter(
+                0,
+                data_freq='d',
+                strategy_run_freq='d',
+                window_length=50,
+                pars=(20,),
+                strategy_data_types='close',  # 考察收盘价变化率
+                strategy_run_timing='open',   # 以开盘价买进(这个策略只处理买入信号)
+        )
+        op.set_parameter(
+                1,
+                data_freq='d',
+                strategy_run_freq='d',
+                window_length=50,
+                pars=(20,),
+                strategy_data_types='close',  # 考察收盘价的变化率
+                strategy_run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+        )
         op.set_blender(blender='s0')
         op.get_blender()
         qt.configure(asset_pool=['000300.SH',
@@ -3417,6 +3422,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      PT_buy_threshold=0.03,
                      PT_sell_threshold=0.03,
                      backtest_price_adj='none')
+
+    def test_stg_index_follow(self):
+        # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
+        print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
         op = qt.Operator(strategies=['finance'], signal_type='PS')
         op.set_parameter(0,
                          opt_tag=1,
