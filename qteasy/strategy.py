@@ -83,11 +83,12 @@ class BaseStrategy:
             par_types: [list, str] = None,
             par_range: [list, tuple] = None,
             strategy_run_freq: str = 'd',
-            sample_freq: str = None,
+            sample_freq: str = None,  # to be deprecated
             strategy_run_timing: str = 'close',
-            bt_price_type: str = None,
+            bt_price_type: str = None,  # to be deprecated
             strategy_data_types: [str, list] = 'close',
-            data_types: [str, list] = None,
+            data_types: [str, list] = None,  # to be deprecated
+            use_latest_data_cycle: bool = True,
             reference_data_types: [str, list] = '',
             data_freq: str = 'd',
             window_length: int = 270,
@@ -132,6 +133,16 @@ class BaseStrategy:
             策略使用的数据类型，例如close, open, high, low等
         data_types: str or list of str, deprecated
             策略使用的数据类型，例如close, open, high, low等
+        use_latest_data_cycle: bool, default True
+            是否使用最新的数据周期生成交易信号，默认True
+            如果为True: 默认值 TODO: 可能产生未来函数时，应该给出警告或提示, for version 1.0.7
+                在实盘运行时，会尝试下载当前周期的最新数据，或尝试使用最近的实时数据估算当前周期的数据，此时应该注意避免出现未来函数，
+                    如运行时间点为开盘时，这时就不能使用收盘价/最高价/最低价生成交易信号，会导致策略运行失真。
+                在回测交易时，会使用回测当前时间点的最新数据生成交易信号。此时应该注意避免出现未来函数，如回测时间点为
+                    开盘时，但是使用当前周期的收盘价生成交易信号，会导致策略运行失真。
+            如果为False：
+                在回测或实盘运行时都仅使用当前已经获得的上一周期的已知数据生成交易信号，在运行频率较低时，可能会导致
+                    交易信号的滞后，但是可以避免未来函数的出现。
         reference_data_types: str or list of str
             策略使用的参考数据类型，例如close, open, high, low等
         data_freq: str {'d', 'w', 'm', 'q', 'y'}
@@ -264,18 +275,21 @@ class BaseStrategy:
         assert strategy_data_types is not None
         assert strategy_run_timing is not None
         assert reference_data_types is not None
+        assert use_latest_data_cycle is not None
         self._data_freq = None
         self._strategy_run_freq = None
         self._window_length = None
         self._data_types = None
         self._strategy_run_timing = None
         self._reference_data_types = None
+        self._use_latest_data_cycle = None
         self.set_hist_pars(data_freq=data_freq,
                            strategy_run_freq=strategy_run_freq,
                            window_length=window_length,
                            strategy_data_types=strategy_data_types,
                            strategy_run_timing=strategy_run_timing,
-                           reference_data_types=reference_data_types)
+                           reference_data_types=reference_data_types,
+                           use_latest_data_cycle=use_latest_data_cycle)
         logger_core.info(
             f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
             f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
@@ -403,13 +417,13 @@ class BaseStrategy:
         self.set_hist_pars(data_freq=data_freq)
 
     @property
-    def sample_freq(self):
+    def sample_freq(self):  # to be deprecated
         """策略生成的采样频率"""
         warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
         return self._strategy_run_freq
 
     @sample_freq.setter
-    def sample_freq(self, sample_freq):
+    def sample_freq(self, sample_freq):  # to be deprecated
         warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
         self.set_hist_pars(strategy_run_freq=sample_freq)
 
@@ -480,13 +494,13 @@ class BaseStrategy:
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
-    def bt_price_type(self):
+    def bt_price_type(self):  # to be deprecated
         """策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
         warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
         return self._strategy_run_timing
 
     @bt_price_type.setter
-    def bt_price_type(self, price_type):
+    def bt_price_type(self, price_type):  # to be deprecated
         """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
         self.set_hist_pars(strategy_run_timing=price_type)
@@ -530,6 +544,16 @@ class BaseStrategy:
     def reference_data_types(self, ref_types):
         """ 设置策略的参考数据类型"""
         self.set_hist_pars(reference_data_types=ref_types)
+
+    @property
+    def use_latest_data_cycle(self):
+        """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
+        return self._use_latest_data_cycle
+
+    @use_latest_data_cycle.setter
+    def use_latest_data_cycle(self, use_latest_data_cycle):
+        """ 设置是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
+        self.set_hist_pars(use_latest_data_cycle=use_latest_data_cycle)
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -684,7 +708,8 @@ class BaseStrategy:
                       window_length=None,
                       strategy_data_types=None,
                       strategy_run_timing=None,
-                      reference_data_types=None):
+                      reference_data_types=None,
+                      use_latest_data_cycle=None):
         """ 设置策略的历史数据回测相关属性
 
         Parameters
@@ -701,6 +726,8 @@ class BaseStrategy:
             需要用到的历史数据回测价格类型
         reference_data_types: str
             策略运行参考数据类型
+        use_latest_data_cycle: bool
+            是否使用最近的一个完整的数据周期
 
         Returns
         -------
@@ -749,6 +776,11 @@ class BaseStrategy:
             assert isinstance(reference_data_types, list), \
                 f'TypeError, reference data types should be a list, got {type(reference_data_types)} instead'
             self._reference_data_types = reference_data_types
+
+        if use_latest_data_cycle is not None:
+            assert isinstance(use_latest_data_cycle, bool), \
+                f'TypeError, use_latest_data_cycle should be a bool, got {type(use_latest_data_cycle)} instead'
+            self._use_latest_data_cycle = use_latest_data_cycle
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""

@@ -2555,7 +2555,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config['backtest_price_adj'] if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_op is: \n{hist_op}\n')
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
@@ -2568,7 +2567,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_ref is: \n{hist_ref}\n')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.strategy_timings
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -2986,7 +2984,10 @@ def run(operator, **kwargs):
                 config=config
         )
         # 在生成交易信号之前准备历史数据
-        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan)
+        operator.assign_hist_data(
+                hist_data=hist_op,
+                cash_plan=invest_cash_plan,
+        )
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
         loop_result = _evaluate_one_parameter(
@@ -3023,7 +3024,11 @@ def run(operator, **kwargs):
                 operator=operator,
                 config=config
         )
-        operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan, reference_data=hist_opti_ref)
+        operator.assign_hist_data(
+                hist_data=hist_opti,
+                cash_plan=opti_cash_plan,
+                reference_data=hist_opti_ref,
+        )
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config['opti_method']
         optimal_pars, perfs = optimization_methods[how](
@@ -3079,7 +3084,10 @@ def run(operator, **kwargs):
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_opti)
                 print(f'config.test_cash_dates is {config["test_cash_dates"]}')
-                operator.assign_hist_data(hist_data=mock_hist, cash_plan=test_cash_plan)
+                operator.assign_hist_data(
+                        hist_data=mock_hist,
+                        cash_plan=test_cash_plan,
+                )
                 mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(
                         par_generator=optimal_pars,

@@ -1882,33 +1882,20 @@ class Operator:
             # 一个offset变量用来调整生成滑窗的总数量，确保不管window_length如何变化，滑窗数量相同
             window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]
-            # debug
-            # 这里会产生window_length比hist_data_val更长的错误，原因是没有取到足够长的历史数据窗口
-            # 检查原因，可能跟config中的invest_start参数有关，在core.py的函数check_and_prepare_hist_data()
-            # 中，在1999行，
-            # axis_length = list(hist_data_val.shape)[1]
-            # if axis_length <= window_length:
-            #     print(f'[DEBUG] in function assign_hist_data(), \n'
-            #           f'got hist_data_val for strategy ({stg_id}) shape: '
-            #           f'{hist_data_val.shape} \n'
-            #           f'while window_length: {window_length}\n'
-            #           f'function arguments: \n'
-            #           f'hist_data ({hist_data.shape}): \n{hist_data}\n'
-            #           f'reference_data ({reference_data.shape if reference_data is not None else None}): '
-            #           f'\n{reference_data}\n'
-            #           f'cash_plan: {cash_plan}\n'
-            #           f'live_mode: {live_mode}\n'
-            #           f'live_running_stgs: {live_running_stgs}\n')
             the_rolling_window = rolling_window(
                     hist_data_val,
                     window=window_length,
                     axis=1
             )
-            # 在非live模式下，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要, 但是在live模式下，只会生成一组(最后一组)滑窗
-            # self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
-            self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-1:]if live_mode \
-                else \
-                the_rolling_window[window_length_offset:-1]
+            # 分配数据滑窗：在live模式下，取最后一组滑窗分配给策略，因为live模式下，策略只会运行一次
+            # 在backtest模式下，将从倒数第二组滑窗或最后一组滑窗回溯window_length组滑窗并分配给策略
+            # 是否包含最后一组滑窗，取决于strategy的属性use_latest_data_cycle的值
+            if live_mode:  # 分配最后一组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-1:]
+            elif stg.use_latest_data_cycle:  # 从最后一组滑窗开始回溯window_length组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset + 1:]
+            else:  # 从倒数第二组滑窗开始回溯window_length组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:-1]
 
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
@@ -1919,10 +1906,13 @@ class Operator:
                         window=window_length,
                         axis=0
                 )
-                # self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
-                self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-1:] if live_mode \
-                    else \
-                    the_rolling_window[window_length_offset:-1]
+                # 参考数据滑窗的分配方式与历史数据滑窗的分配方式相同
+                if live_mode:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-1:]
+                elif stg.use_latest_data_cycle:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset + 1:]
+                else:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:-1]
             else:
                 self._op_ref_data_rolling_windows[stg_id] = None
 
@@ -1990,7 +1980,6 @@ class Operator:
         # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
         for price_type_idx in range(self.strategy_timing_count):
             # 按照price_type_idx逐个生成数据并填充
-            # TODO: 在live模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
             price_type = self.strategy_timings[price_type_idx]
             stg_count = self.get_strategy_count_by_run_timing(price_type)
             self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
