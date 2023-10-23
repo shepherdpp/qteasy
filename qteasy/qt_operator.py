@@ -795,10 +795,11 @@ class Operator:
             - par_types: list, 策略参数类型
             - par_ranges: list, 策略参数范围
             - data_freq: str, 策略数据频率
-            - sample_freq: str, 策略采样频率
             - window_length: int, 策略窗口长度
-            - data_types: list, 策略数据类型
-            - bt_price_types: list, 策略回测价格类型
+            - strategy_run_freq: str, 策略采样频率
+            - strategy_data_types: list, 策略数据类型
+            - strategy_run_timing: str, 策略运行时机
+            - use_latest_data_cycle: bool, 策略是否使用最新数据周期
 
         Returns
         -------
@@ -1435,7 +1436,7 @@ class Operator:
         return self._stg_blender[run_timing]
 
     def view_blender(self, run_timing=None):
-        """ TODO: 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
+        """ 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
              版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
 
         Parameters
@@ -1444,16 +1445,26 @@ class Operator:
             一个可用的run_timing
 
         """
-        # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
-        #  例如： blender string: 's0 + s1 + s2'
-        #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
+
+        from qteasy.blender import human_blender
         if run_timing is None:
-            return self._stg_blender_strings
+            all_blenders = {}
+            for run_timing in self.strategy_timings:
+                stg_ids = self.get_strategy_id_by_run_timing(run_timing)
+                all_blenders[run_timing] = human_blender(
+                        self._stg_blender_strings[run_timing],
+                        strategy_ids=stg_ids,
+                )
+            return all_blenders
         if run_timing not in self.strategy_timings:
             return None
         if run_timing not in self._stg_blender:
             return None
-        return self._stg_blender_strings[run_timing]
+        stg_id = self.get_strategy_id_by_run_timing(run_timing)
+        return human_blender(
+                self._stg_blender_strings[run_timing],
+                strategy_ids=stg_id,
+        )
 
     def set_parameter(self,
                       stg_id: [str, int],
@@ -2171,3 +2182,4 @@ class Operator:
             signal_value[:, :, i] = signal_out[timing].T
         self._op_list = signal_value
         return signal_value
+

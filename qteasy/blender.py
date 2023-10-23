@@ -880,3 +880,44 @@ def _operate(n1, n2, op):
     else:
         raise ValueError(f'Unknown operand: ({op})!')
 
+
+def human_blender(blender_str: str, strategy_ids: list) -> str:
+    """ 将blender字符串转化为可读的字符串，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
+
+    Parameters
+    ----------
+    blender_str: str
+        blender字符串，例如's0+s1*s2'
+    strategy_ids: list of str
+        策略ID列表，例如['MACD', 'DMA', 'TRIX'], 策略的数量必须与blender_str中的策略数量一致或大于blender_str中的策略数量
+
+    Returns
+    -------
+    blender_str: str
+        可读的blender字符串，例如'MACD + DMA * TREND'
+    """
+
+    if blender_str is None:
+        return ''
+
+    if not isinstance(blender_str, str):
+        raise TypeError(f'blender_str must be a string, got {type(blender_str)}')
+    if not isinstance(strategy_ids, list):
+        raise TypeError(f'strategy_ids must be a list, got {type(strategy_ids)}')
+
+    tokens = _exp_to_token(blender_str)
+
+    # 将tokens中的策略序号替换为策略ID
+    human_tokens = []
+    for token in tokens:
+        if BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
+            strategy_id = strategy_ids[int(token[1:])]
+            human_tokens.append(str(strategy_id))
+        elif token in ['+', '-', '*', '/', '^', '&', '|', 'and', 'or', 'not', '~']:
+            human_tokens.append(f' {token} ')
+        elif token in [',']:
+            human_tokens.append(f'{token} ')
+        else:
+            human_tokens.append(token)
+
+    return ''.join(human_tokens)

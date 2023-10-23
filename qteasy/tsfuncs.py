@@ -25,9 +25,6 @@ ERRORS_TO_CHECK_ON_RETRY = Exception
 
 
 # tsfuncs interface function, call this function to extract data
-# TODO: update this funciton:
-#  1, remove parameter "table" and replace it with "api_name" instead (or "api")
-#  tushare的API名称解析应该在database模块中完成，而不是在这里，这里仅仅考虑跟tushare相关的所有函数的接口
 def acquire_data(api_name, **kwargs):
     """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
     func = globals()[api_name]
@@ -49,20 +46,20 @@ def stock_basic(exchange: str = None):
     -------
     pd.DataFrame:
         column      type    description
-        ts_code,    str,    TS代码
-        symbol,     str,    股票代码
-        name,       str,    股票名称
-        area,       str,    所在地域
-        industry,   str,    所属行业
-        fullname,   str,    股票全称
-        enname      str,    英文全称
-        market,     str,    市场类型 （主板/中小板/创业板/科创板）
-        exchange,   str,    交易所代码
-        curr_type,  str,    交易货币
-        list_status,str,    上市状态： L上市 D退市 P暂停上市
-        list_date,  str,    上市日期
-        delist_date,str,    退市日期
-        is_hs,      str,    是否沪深港通标的，N否 H沪股通 S深股通
+        ts_code     str     TS代码
+        symbol      str     股票代码
+        name        str     股票名称
+        area        str     所在地域
+        industry    str     所属行业
+        fullname    str     股票全称
+        enname      str     英文全称
+        market      str     市场类型 （主板/中小板/创业板/科创板）
+        exchange    str     交易所代码
+        curr_type   str     交易货币
+        list_status str     上市状态： L上市 D退市 P暂停上市
+        list_date   str     上市日期
+        delist_date str     退市日期
+        is_hs       str     是否沪深港通标的，N否 H沪股通 S深股通
     """
     is_hs = ''
     list_status = 'L'
@@ -107,10 +104,10 @@ def trade_calendar(exchange: str = 'SSE',
     -------
     pd.DataFrame:
         column          type    description
-        exchange,       str,    交易所 SSE上交所 SZSE深交所
-        cal_date,       str,    日历日期
-        is_open,        str,    是否交易 0休市 1交易
-        pretrade_date,  str,    默认不显示，  上一个交易日
+        exchange        str     交易所 SSE上交所 SZSE深交所
+        cal_date        str     日历日期
+        is_open         str     是否交易 0休市 1交易
+        pretrade_date   str     默认不显示，  上一个交易日
     """
     pro = ts.pro_api()
     trade_cal = pro.trade_cal(exchange=exchange,

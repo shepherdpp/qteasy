@@ -135,7 +135,7 @@ class BaseStrategy:
             策略使用的数据类型，例如close, open, high, low等
         use_latest_data_cycle: bool, default True
             是否使用最新的数据周期生成交易信号，默认True
-            如果为True: 默认值 TODO: 可能产生未来函数时，应该给出警告或提示, for version 1.0.7
+            如果为True: 默认值
                 在实盘运行时，会尝试下载当前周期的最新数据，或尝试使用最近的实时数据估算当前周期的数据，此时应该注意避免出现未来函数，
                     如运行时间点为开盘时，这时就不能使用收盘价/最高价/最低价生成交易信号，会导致策略运行失真。
                 在回测交易时，会使用回测当前时间点的最新数据生成交易信号。此时应该注意避免出现未来函数，如回测时间点为
@@ -780,6 +780,11 @@ class BaseStrategy:
         if use_latest_data_cycle is not None:
             assert isinstance(use_latest_data_cycle, bool), \
                 f'TypeError, use_latest_data_cycle should be a bool, got {type(use_latest_data_cycle)} instead'
+            # warn the user if use_latest_data_cycle is set to True for future functions
+            if use_latest_data_cycle:
+                if self.strategy_run_timing != 'close':
+                    warnings.warn(f'Be cautious of future function! Data required for strategy might '
+                                  f'not be available at {self.strategy_run_timing}!', UserWarning)
             self._use_latest_data_cycle = use_latest_data_cycle
 
     def set_custom_pars(self, **kwargs):

@@ -113,6 +113,8 @@ class TraderShell(Cmd):
         return self._status
 
     # ----- basic commands -----
+    # TODO: add command "watch", to display market data in realtime
+    # TODO: add escape warning when realtime data acquiring is not available
     def do_status(self, arg):
         """ Show trader status
 
@@ -1511,26 +1513,13 @@ class Trader(object):
                     df=real_time_data,
                     merge_type='update',
             )
-            # print(f'[DEBUG] trader.py - running strategy, is a trade day, downloaded real_time_data: \n'
-            #       f'{real_time_data} \nand '
-            #       f'{rows_written} rows are saved in table {table_to_update} \n')
-            # from qteasy.history import get_history_panel
-            # refreshed_data = get_history_panel(
-            #         data_source=self._datasource,
-            #         htypes="close",
-            #         shares=self.asset_pool,
-            #         start=data_start_time,
-            #         end=data_end_time,
-            #         freq=max_strategy_freq,
-            #         asset_type="E",
-            #         adj="none",
-            # )
-            #
-            # print(f'{refreshed_data} \n')
 
         # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的最新数据
-        else:  # TIME_FREQ >= 'D':
-            # 如果"use_realtime_price_as_close"为True，则将实时数据的close列作为当前所需价格
+        else:  # (TIME_FREQ >= 'D') and strategy.use_latest_data_cycle:
+            # 如果策略的属性"use_latest_data_cycle"为True，需要估算当前数据周期中的各项价格数据(High/low/open/close/volume)
+            # TODO: implement for version 1.0.7
+            # 如果策略的data_type中含有open, high, low, close, volume, 则需要下载相应的数据以便分别估算这些数据：
+            # 其余数据如indicator等无法估算，直接使用上一周期的值
             pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref = check_and_prepare_live_trade_data(
@@ -1538,11 +1527,6 @@ class Trader(object):
                 config=config,
                 datasource=self._datasource,
         )
-        # if not hist_op.is_empty:
-        #     print(f'[DEBUG] trader.py - running strategy, downloaded hist_op data: {hist_op} \n')
-        # else:
-        #     print(f'[DEBUG] trader.py - running strategy, empty hist_op is downloaded:\nhist_op: {hist_op} \n'
-        #           f'hist_ref: {hist_ref} \n')
         if self.debug:
             self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(
@@ -1583,7 +1567,6 @@ class Trader(object):
         trade_data[:, 3] = last_trade_result_summary[1]
         trade_data[:, 4] = last_trade_result_summary[2]
 
-        # print(f'[DEBUG]: to created signal, trade_data: {trade_data}\n')
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
                            f'"Operator.op_type = "step"')
@@ -1608,6 +1591,7 @@ class Trader(object):
                 available_cash=available_cash,
                 config=config
         )
+        names = get_symbol_names(self._datasource, symbols)
         submitted_qty = 0
         if self.debug:
             self.post_message(f'generated trade signals:\n'
@@ -1616,7 +1600,7 @@ class Trader(object):
                               f'directions: {directions}\n'
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n')
-        for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, quoted_prices):
+        for sym, name, pos, d, qty, price in zip(symbols, names, positions, directions, quantities, quoted_prices):
             if qty <= 0.001:
                 continue
             pos_id = get_or_create_position(account_id=self.account_id,
@@ -1640,7 +1624,7 @@ class Trader(object):
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
                 trade_order['order_id'] = order_id
                 self._broker.order_queue.put(trade_order)
-                self.post_message(f'[NEW ORDER {order_id}]: {d}-{pos} {qty} of {sym} @ {price}')
+                self.post_message(f'[NEW ORDER {order_id}]: <{name} - {sym}> {d}-{pos} {qty} shares @ {price}')
                 # 记录已提交的交易数量
                 submitted_qty += 1
 
@@ -2240,12 +2224,19 @@ def start_trader(
 def refill_missing_datasource_data(operator, trader, config, datasource):
     """ 针对日频或以上的数据，检查数据源中的数据可用性，下载缺失的数据到数据源
 
+    在trader运行过程中，为了避免数据缺失，检查当前Datasource中的数据是否已经填充到最新日期，
+    如果没有，则下载缺失的数据到数据源中，以便后续使用
+
     Parameters
     ----------
     operator: qt.Operator
+        Operator交易员对象
     trader: Trader
+        Trader交易对象
     config: qt.Config
+        Config配置对象
     datasource: qt.Datasource
+        Datasource数据源对象
 
     Returns
     -------

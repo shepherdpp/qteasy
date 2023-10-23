@@ -19,7 +19,7 @@ from qteasy.utilfuncs import rolling_window
 from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
 from qteasy.tafuncs import sma
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from qteasy.blender import _exp_to_token, blender_parser, signal_blend
+from qteasy.blender import _exp_to_token, blender_parser, signal_blend, human_blender
 
 
 class TestLSStrategy(RuleIterator):
@@ -2271,6 +2271,27 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         hit = np.allclose(res, target)
         self.assertTrue(hit)
+
+        # test human_blender function:
+        print('\ntest human_blender function')
+        strategy_ids = ['MACD', 'DMA', 'Crossline', 'TRIX', 'KDJ']
+        blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
+        res = human_blender(blender_exp, strategy_ids)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        self.assertEqual(res, 'avgpos_3_0.5(MACD, DMA, Crossline, TRIX, KDJ)')
+
+        blender_exp = 'max(s0, s1, s2)+s3*s4'
+        res = human_blender(blender_exp, strategy_ids)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        self.assertEqual(res, 'max(MACD, DMA, Crossline) + TRIX * KDJ')
+
+        blender_exp = 'max(s0, s1/s0)+s1and0.5*s4'
+        res = human_blender(blender_exp, strategy_ids)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        self.assertEqual(res, 'max(MACD, DMA / MACD) + DMA and 0.5 * KDJ')
+
+        blender_exp = 'max(s0, s1/s0)+s1^0.5*s6'
+        self.assertRaises(IndexError, human_blender, blender_exp, strategy_ids)
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
