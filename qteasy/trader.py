@@ -25,7 +25,7 @@ from cmd import Cmd
 import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration
+from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration, adjust_string_length
 from qteasy.broker import Broker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
@@ -252,9 +252,9 @@ class TraderShell(Cmd):
         print(f'current positions: \n')
         print(
                 self._trader.account_position_info.to_string(
-                        columns=['name', 'qty', 'available_qty', 'cost', 'current_price',
-                                 'market_value', 'profit', 'profit_ratio'],
-                        header=['name', 'qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio'],
+                        columns=['qty', 'available_qty', 'cost', 'current_price',
+                                 'market_value', 'profit', 'profit_ratio', 'name'],
+                        header=['qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio', 'name'],
                         formatters={'name':          '{:s}'.format,
                                     'qty':           '{:,.2f}'.format,
                                     'available_qty': '{:,.2f}'.format,
@@ -263,6 +263,16 @@ class TraderShell(Cmd):
                                     'market_value':  '¥{:,.2f}'.format,
                                     'profit':        '¥{:,.2f}'.format,
                                     'profit_ratio':  '{:.2%}'.format},
+                        col_space={
+                            'name': 8,
+                            'qty': 10,
+                            'available_qty': 10,
+                            'cost': 12,
+                            'current_price': 12,
+                            'market_value': 14,
+                            'profit': 14,
+                            'profit_ratio': 8,
+                        },
                         justify='right',
                 )
         )
@@ -391,24 +401,36 @@ class TraderShell(Cmd):
         history['earnings'] = history['value'] - history['cum_cost']
         history['earning_rate'] = history['earnings'] / history['cum_cost']
         # add row: name
-        history['name'] = get_symbol_names(datasource=self.trader.datasource, symbols=history['symbol'].tolist())
+        all_names = get_symbol_names(datasource=self.trader.datasource, symbols=history['symbol'].tolist())
+        history['name'] = [adjust_string_length(name, 8) for name in all_names]
 
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
         # for earning rate
         print(
                 history.to_string(
-                        columns=['execution_time', 'symbol', 'name', 'direction', 'filled_qty', 'price_filled',
-                                 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate'],
-                        header=['time', 'symbol', 'name', 'operation', 'qty', 'price', 'holdings',
-                                'holding value', 'cost', 'earnings', 'earning_rate'],
-                        formatters={'name':         '{:s}'.format,
-                                    'filled_qty':   '{:,.2f}'.format,
-                                    'price_filled': '{:,.2f}'.format,
-                                    'cum_qty':      '{:,.2f}'.format,
-                                    'value':        '{:,.2f}'.format,
-                                    'share_cost':   '{:,.2f}'.format,
-                                    'earnings':     '{:,.2f}'.format,
-                                    'earning_rate': '{:.3%}'.format},
+                        columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
+                                 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate', 'name'],
+                        header=['time', 'symbol', 'oper', 'qty', 'price', 'holdings',
+                                'holding value', 'cost', 'earnings', 'earning_rate', 'name'],
+                        formatters={
+                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                            'name':         '{:8s}'.format,
+                            'operation':    '{:s}'.format,
+                            'filled_qty':   '{:,.2f}'.format,
+                            'price_filled': '¥{:,.2f}'.format,
+                            'cum_qty':      '{:,.2f}'.format,
+                            'value':        '¥{:,.2f}'.format,
+                            'share_cost':   '¥{:,.2f}'.format,
+                            'earnings':     '¥{:,.2f}'.format,
+                            'earning_rate': '{:.3%}'.format,
+                        },
+                        col_space={
+                            'name': 8,
+                            'price_filled': 10,
+                            'value': 12,
+                            'share_cost': 10,
+                            'earnings': 12,
+                        },
                         justify='right',
                         index=False,
                 )
@@ -506,21 +528,27 @@ class TraderShell(Cmd):
             order_details['name'] = names
             print(order_details.to_string(
                     index=False,
-                    columns=['execution_time','symbol', 'name', 'position', 'direction', 'qty', 'price_quoted',
+                    columns=['execution_time', 'symbol', 'position', 'direction', 'qty', 'price_quoted',
                              'submitted_time', 'status', 'price_filled', 'filled_qty', 'canceled_qty',
-                             'delivery_status'],
-                    header=['time', 'symbol', 'name', 'pos', 'buy/sell', 'qty', 'price',
-                            'submitted', 'status', 'filled_price', 'filled', 'canceled',
-                            'delivery'],
-                    formatters={'name':           '{:8s}'.format,
+                             'delivery_status', 'name'],
+                    header=['time', 'symbol', 'pos', 'buy/sell', 'qty', 'price',
+                            'submitted', 'status', 'fill_price', 'fill_qty', 'canceled',
+                            'delivery', 'name'],
+                    formatters={'name':           '{:s}'.format,
                                 'qty':            '{:,.2f}'.format,
-                                'price_quoted':   '{:,.2f}'.format,
-                                'price_filled':   '{:,.2f}'.format,
+                                'price_quoted':   '¥{:,.2f}'.format,
+                                'price_filled':   '¥{:,.2f}'.format,
                                 'filled_qty':     '{:,.2f}'.format,
                                 'canceled_qty':   '{:,.2f}'.format,
                                 'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
                                 'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
                                 },
+                    col_space={
+                        'price_quoted': 10,
+                        'price_filled': 10,
+                        'filled_qty': 10,
+                        'canceled_qty': 10,
+                    },
                     justify='right',
             ))
 

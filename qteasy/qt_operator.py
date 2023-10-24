@@ -1625,7 +1625,8 @@ class Operator:
         if (self.strategy_count > 0) and verbose:
             print('            -------------------------Strategy Details-------------------------')
             for stg_id, stg in self.get_strategy_id_pairs():
-                print(f'Strategy_ID:        {stg_id}')
+                print(f'\nStrategy_ID:        {stg_id}\n'
+                      f'----------------------------------')
                 stg.info()
             print('=' * 100)
 
