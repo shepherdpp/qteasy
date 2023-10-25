@@ -56,3 +56,5 @@ dist/
 qteasy.egg-info/
 data_test/
 /question.py
+*.xlsx
+*.numbers

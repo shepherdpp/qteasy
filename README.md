@@ -33,13 +33,14 @@
   - [投资策略的实盘运行](#投资策略的实盘运行)
   - [投资策略的优化](#回测并优化交易策略)
 - [更详细的使用方法请参见教程](#QTEASY使用教程)
-- 
+
+
 ## QTEASY简介
 
-- Author: **Jackie PENG**
+- 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
-- Created: 2019, July, 16
-- Latest Version: `1.0.6`
+- 创建日期: 2019, July, 16
+- 最新版本: `1.0.6`
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
@@ -55,7 +56,9 @@
 
 ### `qteasy`的安装
 
-`python -m pip install qteasy`
+```bash
+pip install qteasy
+```
 
 ### 安装依赖包
 
@@ -71,7 +74,7 @@
 
 ##  10分钟了解qteasy的功能
 
-### 3.1 导入`qteasy`
+### 导入`qteasy`
 基本的模块导入方法如下
 
 ```python
