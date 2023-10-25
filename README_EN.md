@@ -81,11 +81,11 @@ import qteasy as qt
 ```
 ### Configure local data source and Tushare token
 
-为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
+`qteasy` is not fully functional without variant types of financial data, which should be stored locally in a datasource.
+Huge amounts of financial data can be readily downloaded with the help of `tushare`, a financial data package for python.
+However, a Tushare API token is required to access the data. Please refer to [Tushare API token](https://tushare.pro/document/2) for details.
 
-`qteasy`可以通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请API Token，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
-
-因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置。在`QT_ROOT_PATH/qteasy/`路径下打开配置文件`qteasy.cfg`，可以看到下面内容：
+Users can configure the local data source and Tushare token in the configuration file `qteasy.cfg` under `QT_ROOT_PATH/qteasy/` path:
 
 ```
 # qteasy configuration file
@@ -94,21 +94,21 @@ import qteasy as qt
 # example:
 # local_data_source = database
 ```
-#### 配置`tushare token`
+#### configure tushare token
 
-将你获得的tushare API token添加到配置文件中，如下所示：
-
+add your `tushare` API token to the configuration file as follows:
 
 ``` commandline
-tushare_token = <你的tushare API Token> 
+tushare_token = <Your tushare API Token> 
 ```
-#### 配置本地数据源 —— 用MySQL数据库作为本地数据源
-默认情况下`qteasy`使用存储在`data/`路径下的`.csv`文件作为数据源，不需要特殊设置。
-如果设置使用`mysql`数据库作为本地数据源，在配置文件中添加以下配置：
+#### Configure local datasource -- use MySQL database as an example
 
-```
+`qteasy` can use local `.csv` files as default data source, no special configuration is needed in this case.
+Add following configurations to the configuration file to use `MySQL` database as local data source:
+
+
+```bash
 local_data_source = database  
-
 local_db_host = <host name>
 local_db_port = <port number>
 local_db_user = <user name>
@@ -116,24 +116,27 @@ local_db_password = <password>
 local_db_name = <database name>
 ```
 
-关闭并保存好配置文件后，重新导入`qteasy`，就完成了数据源的配置，可以开始下载数据到本地了。
+Save and close the configuration file, then import `qteasy` again to activate new configurations.
 
-### 下载金融历史数据 
 
-要下载金融价格数据，使用`qt.refill_data_source()`函数。下面的代码下载2021及2022两年内所有股票、所有指数的日K线数据，同时下载所有的股票和基金的基本信息数据。
-（根据网络速度，下载数据可能需要十分钟左右的时间，如果存储为csv文件，将占用大约200MB的磁盘空间）：
+### Download historical financial data 
+
+Download historical financial data with `qt.refill_data_source()` function. 
+The following code will download all stock and index daily price data from 2021 to 2022, and all stock and fund basic information data.
+depending on connection, it may take about 10 minutes to download all data. The data will take about 200MB disk space if stored as csv files.
+
 
 ```python
 qt.refill_data_source(
-        tables=['stock_daily',   # 股票的日线价格
-                'index_daily',   # 指数的日线价格
-                'basics'],       # 股票和基金的基本信息
-        start_date='20210101',  # 下载数据的起止时间
+        tables=['stock_daily',   # daily price of stocks
+                'index_daily',   # daily price of indexes
+                'basics'],       # basic information of stocks and funds
+        start_date='20210101',  # start date of data to download
         end_date='20221231',  
 )
 ```
-
-数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。
+Downloaded data can be retrieved with `qt.get_history_data()` function. 
+Data of multiple stocks will be stored in a `dict` object.
 
 ```python
 qt.get_history_data(htypes='open, high, low, close', 
@@ -141,7 +144,7 @@ qt.get_history_data(htypes='open, high, low, close',
                     start='20210101',
                     end='20210115')
 ```
-运行上述代码会得到一个`Dict`对象，包含两个股票"000001.SZ"以及"000005.SZ"的K线数据（数据存储为`DataFrame`）：
+Above code returns a `dict` containing stock symbols as keys and Dataframe of prices as dict values:
 ```
 {'000001.SZ':
               open   high    low  close
@@ -163,9 +166,10 @@ qt.get_history_data(htypes='open, high, low, close',
  2021-01-14  5556.2125  5568.0179  5458.6818  5470.4563
  2021-01-15  5471.3910  5500.6348  5390.2737  5458.0812}
 ```
-除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[教程](#QTEASY使用教程)
+Apart from prices, `qteasy` can also download and manage a large amount of financial data, including financial statements, technical indicators, and basic information. For details, please refer to
+[QTEASY tutorial: download and manage financial data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
 
-股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。
+As a shortcut, `qteasy` provides a `qt.candle()` function to plot candlestick charts of stock prices already downloaded
 
 ```python
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
@@ -174,25 +178,27 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_5_2.png)
     
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
-`qt.candle()`支持功能如下：
-- 显示股票、基金、期货的K线
-- 显示复权价格
-- 显示分钟、 周或月K线 
-- 显示不同移动均线以及MACD/KDJ等指标
+`qt.candle()` supports plotting:
+- Candle stick chart of stocks, funds and futures,
+- in adjusted prices and unadjusted prices,
+- in different frequencies like minute, week or month,
+- together with different moving averages and technical indicators like MACD/KDJ,
 
-详细的用法请参考文档，示例如下(请先使用`qt.refill_data_source()`下载相应的历史数据)：
+More detailed intro can be found in tutorial. Here are some examples:
+
+(Please make sure you have downloaded the data with `qt.refill_data_source()` first)
 
 
 ```python
-# 场内基金的小时K线图
+# Hourly candle stick chart of fund
 qt.candle('159601', start = '20220121', freq='h')
-# 沪深300指数的日K线图
+# Daily price K-line chart of HS300 index
 qt.candle('000300', start = '20200121')
-# 股票的30分钟K线，复权价格
+# Adjusted 30-min K-line chart of stocks
 qt.candle('中国电信', start = '20211021', freq='30min', adj='b')
-# 期货K线，三条移动均线分别为9天、12天、26天
+# K-line chart of futures with specified moving averages (9, 12, 26 days)
 qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
-# 场外基金净值曲线图，复权净值，不显示移动均线
+# Net value chart of funds, adjusted net value, no moving average
 qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
@@ -226,7 +232,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 关于`DataSource`对象的更多详细介绍，请参见[qteasy教程](https://github.com/shepherdpp/qteasy/tutorials)
 
 
-###  创建一个投资策略
+###  创建一个投资策略 Create an investment strategy
 
 `qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略。
