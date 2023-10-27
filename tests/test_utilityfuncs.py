@@ -304,6 +304,7 @@ class TestUtilityFuncs(unittest.TestCase):
         """ test the function next_market_trade_day()
         """
         date_trade = '20210401'
+        next_date = '20210402'
         date_holiday = '20210102'
         next_holiday = pd.to_datetime(date_holiday) + pd.Timedelta(2, 'd')
         date_weekend = '20210424'
@@ -316,6 +317,8 @@ class TestUtilityFuncs(unittest.TestCase):
         next_christmas_xhkg = '20201228'
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_trade)),
                          pd.to_datetime(date_trade))
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_trade, nearest_only=False)),
+                         pd.to_datetime(next_date))
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_holiday)),
                          pd.to_datetime(next_holiday))
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_weekend)),

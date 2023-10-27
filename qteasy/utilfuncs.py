@@ -950,15 +950,22 @@ def prev_market_trade_day(date, exchange='SSE'):
     ------
     NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
+    Examples
+    --------
+    >>> prev_market_trade_day('2019-01-01')
+    Timestamp('2018-12-28 00:00:00')
+    >>> prev_market_trade_day('2020-12-24')
+    Timestamp('2020-12-23 00:00:00')
+
     See Also
     --------
     is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date).floor(freq='d')
-    except Exception as ex:
-        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
-        raise
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
     if qteasy.QT_TRADE_CALENDAR is not None:
         exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
@@ -971,7 +978,7 @@ def prev_market_trade_day(date, exchange='SSE'):
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
 
-    - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
+    - 如果date是交易日，返回date当日，如2020-12-24日是交易日，返回2020-12-24
     - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
 
     Parameters
@@ -985,21 +992,25 @@ def nearest_market_trade_day(date, exchange='SSE'):
     -------
     pd.TimeStamp
 
+    Examples:
+    ---------
+    >>> nearest_market_trade_day('2019-01-01')
+    Timestamp('2018-12-28 00:00:00')
+    >>> nearest_market_trade_day('2020-12-24')
+    Timestamp('2020-12-24 00:00:00')
+
     See Also
     --------
     is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date).floor(freq='d')
-    except Exception as ex:
-        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
-        raise
-    assert _date is not None, f'{date} is not a valide date'
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
-        # raise ValueError(f'{date} is out of trade calendar range ({last_known_trade_day}), '
-        #                  f'refill trade calendar with "refill_data_source(tables=[\'trade_calendar\'])"')
     if is_market_trade_day(_date, exchange):
         return _date
     else:
@@ -1010,8 +1021,11 @@ def nearest_market_trade_day(date, exchange='SSE'):
 
 
 @lru_cache(maxsize=16)
-def next_market_trade_day(date, exchange='SSE'):
+def next_market_trade_day(date, exchange='SSE', nearest_only=True):
     """ 根据交易所发布的交易日历找到它的后一个交易日，准确性高但需要提前准备QT_TRADE_CALENDAR数据
+
+    - 如果date是一个交易日，则返回date当日(若nearst_only=True)或者返回date的下一个交易日(若nearest_only=False)
+    - 如果date不是一个交易日，则返回date的下一个交易日，如2020-12-25不是交易日，但它的下一个交易日是2020-12-28，因此返回2020-12-28
 
     Parameters
     ----------
@@ -1019,6 +1033,8 @@ def next_market_trade_day(date, exchange='SSE'):
         可以转化为时间日期格式的字符串或其他类型对象
     exchange: str
         交易所代码
+    nearest_only: bool, default: True
+        是否只返回最近的交易日，如果为True，则返回最近的交易日，如果为False，则返回下一个交易日
 
     Returns
     -------
@@ -1028,27 +1044,34 @@ def next_market_trade_day(date, exchange='SSE'):
     ------
     NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
+    Examples
+    --------
+    >>> next_market_trade_day('2019-01-01')
+    Timestamp('2019-01-02 00:00:00')
+    >>> next_market_trade_day('2020-12-24')
+    Timestamp('2020-12-24 00:00:00')
+    >>> next_market_trade_day('2020-12-24', nearest_only=False)
+    Timestamp('2020-12-25 00:00:00')
+
     See Also
     --------
     is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date).floor(freq='d')
-    except Exception:
-        raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
-    assert _date is not None, f'{date} is not a valid date'
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
-        # raise ValueError(f'{date} is out of trade calendar range ({last_known_trade_day}), '
-        #                  f'refill trade calendar with "refill_data_source(tables=[\'trade_calendar\'])"')
-    if is_market_trade_day(_date, exchange):
+    if is_market_trade_day(_date, exchange) and nearest_only:
         return _date
     else:
-        next = _date + pd.Timedelta(1, 'd')
-        while not is_market_trade_day(next):
-            next = next + pd.Timedelta(1, 'd')
-        return next
+        next_date = _date + pd.Timedelta(1, 'd')
+        while not is_market_trade_day(next_date):
+            next_date = next_date + pd.Timedelta(1, 'd')
+        return next_date
 
 
 def weekday_name(weekday: int):
