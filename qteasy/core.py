@@ -2680,6 +2680,105 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             adj='none',
             data_source=datasource,
     )
+    # TODO: 估算的数据不存储，因此不在trader中下载，在这里实时下载。仅在realtime运行时下载数据，对backtest效率无影响
+    #  下载后直接加入hist_op以及hist_ref中，不保存到本地数据源中，因为估算数据可能会不准确
+    #  估算的数据包括：
+    #  1. 估算的open/high/low/close/volume
+    #  2. 估算的其他数据，直接沿用上一周期的数据
+    #  添加估算数据在hist_op和hist_ref的最后一行，并添加日期时间索引为最新周期的日期时间
+    #  添加后的数据可以自然在assign_hist_data中分配给operator的相应变量
+    if any(
+            (stg.strategy_run_freq.upper() in ['D', 'W', 'M']) and
+            stg.use_latest_data_cycle
+            for stg
+            in operator.strategies
+    ):  # 如果有任何一个策略需要估算当前周期的数据
+        # 从hist_op的index中找到日期序列，最后一个日期是prev_cycle_end, 根据日期序列计算本cycle的开始和结束日期
+        prev_cycle_date = hist_op.hdates[-1]
+
+        latest_cycle_date = next_market_trade_day(prev_cycle_date)
+
+        extended_op_values = np.zeros(shape=(hist_op.shape[0], 1, hist_op.shape[2]))
+        extended_ref_values = np.zeros(shape=(hist_ref.shape[0], 1, hist_ref.shape[2]))
+        # 如果需要估算当前的除open/high/low/close/volume以外的其他数据：
+        # 直接沿用上一周期的数据
+        # 将hist_op和ref最后一行的数据复制到extended_op_values和extended_ref_values中,作为默认值
+        extended_op_values[:, 0, :] = hist_op.values[:, -1, :]
+        extended_ref_values[:, 0, :] = hist_ref.values[:, -1, :]
+
+        # 如果需要估算当前的open：
+        if 'open' in hist_op.htypes:
+            pass
+            # 找到本周期的第一个交易小时，读取该小时的open价格，作为本周期的open价格
+        if 'open' in hist_ref.htypes:
+            pass
+            # 找到本周期的第一个交易小时，读取该小时的open价格，作为本周期的open价格
+
+        # 如果需要估算当前的high/low：
+        if 'high' in hist_op.htypes:
+            pass
+            # 读取本周期开始到现在的全部价格，取最大值和最小值作为本周期的high和low
+        if 'high' in hist_ref.htypes:
+            pass
+            # 读取本周期开始到现在的全部价格，取最大值和最小值作为本周期的high和low
+        if 'low' in hist_op.htypes:
+            pass
+            # 读取本周期开始到现在的全部价格，取最大值和最小值作为本周期的high和low
+        if 'low' in hist_ref.htypes:
+            pass
+            # 读取本周期开始到现在的全部价格，取最大值和最小值作为本周期的high和low
+
+        # 如果需要估算当前的close：
+        if 'close' in hist_op.htypes:
+            # 找到最近一个交易分钟，读取该分钟的close价格，作为本周期的close价格
+            column_index = hist_op.columns['close']
+            try:
+                real_time_data = datasource.fetch_realtime_price_data(
+                        table='stock_1min',
+                        channel='tushare',
+                        symbols=hist_op.shares,
+                )
+                close_data = real_time_data.set_index('ts_code').reindex(index=hist_op.shares)['close']
+                extended_op_values[:, 0, column_index] = close_data.values
+            except:
+                pass
+        if 'close' in hist_ref.htypes:
+            # 找到最近一个交易分钟，读取该分钟的close价格，作为本周期的close价格
+            column_index = hist_ref.columns['close']
+            try:
+                real_time_data = datasource.fetch_realtime_price_data(
+                        table='stock_1min',
+                        channel='tushare',
+                        symbols=hist_ref.shares,
+                )
+                close_data = real_time_data.set_index('ts_code').reindex(index=hist_ref.shares)['close']
+                extended_ref_values[:, 0, column_index] = close_data.values
+            except:
+                pass
+
+        # 如果需要估算当前的volume：
+        if 'vol' in hist_op.htypes:
+            pass
+            # 读取本周期开始到现在的全部成交量，求和作为本周期的volume
+        if 'vol' in hist_ref.htypes:
+            pass
+            # 读取本周期开始到现在的全部成交量，求和作为本周期的volume
+
+        # 将extended_hist_op和extended_hist_ref添加到hist_op和hist_ref中
+        extended_hist_op = HistoryPanel(
+                values=extended_op_values,
+                levels=hist_op.shares,
+                rows=[latest_cycle_date],
+                columns=hist_op.htypes,
+        )
+        extended_hist_ref = HistoryPanel(
+                values=extended_ref_values,
+                levels=hist_ref.shares,
+                rows=[latest_cycle_date],
+                columns=hist_ref.htypes,
+        )
+        hist_op = hist_op.join(extended_hist_op, same_shares=True, same_htypes=True)
+        hist_ref = hist_ref.join(extended_hist_ref, same_shares=True, same_htypes=True)
 
     return hist_op, hist_ref
 

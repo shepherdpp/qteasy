@@ -3545,7 +3545,7 @@ class DataSource:
         -------
         pd.DataFrame:
             下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
-
+            columns: ts_code, trade_time, open, high, low, close, vol, amount
         """
         # 目前仅支持从tushare获取数据，未来可能增加新的API
         from .tsfuncs import acquire_data

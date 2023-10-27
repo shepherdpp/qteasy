@@ -1507,8 +1507,6 @@ class Trader(object):
             freq = strategy.strategy_run_freq.upper()
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
-        # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
-        # duration, base_unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
         unit_to_table = {
             'h':     'stock_hourly',
             '30min': 'stock_30min',
@@ -1520,6 +1518,7 @@ class Trader(object):
         # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
         if self.debug:
             self.post_message(f'getting live data...')
+        # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据
@@ -1543,11 +1542,7 @@ class Trader(object):
             )
 
         # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的最新数据
-        else:  # (TIME_FREQ >= 'D') and strategy.use_latest_data_cycle:
-            # 如果策略的属性"use_latest_data_cycle"为True，需要估算当前数据周期中的各项价格数据(High/low/open/close/volume)
-            # TODO: implement for version 1.0.7
-            # 如果策略的data_type中含有open, high, low, close, volume, 则需要下载相应的数据以便分别估算这些数据：
-            # 其余数据如indicator等无法估算，直接使用上一周期的值
+        else:
             pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
         hist_op, hist_ref = check_and_prepare_live_trade_data(
