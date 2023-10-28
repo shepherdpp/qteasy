@@ -226,7 +226,7 @@ With the dynamic candlestick chart, users can control the display range of the K
 
 ![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
 
-Find more detailed introduction to DataSource objects in [02: 金融数据下载及管理](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
+Find more detailed introduction to DataSource objects in [02: Manage Financial Data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
 
 
 ###  Create an investment strategy
@@ -264,16 +264,16 @@ ________________________________________________________________________________
 dma       DMA                  days @ close  270 x days        ['close']            (12, 26, 9)     
 ====================================================================================================
 ```
-现在可以看到`op`中有一个交易策略，ID是`dma`，我们在`Operator`层面设置或修改策略的参数
-时，都需要引用这个`ID`。
+Now a strategy is added to the operator with ID 'dma', with which we can set or modify parameters of the strategy.
 
-`DMA`是一个内置的均线择时策略，它通过计算股票每日收盘价的快、慢两根移动均线的差值`DMA`与其移动平均值`AMA`之间的交叉情况来确定多空或买卖点。
+'DMA' is a built-in timing strategy that generates buy/sell signals based on the difference between the fast and slow moving averages of the stock price. 
 
-使用qt.built_ins()函数可以查看DMA策略的详情，例如：
+Detailed info of this strategy can be print out with `op.info()` method:
+
 ```python
 qt.built_ins('dma')
 ```
-得到：
+following info will be printed:
 
 ```
  DMA择时策略
@@ -298,32 +298,33 @@ qt.built_ins('dma')
     参数范围：[(10, 250), (10, 250), (8, 250)]
     策略不支持参考数据，不支持交易数据
 ```
-在默认情况下，策略由三个**可调参数**：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
-不同的策略运行周期。
+By default, the strategy uses three **adjustable parameters**: `(12,26,9)`, but we can give any three integers greater than 2 and less than 250 as the parameters of the strategy to adapt to stocks with different trading activity or to adapt to different strategy running cycles.
 
 
-### 回测并评价交易策略的性能表现
-queasy可以使用历史数据回测策略表现并输出图表如下：
+### Backtest strategy with history data and evaluate its performance
+
+with `qteasy`, one can easily backtest a strategy with historical data and evaluate its performance.
+
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_14_3.png)
 
-使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
+Use `op.run()` to run the strategy with historical data, and the result will be returned as a `dict` object:
 
 ```python
 res = op.run(
-        mode=1,                         # 历史回测模式
-        asset_pool='000300.SH',         # 投资资产池
-        asset_type='IDX',               # 投资资产类型
-        invest_cash_amounts=[100000],   # 投资资金
-        invest_start='20220501',        # 投资回测开始日期
-        invest_end='20221231',          # 投资回测结束日期
-        cost_rate_buy=0.0003,           # 买入费率
-        cost_rate_sell=0.0001,          # 卖出费率
-        visual=True,                    # 打印可视化回测图表
-        trade_log=True                  # 打印交易日志
+        mode=1,                         # run in backtest mode
+        asset_pool='000300.SH',         # the list symbols in trading pool 
+        asset_type='IDX',               # the type of assets to be traded
+        invest_cash_amounts=[100000],   # initial investment cash amount
+        invest_start='20220501',        # start date of backtest
+        invest_end='20221231',          # end date of backtest
+        cost_rate_buy=0.0003,           # trade cost rate for buying
+        cost_rate_sell=0.0001,          # trade cost rate for selling
+        visual=True,                    # print visualized backtest result
+        trade_log=True                  # save trade log
 )
 ```
-输出结果如下：
-```
+Here's printed trade result:
+```commandline
      ====================================
      |                                  |
      |       BACK TESTING RESULT        |
@@ -367,28 +368,31 @@ Max drawdown:                    11.92%
 
 ===========END OF REPORT=============
 ```
+The backtest result is also visualized in a chart as well:
+
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_21_1.png)
 
-### 交易策略的参数调优
+### Optimize adjustable parameters of a strategy
 
-交易策略的表现与参数有关，如果输入不同的参数，策略回报相差会非常大。`qteasy`可以用多种不同的优化算法，帮助搜索最优的策略参数，
+The performance of a strategy highly depends on its adjustable parameters, and often varies a lot with different parameters. `qteasy` provides a series of optimization algorithms to help search for the best parameters of a strategy.
 
-要使用策略优化功能，需要设置交易策略的优化标记`opt_tag=1`，并配置环境变量`mode=2`即可:
+To run qteasy in optimization mode, set optimization tag of the strategy: `opt_tag=1`, and set environment variable `mode=2`:
+
 
 ```python
 op.set_parameter('dma', opt_tag=1)
-res = op.run(mode=2,                    # 优化模式
-             opti_start='20220501',     # 优化区间开始日期
-             opti_end='20221231',       # 优化区间结束日期
-             test_start='20220501',     # 测试区间开始日期
-             test_end='20221231',       # 测试区间结束日期
-             opti_sample_count=1000,    # 优化样本数量
-             visual=True,               # 打印优化结果图表
-             parallel=False)            # 不使用并行计算
+res = op.run(mode=2,                    # run in optimization mode
+             opti_start='20220501',     # start date of optimization period
+             opti_end='20221231',       # end date of optimization period
+             test_start='20220501',     # start date of test period
+             test_end='20221231',       # end date of test period
+             opti_sample_count=1000,    # sample count of optimization
+             visual=True,               # print visualized backtest result
+             parallel=True)            # run in parallel mode
 ```
 
-`qteasy`将在同一段历史数据（优化区间）上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据（测试区间）上进行独立测试，并显
-示独立测试的结果：
+`qteasy` tries to find the 30 sets of best-performing parameters of a strategy on the optimization period, and perform independent backtest on the test period. The result of the optimization will be printed as follows:
+
 ```commandline
 ==================================== 
 |                                  |
@@ -398,9 +402,9 @@ res = op.run(mode=2,                    # 优化模式
 
 qteasy running mode: 2 - Strategy Parameter Optimization
 
-... # 省略部分输出
+... # ommited for brevity
 
-# 以下是30组优化的策略参数及其结果（部分结果省略）
+# 30 sets of optimized parameters and their results (partially omitted for brevity)
     Strategy items Sell-outs Buy-ins ttl-fee     FV      ROI  Benchmark rtn MDD 
 0     (35, 69, 60)     1.0      2.0    71.45 106,828.20  6.8%     -3.5%     9.5%
 1   (124, 104, 18)     3.0      2.0   124.86 106,900.59  6.9%     -3.5%     7.4%
@@ -413,50 +417,50 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 ===========END OF REPORT=============
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_24_1.png)   
-将优化后的参数应用到策略中，并再次回测，可以看到结果明显提升：
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_24_1.png)
+Run backtest again with the optimized parameters, and the result will be improved significantly:
 
 ```python
 op.set_parameter('dma', pars=(143, 99, 32))
 res = op.run(
-        mode=1,                         # 历史回测模式
-        asset_pool='000300.SH',         # 投资资产池
-        asset_type='IDX',               # 投资资产类型
-        invest_cash_amounts=[100000],   # 投资资金
-        invest_start='20220501',        # 投资回测开始日期
-        invest_end='20221231',          # 投资回测结束日期
-        cost_rate_buy=0.0003,           # 买入费率
-        cost_rate_sell=0.0001,          # 卖出费率
-        visual=True,                    # 打印可视化回测图表
-        trade_log=True                  # 打印交易日志
+        mode=1,                         # run in backtest mode
+        asset_pool='000300.SH',         # the list symbols in trading pool
+        asset_type='IDX',               # the type of assets to be traded
+        invest_cash_amounts=[100000],   # initial investment cash amount
+        invest_start='20220501',        # start date of backtest
+        invest_end='20221231',          # end date of backtest
+        cost_rate_buy=0.0003,           # trade cost rate for buying
+        cost_rate_sell=0.0001,          # trade cost rate for selling
+        visual=True,                    # print visualized backtest result
+        trade_log=True)                 # save trade log
 ```
-结果如下：
+
+here's result：
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_26_1.png)   
 
+For more detailed info about the optimization result, please refer to the tutorial.
 
-关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
+### Deploy the strategy and start live trading
 
-### 部署并开始交易策略的实盘运行
+`qteasy` provides a simple live trading program that runs in command line environment. After configuring the `Operator` object and setting the strategy, it runs automatically, downloads real-time data, generates trading instructions according to the strategy results, simulate the trading process and record the trading results.
 
-`qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
-
-在`Operator`中设置好交易策略，并配置好交易参数后，可以直接启动实盘交易：
+Live trade can be started when strategy is setup with its parameters and configured with `Operator` object. 
 
 ```python
 import qteasy as qt
 
-# 创建一个交易策略alpha
-alpha = qt.get_built_in_strategy('ndayrate')  # 创建一个N日股价涨幅交易策略
+# create trade strategy alpha
+alpha = qt.get_built_in_strategy('ndayrate')  # create a N-day price change trade strategy 
 
-# 设置策略的运行参数
-alpha.strategy_run_freq = 'd'  # 每日运行
-alpha.data_freq = 'd' # 策略使用日频数据
-alpha.window_length = 20  # 数据窗口长度
-alpha.sort_ascending = False  # 优先选择涨幅最大的股票
-alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
-alpha.ubound = 0.005  # 筛选出涨幅大于0.5%的股票
-alpha.sel_count = 7  # 每次选出7支股票
+# set strategy parameters
+alpha.strategy_run_freq = 'd'  # strategy runs daily
+alpha.data_freq = 'd' # strategy uses daily data
+alpha.window_length = 20  # length of data window
+alpha.sort_ascending = False  # select stocks with largest price change
+alpha.condition = 'greater'  # filter stocks with price change greater than:
+alpha.ubound = 0.005  # 0.5%.
+alpha.sel_count = 7  # select at most 7 stocks each time 
 
 # 创建一个交易员对象，运行alpha策略
 op = qt.Operator(alpha, signal_type='PT', op_type='step')
