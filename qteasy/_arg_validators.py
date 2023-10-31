@@ -158,6 +158,28 @@ def _valid_qt_kwargs():
                           "{'host': 'localhost', 'port': 8888} : 交易代理商的主机名和端口号\n"
                           "具体的参数设置请参考交易代理商的文档\n"},
 
+        'live_price_acquire_channel':
+            {'Default':   'tushare',
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['tushare', 'akshare'],
+             'level':     2,
+             'text':      '实盘交易时获取实时价格的方式：\n'
+                          'tushare  - 通过tushare获取实时价格\n'
+                          'akshare  - Not Implemented: 从akshare获取实时价格\n'},
+
+        'live_price_acquire_freq':
+            {'Default':   '5MIN',
+             'Validator': lambda value: isinstance(value, str) and value.upper() in
+                                        ['H', '30MIN', '15MIN', '5MIN', '1MIN', 'TICK'],
+             'level':     2,
+             'text':      '实盘交易时获取实时价格的频率：\n'
+                          'H      - 1小时\n'
+                          '30MIN  - 30分钟\n'
+                          '15MIN  - 15分钟\n'
+                          '5MIN   - 5分钟\n'
+                          '1MIN   - 1分钟\n'
+                          'TICK   - Tick数据\n'},
+
+
         'trade_batch_size':
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))

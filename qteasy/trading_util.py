@@ -93,20 +93,37 @@ def create_daily_task_agenda(operator, config=None):
     task_agenda.append((market_close_time, 'close_market'))
     task_agenda.append((post_close_time, 'post_close'))
 
+    # 根据config中的live_price_acquire参数，生成获取实时价格的任务
+    # 数据获取频率是分钟级别的，根据交易市场的开市时间和收市时间，生成获取实时价格的任务时间
+    from qteasy.utilfuncs import next_market_trade_day
+    a_trade_day = next_market_trade_day(today, exchange=exchange_market)
+    if a_trade_day is not None:
+        the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+    else:
+        raise ValueError(f'no next trade day of today({today})')
+    run_time_index = _trade_time_index(
+            start=a_trade_day,
+            end=the_next_day,
+            freq=config['live_price_acquire_freq'],
+            start_am=market_open_time_am,
+            end_am=market_close_time_am,
+            include_start_am=False,
+            include_end_am=True,
+            start_pm=market_open_time_pm,
+            end_pm=market_close_time_pm,
+            include_start_pm=False,
+            include_end_pm=True,
+    ).strftime('%H:%M:%S').tolist()
+    # 将策略的运行时间添加到任务日程，生成任务日程
+    for t in run_time_index:
+        task_agenda.append((t, 'acquire_live_price'))
+
     # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
     for stg_id, stg in operator.get_strategy_id_pairs():
         timing = stg.strategy_run_timing
         freq = stg.strategy_run_freq
         if freq.lower() in ['1min', '5min', '15min', '30min', 'h']:
             # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
-            from qteasy.utilfuncs import next_market_trade_day
-            a_trade_day = next_market_trade_day(today, exchange=exchange_market)
-            # print(f'[DEBUG]: in trading_util: function create_daily_task_agenda(): '
-            #       f'next trade day of today({today}) is {a_trade_day}')
-            if a_trade_day is not None:
-                the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
-            else:
-                raise ValueError(f'no next trade day of today({today})')
             run_time_index = _trade_time_index(
                     start=a_trade_day,
                     end=the_next_day,

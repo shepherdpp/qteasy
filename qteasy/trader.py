@@ -36,6 +36,14 @@ from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
+UNIT_TO_TABLE = {
+            'h':     'stock_hourly',
+            '30min': 'stock_30min',
+            '15min': 'stock_15min',
+            '5min':  'stock_5min',
+            '1min':  'stock_1min',
+            'min':   'stock_1min',
+        }
 
 
 def parse_shell_argument(arg: str = None, no_arg=False) -> list:
@@ -992,6 +1000,10 @@ class Trader(object):
         self._status = 'stopped'
         self._prev_status = None
 
+        self.live_price_channel = self._config['live_price_acquire_channel']
+        self.live_price_freq = self._config['live_price_acquire_freq']
+        self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
+
         self.account = get_account(self.account_id, data_source=self._datasource)
 
         self.debug = debug
@@ -1184,6 +1196,7 @@ class Trader(object):
                 if self.status != 'paused':
                     self._add_task_from_agenda(current_time)
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
+                # TODO: move these operations to a task "change_date"
                 if current_date != pre_date:
                     self._check_trade_day()
                     self._initialize_agenda(current_time)
@@ -1507,14 +1520,6 @@ class Trader(object):
             freq = strategy.strategy_run_freq.upper()
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
-        unit_to_table = {
-            'h':     'stock_hourly',
-            '30min': 'stock_30min',
-            '15min': 'stock_15min',
-            '5min':  'stock_5min',
-            '1min':  'stock_1min',
-            'min':   'stock_1min',
-        }
         # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
         if self.debug:
             self.post_message(f'getting live data...')
@@ -1522,7 +1527,7 @@ class Trader(object):
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据
-            table_to_update = unit_to_table[unit.lower()]
+            table_to_update = UNIT_TO_TABLE[unit.lower()]
             real_time_data = self._datasource.fetch_realtime_price_data(
                     table=table_to_update,
                     channel='tushare',
@@ -1729,6 +1734,33 @@ class Trader(object):
         )
         self.post_message('processed trade delivery')
 
+    def _acquire_live_price(self):
+        """ 获取实时价格, 并保存实时价格到self.live_price中 """
+        if self.debug:
+            self.post_message('running task acquire_live_price')
+
+        duration, unit, _ = parse_freq_string(self.live_price_freq, std_freq_only=False)
+        table_to_update = UNIT_TO_TABLE[unit.lower()]
+        real_time_data = self._datasource.fetch_realtime_price_data(
+                    table=table_to_update,
+                    channel='tushare',
+                    symbols=self.asset_pool,
+            )
+
+        # 将real_time_data append 到 self.live_price后
+        self.live_price.append(real_time_data)
+
+    def _change_date(self):
+        """ 改变日期，在日期改变（午夜）时执行的操作，包括：
+
+        - 处理前一日交易的交割
+        - 处理前一日获取的实时数据、并准备下一日的实时数据
+        - 检查下一日是否是交易日，并更新相关的运行参数
+        - 重新生成agenda
+        - 生成消息发送到消息队列
+        """
+        raise NotImplementedError
+
     def _market_open(self):
         """ 开市时操作：
 
@@ -1897,7 +1929,7 @@ class Trader(object):
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：
         1. 每日固定事件如开盘、收盘、交割等
         2. 每日需要定时执行的交易策略
-        3. 需要定期下载的历史数据（这部分信息需要在QT_CONFIG中定义）
+        3. 定时下载的实时数据
 
         Parameters
         ----------
@@ -2116,25 +2148,27 @@ class Trader(object):
         return
 
     AVAILABLE_TASKS = {
-        'pre_open':       _pre_open,
-        'open_market':    _market_open,
-        'close_market':   _market_close,
-        'post_close':     _post_close,
-        'run_strategy':   _run_strategy,
-        'process_result': _process_result,
-        'start':          _start,
-        'stop':           _stop,
-        'sleep':          _sleep,
-        'wakeup':         _wakeup,
-        'pause':          _pause,
-        'resume':         _resume,
-        'refill':         _refill,
+        'pre_open':             _pre_open,
+        'open_market':          _market_open,
+        'close_market':         _market_close,
+        'post_close':           _post_close,
+        'run_strategy':         _run_strategy,
+        'process_result':       _process_result,
+        'acquire_live_price':   _acquire_live_price,
+        'change_date':          _change_date,
+        'start':                _start,
+        'stop':                 _stop,
+        'sleep':                _sleep,
+        'wakeup':               _wakeup,
+        'pause':                _pause,
+        'resume':               _resume,
+        'refill':               _refill,
     }
 
     TASK_WHITELIST = {
         'stopped':  ['start'],
         'running':  ['stop', 'sleep', 'pause', 'run_strategy', 'process_result', 'pre_open',
-                     'open_market', 'close_market'],
+                     'open_market', 'close_market', 'acquire_live_price'],
         'sleeping': ['wakeup', 'stop', 'pause', 'pre_open',
                      'process_result',  # 如果交易结果已经产生，哪怕处理时Trader已经处于sleeping状态，也应该处理完所有结果
                      'open_market', 'post_close', 'refill'],
