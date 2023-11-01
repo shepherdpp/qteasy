@@ -1362,9 +1362,24 @@ DATA_TABLE_MAP = {
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
 # Table_masters，用于存储表的基本信息
-TABLE_MASTER_COLUMNS = ['schema', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                        'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
-                        'start_end_chunk_size']
+TABLE_MASTER_COLUMNS = [
+    'schema',  # 数据表schema
+    'desc',   # 数据表描述
+    'table_usage',   # 数据表用途
+    'asset_type',   # 资产类型
+    'freq',   # 数据频率
+    'tushare',   # 从tushare获取数据时使用的api名
+    'fill_arg_name',  # 从tushare获取数据时使用的api参数名
+    'fill_arg_type',   # 从tushare获取数据时使用的api参数类型
+    'arg_rng',   # 从tushare获取数据时使用的api参数取值范围
+    'arg_allowed_code_suffix',   # 从tushare获取数据时使用的api参数允许的股票代码后缀
+    'arg_allow_start_end',  # 从tushare获取数据时使用的api参数允许的start_date和end_date
+    'start_end_chunk_size',   # 从tushare获取数据时使用的api参数start_date和end_date的最大时间跨度
+    'eastmoney',   # 从eastmoney获取数据时使用的api名
+    'fill_arg_name',   # 从eastmoney获取数据时使用的api参数名
+    'fill_arg_type',   # 从eastmoney获取数据时使用的api参数类型
+    'arg_rng',  # 从eastmoney获取数据时使用的api参数取值范围
+]
 TABLE_MASTERS = {
 
     'sys_op_live_accounts':
@@ -3535,9 +3550,10 @@ class DataSource:
         table: str,
             数据表名，必须是database中定义的数据表
         channel: str,
-            数据获取渠道，金融数据API，支持以下选项：
-            - 'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分
-            - 'other'   : NotImplemented 其他金融数据API，尚未开发
+            数据获取渠道，金融数据API，支持以下选项:
+            - 'eastmoney': 通过东方财富网的API获取数据
+            - 'tushare':   从Tushare API获取金融数据，请自行申请相应权限和积分
+            - 'other':     NotImplemented 其他金融数据API，尚未开发
         symbols: str or list of str
             用于下载金融数据的函数参数，在这里只支持ts_code一个参数，表示股票代码
 
@@ -3548,7 +3564,6 @@ class DataSource:
             columns: ts_code, trade_time, open, high, low, close, vol, amount
         """
         # 目前仅支持从tushare获取数据，未来可能增加新的API
-        from .tsfuncs import acquire_data
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in ['stock_1min', 'stock_5min', 'stock_15min', 'stock_30min', 'stock_hourly']:
@@ -3569,12 +3584,13 @@ class DataSource:
         realtime_data_freq = table_freq_map[table_freq]
         # 从指定的channel获取数据
         if channel == 'tushare':
+            from .tsfuncs import acquire_data as acquire_data_from_ts
             # 通过tushare的API下载数据
             api_name = 'realtime_min'
             if symbols is None:
                 raise ValueError(f'ts_code must be given while channel == "tushare"')
             try:
-                dnld_data = acquire_data(api_name, ts_code=symbols, freq=realtime_data_freq)
+                dnld_data = acquire_data_from_ts(api_name, ts_code=symbols, freq=realtime_data_freq)
             except Exception as e:
                 raise Exception(f'data {table} can not be acquired from tushare\n{e}')
 
@@ -3585,10 +3601,41 @@ class DataSource:
                 'time':   'trade_time',
                 'volume': 'vol',
             })
+
+            return dnld_data
+        elif channel == 'eastmoney':
+            from .eastmoney import acquire_data as acquire_data_from_em
+            result_data = pd.DataFrame(
+                    columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
+            )
+            # 通过东方财富网的API下载数据
+            table_freq_map = {
+                '1min':  1,
+                '5min':  5,
+                '15min': 15,
+                '30min': 30,
+                'h':     60,
+            }
+            current_time = pd.to_datetime('today')
+            # begin time is freq minutes before current time
+            begin_time = current_time.strftime('%Y%m%d')
+            for symbol in symbols:
+                code = symbol.split('.')[0]
+                dnld_data = acquire_data_from_em(
+                        code,
+                        beg=begin_time,
+                        klt=table_freq_map[table_freq],
+                        fqt=0,  # 获取不复权数据
+                )
+                # 仅保留dnld_data的最后一行，并添加ts_code列，值为symbol
+                dnld_data = dnld_data.iloc[-1:, :]
+                dnld_data['ts_code'] = symbol
+                # 将dnld_data合并到result_data的最后一行
+                result_data = pd.concat([result_data, dnld_data], axis=0, ignore_index=True)
+
+            return result_data
         else:
             raise NotImplementedError
-
-        return dnld_data
 
     def update_table_data(self, table, df, merge_type='update'):
         """ 检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤：

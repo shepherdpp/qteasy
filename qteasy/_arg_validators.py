@@ -159,11 +159,12 @@ def _valid_qt_kwargs():
                           "具体的参数设置请参考交易代理商的文档\n"},
 
         'live_price_acquire_channel':
-            {'Default':   'tushare',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['tushare', 'akshare'],
+            {'Default':   'eastmoney',
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['eastmoney', 'tushare', 'akshare'],
              'level':     2,
              'text':      '实盘交易时获取实时价格的方式：\n'
-                          'tushare  - 通过tushare获取实时价格\n'
+                          'eastmoney - 通过东方财富网获取实时价格\n'
+                          'tushare  - 通过tushare获取实时价格(需要自行开通权限)\n'
                           'akshare  - Not Implemented: 从akshare获取实时价格\n'},
 
         'live_price_acquire_freq':
