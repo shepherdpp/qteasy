@@ -1375,10 +1375,10 @@ TABLE_MASTER_COLUMNS = [
     'arg_allowed_code_suffix',   # 从tushare获取数据时使用的api参数允许的股票代码后缀
     'arg_allow_start_end',  # 从tushare获取数据时使用的api参数允许的start_date和end_date
     'start_end_chunk_size',   # 从tushare获取数据时使用的api参数start_date和end_date的最大时间跨度
-    'eastmoney',   # 从eastmoney获取数据时使用的api名
-    'fill_arg_name',   # 从eastmoney获取数据时使用的api参数名
-    'fill_arg_type',   # 从eastmoney获取数据时使用的api参数类型
-    'arg_rng',  # 从eastmoney获取数据时使用的api参数取值范围
+    # 'eastmoney',   # 从eastmoney获取数据时使用的api名
+    # 'fill_arg_name',   # 从eastmoney获取数据时使用的api参数名
+    # 'fill_arg_type',   # 从eastmoney获取数据时使用的api参数类型
+    # 'arg_rng',  # 从eastmoney获取数据时使用的api参数取值范围
 ]
 TABLE_MASTERS = {
 
@@ -3563,7 +3563,7 @@ class DataSource:
             下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
             columns: ts_code, trade_time, open, high, low, close, vol, amount
         """
-        # 目前仅支持从tushare获取数据，未来可能增加新的API
+        # 目前支持从tushare和eastmoney获取数据，未来可能增加新的API
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in ['stock_1min', 'stock_5min', 'stock_15min', 'stock_30min', 'stock_hourly']:
@@ -3603,12 +3603,12 @@ class DataSource:
             })
 
             return dnld_data
+        # 通过东方财富网的API下载数据
         elif channel == 'eastmoney':
-            from .eastmoney import acquire_data as acquire_data_from_em
+            from .emfuncs import acquire_data as acquire_data_from_em
             result_data = pd.DataFrame(
                     columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
             )
-            # 通过东方财富网的API下载数据
             table_freq_map = {
                 '1min':  1,
                 '5min':  5,

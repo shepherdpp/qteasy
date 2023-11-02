@@ -111,6 +111,7 @@ class TraderShell(Cmd):
         super().__init__()
         self._trader = trader
         self._status = None
+        self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
 
     @property
     def trader(self):
@@ -243,6 +244,15 @@ class TraderShell(Cmd):
             else:
                 sys.stdout.write(f'info command does not accept arguments other than "detail"\n')
         self.trader.info()
+
+    def do_pool(self, arg):
+        """ print information of the asset pool
+
+        Print detailed information of all stocks in the asset pool, including
+        stock symbol, name, company name, industry, listed date, etc.
+
+        """
+        return
 
     def do_positions(self, arg):
         """ Get account positions
@@ -752,48 +762,62 @@ class TraderShell(Cmd):
         print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
 
     def do_run(self, arg: str):
-        """ To run a strategy in current setup, only available in DEBUG mode.
+        """ To force run a strategy or a task in current setup, only available in DEBUG mode.
         strategy id can be found in strategies command.
 
         Usage:
         ------
         run stg1 [stg2] [stg3] ...
+        run task task_name [arg1] [arg2] ...
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
             return
-        strategies = str_to_list(arg, sep_char=' ')
-        if not isinstance(strategies, list):
+        argument = str_to_list(arg, sep_char=' ')
+        if not isinstance(argument, list):
             print('Invalid argument, use "strategies" to view all strategy ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        if not strategies:
+        if not argument:
             print('A valid strategy id must be given, use "strategies" to view all ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        all_strategy_ids = self.trader.operator.strategy_ids
-        if not all([strategy in all_strategy_ids for strategy in strategies]):
-            invalid_stg = [stg for stg in strategies if stg not in all_strategy_ids]
-            print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
-            return
+        if not argument[0] in ['task', 't']:  # run strategies
+            all_strategy_ids = self.trader.operator.strategy_ids
+            if not all([strategy in all_strategy_ids for strategy in argument]):
+                invalid_stg = [stg for stg in argument if stg not in all_strategy_ids]
+                print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
+                return
 
-        current_trader_status = self.trader.status
-        current_broker_status = self.trader.broker.status
+            current_trader_status = self.trader.status
+            current_broker_status = self.trader.broker.status
 
-        self.trader.status = 'running'
-        self.trader.broker.status = 'running'
+            self.trader.status = 'running'
+            self.trader.broker.status = 'running'
 
-        try:
-            self.trader.run_task('run_strategy', strategies)
-        except Exception as e:
-            import traceback
-            print(f'Error in running strategy: {e}')
-            print(traceback.format_exc())
+            try:
+                self.trader.run_task('run_strategy', argument)
+            except Exception as e:
+                import traceback
+                print(f'Error in running strategy: {e}')
+                print(traceback.format_exc())
 
-        import time
-        time.sleep(20)
-        self.trader.status = current_trader_status
-        self.trader.broker.status = current_broker_status
+            import time
+            time.sleep(20)
+            self.trader.status = current_trader_status
+            self.trader.broker.status = current_broker_status
+        else:  # run tasks
+            if len(argument) == 1:
+                print('Please input a valid task name.')
+                return
+            task_name = argument[1]
+            args = argument[2:]
+            try:
+                self.trader.run_task(task_name, args)
+            except Exception as e:
+                import traceback
+                print(f'Error in running task: {e}')
+                print(traceback.format_exc())
 
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
@@ -1088,16 +1112,18 @@ class Trader(object):
     def account_position_info(self):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
+        symbols = positions.loc[positions.qty > 0].index.tolist()
         try:
-            hist_op, hist_ref = check_and_prepare_live_trade_data(
-                    operator=self._operator,
-                    config=self._config,
-                    datasource=self._datasource,
+            # 获取每个symbol的最新价格
+            from .emfuncs import stock_live_kline_price
+            current_prices = stock_live_kline_price(
+                    symbols=symbols,
             )
-            current_prices = hist_op['close', :, -1].squeeze()
+            current_prices.set_index('symbol', inplace=True)
+            current_prices = current_prices['close'].astype('float')
+            current_prices.reindex(positions.index)
         except Exception as e:
             current_prices = [np.nan] * len(positions)
-
         positions['name'] = positions['name'].fillna('')
         positions['current_price'] = current_prices
         positions['total_cost'] = positions['qty'] * positions['cost']
@@ -1259,6 +1285,14 @@ class Trader(object):
               f'Total Value:                    ¥ {total_value:,.2f}\n'
               f'Total Stock Value:              ¥ {total_market_value:,.2f}\n'
               f'Total Profit:                   ¥ {total_profit:,.2f}\n')
+        asset_in_pool= len(self.asset_pool)
+        asset_pool_string = adjust_string_length(
+                s=str(self.asset_pool),
+                n=59,
+        )
+        print(f'Current Investment Pool:        {asset_in_pool} stocks: {asset_pool_string}\n'
+              f'                                Use "pool" command to view asset pool details.\n'
+              f'Current Investment Type:        {self.asset_type}\n')
         if detail:
             position_level = total_market_value / total_value
             total_profit_ratio = total_profit / total_value
@@ -1530,7 +1564,7 @@ class Trader(object):
             table_to_update = UNIT_TO_TABLE[unit.lower()]
             real_time_data = self._datasource.fetch_realtime_price_data(
                     table=table_to_update,
-                    channel='tushare',
+                    channel=config['live_price_acquire_channel'],
                     symbols=self.asset_pool,
             )
 
@@ -1546,7 +1580,7 @@ class Trader(object):
                     merge_type='update',
             )
 
-        # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的最新数据
+        # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的历史数据
         else:
             pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
@@ -1571,7 +1605,7 @@ class Trader(object):
                 shares=shares,
                 data_source=self._datasource,
         )
-        # 当前价格是hist_op的最后一行  # TODO: 需要根据strategy_timing获取价格的类型（如open价格或close价格）
+        # 当前价格是hist_op的最后一行, 如果需要用latest_data_cycle，最新的实时数据已经包含在hist_op中了
         timing_type = operator[strategy_ids[0]].strategy_timing
         current_prices = hist_op[timing_type, :, -1].squeeze()
         if current_prices.ndim == 0:
@@ -1735,20 +1769,17 @@ class Trader(object):
         self.post_message('processed trade delivery')
 
     def _acquire_live_price(self):
-        """ 获取实时价格, 并保存实时价格到self.live_price中 """
+        """ 获取当日实时价格, 并保存实时价格到self.live_price中 """
         if self.debug:
             self.post_message('running task acquire_live_price')
 
-        duration, unit, _ = parse_freq_string(self.live_price_freq, std_freq_only=False)
-        table_to_update = UNIT_TO_TABLE[unit.lower()]
-        real_time_data = self._datasource.fetch_realtime_price_data(
-                    table=table_to_update,
-                    channel='tushare',
+        from .emfuncs import stock_live_kline_price
+        real_time_data = stock_live_kline_price(
                     symbols=self.asset_pool,
             )
 
         # 将real_time_data append 到 self.live_price后
-        self.live_price.append(real_time_data)
+        self.live_price = real_time_data
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）时执行的操作，包括：

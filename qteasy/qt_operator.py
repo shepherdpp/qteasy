@@ -1899,11 +1899,14 @@ class Operator:
                     window=window_length,
                     axis=1
             )
-            # 分配数据滑窗：在live模式下，取最后一组滑窗分配给策略，因为live模式下，策略只会运行一次
+            # 分配数据滑窗：在live模式下，取最后一组或倒数第二组滑窗分配给策略，具体取决于策略的属性
+            # use_latest_data_cycle因为live模式下，策略只会运行一次
             # 在backtest模式下，将从倒数第二组滑窗或最后一组滑窗回溯window_length组滑窗并分配给策略
             # 是否包含最后一组滑窗，取决于strategy的属性use_latest_data_cycle的值
-            if live_mode:  # 分配最后一组滑窗
+            if live_mode and stg.use_latest_data_cycle:  # 分配最后一组滑窗
                 self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-1:]
+            elif live_mode:  # 分配倒数第二组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-2:-1]
             elif stg.use_latest_data_cycle:  # 从最后一组滑窗开始回溯window_length组滑窗
                 self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset + 1:]
             else:  # 从倒数第二组滑窗开始回溯window_length组滑窗
@@ -1919,8 +1922,10 @@ class Operator:
                         axis=0
                 )
                 # 参考数据滑窗的分配方式与历史数据滑窗的分配方式相同
-                if live_mode:
+                if live_mode and stg.use_latest_data_cycle:
                     self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-1:]
+                elif live_mode:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-2:-1]
                 elif stg.use_latest_data_cycle:
                     self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset + 1:]
                 else:
