@@ -2644,8 +2644,19 @@ def reconnect_ds(data_source=None):
     data_source.reconnect()
 
 
-def check_and_prepare_live_trade_data(operator, config, datasource=None):
+def check_and_prepare_live_trade_data(operator, config, datasource=None, live_prices=None):
     """ 在run_mode == 0的情况下准备相应的历史数据
+
+    Parameters
+    ----------
+    operator: Operator
+        需要设置数据的Operator对象
+    config: ConfigDict
+        用于设置Operator对象的环境参数变量
+    datasource: DataSource
+        用于下载数据的DataSource对象
+    live_prices: pd.DataFrame, optional
+        用于实盘交易的最新价格数据，如果不提供，则从datasource中下载获取
 
     Returns
     -------
@@ -2655,19 +2666,19 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
         用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
 
-    run_mode = config.mode
+    run_mode = config['mode']
     if run_mode != 0:
         raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
     hist_op = get_history_panel(
             htypes=operator.all_price_and_data_types,
-            shares=config.asset_pool,
+            shares=config['asset_pool'],
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
-            asset_type=config.asset_type,
+            asset_type=config['asset_type'],
             adj='none',
             data_source=datasource,
-    )
+    )  # TODO: this function get_history_panel() is extremely slow, need to be optimized
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
@@ -2675,7 +2686,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             shares=None,
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
-            asset_type=config.asset_type,
+            asset_type=config['asset_type'],
             adj='none',
             data_source=datasource,
     )
@@ -2702,15 +2713,17 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
         if not hist_ref.is_empty:
             extended_ref_values[:, 0, :] = hist_ref.values[:, -1, :]
 
-        # 使用eastmoney的stock_live_kline_price获取当前周期的最新数据
-        from qteasy.emfuncs import stock_live_kline_price
-        live_kline_prices = stock_live_kline_price(
-                symbols=hist_op.shares,
-                freq=operator.op_data_freq,
-        )
+        # 如果没有给出live_prices，则使用eastmoney的stock_live_kline_price获取当前周期的最新数据
+        if live_prices is None:
+            from qteasy.emfuncs import stock_live_kline_price
+            live_kline_prices = stock_live_kline_price(
+                    symbols=hist_op.shares,
+                    freq=operator.op_data_freq,
+            )
+            live_kline_prices.set_index('symbol', inplace=True)
+        else:
+            live_kline_prices = live_prices
         # 将live_kline_prices中的数据填充到extended_op_values和extended_ref_values中
-        import pdb; pdb.set_trace()
-        live_kline_prices.set_index('symbol', inplace=True)
         live_kline_prices = live_kline_prices.reindex(index=hist_op.shares)
         for i, htype in enumerate(hist_op.htypes):
             if htype in live_kline_prices.columns:

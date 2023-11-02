@@ -3555,7 +3555,7 @@ class DataSource:
             - 'tushare':   从Tushare API获取金融数据，请自行申请相应权限和积分
             - 'other':     NotImplemented 其他金融数据API，尚未开发
         symbols: str or list of str
-            用于下载金融数据的函数参数，在这里只支持ts_code一个参数，表示股票代码
+            用于下载金融数据的函数参数，需要输入完整的ts_code，表示股票代码
 
         Returns
         -------
@@ -3569,9 +3569,6 @@ class DataSource:
         if table not in ['stock_1min', 'stock_5min', 'stock_15min', 'stock_30min', 'stock_hourly']:
             raise KeyError(f'realtime minute data is not available for table {table}')
 
-        if isinstance(symbols, list):
-            symbols = ','.join(symbols)
-
         table_freq_map = {
             '1min':  '1MIN',
             '5min':  '5MIN',
@@ -3584,6 +3581,9 @@ class DataSource:
         realtime_data_freq = table_freq_map[table_freq]
         # 从指定的channel获取数据
         if channel == 'tushare':
+            # tushare 要求symbols以逗号分隔字符串形式给出
+            if isinstance(symbols, list):
+                symbols = ','.join(symbols)
             from .tsfuncs import acquire_data as acquire_data_from_ts
             # 通过tushare的API下载数据
             api_name = 'realtime_min'
@@ -3606,6 +3606,9 @@ class DataSource:
         # 通过东方财富网的API下载数据
         elif channel == 'eastmoney':
             from .emfuncs import acquire_data as acquire_data_from_em
+            if isinstance(symbols, str):
+                # 此时symbols应该以字符串列表的形式给出
+                symbols = str_to_list(symbols)
             result_data = pd.DataFrame(
                     columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
             )
@@ -3622,7 +3625,8 @@ class DataSource:
             for symbol in symbols:
                 code = symbol.split('.')[0]
                 dnld_data = acquire_data_from_em(
-                        code,
+                        api_name='get_k_history',
+                        code=code,
                         beg=begin_time,
                         klt=table_freq_map[table_freq],
                         fqt=0,  # 获取不复权数据

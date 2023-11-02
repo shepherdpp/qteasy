@@ -121,6 +121,26 @@ class TraderShell(Cmd):
     def status(self):
         return self._status
 
+    @property
+    def watched_prices(self):
+        """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
+        """
+        if self._watch_list:
+            from .emfuncs import stock_live_kline_price
+            symbols = self._watch_list
+            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True)
+            live_prices.close = live_prices.close.astype(float)
+            live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
+            live_prices.set_index('symbol', inplace=True)
+            watched_prices = ''
+            for symbol in symbols:
+                watched_prices += f' == {live_prices.loc[symbol, "name"]}/' \
+                                  f'¥{live_prices.loc[symbol, "close"]:.2f}/' \
+                                  f'{live_prices.loc[symbol, "change"]:.2%} '
+            return watched_prices
+        else:
+            return ''
+
     # ----- basic commands -----
     # TODO: add command "watch", to display market data in realtime
     # TODO: add escape warning when realtime data acquiring is not available
@@ -253,6 +273,33 @@ class TraderShell(Cmd):
 
         """
         return
+
+    def do_watch(self, arg):
+        """ Add or remove stock symbols to watch list
+
+        Usage:
+        ------
+        watch [symbol1] [symbol2] [symbol3]
+        """
+        args = parse_shell_argument(arg)
+        if not args:
+            sys.stdout.write(f'please input stock symbols to watch, like 000651.SZ\n')
+            return False
+        if args:
+            arg_count = len(args)
+            if arg_count > 3:
+                args = args[:3]
+        from .utilfuncs import TS_CODE_IDENTIFIER_CN_STOCK
+        import re
+        for arg in args:
+            # 检查arg是否股票代码，如果是，添加到watch list，除非该代码已在watch list中
+            if re.match(TS_CODE_IDENTIFIER_CN_STOCK, arg.upper()):
+                if arg not in self._watch_list:
+                    self._watch_list.append(arg.upper())
+                # 检查watch_list中代码个数是否超过d个，如果超过，删除最早添加的代码
+                if len(self._watch_list) > 4:
+                    self._watch_list.pop(0)
+        print(f'current watch list: {self._watch_list}')
 
     def do_positions(self, arg):
         """ Get account positions
@@ -811,9 +858,8 @@ class TraderShell(Cmd):
                 print('Please input a valid task name.')
                 return
             task_name = argument[1]
-            args = argument[2:]
             try:
-                self.trader.run_task(task_name, args)
+                self.trader.run_task(task_name)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')
@@ -840,6 +886,8 @@ class TraderShell(Cmd):
         Thread(target=self.trader.broker.run).start()
 
         prev_message = ''
+        live_price_refresh_timer = 0
+        watched_prices = self.watched_prices
         while True:
             # enter shell loop
             try:
@@ -861,16 +909,22 @@ class TraderShell(Cmd):
                                     next_normal_message = next_message
                                     break
                                 message = next_message
-                            print(message[:-2], end='\r')
+
+                            message = message[:-2] + ' ' + watched_prices
+                            print(message, end='\r')
                             if next_normal_message:
-                                print(next_normal_message)
+                                print(f'{next_normal_message: <60}')
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            print(message)
+                            print(f'{message: <60}')
                         prev_message = message
-
+                    # check if live price refresh timer is up, if yes, refresh live prices
+                    live_price_refresh_timer += 0.05
+                    if live_price_refresh_timer > 5:
+                        watched_prices = self.watched_prices
+                        live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
@@ -1584,10 +1638,13 @@ class Trader(object):
         else:
             pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
+        if self.debug:
+            self.post_message(f'preparing trade data...')
         hist_op, hist_ref = check_and_prepare_live_trade_data(
                 operator=operator,
                 config=config,
                 datasource=self._datasource,
+                live_prices=self.live_price,
         )
         if self.debug:
             self.post_message(f'read real time data and set operator data allocation')
@@ -1777,8 +1834,8 @@ class Trader(object):
         real_time_data = stock_live_kline_price(
                     symbols=self.asset_pool,
             )
-
-        # 将real_time_data append 到 self.live_price后
+        real_time_data.set_index('symbol', inplace=True)
+        # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data
 
     def _change_date(self):
@@ -1952,7 +2009,7 @@ class Trader(object):
                     count_down_to_next_task = count_down_sec
                     next_task = task
         if not task_added:
-            self.post_message(f'will execute next task:({next_task}) in '
+            self.post_message(f'Next task:({next_task}) in '
                               f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
                               new_line=False)
 

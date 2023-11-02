@@ -42,7 +42,7 @@ def gen_eastmoney_code(rawcode: str) -> str:
     return f'1.{rawcode}'
 
 
-def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1) -> pd.DataFrame:
+def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
     """
     功能获取k线数据
     Parameters
@@ -58,13 +58,15 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
     fqt: 复权方式
         不复权 : 0
         前复权 : 1
-            后复权 : 2
+        后复权 : 2
+    verbose: 是否返回更多信息（名称，昨日收盘价）
+
     Return
     ------
     DateFrame : 包含股票k线数据
     """
     EastmoneyKlines = {
-        'f51': 'datetime',
+        'f51': 'trade_time',
         'f52': 'open',
         'f53': 'close',
         'f54': 'high',
@@ -105,6 +107,9 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
         kline = _kline.split(',')
         rows.append(kline)
     df = pd.DataFrame(rows, columns=columns)
+    if verbose:
+        df['name'] = data['name']
+        df['pre_close'] = data['prePrice']
     return df
 
 
@@ -132,8 +137,8 @@ def stock_daily(symbols, start, end):
     return pd.concat(data)
 
 
-def stock_1min(symbols, start, end):
-    """ 获取股票1分钟线数据
+def stock_mins(symbols, start, end, freq='1min'):
+    """ 获取股票分钟线数据
     Parameters
     ----------
     symbols : list
@@ -142,12 +147,21 @@ def stock_1min(symbols, start, end):
         开始日期
     end : str
         结束日期
+    freq : str, optional, default '1min'
+        频率，支持'1min', '5min', '15min', '30min', '60min'
     Returns
     -------
     DataFrame
         包含股票1分钟线数据
     """
     data = []
+    freq_map = {
+        '1min': 1,
+        '5min': 5,
+        '15min': 15,
+        '30min': 30,
+        '60min': 60,
+    }
     for symbol in symbols:
         code = symbol.split('.')[0]
         df = get_k_history(code, start, end, klt=1)
@@ -156,11 +170,11 @@ def stock_1min(symbols, start, end):
     return pd.concat(data)
 
 
-def stock_live_kline_price(symbols, freq='D'):
+def stock_live_kline_price(symbols, freq='D', verbose=False):
     """ 获取股票当前最新日线数据，数据实时更新
     Parameters
     ----------
-    symbols : str
+    symbols : str or list of str
         股票代码
     freq : str
         数据更新频率，目前仅支持日线数据
@@ -190,7 +204,7 @@ def stock_live_kline_price(symbols, freq='D'):
     # 使用ProcessPoolExecutor, as_completed加速数据获取
     with ProcessPoolExecutor(max_workers=10) as executor:
         futures = {
-            executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt): symbol
+            executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt, verbose=verbose): symbol
             for symbol
             in symbols
         }
@@ -203,17 +217,14 @@ def stock_live_kline_price(symbols, freq='D'):
             else:
                 df['symbol'] = symbol
                 data.append(df.iloc[-1:, :])
-    # for symbol in symbols:
-    #     code = symbol.split('.')[0]
-    #     try:
-    #         df = get_k_history(code, beg=today, klt=klt)
-    #     except Exception as e:
-    #         df = pd.DataFrame({'datetime': [today]})
-    #     if df.empty:
-    #         df = pd.DataFrame({'datetime': [today]})
-    #     df['symbol'] = symbol
-    #     data.append(df.iloc[-1:, :])
     data = pd.concat(data)
-    data = data.reindex(columns=['datetime', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
-    data.set_index('datetime', inplace=True)
+    if verbose:
+        data = data.reindex(
+                columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
+        )
+    else:
+        data = data.reindex(
+                columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
+        )
+    data.set_index('trade_time', inplace=True)
     return data

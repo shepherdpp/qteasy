@@ -15,7 +15,7 @@ import pandas as pd
 import time
 
 from qteasy.emfuncs import acquire_data, gen_eastmoney_code, get_k_history
-from qteasy.emfuncs import stock_daily, stock_1min, stock_live_kline_price
+from qteasy.emfuncs import stock_daily, stock_mins, stock_live_kline_price
 
 
 class TestEastmoney(unittest.TestCase):
@@ -27,14 +27,27 @@ class TestEastmoney(unittest.TestCase):
     def test_get_k_history(self):
         """ Test get_k_history function """
         code = '000651'
-        for i in range(30):
-            res = get_k_history(code=code, beg='20231102', klt=101)
-            print(res.values)
-            time.sleep(1)
+        res = get_k_history(code=code, beg='20231102', klt=5)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        code = '000651'
+        res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
+        print(res)
         self.assertIsInstance(res, pd.DataFrame)
 
     def test_stock_live_daily_price(self):
         """ Test stock_live_kline_price function """
+
+        code = ['000016.SZ', '000025.SZ', '000333.SZ']
+        res = acquire_data('stock_live_kline_price', symbols=code, freq='D')
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+
+        code = ['000016.SZ', '000025.SZ', '000333.SZ']
+        res = acquire_data('stock_live_kline_price', symbols=code, freq='D', verbose=True)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+
         code = ['000016.SZ', '000025.SZ', '000333.SZ', '000404.SZ', '000428.SZ', '000521.SZ', '000541.SZ', '000550.SZ',
                 '000572.SZ', '000625.SZ', '000651.SZ', '000721.SZ', '000753.SZ', '000757.SZ', '000800.SZ', '000801.SZ',
                 '000810.SZ', '000868.SZ', '000921.SZ', '000951.SZ', '000957.SZ', '000996.SZ', '001259.SZ', '002005.SZ',
