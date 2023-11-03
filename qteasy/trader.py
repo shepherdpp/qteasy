@@ -112,6 +112,7 @@ class TraderShell(Cmd):
         self._trader = trader
         self._status = None
         self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
+        self._command_history = []  # list of commands executed in shell
 
     @property
     def trader(self):
@@ -134,9 +135,12 @@ class TraderShell(Cmd):
             live_prices.set_index('symbol', inplace=True)
             watched_prices = ''
             for symbol in symbols:
-                watched_prices += f' == {live_prices.loc[symbol, "name"]}/' \
-                                  f'¥{live_prices.loc[symbol, "close"]:.2f}/' \
-                                  f'{live_prices.loc[symbol, "change"]:.2%} '
+                if symbol in live_prices.index:
+                    watched_prices += f' ={symbol[:-3]}{live_prices.loc[symbol, "name"]}/' \
+                                      f'{live_prices.loc[symbol, "close"]:.2f}/' \
+                                      f'{live_prices.loc[symbol, "change"]:+.2%}'
+                else:
+                    watched_prices += f' ={symbol[:-3]}/--/---'
             return watched_prices
         else:
             return ''
@@ -287,8 +291,8 @@ class TraderShell(Cmd):
             return False
         if args:
             arg_count = len(args)
-            if arg_count > 3:
-                args = args[:3]
+            if arg_count > 5:
+                args = args[:5]
         from .utilfuncs import TS_CODE_IDENTIFIER_CN_STOCK
         import re
         for arg in args:
@@ -296,8 +300,8 @@ class TraderShell(Cmd):
             if re.match(TS_CODE_IDENTIFIER_CN_STOCK, arg.upper()):
                 if arg not in self._watch_list:
                     self._watch_list.append(arg.upper())
-                # 检查watch_list中代码个数是否超过d个，如果超过，删除最早添加的代码
-                if len(self._watch_list) > 4:
+                # 检查watch_list中代码个数是否超过5个，如果超过，删除最早添加的代码
+                if len(self._watch_list) > 5:
                     self._watch_list.pop(0)
         print(f'current watch list: {self._watch_list}')
 
@@ -413,6 +417,9 @@ class TraderShell(Cmd):
                     print(f'configure key "{key}" can not be changed to "{value}".')
             except Exception as e:
                 print(f'Error: {e}')
+                if self.trader.debug:
+                    import traceback
+                    traceback.print_exc()
             return
         else:
             sys.stdout.write(f'config command does not accept more than 2 arguments\n')
@@ -691,7 +698,7 @@ class TraderShell(Cmd):
             )
             current_price = last_available_data['close'][symbol][-1]
         except Exception as e:
-            print(f'Error: {e}, latest available data can not be donwloaded. 10.00 will be used as current price.')
+            print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
             import traceback
             traceback.print_exc()
             current_price = 10.00
@@ -781,6 +788,9 @@ class TraderShell(Cmd):
                 new_pars = eval(','.join(pars))
             except Exception as e:
                 print(f'Invalid parameter ({",".join(pars)})! Error: {e}')
+                if self.trader.debug:
+                    import traceback
+                    traceback.print_exc()
                 return
             if not isinstance(new_pars, tuple):
                 print(f'Invalid parameter ({new_pars})! Parameter should be a tuple')
@@ -792,6 +802,9 @@ class TraderShell(Cmd):
             except Exception as e:
                 print(f'Can not set {new_pars} to {strategy_id}, Error: {e}')
                 self.trader.operator.info()
+                if self.trader.debug:
+                    import traceback
+                    traceback.print_exc()
                 return
             print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
             self.trader.operator.info()
@@ -911,14 +924,14 @@ class TraderShell(Cmd):
                                 message = next_message
 
                             message = message[:-2] + ' ' + watched_prices
-                            print(message, end='\r')
+                            print(f'{message: <80}', end='\r')
                             if next_normal_message:
-                                print(f'{next_normal_message: <60}')
+                                print(f'{next_normal_message: <80}')
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            print(f'{message: <60}')
+                            print(f'{message: <80}')
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
@@ -1168,16 +1181,21 @@ class Trader(object):
         positions = self.account_positions
         symbols = positions.loc[positions.qty > 0].index.tolist()
         try:
-            # 获取每个symbol的最新价格
-            from .emfuncs import stock_live_kline_price
-            current_prices = stock_live_kline_price(
-                    symbols=symbols,
-            )
-            current_prices.set_index('symbol', inplace=True)
+            # 获取每个symbol的最新价格，从self.live_price中获取，如果没有，从网络获取
+            if self.live_price is not None:
+                current_prices = self.live_price
+            else:
+                from .emfuncs import stock_live_kline_price
+                current_prices = stock_live_kline_price(
+                        symbols=symbols,
+                )
+                current_prices.set_index('symbol', inplace=True)
+
             current_prices = current_prices['close'].astype('float')
             current_prices.reindex(positions.index)
         except Exception as e:
             current_prices = [np.nan] * len(positions)
+
         positions['name'] = positions['name'].fillna('')
         positions['current_price'] = current_prices
         positions['total_cost'] = positions['qty'] * positions['cost']
@@ -1412,7 +1430,7 @@ class Trader(object):
         if self.debug:
             message = f'[DEBUG]-{message}'
         if self.debug and (message[-2:] != '_R'):
-            print(message)  # 如果在debug模式下且不是覆盖型信息，直接打印
+            print(f'{message: <80}')  # 如果在debug模式下且不是覆盖型信息，直接打印
         else:
             self.message_queue.put(message)
 
@@ -1456,6 +1474,9 @@ class Trader(object):
             result_id = process_trade_result(result, data_source=self._datasource)
         except Exception as e:
             self.post_message(f'{e} Error occurred during processing trade result, result will be ignored')
+            if self.debug:
+                import traceback
+                traceback.print_exc()
             return
         if result_id is not None:
             from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail
@@ -1839,7 +1860,7 @@ class Trader(object):
         self.live_price = real_time_data
 
     def _change_date(self):
-        """ 改变日期，在日期改变（午夜）时执行的操作，包括：
+        """ 改变日期，在日期改变（午夜）前执行的操作，包括：
 
         - 处理前一日交易的交割
         - 处理前一日获取的实时数据、并准备下一日的实时数据
@@ -2009,7 +2030,7 @@ class Trader(object):
                     count_down_to_next_task = count_down_sec
                     next_task = task
         if not task_added:
-            self.post_message(f'Next task:({next_task}) in '
+            self.post_message(f'Next task:({next_task[1]}) in '
                               f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
                               new_line=False)
 
@@ -2232,7 +2253,6 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        # print(f'[DEBUG] position {position_id} changed with data: {position_data}')
         return
 
     AVAILABLE_TASKS = {
@@ -2344,7 +2364,6 @@ def start_trader(
     broker = ALL_BROKERS.get(broker_type, NotImplementedBroker)(
             **broker_params
     )
-    print(f'[DEBUG], broker created: {broker}')
     trader = Trader(
             account_id=account_id,
             operator=operator,

@@ -1933,10 +1933,13 @@ def adjust_string_length(s, n, tail='.', padder=' ', hans_aware=True):
         if ((print_width + tail_count) > n) and (n >= 3):
             remainder += 1
             tail_count -= 1
-    cut_in_pos = 0.7
-    beginning_length = int(remainder * cut_in_pos)
-    ending_length = remainder - beginning_length
-    return s[:beginning_length] + tail * tail_count + s[-ending_length:]
+    if n >= 5:
+        cut_in_pos = 0.8
+        beginning_length = int(remainder * cut_in_pos)
+        ending_length = remainder - beginning_length
+        return s[:beginning_length] + tail * tail_count + s[-ending_length:]
+    else:
+        return s[:remainder] + tail * tail_count
 
 
 def count_hans(s: str):

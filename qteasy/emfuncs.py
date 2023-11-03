@@ -217,7 +217,10 @@ def stock_live_kline_price(symbols, freq='D', verbose=False):
             else:
                 df['symbol'] = symbol
                 data.append(df.iloc[-1:, :])
-    data = pd.concat(data)
+    try:
+        data = pd.concat(data)
+    except:
+        return pd.DataFrame()
     if verbose:
         data = data.reindex(
                 columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
