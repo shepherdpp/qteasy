@@ -726,19 +726,19 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(adjust_string_length('this is a long string', 1), '.')
         self.assertEqual(adjust_string_length('this is a long string', 2), '..')
         self.assertEqual(adjust_string_length('this is a long string', 3), 't..')
-        self.assertEqual(adjust_string_length('this is a long string', 7), 'this...')
+        self.assertEqual(adjust_string_length('this is a long string', 7), 'thi...g')
         self.assertEqual(adjust_string_length('this is a long string', 21), 'this is a long string')
-        self.assertEqual(adjust_string_length('this is a long string', 20), 'this is a long st...')
+        self.assertEqual(adjust_string_length('this is a long string', 20), 'this is a lon...ring')
 
-        self.assertEqual(adjust_string_length('this is a long string', 10, '*'), 'this is***')
+        self.assertEqual(adjust_string_length('this is a long string', 10, '*'), 'this ***ng')
         self.assertEqual(adjust_string_length('short string', 15), 'short string   ')
 
         self.assertEqual(adjust_string_length('this is a 含有中文字符的 string', 20, hans_aware=False),
-                         'this is a 含有中文字符的...')
+                         'this is a 含有中文...string')
         self.assertEqual(adjust_string_length('this is a 含有中文字符的 string', 20, hans_aware=True),
-                         'this is a 含有中文..')
+                         'this is a 含有..ring')
         self.assertEqual(adjust_string_length('含有中文字符的 string', 20, hans_aware=True),
-                         '含有中文字符的 st...')
+                         '含有中文字符的...ing')
         self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=True),
                          '中文字符string      ')
         self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=False),

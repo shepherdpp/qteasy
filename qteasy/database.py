@@ -1776,7 +1776,7 @@ TABLE_SCHEMA = {
                         'c_fee', 'duration_year', 'p_value', 'min_amount', 'exp_return', 'benchmark',
                         'status', 'invest_type', 'type', 'trustee', 'purc_startdate', 'redm_startdate',
                         'market'],
-         'dtypes':     ['varchar(24)', 'varchar(24)', 'varchar(20)', 'varchar(20)', 'varchar(8)',
+         'dtypes':     ['varchar(24)', 'varchar(48)', 'varchar(20)', 'varchar(20)', 'varchar(8)',
                         'date', 'date', 'date', 'date', 'date', 'float', 'float', 'float', 'float',
                         'float', 'float', 'float', 'text', 'varchar(2)', 'varchar(10)', 'varchar(10)',
                         'varchar(10)', 'date', 'date', 'varchar(2)'],

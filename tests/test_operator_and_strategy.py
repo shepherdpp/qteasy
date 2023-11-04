@@ -37,14 +37,17 @@ class TestLSStrategy(RuleIterator):
     """
 
     def __init__(self):
-        super().__init__(name='test_LS',
-                         description='test long/short strategy',
-                         par_count=2,
-                         par_types='discr, conti',
-                         par_range=([1, 5], [2, 10]),
-                         strategy_data_types='close, open, high, low',
-                         data_freq='d',
-                         window_length=5)
+        super().__init__(
+                name='test_LS',
+                description='test long/short strategy',
+                par_count=2,
+                par_types='discr, conti',
+                par_range=([1, 5], [2, 10]),
+                strategy_data_types='close, open, high, low',
+                data_freq='d',
+                window_length=5,
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -96,16 +99,18 @@ class TestSelStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SEL',
-                         description='test portfolio selection strategy',
-                         par_count=0,
-                         par_types='',
-                         par_range=(),
-                         strategy_data_types='high, low, close',
-                         data_freq='d',
-                         strategy_run_freq='10d',
-                         window_length=5,
-                         )
+        super().__init__(
+                name='test_SEL',
+                description='test portfolio selection strategy',
+                par_count=0,
+                par_types='',
+                par_range=(),
+                strategy_data_types='high, low, close',
+                data_freq='d',
+                strategy_run_freq='10d',
+                window_length=5,
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None):
@@ -148,15 +153,18 @@ class TestSelStrategyDiffTime(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SEL',
-                         description='test portfolio selection strategy',
-                         par_count=0,
-                         par_types='',
-                         par_range=(),
-                         strategy_data_types='close, low, open',
-                         data_freq='d',
-                         strategy_run_freq='w',
-                         window_length=2)
+        super().__init__(
+                name='test_SEL',
+                description='test portfolio selection strategy',
+                par_count=0,
+                par_types='',
+                par_range=(),
+                strategy_data_types='close, low, open',
+                data_freq='d',
+                strategy_run_freq='w',
+                window_length=2,
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None):
@@ -193,7 +201,8 @@ class TestSigStrategy(GeneralStg):
                 par_types='conti, conti, conti',
                 par_range=([0, 10], [-3, 3], [-3, 3]),
                 strategy_data_types='close, open, high, low',
-                window_length=2
+                window_length=2,
+                use_latest_data_cycle=False,
         )
         pass
 

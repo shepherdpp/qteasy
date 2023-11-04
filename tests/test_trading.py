@@ -1467,6 +1467,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_am': '11:30:00',
             'exchange': 'SSE',
             'strategy_open_close_timing_offset': 1,
+            'live_price_acquire_freq': '5min',
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
