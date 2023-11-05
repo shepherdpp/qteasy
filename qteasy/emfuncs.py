@@ -43,28 +43,45 @@ def gen_eastmoney_code(rawcode: str) -> str:
 
 
 def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
-    """
-    功能获取k线数据
+    """ 功能获取k线数据
+
     Parameters
     ----------
-    code : 6 位股票代码
-    beg: 开始日期 例如 20200101
-    end: 结束日期 例如 20200201
-    klt: k线间距 默认为 101 即日k
+    code: str
+        6 位股票代码
+    beg: str, default '16000101'
+        开始日期 例如 20200101
+    end: str, default '20500101'
+        结束日期 例如 20200201
+    klt: int , default 1
+        k线间距 默认为 101 即日k
         klt:1 1 分钟
         klt:5 5 分钟
         klt:101 日
         klt:102 周
-    fqt: 复权方式
+    fqt: str, default 1
+        复权方式
         不复权 : 0
         前复权 : 1
         后复权 : 2
-    verbose: 是否返回更多信息（名称，昨日收盘价）
+    verbose: bool, default False
+        是否返回更多信息（名称，昨日收盘价）
 
     Return
     ------
-    DateFrame : 包含股票k线数据
+    DateFrame : 包含股票k线数据，包含以下字段
+        trade_time: str, 日期
+        name: str, 股票名称，仅当verbose=True时返回
+        pre_close: float, 昨日收盘价，仅当verbose=True时返回
+        open: float, 开盘价
+        close: float, 收盘价
+        high: float, 最高价
+        low: float, 最低价
+        vol: float, 成交量
+        amount: float, 成交额
+    未读取到数据时返回空DataFrame
     """
+
     EastmoneyKlines = {
         'f51': 'trade_time',
         'f52': 'open',
@@ -101,6 +118,8 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
     json_response = requests.get(
             url, headers=EastmoneyHeaders).json()
     data = json_response['data']
+    if data is None:
+        return pd.DataFrame()
     klines = data['klines']
     rows = []
     for _kline in klines:
@@ -170,7 +189,7 @@ def stock_mins(symbols, start, end, freq='1min'):
     return pd.concat(data)
 
 
-def stock_live_kline_price(symbols, freq='D', verbose=False):
+def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True):
     """ 获取股票当前最新日线数据，数据实时更新
     Parameters
     ----------
@@ -178,6 +197,10 @@ def stock_live_kline_price(symbols, freq='D', verbose=False):
         股票代码
     freq : str
         数据更新频率，目前仅支持日线数据
+    verbose : bool, default False
+        是否返回更多信息（名称，昨日收盘价）
+    parallel : bool, default True
+        是否使用多进程加速数据获取
 
     Returns
     -------
@@ -201,26 +224,36 @@ def stock_live_kline_price(symbols, freq='D', verbose=False):
         klt = 102
     if freq.upper() == 'M':
         klt = 103
-    # 使用ProcessPoolExecutor, as_completed加速数据获取
-    with ProcessPoolExecutor(max_workers=10) as executor:
-        futures = {
-            executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt, verbose=verbose): symbol
-            for symbol
-            in symbols
-        }
-        for future in as_completed(futures):
-            try:
-                df = future.result()
-                symbol = futures[future]
-            except Exception as exc:
-                print(f'{exc} generated an exception: {exc}')
-            else:
-                df['symbol'] = symbol
-                data.append(df.iloc[-1:, :])
+    # 使用ProcessPoolExecutor, as_completed加速数据获取，当parallel=False时，不使用多进程
+    if parallel:
+        with ProcessPoolExecutor(max_workers=10) as executor:
+            futures = {
+                executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt, verbose=verbose): symbol
+                for symbol
+                in symbols
+            }
+            for future in as_completed(futures):
+                try:
+                    df = future.result()
+                    symbol = futures[future]
+                except Exception as exc:
+                    print(f'{exc} generated an exception: {exc}')
+                else:
+                    if df.empty:
+                        continue
+                    df['symbol'] = symbol
+                    data.append(df.iloc[-1:, :])
+    else:  # parallel == False, 不使用多进程
+        for symbol in symbols:
+            df = get_k_history(symbol.split('.')[0], beg=today, klt=klt, verbose=verbose)
+            if df.empty:
+                continue
+            df['symbol'] = symbol
+            data.append(df.iloc[-1:, :])
     try:
         data = pd.concat(data)
     except:
-        return pd.DataFrame()
+        return pd.DataFrame()  # 返回空DataFrame
     if verbose:
         data = data.reindex(
                 columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']

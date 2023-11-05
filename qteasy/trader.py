@@ -122,6 +122,9 @@ class TraderShell(Cmd):
     def status(self):
         return self._status
 
+    def watch_list(self):
+        return self._watch_list
+
     @property
     def watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
@@ -129,10 +132,12 @@ class TraderShell(Cmd):
         if self._watch_list:
             from .emfuncs import stock_live_kline_price
             symbols = self._watch_list
-            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True)
-            live_prices.close = live_prices.close.astype(float)
-            live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
-            live_prices.set_index('symbol', inplace=True)
+            # 此处不使用并行，如果用户使用keyboard interrupt时正好在运行并行进程，会导致无法正确捕捉keyboard interrupt
+            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
+            if not live_prices.empty:
+                live_prices.close = live_prices.close.astype(float)
+                live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
+                live_prices.set_index('symbol', inplace=True)
             watched_prices = ''
             for symbol in symbols:
                 if symbol in live_prices.index:
@@ -143,10 +148,9 @@ class TraderShell(Cmd):
                     watched_prices += f' ={symbol[:-3]}/--/---'
             return watched_prices
         else:
-            return ''
+            return ' == Realtime prices can be displayed here. Use "watch" command to add stocks to watch list. =='
 
     # ----- basic commands -----
-    # TODO: add command "watch", to display market data in realtime
     # TODO: add escape warning when realtime data acquiring is not available
     def do_status(self, arg):
         """ Show trader status
@@ -287,7 +291,8 @@ class TraderShell(Cmd):
         """
         args = parse_shell_argument(arg)
         if not args:
-            sys.stdout.write(f'please input stock symbols to watch, like 000651.SZ\n')
+            sys.stdout.write(f'Current watch list: {self._watch_list}\n'
+                             f'input symbols to add to watch list, like 000651.SZ\n')
             return False
         if args:
             arg_count = len(args)
@@ -765,12 +770,14 @@ class TraderShell(Cmd):
         to display strategies information:
         (QTEASY): strategies
         to display strategies information in detail:
-        (QTEASY): strategies d
+        (QTEASY): strategies d|detail
         to set parameters for strategy "stg":
-        (QTEASY): strategies s stg (1, 2, 3)
+        (QTEASY): strategies s|strategy stg (1, 2, 3)
+        to set blender of strategies:
+        (QTEASY): strategies b|blender <blender> (not implemented yet)
 
         """
-
+        # TODO: to change blender of strategies, use strategies blender|b <blender>
         args = parse_shell_argument(arg)
         if not args:
             self.trader.operator.info()
@@ -808,6 +815,8 @@ class TraderShell(Cmd):
                 return
             print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
             self.trader.operator.info()
+        elif args[0] in ['b', 'blender']:
+            print(f'Not implemented yet.')
 
     def do_agenda(self, arg):
         """ Show current strategy task agenda
@@ -924,14 +933,14 @@ class TraderShell(Cmd):
                                 message = next_message
 
                             message = message[:-2] + ' ' + watched_prices
-                            print(f'{message: <80}', end='\r')
+                            print(f'{message: <240}', end='\r')
                             if next_normal_message:
-                                print(f'{next_normal_message: <80}')
+                                print(f'{next_normal_message: <240}')
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            print(f'{message: <80}')
+                            print(f'{message: <240}')
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
