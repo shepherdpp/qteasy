@@ -1683,6 +1683,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 100.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), (5.0 + 100.0 * 60.5) / 100)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'filled')
         # check trade result status
@@ -1736,6 +1737,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 0.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), 0.0)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'canceled')
         # check trade result status
@@ -1795,6 +1797,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 100.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), (100.0 * 81.0 + 12.5) / 100)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
@@ -1854,6 +1857,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 400.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), (7.5 + 400.0 * 89.5) / 400)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'filled')
         # check trade result status
@@ -1938,6 +1942,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 100.0 - 100.0)
         self.assertEqual(int(available_qty), 100.0 - 100.0)
+        self.assertEqual(float(costs), 0)  # 因为没有持仓，所以costs为0
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'filled')
         # check trade result status
@@ -1997,6 +2002,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 400.0 - 300.0)
         self.assertEqual(int(available_qty), 400.0 - 300.0)
+        self.assertEqual(float(costs), (89.51875 * 400 + 65.3 - 300.0 * 140) / 100)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
@@ -2021,10 +2027,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(summary[1]), [0, -100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
-        # fully fill signal 9
+        # partially filled order 9 with 99 shares sold at 191.0, with transaction fee 23.9
         raw_trade_result = {
             'order_id':       9,
-            'filled_qty':      100.0,
+            'filled_qty':      99.0,
             'price':           191.0,
             'transaction_fee': 23.9,
             'canceled_qty':    0.0,
@@ -2040,7 +2046,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(9, data_source=self.test_ds).loc[7].to_dict()}')
         # check cash availability
         own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
-        self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 100 * 191.0 - 23.9)
+        self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 99 * 191.0 - 23.9)
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
         self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
@@ -2050,16 +2056,17 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
         )
-        self.assertEqual(int(own_qty), 400.0 - 300.0 - 100.0)
-        self.assertEqual(int(available_qty), 400.0 - 300.0 - 100.0)
+        self.assertEqual(int(own_qty), 400.0 - 300.0 - 99.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0 - 99.0)
+        self.assertAlmostEqual(float(costs), (-61.272 * 100 - 99 * 191 + 23.9) / 1.0)
         # check trade_signal status
-        self.assertEqual(trade_signal_detail['status'], 'filled')
+        self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
         trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 41934.7)
         self.assertEqual(trade_result['delivery_status'], 'DL')
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
-        self.assertEqual(trade_result['delivery_amount'], 19076.1)
+        self.assertEqual(trade_result['delivery_amount'], 18885.1)
         self.assertEqual(trade_result['delivery_status'], 'ND')
 
         # process trade result delivery for the last order
@@ -2070,29 +2077,30 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
         )
-        self.assertEqual(int(own_qty), 400.0 - 300.0 - 100.0)
-        self.assertEqual(int(available_qty), 400.0 - 300.0 - 100.0)
+        self.assertEqual(int(own_qty), 400.0 - 300.0 - 99.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0 - 99.0)
+        self.assertAlmostEqual(float(costs), -25012.3)
         # check trade_signal status
-        self.assertEqual(trade_signal_detail['status'], 'filled')
+        self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
         trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 41934.7)
         self.assertEqual(trade_result['delivery_status'], 'DL')
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
-        self.assertEqual(trade_result['delivery_amount'], 19076.1)
+        self.assertEqual(trade_result['delivery_amount'], 18885.1)
         self.assertEqual(trade_result['delivery_status'], 'DL')
         # check trade result summary with no share
         # in the summary, filled amount will be total amount in order, and price will be average filled price
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
         self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
-        self.assertEqual(list(summary[1]), [-100, 0, 100, -400, 0])
+        self.assertEqual(list(summary[1]), [-100, 0, 100, -399, 0])
         self.assertEqual(list(summary[2]), [90, 0, 81, 165.5, 0])
         # check trade result summary with share
         summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
         self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
-        self.assertEqual(list(summary[1]), [0, -100, -400])
+        self.assertEqual(list(summary[1]), [0, -100, -399])
         self.assertEqual(list(summary[2]), [0, 90, 165.5])
         # check trade result summary with share that out of range
         summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)

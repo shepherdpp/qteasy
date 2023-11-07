@@ -329,7 +329,7 @@ class TraderShell(Cmd):
                         columns=['qty', 'available_qty', 'cost', 'current_price',
                                  'market_value', 'profit', 'profit_ratio', 'name'],
                         header=['qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio', 'name'],
-                        formatters={'name':          '{:s}'.format,
+                        formatters={'name':          '{:8s}'.format,
                                     'qty':           '{:,.2f}'.format,
                                     'available_qty': '{:,.2f}'.format,
                                     'cost':          '¥{:,.2f}'.format,
@@ -471,7 +471,7 @@ class TraderShell(Cmd):
                                          history['filled_qty'])
         # calculate rows: cum_qty, trade_cost, cum_cost, value, share_cost, earnings, and earning rate
         history['cum_qty'] = history['filled_qty'].cumsum()
-        history['trade_cost'] = history['filled_qty'] * history['price_filled']
+        history['trade_cost'] = history['filled_qty'] * history['price_filled'] + history['transaction_fee']
         history['cum_cost'] = history['trade_cost'].cumsum()
         history['value'] = history['cum_qty'] * history['price_filled']
         history['share_cost'] = history['cum_cost'] / history['cum_qty']
@@ -479,22 +479,25 @@ class TraderShell(Cmd):
         history['earning_rate'] = history['earnings'] / history['cum_cost']
         # add row: name
         all_names = get_symbol_names(datasource=self.trader.datasource, symbols=history['symbol'].tolist())
-        history['name'] = [adjust_string_length(name, 8) for name in all_names]
+        history['name'] = [adjust_string_length(name, 8, hans_aware=True, padding='left') for name in all_names]
 
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
         # for earning rate
         print(
                 history.to_string(
                         columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
-                                 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate', 'name'],
-                        header=['time', 'symbol', 'oper', 'qty', 'price', 'holdings',
-                                'holding value', 'cost', 'earnings', 'earning_rate', 'name'],
+                                 'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
+                                 'name'],
+                        header=['time', 'symbol', 'oper', 'qty', 'price',
+                                'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
+                                'name'],
                         formatters={
                             'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
                             'name':         '{:8s}'.format,
                             'operation':    '{:s}'.format,
                             'filled_qty':   '{:,.2f}'.format,
                             'price_filled': '¥{:,.2f}'.format,
+                            'transaction_fee': '¥{:,.2f}'.format,
                             'cum_qty':      '{:,.2f}'.format,
                             'value':        '¥{:,.2f}'.format,
                             'share_cost':   '¥{:,.2f}'.format,
@@ -1175,7 +1178,7 @@ class Trader(object):
         # 获取每个symbol的names
         positions = positions.T
         symbol_names = get_symbol_names(datasource=self._datasource, symbols=positions.index.tolist())
-        positions['name'] = symbol_names
+        positions['name'] = [adjust_string_length(name, 8, hans_aware=True, padding='left') for name in symbol_names]
         return positions
 
     @property
@@ -1369,7 +1372,7 @@ class Trader(object):
         asset_in_pool= len(self.asset_pool)
         asset_pool_string = adjust_string_length(
                 s=str(self.asset_pool),
-                n=59,
+                n=80,
         )
         print(f'Current Investment Pool:        {asset_in_pool} stocks: {asset_pool_string}\n'
               f'                                Use "pool" command to view asset pool details.\n'
@@ -1536,13 +1539,14 @@ class Trader(object):
             - position: str, 交易标的的持仓方向，long/short
             - direction: str, 交易方向，buy/sell
             - order_type: str, 订单类型，market/limit
-            - qty: int, 订单数量
-            - price: float, 订单价格
+            - qty: int, 订单申报数量
+            - price: float, 订单申报价格
             - submitted_time: datetime, 订单提交时间
             - status: str, 订单状态，filled/canceled/partial-filled
             - price_filled: float, 成交价格
             - filled_qty: int, 成交数量
             - canceled_qty: int, 撤单数量
+            - transaction_fee: float, 交易费用
             - execution_time: datetime, 成交时间
             - delivery_status: str, 交割状态，D/ND
         """
@@ -1563,7 +1567,7 @@ class Trader(object):
         order_result_details = order_result_details.reindex(
                 columns=['symbol', 'position', 'direction', 'order_type',
                          'qty', 'price_quoted', 'submitted_time', 'status',
-                         'price_filled', 'filled_qty', 'canceled_qty', 'execution_time',
+                         'price_filled', 'filled_qty', 'canceled_qty', 'transaction_fee', 'execution_time',
                          'delivery_status'],
         )
         return order_result_details

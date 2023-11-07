@@ -168,7 +168,7 @@ def _valid_qt_kwargs():
                           'akshare  - Not Implemented: 从akshare获取实时价格\n'},
 
         'live_price_acquire_freq':
-            {'Default':   '5MIN',
+            {'Default':   '15MIN',
              'Validator': lambda value: isinstance(value, str) and value.upper() in
                                         ['H', '30MIN', '15MIN', '5MIN', '1MIN', 'TICK'],
              'level':     2,
@@ -474,7 +474,7 @@ def _valid_qt_kwargs():
                           '默认值为万分之一'},
 
         'cost_min_buy':
-            {'Default':   0.0,
+            {'Default':   5.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,
@@ -482,7 +482,7 @@ def _valid_qt_kwargs():
                           '默认值为5元'},
 
         'cost_min_sell':
-            {'Default':   0.0,
+            {'Default':   5.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,

@@ -1010,10 +1010,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
             new_cost = prev_cost
         else:
             additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
-            new_cost = np.round(
-                    (prev_cost + additional_cost) / (owned_qty + position_change),
-                    CASH_DECIMAL_PLACES
-            )
+            new_cost = (prev_cost + additional_cost) / (owned_qty + position_change)
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,
@@ -1029,14 +1026,11 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         )
         # calculate new cost
         prev_cost = position_cost * owned_qty
-        if owned_qty - position_change == 0:
-            new_cost = None
+        if owned_qty + position_change == 0:  # 如果卖出后持仓为0，则成本为0
+            new_cost = 0
         else:
-            additional_cost = -position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
-            new_cost = np.round(
-                    (prev_cost + additional_cost) / (owned_qty - position_change),
-                    CASH_DECIMAL_PLACES
-            )
+            additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
+            new_cost = (prev_cost + additional_cost) / (owned_qty + position_change)
         update_position(
                 position_id=order_detail['pos_id'],
                 data_source=data_source,

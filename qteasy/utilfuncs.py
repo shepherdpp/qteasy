@@ -1853,10 +1853,10 @@ def truncate_string(s, n, padder='.'):  # to be deprecated
     'h..'
     """
     warnings.warn('truncate_string will be deprecated, use adjust_string_length instead', DeprecationWarning)
-    return adjust_string_length(s, n, elipsis=padder)
+    return adjust_string_length(s, n, ellipsis=padder)
 
 
-def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
+def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right'):
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 
@@ -1868,12 +1868,14 @@ def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
         字符串
     n: int
         需要保留的长度
-    elipsis: str, Default: '.'
+    ellipsis: str, Default: '.'
         填充在截短的字符串后用于表示省略号的字符，默认为'.'
     padder: str, Default: ' '
         填充在字符串末尾补充长度的字符，默认为空格
     hans_aware: bool, Default: False
         是否考虑汉字的长度，如果为True，则汉字的长度为2，否则为1
+    padding: str, Default: 'right'
+        填充的位置，可以为'left'或'right'，默认为'right'
 
     Returns
     -------
@@ -1881,16 +1883,16 @@ def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
 
     Examples
     --------
-    >>> adjust_string_length('hello world', 5)
-    'he...'
-    >>> adjust_string_length('hello world', 5, padder='*')
-    'he***'
-    >>> adjust_string_length('hello world', 3)
-    'hel'
+    >>> adjust_string_length('hello world', 8)
+    'hell...d'
+    >>> adjust_string_length('hello world', 15, padder='*')
+    'hello world****'
+    >>> adjust_string_length('hello world', 9, ellipsis='_')
+    'hell___ld'
     >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=False)
-    '中文字符占据...'
-    >>> adjust_string_length('中文字符占据2个位置', 9)
-    '中文字...'
+    '中文字符...位置'
+    >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=True)
+    '中文...置'
     """
 
     cut_off_proportion = 0.7
@@ -1899,10 +1901,10 @@ def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
         raise TypeError(f'the first argument should be a string, got {type(s)} instead')
     if not isinstance(n, int):
         raise TypeError(f'the second argument should be an integer, got {type(n)} instead')
-    if not isinstance(elipsis, str):
-        raise TypeError(f'the padder should be a character, got {type(elipsis)} instead')
-    if not len(elipsis) == 1:
-        raise ValueError(f'the padder should be a single character, got {len(elipsis)} characters')
+    if not isinstance(ellipsis, str):
+        raise TypeError(f'the padder should be a character, got {type(ellipsis)} instead')
+    if not len(ellipsis) == 1:
+        raise ValueError(f'the padder should be a single character, got {len(ellipsis)} characters')
     if not isinstance(padder, str):
         raise TypeError(f'the padder should be a character, got {type(padder)} instead')
     if not len(padder) == 1:
@@ -1912,11 +1914,13 @@ def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
 
     length = len(s)
     if hans_aware:
-        remainder_print_width = length + _count_hans(s)
         length += _count_hans(s)
 
-    if length <= n:
+    if (length <= n) and (padding == 'right'):
         return s + padder * (n - length)
+
+    if (length <= n) and (padding == 'left'):
+        return padder * (n - length) + s
 
     if n == 3:
         elipsis_count = 2
@@ -1948,7 +1952,7 @@ def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
     remainder_part = []
     remainder_print_width = 0
     if remainder_length > 0:
-        for char in s[::-1]:  # build up elipsis part of the string
+        for char in s[::-1]:  # build up ellipsis part of the string
             if hans_aware and ('\u4e00' <= char <= '\u9fff'):
                 remainder_print_width += 2
             else:
@@ -1961,7 +1965,7 @@ def adjust_string_length(s, n, elipsis='.', padder=' ', hans_aware=False):
     if ((front_print_width + remainder_print_width + elipsis_count) > n) and (n >= 3):
         elipsis_count -= 1
 
-    return ''.join(front_part) + elipsis * elipsis_count + ''.join(remainder_part[::-1])
+    return ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
 
 
 def _count_hans(s: str):

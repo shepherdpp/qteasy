@@ -113,10 +113,12 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
         ('fqt', f'{fqt}'),
     )
     base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
-    # base_url = 'https://push2his.eastmoney.com/api/qt/clist/get'
     url = base_url + '?' + urlencode(params)
-    json_response = requests.get(
-            url, headers=EastmoneyHeaders).json()
+    try:
+        json_response = requests.get(
+                url, headers=EastmoneyHeaders).json()
+    except:
+        return pd.DataFrame()
     data = json_response['data']
     if data is None:
         return pd.DataFrame()
