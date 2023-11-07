@@ -1925,15 +1925,12 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
     if n == 3:
         elipsis_count = 2
         front_length = 1
-        remainder_length = 0
     elif n < 3:
         elipsis_count = n
         front_length = 0
-        remainder_length = 0
     else:
         elipsis_count = 3
         front_length = round((n - elipsis_count) * cut_off_proportion)
-        remainder_length = int(n - elipsis_count - front_length)
 
     # count from beginning of the string
     front_part = []
@@ -1945,12 +1942,19 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
             else:
                 front_print_width += 1
             front_part.append(char)
-            if front_print_width >= front_length:
+            if front_print_width - front_length == 2:
+                front_part.pop()  # 如果刚好多增加了一个中文字符，则需要将最后一个字符去掉
+                front_print_width -=2
+                break
+            if front_print_width - front_length >= 0:
                 break
 
     # count from back of the string
     remainder_part = []
     remainder_print_width = 0
+    remainder_length = n - front_length - elipsis_count
+    if (n >= 5) and (remainder_length == 0):
+        remainder_length = 1  # there must be a character in the remainder part if n >= 5
     if remainder_length > 0:
         for char in s[::-1]:  # build up ellipsis part of the string
             if hans_aware and ('\u4e00' <= char <= '\u9fff'):
@@ -1962,8 +1966,9 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
             if remainder_print_width >= remainder_length:
                 break
 
-    if ((front_print_width + remainder_print_width + elipsis_count) > n) and (n >= 3):
-        elipsis_count -= 1
+    if (front_print_width + remainder_print_width + elipsis_count > n) and (n >= 3):
+        # 此时前面的字符数和后面的字符数加上省略号的字符数比n多，需要将省略号的字符数减少
+        elipsis_count -= front_print_width + remainder_print_width + elipsis_count - n
 
     return ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
 

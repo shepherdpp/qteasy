@@ -823,6 +823,10 @@ class TestUtilityFuncs(unittest.TestCase):
                          '..')
         self.assertEqual(adjust_string_length('含有中文字符的 string', 1, hans_aware=True),
                          '.')
+        self.assertEqual(adjust_string_length('中文字符占据2个位置', 14, hans_aware=True),
+                         '中文字符..位置')
+        self.assertEqual(adjust_string_length('中文字符占据2个位置', 13, hans_aware=True),
+                         '中文字符.位置')
 
         self.assertRaises(TypeError, adjust_string_length, 123, 10)
         self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')
