@@ -125,8 +125,7 @@ class TraderShell(Cmd):
     def watch_list(self):
         return self._watch_list
 
-    @property
-    def watched_prices(self):
+    def get_watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
         if self._watch_list:
@@ -912,7 +911,7 @@ class TraderShell(Cmd):
 
         prev_message = ''
         live_price_refresh_timer = 0
-        watched_prices = self.watched_prices
+        watched_prices = self.get_watched_prices()
         while True:
             # enter shell loop
             try:
@@ -948,7 +947,8 @@ class TraderShell(Cmd):
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
                     if live_price_refresh_timer > 5:
-                        watched_prices = self.watched_prices
+                        # TODO get watched prices in a different thread, to prevent from blocking
+                        watched_prices = self.get_watched_prices()
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -1191,21 +1191,11 @@ class Trader(object):
     def account_position_info(self):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
-        symbols = positions.loc[positions.qty > 0].index.tolist()
-        try:
-            # 获取每个symbol的最新价格，从self.live_price中获取，如果没有，从网络获取
-            if self.live_price is not None:
-                current_prices = self.live_price
-            else:
-                from .emfuncs import stock_live_kline_price
-                current_prices = stock_live_kline_price(
-                        symbols=symbols,
-                )
-                current_prices.set_index('symbol', inplace=True)
 
-            current_prices = current_prices['close'].astype('float')
-            current_prices.reindex(positions.index)
-        except Exception as e:
+        # 获取每个symbol的最新价格，从self.live_price中获取，如果没有，使用全nan填充
+        if self.live_price is not None:
+            current_prices = self.live_price
+        else:
             current_prices = [np.nan] * len(positions)
 
         positions['name'] = positions['name'].fillna('')
@@ -1793,6 +1783,7 @@ class Trader(object):
 
         datasource.reconnect()
         datasource.reconnect()
+
         datasource.get_all_basic_table_data(
                 refresh_cache=True,
         )
@@ -1865,12 +1856,22 @@ class Trader(object):
             self.post_message('running task acquire_live_price')
 
         from .emfuncs import stock_live_kline_price
-        real_time_data = stock_live_kline_price(
-                    symbols=self.asset_pool,
-            )
+        # read real_time_data in a separate thread, set timeout to 20 seconds, if timeout, abort and return None
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(stock_live_kline_price, symbols=self.asset_pool)
+            try:
+                real_time_data = future.result(timeout=20)
+            except TimeoutError:
+                self.post_message('TimeoutError occurred when reading real time data, will try again')
+                return None
+
         real_time_data.set_index('symbol', inplace=True)
         # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data
+        self.post_message(f'acquired live price data, live prices updated!')
+
+
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：

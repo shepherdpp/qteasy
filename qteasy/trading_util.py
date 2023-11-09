@@ -114,8 +114,9 @@ def create_daily_task_agenda(operator, config=None):
             include_start_pm=False,
             include_end_pm=True,
     ).strftime('%H:%M:%S').tolist()
-    # 将策略的运行时间添加到任务日程，生成任务日程
+    # 将实时价格的更新时间添加到任务日程，生成价格更新日程，因为价格更新的任务优先级更低，因此每个任务都推迟5秒执行
     for t in run_time_index:
+        t = (pd.to_datetime(t) + pd.Timedelta(seconds=5)).strftime('%H:%M:%S')
         task_agenda.append((t, 'acquire_live_price'))
 
     # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程

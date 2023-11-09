@@ -15,7 +15,7 @@ from urllib.parse import urlencode
 import pandas as pd
 import requests
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
 
 from .utilfuncs import str_to_list
 
@@ -228,7 +228,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True):
         klt = 103
     # 使用ProcessPoolExecutor, as_completed加速数据获取，当parallel=False时，不使用多进程
     if parallel:
-        with ProcessPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {
                 executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt, verbose=verbose): symbol
                 for symbol
@@ -236,8 +236,10 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True):
             }
             for future in as_completed(futures):
                 try:
-                    df = future.result()
+                    df = future.result(timeout=2)
                     symbol = futures[future]
+                except TimeoutError:
+                    continue
                 except Exception as exc:
                     print(f'{exc} generated an exception: {exc}')
                 else:

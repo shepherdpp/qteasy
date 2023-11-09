@@ -911,7 +911,11 @@ def human_blender(blender_str: str, strategy_ids: list) -> str:
     human_tokens = []
     for token in tokens:
         if BLENDER_STRATEGY_INDEX_IDENTIFIER.match(token):
-            strategy_id = strategy_ids[int(token[1:])]
+            try:
+                strategy_id = strategy_ids[int(token[1:])]
+            except IndexError:
+                raise IndexError(f'index {token[1:]} out of range, while there are only '
+                                 f'{len(strategy_ids)} strategies in the list')
             human_tokens.append(str(strategy_id))
         elif token in ['+', '-', '*', '/', '^', '&', '|', 'and', 'or', 'not', '~']:
             human_tokens.append(f' {token} ')
