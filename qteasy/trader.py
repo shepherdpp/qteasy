@@ -17,6 +17,7 @@ from typing import Any, Callable, Union
 
 import pandas as pd
 import numpy as np
+import shutil
 
 from threading import Timer
 from queue import Queue
@@ -921,6 +922,7 @@ class TraderShell(Cmd):
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
+                        text_width = shutil.get_terminal_size().columns
                         message = self._trader.message_queue.get()
                         if message[-2:] == '_R':
                             # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
@@ -935,20 +937,22 @@ class TraderShell(Cmd):
                                 message = next_message
 
                             message = message[:-2] + ' ' + watched_prices
-                            print(f'{message: <240}', end='\r')
+                            print(f'{adjust_string_length(message, text_width)}', end='\r')
                             if next_normal_message:
-                                print(f'{next_normal_message: <240}')
+                                print(f'{adjust_string_length(next_normal_message, text_width)}')
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            print(f'{message: <240}')
+                            print(f'{adjust_string_length(message, text_width)}')
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
                     if live_price_refresh_timer > 5:
-                        # TODO get watched prices in a different thread, to prevent from blocking
-                        watched_prices = self.get_watched_prices()
+                        from concurrent.futures import ThreadPoolExecutor
+                        with ThreadPoolExecutor(max_workers=1) as executor:
+                            future = executor.submit(self.get_watched_prices)
+                            watched_prices = future.result(timeout=3)
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
