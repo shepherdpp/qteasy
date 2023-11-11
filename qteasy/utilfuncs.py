@@ -950,15 +950,22 @@ def prev_market_trade_day(date, exchange='SSE'):
     ------
     NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
+    Examples
+    --------
+    >>> prev_market_trade_day('2019-01-01')
+    Timestamp('2018-12-28 00:00:00')
+    >>> prev_market_trade_day('2020-12-24')
+    Timestamp('2020-12-23 00:00:00')
+
     See Also
     --------
     is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date).floor(freq='d')
-    except Exception as ex:
-        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
-        raise
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
     if qteasy.QT_TRADE_CALENDAR is not None:
         exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
@@ -971,7 +978,7 @@ def prev_market_trade_day(date, exchange='SSE'):
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
 
-    - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
+    - 如果date是交易日，返回date当日，如2020-12-24日是交易日，返回2020-12-24
     - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
 
     Parameters
@@ -985,21 +992,25 @@ def nearest_market_trade_day(date, exchange='SSE'):
     -------
     pd.TimeStamp
 
+    Examples:
+    ---------
+    >>> nearest_market_trade_day('2019-01-01')
+    Timestamp('2018-12-28 00:00:00')
+    >>> nearest_market_trade_day('2020-12-24')
+    Timestamp('2020-12-24 00:00:00')
+
     See Also
     --------
     is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date).floor(freq='d')
-    except Exception as ex:
-        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
-        raise
-    assert _date is not None, f'{date} is not a valide date'
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
-        # raise ValueError(f'{date} is out of trade calendar range ({last_known_trade_day}), '
-        #                  f'refill trade calendar with "refill_data_source(tables=[\'trade_calendar\'])"')
     if is_market_trade_day(_date, exchange):
         return _date
     else:
@@ -1010,8 +1021,11 @@ def nearest_market_trade_day(date, exchange='SSE'):
 
 
 @lru_cache(maxsize=16)
-def next_market_trade_day(date, exchange='SSE'):
+def next_market_trade_day(date, exchange='SSE', nearest_only=True):
     """ 根据交易所发布的交易日历找到它的后一个交易日，准确性高但需要提前准备QT_TRADE_CALENDAR数据
+
+    - 如果date是一个交易日，则返回date当日(若nearst_only=True)或者返回date的下一个交易日(若nearest_only=False)
+    - 如果date不是一个交易日，则返回date的下一个交易日，如2020-12-25不是交易日，但它的下一个交易日是2020-12-28，因此返回2020-12-28
 
     Parameters
     ----------
@@ -1019,6 +1033,8 @@ def next_market_trade_day(date, exchange='SSE'):
         可以转化为时间日期格式的字符串或其他类型对象
     exchange: str
         交易所代码
+    nearest_only: bool, default: True
+        是否只返回最近的交易日，如果为True，则返回最近的交易日，如果为False，则返回下一个交易日
 
     Returns
     -------
@@ -1028,27 +1044,34 @@ def next_market_trade_day(date, exchange='SSE'):
     ------
     NotImplementedError: 要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
+    Examples
+    --------
+    >>> next_market_trade_day('2019-01-01')
+    Timestamp('2019-01-02 00:00:00')
+    >>> next_market_trade_day('2020-12-24')
+    Timestamp('2020-12-24 00:00:00')
+    >>> next_market_trade_day('2020-12-24', nearest_only=False)
+    Timestamp('2020-12-25 00:00:00')
+
     See Also
     --------
     is_market_trade_day()
     """
     try:
         _date = pd.to_datetime(date).floor(freq='d')
-    except Exception:
-        raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
-    assert _date is not None, f'{date} is not a valid date'
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
     last_known_trade_day = last_known_market_trade_day(exchange)
     if _date < pd.to_datetime('19910101') or _date > last_known_trade_day:
         return None
-        # raise ValueError(f'{date} is out of trade calendar range ({last_known_trade_day}), '
-        #                  f'refill trade calendar with "refill_data_source(tables=[\'trade_calendar\'])"')
-    if is_market_trade_day(_date, exchange):
+    if is_market_trade_day(_date, exchange) and nearest_only:
         return _date
     else:
-        next = _date + pd.Timedelta(1, 'd')
-        while not is_market_trade_day(next):
-            next = next + pd.Timedelta(1, 'd')
-        return next
+        next_date = _date + pd.Timedelta(1, 'd')
+        while not is_market_trade_day(next_date):
+            next_date = next_date + pd.Timedelta(1, 'd')
+        return next_date
 
 
 def weekday_name(weekday: int):
@@ -1803,10 +1826,9 @@ def reindent(s, num_spaces=4):
     return s
 
 
-def truncate_string(s, n, padder='.'):
-    """ 如果字符串超过指定长度，则将字符串截短到制定的长度，并确保字符串的末尾有三个句点
-        如果n<=4，则句点的数量相应减少
-        如果n<0则报错
+def truncate_string(s, n, padder='.'):  # to be deprecated
+    """ to be deprecated, 调整字符串为指定长度，为了保证兼容性，暂时保留此函数
+    以后使用adjust_string_length代替
 
     Parameters
     ----------
@@ -1814,8 +1836,8 @@ def truncate_string(s, n, padder='.'):
         字符串
     n: int
         需要保留的长度
-    padder: str, Default: '.'
-        作为省略号填充在字符串末尾的字符
+    padder: str, Default: '...'
+        填充在截短的字符串后用于表示省略号的字符，默认为'.'
 
     Returns
     -------
@@ -1828,23 +1850,154 @@ def truncate_string(s, n, padder='.'):
     >>> truncate_string('hello world', 5, padder='*')
     'he***'
     >>> truncate_string('hello world', 3)
-    'hel'
+    'h..'
     """
+    warnings.warn('truncate_string will be deprecated, use adjust_string_length instead', DeprecationWarning)
+    return adjust_string_length(s, n, ellipsis=padder)
+
+
+def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right'):
+    """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
+        如果字符串过短则在末尾添加空格补齐长度
+
+        默认情况下，认为汉字的长度为2，英文字符的长度为1，可以通过hans_aware参数设置是否考虑汉字的长度
+
+    Parameters
+    ----------
+    s: str
+        字符串
+    n: int
+        需要保留的长度
+    ellipsis: str, Default: '.'
+        填充在截短的字符串后用于表示省略号的字符，默认为'.'
+    padder: str, Default: ' '
+        填充在字符串末尾补充长度的字符，默认为空格
+    hans_aware: bool, Default: False
+        是否考虑汉字的长度，如果为True，则汉字的长度为2，否则为1
+    padding: str, Default: 'right'
+        填充的位置，可以为'left'或'right'，默认为'right'
+
+    Returns
+    -------
+    str
+
+    Examples
+    --------
+    >>> adjust_string_length('hello world', 8)
+    'hell...d'
+    >>> adjust_string_length('hello world', 15, padder='*')
+    'hello world****'
+    >>> adjust_string_length('hello world', 9, ellipsis='_')
+    'hell___ld'
+    >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=False)
+    '中文字符...位置'
+    >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=True)
+    '中文...置'
+    """
+
+    cut_off_proportion = 0.7
+
     if not isinstance(s, str):
         raise TypeError(f'the first argument should be a string, got {type(s)} instead')
     if not isinstance(n, int):
         raise TypeError(f'the second argument should be an integer, got {type(n)} instead')
+    if not isinstance(ellipsis, str):
+        raise TypeError(f'the padder should be a character, got {type(ellipsis)} instead')
+    if not len(ellipsis) == 1:
+        raise ValueError(f'the padder should be a single character, got {len(ellipsis)} characters')
     if not isinstance(padder, str):
         raise TypeError(f'the padder should be a character, got {type(padder)} instead')
     if not len(padder) == 1:
         raise ValueError(f'the padder should be a single character, got {len(padder)} characters')
-    if n <= 1:
+    if n < 1:
         raise ValueError(f'the expected length should be larger than 0, got {n}')
-    if len(s) <= n:
-        return s
-    padder_count = 3
-    if n < 3:
-        padder_count = n
-    return s[:n-padder_count] + padder * padder_count
 
+    length = len(s)
+    if hans_aware:
+        length += _count_hans(s)
+
+    if (length <= n) and (padding == 'right'):
+        return s + padder * (n - length)
+
+    if (length <= n) and (padding == 'left'):
+        return padder * (n - length) + s
+
+    if n == 3:
+        elipsis_count = 2
+        front_length = 1
+    elif n < 3:
+        elipsis_count = n
+        front_length = 0
+    else:
+        elipsis_count = 3
+        front_length = round((n - elipsis_count) * cut_off_proportion)
+
+    # count from beginning of the string
+    front_part = []
+    front_print_width = 0
+    if front_length > 0:
+        for char in s:  # build up front part of the string
+            if hans_aware and ('\u4e00' <= char <= '\u9fff'):
+                front_print_width += 2
+            else:
+                front_print_width += 1
+            front_part.append(char)
+            if front_print_width - front_length == 2:
+                front_part.pop()  # 如果刚好多增加了一个中文字符，则需要将最后一个字符去掉
+                front_print_width -=2
+                break
+            if front_print_width - front_length >= 0:
+                break
+
+    # count from back of the string
+    remainder_part = []
+    remainder_print_width = 0
+    remainder_length = n - front_length - elipsis_count
+    if (n >= 5) and (remainder_length == 0):
+        remainder_length = 1  # there must be a character in the remainder part if n >= 5
+    if remainder_length > 0:
+        for char in s[::-1]:  # build up ellipsis part of the string
+            if hans_aware and ('\u4e00' <= char <= '\u9fff'):
+                remainder_print_width += 2
+            else:
+                remainder_print_width += 1
+
+            remainder_part.append(char)
+            if remainder_print_width >= remainder_length:
+                break
+
+    if (front_print_width + remainder_print_width + elipsis_count > n) and (n >= 3):
+        # 此时前面的字符数和后面的字符数加上省略号的字符数比n多，需要将省略号的字符数减少
+        elipsis_count -= front_print_width + remainder_print_width + elipsis_count - n
+
+    return ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
+
+
+def _count_hans(s: str):
+    """ 统计字符串中汉字的数量 (unicode 4E00-9FFF)
+
+    Parameters
+    ----------
+    s: str
+        字符串
+
+    Returns
+    -------
+    int, 汉字的数量
+
+    Examples
+    --------
+    >>> _count_hans('hello world')
+    0
+    >>> _count_hans('你好，世界')
+    4
+    """
+    # for loop is faster than list comprehension and regex
+    if not isinstance(s, str):
+        raise TypeError(f'the argument should be a string, got {type(s)} instead')
+    hans_total = 0
+    for char in s:
+        if '\u4e00' <= char <= '\u9fff':
+            hans_total += 1
+    return hans_total
 

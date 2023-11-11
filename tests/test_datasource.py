@@ -1985,6 +1985,16 @@ class TestDataSource(unittest.TestCase):
                 )
                 print(f'res: {res}')
 
+    def test_fetch_realtime_price_data(self):
+        """ test datasource function fetch_realtime_price_data()"""
+        res = self.ds_csv.fetch_realtime_price_data(
+                table='stock_5min',
+                channel='eastmoney',
+                symbols=['000001.SZ', '000002.SZ'],
+        )
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+
 
 if __name__ == '__main__':
     unittest.main()

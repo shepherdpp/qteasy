@@ -1059,7 +1059,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(hp.flatten_to_dataframe().empty)
 
     def test_head_and_tail(self):
-        """ 测试函数 head() 和 tail() """
+        """ 测试函数 head() 和 ellipsis() """
 
         hp = self.hp
 
@@ -1073,7 +1073,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(head.values, hp.values[:, 0:3]))
 
         tail = hp.tail(3)
-        print(f'test tail()\nhp is {hp}\ntail(3) is {tail}')
+        print(f'test ellipsis()\nhp is {hp}\nellipsis(3) is {tail}')
         self.assertIsInstance(tail, qt.HistoryPanel)
         self.assertEqual(tail.shape, (hp.shape[0], 3, hp.shape[2]))
         self.assertEqual(tail.hdates, hp.hdates[-3:])

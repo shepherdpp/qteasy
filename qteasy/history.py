@@ -1545,7 +1545,7 @@ class HistoryPanel():
         2020-01-05  2.6,    3.2,    20050
         2020-01-06  2.9,    3.0,    20060
 
-        >>> hp.tail(3)
+        >>> hp.ellipsis(3)
         share 0, label: 000300
                     close,  open,   vol
         2020-01-04  12.3,   12.5,   1020040

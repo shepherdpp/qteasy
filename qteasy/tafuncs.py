@@ -2467,7 +2467,7 @@ def cdlengulfing(opn, high, low, close):
     Bullish engulfing pattern:
     The bullish engulfing pattern is a two-candle reversal pattern. The second candle
     completely ‘engulfs’ the real body of the first one, without regard to the length of
-    the tail shadows. The Bullish Engulfing pattern appears in a downtrend and is a
+    the ellipsis shadows. The Bullish Engulfing pattern appears in a downtrend and is a
     combination of one dark candle followed by a larger hollow candle. On the second day
     of the pattern, price opens lower than the previous low, yet buying pressure pushes
     the price up to a higher level than the previous high, culminating in an obvious win
