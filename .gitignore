@@ -56,6 +56,6 @@ dist/
 qteasy.egg-info/
 data_test/
 /question.py
-qteasy/tradelog/trade_log_大小盘轮动研究.xlsx
-qteasy/tradelog/trade_records_大小盘轮动研究.numbers
 *.xlsx
+*.numbers
+

@@ -37,7 +37,7 @@
 
 ## QTEASY简介
 
-- Author: **Jackie PENG**
+- 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
 - Latest Version: `1.0.7`
@@ -56,7 +56,9 @@
 
 ### `qteasy`的安装
 
-`python -m pip install qteasy`
+```bash
+pip install qteasy
+```
 
 ### 安装依赖包
 
@@ -72,7 +74,7 @@
 
 ##  10分钟了解qteasy的功能
 
-### 3.1 导入`qteasy`
+### 导入`qteasy`
 基本的模块导入方法如下
 
 ```python
@@ -163,7 +165,7 @@ qt.get_history_data(htypes='open, high, low, close',
  2021-01-14  5556.2125  5568.0179  5458.6818  5470.4563
  2021-01-15  5471.3910  5500.6348  5390.2737  5458.0812}
 ```
-除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[教程](#QTEASY使用教程)
+除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[QTEASY教程：金融数据下载及管理](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
 
 股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。
 

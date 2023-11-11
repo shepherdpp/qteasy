@@ -23,26 +23,22 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
+- [QTEASY简介](#基本介绍)
+- [安装及依赖](#安装依赖包)
+- [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
+  - [初始配置——本地数据源](#配置本地数据源)
+  - [下载股票价格并可视化](#下载股票价格数据并将其可视化)
+  - [创建投资策略](#创建一个投资策略)
+  - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
+  - [投资策略的实盘运行](#投资策略的实盘运行)
+  - [投资策略的优化](#回测并优化交易策略)
+- [更详细的使用方法请参见教程](#QTEASY使用教程)
+
+## Introduction
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `0.0.1.dev7`
-
-## Installation and dependencies
-This project requires and depends on following packages:
-- *`pandas` version ~= 0.25.1*    `# conda install pandas`
-- *`numpy` version ~= 1.18.1*    `# conda install numpy`
-- *`numba` version ~= 0.47.0*    `# conda install numba`
-- *`TA-lib` version ~= 0.4.18*    `# conda install -c conda-forge ta-lib`
-- *`tushare` version ~= 1.2.89*    `# pip install tushare`
-- *`mplfinance` version ~= 0.12.7*    `# conda install -c conda-forge mplfinance`
-- *`pymysql` version ~= 1.0.2*    `# Optional, conda install -c anaconda pymysql`
-- *`sqlalchemy`* version ~= 1.4.22   `# Optional, conda install sqlalchemy`
-- *`pytables`* version ~= 3.6.1   `# Optional, conda install -c conda-forge pytables`
-- *`pyarrow`* version ~= 3.0.0   `# Optional, conda install -c conda-forge pyarrow`
-
-
-## Introductions 
+- Latest Version: `1.0.6`
 
 This project is aiming at a fast quantitative investment package for python, with following functions:
 
@@ -54,252 +50,482 @@ This project is aiming at a fast quantitative investment package for python, wit
 The target of this module is to provide effective vectorized backtesting and assessment of investment 
 strategies, with highly versertility and flexibility
 
+## Installation and dependencies
+
+### Install `qteay` from PyPI
+
+```bash
+pip install qteasy
+```
+### Install dependencies
+
+This project requires and depends on following packages:
+- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
+- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
+- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
+- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
+- *`tushare` version >= 1.2.89*    `pip install tushare`
+- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+
+A local datasource should be setup for `qteasy` to work properly. a series of .csv files will be used to store 
+financial data in default case. Other types of datasource can be used, such as MySQL database, but other dependencies
+should be installed. find more details in the tutorial.
 
 ##  Gets to know qteasy in 10 Min
 
-- Import the module 模块的导入
-- data acquiring 数据的获取和可视化  
-- strategy creation 投资策略的创建
-- Back-test of strategies 投资策略的回测
-- Strategy Optimization 投资策略的优化
-
-The convensional way of importing this package is following:
-基本的模块导入方法如下
+### Import the module 
 
 
 ```python
 import qteasy as qt
-import matplotlib as mpl
+```
+### Configure local data source and Tushare token
+
+`qteasy` is not fully functional without variant types of financial data, which should be stored locally in a datasource.
+Huge amounts of financial data can be readily downloaded with the help of `tushare`, a financial data package for python.
+However, a Tushare API token is required to access the data. Please refer to [Tushare API token](https://tushare.pro/document/2) for details.
+
+Users can configure the local data source and Tushare token in the configuration file `qteasy.cfg` under `QT_ROOT_PATH/qteasy/` path:
+
+```
+# qteasy configuration file
+# following configurations will be loaded when initialize qteasy
+
+# example:
+# local_data_source = database
+```
+#### configure tushare token
+
+add your `tushare` API token to the configuration file as follows:
+
+``` commandline
+tushare_token = <Your tushare API Token> 
+```
+#### Configure local datasource -- use MySQL database as an example
+
+`qteasy` can use local `.csv` files as default data source, no special configuration is needed in this case.
+Add following configurations to the configuration file to use `MySQL` database as local data source:
+
+
+```bash
+local_data_source = database  
+local_db_host = <host name>
+local_db_port = <port number>
+local_db_user = <user name>
+local_db_password = <password>
+local_db_name = <database name>
 ```
 
-Then the classes and functions can be used 模块导入后，工具包中的函数及对象即可以使用了:
+Save and close the configuration file, then import `qteasy` again to activate new configurations.
+
+
+### Download historical financial data 
+
+Download historical financial data with `qt.refill_data_source()` function. 
+The following code will download all stock and index daily price data from 2021 to 2022, and all stock and fund basic information data.
+depending on connection, it may take about 10 minutes to download all data. The data will take about 200MB disk space if stored as csv files.
 
 
 ```python
-ht = qt.HistoryPanel()
-op = qt.Operator()
+qt.refill_data_source(
+        tables=['stock_daily',   # daily price of stocks
+                'index_daily',   # daily price of indexes
+                'basics'],       # basic information of stocks and funds
+        start_date='20210101',  # start date of data to download
+        end_date='20221231',  
+)
 ```
-
-### Load and visualize Stock prices 下载股票价格数据并将其可视化 
-To use `qteasy`, lots of historical financial data should be prepared and saved locally for back testing and optimizing trading strategies created through a DataSource object defined in qteasy.  Fortunately, these data can be easily loaded through tushare module.
-
-为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，通过一个DataSource对象来获取。这些数据可以生成投资策略所需要的历史数据组合，也可以通过简单的命令生成股票的K线图，如果本地没有历史数据，那么qteasy的许多功能就无法执行。
-
-为了使用历史数据，`qteasy`支持通过`tushare`金融数据包来获取大量的金融数据，用户需要自行获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
-一旦拥有足够的权限，可以通过下面的命令批量拉取过去一年的所有金融数据并保存在本地，以确保`qteasy`的相关功能可以正常使用
-（请注意，由于数据量较大，下载时间较长，建议分批下载。建议使用数据库保存本地数据，不包括分钟数据时，所有数据将占用大约10G的磁盘空间，
-分钟级别数据将占用350GB甚至更多的磁盘空间）。
-关于`DataSource`对象的更多详细介绍，请参见详细文档。
+Downloaded data can be retrieved with `qt.get_history_data()` function. 
+Data of multiple stocks will be stored in a `dict` object.
 
 ```python
-qt.QT_DATA_SOURCE.refill_data_source('all', start_date='20210101', end_date='20220101')
+qt.get_history_data(htypes='open, high, low, close', 
+                    shares='000001.SZ, 000300.SH',
+                    start='20210101',
+                    end='20210115')
 ```
+Above code returns a `dict` containing stock symbols as keys and Dataframe of prices as dict values:
+```
+{'000001.SZ':
+              open   high    low  close
+ 2021-01-04  19.10  19.10  18.44  18.60
+ 2021-01-05  18.40  18.48  17.80  18.17
+ 2021-01-06  18.08  19.56  18.00  19.56
+ ... 
+ 2021-01-13  21.00  21.01  20.40  20.70
+ 2021-01-14  20.68  20.89  19.95  20.17
+ 2021-01-15  21.00  21.95  20.82  21.00,
+ 
+ '000300.SH':
+                  open       high        low      close
+ 2021-01-04  5212.9313  5284.4343  5190.9372  5267.7181
+ 2021-01-05  5245.8355  5368.5049  5234.3775  5368.5049
+ 2021-01-06  5386.5144  5433.4694  5341.4304  5417.6677
+ ...
+ 2021-01-13  5609.2637  5644.7195  5535.1435  5577.9711
+ 2021-01-14  5556.2125  5568.0179  5458.6818  5470.4563
+ 2021-01-15  5471.3910  5500.6348  5390.2737  5458.0812}
+```
+Apart from prices, `qteasy` can also download and manage a large amount of financial data, including financial statements, technical indicators, and basic information. For details, please refer to
+[QTEASY tutorial: download and manage financial data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
 
-股票的数据下载后，使用`candle()`函数，如果K线图显示成功，表明价格数据下载成功。
-
+As a shortcut, `qteasy` provides a `qt.candle()` function to plot candlestick charts of stock prices already downloaded
 
 ```python
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_5_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_5_2.png)
     
-
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
-`qt.candle()`支持显示股票、基金、期货的K线，同时也可以传入`adj`参数显示复权价格，或传入`freq`参数改变K显得频率，显示分钟、周或月K线，还可以传入更多的参数修改K线图上的
-指标类型、移动均线类型以及参数，详细的用法请参考文档，示例如下：
+`qt.candle()` supports plotting:
+- Candle stick chart of stocks, funds and futures,
+- in adjusted prices and unadjusted prices,
+- in different frequencies like minute, week or month,
+- together with different moving averages and technical indicators like MACD/KDJ,
+
+More detailed intro can be found in tutorial. Here are some examples:
+
+(Please make sure you have downloaded the data with `qt.refill_data_source()` first)
 
 
 ```python
-# 场内基金的小时K线图
-data = qt.candle('159601', start = '20220121', freq='h')
-# 沪深300指数的日K线图
-data = qt.candle('000300', start = '20200121')
-# 股票的30分钟K线，复权价格
-data = qt.candle('中国电信', start = '20211021', freq='30min', adj='b')
-# 期货K线，三条移动均线分别为9天、12天、26天
-data = qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
-# 场外基金净值曲线图，复权净值，不显示移动均线
-data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
+# Hourly candle stick chart of fund
+qt.candle('159601', start = '20220121', freq='h')
+# Daily price K-line chart of HS300 index
+qt.candle('000300', start = '20200121')
+# Adjusted 30-min K-line chart of stocks
+qt.candle('中国电信', start = '20211021', freq='30min', adj='b')
+# K-line chart of futures with specified moving averages (9, 12, 26 days)
+qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
+# Net value chart of funds, adjusted net value, no moving average
+qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_1.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_3_1.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_7_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_7_2.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_8_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_8_3.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_4.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_3_4.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_3_5.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_3_5.png)
     
 
+The candlestick chart generated by `qt.candle()` is an interactive dynamic chart (please note that the candlestick chart is based on `matplotlib`, and the display function is different when using different terminals. Some terminals do not support dynamic charts. For details, please refer to [matplotlib documentation](https://matplotlib.org/stable/users/explain/backends.html)
+
+With the dynamic candlestick chart, users can control the display range of the K-line chart with the mouse and keyboard to:
+
+- view earlier and later prices by dragging the mouse， and
+- zoom in or out by scrolling the mouse wheel， and
+- view earlier and later prices by pressing left and right arrow keys， and
+- zoom in or out by pressing up and down arrow keys， and
+- view different moving averages by double clicking the mouse on the chart， and
+- view different technical indicators by double clicking the mouse on the indicator area
+
+![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
+
+Find more detailed introduction to DataSource objects in [02: Manage Financial Data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
 
 
-a dynamic candle chart of stock 000300 will be displayed, you can drag the candle plots over to view wider span of data, zoom
-in and out with scrolling of your mouse, and switching bewteen multiple indicator lines by double-clicking the chart
+###  Create an investment strategy
 
-生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持动态图表，详情请参阅https://matplotlib.org/stable/users/explain/backends.html），在使用动态K线图时，用户可以用鼠标和键盘控制K线图的显示范围：
+In `qteasy`, all trade strategies are implemented by an `Operator` object, which is a container of strategies. An operator can manage multiple strategies at the same time and triger one or more strategies at the right timing.
 
-- 鼠标在图表上左右拖动：可以移动K线图显示更早或更晚的K线
-- 鼠标滚轮在图表上滚动，可以缩小或放大K线图的显示范围
-- 通过键盘左右方向键，可以移动K线图的显示范围显示更早或更晚的K线
-- 通过键盘上下键，可以缩小或放大K线图的显示范围
-- 在K线图上双击鼠标，可以切换不同的均线类型
-- 在K线图的指标区域双击，可以切换不同的指标类型：MACD，RSI，DEMA
+A `qteasy` trade strategy can be created in two ways, please refer to the tutorial for detailed instructions:
 
-![gif](img/output_dyna_plot.gif)
+- **Combined with built-in strategies**, or 
+- **Constructed with `Strategy` class**
 
-### Create and running of investment strategy sessions  创建一个投资策略，进行回测评价并优化其表现
+#### Create a DMA strategy
 
-There are multiple internally preset strategies such as crossline timing strategy or DMA timing strategy provided in
- `qteasy`, a strategy should be created with an `Operator` object, the `Operator` is the container of strategies, and provides
- multiple methods to utilize and operate on these strategies.
+To create an Operator with a DMA strategy, pass `strategies='DMA'` to the `Operator` constructor, a `DMA` trade strategy will be created because 'DMA' strategy is a built-in strategy.
 
-`queasy`提供了多种内置交易策略可供用户使用，因此用户不需要手工创建这些策略，可以直接使用内置策略（关于所有内置策略的介绍，请参见详细文档）。复合策略可以通过多个简单的策略混合而成。当复合策略无法达到预计的效果时，可以通过`qteasy.Strategy`类来自定义一个策略。
-
-### Create a DMA timing strategy  生成一个DMA均线择时交易策略
-
-`qteasy`中的所有交易策略都是通过`qteast.Operator`对象来实现回测和运行的，每一个`Operator`对象均包含三种不同的交易策略用途，每一种用途用于生成不同类型的交易信号，以便用于交易的模拟，例如选股信号、择时信号或者风控信号，每种信号类型都可以由一个或多个交易策略来生成，在后面的章节中我们可以详细介绍每一种信号类型以及交易策略，在这里，我们将使用一个内置的DMA均线择时策略来生成一个择时信号，忽略选股和风控信号。
-
-创建一个`Operator`对象，并在创建时传入参数：`strategies='DMA'`，新建一个DMA双均线择时交易策略。
-
+You may view the details of the DMA strategy with `op.info()` method:
 
 ```python
 op = qt.Operator(strategies='dma')
+op.info()
 ```
+```bash
+            -----------------------Operator Information-----------------------
+Strategies:  1 Strategies
+Run Mode:    batch - All history operation signals are generated before back testing
+Signal Type: pt - Position Target, signal represents position holdings in percentage of total value
 
-DMA是一个内置的均线择时策略，它通过计算股票每日收盘价的快、慢两根移动均线的差值DMA与其移动平均值AMA之间的交叉情况来确定多空或买卖
-点，这个策略需要三个参数`(s,l,d)`，公式如下：
+            ------------------------Strategy blenders-------------------------
+for strategy running timing - close:
+no blender
 
-- DMA = 股价的s日均线 - 股价的l日均线
-- AMA = DMA的d日均线
+            ----------------------------Strategies----------------------------
+stg_id    name                  run timing   data window       data types             parameters     
+____________________________________________________________________________________________________
+dma       DMA                  days @ close  270 x days        ['close']            (12, 26, 9)     
+====================================================================================================
+```
+Now a strategy is added to the operator with ID 'dma', with which we can set or modify parameters of the strategy.
 
-交易规则：
+'DMA' is a built-in timing strategy that generates buy/sell signals based on the difference between the fast and slow moving averages of the stock price. 
 
-        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线，由空变多，产生买入信号
-        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线，由多变空，产生卖出信号
-
-在默认情况下，三个参数为：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
-不同的策略运行周期。除了DMA策略以外，`qteasy`还提供了其他择时策略，详细的列表可以参见`qteasy`的手册。
-
-传递策略参数到`op`对象中：
-
+Detailed info of this strategy can be print out with `op.info()` method:
 
 ```python
-op.set_parameter('dma', pars=(23, 166, 196))
+qt.built_ins('dma')
 ```
+following info will be printed:
 
-上面的代码将参数`pars=(23, 166, 196)`传递给DMA策略，`op.set_parameter()`的详细使用方法见手册。
+```
+ DMA择时策略
+
+    策略参数：
+        s, int, 短均线周期
+        l, int, 长均线周期
+        d, int, DMA周期
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        在下面情况下产生买入信号：
+        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1
+        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0
+        3， DMA与股价发生背离时的交叉信号，可信度较高
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (8, 250)]
+    策略不支持参考数据，不支持交易数据
+```
+By default, the strategy uses three **adjustable parameters**: `(12,26,9)`, but we can give any three integers greater than 2 and less than 250 as the parameters of the strategy to adapt to stocks with different trading activity or to adapt to different strategy running cycles.
 
 
-### Back-test strategy  回测并评价交易策略的性能表现
+### Backtest strategy with history data and evaluate its performance
 
-使用默认参数回测策略在历史数据上的表现，请使用`qteasy.run()`，`mode=1`表示进入回测模式，传入参数`visual=False`以文本形式打印结果
-`qteasy.run()`的其他可选参数参见手册
+with `qteasy`, one can easily backtest a strategy with historical data and evaluate its performance.
 
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_14_3.png)
+
+Use `op.run()` to run the strategy with historical data, and the result will be returned as a `dict` object:
 
 ```python
-res = qt.run(op, mode=1, invest_start='20080101', visual=True)
+res = op.run(
+        mode=1,                         # run in backtest mode
+        asset_pool='000300.SH',         # the list symbols in trading pool 
+        asset_type='IDX',               # the type of assets to be traded
+        invest_cash_amounts=[100000],   # initial investment cash amount
+        invest_start='20220501',        # start date of backtest
+        invest_end='20221231',          # end date of backtest
+        cost_rate_buy=0.0003,           # trade cost rate for buying
+        cost_rate_sell=0.0001,          # trade cost rate for selling
+        visual=True,                    # print visualized backtest result
+        trade_log=True                  # save trade log
+)
 ```
+Here's printed trade result:
+```commandline
+     ====================================
+     |                                  |
+     |       BACK TESTING RESULT        |
+     |                                  |
+     ====================================
 
-输出结果如下：
-```
-====================================
-|                                  |
-|       BACK TESTING RESULT        |
-|                                  |
-====================================
 qteasy running mode: 1 - History back testing
-time consumption for operate signal creation: 3.3ms
-time consumption for operation back looping:  348.3ms
+time consumption for operate signal creation: 4.4 ms
+time consumption for operation back looping:  82.5 ms
 
-investment starts on      2008-01-02 00:00:00
-ends on                   2021-02-01 00:00:00
-Total looped periods:     13.1 years.
+investment starts on      2022-05-05 00:00:00
+ends on                   2022-12-30 00:00:00
+Total looped periods:     0.7 years.
 
 -------------operation summary:------------
+Only non-empty shares are displayed, call 
+"loop_result["oper_count"]" for complete operation summary
 
-           Sell   Buy  Total  Long pct  Short pct  Empty pct
-000300.SH    11    12     23     50.7%       0.0%      49.3%   
+          Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+000300.SH    6        6      12   56.4%      0.0%     43.6%   
 
-Total operation fee:      ¥    1,042.59
-total investment amount:  ¥  100,000.00
-final value:              ¥  425,982.00
-Total return:                   325.98% 
-Avg Yearly return:               11.70%
-Skewness:                         -0.63
-Kurtosis:                         10.80
-Benchmark return:                 0.60% 
-Benchmark Yearly return:          0.05%
+Total operation fee:     ¥      257.15
+total investment amount: ¥  100,000.00
+final value:              ¥  105,773.09
+Total return:                     5.77% 
+Avg Yearly return:                8.95%
+Skewness:                          0.58
+Kurtosis:                          3.54
+Benchmark return:                -3.46% 
+Benchmark Yearly return:         -5.23%
 
 ------strategy loop_results indicators------ 
-alpha:                            0.067
-Beta:                             1.002
-Sharp ratio:                      0.041
-Info ratio:                       0.029
-250 day volatility:               0.162
-Max drawdown:                    35.04% 
-    peak / valley:        2009-08-03 / 2014-07-10
-    recovered on:         2014-12-16
+alpha:                            0.142
+Beta:                             1.003
+Sharp ratio:                      0.637
+Info ratio:                       0.132
+250 day volatility:               0.138
+Max drawdown:                    11.92% 
+    peak / valley:        2022-08-17 / 2022-10-31
+    recovered on:         Not recovered!
+
+===========END OF REPORT=============
+```
+The backtest result is also visualized in a chart as well:
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_21_1.png)
+
+### Optimize adjustable parameters of a strategy
+
+The performance of a strategy highly depends on its adjustable parameters, and often varies a lot with different parameters. `qteasy` provides a series of optimization algorithms to help search for the best parameters of a strategy.
+
+To run qteasy in optimization mode, set optimization tag of the strategy: `opt_tag=1`, and set environment variable `mode=2`:
+
+
+```python
+op.set_parameter('dma', opt_tag=1)
+res = op.run(mode=2,                    # run in optimization mode
+             opti_start='20220501',     # start date of optimization period
+             opti_end='20221231',       # end date of optimization period
+             test_start='20220501',     # start date of test period
+             test_end='20221231',       # end date of test period
+             opti_sample_count=1000,    # sample count of optimization
+             visual=True,               # print visualized backtest result
+             parallel=True)            # run in parallel mode
+```
+
+`qteasy` tries to find the 30 sets of best-performing parameters of a strategy on the optimization period, and perform independent backtest on the test period. The result of the optimization will be printed as follows:
+
+```commandline
+==================================== 
+|                                  |
+|       OPTIMIZATION RESULT        |
+|                                  |
+====================================
+
+qteasy running mode: 2 - Strategy Parameter Optimization
+
+... # ommited for brevity
+
+# 30 sets of optimized parameters and their results (partially omitted for brevity)
+    Strategy items Sell-outs Buy-ins ttl-fee     FV      ROI  Benchmark rtn MDD 
+0     (35, 69, 60)     1.0      2.0    71.45 106,828.20  6.8%     -3.5%     9.5%
+1   (124, 104, 18)     3.0      2.0   124.86 106,900.59  6.9%     -3.5%     7.4%
+2   (126, 120, 56)     1.0      1.0    72.38 107,465.86  7.5%     -3.5%     7.5%
+...
+27   (103, 84, 70)     1.0      1.0    74.84 114,731.44 14.7%     -3.5%     8.8%
+28  (143, 103, 49)     1.0      1.0    74.33 116,453.26 16.5%     -3.5%     4.3%
+29   (129, 92, 56)     1.0      1.0    74.55 118,811.58 18.8%     -3.5%     4.3%
 
 ===========END OF REPORT=============
 ```
 
-整个回测过程耗时0.4s左右，其中交易信号生成共耗费3.3ms，交易回测耗时348ms
-
-根据上面结果，系统使用了沪深300指数从2008年到2021年共13.1年的历史数据来测试策略，在这段时间内，模拟2008年1月1日投入10万元投资于沪深300指数，共产生了11次买入信号和12次卖出信号，产生的交易费用为1042.59元。
-到2021年2月1日为止，投资总额从10万元变为42万元，投资总收益为325.98%，年化收益率为11.78%，而同期沪深300指数本身的涨幅仅为0。6%，策略最终是跑赢了大盘的。
-
-在`qteasy`模拟的交易过程中，可以设置丰富的参数，例如：
-
-- 投入资金的数量、日期、或者设置分批多次投入资金；
-- 买入和卖出交易的费用、包括佣金费率、最低费用、固定费用、以及滑点。各种费率都可以针对买入和卖出分别设定
-- 买入和卖出交易的交割时间，也就是T+N日交割制度
-- 买入和卖出交易的最小批量，例如是否允许分数份额交易、还是必须整数份额、甚至整百份交易
-
-最终打印的回测结果是考虑上述所有交易参数之后的最终结果，因此可以看到总交易成本。详细的交易参数设置请参见详细文档。
-
-
-
-另外，`qteasy`还给给出了关于策略表现的几个指标：
-如alpha和beta分别是0.067和1.002，而夏普率为0.041。最大回撤发生在2009年8月3日到2014年7月10日，回撤了35.0%，且到了2014年12月16日才翻盘。
-
-在上面的回测结果中我们给出了参数`visual=False`，如果令`visual=True`，就能得到可视化的回测结果，以图表的形式给出，并提供可视化信息：
-
-- 投资策略的历史资金曲线
-- 参考数据（沪深300指数）的历史曲线
-- 买点和卖点（在参考数据上以红色、绿色箭头显示）
-- 持仓区间（绿色表示持仓）
-- 投资策略的评价指标（alpha、sharp等）
-- 历史回撤分析（显示五次最大的回撤）
-- 历史收益率热力图、山积图等图表
-
-![png](img/output_14_3.png)
-qteasy提供了丰富的策略回测选项，例如：
-
-- 回测开始结束日期
-- 回测结果评价指标
-- 回测时是否允许持有负数仓位（用于模拟期货交易卖空行为，也可以使用专门的期货交易模拟算法）
-
-更多的选项请参见详细文档
-
-### Optimize strategy  回测并优化交易策略
-
-交易策略的表现往往与参数有关，例如上个例子中的DMA择时策略，如果输入不同的参数，策略回报相差会非常大。qteasy提供了多种不同的策略参数优化算法，帮助搜索最优的策略参数，并且提供多种不同的策略参数检验方法，为策略参数的表现提供独立检验。
-
-要使用策略优化功能，需要设置交易策略的优化标记`opt_tag=1`：然后运行`qt.run()`,并使用参数`mode=2`即可:
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_24_1.png)
+Run backtest again with the optimized parameters, and the result will be improved significantly:
 
 ```python
-op.set_parameter('dma', opt_tag=1)
-res = qt.run(op, mode=2, visual=True)
+op.set_parameter('dma', pars=(143, 99, 32))
+res = op.run(
+        mode=1,                         # run in backtest mode
+        asset_pool='000300.SH',         # the list symbols in trading pool
+        asset_type='IDX',               # the type of assets to be traded
+        invest_cash_amounts=[100000],   # initial investment cash amount
+        invest_start='20220501',        # start date of backtest
+        invest_end='20221231',          # end date of backtest
+        cost_rate_buy=0.0003,           # trade cost rate for buying
+        cost_rate_sell=0.0001,          # trade cost rate for selling
+        visual=True,                    # print visualized backtest result
+        trade_log=True)                 # save trade log
 ```
 
-默认情况下，qteasy将在同一段历史数据上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据上进行独立测试，并显示独立测试的结果，同时输出可视化结果如下：
+here's result：
 
-这里忽略详细的参数对比数据，详细的结果解读和说明参见详细文档
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_26_1.png)   
 
-关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
+For more detailed info about the optimization result, please refer to the tutorial.
 
-![png](img/output_15_3.png)   
+### Deploy the strategy and start live trading
 
+`qteasy` provides a simple live trading program that runs in command line environment. After configuring the `Operator` object and setting the strategy, it runs automatically, downloads real-time data, generates trading instructions according to the strategy results, simulate the trading process and record the trading results.
+
+Live trade can be started when strategy is setup with its parameters and configured with `Operator` object. 
+
+```python
+import qteasy as qt
+
+# create trade strategy alpha
+alpha = qt.get_built_in_strategy('ndayrate')  # create a N-day price change trade strategy 
+
+# set strategy parameters
+alpha.strategy_run_freq = 'd'  # strategy runs daily
+alpha.data_freq = 'd' # strategy uses daily data
+alpha.window_length = 20  # length of data window
+alpha.sort_ascending = False  # select stocks with largest price change
+alpha.condition = 'greater'  # filter stocks with price change greater than:
+alpha.ubound = 0.005  # 0.5%.
+alpha.sel_count = 7  # select at most 7 stocks each time 
+
+# create an operator object containing alpha strategy
+op = qt.Operator(alpha, signal_type='PT', op_type='step')
+
+# set up strategy running parameters
+# asset pool contains all bank stocks and home appliance stocks
+asset_pool = qt.filter_stock_codes(industry='银行, 家用电器', exchange='SSE, SZSE')
+
+qt.configure(
+        mode=0,  # run in live trade mode
+        asset_type='E',  # asset type is stock
+        asset_pool=asset_pool,  # stock pool contains all bank stocks and home appliance stocks
+        trade_batch_size=100,  # trade batch size is 100
+        sell_batch_size=1,  # sell batch size is 1
+        live_trade_account_id=1,  # live trade account ID
+        live_trade_account='user name',  # live trade account user name
+)
+
+qt.run(op)
+```
+A `TraderShell` command line interface will be started, automatically running strategy at the right time. The parameters 
+of the strategy are determined by the `QT_CONFIG` environment variable. After the `TraderShell` command line interface 
+is started, all important information related to the transaction will be displayed in the console:
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_27_1.png)   
+
+In the `TraderShell`, following key information will be displayed on the console:
+- current date, time and running status, 
+- the trading signals and orders generated by the strategy, 
+- the execution status of the trading orders,
+- the change of account funds, and,
+- the change of account positions.
+
+You can press `Ctrl+C` to view Shell menu at any time during the running of `TraderShell`:
+```commandline
+Current mode interrupted, Input 1 or 2 or 3 for below options: 
+[1], Enter command mode; 
+[2], Enter dashboard mode. 
+[3], Exit and stop the trader; 
+please input your choice: 
+```
+then press 1 to enter interactive mode, in which user command is taken and executed:
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/img/output_28_1.png)   
+
+Users interact with, control and modify behavior of the live trading by inputting commands. The following commands are supported:
+
+- `pause` / `resume`: pause or resume live trading
+- `strategies`: view current strategies and parameters
+- `change`: change current position and cash amount
+- `positions`: view current positions of holdings
+- `orders`: view trade orders
+- `history`: view trade history
+- `exit`: exit TraderShell
+- ... more commands please refer to `QTEASY` documentation
+
+## QTEASY Tutorials
+
+Please use below links to find more detailed tutorials about `QTEASY`:
+
+- [01: Basic Configurations and Initialization](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2001%20-%20系统基础配置.md)
+- [02: Download and manage financial data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
+- [03: Back-test trade strategies](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2003%20-%20交易策略及回测基本操作.md)
+- [04: Use built-in Strategies](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2004%20-%20使用内置交易策略.md)
+- [05: User-defined Strategies(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2005%20-%20创建自定义交易策略.md)
+- [06: Optimization of Strategies(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2006%20-%20交易策略的优化.md)
+- [07: Deploy Strategy in Live Trade(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)
+- [08: Manipulate of History Data(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2008%20-%20历史数据的操作和分析.md)
