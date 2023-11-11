@@ -1467,18 +1467,25 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_am': '11:30:00',
             'exchange': 'SSE',
             'strategy_open_close_timing_offset': 1,
+            'live_price_acquire_freq': '15min',
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 7)
+        self.assertEqual(len(agenda), 25)
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[3], ('12:55:00', 'wakeup'))
-        self.assertEqual(agenda[4], ('15:29:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[5], ('15:30:00', 'close_market'))
-        self.assertEqual(agenda[6], ('15:45:00', 'post_close'))
+        self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
+        self.assertEqual(agenda[3], ('10:00:05', 'acquire_live_price'))
+        self.assertEqual(agenda[9], ('11:30:05', 'acquire_live_price'))
+        self.assertEqual(agenda[10], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[11], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[12], ('13:15:05', 'acquire_live_price'))
+        self.assertEqual(agenda[19], ('15:00:05', 'acquire_live_price'))
+        self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[22], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[23], ('15:30:05', 'acquire_live_price'))
+        self.assertEqual(agenda[24], ('15:45:00', 'post_close'))
 
         # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
         op = qt.Operator(strategies='macd')
@@ -1492,22 +1499,25 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_am': '11:30:00',
             'exchange': 'SSE',
             'strategy_open_close_timing_offset': 1,
+            'live_price_acquire_freq': '15min',
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 11)
+        self.assertEqual(len(agenda), 29)
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('10:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[3], ('11:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[4], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[5], ('12:55:00', 'wakeup'))
-        self.assertEqual(agenda[6], ('13:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[7], ('14:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[8], ('15:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[9], ('15:30:00', 'close_market'))
-        self.assertEqual(agenda[10], ('15:45:00', 'post_close'))
+        self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
+        self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[8], ('11:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[12], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[13], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[14], ('13:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[18], ('14:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[23], ('15:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[26], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[27], ('15:30:05', 'acquire_live_price'))
+        self.assertEqual(agenda[28], ('15:45:00', 'post_close'))
 
         # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
         op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
@@ -1527,28 +1537,33 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_am': '11:30:00',
             'exchange': 'SSE',
             'strategy_open_close_timing_offset': 1,
+            'live_price_acquire_freq': '60min',
         }
         agenda = create_daily_task_agenda(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 17)
+        self.assertEqual(len(agenda), 21)
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['rsi']))
         self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[4], ('10:30:00', 'run_strategy', ['rsi', 'dma']))
-        self.assertEqual(agenda[5], ('11:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[6], ('11:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[7], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[8], ('12:55:00', 'wakeup'))
-        self.assertEqual(agenda[9], ('13:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[10], ('13:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[11], ('14:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[12], ('14:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[13], ('15:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[14], ('15:29:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[15], ('15:30:00', 'close_market'))
-        self.assertEqual(agenda[16], ('15:45:00', 'post_close'))
+        self.assertEqual(agenda[4], ('10:00:05', 'acquire_live_price'))
+        self.assertEqual(agenda[5], ('10:30:00', 'run_strategy', ['rsi', 'dma']))
+        self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[7], ('11:00:05', 'acquire_live_price'))
+        self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[9], ('11:35:00', 'sleep'))
+        self.assertEqual(agenda[10], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[14], ('14:00:05', 'acquire_live_price'))
+        self.assertEqual(agenda[15], ('14:30:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[16], ('15:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[17], ('15:00:05', 'acquire_live_price'))
+        self.assertEqual(agenda[18], ('15:29:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[19], ('15:30:00', 'close_market'))
+        self.assertEqual(agenda[20], ('15:45:00', 'post_close'))
 
     def test_process_trade_orders(self):
         """ test full process of trading:
@@ -1682,6 +1697,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 100.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), (5.0 + 100.0 * 60.5) / 100)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'filled')
         # check trade result status
@@ -1735,6 +1751,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 0.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), 0.0)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'canceled')
         # check trade result status
@@ -1794,6 +1811,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 100.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), (100.0 * 81.0 + 12.5) / 100)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
@@ -1853,6 +1871,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 0.0 + 400.0)
         self.assertEqual(int(available_qty), 0.0 + 0.0)
+        self.assertEqual(float(costs), (7.5 + 400.0 * 89.5) / 400)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'filled')
         # check trade result status
@@ -1937,6 +1956,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 100.0 - 100.0)
         self.assertEqual(int(available_qty), 100.0 - 100.0)
+        self.assertEqual(float(costs), 0)  # 因为没有持仓，所以costs为0
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'filled')
         # check trade result status
@@ -1996,6 +2016,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(int(own_qty), 400.0 - 300.0)
         self.assertEqual(int(available_qty), 400.0 - 300.0)
+        self.assertEqual(float(costs), (89.51875 * 400 + 65.3 - 300.0 * 140) / 100)
         # check trade_signal status
         self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
@@ -2020,10 +2041,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(summary[1]), [0, -100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
-        # fully fill signal 9
+        # partially filled order 9 with 99 shares sold at 191.0, with transaction fee 23.9
         raw_trade_result = {
             'order_id':       9,
-            'filled_qty':      100.0,
+            'filled_qty':      99.0,
             'price':           191.0,
             'transaction_fee': 23.9,
             'canceled_qty':    0.0,
@@ -2039,7 +2060,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'{read_trade_results_by_order_id(9, data_source=self.test_ds).loc[7].to_dict()}')
         # check cash availability
         own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
-        self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 100 * 191.0 - 23.9)
+        self.assertAlmostEqual(own_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3 + 99 * 191.0 - 23.9)
         self.assertAlmostEqual(available_cash, 50025 + 100 * 90.0 - 5.5 + 300 * 140.0 - 65.3)
         self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(9, data_source=self.test_ds)
@@ -2049,16 +2070,17 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
         )
-        self.assertEqual(int(own_qty), 400.0 - 300.0 - 100.0)
-        self.assertEqual(int(available_qty), 400.0 - 300.0 - 100.0)
+        self.assertEqual(int(own_qty), 400.0 - 300.0 - 99.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0 - 99.0)
+        self.assertAlmostEqual(float(costs), (-61.272 * 100 - 99 * 191 + 23.9) / 1.0)
         # check trade_signal status
-        self.assertEqual(trade_signal_detail['status'], 'filled')
+        self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
         trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 41934.7)
         self.assertEqual(trade_result['delivery_status'], 'DL')
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
-        self.assertEqual(trade_result['delivery_amount'], 19076.1)
+        self.assertEqual(trade_result['delivery_amount'], 18885.1)
         self.assertEqual(trade_result['delivery_status'], 'ND')
 
         # process trade result delivery for the last order
@@ -2069,29 +2091,30 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 trade_signal_detail['symbol'],
                 data_source=self.test_ds,
         )
-        self.assertEqual(int(own_qty), 400.0 - 300.0 - 100.0)
-        self.assertEqual(int(available_qty), 400.0 - 300.0 - 100.0)
+        self.assertEqual(int(own_qty), 400.0 - 300.0 - 99.0)
+        self.assertEqual(int(available_qty), 400.0 - 300.0 - 99.0)
+        self.assertAlmostEqual(float(costs), -25012.3)
         # check trade_signal status
-        self.assertEqual(trade_signal_detail['status'], 'filled')
+        self.assertEqual(trade_signal_detail['status'], 'partial-filled')
         # check trade result status
         trade_result = read_trade_result_by_id(6, data_source=self.test_ds)
         self.assertEqual(trade_result['delivery_amount'], 41934.7)
         self.assertEqual(trade_result['delivery_status'], 'DL')
         trade_result = read_trade_result_by_id(7, data_source=self.test_ds)
-        self.assertEqual(trade_result['delivery_amount'], 19076.1)
+        self.assertEqual(trade_result['delivery_amount'], 18885.1)
         self.assertEqual(trade_result['delivery_status'], 'DL')
         # check trade result summary with no share
         # in the summary, filled amount will be total amount in order, and price will be average filled price
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
         self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
-        self.assertEqual(list(summary[1]), [-100, 0, 100, -400, 0])
+        self.assertEqual(list(summary[1]), [-100, 0, 100, -399, 0])
         self.assertEqual(list(summary[2]), [90, 0, 81, 165.5, 0])
         # check trade result summary with share
         summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
         self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
-        self.assertEqual(list(summary[1]), [0, -100, -400])
+        self.assertEqual(list(summary[1]), [0, -100, -399])
         self.assertEqual(list(summary[2]), [0, 90, 165.5])
         # check trade result summary with share that out of range
         summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)

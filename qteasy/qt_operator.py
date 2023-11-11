@@ -795,10 +795,11 @@ class Operator:
             - par_types: list, 策略参数类型
             - par_ranges: list, 策略参数范围
             - data_freq: str, 策略数据频率
-            - sample_freq: str, 策略采样频率
             - window_length: int, 策略窗口长度
-            - data_types: list, 策略数据类型
-            - bt_price_types: list, 策略回测价格类型
+            - strategy_run_freq: str, 策略采样频率
+            - strategy_data_types: list, 策略数据类型
+            - strategy_run_timing: str, 策略运行时机
+            - use_latest_data_cycle: bool, 策略是否使用最新数据周期
 
         Returns
         -------
@@ -1435,7 +1436,7 @@ class Operator:
         return self._stg_blender[run_timing]
 
     def view_blender(self, run_timing=None):
-        """ TODO: 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
+        """ 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
              版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
 
         Parameters
@@ -1444,16 +1445,26 @@ class Operator:
             一个可用的run_timing
 
         """
-        # TODO: 在创建的可读性版本多孔蒙板混合器中，使用实际的strategyID代替strategy数字，
-        #  例如： blender string: 's0 + s1 + s2'
-        #  会被转化为: 'dma + macd + trix' (假设三个strategy的ID分别为dma，macd， trix）
+
+        from qteasy.blender import human_blender
         if run_timing is None:
-            return self._stg_blender_strings
+            all_blenders = {}
+            for run_timing in self.strategy_timings:
+                stg_ids = self.get_strategy_id_by_run_timing(run_timing)
+                all_blenders[run_timing] = human_blender(
+                        self._stg_blender_strings[run_timing],
+                        strategy_ids=stg_ids,
+                )
+            return all_blenders
         if run_timing not in self.strategy_timings:
             return None
         if run_timing not in self._stg_blender:
             return None
-        return self._stg_blender_strings[run_timing]
+        stg_id = self.get_strategy_id_by_run_timing(run_timing)
+        return human_blender(
+                self._stg_blender_strings[run_timing],
+                strategy_ids=stg_id,
+        )
 
     def set_parameter(self,
                       stg_id: [str, int],
@@ -1550,7 +1561,7 @@ class Operator:
         verbose: bool, Default False
             是否打印出策略的详细信息, 如果为True, 则会打印出策略的详细信息，包括选股策略的信息等
         """
-        from .utilfuncs import truncate_string
+        from .utilfuncs import adjust_string_length
         signal_type_descriptions = {
             'pt': 'Position Target, signal represents position holdings in percentage of total value',
             'ps': 'Percentage trade signal, represents buy/sell stock in percentage of total value',
@@ -1603,18 +1614,19 @@ class Operator:
                 run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
                 qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
                 data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
-                print(f'{truncate_string(stg_id, 10):<10}'
-                      f'{truncate_string(stg.name, 20):<20}'
-                      f'{truncate_string(run_type_str, 15):^15}'
-                      f'{truncate_string(data_type_str, 10):^10}'
-                      f'{truncate_string(str(stg.history_data_types), 25):^25}'
-                      f'{truncate_string(str(stg.pars), 20):^20}')
+                print(f'{adjust_string_length(stg_id, 10):<10}'
+                      f'{adjust_string_length(stg.name, 20):<20}'
+                      f'{adjust_string_length(run_type_str, 15):^15}'
+                      f'{adjust_string_length(data_type_str, 10):^10}'
+                      f'{adjust_string_length(str(stg.history_data_types), 25):^25}'
+                      f'{adjust_string_length(str(stg.pars), 20):^20}')
             print('=' * 100)
         # 打印每个strategy的详细信息
         if (self.strategy_count > 0) and verbose:
             print('            -------------------------Strategy Details-------------------------')
             for stg_id, stg in self.get_strategy_id_pairs():
-                print(f'Strategy_ID:        {stg_id}')
+                print(f'\nStrategy_ID:        {stg_id}\n'
+                      f'----------------------------------')
                 stg.info()
             print('=' * 100)
 
@@ -1882,33 +1894,23 @@ class Operator:
             # 一个offset变量用来调整生成滑窗的总数量，确保不管window_length如何变化，滑窗数量相同
             window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]
-            # debug
-            # 这里会产生window_length比hist_data_val更长的错误，原因是没有取到足够长的历史数据窗口
-            # 检查原因，可能跟config中的invest_start参数有关，在core.py的函数check_and_prepare_hist_data()
-            # 中，在1999行，
-            # axis_length = list(hist_data_val.shape)[1]
-            # if axis_length <= window_length:
-            #     print(f'[DEBUG] in function assign_hist_data(), \n'
-            #           f'got hist_data_val for strategy ({stg_id}) shape: '
-            #           f'{hist_data_val.shape} \n'
-            #           f'while window_length: {window_length}\n'
-            #           f'function arguments: \n'
-            #           f'hist_data ({hist_data.shape}): \n{hist_data}\n'
-            #           f'reference_data ({reference_data.shape if reference_data is not None else None}): '
-            #           f'\n{reference_data}\n'
-            #           f'cash_plan: {cash_plan}\n'
-            #           f'live_mode: {live_mode}\n'
-            #           f'live_running_stgs: {live_running_stgs}\n')
             the_rolling_window = rolling_window(
                     hist_data_val,
                     window=window_length,
                     axis=1
             )
-            # 在非live模式下，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要, 但是在live模式下，只会生成一组(最后一组)滑窗
-            # self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
-            self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-1:]if live_mode \
-                else \
-                the_rolling_window[window_length_offset:-1]
+            # 分配数据滑窗：在live模式下，取最后一组或倒数第二组滑窗分配给策略，具体取决于策略的属性
+            # use_latest_data_cycle因为live模式下，策略只会运行一次
+            # 在backtest模式下，将从倒数第二组滑窗或最后一组滑窗回溯window_length组滑窗并分配给策略
+            # 是否包含最后一组滑窗，取决于strategy的属性use_latest_data_cycle的值
+            if live_mode and stg.use_latest_data_cycle:  # 分配最后一组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-1:]
+            elif live_mode:  # 分配倒数第二组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[-2:-1]
+            elif stg.use_latest_data_cycle:  # 从最后一组滑窗开始回溯window_length组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset + 1:]
+            else:  # 从倒数第二组滑窗开始回溯window_length组滑窗
+                self._op_hist_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:-1]
 
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
@@ -1919,10 +1921,15 @@ class Operator:
                         window=window_length,
                         axis=0
                 )
-                # self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:] if live_mode \
-                self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-1:] if live_mode \
-                    else \
-                    the_rolling_window[window_length_offset:-1]
+                # 参考数据滑窗的分配方式与历史数据滑窗的分配方式相同
+                if live_mode and stg.use_latest_data_cycle:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-1:]
+                elif live_mode:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[-2:-1]
+                elif stg.use_latest_data_cycle:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset + 1:]
+                else:
+                    self._op_ref_data_rolling_windows[stg_id] = the_rolling_window[window_length_offset:-1]
             else:
                 self._op_ref_data_rolling_windows[stg_id] = None
 
@@ -1990,7 +1997,6 @@ class Operator:
         # 初始化历史交易信号和历史日期序号dict，在其中填入全0信号（信号的格式为array[0,0,0]，长度为share_count）
         for price_type_idx in range(self.strategy_timing_count):
             # 按照price_type_idx逐个生成数据并填充
-            # TODO: 在live模式运行qt时，需要允许用户从磁盘中读取历史实盘交易记录并在这里初始化历史交易记录
             price_type = self.strategy_timings[price_type_idx]
             stg_count = self.get_strategy_count_by_run_timing(price_type)
             self._op_signals_by_price_type_idx[price_type_idx] = [np.zeros(share_count)] * stg_count
@@ -2182,3 +2188,4 @@ class Operator:
             signal_value[:, :, i] = signal_out[timing].T
         self._op_list = signal_value
         return signal_value
+

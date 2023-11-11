@@ -17,6 +17,7 @@ from typing import Any, Callable, Union
 
 import pandas as pd
 import numpy as np
+import shutil
 
 from threading import Timer
 from queue import Queue
@@ -25,7 +26,7 @@ from cmd import Cmd
 import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration
+from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration, adjust_string_length
 from qteasy.broker import Broker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
@@ -36,6 +37,14 @@ from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names
 
 # TODO: 交易系统的配置信息，从QT_CONFIG中读取
 TIME_ZONE = 'Asia/Shanghai'
+UNIT_TO_TABLE = {
+            'h':     'stock_hourly',
+            '30min': 'stock_30min',
+            '15min': 'stock_15min',
+            '5min':  'stock_5min',
+            '1min':  'stock_1min',
+            'min':   'stock_1min',
+        }
 
 
 def parse_shell_argument(arg: str = None, no_arg=False) -> list:
@@ -103,6 +112,8 @@ class TraderShell(Cmd):
         super().__init__()
         self._trader = trader
         self._status = None
+        self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
+        self._command_history = []  # list of commands executed in shell
 
     @property
     def trader(self):
@@ -112,7 +123,35 @@ class TraderShell(Cmd):
     def status(self):
         return self._status
 
+    def watch_list(self):
+        return self._watch_list
+
+    def get_watched_prices(self):
+        """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
+        """
+        if self._watch_list:
+            from .emfuncs import stock_live_kline_price
+            symbols = self._watch_list
+            # 此处不使用并行，如果用户使用keyboard interrupt时正好在运行并行进程，会导致无法正确捕捉keyboard interrupt
+            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
+            if not live_prices.empty:
+                live_prices.close = live_prices.close.astype(float)
+                live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
+                live_prices.set_index('symbol', inplace=True)
+            watched_prices = ''
+            for symbol in symbols:
+                if symbol in live_prices.index:
+                    watched_prices += f' ={symbol[:-3]}{live_prices.loc[symbol, "name"]}/' \
+                                      f'{live_prices.loc[symbol, "close"]:.2f}/' \
+                                      f'{live_prices.loc[symbol, "change"]:+.2%}'
+                else:
+                    watched_prices += f' ={symbol[:-3]}/--/---'
+            return watched_prices
+        else:
+            return ' == Realtime prices can be displayed here. Use "watch" command to add stocks to watch list. =='
+
     # ----- basic commands -----
+    # TODO: add escape warning when realtime data acquiring is not available
     def do_status(self, arg):
         """ Show trader status
 
@@ -234,6 +273,43 @@ class TraderShell(Cmd):
                 sys.stdout.write(f'info command does not accept arguments other than "detail"\n')
         self.trader.info()
 
+    def do_pool(self, arg):
+        """ print information of the asset pool
+
+        Print detailed information of all stocks in the asset pool, including
+        stock symbol, name, company name, industry, listed date, etc.
+
+        """
+        return
+
+    def do_watch(self, arg):
+        """ Add or remove stock symbols to watch list
+
+        Usage:
+        ------
+        watch [symbol1] [symbol2] [symbol3]
+        """
+        args = parse_shell_argument(arg)
+        if not args:
+            sys.stdout.write(f'Current watch list: {self._watch_list}\n'
+                             f'input symbols to add to watch list, like 000651.SZ\n')
+            return False
+        if args:
+            arg_count = len(args)
+            if arg_count > 5:
+                args = args[:5]
+        from .utilfuncs import TS_CODE_IDENTIFIER_CN_STOCK
+        import re
+        for arg in args:
+            # 检查arg是否股票代码，如果是，添加到watch list，除非该代码已在watch list中
+            if re.match(TS_CODE_IDENTIFIER_CN_STOCK, arg.upper()):
+                if arg not in self._watch_list:
+                    self._watch_list.append(arg.upper())
+                # 检查watch_list中代码个数是否超过5个，如果超过，删除最早添加的代码
+                if len(self._watch_list) > 5:
+                    self._watch_list.pop(0)
+        print(f'current watch list: {self._watch_list}')
+
     def do_positions(self, arg):
         """ Get account positions
 
@@ -250,10 +326,10 @@ class TraderShell(Cmd):
         print(f'current positions: \n')
         print(
                 self._trader.account_position_info.to_string(
-                        columns=['name', 'qty', 'available_qty', 'cost', 'current_price',
-                                 'market_value', 'profit', 'profit_ratio'],
-                        header=['name', 'qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio'],
-                        formatters={'name':          '{:s}'.format,
+                        columns=['qty', 'available_qty', 'cost', 'current_price',
+                                 'market_value', 'profit', 'profit_ratio', 'name'],
+                        header=['qty', 'available', 'cost', 'price', 'market_value', 'profit', 'profit_ratio', 'name'],
+                        formatters={'name':          '{:8s}'.format,
                                     'qty':           '{:,.2f}'.format,
                                     'available_qty': '{:,.2f}'.format,
                                     'cost':          '¥{:,.2f}'.format,
@@ -261,6 +337,16 @@ class TraderShell(Cmd):
                                     'market_value':  '¥{:,.2f}'.format,
                                     'profit':        '¥{:,.2f}'.format,
                                     'profit_ratio':  '{:.2%}'.format},
+                        col_space={
+                            'name': 8,
+                            'qty': 10,
+                            'available_qty': 10,
+                            'cost': 12,
+                            'current_price': 12,
+                            'market_value': 14,
+                            'profit': 14,
+                            'profit_ratio': 8,
+                        },
                         justify='right',
                 )
         )
@@ -336,6 +422,9 @@ class TraderShell(Cmd):
                     print(f'configure key "{key}" can not be changed to "{value}".')
             except Exception as e:
                 print(f'Error: {e}')
+                if self.trader.debug:
+                    import traceback
+                    traceback.print_exc()
             return
         else:
             sys.stdout.write(f'config command does not accept more than 2 arguments\n')
@@ -382,31 +471,46 @@ class TraderShell(Cmd):
                                          history['filled_qty'])
         # calculate rows: cum_qty, trade_cost, cum_cost, value, share_cost, earnings, and earning rate
         history['cum_qty'] = history['filled_qty'].cumsum()
-        history['trade_cost'] = history['filled_qty'] * history['price_filled']
+        history['trade_cost'] = history['filled_qty'] * history['price_filled'] + history['transaction_fee']
         history['cum_cost'] = history['trade_cost'].cumsum()
         history['value'] = history['cum_qty'] * history['price_filled']
         history['share_cost'] = history['cum_cost'] / history['cum_qty']
         history['earnings'] = history['value'] - history['cum_cost']
         history['earning_rate'] = history['earnings'] / history['cum_cost']
         # add row: name
-        history['name'] = get_symbol_names(datasource=self.trader.datasource, symbols=history['symbol'].tolist())
+        all_names = get_symbol_names(datasource=self.trader.datasource, symbols=history['symbol'].tolist())
+        history['name'] = [adjust_string_length(name, 8, hans_aware=True, padding='left') for name in all_names]
 
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
         # for earning rate
         print(
                 history.to_string(
-                        columns=['execution_time', 'symbol', 'name', 'direction', 'filled_qty', 'price_filled',
-                                 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate'],
-                        header=['time', 'symbol', 'name', 'operation', 'qty', 'price', 'holdings',
-                                'holding value', 'cost', 'earnings', 'earning_rate'],
-                        formatters={'name':         '{:s}'.format,
-                                    'filled_qty':   '{:,.2f}'.format,
-                                    'price_filled': '{:,.2f}'.format,
-                                    'cum_qty':      '{:,.2f}'.format,
-                                    'value':        '{:,.2f}'.format,
-                                    'share_cost':   '{:,.2f}'.format,
-                                    'earnings':     '{:,.2f}'.format,
-                                    'earning_rate': '{:.3%}'.format},
+                        columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
+                                 'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
+                                 'name'],
+                        header=['time', 'symbol', 'oper', 'qty', 'price',
+                                'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
+                                'name'],
+                        formatters={
+                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                            'name':         '{:8s}'.format,
+                            'operation':    '{:s}'.format,
+                            'filled_qty':   '{:,.2f}'.format,
+                            'price_filled': '¥{:,.2f}'.format,
+                            'transaction_fee': '¥{:,.2f}'.format,
+                            'cum_qty':      '{:,.2f}'.format,
+                            'value':        '¥{:,.2f}'.format,
+                            'share_cost':   '¥{:,.2f}'.format,
+                            'earnings':     '¥{:,.2f}'.format,
+                            'earning_rate': '{:.3%}'.format,
+                        },
+                        col_space={
+                            'name': 8,
+                            'price_filled': 10,
+                            'value': 12,
+                            'share_cost': 10,
+                            'earnings': 12,
+                        },
                         justify='right',
                         index=False,
                 )
@@ -504,21 +608,27 @@ class TraderShell(Cmd):
             order_details['name'] = names
             print(order_details.to_string(
                     index=False,
-                    columns=['execution_time','symbol', 'name', 'position', 'direction', 'qty', 'price_quoted',
+                    columns=['execution_time', 'symbol', 'position', 'direction', 'qty', 'price_quoted',
                              'submitted_time', 'status', 'price_filled', 'filled_qty', 'canceled_qty',
-                             'delivery_status'],
-                    header=['time', 'symbol', 'name', 'pos', 'buy/sell', 'qty', 'price',
-                            'submitted', 'status', 'filled_price', 'filled', 'canceled',
-                            'delivery'],
-                    formatters={'name':           '{:8s}'.format,
+                             'delivery_status', 'name'],
+                    header=['time', 'symbol', 'pos', 'buy/sell', 'qty', 'price',
+                            'submitted', 'status', 'fill_price', 'fill_qty', 'canceled',
+                            'delivery', 'name'],
+                    formatters={'name':           '{:s}'.format,
                                 'qty':            '{:,.2f}'.format,
-                                'price_quoted':   '{:,.2f}'.format,
-                                'price_filled':   '{:,.2f}'.format,
+                                'price_quoted':   '¥{:,.2f}'.format,
+                                'price_filled':   '¥{:,.2f}'.format,
                                 'filled_qty':     '{:,.2f}'.format,
                                 'canceled_qty':   '{:,.2f}'.format,
                                 'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
                                 'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
                                 },
+                    col_space={
+                        'price_quoted': 10,
+                        'price_filled': 10,
+                        'filled_qty': 10,
+                        'canceled_qty': 10,
+                    },
                     justify='right',
             ))
 
@@ -596,7 +706,7 @@ class TraderShell(Cmd):
             )
             current_price = last_available_data['close'][symbol][-1]
         except Exception as e:
-            print(f'Error: {e}, latest available data can not be donwloaded. 10.00 will be used as current price.')
+            print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
             import traceback
             traceback.print_exc()
             current_price = 10.00
@@ -651,7 +761,7 @@ class TraderShell(Cmd):
               'press "Ctrl+C" to exit dashboard mode and select from prompted options.\n')
         return True
 
-    def do_strategies(self, arg):
+    def do_strategies(self, arg: str):
         """ Show strategies information or set parameters for a strategy
 
         Usage:
@@ -663,12 +773,14 @@ class TraderShell(Cmd):
         to display strategies information:
         (QTEASY): strategies
         to display strategies information in detail:
-        (QTEASY): strategies d
+        (QTEASY): strategies d|detail
         to set parameters for strategy "stg":
-        (QTEASY): strategies s stg (1, 2, 3)
+        (QTEASY): strategies s|strategy stg (1, 2, 3)
+        to set blender of strategies:
+        (QTEASY): strategies b|blender <blender> (not implemented yet)
 
         """
-
+        # TODO: to change blender of strategies, use strategies blender|b <blender>
         args = parse_shell_argument(arg)
         if not args:
             self.trader.operator.info()
@@ -686,6 +798,9 @@ class TraderShell(Cmd):
                 new_pars = eval(','.join(pars))
             except Exception as e:
                 print(f'Invalid parameter ({",".join(pars)})! Error: {e}')
+                if self.trader.debug:
+                    import traceback
+                    traceback.print_exc()
                 return
             if not isinstance(new_pars, tuple):
                 print(f'Invalid parameter ({new_pars})! Parameter should be a tuple')
@@ -697,9 +812,14 @@ class TraderShell(Cmd):
             except Exception as e:
                 print(f'Can not set {new_pars} to {strategy_id}, Error: {e}')
                 self.trader.operator.info()
+                if self.trader.debug:
+                    import traceback
+                    traceback.print_exc()
                 return
             print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
             self.trader.operator.info()
+        elif args[0] in ['b', 'blender']:
+            print(f'Not implemented yet.')
 
     def do_agenda(self, arg):
         """ Show current strategy task agenda
@@ -713,49 +833,62 @@ class TraderShell(Cmd):
             return
         print(f'Execution Agenda -- {self.trader.task_daily_agenda}')
 
-    def do_run(self, arg):
-        """ To run a strategy in current setup, only available in DEBUG mode.
+    def do_run(self, arg: str):
+        """ To force run a strategy or a task in current setup, only available in DEBUG mode.
         strategy id can be found in strategies command.
 
         Usage:
         ------
         run stg1 [stg2] [stg3] ...
+        run task task_name [arg1] [arg2] ...
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
             return
-        strategies = str_to_list(arg, sep_char=' ')
-        if not isinstance(strategies, list):
+        argument = str_to_list(arg, sep_char=' ')
+        if not isinstance(argument, list):
             print('Invalid argument, use "strategies" to view all strategy ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        if not strategies:
+        if not argument:
             print('A valid strategy id must be given, use "strategies" to view all ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        all_strategy_ids = self.trader.operator.strategy_ids
-        if not all([strategy in all_strategy_ids for strategy in strategies]):
-            invalid_stg = [stg for stg in strategies if stg not in all_strategy_ids]
-            print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
-            return
+        if not argument[0] in ['task', 't']:  # run strategies
+            all_strategy_ids = self.trader.operator.strategy_ids
+            if not all([strategy in all_strategy_ids for strategy in argument]):
+                invalid_stg = [stg for stg in argument if stg not in all_strategy_ids]
+                print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
+                return
 
-        current_trader_status = self.trader.status
-        current_broker_status = self.trader.broker.status
+            current_trader_status = self.trader.status
+            current_broker_status = self.trader.broker.status
 
-        self.trader.status = 'running'
-        self.trader.broker.status = 'running'
+            self.trader.status = 'running'
+            self.trader.broker.status = 'running'
 
-        try:
-            self.trader.run_task('run_strategy', strategies)
-        except Exception as e:
-            import traceback
-            print(f'Error in running strategy: {e}')
-            print(traceback.format_exc())
+            try:
+                self.trader.run_task('run_strategy', argument)
+            except Exception as e:
+                import traceback
+                print(f'Error in running strategy: {e}')
+                print(traceback.format_exc())
 
-        import time
-        time.sleep(20)
-        self.trader.status = current_trader_status
-        self.trader.broker.status = current_broker_status
+            import time
+            time.sleep(20)
+            self.trader.status = current_trader_status
+            self.trader.broker.status = current_broker_status
+        else:  # run tasks
+            if len(argument) == 1:
+                print('Please input a valid task name.')
+                return
+            task_name = argument[1]
+            try:
+                self.trader.run_task(task_name)
+            except Exception as e:
+                import traceback
+                print(f'Error in running task: {e}')
+                print(traceback.format_exc())
 
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
@@ -778,6 +911,8 @@ class TraderShell(Cmd):
         Thread(target=self.trader.broker.run).start()
 
         prev_message = ''
+        live_price_refresh_timer = 0
+        watched_prices = self.get_watched_prices()
         while True:
             # enter shell loop
             try:
@@ -787,6 +922,7 @@ class TraderShell(Cmd):
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
+                        text_width = shutil.get_terminal_size().columns
                         message = self._trader.message_queue.get()
                         if message[-2:] == '_R':
                             # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
@@ -799,16 +935,25 @@ class TraderShell(Cmd):
                                     next_normal_message = next_message
                                     break
                                 message = next_message
-                            print(message[:-2], end='\r')
+
+                            message = message[:-2] + ' ' + watched_prices
+                            print(f'{adjust_string_length(message, text_width)}', end='\r')
                             if next_normal_message:
-                                print(next_normal_message)
+                                print(f'{adjust_string_length(next_normal_message, text_width)}')
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            print(message)
+                            print(f'{adjust_string_length(message, text_width)}')
                         prev_message = message
-
+                    # check if live price refresh timer is up, if yes, refresh live prices
+                    live_price_refresh_timer += 0.05
+                    if live_price_refresh_timer > 5:
+                        from concurrent.futures import ThreadPoolExecutor
+                        with ThreadPoolExecutor(max_workers=1) as executor:
+                            future = executor.submit(self.get_watched_prices)
+                            watched_prices = future.result(timeout=3)
+                        live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
                     sys.stdout.write('will enter interactive mode.\n')
@@ -962,6 +1107,10 @@ class Trader(object):
         self._status = 'stopped'
         self._prev_status = None
 
+        self.live_price_channel = self._config['live_price_acquire_channel']
+        self.live_price_freq = self._config['live_price_acquire_freq']
+        self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
+
         self.account = get_account(self.account_id, data_source=self._datasource)
 
         self.debug = debug
@@ -1033,7 +1182,7 @@ class Trader(object):
         # 获取每个symbol的names
         positions = positions.T
         symbol_names = get_symbol_names(datasource=self._datasource, symbols=positions.index.tolist())
-        positions['name'] = symbol_names
+        positions['name'] = [adjust_string_length(name, 8, hans_aware=True, padding='left') for name in symbol_names]
         return positions
 
     @property
@@ -1046,14 +1195,11 @@ class Trader(object):
     def account_position_info(self):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
-        try:
-            hist_op, hist_ref = check_and_prepare_live_trade_data(
-                    operator=self._operator,
-                    config=self._config,
-                    datasource=self._datasource,
-            )
-            current_prices = hist_op['close', :, -1].squeeze()
-        except Exception as e:
+
+        # 获取每个symbol的最新价格，从self.live_price中获取，如果没有，使用全nan填充
+        if self.live_price is not None:
+            current_prices = self.live_price
+        else:
             current_prices = [np.nan] * len(positions)
 
         positions['name'] = positions['name'].fillna('')
@@ -1154,6 +1300,7 @@ class Trader(object):
                 if self.status != 'paused':
                     self._add_task_from_agenda(current_time)
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
+                # TODO: move these operations to a task "change_date"
                 if current_date != pre_date:
                     self._check_trade_day()
                     self._initialize_agenda(current_time)
@@ -1216,6 +1363,14 @@ class Trader(object):
               f'Total Value:                    ¥ {total_value:,.2f}\n'
               f'Total Stock Value:              ¥ {total_market_value:,.2f}\n'
               f'Total Profit:                   ¥ {total_profit:,.2f}\n')
+        asset_in_pool= len(self.asset_pool)
+        asset_pool_string = adjust_string_length(
+                s=str(self.asset_pool),
+                n=80,
+        )
+        print(f'Current Investment Pool:        {asset_in_pool} stocks: {asset_pool_string}\n'
+              f'                                Use "pool" command to view asset pool details.\n'
+              f'Current Investment Type:        {self.asset_type}\n')
         if detail:
             position_level = total_market_value / total_value
             total_profit_ratio = total_profit / total_value
@@ -1281,7 +1436,7 @@ class Trader(object):
         if self.debug:
             message = f'[DEBUG]-{message}'
         if self.debug and (message[-2:] != '_R'):
-            print(message)  # 如果在debug模式下且不是覆盖型信息，直接打印
+            print(f'{message: <80}')  # 如果在debug模式下且不是覆盖型信息，直接打印
         else:
             self.message_queue.put(message)
 
@@ -1325,6 +1480,9 @@ class Trader(object):
             result_id = process_trade_result(result, data_source=self._datasource)
         except Exception as e:
             self.post_message(f'{e} Error occurred during processing trade result, result will be ignored')
+            if self.debug:
+                import traceback
+                traceback.print_exc()
             return
         if result_id is not None:
             from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail
@@ -1375,13 +1533,14 @@ class Trader(object):
             - position: str, 交易标的的持仓方向，long/short
             - direction: str, 交易方向，buy/sell
             - order_type: str, 订单类型，market/limit
-            - qty: int, 订单数量
-            - price: float, 订单价格
+            - qty: int, 订单申报数量
+            - price: float, 订单申报价格
             - submitted_time: datetime, 订单提交时间
             - status: str, 订单状态，filled/canceled/partial-filled
             - price_filled: float, 成交价格
             - filled_qty: int, 成交数量
             - canceled_qty: int, 撤单数量
+            - transaction_fee: float, 交易费用
             - execution_time: datetime, 成交时间
             - delivery_status: str, 交割状态，D/ND
         """
@@ -1402,7 +1561,7 @@ class Trader(object):
         order_result_details = order_result_details.reindex(
                 columns=['symbol', 'position', 'direction', 'order_type',
                          'qty', 'price_quoted', 'submitted_time', 'status',
-                         'price_filled', 'filled_qty', 'canceled_qty', 'execution_time',
+                         'price_filled', 'filled_qty', 'canceled_qty', 'transaction_fee', 'execution_time',
                          'delivery_status'],
         )
         return order_result_details
@@ -1477,26 +1636,17 @@ class Trader(object):
             freq = strategy.strategy_run_freq.upper()
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
-        # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
-        # duration, base_unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=True)
-        unit_to_table = {
-            'h':     'stock_hourly',
-            '30min': 'stock_30min',
-            '15min': 'stock_15min',
-            '5min':  'stock_5min',
-            '1min':  'stock_1min',
-            'min':   'stock_1min',
-        }
         # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
         if self.debug:
             self.post_message(f'getting live data...')
+        # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据
-            table_to_update = unit_to_table[unit.lower()]
+            table_to_update = UNIT_TO_TABLE[unit.lower()]
             real_time_data = self._datasource.fetch_realtime_price_data(
                     table=table_to_update,
-                    channel='tushare',
+                    channel=config['live_price_acquire_channel'],
                     symbols=self.asset_pool,
             )
 
@@ -1511,38 +1661,19 @@ class Trader(object):
                     df=real_time_data,
                     merge_type='update',
             )
-            # print(f'[DEBUG] trader.py - running strategy, is a trade day, downloaded real_time_data: \n'
-            #       f'{real_time_data} \nand '
-            #       f'{rows_written} rows are saved in table {table_to_update} \n')
-            # from qteasy.history import get_history_panel
-            # refreshed_data = get_history_panel(
-            #         data_source=self._datasource,
-            #         htypes="close",
-            #         shares=self.asset_pool,
-            #         start=data_start_time,
-            #         end=data_end_time,
-            #         freq=max_strategy_freq,
-            #         asset_type="E",
-            #         adj="none",
-            # )
-            #
-            # print(f'{refreshed_data} \n')
 
-        # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的最新数据
-        else:  # TIME_FREQ >= 'D':
-            # 如果"use_realtime_price_as_close"为True，则将实时数据的close列作为当前所需价格
+        # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的历史数据
+        else:
             pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
+        if self.debug:
+            self.post_message(f'preparing trade data...')
         hist_op, hist_ref = check_and_prepare_live_trade_data(
                 operator=operator,
                 config=config,
                 datasource=self._datasource,
+                live_prices=self.live_price,
         )
-        # if not hist_op.is_empty:
-        #     print(f'[DEBUG] trader.py - running strategy, downloaded hist_op data: {hist_op} \n')
-        # else:
-        #     print(f'[DEBUG] trader.py - running strategy, empty hist_op is downloaded:\nhist_op: {hist_op} \n'
-        #           f'hist_ref: {hist_ref} \n')
         if self.debug:
             self.post_message(f'read real time data and set operator data allocation')
         operator.assign_hist_data(
@@ -1559,7 +1690,7 @@ class Trader(object):
                 shares=shares,
                 data_source=self._datasource,
         )
-        # 当前价格是hist_op的最后一行  # TODO: 需要根据strategy_timing获取价格的类型（如open价格或close价格）
+        # 当前价格是hist_op的最后一行, 如果需要用latest_data_cycle，最新的实时数据已经包含在hist_op中了
         timing_type = operator[strategy_ids[0]].strategy_timing
         current_prices = hist_op[timing_type, :, -1].squeeze()
         if current_prices.ndim == 0:
@@ -1583,7 +1714,6 @@ class Trader(object):
         trade_data[:, 3] = last_trade_result_summary[1]
         trade_data[:, 4] = last_trade_result_summary[2]
 
-        # print(f'[DEBUG]: to created signal, trade_data: {trade_data}\n')
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
                            f'"Operator.op_type = "step"')
@@ -1608,6 +1738,7 @@ class Trader(object):
                 available_cash=available_cash,
                 config=config
         )
+        names = get_symbol_names(self._datasource, symbols)
         submitted_qty = 0
         if self.debug:
             self.post_message(f'generated trade signals:\n'
@@ -1616,7 +1747,7 @@ class Trader(object):
                               f'directions: {directions}\n'
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n')
-        for sym, pos, d, qty, price in zip(symbols, positions, directions, quantities, quoted_prices):
+        for sym, name, pos, d, qty, price in zip(symbols, names, positions, directions, quantities, quoted_prices):
             if qty <= 0.001:
                 continue
             pos_id = get_or_create_position(account_id=self.account_id,
@@ -1640,7 +1771,7 @@ class Trader(object):
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
                 trade_order['order_id'] = order_id
                 self._broker.order_queue.put(trade_order)
-                self.post_message(f'[NEW ORDER {order_id}]: {d}-{pos} {qty} of {sym} @ {price}')
+                self.post_message(f'[NEW ORDER {order_id}]: <{name} - {sym}> {d}-{pos} {qty} shares @ {price}')
                 # 记录已提交的交易数量
                 submitted_qty += 1
 
@@ -1656,6 +1787,7 @@ class Trader(object):
 
         datasource.reconnect()
         datasource.reconnect()
+
         datasource.get_all_basic_table_data(
                 refresh_cache=True,
         )
@@ -1721,6 +1853,40 @@ class Trader(object):
                 config=self._config
         )
         self.post_message('processed trade delivery')
+
+    def _acquire_live_price(self):
+        """ 获取当日实时价格, 并保存实时价格到self.live_price中 """
+        if self.debug:
+            self.post_message('running task acquire_live_price')
+
+        from .emfuncs import stock_live_kline_price
+        # read real_time_data in a separate thread, set timeout to 20 seconds, if timeout, abort and return None
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(stock_live_kline_price, symbols=self.asset_pool)
+            try:
+                real_time_data = future.result(timeout=20)
+            except TimeoutError:
+                self.post_message('TimeoutError occurred when reading real time data, will try again')
+                return None
+
+        real_time_data.set_index('symbol', inplace=True)
+        # 将real_time_data 赋值给self.live_price
+        self.live_price = real_time_data
+        self.post_message(f'acquired live price data, live prices updated!')
+
+
+
+    def _change_date(self):
+        """ 改变日期，在日期改变（午夜）前执行的操作，包括：
+
+        - 处理前一日交易的交割
+        - 处理前一日获取的实时数据、并准备下一日的实时数据
+        - 检查下一日是否是交易日，并更新相关的运行参数
+        - 重新生成agenda
+        - 生成消息发送到消息队列
+        """
+        raise NotImplementedError
 
     def _market_open(self):
         """ 开市时操作：
@@ -1882,7 +2048,7 @@ class Trader(object):
                     count_down_to_next_task = count_down_sec
                     next_task = task
         if not task_added:
-            self.post_message(f'will execute next task:({next_task}) in '
+            self.post_message(f'Next task:({next_task[1]}) in '
                               f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
                               new_line=False)
 
@@ -1890,7 +2056,7 @@ class Trader(object):
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：
         1. 每日固定事件如开盘、收盘、交割等
         2. 每日需要定时执行的交易策略
-        3. 需要定期下载的历史数据（这部分信息需要在QT_CONFIG中定义）
+        3. 定时下载的实时数据
 
         Parameters
         ----------
@@ -2105,29 +2271,30 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        # print(f'[DEBUG] position {position_id} changed with data: {position_data}')
         return
 
     AVAILABLE_TASKS = {
-        'pre_open':       _pre_open,
-        'open_market':    _market_open,
-        'close_market':   _market_close,
-        'post_close':     _post_close,
-        'run_strategy':   _run_strategy,
-        'process_result': _process_result,
-        'start':          _start,
-        'stop':           _stop,
-        'sleep':          _sleep,
-        'wakeup':         _wakeup,
-        'pause':          _pause,
-        'resume':         _resume,
-        'refill':         _refill,
+        'pre_open':             _pre_open,
+        'open_market':          _market_open,
+        'close_market':         _market_close,
+        'post_close':           _post_close,
+        'run_strategy':         _run_strategy,
+        'process_result':       _process_result,
+        'acquire_live_price':   _acquire_live_price,
+        'change_date':          _change_date,
+        'start':                _start,
+        'stop':                 _stop,
+        'sleep':                _sleep,
+        'wakeup':               _wakeup,
+        'pause':                _pause,
+        'resume':               _resume,
+        'refill':               _refill,
     }
 
     TASK_WHITELIST = {
         'stopped':  ['start'],
         'running':  ['stop', 'sleep', 'pause', 'run_strategy', 'process_result', 'pre_open',
-                     'open_market', 'close_market'],
+                     'open_market', 'close_market', 'acquire_live_price'],
         'sleeping': ['wakeup', 'stop', 'pause', 'pre_open',
                      'process_result',  # 如果交易结果已经产生，哪怕处理时Trader已经处于sleeping状态，也应该处理完所有结果
                      'open_market', 'post_close', 'refill'],
@@ -2215,7 +2382,6 @@ def start_trader(
     broker = ALL_BROKERS.get(broker_type, NotImplementedBroker)(
             **broker_params
     )
-    print(f'[DEBUG], broker created: {broker}')
     trader = Trader(
             account_id=account_id,
             operator=operator,
@@ -2240,12 +2406,19 @@ def start_trader(
 def refill_missing_datasource_data(operator, trader, config, datasource):
     """ 针对日频或以上的数据，检查数据源中的数据可用性，下载缺失的数据到数据源
 
+    在trader运行过程中，为了避免数据缺失，检查当前Datasource中的数据是否已经填充到最新日期，
+    如果没有，则下载缺失的数据到数据源中，以便后续使用
+
     Parameters
     ----------
     operator: qt.Operator
+        Operator交易员对象
     trader: Trader
+        Trader交易对象
     config: qt.Config
+        Config配置对象
     datasource: qt.Datasource
+        Datasource数据源对象
 
     Returns
     -------

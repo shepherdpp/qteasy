@@ -19,7 +19,7 @@ from qteasy.utilfuncs import rolling_window
 from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
 from qteasy.tafuncs import sma
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from qteasy.blender import _exp_to_token, blender_parser, signal_blend
+from qteasy.blender import _exp_to_token, blender_parser, signal_blend, human_blender
 
 
 class TestLSStrategy(RuleIterator):
@@ -37,14 +37,17 @@ class TestLSStrategy(RuleIterator):
     """
 
     def __init__(self):
-        super().__init__(name='test_LS',
-                         description='test long/short strategy',
-                         par_count=2,
-                         par_types='discr, conti',
-                         par_range=([1, 5], [2, 10]),
-                         strategy_data_types='close, open, high, low',
-                         data_freq='d',
-                         window_length=5)
+        super().__init__(
+                name='test_LS',
+                description='test long/short strategy',
+                par_count=2,
+                par_types='discr, conti',
+                par_range=([1, 5], [2, 10]),
+                strategy_data_types='close, open, high, low',
+                data_freq='d',
+                window_length=5,
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -96,16 +99,18 @@ class TestSelStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SEL',
-                         description='test portfolio selection strategy',
-                         par_count=0,
-                         par_types='',
-                         par_range=(),
-                         strategy_data_types='high, low, close',
-                         data_freq='d',
-                         strategy_run_freq='10d',
-                         window_length=5,
-                         )
+        super().__init__(
+                name='test_SEL',
+                description='test portfolio selection strategy',
+                par_count=0,
+                par_types='',
+                par_range=(),
+                strategy_data_types='high, low, close',
+                data_freq='d',
+                strategy_run_freq='10d',
+                window_length=5,
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None):
@@ -148,15 +153,18 @@ class TestSelStrategyDiffTime(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SEL',
-                         description='test portfolio selection strategy',
-                         par_count=0,
-                         par_types='',
-                         par_range=(),
-                         strategy_data_types='close, low, open',
-                         data_freq='d',
-                         strategy_run_freq='w',
-                         window_length=2)
+        super().__init__(
+                name='test_SEL',
+                description='test portfolio selection strategy',
+                par_count=0,
+                par_types='',
+                par_range=(),
+                strategy_data_types='close, low, open',
+                data_freq='d',
+                strategy_run_freq='w',
+                window_length=2,
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None):
@@ -193,7 +201,8 @@ class TestSigStrategy(GeneralStg):
                 par_types='conti, conti, conti',
                 par_range=([0, 10], [-3, 3], [-3, 3]),
                 strategy_data_types='close, open, high, low',
-                window_length=2
+                window_length=2,
+                use_latest_data_cycle=False,
         )
         pass
 
@@ -256,8 +265,8 @@ class MyStg(qt.RuleIterator):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线的当前值
-        s_ma = qt.sma(h[0], s)[-1]
-        f_ma = qt.sma(h[0], f)[-1]
+        s_ma = sma(h[0], s)[-1]
+        f_ma = sma(h[0], f)[-1]
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_ma * (1 + m)
@@ -274,12 +283,15 @@ class MyStg(qt.RuleIterator):
 
 class StgBuyOpen(GeneralStg):
     def __init__(self, pars=(20,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         name='OPEN_BUY',
-                         par_range=[(0, 100)],
-                         strategy_run_timing='open')
+        super().__init__(
+                pars=pars,
+                par_count=1,
+                par_types=['int'],
+                name='OPEN_BUY',
+                par_range=[(0, 100)],
+                strategy_run_timing='open',
+                use_latest_data_cycle=False,
+        )
         pass
 
     def realize(self, h, r=None, t=None):
@@ -293,7 +305,7 @@ class StgBuyOpen(GeneralStg):
         # buy_pos = np.nanargmax(factors)
         # sig[buy_pos] = 1
         # return sig
-        if np.all(factors <= 0.0):
+        if np.all(factors <= 0.002):
             # 如果所有的选股指标都小于0，则全部卖出
             # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
             return sig
@@ -324,7 +336,7 @@ class StgSelClose(GeneralStg):
         sig = -np.ones_like(factors)
         # sig[np.nanargmax(factors)] = 0
         # return sig
-        if np.all(factors <= 0.0):
+        if np.all(factors <= 0.002):
             # 如果所有的选股指标都小于0，则全部卖出
             return sig
         else:
@@ -972,21 +984,21 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(blender_open, ['+', 's1', 's1'])
         self.assertEqual(blender_close, ['+', 's1', 's1'])
 
-        op.set_blender(['s1+1', 's3+4'])
+        op.set_blender(['s1+s2+1', 's0+4'])
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['+', '4', 's3'])
-        self.assertEqual(blender_close, ['+', '1', 's1'])
-        self.assertEqual(op.view_blender('open'), 's3+4')
-        self.assertEqual(op.view_blender('close'), 's1+1')
+        self.assertEqual(blender_open, ['+', '4', 's0'])
+        self.assertEqual(blender_close, ['+', '1', '+', 's2', 's1'])
+        self.assertEqual(op.view_blender('open'), 'dma + 4')
+        self.assertEqual(op.view_blender('close'), 'macd + dma_1 + 1')
 
-        op.strategy_blenders = (['s1+2', 's2*3'])
+        op.strategy_blenders = (['s1+2', 's0*3'])
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_open, ['*', '3', 's0'])
         self.assertEqual(blender_close, ['+', '2', 's1'])
-        self.assertEqual(op.view_blender('open'), 's2*3')
-        self.assertEqual(op.view_blender('close'), 's1+2')
+        self.assertEqual(op.view_blender('open'), 'dma * 3')
+        self.assertEqual(op.view_blender('close'), 'macd + 2')
 
         # test error inputs:
         self.assertRaises(TypeError, op.set_blender, 123, 'open')
@@ -996,32 +1008,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_blender('1+3', 'volume')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_open, ['*', '3', 's0'])
         self.assertEqual(blender_close, ['+', '2', 's1'])
         # price_type not valid, no change is made
         op.set_blender('1+2', 'wrong_timing')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_open, ['*', '3', 's0'])
         self.assertEqual(blender_close, ['+', '2', 's1'])
         # wrong type of blender, no change is made
         self.assertRaises(TypeError, op.set_blender, 55, 'open')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_open, ['*', '3', 's0'])
         self.assertEqual(blender_close, ['+', '2', 's1'])
         # wrong type of blender, no change is made
         self.assertRaises(TypeError, op.set_blender, ['1+2'], 'close')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_open, ['*', '3', 's0'])
         self.assertEqual(blender_close, ['+', '2', 's1'])
         # can't parse blender, raise and no change is made
         self.assertWarns(Warning, op.set_blender, 'a+bc', 'high')
         self.assertRaises(ValueError, op.set_blender, 'a+bc', 'close')
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's2'])
+        self.assertEqual(blender_open, ['*', '3', 's0'])
         self.assertEqual(blender_close, ['+', '2', 's1'])
         self.assertIs(blender_high, None)
 
@@ -1478,7 +1490,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
         self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
-        self.op.assign_hist_data(hist_data=self.hp1, cash_plan=on_spot_cash)
+        self.op.assign_hist_data(
+                hist_data=self.hp1,
+                cash_plan=on_spot_cash,
+        )  # TODO: 测试交易策略不需要使用当前数据周期的情况(stg.use_latest_data_cycle==False) for version 1.0.7
         # test if all historical data related properties are set
         self.assertIsInstance(self.op._op_list_shares, dict)
         self.assertIsInstance(self.op._op_list_hdates, dict)
@@ -1636,7 +1651,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id=1,
                               pars=())
-        self.op.assign_hist_data(hist_data=self.hp1, cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(
+                hist_data=self.hp1,
+                cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000),
+        )
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
@@ -1724,7 +1742,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
         self.op.set_blender(blender='s0 or s1', run_timing='open')
-        self.op.assign_hist_data(hist_data=self.hp1, cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(
+                hist_data=self.hp1,
+                cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000),
+        )
         print('--test how operator information is printed out--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
@@ -2259,6 +2280,27 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         hit = np.allclose(res, target)
         self.assertTrue(hit)
+
+        # test human_blender function:
+        print('\ntest human_blender function')
+        strategy_ids = ['MACD', 'DMA', 'Crossline', 'TRIX', 'KDJ']
+        blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
+        res = human_blender(blender_exp, strategy_ids)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        self.assertEqual(res, 'avgpos_3_0.5(MACD, DMA, Crossline, TRIX, KDJ)')
+
+        blender_exp = 'max(s0, s1, s2)+s3*s4'
+        res = human_blender(blender_exp, strategy_ids)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        self.assertEqual(res, 'max(MACD, DMA, Crossline) + TRIX * KDJ')
+
+        blender_exp = 'max(s0, s1/s0)+s1and0.5*s4'
+        res = human_blender(blender_exp, strategy_ids)
+        print(f'blended signals with blender "{blender_exp}" is \n{res}')
+        self.assertEqual(res, 'max(MACD, DMA / MACD) + DMA and 0.5 * KDJ')
+
+        blender_exp = 'max(s0, s1/s0)+s1^0.5*s6'
+        self.assertRaises(IndexError, human_blender, blender_exp, strategy_ids)
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
@@ -3368,25 +3410,30 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # to be added
 
     def test_stg_trading_different_prices(self):
-        """测试op包含的策略有不同的交易价格，以开盘价买入，以收盘价卖出"""
-        qt.get_basic_info('000899.SZ')
+        """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
+        # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
+        print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
         stg_buy = StgBuyOpen()
         stg_sel = StgSelClose()
         op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        op.set_parameter(0,
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         strategy_data_types='close',
-                         strategy_run_timing='open')
-        op.set_parameter(1,
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         strategy_data_types='close',
-                         strategy_run_timing='close')
+        op.set_parameter(
+                0,
+                data_freq='d',
+                strategy_run_freq='d',
+                window_length=50,
+                pars=(20,),
+                strategy_data_types='close',  # 考察收盘价变化率
+                strategy_run_timing='open',   # 以开盘价买进(这个策略只处理买入信号)
+        )
+        op.set_parameter(
+                1,
+                data_freq='d',
+                strategy_run_freq='d',
+                window_length=50,
+                pars=(20,),
+                strategy_data_types='close',  # 考察收盘价的变化率
+                strategy_run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+        )
         op.set_blender(blender='s0')
         op.get_blender()
         qt.configure(asset_pool=['000300.SH',
@@ -3417,6 +3464,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      PT_buy_threshold=0.03,
                      PT_sell_threshold=0.03,
                      backtest_price_adj='none')
+
+    def test_stg_index_follow(self):
+        # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
+        print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
         op = qt.Operator(strategies=['finance'], signal_type='PS')
         op.set_parameter(0,
                          opt_tag=1,

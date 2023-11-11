@@ -158,6 +158,29 @@ def _valid_qt_kwargs():
                           "{'host': 'localhost', 'port': 8888} : 交易代理商的主机名和端口号\n"
                           "具体的参数设置请参考交易代理商的文档\n"},
 
+        'live_price_acquire_channel':
+            {'Default':   'eastmoney',
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['eastmoney', 'tushare', 'akshare'],
+             'level':     2,
+             'text':      '实盘交易时获取实时价格的方式：\n'
+                          'eastmoney - 通过东方财富网获取实时价格\n'
+                          'tushare  - 通过tushare获取实时价格(需要自行开通权限)\n'
+                          'akshare  - Not Implemented: 从akshare获取实时价格\n'},
+
+        'live_price_acquire_freq':
+            {'Default':   '15MIN',
+             'Validator': lambda value: isinstance(value, str) and value.upper() in
+                                        ['H', '30MIN', '15MIN', '5MIN', '1MIN', 'TICK'],
+             'level':     2,
+             'text':      '实盘交易时获取实时价格的频率：\n'
+                          'H      - 1小时\n'
+                          '30MIN  - 30分钟\n'
+                          '15MIN  - 15分钟\n'
+                          '5MIN   - 5分钟\n'
+                          '1MIN   - 1分钟\n'
+                          'TICK   - Tick数据\n'},
+
+
         'trade_batch_size':
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, (int, float))
@@ -451,7 +474,7 @@ def _valid_qt_kwargs():
                           '默认值为万分之一'},
 
         'cost_min_buy':
-            {'Default':   0.0,
+            {'Default':   5.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,
@@ -459,7 +482,7 @@ def _valid_qt_kwargs():
                           '默认值为5元'},
 
         'cost_min_sell':
-            {'Default':   0.0,
+            {'Default':   5.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,
@@ -971,7 +994,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     output_strings: str
         包含所有参数信息的字符串
     """
-    from qteasy.utilfuncs import reindent, truncate_string
+    from qteasy.utilfuncs import reindent, adjust_string_length
     if isinstance(level, int):
         levels = [level]
     elif isinstance(level, list):
@@ -1013,9 +1036,9 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
         no += 1
         output_strings.append(f'{no: <4}')
-        output_strings.append(f'{truncate_string(str(key), column_w_key): <{column_w_key}}')
+        output_strings.append(f'{adjust_string_length(str(key), column_w_key): <{column_w_key}}')
         if info:
-            output_strings.append(f'{truncate_string(cur_value, column_w_current): <{column_w_current}}'
+            output_strings.append(f'{adjust_string_length(cur_value, column_w_current): <{column_w_current}}'
                                   f'<{default_value}>\n')
             if verbose:
                 output_strings.append(

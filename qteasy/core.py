@@ -2555,7 +2555,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config['backtest_price_adj'] if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_op is: \n{hist_op}\n')
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
@@ -2568,7 +2567,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), hist_ref is: \n{hist_ref}\n')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.strategy_timings
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -2646,9 +2644,19 @@ def reconnect_ds(data_source=None):
     data_source.reconnect()
 
 
-# TODO: this function is very slow, find out why
-def check_and_prepare_live_trade_data(operator, config, datasource=None):
+def check_and_prepare_live_trade_data(operator, config, datasource=None, live_prices=None):
     """ 在run_mode == 0的情况下准备相应的历史数据
+
+    Parameters
+    ----------
+    operator: Operator
+        需要设置数据的Operator对象
+    config: ConfigDict
+        用于设置Operator对象的环境参数变量
+    datasource: DataSource
+        用于下载数据的DataSource对象
+    live_prices: pd.DataFrame, optional
+        用于实盘交易的最新价格数据，如果不提供，则从datasource中下载获取
 
     Returns
     -------
@@ -2658,19 +2666,19 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
         用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
 
-    run_mode = config.mode
+    run_mode = config['mode']
     if run_mode != 0:
         raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
     hist_op = get_history_panel(
             htypes=operator.all_price_and_data_types,
-            shares=config.asset_pool,
+            shares=config['asset_pool'],
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
-            asset_type=config.asset_type,
+            asset_type=config['asset_type'],
             adj='none',
             data_source=datasource,
-    )
+    )  # TODO: this function get_history_panel() is extremely slow, need to be optimized
 
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
@@ -2678,10 +2686,65 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None):
             shares=None,
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
-            asset_type=config.asset_type,
+            asset_type=config['asset_type'],
             adj='none',
             data_source=datasource,
     )
+    if any(
+            (stg.strategy_run_freq.upper() in ['D', 'W', 'M']) and
+            stg.use_latest_data_cycle
+            for stg
+            in operator.strategies
+    ):  # 如果有任何一个策略需要估算当前周期的数据
+        # 从hist_op的index中找到日期序列，最后一个日期是prev_cycle_end, 根据日期序列计算本cycle的开始和结束日期
+        prev_cycle_date = hist_op.hdates[-1]
+
+        latest_cycle_date = next_market_trade_day(
+                prev_cycle_date,
+                nearest_only=False,
+        )
+
+        extended_op_values = np.zeros(shape=(hist_op.shape[0], 1, hist_op.shape[2]))
+        extended_ref_values = np.zeros(shape=(hist_ref.shape[0], 1, hist_ref.shape[2]))
+        # 如果需要估算当前的除open/high/low/close/volume以外的其他数据：
+        # 直接沿用上一周期的数据
+        # 将hist_op和ref最后一行的数据复制到extended_op_values和extended_ref_values中,作为默认值
+        extended_op_values[:, 0, :] = hist_op.values[:, -1, :]
+        if not hist_ref.is_empty:
+            extended_ref_values[:, 0, :] = hist_ref.values[:, -1, :]
+
+        # 如果没有给出live_prices，则使用eastmoney的stock_live_kline_price获取当前周期的最新数据
+        if live_prices is None:
+            from qteasy.emfuncs import stock_live_kline_price
+            live_kline_prices = stock_live_kline_price(
+                    symbols=hist_op.shares,
+                    freq=operator.op_data_freq,
+            )
+            live_kline_prices.set_index('symbol', inplace=True)
+        else:
+            live_kline_prices = live_prices
+        # 将live_kline_prices中的数据填充到extended_op_values和extended_ref_values中
+        live_kline_prices = live_kline_prices.reindex(index=hist_op.shares)
+        for i, htype in enumerate(hist_op.htypes):
+            if htype in live_kline_prices.columns:
+                extended_op_values[:, 0, i] = live_kline_prices[htype].values
+
+        # 将extended_hist_op和extended_hist_ref添加到hist_op和hist_ref中
+        extended_hist_op = HistoryPanel(
+                values=extended_op_values,
+                levels=hist_op.shares,
+                rows=[latest_cycle_date],
+                columns=hist_op.htypes,
+        )
+        hist_op = hist_op.join(extended_hist_op, same_shares=True, same_htypes=True)
+        if not hist_ref.is_empty:
+            extended_hist_ref = HistoryPanel(
+                    values=extended_ref_values,
+                    levels=hist_ref.shares,
+                    rows=[latest_cycle_date],
+                    columns=hist_ref.htypes,
+            )
+            hist_ref = hist_ref.join(extended_hist_ref, same_shares=True, same_htypes=True)
 
     return hist_op, hist_ref
 
@@ -2986,7 +3049,10 @@ def run(operator, **kwargs):
                 config=config
         )
         # 在生成交易信号之前准备历史数据
-        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan)
+        operator.assign_hist_data(
+                hist_data=hist_op,
+                cash_plan=invest_cash_plan,
+        )
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
         loop_result = _evaluate_one_parameter(
@@ -3023,7 +3089,11 @@ def run(operator, **kwargs):
                 operator=operator,
                 config=config
         )
-        operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan, reference_data=hist_opti_ref)
+        operator.assign_hist_data(
+                hist_data=hist_opti,
+                cash_plan=opti_cash_plan,
+                reference_data=hist_opti_ref,
+        )
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config['opti_method']
         optimal_pars, perfs = optimization_methods[how](
@@ -3079,7 +3149,10 @@ def run(operator, **kwargs):
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_opti)
                 print(f'config.test_cash_dates is {config["test_cash_dates"]}')
-                operator.assign_hist_data(hist_data=mock_hist, cash_plan=test_cash_plan)
+                operator.assign_hist_data(
+                        hist_data=mock_hist,
+                        cash_plan=test_cash_plan,
+                )
                 mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(
                         par_generator=optimal_pars,
