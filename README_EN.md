@@ -23,16 +23,18 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
-- [QTEASY简介](#基本介绍)
-- [安装及依赖](#安装依赖包)
-- [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
-  - [初始配置——本地数据源](#配置本地数据源)
-  - [下载股票价格并可视化](#下载股票价格数据并将其可视化)
-  - [创建投资策略](#创建一个投资策略)
-  - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
-  - [投资策略的实盘运行](#投资策略的实盘运行)
-  - [投资策略的优化](#回测并优化交易策略)
-- [更详细的使用方法请参见教程](#QTEASY使用教程)
+- [Introduction](#Introduction)
+- [Installation and dependencies](#installation-and-dependencies)
+  - [Install `qteasy` from pypi](#install-qteay-from-pypi)
+  - [Install dependencies](#install-dependencies)
+- [Gets to know `qteasy` in 10 min](#gets-to-know-qteasy-in-10-min)
+  - [Configure `qteasy` and data source](#configure-local-data-source-and-tushare-token)
+  - [Acquire and visualize financial data](#download-historical-financial-data)
+  - [Create a strategy](#create-an-investment-strategy)
+  - [Back test and assess Strategy](#backtest-strategy-with-history-data-and-evaluate-its-performance)
+  - [Deploy Strategy](#deploy-the-strategy-and-start-live-trading)
+  - [Optimizing Strategy](#optimize-adjustable-parameters-of-a-strategy)
+- [More Tutorials](#qteasy-tutorials)
 
 ## Introduction
 - Author: **Jackie PENG**
