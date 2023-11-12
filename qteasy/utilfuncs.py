@@ -1907,8 +1907,6 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
         raise ValueError(f'the padder should be a single character, got {len(ellipsis)} characters')
     if not isinstance(padder, str):
         raise TypeError(f'the padder should be a character, got {type(padder)} instead')
-    if not len(padder) == 1:
-        raise ValueError(f'the padder should be a single character, got {len(padder)} characters')
     if n < 1:
         raise ValueError(f'the expected length should be larger than 0, got {n}')
 

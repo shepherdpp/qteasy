@@ -1724,7 +1724,7 @@ def get_history_data(htypes,
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
     rows: int, default: 10
         获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end]
-        如果未指定start和end，则获取数据表中最近的rows条数据
+        如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多
     freq: str
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
@@ -1862,21 +1862,26 @@ def get_history_data(htypes,
 
     one_year = pd.Timedelta(365, 'd')
     one_week = pd.Timedelta(7, 'd')
-    if (start is None) and (end is None):
+
+    if (start is None) and (end is None) and (rows is None):
         end = pd.to_datetime('today').date()
         start = end - one_year
+    elif (start is None) and (end is None):
+        rows = int(rows)
     elif start is None:
         try:
             end = pd.to_datetime(end)
         except Exception:
             raise Exception(f'end date can not be converted to a datetime')
         start = end - one_year
+        rows = None
     elif end is None:
         try:
             start = pd.to_datetime(start)
         except Exception:
             raise Exception(f'start date can not be converted to a datetime')
         end = start + one_year
+        rows = None
     else:
         try:
             start = pd.to_datetime(start)
@@ -1885,6 +1890,7 @@ def get_history_data(htypes,
             raise Exception(f'start and end must be both datetime like')
         if end - start <= one_week:
             raise ValueError(f'End date should be at least one week after start date')
+        rows = None
 
     if freq is None:
         freq = 'd'
