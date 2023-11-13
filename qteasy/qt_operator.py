@@ -1515,6 +1515,7 @@ class Operator:
             其他参数
 
         """
+
         assert isinstance(stg_id, (int, str)), f'stg_id should be a int or a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
         # TODO; 应该允许同时设置多个策略的参数（对于opt_tag这一类参数非常有用）
@@ -1562,6 +1563,10 @@ class Operator:
             是否打印出策略的详细信息, 如果为True, 则会打印出策略的详细信息，包括选股策略的信息等
         """
         from .utilfuncs import adjust_string_length
+        from rich import print as rprint
+        from shutil import get_terminal_size
+        terminal_width = get_terminal_size().columns
+        info_width = int(terminal_width * 0.75) if terminal_width > 120 else terminal_width
         signal_type_descriptions = {
             'pt': 'Position Target, signal represents position holdings in percentage of total value',
             'ps': 'Percentage trade signal, represents buy/sell stock in percentage of total value',
@@ -1585,28 +1590,34 @@ class Operator:
             '30min': '30min',
             'h': 'hours',
         }
-        print(f'            -----------------------Operator Information-----------------------\n'
-              f'Strategies:  {self.strategy_count} Strategies\n'
-              f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
-              f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
+        rprint(f'{"Operator Information":-^{info_width}}\n'
+               f'Strategies:  {self.strategy_count} Strategies\n'
+               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
+               f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
         # 打印blender的信息：
         for run_timing in self.strategy_timings:
-            print(f'            ------------------------Strategy blenders-------------------------')
-            print(f'for strategy running timing - {run_timing}:')
+            rprint(f'{"Strategy blenders":-^{info_width}}\n'
+                  f'for strategy running timing - {run_timing}:')
             if self.strategy_blenders != {}:
-                print(f'signal blenders: {self.view_blender(run_timing)}\n')
+                rprint(f'signal blenders: {self.view_blender(run_timing)}\n')
             else:
-                print(f'no blender\n')
+                rprint(f'no blender\n')
         # 打印各个strategy的基本信息：
         if (self.strategy_count > 0) and (not verbose):
-            print(f'            ----------------------------Strategies----------------------------\n'
-                  f'{"stg_id":<10}'
-                  f'{"name":<20}'
-                  f'{"run timing":^15}'
-                  f'{"data window":^10}'
-                  f'{"data types":^25}'
-                  f'{"parameters":^20}\n'
-                  f'{"_" * 100}')
+            id_width = int(info_width * .1)
+            name_width = int(info_width * .2)
+            run_timing_width = int(info_width * .15)
+            data_window_width = int(info_width * .10)
+            data_type_width = int(info_width * .25)
+            par_width = int(info_width * .20)
+            rprint(f'{"Strategies":-^{info_width}}\n'
+                   f'{"stg_id":<{id_width}}'
+                   f'{"name":<{name_width}}'
+                   f'{"run timing":^{run_timing_width}}'
+                   f'{"data window":^{data_window_width}}'
+                   f'{"data types":^{data_type_width}}'
+                   f'{"parameters":^{par_width}}\n'
+                   f'{"_" * info_width}')
             for stg_id, stg in self.get_strategy_id_pairs():
                 from .utilfuncs import parse_freq_string
                 qty, main_freq, sub_freq = parse_freq_string(stg.strategy_run_freq)
@@ -1614,21 +1625,19 @@ class Operator:
                 run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
                 qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
                 data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
-                print(f'{adjust_string_length(stg_id, 10):<10}'
-                      f'{adjust_string_length(stg.name, 20):<20}'
-                      f'{adjust_string_length(run_type_str, 15):^15}'
-                      f'{adjust_string_length(data_type_str, 10):^10}'
-                      f'{adjust_string_length(str(stg.history_data_types), 25):^25}'
-                      f'{adjust_string_length(str(stg.pars), 20):^20}')
-            print('=' * 100)
+                rprint(f'{adjust_string_length(stg_id, id_width):<{id_width}}'
+                       f'{adjust_string_length(stg.name, name_width):<{name_width}}'
+                       f'{adjust_string_length(run_type_str, run_timing_width):^{run_timing_width}}'
+                       f'{adjust_string_length(data_type_str, data_window_width):^{data_window_width}}'
+                       f'{adjust_string_length(str(stg.history_data_types), data_type_width):^{data_type_width}}'
+                       f'{adjust_string_length(str(stg.pars), par_width):^{par_width}}')
+            print('=' * info_width)
         # 打印每个strategy的详细信息
         if (self.strategy_count > 0) and verbose:
-            print('            -------------------------Strategy Details-------------------------')
+            print(f'{"Strategy Details":-^{info_width}}')
             for stg_id, stg in self.get_strategy_id_pairs():
-                print(f'\nStrategy_ID:        {stg_id}\n'
-                      f'----------------------------------')
-                stg.info()
-            print('=' * 100)
+                stg.info(stg_id=stg_id, verbose=verbose)
+            print('=' * info_width)
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置

@@ -579,33 +579,55 @@ class BaseStrategy:
         str2 = f'{self.name})'
         return ''.join([str1, str2])
 
-    def info(self, verbose: bool = True):
-        """打印所有相关信息和主要属性"""
-        # TODO: 重新设计strategy.info()，更加简明扼要地输出关键信息，
-        #  还要兼顾operator.info()的需要
+    def info(self, verbose: bool = True, stg_id=None):
+        """打印所有相关信息和主要属性
 
+        Parameters
+        ----------
+        verbose: bool, default True
+            是否打印更多的信息
+        stg_id: str, default None
+            策略的ID，如果为None，则打印策略的名称，否则打印策略的ID
+
+        Returns
+        -------
+        None
+        """
+        from .utilfuncs import adjust_string_length
+        from rich import print as rprint
+        from shutil import get_terminal_size
+
+        if stg_id is None:
+            stg_id = self.name
+        term_width = get_terminal_size().columns
+        info_width = int(term_width * 0.75) if term_width > 120 else term_width
+        key_width = max(24, int(info_width * 0.3))
+        value_width = max(7, info_width - key_width)
         stg_type = self.__class__.__bases__[0].__name__
-        print(f'Strategy_type:      {stg_type}\n'
-              f'Strategy name:      {self.name}\n'
-              f'Description:        {self.description}')
+        rprint(f'\n{"Strategy_ID":<{key_width}}{adjust_string_length(str(stg_id), value_width)}')
+        rprint('=' * info_width)
         if self._pars is not None:
-            print('Strategy Parameter:', self._pars)
+            rprint(f'{"Strategy Parameter":<{key_width}}{adjust_string_length(str(self._pars), value_width)}')
         else:
-            print('Strategy Parameter: No Parameter!')
+            rprint('Strategy Parameter: No Parameter!')
+        rprint(f'{"Strategy_type":<{key_width}}{stg_type}\n'
+               f'{"Strategy name":<{key_width}}{self.name}\n'
+               f'Description\n    {self.description}')
         # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
         if verbose:
             run_type_str = self.strategy_run_freq + ' @ ' + self.strategy_run_timing
             data_type_str = str(self.window_length) + ' ' + self.data_freq
-            print(f'\n'
-                  f'Strategy Properties     Property Value\n'
-                  f'-------------------------------------------------\n'
-                  f'Param. count            {self.par_count}\n'
-                  f'Param. types            {self.par_types}\n'
-                  f'Param. range            {self.par_range}\n'
-                  f'Run parameters          {run_type_str}\n'
-                  f'Data types              {self.history_data_types}\n'
-                  f'Data parameters         {data_type_str}'
-                  )
+            rprint(
+                    f'\n'
+                    f'{"Strategy Properties":<{key_width}}{"Values":{value_width}}\n'
+                    f'{"-" * info_width}\n'
+                    f'{"Param.count":<{key_width}}{self.par_count}\n'
+                    f'{"Param.types":<{key_width}}{adjust_string_length(str(self.par_types), value_width)}\n'
+                    f'{"Param.range":<{key_width}}{adjust_string_length(str(self.par_range), value_width)}\n'
+                    f'{"Run parameters":<{key_width}}{adjust_string_length(run_type_str, value_width)}\n'
+                    f'{"Data types":<{key_width}}{adjust_string_length(str(self.history_data_types), value_width)}\n'
+                    f'{"Data parameters":<{key_width}}{adjust_string_length(data_type_str, value_width)}'
+            )
         print()
 
     def set_pars(self, pars: (tuple, dict)) -> int:
@@ -1328,19 +1350,35 @@ class FactorSorter(BaseStrategy):
         self.sort_ascending = sort_ascending
         self.weighting = weighting
 
-    def info(self, verbose: bool = True):
+    def info(self, verbose: bool = True, stg_id=None):
         """ display more FactorSorter-specific properties
+
+        Parameters
+        ----------
+        verbose: bool
+            if True, display more properties
+        stg_id: str
+            strategy id, if None, use self.name
         """
-        super().info(verbose=verbose)
+        from .utilfuncs import adjust_string_length
+        from rich import print as rprint
+        from shutil import get_terminal_size
+
+        term_width = get_terminal_size().columns
+        info_width = int(term_width * 0.75) if term_width > 120 else term_width
+        key_width = max(24, int(info_width * 0.3))
+        value_width = max(7, info_width - key_width)
+
+        super().info(verbose=verbose, stg_id=stg_id)
         if self.max_sel_count > 1:
-            print(f'Max select count        {int(self.max_sel_count)}')
+            rprint(f'{"Max select count":<{key_width}}{int(self.max_sel_count)}')
         else:
-            print(f'Max select count        {self.max_sel_count:.1%}')
-        print(f'Sort Ascending:         {self.sort_ascending}\n'
-              f'Weighting               {self.weighting}\n'
-              f'Filter Condition        {self.condition}\n'
-              f'Filter ubound           {self.ubound}\n'
-              f'Filter lbound           {self.lbound}')
+            rprint(f'{"Max select count":<{key_width}}{self.max_sel_count:.1%}')
+        rprint(f'{"Sort Ascending":<{key_width}}{self.sort_ascending}\n'
+               f'{"Weighting":<{key_width}}{adjust_string_length(self.weighting, value_width)}\n'
+               f'{"Filter Condition":<{key_width}}{adjust_string_length(self.condition, value_width)}\n'
+               f'{"Filter ubound":<{key_width}}{self.ubound}\n'
+               f'{"Filter lbound":<{key_width}}{self.lbound}')
 
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """处理从_realize()方法传递过来的选股因子
