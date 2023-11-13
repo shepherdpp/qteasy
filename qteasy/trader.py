@@ -143,13 +143,15 @@ class TraderShell(Cmd):
             for symbol in symbols:
                 if symbol in live_prices.index:
                     change = live_prices.loc[symbol, 'change']
-                    watched_prices += f' ={symbol[:-3]}{live_prices.loc[symbol, "name"]}/' \
-                                      f'{live_prices.loc[symbol, "close"]:.2f}/' \
-                                      f'{live_prices.loc[symbol, "change"]:+.2%}'
+                    watched_prices_seg = f' ={symbol[:-3]}{live_prices.loc[symbol, "name"]}/' \
+                                         f'{live_prices.loc[symbol, "close"]:.2f}/' \
+                                         f'{live_prices.loc[symbol, "change"]:+.2%}'
                     if change > 0:
-                        watched_prices = '[bold red]' + watched_prices + '[/bold red]'
+                        watched_prices += ('[bold red]' + watched_prices_seg + '[/bold red]')
                     elif change < 0:
-                        watched_prices += '[bold green]' + watched_prices + '[/bold green]'
+                        watched_prices += ('[bold green]' + watched_prices_seg + '[/bold green]')
+                    else:
+                        watched_prices += watched_prices_seg
 
                 else:
                     watched_prices += f' ={symbol[:-3]}/--/---'
@@ -1030,14 +1032,18 @@ class TraderShell(Cmd):
                                 message = next_message
 
                             message = message[:-2] + ' ' + watched_prices
-                            rprint(adjust_string_length(message, text_width, hans_aware=True), end='\r')
+                            # TODO: adjust_string_length函数在缩短字符串时会删除掉格式标签，导致错误，应改进
+                            # print(adjust_string_length(message, text_width, hans_aware=True), end='\r')
+                            rprint(message, end='\r')
                             if next_normal_message:
-                                rprint(adjust_string_length(next_normal_message, text_width, hans_aware=True))
+                                # print(adjust_string_length(next_normal_message, text_width, hans_aware=True))
+                                rprint(next_normal_message)
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            print(f'{adjust_string_length(message, text_width, hans_aware=True)}')
+                            # print(f'{adjust_string_length(message, text_width, hans_aware=True)}')
+                            rprint(message)
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
@@ -1300,7 +1306,7 @@ class Trader(object):
                     end=today,
             )['close'].iloc[-1]
         elif self.live_price is not None:
-            current_prices = self.live_price
+            current_prices = self.live_price['close'].reindex(index=positions.index).astype('float')
         else:
             current_prices = [np.nan] * len(positions)
 
@@ -1909,6 +1915,9 @@ class Trader(object):
                 config=config,
                 datasource=datasource,
         )
+
+        # 获取当日实时价格
+        self._acquire_live_price()
 
     def _post_close(self):
         """ 收市后例行操作：
