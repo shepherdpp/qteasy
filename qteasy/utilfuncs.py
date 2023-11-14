@@ -1856,11 +1856,13 @@ def truncate_string(s, n, padder='.'):  # to be deprecated
     return adjust_string_length(s, n, ellipsis=padder)
 
 
-def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right'):
+def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False):
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 
-        默认情况下，认为汉字的长度为2，英文字符的长度为1，可以通过hans_aware参数设置是否考虑汉字的长度
+    默认情况下，认为汉字的长度为2，英文字符的长度为1，可以通过hans_aware参数设置是否考虑汉字的长度
+    如果字符串中含有格式标签，如[bold]或[red]，则需要将format_tags参数设置为True，此时会先将格式标签去除，
+    然后调整字符串长度，调整完成后再将格式标签添加回去
 
     Parameters
     ----------
@@ -1876,6 +1878,8 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
         是否考虑汉字的长度，如果为True，则汉字的长度为2，否则为1
     padding: str, Default: 'right'
         填充的位置，可以为'left'或'right'，默认为'right'
+    format_tags: bool, Default: False
+        是否考虑字符串中的格式标签，如果为True，则首先去除字符串中的格式标签后再调整长度，调整完成后再将格式标签添加回去
 
     Returns
     -------
@@ -1893,7 +1897,18 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
     '中文字符...位置'
     >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=True)
     '中文...置'
+    >>> adjust_string_length('hello [bold red]world[/bold red]', 9, format_tags=True)
+    'hell[bold red]...ld[/bold red]'
     """
+    # TODO: able to handle format tags in string like [bold] or [red]
+    #  find out all format tags and extract them before calculating the length
+    #  then add them back after truncating the string
+
+    if format_tags:
+        format_tags, format_tags_positions, s = _extract_format_tags(s)
+    else:
+        format_tags = []
+        format_tags_positions = []
 
     cut_off_proportion = 0.7
 
@@ -1915,10 +1930,16 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
         length += _count_hans(s)
 
     if (length <= n) and (padding == 'right'):
-        return s + padder * (n - length)
+        res_str = s + padder * (n - length)
+        if format_tags:
+            res_str = _put_back_format_tags(res_str, format_tags, format_tags_positions)
+        return res_str
 
     if (length <= n) and (padding == 'left'):
-        return padder * (n - length) + s
+        res_str = padder * (n - length) + s
+        if format_tags:
+            res_str = _put_back_format_tags(res_str, format_tags, format_tags_positions)
+        return res_str
 
     if n == 3:
         elipsis_count = 2
@@ -1968,7 +1989,92 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
         # 此时前面的字符数和后面的字符数加上省略号的字符数比n多，需要将省略号的字符数减少
         elipsis_count -= front_print_width + remainder_print_width + elipsis_count - n
 
-    return ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
+    combined_string = ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
+    if format_tags:
+        cut_off_position = len(front_part) + elipsis_count
+        removed_count = len(s) - len(combined_string)
+        adjusted_format_tags_positions = []
+        # adjust the format tags positions because the string is now shorter
+        for item in format_tags_positions:
+            item = item if item < cut_off_position else max(cut_off_position, item - removed_count)
+            adjusted_format_tags_positions.append(item)
+        # put all format tags back on the positions as the format_tags_positions
+        combined_string = _put_back_format_tags(
+                combined_string,
+                format_tags,
+                adjusted_format_tags_positions,
+        )
+
+        return combined_string
+
+    else:
+        return combined_string
+
+
+def _extract_format_tags(s):
+    """ 从字符串中提取格式标签，生成一个标签列表，并生成标签的位置列表，同时返回不含标签的字符串
+
+    注意生成的标签位置列表是每一个标签在不含标签的字符串中的位置列表，而不是在原字符串中的位置列表
+
+    Parameters
+    ----------
+    s: str
+        字符串
+
+    Returns
+    -------
+    list: 格式标签列表
+    list: 标签位置列表
+    str: 不含标签的字符串
+
+    Examples
+    --------
+    >>> _extract_format_tags('hello [bold]world[/bold]')
+    ['[bold]', '[/bold]']], [6, 11], 'hello world'
+    >>> _extract_format_tags('hello [bold]world[/bold] [red]!')
+    ['[bold]', '[/bold]', '[red]'], [6, 11, 12], 'hello world !'
+    """
+    import re
+    pattern = re.compile(r'\[.*?\]')
+    tags = pattern.findall(s)
+    tag_positions = []
+    prev_end = 0
+    prev_pos = 0
+    for match in pattern.finditer(s):
+        prev_pos += match.start() - prev_end
+        tag_positions.append(prev_pos)
+        prev_end = match.end()
+    s = re.sub(r'\[.*?\]', '', s)
+    return tags, tag_positions, s
+
+
+def _put_back_format_tags(s, tags, tag_positions):
+    """ 将格式标签放回字符串中, 标签的位置由tag_positions指定
+
+    Parameters
+    ----------
+    s: str
+        字符串
+    tags: list of str
+        格式标签列表
+    tag_positions: list of int
+        标签位置列表
+
+    Returns
+    -------
+    str: 含有格式标签的字符串
+    """
+    res_str = ''
+    for pos, char in enumerate(s):
+        while pos in tag_positions:
+            res_str += tags.pop(0)
+            tag_positions.pop(0)
+        res_str += char
+    while tag_positions:
+        res_str += tags.pop(0)
+        tag_positions.pop(0)
+
+    return res_str
 
 
 def _count_hans(s: str):
