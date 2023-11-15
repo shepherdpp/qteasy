@@ -5,4 +5,4 @@ mplfinance
 matplotlib
 tushare
 setuptools
-requests
+rich

@@ -421,6 +421,17 @@ class RandomBroker(Broker):
         return tuple(order_results)
 
 
+class SimulateBroker(Broker):
+    """ QT 默认的模拟交易所，该交易所模拟真实的交易情况，从qt_config中读取交易费率、滑点等参数
+    根据这些参数尽可能真实地模拟成交结果，特点如下：
+
+    - 交易费率根据qt_config中的设置计算，包括固定费率、最低费用、滑点等
+    - 交易时有一定概率出现交易失败或部分成交
+    - 股票涨停时大概率买入交易失败，跌停时大概率卖出交易失败
+    """
+    # TODO: implement this broker simulator and set it to be the default broker in QT
+
+
 class NotImplementedBroker(Broker):
     """ NotImplementedBroker raises NotImplementedError when __init__() is called
     """
@@ -431,8 +442,8 @@ class NotImplementedBroker(Broker):
 
 
 ALL_BROKERS = {
-    'simple': SimpleBroker,
-    'random': RandomBroker,
-    'manual': NotImplementedBroker,
-    'simulator': NotImplementedBroker,
+    'simple':       SimpleBroker,
+    'random':       RandomBroker,
+    'manual':       NotImplementedBroker,
+    'simulator':    SimulateBroker,
 }

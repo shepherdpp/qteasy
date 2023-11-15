@@ -44,10 +44,13 @@
 
 This project is aiming at a fast quantitative investment package for python, with following functions:
 
+1. Acquire, clean, organize, visualize, store and query financial data, including stock price, financial statements, technical indicators, and basic information of stocks and funds. Downloaded data can be stored locally in forms of csv files or MySQL database. Data can be acquired from Tushare, eastMoney, etc.
+2. Create, backtest and assess investment strategies, and optimize adjustable parameters of strategies with a series of optimization algorithms.
+3. Deploy strategies and start live trading with real-time data, and record trading logs, account positions and funds.
 
-1. Historical stock data acquiring and bundling, visualization 
-2. Investment strategy creation, backtesting, assessment and optimization 
-3. Live stock trading: trading operation submission, withdrawal, status checking and feedback reporting 
+Following functions are in development plan:
+1. *Provide common financial statistical analysis tools and integrate them into the HistoryPanel object*
+2. *Connect with automated trading system and realize automated trading (in development)*
 
 The target of this module is to provide effective vectorized backtesting and assessment of investment 
 strategies, with highly versertility and flexibility
@@ -68,6 +71,7 @@ This project requires and depends on following packages:
 - *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
 A local datasource should be setup for `qteasy` to work properly. a series of .csv files will be used to store 
 financial data in default case. Other types of datasource can be used, such as MySQL database, but other dependencies
