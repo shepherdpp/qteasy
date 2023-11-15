@@ -1761,7 +1761,7 @@ TABLE_SCHEMA = {
         {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher',
                         'index_type', 'category', 'base_date', 'base_point', 'list_date', 'weight_rule',
                         'desc', 'exp_date'],
-         'dtypes':     ['varchar(24)', 'varchar(40)', 'varchar(80)', 'varchar(8)', 'varchar(30)',
+         'dtypes':     ['varchar(24)', 'varchar(80)', 'varchar(80)', 'varchar(8)', 'varchar(30)',
                         'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text',
                         'text', 'date'],
          'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方',

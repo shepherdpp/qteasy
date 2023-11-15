@@ -2854,9 +2854,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
                  '600251.SH', '000006.SZ', '000008.SZ', '600251.SH', '000006.SH', '000008.SH']
         )
         print(symbol_names)
-        self.assertEqual(symbol_names, ['平安银行', '万科A', '国华网安', '上证指数', '上证A指', '上证工业类指数',
-                                        '冠农股份', '深振业A', '神州高铁', '冠农股份', '上证房地产指数',
-                                        '上证综合股指数'])
+        self.assertEqual(symbol_names, ['平安银行', '万科A', '国华网安', '上证指数', 'A股指数', '工业指数',
+                                        '冠农股份', '深振业A', '神州高铁', '冠农股份', '地产指数', '综合指数'])
 
         # "N/A" will be returned for symbols not found or not a symbol
         print('test get_symbol_names with symbols not found or not a symbol')

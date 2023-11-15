@@ -1318,16 +1318,21 @@ class Trader(object):
         """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
 
-        # 获取每个symbol的最新价格，在交易日从self.live_price中获取，或者使用全nan填充，非交易日从datasource中获取，
+        # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
         if self.live_price is None:
             today = pd.to_datetime('today')
-            current_prices = self._datasource.get_history_data(
-                    shares=positions.index.tolist(),
-                    htypes='close',
-                    asset_type='E',
-                    start=today - pd.Timedelta(days=7),
-                    end=today,
-            )['close'].iloc[-1]
+            try:
+                current_prices = self._datasource.get_history_data(
+                        shares=positions.index.tolist(),
+                        htypes='close',
+                        asset_type='E',
+                        start=today - pd.Timedelta(days=7),
+                        end=today,
+                )['close'].iloc[-1]
+            except Exception as e:
+                if self.debug:
+                    self.post_message(f'Error in getting current prices: {e}')
+                current_prices = pd.Series(index=positions.index, data=np.nan)
         else:
             current_prices = self.live_price['close'].reindex(index=positions.index).astype('float')
 

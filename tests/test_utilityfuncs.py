@@ -843,7 +843,7 @@ class TestUtilityFuncs(unittest.TestCase):
                 13,
                 hans_aware=True,
                 format_tags=True,
-        ), '[red]string[/red] [blue]..[/blue][yellow][/yellow][green][green][white]字符[/white]')
+        ), '[red]string[/red] [blue]..[/blue][yellow][/yellow][green][/green][white]字符[/white]')
         self.assertEqual(adjust_string_length(
                 '[red]完全[/red][blue]由[/blue][yellow]中文字符[/yellow][green]组成[/green]的[white]字符串[/white]',
                 10,
