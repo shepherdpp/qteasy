@@ -277,12 +277,7 @@ class TraderShell(Cmd):
         ------
         info [detail]
         """
-        if arg:
-            if arg == 'detail':
-                self.trader.info(detail=True)
-            else:
-                sys.stdout.write(f'info command does not accept arguments other than "detail"\n')
-        self.trader.info()
+        self.do_overview(arg)
 
     def do_pool(self, arg):
         """ print information of the asset pool
@@ -1465,13 +1460,13 @@ class Trader(object):
                 import traceback
                 traceback.print_exc()
 
-    def info(self, detail=False):
+    def info(self, width=80):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
 
         Parameters:
         -----------
-        detail: bool, default False
-            是否打印持仓的详细信息
+        width: int, default 80
+            打印信息的宽度
 
         Returns:
         --------
@@ -1479,6 +1474,8 @@ class Trader(object):
         """
 
         from rich import print as rprint
+
+        semi_width = int(width * 0.65)
         position_info = self.account_position_info
         total_market_value = position_info['market_value'].sum()
         own_cash = self.account_cash[0]
@@ -1488,43 +1485,48 @@ class Trader(object):
         total_value = total_market_value + own_cash
         total_return_of_investment = total_value - total_investment
         total_roi_rate = total_return_of_investment / total_investment
-        rprint('                  Account Overview:')
-        rprint('-' * 80)
-        rprint(f'Account ID:                     {self.account_id}')
-        rprint(f'User Name:                      {self.account["user_name"]}')
-        rprint(f'Created on:                     {self.account["created_time"]}')
-        rprint(f'Own Cash:                       ¥ {own_cash:,.2f} ')
-        rprint(f'Available Cash:                 ¥ {available_cash:,.2f}')
-        rprint(f'Total Investment:               ¥ {total_investment:,.2f}')
-        if total_value > total_investment:
-            rprint(f'Total Value:                    [bold red]¥ {total_value:,.2f}[/bold red]')
-            rprint(f'Total Stock Value:              [bold red]¥ {total_market_value:,.2f}[/bold red]')
-            rprint(f'Total Profit:                   [bold red]¥ {total_profit:,.2f}[/bold red]')
+        position_level = total_market_value / total_value
+        total_profit_ratio = total_profit / total_value
+        rprint(f'{" Account Overview ":=^{width}}')
+        rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
+        rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
+        rprint(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
+        print(f'{" Returns ":-^{semi_width}}')
+        rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
+        if total_value >= total_investment:
+            rprint(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
         else:
-            rprint(f'Total Value:                    [bold green]¥ {total_value:,.2f}[/bold green]')
-            rprint(f'Total Stock Value:              [bold green]¥ {total_market_value:,.2f}[/bold green]')
-            rprint(f'Total Profit:                   [bold green]¥ {total_profit:,.2f}[/bold green]')
+            rprint(f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]')
+        if total_profit_ratio >= 0:
+            rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
+                   f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n'
+                   f'{"Total ROI Rate":<{semi_width - 20}}[bold red]{total_roi_rate:.2%}[/bold red]')
+        else:
+            rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
+                   f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
+                   f'{"Total ROI Rate":<{semi_width - 20}}[bold green]{total_roi_rate:.2%}[/bold green]')
+        print(f'{" Cash ":-^{semi_width}}')
+        rprint(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
+        rprint(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
+        print(f'{" Stocks ":-^{semi_width}}')
+        rprint(f'{"Stock Position Level":<{semi_width - 20}}{position_level:.2%}')
+        if total_profit >= 0:
+            rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
+            rprint(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]')
+            rprint(f'{"Stock Profit Ratio":<{semi_width - 20}}[bold red]{total_profit_ratio:.2%}[/bold red]')
+        else:
+            rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold green]')
+            rprint(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]')
+            rprint(f'{"Total Profit Ratio":<{semi_width - 20}}[bold green]{total_profit_ratio:.2%}[/bold green]')
         asset_in_pool= len(self.asset_pool)
         asset_pool_string = adjust_string_length(
-                s=str(self.asset_pool),
-                n=80,
+                s=', '.join(self.asset_pool),
+                n=width,
         )
-        rprint(f'Current Investment Pool:        {asset_in_pool} stocks: {asset_pool_string}\n'
-               f'                                Use "pool" command to view asset pool details.\n'
-               f'Current Investment Type:        {self.asset_type}\n')
-        if detail:
-            position_level = total_market_value / total_value
-            total_profit_ratio = total_profit / total_value
-            if total_profit_ratio > 0:
-                rprint(f'Total Return of Investment:     [bold red]¥ {total_return_of_investment:,.2f}[/bold red]\n'
-                       f'Total ROI Rate:                 [bold red]{total_roi_rate:.2%}[/bold red]\n'
-                       f'Position Level:                 [bold red]{position_level:.2%}[/bold red]\n'
-                       f'Total Profit Ratio:             [bold red]{total_profit_ratio:.2%}[/bold red]')
-            else:
-                rprint(f'Total Return of Investment:     [bold green]¥ {total_return_of_investment:,.2f}[/bold green]\n'
-                       f'Total ROI Rate:                 [bold green]{total_roi_rate:.2%}[/bold green]\n'
-                       f'Position Level:                 [bold green]{position_level:.2%}[/bold green]\n'
-                       f'Total Profit Ratio:             [bold green]{total_profit_ratio:.2%}[/bold green]')
+        print(f'{" Investment ":-^{width}}')
+        rprint(f'Current Investment Type:        {self.asset_type}')
+        rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
+               f'{asset_pool_string}\n')
         return None
 
     def trade_results(self, status='filled'):
