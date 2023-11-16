@@ -8,6 +8,7 @@
 #   Commonly used utility functions.
 # ======================================
 
+import argparse
 import numpy as np
 import pandas as pd
 import sys
@@ -73,6 +74,30 @@ AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                           'proportion signal': 'ps',
                           'volume signal':     'vs'}
 AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
+
+
+def get_qt_argparser():
+    """ 获取QT的命令行参数解析器
+
+    生成的解析器包含以下参数：
+    -a, --account: int, default None
+        用于指定交易账户的ID，如果不指定，则使用默认账户
+    -n, --new_account: str, default None
+        用于指定新建账户的用户名，如果不指定，则使用默认账户
+    -r, --restart: bool, default False
+        用于指定是否清除所有账户数据并重新开始
+    -d, --debug: bool, default False
+        用于指定是否以debug模式启动交易程序
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--account', type=int, help='start trader with the given account id')
+    parser.add_argument('-n', '--new_account', type=str, default=None,
+                        help='if set, create a new account with the given user name')
+    parser.add_argument('-r', '--restart', action='store_true', default=False,
+                        help='if set, remove all record and restart account')
+    parser.add_argument('-d', '--debug', action='store_true', help='if set, start trader in debug mode')
+
+    return parser
 
 
 def freq_dither(freq, freq_list):

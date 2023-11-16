@@ -298,10 +298,11 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        Add symbols explicitly to watch list:
-        watch [symbol1] [symbol2] [symbol3]
-        Add symbols from position list to watch list:
-        watch position|positions|pos|p
+        watch [symbol [symbol ...]] [position|positions|pos|p]
+
+        symbol:     Add symbols explicitly to watch list:
+        position:   Add 5 symbols from position list to watch list:
+        watch
         """
 
         from rich import print as rprint

@@ -4638,7 +4638,7 @@ class DataSource:
             end = pd.to_datetime(end).strftime('%Y%m%d')
             allow_start_end = (cur_table_info.arg_allow_start_end.lower() == 'y')
             start_end_chunk_size = 0
-            if cur_table_info.start_end_chunk_size is not '':
+            if cur_table_info.start_end_chunk_size != '':
                 start_end_chunk_size = int(cur_table_info.start_end_chunk_size)
             additional_args = {}
             chunked_additional_args = []
