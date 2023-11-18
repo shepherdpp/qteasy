@@ -974,7 +974,7 @@ def _validate_vkwargs_dict(vkwargs):
             raise ValueError(f'Missing "text" string for config_key {key}')
 
 
-def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
+def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False, width=80):
     """ 给出一个或多个参数名称, 确认他们是否合法参数名称，并显示它们的当前值和其他信息
     返回一个字符串，包含所有参数的信息
 
@@ -988,6 +988,8 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         是否输出基本信息
     verbose: bool
         是否输出详细信息
+    width: int
+        输出结果每一行占用的字符数
 
     Returns
     -------
@@ -1004,19 +1006,21 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     else:
         raise TypeError(f'level should be an integer or list of integers, got {type(level)}')
     assert all(isinstance(item, int) for item in levels), f'TypeError, levels should be a list of integers'
-    column_w_key = 22
-    column_w_current = 30
+    column_w_key = min(int(width * 0.2), 30)
+    column_w_default = min(int(width * 0.2), 30)
+    column_w_current = width - column_w_key - column_w_default - 4
     column_offset_description = 4
     vkwargs = _valid_qt_kwargs()
     output_strings = list()
     if info:
-        output_strings.append('No. Config-Key            Cur Val                       Default val\n')
+        output_strings.append(f'No. {"Config - Key":<{column_w_key}}{"Cur Val":<{column_w_current}}'
+                              f'{"Default val":<{column_w_default}}\n')
         if verbose:
             output_strings.append('      Description\n')
-        output_strings.append('-------------------------------------------------------------------\n')
+        output_strings.append(f'{"=" * width}\n')
     else:
-        output_strings.append('No. Config-Key            Cur Val             \n')
-        output_strings.append('--------------------------------------------------------\n')
+        output_strings.append(f'No. {"Config - Key":<{column_w_key}}{"Cur Val":<{column_w_current}}\n')
+        output_strings.append(f'{"=" * (width - column_w_default)}\n')
     no = 0
     for key in kwargs:
         if key not in vkwargs:
@@ -1036,10 +1040,11 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
         no += 1
         output_strings.append(f'{no: <4}')
-        output_strings.append(f'{adjust_string_length(str(key), column_w_key): <{column_w_key}}')
+        output_strings.append(f'{adjust_string_length(str(key), column_w_key-1): <{column_w_key}}')
         if info:
-            output_strings.append(f'{adjust_string_length(cur_value, column_w_current): <{column_w_current}}'
-                                  f'<{default_value}>\n')
+            output_strings.append(
+                    f'{adjust_string_length(cur_value, column_w_current-1): <{column_w_current}}'
+                    f'<{adjust_string_length(default_value, column_w_default-3, padder="")}>\n')
             if verbose:
                 output_strings.append(
                         f'{reindent(description, column_offset_description): <{column_w_key + column_w_current * 2}}'

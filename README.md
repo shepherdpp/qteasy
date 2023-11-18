@@ -44,9 +44,13 @@
 
 本项目旨在开发一套基于python的本地运行的量化交易策略回测和开发工具，包含以下基本功能
 
-1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用，并*提供一些金融统计数据分析工具（开发中）*
+1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括Tushare、EastMoney等
 2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
-3. 交易策略的部署、实盘运行，未来还将实现*与自动化交易系统连接、实现自动化交易(开发中)*
+3. 交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息
+
+以下功能在开发计划中：
+1. *提供常用的金融统计数据分析工具，并整合到内间的HistoryPanel对象中*
+2. *与自动化交易系统连接、实现自动化交易(开发中)*
 
 
 开发本模块的目标是为量化交易人员提供一套量化交易策略开发框架，提供了金融数据下载和分析，交易策略快速回测，策略可调参数的寻优以及交易策略实盘运行等功能。
@@ -60,15 +64,19 @@
 pip install qteasy
 ```
 
+### python 版本
+- *`python` version >= 3.6* 
+
 ### 安装依赖包
 
 这个项目依赖以下python package，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装:
-- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
+- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
 

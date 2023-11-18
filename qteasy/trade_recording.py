@@ -591,7 +591,7 @@ def get_account_position_details(account_id, shares=None, data_source=None):
                 'cost': costs,
             },
             index=symbols,
-    ).T  # TODO: ?? 为什么要转置
+    ).T
     return positions
 
 
