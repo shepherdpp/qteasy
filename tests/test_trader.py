@@ -401,7 +401,7 @@ class TestTrader(unittest.TestCase):
         self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
-        ts.info(detail=True)
+        ts.info()
 
     def test_trader_run(self):
         """Test full-fledged run with all tasks manually added"""
