@@ -3,6 +3,7 @@
 ![PyPI](https://img.shields.io/pypi/v/qteasy)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
 [![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
+[![Documentation Status](https://readthedocs.org/projects/qteasy/badge/?version=latest)](https://qteasy.readthedocs.io/zh/latest/?badge=latest)
 ![GitHub](https://img.shields.io/github/license/shepherdpp/qteasy)
 ![GitHub repo size](https://img.shields.io/github/repo-size/shepherdpp/qteasy)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shepherdpp/qteasy)
