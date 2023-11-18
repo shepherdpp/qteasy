@@ -362,7 +362,7 @@ class TraderShell(Cmd):
                     'current_price': 12,
                     'market_value': 14,
                     'profit': 14,
-                    'profit_ratio': 8,
+                    'profit_ratio': 12,
                 },
                 justify='right',
         )
@@ -391,7 +391,7 @@ class TraderShell(Cmd):
                         'current_price': 22,
                         'market_value': 14,
                         'profit': 14,
-                        'profit_ratio': 23,
+                        'profit_ratio': 12,
                     },
                     justify='right',
             )
@@ -1038,12 +1038,12 @@ class TraderShell(Cmd):
 
                             message = message[:-2] + ' ' + watched_prices
                             rprint(adjust_string_length(message,
-                                                        text_width - 10,
+                                                        text_width - 12,
                                                         hans_aware=True,
                                                         format_tags=True), end='\r')
                             if next_normal_message:
                                 rprint(adjust_string_length(next_normal_message,
-                                                            text_width - 10,
+                                                            text_width - 12,
                                                             hans_aware=True,
                                                             format_tags=True))
                         else:
@@ -1051,7 +1051,7 @@ class TraderShell(Cmd):
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
                             rprint(adjust_string_length(message,
-                                                        text_width - 10,
+                                                        text_width - 12,
                                                         hans_aware=True,
                                                         format_tags=True))
                         prev_message = message
@@ -1495,38 +1495,37 @@ class Trader(object):
         rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
         if total_value >= total_investment:
             rprint(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
-        else:
-            rprint(f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]')
-        if total_profit_ratio >= 0:
             rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
                    f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n'
-                   f'{"Total ROI Rate":<{semi_width - 20}}[bold red]{total_roi_rate:.2%}[/bold red]')
+                   f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]')
         else:
+            rprint(f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]')
             rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
                    f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
-                   f'{"Total ROI Rate":<{semi_width - 20}}[bold green]{total_roi_rate:.2%}[/bold green]')
+                   f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]')
         print(f'{" Cash ":-^{semi_width}}')
+        rprint(f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} ')
         rprint(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
         rprint(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
         print(f'{" Stocks ":-^{semi_width}}')
-        rprint(f'{"Stock Position Level":<{semi_width - 20}}{position_level:.2%}')
+        rprint(f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}')
         if total_profit >= 0:
             rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
             rprint(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]')
-            rprint(f'{"Stock Profit Ratio":<{semi_width - 20}}[bold red]{total_profit_ratio:.2%}[/bold red]')
+            rprint(f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]')
         else:
             rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold green]')
             rprint(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]')
-            rprint(f'{"Total Profit Ratio":<{semi_width - 20}}[bold green]{total_profit_ratio:.2%}[/bold green]')
+            rprint(f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold green]')
         asset_in_pool= len(self.asset_pool)
         asset_pool_string = adjust_string_length(
                 s=', '.join(self.asset_pool),
-                n=width,
+                n=width - 2,
         )
         print(f'{" Investment ":-^{width}}')
         rprint(f'Current Investment Type:        {self.asset_type}')
         rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
-               f'{asset_pool_string}\n')
+               f'=={asset_pool_string}\n')
         return None
 
     def trade_results(self, status='filled'):

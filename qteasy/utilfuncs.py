@@ -949,7 +949,9 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
             raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
         return exchange_trade_cal[exchange_trade_cal.is_open == 1].index.max()
     else:
-        raise NotImplementedError
+        raise RuntimeError('Trade Calendar is not available, please download basic data into DataSource, Use:\n'
+                           'qteasy.refill_data_source(tables="basics")\n'
+                           'see more details in qteasy docs')
 
 
 @lru_cache(maxsize=16)
@@ -996,7 +998,9 @@ def prev_market_trade_day(date, exchange='SSE'):
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
         return pd.to_datetime(pretrade_date)
     else:
-        raise NotImplementedError
+        raise RuntimeError('Trade Calendar is not available, please download basic data into DataSource, Use:\n'
+                           'qteasy.refill_data_source(tables="basics")\n'
+                           'see more details in qteasy docs')
 
 
 @lru_cache(maxsize=16)

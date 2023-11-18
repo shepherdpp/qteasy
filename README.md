@@ -64,10 +64,13 @@
 pip install qteasy
 ```
 
+### python 版本
+- *`python` version >= 3.6* 
+
 ### 安装依赖包
 
 这个项目依赖以下python package，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装:
-- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
+- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`

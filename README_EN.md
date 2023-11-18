@@ -62,10 +62,14 @@ strategies, with highly versertility and flexibility
 ```bash
 pip install qteasy
 ```
+
+### python version
+- *`python` version >= 3.6* 
+
 ### Install dependencies
 
 This project requires and depends on following packages:
-- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
+- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
