@@ -16,7 +16,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-    'recommonmark',
     'sphinx.ext.napoleon',
     'sphinx_rtd_theme',
     'sphinx_markdown_tables',
