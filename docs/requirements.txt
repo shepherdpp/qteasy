@@ -1,3 +1,8 @@
-sphinx-rtd-theme
+# Defining the exact version will make sure things don't break
+sphinx==5.3.0
+alabaster==0.7.13
+pygments==2.14.0
+sphinx_rtd_theme==1.3.0
+readthedocs-sphinx-search==0.1.1
 sphinx-markdown-tables==0.0.15
-myst-parser
+myst_parser

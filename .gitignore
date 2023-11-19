@@ -12,14 +12,6 @@ qteasy/__pycache__/core.cpython-36.pyc
 *.pyc
 qteasy/__pycache__/
 .idea/
-test_par_in_different_periods.ipynb
-.ipynb_checkpoints/test_par_in_different_periods-checkpoint.ipynb
-.ipynb_checkpoints/Multi_DMA_test-checkpoint.ipynb
-Multi_DMA_test.ipynb
-.ipynb_checkpoints/All_timing_test_separately-checkpoint.ipynb
-.ipynb_checkpoints/Backtest_plotting-checkpoint.ipynb
-All_timing_test_separately.ipynb
-Backtest_plotting.ipynb
 **.csv
 **.pyc
 **.ipynb
@@ -62,3 +54,6 @@ data_test/
 live_daily.py
 live_grid.py
 live_example.py
+docs/build/
+docs/make.bat
+docs/Makefile
