@@ -51,7 +51,7 @@ QTEASY is a fast quantitative investment package created for traders, with follo
 3. Deploy strategies and start live trading with real-time data, and record trading logs, account positions and funds.
 
 Following functions are in development plan:
-1. *Provide common financial statistical analysis tools and integrate them into the HistoryPanel object*
+1. *Provide common financial statistical analysis tools and integrate them into the HistoryPanel object (in development)*
 2. *Connect with automated trading system and realize automated trading (in development)*
 
 The target of this module is to provide effective vectorized backtesting and assessment of investment 
@@ -179,7 +179,7 @@ Above code returns a `dict` containing stock symbols as keys and Dataframe of pr
  2021-01-15  5471.3910  5500.6348  5390.2737  5458.0812}
 ```
 Apart from prices, `qteasy` can also download and manage a large amount of financial data, including financial statements, technical indicators, and basic information. For details, please refer to
-[QTEASY tutorial: download and manage financial data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
+[QTEASY documents](https://qteasy.readthedocs.io)
 
 As a shortcut, `qteasy` provides a `qt.candle()` function to plot candlestick charts of stock prices already downloaded
 
@@ -238,7 +238,7 @@ With the dynamic candlestick chart, users can control the display range of the K
 
 ![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
 
-Find more detailed introduction to DataSource objects in [02: Manage Financial Data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
+Find more detailed introduction to DataSource objects in [QTEASY documents](https://qteasy.readthedocs.io)
 
 
 ###  Create an investment strategy
@@ -529,15 +529,6 @@ Users interact with, control and modify behavior of the live trading by inputtin
 - `exit`: exit TraderShell
 - ... more commands please refer to `QTEASY` documentation
 
-## QTEASY Tutorials
+## QTEASY Documentations
 
-Please use below links to find more detailed tutorials about `QTEASY`:
-
-- [01: Basic Configurations and Initialization](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2001%20-%20系统基础配置.md)
-- [02: Download and manage financial data](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
-- [03: Back-test trade strategies](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2003%20-%20交易策略及回测基本操作.md)
-- [04: Use built-in Strategies](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2004%20-%20使用内置交易策略.md)
-- [05: User-defined Strategies(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2005%20-%20创建自定义交易策略.md)
-- [06: Optimization of Strategies(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2006%20-%20交易策略的优化.md)
-- [07: Deploy Strategy in Live Trade(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)
-- [08: Manipulate of History Data(TBC)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2008%20-%20历史数据的操作和分析.md)
+You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io):
