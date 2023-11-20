@@ -25,6 +25,7 @@
 
 
 - [Introduction](#Introduction)
+- [QTEASY Documentations](#QTEASY-Documentations)
 - [Installation and dependencies](#installation-and-dependencies)
   - [Install `qteasy` from pypi](#install-qteay-from-pypi)
   - [Install dependencies](#install-dependencies)
@@ -35,7 +36,6 @@
   - [Back test and assess Strategy](#backtest-strategy-with-history-data-and-evaluate-its-performance)
   - [Deploy Strategy](#deploy-the-strategy-and-start-live-trading)
   - [Optimizing Strategy](#optimize-adjustable-parameters-of-a-strategy)
-- [More Tutorials](#qteasy-tutorials)
 
 ## Introduction
 - Author: **Jackie PENG**
@@ -56,6 +56,12 @@ Following functions are in development plan:
 
 The target of this module is to provide effective vectorized backtesting and assessment of investment 
 strategies, with highly versertility and flexibility
+
+
+## QTEASY Documentations
+
+You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io):
+
 
 ## Installation and dependencies
 
@@ -528,7 +534,3 @@ Users interact with, control and modify behavior of the live trading by inputtin
 - `history`: view trade history
 - `exit`: exit TraderShell
 - ... more commands please refer to `QTEASY` documentation
-
-## QTEASY Documentations
-
-You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io):
