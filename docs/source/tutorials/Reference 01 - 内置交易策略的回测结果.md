@@ -1,4 +1,4 @@
-### 回测内置策略
+### 所有内置交易策略的回测结果一览
 
 测试内置的择时策略和选股策略
 每种策略进行一次回测，回测区间苁1996年到2021年，测试使用默认策略参数，测试参数如下：
@@ -98,7 +98,7 @@ qt.configuration(up_to=5, default=True)
     opti_max_rounds:      5              <5>
     opti_min_volume:      1000           <1000>
     opti_population:      1000.0         <1000.0>
-    opti_https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_count:    30             <30>
+    opti_img/output_count:    30             <30>
     
 
 
@@ -157,7 +157,7 @@ res = qt.run(op)
     ===========END OF REPORT=============
     
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_3_3.png)
+![png](img/output_3_3.png)
 
 
 ```python
@@ -218,7 +218,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_4_3.png)
+![png](img/output_4_3.png)
     
 
 
@@ -281,7 +281,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_5_3.png)
+![png](img/output_5_3.png)
     
 
 
@@ -344,7 +344,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_6_3.png)
+![png](img/output_6_3.png)
     
 
 
@@ -407,7 +407,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_7_3.png)
+![png](img/output_7_3.png)
     
 
 
@@ -470,7 +470,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_8_3.png)
+![png](img/output_8_3.png)
     
 
 
@@ -533,7 +533,7 @@ res = qt.run(op, mode=1, print_backtest_log=False)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_9_3.png)
+![png](img/output_9_3.png)
     
 
 
@@ -616,7 +616,7 @@ res = qt.run(op, mode=1, printlog=True)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_11_3.png)
+![png](img/output_11_3.png)
     
 
 
@@ -679,7 +679,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_12_3.png)
+![png](img/output_12_3.png)
     
 
 
@@ -742,7 +742,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_13_3.png)
+![png](img/output_13_3.png)
     
 
 
@@ -805,7 +805,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_14_3.png)
+![png](img/output_14_3.png)
     
 
 
@@ -868,7 +868,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_15_3.png)
+![png](img/output_15_3.png)
     
 
 
@@ -931,7 +931,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_16_3.png)
+![png](img/output_16_3.png)
     
 
 
@@ -994,7 +994,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_17_3.png)
+![png](img/output_17_3.png)
     
 
 
@@ -1057,7 +1057,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_18_3.png)
+![png](img/output_18_3.png)
     
 
 
@@ -1120,7 +1120,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_19_3.png)
+![png](img/output_19_3.png)
     
 
 
@@ -1183,7 +1183,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_20_3.png)
+![png](img/output_20_3.png)
     
 
 
@@ -1246,7 +1246,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_21_3.png)
+![png](img/output_21_3.png)
     
 
 
@@ -1309,7 +1309,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_22_3.png)
+![png](img/output_22_3.png)
     
 
 
@@ -1372,7 +1372,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_23_3.png)
+![png](img/output_23_3.png)
     
 
 
@@ -1435,7 +1435,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_24_3.png)
+![png](img/output_24_3.png)
     
 
 
@@ -1498,7 +1498,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_25_3.png)
+![png](img/output_25_3.png)
     
 
 
@@ -1561,7 +1561,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_26_3.png)
+![png](img/output_26_3.png)
     
 
 
@@ -1624,7 +1624,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_27_3.png)
+![png](img/output_27_3.png)
     
 
 
@@ -1687,7 +1687,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_28_3.png)
+![png](img/output_28_3.png)
     
 
 
@@ -1750,7 +1750,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_29_3.png)
+![png](img/output_29_3.png)
     
 
 
@@ -1813,7 +1813,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_30_3.png)
+![png](img/output_30_3.png)
     
 
 
@@ -1877,7 +1877,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_31_3.png)
+![png](img/output_31_3.png)
     
 
 
@@ -1940,7 +1940,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_32_3.png)
+![png](img/output_32_3.png)
     
 
 
@@ -2003,7 +2003,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_33_3.png)
+![png](img/output_33_3.png)
     
 
 
@@ -2066,7 +2066,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_34_3.png)
+![png](img/output_34_3.png)
     
 
 
@@ -2129,7 +2129,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_35_3.png)
+![png](img/output_35_3.png)
     
 
 
@@ -2192,7 +2192,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_36_3.png)
+![png](img/output_36_3.png)
     
 
 
@@ -2255,7 +2255,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_37_3.png)
+![png](img/output_37_3.png)
     
 
 
@@ -2318,7 +2318,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_38_3.png)
+![png](img/output_38_3.png)
     
 
 
@@ -2381,7 +2381,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_39_3.png)
+![png](img/output_39_3.png)
     
 
 
@@ -2444,7 +2444,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_40_3.png)
+![png](img/output_40_3.png)
     
 
 
@@ -2507,7 +2507,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_41_3.png)
+![png](img/output_41_3.png)
     
 
 
@@ -2570,7 +2570,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/tutorials/img/output_42_3.png)
+![png](img/output_42_3.png)
     
 
 

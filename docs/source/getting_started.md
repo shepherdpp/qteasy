@@ -1,4 +1,4 @@
-# `qteasy` -- 一个基于Python的高效量化投资工具包
+# 欢迎使用QTEASY——一个量化交易系统工具包
 
 ![PyPI](https://img.shields.io/pypi/v/qteasy)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
@@ -22,38 +22,6 @@
 ![GitHub watchers](https://img.shields.io/github/watchers/shepherdpp/qteasy?style=social)
 ![GitHub followers](https://img.shields.io/github/followers/shepherdpp?style=social)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
-
-
-- [QTEASY简介](#基本介绍)
-- [安装及依赖](#安装依赖包)
-- [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
-  - [初始配置——本地数据源](#配置本地数据源)
-  - [下载股票价格并可视化](#下载股票价格数据并将其可视化)
-  - [创建投资策略](#创建一个投资策略)
-  - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
-  - [投资策略的实盘运行](#投资策略的实盘运行)
-  - [投资策略的优化](#回测并优化交易策略)
-- [更详细的使用方法请参见教程](#QTEASY使用教程)
-
-
-## QTEASY简介
-
-- 作者: **Jackie PENG**
-- email: *jackie_pengzhao@163.com*
-- Created: 2019, July, 16
-- Latest Version: `1.0.7`
-- License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
-
-
-QTEASY是为量化交易人员开发的一套量化交易策略开发工具包，提供了以下基本功能。
-
-1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括Tushare、EastMoney等
-2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
-3. 交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息
-
-以下功能在开发计划中：
-1. *提供常用的金融统计数据分析工具，并整合到内间的HistoryPanel对象中*
-2. *与自动化交易系统连接、实现自动化交易(开发中)*
 
 
 ## 安装及依赖
@@ -109,7 +77,7 @@ import qteasy as qt
 将你获得的tushare API token添加到配置文件中，如下所示：
 
 
-``` commandline
+``` 
 tushare_token = <你的tushare API Token> 
 ```
 #### 配置本地数据源 —— 用MySQL数据库作为本地数据源
@@ -181,7 +149,7 @@ qt.get_history_data(htypes='open, high, low, close',
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
+![png](img/output_5_2.png)
     
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持功能如下：
@@ -206,15 +174,15 @@ qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_1.png)
+![png](img/output_3_1.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_7_2.png)
+![png](img/output_7_2.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_8_3.png)
+![png](img/output_8_3.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_4.png)
+![png](img/output_3_4.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_5.png)
+![png](img/output_3_5.png)
     
 
 
@@ -236,7 +204,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 关于`DataSource`对象的更多详细介绍，请参见[qteasy教程](https://github.com/shepherdpp/qteasy/tutorials)
 
 
-###  创建一个投资策略
+##  创建一个投资策略
 
 `qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略。
@@ -246,7 +214,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 - **使用内置交易策略组合**
 - **通过策略类自行创建策略**
 
-#### 生成一个DMA均线择时交易策略
+### 生成一个DMA均线择时交易策略
 在这里，我们将使用一个内置的`DMA`均线择时策略来生成一个最简单的大盘择时交易系统。所有内置交易策略的清单和详细说明请参见文档。
 
 创建`Operator`对象时传入参数：`strategies='DMA'`，可以新建一个`DMA`双均线择时交易策略。
@@ -298,7 +266,7 @@ qt.built_ins('dma')
 
 ### 回测并评价交易策略的性能表现
 queasy可以使用历史数据回测策略表现并输出图表如下：
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
+![png](img/output_14_3.png)
 
 使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
 
@@ -361,9 +329,9 @@ Max drawdown:                    11.92%
 
 ===========END OF REPORT=============
 ```
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
+![png](img/output_21_1.png)
 
-### 交易策略的参数调优
+## 交易策略的参数调优
 
 交易策略的表现与参数有关，如果输入不同的参数，策略回报相差会非常大。`qteasy`可以用多种不同的优化算法，帮助搜索最优的策略参数，
 
@@ -383,7 +351,7 @@ res = op.run(mode=2,                    # 优化模式
 
 `qteasy`将在同一段历史数据（优化区间）上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据（测试区间）上进行独立测试，并显
 示独立测试的结果：
-```commandline
+```
 ==================================== 
 |                                  |
 |       OPTIMIZATION RESULT        |
@@ -407,7 +375,7 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 ===========END OF REPORT=============
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_24_1.png)   
+![png](img/output_24_1.png)   
 将优化后的参数应用到策略中，并再次回测，可以看到结果明显提升：
 
 ```python
@@ -426,12 +394,11 @@ res = op.run(
 ```
 结果如下：
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_26_1.png)   
-
+![png](img/output_26_1.png)
 
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
 
-### 部署并开始交易策略的实盘运行
+## 部署并开始交易策略的实盘运行
 
 `qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
 
@@ -473,7 +440,7 @@ qt.run(op)
 ```
 此时`qteasy`会启动一个`Trader Shell`命令行界面，同时交易策略会自动定时运行，运行的参数随`QT_CONFIG`而定。启动TraderShell后，所有交易相关的重要信息都会显示在console中：
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)   
+![png](img/output_27_1.png)   
 
 此时控制台上会显示当前交易执行状态：
 - 当前日期、时间、运行状态
@@ -484,7 +451,7 @@ qt.run(op)
 - 开盘和收盘时间预告等
 
 在`TraderShell`运行过程中可以随时按`Ctrl+C`进入Shell选单：
-```commandline
+```
 Current mode interrupted, Input 1 or 2 or 3 for below options: 
 [1], Enter command mode; 
 [2], Enter dashboard mode. 
@@ -495,7 +462,7 @@ please input your choice:
 此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以在(QTEASY)命令行提示符后输入
 命令来控制交易策略的运行：
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_28_1.png)   
+![png](img/output_28_1.png)   
 
 在命令行模式下可以与`TraderShell`实现交互，操作当前账户，查询交易历史、修改状态等：
 
@@ -506,16 +473,3 @@ please input your choice:
 - `history`: 查看历史交易记录
 - `exit`: 退出TraderShell
 - ... 更多`TraderShell`命令参见`QTEASY`文档
-
-## QTEASY 使用教程
-
-关于`QTEASY`系统的更多详细解释和使用方法，请参阅以下使用教程：
-
-- [01: 系统基础配置及初始化](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2001%20-%20系统基础配置.md)
-- [02: 金融数据下载及管理](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
-- [03: 交易策略及回测基本操作](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2003%20-%20交易策略及回测基本操作.md)
-- [04: 使用内置交易策略](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2004%20-%20使用内置交易策略.md)
-- [05: 创建自定义交易策略(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2005%20-%20创建自定义交易策略.md)
-- [06: 交易策略的参数优化(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2006%20-%20交易策略的优化.md)
-- [07: 交易策略的部署和运行(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)
-- [08: 历史数据的操作和分析(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2008%20-%20历史数据的操作和分析.md)
