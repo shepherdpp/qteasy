@@ -24,16 +24,18 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
-- [QTEASY简介](#基本介绍)
-- [安装及依赖](#安装依赖包)
-- [10分钟了解Qteasy的功能](#10分钟了解qteasy的功能)
+- [基本介绍](#QTEASY简介)
+- [QTEASY文档](#QTEASY文档)
+- [安装依赖包](#安装及依赖)
+  - [安装`qteasy`](#QTEASY的安装)
+  - [安装依赖包](#安装依赖包)
+- [10分钟了解Qteasy的功能](#10分钟了解QTEASY的功能)
   - [初始配置——本地数据源](#配置本地数据源)
-  - [下载股票价格并可视化](#下载股票价格数据并将其可视化)
+  - [下载股票价格并可视化](#下载金融历史数据)
   - [创建投资策略](#创建一个投资策略)
   - [投资策略的回测和评价](#回测并评价交易策略的性能表现)
-  - [投资策略的实盘运行](#投资策略的实盘运行)
-  - [投资策略的优化](#回测并优化交易策略)
-- [更详细的使用方法请参见教程](#QTEASY使用教程)
+  - [投资策略的优化](#交易策略的参数调优)
+  - [投资策略的实盘运行](#部署并开始交易策略的实盘运行)
 
 
 ## QTEASY简介
@@ -55,10 +57,13 @@ QTEASY是为量化交易人员开发的一套量化交易策略开发工具包�
 1. *提供常用的金融统计数据分析工具，并整合到内间的HistoryPanel对象中*
 2. *与自动化交易系统连接、实现自动化交易(开发中)*
 
+## QTEASY文档
+
+关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io)：
 
 ## 安装及依赖
 
-### `qteasy`的安装
+### QTEASY的安装
 
 ```bash
 pip install qteasy
@@ -89,7 +94,7 @@ pip install qteasy
 import qteasy as qt
 ```
 
-### 配置本地数据源和tushare token
+### 配置本地数据源
 
 为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
 
@@ -507,6 +512,3 @@ please input your choice:
 - `exit`: 退出TraderShell
 - ... 更多`TraderShell`命令参见`QTEASY`文档
 
-## QTEASY 文档
-
-关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io)：
