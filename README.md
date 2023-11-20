@@ -173,7 +173,7 @@ qt.get_history_data(htypes='open, high, low, close',
  2021-01-14  5556.2125  5568.0179  5458.6818  5470.4563
  2021-01-15  5471.3910  5500.6348  5390.2737  5458.0812}
 ```
-除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[QTEASY教程：金融数据下载及管理](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
+除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[qteasy文档](https://qteasy.readthedocs.io)
 
 股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。
 
@@ -233,7 +233,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 
 ![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
 
-关于`DataSource`对象的更多详细介绍，请参见[qteasy教程](https://github.com/shepherdpp/qteasy/tutorials)
+关于`DataSource`对象的更多详细介绍，请参见[qteasy文档](https://qteasy.readthedocs.io)
 
 
 ###  创建一个投资策略
@@ -507,15 +507,6 @@ please input your choice:
 - `exit`: 退出TraderShell
 - ... 更多`TraderShell`命令参见`QTEASY`文档
 
-## QTEASY 使用教程
+## QTEASY 文档
 
-关于`QTEASY`系统的更多详细解释和使用方法，请参阅以下使用教程：
-
-- [01: 系统基础配置及初始化](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2001%20-%20系统基础配置.md)
-- [02: 金融数据下载及管理](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)
-- [03: 交易策略及回测基本操作](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2003%20-%20交易策略及回测基本操作.md)
-- [04: 使用内置交易策略](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2004%20-%20使用内置交易策略.md)
-- [05: 创建自定义交易策略(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2005%20-%20创建自定义交易策略.md)
-- [06: 交易策略的参数优化(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2006%20-%20交易策略的优化.md)
-- [07: 交易策略的部署和运行(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)
-- [08: 历史数据的操作和分析(未完待续)](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2008%20-%20历史数据的操作和分析.md)
+关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io)：
