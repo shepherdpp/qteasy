@@ -8,3 +8,9 @@ sphinx-markdown-tables==0.0.17
 myst_parser==1.0.0
 sphinxcontrib-napoleon==0.7
 tushare
+numba
+numpy
+pandas >= 1.1.0
+mplfinance
+matplotlib
+rich
