@@ -7,3 +7,4 @@ readthedocs-sphinx-search==0.1.1
 sphinx-markdown-tables==0.0.17
 myst_parser==1.0.0
 sphinxcontrib-napoleon==0.7
+tushare
