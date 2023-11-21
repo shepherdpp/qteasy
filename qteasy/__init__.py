@@ -70,11 +70,12 @@ for line in config_lines:
     if line[0] == '#':  # 忽略注释行
         continue
     line = line.split('=')
-    # TODO: 读取配置文件时，字符串是不需要引号的，但是如果字符串用引号引起来，说明强制要求字符串类型，需要解决
     if len(line) == 2:
         arg_name = line[0].strip()
         read_value = line[1].strip()
-        if read_value == 'True':
+        if (read_value[0] in ['\'', '"']) and (read_value[-1] == ['\'', '"']):
+            read_value = str(read_value[1:-1])
+        elif read_value == 'True':
             read_value = True
         elif read_value == 'False':
             read_value = False

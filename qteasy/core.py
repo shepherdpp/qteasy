@@ -1991,16 +1991,8 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
     Examples
     --------
     >>> configure(reset=True)  # 将QT_CONFIG参数设置为默认值
-
-    Out:
-
     >>> configure(invest_cash_amounts=[10000, 20000, 30000], invest_cash_dates=['2018-01-01', '2018-02-01', '2018-03-01'])
-
-    Out:
-
     >>> get_config('invest_cash_amounts, invest_cash_dates')
-
-    Out:
     No. Config-Key            Cur Val                       Default val
     -------------------------------------------------------------------
     1   invest_cash_amounts   [10000, 20000, 30000]         <[100000.0]>
@@ -2169,15 +2161,11 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     Examples
     --------
     >>> get_config('local_data_source')
-
-    Out:
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
     1   local_data_source     database       <file>
 
     >>> get_config('local_data_source, local_data_file_type, local_data_file_path')
-
-    Out:
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
     1   local_data_source     database       <file>
@@ -2185,8 +2173,6 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     3   local_data_file_path  data/          <data/>
 
     >>> get_config(level=0, up_to=2)
-
-    Out:
     No. Config-Key            Cur Val        Default val
     ----------------------------------------------------
     1   mode                  1              <1>
@@ -2200,8 +2186,6 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
     ... (more rows)
 
     >>> get_config(level=0, up_to=1, verbose=True)
-
-    Out:
     No. Config-Key            Cur Val        Default val
           Description
     ----------------------------------------------------
@@ -2211,8 +2195,6 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
           1: 回测-评价模式
           2: 策略优化模式
           3: 统计预测模式
-
-
     2   time_zone             Asia/Shanghai  <Asia/Shanghai>
           回测时的时区，可以是任意时区，例如：
           Asia/Shanghai
@@ -2226,11 +2208,8 @@ def get_config(config_key=None, level=0, up_to=0, default=True, verbose=False):
           Pacific/Auckland
           Pacific/Chatham
           etc.
-
-
     3   asset_pool            000300.SH      <000300.SH>
           可用投资产品池，投资组合基于池中的产品创建
-
     4   asset_type            IDX            <IDX>
           投资产品的资产类型，包括：
           IDX  : 指数
