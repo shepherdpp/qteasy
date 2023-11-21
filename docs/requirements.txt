@@ -14,3 +14,4 @@ pandas >= 1.1.0
 mplfinance
 matplotlib
 rich
+talib
