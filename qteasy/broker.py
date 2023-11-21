@@ -351,8 +351,8 @@ class RandomBroker(Broker):
 
     """
 
-    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003, moq=100, delay=5.0, price_deviation=0.01,
-                 probabilities=[0.8, 0.15, 0.05]):
+    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003, moq=100, delay=1.0, price_deviation=0.001,
+                 probabilities=(0.88, 0.10, 0.02)):
         super(RandomBroker, self).__init__()
         self.broker_name = 'RandomBroker'
         self.fee_rate_buy = fee_rate_buy
@@ -402,10 +402,10 @@ class RandomBroker(Broker):
                         qty = remain_qty # 如果成交数量小于moq，且剩余数量也小于moq，那么成交数量就是剩余数量
                         result_type = 'filled'
                 if direction == 'buy':
-                    order_price = order_price * (1 + price_deviation)
+                    order_price = order_price * (1 - price_deviation)
                     transaction_fee = qty * order_price * self.fee_rate_buy
                 elif direction == 'sell':
-                    order_price = order_price * (1 - price_deviation)
+                    order_price = order_price * (1 + price_deviation)
                     transaction_fee = qty * order_price * self.fee_rate_sell
                 else:
                     raise RuntimeError(f'invalid direction: {direction}')
