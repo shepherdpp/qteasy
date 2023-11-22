@@ -1,35 +1,11 @@
-# 欢迎使用QTEASY——一个量化交易系统工具包
-
-![PyPI](https://img.shields.io/pypi/v/qteasy)
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
-[![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
-[![Documentation Status](https://readthedocs.org/projects/qteasy/badge/?version=latest)](https://qteasy.readthedocs.io/zh/latest/?badge=latest)
-![GitHub](https://img.shields.io/github/license/shepherdpp/qteasy)
-![GitHub repo size](https://img.shields.io/github/repo-size/shepherdpp/qteasy)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shepherdpp/qteasy)
-![GitHub top language](https://img.shields.io/github/languages/top/shepherdpp/qteasy)
-![PyPI - Implementation](https://img.shields.io/pypi/implementation/qteasy)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qteasy)
-![GitHub branch checks state](https://img.shields.io/github/checks-status/shepherdpp/qteasy/master)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/shepherdpp/qteasy)
-![GitHub issues](https://img.shields.io/github/issues/shepherdpp/qteasy)
-![GitHub last commit](https://img.shields.io/github/last-commit/shepherdpp/qteasy)
-![GitHub contributors](https://img.shields.io/github/contributors/shepherdpp/qteasy)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/qteasy)
-![PyPI - Downloads](https://img.shields.io/pypi/dw/qteasy)
-![GitHub Repo stars](https://img.shields.io/github/stars/shepherdpp/qteasy?style=social)
-![GitHub forks](https://img.shields.io/github/forks/shepherdpp/qteasy?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/shepherdpp/qteasy?style=social)
-![GitHub followers](https://img.shields.io/github/followers/shepherdpp?style=social)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
-
+# QTEASY快速上手指南
 
 ## 安装及依赖
 
-### `qteasy`的安装
+### 通过`pip`安装
 
 ```bash
-pip install qteasy
+$ pip install qteasy
 ```
 
 ### python 版本
@@ -56,6 +32,7 @@ pip install qteasy
 
 ```python
 import qteasy as qt
+print(qt.__version__)
 ```
 
 ### 配置本地数据源和tushare token

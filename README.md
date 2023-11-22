@@ -66,7 +66,7 @@ QTEASY是为量化交易人员开发的一套量化交易策略开发工具包�
 ### QTEASY的安装
 
 ```bash
-pip install qteasy
+$ pip install qteasy
 ```
 
 ### python 版本
@@ -82,7 +82,8 @@ pip install qteasy
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
-- *`TA-lib` version >= 0.4.18*    TA-Lib需要手动安装，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html)
+
+- *`TA-lib` version >= 0.4.18*    `TA-Lib` 需要手动安装，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html)
 
 
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
@@ -94,6 +95,7 @@ pip install qteasy
 
 ```python
 import qteasy as qt
+print(qt.__version__)
 ```
 
 ### 配置本地数据源

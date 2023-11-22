@@ -68,7 +68,7 @@ You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readth
 ### Install `qteay` from PyPI
 
 ```bash
-pip install qteasy
+$ pip install qteasy
 ```
 
 ### python version
@@ -98,7 +98,9 @@ should be installed. find more details in the tutorial.
 
 ```python
 import qteasy as qt
+print(qt.__version__)
 ```
+
 ### Configure local data source and Tushare token
 
 `qteasy` is not fully functional without variant types of financial data, which should be stored locally in a datasource.
