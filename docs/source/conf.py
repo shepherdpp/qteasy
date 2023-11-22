@@ -28,7 +28,6 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
-    # 'numpydoc',
 ]
 
 templates_path = ['_templates']
