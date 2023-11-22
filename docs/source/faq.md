@@ -19,17 +19,21 @@
 
 ### Mac OS
 
-`$ brew install ta-lib`
+```bash
+$ brew install ta-lib
+```
 
 如果使用Apple Silicon芯片，可以使用：
 
-`$ arch -arm64 brew install ta-lib`
+```bash
+$ arch -arm64 brew install ta-lib
+```
 
 ### Linux
 
 下载 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz) ，然后:
 
-``` console
+```bash
 $ tar -xzf ta-lib-0.4.0-src.tar.gz
 $ cd ta-lib/
 $ ./configure --prefix=/usr
