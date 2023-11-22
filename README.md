@@ -43,7 +43,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.7`
+- Latest Version: `1.0.8`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 
@@ -78,10 +78,12 @@ pip install qteasy
 - *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
+
+- *`TA-lib` version >= 0.4.18*    TA-Lib需要手动安装，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html)
+
 
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
 

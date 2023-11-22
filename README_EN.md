@@ -41,7 +41,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.6`
+- Latest Version: `1.0.8`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 QTEASY is a fast quantitative investment package created for traders, with following features:
@@ -80,10 +80,12 @@ This project requires and depends on following packages:
 - *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
+
+
+- *`TA-lib` version >= 0.4.18*    the TA-Lib will have to be installed manually, please refer to [TA-Lib installation](https://qteasy.readthedocs.io/zh/latest/faq.html) for details.
 
 A local datasource should be setup for `qteasy` to work properly. a series of .csv files will be used to store 
 financial data in default case. Other types of datasource can be used, such as MySQL database, but other dependencies
