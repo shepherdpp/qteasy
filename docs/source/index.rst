@@ -13,7 +13,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.7`
+- Latest Version: `1.0.8`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 Introduction
@@ -100,6 +100,14 @@ ABOUT
    :glob:
 
    about
+
+FAQ
+===
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   faq
 
 Indices and tables
 ==================
