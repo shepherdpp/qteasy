@@ -102,11 +102,14 @@ def ema(close, span: int = 30):
 
         EMA=Price(t)×k+EMA(y)×(1−k)
 
-    input：
-        close: float,收盘价 1-D ndarray, 输入数据，一维矩阵
-        span: int, optional, 1 < span, 跨度
-    output：=====
-        :return: 1-D ndarray; 输入数据的指数平滑移动平均值
+    Parameters
+    ----------
+    close: float,收盘价 1-D ndarray, 输入数据，一维矩阵
+    span: int, optional, 1 < span, 跨度
+
+    Return
+    ------
+    1-D ndarray; 输入数据的指数平滑移动平均值
     """
     return EMA(close, span)
 
@@ -181,12 +184,15 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     For a simple moving average, the formula is the sum of the data
     points over a given period divided by the number of periods.
 
-    input：
-        close: float,收盘价 type: 1-D np.ndarray 输入数据，一维矩阵
-        timeperiod: type: int, 1 < window, 时间滑动窗口
-        matype: type: int:
-    return：
-        :return: ndarray, 完成计算的移动平均序列
+    Parameters
+    ----------
+    close: float,收盘价 type: 1-D np.ndarray 输入数据，一维矩阵
+    timeperiod: type: int, 1 < window, 时间滑动窗口
+    matype: type: int:
+
+    Return
+    ------
+    ndarray, 完成计算的移动平均序列
     """
     return MA(close, timeperiod, matype)
 
@@ -219,6 +225,8 @@ def mama(close, fastlimit=0, slowlimit=0):
 def mavp(close, periods, minperiod: int = 2, maxperiod: int = 30, matype: int = 0):
     """Moving average with variable period 可变周期的移动平均线
 
+    Parameters
+    ----------
     close: float,收盘价
     periods:
     minperiod:
@@ -246,6 +254,8 @@ def mid_point(close, timeperiod=14):
 def mid_price(high, low, timeperiod: int = 14):
     """Midpoint Price over period 期间中点价格
 
+    Parameters
+    ----------
     high: float, 最高价
     low: float, 最低价
     timeperiod:
@@ -269,8 +279,8 @@ def sar(high, low, acceleration=0, maximum=0):
     A dot is placed below the price when it is trending upward, and
     above the price when it is trending downward.
 
-
-
+    Parameters
+    ----------
     high: float, 最高价
     low: float, 最低价
     acceleration:
@@ -297,6 +307,8 @@ def sarext(high, low, acceleration=0, maximum=0):
         BUY signals are generated when the indicator is above 0;
         SELL signals are generated when the indicator is below 0.
 
+    Parameters
+    ----------
     high: float, 最高价
     low: float, 最低价
     acceleration:
@@ -308,7 +320,7 @@ def sarext(high, low, acceleration=0, maximum=0):
     return SAREXT(high, low, acceleration, maximum)
 
 
-def sma(close, timeperiod=30):
+def sma(close, timeperiod=30):  # TODO: TA-Lib free
     """Simple Moving Average 简单移动平均
 
     For a simple moving average, the formula is the sum of the data
@@ -733,7 +745,7 @@ def dx(high, low, close, timeperiod=14):
     return DX(high, low, close, timeperiod)
 
 
-def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
+def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):  # TODO: TA-Lib free
     """Moving Average Convergence/Divergence:
 
     The Moving Average Convergence/Divergence indicator is a momentum oscillator
@@ -1244,6 +1256,8 @@ def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slow
 
     Highest High = the highest high of the specified time period
 
+    Parameters
+    ----------
     high: float, 最高价
     low: float, 最低价
     close: float,收盘价
@@ -1269,8 +1283,8 @@ def stochf(high, low, close, fastk_period=5, fastd_period=3, fastd_matype=0):
     trending upward, prices will close near the high, and in a market trending downward,
     prices close near the low.
 
-
-
+    Parameters
+    ----------
     high: float, 最高价
     low: float, 最低价
     close: float,收盘价
@@ -1342,7 +1356,7 @@ def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=
     return STOCHRSI(close, timeperiod, fastk_period, fastd_period, fastd_matype)
 
 
-def trix(close, timeperiod=30):
+def trix(close, timeperiod=30):  # TODO: TA-Lib free
     """1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 
     close: float,收盘价

@@ -51,9 +51,9 @@ data_test/
 *.xlsx
 *.numbers
 
-live_daily.py
-live_grid.py
-live_example.py
+examples/live_daily.py
+examples/live_grid.py
+examples/live_example.py
 docs/build/
 docs/make.bat
 docs/Makefile

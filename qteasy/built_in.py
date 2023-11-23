@@ -3673,10 +3673,10 @@ class SelectingNDayVolatility(FactorSorter):
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':     Crossline,
-                       'macd':          MACD,
-                       'dma':           DMA,
-                       'trix':          TRIX,
+BUILT_IN_STRATEGIES = {'crossline':     Crossline,  # TODO: TA-Lib free
+                       'macd':          MACD,  # TODO: TA-Lib free
+                       'dma':           DMA,  # TODO: TA-Lib free
+                       'trix':          TRIX,  # TODO: TA-Lib free
                        'cdl':           CDL,
                        'bband':         BBand,
                        's-bband':       SoftBBand,

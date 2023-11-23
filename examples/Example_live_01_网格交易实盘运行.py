@@ -3,6 +3,9 @@ import numpy as np
 
 import qteasy as qt
 from qteasy import Operator
+import sys
+
+sys.path.insert(0, '../')
 
 
 class GridTrade(qt.RuleIterator):
