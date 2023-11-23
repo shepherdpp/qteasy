@@ -30,12 +30,12 @@ Configuration
 
 .. autofunction:: qteasy.save_config
 
-Historical Data
----------------
+Historical Data Manipulation
+----------------------------
 
 查找历史数据:
 
-.. autofunction:: qteasy.find_historical_data
+.. autofunction:: qteasy.find_history_data
 
 获取基础数据:
 
@@ -46,3 +46,12 @@ Historical Data
 .. autofunction:: qteasy.filter_stock_info
 
 .. autofunction:: qteasy.filter_stocks
+
+Built-in Strategies
+-------------------
+
+.. autofunction:: qteasy.built_ins
+
+.. autofunction:: qteasy.built_in_list
+
+.. autofunction:: qteasy.built_in_strategies

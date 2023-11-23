@@ -1022,9 +1022,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     --------
     >>> # 筛选出2019年1月1日以后的上证300指数成分股
     >>> filter_stocks(date='2019-01-01', index='000300.SH')
-
-    Out:
-               symbol   name area industry market  list_date exchange
+           symbol   name area industry market  list_date exchange
     ts_code
     000001.SZ  000001   平安银行   深圳       银行     主板 1991-04-03     SZSE
     000002.SZ  000002    万科A   深圳     全国地产     主板 1991-01-29     SZSE
@@ -1037,20 +1035,15 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     600875.SH  600875   东方电气   四川     电气设备     主板 1995-10-10      SSE
     601699.SH  601699   潞安环能   山西     煤炭开采     主板 2006-09-22      SSE
     688223.SH  688223   晶科能源   江西     电气设备    科创板 2022-01-26      SSE
-
     [440 rows x 7 columns]
 
     >>> # 筛选出2019年1月1日以后上市的上海银行业的股票
     >>> filter_stocks(date='2019-01-01', industry='银行', area='上海')
-
-    Out:
                name area industry market  list_date exchange
     ts_code
     600000.SH  浦发银行   上海       银行     主板 1999-11-10      SSE
     601229.SH  上海银行   上海       银行     主板 2016-11-16      SSE
     601328.SH  交通银行   上海       银行     主板 2007-05-15      SSE
-
-
     """
     try:
         date = pd.to_datetime(date)
@@ -1195,8 +1188,6 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     Examples
     --------
     >>> get_basic_info('000001.SZ')
-
-    Out:
     found 1 matches, matched codes are {'E': {'000001.SZ': '平安银行'}, 'count': 1}
     More information for asset type E:
     ------------------------------------------
@@ -1210,8 +1201,6 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------------------------------------------
 
     >>> get_basic_info('000001')
-
-    Out:
     found 4 matches, matched codes are {'E': {'000001.SZ': '平安银行'}, 'IDX': {'000001.CZC': '农期指数', '000001.SH': '上证指数'}, 'FD': {'000001.OF': '华夏成长'}, 'count': 4}
     More information for asset type E:
     ------------------------------------------
@@ -1246,8 +1235,6 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------------------------------------------
 
     >>> get_basic_info('平安银行')
-
-    Out:
     found 4 matches, matched codes are {'E': {'000001.SZ': '平安银行', '600928.SH': '西安银行'}, 'IDX': {'802613.SI': '平安银行养老新兴投资指数'}, 'FD': {'700001.OF': '平安行业先锋'}, 'count': 4}
     More information for asset type E:
     ------------------------------------------
@@ -1282,14 +1269,10 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------------------------------------------
 
     >>> get_basic_info('贵州钢绳', match_full_name=False)
-
-    Out:
     No match found! To get better result, you can
     - pass "match_full_name=True" to match full names of stocks and funds
 
     >>> get_basic_info('贵州钢绳', match_full_name=True)
-
-    Out:
     found 1 matches, matched codes are {'E': {'600992.SH': '贵绳股份'}, 'count': 1}
     More information for asset type E:
     ------------------------------------------
