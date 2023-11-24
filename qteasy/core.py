@@ -2522,8 +2522,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             asset_type=config['asset_type'],
             adj=config['backtest_price_adj'] if run_mode > 0 else 'none',
             data_source=datasource,
-    ) if run_mode <= 1 else HistoryPanel()
-
+    ) if run_mode <= 1 else HistoryPanel()  # TODO: 当share较多时，运行速度非常慢，需要优化
     # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(
             htypes=oper.op_ref_types,
@@ -2531,8 +2530,8 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
             start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),  # TODO: 已经offset过了，为什么还要offset？
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'],
+            asset_type='IDX',
+            adj='none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
@@ -3008,7 +3007,7 @@ def run(operator, **kwargs):
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
         (hist_op,
-         hist_benchmark,
+         hist_ref,
          back_trade_prices,
          hist_benchmark,
          invest_cash_plan
@@ -3019,6 +3018,7 @@ def run(operator, **kwargs):
         # 在生成交易信号之前准备历史数据
         operator.assign_hist_data(
                 hist_data=hist_op,
+                reference_data=hist_ref,
                 cash_plan=invest_cash_plan,
         )
 

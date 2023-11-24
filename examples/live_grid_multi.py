@@ -1,11 +1,22 @@
+# coding=utf-8
+# ======================================
+# File:     live_grid.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2021-08-29
+# Desc:
+#   Create a grid trading strategy for
+# multiple stocks with different trade
+# parameters
+# ======================================
 
 import numpy as np
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../'))
 import qteasy as qt
 from qteasy import Operator
-import sys
-
-sys.path.insert(0, '../')
 
 
 class GridTrade(qt.RuleIterator):
@@ -45,6 +56,7 @@ class GridTrade(qt.RuleIterator):
 
 if __name__ == '__main__':
     from qteasy.utilfuncs import get_qt_argparser
+
     parser = get_qt_argparser()
     args = parser.parse_args()
     alpha = GridTrade(pars=(0.1, 200, 38.0),  # 当基准网格为0时，代表首次运行，此时买入1000股，并设置当前价为基准网格
@@ -57,7 +69,7 @@ if __name__ == '__main__':
                       strategy_run_freq='5min',
                       data_freq='5min',
                       window_length=20,
-                     )
+                      )
 
     op = Operator('macd, dma', signal_type='VS', op_type='step')
     qt.configure(

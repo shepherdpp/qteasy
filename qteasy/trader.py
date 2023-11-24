@@ -391,7 +391,7 @@ class TraderShell(Cmd):
                         'current_price': 22,
                         'market_value': 14,
                         'profit': 14,
-                        'profit_ratio': 12,
+                        'profit_ratio': 20,
                     },
                     justify='right',
             )
@@ -416,10 +416,10 @@ class TraderShell(Cmd):
                         'qty': 10,
                         'available_qty': 10,
                         'cost': 12,
-                        'current_price': 24,
+                        'current_price': 22,
                         'market_value': 14,
                         'profit': 14,
-                        'profit_ratio': 25,
+                        'profit_ratio': 20,
                     },
                     justify='right',
             )
