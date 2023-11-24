@@ -21,7 +21,7 @@ from .tafuncs import stochrsi, ultosc, willr, ad, adosc, obv
 
 # Built-in Rolling timing strategies:
 def built_in_list(stg_id=None):
-    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息
+    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息并返回该策略
 
     Parameters
     ----------
@@ -36,7 +36,8 @@ def built_in_list(stg_id=None):
 
     Examples
     --------
-    >>> built_in_list()
+    >>> import qteasy as qt
+    >>> qt.built_in_list()
     {
      'crossline': qteasy.built_in.Crossline,
      'macd': qteasy.built_in.MACD,
@@ -46,9 +47,10 @@ def built_in_list(stg_id=None):
       'ndaychg': qteasy.built_in.SelectingNDayChange,
      'ndayvol': qteasy.built_in.SelectingNDayVolatility
     }
+
     >>> stg = built_in_list('macd')
     MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
-
+    --------------------
     策略参数：
         s: int, 短周期指数平滑均线计算日期；
         l: int, 长周期指数平滑均线计算日期；
@@ -59,7 +61,6 @@ def built_in_list(stg_id=None):
         计算MACD值：
         1，当MACD值大于0时，设置仓位目标为1
         2，当MACD值小于0时，设置仓位目标为0
-
     策略属性缺省值：
     默认参数：(12, 26, 9)
     数据类型：close 收盘价，单数据输入
@@ -67,6 +68,7 @@ def built_in_list(stg_id=None):
     窗口长度：270
     参数范围：[(10, 250), (10, 250), (5, 250)]
     策略不支持参考数据，不支持交易数据
+
     >>> stg
     RULE-ITER(MACD)
     """
@@ -3673,10 +3675,10 @@ class SelectingNDayVolatility(FactorSorter):
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':     Crossline,
-                       'macd':          MACD,
-                       'dma':           DMA,
-                       'trix':          TRIX,
+BUILT_IN_STRATEGIES = {'crossline':     Crossline,  # TODO: TA-Lib free
+                       'macd':          MACD,  # TODO: TA-Lib free
+                       'dma':           DMA,  # TODO: TA-Lib free
+                       'trix':          TRIX,  # TODO: TA-Lib free
                        'cdl':           CDL,
                        'bband':         BBand,
                        's-bband':       SoftBBand,

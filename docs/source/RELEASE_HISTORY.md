@@ -1,5 +1,9 @@
 # QTEASY release history
 
+## 1.0.9 (2023-11-24)
+- Corrected a mistake in reference data generation and allocation to strategies, making reference data available to strategies
+- Improved documentations
+
 ## 1.0.8 (2023-11-22)
 - Improved trader shell visual effects, added color coding for different types of messages, with dependency on rich package
 - Published Qteasy Docs to https://qteasy.readthedocs.io/zh/latest/, added more supportive documents including api reference, examples, tutorials, etc.

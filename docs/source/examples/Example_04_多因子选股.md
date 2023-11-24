@@ -1,18 +1,26 @@
-# coding=utf-8
-# ======================================
-# File:     test_fast_experiments.py
-# Author:   Jackie PENG
-# Contact:  jackie.pengzhao@gmail.com
-# Created:  2020-02-12
-# Desc:
-#   Temporary test file for quick
-#   function tests.
-# ======================================
-import unittest
+# 示例策略4: 多因子选股策略
 
+本策略每隔1个月定时触发,根据Fama-French三因子模型对每只股票进行回归，得到其alpha值。
+假设Fama-French三因子模型可以完全解释市场，则alpha为负表明市场低估该股，因此应该买入。
+
+策略思路：
+
+计算市场收益率、个股的账面市值比和市值,并对后两个进行了分类,
+根据分类得到的组合分别计算其市值加权收益率、SMB和HML. 
+对各个股票进行回归(假设无风险收益率等于0)得到alpha值.
+
+选取alpha值小于0并为最小的10只股票进入标的池，平掉不在标的池的股票并等权买入在标的池的股票
+
+回测数据:SHSE.000300的成份股
+
+回测时间为:2019-05-01 到 2022-05-01
+
+
+## 定义策略
+
+```python
 import qteasy as qt
 import numpy as np
-
 
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
     """ 根据mv_target和bp_target计算市值加权收益率
@@ -26,7 +34,7 @@ def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target
 
 
 class MultiFactors(qt.FactorSorter):
-
+    
     def __init__(self, pars: tuple = (0.5, 0.3, 0.7)):
         super().__init__(
                 pars=pars,
@@ -48,7 +56,7 @@ class MultiFactors(qt.FactorSorter):
                 lbound=0,  # 仅选择因子小于0的股票
                 ubound=0,  # 仅选择因子小于0的股票
         )
-
+    
     def realize(self, h, r=None, t=None, pars=None):
 
         size_gate_percentile, bp_small_percentile, bp_large_percentile = self.pars
@@ -115,35 +123,101 @@ class MultiFactors(qt.FactorSorter):
 
         return factors
 
+# 策略定义完毕
+```
 
-class FastExperiments(unittest.TestCase):
-    """This test case is created to have experiments done that can be quickly called from Command line"""
+## 运行策略
 
-    def setUp(self):
-        pass
+设置回测参数，运行策略
+```python
+shares = qt.filter_stock_codes(index='000300.SH', date='20190501')
+alpha = MultiFactors()  # 实例化策略
+op = qt.Operator(alpha, signal_type='PT')  # 创建Operator交易员对象，使用PT信号类型（仓位目标信号）
+op.op_type = 'stepwise'
+op.set_blender('1.0*s0', "close")  # 设置仓位调整公式，仓位目标为1.0*s0，即持仓百分比总和等于100%
+op.run(mode=1,
+       invest_start='20190501',  # 回测起始时间
+       invest_end='20220501',  # 回测结束时间
+       asset_type='E',  # 股票
+       asset_pool=shares,  # 股票池
+       trade_batch_size=100,  # 交易最小批量
+       sell_batch_size=1,  # 卖出最小批量
+       trade_log=True,  # 产生交易记录
+      )
 
-    def test_fast_experiments(self):
-        """temp test"""
-        # op = qt.Operator(strategies='dma')
-        # op.set_parameter('dma', pars=(23, 166, 196))
-        # res = qt.run(op, mode=1, invest_start='20160501', visual=True, trade_log=True)
-        self.assertEqual(1, 1)
+print()
+```
 
-        shares = qt.filter_stock_codes(index='000300.SH', date='20190501')
-        print(len(shares), shares[:10])
-        alpha = MultiFactors()
-        op = qt.Operator(alpha, signal_type='PT')
-        op.op_type = 'stepwise'
-        op.set_blender('close', "0.8*s0")
-        op.run(mode=1,
-               invest_start='20190501',
-               invest_end='20220501',
-               asset_type='E',
-               asset_pool=shares,
-               trade_batch_size=100,
-               sell_batch_size=1,
-               trade_log=True)
+运行结果如下：
 
+```bash
 
-if __name__ == '__main__':
-    unittest.main()
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 0.0 ms
+    time consumption for operation back looping:  6 sec 502.5 ms
+    
+    investment starts on      2019-05-06 00:00:00
+    ends on                   2022-04-29 00:00:00
+    Total looped periods:     3.0 years.
+    
+    -------------operation summary:------------
+    Only non-empty shares are displayed, call 
+    "loop_result["oper_count"]" for complete operation summary
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000063.SZ    1        1      2     2.7%      0.0%     97.3%  
+    000100.SZ    2        2      4     5.9%      0.0%     94.1%  
+    000157.SZ    3        3      6     8.6%      0.0%     91.4%  
+    000333.SZ    1        1      2     2.7%      0.0%     97.3%  
+    000338.SZ    2        2      4     5.5%      0.0%     94.5%  
+    000413.SZ    1        1      2     2.9%      0.0%     97.1%  
+    000423.SZ    1        1      2     2.7%      0.0%     97.3%  
+    000425.SZ    1        1      2     2.7%      0.0%     97.3%  
+    000625.SZ    2        2      4     5.6%      0.0%     94.4%  
+    000651.SZ    1        1      2     2.7%      0.0%     97.3%  
+    ...            ...     ...   ...      ...       ...       ...
+    603185.SH    1        1      2     5.8%      0.0%     94.2%  
+    603290.SH    1        1      2     5.8%      0.0%     94.2%  
+    688005.SH    3        3      6     7.9%      0.0%     92.1%  
+    002756.SZ    1        1      2     2.7%      0.0%     97.3%  
+    600039.SH    1        1      2     2.8%      0.0%     97.2%  
+    600803.SH    1        1      2     2.9%      0.0%     97.1%  
+    688187.SH    1        1      2     2.9%      0.0%     97.1%  
+    000983.SZ    1        1      2     2.9%      0.0%     97.1%  
+    600732.SH    3        3      6     8.2%      0.0%     91.8%  
+    601699.SH    1        2      3     8.5%      0.0%     91.5%   
+    
+    Total operation fee:     ¥    3,356.25
+    total investment amount: ¥  100,000.00
+    final value:              ¥  252,942.40
+    Total return:                   152.94% 
+    Avg Yearly return:               36.48%
+    Skewness:                         -0.19
+    Kurtosis:                          3.08
+    Benchmark return:                 9.00% 
+    Benchmark Yearly return:          2.93%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.413
+    Beta:                             0.458
+    Sharp ratio:                      1.511
+    Info ratio:                       0.086
+    250 day volatility:               0.283
+    Max drawdown:                    28.83% 
+        peak / valley:        2021-12-23 / 2022-04-26
+        recovered on:         Not recovered!
+    
+    ===========END OF REPORT=============
+    
+
+```
+
+    
+![png](img/output_4_3.png)
+

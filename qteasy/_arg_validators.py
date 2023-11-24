@@ -563,7 +563,7 @@ def _valid_qt_kwargs():
                           '产生正现金流入'},
 
         'backtest_price_adj':
-            {'Default':   'back',
+            {'Default':   'none',
              'Validator': lambda value: isinstance(value, str)
                                         and value.lower() in ['none', 'n', 'back', 'b', 'adj'],
              'level':     4,

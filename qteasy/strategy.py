@@ -1261,7 +1261,7 @@ class FactorSorter(BaseStrategy):
 
             以下是获取参考数据的几个例子：
                 设定：
-                    - reference_data_types = "000300.SH.close, 000001.SH.close"
+                    - reference_data_types = "close-000300.SH, close-000001.SH"
 
                 例1: 获取最近一天的沪深300收盘价：
                     close_300 = r[-1, 0]
