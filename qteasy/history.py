@@ -687,7 +687,6 @@ class HistoryPanel():
                     open  high  low
         2015-01-01   1.0   2.0  3.0
         2015-01-02   4.0   NaN  6.0
-
         share 1, label: 000002
                     open  high   low
         2015-01-01   NaN   8.0   9.0
@@ -698,7 +697,6 @@ class HistoryPanel():
                     open  high  low
         2015-01-01   1.0   2.0  3.0
         2015-01-02   4.0   2.0  6.0
-
         share 1, label: 000002
                     open  high   low
         2015-01-01   NaN   8.0   9.0
@@ -709,7 +707,6 @@ class HistoryPanel():
                     open  high  low
         2015-01-01   1.0   2.0  3.0
         2015-01-02   4.0   2.0  6.0
-
         share 1, label: 000002
                     open  high   low
         2015-01-01   3.0   8.0   9.0
@@ -940,7 +937,6 @@ class HistoryPanel():
                     open  high  low
         2019-01-01   1.0   2.0  NaN
         2019-01-02   4.0   5.0  NaN
-
         share 1, label: 000002
                     open  high   low
         2019-01-01   7.0   8.0   9.0
@@ -1027,7 +1023,6 @@ class HistoryPanel():
                     close  open        vol
         2020-01-01   12.3  12.5  1020010.0
         2020-01-02   12.6  13.2  1020020.0
-
         share 1, label: 000001
                     close  open      vol
         2020-01-01    2.3   2.5  20010.0
@@ -1084,7 +1079,6 @@ class HistoryPanel():
                     close  open        vol
         2020-01-01   12.3  12.5  1020010.0
         2020-01-02   12.6  13.2  1020020.0
-
         share 1, label: 000001
                     close  open      vol
         2020-01-01    2.3   2.5  20010.0
@@ -1130,7 +1124,6 @@ class HistoryPanel():
                     close  open        vol
         2020-01-01   12.3  12.5  1020010.0
         2020-01-02   12.6  13.2  1020020.0
-
         share 1, label: 000001
                     close  open      vol
         2020-01-01    2.3   2.5  20010.0
@@ -1364,7 +1357,6 @@ class HistoryPanel():
         2020-01-04  12.3,   12.5,   1020040
         2020-01-05  12.6,   13.2,   1020050
         2020-01-06  12.9,   13.0,   1020060
-
         share 1, label: 000001：
                     close,  open,   vol
         2020-01-01  2.3,    2.5,    20010
@@ -1419,7 +1411,6 @@ class HistoryPanel():
         2020-01-04  12.3,   12.5,   1020040
         2020-01-05  12.6,   13.2,   1020050
         2020-01-06  12.9,   13.0,   1020060
-
         share 1, label: 000001：
                     close,  open,   vol
         2020-01-01  2.3,    2.5,    20010
@@ -1474,7 +1465,6 @@ class HistoryPanel():
         2020-01-04  12.3,   12.5,   1020040
         2020-01-05  12.6,   13.2,   1020050
         2020-01-06  12.9,   13.0,   1020060
-
         share 1, label: 000001：
                     close,  open,   vol
         2020-01-01  2.3,    2.5,    20010
@@ -1490,7 +1480,6 @@ class HistoryPanel():
         2020-01-01  12.3,   12.5,   1020010
         2020-01-02  12.6,   13.2,   1020020
         2020-01-03  12.9,   13.0,   1020030
-
         share 1, label: 000001
                     close,  open,   vol
         2020-01-01  2.3,    2.5,    20010
@@ -1535,7 +1524,6 @@ class HistoryPanel():
         2020-01-04  12.3,   12.5,   1020040
         2020-01-05  12.6,   13.2,   1020050
         2020-01-06  12.9,   13.0,   1020060
-
         share 1, label: 000001：
                     close,  open,   vol
         2020-01-01  2.3,    2.5,    20010
@@ -1545,13 +1533,12 @@ class HistoryPanel():
         2020-01-05  2.6,    3.2,    20050
         2020-01-06  2.9,    3.0,    20060
 
-        >>> hp.ellipsis(3)
+        >>> hp.tail(3)
         share 0, label: 000300
                     close,  open,   vol
         2020-01-04  12.3,   12.5,   1020040
         2020-01-05  12.6,   13.2,   1020050
         2020-01-06  12.9,   13.0,   1020060
-
         share 1, label: 000001：
                     close,  open,   vol
         2020-01-04  2.3,    2.5,    20040
@@ -1663,7 +1650,6 @@ def dataframe_to_hp(
     ...     columns=['A', 'B', 'C']
     ... )
     >>> dataframe
-
     Out:
                        A         B         C
     2020-01-01  0.814394  0.284772  0.259304
@@ -1672,8 +1658,6 @@ def dataframe_to_hp(
 
     >>> hp = dataframe_to_hp(dataframe, htypes=['open', 'close', 'high'], shares='000001')
     >>> hp
-
-    Out:
     share 0, label: 000001
                     open     close      high
     2020-01-01  0.814394  0.284772  0.259304
@@ -1682,20 +1666,16 @@ def dataframe_to_hp(
 
     >>> hp = dataframe_to_hp(dataframe, htypes='open', shares=['000001', '000002', '000003'])
     >>> hp
-
-    Out:
     share 0, label: 000001
                     open
     2020-01-01  0.814394
     2020-01-02  0.237300
     2020-01-03  0.744638
-
     share 1, label: 000002
                     open
     2020-01-01  0.284772
     2020-01-02  0.483317
     2020-01-03  0.255470
-
     share 2, label: 000003
                     open
     2020-01-01  0.259304
@@ -1797,6 +1777,8 @@ def from_single_dataframe(df: pd.DataFrame,
 def from_multi_index_dataframe(df: pd.DataFrame):
     """ 将一个含有multi-index的DataFrame转化为一个HistoryPanel
 
+    Parameters
+    ----------
     df: pd.DataFrame
         需要被转化的DataFrame
 
