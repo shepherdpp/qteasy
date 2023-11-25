@@ -221,3 +221,94 @@ print()
     
 ![png](img/output_4_3.png)
 
+
+设置另外的回测区间从2016-04-05到2021-02-01，运行策略，可以看到在不同的区间下该策略都是有效的
+```python
+shares = qt.filter_stock_codes(index='000300.SH', date='20190501')
+alpha = MultiFactors()  # 实例化策略
+op = qt.Operator(alpha, signal_type='PT')  # 创建Operator交易员对象，使用PT信号类型（仓位目标信号）
+op.op_type = 'stepwise'
+op.set_blender('1.0*s0', "close")  # 设置仓位调整公式，仓位目标为1.0*s0，即持仓百分比总和等于100%
+op.run(mode=1,
+       invest_start='20160405',  # 回测起始时间
+       invest_end='20210201',  # 回测结束时间
+       asset_type='E',  # 股票
+       asset_pool=shares,  # 股票池
+       trade_batch_size=100,  # 交易最小批量
+       sell_batch_size=1,  # 卖出最小批量
+       trade_log=True,  # 产生交易记录
+      )
+
+print()
+```
+
+运行结果如下：
+```bash
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 0.0 ms
+    time consumption for operation back looping:  8 sec 335.0 ms
+    
+    investment starts on      2016-04-05 00:00:00
+    ends on                   2021-02-01 00:00:00
+    Total looped periods:     4.8 years.
+    
+    -------------operation summary:------------
+    Only non-empty shares are displayed, call 
+    "loop_result["oper_count"]" for complete operation summary
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000063.SZ    2        2      4     3.4%      0.0%     96.6%  
+    000100.SZ    3        3      6     5.2%      0.0%     94.8%  
+    000157.SZ    1        1      2     1.8%      0.0%     98.2%  
+    000333.SZ    2        2      4     3.4%      0.0%     96.6%  
+    000338.SZ    1        1      2     1.7%      0.0%     98.3%  
+    000413.SZ    2        2      4     3.6%      0.0%     96.4%  
+    000596.SZ    1        1      2     1.8%      0.0%     98.2%  
+    000625.SZ    3        3      6     5.3%      0.0%     94.7%  
+    000629.SZ    1        1      2     1.7%      0.0%     98.3%  
+    000651.SZ    1        1      2     1.7%      0.0%     98.3%  
+    ...            ...     ...   ...      ...       ...       ...
+    688005.SH    1        2      3     3.3%      0.0%     96.7%  
+    000733.SZ    1        1      2     1.8%      0.0%     98.2%  
+    002180.SZ    1        1      2     1.7%      0.0%     98.3%  
+    600039.SH    1        1      2     1.7%      0.0%     98.3%  
+    600803.SH    1        1      2     1.7%      0.0%     98.3%  
+    601615.SH    1        1      2     1.8%      0.0%     98.2%  
+    000983.SZ    2        2      4     3.3%      0.0%     96.7%  
+    600732.SH    3        4      7     6.7%      0.0%     93.3%  
+    600754.SH    1        1      2     1.8%      0.0%     98.2%  
+    601699.SH    1        1      2     1.7%      0.0%     98.3%   
+    
+    Total operation fee:     ¥    7,063.30
+    total investment amount: ¥  100,000.00
+    final value:              ¥  584,928.02
+    Total return:                   484.93% 
+    Avg Yearly return:               44.15%
+    Skewness:                         -0.14
+    Kurtosis:                          2.77
+    Benchmark return:                65.96% 
+    Benchmark Yearly return:         11.06%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.428
+    Beta:                             0.371
+    Sharp ratio:                      1.376
+    Info ratio:                       0.076
+    250 day volatility:               0.287
+    Max drawdown:                    35.84% 
+        peak / valley:        2018-06-12 / 2019-01-02
+        recovered on:         2019-03-05
+    
+    ===========END OF REPORT=============
+```
+
+    
+![png](img/output_4_4.png)
+    
+

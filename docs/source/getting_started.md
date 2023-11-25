@@ -161,7 +161,6 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ![png](img/output_3_4.png)
 
 ![png](img/output_3_5.png)
-    
 
 
 生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持

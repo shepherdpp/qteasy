@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.abspath('../../'))
 project = 'qteasy'
 copyright = '2023, Jackie PENG'
 author = 'Jackie PENG'
-release = '1.0.9'
-version = '1.0.9'
+release = '1.0'
+version = '1.0.10'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
