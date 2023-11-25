@@ -48,7 +48,7 @@ UNIT_TO_TABLE = {
         }
 
 
-def parse_shell_argument(arg: str = None, no_arg=False) -> list:
+def parse_shell_argument(arg: str = None, default=None) -> list:
     """ 解析输入的参数, 返回解析后的参数列表，
 
     解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
@@ -57,8 +57,10 @@ def parse_shell_argument(arg: str = None, no_arg=False) -> list:
 
     Parameters:
     -----------
-    arg: 输入的参数
-    no_arg: 是否不允许输入参数，如果为True，且输入参数时，返回空列表并提示错误
+    arg: str
+        输入的参数
+    default: str, default None
+        如果输入参数为空，返回的默认值
 
     Returns:
     --------
@@ -66,12 +68,12 @@ def parse_shell_argument(arg: str = None, no_arg=False) -> list:
         解析后的参数
     """
     if arg is None:
-        return []
+        return [] if default is None else [default]
     arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
     while '  ' in arg:
         arg = arg.replace('  ', ' ')  # 删除字符间多余的空格
     if arg == '':
-        return []
+        return [] if default is None else [default]
     args = arg.split(' ')
     return args
 
@@ -275,7 +277,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        info [detail]
+        info [--detail｜-d]
         """
         self.do_overview(arg)
 
@@ -293,7 +295,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        watch [symbol [symbol ...]] [position|positions|pos|p]
+        watch [symbol [symbol ...]] [--position|--positions|-pos|-p]
 
         symbol:     Add symbols explicitly to watch list:
         position:   Add 5 symbols from position list to watch list:
@@ -313,8 +315,8 @@ class TraderShell(Cmd):
         from .utilfuncs import TS_CODE_IDENTIFIER_CN_STOCK
         import re
         for arg in args:
-            # 如果arg=='position' 或者 'positions'，则将当前持仓量最大的股票代码添加到watch list
-            if arg in ['position', 'positions', 'pos', 'p']:
+            # 如果arg=='--position' 或者 '--positions'，则将当前持仓量最大的股票代码添加到watch list
+            if arg in ['--position', '--positions', '-pos', '-p']:
                 pos = self._trader.account_position_info
                 if pos.empty:
                     print('No holding position at the moment.')
@@ -435,12 +437,12 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        overview [detail|d]
+        overview [--detail|-d]
         """
         detail = False
         args = parse_shell_argument(arg)
         if args:
-            if args[0] in ['detail', 'd']:
+            if args[0] in ['--detail', '-d']:
                 detail = True
             else:
                 print('argument not valid, input "detail" or "d" to get detailed info')
@@ -459,7 +461,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        config [level]|[key] [value]
+        config [[level]|[key]] [value]
 
         Examples:
         ---------
@@ -539,9 +541,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        if arg is None or arg == '':
-            arg = 'none'  # TODO: check the first stock in account position and use it as default
-        args = arg.split(' ')
+        args = parse_shell_argument(arg)
         history = self._trader.history_orders()
 
         if history.empty:
@@ -621,46 +621,46 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders [(F)filled] [(C)canceled] [(P)partial-filled] [(L)ast_(H)our] [(T)today] [(Y)yesterday]
-        [(3)3day] [(W)week] [(M)month] [(B)buy] [(S)sell] [symbols like '000001.SZ']
+        orders --today|-t [--filled|-f] [--canceled|-c] [--partial-filled|-p] [--last_hour|-l|-h] [--yesterday|-y]
+        [--3day|-3] [--week|-w] [--month|-m] [--buy|-b] [--sell|-s] [--long|-lg] [--short|-sh] [symbol like '000001.SZ']
 
         Examples:
         ---------
-        orders 000001
+        (QTEASY): orders
+        - display all orders of today
+        (QTEASY): orders 000001
         - display all orders of stock 000001
-        orders filled today 000001
+        (QTEASY): orders --filled --today 000001
         - display all filled orders of stock 000001 executed today
         """
 
         from rich import print as rprint
-        if arg is None or arg == '':
-            arg = 'today'
-        args = arg.lower().split(' ')
+        args = parse_shell_argument(arg, default='--today')
         order_details = self._trader.history_orders()
 
         for argument in args:
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
             # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-            if argument in ['last_hour', 'l', 'h', 'today', 't', 'yesterday', 'y',
-                            '3day', '3', 'week', 'w', 'month', 'm']:
+            if argument in ['--last_hour', '-l', '-h', '--today', '-t', '--yesterday', '-y',
+                            '--3day', '-3', '--week', '-w', '--month', '-m']:
                 # create order time ranges
                 end = pd.to_datetime('today')  # 产生本地时区时间
-                if argument in ['last_hour', 'l']:
+                if argument in ['--last_hour', '-l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
-                elif argument in ['today', 't']:
+                elif argument in ['--today', '-t']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=1)
                     start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['yesterday', 'y']:
+                elif argument in ['--yesterday', '-y']:
                     yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
                     start = yesterday.strftime("%Y-%m-%d 00:00:00")
                     end = yesterday.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['3day', '3']:
+                elif argument in ['--3day', '-3']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=3)
                     start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['week', 'w']:
+                elif argument in ['--week', '-w']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=7)
                     start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['month', 'm']:
+                elif argument in ['--month', '-m']:
                     start = pd.to_datetime(end) - pd.Timedelta(days=30)
                     start = start.strftime("%Y-%m-%d 23:59:59")
                 else:
@@ -671,24 +671,24 @@ class TraderShell(Cmd):
                 order_details = order_details[(order_details['submitted_time'] >= start) &
                                               (order_details['submitted_time'] <= end)]
             # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
-            elif argument in ['filled', 'f', 'canceled', 'c', 'partial-filled', 'p']:
-                if argument in ['filled', 'f']:
+            elif argument in ['--filled', '-f', '--canceled', '-c', '--partial-filled', '-p']:
+                if argument in ['--filled', '-f']:
                     order_details = order_details[order_details['status'] == 'filled']
-                elif argument in ['canceled', 'c']:
+                elif argument in ['--canceled', '-c']:
                     order_details = order_details[order_details['status'] == 'canceled']
-                elif argument in ['partial-filled', 'p']:
+                elif argument in ['--partial-filled', '-p']:
                     order_details = order_details[order_details['status'] == 'partial-filled']
             # select orders by order side arguments like 'long', 'short'
-            elif argument in ['long', 'short']:
-                if argument in ['long']:
+            elif argument in ['--long', '-lg', '--short', '-sh']:
+                if argument in ['--long', '-lg']:
                     order_details = order_details[order_details['position'] == 'long']
-                elif argument in ['short']:
+                elif argument in ['--short', '-sh']:
                     order_details = order_details[order_details['position'] == 'short']
             # select orders by order side arguments like 'buy', 'sell'
-            elif argument in ['buy', 'b', 'sell', 's']:
-                if argument in ['buy', 'b']:
+            elif argument in ['--buy', '-b', '--sell', '-s']:
+                if argument in ['--buy', '-b']:
                     order_details = order_details[order_details['direction'] == 'buy']
-                elif argument in ['sell', 's']:
+                elif argument in ['--sell', '-s']:
                     order_details = order_details[order_details['direction'] == 'sell']
             # select orders by order symbol arguments like '000001.SZ'
             elif is_complete_cn_stock_symbol_like(argument.upper()):
@@ -698,7 +698,8 @@ class TraderShell(Cmd):
                 possible_complete_symbols = [argument + '.SH', argument + '.SZ', argument + '.BJ']
                 order_details = order_details[order_details['symbol'].isin(possible_complete_symbols)]
             else:
-                pass
+                print(f'"{argument}" invalid: Please input a valid symbol to get order details.')
+                return
 
         if order_details.empty:
             rprint(f'No orders found with argument ({args}). try other arguments.')
@@ -741,21 +742,21 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        change cash/c <amount>
-        change <symbol> <amount> [price] [long/l/short/s]
+        change symbol amount price [--long|-l|--short|-s]
+        change [--cash|-c amount]
 
         Examples:
         ---------
-        change cash/c 1000000:
-            add 1000000 cash to trader account
         change 000001.SZ 1000 10.5:
             add 1000 shares of 000001.SZ to trader account with price 10.5 on long side (default)
+        change --cash/-c 1000000:
+            add 1000000 cash to trader account
         """
 
-        args = arg.split(' ')
+        args = parse_shell_argument(arg)
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
-        if args[0] in ['cash', 'c']:
+        if args[0] in ['--cash', '-c']:
             # change cash
             if len(args) < 2:
                 print('Please input cash value to increase (+) or to decrease (-).')
@@ -814,22 +815,22 @@ class TraderShell(Cmd):
             # 只给出两个参数，默认使用最新价格、side为已有的非零持仓
             price = current_price
             side = None
-        elif (len(args) == 3) and (args[2] in ['long', 'short', 'l', 's']):
+        elif (len(args) == 3) and (args[2] in ['--long', '--short', '-l', '-s']):
             # 只给出side参数，默认使用最新价格
             price = current_price
-            side = 'long' if args[2] in ['long', 'l'] else 'short'
+            side = 'long' if args[2] in ['--long', '-l'] else 'short'
         elif (len(args) == 3) and (is_number_like(args[2])):
             # 只给出price参数，默认使用已有的非零持仓side
             price = float(args[2])
             side = None
-        elif (len(args) == 4) and (is_number_like(args[2])) and (args[3] in ['long', 'short', 'l', 's']):
+        elif (len(args) == 4) and (is_number_like(args[2])) and (args[3] in ['--long', '--short', '-l', '-s']):
             # 既给出了价格，又给出了side
             price = float(args[2])
-            side = 'long' if args[3] in ['long', 'l'] else 'short'
-        elif (len(args) == 4) and (is_number_like(args[3])) and (args[2] in ['long', 'short', 'l', 's']):
+            side = 'long' if args[3] in ['--long', '-l'] else 'short'
+        elif (len(args) == 4) and (is_number_like(args[3])) and (args[2] in ['--long', '--short', '-l', '-s']):
             # 既给出了价格，又给出了side
             price = float(args[3])
-            side = 'long' if args[2] in ['long', 'l'] else 'short'
+            side = 'long' if args[2] in ['--long', '-l'] else 'short'
         else:  # not a valid input
             print(f'{args} is not a valid input, Please input valid arguments.')
             return
@@ -866,31 +867,31 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        strategies [d|detail] [s|set_par <strategy_id> <pars>]
+        strategies [--detail|-d] [--set-par|-s strategy_id pars]
 
         Examples:
         ---------
         to display strategies information:
         (QTEASY): strategies
         to display strategies information in detail:
-        (QTEASY): strategies d|detail
+        (QTEASY): strategies --detail
         to set parameters for strategy "stg":
-        (QTEASY): strategies s|strategy stg (1, 2, 3)
+        (QTEASY): strategies --set-par stg (1, 2, 3)
         to set blender of strategies:
-        (QTEASY): strategies b|blender <blender> (not implemented yet)
+        (QTEASY): strategies --blender <blender> (not implemented yet)
 
         """
         # TODO: to change blender of strategies, use strategies blender|b <blender>
         args = parse_shell_argument(arg)
         if not args:
             self.trader.operator.info()
-        elif args[0] in ['d', 'detail']:
+        elif args[0] in ['-d', '--detail']:
             self.trader.operator.info(verbose=True)
-        elif args[0] in ['s', 'set_par']:
+        elif args[0] in ['-s', '--set-par']:
             if len(args) < 3:
                 print('To set up variable parameter of a strategy, input a valid strategy id and a parameter:\n'
                       'For Example, to set (1, 2, 3) as the parameter of strategy "custom", use:\n'
-                      '(QTEASY): strategies s custom (1, 2, 3)')
+                      '(QTEASY): strategies -s custom (1, 2, 3)')
                 return
             strategy_id = args[1]
             pars = args[2:]
@@ -918,7 +919,7 @@ class TraderShell(Cmd):
                 return
             print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
             self.trader.operator.info()
-        elif args[0] in ['b', 'blender']:
+        elif args[0] in ['-b', '--blender']:
             print(f'Not implemented yet.')
 
     def do_agenda(self, arg):
@@ -926,7 +927,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        plan
+        agenda
         """
         if arg:
             print('agenda command does not accept arguments.')
@@ -940,7 +941,7 @@ class TraderShell(Cmd):
         Usage:
         ------
         run stg1 [stg2] [stg3] ...
-        run task task_name [arg1] [arg2] ...
+        run --task|-t task_name [[arg1] [arg2] ...]
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
@@ -954,7 +955,7 @@ class TraderShell(Cmd):
             print('A valid strategy id must be given, use "strategies" to view all ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        if not argument[0] in ['task', 't']:  # run strategies
+        if not argument[0] in ['--task', '-t']:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
             if not all([strategy in all_strategy_ids for strategy in argument]):
                 invalid_stg = [stg for stg in argument if stg not in all_strategy_ids]
