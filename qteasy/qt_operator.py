@@ -1924,8 +1924,8 @@ class Operator:
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
             ref_data_val = self._op_reference_data[stg_id]
-            ref_data_val = ref_data_val.reshape(ref_data_val.shape[1:])  # 将ref数据变为二维，以符合Strategy的要求
             if ref_data_val is not None:
+                ref_data_val = ref_data_val.reshape(ref_data_val.shape[1:])  # 将ref数据变为二维，以符合Strategy的要求
                 the_rolling_window = rolling_window(
                         ref_data_val,
                         window=window_length,
