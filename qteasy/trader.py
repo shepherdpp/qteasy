@@ -2518,8 +2518,24 @@ def start_trader(
     # if account is ready then create trader and broker
     broker_type = config['live_trade_broker_type']
     broker_params = config['live_trade_broker_params']
-    from qteasy.broker import ALL_BROKERS, NotImplementedBroker
-    broker = ALL_BROKERS.get(broker_type, NotImplementedBroker)(
+    if (broker_type == 'simulator') and (broker_params is None):
+        broker_params = {
+            "fee_rate_buy": config['cost_rate_buy'],
+            "fee_rate_sell": config['cost_rate_sell'],
+            "fee_min_buy": config['cost_min_buy'],
+            "fee_min_sell": config['cost_min_sell'],
+            "fee_fix_buy": config['cost_fixed_buy'],
+            "fee_fix_sell": config['cost_fixed_sell'],
+            "slipage": config['cost_slipage'],
+            "moq_buy": config['trade_batch_size'],
+            "moq_sell": config['sell_batch_size'],
+            "delay": 1.0,
+            "price_deviation": 0.001,
+            "probabilities": (0.9, 0.08, 0.02),
+        }
+
+    from qteasy.broker import ALL_BROKERS, SimulatorBroker
+    broker = ALL_BROKERS.get(broker_type, SimulatorBroker)(
             **broker_params
     )
     trader = Trader(
@@ -2614,4 +2630,3 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
         )
 
     return
-

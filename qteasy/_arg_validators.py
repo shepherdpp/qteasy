@@ -144,11 +144,12 @@ def _valid_qt_kwargs():
                           "000001.SZ: 1000股, 000002.SZ: 2000股\n"},
 
         'live_trade_broker_type':
-            {'Default':   'simple',
+            {'Default':   'simulator',
              'Validator': lambda value: isinstance(value, str) and value.lower() in ['simple', 'random', 'manual'],
              'level':     1,
              'text':      '实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、'
-                          '手动输入结果或者连接到交易代理商的交易接口\n'},
+                          '手动输入结果或者连接到交易代理商的交易接口\n'
+                          '默认使用模拟交易代理Simulator'},
 
         'live_trade_broker_params':
             {'Default':   None,
@@ -156,7 +157,9 @@ def _valid_qt_kwargs():
              'level':     1,
              'text':      '实盘交易账户的交易代理商参数，字典，例如：\n'
                           "{'host': 'localhost', 'port': 8888} : 交易代理商的主机名和端口号\n"
-                          "具体的参数设置请参考交易代理商的文档\n"},
+                          "具体的参数设置请参考交易代理商的文档\n"
+                          "如果使用 'simulator' broker，且设置此参数为None，则会使用config中的\n"
+                          "backtest参数"},
 
         'live_price_acquire_channel':
             {'Default':   'eastmoney',

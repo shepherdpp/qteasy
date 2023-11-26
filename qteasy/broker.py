@@ -329,35 +329,70 @@ class SimpleBroker(Broker):
         return 'filled', qty, price, fee
 
 
-class RandomBroker(Broker):
-    """ RandomBroker接到交易订单后，随机等待一段时间再返回交易结果。交易结果随机，包含完全成交、部分成交和取消交易
+class SimulatorBroker(Broker):
+    """ QT 默认的模拟交易所，该交易所模拟真实的交易情况，从qt_config中读取交易费率、滑点等参数
 
-    交易费用根据交易方向和交易价格计算，滑点是按照百分比计算的，比如0.01表示1%
+    根据这些参数尽可能真实地模拟成交结果，特点如下：
 
-    Parameters
-    ----------
-    fee_rate_buy: float, default 0.0001
-        买入交易费率，比如0.0001表示万分之一
-    fee_rate_sell: float, default 0.0003
-        卖出交易费率，比如0.0003表示万分之三
-    moq: float, default 100
-        最小交易数量，比如100表示最小交易数量为100股，如果交易数量不是100的整数倍，那么会被圆整到100的整数倍
-    delay: float, default 5.0
-        交易所处理订单的时间，单位是秒
-    price_deviation: float, default 0.01
-        实际交易价格和报价之间的差异，比如0.01表示1%
-    probabilities: list of float, default [0.8, 0.15, 0.05]
-        交易结果的概率，比如[0.8, 0.15, 0.05]表示交易结果为'filled'的概率为80%，为'partial-filled'的概率为15%，为'canceled'的概率为5%
-
+    - 交易费率根据qt_config中的设置计算，包括固定费率、最低费用、滑点等
+    - 交易时有一定概率出现交易失败或部分成交
+    - 股票涨停时大概率买入交易失败，跌停时大概率卖出交易失败 - TODO: to be implemented
     """
 
-    def __init__(self, fee_rate_buy=0.0001, fee_rate_sell=0.0003, moq=100, delay=1.0, price_deviation=0.001,
-                 probabilities=(0.88, 0.10, 0.02)):
-        super(RandomBroker, self).__init__()
-        self.broker_name = 'RandomBroker'
+    def __init__(self,
+                 fee_rate_buy=0.0003,
+                 fee_rate_sell=0.0001,
+                 fee_min_buy=0.0,
+                 fee_min_sell=0.0,
+                 fee_fix_buy=0.0,
+                 fee_fix_sell=0.0,
+                 slipage=0.0,
+                 moq_buy=0.0,
+                 moq_sell=0.0,
+                 delay=1.0,
+                 price_deviation=0.0,
+                 probabilities=(0.9, 0.08, 0.02)):
+        """ 生成一个Broker对象
+
+        Parameters
+        ----------
+        fee_rate_buy: float,
+            买入操作的交易费率
+        fee_rate_sell: float,
+            卖出操作的交易费率
+        fee_min_buy: float, default 0.0
+            买入操作的最低交易费用
+        fee_min_sell: float, default 0.0
+            卖出操作的最低交易费用
+        fee_fix_buy: float, default 0.0
+            买入操作的固定交易费用，如果不为0，则忽略交易费率和最低费用
+        fee_fix_sell: float, default 0.0
+            卖出操作的固定交易费用，如果不为0，则忽略交易费率和最低费用
+        slipage: float, default 0.0
+            交易滑点, 当交易数量很大时，交易费用会被放大 slipage * (qty / 100) ** 2 倍
+        moq_buy: float, default 0.0
+            买入操作最小数量
+        moq_sell: float, default 0.0
+            卖出操作最小数量
+        delay: float, default 1.0
+            模拟交易延迟，单位为秒
+        price_deviation: float, default 0.0
+            模拟成交价波动率
+        probabilities: tuple of 3 floats, default (0.90, 0.08, 0.02)
+            模拟完全成交、部分成交和未成交三种情况出现的概率
+
+        """
+        super(SimulatorBroker, self).__init__()
+        self.broker_name = 'SimulatorBroker'
         self.fee_rate_buy = fee_rate_buy
         self.fee_rate_sell = fee_rate_sell
-        self.moq = moq
+        self.fee_min_buy = fee_min_buy
+        self.fee_min_sell = fee_min_sell
+        self.fee_fix_buy = fee_fix_buy
+        self.fee_fix_sell = fee_fix_sell
+        self.slipage = slipage
+        self.moq_buy = moq_buy
+        self.moq_sell = moq_sell
         self.delay = delay
         self.price_deviation = price_deviation
         self.probabilities = probabilities
@@ -394,21 +429,30 @@ class RandomBroker(Broker):
                 if result_type == 'partial-filled':
                     filled_proportion = np.random.choice([0.25, 0.5, 0.75], p=[0.3, 0.5, 0.2])  # 模拟交易所的部分成交
                 qty = remain_qty * filled_proportion
-                if self.moq > 0:
-                    qty = np.trunc(qty / self.moq) * self.moq
-                    if (qty < self.moq) and (remain_qty > self.moq):
-                        qty = self.moq # 如果成交数量小于moq，但是剩余数量大于moq，那么成交数量就是moq
-                    elif (qty < self.moq) and (remain_qty <= self.moq):
+                if self.moq_buy > 0:
+                    qty = np.trunc(qty / self.moq_buy) * self.moq_buy
+                    if (qty < self.moq_buy) and (remain_qty > self.moq_buy):
+                        qty = self.moq_buy # 如果成交数量小于moq，但是剩余数量大于moq，那么成交数量就是moq
+                    elif (qty < self.moq_buy) and (remain_qty <= self.moq_buy):
                         qty = remain_qty # 如果成交数量小于moq，且剩余数量也小于moq，那么成交数量就是剩余数量
                         result_type = 'filled'
                 if direction == 'buy':
                     order_price = order_price * (1 - price_deviation)
-                    transaction_fee = qty * order_price * self.fee_rate_buy
+                    transaction_fee = \
+                        max(qty * order_price * self.fee_rate_buy, self.fee_min_buy) \
+                            if self.fee_fix_buy == 0 \
+                            else self.fee_fix_buy
                 elif direction == 'sell':
                     order_price = order_price * (1 + price_deviation)
-                    transaction_fee = qty * order_price * self.fee_rate_sell
+                    transaction_fee = \
+                        max(qty * order_price * self.fee_rate_sell, self.fee_min_sell) \
+                            if self.fee_fix_sell == 0 \
+                            else self.fee_min_sell
                 else:
                     raise RuntimeError(f'invalid direction: {direction}')
+                # 模拟交易滑点, 交易数量越大，对交易费用产生的影响越大
+                if self.slipage > 0:
+                    transaction_fee *= (1 + self.slipage * (qty / 100) ** 2)
 
             else:  # result_type == 'canceled'
                 transaction_fee = 0
@@ -421,17 +465,6 @@ class RandomBroker(Broker):
         return tuple(order_results)
 
 
-class SimulateBroker(Broker):
-    """ QT 默认的模拟交易所，该交易所模拟真实的交易情况，从qt_config中读取交易费率、滑点等参数
-    根据这些参数尽可能真实地模拟成交结果，特点如下：
-
-    - 交易费率根据qt_config中的设置计算，包括固定费率、最低费用、滑点等
-    - 交易时有一定概率出现交易失败或部分成交
-    - 股票涨停时大概率买入交易失败，跌停时大概率卖出交易失败
-    """
-    # TODO: implement this broker simulator and set it to be the default broker in QT
-
-
 class NotImplementedBroker(Broker):
     """ NotImplementedBroker raises NotImplementedError when __init__() is called
     """
@@ -442,8 +475,7 @@ class NotImplementedBroker(Broker):
 
 
 ALL_BROKERS = {
-    'simple':       SimpleBroker,
-    'random':       RandomBroker,
-    'manual':       NotImplementedBroker,
-    'simulator':    SimulateBroker,
+    'simple':    SimpleBroker,
+    'manual':    NotImplementedBroker,
+    'simulator': SimulatorBroker,
 }
