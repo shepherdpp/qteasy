@@ -72,10 +72,11 @@ def _valid_qt_kwargs():
                           '3: 统计预测模式\n'},
 
         'time_zone':  # this parameter is now not used
-            {'Default':   'Asia/Shanghai',
-             'Validator': lambda value: isinstance(value, str),
+            {'Default':   'local',
+             'Validator': lambda value: _validate_time_zone(value),
              'level':     4,
-             'text':      '回测时的时区，可以是任意时区，例如：\n'
+             'text':      '回测时的时区，默认值"local"，表示使用本地时区。\n'
+                          '如果需要固定时区，设置任意合法的时区，例如：\n'
                           'Asia/Shanghai\n'
                           'Asia/Hong_Kong\n'
                           'US/Eastern\n'
@@ -1304,9 +1305,27 @@ def _validate_asset_type(value: str):
 
     Returns
     -------
+    bool
     """
     from .utilfuncs import AVAILABLE_ASSET_TYPES
     return value.upper() in AVAILABLE_ASSET_TYPES
+
+
+def _validate_time_zone(value: str):
+    """ 验证一个时区字符串的合法性
+
+    Parameters
+    ----------
+    value: str
+
+    Returns
+    -------
+    bool
+    """
+    if not isinstance(value, str):
+        return False
+    import pytz
+    return value in pytz.all_timezones_set
 
 
 def _validate_asset_pool(value):
