@@ -77,6 +77,7 @@ if __name__ == '__main__':
 
     qt.configure(
             mode=0,
+            time_zone='Asia/Shanghai',
             asset_type='E',
             asset_pool='000651.SZ',
             benchmark_asset='000651.SZ',

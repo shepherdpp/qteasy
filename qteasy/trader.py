@@ -1065,7 +1065,7 @@ class TraderShell(Cmd):
                                 watched_prices = future.result(timeout=3)
                             except TimeoutError:
                                 if self.trader.debug:
-                                    self.trader.post_message('Error in refreshing live prices: TimeoutError')
+                                    self.trader.post_message('Timed out when refreshing live prices')
                             except Exception as e:
                                 if self.trader.debug:
                                     import traceback
@@ -1216,11 +1216,8 @@ class Trader(object):
         self.message_queue = Queue()
 
         self.task_daily_agenda = []
-        """任务日程是动态的，当agenda的时间晚于当前时间时，触发任务，同时将该任务从agenda中删除。第二天0:00重新生成新的agenda。
-         在第一次生成agenda时，需要判断当前时间，并把已经过期的task删除，才能确保正常运行，同时添加pre_open任务确保pre_open总会被执行
-
-        现在采用动态agenda方式设计的原因是，如果采用静态agenda，在交易mainloop中可能重复执行任务或者漏掉任务。"""
         self.time_zone = config['time_zone']
+        self.init_datetime = self.get_current_datetime()
 
         self.is_trade_day = False
         self._status = 'stopped'
@@ -1353,7 +1350,13 @@ class Trader(object):
         else:
             # create utc time and convert to time_zone time and remove time_zone information
             dt = pd.to_datetime('now', utc=True).tz_convert(self.time_zone)
-            return pd.to_datetime(dt.strftime('%Y-%m-%d %H:%M:%S'))
+            tz_time = pd.to_datetime(dt.tz_localize(None))
+            # if tz_time is very close to local time, then set time_zone to local and return local time
+            if abs(tz_time - pd.to_datetime('today')) < pd.Timedelta(seconds=1):
+                self.time_zone = 'local'
+                return pd.to_datetime('today')
+            # else return tz_time
+            return tz_time
 
     def config(self, key=None):
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""

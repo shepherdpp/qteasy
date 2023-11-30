@@ -191,7 +191,7 @@ def stock_mins(symbols, start, end, freq='1min'):
     return pd.concat(data)
 
 
-def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True):
+def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, timezone='local'):
     """ 获取股票当前最新日线数据，数据实时更新
     Parameters
     ----------
@@ -203,6 +203,8 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True):
         是否返回更多信息（名称，昨日收盘价）
     parallel : bool, default True
         是否使用多进程加速数据获取
+    timezone : str, default 'local'
+        时区，默认值为'local'，即本地时区, 也可以设置为'Asia/Shanghai'等以强制转换时区
 
     Returns
     -------
@@ -220,7 +222,10 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True):
     data = []
     if isinstance(symbols, str):
         symbols = str_to_list(symbols)
-    today = pd.Timestamp.today().strftime('%Y%m%d')
+    if timezone == 'local':
+        today = pd.Timestamp.today().strftime('%Y%m%d')
+    else:
+        today = pd.Timestamp.today(tz=timezone).strftime('%Y%m%d')
     klt = 101
     if freq.upper() == 'W':
         klt = 102
