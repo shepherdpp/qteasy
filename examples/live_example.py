@@ -42,8 +42,8 @@ if __name__ == '__main__':
             live_trade_account_id=args.account,
             live_trade_account=args.new_account,
             live_trade_debug_mode=args.debug,
-            live_trade_broker_type='random',
-            live_trade_broker_params={'delay': 1},
+            live_trade_broker_type='simulator',
+            live_trade_broker_params=None,
     )
     datasource = qt.QT_DATA_SOURCE
 

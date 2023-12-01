@@ -473,9 +473,40 @@ class NotImplementedBroker(Broker):
         super(NotImplementedBroker, self).__init__()
         raise NotImplementedError('NotImplementedBroker is not implemented yet')
 
+    def transaction_result(self, order_qty, order_price, direction):
+        pass
 
-ALL_BROKERS = {
-    'simple':    SimpleBroker,
-    'manual':    NotImplementedBroker,
-    'simulator': SimulatorBroker,
-}
+
+def get_broker(name: str = 'simulator', params=None):
+    """ get broker object by broker name
+
+    Parameters
+    ----------
+    name:str default: simulator
+        the broker name
+    params: dict or None
+        the parameters of broker
+
+    Return
+    ------
+    Broker
+    """
+    all_brokers = {
+        'random':    SimulatorBroker,
+        'simple':    SimpleBroker,
+        'manual':    NotImplementedBroker,
+        'simulator': SimulatorBroker,
+    }
+    names_to_be_deprecated = {'random': 'simulator'}
+
+    if not isinstance(name, str):
+        raise TypeError(f'name must be a string, got {type(name)}')
+
+    if name in names_to_be_deprecated:
+        import warnings
+        warnings.warn(f'the broker {name} will be deprecated in next version, '
+                      f'use {names_to_be_deprecated[name]} instead')
+    broker_func = all_brokers.get(name, SimulatorBroker)
+    if params is not None:
+        return broker_func(**params)
+    return broker_func()

@@ -146,7 +146,11 @@ def _valid_qt_kwargs():
 
         'live_trade_broker_type':
             {'Default':   'simulator',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simulator', 'simple', 'manual'],
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simulator',
+                                                                                     'simple',
+                                                                                     'random',  # to be deprecated
+                                                                                     'manual',
+                                                                                     ],
              'level':     1,
              'text':      '实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、'
                           '手动输入结果或者连接到交易代理商的交易接口\n'

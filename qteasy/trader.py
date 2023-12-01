@@ -2549,10 +2549,8 @@ def start_trader(
             "probabilities": (0.9, 0.08, 0.02),
         }
 
-    from qteasy.broker import ALL_BROKERS, SimulatorBroker
-    broker = ALL_BROKERS.get(broker_type, SimulatorBroker)(
-            **broker_params
-    )
+    from qteasy.broker import get_broker
+    broker = get_broker(broker_type, broker_params)
     trader = Trader(
             account_id=account_id,
             operator=operator,

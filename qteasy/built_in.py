@@ -12,20 +12,12 @@ import numpy as np
 import warnings
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-try:  # if ta-lib is installed
-    from .tafuncs import sma, ema, trix, macd, bbands
-except Exception as e:  # if ta-lib is not installed, use the pure python version
-    # use local functions instead
-    warnings.warn(f'Warning: {e}')
-    pass
-
+from .tafuncs import sma, ema, trix, macd, bbands
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
 from .tafuncs import stochrsi, ultosc, willr, ad, dema, apo, cdldoji, atr
 
-
-# All following strategies can be used to create strategies by referring to its strategy ID
 
 # Built-in Rolling timing strategies:
 def built_in_list(stg_id=None):
@@ -166,6 +158,7 @@ def get_built_in_strategy(stg_id):
     return BUILT_IN_STRATEGIES[stg_id]()
 
 
+# All following strategies can be used to create strategies by referring to its strategy ID
 # Basic technical analysis based Timing strategies
 class Crossline(RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
