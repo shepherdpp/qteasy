@@ -9,12 +9,20 @@
 # ======================================
 
 import numpy as np
+import warnings
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
-from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
+# commonly used ta-lib funcs that have a None ta-lib version
+try:  # if ta-lib is installed
+    from .tafuncs import sma, ema, trix, macd, bbands
+except Exception as e:  # if ta-lib is not installed, use the pure python version
+    # use local functions instead
+    warnings.warn(f'Warning: {e}')
+    pass
+
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
-from .tafuncs import stochrsi, ultosc, willr, ad, adosc, obv
+from .tafuncs import stochrsi, ultosc, willr, ad, dema, apo, cdldoji, atr
 
 
 # All following strategies can be used to create strategies by referring to its strategy ID
@@ -518,6 +526,10 @@ class SCRSHT(RuleIterator):
     """
 
     def __init__(self, pars=()):
+        try:  # if ta-lib is installed
+            from .tafuncs import ht
+        except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
+            raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -1397,6 +1409,10 @@ class SLPHT(RuleIterator):
     """
 
     def __init__(self, pars=(5, )):
+        try:  # if ta-lib is installed
+            from .tafuncs import ht
+        except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
+            raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],

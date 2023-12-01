@@ -146,7 +146,7 @@ def _valid_qt_kwargs():
 
         'live_trade_broker_type':
             {'Default':   'simulator',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simple', 'random', 'manual'],
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simulator', 'simple', 'manual'],
              'level':     1,
              'text':      '实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、'
                           '手动输入结果或者连接到交易代理商的交易接口\n'
@@ -1235,7 +1235,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         import inspect
         v = inspect.getsource(vkwargs[key]['Validator']).strip()
         raise TypeError(
-                f'Invalid value: ({str(value)}) of type: ({type(value)}) for config_key: <{key}>\n'
+                f'Invalid value: "{str(value)}"({type(value)}) for config_key: <{key}>\n'
                 f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v
         )
 
@@ -1324,8 +1324,10 @@ def _validate_time_zone(value: str):
     """
     if not isinstance(value, str):
         return False
-    import pytz
-    return value in pytz.all_timezones_set
+    if value == 'local':
+        return True
+    from pytz import all_timezones_set
+    return value in all_timezones_set
 
 
 def _validate_asset_pool(value):

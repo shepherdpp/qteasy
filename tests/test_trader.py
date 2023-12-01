@@ -43,6 +43,7 @@ class TestTrader(unittest.TestCase):
         broker = SimulatorBroker()
         config = {
             'mode': 0,
+            'time_zone': 'local',
             'market_open_time_am':  '09:30:00',
             'market_close_time_pm': '15:30:00',
             'market_open_time_pm':  '13:00:00',

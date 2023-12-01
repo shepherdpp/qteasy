@@ -1,3 +1,11 @@
+# ======================================
+# File:     requirements.txt
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2023-02-03
+# Desc:
+#   Required dependencies for qteasy
+# ======================================
 
 pandas>=1.1.0
 numpy>=1.18.1
@@ -6,3 +14,8 @@ ta-lib==0.4.18
 tushare>=1.2.89
 mplfinance>=0.11
 rich>=10.0.0
+
+pytz
+matplotlib
+requests
+setuptools
