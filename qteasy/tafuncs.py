@@ -28,8 +28,11 @@ try:
         ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
         MINMAX, MINMAXINDEX, MULT, SUB, SUM
 except ImportError as e:
-    raise ImportError(f'TA-lib should be installed to use all TA functions, visit '
-                      f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information')
+    import warnings
+    warnings.warn(f'TA-lib should be installed to use all TA functions, visit '
+                  f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information',
+                  ImportWarning)
+    pass
 
 
 # 以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数，如果TA-lib没有安装
