@@ -1,4 +1,4 @@
-### 所有内置交易策略的回测结果一览
+# 所有内置交易策略的回测结果一览
 
 测试内置的择时策略和选股策略
 每种策略进行一次回测，回测区间苁1996年到2021年，测试使用默认策略参数，测试参数如下：
@@ -10,11 +10,12 @@
 
 ```python
 import qteasy as qt
-%matplotlib inline
+print(qt.__version__)
 ```
 
 
 ```python
+import qteasy as qt
 op = qt.Operator(strategies=['crossline'])
 op.set_parameter(0, pars=(35, 120, 10, 'buy'))
 qt.configure(mode=1,
