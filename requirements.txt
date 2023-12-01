@@ -10,7 +10,6 @@
 pandas>=1.1.0
 numpy>=1.18.1
 numba>=0.47
-ta-lib==0.4.18
 tushare>=1.2.89
 mplfinance>=0.11
 rich>=10.0.0

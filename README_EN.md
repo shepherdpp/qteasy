@@ -85,8 +85,6 @@ This project requires and depends on following packages:
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
 
-- *`TA-lib` version >= 0.4.18*    the TA-Lib will have to be installed manually, please refer to [TA-Lib installation](https://qteasy.readthedocs.io/zh/latest/faq.html) for details.
-
 A local datasource should be setup for `qteasy` to work properly. a series of .csv files will be used to store 
 financial data in default case. Other types of datasource can be used, such as MySQL database, but other dependencies
 should be installed. find more details in the tutorial.
