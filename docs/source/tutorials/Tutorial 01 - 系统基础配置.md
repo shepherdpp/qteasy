@@ -21,7 +21,6 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 - *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` / `conda install -c conda-forge ta-lib`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 
@@ -39,6 +38,12 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 #### 如果使用feather文件作为本地数据源
 - *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
 
+#### 使用完整的内置交易策略
+`qteasy`提供了大量内置交易策略，用户可以直接使用这些交易策略通过"混合"的方式组合成自己的交易策略，但是大部份内置交易策略需要借助`TA-Lib`发挥作用
+`TA-Lib`是供C语言的一个的一个金融交易技术分析函数包，里面包含大量的技术指标、K线形态识别、基础统计分析等函数，`python`提供了这个包的`wrapper`，要
+在`python`中使用`ta-lib`，需要先安装C语言的`TA-Lib`后，再安装`python`的`ta-lib`包：
+
+- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` 更多的安装信息，请参见[`qteasy`文档](https://qteasy.readthedocs.io/zh/latest/faq.html)
 
 ### 2，数据管理环境（本地数据源）
 

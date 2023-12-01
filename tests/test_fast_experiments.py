@@ -187,7 +187,7 @@ class FastExperiments(unittest.TestCase):
         op = qt.Operator(alpha, signal_type='PT')
 
         op.op_type = 'stepwise'
-        op.set_blender('close', "0.8*s0")
+        op.set_blender("0.8*s0", 'close')
         op.run(mode=1,
                invest_start='20210101',
                invest_end='20220501',
