@@ -3634,7 +3634,8 @@ class DataSource:
                 # 仅保留dnld_data的最后一行，并添加ts_code列，值为symbol
                 dnld_data = dnld_data.iloc[-1:, :]
                 dnld_data['ts_code'] = symbol
-                # 将dnld_data合并到result_data的最后一行
+                # 将dnld_data合并到result_data的最后一行 # TODO: 检查是否需要ignore_index参数？此时index信息会丢失
+
                 result_data = pd.concat([result_data, dnld_data], axis=0, ignore_index=True)
 
             return result_data

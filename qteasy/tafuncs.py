@@ -8,29 +8,32 @@
 #   Interfaces to ta-lib functions.
 # ======================================
 
-from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
-    SMA, T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACD, MACDEXT, AROON, AROONOSC, \
-    MACDFIX, MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
-    STOCHF, STOCHRSI, TRIX, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
-    WCLPRICE, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDMODE, CDL2CROWS, CDL3BLACKCROWS, \
-    CDL3INSIDE, CDL3LINESTRIKE, CDL3OUTSIDE, CDL3STARSINSOUTH, CDL3WHITESOLDIERS, CDLABANDONEDBABY, \
-    CDLADVANCEBLOCK, CDLBELTHOLD, CDLBREAKAWAY, CDLCLOSINGMARUBOZU, CDLCONCEALBABYSWALL, CDLCOUNTERATTACK, \
-    CDLDARKCLOUDCOVER, CDLDOJI, CDLDOJISTAR, CDLDRAGONFLYDOJI, CDLENGULFING, CDLEVENINGDOJISTAR, CDLEVENINGSTAR, \
-    CDLGAPSIDESIDEWHITE, CDLGRAVESTONEDOJI, CDLHAMMER, CDLHANGINGMAN, CDLHARAMI, CDLHARAMICROSS, CDLHIGHWAVE, \
-    CDLHIKKAKE, CDLHIKKAKEMOD, CDLHOMINGPIGEON, CDLIDENTICAL3CROWS, CDLINNECK, CDLINVERTEDHAMMER, CDLKICKING, \
-    CDLKICKINGBYLENGTH, CDLLADDERBOTTOM, CDLLONGLEGGEDDOJI, CDLLONGLINE, CDLMARUBOZU, CDLMATCHINGLOW, CDLMATHOLD, \
-    CDLMORNINGDOJISTAR, CDLMORNINGSTAR, CDLONNECK, CDLPIERCING, CDLRICKSHAWMAN, CDLRISEFALL3METHODS, \
-    CDLSEPARATINGLINES, CDLSHOOTINGSTAR, CDLSHORTLINE, CDLSPINNINGTOP, CDLSTALLEDPATTERN, CDLSTICKSANDWICH, \
-    CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
-    BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
-    ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
-    MINMAX, MINMAXINDEX, MULT, SUB, SUM
+import numpy as np
+try:
+    from talib import BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
+        T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
+        MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
+        STOCHF, STOCHRSI, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
+        WCLPRICE, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDMODE, CDL2CROWS, CDL3BLACKCROWS, \
+        CDL3INSIDE, CDL3LINESTRIKE, CDL3OUTSIDE, CDL3STARSINSOUTH, CDL3WHITESOLDIERS, CDLABANDONEDBABY, \
+        CDLADVANCEBLOCK, CDLBELTHOLD, CDLBREAKAWAY, CDLCLOSINGMARUBOZU, CDLCONCEALBABYSWALL, CDLCOUNTERATTACK, \
+        CDLDARKCLOUDCOVER, CDLDOJI, CDLDOJISTAR, CDLDRAGONFLYDOJI, CDLENGULFING, CDLEVENINGDOJISTAR, CDLEVENINGSTAR, \
+        CDLGAPSIDESIDEWHITE, CDLGRAVESTONEDOJI, CDLHAMMER, CDLHANGINGMAN, CDLHARAMI, CDLHARAMICROSS, CDLHIGHWAVE, \
+        CDLHIKKAKE, CDLHIKKAKEMOD, CDLHOMINGPIGEON, CDLIDENTICAL3CROWS, CDLINNECK, CDLINVERTEDHAMMER, CDLKICKING, \
+        CDLKICKINGBYLENGTH, CDLLADDERBOTTOM, CDLLONGLEGGEDDOJI, CDLLONGLINE, CDLMARUBOZU, CDLMATCHINGLOW, CDLMATHOLD, \
+        CDLMORNINGDOJISTAR, CDLMORNINGSTAR, CDLONNECK, CDLPIERCING, CDLRICKSHAWMAN, CDLRISEFALL3METHODS, \
+        CDLSEPARATINGLINES, CDLSHOOTINGSTAR, CDLSHORTLINE, CDLSPINNINGTOP, CDLSTALLEDPATTERN, CDLSTICKSANDWICH, \
+        CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
+        BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
+        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
+        MINMAX, MINMAXINDEX, MULT, SUB, SUM
+except ImportError as e:
+    raise ImportError(f'TA-lib should be installed to use all TA functions, visit '
+                      f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information')
 
 
-# TODO: 假设talib没有正确安装时，需要提供替代办法计算相应值，或者针对部分最常用内置策略
-#  提供替代版本解决方案，对其他内置策略，使用恰当的提示方式提示用户应该及如何安装TA-lib
-
-# 以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数
+# 以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数，如果TA-lib没有安装
+# 则提示用户安装
 
 # ========================
 # Overlap Studies Functions 滚动窗口叠加算例函数
@@ -86,7 +89,11 @@ def dema(close, period: int = 30):
     Return
     ------
     """
-    return DEMA(close, period)
+    try:
+        from talib import DEMA
+        return DEMA(close, period)
+    except ImportError:
+        return 2 * ema(close, period) - ema(ema(close, period), period)
 
 
 def ema(close, span: int = 30):
@@ -111,7 +118,22 @@ def ema(close, span: int = 30):
     ------
     1-D ndarray; 输入数据的指数平滑移动平均值
     """
-    return EMA(close, span)
+    try:
+        from talib import EMA
+        return EMA(close, span)
+    except ImportError:
+        alpha = 2 / (span + 1.0)
+        alpha_rev = 1 - alpha
+        n = close.shape[0]
+        pows = alpha_rev ** (np.arange(n + 1))
+        scale_arr = 1 / pows[:-1]
+        offset = close[0] * pows[1:]
+        pw0 = alpha * alpha_rev ** (n - 1)
+        mult = close * pw0 * scale_arr
+        cumsums = mult.cumsum()
+        out = offset + cumsums * scale_arr[::-1]
+
+        return out
 
 
 def ht(close):
@@ -320,7 +342,7 @@ def sarext(high, low, acceleration=0, maximum=0):
     return SAREXT(high, low, acceleration, maximum)
 
 
-def sma(close, timeperiod=30):  # TODO: TA-Lib free
+def sma(close, timeperiod=30):
     """Simple Moving Average 简单移动平均
 
     For a simple moving average, the formula is the sum of the data
@@ -332,7 +354,18 @@ def sma(close, timeperiod=30):  # TODO: TA-Lib free
     Return
     ------
     """
-    return SMA(close, timeperiod)
+    try:
+        from talib import SMA
+        return SMA(close, timeperiod)
+    except ImportError:
+        a = close.cumsum()
+        ar = np.roll(a, timeperiod)
+        ar[:timeperiod - 1] = np.nan
+        ar[timeperiod - 1] = 0
+
+        return (a - ar) / timeperiod
+
+        return
 
 
 def t3(close, timeperiod=5, vfactor=0):
@@ -745,7 +778,7 @@ def dx(high, low, close, timeperiod=14):
     return DX(high, low, close, timeperiod)
 
 
-def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):  # TODO: TA-Lib free
+def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
     """Moving Average Convergence/Divergence:
 
     The Moving Average Convergence/Divergence indicator is a momentum oscillator
@@ -791,7 +824,14 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):  # TODO: TA-Lib f
         macdsignal,
         macdhist
     """
-    return MACD(close, fastperiod, slowperiod, signalperiod)
+    try:
+        from talib import MACD
+        return MACD(close, fastperiod, slowperiod, signalperiod)
+    except ImportError:
+        macdhist = ema(close, fastperiod) - ema(close, slowperiod)
+        macdsignal = ema(macdhist, signalperiod)
+        macd = 2 * (macdhist - macdsignal)
+        return macd, macdsignal, macdhist
 
 
 def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, signalperiod=9, signalmatype=0):
@@ -832,7 +872,11 @@ def macdfix(close, signalperiod=9):
         macdsignal,
         macdhist
     """
-    return MACDFIX(close, signalperiod)
+    try:
+        from talib import MACDFIX
+        return MACDFIX(close, signalperiod)
+    except ImportError:
+        return macd(12, 26, signalperiod=signalperiod)
 
 
 def mfi(high, low, close, volume, timeperiod=14):
@@ -1356,16 +1400,24 @@ def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=
     return STOCHRSI(close, timeperiod, fastk_period, fastd_period, fastd_matype)
 
 
-def trix(close, timeperiod=30):  # TODO: TA-Lib free
+def trix(close, timeperiod=30):
     """1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 
-    close: float,收盘价
-    timeperiod:
+    close: float, 1-d array of float
+        收盘价
+    timeperiod: int
+        ema span
 
     Return
     ------
     """
-    return TRIX(close, timeperiod)
+    try:
+        from talib import TRIX
+        return TRIX(close, timeperiod)
+    except ImportError:
+        tri_ema = ema(ema(ema(close, timeperiod), timeperiod), timeperiod)
+        res = tri_ema / np.roll(tri_ema, 1) - 1
+        return res
 
 
 def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):

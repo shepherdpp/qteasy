@@ -145,6 +145,7 @@ def calculate(trade_values: np.ndarray,
     if fixed_fees is None:
         fixed_fees = False
 
+    # TODO: 重写slipage的计算公式，使得slipage是一个交易费用的乘数，该乘数 = slipage * (qty / 100) ** 2
     if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
         if is_buying:
             return buy_fix + slipage * trade_values ** 2

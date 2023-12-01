@@ -72,10 +72,11 @@ def _valid_qt_kwargs():
                           '3: 统计预测模式\n'},
 
         'time_zone':  # this parameter is now not used
-            {'Default':   'Asia/Shanghai',
-             'Validator': lambda value: isinstance(value, str),
+            {'Default':   'local',
+             'Validator': lambda value: _validate_time_zone(value),
              'level':     4,
-             'text':      '回测时的时区，可以是任意时区，例如：\n'
+             'text':      '回测时的时区，默认值"local"，表示使用本地时区。\n'
+                          '如果需要固定时区，设置任意合法的时区，例如：\n'
                           'Asia/Shanghai\n'
                           'Asia/Hong_Kong\n'
                           'US/Eastern\n'
@@ -144,11 +145,16 @@ def _valid_qt_kwargs():
                           "000001.SZ: 1000股, 000002.SZ: 2000股\n"},
 
         'live_trade_broker_type':
-            {'Default':   'simple',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simple', 'random', 'manual'],
+            {'Default':   'simulator',
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['simulator',
+                                                                                     'simple',
+                                                                                     'random',  # to be deprecated
+                                                                                     'manual',
+                                                                                     ],
              'level':     1,
              'text':      '实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、'
-                          '手动输入结果或者连接到交易代理商的交易接口\n'},
+                          '手动输入结果或者连接到交易代理商的交易接口\n'
+                          '默认使用模拟交易代理Simulator'},
 
         'live_trade_broker_params':
             {'Default':   None,
@@ -156,7 +162,9 @@ def _valid_qt_kwargs():
              'level':     1,
              'text':      '实盘交易账户的交易代理商参数，字典，例如：\n'
                           "{'host': 'localhost', 'port': 8888} : 交易代理商的主机名和端口号\n"
-                          "具体的参数设置请参考交易代理商的文档\n"},
+                          "具体的参数设置请参考交易代理商的文档\n"
+                          "如果使用 'simulator' broker，且设置此参数为None，则会使用config中的\n"
+                          "backtest参数"},
 
         'live_price_acquire_channel':
             {'Default':   'eastmoney',
@@ -1231,7 +1239,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         import inspect
         v = inspect.getsource(vkwargs[key]['Validator']).strip()
         raise TypeError(
-                f'Invalid value: ({str(value)}) of type: ({type(value)}) for config_key: <{key}>\n'
+                f'Invalid value: "{str(value)}"({type(value)}) for config_key: <{key}>\n'
                 f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v
         )
 
@@ -1301,9 +1309,29 @@ def _validate_asset_type(value: str):
 
     Returns
     -------
+    bool
     """
     from .utilfuncs import AVAILABLE_ASSET_TYPES
     return value.upper() in AVAILABLE_ASSET_TYPES
+
+
+def _validate_time_zone(value: str):
+    """ 验证一个时区字符串的合法性
+
+    Parameters
+    ----------
+    value: str
+
+    Returns
+    -------
+    bool
+    """
+    if not isinstance(value, str):
+        return False
+    if value == 'local':
+        return True
+    from pytz import all_timezones_set
+    return value in all_timezones_set
 
 
 def _validate_asset_pool(value):

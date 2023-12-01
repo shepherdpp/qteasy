@@ -9,15 +9,15 @@
 # ======================================
 
 import numpy as np
+import warnings
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
-from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
+# commonly used ta-lib funcs that have a None ta-lib version
+from .tafuncs import sma, ema, trix, macd, bbands
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
-from .tafuncs import stochrsi, ultosc, willr, ad, adosc, obv
+from .tafuncs import stochrsi, ultosc, willr, ad, dema, apo, cdldoji, atr
 
-
-# All following strategies can be used to create strategies by referring to its strategy ID
 
 # Built-in Rolling timing strategies:
 def built_in_list(stg_id=None):
@@ -158,6 +158,7 @@ def get_built_in_strategy(stg_id):
     return BUILT_IN_STRATEGIES[stg_id]()
 
 
+# All following strategies can be used to create strategies by referring to its strategy ID
 # Basic technical analysis based Timing strategies
 class Crossline(RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
@@ -518,6 +519,10 @@ class SCRSHT(RuleIterator):
     """
 
     def __init__(self, pars=()):
+        try:  # if ta-lib is installed
+            from .tafuncs import ht
+        except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
+            raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -1397,6 +1402,10 @@ class SLPHT(RuleIterator):
     """
 
     def __init__(self, pars=(5, )):
+        try:  # if ta-lib is installed
+            from .tafuncs import ht
+        except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
+            raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],

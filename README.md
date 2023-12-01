@@ -82,10 +82,6 @@ $ pip install qteasy
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
-
-- *`TA-lib` version >= 0.4.18*    `TA-Lib` 需要手动安装，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html)
-
-
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
 
 ##  10分钟了解qteasy的功能

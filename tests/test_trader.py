@@ -21,7 +21,7 @@ from qteasy import QT_CONFIG, DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order
 from qteasy.trader import Trader, get_symbol_names
-from qteasy.broker import RandomBroker, Broker
+from qteasy.broker import SimulatorBroker, Broker
 
 
 class TestTrader(unittest.TestCase):
@@ -40,9 +40,10 @@ class TestTrader(unittest.TestCase):
                 window_length=30,
                 strategy_run_freq='30min',
         )
-        broker = RandomBroker()
+        broker = SimulatorBroker()
         config = {
             'mode': 0,
+            'time_zone': 'local',
             'market_open_time_am':  '09:30:00',
             'market_close_time_pm': '15:30:00',
             'market_open_time_pm':  '13:00:00',

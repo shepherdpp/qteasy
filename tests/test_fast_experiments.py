@@ -116,6 +116,54 @@ class MultiFactors(qt.FactorSorter):
         return factors
 
 
+class IndexEnhancement(qt.GeneralStg):
+
+    def __init__(self, pars: tuple = (0.35, 0.8, 5)):
+        super().__init__(
+                pars=pars,
+                par_count=2,
+                par_types=['float', 'float', 'int'],  # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
+                par_range=[(0.01, 0.99), (0.51, 0.99), (2, 20)],
+                name='IndexEnhancement',
+                description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
+                strategy_run_timing='close',  # 在周期结束（收盘）时运行
+                strategy_run_freq='d',  # 每天执行一次选股
+                strategy_data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
+                data_freq='d',  # 数据频率（包括股票数据和参考数据）
+                window_length=20,
+                use_latest_data_cycle=True,
+                reference_data_types='',  # 不需要使用参考数据
+        )
+
+    def realize(self, h, r=None, t=None, pars=None):
+        weight_threshold, init_weight, price_days = self.pars
+        # 读取投资组合的权重wt和最近price_days天的收盘价
+        wt = h[:, -1, 0]  # 当前所有股票的权重值
+        pre_close = h[:, -price_days - 1:-1, 1]
+        close = h[:, -price_days:, 1]  # 当前所有股票的最新连续收盘价
+        # 计算连续price_days天的收益
+        stock_returns = pre_close - close  # 连续p天的收益
+
+        # 设置初始选股权重为0.8
+        weights = init_weight * np.ones_like(wt)
+
+        # 剔除掉权重小于weight_threshold的股票
+        weights[wt < weight_threshold] = 0
+
+        # 找出强势股，将其权重设为1, 找出弱势股，将其权重设置为 init_weight - (1 - init_weight)
+        up_trends = np.all(stock_returns > 0, axis=1)
+        weights[up_trends] = 1.0
+        down_trend_weight = init_weight - (1 - init_weight)
+        down_trends = np.all(stock_returns < 0, axis=1)
+        weights[down_trends] = down_trend_weight
+
+        # 实际选股权重为weights * HS300权重
+        weights *= wt
+        # print(f'select weight is: \n{weights}')
+
+        return weights
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -129,16 +177,22 @@ class FastExperiments(unittest.TestCase):
         # res = qt.run(op, mode=1, invest_start='20160501', visual=True, trade_log=True)
         self.assertEqual(1, 1)
 
-        shares = qt.filter_stock_codes(index='000300.SH', date='20190501')
+        shares = qt.filter_stock_codes(index='000300.SH', date='20210101')
         print(len(shares), shares[:10])
-        alpha = MultiFactors()
+
+        # alpha = MultiFactors()
+        # op = qt.Operator(alpha, signal_type='PT')
+
+        alpha = IndexEnhancement()
         op = qt.Operator(alpha, signal_type='PT')
+
         op.op_type = 'stepwise'
         op.set_blender('close', "0.8*s0")
         op.run(mode=1,
-               invest_start='20190501',
+               invest_start='20210101',
                invest_end='20220501',
                asset_type='E',
+               invest_cash_amounts=[1000000],
                asset_pool=shares,
                trade_batch_size=100,
                sell_batch_size=1,
