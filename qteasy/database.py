@@ -2723,7 +2723,7 @@ class DataSource:
 
         if self.file_type == 'csv':
             # 这里针对csv文件进行了优化，通过分块读取文件，避免当文件过大时导致读取异常
-            df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
+            df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)  # TODO: add try to escape file reading errors
             df_picker = (chunk for chunk in df_reader)
             if (share_like_pk is not None) and (date_like_pk is not None):
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
@@ -2740,12 +2740,12 @@ class DataSource:
             return df
 
         if self.file_type == 'hdf':
-            # hdf5/feather的大文件读取尚未优化
-            df = pd.read_hdf(file_path_name, 'df')
+            # TODO: hdf5/feather的大文件读取尚未优化
+            df = pd.read_hdf(file_path_name, 'df')  # TODO: add try to escape file reading errors
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'fth':
-            # feather大文件读取尚未优化
-            df = pd.read_feather(file_path_name)
+            # TODO: feather大文件读取尚未优化
+            df = pd.read_feather(file_path_name)  # TODO: add try to escape file reading errors
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
 

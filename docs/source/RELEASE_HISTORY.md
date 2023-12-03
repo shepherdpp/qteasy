@@ -1,5 +1,11 @@
 # QTEASY release history
 
+## 1.0.11 (2023-12-03)
+- Implemented "--perameter" / "-p" style parameter in Trader Shell, the old style will be deprecated in later versions
+- Allowed users to set up live trade broker parameters with QT configurations
+- Allowed users to set up live trade running time zone
+- Made dependency ta-lib as optional, kept a few critical built in strategies usable without ta-lib
+
 ## 1.0.10 (2023-11-25)
 - Corrected a mistake left out in version 1.0.9, which caused error when reference data is None in strategy
 - Changed default value of qteasy parameter `backtest_price_adj` to `none`
