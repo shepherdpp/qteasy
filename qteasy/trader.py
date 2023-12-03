@@ -73,6 +73,21 @@ def parse_shell_argument(arg: str = None, default=None) -> list:
     if arg == '':
         return [] if default is None else [default]
     args = arg.split(' ')
+    # 当用户仍然使用原来的parameter格式时（不带"-"），打印DeprecatedWarning
+    if any(arg[0] != '-' for arg in args):
+        from rich import print as rprint
+        rprint(f'"parameter" style parameters will be deprecated, please use "--parameters" / "-p" style, '
+               f'QT shell will try to correct your inputs. for example: "overview -d"\n')
+        # update args, add "-" in short args and "--" in long args
+        new_args = []
+        for arg in args:
+            if len(arg) == 1:
+                new_args.append("-" + arg)
+            else:
+                new_args.append("--" + arg)
+
+        args = new_args
+
     return args
 
 
