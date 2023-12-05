@@ -856,6 +856,7 @@ class TestUtilityFuncs(unittest.TestCase):
                 hans_aware=True,
                 format_tags=True,
         ), '[red]完全[/red][blue]由[/blue][yellow]中.[/yellow][green][/green][white]符串[/white]')
+        self.assertEqual(adjust_string_length('this is a long string', 7, format_tags=True), 'thi...g')
 
         self.assertRaises(TypeError, adjust_string_length, 123, 10)
         self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')

@@ -1929,9 +1929,6 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
     >>> adjust_string_length('hello [bold red]world[/bold red]', 9, format_tags=True)
     'hell[bold red]...ld[/bold red]'
     """
-    # TODO: able to handle format tags in string like [bold] or [red]
-    #  find out all format tags and extract them before calculating the length
-    #  then add them back after truncating the string
 
     if format_tags:
         format_tags, format_tags_positions, s = _extract_format_tags(s)

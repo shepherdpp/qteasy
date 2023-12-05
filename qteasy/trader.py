@@ -46,7 +46,7 @@ UNIT_TO_TABLE = {
         }
 
 
-def parse_shell_argument(arg: str = None, default=None) -> list:
+def parse_shell_argument(arg: str = None, default=None, command_name=None) -> list:
     """ 解析输入的参数, 返回解析后的参数列表，
 
     解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
@@ -75,16 +75,20 @@ def parse_shell_argument(arg: str = None, default=None) -> list:
     args = arg.split(' ')
     # 当用户仍然使用原来的parameter格式时（不带"-"），打印DeprecatedWarning
     if any(arg[0] != '-' for arg in args):
-        from rich import print as rprint
-        rprint(f'"parameter" style parameters will be deprecated, please use "--parameters" / "-p" style, '
-               f'QT shell will try to correct your inputs. for example: "overview -d"\n')
         # update args, add "-" in short args and "--" in long args
         new_args = []
+        example_arg = ''
         for arg in args:
             if len(arg) == 1:
                 new_args.append("-" + arg)
+                example_arg = "-" + arg
             else:
                 new_args.append("--" + arg)
+                example_arg = "--" + arg
+
+        from rich import print as rprint
+        rprint(f'[bold red]FutureWarning[/bold red]: plain style parameters will be deprecated in future versions, '
+               f'use "{command_name} {example_arg}" instead\n')
 
         args = new_args
 
@@ -317,7 +321,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='watch')
         if not args:
             sys.stdout.write(f'Current watch list: {self._watch_list}\n'
                              f'input symbols to add to watch list, like 000651.SZ\n')
@@ -454,7 +458,7 @@ class TraderShell(Cmd):
         overview [--detail|-d]
         """
         detail = False
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='overview')
         if args:
             if args[0] in ['--detail', '-d']:
                 detail = True
@@ -492,7 +496,7 @@ class TraderShell(Cmd):
         import shutil
         column_width, _ = shutil.get_terminal_size()
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='config')
         if len(args) == 0:
             config = self.trader.config()
             rprint(_vkwargs_to_text(config,
@@ -555,7 +559,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='history')
         history = self._trader.history_orders()
 
         if history.empty:
@@ -649,7 +653,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, default='--today')
+        args = parse_shell_argument(arg, default='--today', command_name='orders')
         order_details = self._trader.history_orders()
 
         for argument in args:
@@ -767,7 +771,7 @@ class TraderShell(Cmd):
             add 1000000 cash to trader account
         """
 
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='change')
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
         if args[0] in ['--cash', '-c']:
@@ -896,7 +900,7 @@ class TraderShell(Cmd):
 
         """
         # TODO: to change blender of strategies, use strategies blender|b <blender>
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='strategies')
         if not args:
             self.trader.operator.info()
         elif args[0] in ['-d', '--detail']:
@@ -1037,7 +1041,7 @@ class TraderShell(Cmd):
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
-                        text_width = int(shutil.get_terminal_size().columns * 0.9)
+                        text_width = int(shutil.get_terminal_size().columns)
                         message = self._trader.message_queue.get()
                         if message[-2:] == '_R':
                             # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
@@ -1052,15 +1056,13 @@ class TraderShell(Cmd):
                                 message = next_message
 
                             message = message[:-2] + ' ' + watched_prices
-                            rprint(adjust_string_length(message,
-                                                        text_width - 12,
-                                                        hans_aware=True,
-                                                        format_tags=True), end='\r')
+                            message = adjust_string_length(message,
+                                                           text_width - 2,
+                                                           hans_aware=True,
+                                                           format_tags=True)
+                            rprint(message, end='\r')
                             if next_normal_message:
-                                rprint(adjust_string_length(next_normal_message,
-                                                            text_width - 12,
-                                                            hans_aware=True,
-                                                            format_tags=True))
+                                rprint(message)
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
@@ -1594,11 +1596,11 @@ class Trader(object):
             tz = f"({self.time_zone.split('/')[-1]})"
         else:
             tz = ''
-        message = f'[{time_string}{tz}]-{self.status}: {message}'
+        message = f'<{time_string}{tz}>{self.status}: {message}'
         if not new_line:
             message += '_R'
         if self.debug:
-            message = f'[DEBUG]-{message}'
+            message = f'<DEBUG>{message}'
         if self.debug and (message[-2:] != '_R'):
             print(f'{message: <80}')  # 如果在debug模式下且不是覆盖型信息，直接打印
         else:
