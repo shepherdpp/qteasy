@@ -313,6 +313,7 @@ class TraderShell(Cmd):
         stock symbol, name, company name, industry, listed date, etc.
 
         """
+        # TODO: implement this function
         return
 
     def do_watch(self, arg):
@@ -358,6 +359,16 @@ class TraderShell(Cmd):
                 if len(self._watch_list) > 5:
                     self._watch_list.pop(0)
         rprint(f'current watch list: {self._watch_list}')
+
+    def do_buy(self, arg):
+        """ manual operation: buy in asset"""
+        # TODO: implement this function
+        pass
+
+    def do_sell(self, arg):
+        """ manual operation: sell out asset"""
+        # TODO: implement this function
+        pass
 
     def do_positions(self, arg):
         """ Get account positions
