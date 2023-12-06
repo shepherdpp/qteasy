@@ -65,6 +65,7 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
     args: list
         解析后的参数
     """
+    # TODO: in the future, should use parser to parse arguments, arguments defined in each command
     if arg is None:
         return [] if default is None else [default]
     arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
@@ -79,18 +80,19 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
         new_args = []
         example_arg = ''
         for arg in args:
-            if all(char.isdigit() for char in arg):  # do nothing for all digit parameters
-                new_args.append(arg)
-            elif len(arg) == 1:
+            if len(arg) == 1 and (not arg.isdigit()):
                 new_args.append("-" + arg)
                 example_arg = "-" + arg
+            elif all(char.isdigit() for char in arg[:2]):  # do nothing for parameters started with at least two digits
+                new_args.append(arg)
             else:
                 new_args.append("--" + arg)
                 example_arg = "--" + arg
 
-        from rich import print as rprint
-        rprint(f'[bold red]FutureWarning[/bold red]: plain style parameters will be deprecated in future versions, '
-               f'use "{command_name} {example_arg}" instead\n')
+        if example_arg:
+            from rich import print as rprint
+            rprint(f'[bold red]FutureWarning[/bold red]: plain style parameters will be deprecated in future versions, '
+                   f'use "{command_name} {example_arg}" instead\n')
 
         args = new_args
 
@@ -183,7 +185,7 @@ class TraderShell(Cmd):
             self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                    'Use "watch" command to add stocks to watch list. =='
         if self.trader.debug:
-            self.trader.post_message('updated watched prices!', )
+            self.trader.post_message('updated watched prices!')
         return
 
     # ----- basic commands -----
@@ -516,7 +518,7 @@ class TraderShell(Cmd):
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
         args = parse_shell_argument(arg, command_name='config')
         if len(args) == 0:
-            config = self.trader.config()
+            config = self.trader.get_config()
             rprint(_vkwargs_to_text(config,
                                     level=[0],
                                     info=True,
@@ -525,7 +527,7 @@ class TraderShell(Cmd):
                    )
         elif len(args) == 1:
             if args[0].isdigit():  # arg is level
-                config = self.trader.config()
+                config = self.trader.get_config()
                 level = int(args[0])
                 rprint(_vkwargs_to_text(config,
                                         level=list(range(0, level + 1)),
@@ -534,7 +536,7 @@ class TraderShell(Cmd):
                                         width=column_width)
                        )
             else:  # arg is key
-                config = self.trader.config(args[0])
+                config = self.trader.get_config(args[0])
                 key = args[0]
                 value = config[key]
                 if value is None:
@@ -1057,6 +1059,8 @@ class TraderShell(Cmd):
                     break
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
+                    watched_price_refresh_interval = self.trader.get_config(
+                            'watched_price_refresh_interval')['watched_price_refresh_interval']
                     if not self._trader.message_queue.empty():
                         text_width = int(shutil.get_terminal_size().columns)
                         # adjust message length
@@ -1094,7 +1098,7 @@ class TraderShell(Cmd):
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
-                    if live_price_refresh_timer > 5:
+                    if live_price_refresh_timer > watched_price_refresh_interval:
                         # 在一个新的进程中读取实时价格
                         from threading import Thread
                         t = Thread(target=self.update_watched_prices)
@@ -1389,7 +1393,7 @@ class Trader(object):
             # else return tz_time
             return tz_time
 
-    def config(self, key=None):
+    def get_config(self, key=None):
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
         if key is not None:
             return {key: self._config.get(key)}
