@@ -79,7 +79,9 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
         new_args = []
         example_arg = ''
         for arg in args:
-            if len(arg) == 1:
+            if all(char.isdigit() for char in arg):  # do nothing for all digit parameters
+                new_args.append(arg)
+            elif len(arg) == 1:
                 new_args.append("-" + arg)
                 example_arg = "-" + arg
             else:
@@ -134,6 +136,8 @@ class TraderShell(Cmd):
         self._timezone = trader.time_zone
         self._status = None
         self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
+        self._watched_prices = ' == Realtime prices can be displayed here. ' \
+                               'Use "watch" command to add stocks to watch list. =='  # watched prices string
         self._command_history = []  # list of commands executed in shell
 
     @property
@@ -153,7 +157,6 @@ class TraderShell(Cmd):
         if self._watch_list:
             from .emfuncs import stock_live_kline_price
             symbols = self._watch_list
-            # 此处不使用并行，如果用户使用keyboard interrupt时正好在运行并行进程，会导致无法正确捕捉keyboard interrupt
             live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
@@ -175,9 +178,13 @@ class TraderShell(Cmd):
 
                 else:
                     watched_prices += f' ={symbol[:-3]}/--/---'
-            return watched_prices
+            self._watched_prices = watched_prices
         else:
-            return ' == Realtime prices can be displayed here. Use "watch" command to add stocks to watch list. =='
+            self._watched_prices = ' == Realtime prices can be displayed here. ' \
+                                   'Use "watch" command to add stocks to watch list. =='
+        if self.trader.debug:
+            self.trader.post_message('updated watched prices!')
+        return
 
     # ----- basic commands -----
     # TODO: add escape warning when realtime data acquiring is not available
@@ -785,7 +792,7 @@ class TraderShell(Cmd):
                 print('Please input cash value to increase (+) or to decrease (-).')
                 return
 
-            self.trader.change_cash(amount)
+            self.trader._change_cash(amount)
             return
 
         symbol = None
@@ -853,7 +860,7 @@ class TraderShell(Cmd):
             print(f'{args} is not a valid input, Please input valid arguments.')
             return
 
-        self._trader.change_position(
+        self._trader._change_position(
                 symbol=symbol,
                 quantity=volume,
                 price=price,
@@ -1031,7 +1038,7 @@ class TraderShell(Cmd):
 
         prev_message = ''
         live_price_refresh_timer = 0
-        watched_prices = self.get_watched_prices()
+        watched_prices = self._watched_prices
         while True:
             # enter shell loop
             try:
@@ -1042,6 +1049,7 @@ class TraderShell(Cmd):
                     # check trader message queue and display messages
                     if not self._trader.message_queue.empty():
                         text_width = int(shutil.get_terminal_size().columns)
+                        # adjust message length
                         message = self._trader.message_queue.get()
                         if message[-2:] == '_R':
                             # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
@@ -1060,6 +1068,7 @@ class TraderShell(Cmd):
                                                            text_width - 2,
                                                            hans_aware=True,
                                                            format_tags=True)
+                            message = f'{message: <{text_width - 2}}'
                             rprint(message, end='\r')
                             if next_normal_message:
                                 rprint(message)
@@ -1067,27 +1076,22 @@ class TraderShell(Cmd):
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            rprint(adjust_string_length(message,
-                                                        text_width - 12,
-                                                        hans_aware=True,
-                                                        format_tags=True))
+                            message = adjust_string_length(message,
+                                                           text_width - 2,
+                                                           hans_aware=True,
+                                                           format_tags=True)
+                            rprint(message)
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
                     if live_price_refresh_timer > 5:
-                        from concurrent.futures import ThreadPoolExecutor
-                        with ThreadPoolExecutor(max_workers=1) as executor:
-                            future = executor.submit(self.get_watched_prices)
-                            try:
-                                watched_prices = future.result(timeout=3)
-                            except TimeoutError:
-                                if self.trader.debug:
-                                    self.trader.post_message('Timed out when refreshing live prices')
-                            except Exception as e:
-                                if self.trader.debug:
-                                    import traceback
-                                    self.trader.post_message(f'Error in refreshing live prices: {e}')
-                                    traceback.print_exc()
+                        # 在一个新的进程中读取实时价格
+                        from threading import Thread
+                        t = Thread(target=self.get_watched_prices)
+                        t.daemon = True
+                        t.start()
+                        if self.trader.debug:
+                            self.trader.post_message(f'Acquiring live prices in a new thread<{t.name}>')
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -1489,6 +1493,7 @@ class Trader(object):
             if self.debug:
                 import traceback
                 traceback.print_exc()
+        return
 
     def info(self, width=80):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
@@ -2031,24 +2036,13 @@ class Trader(object):
 
     def _acquire_live_price(self):
         """ 获取当日实时价格, 并保存实时价格到self.live_price中 """
+        # 在一个新的线程中更新实时数据
+        from threading import Thread
+        t = Thread(target=self._get_live_prices)
+        t.daemon = True  # set as deamon so this thread will be killed after main program ends
+        t.start()
         if self.debug:
-            self.post_message('running task acquire_live_price')
-
-        from .emfuncs import stock_live_kline_price
-        # read real_time_data in a separate thread, set timeout to 20 seconds, if timeout, abort and return None
-        from concurrent.futures import ThreadPoolExecutor, TimeoutError
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(stock_live_kline_price, symbols=self.asset_pool)
-            try:
-                real_time_data = future.result(timeout=20)
-            except TimeoutError:
-                self.post_message('TimeoutError occurred when reading real time data. Result will be ignored.')
-                return None
-
-        real_time_data.set_index('symbol', inplace=True)
-        # 将real_time_data 赋值给self.live_price
-        self.live_price = real_time_data
-        self.post_message(f'acquired live price data, live prices updated!')
+            self.post_message(f'started task acquire_live_price in Thread<{t.name}>')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -2297,7 +2291,7 @@ class Trader(object):
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
-    def change_cash(self, amount):
+    def _change_cash(self, amount):
         """ 手动修改现金，根据amount的正负号，增加或减少现金
 
         修改后持有现金/可用现金/总投资金额都会发生变化
@@ -2334,7 +2328,7 @@ class Trader(object):
         self.post_message(f'Cash amount changed to {self.account_cash}')
         return
 
-    def change_position(self, symbol, quantity, price, side=None):
+    def _change_position(self, symbol, quantity, price, side=None):
         """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
 
         修改后持仓的数量 = 原持仓数量 + quantity
@@ -2443,6 +2437,25 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
+        return
+
+    def _get_live_prices(self):
+        """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
+        from .emfuncs import stock_live_kline_price
+        try:
+            real_time_data = stock_live_kline_price(symbols=self.asset_pool)
+        except Exception as e:
+            if self.debug:
+                import traceback
+                self.post_message(f'Error in acquiring live prices: {e}')
+                traceback.print_exc()
+            return None
+
+        real_time_data.set_index('symbol', inplace=True)
+        # 将real_time_data 赋值给self.live_price
+        self.live_price = real_time_data
+        if self.debug:
+            self.post_message(f'acquired live price data, live prices updated!')
         return
 
     AVAILABLE_TASKS = {

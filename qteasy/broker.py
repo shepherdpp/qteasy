@@ -130,6 +130,7 @@ class Broker(object):
                 traceback.print_exc()
             self.status = 'stopped'
             raise e
+        return
 
     def post_message(self, message: str):
         """ 将消息放入消息队列
