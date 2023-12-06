@@ -181,13 +181,18 @@ def _valid_qt_kwargs():
                                         ['H', '30MIN', '15MIN', '5MIN', '1MIN', 'TICK'],
              'level':     2,
              'text':      '实盘交易时获取实时价格的频率：\n'
-                          'H      - 1小时\n'
-                          '30MIN  - 30分钟\n'
-                          '15MIN  - 15分钟\n'
-                          '5MIN   - 5分钟\n'
-                          '1MIN   - 1分钟\n'
-                          'TICK   - Tick数据\n'},
+                          'H      - 每1小时获取一次数据\n'
+                          '30MIN  - 每30分钟获取一次数据\n'
+                          '15MIN  - 每15分钟获取一次数据\n'
+                          '5MIN   - 每5分钟获取一次数据\n'
+                          '1MIN   - 每1分钟获取一次数据\n'},
 
+        'watched_price_refresh_interval':
+            {'Default':   5,
+             'Validator': lambda value: isinstance(value, int) and value >= 5,
+             'level':     4,
+             'text':      '实盘交易时监看实时价格的刷新频率，单位为秒，默认为5秒\n'
+                          '该数值不能低于5秒'},
 
         'trade_batch_size':
             {'Default':   0.0,

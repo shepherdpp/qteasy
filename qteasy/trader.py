@@ -46,7 +46,7 @@ UNIT_TO_TABLE = {
         }
 
 
-def parse_shell_argument(arg: str = None, default=None) -> list:
+def parse_shell_argument(arg: str = None, default=None, command_name=None) -> list:
     """ 解析输入的参数, 返回解析后的参数列表，
 
     解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
@@ -65,6 +65,7 @@ def parse_shell_argument(arg: str = None, default=None) -> list:
     args: list
         解析后的参数
     """
+    # TODO: in the future, should use parser to parse arguments, arguments defined in each command
     if arg is None:
         return [] if default is None else [default]
     arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
@@ -75,16 +76,23 @@ def parse_shell_argument(arg: str = None, default=None) -> list:
     args = arg.split(' ')
     # 当用户仍然使用原来的parameter格式时（不带"-"），打印DeprecatedWarning
     if any(arg[0] != '-' for arg in args):
-        from rich import print as rprint
-        rprint(f'"parameter" style parameters will be deprecated, please use "--parameters" / "-p" style, '
-               f'QT shell will try to correct your inputs. for example: "overview -d"\n')
         # update args, add "-" in short args and "--" in long args
         new_args = []
+        example_arg = ''
         for arg in args:
-            if len(arg) == 1:
+            if len(arg) == 1 and (not arg.isdigit()):
                 new_args.append("-" + arg)
+                example_arg = "-" + arg
+            elif all(char.isdigit() for char in arg[:2]):  # do nothing for parameters started with at least two digits
+                new_args.append(arg)
             else:
                 new_args.append("--" + arg)
+                example_arg = "--" + arg
+
+        if example_arg:
+            from rich import print as rprint
+            rprint(f'[bold red]FutureWarning[/bold red]: plain style parameters will be deprecated in future versions, '
+                   f'use "{command_name} {example_arg}" instead\n')
 
         args = new_args
 
@@ -130,6 +138,8 @@ class TraderShell(Cmd):
         self._timezone = trader.time_zone
         self._status = None
         self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
+        self._watched_prices = ' == Realtime prices can be displayed here. ' \
+                               'Use "watch" command to add stocks to watch list. =='  # watched prices string
         self._command_history = []  # list of commands executed in shell
 
     @property
@@ -143,13 +153,12 @@ class TraderShell(Cmd):
     def watch_list(self):
         return self._watch_list
 
-    def get_watched_prices(self):
+    def update_watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
         if self._watch_list:
             from .emfuncs import stock_live_kline_price
             symbols = self._watch_list
-            # 此处不使用并行，如果用户使用keyboard interrupt时正好在运行并行进程，会导致无法正确捕捉keyboard interrupt
             live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
@@ -171,9 +180,13 @@ class TraderShell(Cmd):
 
                 else:
                     watched_prices += f' ={symbol[:-3]}/--/---'
-            return watched_prices
+            self._watched_prices = watched_prices
         else:
-            return ' == Realtime prices can be displayed here. Use "watch" command to add stocks to watch list. =='
+            self._watched_prices = ' == Realtime prices can be displayed here. ' \
+                                   'Use "watch" command to add stocks to watch list. =='
+        if self.trader.debug:
+            self.trader.post_message('updated watched prices!')
+        return
 
     # ----- basic commands -----
     # TODO: add escape warning when realtime data acquiring is not available
@@ -302,6 +315,7 @@ class TraderShell(Cmd):
         stock symbol, name, company name, industry, listed date, etc.
 
         """
+        # TODO: implement this function
         return
 
     def do_watch(self, arg):
@@ -317,7 +331,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='watch')
         if not args:
             sys.stdout.write(f'Current watch list: {self._watch_list}\n'
                              f'input symbols to add to watch list, like 000651.SZ\n')
@@ -347,6 +361,16 @@ class TraderShell(Cmd):
                 if len(self._watch_list) > 5:
                     self._watch_list.pop(0)
         rprint(f'current watch list: {self._watch_list}')
+
+    def do_buy(self, arg):
+        """ manual operation: buy in asset"""
+        # TODO: implement this function
+        pass
+
+    def do_sell(self, arg):
+        """ manual operation: sell out asset"""
+        # TODO: implement this function
+        pass
 
     def do_positions(self, arg):
         """ Get account positions
@@ -454,7 +478,7 @@ class TraderShell(Cmd):
         overview [--detail|-d]
         """
         detail = False
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='overview')
         if args:
             if args[0] in ['--detail', '-d']:
                 detail = True
@@ -492,9 +516,9 @@ class TraderShell(Cmd):
         import shutil
         column_width, _ = shutil.get_terminal_size()
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='config')
         if len(args) == 0:
-            config = self.trader.config()
+            config = self.trader.get_config()
             rprint(_vkwargs_to_text(config,
                                     level=[0],
                                     info=True,
@@ -503,7 +527,7 @@ class TraderShell(Cmd):
                    )
         elif len(args) == 1:
             if args[0].isdigit():  # arg is level
-                config = self.trader.config()
+                config = self.trader.get_config()
                 level = int(args[0])
                 rprint(_vkwargs_to_text(config,
                                         level=list(range(0, level + 1)),
@@ -512,7 +536,7 @@ class TraderShell(Cmd):
                                         width=column_width)
                        )
             else:  # arg is key
-                config = self.trader.config(args[0])
+                config = self.trader.get_config(args[0])
                 key = args[0]
                 value = config[key]
                 if value is None:
@@ -555,7 +579,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='history')
         history = self._trader.history_orders()
 
         if history.empty:
@@ -649,7 +673,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, default='--today')
+        args = parse_shell_argument(arg, default='--today', command_name='orders')
         order_details = self._trader.history_orders()
 
         for argument in args:
@@ -767,7 +791,7 @@ class TraderShell(Cmd):
             add 1000000 cash to trader account
         """
 
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='change')
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
         if args[0] in ['--cash', '-c']:
@@ -781,7 +805,7 @@ class TraderShell(Cmd):
                 print('Please input cash value to increase (+) or to decrease (-).')
                 return
 
-            self.trader.change_cash(amount)
+            self.trader._change_cash(amount)
             return
 
         symbol = None
@@ -849,7 +873,7 @@ class TraderShell(Cmd):
             print(f'{args} is not a valid input, Please input valid arguments.')
             return
 
-        self._trader.change_position(
+        self._trader._change_position(
                 symbol=symbol,
                 quantity=volume,
                 price=price,
@@ -896,7 +920,7 @@ class TraderShell(Cmd):
 
         """
         # TODO: to change blender of strategies, use strategies blender|b <blender>
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='strategies')
         if not args:
             self.trader.operator.info()
         elif args[0] in ['-d', '--detail']:
@@ -1027,7 +1051,6 @@ class TraderShell(Cmd):
 
         prev_message = ''
         live_price_refresh_timer = 0
-        watched_prices = self.get_watched_prices()
         while True:
             # enter shell loop
             try:
@@ -1036,8 +1059,11 @@ class TraderShell(Cmd):
                     break
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
+                    watched_price_refresh_interval = self.trader.get_config(
+                            'watched_price_refresh_interval')['watched_price_refresh_interval']
                     if not self._trader.message_queue.empty():
-                        text_width = int(shutil.get_terminal_size().columns * 0.9)
+                        text_width = int(shutil.get_terminal_size().columns)
+                        # adjust message length
                         message = self._trader.message_queue.get()
                         if message[-2:] == '_R':
                             # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
@@ -1051,41 +1077,35 @@ class TraderShell(Cmd):
                                     break
                                 message = next_message
 
-                            message = message[:-2] + ' ' + watched_prices
-                            rprint(adjust_string_length(message,
-                                                        text_width - 12,
-                                                        hans_aware=True,
-                                                        format_tags=True), end='\r')
+                            message = message[:-2] + ' ' + self._watched_prices
+                            message = adjust_string_length(message,
+                                                           text_width - 2,
+                                                           hans_aware=True,
+                                                           format_tags=True)
+                            message = f'{message: <{text_width - 2}}'
+                            rprint(message, end='\r')
                             if next_normal_message:
-                                rprint(adjust_string_length(next_normal_message,
-                                                            text_width - 12,
-                                                            hans_aware=True,
-                                                            format_tags=True))
+                                rprint(message)
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
                                 print('\n', end='')
-                            rprint(adjust_string_length(message,
-                                                        text_width - 12,
-                                                        hans_aware=True,
-                                                        format_tags=True))
+                            message = adjust_string_length(message,
+                                                           text_width - 2,
+                                                           hans_aware=True,
+                                                           format_tags=True)
+                            rprint(message)
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
-                    if live_price_refresh_timer > 5:
-                        from concurrent.futures import ThreadPoolExecutor
-                        with ThreadPoolExecutor(max_workers=1) as executor:
-                            future = executor.submit(self.get_watched_prices)
-                            try:
-                                watched_prices = future.result(timeout=3)
-                            except TimeoutError:
-                                if self.trader.debug:
-                                    self.trader.post_message('Timed out when refreshing live prices')
-                            except Exception as e:
-                                if self.trader.debug:
-                                    import traceback
-                                    self.trader.post_message(f'Error in refreshing live prices: {e}')
-                                    traceback.print_exc()
+                    if live_price_refresh_timer > watched_price_refresh_interval:
+                        # 在一个新的进程中读取实时价格
+                        from threading import Thread
+                        t = Thread(target=self.update_watched_prices)
+                        t.daemon = True
+                        t.start()
+                        if self.trader.debug:
+                            self.trader.post_message(f'Acquiring live prices in a new thread<{t.name}>', new_line=False)
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -1373,7 +1393,7 @@ class Trader(object):
             # else return tz_time
             return tz_time
 
-    def config(self, key=None):
+    def get_config(self, key=None):
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
         if key is not None:
             return {key: self._config.get(key)}
@@ -1487,6 +1507,7 @@ class Trader(object):
             if self.debug:
                 import traceback
                 traceback.print_exc()
+        return
 
     def info(self, width=80):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
@@ -1594,13 +1615,14 @@ class Trader(object):
             tz = f"({self.time_zone.split('/')[-1]})"
         else:
             tz = ''
-        message = f'[{time_string}{tz}]-{self.status}: {message}'
+        message = f'<{time_string}{tz}>{self.status}: {message}'
         if not new_line:
             message += '_R'
         if self.debug:
-            message = f'[DEBUG]-{message}'
+            message = f'<DEBUG>{message}'
         if self.debug and (message[-2:] != '_R'):
-            print(f'{message: <80}')  # 如果在debug模式下且不是覆盖型信息，直接打印
+            text_width = int(shutil.get_terminal_size().columns)
+            print(f'{message: <{text_width - 2}}')  # 如果在debug模式下且不是覆盖型信息，直接打印
         else:
             self.message_queue.put(message)
 
@@ -2029,24 +2051,13 @@ class Trader(object):
 
     def _acquire_live_price(self):
         """ 获取当日实时价格, 并保存实时价格到self.live_price中 """
+        # 在一个新的线程中更新实时数据
+        from threading import Thread
+        t = Thread(target=self._update_live_price)
+        t.daemon = True  # set as deamon so this thread will be killed after main program ends
+        t.start()
         if self.debug:
-            self.post_message('running task acquire_live_price')
-
-        from .emfuncs import stock_live_kline_price
-        # read real_time_data in a separate thread, set timeout to 20 seconds, if timeout, abort and return None
-        from concurrent.futures import ThreadPoolExecutor, TimeoutError
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(stock_live_kline_price, symbols=self.asset_pool)
-            try:
-                real_time_data = future.result(timeout=20)
-            except TimeoutError:
-                self.post_message('TimeoutError occurred when reading real time data. Result will be ignored.')
-                return None
-
-        real_time_data.set_index('symbol', inplace=True)
-        # 将real_time_data 赋值给self.live_price
-        self.live_price = real_time_data
-        self.post_message(f'acquired live price data, live prices updated!')
+            self.post_message(f'started task acquire_live_price in Thread<{t.name}>')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -2295,7 +2306,7 @@ class Trader(object):
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
-    def change_cash(self, amount):
+    def _change_cash(self, amount):
         """ 手动修改现金，根据amount的正负号，增加或减少现金
 
         修改后持有现金/可用现金/总投资金额都会发生变化
@@ -2332,7 +2343,7 @@ class Trader(object):
         self.post_message(f'Cash amount changed to {self.account_cash}')
         return
 
-    def change_position(self, symbol, quantity, price, side=None):
+    def _change_position(self, symbol, quantity, price, side=None):
         """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
 
         修改后持仓的数量 = 原持仓数量 + quantity
@@ -2441,6 +2452,25 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
+        return
+
+    def _update_live_price(self):
+        """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
+        from .emfuncs import stock_live_kline_price
+        try:
+            real_time_data = stock_live_kline_price(symbols=self.asset_pool)
+        except Exception as e:
+            if self.debug:
+                import traceback
+                self.post_message(f'Error in acquiring live prices: {e}')
+                traceback.print_exc()
+            return None
+
+        real_time_data.set_index('symbol', inplace=True)
+        # 将real_time_data 赋值给self.live_price
+        self.live_price = real_time_data
+        if self.debug:
+            self.post_message(f'acquired live price data, live prices updated!', new_line=False)
         return
 
     AVAILABLE_TASKS = {

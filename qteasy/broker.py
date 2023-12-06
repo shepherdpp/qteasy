@@ -130,13 +130,16 @@ class Broker(object):
                 traceback.print_exc()
             self.status = 'stopped'
             raise e
+        return
 
-    def post_message(self, message: str):
+    def post_message(self, message: str, new_line=True):
         """ 将消息放入消息队列
         """
         if self.debug:
             message = f'[DEBUG]-{message}'
         message = f'[{self.broker_name}]: {message}'
+        if not new_line:
+            message += '_R'
         self.broker_messages.put(message)
 
     def get_result(self, order):

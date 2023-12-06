@@ -1,12 +1,12 @@
 # coding=utf-8
 # ======================================
-# File:     test_fast_experiments.py
+# File:     test_user_defined.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Temporary test file for quick
-#   function tests.
+#   Test file for user-defined
+# strategies.
 # ======================================
 import unittest
 
@@ -164,24 +164,86 @@ class IndexEnhancement(qt.GeneralStg):
         return weights
 
 
+class GridTrading(qt.GeneralStg):
+
+    def __init__(self, pars: tuple = (2.0, 3.0, 0.3, 0.5, 300)):
+        super().__init__(
+                pars=pars,
+                par_count=5,
+                par_types=['float', 'float', 'float', 'float', 'int'],  # 仓位配置的阈值：参数1:低仓位阈值，参数2: 高仓位阈值，参数3：低仓位比例，参数4:高仓位比例，参数5:计算天数
+                par_range=[(0.5, 3.0), (2.0, 10.), (0.01, 0.5), (0.5, 0.99), (10, 300)],
+                name='GridTrading',
+                description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
+                strategy_run_timing='close',  # 在周期结束（收盘）时运行
+                strategy_run_freq='1min',  # 每份钟执行一次调整
+                strategy_data_types='close',  # 使用份钟收盘价调整
+                data_freq='1min',  # 数据频率（包括股票数据和参考数据）
+                window_length=300,
+                use_latest_data_cycle=False,  # 高频数据不需要使用当前数据区间
+                reference_data_types='',  # 不需要使用参考数据
+        )
+
+    def realize(self, h, r=None, t=None, pars=None):
+        """策略输出PT信号，即仓位目标信号"""
+
+        low_threshold, high_threshold, low_pos, hi_pos, days = self.pars
+
+        # 读取最近N天的收盘价
+        close = h[:, - days:, 0]  # 最新连续收盘价
+        current_close = h[:, -1, 0]  # 当天的收盘价
+
+        # 计算N天的平均价和标准差，并计算仓位阈值
+        close_mean = np.nanmean(close, axis=1)
+        close_std = np.nanstd(close, axis=1)
+        hi_positive = close_mean + high_threshold * close_std
+        low_positive = close_mean + low_threshold * close_std
+        low_negative = close_mean - low_threshold * close_std
+        hi_negative = close_mean - high_threshold * close_std
+
+        # 根据当前的实际价格确定目标仓位，并将目标仓位作为信号输出
+        pos = np.zeros_like(close_mean)
+        pos = np.where(current_close > hi_positive, hi_pos, pos)
+        pos = np.where(hi_positive >= current_close > low_positive, low_pos, pos)
+        pos = np.where(low_positive >= current_close > low_negative, 0, pos)
+        pos = np.where(low_negative >= current_close > hi_negative, - low_pos, pos)
+        pos = np.where(current_close >= hi_negative, - hi_pos, pos)
+
+        return pos
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
     def setUp(self):
         pass
 
-    def test_fast_experiments(self):
-        """temp test"""
-        # op = qt.Operator(strategies='dma')
-        # op.set_parameter('dma', pars=(23, 166, 196))
-        # res = qt.run(op, mode=1, invest_start='20160501', visual=True, trade_log=True)
+    def test_multi_factors(self):
+        """ test strategy MultiFactors"""
+        self.assertEqual(1, 1)
+        shares = qt.filter_stock_codes(index='000300.SH', date='20210101')
+        print(len(shares), shares[:10])
+
+        alpha = MultiFactors()
+        op = qt.Operator(alpha, signal_type='PT')
+
+        op.op_type = 'stepwise'
+        op.set_blender("0.8*s0", 'close')
+        op.run(mode=1,
+               invest_start='20210101',
+               invest_end='20220501',
+               asset_type='E',
+               invest_cash_amounts=[1000000],
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=True)
+
+    def test_index_enhancement(self):
+        """ tests for self-defined strategies"""
         self.assertEqual(1, 1)
 
         shares = qt.filter_stock_codes(index='000300.SH', date='20210101')
         print(len(shares), shares[:10])
-
-        # alpha = MultiFactors()
-        # op = qt.Operator(alpha, signal_type='PT')
 
         alpha = IndexEnhancement()
         op = qt.Operator(alpha, signal_type='PT')
@@ -197,6 +259,28 @@ class FastExperiments(unittest.TestCase):
                trade_batch_size=100,
                sell_batch_size=1,
                trade_log=True)
+
+    def test_grid_trading(self):
+        """ test for strategy GridTrading"""
+        self.assertEqual(1, 1)
+
+        alpha = GridTrading()
+        op = qt.Operator(alpha, signal_type='PT')
+
+        op.op_type = 'batch'
+        op.set_blender("1.0*s0", 'close')
+        op.run(
+                mode=1,
+                invest_start='20220401',
+                invest_end='20220731',
+                invest_cash_amounts=[1000000],
+                asset_type='IDX',
+                asset_pool=['000300.SH'],
+                trade_batch_size=0,
+                sell_batch_size=0,
+                trade_log=True,
+                allow_sell_short=True,
+        )
 
 
 if __name__ == '__main__':

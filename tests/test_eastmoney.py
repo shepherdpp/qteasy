@@ -23,6 +23,7 @@ class TestEastmoney(unittest.TestCase):
 
     def SetUp(self):
         pass
+        # TODO: complete tests
 
     def test_get_k_history(self):
         """ Test get_k_history function """

@@ -1,5 +1,15 @@
 # QTEASY release history
 
+## 1.0.12 (2023-12-07)
+- improved visual effects
+- now live prices are acquired in background threads, not causing lags in the main loop
+- mistake corrections that allow live prices to be displayed when time zone is not local
+- watched price refresh interval is now configurable
+
+*in next release:*
+
+- two new commands will be added to Shell: `buy` and `sell` 
+
 ## 1.0.11 (2023-12-03)
 - Implemented "--perameter" / "-p" style parameter in Trader Shell, the old style will be deprecated in later versions
 - Allowed users to set up live trade broker parameters with QT configurations

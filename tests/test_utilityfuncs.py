@@ -280,7 +280,7 @@ class TestUtilityFuncs(unittest.TestCase):
         date_seems_trade_day = '20210217'
         prev_seems_trade_day = pd.to_datetime(date_seems_trade_day) - pd.Timedelta(7, 'd')
         date_too_early = '19890601'
-        date_too_late = '20240105'
+        date_too_late = '20990105'
         date_christmas = '20201225'
         prev_christmas_xhkg = '20201224'
         self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_trade)),
@@ -856,6 +856,7 @@ class TestUtilityFuncs(unittest.TestCase):
                 hans_aware=True,
                 format_tags=True,
         ), '[red]完全[/red][blue]由[/blue][yellow]中.[/yellow][green][/green][white]符串[/white]')
+        self.assertEqual(adjust_string_length('this is a long string', 7, format_tags=True), 'thi...g')
 
         self.assertRaises(TypeError, adjust_string_length, 123, 10)
         self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')
