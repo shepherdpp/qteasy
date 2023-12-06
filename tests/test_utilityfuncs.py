@@ -280,7 +280,7 @@ class TestUtilityFuncs(unittest.TestCase):
         date_seems_trade_day = '20210217'
         prev_seems_trade_day = pd.to_datetime(date_seems_trade_day) - pd.Timedelta(7, 'd')
         date_too_early = '19890601'
-        date_too_late = '20240105'
+        date_too_late = '20990105'
         date_christmas = '20201225'
         prev_christmas_xhkg = '20201224'
         self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_trade)),

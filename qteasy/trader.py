@@ -151,7 +151,7 @@ class TraderShell(Cmd):
     def watch_list(self):
         return self._watch_list
 
-    def get_watched_prices(self):
+    def update_watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
         if self._watch_list:
@@ -183,7 +183,7 @@ class TraderShell(Cmd):
             self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                    'Use "watch" command to add stocks to watch list. =='
         if self.trader.debug:
-            self.trader.post_message('updated watched prices!')
+            self.trader.post_message('updated watched prices!', )
         return
 
     # ----- basic commands -----
@@ -1049,7 +1049,6 @@ class TraderShell(Cmd):
 
         prev_message = ''
         live_price_refresh_timer = 0
-        watched_prices = self._watched_prices
         while True:
             # enter shell loop
             try:
@@ -1074,7 +1073,7 @@ class TraderShell(Cmd):
                                     break
                                 message = next_message
 
-                            message = message[:-2] + ' ' + watched_prices
+                            message = message[:-2] + ' ' + self._watched_prices
                             message = adjust_string_length(message,
                                                            text_width - 2,
                                                            hans_aware=True,
@@ -1098,11 +1097,11 @@ class TraderShell(Cmd):
                     if live_price_refresh_timer > 5:
                         # 在一个新的进程中读取实时价格
                         from threading import Thread
-                        t = Thread(target=self.get_watched_prices)
+                        t = Thread(target=self.update_watched_prices)
                         t.daemon = True
                         t.start()
                         if self.trader.debug:
-                            self.trader.post_message(f'Acquiring live prices in a new thread<{t.name}>')
+                            self.trader.post_message(f'Acquiring live prices in a new thread<{t.name}>', new_line=False)
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -1618,7 +1617,8 @@ class Trader(object):
         if self.debug:
             message = f'<DEBUG>{message}'
         if self.debug and (message[-2:] != '_R'):
-            print(f'{message: <80}')  # 如果在debug模式下且不是覆盖型信息，直接打印
+            text_width = int(shutil.get_terminal_size().columns)
+            print(f'{message: <{text_width - 2}}')  # 如果在debug模式下且不是覆盖型信息，直接打印
         else:
             self.message_queue.put(message)
 
@@ -2049,7 +2049,7 @@ class Trader(object):
         """ 获取当日实时价格, 并保存实时价格到self.live_price中 """
         # 在一个新的线程中更新实时数据
         from threading import Thread
-        t = Thread(target=self._get_live_prices)
+        t = Thread(target=self._update_live_price)
         t.daemon = True  # set as deamon so this thread will be killed after main program ends
         t.start()
         if self.debug:
@@ -2450,7 +2450,7 @@ class Trader(object):
         )
         return
 
-    def _get_live_prices(self):
+    def _update_live_price(self):
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
         from .emfuncs import stock_live_kline_price
         try:
@@ -2466,7 +2466,7 @@ class Trader(object):
         # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data
         if self.debug:
-            self.post_message(f'acquired live price data, live prices updated!')
+            self.post_message(f'acquired live price data, live prices updated!', new_line=False)
         return
 
     AVAILABLE_TASKS = {
