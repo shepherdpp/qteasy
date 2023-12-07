@@ -31,8 +31,8 @@ class GridTrade(qt.RuleIterator):
         price = h[-1, 0]  # 最近一个K线周期的close价格
         # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
         if base_grid <= 0.01:
-            # 基准网格尚未设置，此时为首次运行，首次买入2000股并设置基准网格为当前价格（精确到0.1元）
-            result = 2000
+            # 基准网格尚未设置，此时为首次运行，首次买入20000股并设置基准网格为当前价格（精确到0.1元）
+            result = 20000
             base_grid = np.round(price / 0.1) * 0.1
         elif price - base_grid > grid_size:
             # 触及卖出网格线，产生卖出信号
@@ -59,10 +59,11 @@ if __name__ == '__main__':
 
     parser = get_qt_argparser()
     args = parser.parse_args()
-    alpha = GridTrade(pars=(0.1, 200, 38.0),  # 当基准网格为0时，代表首次运行，此时买入1000股，并设置当前价为基准网格
+    alpha = GridTrade(pars={'000651.SZ': (0.2, 2000, 0.),
+                            '600036.SH': (0.2, 2000, 0.)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
                       par_count=3,
                       par_types=['float', 'int', 'float'],
-                      par_range=[(0.1, 2), (100, 300), (0, 40)],
+                      par_range=[(0.1, 2), (100, 3000), (0, 40)],
                       name='GridTrade',
                       description='网格交易策略，当前股票价格波动幅度超过网格尺寸时，产生卖出或买入交易信号，并更新网格',
                       strategy_run_timing='close',
@@ -71,12 +72,12 @@ if __name__ == '__main__':
                       window_length=20,
                       )
 
-    op = Operator('macd, dma', signal_type='VS', op_type='step')
+    op = Operator(alpha, signal_type='VS', op_type='step')
     qt.configure(
             mode=0,
             time_zone='Asia/Shanghai',
             asset_type='E',
-            asset_pool='000651.SZ',
+            asset_pool=['000651.SZ', '600036.SH'],
             benchmark_asset='000651.SZ',
             benchmark_asset_type='E',
             benchmark_dtype='close',
@@ -85,6 +86,8 @@ if __name__ == '__main__':
             live_trade_account_id=args.account,
             live_trade_account=args.new_account,
             live_trade_debug_mode=args.debug,
+            live_trade_broker_type='simulator',
+            watched_price_refresh_interval=30,
     )
     datasource = qt.QT_DATA_SOURCE
 

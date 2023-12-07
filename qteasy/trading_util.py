@@ -31,7 +31,7 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
-def create_daily_task_agenda(operator, config=None):
+def create_daily_task_schedule(operator, config=None):
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
     每日任务日程包括含 sleep / wake_up / run_stg 等所有有效任务类型的任务列表，
