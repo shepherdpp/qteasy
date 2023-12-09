@@ -1103,8 +1103,7 @@ class TraderShell(Cmd):
                         # 在一个新的进程中读取实时价格, 收盘后不获取
                         if self.trader.is_market_open:
                             from threading import Thread
-                            t = Thread(target=self.update_watched_prices)
-                            t.daemon = True
+                            t = Thread(target=self.update_watched_prices, daemon=True)
                             t.start()
                             if self.trader.debug:
                                 self.trader.post_message(f'Acquiring watched prices in a new thread<{t.name}>')
@@ -1159,12 +1158,12 @@ class Trader(object):
     """ Trader是交易系统的核心，它负责调度交易任务，根据交易日历和策略规则生成交易订单并提交给Broker
 
     Trader的核心包括：
-        一个task_queue，它是一个FIFO队列，任何需要执行的任务都需要被添加到队列中才会执行，执行完成后从队列中删除。
-        一个task_daily_agenda，它是list of tuples, 每个tuple包含一个交易时间和一项任务，例如
-        (datetime.time(9, 30), 'open_market')，表示在每天的9:30开市
-    Trader的main loop定期检查task_queue中的任务，如果有任务到达，就执行任务，否则等待下一个任务到达。
-    如果在交易日中，Trader会定时将task_daily_agenda中的任务添加到task_queue中。
-    如果不是交易日，Trader会打印当前状态，并等待下一个交易日。
+        一个task_daily_scheduler，它每天生成一个task列表和计划时间，在计划时间将任务加入task队列，任何需要
+            执行的任务都需要被添加到队列中才会执行，执行完成后从队列中删除。
+            Trader的main loop定期检查task_queue中的任务，如果有任务到达，就执行任务，否则等待下一个任务到达。
+            如果在交易日中，Trader会定时将task_daily_agenda中的任务添加到task_queue中。
+            如果不是交易日，Trader会打印当前状态，并等待下一个交易日。
+        一个task_runner, 启动一个新的线程，运行指定的任务，等待任务返回结果
 
     Attributes:
     -----------
@@ -1424,6 +1423,11 @@ class Trader(object):
         schedule_string = schedule_string.replace('[', '<')
         schedule_string = schedule_string.replace(']', '>')
         rprint(schedule_string)
+
+    def register_broker(self, debug=False, **kwargs):
+        """ 注册broker，以便实现登录等处理
+        """
+        self.broker.register(debug=debug, **kwargs)
 
     def run(self):
         """ 交易系统的main loop：
@@ -2001,7 +2005,7 @@ class Trader(object):
         )
 
         # 获取当日实时价格
-        self._acquire_live_price()
+        self._update_live_price()
 
     def _post_close(self):
         """ 收市后例行操作：
@@ -2054,16 +2058,6 @@ class Trader(object):
                 config=self._config
         )
         self.post_message('processed trade delivery')
-
-    def _acquire_live_price(self):
-        """ 获取当日实时价格, 并保存实时价格到self.live_price中 """
-        # 在一个新的线程中更新实时数据
-        from threading import Thread
-        t = Thread(target=self._update_live_price)
-        t.daemon = True  # set as deamon so this thread will be killed after main program ends
-        t.start()
-        if self.debug:
-            self.post_message(f'Acquiring live price data in Thread<{t.name}>')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -2135,7 +2129,11 @@ class Trader(object):
         *args: tuple
             任务参数
         """
-        # TODO: all tasks shoule be run in a separate thread
+        # TODO: all tasks should be run in a separate thread
+        #  所有的task都被定义为单线程，不与其他task交互，只直接与trader的属
+        #  性交互。这里将启动一个新的进程运行每个task。每一个thread都被设定
+        #  为daemon，确保进程得到关闭。未来，可能使用
+        #  threading.excepthook()来捕捉产生的exceptions
 
         if task is None:
             return
@@ -2146,12 +2144,13 @@ class Trader(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func: Union[Union[Callable, None], Any] = self.AVAILABLE_TASKS[task]
+
+        from threading import Thread
+        t = Thread(target=task_func, args=args, daemon=True)
         if self.debug:
-            self.post_message(f'will run task: {task} with args: {args} in function: {task_func.__name__}')
-        if args:
-            task_func(self, *args)
-        else:
-            task_func(self)
+            self.post_message(f'will run task: {task} with args: {args} in a new Thread {t.name}')
+        t.start()
+        # task_func(self, *args)
 
     # =============== internal methods =================
 
@@ -2463,6 +2462,8 @@ class Trader(object):
 
     def _update_live_price(self):
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
+        if self.debug:
+            self.post_message(f'Acquiring live price data')
         from .emfuncs import stock_live_kline_price
         try:
             real_time_data = stock_live_kline_price(symbols=self.asset_pool)
@@ -2487,7 +2488,7 @@ class Trader(object):
         'post_close':           _post_close,
         'run_strategy':         _run_strategy,
         'process_result':       _process_result,
-        'acquire_live_price':   _acquire_live_price,
+        'acquire_live_price':   _update_live_price,
         'change_date':          _change_date,
         'start':                _start,
         'stop':                 _stop,
@@ -2611,7 +2612,7 @@ def start_trader(
             datasource=datasource,
             debug=debug,
     )
-    trader.broker.debug = debug
+    trader.register_broker(debug=trader.debug)
 
     # find out datasource availabilities, refill data source if table data not available
     refill_missing_datasource_data(

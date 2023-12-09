@@ -61,16 +61,39 @@ class Broker(object):
         self.token = ''
         self.status = 'init'  # init, running, stopped, paused
         self.debug = False
+        self.is_registered = False
 
         self.order_queue = Queue()
         self.result_queue = Queue()
         self.broker_messages = Queue()
+
+    def register(self, debug=False, **kwargs):
+        """ register由broker的trader对象发起，作用是设置broker的状态为is_registered
+        将broker连接到正确的交易平台，注册交易信息，输入账号、密码等完成登录
+
+        只有is_registered == True时，broker才能够运行
+
+        Parameters
+        ----------
+        debug: bool, default: False
+            是否进入debug mode
+        kwargs:
+
+        Return
+        ------
+        None
+        """
+        # TODO: implement this function
+        self.is_registered = True
+        self.debug = debug
 
     def run(self):
         """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
         order_queue中的每一个交易订单都由get_result函数来处理并获取交易结果，get_result函数
         的执行过程是IO intensive的，因此需要使用ThreadPoolExecutor来并行处理交易订单
         """
+        if not self.is_registered:
+            raise RuntimeError(f'broker is not registered!')
         if self.debug:
             self.post_message(f'is running...')
         self.status = 'init'
@@ -175,7 +198,11 @@ class Broker(object):
             self.post_message(f'get_result():\nsubmit order components of order(ID) {order["order_id"]}:\n'
                               f'quantity:{order["qty"]}\norder_price={order["price"]}\n'
                               f'order_direction={order["direction"]}\n')
+        pos_id = order['pos_id']
+        from qteasy.trade_recording import get_position_by_id
+        symbol = get_position_by_id(pos_id=pos_id)['symbol']
         trade_results = self.transaction_result(
+                symbol=symbol,
                 order_qty=order['qty'],
                 order_price=order['price'],
                 direction=order['direction'],
@@ -244,15 +271,17 @@ class Broker(object):
         return raw_trade_results
 
     @abstractmethod
-    def transaction_result(self, order_qty, order_price, direction):
+    def transaction_result(self, symbol, order_qty, order_price, direction):
         """ 交易所处理交易订单并获取交易结果, 抽象方法，需要由用户在子类中实现
 
         Parameters:
         -----------
+        symbol: str
+            交易标的股票代码
         order_qty: float
-            交易订单数量
+            挂单数量
         order_price: float
-            交易订单价格
+            交易报价
         direction: str
             交易订单方向，'buy' 或者 'sell'
 
@@ -312,19 +341,34 @@ class SimpleBroker(Broker):
         super(SimpleBroker, self).__init__()
         self.broker_name = 'SimpleBroker'
 
-    def transaction_result(self, order_qty, order_price, direction):
+    def transaction_result(self, symbol, order_qty, order_price, direction):
         """ 订单立即成交
+
+        Parameters:
+        ----------
+        symbol: str
+            挂单交易标的股票代码
+        order_qty: float
+            挂单数量
+        order_price: float
+            挂单报价
+        direction: str
+            交易订单方向，'buy' 或者 'sell'
 
         Returns:
         --------
-        result_type: str
-            交易结果类型，'filled' - 成交
-        qty: float
-            成交数量
-        price: float
-            成交价格
-        fee: float
-            交易费用
+        tuple of tuples: ((result_type, qty, price, fee), (...), ...)
+            result_type: str 交易结果类型:
+                'filled' - 成交,
+                'partial_filled' - 部分成交,
+                'canceled' - 取消
+                'failed' - 失败
+            qty: float
+                成交/取消数量，这个数字应该小于等于order_qty，且大于等于0
+            price: float
+                成交价格, 如果是取消交易，价格为0或任意数字
+            fee: float
+                交易费用，交易费用应该大于等于0
         """
         qty = order_qty
         price = order_price
@@ -337,8 +381,8 @@ class SimulatorBroker(Broker):
 
     根据这些参数尽可能真实地模拟成交结果，特点如下：
 
+    - 在收到交易订单后，检查当前价格，如果价格低于叫买价，以实际价格买入，如果价格高于叫卖价，以实际价格卖出 - TODO: to be implemented
     - 交易费率根据qt_config中的设置计算，包括固定费率、最低费用、滑点等
-    - 交易时有一定概率出现交易失败或部分成交
     - 股票涨停时大概率买入交易失败，跌停时大概率卖出交易失败 - TODO: to be implemented
     """
 
@@ -400,32 +444,65 @@ class SimulatorBroker(Broker):
         self.price_deviation = price_deviation
         self.probabilities = probabilities
 
-    def transaction_result(self, order_qty, order_price, direction):
-        """ 订单随机成交
+    def transaction_result(self, symbol, order_qty, order_price, direction):
+        """ 读取实时价格模拟成交
+
+
+        Parameters:
+        -----------
+        symbol: str
+            交易标的股票代码
+        order_qty: float
+            挂单数量
+        order_price: float
+            交易报价
+        direction: str
+            交易订单方向，'buy' 或者 'sell'
 
         Returns:
         --------
-        result_type: str
-            交易结果类型，'filled' - 成交, 'partial-filled' - 部分成交, 'canceled' - 取消
-        qty: float
-            成交/取消数量
-        price: float
-            成交价格, 如果是取消交易，价格为0或任意数字
-        fee: float
-            交易费用
+        tuple of tuples: ((result_type, qty, price, fee), (...), ...)
+            result_type: str 交易结果类型:
+                'filled' - 成交,
+                'partial_filled' - 部分成交,
+                'canceled' - 取消
+                'failed' - 失败
+            qty: float
+                成交/取消数量，这个数字应该小于等于order_qty，且大于等于0
+            price: float
+                成交价格, 如果是取消交易，价格为0或任意数字
+            fee: float
+                交易费用，交易费用应该大于等于0
         """
-        from time import sleep
         from random import random
 
         remain_qty = order_qty
         order_results = []
 
         while remain_qty > 0.001:
-            result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
-            trade_delay = random() * self.delay  # 模拟交易所处理订单的时间
-            price_deviation = random() * self.price_deviation  # 模拟成交价格与报价之间的差异
 
-            sleep(trade_delay)
+            # 获取当前实时价格
+
+            from .emfuncs import stock_live_kline_price
+            live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
+            if not live_prices.empty:
+                change = (live_prices['close'] / live_prices['pre_close'] - 1).iloc[-1]
+                live_price = live_prices.close.astype(float).iloc[-1]
+            else:
+                raise ValueError(f'live price of symbol {symbol} can not be acquired at the moment...')
+
+            # 如果当前价低于挂买价，或者高于挂卖价，则概率成交或部分成交
+            if ((live_price >= order_price) and (direction == 'sell')) or \
+                ((live_price <= order_price) and (direction == 'buy')):
+                result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
+                # 如果change非常接近+10% / -10%，则非常大概率canceled
+                if abs(abs(change) - 0.1) <= 0.001:
+                    result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
+            else:
+                # 无法成交
+                result_type = 'canceled'
+
+            price_deviation = random() * self.price_deviation  # 模拟成交价格与报价之间的差异
 
             if result_type in ['filled', 'partial-filled']:
                 filled_proportion = 1
@@ -476,7 +553,7 @@ class NotImplementedBroker(Broker):
         super(NotImplementedBroker, self).__init__()
         raise NotImplementedError('NotImplementedBroker is not implemented yet')
 
-    def transaction_result(self, order_qty, order_price, direction):
+    def transaction_result(self, symbol, order_qty, order_price, direction):
         pass
 
 
