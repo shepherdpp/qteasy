@@ -65,7 +65,11 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
     args: list
         解析后的参数
     """
-    # TODO: in the future, should use parser to parse arguments, arguments defined in each command
+    # TODO: should return:
+    #  a dict that contains values of all arguments, such as:
+    #  {'arg1': (value),
+    #   'arg2': value2}
+    #  maybe should use parser to parse arguments, arguments defined in each command
     if arg is None:
         return [] if default is None else [default]
     arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
@@ -323,7 +327,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        watch [symbol [symbol ...]] [--position|--positions|-pos|-p]
+        watch [SYMBOL [SYMBOL ...]] [--position|--positions|-pos|-p]
 
         symbol:     Add symbols explicitly to watch list:
         position:   Add 5 symbols from position list to watch list:
@@ -363,13 +367,80 @@ class TraderShell(Cmd):
         rprint(f'current watch list: {self._watch_list}')
 
     def do_buy(self, arg):
-        """ manual operation: buy in asset"""
+        """ manual operation: buy in asset
+
+        Usage:
+        ------
+        buy --symbol|-s SYMBOL --amount|-a ACCOUNT --price|-p PRICE [--position|-p POSITION]
+        """
         # TODO: implement this function
+        account_id = self.trader.account_id
+        datasource = self.trader.datasource
+        broker = self.trader.broker
+        args = parse_shell_argument(arg)
+        symbol = args['symbol']
+        position = args['position']
+        qty = args['amount']
+        price = args['price']
+        pos_id = get_or_create_position(account_id=account_id,
+                                        symbol=symbol,
+                                        position_type=position,
+                                        data_source=datasource)
+
+        # 生成交易订单dict
+        trade_order = {
+            'pos_id':         pos_id,
+            'direction':      'buy',
+            'order_type':     'market',  # TODO: order type is to be properly defined
+            'qty':            qty,
+            'price':          price,
+            'submitted_time': None,
+            'status':         'created',
+        }
+
+        order_id = record_trade_order(trade_order, data_source=datasource)
+        # 逐一提交交易信号
+        if submit_order(order_id=order_id, data_source=datasource) is not None:
+            trade_order['order_id'] = order_id
+            broker.order_queue.put(trade_order)
         pass
 
     def do_sell(self, arg):
-        """ manual operation: sell out asset"""
+        """ manual operation: sell out asset
+
+        Usage:
+        ------
+        sell --symbol|-s SYMBOL --amount|-a ACCOUNT --price|-p PRICE [--long|-l][--short|-sh]"""
         # TODO: implement this function
+        account_id = self.trader.account_id
+        datasource = self.trader.datasource
+        broker = self.trader.broker
+        args = parse_shell_argument(arg)
+        symbol = args['symbol']
+        position = args['position']
+        qty = args['amount']
+        price = args['price']
+        pos_id = get_or_create_position(account_id=account_id,
+                                        symbol=symbol,
+                                        position_type=position,
+                                        data_source=datasource)
+
+        # 生成交易订单dict
+        trade_order = {
+            'pos_id':         pos_id,
+            'direction':      'sell',
+            'order_type':     'market',  # TODO: order type is to be properly defined
+            'qty':            qty,
+            'price':          price,
+            'submitted_time': None,
+            'status':         'created',
+        }
+
+        order_id = record_trade_order(trade_order, data_source=datasource)
+        # 逐一提交交易信号
+        if submit_order(order_id=order_id, data_source=datasource) is not None:
+            trade_order['order_id'] = order_id
+            broker.order_queue.put(trade_order)
         pass
 
     def do_positions(self, arg):

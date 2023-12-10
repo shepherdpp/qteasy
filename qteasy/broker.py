@@ -474,15 +474,13 @@ class SimulatorBroker(Broker):
             fee: float
                 交易费用，交易费用应该大于等于0
         """
-        from random import random
 
         remain_qty = order_qty
         order_results = []
 
         while remain_qty > 0.001:
 
-            # 获取当前实时价格
-
+            # 获取当前实时价格 TODO: 如果当前价格无法成交，是否应该持续等待价格变化可以成交或者broker关闭为止？
             from .emfuncs import stock_live_kline_price
             live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
@@ -491,18 +489,22 @@ class SimulatorBroker(Broker):
             else:
                 raise ValueError(f'live price of symbol {symbol} can not be acquired at the moment...')
 
-            # 如果当前价低于挂买价，或者高于挂卖价，则概率成交或部分成交
-            if ((live_price >= order_price) and (direction == 'sell')) or \
-                ((live_price <= order_price) and (direction == 'buy')):
+            # 如果当前价高于挂卖价，大概率成交或部分成交
+            if (live_price >= order_price) and (direction == 'sell'):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
-                # 如果change非常接近+10% / -10%，则非常大概率canceled
-                if abs(abs(change) - 0.1) <= 0.001:
+                # 如果change非常接近-10%(跌停)，则非常大概率canceled
+                if abs(change + 0.1) <= 0.001:
                     result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
+            # 如果当前价低于挂买价, 大概率成交或部分成交
+            elif (live_price <= order_price) and (direction == 'buy'):
+                result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
+                # 如果change非常接近+10%(涨停)，则非常大概率canceled
+                if abs(change - 0.1) <= 0.001:
+                    result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
+
             else:
                 # 无法成交
                 result_type = 'canceled'
-
-            price_deviation = random() * self.price_deviation  # 模拟成交价格与报价之间的差异
 
             if result_type in ['filled', 'partial-filled']:
                 filled_proportion = 1
@@ -517,13 +519,13 @@ class SimulatorBroker(Broker):
                         qty = remain_qty # 如果成交数量小于moq，且剩余数量也小于moq，那么成交数量就是剩余数量
                         result_type = 'filled'
                 if direction == 'buy':
-                    order_price = order_price * (1 - price_deviation)
+                    order_price = live_price
                     transaction_fee = \
                         max(qty * order_price * self.fee_rate_buy, self.fee_min_buy) \
                             if self.fee_fix_buy == 0 \
                             else self.fee_fix_buy
                 elif direction == 'sell':
-                    order_price = order_price * (1 + price_deviation)
+                    order_price = live_price
                     transaction_fee = \
                         max(qty * order_price * self.fee_rate_sell, self.fee_min_sell) \
                             if self.fee_fix_sell == 0 \
