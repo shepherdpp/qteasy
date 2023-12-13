@@ -13,7 +13,6 @@
 
 import time
 import sys
-from typing import Any, Callable, Union
 
 import pandas as pd
 import numpy as np
@@ -367,21 +366,51 @@ class TraderShell(Cmd):
         rprint(f'current watch list: {self._watch_list}')
 
     def do_buy(self, arg):
-        """ manual operation: buy in asset
+        """ Manually create buy-in order: buy AMOUNT shares of SYMBOL with PRICE
+        the order will be submitted to broker and will be executed according to broker rules
+        --long / --short indicates position to buy, default long
+        --force indicates force buy regardless of current prices # TODO: to be implemented
 
         Usage:
         ------
-        buy --symbol|-s SYMBOL --amount|-a ACCOUNT --price|-p PRICE [--position|-p POSITION]
+        buy AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+
+        Examples:
+        ---------
+        # buy in 100 shares of 000651.SH at price 32.5
+        buy 100 000651.SH 32.5
+        # buy short 100 shares of 000651.SH at price 30.0
+        buy 100 000651.SH 30.0 --short
         """
-        # TODO: implement this function
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
         args = parse_shell_argument(arg)
-        symbol = args['symbol']
-        position = args['position']
-        qty = args['amount']
-        price = args['price']
+        if len(args) < 3:
+            print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
+                  f'use "help buy" to see more info')
+            return
+        try:
+            qty = float(args[0])
+            symbol = args[1].upper()
+            price = float(args[2])
+            position = 'long'
+        except:
+            print(f'Wrong format for positional argument AMOUNT or PRICE, please check your input. '
+                  f'use "help buy" to see more info')
+            return
+        if len(args) >= 4:
+            if args[3] not in ['--long', '-l', '--short', '-s']:
+                print(f'Wrong argument: {args[3]}, use "help buy" to see more info')
+                return
+            if args[3] in ['--short', '-s']:
+                position = 'short'
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+        if not is_complete_cn_stock_symbol_like(symbol):
+            print(f'Wrong symbol is given: {symbol}, please check your input!')
+            return
+        if qty <= 0 or price <= 0:
+            print(f'Qty or price can not be less or equal to 0, please check your input!')
         pos_id = get_or_create_position(account_id=account_id,
                                         symbol=symbol,
                                         position_type=position,
@@ -406,20 +435,51 @@ class TraderShell(Cmd):
         pass
 
     def do_sell(self, arg):
-        """ manual operation: sell out asset
+        """ Manually create sell-out order: sell AMOUNT shares of SYMBOL with PRICE
+        the order will be submitted to broker and will be executed according to broker rules
+        --long / --short indicates position to buy, default long
+        --force indicates force buy regardless of current prices # TODO: to be implemented
 
         Usage:
         ------
-        sell --symbol|-s SYMBOL --amount|-a ACCOUNT --price|-p PRICE [--long|-l][--short|-sh]"""
-        # TODO: implement this function
+        sell AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+
+        Examples:
+        ---------
+        # sell out 100 shares of 000651.SH at price 32.5
+        sell 100 000651.Sh 32.5
+        # sell short 100 shares of 000651 at price 30.0
+        sell 100 000651.SH 30.0 --short
+        """
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
         args = parse_shell_argument(arg)
-        symbol = args['symbol']
-        position = args['position']
-        qty = args['amount']
-        price = args['price']
+        if len(args) < 3:
+            print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
+                  f'use "help buy" to see more info')
+            return
+        try:
+            qty = float(args[0])
+            symbol = args[1].upper()
+            price = float(args[2])
+            position = 'long'
+        except:
+            print(f'Wrong format for positional argument AMOUNT or PRICE, please check your input. '
+                  f'use "help buy" to see more info')
+            return
+        if len(args) >= 4:
+            if args[3] not in ['--long', '-l', '--short', '-s']:
+                print(f'Wrong argument: {args[3]}, use "help buy" to see more info')
+                return
+            if args[3] in ['--short', '-s']:
+                position = 'short'
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+        if not is_complete_cn_stock_symbol_like(symbol):
+            print(f'Wrong symbol is given: {symbol}, please check your input!')
+            return
+        if qty <= 0 or price <= 0:
+            print(f'Qty or price can not be less or equal to 0, please check your input!')
         pos_id = get_or_create_position(account_id=account_id,
                                         symbol=symbol,
                                         position_type=position,
@@ -690,38 +750,42 @@ class TraderShell(Cmd):
 
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
         # for earning rate
-        rprint(
-                history.to_string(
-                        columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
-                                 'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
-                                 'name'],
-                        header=['time', 'symbol', 'oper', 'qty', 'price',
-                                'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
-                                'name'],
-                        formatters={
-                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
-                            'name':         '{:8s}'.format,
-                            'operation':    '{:s}'.format,
-                            'filled_qty':   '{:,.2f}'.format,
-                            'price_filled': '¥{:,.2f}'.format,
-                            'transaction_fee': '¥{:,.2f}'.format,
-                            'cum_qty':      '{:,.2f}'.format,
-                            'value':        '¥{:,.2f}'.format,
-                            'share_cost':   '¥{:,.2f}'.format,
-                            'earnings':     '¥{:,.2f}'.format,
-                            'earning_rate': '{:.3%}'.format,
-                        },
-                        col_space={
-                            'name': 8,
-                            'price_filled': 10,
-                            'value': 12,
-                            'share_cost': 10,
-                            'earnings': 12,
-                        },
-                        justify='right',
-                        index=False,
-                )
-        )
+        # Error will be raised if execution_time is NaT. will print out normal format in this case
+        if np.any(pd.isna(history.execition_time)):
+            print(history)
+        else:
+            rprint(
+                    history.to_string(
+                            columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
+                                     'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
+                                     'name'],
+                            header=['time', 'symbol', 'oper', 'qty', 'price',
+                                    'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
+                                    'name'],
+                            formatters={
+                                'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                                'name':         '{:8s}'.format,
+                                'operation':    '{:s}'.format,
+                                'filled_qty':   '{:,.2f}'.format,
+                                'price_filled': '¥{:,.2f}'.format,
+                                'transaction_fee': '¥{:,.2f}'.format,
+                                'cum_qty':      '{:,.2f}'.format,
+                                'value':        '¥{:,.2f}'.format,
+                                'share_cost':   '¥{:,.2f}'.format,
+                                'earnings':     '¥{:,.2f}'.format,
+                                'earning_rate': '{:.3%}'.format,
+                            },
+                            col_space={
+                                'name': 8,
+                                'price_filled': 10,
+                                'value': 12,
+                                'share_cost': 10,
+                                'earnings': 12,
+                            },
+                            justify='right',
+                            index=False,
+                    )
+            )
 
     def do_orders(self, arg):
         """ Get trader orders
@@ -816,31 +880,35 @@ class TraderShell(Cmd):
             symbols = order_details['symbol'].tolist()
             names = get_symbol_names(datasource=self.trader.datasource, symbols=symbols)
             order_details['name'] = names
-            rprint(order_details.to_string(
-                    index=False,
-                    columns=['execution_time', 'symbol', 'position', 'direction', 'qty', 'price_quoted',
-                             'submitted_time', 'status', 'price_filled', 'filled_qty', 'canceled_qty',
-                             'delivery_status', 'name'],
-                    header=['time', 'symbol', 'pos', 'buy/sell', 'qty', 'price',
-                            'submitted', 'status', 'fill_price', 'fill_qty', 'canceled',
-                            'delivery', 'name'],
-                    formatters={'name':           '{:s}'.format,
-                                'qty':            '{:,.2f}'.format,
-                                'price_quoted':   '¥{:,.2f}'.format,
-                                'price_filled':   '¥{:,.2f}'.format,
-                                'filled_qty':     '{:,.2f}'.format,
-                                'canceled_qty':   '{:,.2f}'.format,
-                                'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
-                                'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
-                                },
-                    col_space={
-                        'price_quoted': 10,
-                        'price_filled': 10,
-                        'filled_qty': 10,
-                        'canceled_qty': 10,
-                    },
-                    justify='right',
-            ))
+            # if NaT in order_details, then strftime will not work, will print out original form of order_details
+            if np.any(pd.isna(order_details.execution_time)) or np.any(pd.isna(order_details.submitted_time)):
+                print(order_details)
+            else:
+                rprint(order_details.to_string(
+                        index=False,
+                        columns=['execution_time', 'symbol', 'position', 'direction', 'qty', 'price_quoted',
+                                 'submitted_time', 'status', 'price_filled', 'filled_qty', 'canceled_qty',
+                                 'delivery_status', 'name'],
+                        header=['time', 'symbol', 'pos', 'buy/sell', 'qty', 'price',
+                                'submitted', 'status', 'fill_price', 'fill_qty', 'canceled',
+                                'delivery', 'name'],
+                        formatters={'name':           '{:s}'.format,
+                                    'qty':            '{:,.2f}'.format,
+                                    'price_quoted':   '¥{:,.2f}'.format,
+                                    'price_filled':   '¥{:,.2f}'.format,
+                                    'filled_qty':     '{:,.2f}'.format,
+                                    'canceled_qty':   '{:,.2f}'.format,
+                                    'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                                    'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
+                                    },
+                        col_space={
+                            'price_quoted': 10,
+                            'price_filled': 10,
+                            'filled_qty': 10,
+                            'canceled_qty': 10,
+                        },
+                        justify='right',
+                ))
 
     def do_change(self, arg):
         """ Change trader cash and positions
@@ -1728,9 +1796,6 @@ class Trader(object):
         if kwargs and (not isinstance(kwargs, dict)):
             raise TypeError('kwargs should be a dict')
 
-        if task not in self.AVAILABLE_TASKS:
-            raise ValueError('task {} is not available'.format(task))
-
         if kwargs:
             task = (task, kwargs)
         if self.debug:
@@ -2200,28 +2265,44 @@ class Trader(object):
         *args: tuple
             任务参数
         """
-        # TODO: all tasks should be run in a separate thread
-        #  所有的task都被定义为单线程，不与其他task交互，只直接与trader的属
-        #  性交互。这里将启动一个新的进程运行每个task。每一个thread都被设定
-        #  为daemon，确保进程得到关闭。未来，可能使用
+        # all tasks is run in a separate thread. 未来，可能使用
         #  threading.excepthook()来捕捉产生的exceptions
+
+        available_tasks = {
+            'pre_open':           self._pre_open,
+            'open_market':        self._market_open,
+            'close_market':       self._market_close,
+            'post_close':         self._post_close,
+            'run_strategy':       self._run_strategy,
+            'process_result':     self._process_result,
+            'acquire_live_price': self._update_live_price,
+            'change_date':        self._change_date,
+            'start':              self._start,
+            'stop':               self._stop,
+            'sleep':              self._sleep,
+            'wakeup':             self._wakeup,
+            'pause':              self._pause,
+            'resume':             self._resume,
+            'refill':             self._refill,
+        }
 
         if task is None:
             return
         if not isinstance(task, str):
             raise ValueError(f'task must be a string, got {type(task)} instead.')
 
-        if task not in self.AVAILABLE_TASKS.keys():
+        if task not in available_tasks.keys():
             raise ValueError(f'Invalid task name: {task}')
 
-        task_func: Union[Union[Callable, None], Any] = self.AVAILABLE_TASKS[task]
-
+        task_func = available_tasks[task]
         from threading import Thread
-        t = Thread(target=task_func, args=args, daemon=True)
+        if args:
+            t = Thread(target=task_func, args=args, daemon=True)
+        else:
+            t = Thread(target=task_func, daemon=True)
         if self.debug:
             self.post_message(f'will run task: {task} with args: {args} in a new Thread {t.name}')
         t.start()
-        # task_func(self, *args)
 
     # =============== internal methods =================
 
@@ -2551,24 +2632,6 @@ class Trader(object):
         if self.debug:
             self.post_message(f'acquired live price data, live prices updated!')
         return
-
-    AVAILABLE_TASKS = {
-        'pre_open':             _pre_open,
-        'open_market':          _market_open,
-        'close_market':         _market_close,
-        'post_close':           _post_close,
-        'run_strategy':         _run_strategy,
-        'process_result':       _process_result,
-        'acquire_live_price':   _update_live_price,
-        'change_date':          _change_date,
-        'start':                _start,
-        'stop':                 _stop,
-        'sleep':                _sleep,
-        'wakeup':               _wakeup,
-        'pause':                _pause,
-        'resume':               _resume,
-        'refill':               _refill,
-    }
 
     TASK_WHITELIST = {
         'stopped':  ['start'],

@@ -424,7 +424,9 @@ class SimulatorBroker(Broker):
         delay: float, default 1.0
             模拟交易延迟，单位为秒
         price_deviation: float, default 0.0
-            模拟成交价波动率
+            模拟成交价格允许误差值。例如，当前价格100元，误差值为0.01，即允许价格误差为100*0.01 = 1元
+            此时买入报价大于100-1元即可成交
+            卖出报价小于100+1元即可成交
         probabilities: tuple of 3 floats, default (0.90, 0.08, 0.02)
             模拟完全成交、部分成交和未成交三种情况出现的概率
 
@@ -484,26 +486,31 @@ class SimulatorBroker(Broker):
             from .emfuncs import stock_live_kline_price
             live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
+                live_prices['close'] = live_prices['close'].astype('float')
                 change = (live_prices['close'] / live_prices['pre_close'] - 1).iloc[-1]
-                live_price = live_prices.close.astype(float).iloc[-1]
+                live_price = live_prices.close.iloc[-1]
+                price_deviation = live_price * self.price_deviation
             else:
                 raise ValueError(f'live price of symbol {symbol} can not be acquired at the moment...')
 
-            # 如果当前价高于挂卖价，大概率成交或部分成交
-            if (live_price >= order_price) and (direction == 'sell'):
+            # 如果当前价高于挂卖价(允许误差由price_deviation控制)，大概率成交或部分成交
+            if (live_price >= order_price - price_deviation) and (direction == 'sell'):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
                 # 如果change非常接近-10%(跌停)，则非常大概率canceled
                 if abs(change + 0.1) <= 0.001:
+                    self.post_message(f'order will be probably canceled because -10% sell-limit')
                     result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
-            # 如果当前价低于挂买价, 大概率成交或部分成交
-            elif (live_price <= order_price) and (direction == 'buy'):
+            # 如果当前价低于挂买价(允许误差由price_deviation控制), 大概率成交或部分成交
+            elif (live_price <= order_price + price_deviation) and (direction == 'buy'):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
                 # 如果change非常接近+10%(涨停)，则非常大概率canceled
                 if abs(change - 0.1) <= 0.001:
+                    self.post_message(f'order will be probably canceled because +10% buy-limit')
                     result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
 
             else:
                 # 无法成交
+                self.post_message('quoted price does not meet current price, order will be canceled')
                 result_type = 'canceled'
 
             if result_type in ['filled', 'partial-filled']:
