@@ -33,17 +33,17 @@ class MultiGridTrade(qt.GeneralStg):
             raise ValueError(f'number of stocks ({h.shape[0]}) does not equal to number of parameters ({len(pars_dict)})')
 
         trade_signals = np.zeros(shape=(len(pars_dict), ))  # 交易信号为一个数组，对应每种股票的交易信号
-        for i, key, pars in enumerate(*pars_dict.items()):
+        for i, key, pars in zip(range(len(pars_dict)), pars_dict.keys(), pars_dict.values()):
             # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
             grid_size, trade_batch, base_grid = pars
 
             # 读取最新价格
-            price = h[i: -1, 0]  # 最近一个K线周期的close价格
+            price = h[i, -1, 0]  # 最近一个K线周期的close价格
 
             # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
             if base_grid <= 0.01:
-                # 基准网格尚未设置，此时为首次运行，首次买入价值20000元的股票并设置基准网格为当前价格（精确到0.1元）
-                trade_signals[i] = np.round(20000 / price, -2)  # 圆整到100股整数
+                # 基准网格尚未设置，此时为首次运行，首次买入价值200000元的股票并设置基准网格为当前价格（精确到0.1元）
+                trade_signals[i] = np.round(200000 / price, -2)  # 圆整到100股整数
                 base_grid = np.round(price / 0.1) * 0.1
             elif price - base_grid > grid_size:
                 # 触及卖出网格线，产生卖出信号

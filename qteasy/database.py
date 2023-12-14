@@ -3091,15 +3091,17 @@ class DataSource:
         """
         if self.source_type == 'file':
             raise RuntimeError('can not connect to database while source type is "file"')
-        sql = f"SHOW TABLES LIKE '{db_table}'"
+        # sql = f"SHOW TABLES LIKE '{db_table}'"
+        db_name = self.db_name
+        sql = f"SHOW TABLES IN {db_name} LIKE '{db_table}'"
         try:
-            self.con.ping(reconnect=True)
+            # self.con.ping(reconnect=True)
             self.cursor.execute(sql)
             self.con.commit()
             res = self.cursor.fetchall()
             return len(res) > 0
         except Exception as e:
-            self.con.rollback()
+            # self.con.rollback()
             raise RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')

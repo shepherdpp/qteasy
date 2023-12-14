@@ -200,7 +200,8 @@ class Broker(object):
                               f'order_direction={order["direction"]}\n')
         pos_id = order['pos_id']
         from qteasy.trade_recording import get_position_by_id
-        symbol = get_position_by_id(pos_id=pos_id)['symbol']
+        from qteasy import QT_DATA_SOURCE
+        symbol = get_position_by_id(pos_id=pos_id, data_source=QT_DATA_SOURCE)['symbol']
         trade_results = self.transaction_result(
                 symbol=symbol,
                 order_qty=order['qty'],

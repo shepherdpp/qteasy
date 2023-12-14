@@ -1802,48 +1802,6 @@ class Trader(object):
             self.post_message(f'adding task: {task}')
         self._add_task_to_queue(task)
 
-    def _process_result(self, result):
-        """ 从result_queue中读取并处理交易结果
-
-        1，处理交易结果，更新账户和持仓信息
-        2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
-        4，生成交易结果信息推送到信息队列
-        """
-        if self.debug:
-            self.post_message('running task process_result')
-        if self.debug:
-            self.post_message(f'process_result: got result: \n{result}')
-        # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
-        try:
-            result_id = process_trade_result(result, data_source=self._datasource)
-        except Exception as e:
-            self.post_message(f'{e} Error occurred during processing trade result, result will be ignored')
-            if self.debug:
-                import traceback
-                traceback.print_exc()
-            return
-        if result_id is not None:
-            from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail
-            result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
-            order_id = result_detail['order_id']
-            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
-            pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
-            status = order_detail['status']
-            filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
-            self.post_message(f'[ORDER EXECUTED {order_id}]: '
-                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
-        # self.post_message(f'processed trade result: {result_id}\n{result}')
-        if self.debug:
-            self.post_message(f'processed trade result: {result_id}\n{result}')
-        process_trade_delivery(
-                account_id=self.account_id,
-                data_source=self._datasource,
-                config=self._config,
-        )
-        if self.debug:
-            self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
-            self.post_message(f'processed trade delivery: positions \n{self.non_zero_positions}')
-
     def history_orders(self, with_trade_results=True):
         """ 账户的历史订单详细信息
 
@@ -2117,6 +2075,48 @@ class Trader(object):
 
         return submitted_qty
 
+    def _process_result(self, result):
+        """ 从result_queue中读取并处理交易结果
+
+        1，处理交易结果，更新账户和持仓信息
+        2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
+        4，生成交易结果信息推送到信息队列
+        """
+        if self.debug:
+            self.post_message('running task process_result')
+        if self.debug:
+            self.post_message(f'process_result: got result: \n{result}')
+        # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
+        try:
+            result_id = process_trade_result(result, data_source=self._datasource)
+        except Exception as e:
+            self.post_message(f'{e} Error occurred during processing trade result, result will be ignored')
+            if self.debug:
+                import traceback
+                traceback.print_exc()
+            return
+        if result_id is not None:
+            from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail
+            result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
+            order_id = result_detail['order_id']
+            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
+            pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
+            status = order_detail['status']
+            filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
+            self.post_message(f'[ORDER EXECUTED {order_id}]: '
+                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
+        # self.post_message(f'processed trade result: {result_id}\n{result}')
+        if self.debug:
+            self.post_message(f'processed trade result: {result_id}\n{result}')
+        process_trade_delivery(
+                account_id=self.account_id,
+                data_source=self._datasource,
+                config=self._config,
+        )
+        if self.debug:
+            self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
+            self.post_message(f'processed trade delivery: positions \n{self.non_zero_positions}')
+
     def _pre_open(self):
         """ 开市前, 确保data_source重新连接, 并扫描数据源，下载缺失的数据"""
         datasource = self._datasource
@@ -2295,14 +2295,32 @@ class Trader(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func = available_tasks[task]
-        from threading import Thread
-        if args:
-            t = Thread(target=task_func, args=args, daemon=True)
+        # TODO: 在新的线程中启动的任务需要操作数据库时，会导致以下错误：
+        #  pymysql.err.InternalError: Packet sequence number wrong - got 1 expected 2
+        #  据查是因为多线程操作数据库时锁错误所导致的。解决方案包括：
+        #  1：使用锁；
+        #  2：每个线程新建连接；
+        #  3：使用pymysql-pool。
+        #  详情：
+        #  https://blog.csdn.net/whatday/article/details/109846729，
+        #  https://stackoverflow.com/questions/71564954/pymysql-error-packet-sequence-number-wrong-got-1-expected-0，
+        #  https://www.cnblogs.com/xiamaojjie/p/14273995.html
+        #  该问题需要解决，目前的临时解决方案：仅部分任务使用新线程，其他任务在主线程中运行
+        new_thread_tasks = ['acquire_live_price']
+        if task in new_thread_tasks:
+            from threading import Thread
+            if args:
+                t = Thread(target=task_func, args=args, daemon=True)
+            else:
+                t = Thread(target=task_func, daemon=True)
+            if self.debug:
+                self.post_message(f'will run task: {task} with args: {args} in a new Thread {t.name}')
+            t.start()
         else:
-            t = Thread(target=task_func, daemon=True)
-        if self.debug:
-            self.post_message(f'will run task: {task} with args: {args} in a new Thread {t.name}')
-        t.start()
+            if args:
+                task_func(*args)
+            else:
+                task_func()
 
     # =============== internal methods =================
 
