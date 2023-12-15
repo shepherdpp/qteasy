@@ -2478,28 +2478,49 @@ class DataSource:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
             try:
+                # TODO: 为使Database连接可以在多线程环境中使用，需要在每一个使用pymysql的函数中都创建一个新的连接，
+                #  并在用完后关闭连接
                 self.source_type = 'db'
-                self.con = pymysql.connect(host=host,
-                                           port=port,
-                                           user=user,
-                                           password=password)
+                con = pymysql.connect(host=host,
+                                      port=port,
+                                      user=user,
+                                      password=password)
                 # 检查db是否存在，当db不存在时创建新的db
-                self.cursor = self.con.cursor()
+                cursor = con.cursor()
                 sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
-                self.cursor.execute(sql)
-                self.con.commit()
+                cursor.execute(sql)
+                con.commit()
                 sql = f"USE {db_name}"
-                self.cursor.execute(sql)
-                self.con.commit()
+                cursor.execute(sql)
+                con.commit()
+                con.close()
                 # if cursor and connect created then create sqlalchemy engine for dataframe
                 self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}')
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
-                # print(f'[DEBUG INFO] used database {db_name} in DataSource: {self.connection_type}')
                 self.host = host
                 self.port = port
                 self.db_name = db_name
                 self.file_type = None
                 self.file_path = None
+                self.__user__ = user
+                self.__password__ = password
+                '''
+                import pymysql
+                con = pymysql.connect(
+                        host=self.host,
+                        port=self.port,
+                        user=self.__user__,
+                        password=self.__password__,
+                        db=self.db_name,
+                )
+                cursor=con.cursor()
+                ...
+                cursor.execute(sql)
+                ...
+                con.commit()
+                con.close()
+                '''
+
             except Exception as e:
                 warnings.warn(f'{str(e)}, Can not set data source type to "db",'
                               f' will fall back to default type', RuntimeWarning)
@@ -2539,15 +2560,11 @@ class DataSource:
             self.file_type = file_type
             self.file_loc = file_loc
             self.connection_type = f'file://{file_type}@qt_root/{file_loc}'
-
-    def __del__(self):
-        """ 关闭数据库连接 """
-        if self.source_type == 'db':
-            print(f'closing database connection to {self.connection_type}')
-            print(f'self.con is {self.con}')
-            if self.con is not None:
-                # self.con.close()
-                print('connection closed')
+            self.host = None
+            self.port = None
+            self.db_name = None
+            self.__user__ = None
+            self.__password__ = None
 
     @property
     def tables(self):
@@ -2996,14 +3013,25 @@ class DataSource:
             sql += f"`{col}`=VALUES(`{col}`),\n"
         sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
         try:
-            rows_affected = self.cursor.executemany(sql, df_tuple)
-            self.con.commit()
+            import pymysql
+            con = pymysql.connect(
+                    host=self.host,
+                    port=self.port,
+                    user=self.__user__,
+                    password=self.__password__,
+                    db=self.db_name,
+            )
+            cursor = con.cursor()
+            rows_affected = cursor.executemany(sql, df_tuple)
+            con.commit()
             return rows_affected
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
                                f'Exception:\n{e}\n'
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
+        finally:
+            con.close()
 
     def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -3024,19 +3052,29 @@ class DataSource:
         sql = f'SELECT DISTINCT `{column}`' \
               f'FROM `{db_table}`' \
               f'ORDER BY `{column}`'
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
         try:
-            self.cursor.execute(sql)
-            self.con.commit()
-
-            res = [item[0] for item in self.cursor.fetchall()]
+            cursor.execute(sql)
+            con.commit()
+            res = [item[0] for item in cursor.fetchall()]
             if isinstance(res[0], datetime.datetime):
                 res = list(pd.to_datetime(res).strftime('%Y%m%d'))
             return res
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             raise RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
+        finally:
+            con.close()
 
     def get_db_table_minmax(self, db_table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
@@ -3063,19 +3101,30 @@ class DataSource:
             add_sql = ''
         sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} '
         sql += f'FROM `{db_table}`'
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
         try:
-            self.cursor.execute(sql)
-            self.con.commit()
+            cursor.execute(sql)
+            con.commit()
 
-            res = list(self.cursor.fetchall()[0])
+            res = list(cursor.fetchall()[0])
             if isinstance(res[0], datetime.datetime):
                 res = list(pd.to_datetime(res).strftime('%Y%m%d'))
             return res
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             raise RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
+        finally:
+            con.close()
 
     def db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
@@ -3091,20 +3140,27 @@ class DataSource:
         """
         if self.source_type == 'file':
             raise RuntimeError('can not connect to database while source type is "file"')
-        # sql = f"SHOW TABLES LIKE '{db_table}'"
-        db_name = self.db_name
-        sql = f"SHOW TABLES IN {db_name} LIKE '{db_table}'"
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
+        sql = f"SHOW TABLES LIKE '{db_table}'"
         try:
-            # self.con.ping(reconnect=True)
-            self.cursor.execute(sql)
-            self.con.commit()
-            res = self.cursor.fetchall()
+            cursor.execute(sql)
+            con.commit()
+            res = cursor.fetchall()
             return len(res) > 0
         except Exception as e:
-            # self.con.rollback()
             raise RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
+        finally:
+            con.close()
 
     def new_db_table(self, db_table, columns, dtypes, primary_key, auto_increment_id=False):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
@@ -3130,6 +3186,15 @@ class DataSource:
         if self.source_type != 'db':
             raise TypeError(f'Datasource is not connected to a database')
 
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
         sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
         for col_name, dtype in zip(columns, dtypes):
             sql += f"`{col_name}` {dtype}"
@@ -3146,11 +3211,13 @@ class DataSource:
                 sql += ",\nKEY (`" + '`),\nKEY (`'.join(primary_key[1:]) + "`)"
         sql += '\n);'
         try:
-            self.cursor.execute(sql)
-            self.con.commit()
+            cursor.execute(sql)
+            con.commit()
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
+        finally:
+            con.close()
 
     def get_db_table_schema(self, db_table):
         """ 获取数据库表的列名称和数据类型
@@ -3164,23 +3231,36 @@ class DataSource:
         -------
             dict: 一个包含列名和数据类型的Dict: {column1: dtype1, column2: dtype2, ...}
         """
+
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
+
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'" \
               f"ORDER BY ordinal_position;"
         try:
-            self.cursor.execute(sql)
-            self.con.commit()
-            results = self.cursor.fetchall()
+            cursor.execute(sql)
+            con.commit()
+            results = cursor.fetchall()
             # 为了方便，将cur_columns和new_columns分别包装成一个字典
             columns = {}
             for col, typ in results:
                 columns[col] = typ
             return columns
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
+        finally:
+            con.close()
 
     def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
@@ -3198,13 +3278,25 @@ class DataSource:
             raise TypeError(f'Datasource is not connected to a database')
         if not isinstance(db_table, str):
             raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
+
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
         sql = f"DROP TABLE IF EXISTS {db_table};"
         try:
-            self.cursor.execute(sql)
-            self.con.commit()
+            cursor.execute(sql)
+            con.commit()
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
+        finally:
+            con.close()
 
     def get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
@@ -3220,18 +3312,30 @@ class DataSource:
         """
         if not self.db_table_exists(db_table):
             return -1
+
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
         sql = "SELECT table_rows, data_length + index_length " \
               "FROM INFORMATION_SCHEMA.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s;"
         try:
-            self.cursor.execute(sql, (self.db_name, db_table))
-            self.con.commit()
-            rows, size = self.cursor.fetchall()[0]
+            cursor.execute(sql, (self.db_name, db_table))
+            con.commit()
+            rows, size = cursor.fetchall()[0]
             return rows, size
         except Exception as e:
-            self.con.rollback()
+            con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
+        finally:
+            con.close()
 
     # ==============
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
@@ -3980,6 +4084,16 @@ class DataSource:
                                   primary_key=prime_keys,
                                   auto_increment_id=True)
                 return 0
+
+            import pymysql
+            con = pymysql.connect(
+                    host=self.host,
+                    port=self.port,
+                    user=self.__user__,
+                    password=self.__password__,
+                    db=self.db_name,
+            )
+            cursor = con.cursor()
             db_name = self.db_name
             sql = f"SELECT AUTO_INCREMENT\n" \
                   f"FROM information_schema.TABLES\n" \
@@ -3987,13 +4101,15 @@ class DataSource:
                   f"AND `TABLE_NAME` = %s;"
 
             try:
-                self.cursor.execute(sql, (db_name, table))
-                self.con.commit()
-                res = self.cursor.fetchall()
+                cursor.execute(sql, (db_name, table))
+                con.commit()
+                res = cursor.fetchall()
                 return res[0][0] - 1
             except Exception as e:
                 raise RuntimeError(
                     f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
+            finally:
+                con.close()
 
         else:  # for other unexpected cases
             pass
@@ -4856,18 +4972,23 @@ class DataSource:
         """
         if self.source_type != 'db':
             return True
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
         try:
-            self.con.ping(reconnect=True)
-            self.cursor = self.con.cursor()
-            sql = f"USE `{self.db_name}`;"
-
-            self.cursor.execute(sql)
-            self.con.commit()
-            self.con.ping()  # check if connection is still alive
+            con.ping(reconnect=True)
+            con.ping()  # check if connection is still alive
             return True
         except Exception as e:
             print(f'{e} on {self.connection_type}, please check your connection')
             return False
+        finally:
+            con.close()
 
 
 # 以下是通用dataframe操作函数

@@ -106,7 +106,13 @@ class Broker(object):
                 # 如果order_queue为空，则不处理交易订单
                 if self.order_queue.empty():
                     continue
+
                 # 使用ThreadPoolExecutor并行调用get_result函数处理交易订单，将结果put到result_queue中
+                # TODO: Broker的结构需改进。self.get_result()函数应该从始至终只处理一个订单，并且在处理订单的
+                #  过程中可以多次返回结果，将结果放入一个内部result_queue中，直到订单处理完成，或者订单被取消，
+                #  或者订单处理失败，此时才返回None。
+                #  Broker的主循环从内部result_queue中获取结果，添加必要的信息之后，将结果放入result_queue中。
+                #  Broker的主循环从order_queue中获取订单，为每一个订单在一个单独的thread中调用self.get_result()。
                 with ThreadPoolExecutor(max_workers=10) as executor:
                     futures = []
                     while not self.order_queue.empty():
