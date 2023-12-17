@@ -752,7 +752,7 @@ class TraderShell(Cmd):
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
         # for earning rate
         # Error will be raised if execution_time is NaT. will print out normal format in this case
-        if np.any(pd.isna(history.execition_time)):
+        if np.any(pd.isna(history.execution_time)):
             print(history)
         else:
             rprint(

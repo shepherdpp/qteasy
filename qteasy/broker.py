@@ -16,7 +16,6 @@ from queue import Queue
 from abc import abstractmethod, ABCMeta
 from threading import Thread
 
-import pandas as pd
 import numpy as np
 import time
 
@@ -155,9 +154,26 @@ class Broker(object):
         while True:
             try:
                 time.sleep(0.05)
+                if self.status == 'stopped':
+                    # 如果Broker正常退出，处理尚未提取的交易订单，这些订单将不会被处理，会提示用户取消订单
+                    print(f'Stopping un-processed orders in broker...')
+                    un_processed_orders = []
+                    while not self.order_queue.empty():
+                        un_processed_orders.append(self.order_queue.get())
+                        self.order_queue.task_done()
+
+                    if len(un_processed_orders) > 0:
+                        print(f'Un-processed orders: {un_processed_orders}')
+
+                    # 交易所关闭后的处理程序
+                    self.log_out_broker()
+                    print(f'Broker is stopped')
+                    break
+
                 # 如果Broker处于暂停状态，则不处理交易订单
                 if self.status == 'paused':
                     continue
+
                 # 如果order_queue为空，则不处理交易订单
                 if self.order_queue.empty():
                     continue
@@ -167,21 +183,6 @@ class Broker(object):
                 t = Thread(target=self._get_result, args=order, daemon=True)
                 # 启动get_result()，在得到result后将其放入result_queue中，直至运行结束
                 t.start()
-
-                if self.status == 'stopped':
-                    # 如果Broker正常退出，处理尚未提取的交易订单，这些订单将不会被处理，会提示用户取消订单
-                    if self.debug:
-                        self.post_message(f'Broker is stopped, will check for un-processed orders...')
-                    un_processed_orders = []
-                    while not self.order_queue.empty():
-                        un_processed_orders.append(self.order_queue.get())
-                        self.order_queue.task_done()
-
-                    if len(un_processed_orders) > 0:
-                        self.post_message(f'Un-processed orders: {un_processed_orders}')
-
-                    # 交易所关闭后的处理程序
-                    self.log_out_broker()
 
             except KeyboardInterrupt:
                 # 如果Broker被用户强制退出，处理尚未完成的交易订单
@@ -535,6 +536,14 @@ class SimulatorBroker(Broker):
 
             import time
             time.sleep(1)  # 每秒进行一次检查
+
+            if self.status == 'stopped':
+                # 当broker停止时，直接返回
+                break
+
+            if self.status == 'paused':
+                # 暂停时不进行任何操作
+                continue
             # 获取当前实时价格
             from .emfuncs import stock_live_kline_price
             live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
