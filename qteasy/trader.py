@@ -27,6 +27,7 @@ import qteasy
 from qteasy import Operator, DataSource, ConfigDict
 from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration, adjust_string_length
+from qteasy.utilfuncs import get_current_tz_datetime
 from qteasy.broker import Broker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
@@ -817,7 +818,7 @@ class TraderShell(Cmd):
             if argument in ['--last_hour', '-l', '-h', '--today', '-t', '--yesterday', '-y',
                             '--3day', '-3', '--week', '-w', '--month', '-m']:
                 # create order time ranges
-                end = self.trader.get_current_datetime()  # 产生本地时区时间
+                end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
                 if argument in ['--last_hour', '-l']:
                     start = pd.to_datetime(end) - pd.Timedelta(hours=1)
                 elif argument in ['--today', '-t']:
@@ -1392,7 +1393,7 @@ class Trader(object):
 
         self.task_daily_schedule = []
         self.time_zone = config['time_zone']
-        self.init_datetime = self.get_current_datetime()
+        self.init_datetime = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
 
         self.is_trade_day = False
         self.is_market_open = False
@@ -1490,7 +1491,7 @@ class Trader(object):
 
         # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
         if self.live_price is None:
-            today = self.get_current_datetime()
+            today = self.get_current_tz_datetime()
             try:
                 current_prices = self._datasource.get_history_data(
                         shares=positions.index.tolist(),
@@ -1519,20 +1520,15 @@ class Trader(object):
         return self._datasource
 
     # ================== methods ==================
-    def get_current_datetime(self):
-        """ 返回当前时间 """
-        if self.time_zone == 'local':
-            return pd.to_datetime('today')
-        else:
-            # create utc time and convert to time_zone time and remove time_zone information
-            dt = pd.to_datetime('now', utc=True).tz_convert(self.time_zone)
-            tz_time = pd.to_datetime(dt.tz_localize(None))
-            # if tz_time is very close to local time, then set time_zone to local and return local time
-            if abs(tz_time - pd.to_datetime('today')) < pd.Timedelta(seconds=1):
-                self.time_zone = 'local'
-                return pd.to_datetime('today')
-            # else return tz_time
-            return tz_time
+    def get_current_tz_datetime(self):
+        """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
+
+        tz_time = get_current_tz_datetime(self.time_zone)
+        # if tz_time is very close to local time, then set time_zone to local and return local time
+        if abs(tz_time - pd.to_datetime('today')) < pd.Timedelta(seconds=1):
+            self.time_zone = 'local'
+        # else return tz_time
+        return tz_time
 
     def get_config(self, key=None):
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
@@ -1579,13 +1575,13 @@ class Trader(object):
         self._check_trade_day()
         self._initialize_schedule()
         self.post_message(f'Trader is running with account_id: {self.account_id}\n'
-                          f'Initialized on date / time: '
-                          f'{pd.to_datetime("today").strftime("%Y-%m-%d %H:%M:%S")}\n'
+                          f'Started on date / time: '
+                          f'{self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")}\n'
                           f'current day is trade day: {self.is_trade_day}\n'
                           f'running agenda: {self.task_daily_schedule}')
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
-        current_date_time = self.get_current_datetime()  # 产生当地时间
+        current_date_time = self.get_current_tz_datetime()  # 产生当地时间
         current_date = current_date_time.date()
         try:
             while self.status != 'stopped':
@@ -1627,7 +1623,7 @@ class Trader(object):
                     self.task_queue.task_done()
 
                 # 如果没有暂停，从任务日程中添加任务到任务队列
-                current_date_time = self.get_current_datetime()  # 产生本地时间
+                current_date_time = self.get_current_tz_datetime()  # 产生本地时间
                 current_time = current_date_time.time()
                 current_date = current_date_time.date()
                 if self.status != 'paused':
@@ -1695,6 +1691,7 @@ class Trader(object):
         rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
         rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
         rprint(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
+        rprint(f'{"Started on":<{semi_width - 20}}{self.init_datetime}')
         print(f'{" Returns ":-^{semi_width}}')
         rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
         if total_value >= total_investment:
@@ -1765,7 +1762,7 @@ class Trader(object):
         new_line: bool, default True
             是否在消息后添加换行符
         """
-        time_string = self.get_current_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
+        time_string = self.get_current_tz_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
         if self.time_zone != 'local':
             tz = f"({self.time_zone.split('/')[-1]})"
         else:
@@ -1925,7 +1922,7 @@ class Trader(object):
         # window_length = self._operator.max_window_length
         #
         # # 下载最小所需实时历史数据
-        # data_end_time = self.get_current_datetime()  # 产生本地时间
+        # data_end_time = self.get_current_tz_datetime()  # 产生本地时间
         max_strategy_freq = 'T'
         for strategy_id in strategy_ids:
             strategy = operator[strategy_id]
@@ -2238,7 +2235,7 @@ class Trader(object):
         # 例如，freq为H或min的数据，更新当天的数据，freq为W的数据，更新最近一周
         # 在arg中必须给出freq以及tables两个参数，tables参数直接传入refill_local_source函数
         # freq被用于计算start_date和end_date
-        end_date = self.get_current_datetime().date()
+        end_date = self.get_current_tz_datetime().date()
         if freq == 'D':
             start_date = end_date
         elif freq == 'W':
@@ -2338,7 +2335,7 @@ class Trader(object):
         """
         if current_date is None:
             # current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()  # 产生世界时UTC时间
-            current_date = self.get_current_datetime().date()  # 产生本地时间
+            current_date = self.get_current_tz_datetime().date()  # 产生本地时间
         from qteasy.utilfuncs import is_market_trade_day
         # exchange = self._config['exchange']  # TODO: should we add exchange to config?
         exchange = 'SSE'
@@ -2367,7 +2364,7 @@ class Trader(object):
         """
         if current_time is None:
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
-            current_time = self.get_current_datetime().time()  # 产生本地时间
+            current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         task_added = False  # 是否添加了任务
         next_task = 'None'
         import datetime as dt
@@ -2424,7 +2421,7 @@ class Trader(object):
         # if current_time is None then use current system time
         if current_time is None:
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
-            current_time = self.get_current_datetime().time()  # 产生本地时间
+            current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         if self.debug:
             self.post_message('initializing agenda...\r')
         # 如果不是交易日，直接返回
@@ -2819,9 +2816,9 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
     try:
         last_available_date = pd.to_datetime(last_available_date)
     except:
-        last_available_date = trader.get_current_datetime() - pd.Timedelta(value=100, unit='d')
+        last_available_date = trader.get_current_tz_datetime() - pd.Timedelta(value=100, unit='d')
     from qteasy.utilfuncs import prev_market_trade_day
-    today = trader.get_current_datetime().strftime('%Y%m%d')
+    today = trader.get_current_tz_datetime().strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
 
     if last_available_date < last_trade_day:
@@ -2833,7 +2830,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
             symbol_list = config['asset_pool']
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
         start_date = last_available_date
-        end_date = trader.get_current_datetime()
+        end_date = trader.get_current_tz_datetime()
 
         datasource.refill_local_source(
                 tables='index_daily',
