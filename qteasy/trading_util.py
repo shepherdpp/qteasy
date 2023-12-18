@@ -68,10 +68,10 @@ def create_daily_task_schedule(operator, config=None):
 
     # 调整任务时间，开盘任务在开盘时执行，收盘任务在收盘时执行，sleep和wakeup任务在开盘前后5分钟执行
     # TODO: 开收盘任务执行提前期或sleep/wakeup任务执行延后期，应该是可配置的
-    open_close_lead = 0
-    sleep_wakeup_delay = 5
-    pre_open_lead = 15
-    post_close_delay = 15
+    open_close_lead = 0  # 股市开盘和收盘时间提前期
+    noon_close_delay = 5  # 午间休市时间延后期
+    pre_open_lead = 15  # 开盘前处理提前期
+    post_close_delay = 15  # 收盘后处理延后期
     market_open_time = (pd.to_datetime(market_open_time_am) -
                         pd.Timedelta(minutes=open_close_lead)).strftime('%H:%M:%S')
     market_close_time = (pd.to_datetime(market_close_time_pm) +
@@ -79,17 +79,17 @@ def create_daily_task_schedule(operator, config=None):
     pre_open_time = (pd.to_datetime(market_open_time_am) -
                       pd.Timedelta(minutes=pre_open_lead)).strftime('%H:%M:%S')
     wakeup_time_pm = (pd.to_datetime(market_open_time_pm) -
-                      pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+                      pd.Timedelta(minutes=noon_close_delay)).strftime('%H:%M:%S')
     sleep_time_am = (pd.to_datetime(market_close_time_am) +
-                     pd.Timedelta(minutes=sleep_wakeup_delay)).strftime('%H:%M:%S')
+                     pd.Timedelta(minutes=noon_close_delay)).strftime('%H:%M:%S')
     post_close_time = (pd.to_datetime(market_close_time_pm) +
                      pd.Timedelta(minutes=post_close_delay)).strftime('%H:%M:%S')
 
-    # 添加交易市场开市和收市任务，开市时产生wakeup任务，收市时产生sleep任务，早晚收盘时产生open_market/close_market任务
+    # 添加交易市场开市和收市任务，早晚收盘和午间休市时时产生open_market/close_market任务
     task_agenda.append((market_open_time, 'open_market'))
     task_agenda.append((pre_open_time, 'pre_open'))
-    task_agenda.append((sleep_time_am, 'sleep'))
-    task_agenda.append((wakeup_time_pm, 'wakeup'))
+    task_agenda.append((sleep_time_am, 'close_market'))
+    task_agenda.append((wakeup_time_pm, 'open_market'))
     task_agenda.append((market_close_time, 'close_market'))
     task_agenda.append((post_close_time, 'post_close'))
 

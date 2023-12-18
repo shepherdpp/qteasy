@@ -168,6 +168,14 @@ class TraderShell(Cmd):
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
                 live_prices.set_index('symbol', inplace=True)
+
+                if self.trader.debug:
+                    self.trader.post_message('live prices acquired to update watched prices!')
+            else:
+
+                if self.trader.debug:
+                    self.trader.post_message('Failed to acquire live prices to update watch price string!')
+
             watched_prices = ''
             for symbol in symbols:
                 if symbol in live_prices.index:
@@ -188,8 +196,6 @@ class TraderShell(Cmd):
         else:
             self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                    'Use "watch" command to add stocks to watch list. =='
-        if self.trader.debug:
-            self.trader.post_message('updated watched prices!')
         return
 
     # ----- basic commands -----
@@ -2150,6 +2156,11 @@ class Trader(object):
         if self.debug:
             self.post_message('running task post_close')
 
+        if self.is_market_open:
+            if self.debug:
+                self.post_message('market is still open, post_close can not be executed during open time!')
+            return
+
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
         order_queue = self.broker.order_queue
         # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
@@ -2184,7 +2195,6 @@ class Trader(object):
             self.post_message(f'canceled unfilled orders')
 
         # 检查今日成交结果，完成交易结果的交割
-        # TODO: 成交结果的交割完全可以等到临近午夜时再进行，这样可以避免在交易时间内的交易结果的交割
         process_trade_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
@@ -2640,7 +2650,11 @@ class Trader(object):
                 self.post_message(f'Error in acquiring live prices: {e}')
                 traceback.print_exc()
             return None
-
+        if real_time_data.empty():
+            # empty data downloaded
+            if self.debug:
+                self.post_message(f'Something wrong, failed to download live price data.')
+            return
         real_time_data.set_index('symbol', inplace=True)
         # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data

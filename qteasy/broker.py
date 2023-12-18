@@ -179,9 +179,8 @@ class Broker(object):
                     continue
 
                 # order_queue不为空，提取交易订单，在一个单独的thread中调用self._get_result()处理交易订单
-                order = self.order_queue.get()
-                t = Thread(target=self._get_result, args=order, daemon=True)
-                # 启动get_result()，在得到result后将其放入result_queue中，直至运行结束
+                order = self.order_queue.get()  # order is a dict, should be packed in a tuple
+                t = Thread(target=self._get_result, args=(order, ), daemon=True)
                 t.start()
 
             except KeyboardInterrupt:
@@ -443,8 +442,23 @@ class SimpleBroker(Broker):
             fee: float
                 交易费用，交易费用应该大于等于0
         """
+        # TODO: consider, can these common codes be moved to base class?
         total_filled = 0
-        while total_filled < order_qty:
+
+        while True:
+
+            import time
+            time.sleep(1)
+
+            if total_filled >= order_qty:  # 订单完全成交，退出
+                break
+
+            if self.status == 'stopped':  # 当broker停止时，退出
+                break
+
+            if self.status == 'paused':  # 当broker暂停时，稍后重试
+                continue
+
             qty = order_qty
             price = order_price
             fee: float = 5.
@@ -532,18 +546,20 @@ class SimulatorBroker(Broker):
 
         total_filled = 0
 
-        while total_filled < order_qty:
+        while True:
 
             import time
-            time.sleep(1)  # 每秒进行一次检查
+            time.sleep(1)  # 延迟1秒重试
 
-            if self.status == 'stopped':
-                # 当broker停止时，直接返回
+            if total_filled >= order_qty:  # 订单完全成交，退出
                 break
 
-            if self.status == 'paused':
-                # 暂停时不进行任何操作
+            if self.status == 'stopped':  # 当broker停止时，退出
+                break
+
+            if self.status == 'paused':  # 当broker暂停时，稍后重试
                 continue
+
             # 获取当前实时价格
             from .emfuncs import stock_live_kline_price
             live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
@@ -552,8 +568,10 @@ class SimulatorBroker(Broker):
                 change = (live_prices['close'] / live_prices['pre_close'] - 1).iloc[-1]
                 live_price = live_prices.close.iloc[-1]
                 price_deviation = live_price * self.price_deviation
-            else:
-                raise ValueError(f'live price of symbol {symbol} can not be acquired at the moment...')
+            else:  # 实时价格获取不成功，稍后重试
+                self.post_message(f'live price of {symbol} can not be acquired at the moment,\n'
+                                  f'order will not be processed, will try in 1 sec...')
+                continue
 
             # 如果当前价高于挂卖价(允许误差由price_deviation控制)，大概率成交或部分成交
             if (live_price >= order_price - price_deviation) and (direction == 'sell'):
@@ -569,16 +587,17 @@ class SimulatorBroker(Broker):
                 if abs(change - 0.1) <= 0.001:
                     self.post_message(f'order will be probably canceled because +10% buy-limit')
                     result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
-
+            # 如果挂单类型为市价单且不受张跌停限制, 大概率成交或部分成交
             elif (order_type == 'market') and (-0.098 < change < 0.098):
                 # 市价单，只要不涨停跌停即可市价成交
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
+            # 所有条件均不满足，稍后重试
             else:
-                # 当前无法成交，等待下次成交
-                self.post_message('quoted price does not meet current price, order will be canceled')
-                result_type = 'canceled'
+                if self.debug:
+                    self.post_message('current price does not satisfy quoted, will try later')
+                continue
 
-            # 根据成交类型生成成交结果，并yield结果
+            # 成交类型为成交或部分成交，计算成交数量及交易费用
             if result_type in ['filled', 'partial-filled']:
                 # 部分成交及全部成交，计算成交数量
                 filled_proportion = 1
@@ -612,19 +631,19 @@ class SimulatorBroker(Broker):
                 if self.slipage > 0:
                     transaction_fee *= (1 + self.slipage * (qty / 100) ** 2)
 
-                total_filled += qty
-
+            # 成交类型为取消，成交数量为0，成交价格为0，交易费用为0
             elif result_type in ['canceled']:  # result_type == 'canceled'
                 transaction_fee = 0
                 order_price = 0
                 qty = order_qty - total_filled
-
+            # 不能成交，稍后重试
             else:
-                # 本次无法成交，等待下次
                 continue
 
             order_result = (result_type, qty, order_price, transaction_fee)
             yield order_result
+
+            total_filled += qty
 
 
 class NotImplementedBroker(Broker):
