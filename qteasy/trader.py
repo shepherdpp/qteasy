@@ -134,10 +134,9 @@ class TraderShell(Cmd):
             'Type "dashboard" to leave interactive mode and enter dashboard.\n' \
             'Type "help <command>" to get help for more commands.\n'
     prompt = '(QTEASY) '
-    use_rawinput = False
 
     def __init__(self, trader):
-        super().__init__()
+        super().__init__(completekey='tab')
         self._trader = trader
         self._timezone = trader.time_zone
         self._status = None
@@ -145,6 +144,7 @@ class TraderShell(Cmd):
         self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
         self._command_history = []  # list of commands executed in shell
+
 
     @property
     def trader(self):
@@ -2650,7 +2650,7 @@ class Trader(object):
                 self.post_message(f'Error in acquiring live prices: {e}')
                 traceback.print_exc()
             return None
-        if real_time_data.empty():
+        if real_time_data.empty:
             # empty data downloaded
             if self.debug:
                 self.post_message(f'Something wrong, failed to download live price data.')

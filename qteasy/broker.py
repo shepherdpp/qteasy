@@ -246,7 +246,7 @@ class Broker(object):
         except RuntimeError as e:
             raise RuntimeError(e)
         symbol = position['symbol']
-        position = position['positions']
+        position = position['position']
         qty = order['qty']
         price = order['price']
         direction = order['direction']
