@@ -22,7 +22,7 @@ from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order, get_last_trade_result_summary
-from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_agenda, get_symbol_names
+from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_schedule, get_symbol_names
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -1454,7 +1454,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 self.test_ds.drop_table_data(table)
 
     def test_create_daily_task_agenda(self):
-        """ test function create_daily_task_agenda """
+        """ test function create_daily_task_schedule """
         # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
@@ -1469,7 +1469,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'strategy_open_close_timing_offset': 1,
             'live_price_acquire_freq': '15min',
         }
-        agenda = create_daily_task_agenda(op, config)
+        agenda = create_daily_task_schedule(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
         self.assertEqual(len(agenda), 25)
@@ -1501,7 +1501,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'strategy_open_close_timing_offset': 1,
             'live_price_acquire_freq': '15min',
         }
-        agenda = create_daily_task_agenda(op, config)
+        agenda = create_daily_task_schedule(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
         self.assertEqual(len(agenda), 29)
@@ -1539,7 +1539,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'strategy_open_close_timing_offset': 1,
             'live_price_acquire_freq': '60min',
         }
-        agenda = create_daily_task_agenda(op, config)
+        agenda = create_daily_task_schedule(op, config)
         print(f'agenda: {agenda}')
         self.assertIsInstance(agenda, list)
         self.assertEqual(len(agenda), 21)

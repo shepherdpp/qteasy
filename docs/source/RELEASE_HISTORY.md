@@ -1,5 +1,14 @@
 # QTEASY release history
 
+## 1.0.13 (2023-12-21)
+- Improvements in Trader Shell
+  - Now users can scroll to previous commands with up and down keys in Command mode
+  - Created new command `buy` / `sell` to allow users to manually submit orders to broker
+  - Optimized shell tasks and let live price acquisition to run in back ground threads
+- In Broker:
+  - Optimized behavior of Simulator Broker, to return execution result according to live prices
+  - Fixed bugs: order execution will not block each other
+
 ## 1.0.12 (2023-12-07)
 - improved visual effects
 - now live prices are acquired in background threads, not causing lags in the main loop
@@ -14,7 +23,7 @@
 - Implemented "--perameter" / "-p" style parameter in Trader Shell, the old style will be deprecated in later versions
 - Allowed users to set up live trade broker parameters with QT configurations
 - Allowed users to set up live trade running time zone
-- Made dependency ta-lib as optional, kept a few critical built in strategies usable without ta-lib
+- Made dependency ta-lib as optional, kept a few critical built in strategies usable without `ta-lib`
 
 ## 1.0.10 (2023-11-25)
 - Corrected a mistake left out in version 1.0.9, which caused error when reference data is None in strategy
@@ -25,8 +34,8 @@
 - Improved documentations
 
 ## 1.0.8 (2023-11-22)
-- Improved trader shell visual effects, added color coding for different types of messages, with dependency on rich package
-- Published Qteasy Docs to https://qteasy.readthedocs.io/zh/latest/, added more supportive documents including api reference, examples, tutorials, etc.
+- Improved trader shell visual effects, added color coding for different types of messages, with dependency on `rich` package
+- Published `Qteasy` Docs to https://qteasy.readthedocs.io/zh/latest/, added more supportive documents including api reference, examples, tutorials, etc.
 - Added parameter `qteasy.__version__`
 - Fixed bugs
 

@@ -511,7 +511,7 @@ class TestTrader(unittest.TestCase):
         # current time, thus to test the trader in simulated real-time run.
 
         # 1, use trader._check_trade_day(sim_date) to simulate a trade day or non-trade day
-        # 2, use trader._initialize_agenda(sim_time) to generate task agenda at a simulated time
+        # 2, use trader._initialize_schedule(sim_time) to generate task agenda at a simulated time
         # 3, use trader._add_task_from_agenda(sim_time) to add task from agenda at a simulated time
 
         import datetime as dt
@@ -529,27 +529,27 @@ class TestTrader(unittest.TestCase):
         sim_date = dt.date(2023, 1, 1)  # a non-trade day
         sim_time = dt.time(0, 0, 0)  # midnight
         ts._check_trade_day(sim_date)
-        ts._initialize_agenda(sim_time)
+        ts._initialize_schedule(sim_time)
         ts._add_task_from_agenda(sim_time)
 
         print('\n========generated task agenda in a non-trade day========\n')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         print(f'is_trade_day: {ts.is_trade_day}')
-        print(f'task daily agenda: {ts.task_daily_agenda}')
+        print(f'task daily agenda: {ts.task_daily_schedule}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         self.assertEqual(ts.is_trade_day, False)
-        self.assertEqual(ts.task_daily_agenda, [])
+        self.assertEqual(ts.task_daily_schedule, [])
 
         # generate task agenda in a trade day and complete agenda will be generated depending on generate time
         sim_date = dt.date(2023, 5, 10)  # a trade day
         sim_time = dt.time(7, 0, 0)  # before morning market open
         ts._check_trade_day(sim_date)
         self.assertEqual(ts.is_trade_day, True)
-        ts._initialize_agenda(sim_time)  # should generate complete agenda
+        ts._initialize_schedule(sim_time)  # should generate complete agenda
         print('\n========generated task agenda before morning market open========\n')
-        print(ts.task_daily_agenda)
+        print(ts.task_daily_schedule)
         target_agenda = [
             ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
@@ -587,13 +587,13 @@ class TestTrader(unittest.TestCase):
             ('15:30:05', 'acquire_live_price'),
             ('15:45:00', 'post_close'),
         ]
-        self.assertEqual(ts.task_daily_agenda, target_agenda)
+        self.assertEqual(ts.task_daily_schedule, target_agenda)
         # re_initialize_agenda at 10:35:27
         sim_time = dt.time(10, 35, 27)
-        ts.task_daily_agenda = []
-        ts._initialize_agenda(sim_time)
+        ts.task_daily_schedule = []
+        ts._initialize_schedule(sim_time)
         print('\n========generated task agenda at 10:35:27========')
-        print(ts.task_daily_agenda)
+        print(ts.task_daily_schedule)
         target_agenda = [
             ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
@@ -624,7 +624,7 @@ class TestTrader(unittest.TestCase):
             ('15:30:05', 'acquire_live_price'),
             ('15:45:00', 'post_close'),
         ]
-        self.assertEqual(ts.task_daily_agenda, target_agenda)
+        self.assertEqual(ts.task_daily_schedule, target_agenda)
         ts.task_queue.empty()  # clear task queue
 
         # third, create simulated task agenda and execute tasks from the agenda at sim times
@@ -644,7 +644,7 @@ class TestTrader(unittest.TestCase):
         ts.broker.broker_name = 'test_simulation_broker'
         ts.broker.status = 'init'
         Thread(target=ts.run).start()
-        ts.task_daily_agenda = []  # clear task agenda
+        ts.task_daily_schedule = []  # clear task agenda
         Thread(target=ts.broker.run).start()
 
         print(f'\n==========start simulation run, setting up test agenda============\n')
@@ -659,7 +659,7 @@ class TestTrader(unittest.TestCase):
             (current_time + dt.timedelta(minutes=16)).time(),  # should run task post_close
         ]
         time.sleep(1)  # wait 1 second to avoid the trader generating agenda again
-        ts.task_daily_agenda = [
+        ts.task_daily_schedule = [
             (test_sim_times[0].strftime('%H:%M:%S'), 'open_market'),
             (test_sim_times[1].strftime('%H:%M:%S'), 'run_strategy', ['macd', 'dma']),
             (test_sim_times[2].strftime('%H:%M:%S'), 'sleep'),
@@ -668,7 +668,7 @@ class TestTrader(unittest.TestCase):
             (test_sim_times[5].strftime('%H:%M:%S'), 'close_market'),
             (test_sim_times[6].strftime('%H:%M:%S'), 'post_close'),
         ]
-        print(f'task agenda manually created: {ts.task_daily_agenda}')
+        print(f'task agenda manually created: {ts.task_daily_schedule}')
         target_agenda_tasks = [
             ('open_market', ),
             ('run_strategy', ['macd', 'dma']),
@@ -679,12 +679,12 @@ class TestTrader(unittest.TestCase):
             ('post_close', ),
         ]
         # check all tasks are in the agenda
-        for task, agenda_task in zip(target_agenda_tasks, ts.task_daily_agenda):
+        for task, agenda_task in zip(target_agenda_tasks, ts.task_daily_schedule):
             self.assertEqual(task, agenda_task[1:])
         print('\n==========start simulation run, executing tasks from agenda============\n')
         for sim_time in test_sim_times:
             print(f'\n=========simulating time: {sim_time}=========\n')
-            print(f'\n=========current task agenda: {ts.task_daily_agenda[0]}=========\n')
+            print(f'\n=========current task agenda: {ts.task_daily_schedule[0]}=========\n')
             ts._add_task_from_agenda(sim_time)
             # waite 1 second for orders to be generated
             time.sleep(2)

@@ -769,6 +769,25 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         sys.stdout.flush()
 
 
+def get_current_tz_datetime(self, time_zone='local'):
+    """ 获取指定时区的当前时间，同时确保返回的时间是tz_naive的
+
+    如果time_zone为'local', 获取当前时区的当前时间。
+    如果指定time_zone的时间与本地时间相同，则直接返回当前时间
+
+    Parameters
+    ----------
+    time_zone: str, default: 'local'
+        符合标准的时区字符串
+    """
+    if time_zone == 'local':
+        return pd.to_datetime('today')
+    else:
+        # create utc time and convert to time_zone time and remove time_zone information
+        dt = pd.to_datetime('now', utc=True).tz_convert(self.time_zone)
+        return pd.to_datetime(dt.tz_localize(None))
+
+
 @lru_cache(maxsize=16)
 def maybe_trade_day(date):
     """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）准确率有限但是效率高

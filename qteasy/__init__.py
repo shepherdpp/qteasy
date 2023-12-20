@@ -35,7 +35,7 @@ from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
 
 
-__version__ = '1.0.12'
+__version__ = '1.0.13'
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -152,3 +152,22 @@ logger_core.setLevel(logging.INFO)
 logger_core.propagate = False
 
 logger_core.info('qteasy loaded!')
+
+__all__ = [
+    'run', 'set_config', 'get_configurations', 'get_config',
+    'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
+    'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
+    'get_history_data', 'filter_stock_codes', 'filter_stocks',
+    'reconnect_ds', 'get_table_info', 'get_table_overview',
+    'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes',
+    'Operator',
+    'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter',
+    'built_ins', 'built_in_list', 'built_in_strategies', 'get_built_in_strategy',
+    'candle',
+    'CashPlan', 'set_cost', 'update_cost',
+    'DataSource', 'find_history_data',
+    'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
+    'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
+    'utilfuncs',
+    'QT_CONFIG', 'ConfigDict', '__version__'
+]

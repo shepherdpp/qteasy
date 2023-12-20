@@ -15,6 +15,7 @@ import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
 import numpy as np
+from pymysql import connect
 
 from qteasy.utilfuncs import str_to_list
 from qteasy.trading_util import _trade_time_index
@@ -285,13 +286,21 @@ class TestDataSource(unittest.TestCase):
                                 ['ts_code', 'trade_date'])
         self.ds_db.db_table_exists('new_test_table')
 
+        con = connect(
+                host=self.ds_db.host,
+                port=self.ds_db.port,
+                user=self.ds_db.__user__,
+                password=self.ds_db.__password__,
+                db=self.ds_db.db_name,
+        )
+        cursor = con.cursor()
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = 'new_test_table'" \
               f"ORDER BY ordinal_position"
-        self.ds_db.cursor.execute(sql)
-        results = self.ds_db.cursor.fetchall()
+        cursor.execute(sql)
+        results = cursor.fetchall()
         # 为了方便，将cur_columns和new_columns分别包装成一个字典
         test_columns = {}
         for col, typ in results:
@@ -650,8 +659,15 @@ class TestDataSource(unittest.TestCase):
         df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         print(f'following dataframe with multiple index will be written to local database:\n'
               f'{df}')
-        con = self.ds_db.con
-        cursor = self.ds_db.cursor
+
+        con = connect(
+                host=self.ds_db.host,
+                port=self.ds_db.port,
+                user=self.ds_db.__user__,
+                password=self.ds_db.__password__,
+                db=self.ds_db.db_name,
+        )
+        cursor = con.cursor()
         table_name = 'test_db_table'
         # 删除数据库中的临时表
         sql = f"DROP TABLE IF EXISTS {table_name}"
