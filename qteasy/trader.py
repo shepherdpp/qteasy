@@ -143,7 +143,6 @@ class TraderShell(Cmd):
         self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
         self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
-        self._command_history = []  # list of commands executed in shell
 
 
     @property
@@ -375,12 +374,17 @@ class TraderShell(Cmd):
     def do_buy(self, arg):
         """ Manually create buy-in order: buy AMOUNT shares of SYMBOL with PRICE
         the order will be submitted to broker and will be executed according to broker rules
+
         --long / --short indicates position to buy, default long
         --force indicates force buy regardless of current prices # TODO: to be implemented
 
         Usage:
         ------
         buy AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+
+        Notes:
+        ------
+        Currently only market price orders can be submitted
 
         Examples:
         ---------
@@ -427,7 +431,7 @@ class TraderShell(Cmd):
         trade_order = {
             'pos_id':         pos_id,
             'direction':      'buy',
-            'order_type':     'market',  # TODO: order type is to be properly defined
+            'order_type':     'market',
             'qty':            qty,
             'price':          price,
             'submitted_time': None,
@@ -444,12 +448,17 @@ class TraderShell(Cmd):
     def do_sell(self, arg):
         """ Manually create sell-out order: sell AMOUNT shares of SYMBOL with PRICE
         the order will be submitted to broker and will be executed according to broker rules
+
         --long / --short indicates position to buy, default long
         --force indicates force buy regardless of current prices # TODO: to be implemented
 
         Usage:
         ------
         sell AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+
+        Notes:
+        ------
+        Currently only market price orders can be submitted
 
         Examples:
         ---------
@@ -496,7 +505,7 @@ class TraderShell(Cmd):
         trade_order = {
             'pos_id':         pos_id,
             'direction':      'sell',
-            'order_type':     'market',  # TODO: order type is to be properly defined
+            'order_type':     'market',
             'qty':            qty,
             'price':          price,
             'submitted_time': None,
@@ -2302,17 +2311,7 @@ class Trader(object):
             raise ValueError(f'Invalid task name: {task}')
 
         task_func = available_tasks[task]
-        # TODO: 在新的线程中启动的任务需要操作数据库时，会导致以下错误：
-        #  pymysql.err.InternalError: Packet sequence number wrong - got 1 expected 2
-        #  据查是因为多线程操作数据库时锁错误所导致的。解决方案包括：
-        #  1：使用锁；
-        #  2：每个线程新建连接；
-        #  3：使用pymysql-pool。
-        #  详情：
-        #  https://blog.csdn.net/whatday/article/details/109846729，
-        #  https://stackoverflow.com/questions/71564954/pymysql-error-packet-sequence-number-wrong-got-1-expected-0，
-        #  https://www.cnblogs.com/xiamaojjie/p/14273995.html
-        #  该问题需要解决，目前的临时解决方案：仅部分任务使用新线程，其他任务在主线程中运行
+
         new_thread_tasks = ['acquire_live_price']
         if task in new_thread_tasks:
             from threading import Thread
