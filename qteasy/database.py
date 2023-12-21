@@ -2463,12 +2463,10 @@ class DataSource:
         if source_type.lower() in ['db', 'database']:
             # optional packages to be imported
             try:
-                # TODO: 尽量避免使用sqlalchemy，直接使用pymysql，未来将去除对sqlalchemy的依赖
                 import pymysql
-                from sqlalchemy import create_engine
             except ImportError:
-                raise ImportError(f'Missing dependency \'pymysql\' and/or \'sqlalchemy\' for datasource type '
-                                  f'\'database\'. Use pip or conda to install pymysql and sqlalchemy.')
+                raise ImportError(f'Missing dependency \'pymysql\' for datasource type '
+                                  f'\'database\'. Use pip or conda to install pymysql.')
             # set up connection to the data base
             if not isinstance(port, int):
                 raise TypeError(f'port should be of type int')
@@ -2478,8 +2476,6 @@ class DataSource:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
             try:
-                # TODO: 为使Database连接可以在多线程环境中使用，需要在每一个使用pymysql的函数中都创建一个新的连接，
-                #  并在用完后关闭连接
                 self.source_type = 'db'
                 con = pymysql.connect(host=host,
                                       port=port,
@@ -2494,8 +2490,7 @@ class DataSource:
                 cursor.execute(sql)
                 con.commit()
                 con.close()
-                # if cursor and connect created then create sqlalchemy engine for dataframe
-                self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}')
+                # create mysql database connection info
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
                 self.host = host
                 self.port = port
@@ -2555,7 +2550,6 @@ class DataSource:
             except Exception:
                 raise SystemError(f'Failed creating data directory \'{file_loc}\' in qt root path, '
                                   f'please check your input.')
-            self.engine = None
             self.source_type = 'file'
             self.file_type = file_type
             self.file_loc = file_loc
@@ -2924,6 +2918,14 @@ class DataSource:
             has_date_filter = True
             date_filter = f'{date_like_pk} BETWEEN "{start}" AND "{end}"'
 
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
         sql = f'SELECT * ' \
               f'FROM {db_table}\n'
         if not (has_ts_code_filter or has_date_filter):
@@ -2941,11 +2943,12 @@ class DataSource:
             sql += f'WHERE {date_filter}'
         sql += ''
         try:
-            df = pd.read_sql_query(sql, con=self.engine)
-            # print(f'[DEBUG]: reading database table with SQL: \n{sql}\ngot: \n{df.head()}')
+            df = pd.read_sql_query(sql, con=con)
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
+        finally:
+            con.close()
 
     def write_database(self, df, db_table):
         """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
@@ -2968,11 +2971,22 @@ class DataSource:
         不要使用这个函数写入数据。因为这个函数并不会检查数据是否存在冲突
         的键值，如果键值冲突时，df中的数据会覆盖数据库中的数据。
         """
+
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
         try:
-            df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
+            df.to_sql(db_table, con=con, index=False, if_exists='append', chunksize=5000)
             return len(df)
         except Exception as e:
             raise RuntimeError(f'{e}, error in writing data into database.')
+        finally:
+            con.close()
 
     def update_database(self, df, db_table, primary_key):
         """ 用DataFrame中的数据更新数据表中的数据记录

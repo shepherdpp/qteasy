@@ -2312,7 +2312,7 @@ class Trader(object):
 
         task_func = available_tasks[task]
 
-        new_thread_tasks = ['acquire_live_price']
+        new_thread_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
         if task in new_thread_tasks:
             from threading import Thread
             if args:
