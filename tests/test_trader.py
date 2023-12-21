@@ -566,8 +566,8 @@ class TestTrader(unittest.TestCase):
             ('11:15:05', 'acquire_live_price'),
             ('11:30:00', 'run_strategy', ['macd']),
             ('11:30:05', 'acquire_live_price'),
-            ('11:35:00', 'sleep'),
-            ('12:55:00', 'wakeup'),
+            ('11:35:00', 'close_market'),
+            ('12:55:00', 'open_market'),
             ('13:00:00', 'run_strategy', ['macd', 'dma']),
             ('13:15:05', 'acquire_live_price'),
             ('13:30:00', 'run_strategy', ['macd']),
@@ -603,8 +603,8 @@ class TestTrader(unittest.TestCase):
             ('11:15:05', 'acquire_live_price'),
             ('11:30:00', 'run_strategy', ['macd']),
             ('11:30:05', 'acquire_live_price'),
-            ('11:35:00', 'sleep'),
-            ('12:55:00', 'wakeup'),
+            ('11:35:00', 'close_market'),
+            ('12:55:00', 'open_market'),
             ('13:00:00', 'run_strategy', ['macd', 'dma']),
             ('13:15:05', 'acquire_live_price'),
             ('13:30:00', 'run_strategy', ['macd']),
@@ -691,7 +691,7 @@ class TestTrader(unittest.TestCase):
             print(f'current trader status: {ts.status}')
             print(f'current broker status: {ts.broker.status}')
             print(f'current cash and positions: \n{ts.account_positions}, \n{ts.account_cash}')
-            print(f'count of trade orders in queue: {ts.broker.order_queue.unfinished_tasks} orders unprocessed')
+            print(f'count of trade orders in queue: {ts.broker.instruction_queue.unfinished_tasks} orders unprocessed')
             print(f'count of trade results in queue: {ts.broker.result_queue.unfinished_tasks} results generated')
             # waite 5 seconds for order execution results to be generated
             time.sleep(5)

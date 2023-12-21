@@ -74,7 +74,7 @@ class Broker(object):
 
     Attributes:
     -----------
-    order_queue: Queue
+    instruction_queue: Queue
         交易订单队列，每个交易订单都是一个list，包含多个交易订单
     result_queue: Queue
         交易结果队列，每个交易结果都是一个list，包含多个交易结果
@@ -87,7 +87,7 @@ class Broker(object):
 
     Methods:
     --------
-    register(debug=False, **kwargs):
+    log_in(debug=False, **kwargs):
         交易所的初始化程序，可以
     run()
         Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
@@ -104,16 +104,16 @@ class Broker(object):
         self.token = ''
         self.status = 'init'  # init, running, stopped, paused
         self.debug = False
-        self.is_registered = False
+        self.is_log_in = False
 
         self.time_zone = 'local'
         self.init_time = get_current_tz_datetime(self.time_zone).strftime('%Y-%m-%d %H:%M:%S')
 
-        self.order_queue = Queue()
+        self.instruction_queue = Queue()
         self.result_queue = Queue()
         self.broker_messages = Queue()
 
-    def register(self, debug=False, **kwargs):
+    def log_in(self, debug=False, **kwargs):
         """ Broker对象在开始运行前的注册过程，作用是设置broker的状态为is_registered
         Override这个函数，以添加更多处理
 
@@ -130,73 +130,28 @@ class Broker(object):
         None
         """
         # override this function if necessary
-        self.is_registered = True
+        self.is_log_in = True
         self.debug = debug
 
-    def log_out_broker(self):
+    def log_out(self):
         """ Broker对象在关闭前的处理过程。
         Override这个函数，以添加更多处理
         """
         # override this function if necessary
         pass
 
-    def run(self):
-        """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
-        order_queue中的每一个交易订单都由transaction函数来处理并获取交易结果，transaction函数是
-        一个Generator，可以分批返回交易结果，直至订单处理完毕或出现错误。每一个transaction都会在单
-        独的线程中运行
+    def pre_loop(self):
         """
-        if not self.is_registered:
-            raise RuntimeError(f'broker is not registered!')
-        if self.debug:
-            self.post_message(f'is running...')
-        self.status = 'init'
-        while True:
-            try:
-                time.sleep(0.05)
-                if self.status == 'stopped':
-                    # 如果Broker正常退出，处理尚未提取的交易订单，这些订单将不会被处理，会提示用户取消订单
-                    print(f'Stopping un-processed orders in broker...')
-                    un_processed_orders = []
-                    while not self.order_queue.empty():
-                        un_processed_orders.append(self.order_queue.get())
-                        self.order_queue.task_done()
 
-                    if len(un_processed_orders) > 0:
-                        print(f'Un-processed orders: {un_processed_orders}')
+        :return:
+        """
+        return
 
-                    # 交易所关闭后的处理程序
-                    self.log_out_broker()
-                    print(f'Broker is stopped')
-                    break
+    def post_loop(self):
+        """
 
-                # 如果Broker处于暂停状态，则不处理交易订单
-                if self.status == 'paused':
-                    continue
-
-                # 如果order_queue为空，则不处理交易订单
-                if self.order_queue.empty():
-                    continue
-
-                # order_queue不为空，提取交易订单，在一个单独的thread中调用self._get_result()处理交易订单
-                order = self.order_queue.get()  # order is a dict, should be packed in a tuple
-                t = Thread(target=self._get_result, args=(order, ), daemon=True)
-                t.start()
-
-            except KeyboardInterrupt:
-                # 如果Broker被用户强制退出，处理尚未完成的交易订单
-                if self.debug:
-                    self.post_message('Broker will be stopped by user.')
-                self.status = 'stopped'
-                continue
-            except Exception as e:
-                # 如果Broker出现异常，打印异常信息，并继续运行
-                self.post_message(f'Runtime exception: {e}, please check system log for details')
-                if self.debug:
-                    import traceback
-                    traceback.print_exc()
-                continue
-
+        :return:
+        """
         return
 
     def post_message(self, message: str, new_line=True):
@@ -212,7 +167,7 @@ class Broker(object):
     def _submit_order(self, order):
         """
 
-        :param order: 
+        :param order:
         :return:
         """
         pass
@@ -243,7 +198,7 @@ class Broker(object):
         """
 
         if self.debug:
-            self.post_message(f'_get_result():\nsubmit order components of order(ID) {order["order_id"]}:\n'
+            self.post_message(f'_check_result():\nsubmit order components of order(ID) {order["order_id"]}:\n'
                               f'quantity:{order["qty"]}\norder_price={order["price"]}\n'
                               f'order_direction={order["direction"]}\n')
         pos_id = order['pos_id']
@@ -261,7 +216,7 @@ class Broker(object):
         order_type = order['order_type']
         return order_type, symbol, qty, price, direction, position
 
-    def _get_result(self, order):
+    def _check_result(self, order):
         """ 解析订单信息，将关键信息提交给transaction，获取交易结果后，解析交易结果，将结果放入result_queue
 
         Parameters:
@@ -304,7 +259,7 @@ class Broker(object):
 
             # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
             if self.debug:
-                self.post_message(f'method: _get_result(): got transaction result for order(ID) {order["order_id"]}\n'
+                self.post_message(f'method: _check_result(): got transaction result for order(ID) {order["order_id"]}\n'
                                   f'result_type={result_type}, \nqty={qty}, \n'
                                   f'filled_price={filled_price}, \nfee={fee}')
             # 圆整qty、filled_qty和fee
@@ -335,11 +290,94 @@ class Broker(object):
 
             # 将trade_result放入result_queue
             if self.debug:
-                self.post_message(f'method _get_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
+                self.post_message(f'method _check_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
                                   f'{raw_trade_result}')
             self.result_queue.put(raw_trade_result)
 
         # 全部订单处理完毕或发生错误后结束
+        return
+
+    def _core_task(self, *args, **kwargs):
+        """ """
+        return
+
+    def _post_close(self):
+        return
+
+    def _idle_task(self):
+        """ tasks performed while idle
+
+        :return:
+        """
+        return
+
+    def _parse_instruction(self, instruction):
+        """
+
+
+        :return:
+        """
+        return
+
+    def _run_task(self, task, args):
+        """ run task
+
+        """
+        return
+
+    def run(self):
+        """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
+        order_queue中的每一个交易订单都由transaction函数来处理并获取交易结果，transaction函数是
+        一个Generator，可以分批返回交易结果，直至订单处理完毕或出现错误。每一个transaction都会在单
+        独的线程中运行
+        """
+        if not self.is_log_in:
+            raise RuntimeError(f'broker is not logged in!')
+        if self.debug:
+            self.post_message(f'is running...')
+        self.status = 'init'
+        self.pre_loop()
+        while True:
+            try:
+                time.sleep(1)
+                if self.status == 'stopped':
+                    # 如果Broker正常退出，处理尚未提取的交易订单，这些订单将不会被处理，会提示用户取消订单
+                    print(f'Stopping un-processed orders in broker...')
+                    self._post_close()
+
+                    # 交易所关闭后的处理程序
+                    self.log_out()
+                    print(f'Broker is stopped')
+                    break
+
+                # 如果Broker处于暂停状态，则不处理交易订单
+                if self.status == 'paused':
+                    self._idle_task()
+
+                if self.status == 'running':
+                    self._core_task()
+
+                # 如果instruction_queue为空，则不处理交易订单
+                if not self.instruction_queue.empty():
+                    # instruction_queue不为空，提取交易订单，在一个单独的thread中调用self._check_result()处理交易订单
+                    instruction = self.instruction_queue.get()  # order is a dict, should be packed in a tuple
+                    task, args = self._parse_instruction(instruction)
+                    self._run_task(task, args)
+
+            except KeyboardInterrupt:
+                # 如果Broker被用户强制退出，处理尚未完成的交易订单
+                if self.debug:
+                    self.post_message('Broker will be stopped by user.')
+                self.status = 'stopped'
+                continue
+            except Exception as e:
+                # 如果Broker出现异常，打印异常信息，并继续运行
+                self.post_message(f'Runtime exception: {e}, please check system log for details')
+                if self.debug:
+                    import traceback
+                    traceback.print_exc()
+                continue
+
         return
 
     @abstractmethod
@@ -450,7 +488,6 @@ class SimpleBroker(Broker):
             fee: float
                 交易费用，交易费用应该大于等于0
         """
-        # TODO: consider, can these common codes be moved to base class?
         total_filled = 0
 
         while True:
