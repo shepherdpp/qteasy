@@ -1,4 +1,8 @@
-# QTEASY release history
+# RELEASE HISTORY
+
+## 1.0.14 (2023-12-22)
+- Removed optional dependency sqlalchemy
+- 
 
 ## 1.0.13 (2023-12-21)
 - Improvements in Trader Shell

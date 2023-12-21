@@ -43,7 +43,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.13`
+- Latest Version: `1.0.14`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 
@@ -427,7 +427,8 @@ res = op.run(
         cost_rate_buy=0.0003,           # 买入费率
         cost_rate_sell=0.0001,          # 卖出费率
         visual=True,                    # 打印可视化回测图表
-        trade_log=True                  # 打印交易日志
+        trade_log=True,                 # 打印交易日志
+)
 ```
 结果如下：
 
