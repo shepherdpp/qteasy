@@ -209,6 +209,14 @@ class Broker(object):
             message += '_R'
         self.broker_messages.put(message)
 
+    def _submit_order(self, order):
+        """
+
+        :param order: 
+        :return:
+        """
+        pass
+
     def _parse_order(self, order):
         """ 解析交易订单，提取其关键信息，并将order的状态改为"submitted"
 
