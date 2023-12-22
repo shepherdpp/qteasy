@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 欢迎使用QTEASY文档!
-=================
+================================
 
 .. note::
 
@@ -80,10 +80,12 @@ API Reference
    :glob:
 
    api_reference
+   use_qteasy
    History_Data
    Built_In
    Strategies
    HistoryPanel
+   Operators
 
 Change Log
 ----------
