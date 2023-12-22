@@ -1,4 +1,4 @@
-# QTEASY使用教程01——基础配置及初始化
+# 1—基础配置及初始化
 
 qteasy是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能：
 
@@ -30,7 +30,6 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包
 #### 如果使用mysql数据库作为本地数据源
 - *`pymysql` version >= 1.0.0*    `pip install pymysql` / `conda install -c anaconda pymysql`
-- *`sqlalchemy` version >= 1.4.18, <=1.4.23*   `pip install sqlalchemy` / `conda install sqlalchemy`
 
 #### 如果使用hdf文件作为本地数据源 
 - *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
@@ -131,7 +130,7 @@ test_db_user = <user name>
 test_db_password = <password>
 test_db_name = test_db <或其他用于测试的临时数据库>
 ```
-根据你选择的本地数据源类型，可能需要安装对应的依赖包，参见[安装及依赖](#安装环境及依赖包)
+根据你选择的本地数据源类型，可能需要安装对应的依赖包
 
 如果日常使用的数据量大，建议设置`data_source_type = database`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
 间， 分钟级别数据将占用350GB甚至更多的磁盘空间。

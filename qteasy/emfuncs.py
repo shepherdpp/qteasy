@@ -15,7 +15,7 @@ from urllib.parse import urlencode
 import pandas as pd
 import requests
 
-from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
+from concurrent.futures import as_completed, ThreadPoolExecutor
 
 from .utilfuncs import str_to_list
 

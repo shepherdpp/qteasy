@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 欢迎使用QTEASY文档!
-=================
+================================
 
 .. note::
 
@@ -13,7 +13,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.13`
+- Latest Version: `1.0.14`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 Introduction
@@ -68,6 +68,7 @@ Examples
     :maxdepth: 1
     :glob:
 
+    tutorials/Reference 01 - 内置交易策略的回测结果
     examples/*
 
 
@@ -78,8 +79,13 @@ API Reference
    :maxdepth: 1
    :glob:
 
-   api_reference.md
-   tutorials/Reference 01 - 内置交易策略的回测结果
+   api_reference
+   use_qteasy
+   History_Data
+   Built_In
+   Strategies
+   HistoryPanel
+   Operators
 
 Change Log
 ----------

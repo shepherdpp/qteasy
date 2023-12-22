@@ -10,17 +10,16 @@
 
 import unittest
 import time
-import sys
 
 from threading import Thread
 
 import pandas as pd
 import numpy as np
 
-from qteasy import QT_CONFIG, DataSource, Operator, BaseStrategy
+from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order
-from qteasy.trader import Trader, get_symbol_names
+from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
 
@@ -566,8 +565,8 @@ class TestTrader(unittest.TestCase):
             ('11:15:05', 'acquire_live_price'),
             ('11:30:00', 'run_strategy', ['macd']),
             ('11:30:05', 'acquire_live_price'),
-            ('11:35:00', 'sleep'),
-            ('12:55:00', 'wakeup'),
+            ('11:35:00', 'close_market'),
+            ('12:55:00', 'open_market'),
             ('13:00:00', 'run_strategy', ['macd', 'dma']),
             ('13:15:05', 'acquire_live_price'),
             ('13:30:00', 'run_strategy', ['macd']),
@@ -603,8 +602,8 @@ class TestTrader(unittest.TestCase):
             ('11:15:05', 'acquire_live_price'),
             ('11:30:00', 'run_strategy', ['macd']),
             ('11:30:05', 'acquire_live_price'),
-            ('11:35:00', 'sleep'),
-            ('12:55:00', 'wakeup'),
+            ('11:35:00', 'close_market'),
+            ('12:55:00', 'open_market'),
             ('13:00:00', 'run_strategy', ['macd', 'dma']),
             ('13:15:05', 'acquire_live_price'),
             ('13:30:00', 'run_strategy', ['macd']),
