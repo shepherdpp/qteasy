@@ -12,17 +12,15 @@
 
 import unittest
 
-import os
 import qteasy as qt
 import pandas as pd
-from pandas import Timestamp
 import numpy as np
 
 from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
-from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order, get_last_trade_result_summary
-from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_schedule, get_symbol_names
+from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
+from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_schedule
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -30,8 +28,8 @@ from qteasy.trade_recording import record_trade_order, update_trade_order, read_
 from qteasy.trade_recording import query_trade_orders, get_position_by_id, update_trade_result
 from qteasy.trade_recording import get_position_ids, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_account_cash_availabilities, get_account_position_availabilities
-from qteasy.trade_recording import get_account_position_details
-from qteasy.trade_recording import write_trade_result, read_trade_result_by_id, read_trade_results_by_order_id
+from qteasy.trade_recording import write_trade_result, get_account_position_details, read_trade_result_by_id
+from qteasy.trade_recording import read_trade_results_by_order_id
 
 
 class TestTradeRecording(unittest.TestCase):
@@ -1478,8 +1476,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
         self.assertEqual(agenda[3], ('10:00:05', 'acquire_live_price'))
         self.assertEqual(agenda[9], ('11:30:05', 'acquire_live_price'))
-        self.assertEqual(agenda[10], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[11], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[10], ('11:35:00', 'close_market'))
+        self.assertEqual(agenda[11], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[12], ('13:15:05', 'acquire_live_price'))
         self.assertEqual(agenda[19], ('15:00:05', 'acquire_live_price'))
         self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', ['macd']))
@@ -1510,8 +1508,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
         self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', ['macd']))
         self.assertEqual(agenda[8], ('11:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[12], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[13], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[12], ('11:35:00', 'close_market'))
+        self.assertEqual(agenda[13], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[14], ('13:00:00', 'run_strategy', ['macd']))
         self.assertEqual(agenda[18], ('14:00:00', 'run_strategy', ['macd']))
         self.assertEqual(agenda[23], ('15:00:00', 'run_strategy', ['macd']))
@@ -1552,8 +1550,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', ['macd', 'rsi']))
         self.assertEqual(agenda[7], ('11:00:05', 'acquire_live_price'))
         self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[9], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[10], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[9], ('11:35:00', 'close_market'))
+        self.assertEqual(agenda[10], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', ['macd', 'rsi']))
         self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', ['rsi']))
         self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', ['macd', 'rsi']))

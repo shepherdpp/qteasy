@@ -331,8 +331,8 @@ class CashPlan:
 
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
 
-    Attributes
-    ----------
+    Properties:
+    -----------
     first_date: str, 第一笔投资的日期
     last_date: str, 最后一笔投资的日期
     periods: int, 投资的总期数
@@ -916,7 +916,7 @@ class CashPlan:
         Examples
         --------
         >>> plan = CashPlan(dates=['20200101', '20210101'], amounts=[10000, 10000])
-        >>> print(cp)
+        >>> print(plan)
         CashPlan(['20200101', '20210101'], [10000, 10000], 0.0)
         """
         return self._cash_plan.__str__()

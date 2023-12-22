@@ -9,10 +9,9 @@
 # ======================================
 
 import numpy as np
-import warnings
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-from .tafuncs import sma, ema, trix, macd, bbands
+from .tafuncs import sma, ema, trix, bbands
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
