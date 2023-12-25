@@ -2499,22 +2499,6 @@ class DataSource:
                 self.file_path = None
                 self.__user__ = user
                 self.__password__ = password
-                '''
-                import pymysql
-                con = pymysql.connect(
-                        host=self.host,
-                        port=self.port,
-                        user=self.__user__,
-                        password=self.__password__,
-                        db=self.db_name,
-                )
-                cursor=con.cursor()
-                ...
-                cursor.execute(sql)
-                ...
-                con.commit()
-                con.close()
-                '''
 
             except Exception as e:
                 warnings.warn(f'{str(e)}, Can not set data source type to "db",'

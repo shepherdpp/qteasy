@@ -2254,7 +2254,7 @@ class MACDEXT(RuleIterator):
         h = h.T
         m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
 
-        if hist > 0:
+        if m > 0:
             cat = 1
         else:
             cat = -1
