@@ -38,7 +38,7 @@ if __name__ == '__main__':
     alpha.weighting = 'even'  # 选出的股票等权重买入且权重平均分配
 
     op = Operator(strategies=[alpha], signal_type='PT', op_type='step')
-    op.set_parameter('alpha', (20, ))  # 以20日张跌幅为选股因子
+    op.set_parameter('custom', pars=(20, ))  # 以20日张跌幅为选股因子
 
     asset_pool = [  # 4个ETF之间轮，最多同时选中两个
         '515630.SH',  # 保险证券ETF
