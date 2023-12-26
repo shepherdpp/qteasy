@@ -3,7 +3,7 @@
 # Package:  qteasy
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
-# Created:  2020-02-11
+# Created:  2023-12-24
 # Desc:
 #   live_rolling:
 #   一个用于ETF基金的多市场轮动
@@ -30,11 +30,22 @@ if __name__ == '__main__':
     alpha.data_freq = 'd'  # 日频数据
     alpha.window_length = 25  # 数据窗口长度为25天
 
+    # 定义选股参数
+    alpha.sort_ascending = False  # 优先选择涨幅最大的股票
+    alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
+    alpha.ubound = 0.0  # 筛选出过去20天涨幅大于0%的股票
+    alpha.max_sel_count = 2  # 每次最多选出2支股票
+    alpha.weighting = 'even'  # 选出的股票等权重买入且权重平均分配
+
     op = Operator(strategies=[alpha], signal_type='PT', op_type='step')
+    op.set_parameter('alpha', (20, ))  # 以20日张跌幅为选股因子
 
-    op.set_parameter('alpha', (32, 16, 9))
-
-    asset_pool = ['000651.SZ', '688609.SH', '000550.SZ', '301215.SZ']  # 4个ETF之间轮动
+    asset_pool = [  # 4个ETF之间轮，最多同时选中两个
+        '515630.SH',  # 保险证券ETF
+        '518680.SH',  # 金ETF
+        '513100.SH',  # 纳指ETF
+        '512000.SH',  # 券商ETF
+    ]
 
     qt.configure(
             mode=0,

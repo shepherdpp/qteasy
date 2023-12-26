@@ -1,3 +1,17 @@
+# coding=utf-8
+# ======================================
+# Package:  qteasy
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2023-12-11
+# Desc:
+#   live_rolling:
+#   一个用于ETF基金的多市场轮动
+# 交易策略略，同时监控多只ETF基
+# 金，轮动持有20日涨幅最大的两只。
+# ======================================
+
+
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../'))
