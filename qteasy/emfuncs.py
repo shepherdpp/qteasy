@@ -28,18 +28,34 @@ def acquire_data(api_name, **kwargs):
     return res
 
 
-def gen_eastmoney_code(rawcode: str) -> str:
+def gen_eastmoney_code(rawcode: str, asset_type='E') -> str:
     """
     生成东方财富专用的secid
 
     Parameters
     ----------
     rawcode：str
-    6 位股票代码按东方财富格式生成的字符串
+        6 位股票代码按东方财富格式生成的字符串
+    asset_type: str, default 'E'
+        资产类型:
+        - E: 股票
+        - IDX: 指数
+        - FD: 基金
+
     """
-    if rawcode[0] != '6':
-        return f'0.{rawcode}'
-    return f'1.{rawcode}'
+    rawcode = rawcode.split('.')
+    if len(rawcode) == 1:
+        rawcode = rawcode[0]
+        if rawcode[0] != '6':
+            return f'0.{rawcode}'
+        return f'1.{rawcode}'
+    if len(rawcode) == 2:
+        market = rawcode[1]
+        rawcode = rawcode[0]
+        if market == 'SZ':
+            return f'0.{rawcode}'
+        elif market == 'SH':
+            return f'1.{rawcode}'
 
 
 def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
@@ -113,6 +129,7 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
         ('fqt', f'{fqt}'),
     )
     base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
+    # base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
     url = base_url + '?' + urlencode(params)
     try:
         json_response = requests.get(
@@ -235,7 +252,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
     if parallel:
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {
-                executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt, verbose=verbose): symbol
+                executor.submit(get_k_history, code=symbol, beg=today, klt=klt, verbose=verbose): symbol
                 for symbol
                 in symbols
             }
@@ -254,7 +271,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
                     data.append(df.iloc[-1:, :])
     else:  # parallel == False, 不使用多进程
         for symbol in symbols:
-            df = get_k_history(symbol.split('.')[0], beg=today, klt=klt, verbose=verbose)
+            df = get_k_history(symbol, beg=today, klt=klt, verbose=verbose)
             if df.empty:
                 continue
             df['symbol'] = symbol

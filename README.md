@@ -58,10 +58,22 @@
 ## `qteasy`能做什么？
 
 
-1. 获取、清洗、本地存储大量金融历史数据，并方便地检索、处理、调用这些数据及实现可视化：
+### **金融历史数据**: 
+
+- 获取、清洗、本地存储大量金融历史数据
+- 检索、处理、调用这些数据
+- 可视化：
+
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
-2. 快速创建并本地化回测交易策略，实现快速策略参数调优。提供大量内置策略，也可以自定义各种复杂策略：
+
+### **创建交易策略**
+
+- 提供几十种内置交易策略，可以直接使用
+- 快速创建自定义交易策略，灵活设置可调参数
+- 交易策略的回测、优化、评价
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
+
+### **实盘交易模拟**
 3. 快速部署交易策略开始实盘运行、进行模拟交易，跟踪记录交易日志、股票持仓、账户资金变化等信息
 
 
