@@ -28,21 +28,35 @@ def acquire_data(api_name, **kwargs):
     return res
 
 
-def gen_eastmoney_code(rawcode: str, asset_type='E') -> str:
+def gen_eastmoney_code(rawcode: str) -> str:
     """
-    生成东方财富专用的secid
+    生成东方财富专用的secid: 1.000001 0.399001等
+
+    沪市股票以1开头，深市及北交所股票以0开头
+    如果rawcode中未指明市场，则根据六位数的第一位判断，当第一位是6是判定未沪市，否则判定为深市
+    此时默认所有代码都为股票，即000001会被判定为0.000001(平安银行）而不是1.000001（上证指数)
+    只有给出后缀时，才根据市场判定正确的secid
 
     Parameters
     ----------
     rawcode：str
         6 位股票代码按东方财富格式生成的字符串
-    asset_type: str, default 'E'
-        资产类型:
-        - E: 股票
-        - IDX: 指数
-        - FD: 基金
 
+    Returns
+    -------
+    secid: str
+        东方财富证券代码
+
+    Examples
+    --------
+    >>> gen_eastmoney_code('000001')
+    0.000001
+    >>> gen_eastmoney_code('000001.SZ')
+    0.000001
+    >>> gen_eastmoney_code('000001.SH')
+    1.000001
     """
+
     rawcode = rawcode.split('.')
     if len(rawcode) == 1:
         rawcode = rawcode[0]
@@ -52,7 +66,7 @@ def gen_eastmoney_code(rawcode: str, asset_type='E') -> str:
     if len(rawcode) == 2:
         market = rawcode[1]
         rawcode = rawcode[0]
-        if market == 'SZ':
+        if market in ['SZ', 'BJ']:
             return f'0.{rawcode}'
         elif market == 'SH':
             return f'1.{rawcode}'

@@ -43,7 +43,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.14`
+- Latest Version: `1.0.15`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 `qteasy`是为量化交易人员开发的一套量化交易策略开发工具包，力图做到：
