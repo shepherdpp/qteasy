@@ -12,10 +12,8 @@
 import unittest
 
 import pandas as pd
-import time
 
-from qteasy.emfuncs import acquire_data, gen_eastmoney_code, get_k_history
-from qteasy.emfuncs import stock_daily, stock_mins, stock_live_kline_price
+from qteasy.emfuncs import acquire_data, get_k_history
 
 
 class TestEastmoney(unittest.TestCase):

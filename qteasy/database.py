@@ -4728,8 +4728,10 @@ class DataSource:
             tables_to_refill.update(dependent_tables)
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
             if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
+                # TODO: 尝试去掉默认下载trade_calendar，因为低积分用户只有每分钟访问一次trade_calendar的权限
+                #  默认下载太过于耗时，只有当trade_calendar无数据或数据不足时才添加trade_calendar
                 tables_to_refill.add('trade_calendar')
-        # print(f'[DEBUG] database.py->refill_local_source(): tables_to_refill: {tables_to_refill}')
+
         import time
         for table in table_master.index:
             # 逐个下载数据并写入本地数据表中

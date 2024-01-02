@@ -1844,7 +1844,7 @@ class TRIX(RuleIterator):
         2， TRIX位于MATRIX下方时，设置仓位目标位-1
 
     策略属性缺省值：
-    默认参数：(25, 125)
+    默认参数：(12, 12)
     数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：270
@@ -1852,7 +1852,7 @@ class TRIX(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(25, 125)):
+    def __init__(self, pars=(12, 12)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['int', 'int'],

@@ -2840,8 +2840,13 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
         if isinstance(config['asset_pool'], str):
             symbol_list = str_to_list(config['asset_pool'])
         else:
-            symbol_list = config['asset_pool']
+            symbol_list = config['asset_pool'].copy()  # to prevent from changing the config
+
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
+        asset_types = config['asset_type']
+        if asset_types != 'IDX':
+            # add index to make sure indices are downloaded
+            asset_types += ', IDX'
         start_date = last_available_date
         end_date = trader.get_current_tz_datetime()
 
@@ -2849,7 +2854,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
                 tables='index_daily',
                 dtypes=op_data_types,
                 freqs=op_data_freq,
-                asset_types='E',
+                asset_types=asset_types,
                 start_date=start_date.strftime('%Y%m%d'),
                 end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
                 symbols=symbol_list,
