@@ -1708,9 +1708,14 @@ class Trader(object):
         total_profit_ratio = total_profit / total_value
         rprint(f'{" Versions ":=^{width}}')
         rprint(f'{"python":<{semi_width - 20}}{sys.version}')
-        rprint(f'{"numpy":<{semi_width - 20}}{np.__version__}')
-        rprint(f'{"pandas":<{semi_width - 20}}{pd.__version__}')
         rprint(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
+        import tushare
+        rprint(f'{"tushare":<{semi_width - 20}}{tushare.__version__}')
+        try:
+            import talib
+            rprint(f'{"ta-lib":<{semi_width - 20}}{talib.__version__}')
+        except ImportError:
+            rprint(f'{"ta-lib":<{semi_width - 20}}not installed')
         rprint(f'{" Account Overview ":=^{width}}')
         rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
         rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
