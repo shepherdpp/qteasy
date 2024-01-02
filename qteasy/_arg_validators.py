@@ -395,7 +395,7 @@ def _valid_qt_kwargs():
                           '包括交易信号以及每一步骤的交易结果'},
 
         'benchmark_asset':
-            {'Default':   '000300.SH',
+            {'Default':   '000300.SH',  # TODO: 未来版本支持多个基准
              'Validator': lambda value: isinstance(value, str)
                                         and _validate_asset_symbol(value),
              'level':     1,

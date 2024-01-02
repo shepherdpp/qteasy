@@ -30,16 +30,46 @@ def acquire_data(api_name, **kwargs):
 
 def gen_eastmoney_code(rawcode: str) -> str:
     """
-    生成东方财富专用的secid
+    生成东方财富专用的secid: 1.000001 0.399001等
+
+    沪市股票以1开头，深市及北交所股票以0开头
+    如果rawcode中未指明市场，则根据六位数的第一位判断，当第一位是6是判定未沪市，否则判定为深市
+    此时默认所有代码都为股票，即000001会被判定为0.000001(平安银行）而不是1.000001（上证指数)
+    只有给出后缀时，才根据市场判定正确的secid
 
     Parameters
     ----------
     rawcode：str
-    6 位股票代码按东方财富格式生成的字符串
+        6 位股票代码按东方财富格式生成的字符串
+
+    Returns
+    -------
+    secid: str
+        东方财富证券代码
+
+    Examples
+    --------
+    >>> gen_eastmoney_code('000001')
+    0.000001
+    >>> gen_eastmoney_code('000001.SZ')
+    0.000001
+    >>> gen_eastmoney_code('000001.SH')
+    1.000001
     """
-    if rawcode[0] != '6':
-        return f'0.{rawcode}'
-    return f'1.{rawcode}'
+
+    rawcode = rawcode.split('.')
+    if len(rawcode) == 1:
+        rawcode = rawcode[0]
+        if rawcode[0] != '6':
+            return f'0.{rawcode}'
+        return f'1.{rawcode}'
+    if len(rawcode) == 2:
+        market = rawcode[1]
+        rawcode = rawcode[0]
+        if market in ['SZ', 'BJ']:
+            return f'0.{rawcode}'
+        elif market == 'SH':
+            return f'1.{rawcode}'
 
 
 def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
@@ -113,6 +143,7 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
         ('fqt', f'{fqt}'),
     )
     base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
+    # base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
     url = base_url + '?' + urlencode(params)
     try:
         json_response = requests.get(
@@ -235,7 +266,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
     if parallel:
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {
-                executor.submit(get_k_history, code=symbol.split('.')[0], beg=today, klt=klt, verbose=verbose): symbol
+                executor.submit(get_k_history, code=symbol, beg=today, klt=klt, verbose=verbose): symbol
                 for symbol
                 in symbols
             }
@@ -254,7 +285,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
                     data.append(df.iloc[-1:, :])
     else:  # parallel == False, 不使用多进程
         for symbol in symbols:
-            df = get_k_history(symbol.split('.')[0], beg=today, klt=klt, verbose=verbose)
+            df = get_k_history(symbol, beg=today, klt=klt, verbose=verbose)
             if df.empty:
                 continue
             df['symbol'] = symbol

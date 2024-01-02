@@ -23,7 +23,6 @@ class TestEastmoney(unittest.TestCase):
 
     def SetUp(self):
         pass
-        # TODO: complete tests
 
     def test_get_k_history(self):
         """ Test get_k_history function """
@@ -35,14 +34,28 @@ class TestEastmoney(unittest.TestCase):
         res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
+        code = '000651.SZ'
+        res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        code = '000001.SH'
+        res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
 
     def test_stock_live_daily_price(self):
         """ Test stock_live_kline_price function """
 
         code = ['000016.SZ', '000025.SZ', '000333.SZ']
         res = acquire_data('stock_live_kline_price', symbols=code, freq='D')
-        print(res)
+        print(f'data acquied for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
         self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+        self.assertEqual(res.index.name, 'trade_time')
+        self.assertTrue(all(item in code for item in res.symbol))
+        # some items may not have real time price at the moment
+        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
 
         code = ['000016.SZ', '000025.SZ', '000333.SZ']
         res = acquire_data('stock_live_kline_price', symbols=code, freq='D', verbose=True)
@@ -68,6 +81,36 @@ class TestEastmoney(unittest.TestCase):
         res = acquire_data('stock_live_kline_price', symbols=code, freq='M')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+        self.assertEqual(res.index.name, 'trade_time')
+        self.assertTrue(all(item in code for item in res.symbol))
+        # some items may not have real time price at the moment
+        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+
+        print('test acquiring Index prices')
+        codes = ['000001.SH', '000300.SH', '399001.SZ']
+        res = acquire_data('stock_live_kline_price', symbols=codes, freq='D')
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+        self.assertEqual(res.index.name, 'trade_time')
+        self.assertTrue(all(item in codes for item in res.symbol))
+        # some items may not have real time price at the moment
+        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+
+        print('test acquiring ETF price data')
+        codes = ['510050.SH', '510300.SH', '510500.SH', '510880.SH', '510900.SH', '512000.SH', '512010.SH']
+        res = acquire_data('stock_live_kline_price', symbols=codes, freq='D')
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+        self.assertEqual(res.index.name, 'trade_time')
+        self.assertTrue(all(item in codes for item in res.symbol))
+        # some items may not have real time price at the moment
+        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
 
 
 if __name__ == '__main__':

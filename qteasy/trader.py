@@ -140,7 +140,7 @@ class TraderShell(Cmd):
         self._trader = trader
         self._timezone = trader.time_zone
         self._status = None
-        self._watch_list = []  # list of stock symbols whose price will be displayed in realtime in dashboard
+        self._watch_list = ['000001.SH']  # default watched price is SH index
         self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
 

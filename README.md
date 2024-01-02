@@ -1,4 +1,4 @@
-# `qteasy` -- 一个基于Python的高效量化投资工具包
+# `qteasy` -- 一个本地化、灵活易用的高效量化投资工具包
 
 ![PyPI](https://img.shields.io/pypi/v/qteasy)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
@@ -24,7 +24,7 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
-- [基本介绍](#QTEASY简介)
+- [基本介绍](#关于QTEASY)
 - [QTEASY文档](#QTEASY文档)
 - [安装依赖包](#安装及依赖)
   - [安装`qteasy`](#QTEASY的安装)
@@ -38,36 +38,57 @@
   - [投资策略的实盘运行](#部署并开始交易策略的实盘运行)
 
 
-## QTEASY简介
+## 关于`qteasy`
 
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.14`
+- Latest Version: `1.0.15`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
+`qteasy`是为量化交易人员开发的一套量化交易策略开发工具包，力图做到：
 
-QTEASY是为量化交易人员开发的一套量化交易策略开发工具包，提供了以下基本功能。
+1. **全流程覆盖**
+2. **完全本地化**
+3. **使用简单**
+4. **灵活**
 
-1. 金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括Tushare、EastMoney等
-2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
-3. 交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息
 
-以下功能在开发计划中：
-1. *提供常用的金融统计数据分析工具，并整合到内间的HistoryPanel对象中*
-2. *与自动化交易系统连接、实现自动化交易(开发中)*
 
-## QTEASY文档
+## `qteasy`能做什么？
+
+
+### **金融历史数据**: 
+
+- 获取、清洗、本地存储大量金融历史数据
+- 检索、处理、调用这些数据
+- 可视化：
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
+
+### **创建交易策略**
+
+- 提供几十种内置交易策略，可以直接使用
+- 快速创建自定义交易策略，灵活设置可调参数
+- 交易策略的回测、优化、评价
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
+
+### **实盘交易模拟**
+3. 快速部署交易策略开始实盘运行、进行模拟交易，跟踪记录交易日志、股票持仓、账户资金变化等信息
+
+
+## 安装
+
+```bash
+$ pip install qteasy
+```
+
+## 文档
 
 关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io)：
 
 ## 安装及依赖
 
-### QTEASY的安装
-
-```bash
-$ pip install qteasy
-```
 
 ### python 版本
 - *`python` version >= 3.6* 

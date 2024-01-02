@@ -1613,10 +1613,10 @@ class Operator:
             rprint(f'{"Strategies":-^{info_width}}\n'
                    f'{"stg_id":<{id_width}}'
                    f'{"name":<{name_width}}'
-                   f'{"run timing":^{run_timing_width}}'
-                   f'{"data window":^{data_window_width}}'
-                   f'{"data types":^{data_type_width}}'
-                   f'{"parameters":^{par_width}}\n'
+                   f'{"run timing":<{run_timing_width}}'
+                   f'{"data window":<{data_window_width}}'
+                   f'{"data types":<{data_type_width}}'
+                   f'{"parameters":<{par_width}}\n'
                    f'{"_" * info_width}')
             for stg_id, stg in self.get_strategy_id_pairs():
                 from .utilfuncs import parse_freq_string
