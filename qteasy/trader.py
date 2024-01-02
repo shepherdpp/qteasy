@@ -949,6 +949,10 @@ class TraderShell(Cmd):
         args = parse_shell_argument(arg, command_name='change')
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
+        if not args:
+            print('Please input valid arguments.')
+            return
+
         if args[0] in ['--cash', '-c']:
             # change cash
             if len(args) < 2:
@@ -1702,6 +1706,11 @@ class Trader(object):
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
         total_profit_ratio = total_profit / total_value
+        rprint(f'{" Versions ":=^{width}}')
+        rprint(f'{"python":<{semi_width - 20}}{sys.version}')
+        rprint(f'{"numpy":<{semi_width - 20}}{np.__version__}')
+        rprint(f'{"pandas":<{semi_width - 20}}{pd.__version__}')
+        rprint(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
         rprint(f'{" Account Overview ":=^{width}}')
         rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
         rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
