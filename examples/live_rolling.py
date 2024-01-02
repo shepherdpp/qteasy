@@ -50,7 +50,7 @@ if __name__ == '__main__':
     qt.configure(
             mode=0,
             time_zone='Asia/Shanghai',
-            asset_type='E',
+            asset_type='FD',
             asset_pool=asset_pool,
             benchmark_asset='000300.SH',
             trade_batch_size=0.1,  # 基金交易允许0.1份

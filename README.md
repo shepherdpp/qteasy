@@ -71,11 +71,14 @@
 - 提供几十种内置交易策略，可以直接使用
 - 快速创建自定义交易策略，灵活设置可调参数
 - 交易策略的回测、优化、评价
+
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
 
 ### **实盘交易模拟**
 3. 快速部署交易策略开始实盘运行、进行模拟交易，跟踪记录交易日志、股票持仓、账户资金变化等信息
 
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_28_1.png)  
 
 ## 安装
 
@@ -220,6 +223,7 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 
 
 ```python
+import qteasy as qt
 # 场内基金的小时K线图
 qt.candle('159601', start = '20220121', freq='h')
 # 沪深300指数的日K线图
