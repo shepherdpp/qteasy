@@ -3,6 +3,7 @@
 ## 1.0.15 (2023-12-29)
 - Now live prices of Index and ETFs can also be watched in live running mode
 - ETF and Index are now supported in live trading mode as trading targets
+- Fixed bugs
 
 ## 1.0.14 (2023-12-22)
 - Removed optional dependency sqlalchemy
