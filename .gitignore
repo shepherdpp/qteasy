@@ -55,5 +55,3 @@ examples/live_daily.py
 examples/live_grid.py
 examples/live_example.py
 docs/build/
-docs/make.bat
-docs/Makefile
