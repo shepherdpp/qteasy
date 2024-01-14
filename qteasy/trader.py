@@ -768,40 +768,41 @@ class TraderShell(Cmd):
         # for earning rate
         # Error will be raised if execution_time is NaT. will print out normal format in this case
         if np.any(pd.isna(history.execution_time)):
-            print(history)
-        else:
-            rprint(
-                    history.to_string(
-                            columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
-                                     'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
-                                     'name'],
-                            header=['time', 'symbol', 'oper', 'qty', 'price',
-                                    'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
-                                    'name'],
-                            formatters={
-                                'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
-                                'name':         '{:8s}'.format,
-                                'operation':    '{:s}'.format,
-                                'filled_qty':   '{:,.2f}'.format,
-                                'price_filled': '¥{:,.2f}'.format,
-                                'transaction_fee': '¥{:,.2f}'.format,
-                                'cum_qty':      '{:,.2f}'.format,
-                                'value':        '¥{:,.2f}'.format,
-                                'share_cost':   '¥{:,.2f}'.format,
-                                'earnings':     '¥{:,.2f}'.format,
-                                'earning_rate': '{:.3%}'.format,
-                            },
-                            col_space={
-                                'name': 8,
-                                'price_filled': 10,
-                                'value': 12,
-                                'share_cost': 10,
-                                'earnings': 12,
-                            },
-                            justify='right',
-                            index=False,
-                    )
-            )
+            history.execution_time = history.execution_time.fillna(pd.to_datetime('1970-01-01'))
+        # else:
+        print(history)
+        rprint(
+                history.to_string(
+                        columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
+                                 'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
+                                 'name'],
+                        header=['time', 'symbol', 'oper', 'qty', 'price',
+                                'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
+                                'name'],
+                        formatters={
+                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                            'name':         '{:8s}'.format,
+                            'operation':    '{:s}'.format,
+                            'filled_qty':   '{:,.2f}'.format,
+                            'price_filled': '¥{:,.2f}'.format,
+                            'transaction_fee': '¥{:,.2f}'.format,
+                            'cum_qty':      '{:,.2f}'.format,
+                            'value':        '¥{:,.2f}'.format,
+                            'share_cost':   '¥{:,.2f}'.format,
+                            'earnings':     '¥{:,.2f}'.format,
+                            'earning_rate': '{:.3%}'.format,
+                        },
+                        col_space={
+                            'name': 8,
+                            'price_filled': 10,
+                            'value': 12,
+                            'share_cost': 10,
+                            'earnings': 12,
+                        },
+                        justify='right',
+                        index=False,
+                )
+        )
 
     def do_orders(self, arg):
         """ Get trader orders

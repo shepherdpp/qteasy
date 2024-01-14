@@ -64,6 +64,7 @@ if __name__ == '__main__':
     datasource = qt.QT_DATA_SOURCE
 
     if args.restart:
+        # TODO: clean up only selected account data
         # clean up all account data in datasource
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
             if datasource.table_data_exists(table):

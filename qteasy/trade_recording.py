@@ -190,10 +190,11 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     if cash_amount < 0:
         raise RuntimeError(f'cash_amount cannot be less than 0!')
 
-    # print(f'[DEBUG]: update account balance for id: {account_id} \n'
-    #       f'cash_amount: {account_data["cash_amount"]} -> {cash_amount}, \n'
-    #       f'available_cash: {account_data["available_cash"]} -> {available_cash} \n'
-    #       f'total_investment: {account_data["total_invest"]} -> {total_investment}')
+    # debug
+    print(f'[DEBUG]: update account balance for id: {account_id} \n'
+          f'cash_amount: {account_data["cash_amount"]} -> {cash_amount}, \n'
+          f'available_cash: {account_data["available_cash"]} -> {available_cash} \n'
+          f'total_investment: {account_data["total_invest"]} -> {total_investment}')
     # 更新账户的资金总额和可用资金
     data_source.update_sys_table_data(
             'sys_op_live_accounts',
@@ -386,18 +387,17 @@ def update_position(position_id, data_source=None, **position_data):
     qty_change = position_data.get('qty_change', 0.0)
     if not isinstance(qty_change, (int, float, np.int64, np.float64)):
         raise TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
-    position['qty'] += qty_change
+    qty = position['qty'] + qty_change
 
     available_qty_change = position_data.get('available_qty_change', 0.0)
     if not isinstance(available_qty_change, (int, float, np.int64, np.float64)):
         raise TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
-    position['available_qty'] += available_qty_change
+    available_qty = position['available_qty'] + available_qty_change
 
     cost = position_data.get('cost', None)
     if cost is not None:
         if not isinstance(cost, (int, float, np.int64, np.float64)):
             raise TypeError(f'cost must be a int or float, got {type(cost)} instead')
-        position['cost'] = cost
 
     # 如果可用数量超过持仓数量，则报错
     if position['available_qty'] > position['qty']:
@@ -410,7 +410,20 @@ def update_position(position_id, data_source=None, **position_data):
     if position['qty'] < 0:
         raise RuntimeError(f'qty ({position["qty"]}) cannot be less than 0!')
 
-    data_source.update_sys_table_data('sys_op_positions', record_id=position_id, **position)
+    # debug
+    print(f'{pd.to_datetime("now")}[DEBUG]: update position for id: '
+          f'{position_id} / {position["symbol"]} / {position["position"]}\n'
+          f'qty: {position["qty"]} -> {qty}, \n'
+          f'available_amount: {position["available_qty"]} -> {available_qty} \n'
+          f'cost: {position["cost"]} -> {cost}')
+
+    data_source.update_sys_table_data(
+            'sys_op_positions',
+            record_id=position_id,
+            qty=qty,
+            available_qty=available_qty,
+            cost=cost,
+    )
 
 
 def get_account_positions(account_id, data_source=None):
