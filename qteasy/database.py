@@ -4496,9 +4496,10 @@ class DataSource:
                 price_df = df_by_htypes[htyp]
                 all_ts_codes = price_df.columns
                 combined_factors = 1.0
+                import pdb; pdb.set_trace()
                 # 后复权价 = 当日最新价 × 当日复权因子
                 for af in adj_factors:
-                    combined_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
+                    combined_factors *= adj_factors[af].reindex(columns=all_ts_codes, index=price_df.index).fillna(1.0)
                 # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
                 #  但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
                 if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
