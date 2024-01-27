@@ -2968,7 +2968,7 @@ class DataSource:
             df.to_sql(db_table, con=con, index=False, if_exists='append', chunksize=5000)
             return len(df)
         except Exception as e:
-            raise RuntimeError(f'{e}, error in writing data into database.')
+            raise RuntimeError(f'{e}, error writing data into database.\nthe data is:\n{df}')
         finally:
             con.close()
 
@@ -5203,11 +5203,22 @@ def _resample_data(hist_data, target_freq,
     if b_days_only:
         if target_freq == 'D':
             target_freq = 'B'
+        # TODO: 仍然有BUG；使用pd自带的'B'freq会将所有的周六周日去掉，但是不会去掉节假日
+        #  等非交易日，导致例如20210101元旦节被认为是交易日，因此需要使用QT_Calendar来确
+        #  保正确的交易日
+        #  这里的处理方式是：在_trade_time_index()函数生成trade_time_index过程中，
+        #  去掉所有非交易日的index
 
     # 如果要求去掉非交易时段的数据
     from qteasy.trading_util import _trade_time_index
     if trade_time_only:
-        expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
+        expanded_index = _trade_time_index(
+                start=start,
+                end=end,
+                freq=target_freq,
+                trade_days_only=b_days_only,
+                **kwargs
+        )
     else:
         expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
     resampled = resampled.reindex(index=expanded_index)

@@ -1,4 +1,10 @@
-# RELEASE HISTORY
+# RELEASE HISTORY[]()
+
+## 1.0.16 (2024-01-27)
+- Fixed a bug in live trade mode that will cause trade results being processed and delivered for more than one time, thus leads to wrong available qty or available cash recorded
+- Fixed a mistake that will cause wrong cost being calculated during live trade
+- Fixed a mistake in live trade shell with command history, that wrong stock cost is calculated when history of multiple stocks are listed
+- Added feature: if a valid trade signal can not be converted to an order due to lack of available cash/stock, a message will be posted in live mode
 
 ## 1.0.15 (2023-12-29)
 - Now live prices of Index and ETFs can also be watched in live running mode

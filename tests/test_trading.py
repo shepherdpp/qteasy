@@ -2331,7 +2331,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2344,6 +2344,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
@@ -2353,7 +2354,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         cash_to_spend = np.array([0.0])
         amounts_to_sell = np.array([-500.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2366,6 +2367,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, sell 500 shares in short position
         shares = ['000001']
@@ -2375,7 +2377,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2389,6 +2391,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, buy 500 shares in short position
         shares = ['000001']
@@ -2398,7 +2401,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2412,6 +2415,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, sell 1000 shares while only 700 shares available
         shares = ['000001']
@@ -2421,7 +2425,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([700.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2436,6 +2440,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
         self.assertEqual(quoted_prices, [10.0, 10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol,
         # sell 1000 short shares while only 500 short shares available
@@ -2446,7 +2451,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([-700.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2460,6 +2465,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
         self.assertEqual(quoted_prices, [10.0, 10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, buy shares with not enough cash
         shares = ['000001']
@@ -2469,7 +2475,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 5000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2482,6 +2488,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with multiple symbols
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2491,7 +2498,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2505,6 +2512,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with multiple symbols, with buy and sell moq = 0.0
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2514,7 +2522,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 650.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2530,6 +2538,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [505.0, 525.0, 352.4, 153.8, 100.1, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with multiple symbols, with buy moq = 100 and sell moq = 10.0
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2539,7 +2548,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 650.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2555,6 +2564,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [500.0, 520.0, 300.0, 150.0, 100.0, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+        self.assertEqual(messages, [''])
 
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""

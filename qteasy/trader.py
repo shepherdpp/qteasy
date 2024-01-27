@@ -168,12 +168,12 @@ class TraderShell(Cmd):
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
                 live_prices.set_index('symbol', inplace=True)
 
-                if self.trader.debug:
-                    self.trader.post_message('live prices acquired to update watched prices!')
-            else:
-
-                if self.trader.debug:
-                    self.trader.post_message('Failed to acquire live prices to update watch price string!')
+            #     # if self.trader.debug:
+            #     #     self.trader.post_message('live prices acquired to update watched prices!')
+            # else:
+            #
+            #     if self.trader.debug:
+            #         self.trader.post_message('Failed to acquire live prices to update watch price string!')
 
             watched_prices = ''
             for symbol in symbols:
@@ -753,9 +753,9 @@ class TraderShell(Cmd):
                                          -history['filled_qty'],
                                          history['filled_qty'])
         # calculate rows: cum_qty, trade_cost, cum_cost, value, share_cost, earnings, and earning rate
-        history['cum_qty'] = history['filled_qty'].cumsum()
+        history['cum_qty'] = history.groupby('symbol')['filled_qty'].cumsum()
         history['trade_cost'] = history['filled_qty'] * history['price_filled'] + history['transaction_fee']
-        history['cum_cost'] = history['trade_cost'].cumsum()
+        history['cum_cost'] = history.groupby('symbol')['trade_cost'].cumsum()
         history['value'] = history['cum_qty'] * history['price_filled']
         history['share_cost'] = history['cum_cost'] / history['cum_qty']
         history['earnings'] = history['value'] - history['cum_cost']
@@ -770,7 +770,7 @@ class TraderShell(Cmd):
         if np.any(pd.isna(history.execution_time)):
             history.execution_time = history.execution_time.fillna(pd.to_datetime('1970-01-01'))
         # else:
-        print(history)
+        # print(history)
         rprint(
                 history.to_string(
                         columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
@@ -1265,8 +1265,8 @@ class TraderShell(Cmd):
                             from threading import Thread
                             t = Thread(target=self.update_watched_prices, daemon=True)
                             t.start()
-                            if self.trader.debug:
-                                self.trader.post_message(f'Acquiring watched prices in a new thread<{t.name}>')
+                            # if self.trader.debug:
+                                # self.trader.post_message(f'Acquiring watched prices in a new thread<{t.name}>')
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -2044,7 +2044,7 @@ class Trader(object):
             self.post_message(f'ran strategy and created signal: {op_signal}')
 
         # 解析交易信号
-        symbols, positions, directions, quantities, quoted_prices = parse_trade_signal(
+        symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
                 signals=op_signal,
                 signal_type=signal_type,
                 shares=shares,
@@ -2064,7 +2064,17 @@ class Trader(object):
                               f'directions: {directions}\n'
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n')
-        for sym, name, pos, d, qty, price in zip(symbols, names, positions, directions, quantities, quoted_prices):
+        for sym, name, pos, d, qty, price, remark in zip(
+                symbols,
+                names,
+                positions,
+                directions,
+                quantities,
+                quoted_prices,
+                remarks,
+        ):
+            if remark:
+                self.post_message(remark)
             if qty <= 0.001:
                 continue
             pos_id = get_or_create_position(account_id=self.account_id,
@@ -2133,19 +2143,28 @@ class Trader(object):
             self.post_message(f'[ORDER EXECUTED {order_id}]: '
                               f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
         # self.post_message(f'processed trade result: {result_id}\n{result}')
-        if self.debug:
-            self.post_message(f'processed trade result: {result_id}\n{result}')
-        process_trade_delivery(
-                account_id=self.account_id,
-                data_source=self._datasource,
-                config=self._config,
-        )
+        # TODO: 此处为何要处理交易结果的交割？批量交割应该是在第二天开盘前进行
+        #  只有现金需要进行立即交割，但是现在live mode下现金是直接交割的，
+        #  不需要单独交割，因此此处不进行交割处理
+        # if self.debug:
+        #     self.post_message(f'processed trade result: {result_id}\n{result}')
+        # process_trade_delivery(
+        #         account_id=self.account_id,
+        #         data_source=self._datasource,
+        #         config=self._config,
+        # )
         if self.debug:
             self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
             self.post_message(f'processed trade delivery: positions \n{self.non_zero_positions}')
 
     def _pre_open(self):
-        """ 开市前, 确保data_source重新连接, 并扫描数据源，下载缺失的数据"""
+        """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
+
+        - 确保data_source重新连接,
+        - 扫描数据源，下载缺失的数据
+        - 处理订单的交割
+        - 获取当日实时价格
+        """
         datasource = self._datasource
         config = self._config
         operator = self._operator
@@ -2167,11 +2186,18 @@ class Trader(object):
                 datasource=datasource,
         )
 
+        # 检查今日成交结果，完成交易结果的交割
+        process_trade_delivery(
+                account_id=self.account_id,
+                data_source=self._datasource,
+                config=self._config
+        )
+
         # 获取当日实时价格
         self._update_live_price()
 
     def _post_close(self):
-        """ 收市后例行操作：
+        """ 所有收盘后应该完成的任务
 
         1，处理当日未完成的交易信号，生成取消订单，并记录订单取消结果
         2，处理当日已成交的订单结果的交割，记录交割结果
@@ -2219,11 +2245,11 @@ class Trader(object):
             self.post_message(f'canceled unfilled orders')
 
         # 检查今日成交结果，完成交易结果的交割
-        process_trade_delivery(
-                account_id=self.account_id,
-                data_source=self._datasource,
-                config=self._config
-        )
+        # process_trade_delivery(
+        #         account_id=self.account_id,
+        #         data_source=self._datasource,
+        #         config=self._config
+        # )
         self.post_message('processed trade delivery')
 
     def _change_date(self):
@@ -2477,7 +2503,8 @@ class Trader(object):
                 self.post_message('market open, removing all tasks before current time except pre_open and open_market')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
-                                        (task[1] in ['pre_open', 'open_market'])]
+                                        (task[1] in ['pre_open',
+                                                     'open_market'])]
         elif mca < current_time < moc:
             # before market afternoon open, remove all task before current time except pre_open, open_market and sleep
             if self.debug:
@@ -2485,7 +2512,9 @@ class Trader(object):
                                   'except pre_open, open_market and sleep')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
-                                        (task[1] in ['pre_open', 'open_market', 'sleep'])]
+                                        (task[1] in ['pre_open',
+                                                     'open_market',
+                                                     'sleep'])]
         elif moc < current_time < mcc:
             # market afternoon open, remove all task before current time except pre_open, open_market, sleep, and wakeup
             if self.debug:
@@ -2493,13 +2522,18 @@ class Trader(object):
                                   'except pre_open, open_market, sleep and wakeup')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
-                                        (task[1] in ['pre_open', 'open_market'])]
+                                        (task[1] in ['pre_open',
+                                                     'open_market',
+                                                     'sleep',
+                                                     'wakeup'])]
         elif mcc < current_time:
-            # after market close, remove all task before current time except post_close
+            # after market close, remove all task before current time except pre_open and post_close
             if self.debug:
                 self.post_message('market closed, removing all tasks before current time except post_close')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
-                                        (pd.to_datetime(task[0]).time() >= current_time) or (task[1] == 'post_close')]
+                                        (pd.to_datetime(task[0]).time() >= current_time) or
+                                        (task[1] in ['pre_open',
+                                                     'post_close'])]
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
