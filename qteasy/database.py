@@ -4576,7 +4576,7 @@ class DataSource:
 
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
-                            process_count=None, chunk_size=100, refresh_trade_calendar=True, log=False):
+                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False):
         """ 批量下载历史数据并保存到本地数据仓库
 
         Parameters
@@ -4728,16 +4728,25 @@ class DataSource:
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
-            if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
-                # TODO: 尝试去掉默认下载trade_calendar，因为低积分用户只有每分钟访问一次trade_calendar的权限
-                #  默认下载太过于耗时，只有当trade_calendar无数据或数据不足时才添加trade_calendar
-                tables_to_refill.add('trade_calendar')
+            if 'trade_calendar' not in tables_to_refill:
+                if refresh_trade_calendar:
+                    tables_to_refill.add('trade_calendar')
+                else:
+                    # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+                    latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
+                    if latest_calendar_date == 'N/A':
+                        tables_to_refill.add('trade_calendar')
+                    elif pd.to_datetime('today') >= latest_calendar_date:
+                        tables_to_refill.add('trade_calendar')
 
+        # 开始逐个下载清单中的表数据
+        table_count = 0
         import time
         for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
             if table not in tables_to_refill:
                 continue
+            table_count += 1
             cur_table_info = table_master.loc[table]
             # 3 生成数据下载参数序列
             arg_name = cur_table_info.fill_arg_name
@@ -4833,7 +4842,8 @@ class DataSource:
             time_elapsed = 0
             rows_affected = 0
             try:
-                if parallel and (table != 'trade_calendar'):
+                # 清单中的第一张表不使用parallel下载
+                if parallel and table_count != 1:
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
                         # 这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
                         #  通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
