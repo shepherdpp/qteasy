@@ -5203,11 +5203,6 @@ def _resample_data(hist_data, target_freq,
     if b_days_only:
         if target_freq == 'D':
             target_freq = 'B'
-        # TODO: 仍然有BUG；使用pd自带的'B'freq会将所有的周六周日去掉，但是不会去掉节假日
-        #  等非交易日，导致例如20210101元旦节被认为是交易日，因此需要使用QT_Calendar来确
-        #  保正确的交易日
-        #  这里的处理方式是：在_trade_time_index()函数生成trade_time_index过程中，
-        #  去掉所有非交易日的index
 
     # 如果要求去掉非交易时段的数据
     from qteasy.trading_util import _trade_time_index
