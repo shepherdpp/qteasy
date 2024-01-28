@@ -520,7 +520,7 @@ def _signal_to_order_elements(shares,
     if total_cash_to_spend > available_cash:
         available_to_plan_ratio = available_cash / total_cash_to_spend
         cash_to_spend = cash_to_spend * available_to_plan_ratio
-        base_remark = f'total available cash ({available_cash:.2f}) not enough, ' \
+        base_remark = f'Not enough available cash ({available_cash:.2f}), ' \
                       f'adjusted cash to spend to {available_to_plan_ratio:.1%}'
 
     # 逐个计算每一只资产的买入和卖出的数量
@@ -569,8 +569,8 @@ def _signal_to_order_elements(shares,
                 directions.append('sell')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
-                remarks.append(base_remark + f'Available stock({available_amounts[i]}) not enough, '
-                                             f'reduced and rounded sell qty to {quantity}')
+                remarks.append(base_remark + f'Not enough available stock({available_amounts[i]}), '
+                                             f'sell qty ({amounts_to_sell[i]}) reduced and rounded to {quantity}')
                 # 如果allow_sell_short，增加反向头寸的买入信号
                 if allow_sell_short:
                     quantity = np.round(- amounts_to_sell[i] - available_amounts[i], AMOUNT_DECIMAL_PLACES)
@@ -606,8 +606,8 @@ def _signal_to_order_elements(shares,
                 directions.append('sell')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
-                remarks.append(base_remark + f'Available stock({available_amounts[i]}) not enough, '
-                                             f'reduced and rounded sell qty to {quantity}')
+                remarks.append(base_remark + f'Not enough short position stock ({-available_amounts[i]}), '
+                                             f'sell short qty ({amounts_to_sell[i]}) reduced and rounded to {quantity}')
                 # 增加反向头寸的买入信号
                 quantity = np.round(amounts_to_sell[i] + available_amounts[i], AMOUNT_DECIMAL_PLACES)
                 if moq_sell > 0:
@@ -617,7 +617,7 @@ def _signal_to_order_elements(shares,
                 directions.append('buy')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
-                remarks.append(base_remark + f'Allow sell short, continue to buy short positions {quantity}')
+                remarks.append(base_remark + f'Allow sell short, continue to buy long positions {quantity}')
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
@@ -1067,7 +1067,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         if owned_qty + position_change == 0:  # 如果卖出后持仓为0，则成本为0
             new_cost = 0
         else:
-            additional_cost = - position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
+            additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
             new_cost = (prev_cost + additional_cost) / (owned_qty + position_change)
         update_position(
                 position_id=order_detail['pos_id'],

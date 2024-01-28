@@ -2755,9 +2755,10 @@ class DataSource:
                             (df[date_like_pk] <= end)]
             elif (share_like_pk is not None) and (date_like_pk is None):
                 df = df.loc[(df[share_like_pk].isin(shares))]
-        except:
-            import pdb
-            pdb.set_trace()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise RuntimeError(f'{e}')
 
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
@@ -2935,8 +2936,10 @@ class DataSource:
             con.close()
 
     def write_database(self, df, db_table):
-        """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
-        与db_table的schema相同且顺序也相同
+        """ 将DataFrame中的数据添加到数据库表末尾，如果表不存在，则
+        新建一张数据库表，并设置primary_key（如果给出）
+
+        假定df的列与db_table的schema相同且顺序也相同
 
         Parameter
         ---------
@@ -4301,7 +4304,6 @@ class DataSource:
             for val in values[:-1]:
                 sql += f"{val}, "
             sql += f"{values[-1]})\n"
-            # import pdb; pdb.set_trace()
             try:
                 self.conn.execute(sql)
                 self.conn.commit()
@@ -4496,7 +4498,6 @@ class DataSource:
                 price_df = df_by_htypes[htyp]
                 all_ts_codes = price_df.columns
                 combined_factors = 1.0
-                import pdb; pdb.set_trace()
                 # 后复权价 = 当日最新价 × 当日复权因子
                 for af in adj_factors:
                     combined_factors *= adj_factors[af].reindex(columns=all_ts_codes, index=price_df.index).fillna(1.0)
@@ -4736,7 +4737,7 @@ class DataSource:
                     latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
                     if latest_calendar_date == 'N/A':
                         tables_to_refill.add('trade_calendar')
-                    elif pd.to_datetime('today') >= latest_calendar_date:
+                    elif pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
                         tables_to_refill.add('trade_calendar')
 
         # 开始逐个下载清单中的表数据

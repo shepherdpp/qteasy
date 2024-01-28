@@ -24,7 +24,11 @@ class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
 
     def setUp(self):
-        pass
+        # 减少重试，缩短测试时间
+        import qteasy as qt
+        qt.tsfuncs.data_download_retry_cnt = 3
+        qt.tsfuncs.data_download_retry_wait = 0.1
+        qt.tsfuncs.data_download_retry_backoff = 1.0
 
     def test_stock_basic(self):
         print(f'test tushare function: stock_basic')

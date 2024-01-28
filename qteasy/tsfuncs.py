@@ -16,7 +16,7 @@ from .utilfuncs import regulate_date_format, list_to_str_format
 from .utilfuncs import retry
 
 data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
-data_download_retry_delay = QT_CONFIG.hist_dnld_retry_delay
+data_download_retry_wait = QT_CONFIG.hist_dnld_retry_wait
 data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
 
 # ERRORS_TO_CHECK_ON_RETRY = (ConnectionError, ConnectionResetError, RuntimeError,
@@ -33,7 +33,7 @@ def acquire_data(api_name, **kwargs):
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def stock_basic(exchange: str = None):
     """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
@@ -79,7 +79,7 @@ def stock_basic(exchange: str = None):
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
@@ -124,7 +124,7 @@ def trade_calendar(exchange: str = 'SSE',
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def name_change(ts_code: str = None,
                 start: str = None,
@@ -178,7 +178,7 @@ def name_change(ts_code: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def new_share(start: str = None,
               end: str = None) -> pd.DataFrame:
@@ -250,7 +250,7 @@ def new_share(start: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def stock_company(ts_code: str = None,
                   exchange: str = None,
@@ -313,7 +313,7 @@ def stock_company(ts_code: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def stk_managers(ts_code: str = None,
                  ann_date: str = None,
@@ -493,7 +493,7 @@ def daily_basic2(ts_code: object = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_daily_basic(ts_code: object = None,
                       trade_date: object = None,
@@ -557,7 +557,7 @@ def realtime_min(ts_code, freq):
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def mins1(ts_code,
           start=None,
@@ -572,7 +572,7 @@ def mins1(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def mins5(ts_code,
           start=None,
@@ -587,7 +587,7 @@ def mins5(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def mins15(ts_code,
            start=None,
@@ -602,7 +602,7 @@ def mins15(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def mins30(ts_code,
            start=None,
@@ -618,7 +618,7 @@ def mins30(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def mins60(ts_code,
            start=None,
@@ -633,7 +633,7 @@ def mins60(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def ft_mins1(ts_code,
              start=None,
@@ -648,7 +648,7 @@ def ft_mins1(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def ft_mins5(ts_code,
              start=None,
@@ -663,7 +663,7 @@ def ft_mins5(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def ft_mins15(ts_code,
               start=None,
@@ -678,7 +678,7 @@ def ft_mins15(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def ft_mins30(ts_code,
               start=None,
@@ -693,7 +693,7 @@ def ft_mins30(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def ft_mins60(ts_code,
               start=None,
@@ -708,7 +708,7 @@ def ft_mins60(ts_code,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def daily(ts_code=None,
           trade_date=None,
@@ -732,7 +732,7 @@ def daily(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def weekly(ts_code=None,
            trade_date=None,
@@ -756,7 +756,7 @@ def weekly(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def monthly(ts_code=None,
             trade_date=None,
@@ -780,7 +780,7 @@ def monthly(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_daily(ts_code=None,
                 trade_date=None,
@@ -804,7 +804,7 @@ def index_daily(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_weekly(ts_code=None,
                  trade_date=None,
@@ -828,7 +828,7 @@ def index_weekly(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_monthly(ts_code=None,
                   trade_date=None,
@@ -852,7 +852,7 @@ def index_monthly(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def fund_daily(ts_code=None,
                trade_date=None,
@@ -876,7 +876,7 @@ def fund_daily(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def adj_factors(ts_code=None,
                 trade_date=None,
@@ -900,7 +900,7 @@ def adj_factors(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def fund_adj(ts_code=None,
              trade_date=None,
@@ -924,7 +924,7 @@ def fund_adj(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def fund_share(ts_code=None,
                trade_date=None,
@@ -948,7 +948,7 @@ def fund_share(ts_code=None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def fund_manager(ts_code=None,
                  ann_date=None,
@@ -972,7 +972,7 @@ def fund_manager(ts_code=None,
 # Finance Data
 # ================
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def income(ts_code: str,
            rpt_date: str = None,
@@ -1133,7 +1133,7 @@ def income(ts_code: str,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def balance(ts_code: str,
             rpt_date: str = None,
@@ -1384,7 +1384,7 @@ def balance(ts_code: str,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def cashflow(ts_code: str,
              rpt_date: str = None,
@@ -1581,7 +1581,7 @@ def cashflow(ts_code: str,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def indicators(ts_code: str,
                rpt_date: str = None,
@@ -1841,7 +1841,7 @@ def indicators(ts_code: str,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def forecast(ts_code: str = None,
              ann_date: str = None,
@@ -1910,7 +1910,7 @@ def forecast(ts_code: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def express(ts_code: str = None,
             ann_date: str = None,
@@ -1999,7 +1999,7 @@ def express(ts_code: str = None,
 # Market Data
 # =================
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def top_list(trade_date: str = None,
              shares: str = None,
@@ -2059,7 +2059,7 @@ def top_list(trade_date: str = None,
 # Index Data
 # ==================
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_basic(ts_code: str = None,
                 name: str = None,
@@ -2140,7 +2140,7 @@ def index_basic(ts_code: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def index_indicators(trade_date: str = None,
                      ts_code: str = None,
@@ -2205,7 +2205,7 @@ def index_indicators(trade_date: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def composite(index: str = None,
               trade_date: str = None,
@@ -2256,7 +2256,7 @@ def composite(index: str = None,
 # =============
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def fund_basic(market: str = None,
                status: str = None) -> pd.DataFrame:
@@ -2324,7 +2324,7 @@ def fund_basic(market: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def fund_net_value(ts_code: str = None,
                    nav_date: str = None,
@@ -2376,7 +2376,7 @@ def fund_net_value(ts_code: str = None,
 # ===============
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def future_basic(exchange: str = None,
                  future_type: str = None) -> pd.DataFrame:
@@ -2435,7 +2435,7 @@ def future_basic(exchange: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def options_basic(exchange: str = None,
                   call_put: str = None) -> pd.DataFrame:
@@ -2493,7 +2493,7 @@ def options_basic(exchange: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def future_daily(trade_date: str = None,
                  future: str = None,
@@ -2558,7 +2558,7 @@ def future_daily(trade_date: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)  # 接口有访问次数限制，因此增加delay
 def options_daily(trade_date: str = None,
                   option: str = None,
@@ -2629,7 +2629,7 @@ def options_daily(trade_date: str = None,
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count, delay=data_download_retry_delay,
+       tries=data_download_retry_count, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def shibor(date=None, start=None, end=None):
     """ 获取上海银行间同业拆借利率SHIBOR利率
@@ -2690,7 +2690,7 @@ def shibor(date=None, start=None, end=None):
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def hibor(date=None, start=None, end=None):
     """ 获取HIBOR (Hongkong InterBank Offered Rate)，香港银行同行业拆借利率
@@ -2751,7 +2751,7 @@ def hibor(date=None, start=None, end=None):
 
 
 @retry(exception_to_check=ERRORS_TO_CHECK_ON_RETRY, mute=True,
-       tries=data_download_retry_count + 3, delay=data_download_retry_delay,
+       tries=data_download_retry_count + 3, delay=data_download_retry_wait,
        backoff=data_download_retry_backoff, logger=logger_core)
 def libor(date=None, start=None, end=None, currency=None):
     """ 获取上海银行间同业拆借利率SHIBOR利率

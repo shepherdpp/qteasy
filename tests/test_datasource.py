@@ -1238,13 +1238,9 @@ class TestDataSource(unittest.TestCase):
                 if start is None:
                     continue
                 for row in range(start + day * 17, end + day * 17):
-                    try:
-                        res = hourly_data_tt.iloc[pos + day * 7].values
-                        target = resampled.iloc[row].values
-                        self.assertTrue(np.allclose(res, target))
-                    except AssertionError:
-                        import pdb
-                        pdb.set_trace()
+                    res = hourly_data_tt.iloc[pos + day * 7].values
+                    target = resampled.iloc[row].values
+                    self.assertTrue(np.allclose(res, target))
 
         print('checks resample hourly data to 2d')
         resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
@@ -1451,8 +1447,8 @@ class TestDataSource(unittest.TestCase):
 
     def test_trade_time_index(self):
         """ 测试函数是否能正确生成交易时段的indexer"""
-        print('create datetime index with freq "D"')
-        indexer = _trade_time_index('20200101', '20200105', freq='d')
+        print('create datetime index with freq "D" and keep non-trading days')
+        indexer = _trade_time_index('20200101', '20200105', freq='d', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
@@ -1462,27 +1458,62 @@ class TestDataSource(unittest.TestCase):
                                          pd.to_datetime('20200104'),
                                          pd.to_datetime('20200105')])
 
-        print('create datetime index with freq "30min" with default trade time')
-        indexer = _trade_time_index('20200101', '20200102', freq='30min')
+        print('create datetime index with freq "D" without non-trading days')
+        indexer = _trade_time_index('20200101', '20200105', freq='d')
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
-        self.assertEqual(len(indexer), 9)
+        self.assertEqual(len(indexer), 2)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103')])
+
+        print('create datetime index with freq "30min" with default trade time with non_trading days')
+        indexer = _trade_time_index('20200101', '20200103', freq='30min', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 18)
         self.assertEqual(list(indexer),
                          list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
                                               '2020-01-01 10:30:00', '2020-01-01 11:00:00',
                                               '2020-01-01 11:30:00', '2020-01-01 13:30:00',
                                               '2020-01-01 14:00:00', '2020-01-01 14:30:00',
-                                              '2020-01-01 15:00:00'])
+                                              '2020-01-01 15:00:00', '2020-01-02 09:30:00',
+                                              '2020-01-02 10:00:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:00:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 13:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 14:30:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "30min" with default trade time without non_trading days')
+        indexer = _trade_time_index('20200101', '20200103', freq='30min', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:00:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:00:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 13:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 14:30:00',
+                                              '2020-01-02 15:00:00'])
                               )
                          )
 
         print('create datetime index with freq "w" and check if all dates are Sundays (default)')
-        indexer = _trade_time_index('20200101', '20200201', freq='w')
+        indexer = _trade_time_index('20200101', '20200201', freq='w', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 4)
         self.assertTrue(
                 all(day.day_name() == 'Sunday' for day in indexer)
+        )
+
+        print('create datetime index with freq "w-Fri" and check if all dates are Fridays')
+        indexer = _trade_time_index('20200101', '20200201', freq='w-Fri', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertTrue(
+                all(day.day_name() == 'Friday' for day in indexer)
         )
 
         print('create datetime index with start/end/periods')
