@@ -1546,6 +1546,7 @@ class Trader(object):
                         shares=positions.index.tolist(),
                         htypes='close',
                         asset_type='E',
+                        freq=self.operator.op_data_freq,
                         start=today - pd.Timedelta(days=7),
                         end=today,
                 )['close'].iloc[-1]
@@ -2911,7 +2912,6 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
     from qteasy.utilfuncs import prev_market_trade_day
     today = trader.get_current_tz_datetime().strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
-
     if last_available_date < last_trade_day:
         # no need to refill if data is already filled up til yesterday
 
