@@ -285,7 +285,7 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
     """
 
     def deco_retry(f):
-        
+
         @wraps(f)
         def f_retry(*args, **kwargs):
             mtries, mdelay = tries, delay

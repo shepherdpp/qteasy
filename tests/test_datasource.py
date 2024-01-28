@@ -1235,8 +1235,8 @@ class TestDataSource(unittest.TestCase):
         print(f'hourly data:\n{hourly_data.head(25)}')
         print(f'hourly data tt:\n{hourly_data_tt.head(25)}')
         print(f'verify that resampled from hourly data and hourly tt data are the same')
-        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill')
-        resampled_tt = _resample_data(hourly_data_tt, target_freq='15min', method='ffill')
+        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill', b_days_only=False)
+        resampled_tt = _resample_data(hourly_data_tt, target_freq='15min', method='ffill', b_days_only=False)
         self.assertTrue(np.allclose(resampled, resampled_tt))
         print('checks resample hourly data to 15 min')
         print(f'resampled data:\n{resampled.head(25)}')
@@ -1293,28 +1293,35 @@ class TestDataSource(unittest.TestCase):
         resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
         resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
         print(resampled_1)
-        sampled_rows = [23, 47, 71, 143, 167, 191, 215]
+        print(hourly_data.to_string())
+        # 被选出的交易日：
+        selected_days = [1, 2, 5, 6, 7, 8, 9]
+        # 计算被选出个交易日最后一个小时的序号
+        sampled_rows = [min(d * 24 + 23, len(hourly_data) - 1) for d in selected_days]
         for pos in range(len(sampled_rows)):
             res = resampled_1.iloc[pos].values
             target = hourly_data.iloc[sampled_rows[pos]].values
-            print(f'resampled row is \n{res}\n'
-                  f'target row is \n{target}')
+            print(f'resampled row ({pos}) is \n{res}\n'
+                  f'hourly data last row ({sampled_rows[pos]}) is \n{target}')
             self.assertTrue(np.allclose(res, target))
 
         print(resampled_2)
-        sampled_row_starts = [0, 24, 48, 120, 144, 168, 192]
-        sampled_row_ends = [24, 48, 72, 144, 168, 192, 216]
+        # 计算被选出个交易日第一个小时和下一天第一个小时的序号
+        sampled_row_starts = [d * 24 for d in selected_days]
+        sampled_row_ends = [min(d * 24 + 24, len(hourly_data)) for d in selected_days]
         for pos in range(len(sampled_rows)):
             res = resampled_2.iloc[pos].values
             start = sampled_row_starts[pos]
             end = sampled_row_ends[pos]
             target = hourly_data.iloc[start:end].values.mean(0)
+            print(f'resampled row ({pos}) is \n{res}\n'
+                  f'hourly-data [{start}:{end}] averaged is \n{target}')
             self.assertTrue(np.allclose(res, target))
 
         print('resample daily data to 30min data')
         daily_data = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
         print(daily_data)
-        resampled = _resample_data(daily_data, target_freq='30min', method='ffill')
+        resampled = _resample_data(daily_data, target_freq='30min', method='ffill', b_days_only=False)
         print(resampled)
         # TODO: last day data missing when resampling daily data to sub-daily data
         #   this is to be improved
