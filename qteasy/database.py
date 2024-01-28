@@ -2954,9 +2954,7 @@ class DataSource:
 
         Note
         ----
-        当数据库表中已经存在数据时，如果不希望已经存在的数据被替换掉，
-        不要使用这个函数写入数据。因为这个函数并不会检查数据是否存在冲突
-        的键值，如果键值冲突时，df中的数据会覆盖数据库中的数据。
+        调用update_database()执行任务，设置参数ignore_duplicate=True
         """
 
         import pymysql
@@ -2967,11 +2965,56 @@ class DataSource:
                 password=self.__password__,
                 db=self.db_name,
         )
+        # if table does not exist, create a new table without primary key info
+        if not self.db_table_exists(db_table):
+            dtype_mapping = {'object': 'varchar(255)',
+                             'datetime64[ns]': 'datetime',
+                             'int64': 'int',
+                             'float32': 'float',
+                             'float64': 'double',
+                             }
+            columns = df.columns
+            dtypes = df.dtypes.tolist()
+            dtypes = [dtype_mapping.get(str(dtype.name), 'varchar(255)') for dtype in dtypes]
+
+            sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
+            fields = []
+            for col, dtype in zip(columns, dtypes):
+                fields.append(f"`{col}` {dtype}\n")
+            sql += f"{', '.join(fields)});"
+            try:
+                cursor = con.cursor()
+                cursor.execute(sql)
+                con.commit()
+            except Exception as e:
+                con.rollback()
+                raise RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
+                                   f'Exception:\n{e}\n'
+                                   f'SQL:\n{sql}')
+
+        tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
+        if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
+            raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
+        df = df.where(pd.notna(df), None)
+        df_tuple = tuple(df.itertuples(index=False, name=None))
+        sql = f"INSERT IGNORE INTO "
+        sql += f"`{db_table}` ("
+        for col in tbl_columns[:-1]:
+            sql += f"`{col}`, "
+        sql += f"`{tbl_columns[-1]}`)\nVALUES\n("
+        for val in tbl_columns[:-1]:
+            sql += "%s, "
+        sql += "%s)\n"
         try:
-            df.to_sql(db_table, con=con, index=False, if_exists='append', chunksize=5000)
-            return len(df)
+            cursor = con.cursor()
+            rows_affected = cursor.executemany(sql, df_tuple)
+            con.commit()
+            return rows_affected
         except Exception as e:
-            raise RuntimeError(f'{e}, error writing data into database.\nthe data is:\n{df}')
+            con.rollback()
+            raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
+                               f'Exception:\n{e}\n'
+                               f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
         finally:
             con.close()
 

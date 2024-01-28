@@ -670,6 +670,7 @@ class TestDataSource(unittest.TestCase):
         sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
+        con.close()
         # 为确保update顺利进行，建立新表并设置primary_key
         self.ds_db.write_database(df, table_name)
         loaded_df = self.ds_db.read_database(table_name)
@@ -712,11 +713,20 @@ class TestDataSource(unittest.TestCase):
         print(f'write and read a MultiIndex dataframe to database')
         print(f'following dataframe with multiple index will be written to database:\n'
               f'{self.df2}')
+        con = connect(
+                host=self.ds_db.host,
+                port=self.ds_db.port,
+                user=self.ds_db.__user__,
+                password=self.ds_db.__password__,
+                db=self.ds_db.db_name,
+        )
+        cursor = con.cursor()
         table_name = 'test_db_table2'
         # 删除数据库中的临时表
         sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
+        con.close()
 
         self.ds_db.write_database(self.df2, table_name)
         loaded_df = self.ds_db.read_database(table_name)
@@ -1222,14 +1232,15 @@ class TestDataSource(unittest.TestCase):
         hourly_data_tt = hourly_data.reindex(index=hourly_index_tt)
 
         print(f'test resample, above daily freq')
-        print(hourly_data.head(25))
-        print(hourly_data_tt.head(15))
+        print(f'hourly data:\n{hourly_data.head(25)}')
+        print(f'hourly data tt:\n{hourly_data_tt.head(25)}')
         print(f'verify that resampled from hourly data and hourly tt data are the same')
         resampled = _resample_data(hourly_data, target_freq='15min', method='ffill')
-        resampled_tt = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        resampled_tt = _resample_data(hourly_data_tt, target_freq='15min', method='ffill')
         self.assertTrue(np.allclose(resampled, resampled_tt))
         print('checks resample hourly data to 15 min')
-        print(resampled.head(25))
+        print(f'resampled data:\n{resampled.head(25)}')
+        print(f'houly data:\n{hourly_data_tt.head(15)}')
         sampled_rows = [(0, 2), (2, 6), (6, 9), (None, None), (9, 12), (12, 16), (16, 16)]
         for day in range(9):
             for pos in range(len(sampled_rows)):
@@ -1518,19 +1529,19 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with start/end/periods')
         print('when freq can be inferred')
-        indexer = _trade_time_index(start='20200101', end='20200102', periods=49)
+        indexer = _trade_time_index(start='20200102', end='20200103', periods=49)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
-                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
-                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
-                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
-                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
-                                              '2020-01-01 15:00:00'])
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:00:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:00:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 13:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 14:30:00',
+                                              '2020-01-02 15:00:00'])
                               )
                          )
         print('when freq can NOT be inferred')
-        indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=50, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 8)
         self.assertEqual(list(indexer),
@@ -1546,7 +1557,7 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('create datetime index with start/periods/freq')
-        indexer = _trade_time_index(start='20200101', freq='30min', periods=49)
+        indexer = _trade_time_index(start='20200101', freq='30min', periods=49, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
