@@ -556,6 +556,7 @@ class TraderShell(Cmd):
         pos_header_string = pos_string.split('\n')[0]
         earning_pos = pos[pos['profit'] >= 0].sort_values(by='profit', ascending=False)
         losing_pos = pos[pos['profit'] < 0].sort_values(by='profit', ascending=False)
+        nan_profit_pos = pos[pos['profit'].isna()]
         if not earning_pos.empty:
             earning_pos_string = earning_pos.to_string(
                     columns=['qty', 'available_qty', 'cost', 'current_price',
@@ -612,7 +613,35 @@ class TraderShell(Cmd):
             )
         else:
             losing_pos_string = ''
-        rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}')
+        if not nan_profit_pos.empty:
+            nan_profit_pos_string = nan_profit_pos.to_string(
+                    columns=['qty', 'available_qty', 'cost', 'current_price',
+                                'market_value', 'profit', 'profit_ratio', 'name'],
+                    header=None,
+                    index_names=False,
+                    formatters={'name':          '{:8s}'.format,
+                                'qty':           '{:,.2f}'.format,
+                                'available_qty': '{:,.2f}'.format,
+                                'cost':          '¥{:,.2f}'.format,
+                                'current_price': '¥{:,.2f}'.format,
+                                'market_value':  '¥{:,.2f}'.format,
+                                'profit':        '¥{:,.2f}'.format,
+                                'profit_ratio':  '{:.2%}'.format},
+                    col_space={
+                        'name': 8,
+                        'qty': 10,
+                        'available_qty': 10,
+                        'cost': 12,
+                        'current_price': 22,
+                        'market_value': 14,
+                        'profit': 14,
+                        'profit_ratio': 20,
+                    },
+                    justify='right',
+            )
+        else:
+            nan_profit_pos_string = ''
+        rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
 
     def do_overview(self, arg):
         """ Get trader overview, same as info
