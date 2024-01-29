@@ -1,4 +1,8 @@
-# RELEASE HISTORY[]()
+# RELEASE HISTORY
+
+## 1.0.17 (2024-01-29)
+- improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
+- fixed a bug that will cause error acquiring live price in live trade mode if running freq is lower than 1 hour
 
 ## 1.0.16 (2024-01-27)
 - Added feature: if a valid trade signal can not be converted to an order due to lack of available cash/stock, a message will be posted in live mode
