@@ -1197,14 +1197,12 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', argument)
+                self.trader.run_task('run_strategy', argument, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
                 print(traceback.format_exc())
 
-            import time
-            time.sleep(20)
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
@@ -1213,7 +1211,7 @@ class TraderShell(Cmd):
                 return
             task_name = argument[1]
             try:
-                self.trader.run_task(task_name)
+                self.trader.run_task(task_name, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')
@@ -2342,7 +2340,7 @@ class Trader(object):
         )
 
     # ================ task operations =================
-    def run_task(self, task, *args):
+    def run_task(self, task, *args, run_in_main_thread=False):
         """ 运行任务
 
         Parameters
@@ -2351,9 +2349,10 @@ class Trader(object):
             任务名称
         *args: tuple
             任务参数
+        run_in_main_thread: bool, default False
+            是否仅在主线程中运行任务
+            如果设置为False，少数new_thread_tasks中的任务可以在新进程中运行
         """
-        # all tasks is run in a separate thread. 未来，可能使用
-        #  threading.excepthook()来捕捉产生的exceptions
 
         available_tasks = {
             'pre_open':           self._pre_open,
@@ -2384,7 +2383,7 @@ class Trader(object):
         task_func = available_tasks[task]
 
         new_thread_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
-        if task in new_thread_tasks:
+        if (not run_in_main_thread) and (task in new_thread_tasks):
             from threading import Thread
             if args:
                 t = Thread(target=task_func, args=args, daemon=True)

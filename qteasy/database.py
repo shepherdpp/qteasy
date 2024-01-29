@@ -5253,7 +5253,7 @@ def _resample_data(hist_data, target_freq,
     # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
     # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
     # 了周五，这样可能会导致错误的结果
-    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将周六周日的数据去除
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将非交易日的数据去除
     # 不过仅对freq为'D'的频率如此操作
     if b_days_only:
         if target_freq == 'D':
@@ -5272,7 +5272,6 @@ def _resample_data(hist_data, target_freq,
     else:
         expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
     resampled = resampled.reindex(index=expanded_index)
-
     # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
     if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
         if method == 'ffill':

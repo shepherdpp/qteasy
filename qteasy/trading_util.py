@@ -1282,6 +1282,11 @@ def _trade_time_index(start=None,
         except Exception as e:
             raise RuntimeError(f'Wrong market type is given, {e}')
         trade_cal = calendar.reindex(index=time_index)
+        # 如果time_index不是从某天的00:00:00开始，则trade_cal中的第一个值会为nan
+        # 此时需要用检查trade_cal的日期，填充正确的交易日标记
+        if pd.isna(trade_cal.iloc[0]):
+            date = pd.to_datetime(time_index[0].date())
+            trade_cal.iloc[0] = calendar.loc[date]
         trade_cal = trade_cal.fillna(method='ffill')
         time_index = trade_cal.loc[trade_cal == 1].index
 
