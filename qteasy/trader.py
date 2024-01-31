@@ -1735,7 +1735,8 @@ class Trader(object):
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
         total_profit_ratio = total_profit / total_value
-        rprint(f'{" Versions ":=^{width}}')
+        # System Info
+        rprint(f'{" System Info ":=^{width}}')
         rprint(f'{"python":<{semi_width - 20}}{sys.version}')
         rprint(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
         import tushare
@@ -1745,12 +1746,51 @@ class Trader(object):
             rprint(f'{"ta-lib":<{semi_width - 20}}{talib.__version__}')
         except ImportError:
             rprint(f'{"ta-lib":<{semi_width - 20}}not installed')
+        rprint(f'{"Local DataSource":<{semi_width - 20}}{self.datasource}')
+        rprint(f'{"System log file path":<{semi_width - 20}}'
+               f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
+        rprint(f'{"Trade log file path":<{semi_width - 20}}'
+               f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
+        # Account information
         rprint(f'{" Account Overview ":=^{width}}')
         rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
         rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
         rprint(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
         rprint(f'{"Started on":<{semi_width - 20}}{self.init_datetime}')
+        rprint(f'{"Time zone":<{semi_width - 20}}{self.get_config("time_zone")["time_zone"]}')
+        # Status and Settings
+        rprint(f'{" Status and Settings ":=^{width}}')
+        rprint(f'{"Trader Stats":<{semi_width - 20}}{self.status}')
+        rprint(f'{"Broker Status":<{semi_width - 20}}{self.broker.broker_name} / {self.broker.status}')
+        rprint(f'{"Live price update freq":<{semi_width - 20}}'
+               f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}s')
+        rprint(f'{"Strategy":<{semi_width - 20}}{self.operator.strategies}')
+        rprint(f'{"Strategy run frequency":<{semi_width - 20}}{self.operator.op_data_freq}')
+        rprint(f'{"Trade batch size(buy/sell)":<{semi_width - 20}}'
+               f'{self.get_config("trade_batch_size")["trade_batch_size"]} '
+               f'/ {self.get_config("sell_batch_size")["sell_batch_size"]}')
+        rprint(f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}'
+               f'{self.get_config("cash_delivery_period")["cash_delivery_period"]}d / '
+               f'{self.get_config("stock_delivery_period")["stock_delivery_period"]}d')
+        buy_fix = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
+        sell_fix = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
+        buy_rate = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
+        sell_rate = float(self.get_config('cost_rate_sell')['cost_rate_sell'])
+        buy_min = float(self.get_config('cost_min_buy')['cost_min_buy'])
+        sell_min = float(self.get_config('cost_min_sell')['cost_min_sell'])
+        if (buy_fix > 0) or (sell_fix > 0):
+            rprint(f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}')
+        if (buy_rate > 0) or (sell_rate > 0):
+            rprint(f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}')
+        if (buy_min > 0) or (sell_min > 0):
+            rprint(f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}')
+        rprint(f'{"Market time (open/close)":<{semi_width - 20}}'
+               f'{self.get_config("market_open_time_am")["market_open_time_am"]} / '
+               f'{self.get_config("market_close_time_pm")["market_close_time_pm"]}')
+        # Investment Return
         print(f'{" Returns ":-^{semi_width}}')
+        rprint(f'{"Benchmark":<{semi_width - 20}}¥ '
+               f'{self.get_config("benchmark_asset")["benchmark_asset"]}')
         rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
         if total_value >= total_investment:
             rprint(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
@@ -2128,15 +2168,15 @@ class Trader(object):
                 self._broker.order_queue.put(trade_order)
                 # format the message depending on buy/sell orders
                 if d == 'buy':  # red for buy
-                    self.post_message(f'[NEW ORDER {order_id}]: <{name} - {sym}> [bold red]{d}-{pos} '
+                    self.post_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold red]{d}-{pos} '
                                       f'{qty} shares @ {price}[/bold red]')
                 else:  # green for sell
-                    self.post_message(f'[NEW ORDER {order_id}]: <{name} - {sym}> [bold green]{d}-{pos} '
+                    self.post_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold green]{d}-{pos} '
                                       f'{qty} shares @ {price}[/bold green]')
                 # 记录已提交的交易数量
                 submitted_qty += 1
 
-        self.post_message(f'[RAN STRATEGY {strategy_ids}]: {submitted_qty} orders submitted in total.')
+        self.post_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
 
         return submitted_qty
 
@@ -2168,7 +2208,7 @@ class Trader(object):
             pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
             status = order_detail['status']
             filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
-            self.post_message(f'[ORDER EXECUTED {order_id}]: '
+            self.post_message(f'<ORDER EXECUTED {order_id}>: '
                               f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
         # self.post_message(f'processed trade result: {result_id}\n{result}')
         # TODO: 此处为何要处理交易结果的交割？批量交割应该是在第二天开盘前进行

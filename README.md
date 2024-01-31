@@ -24,7 +24,7 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
-- [基本介绍](#关于QTEASY)
+- [基本介绍](#关于`QTEASY`)
 - [QTEASY文档](#QTEASY文档)
 - [安装依赖包](#安装及依赖)
   - [安装`qteasy`](#QTEASY的安装)
@@ -51,9 +51,7 @@
 1. **全流程覆盖**
 2. **完全本地化**
 3. **使用简单**
-4. **灵活**
-
-
+4. **灵活多变**
 
 ## `qteasy`能做什么？
 
@@ -61,8 +59,8 @@
 ### **金融历史数据**: 
 
 - 获取、清洗、本地存储大量金融历史数据
-- 检索、处理、调用这些数据
-- 可视化：
+- 检索、处理、调用本地数据
+- 本地金融数据可视化
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
 
@@ -75,8 +73,11 @@
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
 
 ### **实盘交易模拟**
-3. 快速部署交易策略开始实盘运行、进行模拟交易，跟踪记录交易日志、股票持仓、账户资金变化等信息
-
+- 读取实时市场数据，实盘运行交易策略
+- 生成交易信号，模拟交易结果
+- 跟踪记录交易日志、股票持仓、账户资金变化等信息
+- 随时查看交易过程，检查盈亏情况
+- 手动控制交易进程、调整交易参数，手动下单
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_28_1.png)  
 
