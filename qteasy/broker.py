@@ -154,7 +154,7 @@ class Broker(object):
         """
         return
 
-    def post_message(self, message: str, new_line=True):
+    def send_message(self, message: str, new_line=True):
         """ 将消息放入broker的消息队列
         """
         if self.debug:
@@ -198,7 +198,7 @@ class Broker(object):
         """
 
         if self.debug:
-            self.post_message(f'_check_result():\nsubmit order components of order(ID) {order["order_id"]}:\n'
+            self.send_message(f'_check_result():\nsubmit order components of order(ID) {order["order_id"]}:\n'
                               f'quantity:{order["qty"]}\norder_price={order["price"]}\n'
                               f'order_direction={order["direction"]}\n')
         pos_id = order['pos_id']
@@ -259,7 +259,7 @@ class Broker(object):
 
             # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
             if self.debug:
-                self.post_message(f'method: _check_result(): got transaction result for order(ID) {order["order_id"]}\n'
+                self.send_message(f'method: _check_result(): got transaction result for order(ID) {order["order_id"]}\n'
                                   f'result_type={result_type}, \nqty={qty}, \n'
                                   f'filled_price={filled_price}, \nfee={fee}')
             # 圆整qty、filled_qty和fee
@@ -290,7 +290,7 @@ class Broker(object):
 
             # 将trade_result放入result_queue
             if self.debug:
-                self.post_message(f'method _check_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
+                self.send_message(f'method _check_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
                                   f'{raw_trade_result}')
             self.result_queue.put(raw_trade_result)
 
@@ -334,7 +334,7 @@ class Broker(object):
         if not self.is_log_in:
             raise RuntimeError(f'broker is not logged in!')
         if self.debug:
-            self.post_message(f'is running...')
+            self.send_message(f'is running...')
         self.status = 'init'
         self.pre_loop()
         while True:
@@ -367,12 +367,12 @@ class Broker(object):
             except KeyboardInterrupt:
                 # 如果Broker被用户强制退出，处理尚未完成的交易订单
                 if self.debug:
-                    self.post_message('Broker will be stopped by user.')
+                    self.send_message('Broker will be stopped by user.')
                 self.status = 'stopped'
                 continue
             except Exception as e:
                 # 如果Broker出现异常，打印异常信息，并继续运行
-                self.post_message(f'Runtime exception: {e}, please check system log for details')
+                self.send_message(f'Runtime exception: {e}, please check system log for details')
                 if self.debug:
                     import traceback
                     traceback.print_exc()
@@ -614,7 +614,7 @@ class SimulatorBroker(Broker):
                 live_price = live_prices.close.iloc[-1]
                 price_deviation = live_price * self.price_deviation
             else:  # 实时价格获取不成功，稍后重试
-                self.post_message(f'live price of {symbol} can not be acquired at the moment,\n'
+                self.send_message(f'live price of {symbol} can not be acquired at the moment,\n'
                                   f'order will not be processed, will try in 1 sec...')
                 continue
 
@@ -623,14 +623,14 @@ class SimulatorBroker(Broker):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
                 # 如果change非常接近-10%(跌停)，则非常大概率canceled
                 if abs(change + 0.1) <= 0.001:
-                    self.post_message(f'order will be probably canceled because -10% sell-limit')
+                    self.send_message(f'order will be probably canceled because -10% sell-limit')
                     result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
             # 如果当前价低于挂买价(允许误差由price_deviation控制), 大概率成交或部分成交
             elif (live_price <= order_price + price_deviation) and (direction == 'buy'):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
                 # 如果change非常接近+10%(涨停)，则非常大概率canceled
                 if abs(change - 0.1) <= 0.001:
-                    self.post_message(f'order will be probably canceled because +10% buy-limit')
+                    self.send_message(f'order will be probably canceled because +10% buy-limit')
                     result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=(0.01, 0.01, 0.98))
             # 如果挂单类型为市价单且不受张跌停限制, 大概率成交或部分成交
             elif (order_type == 'market') and (-0.098 < change < 0.098):
@@ -639,7 +639,7 @@ class SimulatorBroker(Broker):
             # 所有条件均不满足，稍后重试
             else:
                 if self.debug:
-                    self.post_message('current price does not satisfy quoted, will try later')
+                    self.send_message('current price does not satisfy quoted, will try later')
                 continue
 
             # 成交类型为成交或部分成交，计算成交数量及交易费用

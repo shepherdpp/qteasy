@@ -856,7 +856,7 @@ class BaseStrategy:
         ref_data: np.ndarray
             策略运行所需的参考数据，包括价格数据、指标数据等
         trade_data: np.ndarray
-            策略运行所需的交易数据，包括价格数据、指标数据等
+            策略运行所需的交易数据，包括价格数据、指标数据等  # TODO (v1.1删除)
         data_idx: int or np.ndarray
             策略运行所需的历史数据的索引，用于在历史数据中定位当前运行的数据
 
@@ -865,6 +865,16 @@ class BaseStrategy:
         stg_signal: np.ndarray
             策略运行的输出，包括交易信号、交易指令等
         """
+
+        # TODO: (v1.1规划更新)
+        #  改变trade_data的定义。删除trade_data，允许用户在hist_data和ref_data
+        #  中定义持仓量、成交量、成交价等数据，这些数据类型通过特殊的数据类型关键字指定，因此客户在策略定
+        #  义时可以通过data_type来灵活地指定所需的数据，不需要专门的trade_data数据类型了。
+        #  同时，这样做还有一个好处，可以定义更多更广泛的数据类型，例如交易日日期、星期几、月份、交易时间
+        #  等等数据，所有与股票无关的数据都可以定义为reference_data，与股票相关的数据可以定义为
+        #  history_data。这样可以大大增加策略的灵活性。
+        #  同时为未来允许用户自定义数据类型做好准备。
+
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
         # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单
         if data_idx is None:
@@ -882,8 +892,7 @@ class BaseStrategy:
             else:
                 ref_seg = ref_data[idx]
             return self.generate_one(h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
-        elif isinstance(data_idx, np.ndarray):
-            # 如果data_idx为一组整数时，生成完整信号清单 signal_list
+        elif isinstance(data_idx, np.ndarray):  # 如果data_idx为一组整数时，生成完整信号清单 signal_list
             # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
             signal_count, share_count, date_count, htype_count = hist_data.shape
             sig_list = np.full(shape=(signal_count, share_count), fill_value=np.nan, order='C')
