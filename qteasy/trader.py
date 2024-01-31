@@ -1723,7 +1723,7 @@ class Trader(object):
 
         from rich import print as rprint
 
-        semi_width = int(width * 0.65)
+        semi_width = int(width * 0.75)
         position_info = self.account_position_info
         total_market_value = position_info['market_value'].sum()
         own_cash = self.account_cash[0]
@@ -1734,7 +1734,7 @@ class Trader(object):
         total_return_of_investment = total_value - total_investment
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
-        total_profit_ratio = total_profit / total_value
+        total_profit_ratio = total_profit / total_market_value
         # System Info
         rprint(f'{" System Info ":=^{width}}')
         rprint(f'{"python":<{semi_width - 20}}{sys.version}')
@@ -1763,15 +1763,15 @@ class Trader(object):
         rprint(f'{"Trader Stats":<{semi_width - 20}}{self.status}')
         rprint(f'{"Broker Status":<{semi_width - 20}}{self.broker.broker_name} / {self.broker.status}')
         rprint(f'{"Live price update freq":<{semi_width - 20}}'
-               f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}s')
+               f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}')
         rprint(f'{"Strategy":<{semi_width - 20}}{self.operator.strategies}')
         rprint(f'{"Strategy run frequency":<{semi_width - 20}}{self.operator.op_data_freq}')
         rprint(f'{"Trade batch size(buy/sell)":<{semi_width - 20}}'
                f'{self.get_config("trade_batch_size")["trade_batch_size"]} '
                f'/ {self.get_config("sell_batch_size")["sell_batch_size"]}')
         rprint(f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}'
-               f'{self.get_config("cash_delivery_period")["cash_delivery_period"]}d / '
-               f'{self.get_config("stock_delivery_period")["stock_delivery_period"]}d')
+               f'{self.get_config("cash_delivery_period")["cash_delivery_period"]} day / '
+               f'{self.get_config("stock_delivery_period")["stock_delivery_period"]} day')
         buy_fix = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
         sell_fix = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
         buy_rate = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
@@ -1788,7 +1788,7 @@ class Trader(object):
                f'{self.get_config("market_open_time_am")["market_open_time_am"]} / '
                f'{self.get_config("market_close_time_pm")["market_close_time_pm"]}')
         # Investment Return
-        print(f'{" Returns ":-^{semi_width}}')
+        print(f'{" Returns ":=^{semi_width}}')
         rprint(f'{"Benchmark":<{semi_width - 20}}¥ '
                f'{self.get_config("benchmark_asset")["benchmark_asset"]}')
         rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
@@ -1802,11 +1802,11 @@ class Trader(object):
             rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
                    f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
                    f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]')
-        print(f'{" Cash ":-^{semi_width}}')
+        print(f'{" Cash ":=^{semi_width}}')
         rprint(f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} ')
         rprint(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
         rprint(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
-        print(f'{" Stocks ":-^{semi_width}}')
+        print(f'{" Stocks ":=^{semi_width}}')
         rprint(f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}')
         if total_profit >= 0:
             rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
@@ -1818,10 +1818,10 @@ class Trader(object):
             rprint(f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold green]')
         asset_in_pool= len(self.asset_pool)
         asset_pool_string = adjust_string_length(
-                s=', '.join(self.asset_pool),
+                s=' '.join(self.asset_pool),
                 n=width - 2,
         )
-        print(f'{" Investment ":-^{width}}')
+        print(f'{" Investment ":=^{width}}')
         rprint(f'Current Investment Type:        {self.asset_type}')
         rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
                f'=={asset_pool_string}\n')
