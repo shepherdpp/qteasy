@@ -277,16 +277,16 @@ def _valid_qt_kwargs():
              'level':     4,
              'text':      '下载历史数据失败时的自动重试次数'},
 
-        'hist_dnld_retry_delay':
+        'hist_dnld_retry_wait':
             {'Default':   1.,
-             'Validator': lambda value: isinstance(value, float) and
-                                        1.0 <= value <= 5.0,
+             'Validator': lambda value: isinstance(value, (int, float)) and
+                                        0.1 <= value <= 5.0,
              'level':     4,
              'text':      '下载历史数据失败时的自动重试前的延迟时间，单位为秒'},
 
         'hist_dnld_backoff':
             {'Default':   2.,
-             'Validator': lambda value: isinstance(value, float) and
+             'Validator': lambda value: isinstance(value, (int, float)) and
                                         1.0 <= value <= 3.0,
              'level':     4,
              'text':      '下载历史数据失败时的自动重试的延迟时间倍增乘数\n'

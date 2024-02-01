@@ -2755,9 +2755,10 @@ class DataSource:
                             (df[date_like_pk] <= end)]
             elif (share_like_pk is not None) and (date_like_pk is None):
                 df = df.loc[(df[share_like_pk].isin(shares))]
-        except:
-            import pdb
-            pdb.set_trace()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise RuntimeError(f'{e}')
 
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
@@ -2935,8 +2936,10 @@ class DataSource:
             con.close()
 
     def write_database(self, df, db_table):
-        """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
-        与db_table的schema相同且顺序也相同
+        """ 将DataFrame中的数据添加到数据库表末尾，如果表不存在，则
+        新建一张数据库表，并设置primary_key（如果给出）
+
+        假定df的列与db_table的schema相同且顺序也相同
 
         Parameter
         ---------
@@ -2951,9 +2954,7 @@ class DataSource:
 
         Note
         ----
-        当数据库表中已经存在数据时，如果不希望已经存在的数据被替换掉，
-        不要使用这个函数写入数据。因为这个函数并不会检查数据是否存在冲突
-        的键值，如果键值冲突时，df中的数据会覆盖数据库中的数据。
+        调用update_database()执行任务，设置参数ignore_duplicate=True
         """
 
         import pymysql
@@ -2964,11 +2965,56 @@ class DataSource:
                 password=self.__password__,
                 db=self.db_name,
         )
+        # if table does not exist, create a new table without primary key info
+        if not self.db_table_exists(db_table):
+            dtype_mapping = {'object': 'varchar(255)',
+                             'datetime64[ns]': 'datetime',
+                             'int64': 'int',
+                             'float32': 'float',
+                             'float64': 'double',
+                             }
+            columns = df.columns
+            dtypes = df.dtypes.tolist()
+            dtypes = [dtype_mapping.get(str(dtype.name), 'varchar(255)') for dtype in dtypes]
+
+            sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
+            fields = []
+            for col, dtype in zip(columns, dtypes):
+                fields.append(f"`{col}` {dtype}\n")
+            sql += f"{', '.join(fields)});"
+            try:
+                cursor = con.cursor()
+                cursor.execute(sql)
+                con.commit()
+            except Exception as e:
+                con.rollback()
+                raise RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
+                                   f'Exception:\n{e}\n'
+                                   f'SQL:\n{sql}')
+
+        tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
+        if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
+            raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
+        df = df.where(pd.notna(df), None)
+        df_tuple = tuple(df.itertuples(index=False, name=None))
+        sql = f"INSERT IGNORE INTO "
+        sql += f"`{db_table}` ("
+        for col in tbl_columns[:-1]:
+            sql += f"`{col}`, "
+        sql += f"`{tbl_columns[-1]}`)\nVALUES\n("
+        for val in tbl_columns[:-1]:
+            sql += "%s, "
+        sql += "%s)\n"
         try:
-            df.to_sql(db_table, con=con, index=False, if_exists='append', chunksize=5000)
-            return len(df)
+            cursor = con.cursor()
+            rows_affected = cursor.executemany(sql, df_tuple)
+            con.commit()
+            return rows_affected
         except Exception as e:
-            raise RuntimeError(f'{e}, error in writing data into database.')
+            con.rollback()
+            raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
+                               f'Exception:\n{e}\n'
+                               f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
         finally:
             con.close()
 
@@ -4301,7 +4347,6 @@ class DataSource:
             for val in values[:-1]:
                 sql += f"{val}, "
             sql += f"{values[-1]})\n"
-            # import pdb; pdb.set_trace()
             try:
                 self.conn.execute(sql)
                 self.conn.commit()
@@ -4498,7 +4543,7 @@ class DataSource:
                 combined_factors = 1.0
                 # 后复权价 = 当日最新价 × 当日复权因子
                 for af in adj_factors:
-                    combined_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
+                    combined_factors *= adj_factors[af].reindex(columns=all_ts_codes, index=price_df.index).fillna(1.0)
                 # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
                 #  但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
                 if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
@@ -4575,7 +4620,7 @@ class DataSource:
 
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
-                            process_count=None, chunk_size=100, refresh_trade_calendar=True, log=False):
+                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False):
         """ 批量下载历史数据并保存到本地数据仓库
 
         Parameters
@@ -4727,16 +4772,25 @@ class DataSource:
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
             # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
-            if ('trade_calendar' not in tables_to_refill) and refresh_trade_calendar:
-                # TODO: 尝试去掉默认下载trade_calendar，因为低积分用户只有每分钟访问一次trade_calendar的权限
-                #  默认下载太过于耗时，只有当trade_calendar无数据或数据不足时才添加trade_calendar
-                tables_to_refill.add('trade_calendar')
+            if 'trade_calendar' not in tables_to_refill:
+                if refresh_trade_calendar:
+                    tables_to_refill.add('trade_calendar')
+                else:
+                    # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+                    latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
+                    if latest_calendar_date == 'N/A':
+                        tables_to_refill.add('trade_calendar')
+                    elif pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+                        tables_to_refill.add('trade_calendar')
 
+        # 开始逐个下载清单中的表数据
+        table_count = 0
         import time
         for table in table_master.index:
             # 逐个下载数据并写入本地数据表中
             if table not in tables_to_refill:
                 continue
+            table_count += 1
             cur_table_info = table_master.loc[table]
             # 3 生成数据下载参数序列
             arg_name = cur_table_info.fill_arg_name
@@ -4832,7 +4886,8 @@ class DataSource:
             time_elapsed = 0
             rows_affected = 0
             try:
-                if parallel and (table != 'trade_calendar'):
+                # 清单中的第一张表不使用parallel下载
+                if parallel and table_count != 1:
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
                         # 这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
                         #  通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
@@ -5198,7 +5253,7 @@ def _resample_data(hist_data, target_freq,
     # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
     # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
     # 了周五，这样可能会导致错误的结果
-    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将周六周日的数据去除
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将非交易日的数据去除
     # 不过仅对freq为'D'的频率如此操作
     if b_days_only:
         if target_freq == 'D':
@@ -5207,11 +5262,16 @@ def _resample_data(hist_data, target_freq,
     # 如果要求去掉非交易时段的数据
     from qteasy.trading_util import _trade_time_index
     if trade_time_only:
-        expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
+        expanded_index = _trade_time_index(
+                start=start,
+                end=end,
+                freq=target_freq,
+                trade_days_only=b_days_only,
+                **kwargs
+        )
     else:
         expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
     resampled = resampled.reindex(index=expanded_index)
-
     # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
     if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
         if method == 'ffill':

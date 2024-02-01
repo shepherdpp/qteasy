@@ -168,12 +168,12 @@ class TraderShell(Cmd):
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
                 live_prices.set_index('symbol', inplace=True)
 
-                if self.trader.debug:
-                    self.trader.post_message('live prices acquired to update watched prices!')
-            else:
-
-                if self.trader.debug:
-                    self.trader.post_message('Failed to acquire live prices to update watch price string!')
+            #     # if self.trader.debug:
+            #     #     self.trader.post_message('live prices acquired to update watched prices!')
+            # else:
+            #
+            #     if self.trader.debug:
+            #         self.trader.post_message('Failed to acquire live prices to update watch price string!')
 
             watched_prices = ''
             for symbol in symbols:
@@ -556,6 +556,7 @@ class TraderShell(Cmd):
         pos_header_string = pos_string.split('\n')[0]
         earning_pos = pos[pos['profit'] >= 0].sort_values(by='profit', ascending=False)
         losing_pos = pos[pos['profit'] < 0].sort_values(by='profit', ascending=False)
+        nan_profit_pos = pos[pos['profit'].isna()]
         if not earning_pos.empty:
             earning_pos_string = earning_pos.to_string(
                     columns=['qty', 'available_qty', 'cost', 'current_price',
@@ -612,7 +613,35 @@ class TraderShell(Cmd):
             )
         else:
             losing_pos_string = ''
-        rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}')
+        if not nan_profit_pos.empty:
+            nan_profit_pos_string = nan_profit_pos.to_string(
+                    columns=['qty', 'available_qty', 'cost', 'current_price',
+                                'market_value', 'profit', 'profit_ratio', 'name'],
+                    header=None,
+                    index_names=False,
+                    formatters={'name':          '{:8s}'.format,
+                                'qty':           '{:,.2f}'.format,
+                                'available_qty': '{:,.2f}'.format,
+                                'cost':          '¥{:,.2f}'.format,
+                                'current_price': '¥{:,.2f}'.format,
+                                'market_value':  '¥{:,.2f}'.format,
+                                'profit':        '¥{:,.2f}'.format,
+                                'profit_ratio':  '{:.2%}'.format},
+                    col_space={
+                        'name': 8,
+                        'qty': 10,
+                        'available_qty': 10,
+                        'cost': 12,
+                        'current_price': 22,
+                        'market_value': 14,
+                        'profit': 14,
+                        'profit_ratio': 20,
+                    },
+                    justify='right',
+            )
+        else:
+            nan_profit_pos_string = ''
+        rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
 
     def do_overview(self, arg):
         """ Get trader overview, same as info
@@ -753,9 +782,9 @@ class TraderShell(Cmd):
                                          -history['filled_qty'],
                                          history['filled_qty'])
         # calculate rows: cum_qty, trade_cost, cum_cost, value, share_cost, earnings, and earning rate
-        history['cum_qty'] = history['filled_qty'].cumsum()
+        history['cum_qty'] = history.groupby('symbol')['filled_qty'].cumsum()
         history['trade_cost'] = history['filled_qty'] * history['price_filled'] + history['transaction_fee']
-        history['cum_cost'] = history['trade_cost'].cumsum()
+        history['cum_cost'] = history.groupby('symbol')['trade_cost'].cumsum()
         history['value'] = history['cum_qty'] * history['price_filled']
         history['share_cost'] = history['cum_cost'] / history['cum_qty']
         history['earnings'] = history['value'] - history['cum_cost']
@@ -768,40 +797,41 @@ class TraderShell(Cmd):
         # for earning rate
         # Error will be raised if execution_time is NaT. will print out normal format in this case
         if np.any(pd.isna(history.execution_time)):
-            print(history)
-        else:
-            rprint(
-                    history.to_string(
-                            columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
-                                     'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
-                                     'name'],
-                            header=['time', 'symbol', 'oper', 'qty', 'price',
-                                    'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
-                                    'name'],
-                            formatters={
-                                'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
-                                'name':         '{:8s}'.format,
-                                'operation':    '{:s}'.format,
-                                'filled_qty':   '{:,.2f}'.format,
-                                'price_filled': '¥{:,.2f}'.format,
-                                'transaction_fee': '¥{:,.2f}'.format,
-                                'cum_qty':      '{:,.2f}'.format,
-                                'value':        '¥{:,.2f}'.format,
-                                'share_cost':   '¥{:,.2f}'.format,
-                                'earnings':     '¥{:,.2f}'.format,
-                                'earning_rate': '{:.3%}'.format,
-                            },
-                            col_space={
-                                'name': 8,
-                                'price_filled': 10,
-                                'value': 12,
-                                'share_cost': 10,
-                                'earnings': 12,
-                            },
-                            justify='right',
-                            index=False,
-                    )
-            )
+            history.execution_time = history.execution_time.fillna(pd.to_datetime('1970-01-01'))
+        # else:
+        # print(history)
+        rprint(
+                history.to_string(
+                        columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
+                                 'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
+                                 'name'],
+                        header=['time', 'symbol', 'oper', 'qty', 'price',
+                                'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
+                                'name'],
+                        formatters={
+                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                            'name':         '{:8s}'.format,
+                            'operation':    '{:s}'.format,
+                            'filled_qty':   '{:,.2f}'.format,
+                            'price_filled': '¥{:,.2f}'.format,
+                            'transaction_fee': '¥{:,.2f}'.format,
+                            'cum_qty':      '{:,.2f}'.format,
+                            'value':        '¥{:,.2f}'.format,
+                            'share_cost':   '¥{:,.2f}'.format,
+                            'earnings':     '¥{:,.2f}'.format,
+                            'earning_rate': '{:.3%}'.format,
+                        },
+                        col_space={
+                            'name': 8,
+                            'price_filled': 10,
+                            'value': 12,
+                            'share_cost': 10,
+                            'earnings': 12,
+                        },
+                        justify='right',
+                        index=False,
+                )
+        )
 
     def do_orders(self, arg):
         """ Get trader orders
@@ -1167,14 +1197,12 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', argument)
+                self.trader.run_task('run_strategy', argument, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
                 print(traceback.format_exc())
 
-            import time
-            time.sleep(20)
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
@@ -1183,7 +1211,7 @@ class TraderShell(Cmd):
                 return
             task_name = argument[1]
             try:
-                self.trader.run_task(task_name)
+                self.trader.run_task(task_name, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')
@@ -1264,8 +1292,8 @@ class TraderShell(Cmd):
                             from threading import Thread
                             t = Thread(target=self.update_watched_prices, daemon=True)
                             t.start()
-                            if self.trader.debug:
-                                self.trader.post_message(f'Acquiring watched prices in a new thread<{t.name}>')
+                            # if self.trader.debug:
+                                # self.trader.post_message(f'Acquiring watched prices in a new thread<{t.name}>')
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -1516,6 +1544,7 @@ class Trader(object):
                         shares=positions.index.tolist(),
                         htypes='close',
                         asset_type='E',
+                        freq=self.operator.op_data_freq,
                         start=today - pd.Timedelta(days=7),
                         end=today,
                 )['close'].iloc[-1]
@@ -1694,7 +1723,7 @@ class Trader(object):
 
         from rich import print as rprint
 
-        semi_width = int(width * 0.65)
+        semi_width = int(width * 0.75)
         position_info = self.account_position_info
         total_market_value = position_info['market_value'].sum()
         own_cash = self.account_cash[0]
@@ -1705,8 +1734,9 @@ class Trader(object):
         total_return_of_investment = total_value - total_investment
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
-        total_profit_ratio = total_profit / total_value
-        rprint(f'{" Versions ":=^{width}}')
+        total_profit_ratio = total_profit / total_market_value
+        # System Info
+        rprint(f'{" System Info ":=^{width}}')
         rprint(f'{"python":<{semi_width - 20}}{sys.version}')
         rprint(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
         import tushare
@@ -1716,12 +1746,51 @@ class Trader(object):
             rprint(f'{"ta-lib":<{semi_width - 20}}{talib.__version__}')
         except ImportError:
             rprint(f'{"ta-lib":<{semi_width - 20}}not installed')
+        rprint(f'{"Local DataSource":<{semi_width - 20}}{self.datasource}')
+        rprint(f'{"System log file path":<{semi_width - 20}}'
+               f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
+        rprint(f'{"Trade log file path":<{semi_width - 20}}'
+               f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
+        # Account information
         rprint(f'{" Account Overview ":=^{width}}')
         rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
         rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
         rprint(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
         rprint(f'{"Started on":<{semi_width - 20}}{self.init_datetime}')
-        print(f'{" Returns ":-^{semi_width}}')
+        rprint(f'{"Time zone":<{semi_width - 20}}{self.get_config("time_zone")["time_zone"]}')
+        # Status and Settings
+        rprint(f'{" Status and Settings ":=^{width}}')
+        rprint(f'{"Trader Stats":<{semi_width - 20}}{self.status}')
+        rprint(f'{"Broker Status":<{semi_width - 20}}{self.broker.broker_name} / {self.broker.status}')
+        rprint(f'{"Live price update freq":<{semi_width - 20}}'
+               f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}')
+        rprint(f'{"Strategy":<{semi_width - 20}}{self.operator.strategies}')
+        rprint(f'{"Strategy run frequency":<{semi_width - 20}}{self.operator.op_data_freq}')
+        rprint(f'{"Trade batch size(buy/sell)":<{semi_width - 20}}'
+               f'{self.get_config("trade_batch_size")["trade_batch_size"]} '
+               f'/ {self.get_config("sell_batch_size")["sell_batch_size"]}')
+        rprint(f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}'
+               f'{self.get_config("cash_delivery_period")["cash_delivery_period"]} day / '
+               f'{self.get_config("stock_delivery_period")["stock_delivery_period"]} day')
+        buy_fix = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
+        sell_fix = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
+        buy_rate = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
+        sell_rate = float(self.get_config('cost_rate_sell')['cost_rate_sell'])
+        buy_min = float(self.get_config('cost_min_buy')['cost_min_buy'])
+        sell_min = float(self.get_config('cost_min_sell')['cost_min_sell'])
+        if (buy_fix > 0) or (sell_fix > 0):
+            rprint(f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}')
+        if (buy_rate > 0) or (sell_rate > 0):
+            rprint(f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}')
+        if (buy_min > 0) or (sell_min > 0):
+            rprint(f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}')
+        rprint(f'{"Market time (open/close)":<{semi_width - 20}}'
+               f'{self.get_config("market_open_time_am")["market_open_time_am"]} / '
+               f'{self.get_config("market_close_time_pm")["market_close_time_pm"]}')
+        # Investment Return
+        print(f'{" Returns ":=^{semi_width}}')
+        rprint(f'{"Benchmark":<{semi_width - 20}}¥ '
+               f'{self.get_config("benchmark_asset")["benchmark_asset"]}')
         rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
         if total_value >= total_investment:
             rprint(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
@@ -1733,11 +1802,11 @@ class Trader(object):
             rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
                    f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
                    f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]')
-        print(f'{" Cash ":-^{semi_width}}')
+        print(f'{" Cash ":=^{semi_width}}')
         rprint(f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} ')
         rprint(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
         rprint(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
-        print(f'{" Stocks ":-^{semi_width}}')
+        print(f'{" Stocks ":=^{semi_width}}')
         rprint(f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}')
         if total_profit >= 0:
             rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
@@ -1749,10 +1818,10 @@ class Trader(object):
             rprint(f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold green]')
         asset_in_pool= len(self.asset_pool)
         asset_pool_string = adjust_string_length(
-                s=', '.join(self.asset_pool),
+                s=' '.join(self.asset_pool),
                 n=width - 2,
         )
-        print(f'{" Investment ":-^{width}}')
+        print(f'{" Investment ":=^{width}}')
         rprint(f'Current Investment Type:        {self.asset_type}')
         rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
                f'=={asset_pool_string}\n')
@@ -2043,7 +2112,7 @@ class Trader(object):
             self.post_message(f'ran strategy and created signal: {op_signal}')
 
         # 解析交易信号
-        symbols, positions, directions, quantities, quoted_prices = parse_trade_signal(
+        symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
                 signals=op_signal,
                 signal_type=signal_type,
                 shares=shares,
@@ -2063,7 +2132,17 @@ class Trader(object):
                               f'directions: {directions}\n'
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n')
-        for sym, name, pos, d, qty, price in zip(symbols, names, positions, directions, quantities, quoted_prices):
+        for sym, name, pos, d, qty, price, remark in zip(
+                symbols,
+                names,
+                positions,
+                directions,
+                quantities,
+                quoted_prices,
+                remarks,
+        ):
+            if remark:
+                self.post_message(remark)
             if qty <= 0.001:
                 continue
             pos_id = get_or_create_position(account_id=self.account_id,
@@ -2089,15 +2168,15 @@ class Trader(object):
                 self._broker.order_queue.put(trade_order)
                 # format the message depending on buy/sell orders
                 if d == 'buy':  # red for buy
-                    self.post_message(f'[NEW ORDER {order_id}]: <{name} - {sym}> [bold red]{d}-{pos} '
+                    self.post_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold red]{d}-{pos} '
                                       f'{qty} shares @ {price}[/bold red]')
                 else:  # green for sell
-                    self.post_message(f'[NEW ORDER {order_id}]: <{name} - {sym}> [bold green]{d}-{pos} '
+                    self.post_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold green]{d}-{pos} '
                                       f'{qty} shares @ {price}[/bold green]')
                 # 记录已提交的交易数量
                 submitted_qty += 1
 
-        self.post_message(f'[RAN STRATEGY {strategy_ids}]: {submitted_qty} orders submitted in total.')
+        self.post_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
 
         return submitted_qty
 
@@ -2129,22 +2208,31 @@ class Trader(object):
             pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
             status = order_detail['status']
             filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
-            self.post_message(f'[ORDER EXECUTED {order_id}]: '
+            self.post_message(f'<ORDER EXECUTED {order_id}>: '
                               f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
         # self.post_message(f'processed trade result: {result_id}\n{result}')
-        if self.debug:
-            self.post_message(f'processed trade result: {result_id}\n{result}')
-        process_trade_delivery(
-                account_id=self.account_id,
-                data_source=self._datasource,
-                config=self._config,
-        )
+        # TODO: 此处为何要处理交易结果的交割？批量交割应该是在第二天开盘前进行
+        #  只有现金需要进行立即交割，但是现在live mode下现金是直接交割的，
+        #  不需要单独交割，因此此处不进行交割处理
+        # if self.debug:
+        #     self.post_message(f'processed trade result: {result_id}\n{result}')
+        # process_trade_delivery(
+        #         account_id=self.account_id,
+        #         data_source=self._datasource,
+        #         config=self._config,
+        # )
         if self.debug:
             self.post_message(f'processed trade delivery: cashes \n{self.account_cash}')
             self.post_message(f'processed trade delivery: positions \n{self.non_zero_positions}')
 
     def _pre_open(self):
-        """ 开市前, 确保data_source重新连接, 并扫描数据源，下载缺失的数据"""
+        """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
+
+        - 确保data_source重新连接,
+        - 扫描数据源，下载缺失的数据
+        - 处理订单的交割
+        - 获取当日实时价格
+        """
         datasource = self._datasource
         config = self._config
         operator = self._operator
@@ -2166,11 +2254,18 @@ class Trader(object):
                 datasource=datasource,
         )
 
+        # 检查今日成交结果，完成交易结果的交割
+        process_trade_delivery(
+                account_id=self.account_id,
+                data_source=self._datasource,
+                config=self._config
+        )
+
         # 获取当日实时价格
         self._update_live_price()
 
     def _post_close(self):
-        """ 收市后例行操作：
+        """ 所有收盘后应该完成的任务
 
         1，处理当日未完成的交易信号，生成取消订单，并记录订单取消结果
         2，处理当日已成交的订单结果的交割，记录交割结果
@@ -2218,11 +2313,11 @@ class Trader(object):
             self.post_message(f'canceled unfilled orders')
 
         # 检查今日成交结果，完成交易结果的交割
-        process_trade_delivery(
-                account_id=self.account_id,
-                data_source=self._datasource,
-                config=self._config
-        )
+        # process_trade_delivery(
+        #         account_id=self.account_id,
+        #         data_source=self._datasource,
+        #         config=self._config
+        # )
         self.post_message('processed trade delivery')
 
     def _change_date(self):
@@ -2285,7 +2380,7 @@ class Trader(object):
         )
 
     # ================ task operations =================
-    def run_task(self, task, *args):
+    def run_task(self, task, *args, run_in_main_thread=False):
         """ 运行任务
 
         Parameters
@@ -2294,9 +2389,10 @@ class Trader(object):
             任务名称
         *args: tuple
             任务参数
+        run_in_main_thread: bool, default False
+            是否仅在主线程中运行任务
+            如果设置为False，少数new_thread_tasks中的任务可以在新进程中运行
         """
-        # all tasks is run in a separate thread. 未来，可能使用
-        #  threading.excepthook()来捕捉产生的exceptions
 
         available_tasks = {
             'pre_open':           self._pre_open,
@@ -2327,7 +2423,7 @@ class Trader(object):
         task_func = available_tasks[task]
 
         new_thread_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
-        if task in new_thread_tasks:
+        if (not run_in_main_thread) and (task in new_thread_tasks):
             from threading import Thread
             if args:
                 t = Thread(target=task_func, args=args, daemon=True)
@@ -2476,7 +2572,8 @@ class Trader(object):
                 self.post_message('market open, removing all tasks before current time except pre_open and open_market')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
-                                        (task[1] in ['pre_open', 'open_market'])]
+                                        (task[1] in ['pre_open',
+                                                     'open_market'])]
         elif mca < current_time < moc:
             # before market afternoon open, remove all task before current time except pre_open, open_market and sleep
             if self.debug:
@@ -2484,7 +2581,9 @@ class Trader(object):
                                   'except pre_open, open_market and sleep')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
-                                        (task[1] in ['pre_open', 'open_market', 'sleep'])]
+                                        (task[1] in ['pre_open',
+                                                     'open_market',
+                                                     'sleep'])]
         elif moc < current_time < mcc:
             # market afternoon open, remove all task before current time except pre_open, open_market, sleep, and wakeup
             if self.debug:
@@ -2492,13 +2591,18 @@ class Trader(object):
                                   'except pre_open, open_market, sleep and wakeup')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
-                                        (task[1] in ['pre_open', 'open_market'])]
+                                        (task[1] in ['pre_open',
+                                                     'open_market',
+                                                     'sleep',
+                                                     'wakeup'])]
         elif mcc < current_time:
-            # after market close, remove all task before current time except post_close
+            # after market close, remove all task before current time except pre_open and post_close
             if self.debug:
                 self.post_message('market closed, removing all tasks before current time except post_close')
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
-                                        (pd.to_datetime(task[0]).time() >= current_time) or (task[1] == 'post_close')]
+                                        (pd.to_datetime(task[0]).time() >= current_time) or
+                                        (task[1] in ['pre_open',
+                                                     'post_close'])]
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
@@ -2847,7 +2951,6 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
     from qteasy.utilfuncs import prev_market_trade_day
     today = trader.get_current_tz_datetime().strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
-
     if last_available_date < last_trade_day:
         # no need to refill if data is already filled up til yesterday
 
