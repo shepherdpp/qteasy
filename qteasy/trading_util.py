@@ -290,7 +290,7 @@ def parse_trade_signal(signals,
         cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
 
     # 将计算出的买入和卖出的数量转换为交易订单
-    symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+    symbols, positions, directions, quantities, quoted_prices, remarks= _signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,
@@ -301,7 +301,7 @@ def parse_trade_signal(signals,
         moq_sell=config['sell_batch_size'],
         allow_sell_short=config['allow_sell_short'],
     )
-    return symbols, positions, directions, quantities, quoted_prices
+    return symbols, positions, directions, quantities, quoted_prices, remarks
 
 
 # TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loopstep中直接引用这三个函数的返回值
@@ -511,30 +511,27 @@ def _signal_to_order_elements(shares,
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
     - quoted_prices: list of float, 所有交易信号的交易报价
+    - remarks: list of str, 生成交易信号的说明，用于为trader提供提示
     """
-
-    # TODO: add moq calculation for amounts to buy/sell
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
-    # print(f'[DEBUG] in function signal_to_order_elements(), got total cash to spend: {total_cash_to_spend} ')
+    base_remark = ''
     if total_cash_to_spend > available_cash:
-        # print(f'[DEBUG] in function signal_to_order_elements(), because total cash to spend is greater than'
-        #       f'available cash ({available_cash}), then total cash to spend is adjusted to: '
-        #       f'{cash_to_spend * available_cash / total_cash_to_spend} ')
-        cash_to_spend = cash_to_spend * available_cash / total_cash_to_spend
+        available_to_plan_ratio = available_cash / total_cash_to_spend
+        cash_to_spend = cash_to_spend * available_to_plan_ratio
+        base_remark = f'Not enough available cash ({available_cash:.2f}), ' \
+                      f'adjusted cash to spend to {available_to_plan_ratio:.1%}'
 
     # 逐个计算每一只资产的买入和卖出的数量
-    symbols = []
-    positions = []
-    directions = []
-    quantities = []
-    quoted_prices = []
+    symbols = []  # 股票代码
+    positions = []  # 持仓类型
+    directions = []  # 交易方向
+    quantities = []  # 交易数量
+    quoted_prices = []  # 交易报价
+    remarks = []  # 生成交易信号的说明，用于为trader提供提示
 
     for i, sym in enumerate(shares):
-        # print(f'[DEBUG] in function signal_to_order_elements(), got signals for each symbol: \n'
-        #       f'symbol: {sym} - cash to spend: {cash_to_spend[i]} / amounts to sell: {amounts_to_sell[i]}\n'
-        #       f'available cash: {available_cash} / available amounts: {available_amounts[i]}')
         # 计算多头买入的数量
         if cash_to_spend[i] > 0.001:
             # 计算买入的数量
@@ -546,6 +543,7 @@ def _signal_to_order_elements(shares,
             directions.append('buy')
             quantities.append(quantity)
             quoted_prices.append(prices[i])
+            remarks.append(base_remark)
         # 计算空头买入的数量
         if (cash_to_spend[i] < -0.001) and allow_sell_short:
             # 计算买入的数量
@@ -557,6 +555,7 @@ def _signal_to_order_elements(shares,
             directions.append('buy')
             quantities.append(quantity)
             quoted_prices.append(prices[i])
+            remarks.append(base_remark)
         # 计算多头卖出的数量
         if amounts_to_sell[i] < -0.001:
             # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
@@ -570,6 +569,8 @@ def _signal_to_order_elements(shares,
                 directions.append('sell')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
+                remarks.append(base_remark + f'Not enough available stock({available_amounts[i]}), '
+                                             f'sell qty ({amounts_to_sell[i]}) reduced and rounded to {quantity}')
                 # 如果allow_sell_short，增加反向头寸的买入信号
                 if allow_sell_short:
                     quantity = np.round(- amounts_to_sell[i] - available_amounts[i], AMOUNT_DECIMAL_PLACES)
@@ -580,6 +581,7 @@ def _signal_to_order_elements(shares,
                     directions.append('buy')
                     quantities.append(quantity)
                     quoted_prices.append(prices[i])
+                    remarks.append(base_remark + f'Allow sell short, continue to buy short positions {quantity}')
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(-amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
@@ -590,6 +592,7 @@ def _signal_to_order_elements(shares,
                 directions.append('sell')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
+                remarks.append(base_remark)
         # 计算空头卖出的数量
         if (amounts_to_sell[i] > 0.001) and allow_sell_short:
             # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
@@ -603,6 +606,8 @@ def _signal_to_order_elements(shares,
                 directions.append('sell')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
+                remarks.append(base_remark + f'Not enough short position stock ({-available_amounts[i]}), '
+                                             f'sell short qty ({amounts_to_sell[i]}) reduced and rounded to {quantity}')
                 # 增加反向头寸的买入信号
                 quantity = np.round(amounts_to_sell[i] + available_amounts[i], AMOUNT_DECIMAL_PLACES)
                 if moq_sell > 0:
@@ -612,6 +617,7 @@ def _signal_to_order_elements(shares,
                 directions.append('buy')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
+                remarks.append(base_remark + f'Allow sell short, continue to buy long positions {quantity}')
             else:
                 # 计算卖出的数量，如果可用资产足够，则直接卖出
                 quantity = np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
@@ -622,14 +628,9 @@ def _signal_to_order_elements(shares,
                 directions.append('sell')
                 quantities.append(quantity)
                 quoted_prices.append(prices[i])
+                remarks.append(base_remark)
 
-    # print(f'[DEBUG] in function signal_to_order_elements(), got orders for each symbol: \n'
-    #       f'- symbols: {symbols} \n- position: {positions} '
-    #       f'\n- direction: {directions} \n- quantity: {quantities}'
-    #       f'\n- prices: {prices} \n- cash to spend: {cash_to_spend} \n'
-    #       f'- amounts to sell: {amounts_to_sell}')
-
-    order_elements = (symbols, positions, directions, quantities, quoted_prices)
+    order_elements = (symbols, positions, directions, quantities, quoted_prices, remarks)
     return order_elements
 
 
@@ -754,7 +755,7 @@ def cancel_order(order_id, data_source=None, config=None):
             order_details['qty'] - total_filled_qty,
             AMOUNT_DECIMAL_PLACES,
     )
-
+    # debug
     # print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
     #       f'total filled qty: {total_filled_qty}\n'
     #       f'already canceled qty: {already_canceled_qty}\n'
@@ -821,6 +822,9 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         if order_detail is None:
             raise RuntimeError(f'No order_detail found for order_id {result.order_id}')
         if order_detail['account_id'] != account_id:
+            # debug
+            # print(f'[DEBUG] in function process_trade_delivery(), result({result_id}) '
+            #       f'is not for account {account_id}, will skip')
             continue
         # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
         trade_direction = order_detail['direction']
@@ -835,22 +839,49 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         current_date = pd.to_datetime('today').date()
         day_diff = (current_date - execution_date).days
         if day_diff < delivery_period:
+            # debug
+            # print(f'[DEBUG] in function process_trade_delivery(), result({result_id}) is not due for delivery, '
+            #       f'execution_date: {execution_date}, current_date: {current_date}, '
+            #       f'delivery_period: {delivery_period}')
             continue
         # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
+        # debug
+        # print(f'[DEBUG] in function process_trade_delivery(), will process result({result_id}): \n{result}')
         if trade_direction == 'buy':
             position_id = order_detail['pos_id']
-            update_position(
-                    position_id=position_id,
-                    data_source=data_source,
-                    available_qty_change=result.delivery_amount,
-            )
+            try:
+                position = get_position_by_id(position_id, data_source=data_source)
+                # debug
+                # print(f'[DEBUG]updating position {position}: \n'
+                #       f'position_id: {position_id}\n'
+                #       f'available_qty_change: {result.delivery_amount}\n'
+                #       f'order_detail: {order_detail}\n')
+                update_position(
+                        position_id=position_id,
+                        data_source=data_source,
+                        available_qty_change=result.delivery_amount,
+                )
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                raise e
         elif trade_direction == 'sell':
             account_id = order_detail['account_id']
-            update_account_balance(
-                    account_id=account_id,
-                    data_source=data_source,
-                    available_cash_change=result.delivery_amount,
-            )
+            try:
+                # debug
+                # account = get_account(account_id, data_source=data_source)
+                # print(f'[DEBUG] updating account {account}:\n'
+                #       f'available_cash_change: {result.delivery_amount}\n'
+                #       f'order_detail: {order_detail}\n')
+                update_account_balance(
+                        account_id=account_id,
+                        data_source=data_source,
+                        available_cash_change=result.delivery_amount,
+                )
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                raise e
         else:
             raise ValueError(f'Invalid direction: {trade_direction}')
         update_trade_result(
@@ -898,7 +929,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         config = qt.QT_CONFIG
     if not isinstance(config, dict):
         raise TypeError('config must be a dict')
-    process_trade_delivery(account_id=order_detail['account_id'], data_source=data_source, config=config)
 
     # 读取交易订单的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
@@ -1008,7 +1038,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         # calculate new cost if (position_change + owned_qty) is not 0
         prev_cost = position_cost * owned_qty
         if position_change + owned_qty == 0:
-            new_cost = prev_cost
+            new_cost = 0
         else:
             additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
             new_cost = (prev_cost + additional_cost) / (owned_qty + position_change)
@@ -1153,6 +1183,8 @@ def _trade_time_index(start=None,
                       end=None,
                       periods=None,
                       freq=None,
+                      trade_days_only=True,
+                      market='SSE',
                       include_start=True,
                       include_end=True,
                       start_am='9:30:00',
@@ -1164,7 +1196,7 @@ def _trade_time_index(start=None,
                       include_start_pm=False,
                       include_end_pm=True):
     """ 通过start/end/periods/freq生成一个符合交易时间段的datetime series，这个序列中的
-    每一个时间都在交易时段内
+    每一个时间都在交易时段内，排除所有的交易日
 
     Parameters
     ----------
@@ -1176,6 +1208,10 @@ def _trade_time_index(start=None,
         日期时间序列的分段数量
     freq: str, {'min', 'h', 'd', 'M'}
         日期时间序列的频率
+    trade_days_only: bool, Default True
+        是否剔除所有非交易日，默认True，如果为False，则保留所有的非交易日
+    market: str, {'SSE', 'SZSE', 'SHFE', ...}, Default 'SSE'
+        交易市场类型，不同的交易市场交易日定义可能不同, 默认上交所，trade_days_only为False时无效
     include_start: bool, Default True
         日期时间序列是否包含开始日期/时间
     include_end: bool, Default True
@@ -1203,13 +1239,17 @@ def _trade_time_index(start=None,
 
     Examples
     --------
-    >>> _trade_time_index(start='2020-01-01', end='2020-01-02', freq='h')
-    DatetimeIndex(['2020-01-01 09:30:00', '2020-01-01 10:30:00',
-                   '2020-01-01 11:30:00', '2020-01-01 13:00:00',
-                   '2020-01-01 14:00:00', '2020-01-01 15:00:00',
-                   '2020-01-02 09:30:00', '2020-01-02 10:30:00',
-                   '2020-01-02 11:30:00', '2020-01-02 13:00:00',
-                   '2020-01-02 14:00:00', '2020-01-02 15:00:00'],
+    # target time index not in trading day
+    >>> _trade_time_index(start='2021-01-01', end='2021-01-02', freq='h')
+    DatetimeIndex([], dtype='datetime64[ns]', freq=None)
+    # target time index is in trading day
+    >>> _trade_time_index(start='2021-02-01', end='2021-02-02', freq='h')
+    DatetimeIndex(['2020-02-01 09:30:00', '2020-02-01 10:30:00',
+                   '2020-02-01 11:30:00', '2020-02-01 13:00:00',
+                   '2020-02-01 14:00:00', '2020-02-01 15:00:00',
+                   '2020-02-02 09:30:00', '2020-02-02 10:30:00',
+                   '2020-02-02 11:30:00', '2020-02-02 13:00:00',
+                   '2020-02-02 14:00:00', '2020-02-02 15:00:00'],
                     dtype='datetime64[ns]', freq=None)
     """
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
@@ -1225,6 +1265,24 @@ def _trade_time_index(start=None,
         closed = None
 
     time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
+
+    if trade_days_only:
+        # 剔除time_index中的non-trade day
+        from qteasy import QT_TRADE_CALENDAR as calendar
+        calendar = calendar.is_open.unstack(level='exchange')
+        try:
+            calendar = calendar[market]
+        except Exception as e:
+            raise RuntimeError(f'Wrong market type is given, {e}')
+        trade_cal = calendar.reindex(index=time_index)
+        # 如果time_index不是从某天的00:00:00开始，则trade_cal中的第一个值会为nan
+        # 此时需要用检查trade_cal的日期，填充正确的交易日标记
+        if pd.isna(trade_cal.iloc[0]):
+            date = pd.to_datetime(time_index[0].date())
+            trade_cal.iloc[0] = calendar.loc[date]
+        trade_cal = trade_cal.fillna(method='ffill')
+        time_index = trade_cal.loc[trade_cal == 1].index
+
     # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
     if time_index.freqstr is not None:
         freq_str = time_index.freqstr.lower().split('-')[0]

@@ -157,9 +157,7 @@ class Broker(object):
     def post_message(self, message: str, new_line=True):
         """ 将消息放入broker的消息队列
         """
-        if self.debug:
-            message = f'[DEBUG]-{message}'
-        message = f'[{self.broker_name}]: {message}'
+        message = f'<{self.broker_name}>: {message}'
         if not new_line:
             message += '_R'
         self.broker_messages.put(message)
@@ -537,7 +535,8 @@ class SimulatorBroker(Broker):
                  moq_sell=0.0,
                  delay=1.0,
                  price_deviation=0.0,
-                 probabilities=(0.9, 0.08, 0.02)):
+                 probabilities=(0.9, 0.08, 0.02),
+                 max_retry=100):
         """ 生成一个Broker对象
 
         Parameters
@@ -568,6 +567,8 @@ class SimulatorBroker(Broker):
             卖出报价小于100+1元即可成交
         probabilities: tuple of 3 floats, default (0.90, 0.08, 0.02)
             模拟完全成交、部分成交和未成交三种情况出现的概率
+        max_retry: int
+            网络故障或价格不匹配无法成交的最大重试次数，超过后返回cancel结果
 
         """
         super(SimulatorBroker, self).__init__()
@@ -584,12 +585,14 @@ class SimulatorBroker(Broker):
         self.delay = delay
         self.price_deviation = price_deviation
         self.probabilities = probabilities
+        self.max_retry = max_retry
 
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
         """ 读取实时价格模拟成交结果
         """
 
         total_filled = 0
+        retry = self.max_retry
 
         while True:
 
@@ -614,12 +617,21 @@ class SimulatorBroker(Broker):
                 live_price = live_prices.close.iloc[-1]
                 price_deviation = live_price * self.price_deviation
             else:  # 实时价格获取不成功，稍后重试
-                self.post_message(f'live price of {symbol} can not be acquired at the moment,\n'
-                                  f'order will not be processed, will try in 1 sec...')
-                continue
+                self.post_message(f'live price of {symbol} can not be acquired at the moment, '
+                                  f'order will not be processed, retries left: {retry}')
+                retry -= 1
+                live_price = 0
+                change = 0
+                price_deviation = 0
+                if retry > 0:
+                    continue
 
+            # 重试超过max_retry，直接cancel订单
+            if retry <= 0:
+                self.post_message(f'order will be canceled because max retries exceeded')
+                result_type = 'canceled'
             # 如果当前价高于挂卖价(允许误差由price_deviation控制)，大概率成交或部分成交
-            if (live_price >= order_price - price_deviation) and (direction == 'sell'):
+            elif (live_price >= order_price - price_deviation) and (direction == 'sell'):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
                 # 如果change非常接近-10%(跌停)，则非常大概率canceled
                 if abs(change + 0.1) <= 0.001:
@@ -639,7 +651,8 @@ class SimulatorBroker(Broker):
             # 所有条件均不满足，稍后重试
             else:
                 if self.debug:
-                    self.post_message('current price does not satisfy quoted, will try later')
+                    self.post_message(f'current price does not satisfy quoted, retries left: {retry}')
+                retry -= 1
                 continue
 
             # 成交类型为成交或部分成交，计算成交数量及交易费用

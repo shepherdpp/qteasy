@@ -12,17 +12,15 @@
 
 import unittest
 
-import os
 import qteasy as qt
 import pandas as pd
-from pandas import Timestamp
 import numpy as np
 
 from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
-from qteasy.trading_util import parse_trade_signal, submit_order, output_trade_order, get_last_trade_result_summary
-from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_schedule, get_symbol_names
+from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
+from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_schedule
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -30,8 +28,8 @@ from qteasy.trade_recording import record_trade_order, update_trade_order, read_
 from qteasy.trade_recording import query_trade_orders, get_position_by_id, update_trade_result
 from qteasy.trade_recording import get_position_ids, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_account_cash_availabilities, get_account_position_availabilities
-from qteasy.trade_recording import get_account_position_details
-from qteasy.trade_recording import write_trade_result, read_trade_result_by_id, read_trade_results_by_order_id
+from qteasy.trade_recording import write_trade_result, get_account_position_details, read_trade_result_by_id
+from qteasy.trade_recording import read_trade_results_by_order_id
 
 
 class TestTradeRecording(unittest.TestCase):
@@ -285,10 +283,13 @@ class TestTradeRecording(unittest.TestCase):
 
         # update qty and available qty with bad values
         with self.assertRaises(RuntimeError):
+            # not enough qty to reduce(own 300, reduce 400)
             update_position(3, data_source=self.test_ds, qty_change=-400, available_qty_change=100)
         with self.assertRaises(RuntimeError):
+            # available qty will be less than 0
             update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=-500)
         with self.assertRaises(TypeError):
+            # type does not match
             update_position(5, data_source=self.test_ds, qty_change='not a number', available_qty_change=100)
         with self.assertRaises(TypeError):
             update_position(6, data_source=self.test_ds, qty_change=300, available_qty_change='not a number')
@@ -300,7 +301,7 @@ class TestTradeRecording(unittest.TestCase):
             update_position(-1, data_source=self.test_ds, qty_change=100, available_qty_change=100)
         with self.assertRaises(TypeError):
             update_position('not a number', data_source=self.test_ds, qty_change=100, available_qty_change=100)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             update_position(None, data_source=self.test_ds, qty_change=100, available_qty_change=100)
         with self.assertRaises(RuntimeError):
             update_position(100, data_source=self.test_ds, qty_change=100, available_qty_change=100)
@@ -1438,6 +1439,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         from qteasy import QT_ROOT_PATH, QT_CONFIG
         self.qt_root_path = QT_ROOT_PATH
         self.data_test_dir = 'data_test/'
+        QT_CONFIG['hist_dnld_retry_cnt'] = 2  # 减少重试次数，加快测试速度
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
         # self.test_ds = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.test_ds = DataSource(
@@ -1478,8 +1480,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
         self.assertEqual(agenda[3], ('10:00:05', 'acquire_live_price'))
         self.assertEqual(agenda[9], ('11:30:05', 'acquire_live_price'))
-        self.assertEqual(agenda[10], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[11], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[10], ('11:35:00', 'close_market'))
+        self.assertEqual(agenda[11], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[12], ('13:15:05', 'acquire_live_price'))
         self.assertEqual(agenda[19], ('15:00:05', 'acquire_live_price'))
         self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', ['macd']))
@@ -1510,8 +1512,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
         self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', ['macd']))
         self.assertEqual(agenda[8], ('11:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[12], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[13], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[12], ('11:35:00', 'close_market'))
+        self.assertEqual(agenda[13], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[14], ('13:00:00', 'run_strategy', ['macd']))
         self.assertEqual(agenda[18], ('14:00:00', 'run_strategy', ['macd']))
         self.assertEqual(agenda[23], ('15:00:00', 'run_strategy', ['macd']))
@@ -1552,8 +1554,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', ['macd', 'rsi']))
         self.assertEqual(agenda[7], ('11:00:05', 'acquire_live_price'))
         self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[9], ('11:35:00', 'sleep'))
-        self.assertEqual(agenda[10], ('12:55:00', 'wakeup'))
+        self.assertEqual(agenda[9], ('11:35:00', 'close_market'))
+        self.assertEqual(agenda[10], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', ['macd', 'rsi']))
         self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', ['rsi']))
         self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', ['macd', 'rsi']))
@@ -1673,6 +1675,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 1, trade signal: \n'
               f'{read_trade_order_detail(1, data_source=self.test_ds)}\n')
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1727,6 +1730,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 2, trade signal: \n'
               f'{read_trade_order_detail(2, data_source=self.test_ds)}\n')
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1787,6 +1791,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 3, trade signal: \n'
               f'{read_trade_order_detail(3, data_source=self.test_ds)}\n')
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1847,6 +1852,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 4, trade signal: \n'
               f'{read_trade_order_detail(4, data_source=self.test_ds)}\n')
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1932,6 +1938,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 7, trade signal: \n'
               f'{read_trade_order_detail(7, data_source=self.test_ds)}\n')
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1992,6 +1999,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 9, trade signal: \n'
               f'{read_trade_order_detail(9, data_source=self.test_ds)}\n')
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2049,6 +2057,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'transaction_fee': 23.9,
             'canceled_qty':    0.0,
         }
+        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2333,7 +2342,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2346,6 +2355,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
@@ -2355,7 +2365,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         cash_to_spend = np.array([0.0])
         amounts_to_sell = np.array([-500.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2368,6 +2378,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, sell 500 shares in short position
         shares = ['000001']
@@ -2377,7 +2388,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2391,6 +2402,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, buy 500 shares in short position
         shares = ['000001']
@@ -2400,7 +2412,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2414,6 +2426,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with only one symbol, sell 1000 shares while only 700 shares available
         shares = ['000001']
@@ -2423,7 +2436,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([700.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2438,6 +2451,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
         self.assertEqual(quoted_prices, [10.0, 10.0])
+        self.assertEqual(messages, ['Not enough available stock(700.0), '
+                                    'sell qty (-1000.0) reduced and rounded to 700.0',
+                                    'Allow sell short, continue to buy short positions 300.0'])
 
         # test _signal_to_order_elements with only one symbol,
         # sell 1000 short shares while only 500 short shares available
@@ -2448,7 +2464,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([-700.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2462,6 +2478,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
         self.assertEqual(quoted_prices, [10.0, 10.0])
+        self.assertEqual(messages, ['Not enough short position stock (700.0), '
+                                    'sell short qty (1000.0) reduced and rounded to 700.0',
+                                    'Allow sell short, continue to buy long positions 300.0'])
 
         # test _signal_to_order_elements with only one symbol, buy shares with not enough cash
         shares = ['000001']
@@ -2471,7 +2490,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 5000.0
         available_amounts = np.array([1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2484,6 +2503,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
+        self.assertEqual(messages, ['Not enough available cash (5000.00), adjusted cash to spend to 50.0%'])
 
         # test _signal_to_order_elements with multiple symbols
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2493,7 +2513,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2507,6 +2527,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+        self.assertEqual(messages, ['', '', '', '', '', ''])
 
         # test _signal_to_order_elements with multiple symbols, with buy and sell moq = 0.0
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2516,7 +2537,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 650.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2532,6 +2553,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [505.0, 525.0, 352.4, 153.8, 100.1, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+        self.assertEqual(messages, ['', '', '', '', '', ''])
 
         # test _signal_to_order_elements with multiple symbols, with buy moq = 100 and sell moq = 10.0
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2541,7 +2563,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_cash = 10000.0
         available_amounts = np.array([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 650.0])
 
-        symbols, positions, directions, quantities, quoted_prices = _signal_to_order_elements(
+        symbols, positions, directions, quantities, quoted_prices, messages = _signal_to_order_elements(
                 shares=shares,
                 cash_to_spend=cash_to_spend,
                 amounts_to_sell=amounts_to_sell,
@@ -2557,6 +2579,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
         self.assertEqual(quantities, [500.0, 520.0, 300.0, 150.0, 100.0, 500.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+        self.assertEqual(messages, ['', '', '', '', '', ''])
 
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""

@@ -368,8 +368,6 @@ def sma(close, timeperiod=30):
 
         return (a - ar) / timeperiod
 
-        return
-
 
 def t3(close, timeperiod=5, vfactor=0):
     """Triple Exponential Moving Average 三重指数移动平均线
