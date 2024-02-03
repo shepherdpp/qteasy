@@ -929,13 +929,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         config = qt.QT_CONFIG
     if not isinstance(config, dict):
         raise TypeError('config must be a dict')
-    # TODO: 为什么要在处理交易结果以前执行交割？此处不应该进行批量交割，
-    #  所有的交割应该在Trader退出时，或者当天开盘前进行
-    # process_trade_delivery(
-    #         account_id=order_detail['account_id'],
-    #         data_source=data_source,
-    #         config=config
-    # )
 
     # 读取交易订单的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
