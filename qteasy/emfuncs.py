@@ -257,7 +257,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
         today = pd.Timestamp.today().strftime('%Y%m%d')
     else:
         today = pd.Timestamp.today(tz=timezone).strftime('%Y%m%d')
-    klt = 101
+    klt = 101  # k line type, 101 for daily
     if freq.upper() == 'W':
         klt = 102
     if freq.upper() == 'M':

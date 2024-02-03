@@ -46,12 +46,12 @@
 - Latest Version: `1.0.17`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
-`qteasy`是为量化交易人员开发的一套量化交易策略开发工具包，力图做到：
+`qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
 
-1. **全流程覆盖**
-2. **完全本地化**
-3. **使用简单**
-4. **灵活多变**
+1. **全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行
+2. **完全本地化** 所有的金融数据、策略运算和优化过程完全本地化，不依赖于任何云端服务
+3. **使用简单** 提供大量内置交易策略，用户可以搭积木式地创建自己的交易策略
+4. **灵活多变** 使用qteasy提供的策略类，用户可以自行创建自己的交易策略，灵活设置可调参数
 
 ## `qteasy`能做什么？
 
@@ -66,11 +66,11 @@
 
 ### **创建交易策略**
 
-- 提供几十种内置交易策略，可以直接使用
+- 提供几十种内置交易策略，可以直接搭积木式使用
 - 快速创建自定义交易策略，灵活设置可调参数
-- 交易策略的回测、优化、评价
+- 交易策略的回测、优化、评价，可视化输出回测结果
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
 
 ### **实盘交易模拟**
 - 读取实时市场数据，实盘运行交易策略
@@ -79,7 +79,9 @@
 - 随时查看交易过程，检查盈亏情况
 - 手动控制交易进程、调整交易参数，手动下单
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_28_1.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
 
 ## 安装
 
@@ -91,23 +93,16 @@ $ pip install qteasy
 
 关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io)：
 
-## 安装及依赖
-
 
 ### python 版本
 - *`python` version >= 3.6* 
 
-### 安装依赖包
+### 安装可选依赖包
 
-这个项目依赖以下python package，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装:
-- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
-- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
-- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
-- *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
+`qteasy`所有必要的依赖包都可以在pip安装的同时安装好，但如果需要使用`qteasy`的全部功能，需要安装以下依赖包：
 
-使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
+- **`ta-lib: == 0.4.18`**, 用于计算技术指标
+- **`pymysql: == 1.0.2`**, 用于连接MySQL数据库,将本地数据存储到MySQL数据库（qteasy默认使用csv文件作为本地数据源，但数据量大时推荐使用mysql数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
 
 ##  10分钟了解qteasy的功能
 
@@ -123,7 +118,7 @@ print(qt.__version__)
 
 为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
 
-`qteasy`可以通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请API Token，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
+`qteasy`默认通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请API Token，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
 
 因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置。在`QT_ROOT_PATH/qteasy/`路径下打开配置文件`qteasy.cfg`，可以看到下面内容：
 
@@ -208,6 +203,7 @@ qt.get_history_data(htypes='open, high, low, close',
 股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。
 
 ```python
+import qteasy as qt
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
@@ -247,7 +243,6 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_5.png)
     
-
 
 生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持
 动态图表，详情请参阅 [matplotlib文档](https://matplotlib.org/stable/users/explain/backends.html)
@@ -296,6 +291,7 @@ op.info()
 
 使用qt.built_ins()函数可以查看DMA策略的详情，例如：
 ```python
+import qteasy as qt
 qt.built_ins('dma')
 ```
 得到：
@@ -323,7 +319,7 @@ qt.built_ins('dma')
     参数范围：[(10, 250), (10, 250), (8, 250)]
     策略不支持参考数据，不支持交易数据
 ```
-在默认情况下，策略由三个**可调参数**：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
+在默认情况下，策略有三个**可调参数**：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
 不同的策略运行周期。
 
 
@@ -334,15 +330,18 @@ queasy可以使用历史数据回测策略表现并输出图表如下：
 使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
 
 ```python
+import qteasy as qt
+
+op = qt.Operator(strategies='dma')
 res = op.run(
         mode=1,                         # 历史回测模式
-        asset_pool='000300.SH',         # 投资资产池
-        asset_type='IDX',               # 投资资产类型
-        invest_cash_amounts=[100000],   # 投资资金
+        asset_pool='000300.SH',         # 投资资产池，即允许投资的股票或指数，此处为沪深300指数
+        asset_type='IDX',               # 投资资产类型，IDX表示指数，E表示股票
+        invest_cash_amounts=[100000],   # 初始投资资金，此处为10万元
         invest_start='20220501',        # 投资回测开始日期
         invest_end='20221231',          # 投资回测结束日期
-        cost_rate_buy=0.0003,           # 买入费率
-        cost_rate_sell=0.0001,          # 卖出费率
+        cost_rate_buy=0.0003,           # 买入费率，此处为0.03%
+        cost_rate_sell=0.0001,          # 卖出费率，此处为0.01%
         visual=True,                    # 打印可视化回测图表
         trade_log=True                  # 打印交易日志
 )
@@ -401,6 +400,9 @@ Max drawdown:                    11.92%
 要使用策略优化功能，需要设置交易策略的优化标记`opt_tag=1`，并配置环境变量`mode=2`即可:
 
 ```python
+import qteasy as qt
+
+op = qt.Operator(strategies='dma')
 op.set_parameter('dma', opt_tag=1)
 res = op.run(mode=2,                    # 优化模式
              opti_start='20220501',     # 优化区间开始日期
@@ -465,7 +467,7 @@ res = op.run(
 
 ### 部署并开始交易策略的实盘运行
 
-`qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
+`qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
 
 在`Operator`中设置好交易策略，并配置好交易参数后，可以直接启动实盘交易：
 
@@ -527,7 +529,8 @@ please input your choice:
 此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以在(QTEASY)命令行提示符后输入
 命令来控制交易策略的运行：
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_28_1.png)   
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png)   
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
 
 在命令行模式下可以与`TraderShell`实现交互，操作当前账户，查询交易历史、修改状态等：
 
@@ -537,5 +540,5 @@ please input your choice:
 - `orders`: 查看当前订单
 - `history`: 查看历史交易记录
 - `exit`: 退出TraderShell
-- ... 更多`TraderShell`命令参见`QTEASY`文档
+- ... 更多`TraderShell`命令参见[`QTEASY`文档](https://qteasy.readthedocs.io)
 
