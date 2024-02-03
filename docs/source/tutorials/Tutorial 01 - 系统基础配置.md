@@ -1,4 +1,4 @@
-# QTEASY使用教程01——基础配置及初始化
+# 1—基础配置及初始化
 
 qteasy是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能：
 
@@ -30,7 +30,6 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包
 #### 如果使用mysql数据库作为本地数据源
 - *`pymysql` version >= 1.0.0*    `pip install pymysql` / `conda install -c anaconda pymysql`
-- *`sqlalchemy` version >= 1.4.18, <=1.4.23*   `pip install sqlalchemy` / `conda install sqlalchemy`
 
 #### 如果使用hdf文件作为本地数据源 
 - *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
@@ -43,7 +42,7 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 `TA-Lib`是供C语言的一个的一个金融交易技术分析函数包，里面包含大量的技术指标、K线形态识别、基础统计分析等函数，`python`提供了这个包的`wrapper`，要
 在`python`中使用`ta-lib`，需要先安装C语言的`TA-Lib`后，再安装`python`的`ta-lib`包：
 
-- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` 更多的安装信息，请参见[`qteasy`文档](https://qteasy.readthedocs.io/zh/latest/faq.html)
+- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` 更多的安装信息，请参见[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html)
 
 ### 2，数据管理环境（本地数据源）
 
@@ -69,6 +68,7 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 
 ```python
 import qteasy as qt
+print(qt.__version__)
 ```
 第一次安装的qteasy会自动初始化，初始化过程会创建一个`qteasy.cnf`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改qteasy的环境配置变量。
 
@@ -131,27 +131,13 @@ test_db_user = <user name>
 test_db_password = <password>
 test_db_name = test_db <或其他用于测试的临时数据库>
 ```
-根据你选择的本地数据源类型，可能需要安装对应的依赖包，参见[安装及依赖](#安装环境及依赖包)
+根据你选择的本地数据源类型，可能需要安装对应的依赖包
 
-如果日常使用的数据量大，建议设置`data_source_type = database`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
-间， 分钟级别数据将占用350GB甚至更多的磁盘空间。
+如果日常使用的数据量大，建议设置`local_data_source = database`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
+间，分钟级别数据将占用350GB甚至更多的磁盘空间。
 
-### 运行时查看和修改环境变量
 
-`qteasy`运行时可以使用以下几个函数查看或修改系统环境变量
-
-### `qt.configuration(config_key=None, level=0, up_to=0, default=True, verbose=False)`
-查看`qteasy`运行环境变量,如果传入参数config_key，则只显示输入的key的值，否则显示所有相应level的`config_key`
-设置`default=True`以及`verbose=True`可以看到更详细的信息以及`config_key`的默认值
-
-### `qt.configure(config=None, reset=False, only_built_in_keys=True, **kwargs)`
-设置`qteasy`运行环境变量
-
-### `qt.save_config()`
-保存`qteasy`运行环境变量
-
-### `qt.load_connfig()`
-读取`qteasy`运行环境变量
+### 配置qteasy环境变量
 
 例如：
 
@@ -226,3 +212,7 @@ qt.configuration(config_key='mode, asset_pool, report, visual', default=True, ve
           为True时使用图表显示可视化运行结果
           （回测模式显示回测报告，优化模式显示优化结果报告）
 
+
+### API 参考
+
+关于qteasy环境变量的AP，以及所有的环境变量，请参考 [Configuration APIs](../api_reference.rst)

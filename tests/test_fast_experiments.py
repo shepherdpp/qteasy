@@ -282,6 +282,37 @@ class FastExperiments(unittest.TestCase):
                 allow_sell_short=True,
         )
 
+    def test_get_history_data(self):
+        """
+        """
+        # extract normal data
+        data = qt.get_history_data(htypes='open, high, low, close',
+                                   start='20211230',
+                                   end='20220110',
+                                   shares='000001.SZ',
+                                   freq='d',
+                                   adj='n',
+                                   asset_type='E')
+        print(f'not adjusted data: \n{data}')
+        # extract back adjusted price for one asset
+        data = qt.get_history_data(htypes='open, high, low, close',
+                                   start='20211230',
+                                   end='20220110',
+                                   shares='000001.SZ',
+                                   freq='d',
+                                   adj='b',
+                                   asset_type='E')
+        print(f'adjusted data: \n{data}')
+        # extract back adjusted prices for both assets mixed
+        data = qt.get_history_data(htypes='open, high, low, close',
+                                   start='20211230',
+                                   end='20220110',
+                                   shares='000001.SZ, 512000.SH',
+                                   freq='d',
+                                   adj='b',
+                                   asset_type='E, FD')
+        print(f'adjusted data: \n{data}')
+
 
 if __name__ == '__main__':
     unittest.main()

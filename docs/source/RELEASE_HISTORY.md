@@ -1,4 +1,25 @@
-# QTEASY release history
+# RELEASE HISTORY
+
+## 1.0.17 (2024-01-29)
+- improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
+- fixed a bug that will cause error acquiring live price in live trade mode if running freq is lower than 1 hour
+
+## 1.0.16 (2024-01-27)
+- Added feature: if a valid trade signal can not be converted to an order due to lack of available cash/stock, a message will be posted in live mode
+- Fixed a bug in live trade mode that will cause trade results being processed and delivered for more than one time, thus leads to wrong available qty or available cash recorded
+- Fixed a mistake that will cause wrong cost being calculated during live trade
+- Fixed a mistake in live trade shell with command history, that wrong stock cost is calculated when history of multiple stocks are listed
+- Fixed bug in issue #85 where data are extracted and filled unexpectedly in non-trading days
+- Fixed other bugs
+
+## 1.0.15 (2023-12-29)
+- Now live prices of Index and ETFs can also be watched in live running mode
+- ETF and Index are now supported in live trading mode as trading targets
+- Fixed bugs
+
+## 1.0.14 (2023-12-22)
+- Removed optional dependency sqlalchemy
+- Added retry in broker to stop order execution after max retries
 
 ## 1.1.0 (2023-)
 

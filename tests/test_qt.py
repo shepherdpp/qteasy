@@ -271,7 +271,11 @@ class TestQT(unittest.TestCase):
                      invest_start='20070110',
                      trade_batch_size=0.,
                      sell_batch_size=0.,
-                     parallel=True)
+                     parallel=True,
+                     hist_dnld_retry_cnt=3,  # 减少数据下载重试次数，加快测试速度
+                     hist_dnld_retry_wait=0.5,  # 减少数据下载重试等待时间，加快测试速度
+                     hist_dnld_backoff=1.2,  # 减少数据下载重试等待时间，加快测试速度
+                     )
 
         timing_pars1 = (165, 191, 23)
         timing_pars2 = {'000100': (77, 118, 144),
@@ -779,11 +783,11 @@ class TestQT(unittest.TestCase):
         """test built-in strategy selecting finance
         """
         op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
-        all_shares = stock_basic()
+        all_shares = qt.filter_stocks(date='20070101')
         shares_banking = qt.filter_stock_codes(date='20070101', industry='银行')
         print('extracted banking share pool:')
-        print(all_shares.loc[all_shares['ts_code'].isin(shares_banking)])
-        shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
+        print(all_shares.loc[all_shares.index.isin(shares_banking)])
+        shares_estate = list(all_shares.loc[all_shares.industry == "全国地产"].index.values)
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
                      benchmark_asset='000300.SH',

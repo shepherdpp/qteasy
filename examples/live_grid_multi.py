@@ -38,26 +38,22 @@ class MultiGridTrade(qt.GeneralStg):
             grid_size, trade_batch, base_grid = pars
             # 读取最新价格
             price = h[i, -1, 0]  # 最近一个K线周期的close价格
-            # print(f'[DEBUG] got latest price for {symbol}: {price}, base_grid: {base_grid}, grid_size: {grid_size}\n')
 
             # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
             if base_grid <= 0.01:
                 # 基准网格尚未设置，此时为首次运行，首次买入价值200000元的股票并设置基准网格为当前价格（精确到0.1元）
                 trade_signals[i] = np.round(200000 / price, -2)  # 圆整到100股整数
                 base_grid = np.round(price / 0.1) * 0.1
-                # print(f'[DEBUG] first run, buy 2000 shares {symbol} at {price} and set base_grid to {base_grid}\n')
             elif price - base_grid > grid_size:
                 # 触及卖出网格线，产生卖出信号
                 trade_signals[i] = - trade_batch  # 交易信号等于交易数量，必须使用VS信号类型
                 # 重新计算基准网格
                 base_grid += grid_size
-                # print(f'[DEBUG] sell {trade_batch} shares {symbol} at {price} and set base_grid to {base_grid}\n')
             elif base_grid - price > grid_size:
                 # 触及买入网格线，产生买入信号
                 trade_signals[i] = trade_batch
                 # 重新计算基准网格
                 base_grid -= grid_size
-                # print(f'[DEBUG] buy {trade_batch} shares {symbol} at {price} and set base_grid to {base_grid}\n')
             else:
                 trade_signals[i] = 0.
 
@@ -74,11 +70,9 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
     alpha = MultiGridTrade(
-            pars={
-                '000651.SZ': (0.2, 500, 0.),
-                '600036.SH': (0.3, 600, 0.),
-                '601398.SH': (0.1, 1000, 0.),
-            },  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
+            pars={'000651.SZ': (0.2, 500, 35.4),
+                  '600036.SH': (0.3, 600, 30.4),
+                  '601398.SH': (0.1, 1000, 5.1)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
             par_count=3,
             par_types=['float', 'int', 'float'],
             par_range=[(0.1, 2), (100, 3000), (0, 40)],

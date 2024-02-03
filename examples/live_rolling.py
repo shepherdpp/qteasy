@@ -3,7 +3,7 @@
 # Package:  qteasy
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
-# Created:  2023-12-11
+# Created:  2023-12-24
 # Desc:
 #   live_rolling:
 #   一个用于ETF基金的多市场轮动
@@ -24,35 +24,37 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # 内置交易策略，使用macd执行交易
-    alpha = qt.get_built_in_strategy('macd')
+    alpha = qt.get_built_in_strategy('ndaychg')  # 一个基于N日涨跌幅的策略，用于多市场轮动策略
 
-    alpha.strategy_run_freq = '10min'  # 每10分钟运行
-    alpha.data_freq = '10min'  # 10min数据
-    alpha.window_length = 100  # 数据窗口长度
+    alpha.strategy_run_freq = 'd'  # 每天运行
+    alpha.data_freq = 'd'  # 日频数据
+    alpha.window_length = 25  # 数据窗口长度为25天
 
-    beta = qt.get_built_in_strategy('dma')
+    # 定义选股参数
+    alpha.sort_ascending = False  # 优先选择涨幅最大的股票
+    alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
+    alpha.ubound = 0.0  # 筛选出过去20天涨幅大于0%的股票
+    alpha.max_sel_count = 2  # 每次最多选出2支股票
+    alpha.weighting = 'even'  # 选出的股票等权重买入且权重平均分配
 
-    beta.strategy_run_freq = '30min'  # 每30分钟运行
-    beta.data_freq = '30min'  # 30min数据
-    beta.window_length = 100  # 数据窗口长度
+    op = Operator(strategies=[alpha], signal_type='PT', op_type='step')
+    op.set_parameter('custom', pars=(20, ))  # 以20日张跌幅为选股因子
 
-    op = Operator(strategies=[alpha, beta], signal_type='PT', op_type='step')
-
-    op.set_parameter('alpha', (32, 16, 9))
-    op.set_parameter('beta', (10, 50, 10))
-
-    asset_pool = ['000651.SZ', '688609.SH', '000550.SZ', '301215.SZ', '002676.SZ', '603726.SH']
+    asset_pool = [  # 4个ETF之间轮，最多同时选中两个
+        '515630.SH',  # 保险证券ETF
+        '518680.SH',  # 金ETF
+        '513100.SH',  # 纳指ETF
+        '512000.SH',  # 券商ETF
+    ]
 
     qt.configure(
             mode=0,
             time_zone='Asia/Shanghai',
-            asset_type='E',
+            asset_type='FD',
             asset_pool=asset_pool,
-            benchmark_asset='000001.SH',
-            benchmark_asset_type='IDX',
-            benchmark_dtype='close',
-            trade_batch_size=100,
-            sell_batch_size=100,
+            benchmark_asset='000300.SH',
+            trade_batch_size=0.1,  # 基金交易允许0.1份
+            sell_batch_size=0.1,  # 基金交易允许0.1份
             live_trade_account_id=args.account,
             live_trade_account=args.new_account,
             live_trade_debug_mode=args.debug,
@@ -62,6 +64,7 @@ if __name__ == '__main__':
     datasource = qt.QT_DATA_SOURCE
 
     if args.restart:
+        # TODO: clean up only selected account data
         # clean up all account data in datasource
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
             if datasource.table_data_exists(table):

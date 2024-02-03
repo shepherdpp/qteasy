@@ -211,19 +211,16 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/data_test/')
         self.assertEqual(self.ds_csv.file_type, 'csv')
         self.assertEqual(self.ds_csv.file_path, os.path.join(self.qt_root_path, 'data_test/'))
-        self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
         self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/data_test/')
         self.assertEqual(self.ds_hdf.file_type, 'hdf')
         self.assertEqual(self.ds_hdf.file_path, os.path.join(self.qt_root_path, 'data_test/'))
-        self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
         self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/data_test/')
         self.assertEqual(self.ds_fth.file_type, 'fth')
         self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, 'data_test/'))
-        self.assertIs(self.ds_fth.engine, None)
 
     def test_file_manipulates(self):
         """ test DataSource method file_exists and drop_file"""
@@ -673,6 +670,7 @@ class TestDataSource(unittest.TestCase):
         sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
+        con.close()
         # 为确保update顺利进行，建立新表并设置primary_key
         self.ds_db.write_database(df, table_name)
         loaded_df = self.ds_db.read_database(table_name)
@@ -715,11 +713,20 @@ class TestDataSource(unittest.TestCase):
         print(f'write and read a MultiIndex dataframe to database')
         print(f'following dataframe with multiple index will be written to database:\n'
               f'{self.df2}')
+        con = connect(
+                host=self.ds_db.host,
+                port=self.ds_db.port,
+                user=self.ds_db.__user__,
+                password=self.ds_db.__password__,
+                db=self.ds_db.db_name,
+        )
+        cursor = con.cursor()
         table_name = 'test_db_table2'
         # 删除数据库中的临时表
         sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
+        con.close()
 
         self.ds_db.write_database(self.df2, table_name)
         loaded_df = self.ds_db.read_database(table_name)
@@ -1225,14 +1232,15 @@ class TestDataSource(unittest.TestCase):
         hourly_data_tt = hourly_data.reindex(index=hourly_index_tt)
 
         print(f'test resample, above daily freq')
-        print(hourly_data.head(25))
-        print(hourly_data_tt.head(15))
+        print(f'hourly data:\n{hourly_data.head(25)}')
+        print(f'hourly data tt:\n{hourly_data_tt.head(25)}')
         print(f'verify that resampled from hourly data and hourly tt data are the same')
-        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill')
-        resampled_tt = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill', b_days_only=False)
+        resampled_tt = _resample_data(hourly_data_tt, target_freq='15min', method='ffill', b_days_only=False)
         self.assertTrue(np.allclose(resampled, resampled_tt))
         print('checks resample hourly data to 15 min')
-        print(resampled.head(25))
+        print(f'resampled data:\n{resampled.head(25)}')
+        print(f'houly data:\n{hourly_data_tt.head(15)}')
         sampled_rows = [(0, 2), (2, 6), (6, 9), (None, None), (9, 12), (12, 16), (16, 16)]
         for day in range(9):
             for pos in range(len(sampled_rows)):
@@ -1241,13 +1249,9 @@ class TestDataSource(unittest.TestCase):
                 if start is None:
                     continue
                 for row in range(start + day * 17, end + day * 17):
-                    try:
-                        res = hourly_data_tt.iloc[pos + day * 7].values
-                        target = resampled.iloc[row].values
-                        self.assertTrue(np.allclose(res, target))
-                    except AssertionError:
-                        import pdb
-                        pdb.set_trace()
+                    res = hourly_data_tt.iloc[pos + day * 7].values
+                    target = resampled.iloc[row].values
+                    self.assertTrue(np.allclose(res, target))
 
         print('checks resample hourly data to 2d')
         resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
@@ -1289,28 +1293,35 @@ class TestDataSource(unittest.TestCase):
         resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
         resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
         print(resampled_1)
-        sampled_rows = [23, 47, 71, 143, 167, 191, 215]
+        print(hourly_data.to_string())
+        # 被选出的交易日：
+        selected_days = [1, 2, 5, 6, 7, 8, 9]
+        # 计算被选出个交易日最后一个小时的序号
+        sampled_rows = [min(d * 24 + 23, len(hourly_data) - 1) for d in selected_days]
         for pos in range(len(sampled_rows)):
             res = resampled_1.iloc[pos].values
             target = hourly_data.iloc[sampled_rows[pos]].values
-            print(f'resampled row is \n{res}\n'
-                  f'target row is \n{target}')
+            print(f'resampled row ({pos}) is \n{res}\n'
+                  f'hourly data last row ({sampled_rows[pos]}) is \n{target}')
             self.assertTrue(np.allclose(res, target))
 
         print(resampled_2)
-        sampled_row_starts = [0, 24, 48, 120, 144, 168, 192]
-        sampled_row_ends = [24, 48, 72, 144, 168, 192, 216]
+        # 计算被选出个交易日第一个小时和下一天第一个小时的序号
+        sampled_row_starts = [d * 24 for d in selected_days]
+        sampled_row_ends = [min(d * 24 + 24, len(hourly_data)) for d in selected_days]
         for pos in range(len(sampled_rows)):
             res = resampled_2.iloc[pos].values
             start = sampled_row_starts[pos]
             end = sampled_row_ends[pos]
             target = hourly_data.iloc[start:end].values.mean(0)
+            print(f'resampled row ({pos}) is \n{res}\n'
+                  f'hourly-data [{start}:{end}] averaged is \n{target}')
             self.assertTrue(np.allclose(res, target))
 
         print('resample daily data to 30min data')
         daily_data = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
         print(daily_data)
-        resampled = _resample_data(daily_data, target_freq='30min', method='ffill')
+        resampled = _resample_data(daily_data, target_freq='30min', method='ffill', b_days_only=False)
         print(resampled)
         # TODO: last day data missing when resampling daily data to sub-daily data
         #   this is to be improved
@@ -1454,8 +1465,8 @@ class TestDataSource(unittest.TestCase):
 
     def test_trade_time_index(self):
         """ 测试函数是否能正确生成交易时段的indexer"""
-        print('create datetime index with freq "D"')
-        indexer = _trade_time_index('20200101', '20200105', freq='d')
+        print('create datetime index with freq "D" and keep non-trading days')
+        indexer = _trade_time_index('20200101', '20200105', freq='d', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
@@ -1465,22 +1476,48 @@ class TestDataSource(unittest.TestCase):
                                          pd.to_datetime('20200104'),
                                          pd.to_datetime('20200105')])
 
-        print('create datetime index with freq "30min" with default trade time')
-        indexer = _trade_time_index('20200101', '20200102', freq='30min')
+        print('create datetime index with freq "D" without non-trading days')
+        indexer = _trade_time_index('20200101', '20200105', freq='d')
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
-        self.assertEqual(len(indexer), 9)
+        self.assertEqual(len(indexer), 2)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103')])
+
+        print('create datetime index with freq "30min" with default trade time with non_trading days')
+        indexer = _trade_time_index('20200101', '20200103', freq='30min', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 18)
         self.assertEqual(list(indexer),
                          list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
                                               '2020-01-01 10:30:00', '2020-01-01 11:00:00',
                                               '2020-01-01 11:30:00', '2020-01-01 13:30:00',
                                               '2020-01-01 14:00:00', '2020-01-01 14:30:00',
-                                              '2020-01-01 15:00:00'])
+                                              '2020-01-01 15:00:00', '2020-01-02 09:30:00',
+                                              '2020-01-02 10:00:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:00:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 13:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 14:30:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "30min" with default trade time without non_trading days')
+        indexer = _trade_time_index('20200101', '20200103', freq='30min', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:00:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:00:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 13:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 14:30:00',
+                                              '2020-01-02 15:00:00'])
                               )
                          )
 
         print('create datetime index with freq "w" and check if all dates are Sundays (default)')
-        indexer = _trade_time_index('20200101', '20200201', freq='w')
+        indexer = _trade_time_index('20200101', '20200201', freq='w', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 4)
@@ -1488,21 +1525,30 @@ class TestDataSource(unittest.TestCase):
                 all(day.day_name() == 'Sunday' for day in indexer)
         )
 
+        print('create datetime index with freq "w-Fri" and check if all dates are Fridays')
+        indexer = _trade_time_index('20200101', '20200201', freq='w-Fri', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertTrue(
+                all(day.day_name() == 'Friday' for day in indexer)
+        )
+
         print('create datetime index with start/end/periods')
         print('when freq can be inferred')
-        indexer = _trade_time_index(start='20200101', end='20200102', periods=49)
+        indexer = _trade_time_index(start='20200102', end='20200103', periods=49)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
-                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
-                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
-                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
-                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
-                                              '2020-01-01 15:00:00'])
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:00:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:00:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 13:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 14:30:00',
+                                              '2020-01-02 15:00:00'])
                               )
                          )
         print('when freq can NOT be inferred')
-        indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=50, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 8)
         self.assertEqual(list(indexer),
@@ -1518,7 +1564,7 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('create datetime index with start/periods/freq')
-        indexer = _trade_time_index(start='20200101', freq='30min', periods=49)
+        indexer = _trade_time_index(start='20200101', freq='30min', periods=49, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
