@@ -21,6 +21,8 @@
 - Removed optional dependency sqlalchemy
 - Added retry in broker to stop order execution after max retries
 
+## 1.1.0 (2023-)
+
 ## 1.0.13 (2023-12-21)
 - Improvements in Trader Shell
   - Now users can scroll to previous commands with up and down keys in Command mode
