@@ -1582,7 +1582,7 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False):
 
 
 def refill_data_source(data_source=None, **kwargs):
-    """ 填充数据数据源
+    """ 填充数据源
 
     Parameters
     ----------
@@ -2256,7 +2256,7 @@ def _check_config_file_name(file_name, allow_default_name=False):
 
 def save_config(config=None, file_name=None, overwrite=True, initial_config=False):
     """ 将config保存为一个文件
-    尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
+    TODO: 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
 
     Parameters
     ----------
