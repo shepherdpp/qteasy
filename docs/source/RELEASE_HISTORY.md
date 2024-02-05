@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.0.18 (2024-02-05)
+- Improved trader shell live messages: now order execution results are better displayed with more info regarding change of stock qty and cash amounts
+- Command INFO and OVERVIEW in trader shell now will not print out system information in default.
+- Updated version requirements for numpy
+- Bug fixes
+
 ## 1.0.17 (2024-01-29)
 - improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
 - fixed a bug that will cause error acquiring live price in live trade mode if running freq is lower than 1 hour
