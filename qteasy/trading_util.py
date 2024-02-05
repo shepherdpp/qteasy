@@ -823,7 +823,7 @@ def process_account_delivery(account_id, data_source=None, config=None):
         res = deliver_trade_result(
                 result_id=result_id,
                 account_id=account_id,
-                result=result,
+                result=result.to_dict(),
                 stock_delivery_period=config['stock_delivery_period'],
                 cash_delivery_period=config['cash_delivery_period'],
                 data_source=data_source,
@@ -874,7 +874,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     if result is None:
         result = read_trade_result_by_id(result_id=result_id, data_source=data_source)
     if not isinstance(result, dict):
-        raise RuntimeError(f'Wrong trade result!')
+        raise RuntimeError(f'Wrong trade result, expect a dict, got {type(result)} instead')
     if result['delivery_status'] != 'ND':
         # 如果交易结果已经交割过了，则不再交割
         return {}
