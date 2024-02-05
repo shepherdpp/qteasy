@@ -780,7 +780,7 @@ def cancel_order(order_id, data_source=None, config=None):
     )
 
 
-def process_trade_delivery(account_id, data_source=None, config=None):
+def process_account_delivery(account_id, data_source=None, config=None):
     """ 处理account_id账户中所有持仓和现金的交割
 
     从交易历史中读取尚未交割的现金和持仓，根据config中的设置值 'cash_delivery_period' 和
@@ -798,9 +798,9 @@ def process_trade_delivery(account_id, data_source=None, config=None):
 
     Returns
     -------
-    None
+    list_of_delivery_result: list of dict,
+        以列表形式返回的所有有效交割结果
     """
-    # TODO: further test this function
 
     if not isinstance(account_id, (int, np.int64)):
         raise TypeError('account_id must be an int')
@@ -815,80 +815,141 @@ def process_trade_delivery(account_id, data_source=None, config=None):
     undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
     if undelivered_results is None:
         return
+
+    delivery_result = []
     # 循环处理每一条未交割的交易结果：
     for result_id, result in undelivered_results.iterrows():
-        # 读取交易结果的signal_detail，如果account_id不匹配，则跳过，如果signal_detail不存在，则报错
-        order_detail = read_trade_order_detail(result.order_id, data_source=data_source)
-        if order_detail is None:
-            raise RuntimeError(f'No order_detail found for order_id {result.order_id}')
-        if order_detail['account_id'] != account_id:
-            # debug
-            # print(f'[DEBUG] in function process_trade_delivery(), result({result_id}) '
-            #       f'is not for account {account_id}, will skip')
-            continue
-        # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
-        trade_direction = order_detail['direction']
-        if trade_direction == 'buy':
-            delivery_period = config['stock_delivery_period']
-        elif trade_direction == 'sell':
-            delivery_period = config['cash_delivery_period']
-        else:
-            raise ValueError(f'Invalid direction: {trade_direction}')
-        # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
-        execution_date = pd.to_datetime(result.execution_time).date()
-        current_date = pd.to_datetime('today').date()
-        day_diff = (current_date - execution_date).days
-        if day_diff < delivery_period:
-            # debug
-            # print(f'[DEBUG] in function process_trade_delivery(), result({result_id}) is not due for delivery, '
-            #       f'execution_date: {execution_date}, current_date: {current_date}, '
-            #       f'delivery_period: {delivery_period}')
-            continue
-        # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
-        # debug
-        # print(f'[DEBUG] in function process_trade_delivery(), will process result({result_id}): \n{result}')
-        if trade_direction == 'buy':
-            position_id = order_detail['pos_id']
-            try:
-                position = get_position_by_id(position_id, data_source=data_source)
-                # debug
-                # print(f'[DEBUG]updating position {position}: \n'
-                #       f'position_id: {position_id}\n'
-                #       f'available_qty_change: {result.delivery_amount}\n'
-                #       f'order_detail: {order_detail}\n')
-                update_position(
-                        position_id=position_id,
-                        data_source=data_source,
-                        available_qty_change=result.delivery_amount,
-                )
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                raise e
-        elif trade_direction == 'sell':
-            account_id = order_detail['account_id']
-            try:
-                # debug
-                # account = get_account(account_id, data_source=data_source)
-                # print(f'[DEBUG] updating account {account}:\n'
-                #       f'available_cash_change: {result.delivery_amount}\n'
-                #       f'order_detail: {order_detail}\n')
-                update_account_balance(
-                        account_id=account_id,
-                        data_source=data_source,
-                        available_cash_change=result.delivery_amount,
-                )
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                raise e
-        else:
-            raise ValueError(f'Invalid direction: {trade_direction}')
-        update_trade_result(
+
+        res = deliver_trade_result(
                 result_id=result_id,
+                account_id=account_id,
+                result=result,
+                stock_delivery_period=config['stock_delivery_period'],
+                cash_delivery_period=config['cash_delivery_period'],
                 data_source=data_source,
-                delivery_status='DL',
         )
+
+        if res:
+            delivery_result.append(res)
+
+    return delivery_result
+
+
+def deliver_trade_result(result_id, account_id, result=None, stock_delivery_period=0, cash_delivery_period=0,
+                         data_source=None):
+    """ 处理交易结果的交割，给出交易结果ID，根据结交割周期修改可用现金/可用持仓，并修改结果的delivery_status为'DL'
+
+    注意，如果delivery_status已经为DL，则不交割，直接返回
+    如果result_id对应的account_id与参数account_id不符合，也不执行交割，直接返回
+
+    Parameters
+    ----------
+    result_id: int
+        结果ID，需要交割的交易结果
+    account_id: int
+        账户ID，如果result所属的account与account_id不匹配则不执行交割
+    result: dict, default None
+        交易结果，如果不给出，则通过result_id读取结果
+    stock_delivery_period: int, default 0
+        股票交割周期，单位为天
+    cash_delivery_period: int, default 0
+        现金交割周期，单位为天
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    delivery_result: dict
+    交割结果：包含以下信息
+    {
+        'pos_id' : int, 更新的持仓ID，如果没有更新则为None
+        'prev_qty': float, 更新前的资产可用持仓数量，如果没有更新则为None
+        'updated_qty': float, 更新后的资产可用持仓数量，如果没有更新则为None
+        'account_id': int, 更新的账户ID，如果没有更新则为None
+        'prev_amount': float, 更新前的账户可用现金余额，如果没有更新则为None
+        'updated_amount': float, 更新后的账户可用现金余额，如果没有更新则为None
+    }
+    """
+    from .trade_recording import read_trade_result_by_id
+    if result is None:
+        result = read_trade_result_by_id(result_id=result_id, data_source=data_source)
+    if not isinstance(result, dict):
+        raise RuntimeError(f'Wrong trade result!')
+    if result['delivery_status'] != 'ND':
+        # 如果交易结果已经交割过了，则不再交割
+        return {}
+    order_id = result['order_id']
+    order_detail = read_trade_order_detail(order_id=order_id, data_source=data_source)
+
+    if order_detail['account_id'] != account_id:
+        # 如果订单不是发自account_id，则不予交割
+        return {}
+
+    # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
+    trade_direction = order_detail['direction']
+    if trade_direction == 'buy':
+        delivery_period = stock_delivery_period
+    elif trade_direction == 'sell':
+        delivery_period = cash_delivery_period
+    else:
+        raise ValueError(f'Invalid direction: {trade_direction}')
+
+    # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
+    execution_date = pd.to_datetime(result['execution_time']).date()
+    current_date = pd.to_datetime('today').date()
+    day_diff = (current_date - execution_date).days
+    if day_diff < delivery_period:
+        return {}
+
+    # 可以开始执行交割
+    delivery_result = {
+        'order_id':         None,
+        'pos_id':           None,
+        'prev_qty':         None,
+        'updated_qty':      None,
+        'account_id':       None,
+        'prev_amount':      None,
+        'updated_amount':   None,
+    }
+
+    # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
+    if trade_direction == 'buy':
+        position_id = order_detail['pos_id']
+        position = get_position_by_id(pos_id=position_id, data_source=data_source)
+        delivery_result['order_id'] = order_id
+        delivery_result['pos_id'] = position_id
+        delivery_result['prev_qty'] = position['available_qty']
+
+        update_position(
+                position_id=position_id,
+                data_source=data_source,
+                available_qty_change=result['delivery_amount'],
+        )
+        position = get_position_by_id(pos_id=position_id, data_source=data_source)
+        delivery_result['updated_qty'] = position['available_qty']
+
+    elif trade_direction == 'sell':
+        delivery_result['account_id'] = account_id
+        account = get_account(account_id, data_source=data_source)
+        delivery_result['order_id'] = order_id
+        delivery_result['prev_amount'] = account['available_cash']
+        update_account_balance(
+                account_id=account_id,
+                data_source=data_source,
+                available_cash_change=result['delivery_amount'],
+        )
+        account = get_account(account_id, data_source=data_source)
+        delivery_result['updated_amount'] = account['available_cash']
+    else:
+        raise RuntimeError(f'Wrong trade direction! {trade_direction}')
+
+    update_trade_result(
+            result_id=result_id,
+            data_source=data_source,
+            delivery_status='DL',
+    )
+
+    return delivery_result
 
 
 def process_trade_result(raw_trade_result, data_source=None, config=None):

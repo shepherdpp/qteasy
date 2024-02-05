@@ -18,7 +18,7 @@ import numpy as np
 
 from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
-from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_trade_delivery
+from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_account_delivery
 from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
@@ -158,7 +158,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        2,
@@ -168,7 +168,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -178,7 +178,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        4,
@@ -188,7 +188,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        5,
@@ -198,7 +198,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -208,7 +208,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        6,
@@ -218,7 +218,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        7,
@@ -228,7 +228,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        9,
@@ -238,10 +238,10 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         # order 8 is canceled
         cancel_order(8, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
 
         print('creating Trader object...')
         # 生成Trader对象

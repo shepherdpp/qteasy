@@ -31,9 +31,10 @@ from qteasy.utilfuncs import get_current_tz_datetime
 from qteasy.broker import Broker
 from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
-from qteasy.trade_recording import new_account, get_or_create_position, update_position
+from qteasy.trade_recording import new_account, get_or_create_position, update_position, read_trade_order_detail
+from qteasy.trade_recording import get_position_by_id
 from qteasy.trading_util import parse_trade_signal, submit_order, process_trade_result
-from qteasy.trading_util import process_trade_delivery, create_daily_task_schedule, cancel_order
+from qteasy.trading_util import process_account_delivery, create_daily_task_schedule, cancel_order
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names
 
 UNIT_TO_TABLE = {
@@ -2174,11 +2175,11 @@ class Trader(object):
                 self._broker.order_queue.put(trade_order)
                 # format the message depending on buy/sell orders
                 if d == 'buy':  # red for buy
-                    self.send_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold red]{d}-{pos} '
-                                      f'{qty} shares @ {price}[/bold red]')
+                    self.send_message(f'<NEW ORDER {order_id}>: <{name}-{sym}> [bold red]{d}-{pos} '
+                                      f'{qty} shares @ ¥{price}[/bold red]')
                 else:  # green for sell
-                    self.send_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold green]{d}-{pos} '
-                                      f'{qty} shares @ {price}[/bold green]')
+                    self.send_message(f'<NEW ORDER {order_id}>: <{name}-{sym}> [bold green]{d}-{pos} '
+                                      f'{qty} shares @ ¥{price}[/bold green]')
                 # 记录已提交的交易数量
                 submitted_qty += 1
 
@@ -2252,7 +2253,6 @@ class Trader(object):
                                   f'cash: ¥{pre_cash_amount:,.2f}->¥{post_cash_amount:,.2f}'
                                   f'available: ¥{pre_available_cash:,.2f}->¥{post_available_cash:,.2f}')
 
-
     def _pre_open(self):
         """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
 
@@ -2281,13 +2281,37 @@ class Trader(object):
                 config=config,
                 datasource=datasource,
         )
+        self.send_message(f'missing data acquired!')
 
-        # 检查今日成交结果，完成交易结果的交割
-        process_trade_delivery(
+        # 检查账户重的成交结果，完成全部交易结果的交割
+        delivery_result = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
                 config=self._config
         )
+        for res in delivery_result:
+            order_id = delivery_result['order_id']
+            if res['pos_id']:  # 发生了股票/资产交割，更新了资产股票的可用持仓数量
+                pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
+                symbol = pos['symbol']
+                pos_type = pos['position']
+                prev_qty = delivery_result['prev_qty']
+                updated_qty = delivery_result['updated_qty']
+                color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
+
+                name = get_symbol_names(self.datasource, symbols=symbol)
+                self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
+                                  f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
+
+            if res['account_id']:  # 发生了现金交割，更新了账户现金的可用数量
+                account = get_account(account_id=self.account_id, data_source=self.datasource)
+                account_name = account['user_name']
+                prev_amount = delivery_result['prev_amount']
+                updated_amount = delivery_result['updated_amount']
+                color_tag = 'bold red' if prev_amount > updated_amount else 'bold green'
+
+                self.send_message(f'<DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
+                                  f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
 
         # 获取当日实时价格
         self._update_live_price()
@@ -2299,8 +2323,7 @@ class Trader(object):
         2，处理当日已成交的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
-        if self.debug:
-            self.send_message('running task post_close')
+        self.send_message('Processing post_close activities...')
 
         if self.is_market_open:
             if self.debug:
@@ -2338,15 +2361,15 @@ class Trader(object):
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
             # TODO: here "submitted" orders can not be canceled, need to be fixed
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled unfilled orders')
-
-        # 检查今日成交结果，完成交易结果的交割
-        # process_trade_delivery(
-        #         account_id=self.account_id,
-        #         data_source=self._datasource,
-        #         config=self._config
-        # )
-        self.send_message('processed trade delivery')
+            order_details = read_trade_order_detail(order_id, data_source=self._datasource)
+            sym = order_details['symbol']
+            name = get_symbol_names(self._datasource, [sym])[0]
+            d = order_details['direction']
+            pos = order_details['position']
+            qty = order_details['qty']
+            price = order_details['price']
+            self.send_message(f'<CANCELED ORDER {order_id}>: <{name}-{sym}> {d}-{pos} '
+                                      f'{qty} shares @ ¥{price}')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：

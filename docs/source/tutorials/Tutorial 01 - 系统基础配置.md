@@ -19,7 +19,7 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 `qteasy`依赖以下`python`包，有些安装包可能不能在安装`qteasy`的时候自动安装，此时推荐使用`Anaconda`搭建运行环境并手动安装依赖包：
 :
 - *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
-- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
+- *`numpy` version >= 1.18.1, <=1.21.5*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
