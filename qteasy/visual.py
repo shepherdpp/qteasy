@@ -557,7 +557,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         multiplier = 1 / 8
         freq_info = '30分钟K线'
     if end is None:
-        now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
+        now = pd.to_datetime('today')
         if now.hour >= 23:
             end = pd.to_datetime('today')
         else:
@@ -718,8 +718,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     else:
         start_date = pd.to_datetime(l_date).strftime('%Y-%m-%d')
     # 设置历史数据获取最后一天，只有现在的时间在23:00以后时才设置为今天，否则就设置为昨天
-    # now获取的日期时间是格林尼治标准时间，计算中国的时间需要加8小时（中国在东八区）
-    now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
+    now = pd.to_datetime('today')
     if now.hour >= 23 and now.weekday() < 5:
         end = pd.to_datetime('today')
     else:

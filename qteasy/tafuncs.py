@@ -10,7 +10,7 @@
 
 import numpy as np
 try:
-    from talib import BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
+    from talib import BBANDS, HT_TRENDLINE, KAMA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
         T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
         MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
         STOCHF, STOCHRSI, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
@@ -70,7 +70,22 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
         :middleband,
         :lowerband: np.ndarray
     """
-    return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
+    try:
+        from talib import BBANDS
+        return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
+    except ImportError:
+        from qteasy.utilfuncs import rolling_window
+        middleband = np.empty_like(close)
+        upperband = np.empty_like(close)
+        lowerband = np.empty_like(close)
+        middleband[:] = np.nan
+        upperband[:] = np.nan
+        lowerband[:] = np.nan
+        middleband[timeperiod-1:] = np.mean(rolling_window(close, window=timeperiod), axis=1)
+        band_width = np.std(rolling_window(close, window=timeperiod), axis=1)
+        upperband[timeperiod-1:] = middleband[timeperiod-1:] + band_width * nbdevup
+        lowerband[timeperiod-1:] = middleband[timeperiod-1:] - band_width * nbdevdn
+        return upperband, middleband, lowerband
 
 
 def dema(close, period: int = 30):
@@ -219,7 +234,16 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     ------
     ndarray, 完成计算的移动平均序列
     """
-    return MA(close, timeperiod, matype)
+    try:
+        from talib import MA
+        return MA(close, timeperiod, matype)
+    except ImportError:
+        a = close.cumsum()
+        ar = np.roll(a, timeperiod)
+        ar[:timeperiod - 1] = np.nan
+        ar[timeperiod - 1] = 0
+
+        return (a - ar) / timeperiod
 
 
 def mama(close, fastlimit=0, slowlimit=0):
@@ -1264,7 +1288,29 @@ def rsi(close, timeperiod=14):
     Return
     ------
     """
-    return RSI(close, timeperiod)
+    try:
+        from talib import RSI
+        return RSI(close, timeperiod)
+    except ImportError:
+        from qteasy.utilfuncs import rolling_window
+        rsi = np.empty_like(close)
+        rsi[:] = np.nan
+        diff = np.diff(close)
+        diff_positive = np.where(diff > 0, diff, 0)[timeperiod - 1:]
+        diff_negative = np.where(diff < 0, -diff, 0)[timeperiod - 1:]
+        diff_window = rolling_window(diff, timeperiod - 1)
+        gain = np.where(diff_window > 0, diff_window, 0).mean(axis=1)
+        loss = np.where(diff_window < 0, -diff_window, 0).mean(axis=1)
+        gain_smooth = np.zeros_like(gain)
+        loss_smooth = np.zeros_like(loss)
+        gain_smooth[0] = gain[0]
+        loss_smooth[0] = loss[0]
+        for i in range(len(close) - timeperiod):
+            gain_smooth[1:] = (gain_smooth[:-1] * (timeperiod - 1) + diff_positive) / timeperiod
+            loss_smooth[1:] = (loss_smooth[:-1] * (timeperiod - 1) + diff_negative) / timeperiod
+        rs = gain_smooth / loss_smooth
+        rsi[timeperiod:] = 100 - 100 / (1 + rs[1:])
+        return rsi
 
 
 def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0):

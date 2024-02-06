@@ -4516,8 +4516,8 @@ class DataSource:
                                f'To check data availability, use one of the following:\n'
                                f'Availability of all tables:     qt.get_table_overview()，or\n'
                                f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
-                               f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
-                               f'**kwargs)')
+                               f'To fill datasource:             qt.refill_data_source(tables=\'table_name\', '
+                               f'start=\'YYYYMMDD\', end=\'YYYYMMDD\', **kwargs)')
         # 如果需要复权数据，计算复权价格
         adj_factors = {}
         if adj.lower() not in ['none', 'n']:

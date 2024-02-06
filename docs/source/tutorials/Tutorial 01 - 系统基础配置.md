@@ -1,4 +1,4 @@
-# 1—基础配置及初始化
+# 基础配置及初始化
 
 qteasy是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能：
 
@@ -6,35 +6,76 @@ qteasy是一个完全本地化部署和运行的量化交易分析工具包，�
 - 量化交易策略的创建，并提供大量内置基本交易策略
 - 向量化的高速交易策略回测及交易结果评价
 - 交易策略参数的优化以及评价
-- 交易策略的部署
+- 交易策略的部署、实盘运行
 
 qteasy使用python创建，使用向量化回测及交易模拟引擎实现了策略的高速回测，同时又兼顾策略框架的灵活性，使得用户可以根据需要灵活定制各种高级策。qteasy提供了多种策略参数优化算法，帮助优化及评价交易策略，同时提供了实时运行模式，使交易策略可以直接部署使用。
 
-本系列教程使用一系列示例介绍qteasy的主要功能以及使用方法。
+通过本系列教程，您将会通过一系列的实际示例，充分了解qteasy的主要功能以及使用方法。
 
-## 安装环境及依赖包
+## `qteasy`安装前的准备工作
 
-### 1，依赖包
+qteasy可以通过pip来安装，由于依赖包较多，为了避免各依赖包与现有环境中的包产生冲突，建议创建一个独立的python环境来安装qteasy。
 
-`qteasy`依赖以下`python`包，有些安装包可能不能在安装`qteasy`的时候自动安装，此时推荐使用`Anaconda`搭建运行环境并手动安装依赖包：
+创建虚拟环境的方法有很多种，这里介绍两种方法，分别是使用`venv`和`conda`：
+
+要使用venv创建虚拟环境，macOS和Linux用户可以打开终端，进入您需要创建环境的路径，输入以下命令，在当前目录下创建一个名为qteasy-env的虚拟环境，并激活环境：
+
+```commandline
+python -m venv qteasy-env  
+source qteasy-env/bin/activate
+```
+
+Windows用户可以打开命令提示符，进入您需要创建环境的文件夹，输入以下命令，创建虚拟环境并激活：
+
+```commandline
+py -m venv qteasy-env  
+.venv\Scripts\activate
+```
+
+要使用conda创建虚拟环境，可以打开终端，输入以下命令，创建一个名为qteasy-env的虚拟环境，并激活环境：
+
+```commandline
+conda create -n qteasy-env python=3.8
+conda activate qteasy-env
+```
+
+在激活的虚拟环境中，使用以下命令安装qteasy：
+
+```commandline
+pip install qteasy
+```
+
+### 依赖包
+
+`qteasy`依赖以下`python`包，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装依赖包：
 :
-- *`pandas` version >= 0.25.1, <1.0.0*    `pip install pandas` / `conda install pandas`
-- *`numpy` version >= 1.18.1, <=1.21.5*    `pip install numpy` / `conda install numpy`
-- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
+- *`pandas` version >= 0.25.1, <1.5.3*    `pip install pandas==1.1.0` / `conda install pandas`
+- *`numpy` version >= 1.18.1, <=1.21.5*    `pip install numpy==1.21.5` / `conda install numpy`
+- *`numba` version >= 0.47*    `pip install numba==0.47.0` / `conda install numba`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`ta-lib` version >= 0.4.18*  `TA-lib`需要用户自行安装，大部份的`qteasy`内置交易策略都是基于`TA-lib`提供的金融数据函数创建的，如果`TA-lib`没有正确安装，将会导致大部份内置交易策略无法使用。
 
-上面的包中，`TA-lib`需要用户自行安装，大部份的`qteasy`内置交易策略都是基于`TA-lib`提供的金融数据函数创建的，如果`TA-lib`没有正确安装，将会导致大部份内置交易策略无法使用。
+### 安装可选依赖包
+使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包，或者在安装`qteasy`时使用可选参数安装这些依赖包：
 
-### 2可选依赖包
-使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包
-#### 如果使用mysql数据库作为本地数据源
+#### 使用mysql数据库作为本地数据源（**推荐**）
+
+可以使用下面命令安装qteasy时安装mysql数据库的依赖包：
+```commandline
+pip install qteasy[mysql]
+```
+或者手动安装pymysql
 - *`pymysql` version >= 1.0.0*    `pip install pymysql` / `conda install -c anaconda pymysql`
 
-#### 如果使用hdf文件作为本地数据源 
+#### 使用其他文件作为本地数据源 
+qteasy还支持使用`hdf5`文件和`feather`文件作为本地数据源，如果使用这两种文件作为本地数据源，可以使用以下命令安装qteasy时安装这些依赖包：
+```commandline
+pip install qteasy[hdf5]
+pip install qteasy[feather]
+```
+或者手动安装以下依赖包：
 - *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
-
-#### 如果使用feather文件作为本地数据源
 - *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
 
 #### 使用完整的内置交易策略
@@ -42,7 +83,7 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 `TA-Lib`是供C语言的一个的一个金融交易技术分析函数包，里面包含大量的技术指标、K线形态识别、基础统计分析等函数，`python`提供了这个包的`wrapper`，要
 在`python`中使用`ta-lib`，需要先安装C语言的`TA-Lib`后，再安装`python`的`ta-lib`包：
 
-- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` 更多的安装信息，请参见[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html)
+- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` 更多的安装信息，请参见[FAQ-TA-lib安装方法](https://qteasy.readthedocs.io/zh/latest/faq.html)
 
 ### 2，数据管理环境（本地数据源）
 
@@ -50,15 +91,50 @@ qteasy使用python创建，使用向量化回测及交易模拟引擎实现了�
 
 `qteasy`同时支持数据库及文件系统作为数据管理环境，考虑到金融数据量，强烈推荐使用数据库作为本地数据源。`qteasy`支持的本地数据源包括：
 
-- **`mysql` 数据库**（或兼容的Maria DB数据库），强烈推荐使用mysql数据库并确保磁盘有至少1TB的存储空间，速度快
-- **`csv` 文件** 占用空间大，但是可以使用Excel读取本地数据，数据量大时速度慢
+- **`csv` 文件** 默认数据源。占用空间大，但是可以使用Excel读取本地数据，数据量大时速度慢
+- **`mysql` 数据库**，强烈推荐使用mysql数据库并确保磁盘有至少1TB的存储空间，速度快
 - **`hdf5` 文件** 占用空间大，数据量大时速度慢
 - **`feather` 文件** 占用空间较小，数据量大时速度慢
 
-### 3，tushare依赖
+为了实现最佳的数据存储效率，建议使用`mysql`数据库作为本地数据源。如果使用`mysql`数据库作为本地数据源。
 
-`qteasy`目前完全依赖`tushare`来获取金融数据，系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
+如果需要使用数据库作为本地数据源，参照以下方法安装`MySQL`数据库，如果使用文件作为本地数据源，可以跳过这一步。
 
+在`MySQL`的[官网](https://dev.mysql.com/downloads/mysql/)可以直接找到社区开源版本下载:
+网站提供了dmg和tar等多种不同的安装方式，而且还有针对M1芯片的版本可选：
+
+![png](https://user-images.githubusercontent.com/34448648/128119283-5c9c3aba-6564-4463-83b6-a2e7216ae3cd.png)
+
+安装完成后，创建用户，设置访问方式并设置密码：
+
+``` mysql
+# 创建新的用户，并允许客户通过localhost连接
+mysql> CREATE USER '用户名'@'localhost' IDENTIFIED BY '初始密码';
+Query OK, 0 rows affected (0.46 sec)
+
+# 设置用户的权限
+mysql> GRANT ALL ON *.* TO '用户名'@'localhost';
+Query OK, 0 rows affected (0.06 sec)
+
+# 创建新的用户，并允许客户通过远程连接
+mysql> CREATE USER '用户名'@'%' IDENTIFIED BY '初始密码';
+Query OK, 0 rows affected (0.46 sec)
+
+# 设置用户的权限
+mysql> GRANT ALL ON *.* TO '用户名'@'%';
+Query OK, 0 rows affected (0.06 sec)
+```
+数据库设置好之后，`qteasy`会自动创建数据库表，将金融数据存储到数据库中。
+
+
+### 3，创建tushare账号并获取token
+
+`qteasy`目前主要依赖`tushare`来获取金融数据，系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
+
+申请tushare积分和权限的方法请参见[tushare pro主页](https://tushare.pro):
+![tushare主页](https://img-blog.csdnimg.cn/direct/34816903637b43e09c01b160b38b8dd9.png#pic_center)
+
+如果不创建tushare账号，`qteasy`仍然可以获得一些数据，但是数据的种类非常有限，访问频率和次数也受到限制，很多`qteasy`功能的使用将会受到限制。
 未来计划增加其他金融数据提供商的API，以扩大数据来源。
 
 
@@ -81,7 +157,6 @@ qteasy的运行依赖于一系列的环境配置变量，通过环境配置变�
 
 > - 使用`qt.QT_ROOT_PATH`可以查看qteasy的根目录
 > - 使用`qt.QT_CONFIG`可以查看当前使用的环境配置变量
-> - `tushare` 的`API token`可以到[tushare pro主页](https://tushare.pro)免费申请
 
 所有的环境参数变量值都可以通过`qt.Configuration()`查看，并通过`qt.Configure()`来设置。
 
@@ -103,38 +178,8 @@ qteasy的运行依赖于一系列的环境配置变量，通过环境配置变�
 
 # 设置tushare的token
 tushare_token = <your tushare token>
-
-# 设置本地数据源，如果使用database作为本地数据源
-local_data_source = database
-# 需要设置数据库服务器信息
-local_db_host = <host name>
-local_db_user = <user name>
-local_db_password = <your password>
-local_db_name = <your db name>
-
-# 或者如果使用csv文件作为本地数据源：
-local_data_source = file
-# 需要设置文件类型和存储路径
-local_data_file_type = csv  # 或者hdf/fth分别代表hdf5文件或feather文件
-local_data_file_path = data  # 或者其他指定的文件存储目录
 ```
 完成上述配置后，`qteasy`会将上述配置读取后写入`qt.QT_CONFIG`环境变量，这样在运行中就会使用这一组配置变量。
-
-### 测试数据源的配置
-qteasy在测试开发环境中需要用到测试数据源，测试数据源可以与正式数据源不同，以免污染正式运行数据。
-将以下配置写入配置文件可以设置测试环境数据源：
-```commandline
-# 如果要使用tests目录下的测试数据，需要设置：
-test_db_host = <host name>
-test_db_port = <port number>
-test_db_user = <user name>
-test_db_password = <password>
-test_db_name = test_db <或其他用于测试的临时数据库>
-```
-根据你选择的本地数据源类型，可能需要安装对应的依赖包
-
-如果日常使用的数据量大，建议设置`local_data_source = database`，使用数据库保存本地数据。不包括分钟数据时，所有数据将占用大约10G的磁盘空
-间，分钟级别数据将占用350GB甚至更多的磁盘空间。
 
 
 ### 配置qteasy环境变量
