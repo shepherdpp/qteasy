@@ -70,7 +70,22 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
         :middleband,
         :lowerband: np.ndarray
     """
-    return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
+    try:
+        from talib import BBANDS
+        return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
+    except ImportError:
+        from qteasy.utilfuncs import rolling_window
+        middleband = np.empty_like(close)
+        upperband = np.empty_like(close)
+        lowerband = np.empty_like(close)
+        middleband[:] = np.nan
+        upperband[:] = np.nan
+        lowerband[:] = np.nan
+        middleband[timeperiod-1:] = np.mean(rolling_window(close, window=timeperiod), axis=1)
+        band_width = np.std(rolling_window(close, window=timeperiod), axis=1)
+        upperband[timeperiod-1:] = middleband[timeperiod-1:] + band_width * nbdevup
+        lowerband[timeperiod-1:] = middleband[timeperiod-1:] - band_width * nbdevdn
+        return upperband, middleband, lowerband
 
 
 def dema(close, period: int = 30):
@@ -1273,7 +1288,29 @@ def rsi(close, timeperiod=14):
     Return
     ------
     """
-    return RSI(close, timeperiod)
+    try:
+        from talib import RSI
+        return RSI(close, timeperiod)
+    except ImportError:
+        from qteasy.utilfuncs import rolling_window
+        rsi = np.empty_like(close)
+        rsi[:] = np.nan
+        diff = np.diff(close)
+        diff_positive = np.where(diff > 0, diff, 0)[timeperiod - 1:]
+        diff_negative = np.where(diff < 0, -diff, 0)[timeperiod - 1:]
+        diff_window = rolling_window(diff, timeperiod - 1)
+        gain = np.where(diff_window > 0, diff_window, 0).mean(axis=1)
+        loss = np.where(diff_window < 0, -diff_window, 0).mean(axis=1)
+        gain_smooth = np.zeros_like(gain)
+        loss_smooth = np.zeros_like(loss)
+        gain_smooth[0] = gain[0]
+        loss_smooth[0] = loss[0]
+        for i in range(len(close) - timeperiod):
+            gain_smooth[1:] = (gain_smooth[:-1] * (timeperiod - 1) + diff_positive) / timeperiod
+            loss_smooth[1:] = (loss_smooth[:-1] * (timeperiod - 1) + diff_negative) / timeperiod
+        rs = gain_smooth / loss_smooth
+        rsi[timeperiod:] = 100 - 100 / (1 + rs[1:])
+        return rsi
 
 
 def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0):

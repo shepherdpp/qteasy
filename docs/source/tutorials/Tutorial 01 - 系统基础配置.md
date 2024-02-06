@@ -54,8 +54,7 @@ pip install qteasy
 - *`numba` version >= 0.47*    `pip install numba==0.47.0` / `conda install numba`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
 - *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
-
-上面的包中，`TA-lib`需要用户自行安装，大部份的`qteasy`内置交易策略都是基于`TA-lib`提供的金融数据函数创建的，如果`TA-lib`没有正确安装，将会导致大部份内置交易策略无法使用。
+- *`ta-lib` version >= 0.4.18*  `TA-lib`需要用户自行安装，大部份的`qteasy`内置交易策略都是基于`TA-lib`提供的金融数据函数创建的，如果`TA-lib`没有正确安装，将会导致大部份内置交易策略无法使用。
 
 ### 安装可选依赖包
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包，或者在安装`qteasy`时使用可选参数安装这些依赖包：
