@@ -10,7 +10,7 @@
 
 import numpy as np
 try:
-    from talib import BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
+    from talib import BBANDS, HT_TRENDLINE, KAMA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
         T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
         MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
         STOCHF, STOCHRSI, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
@@ -219,7 +219,16 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     ------
     ndarray, 完成计算的移动平均序列
     """
-    return MA(close, timeperiod, matype)
+    try:
+        from talib import MA
+        return MA(close, timeperiod, matype)
+    except ImportError:
+        a = close.cumsum()
+        ar = np.roll(a, timeperiod)
+        ar[:timeperiod - 1] = np.nan
+        ar[timeperiod - 1] = 0
+
+        return (a - ar) / timeperiod
 
 
 def mama(close, fastlimit=0, slowlimit=0):
