@@ -9,10 +9,12 @@
 # ======================================
 
 import numpy as np
+import pandas as pd
+
 try:
-    from talib import BBANDS, HT_TRENDLINE, KAMA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
+    from talib import HT_TRENDLINE, KAMA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
         T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
-        MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
+        MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, STOCH, \
         STOCHF, STOCHRSI, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
         WCLPRICE, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDMODE, CDL2CROWS, CDL3BLACKCROWS, \
         CDL3INSIDE, CDL3LINESTRIKE, CDL3OUTSIDE, CDL3STARSINSOUTH, CDL3WHITESOLDIERS, CDLABANDONEDBABY, \
@@ -75,6 +77,14 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
         return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
     except ImportError:
         from qteasy.utilfuncs import rolling_window
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        elif isinstance(close, np.ndarray):
+            index = None
+            close = close
+        else:
+            raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
         middleband = np.empty_like(close)
         upperband = np.empty_like(close)
         lowerband = np.empty_like(close)
@@ -85,6 +95,11 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
         band_width = np.std(rolling_window(close, window=timeperiod), axis=1)
         upperband[timeperiod-1:] = middleband[timeperiod-1:] + band_width * nbdevup
         lowerband[timeperiod-1:] = middleband[timeperiod-1:] - band_width * nbdevdn
+        if index is not None:
+            upperband = pd.Series(upperband, index=index)
+            middleband = pd.Series(middleband, index=index)
+            lowerband = pd.Series(lowerband, index=index)
+
         return upperband, middleband, lowerband
 
 
@@ -101,17 +116,40 @@ def dema(close, period: int = 30):
 
         DEMA=2×EMA_N − EMA of EMA_N
 
-    close: float,收盘价
-    period:
+    close: array of float or pd.Series,
+        收盘价
+    period: int, optional, period > 1,
+        时间跨度
 
     Return
     ------
+    dema: array of float or pd.Series
+
+    Note
+    ----
+    不使用talib库时，计算结果与talib库中的DEMA函数计算结果可能会有细微差异
     """
     try:
         from talib import DEMA
         return DEMA(close, period)
     except ImportError:
-        return 2 * ema(close, period) - ema(ema(close, period), period)
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        elif isinstance(close, np.ndarray):
+            index = None
+            close = close
+        else:
+            raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+
+        res = 2 * _ema_flat(close, period) - _ema_flat(_ema_flat(close, period), period)
+        empty_span = 2 * (period - 1)
+        res[:empty_span] = np.nan
+
+        if index is not None:
+            res = pd.Series(res, index=index)
+
+        return res
 
 
 def ema(close, span: int = 30):
@@ -135,23 +173,60 @@ def ema(close, span: int = 30):
     Return
     ------
     1-D ndarray; 输入数据的指数平滑移动平均值
+
+    Note
+    ----
+    不使用talib库时，计算结果与talib库中的EMA函数计算结果可能会有细微差异
     """
     try:
         from talib import EMA
         return EMA(close, span)
     except ImportError:
-        alpha = 2 / (span + 1.0)
-        alpha_rev = 1 - alpha
-        n = close.shape[0]
-        pows = alpha_rev ** (np.arange(n + 1))
-        scale_arr = 1 / pows[:-1]
-        offset = close[0] * pows[1:]
-        pw0 = alpha * alpha_rev ** (n - 1)
-        mult = close * pw0 * scale_arr
-        cumsums = mult.cumsum()
-        out = offset + cumsums * scale_arr[::-1]
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        elif isinstance(close, np.ndarray):
+            index = None
+            close = close
+        else:
+            raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+        out = _ema_flat(close, span)
+        out[:span - 1] = np.nan
+
+        if index is not None:
+            out = pd.Series(out, index=index)
 
         return out
+
+
+def _ema_flat(close, span: int = 30):
+    """ Exponential Moving Average指数移动平均值, ta-lib不可用时自行计算的指数移动平均值
+
+    为实现多次嵌套计算，计算结果中不含nan值
+
+    Parameters
+    ----------
+    close: array of float,
+        收盘价
+    span: int, optional, 1 < span,
+        跨度
+
+    Returns
+    -------
+    ema:
+    """
+    alpha = 2 / (span + 1.0)
+    alpha_rev = 1 - alpha
+    n = close.shape[0]
+    pows = alpha_rev ** (np.arange(n + 1))
+    scale_arr = 1 / pows[:-1]
+    offset = close[0] * pows[1:]
+    pw0 = alpha * alpha_rev ** (n - 1)
+    mult = close * pw0 * scale_arr
+    cumsums = mult.cumsum()
+    out = offset + cumsums * scale_arr[::-1]
+
+    return out
 
 
 def ht(close):
@@ -233,17 +308,32 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     Return
     ------
     ndarray, 完成计算的移动平均序列
+
+    Note
+    ----
+    不使用talib库时，只能计算简单移动平均SMA，其他的移动平均类型将被忽略
     """
     try:
         from talib import MA
         return MA(close, timeperiod, matype)
     except ImportError:
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        elif isinstance(close, np.ndarray):
+            index = None
+            close = close
+        else:
+            raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
         a = close.cumsum()
         ar = np.roll(a, timeperiod)
         ar[:timeperiod - 1] = np.nan
         ar[timeperiod - 1] = 0
+        res = (a - ar) / timeperiod
 
-        return (a - ar) / timeperiod
+        if index is not None:
+            res = pd.Series(res, index=index)
+        return res
 
 
 def mama(close, fastlimit=0, slowlimit=0):
@@ -385,12 +475,7 @@ def sma(close, timeperiod=30):
         from talib import SMA
         return SMA(close, timeperiod)
     except ImportError:
-        a = close.cumsum()
-        ar = np.roll(a, timeperiod)
-        ar[:timeperiod - 1] = np.nan
-        ar[timeperiod - 1] = 0
-
-        return (a - ar) / timeperiod
+        return ma(close, timeperiod)
 
 
 def t3(close, timeperiod=5, vfactor=0):
@@ -845,18 +930,46 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
 
     Return
     ------
-        macd,
-        macdsignal,
-        macdhist
+        macdhist, array of float or pd.Series
+        macdsignal, array of float or pd.Series
+        macd, array of float or pd.Series
+
+    Note
+    ----
+    不使用talib库时，计算结果与talib库中的MACD函数计算结果可能会有细微差异
     """
     try:
         from talib import MACD
         return MACD(close, fastperiod, slowperiod, signalperiod)
     except ImportError:
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        elif isinstance(close, np.ndarray):
+            index = None
+            close = close
+        else:
+            raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+
         macdhist = ema(close, fastperiod) - ema(close, slowperiod)
         macdsignal = ema(macdhist, signalperiod)
-        macd = 2 * (macdhist - macdsignal)
-        return macd, macdsignal, macdhist
+        macd = (macdhist - macdsignal)
+
+        if signalperiod == 1:
+            empty_span = max(slowperiod, fastperiod) + signalperiod - 3
+        else:
+            empty_span = max(slowperiod, fastperiod) + signalperiod - 2
+
+        macdhist[:empty_span] = np.nan
+        macdsignal[:empty_span] = np.nan
+        macd[:empty_span] = np.nan
+
+        if index is not None:
+            macdhist = pd.Series(macdhist, index=index)
+            macdsignal = pd.Series(macdsignal, index=index)
+            macd = pd.Series(macd, index=index)
+
+        return macdhist, macdsignal, macd
 
 
 def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, signalperiod=9, signalmatype=0):
@@ -1293,6 +1406,15 @@ def rsi(close, timeperiod=14):
         return RSI(close, timeperiod)
     except ImportError:
         from qteasy.utilfuncs import rolling_window
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        elif isinstance(close, np.ndarray):
+            index = None
+            close = close
+        else:
+            raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+
         rsi = np.empty_like(close)
         rsi[:] = np.nan
         diff = np.diff(close)
@@ -1310,6 +1432,9 @@ def rsi(close, timeperiod=14):
             loss_smooth[1:] = (loss_smooth[:-1] * (timeperiod - 1) + diff_negative) / timeperiod
         rs = gain_smooth / loss_smooth
         rsi[timeperiod:] = 100 - 100 / (1 + rs[1:])
+
+        if index is not None:
+            rsi = pd.Series(rsi, index=index)
         return rsi
 
 
@@ -1450,20 +1575,40 @@ def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=
 def trix(close, timeperiod=30):
     """1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 
-    close: float, 1-d array of float
+    close: 1-d array of float or pd.Series,
         收盘价
     timeperiod: int
         ema span
 
     Return
     ------
+    trix: float, 1-d array of float or pd.Series
+
+    Note
+    ----
+    如果没有安装talib，TRIX的计算结果将有少许差异
     """
+
     try:
         from talib import TRIX
         return TRIX(close, timeperiod)
     except ImportError:
-        tri_ema = ema(ema(ema(close, timeperiod), timeperiod), timeperiod)
+        if isinstance(close, pd.Series):
+            index = close.index
+            close = close.values
+        else:
+            index = None
+        tri_ema = _ema_flat(_ema_flat(_ema_flat(close, timeperiod), timeperiod), timeperiod)
         res = tri_ema / np.roll(tri_ema, 1) - 1
+        if timeperiod == 1:
+            empty_span = 0
+        else:
+            empty_span = 3 * timeperiod - 2
+        res[:empty_span] = np.nan
+
+        if index is not None:
+            res = pd.Series(res, index=index)
+
         return res
 
 

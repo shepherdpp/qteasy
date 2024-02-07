@@ -1,8 +1,8 @@
 # RELEASE HISTORY
 
 ## 1.0.19 (2024-02-07)
-- Removed dependency on `ta-lib` package for ta functions RSI(), MA(), and BBANDS(), thus candle charts can be created without `ta-lib` installed
-- 
+- Removed dependency on `ta-lib` package for ta functions `RSI()`, `MA()`, and `BBANDS()`, thus candle charts can be created without `ta-lib` installed
+- Updated dependencies, made package more use-able for beginners with no `ta-lib` and only basic `tushare` credits
 
 ## 1.0.18 (2024-02-05)
 - Improved trader shell live messages: now order execution results are better displayed with more info regarding change of stock qty and cash amounts

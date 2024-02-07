@@ -10,6 +10,7 @@
 # ======================================
 import unittest
 import numpy as np
+import pandas as pd
 
 from qteasy.tafuncs import bbands, dema, ema, ht, kama, ma, mama, mavp, mid_point
 from qteasy.tafuncs import mid_price, sar, sarext, sma, t3, tema, trima, wma, adx, adxr
@@ -74,6 +75,13 @@ class TestTAFuncs(unittest.TestCase):
                                 178206, 83145, 384713, 308022, 380623, 423506, 833615, 473541,
                                 841975, 450572, 162390, 550347, 415988, 133953, 754915, 476105,
                                 120871, 629045]).astype('float')
+        index_data = pd.date_range(start='2020-01-01', periods=self.data_rows, freq='D')
+        self.df_data = pd.DataFrame(
+                np.array([self.open, self.high, self.low, self.close, self.volume]).T,
+                index=index_data,
+                columns=['open', 'high', 'low', 'close', 'volume'],
+                dtype='float',
+        )
 
     def test_bbands(self):
         print(f'test TA function: bbands\n'
