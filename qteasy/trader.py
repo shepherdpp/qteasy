@@ -2230,7 +2230,8 @@ class Trader(object):
             filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
             # send message to indicate execution of order
             self.send_message(f'<ORDER EXECUTED {order_id}>: '
-                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
+                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price} '
+                              f'with fee: {result_detail["transaction_fee"]}')
             # send message to indicate change of positions / cashes
             # 读取交易处理以后的账户信息和持仓信息
             order_id = result['order_id']
