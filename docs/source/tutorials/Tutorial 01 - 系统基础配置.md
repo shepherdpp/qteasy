@@ -1,6 +1,6 @@
-# 基础配置及初始化
+# 教程1 - 安装方法及初始配置
 
-qteasy是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能：
+`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能：
 
 - 金融数据的获取、清洗、存储以及处理、可视化、使用
 - 量化交易策略的创建，并提供大量内置基本交易策略
@@ -8,17 +8,19 @@ qteasy是一个完全本地化部署和运行的量化交易分析工具包，�
 - 交易策略参数的优化以及评价
 - 交易策略的部署、实盘运行
 
-qteasy使用python创建，使用向量化回测及交易模拟引擎实现了策略的高速回测，同时又兼顾策略框架的灵活性，使得用户可以根据需要灵活定制各种高级策。qteasy提供了多种策略参数优化算法，帮助优化及评价交易策略，同时提供了实时运行模式，使交易策略可以直接部署使用。
+`qteasy`使用`python`创建，使用向量化回测及交易模拟引擎实现了策略的高速回测，同时又兼顾策略框架的灵活性，使得用户可以根据需要灵活定制各种高级策。`qteasy`提供了多种策略参数优化算法，帮助优化及评价交易策略，同时提供了实时运行模式，使交易策略可以直接部署使用。
 
-通过本系列教程，您将会通过一系列的实际示例，充分了解qteasy的主要功能以及使用方法。
+通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。
 
 ## `qteasy`安装前的准备工作
 
-qteasy可以通过pip来安装，由于依赖包较多，为了避免各依赖包与现有环境中的包产生冲突，建议创建一个独立的python环境来安装qteasy。
+### 1, 创建安装环境
+
+`qteasy`可以通过`pip`来安装，由于依赖包较多，为了避免各依赖包与现有环境中的包产生冲突，建议创建一个独立的`python`环境来安装`qteasy`。
 
 创建虚拟环境的方法有很多种，这里介绍两种方法，分别是使用`venv`和`conda`：
 
-要使用venv创建虚拟环境，macOS和Linux用户可以打开终端，进入您需要创建环境的路径，输入以下命令，在当前目录下创建一个名为qteasy-env的虚拟环境，并激活环境：
+要使用`venv`创建虚拟环境，macOS和Linux用户可以打开终端，进入您需要创建环境的路径，输入以下命令，在当前目录下创建一个名为`qteasy-env`的虚拟环境，并激活环境：
 
 ```commandline
 python -m venv qteasy-env  
@@ -32,60 +34,19 @@ py -m venv qteasy-env
 .venv\Scripts\activate
 ```
 
-要使用conda创建虚拟环境，可以打开终端，输入以下命令，创建一个名为qteasy-env的虚拟环境，并激活环境：
+要使用conda创建虚拟环境，可以打开终端，输入以下命令，创建一个名为`qteasy-env`的虚拟环境，并激活环境：
 
 ```commandline
 conda create -n qteasy-env python=3.8
 conda activate qteasy-env
 ```
 
-在激活的虚拟环境中，使用以下命令安装qteasy：
+在激活的虚拟环境中，使用以下命令安装`qteasy`：
 
 ```commandline
 pip install qteasy
 ```
-
-### 依赖包
-
-`qteasy`依赖以下`python`包，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装依赖包：
-:
-- *`pandas` version >= 0.25.1, <1.5.3*    `pip install pandas==1.1.0` / `conda install pandas`
-- *`numpy` version >= 1.18.1, <=1.21.5*    `pip install numpy==1.21.5` / `conda install numpy`
-- *`numba` version >= 0.47*    `pip install numba==0.47.0` / `conda install numba`
-- *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
-- *`ta-lib` version >= 0.4.18*  `TA-lib`需要用户自行安装，大部份的`qteasy`内置交易策略都是基于`TA-lib`提供的金融数据函数创建的，如果`TA-lib`没有正确安装，将会导致大部份内置交易策略无法使用。
-
-### 安装可选依赖包
-使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装以下可选依赖包，或者在安装`qteasy`时使用可选参数安装这些依赖包：
-
-#### 使用mysql数据库作为本地数据源（**推荐**）
-
-可以使用下面命令安装qteasy时安装mysql数据库的依赖包：
-```commandline
-pip install qteasy[mysql]
-```
-或者手动安装pymysql
-- *`pymysql` version >= 1.0.0*    `pip install pymysql` / `conda install -c anaconda pymysql`
-
-#### 使用其他文件作为本地数据源 
-qteasy还支持使用`hdf5`文件和`feather`文件作为本地数据源，如果使用这两种文件作为本地数据源，可以使用以下命令安装qteasy时安装这些依赖包：
-```commandline
-pip install qteasy[hdf5]
-pip install qteasy[feather]
-```
-或者手动安装以下依赖包：
-- *`pytables` version >= 3.6.1*   `conda install -c conda-forge pytables`
-- *`pyarrow` version >= 3*   `pip install pyarrow` / `conda install -c conda-forge pyarrow`
-
-#### 使用完整的内置交易策略
-`qteasy`提供了大量内置交易策略，用户可以直接使用这些交易策略通过"混合"的方式组合成自己的交易策略，但是大部份内置交易策略需要借助`TA-Lib`发挥作用
-`TA-Lib`是供C语言的一个的一个金融交易技术分析函数包，里面包含大量的技术指标、K线形态识别、基础统计分析等函数，`python`提供了这个包的`wrapper`，要
-在`python`中使用`ta-lib`，需要先安装C语言的`TA-Lib`后，再安装`python`的`ta-lib`包：
-
-- *`TA-lib` version >= 0.4.18*    `pip install ta-lib` 更多的安装信息，请参见[FAQ-TA-lib安装方法](https://qteasy.readthedocs.io/zh/latest/faq.html)
-
-### 2，数据管理环境（本地数据源）
+### 2，安装`MySQL`数据库 (可选)
 
 `qteasy`可以管理大量的金融数据。`qteasy`的工作方式是将所有的金融数据下载到本地，清洗后存储到事先定义好的数据表中，在需要时（生成K线图、交易信号生成、模拟交易回测、交易结果评价等所有环节都需要用到金融数据）从本地数据源直接读取所需的数据。因此，必须在本地设置一个数据管理环境。
 
@@ -96,14 +57,14 @@ pip install qteasy[feather]
 - **`hdf5` 文件** 占用空间大，数据量大时速度慢
 - **`feather` 文件** 占用空间较小，数据量大时速度慢
 
-为了实现最佳的数据存储效率，建议使用`mysql`数据库作为本地数据源。如果使用`mysql`数据库作为本地数据源。
+为了实现最佳的数据存储效率，建议使用`mysql`数据库作为本地数据源。
 
 如果需要使用数据库作为本地数据源，参照以下方法安装`MySQL`数据库，如果使用文件作为本地数据源，可以跳过这一步。
 
 在`MySQL`的[官网](https://dev.mysql.com/downloads/mysql/)可以直接找到社区开源版本下载:
 网站提供了dmg和tar等多种不同的安装方式，而且还有针对M1芯片的版本可选：
 
-![png](https://user-images.githubusercontent.com/34448648/128119283-5c9c3aba-6564-4463-83b6-a2e7216ae3cd.png)
+![png](https://img-blog.csdnimg.cn/img_convert/777753d0c13584515c95cd3450882ee6.png)
 
 安装完成后，创建用户，设置访问方式并设置密码：
 
@@ -126,137 +87,196 @@ Query OK, 0 rows affected (0.06 sec)
 ```
 数据库设置好之后，`qteasy`会自动创建数据库表，将金融数据存储到数据库中。
 
+#### 安装`pymysql`
 
-### 3，创建tushare账号并获取token
+```commandline
+pip install pymysql
+```
+
+### 3，创建`tushare`账号并获取API token (可选)
 
 `qteasy`目前主要依赖`tushare`来获取金融数据，系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
 
-申请tushare积分和权限的方法请参见[tushare pro主页](https://tushare.pro):
-![tushare主页](https://img-blog.csdnimg.cn/direct/34816903637b43e09c01b160b38b8dd9.png#pic_center)
+![tushare数据行情页1](https://img-blog.csdnimg.cn/direct/ad0f44a595824ff7831b6fa4560ba84f.png#pic_center)
 
-如果不创建tushare账号，`qteasy`仍然可以获得一些数据，但是数据的种类非常有限，访问频率和次数也受到限制，很多`qteasy`功能的使用将会受到限制。
+申请tushare积分和权限的方法请参见[tushare pro主页](https://tushare.pro):
+![在这里插入图片描述](https://img-blog.csdnimg.cn/direct/9e930634151d43d0bdb4a8dc465194d5.png#pic_center)
+
+如果不创建`tushare`账号，`qteasy`仍然可以获得一些数据，但是数据的种类非常有限，访问频率和次数也受到限制，很多`qteasy`功能的使用将会受到限制，如下图所示:
+
+![tushare数据详情页2](https://img-blog.csdnimg.cn/direct/0f0343e35fb44159a2d086f1df6ddb17.png#pic_center)
+
 未来计划增加其他金融数据提供商的API，以扩大数据来源。
 
+### 4，安装TA-lib (可选)
 
-## 使用`QTEASY`
+`qteasy`内置了大量的技术指标，这些技术指标的计算依赖于`TA-lib`，如果需要使用`qteasy`内置的所有技术指标，需要安装`TA-lib`。
+如果跳过这一步，将只能使用以下少数几种内置策略。下面简单介绍`TA-lib`的安装方法：
 
-当qteasy的所有依赖包正确安装后，即可使用以下方式导入`qteasy`：
+完整的`TA-Lib`包无法通过pip安装，因为通过`pip install ta-lib`安装的只是TA-Lib包的一个`python wrapper`, 用户必须首先安装C语言的TA-Lib才能在python中使用它。
+
+> 有些用户可以用下面的方法安装C语言的TA-Lib包：
+> `conda install -c conda-forge libta-lib`
+
+在不同的系统下安装C语言的TA-Lib包的方法：
+
+### Windows
+
+* 下载 [ta-lib-0.4.0-msvc.zip](http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-msvc.zip) 并解压至 `C:\ta-lib`.
+* 下载并安装 `Visual Studio Community` (2015 或更新版本)， 选择 `[Visual C++]` 功能
+* Windows 开始菜单, 启动 `[VS2015 x64 Native Tools Command Prompt]`
+* 移动至 `C:\ta-lib\c\make\cdr\win32\msvc`
+* `nmake`
+
+### Mac OS
+
+```bash
+$ brew install ta-lib
+```
+
+如果使用Apple Silicon芯片，可以使用：
+
+```bash
+$ arch -arm64 brew install ta-lib
+```
+
+### Linux
+
+下载 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz) ，然后:
+
+```bash
+$ tar -xzf ta-lib-0.4.0-src.tar.gz
+$ cd ta-lib/
+$ ./configure --prefix=/usr
+$ make
+$ sudo make install
+```
+安装完成C语言`TA-Lib`后，可以安装`TA-Lib`的`python wrapper`：
+
+```commandline
+pip install TA-Lib
+```
+
+更完整的`TA-Lib`的安装方法请参考[这里](https://pypi.org/prject/TA-Lib/)
+
+
+## 初始化`QTEASY`
+
+当`qteasy`的所有依赖包正确安装后，就可以在IDE中导入`qteasy`了。
 
 ```python
 import qteasy as qt
 print(qt.__version__)
 ```
-第一次安装的qteasy会自动初始化，初始化过程会创建一个`qteasy.cnf`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改qteasy的环境配置变量。
 
-默认情况下，qteasy使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用qteasy，用户还应该完成本地数据源的基本配置。
+第一次导入`qteasy`时会自动初始化，初始化过程会创建一个`qteasy.cnf`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改`qteasy`的环境配置变量。
 
+用户可以将一些关键配置信息存放在`qteasy.cfg`文件中，这样`qteasy`在导入时会自动读取这些配置信息。
 
-## 配置环境变量和数据源
+用户可以在资源管理器、访达或者终端中找到`qteasy`的根目录，然后打开`qteasy.cfg`文件，修改其中的内容。
+> 在qteasy中可以通过`qt.QT_ROOT_PATH`查看qteasy的根目录
+> ```python
+> import qteasy as qt
+> print(qt.QT_ROOT_PATH)
+> ```
 
-qteasy的运行依赖于一系列的环境配置变量，通过环境配置变量，用户可以控制qteasy运行的方方面面。qteasy在运行时允许存在多组不同的环境配置变量对象Config，每一组Config对应一组环境配置变量。在默认情况下，qteasy初始化会创建一个默认环境变量QT_CONFIG并始终使用这个配置变量。
-
-> - 使用`qt.QT_ROOT_PATH`可以查看qteasy的根目录
-> - 使用`qt.QT_CONFIG`可以查看当前使用的环境配置变量
-
-所有的环境参数变量值都可以通过`qt.Configuration()`查看，并通过`qt.Configure()`来设置。
-
-### 初始环境变量的配置
-
-在`qteasy`第一次初始化以后，在`qteasy/`文件夹里会创建一个`qteasy.cnf`的文件，这个文件里的内容会在每次`qteasy`被`import`并初始化的时候读取，并作为默认环境参数被读入内存。第一次初始化后创建的qteasy.cnf文件中不会有任何自定义配置，用户可以用文本处理程序打开这个文件，修改其中的内容。
-
-第一次创建的`qteasy.cnf`文件内容如下：
+第一次初始化后的`qteasy.cnf`文件内容如下：
 
 ```
-# qteasy configs
-# following configurations will be activated during initialization
+# qteasy configuration file
+# following configurations will be loaded when initialize qteasy
+
+# example:
+# local_data_source = database
 ```
-建议用户在使用qteasy前使用qteasy.cnf文件配置tushare 的token，以及本地数据源的配置，例如：
+用户可以直接在文件中添加配置信息，保存文件后重新导入`qteasy`即可使配置生效了，例如：
 
 ```
-# qteasy configs
-# following configurations will be activated during initialization
-
-# 设置tushare的token
-tushare_token = <your tushare token>
+local_data_source = database
 ```
-完成上述配置后，`qteasy`会将上述配置读取后写入`qt.QT_CONFIG`环境变量，这样在运行中就会使用这一组配置变量。
 
+以下几个配置信息是用户在使用`qteasy`前非常有必要配置的：
 
-### 配置qteasy环境变量
+### 1，配置`tushare`的API token
 
-例如：
+注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare` token，将无法正常使用`tushare`的数据服务。
 
-下面的示例显示`qteasy`的环境配置变量：
+如果您按照教程前一节的内容创建了`tushare`账号并获取了token，可以将token写入`qteasy.cnf`文件中，这样在导入`qteasy`时就会自动读取这个token。
 
+在`qteasy.cnf`文件中添加以下内容：
+
+```
+tushare_token = 你的tushare token
+```
+
+### 2，配置本地数据源
+
+默认情况下，`qteasy`使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用`qteasy`，用户还应该完成本地数据源的基本配置。
+
+如果您按照教程前一节的内容创建了`mysql`数据库，可以将数据库的配置信息写入`qteasy.cnf`文件中，这样`qteasy`就会连接到您指定的数据库，将金融数据存储到数据库中。
+
+在`qteasy.cnf`文件中添加以下内容：
+
+```
+local_data_source = database
+database_host = <你的数据库主机名，如local_host>
+database_port = <你的数据库端口，如3306>
+database_user = <你的数据库用户名>
+database_password = <你的数据库连接密码>
+database_name = <保存金融数据的数据库名，如qt_base>
+```
+如果不做上述配置，`qteasy`会使用默认的csv文件作为本地数据源。
+
+## 开始下载第一批金融数据
+
+完成上述配置以后，保存并关闭`qteasy.cfg`文件，恭喜你，`qteasy`已经安装并配置好了，现在可以开始使用`qteasy`了。
+
+完成上述配置以后，保存并关闭`qteasy.cfg`文件，恭喜你，`qteasy`已经安装并配置好了，现在可以开始使用`qteasy`了。
+
+首先，我们需要下载一些金融数据，交易策略的回测、优化、评价等所有功能都需要用到金融数据。
+在这里，我们可以先下载一些股票数据，以便后续的教程中使用。
+
+`qt.refill_data_source`是一个通用的数据下载函数，只要你的tushare积分足够，可以下载股票、期货、指数、基金等金融数据，也可以下载宏观经济、财务报表、财务指标、公司基本信息等非交易数据。使用这个函数，您可以批量下载数据到本地，保存前会进行数据去重和清洗、确保不会重复保存，另外，使用多线程并行下载，提供下载进度条，特别适合一次性下载大量历史数据保存到本地，也适合定期运行，定期补充增量数据，例如每月或每周补充下载本月或本周的所有数据。
 
 ```python
-qt.configuration(level=0, up_to=1, default=True)
+import qteasy as qt
+
+# 下载股票数据 (从2023年1月1日到2023年12月31日之间的所有股票数据)
+qt.refill_data_source(tables='stock_daily', start_date='20230101', end_date='20231231')
+
+Filling data source file://csv@qt_root/data/ ...
+[########################################]9/9-100.0%  <trade_calendar:SSE-XHKG>74804wrtn in ~9't
+[########################################]7/7-100.0%  <stock_basic:SH-BJ>10365wrtn in ~1't
+[########################################]272/272-100.0%  <stock_daily:20230101-20231231>959278623wrtn in ~2H
 ```
 
-输出如下
 
+在`qteasy`中，所有数据都保存在特定的数据表中，而且每一种数据都有其唯一的数据ID，例如'pe'表示市盈率，open表示开盘价，等等；通过数据ID，用户可以在qteasy中随时获取所需的数据——只要数据已经下载到本地。
 
-    No. Config-Key            Cur Val        Default val
-    ----------------------------------------------------
-    1   mode                  1              <1>
-    2   asset_pool            000300.SH      <000300.SH>
-    3   asset_type            IDX            <IDX>
-    4   trade_batch_size      0.0            <0.0>
-    5   sell_batch_size       0.0            <0.0>
-    6   parallel              True           <True>
-    7   trade_log             True           <True>
-    8   benchmark_asset       000300.SH      <000300.SH>
-    9   benchmark_asset_type  IDX            <IDX>
-    10  benchmark_dtype       close          <close>
-    11  report                True           <True>
-    12  visual                True           <True>
-    13  cost_rate_buy         0.0003         <0.0003>
-    14  cost_rate_sell        0.0001         <0.0001>
-    15  invest_start          20160405       <20160405>
-    16  invest_end            20210201       <20210201>
-    17  invest_cash_amounts   [100000.0]     <[100000.0]>
-    18  opti_start            20160405       <20160405>
-    19  opti_end              20191231       <20191231>
-    20  opti_cash_amounts     [100000.0]     <[100000.0]>
-    21  test_start            20200106       <20200106>
-    22  test_end              20210201       <20210201>
-    23  test_cash_amounts     [100000.0]     <[100000.0]>
-    24  optimize_target       final_value    <final_value>
-    25  maximize_target       True           <True>
-    26  opti_method           1              <1>
+同时，数据ID也是`qteasy`中交易策略的核心，用户可以通过数据ID在交易策略中"订阅"所需要的数据类型，并根据这些数据生成交易信号（关于交易信号和交易策略，请参见教程第四章）。
 
+根据您的网络环境和数据量大小，下载数据的时间可能会有所不同，下载完成后，2023年内的所有股票数据就可以直接获取了。
 
-
-如果设置`verbose=True`，并传入`config_key`参数，可以显示特定`config_key`的详细描述
-
+要获取历史数据，可以使用`get_history_data`函数，在参数中指定数据类型、股票代码、开始日期和结束日期，
+下面的代码可以获取2023年1月1日到3月1日的股票000001.SZ的开盘价、最高价、最低价、收盘价、成交量、成交额等数据：
 
 ```python
-qt.configuration(config_key='mode, asset_pool, report, visual', default=True, verbose=True)
-```
+import qteasy as qt
+qt.get_history_data('open, high, low, close, vol', shares='000001.SZ', start='20230101', end='20230301')
 
-输出如下：
+{'000001.SZ':              open   high    low  close         vol
+2023-01-04  13.71  14.42  13.63  14.32  2189682.53
+2023-01-05  14.40  14.74  14.37  14.48  1665425.18
+2023-01-06  14.50  14.72  14.48  14.62  1195744.71
+...
+2023-02-27  13.75  13.88  13.68  13.69   621461.93
+2023-02-28  13.75  13.85  13.61  13.78   607935.92
+2023-03-01  13.80  14.19  13.74  14.17  1223451.78}
+``` 
 
-    No. Config-Key            Cur Val        Default val
-          Description
-    ----------------------------------------------------
-    1   mode                  1              <1>
-          qteasy 的运行模式: 
-          0: 实时信号生成模式
-          1: 回测-评价模式
-          2: 策略优化模式
-          3: 统计预测模式
-    
-    2   asset_pool            000300.SH      <000300.SH>
-          可用投资产品池，投资组合基于池中的产品创建                         
-          
-    3   report                True           <True>
-          为True时打印运行结果报告
-          实时模式显示策略运行报告，回测模式显示回测结果报告，优化模式显示优化结果报告
-    
-    4   visual                True           <True>
-          为True时使用图表显示可视化运行结果
-          （回测模式显示回测报告，优化模式显示优化结果报告）
+至此，如果您看到上面的数据，表明`qteasy`的安装和初始化工作已经完成，您已经可以开始使用`qteasy`了。
 
+在下一章节中，我们将会介绍`qteasy`的基本数据类型，以及如何使用`qteasy`来获取并管理金融数据。
 
 ### API 参考
 
