@@ -1,7 +1,7 @@
 # RELEASE HISTORY
 
 ## 1.0.20 (2024-02-08)
-- Fixed mistakes in ta-lib compatible functions EMA(), MACD(), TRIX(), and DEMA(), now they can be used without `ta-lib` installed, although the results are slightly different from their talib versions
+- Fixed mistakes in ta-lib compatible functions `EMA()`, `MACD()`, `TRIX()`, and `DEMA()`, now they can be used without `ta-lib` installed, although the results are slightly different from their talib versions
 
 ## 1.0.19 (2024-02-07)
 - Removed dependency on `ta-lib` package for ta functions `RSI()`, `MA()`, and `BBANDS()`, thus candle charts can be created without `ta-lib` installed

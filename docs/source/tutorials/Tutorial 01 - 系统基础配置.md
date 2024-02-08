@@ -64,7 +64,7 @@ pip install qteasy
 在`MySQL`的[官网](https://dev.mysql.com/downloads/mysql/)可以直接找到社区开源版本下载:
 网站提供了dmg和tar等多种不同的安装方式，而且还有针对M1芯片的版本可选：
 
-![png](https://img-blog.csdnimg.cn/img_convert/777753d0c13584515c95cd3450882ee6.png)
+![png](img/mysql.png)
 
 安装完成后，创建用户，设置访问方式并设置密码：
 
@@ -97,14 +97,14 @@ pip install pymysql
 
 `qteasy`目前主要依赖`tushare`来获取金融数据，系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
 
-![tushare数据行情页1](https://img-blog.csdnimg.cn/direct/ad0f44a595824ff7831b6fa4560ba84f.png#pic_center)
+![png](img/tushare-3.png)
 
-申请tushare积分和权限的方法请参见[tushare pro主页](https://tushare.pro):
-![在这里插入图片描述](https://img-blog.csdnimg.cn/direct/9e930634151d43d0bdb4a8dc465194d5.png#pic_center)
+注册tushare账号和权限的方法请参见[tushare pro主页](https://tushare.pro):
+![png](img/tushare.png)
 
 如果不创建`tushare`账号，`qteasy`仍然可以获得一些数据，但是数据的种类非常有限，访问频率和次数也受到限制，很多`qteasy`功能的使用将会受到限制，如下图所示:
 
-![tushare数据详情页2](https://img-blog.csdnimg.cn/direct/0f0343e35fb44159a2d086f1df6ddb17.png#pic_center)
+![png](img/tushare4.png)
 
 未来计划增加其他金融数据提供商的API，以扩大数据来源。
 
@@ -120,7 +120,7 @@ pip install pymysql
 
 在不同的系统下安装C语言的TA-Lib包的方法：
 
-### Windows
+#### Windows
 
 * 下载 [ta-lib-0.4.0-msvc.zip](http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-msvc.zip) 并解压至 `C:\ta-lib`.
 * 下载并安装 `Visual Studio Community` (2015 或更新版本)， 选择 `[Visual C++]` 功能
@@ -128,7 +128,7 @@ pip install pymysql
 * 移动至 `C:\ta-lib\c\make\cdr\win32\msvc`
 * `nmake`
 
-### Mac OS
+#### Mac OS
 
 ```bash
 $ brew install ta-lib
@@ -140,7 +140,7 @@ $ brew install ta-lib
 $ arch -arm64 brew install ta-lib
 ```
 
-### Linux
+#### Linux
 
 下载 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz) ，然后:
 
