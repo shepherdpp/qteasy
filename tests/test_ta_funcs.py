@@ -88,18 +88,35 @@ class TestTAFuncs(unittest.TestCase):
               f'========================')
         upper, middle, lower = bbands(self.close, timeperiod=5)
         print(f'results are\nupper:\n{upper}\nmiddle:\n{middle}\nlower:\n{lower}')
+        print(f'test TA function fall_back version: bbands\n'
+              f'========================')
+        upper_, middle_, lower_ = bbands(self.close, timeperiod=5, fall_back=True)
+        print(f'results are\nupper:\n{upper}\nmiddle:\n{middle}\nlower:\n{lower}')
+        self.assertTrue(np.allclose(upper, upper_, equal_nan=True))
+        self.assertTrue(np.allclose(middle, middle_, equal_nan=True))
+        self.assertTrue(np.allclose(lower, lower_, equal_nan=True))
 
     def test_dema(self):
         print(f'test TA function: dema\n'
               f'======================')
         res = dema(self.close, period=5)
         print(f'result is\n{res}')
+        print(f'test TA function fall_back version: dema\n'
+              f'======================')
+        res_ = dema(self.close, period=5, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True, atol=0.05))
 
     def test_ema(self):
         print(f'test TA function: ema\n'
               f'======================')
         res = ema(self.close, span=5)
         print(f'result is\n{res}')
+        print(f'test TA function fall_back version: ema\n'
+              f'======================')
+        res_ = ema(self.close, span=5, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True, atol=0.05))
 
     def test_ht(self):
         print(f'test TA function: ht\n'
@@ -118,6 +135,11 @@ class TestTAFuncs(unittest.TestCase):
               f'=====================')
         res = ma(self.close)
         print(f'result is \n{res}')
+        print(f'test TA function fall back version: ma\n'
+              f'=====================')
+        res_ = ma(self.close, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True))
 
     def test_mama(self):
         print(f'test TA function: mama\n'
@@ -161,6 +183,11 @@ class TestTAFuncs(unittest.TestCase):
               f'======================')
         res = sma(self.close)
         print(f'result is \n{res}')
+        print(f'test TA function fall back version: sma\n'
+              f'======================')
+        res_ = sma(self.close, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True))
 
     def test_t3(self):
         print(f'test TA function: t3\n'
@@ -245,6 +272,13 @@ class TestTAFuncs(unittest.TestCase):
               f'=======================')
         macd_hist, macd_signal, macd_res = macd(self.close)
         print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macd_signal}\nmacd hist:\n{macd_hist}')
+        print(f'test TA function fall back version: macd\n'
+              f'=======================')
+        macd_hist_, macd_signal_, macd_res_ = macd(self.close, fall_back=True)
+        print(f'results are:\nmacd:\n{macd_res_}\nmacd signal:\n{macd_signal_}\nmacd hist:\n{macd_hist_}')
+        self.assertTrue(np.allclose(macd_hist, macd_hist_, equal_nan=True, atol=0.05))
+        self.assertTrue(np.allclose(macd_signal, macd_signal_, equal_nan=True, atol=0.05))
+        self.assertTrue(np.allclose(macd_res, macd_res_, equal_nan=True, atol=0.05))
 
     def test_macdext(self):
         print(f'test TA function: macdext\n'
@@ -255,8 +289,15 @@ class TestTAFuncs(unittest.TestCase):
     def test_macdfix(self):
         print(f'test TA function: macdfix\n'
               f'==========================')
-        macd_res, macdsignal, macdhist = macdfix(self.close)
-        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macdhist}')
+        macd_hist, macdsignal, macd = macdfix(self.close)
+        print(f'results are:\nmacd:\n{macd}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macd_hist}')
+        print(f'test TA function fall back version: macdfix\n'
+              f'==========================')
+        macd_hist_, macdsignal_, macd_ = macdfix(self.close, fall_back=True)
+        print(f'results are:\nmacd:\n{macd_}\nmacd signal:\n{macdsignal_}\nmacd hist:\n{macd_hist_}')
+        self.assertTrue(np.allclose(macd_hist, macd_hist_, equal_nan=True, atol=0.05))
+        self.assertTrue(np.allclose(macdsignal, macdsignal_, equal_nan=True, atol=0.05))
+        self.assertTrue(np.allclose(macd, macd_, equal_nan=True, atol=0.05))
 
     def test_mfi(self):
         print(f'test TA function: mfi\n'
@@ -329,6 +370,11 @@ class TestTAFuncs(unittest.TestCase):
               f'======================')
         res = rsi(self.close)
         print(f'result is \n{res}')
+        print(f'test TA function fall back version: rsi\n'
+              f'======================')
+        res_ = rsi(self.close, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True))
 
     def test_stoch(self):
         print(f'test TA function: stoch\n'
@@ -353,6 +399,12 @@ class TestTAFuncs(unittest.TestCase):
               f'=======================')
         res = trix(self.close, timeperiod=5)
         print(f'result is \n{res}')
+        print(f'test TA function fall back version: trix\n'
+              f'=======================')
+        res_ = trix(self.close, timeperiod=5, fall_back=True)
+        print(f'result is \n{res_}')
+        print(res - res_)
+        self.assertTrue(np.allclose(res, res_, equal_nan=True, atol=0.5))
 
     def test_ultosc(self):
         print(f'test TA function: ultosc\n'
@@ -983,6 +1035,11 @@ class TestTAFuncs(unittest.TestCase):
               f'======================')
         res = ta_max(self.close)
         print(f'result is \n{res}')
+        print(f'test TA function fall back version: ta_max\n'
+              f'======================')
+        res_ = ta_max(self.close, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True))
 
     def test_maxindex(self):
         print(f'test TA function: maxindex\n'
@@ -995,6 +1052,11 @@ class TestTAFuncs(unittest.TestCase):
               f'======================')
         res = ta_min(self.close)
         print(f'result is \n{res}')
+        print(f'test TA function fall back version: ta_min\n'
+              f'======================')
+        res_ = ta_min(self.close, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.allclose(res, res_, equal_nan=True))
 
     def test_minindex(self):
         print(f'test TA function: minindex\n'
