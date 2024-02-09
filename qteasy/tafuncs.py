@@ -27,7 +27,7 @@ try:
         CDLSEPARATINGLINES, CDLSHOOTINGSTAR, CDLSHORTLINE, CDLSPINNINGTOP, CDLSTALLEDPATTERN, CDLSTICKSANDWICH, \
         CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
         BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
-        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
+        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAXINDEX, MININDEX, \
         MINMAX, MINMAXINDEX, MULT, SUB, SUM
 except ImportError as e:
     import warnings
@@ -951,8 +951,8 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
         else:
             raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
 
-        macdhist = ema(close, fastperiod) - ema(close, slowperiod)
-        macdsignal = ema(macdhist, signalperiod)
+        macdhist = _ema_flat(close, fastperiod) - _ema_flat(close, slowperiod)
+        macdsignal = _ema_flat(macdhist, signalperiod)
         macd = (macdhist - macdsignal)
 
         if signalperiod == 1:
@@ -4438,7 +4438,7 @@ def div(high, low):
     return DIV(high, low)
 
 
-def max(close, timeperiod=30):
+def ta_max(close, timeperiod=30):
     """Highest value over a specified period
 
     close: float,收盘价
@@ -4448,7 +4448,18 @@ def max(close, timeperiod=30):
     ------
         :real:
     """
-    return MAX(close, timeperiod)
+    try:
+        from talib import MAX
+        return MAX(close, timeperiod)
+    except ImportError:
+        if isinstance(close, pd.Series):
+            return close.rolling(timeperiod).max()
+        elif isinstance(close, np.ndarray):
+            from qteasy.utilfuncs import rolling_window
+            res = np.zeros_like(close)
+            res[timeperiod:] = rolling_window(close, timeperiod).max(axis=1)
+            res[:timeperiod] = np.nan
+            return res
 
 
 def maxindex(close, timeperiod=30):
@@ -4464,7 +4475,7 @@ def maxindex(close, timeperiod=30):
     return MAXINDEX(close, timeperiod)
 
 
-def min(close, timeperiod=30):
+def ta_min(close, timeperiod=30):
     """Lowest value over a specified period
 
     close: float,收盘价
@@ -4474,7 +4485,18 @@ def min(close, timeperiod=30):
     ------
         :real:
     """
-    return MIN(close, timeperiod)
+    try:
+        from talib import MIN
+        return MIN(close, timeperiod)
+    except ImportError:
+        if isinstance(close, pd.Series):
+            return close.rolling(timeperiod).min()
+        elif isinstance(close, np.ndarray):
+            from qteasy.utilfuncs import rolling_window
+            res = np.zeros_like(close)
+            res[timeperiod:] = rolling_window(close, timeperiod).min(axis=1)
+            res[:timeperiod] = np.nan
+            return res
 
 
 def minindex(close, timeperiod=30):

@@ -39,7 +39,7 @@ from qteasy.tafuncs import cdlthrusting, cdltristar, cdlunique3river, cdlupsideg
 from qteasy.tafuncs import cdlxsidegap3methods, beta, correl, linearreg, linearreg_angle
 from qteasy.tafuncs import linearreg_intercept, linearreg_slope, stddev, tsf, var, acos
 from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, sin, sinh
-from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
+from qteasy.tafuncs import sqrt, tan, tanh, add, div, ta_max, maxindex, ta_min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
 
@@ -243,14 +243,14 @@ class TestTAFuncs(unittest.TestCase):
     def test_macd(self):
         print(f'test TA function: macd\n'
               f'=======================')
-        macd_res, macdsignal, macdhist = macd(self.close)
-        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macdhist}')
+        macd_hist, macd_signal, macd_res = macd(self.close)
+        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macd_signal}\nmacd hist:\n{macd_hist}')
 
     def test_macdext(self):
         print(f'test TA function: macdext\n'
               f'==========================')
-        macd_res, macdsignal, macdhist = macdext(self.close)
-        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macdhist}')
+        macd_hist, macd_signal, macd_res = macdext(self.close)
+        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macd_signal}\nmacd hist:\n{macd_hist}')
 
     def test_macdfix(self):
         print(f'test TA function: macdfix\n'
@@ -979,9 +979,9 @@ class TestTAFuncs(unittest.TestCase):
         print(f'result is \n{res}')
 
     def test_max(self):
-        print(f'test TA function: max\n'
+        print(f'test TA function: ta_max\n'
               f'======================')
-        res = max(self.close)
+        res = ta_max(self.close)
         print(f'result is \n{res}')
 
     def test_maxindex(self):
@@ -991,9 +991,9 @@ class TestTAFuncs(unittest.TestCase):
         print(f'result is \n{res}')
 
     def test_min(self):
-        print(f'test TA function: min\n'
+        print(f'test TA function: ta_min\n'
               f'======================')
-        res = min(self.close)
+        res = ta_min(self.close)
         print(f'result is \n{res}')
 
     def test_minindex(self):
