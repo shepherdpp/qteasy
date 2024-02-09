@@ -27,7 +27,7 @@ try:
         CDLSEPARATINGLINES, CDLSHOOTINGSTAR, CDLSHORTLINE, CDLSPINNINGTOP, CDLSTALLEDPATTERN, CDLSTICKSANDWICH, \
         CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
         BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
-        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
+        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAXINDEX, MININDEX, \
         MINMAX, MINMAXINDEX, MULT, SUB, SUM
 except ImportError as e:
     import warnings
@@ -43,7 +43,7 @@ except ImportError as e:
 # ========================
 # Overlap Studies Functions 滚动窗口叠加算例函数
 
-def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, matype: int = 0):
+def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, matype: int = 0, fall_back=False):
     """Bollinger Bands 布林带线
 
         Bollinger Bands® are a technical analysis tool developed by John Bollinger
@@ -61,10 +61,12 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
     Parameters
     ----------
         close: float,收盘价
-        timeperiod:
-        nbdevup:
-        nbdevdn:
-        matype:
+        timeperiod: int, optional, 1 < timeperiod, 时间跨度
+        nbdevup: int, optional, default 2, 上轨标准差
+        nbdevdn: int, optional, default 2, 下轨标准差
+        matype: int, optional, default 0, 移动平均类型
+        fall_back: bool, optional, default False
+            是否使用自行计算的布林带线
 
     Return
     ------
@@ -72,38 +74,41 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
         :middleband,
         :lowerband: np.ndarray
     """
-    try:
-        from talib import BBANDS
-        return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
-    except ImportError:
-        from qteasy.utilfuncs import rolling_window
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        elif isinstance(close, np.ndarray):
-            index = None
-            close = close
-        else:
-            raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
-        middleband = np.empty_like(close)
-        upperband = np.empty_like(close)
-        lowerband = np.empty_like(close)
-        middleband[:] = np.nan
-        upperband[:] = np.nan
-        lowerband[:] = np.nan
-        middleband[timeperiod-1:] = np.mean(rolling_window(close, window=timeperiod), axis=1)
-        band_width = np.std(rolling_window(close, window=timeperiod), axis=1)
-        upperband[timeperiod-1:] = middleband[timeperiod-1:] + band_width * nbdevup
-        lowerband[timeperiod-1:] = middleband[timeperiod-1:] - band_width * nbdevdn
-        if index is not None:
-            upperband = pd.Series(upperband, index=index)
-            middleband = pd.Series(middleband, index=index)
-            lowerband = pd.Series(lowerband, index=index)
+    if not fall_back:
+        try:
+            from talib import BBANDS
+            return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
+        except ImportError:
+            pass
 
-        return upperband, middleband, lowerband
+    from qteasy.utilfuncs import rolling_window
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    elif isinstance(close, np.ndarray):
+        index = None
+        close = close
+    else:
+        raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    middleband = np.empty_like(close)
+    upperband = np.empty_like(close)
+    lowerband = np.empty_like(close)
+    middleband[:] = np.nan
+    upperband[:] = np.nan
+    lowerband[:] = np.nan
+    middleband[timeperiod-1:] = np.mean(rolling_window(close, window=timeperiod), axis=1)
+    band_width = np.std(rolling_window(close, window=timeperiod), axis=1)
+    upperband[timeperiod-1:] = middleband[timeperiod-1:] + band_width * nbdevup
+    lowerband[timeperiod-1:] = middleband[timeperiod-1:] - band_width * nbdevdn
+    if index is not None:
+        upperband = pd.Series(upperband, index=index)
+        middleband = pd.Series(middleband, index=index)
+        lowerband = pd.Series(lowerband, index=index)
+
+    return upperband, middleband, lowerband
 
 
-def dema(close, period: int = 30):
+def dema(close, period: int = 30, fall_back=False):
     """Double Exponential Moving Average 双重指数平滑移动平均
 
         The DEMA uses two exponential moving averages (EMAs) to eliminate lag,
@@ -120,6 +125,8 @@ def dema(close, period: int = 30):
         收盘价
     period: int, optional, period > 1,
         时间跨度
+    fall_back: bool, optional, default False
+        是否使用自行计算的双重指数平滑移动平均值
 
     Return
     ------
@@ -129,30 +136,33 @@ def dema(close, period: int = 30):
     ----
     不使用talib库时，计算结果与talib库中的DEMA函数计算结果可能会有细微差异
     """
-    try:
-        from talib import DEMA
-        return DEMA(close, period)
-    except ImportError:
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        elif isinstance(close, np.ndarray):
-            index = None
-            close = close
-        else:
-            raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    if not fall_back:
+        try:
+            from talib import DEMA
+            return DEMA(close, period)
+        except ImportError:
+            pass
 
-        res = 2 * _ema_flat(close, period) - _ema_flat(_ema_flat(close, period), period)
-        empty_span = 2 * (period - 1)
-        res[:empty_span] = np.nan
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    elif isinstance(close, np.ndarray):
+        index = None
+        close = close
+    else:
+        raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
 
-        if index is not None:
-            res = pd.Series(res, index=index)
+    res = 2 * _ema_flat(close, period) - _ema_flat(_ema_flat(close, period), period)
+    empty_span = 2 * (period - 1)
+    res[:empty_span] = np.nan
 
-        return res
+    if index is not None:
+        res = pd.Series(res, index=index)
+
+    return res
 
 
-def ema(close, span: int = 30):
+def ema(close, span: int = 30, fall_back=False):
     """Exponential Moving Average指数移动平均值
 
         The EMA is a type of weighted moving average (WMA) that gives
@@ -169,6 +179,8 @@ def ema(close, span: int = 30):
     ----------
     close: float,收盘价 1-D ndarray, 输入数据，一维矩阵
     span: int, optional, 1 < span, 跨度
+    fall_back: bool, optional, default False
+        是否使用自行计算的指数移动平均值
 
     Return
     ------
@@ -178,25 +190,28 @@ def ema(close, span: int = 30):
     ----
     不使用talib库时，计算结果与talib库中的EMA函数计算结果可能会有细微差异
     """
-    try:
-        from talib import EMA
-        return EMA(close, span)
-    except ImportError:
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        elif isinstance(close, np.ndarray):
-            index = None
-            close = close
-        else:
-            raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
-        out = _ema_flat(close, span)
-        out[:span - 1] = np.nan
+    if not fall_back:
+        try:
+            from talib import EMA
+            return EMA(close, span)
+        except ImportError:
+            pass
 
-        if index is not None:
-            out = pd.Series(out, index=index)
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    elif isinstance(close, np.ndarray):
+        index = None
+        close = close
+    else:
+        raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    out = _ema_flat(close, span)
+    out[:span - 1] = np.nan
 
-        return out
+    if index is not None:
+        out = pd.Series(out, index=index)
+
+    return out
 
 
 def _ema_flat(close, span: int = 30):
@@ -293,7 +308,7 @@ def kama(close, timeperiod: int = 30):
     return KAMA(close, timeperiod)
 
 
-def ma(close, timeperiod: int = 30, matype: int = 0):
+def ma(close, timeperiod: int = 30, matype: int = 0, fall_back=False):
     """Moving Average移动平均值
 
     For a simple moving average, the formula is the sum of the data
@@ -304,6 +319,8 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     close: float,收盘价 type: 1-D np.ndarray 输入数据，一维矩阵
     timeperiod: type: int, 1 < window, 时间滑动窗口
     matype: type: int:
+    fall_back: bool, optional, default False
+        是否使用自行计算的移动平均值
 
     Return
     ------
@@ -313,27 +330,30 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
     ----
     不使用talib库时，只能计算简单移动平均SMA，其他的移动平均类型将被忽略
     """
-    try:
-        from talib import MA
-        return MA(close, timeperiod, matype)
-    except ImportError:
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        elif isinstance(close, np.ndarray):
-            index = None
-            close = close
-        else:
-            raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
-        a = close.cumsum()
-        ar = np.roll(a, timeperiod)
-        ar[:timeperiod - 1] = np.nan
-        ar[timeperiod - 1] = 0
-        res = (a - ar) / timeperiod
+    if not fall_back:
+        try:
+            from talib import MA
+            return MA(close, timeperiod, matype)
+        except ImportError:
+            pass
 
-        if index is not None:
-            res = pd.Series(res, index=index)
-        return res
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    elif isinstance(close, np.ndarray):
+        index = None
+        close = close
+    else:
+        raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    a = close.cumsum()
+    ar = np.roll(a, timeperiod)
+    ar[:timeperiod - 1] = np.nan
+    ar[timeperiod - 1] = 0
+    res = (a - ar) / timeperiod
+
+    if index is not None:
+        res = pd.Series(res, index=index)
+    return res
 
 
 def mama(close, fastlimit=0, slowlimit=0):
@@ -459,23 +479,28 @@ def sarext(high, low, acceleration=0, maximum=0):
     return SAREXT(high, low, acceleration, maximum)
 
 
-def sma(close, timeperiod=30):
+def sma(close, timeperiod=30, fall_back=False):
     """Simple Moving Average 简单移动平均
 
     For a simple moving average, the formula is the sum of the data
     points over a given period divided by the number of periods.
 
     close: float,收盘价
-    timeperiod:
+    timeperiod: int, optional, 1 < window, 时间滑动窗口
+    fall_back: bool, optional, default False
+        是否使用自行计算的移动平均值
 
     Return
     ------
     """
-    try:
-        from talib import SMA
-        return SMA(close, timeperiod)
-    except ImportError:
-        return ma(close, timeperiod)
+    if not fall_back:
+        try:
+            from talib import SMA
+            return SMA(close, timeperiod)
+        except ImportError:
+            pass
+
+    return ma(close, timeperiod)
 
 
 def t3(close, timeperiod=5, vfactor=0):
@@ -888,7 +913,7 @@ def dx(high, low, close, timeperiod=14):
     return DX(high, low, close, timeperiod)
 
 
-def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
+def macd(close, fastperiod=12, slowperiod=26, signalperiod=9, fall_back=False):
     """Moving Average Convergence/Divergence:
 
     The Moving Average Convergence/Divergence indicator is a momentum oscillator
@@ -924,9 +949,14 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
     Parameters
     ----------
         close: float,收盘价
-        fastperiod:
-        slowperiod:
-        signalperiod:
+        fastperiod: int, optional, 1 < fastperiod,
+            快均线计算周期
+        slowperiod: int, optional, 1 < slowperiod,
+            慢均线计算周期
+        signalperiod: int, optional, 1 < signalperiod,
+            信号线计算周期
+        fall_back: bool, optional, default False
+            是否使用自行计算的移动平均值
 
     Return
     ------
@@ -938,38 +968,41 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
     ----
     不使用talib库时，计算结果与talib库中的MACD函数计算结果可能会有细微差异
     """
-    try:
-        from talib import MACD
-        return MACD(close, fastperiod, slowperiod, signalperiod)
-    except ImportError:
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        elif isinstance(close, np.ndarray):
-            index = None
-            close = close
-        else:
-            raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    if not fall_back:
+        try:
+            from talib import MACD
+            return MACD(close, fastperiod, slowperiod, signalperiod)
+        except ImportError:
+            pass
 
-        macdhist = ema(close, fastperiod) - ema(close, slowperiod)
-        macdsignal = ema(macdhist, signalperiod)
-        macd = (macdhist - macdsignal)
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    elif isinstance(close, np.ndarray):
+        index = None
+        close = close
+    else:
+        raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
 
-        if signalperiod == 1:
-            empty_span = max(slowperiod, fastperiod) + signalperiod - 3
-        else:
-            empty_span = max(slowperiod, fastperiod) + signalperiod - 2
+    macdhist = _ema_flat(close, fastperiod) - _ema_flat(close, slowperiod)
+    macdsignal = _ema_flat(macdhist, signalperiod)
+    macd = (macdhist - macdsignal)
 
-        macdhist[:empty_span] = np.nan
-        macdsignal[:empty_span] = np.nan
-        macd[:empty_span] = np.nan
+    if signalperiod == 1:
+        empty_span = max(slowperiod, fastperiod) + signalperiod - 3
+    else:
+        empty_span = max(slowperiod, fastperiod) + signalperiod - 2
 
-        if index is not None:
-            macdhist = pd.Series(macdhist, index=index)
-            macdsignal = pd.Series(macdsignal, index=index)
-            macd = pd.Series(macd, index=index)
+    macdhist[:empty_span] = np.nan
+    macdsignal[:empty_span] = np.nan
+    macd[:empty_span] = np.nan
 
-        return macdhist, macdsignal, macd
+    if index is not None:
+        macdhist = pd.Series(macdhist, index=index)
+        macdsignal = pd.Series(macdsignal, index=index)
+        macd = pd.Series(macd, index=index)
+
+    return macdhist, macdsignal, macd
 
 
 def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, signalperiod=9, signalmatype=0):
@@ -996,25 +1029,31 @@ def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, sig
     return MACDEXT(close, fastperiod, fastmatype, slowperiod, slowmatype, signalperiod, signalmatype)
 
 
-def macdfix(close, signalperiod=9):
+def macdfix(close, signalperiod=9, fall_back=False):
     """Moving Average Convergence/Divergence Fix 12/26
 
     Parameters
     ----------
         close: float,收盘价
-        signalperiod:
+        signalperiod: int, optional, 1 < signalperiod,
+            信号线计算周期
+        fall_back: bool, optional, default False
+            是否使用自行计算的移动平均值
 
     Return
     ------
-        macd,
+        macdhist,
         macdsignal,
-        macdhist
+        macd
     """
-    try:
-        from talib import MACDFIX
-        return MACDFIX(close, signalperiod)
-    except ImportError:
-        return macd(12, 26, signalperiod=signalperiod)
+    if not fall_back:
+        try:
+            from talib import MACDFIX
+            return MACDFIX(close, signalperiod)
+        except ImportError:
+            pass
+
+    return macd(close, 12, 26, signalperiod=signalperiod)
 
 
 def mfi(high, low, close, volume, timeperiod=14):
@@ -1380,7 +1419,7 @@ def rocr100(close, timeperiod=10):
     return ROCR100(close, timeperiod)
 
 
-def rsi(close, timeperiod=14):
+def rsi(close, timeperiod=14, fall_back=False):
     """Relative Strength Index:
 
     The relative strength index (RSI) is a momentum indicator used in technical analysis
@@ -1393,49 +1432,56 @@ def rsi(close, timeperiod=14):
     - An asset is usually considered overbought when the RSI is above 70% and oversold
     when it is below 30%.
 
-    
-
+    Parameters
+    ----------
     close: float,收盘价
-    timeperiod:
+    timeperiod: int, optional, 1 < timeperiod,
+        计算周期
+    fall_back: bool, optional, default False
+        是否使用自行计算的移动平均值
 
     Return
     ------
     """
-    try:
-        from talib import RSI
-        return RSI(close, timeperiod)
-    except ImportError:
-        from qteasy.utilfuncs import rolling_window
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        elif isinstance(close, np.ndarray):
-            index = None
-            close = close
-        else:
-            raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    if not fall_back:
+        try:
+            from talib import RSI
+            return RSI(close, timeperiod)
+        except ImportError:
+            pass
 
-        rsi = np.empty_like(close)
-        rsi[:] = np.nan
-        diff = np.diff(close)
-        diff_positive = np.where(diff > 0, diff, 0)[timeperiod - 1:]
-        diff_negative = np.where(diff < 0, -diff, 0)[timeperiod - 1:]
-        diff_window = rolling_window(diff, timeperiod - 1)
-        gain = np.where(diff_window > 0, diff_window, 0).mean(axis=1)
-        loss = np.where(diff_window < 0, -diff_window, 0).mean(axis=1)
-        gain_smooth = np.zeros_like(gain)
-        loss_smooth = np.zeros_like(loss)
-        gain_smooth[0] = gain[0]
-        loss_smooth[0] = loss[0]
-        for i in range(len(close) - timeperiod):
-            gain_smooth[1:] = (gain_smooth[:-1] * (timeperiod - 1) + diff_positive) / timeperiod
-            loss_smooth[1:] = (loss_smooth[:-1] * (timeperiod - 1) + diff_negative) / timeperiod
-        rs = gain_smooth / loss_smooth
-        rsi[timeperiod:] = 100 - 100 / (1 + rs[1:])
+    from qteasy.utilfuncs import rolling_window
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    elif isinstance(close, np.ndarray):
+        index = None
+        close = close
+    else:
+        raise TypeError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
 
-        if index is not None:
-            rsi = pd.Series(rsi, index=index)
-        return rsi
+    rsi = np.empty_like(close)
+    rsi[:] = np.nan
+    diff = np.diff(close)
+    diff_positive = np.where(diff > 0, diff, 0)[timeperiod - 1:]
+    diff_negative = np.where(diff < 0, -diff, 0)[timeperiod - 1:]
+    diff_window = rolling_window(diff, timeperiod - 1)
+    gain = np.where(diff_window > 0, diff_window, 0).mean(axis=1)
+    loss = np.where(diff_window < 0, -diff_window, 0).mean(axis=1)
+    gain_smooth = np.zeros_like(gain)
+    loss_smooth = np.zeros_like(loss)
+    gain_smooth[0] = gain[0]
+    loss_smooth[0] = loss[0]
+    for i in range(len(close) - timeperiod):
+        gain_smooth[1:] = (gain_smooth[:-1] * (timeperiod - 1) + diff_positive) / timeperiod
+        loss_smooth[1:] = (loss_smooth[:-1] * (timeperiod - 1) + diff_negative) / timeperiod
+    rs = gain_smooth / loss_smooth
+    rsi[timeperiod:] = 100 - 100 / (1 + rs[1:])
+
+    if index is not None:
+        rsi = pd.Series(rsi, index=index)
+
+    return rsi
 
 
 def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0):
@@ -1572,13 +1618,15 @@ def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=
     return STOCHRSI(close, timeperiod, fastk_period, fastd_period, fastd_matype)
 
 
-def trix(close, timeperiod=30):
+def trix(close, timeperiod=30, fall_back=False):
     """1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 
     close: 1-d array of float or pd.Series,
         收盘价
     timeperiod: int
         ema span
+    fall_back: bool, optional, default False
+        是否使用自行计算的移动平均值
 
     Return
     ------
@@ -1586,30 +1634,33 @@ def trix(close, timeperiod=30):
 
     Note
     ----
-    如果没有安装talib，TRIX的计算结果将有少许差异
+    如果没有安装talib，TRIX的计算结果将有较大差异
     """
 
-    try:
-        from talib import TRIX
-        return TRIX(close, timeperiod)
-    except ImportError:
-        if isinstance(close, pd.Series):
-            index = close.index
-            close = close.values
-        else:
-            index = None
-        tri_ema = _ema_flat(_ema_flat(_ema_flat(close, timeperiod), timeperiod), timeperiod)
-        res = tri_ema / np.roll(tri_ema, 1) - 1
-        if timeperiod == 1:
-            empty_span = 0
-        else:
-            empty_span = 3 * timeperiod - 2
-        res[:empty_span] = np.nan
+    if not fall_back:
+        try:
+            from talib import TRIX
+            return TRIX(close, timeperiod)
+        except ImportError:
+            pass
 
-        if index is not None:
-            res = pd.Series(res, index=index)
+    if isinstance(close, pd.Series):
+        index = close.index
+        close = close.values
+    else:
+        index = None
+    tri_ema = _ema_flat(_ema_flat(_ema_flat(close, timeperiod), timeperiod), timeperiod)
+    res = tri_ema / np.roll(tri_ema, 1) - 1
+    if timeperiod == 1:
+        empty_span = 0
+    else:
+        empty_span = 3 * timeperiod - 2
+    res[:empty_span] = np.nan
 
-        return res
+    if index is not None:
+        res = pd.Series(res, index=index)
+
+    return res
 
 
 def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):
@@ -4438,17 +4489,33 @@ def div(high, low):
     return DIV(high, low)
 
 
-def max(close, timeperiod=30):
+def ta_max(close, timeperiod=30, fall_back=False):
     """Highest value over a specified period
 
     close: float,收盘价
-    timeperiod:
+    timeperiod: int,时间周期
+    fall_back: bool, optional, default False
+        是否使用python实现
 
     Return
     ------
         :real:
     """
-    return MAX(close, timeperiod)
+    if not fall_back:
+        try:
+            from talib import MAX
+            return MAX(close, timeperiod)
+        except ImportError:
+            pass
+
+    if isinstance(close, pd.Series):
+        return close.rolling(timeperiod).max()
+    elif isinstance(close, np.ndarray):
+        from qteasy.utilfuncs import rolling_window
+        res = np.zeros_like(close)
+        res[timeperiod - 1:] = rolling_window(close, timeperiod).max(axis=1)
+        res[:timeperiod - 1] = np.nan
+        return res
 
 
 def maxindex(close, timeperiod=30):
@@ -4464,17 +4531,33 @@ def maxindex(close, timeperiod=30):
     return MAXINDEX(close, timeperiod)
 
 
-def min(close, timeperiod=30):
+def ta_min(close, timeperiod=30, fall_back=False):
     """Lowest value over a specified period
 
     close: float,收盘价
-    timeperiod:
+    timeperiod: int,时间周期
+    fall_back: bool, optional, default False
+        是否使用python实现
 
     Return
     ------
         :real:
     """
-    return MIN(close, timeperiod)
+    if not fall_back:
+        try:
+            from talib import MIN
+            return MIN(close, timeperiod)
+        except ImportError:
+            pass
+
+    if isinstance(close, pd.Series):
+        return close.rolling(timeperiod).min()
+    elif isinstance(close, np.ndarray):
+        from qteasy.utilfuncs import rolling_window
+        res = np.zeros_like(close)
+        res[timeperiod - 1:] = rolling_window(close, timeperiod).min(axis=1)
+        res[:timeperiod - 1] = np.nan
+        return res
 
 
 def minindex(close, timeperiod=30):
