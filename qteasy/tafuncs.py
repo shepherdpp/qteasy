@@ -96,6 +96,16 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
     middleband[:] = np.nan
     upperband[:] = np.nan
     lowerband[:] = np.nan
+    if timeperiod > len(close):
+        if index is not None:
+            upperband = pd.Series(upperband, index=index)
+            middleband = pd.Series(middleband, index=index)
+            lowerband = pd.Series(lowerband, index=index)
+        return upperband, middleband, lowerband
+    if timeperiod <= 1:
+        raise ValueError(f'TA_BBANDS function failed, Invalid Parameter')
+    if matype != 0:
+        raise ValueError(f'TA_BBANDS function can only accept matype==0 in fall_back mode')
     middleband[timeperiod-1:] = np.mean(rolling_window(close, window=timeperiod), axis=1)
     band_width = np.std(rolling_window(close, window=timeperiod), axis=1)
     upperband[timeperiod-1:] = middleband[timeperiod-1:] + band_width * nbdevup
@@ -142,6 +152,9 @@ def dema(close, period: int = 30, fall_back=False):
             return DEMA(close, period)
         except ImportError:
             pass
+
+    if period <= 1:
+        raise ValueError(f'TA_DEMA function failed, Invalid Parameter')
 
     if isinstance(close, pd.Series):
         index = close.index
@@ -197,6 +210,8 @@ def ema(close, span: int = 30, fall_back=False):
         except ImportError:
             pass
 
+    if span <= 1:
+        raise ValueError(f'TA_EMA function failed, Invalid Parameter')
     if isinstance(close, pd.Series):
         index = close.index
         close = close.values
@@ -328,7 +343,7 @@ def ma(close, timeperiod: int = 30, matype: int = 0, fall_back=False):
 
     Note
     ----
-    不使用talib库时，只能计算简单移动平均SMA，其他的移动平均类型将被忽略
+    不使用talib库时，只能计算简单移动平均SMA
     """
     if not fall_back:
         try:
@@ -337,6 +352,10 @@ def ma(close, timeperiod: int = 30, matype: int = 0, fall_back=False):
         except ImportError:
             pass
 
+    if timeperiod <= 0:
+        raise ValueError(f'TA_MA function failed, Invalid Parameter')
+    if matype != 0:
+        raise ValueError(f'TA_MA function can only accept matype==0 in fall_back mode')
     if isinstance(close, pd.Series):
         index = close.index
         close = close.values
@@ -345,11 +364,14 @@ def ma(close, timeperiod: int = 30, matype: int = 0, fall_back=False):
         close = close
     else:
         raise ValueError(f'close should be a pandas.Series or np.ndarray, got {type(close)} instead.')
+    res = np.empty_like(close)
+    res[:] = np.nan
     a = close.cumsum()
-    ar = np.roll(a, timeperiod)
-    ar[:timeperiod - 1] = np.nan
-    ar[timeperiod - 1] = 0
-    res = (a - ar) / timeperiod
+    if timeperiod <= len(close):
+        ar = np.roll(a, timeperiod)
+        ar[:timeperiod - 1] = np.nan
+        ar[timeperiod - 1] = 0
+        res = (a - ar) / timeperiod
 
     if index is not None:
         res = pd.Series(res, index=index)
@@ -975,6 +997,8 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9, fall_back=False):
         except ImportError:
             pass
 
+    if fastperiod <= 1 or slowperiod <= 1 or signalperiod <= 0:
+        raise ValueError(f'TA_MACD function failed, Invalid Parameter')
     if isinstance(close, pd.Series):
         index = close.index
         close = close.values
@@ -1450,6 +1474,8 @@ def rsi(close, timeperiod=14, fall_back=False):
         except ImportError:
             pass
 
+    if timeperiod <= 0:
+        raise ValueError(f'TA_RSI function failed, Invalid Parameter')
     from qteasy.utilfuncs import rolling_window
     if isinstance(close, pd.Series):
         index = close.index
@@ -1634,7 +1660,7 @@ def trix(close, timeperiod=30, fall_back=False):
 
     Note
     ----
-    如果没有安装talib，TRIX的计算结果将有较大差异
+    如果没有安装talib，TRIX的计算结果将有较大差异，且timeperiod必须大于1
     """
 
     if not fall_back:
@@ -1644,6 +1670,8 @@ def trix(close, timeperiod=30, fall_back=False):
         except ImportError:
             pass
 
+    if timeperiod <= 1:
+        raise ValueError(f'TA_TRIX function failed, Invalid Parameter')
     if isinstance(close, pd.Series):
         index = close.index
         close = close.values
@@ -1651,11 +1679,9 @@ def trix(close, timeperiod=30, fall_back=False):
         index = None
     tri_ema = _ema_flat(_ema_flat(_ema_flat(close, timeperiod), timeperiod), timeperiod)
     res = tri_ema / np.roll(tri_ema, 1) - 1
-    if timeperiod == 1:
-        empty_span = 0
-    else:
+    if timeperiod > 1:
         empty_span = 3 * timeperiod - 2
-    res[:empty_span] = np.nan
+        res[:empty_span] = np.nan
 
     if index is not None:
         res = pd.Series(res, index=index)
@@ -4511,8 +4537,13 @@ def ta_max(close, timeperiod=30, fall_back=False):
     if isinstance(close, pd.Series):
         return close.rolling(timeperiod).max()
     elif isinstance(close, np.ndarray):
+        if timeperiod < 1:
+            raise ValueError("TA_MAX function failed with Bad Parameter: timeperiod must be greater than 0")
         from qteasy.utilfuncs import rolling_window
         res = np.zeros_like(close)
+        if timeperiod > len(res):
+            res[:] = np.nan
+            return res
         res[timeperiod - 1:] = rolling_window(close, timeperiod).max(axis=1)
         res[:timeperiod - 1] = np.nan
         return res
@@ -4553,8 +4584,13 @@ def ta_min(close, timeperiod=30, fall_back=False):
     if isinstance(close, pd.Series):
         return close.rolling(timeperiod).min()
     elif isinstance(close, np.ndarray):
+        if timeperiod < 1:
+            raise ValueError("TA_MIN function failed with Bad Parameter: timeperiod must be greater than 0")
         from qteasy.utilfuncs import rolling_window
         res = np.zeros_like(close)
+        if timeperiod > len(res):
+            res[:] = np.nan
+            return res
         res[timeperiod - 1:] = rolling_window(close, timeperiod).min(axis=1)
         res[:timeperiod - 1] = np.nan
         return res

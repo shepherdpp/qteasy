@@ -95,6 +95,16 @@ class TestTAFuncs(unittest.TestCase):
         self.assertTrue(np.allclose(upper, upper_, equal_nan=True))
         self.assertTrue(np.allclose(middle, middle_, equal_nan=True))
         self.assertTrue(np.allclose(lower, lower_, equal_nan=True))
+        print(f'test TA function fall_back version when timeperiod is too large: bbands\n'
+              f'========================')
+        upper_, middle_, lower_ = bbands(self.close, timeperiod=55, fall_back=True)
+        print(f'results are\nupper:\n{upper}\nmiddle:\n{middle}\nlower:\n{lower}')
+        self.assertTrue(np.alltrue(np.isnan(upper_)))
+        self.assertTrue(np.alltrue(np.isnan(middle_)))
+        self.assertTrue(np.alltrue(np.isnan(lower_)))
+        print(f'test TA function fall_back version raises Bad Parameter error\n'
+              f'========================')
+        self.assertRaises(ValueError, bbands, self.close, timeperiod=5, matype=2, fall_back=True)
 
     def test_dema(self):
         print(f'test TA function: dema\n'
@@ -106,6 +116,16 @@ class TestTAFuncs(unittest.TestCase):
         res_ = dema(self.close, period=5, fall_back=True)
         print(f'result is\n{res}')
         self.assertTrue(np.allclose(res, res_, equal_nan=True, atol=0.05))
+        print(f'test TA function fall_back version with too long period: dema\n'
+              f'======================')
+        res_ = dema(self.close, period=55, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function fall_back version bad parameter: dema\n'
+              f'======================')
+        with self.assertRaises(ValueError):
+            dema(self.close, period=1, fall_back=True)
+            dema(self.close, period=-1, fall_back=True)
 
     def test_ema(self):
         print(f'test TA function: ema\n'
@@ -117,6 +137,16 @@ class TestTAFuncs(unittest.TestCase):
         res_ = ema(self.close, span=5, fall_back=True)
         print(f'result is\n{res}')
         self.assertTrue(np.allclose(res, res_, equal_nan=True, atol=0.05))
+        print(f'test TA function fall_back version with too long span: ema\n'
+              f'======================')
+        res_ = ema(self.close, span=55, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function fall_back version bad parameter: ema\n'
+              f'======================')
+        with self.assertRaises(ValueError):
+            ema(self.close, span=1, fall_back=True)
+            ema(self.close, span=-1, fall_back=True)
 
     def test_ht(self):
         print(f'test TA function: ht\n'
@@ -140,6 +170,17 @@ class TestTAFuncs(unittest.TestCase):
         res_ = ma(self.close, fall_back=True)
         print(f'result is \n{res_}')
         self.assertTrue(np.allclose(res, res_, equal_nan=True))
+        print(f'test TA function fall back version with too long period: ma\n'
+              f'=====================')
+        res_ = ma(self.close, timeperiod=55, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function fall back version bad parameter: ma\n'
+                f'=====================')
+        with self.assertRaises(ValueError):
+            ma(self.close, timeperiod=0, fall_back=True)
+            ma(self.close, timeperiod=-1, fall_back=True)
+            ma(self.close, timeperiod=50, matype=1, fall_back=True)
 
     def test_mama(self):
         print(f'test TA function: mama\n'
@@ -279,6 +320,25 @@ class TestTAFuncs(unittest.TestCase):
         self.assertTrue(np.allclose(macd_hist, macd_hist_, equal_nan=True, atol=0.05))
         self.assertTrue(np.allclose(macd_signal, macd_signal_, equal_nan=True, atol=0.05))
         self.assertTrue(np.allclose(macd_res, macd_res_, equal_nan=True, atol=0.05))
+        print(f'test TA function fall back version with very long periods: macd\n'
+              f'=======================')
+        macd_hist_, macd_signal_, macd_res_ = macd(self.close,
+                                                   fastperiod=55,
+                                                   slowperiod=55,
+                                                   signalperiod=55,
+                                                   fall_back=True)
+        print(f'results are:\nmacd:\n{macd_res_}\nmacd signal:\n{macd_signal_}\nmacd hist:\n{macd_hist_}')
+        self.assertTrue(np.alltrue(np.isnan(macd_hist_)))
+        self.assertTrue(np.alltrue(np.isnan(macd_signal_)))
+        self.assertTrue(np.alltrue(np.isnan(macd_res_)))
+        print(f'test TA function fall back version with bad parameter: macd\n')
+        with self.assertRaises(ValueError):
+            macd(self.close, fastperiod=1, slowperiod=5, signalperiod=5, fall_back=True)
+            macd(self.close, fastperiod=-1, slowperiod=5, signalperiod=5, fall_back=True)
+            macd(self.close, fastperiod=5, slowperiod=-1, signalperiod=5, fall_back=True)
+            macd(self.close, fastperiod=5, slowperiod=1, signalperiod=5, fall_back=True)
+            macd(self.close, fastperiod=5, slowperiod=5, signalperiod=-1, fall_back=True)
+            macd(self.close, fastperiod=5, slowperiod=5, signalperiod=1, fall_back=True)
 
     def test_macdext(self):
         print(f'test TA function: macdext\n'
@@ -375,6 +435,14 @@ class TestTAFuncs(unittest.TestCase):
         res_ = rsi(self.close, fall_back=True)
         print(f'result is \n{res_}')
         self.assertTrue(np.allclose(res, res_, equal_nan=True))
+        print(f'test TA function fall back version with too long period: rsi\n')
+        res_ = rsi(self.close, timeperiod=50, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function fall back version bad parameter: rsi\n')
+        with self.assertRaises(ValueError):
+            rsi(self.close, timeperiod=1, fall_back=True)
+            rsi(self.close, timeperiod=-1, fall_back=True)
 
     def test_stoch(self):
         print(f'test TA function: stoch\n'
@@ -405,6 +473,17 @@ class TestTAFuncs(unittest.TestCase):
         print(f'result is \n{res_}')
         print(res - res_)
         self.assertTrue(np.allclose(res, res_, equal_nan=True, atol=0.5))
+        print(f'test TA function fall back version with too long period: trix\n'
+                f'=======================')
+        res_ = trix(self.close, timeperiod=18, fall_back=True)
+        print(f'result is\n{res}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function fall back version bad parameter: trix\n'
+                f'=======================')
+        with self.assertRaises(ValueError):
+            trix(self.close, timeperiod=1, fall_back=True)
+            trix(self.close, timeperiod=0, fall_back=True)
+            trix(self.close, timeperiod=-1, fall_back=True)
 
     def test_ultosc(self):
         print(f'test TA function: ultosc\n'
@@ -1040,6 +1119,15 @@ class TestTAFuncs(unittest.TestCase):
         res_ = ta_max(self.close, fall_back=True)
         print(f'result is \n{res_}')
         self.assertTrue(np.allclose(res, res_, equal_nan=True))
+        print(f'test TA function: ta_max with too long timeperiod\n'
+              f'======================')
+        res_ = ta_max(self.close, timeperiod=51, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function: ta_max raises with bad parameter\n'
+              f'======================')
+        with self.assertRaises(ValueError):
+            ta_max(self.close, timeperiod=0, fall_back=True)
 
     def test_maxindex(self):
         print(f'test TA function: maxindex\n'
@@ -1057,6 +1145,15 @@ class TestTAFuncs(unittest.TestCase):
         res_ = ta_min(self.close, fall_back=True)
         print(f'result is \n{res_}')
         self.assertTrue(np.allclose(res, res_, equal_nan=True))
+        print(f'test TA function: ta_min with too long timeperiod\n'
+              f'======================')
+        res_ = ta_min(self.close, timeperiod=51, fall_back=True)
+        print(f'result is \n{res_}')
+        self.assertTrue(np.alltrue(np.isnan(res_)))
+        print(f'test TA function: ta_min raises with bad parameter\n'
+              f'======================')
+        with self.assertRaises(ValueError):
+            ta_min(self.close, timeperiod=0, fall_back=True)
 
     def test_minindex(self):
         print(f'test TA function: minindex\n'
