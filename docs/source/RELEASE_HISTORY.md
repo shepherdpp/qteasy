@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.0.21 (2024-02-11)
+- Fixed bugs
+
 ## 1.0.20 (2024-02-08)
 - Fixed mistakes in ta-lib compatible functions `EMA()`, `MACD()`, `TRIX()`, and `DEMA()`, now they can be used without `ta-lib` installed, although the results are slightly different from their talib versions
 
