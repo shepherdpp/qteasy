@@ -1288,7 +1288,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
     ds = qteasy.QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     matched_count = matched_codes['count']
@@ -2096,7 +2096,7 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
         if not isinstance(config_key, list):
             raise TypeError(f'config_key should be a string or list of strings, got {type(config_key)}')
         assert all(isinstance(item, str) for item in config_key)
-        kwargs = {key: QT_CONFIG[config_key] for key in config_key}
+        kwargs = {key: QT_CONFIG[key] for key in config_key}
         level = [0, 1, 2, 3, 4, 5]
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
@@ -3215,6 +3215,8 @@ def _evaluate_all_parameters(par_generator,
     i = 0
     best_so_far = 0
     opti_target = config.optimize_target
+    import shutil
+    screen_width = shutil.get_terminal_size().columns
     # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
@@ -3236,7 +3238,9 @@ def _evaluate_all_parameters(par_generator,
             if target_value > best_so_far:
                 best_so_far = target_value
             if i % 10 == 0:
-                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+                progress_bar(i, total,
+                             comments=f'best performance: {best_so_far:.3f}',
+                             row_width=screen_width)
     # 禁用多进程计算方式，使用单进程计算
     else:
         for par in par_generator:
@@ -3253,9 +3257,12 @@ def _evaluate_all_parameters(par_generator,
             if target_value > best_so_far:
                 best_so_far = target_value
             if i % 10 == 0:
-                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+                progress_bar(i, total,
+                             comments=f'best performance: {best_so_far:.3f}',
+                             row_width=screen_width)
     # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-    progress_bar(i, i)
+    progress_bar(i, i,
+                 row_width=screen_width)
 
     return pool
 
@@ -3790,7 +3797,10 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
             current_volume += subspace.volume
         current_round += 1
         space_count_in_round = len(spaces)
-        progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
+        progress_bar(i,
+                     total_calc_rounds,
+                     f'start next round with {space_count_in_round} spaces',
+                     row_width=50)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs
