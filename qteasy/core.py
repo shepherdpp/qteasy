@@ -1061,7 +1061,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
                                                       'market', 'list_date', 'exchange']]
     if share_basics is None or share_basics.empty:
         return pd.DataFrame()
-    share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
+    share_basics['list_date'] = pd.to_datetime(share_basics.list_date.astype(int).astype(str))
     none_matched = dict()
     # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
     # print('looking for none matching arguments')
@@ -1617,8 +1617,8 @@ def refill_data_source(data_source=None, **kwargs):
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
         end_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        code_range: str or list of str, default: None
-            **注意，不是所有情况下code_range参数都有效
+        symbols: str or list of str, default: None
+            **注意，不是所有情况下symbols参数都有效
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'

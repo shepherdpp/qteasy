@@ -716,7 +716,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     if l_date is None:
         start_date = '2000-01-01'
     else:
-        l_date = str(l_date)
+        l_date = str(int(l_date))  # 某些类型的数据表会把日期存储为整数或浮点数，需要转换为字符串，如19980302.0 -> '19980302'
         start_date = pd.to_datetime(l_date).strftime('%Y-%m-%d')
     # 设置历史数据获取最后一天，只有现在的时间在23:00以后时才设置为今天，否则就设置为昨天
     now = pd.to_datetime('today')
