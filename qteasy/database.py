@@ -4716,7 +4716,7 @@ class DataSource:
         code_end = None
         if symbols is not None:
             if not isinstance(symbols, (str, list)):
-                raise TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
+                raise TypeError(f'symbols should be a string or list, got {type(symbols)} instead.')
             if isinstance(symbols, str):
                 if len(str_to_list(symbols, ':')) == 2:
                     code_start, code_end = str_to_list(symbols, ':')

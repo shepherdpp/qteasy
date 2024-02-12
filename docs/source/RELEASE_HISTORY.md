@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.0.22 (2024-02-14)
+- Fixed a mistake in qt.get_config and qt.candle() that interprets wrong list dates in basic data
+- Improved progress bar: trim the text to screen width
+- Allows qt.get_stock_info() to run without all basic tables being downloaded
+
 ## 1.0.21 (2024-02-11)
 - Fixed bugs
 

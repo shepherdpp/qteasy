@@ -748,7 +748,7 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = ''):
+def progress_bar(prog: int, total: int = 100, comments: str = '', row_width=None):
     """根据输入的数字生成进度条字符串并刷新
 
     Parameters
@@ -759,12 +759,18 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         总体进度，默认为100
     comments: str, optional
         需要显示在进度条中的文字信息
+    row_width: int, optional
+        进度条的总宽度，默认为None，即自动调整宽度 == 屏幕宽度，如果显示的字符总长度超过了row_width，则缩减comments的长度
     """
     if total > 0:
+        if row_width is None:
+            import shutil
+            row_width = shutil.get_terminal_size().columns
+
         if prog > total:
             prog = total
         progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                       f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+                       f'{prog}/{total}-{np.round(prog / total * 100, 1)}% {comments}'[:row_width - 1]
         sys.stdout.write(progress_str)
         sys.stdout.flush()
 
@@ -1359,7 +1365,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     if asset_types is None:
@@ -1379,6 +1385,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
         # if code like "000100.SH"
         for at in asset_types:
             basic = asset_type_basics[at]
+            if basic.empty:
+                continue
             ts_code = basic.loc[basic.index == code].name.to_dict()
             count += len(ts_code)
             code_matched.update({at: ts_code})
@@ -1386,6 +1394,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
         # if code like all number inputs
         for at in asset_types:
             basic = asset_type_basics[at]
+            if basic.empty:
+                continue
             basic['symbol'] = [item.split('.')[0] for item in basic.index]
             ts_code = basic.loc[basic.symbol == code].name.to_dict()
             count += len(ts_code)
@@ -1393,6 +1403,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     else:
         for at in asset_types_with_name:
             basic = asset_type_basics[at]
+            if basic.empty:
+                continue
             names = basic.name.to_list()
             full_names = []
             match_full_name = (at in ['E', 'IDX']) and match_full_name

@@ -352,6 +352,12 @@ class TestQT(unittest.TestCase):
         qt.configuration(default=True)
         print(f'configuration with info=True, verbose=True\n')
         qt.configuration(default=True, verbose=True)
+        print(f'configuration with specific config key\n')
+        qt.configuration(config_key='mode', default=True)
+        print(f'configuration with list of specific config key\n')
+        qt.configuration(config_key=['mode', 'time_zone'], default=True)
+        print(f'configuration with multi string of specific config key\n')
+        qt.configuration(config_key='mode, time_zone', default=True)
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
