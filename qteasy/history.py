@@ -633,7 +633,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float, np.int, np.float]):
+    def fillna(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -649,7 +649,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float, np.int, np.float]):
+    def fillinf(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
@@ -1719,11 +1719,11 @@ def dataframe_to_hp(
     """
 
     available_column_types = ['shares', 'htypes', None]
-    from collections import Iterable
+    from collections import Sized
     assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
     if hdates is None:
         hdates = df.rename(index=pd.to_datetime).index
-    assert isinstance(hdates, Iterable), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
+    assert isinstance(hdates, Sized), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
     index_count = len(hdates)
     assert index_count == len(df.index), \
         f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
@@ -1767,7 +1767,7 @@ def dataframe_to_hp(
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
+            assert isinstance(shares, Sized), f'TypeError: levels should be iterable, got {type(shares)} instead.'
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         if htypes is None:
@@ -1786,7 +1786,7 @@ def dataframe_to_hp(
             assert len(htypes) == len(df.columns), \
                 f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(htypes, Iterable), f'TypeError: levels should be iterable, got {type(htypes)} instead.'
+            assert isinstance(htypes, Sized), f'TypeError: levels should be iterable, got {type(htypes)} instead.'
             assert len(htypes) == len(df.columns), \
                 f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         assert shares is not None, f'InputError, shares should be given when they can not inferred'
