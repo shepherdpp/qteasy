@@ -509,6 +509,17 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
     Returns
     -------
     list of slice/list that can be used to slice the Historical Data Object
+
+    Examples
+    --------
+    >>> list_or_slice('close', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0]
+    >>> list_or_slice('close,open', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0, 1]
+    >>> list_or_slice('close:open', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0, 1]
+    >>> list_or_slice('close:high', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0, 1, 2]
     """
 
     if isinstance(unknown_input, slice):
@@ -555,6 +566,15 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
     这个函数生成的字典可以生成一个适合快速访问的label与target_list中的元素映射，使得可以快速地通过label访问列表中的元素
 
+    例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
+    现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
+    使用labels_to_dict函数生成一个字典如下：
+    find_idx:  {'first' : 0
+                'second': 1
+                'third' : 2}
+    通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
+    target_list[find_idx['first']] == target_list[0] == 100
+
     本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
 
     Parameters
@@ -572,15 +592,17 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 
     Examples
     --------
-    例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
-    现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
-    使用labels_to_dict函数生成一个字典如下：
-    find_idx:  {'first' : 0
-                'second': 1
-                'third' : 2}
-    通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
-    target_list[find_idx['first']] == target_list[0] == 100
-
+    >>> the_list = [100, 130, 170]
+    >>> the_labels = ['first', 'second', 'third']
+    >>>label_value = labels_to_dict(the_labels, the_list)
+    >>> label_value
+    {'first': 0, 'second': 1, 'third': 2}
+    >>> the_list[label_value['first']]
+    100
+    >>> the_list[label_value['second']]
+    130
+    >>> the_list[label_value['third']]
+    170
     """
     if isinstance(input_labels, str):
         input_labels = str_to_list(input_string=input_labels)
