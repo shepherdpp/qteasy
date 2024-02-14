@@ -477,7 +477,7 @@ if __name__ == '__main__':
 上面的脚本文件提供了最基本的数据下载功能，可以根据需要修改`tables`和`start_date`、`end_date`参数，以及`parallel`和`merge_type`参数，来下载不同的数据类型和不同的数据范围。
 您可以自行改进脚本文件以实现更多的功能
 
-要下载2023年全年的stock_daily数据，只需要在命令行中运行以下命令：
+要下载2023年全年的`stock_daily`数据，只需要在命令行中运行以下命令：
 
 ```
 python -m refill_data --tables stock_daily --start_date 20230101 --end_date 20231231
