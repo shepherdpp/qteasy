@@ -1,4 +1,4 @@
-# `qteasy`教程2 - 获取并管理金融数据
+# 教程2 - 获取并管理金融数据
 
 `qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能：
 
@@ -425,6 +425,65 @@ pe_2          d     E  stock_indicator2                  股票技术指标 - �
 ========================================================================
 ```
 查找到相应的数据之后，只需要查看该数据所属的数据表，将该数据表下载到本地数据源中(`refill_data_source(tables, ...)`)，即可使用这些数据(`qt.get_history_data(htype, shares, ...)`)了。
+
+## 定期下载数据到本地
+
+为了保持本地数据源的数据更新，我们可以使用`qt.refill_data_source()`函数定期下载数据到本地。创建一个文件`refill_data.py`，并在其中写入以下代码：
+
+```python
+import qteasy as qt
+
+if __name__ == '__main__':
+    # 解析命令行参数，--tabls参数表示数据表类型，--start_date和--end_date表示下载数据的起始日期和结束日期
+    import argparse
+    parser = argparse.ArgumentParser(description='refill data source')
+    parser.add_argument('--tables', type=str, default='stock_daily', help='data table type')
+    parser.add_argument('--start_date', type=str, default='20230101', help='start date')
+    parser.add_argument('--end_date', type=str, default='20231231', help='end date')
+    parser.add_argument('--parallel', type=bool, default=True, help='parallel download')
+    parser.add_argument('--merge_type', type=str, default='update', help='merge type')
+    args = parser.parse_args()
+    tables = args.tables
+    start_date = args.start_date
+    end_date = args.end_date
+    parallel = args.parallel
+    merge_type = args.merge_type
+    
+    if tables == 'events':
+        # 下载低频data和event数据，下载周期较长以cover所有的季度月度周度数据 （每周下载或每月下载）
+        tables = 'stock_weekly, stock_monthly, index_weekly, index_monthly, '
+        tables += 'income, balance, cashflow, financial, forecast, express, comp, report, events'
+    elif tables == 'basics':
+        # 下载基础数据，下载周期较长以cover所有的季度月度周度数据 （每周下载或每月下载）
+        tables = 'basics'
+    elif tables == 'daily':
+        # 下载日频数据，下载周期较短以减少下载负载 （每天或每周下载）
+        tables = 'adj, stock_daily, fund_daily, future_daily, options_daily, stock_indicator, stock_indicator2, index_indicator, shibor, libor, hibor, index_daily'
+    elif tables == 'stock_mins':
+        tables = 'adj, stock_1min, stock_5min, stock_15min, stock_30min, stock_hourly'
+    elif tables == 'index_mins':
+        tables = 'adj, index_1min, index_5min, index_15min, index_30min, index_hourly'
+    elif tables == 'fund_mins':
+        tables = 'adj, fund_1min, fund_5min, fund_15min, fund_30min, fund_hourly'
+    else:
+        tables == tables
+    
+    qt.refill_data_source(tables=tables, 
+                          start_date=start_date, 
+                          end_date=end_date, 
+                          parallel= parallel, 
+                          merge_type=merge_type)
+```
+上面的脚本文件提供了最基本的数据下载功能，可以根据需要修改`tables`和`start_date`、`end_date`参数，以及`parallel`和`merge_type`参数，来下载不同的数据类型和不同的数据范围。
+您可以自行改进脚本文件以实现更多的功能
+
+要下载2023年全年的stock_daily数据，只需要在命令行中运行以下命令：
+
+```
+python -m refill_data --tables stock_daily --start_date 20230101 --end_date 20231231
+```
+
+```python
 
 ## 回顾总结
 
