@@ -1061,7 +1061,13 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
                                                       'market', 'list_date', 'exchange']]
     if share_basics is None or share_basics.empty:
         return pd.DataFrame()
-    share_basics['list_date'] = pd.to_datetime(share_basics.list_date.astype(int).astype(str))
+
+    if share_basics.list_date.dtype == 'int':
+        share_basics['list_date'] = pd.to_datetime(share_basics.list_date.astype(str))
+    elif share_basics.list_date.dtype == 'float':
+        share_basics['list_date'] = pd.to_datetime(share_basics.list_date.astype(int).astype(str))
+    elif share_basics.list_date.dtype == 'O':
+        share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
     none_matched = dict()
     # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
     # print('looking for none matching arguments')
