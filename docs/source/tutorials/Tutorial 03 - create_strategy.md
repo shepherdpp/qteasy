@@ -45,6 +45,9 @@ op = qt.Operator(strategies = 'ndayrate', signal_type='pt')
 
 ```python
 qt.built_ins('ndayrate')
+```
+输出结果如下：
+```text
 以股票过去N天的价格或数据指标的变动比例作为选股因子选股
     基础选股策略：根据股票以前n天的股价变动比例作为选股因子
 
@@ -94,7 +97,9 @@ stg = op.strategies[0]  # 获取op的第一个策略，下面的几种方法是�
 stg = op[0]
 stg = op['ndayrate']
 stg = op.get_strategies_by_id('ndayrate')
-
+```
+输出结果如下：
+```text
 stg.info()
 Strategy_ID             N-DAY RATE                                              
 ================================================================================
@@ -151,9 +156,6 @@ op.set_parameter(0,
 
 ```python
 qt.refill_data_source(tables='index_daily', symbols='399006, 000300', start_date='20100901', end_date='20201231')
-Filling data source file://csv@qt_root/data/ ...
-[########################################]7/7-100.0%  <index_basic:SSE-OTH>10365wrtn in ~1't
-[########################################]2/2-100.0%  <index_daily:000300.SH-399006.SZ>6925wrtn in ~2"
 ```
 确认数据是否下载成功：
 ```python
