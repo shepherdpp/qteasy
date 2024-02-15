@@ -80,6 +80,7 @@ Tutorials
 ---------
 
 .. toctree::
+   :caption: Tutorials
    :maxdepth: 1
    :glob:
 
@@ -96,6 +97,7 @@ References
 ----------
 
 .. toctree::
+    :caption: References
     :maxdepth: 1
     :glob:
 
