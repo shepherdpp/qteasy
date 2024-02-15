@@ -114,34 +114,30 @@ Getting Started
    HistoryPanel
    Operators
 
-Change Log
-----------
 
 .. toctree::
+   :caption: Release History 发行版本历史
    :maxdepth: 1
    :glob:
 
    RELEASE_HISTORY
 
 
-LICENSE
--------
-
-.. license
+.. license::
+   :caption: License
    :doc: LICENSE
 
-ABOUT
------
 
 .. toctree::
+   :caption: About 关于
    :maxdepth: 1
    :glob:
 
    about
 
-FAQ
----
+
 .. toctree::
+   :caption: FAQ 常见问题
    :maxdepth: 1
    :glob:
 
