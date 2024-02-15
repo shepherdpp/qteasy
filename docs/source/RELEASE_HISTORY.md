@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.0.23 (2024-02-15)
+- Fixed a bug that will cause wrong type conversion when filtering stocks with `qt.filter_stocks()` and creating candle charts with `qt.candle()`
+
 ## 1.0.22 (2024-02-14)
 - Fixed a mistake in qt.get_config and qt.candle() that interprets wrong list dates in basic data
 - Improved progress bar: trim the text to screen width

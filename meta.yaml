@@ -1,9 +1,9 @@
 package:
   name: "qteasy"
-  version: "1.0.22"
+  version: "1.0.23"
 
 source:
-  git_rev: v1.0.22
+  git_rev: v1.0.23
   git_url: https://github.com/shepherdpp/qteasy
 
 requirements:
