@@ -19,8 +19,6 @@
 Why QTEASY?
 -----------
 
-使用QTEASY有哪些好处？
-
 1. **全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行
 2. **完全本地化** 所有的金融数据、策略运算和优化过程完全本地化，不依赖于任何云端服务
 3. **使用简单** 提供大量内置交易策略，用户可以搭积木式地创建自己的交易策略
@@ -72,7 +70,7 @@ Getting Started
 
 .. toctree::
    :caption: Tutorials qteasy教程
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    tutorials/Tutorial 01 - basics
