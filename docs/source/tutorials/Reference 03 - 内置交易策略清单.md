@@ -213,7 +213,6 @@ stg_macd.info()
 | ndayvol | `SelectingNDayVolatility` | 根据股票以前N天的股价波动率作为选股因子                                                                                                                                                                                                                               |
 
 
-
 如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的Doc-string：
 
 例如：

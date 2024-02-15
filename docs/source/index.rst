@@ -8,7 +8,7 @@
 
 .. note::
 
-   This project is under active development.
+   This project is under active development. Please feel free to contribute to this project, or report any issues you find.
 
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
@@ -52,14 +52,25 @@ Tutorials
    :maxdepth: 1
    :glob:
 
-   tutorials/Tutorial 01 - 系统基础配置
-   tutorials/Tutorial 02 - 金融数据获取及管理
-   tutorials/Tutorial 03 - 交易策略及回测基本操作
-   tutorials/Tutorial 04 - 使用内置交易策略
+   tutorials/Tutorial 01 - basics
+   tutorials/Tutorial 02 - data
+   tutorials/Tutorial 03 - create_strategy
+   tutorials/Tutorial 04 - built_ins
    tutorials/Tutorial 05 - 创建自定义交易策略
    tutorials/Tutorial 06 - 交易策略的优化
    tutorials/Tutorial 07 - 交易策略的部署及运行
    tutorials/Tutorial 08 - 历史数据的操作和分析
+
+References
+----------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    tutorials/Reference 01 - 内置交易策略的回测结果
+    tutorials/Reference 02 - 创建及回测交易策略
+    tutorials/Reference 03 - 内置交易策略清单
 
 Examples
 --------
@@ -68,7 +79,6 @@ Examples
     :maxdepth: 1
     :glob:
 
-    tutorials/Reference 01 - 内置交易策略的回测结果
     examples/*
 
 
