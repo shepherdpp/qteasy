@@ -72,6 +72,7 @@ Getting Started
 .. toctree::
    :caption: Tutorials qteasy教程
    :maxdepth: 1
+   :numbered:
    :glob:
 
    tutorials/Tutorial 01 - basics
@@ -87,6 +88,7 @@ Getting Started
 .. toctree::
     :caption: References 参考文档
     :maxdepth: 1
+    :numbered:
     :glob:
 
     tutorials/Reference 01 - 内置交易策略的回测结果
@@ -97,23 +99,25 @@ Getting Started
 .. toctree::
     :caption: Examples 自定义交易策略示例
     :maxdepth: 1
+    :numbered:
     :glob:
 
     examples/*
 
 
 .. toctree::
-   :caption: API Reference API参考
-   :maxdepth: 1
-   :glob:
+    :caption: API References API参考
+    :maxdepth: 1
+    :numbered:
+    :glob:
 
-   api_reference
-   use_qteasy
-   History_Data
-   Built_In
-   Strategies
-   HistoryPanel
-   Operators
+    api_reference
+    use_qteasy
+    History_Data
+    Built_In
+    Strategies
+    HistoryPanel
+    Operators
 
 
 .. toctree::
