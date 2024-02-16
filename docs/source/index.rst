@@ -34,7 +34,7 @@ What Can You Do with QTEASY？
 - 检索、处理、调用本地数据
 - 本地金融数据可视化
 
-.. image:: https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png
+.. image:: img/output_3_4.png
 
 创建交易策略
 ~~~~~~~~~~~~~~~~~~~~
@@ -43,7 +43,7 @@ What Can You Do with QTEASY？
 - 快速创建自定义交易策略，灵活设置可调参数
 - 交易策略的回测、优化、评价，可视化输出回测结果
 
-.. image:: https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png
+.. image:: img/output_14_3.png
 
 实盘交易模拟
 ~~~~~~~~~~~~~~~~~~~~
@@ -54,9 +54,9 @@ What Can You Do with QTEASY？
 - 随时查看交易过程，检查盈亏情况
 - 手动控制交易进程、调整交易参数，手动下单
 
-.. image:: https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png
-.. image:: https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png
-.. image:: https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png
+.. image:: img/output_27_1.png
+.. image:: img/output_27_2.png
+.. image:: img/output_27_3.png
 
 Getting Started
 ---------------
@@ -66,6 +66,7 @@ Getting Started
    :glob:
 
    getting_started
+   help
 
 
 .. toctree::
