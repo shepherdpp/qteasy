@@ -16,5 +16,5 @@ A clear and concise description of what you want to happen.
 **Describe alternatives you've considered / 请描述您考虑过的其他方法**
 A clear and concise description of any alternative solutions or features you've considered.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Additional context / 附加内容**
+Add any other context or screenshots about the feature request here / 添加其他您认为有助于说明意图的其他附加内容.
