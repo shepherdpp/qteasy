@@ -67,10 +67,11 @@ Getting Started
 
    getting_started
    help
+   roadmap
 
 
 .. toctree::
-   :caption: Tutorials qteasy教程
+   :caption: Tutorials 教程
    :maxdepth: 1
    :numbered:
    :glob:
