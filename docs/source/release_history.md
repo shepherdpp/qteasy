@@ -1,5 +1,29 @@
 # RELEASE HISTORY
 
+## 1.0.23 (2024-02-15)
+- Fixed a bug that will cause wrong type conversion when filtering stocks with `qt.filter_stocks()` and creating candle charts with `qt.candle()`
+
+## 1.0.22 (2024-02-14)
+- Fixed a mistake in qt.get_config and qt.candle() that interprets wrong list dates in basic data
+- Improved progress bar: trim the text to screen width
+- Allows qt.get_stock_info() to run without all basic tables being downloaded
+
+## 1.0.21 (2024-02-11)
+- Fixed bugs
+
+## 1.0.20 (2024-02-08)
+- Fixed mistakes in ta-lib compatible functions `EMA()`, `MACD()`, `TRIX()`, and `DEMA()`, now they can be used without `ta-lib` installed, although the results are slightly different from their talib versions
+
+## 1.0.19 (2024-02-07)
+- Removed dependency on `ta-lib` package for ta functions `RSI()`, `MA()`, and `BBANDS()`, thus candle charts can be created without `ta-lib` installed
+- Updated dependencies, made package more use-able for beginners with no `ta-lib` and only basic `tushare` credits
+
+## 1.0.18 (2024-02-05)
+- Improved trader shell live messages: now order execution results are better displayed with more info regarding change of stock qty and cash amounts
+- Command INFO and OVERVIEW in trader shell now will not print out system information in default.
+- Updated version requirements for numpy
+- Bug fixes
+
 ## 1.0.17 (2024-01-29)
 - improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
 - fixed a bug that will cause error acquiring live price in live trade mode if running freq is lower than 1 hour

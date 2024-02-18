@@ -1,4 +1,4 @@
-# 3—创建交易策略并评价回测结果
+# 创建交易策略并评价回测结果
 
 `qteasy`中的所有交易策略都是通过`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略，哪怕这些交易策略有不同的运行时机和运行频率，或者不同的用途，例如一个策略用于选股、另一个策略用于大盘择时，再一个策
@@ -18,8 +18,8 @@
   - 当用户的策略非常复杂时，可以通过`qteasy.Strategy`类来自定义一个策略。
 
 
-创建交易策略，并且使用历史数据回溯测试交易策略的交易结果，并对交易结果进行评价是qteasy的核心功能之一。
-qteasy通过一个交易员对象（Operator）汇总一系列的交易策略，并且通过qt.run()函数在一段设定好的历史时间段内模拟交易策略的运行，生成交易信号，使用历史价格进行模拟交易，生成交易结果，计算评价指标，并以可视化形式输出为图表。
+创建交易策略，并且使用历史数据回溯测试交易策略的交易结果，并对交易结果进行评价是`qteasy`的核心功能之一。
+`qteasy`通过一个交易员对象（Operator）汇总一系列的交易策略，并且通过`qt.run()`函数在一段设定好的历史时间段内模拟交易策略的运行，生成交易信号，使用历史价格进行模拟交易，生成交易结果，计算评价指标，并以可视化形式输出为图表。
 
 本章节以一个最常见的基金择时投资策略为例子，演示了以下内容：
 - 创建一个简单的dma择时投资策略，创建一个交易员对象使用这个策略，演示如何修改、添加策略
@@ -49,7 +49,7 @@ stg = qt.built_in.DMA()
 # 通过stg.info()可以查看策略的主要信息：
 stg.info()
 ```
-```commandline
+```text
 Strategy_type:      RuleIterator
 Strategy name:      DMA
 Description:        Quick DMA strategy, determine long/short position according to differences of moving average prices with simple timing strategy
@@ -80,7 +80,7 @@ Data parameters         270 d
 qt.built_ins('dma')
 ```
 得到：
-```commandline
+```text
  DMA择时策略
 
     策略参数：
@@ -309,7 +309,6 @@ Operator对象生成的交易信号，并将多个交易信号组变换成一个
 ```python
 op = qt.Operator()
 ```
-
     OPERATOR INFO:
     =========================
     Information of the Module
@@ -551,7 +550,7 @@ qt.run(op)
 - 月度收益率统计频率直方图
 
 
-![png](img/output_12_2.png)
+![png](../tutorials/img/output_12_2.png)
     
 在`qteasy`模拟的交易过程中，可以设置丰富的参数，例如：
 
@@ -742,7 +741,7 @@ print(f'optimization completed, 50 parameters found, they are\n'
 
 
 
-![png](img/output_14_2.png)
+![png](../tutorials/img/output_14_2.png)
     
 
 
@@ -807,7 +806,7 @@ qt.run(op,
 
 
 
-![png](img/output_16_2.png)
+![png](../tutorials/img/output_16_2.png)
     
 ## 创建一个自定义策略
 

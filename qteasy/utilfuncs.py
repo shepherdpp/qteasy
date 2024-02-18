@@ -509,6 +509,17 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
     Returns
     -------
     list of slice/list that can be used to slice the Historical Data Object
+
+    Examples
+    --------
+    >>> list_or_slice('close', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0]
+    >>> list_or_slice('close,open', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0, 1]
+    >>> list_or_slice('close:open', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0, 1]
+    >>> list_or_slice('close:high', {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+    [0, 1, 2]
     """
 
     if isinstance(unknown_input, slice):
@@ -555,6 +566,15 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
     这个函数生成的字典可以生成一个适合快速访问的label与target_list中的元素映射，使得可以快速地通过label访问列表中的元素
 
+    例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
+    现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
+    使用labels_to_dict函数生成一个字典如下：
+    find_idx:  {'first' : 0
+                'second': 1
+                'third' : 2}
+    通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
+    target_list[find_idx['first']] == target_list[0] == 100
+
     本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
 
     Parameters
@@ -572,15 +592,17 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 
     Examples
     --------
-    例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
-    现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
-    使用labels_to_dict函数生成一个字典如下：
-    find_idx:  {'first' : 0
-                'second': 1
-                'third' : 2}
-    通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
-    target_list[find_idx['first']] == target_list[0] == 100
-
+    >>> the_list = [100, 130, 170]
+    >>> the_labels = ['first', 'second', 'third']
+    >>>label_value = labels_to_dict(the_labels, the_list)
+    >>> label_value
+    {'first': 0, 'second': 1, 'third': 2}
+    >>> the_list[label_value['first']]
+    100
+    >>> the_list[label_value['second']]
+    130
+    >>> the_list[label_value['third']]
+    170
     """
     if isinstance(input_labels, str):
         input_labels = str_to_list(input_string=input_labels)
@@ -748,7 +770,7 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = ''):
+def progress_bar(prog: int, total: int = 100, comments: str = '', row_width=None):
     """根据输入的数字生成进度条字符串并刷新
 
     Parameters
@@ -759,12 +781,18 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         总体进度，默认为100
     comments: str, optional
         需要显示在进度条中的文字信息
+    row_width: int, optional
+        进度条的总宽度，默认为None，即自动调整宽度 == 屏幕宽度，如果显示的字符总长度超过了row_width，则缩减comments的长度
     """
     if total > 0:
+        if row_width is None:
+            import shutil
+            row_width = shutil.get_terminal_size().columns
+
         if prog > total:
             prog = total
         progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                       f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+                       f'{prog}/{total}-{np.round(prog / total * 100, 1)}% {comments}'[:row_width - 1]
         sys.stdout.write(progress_str)
         sys.stdout.flush()
 
@@ -1359,7 +1387,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     if asset_types is None:
@@ -1379,6 +1407,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
         # if code like "000100.SH"
         for at in asset_types:
             basic = asset_type_basics[at]
+            if basic.empty:
+                continue
             ts_code = basic.loc[basic.index == code].name.to_dict()
             count += len(ts_code)
             code_matched.update({at: ts_code})
@@ -1386,6 +1416,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
         # if code like all number inputs
         for at in asset_types:
             basic = asset_type_basics[at]
+            if basic.empty:
+                continue
             basic['symbol'] = [item.split('.')[0] for item in basic.index]
             ts_code = basic.loc[basic.symbol == code].name.to_dict()
             count += len(ts_code)
@@ -1393,6 +1425,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     else:
         for at in asset_types_with_name:
             basic = asset_type_basics[at]
+            if basic.empty:
+                continue
             names = basic.name.to_list()
             full_names = []
             match_full_name = (at in ['E', 'IDX']) and match_full_name

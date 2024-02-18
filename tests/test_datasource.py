@@ -1084,6 +1084,7 @@ class TestDataSource(unittest.TestCase):
         df_stock_basic = qt_ds.read_table_data('stock_basic',
                                                shares=['000001.SZ', '000002.SZ'],
                                                start='20200101', end='20200201')
+
         for ds in [self.ds_csv, self.ds_db, self.ds_hdf, self.ds_db]:
             print(f'-- {ds.source_type}-{ds.connection_type} --')
             print('write data to datasource')
