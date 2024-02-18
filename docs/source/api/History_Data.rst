@@ -2,10 +2,12 @@
 ============================
 
 查找历史数据:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: qteasy.find_history_data
 
 获取基础数据:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: qteasy.get_basic_info
 

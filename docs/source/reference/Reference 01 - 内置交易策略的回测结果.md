@@ -158,7 +158,7 @@ res = qt.run(op)
     ===========END OF REPORT=============
     
 
-![png](img/output_3_3.png)
+![png](../tutorials/img/output_3_3.png)
 
 
 ```python
@@ -219,7 +219,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_4_3.png)
+![png](../tutorials/img/output_4_3.png)
     
 
 
@@ -282,7 +282,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_5_3.png)
+![png](../tutorials/img/output_5_3.png)
     
 
 
@@ -345,7 +345,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_6_3.png)
+![png](../tutorials/img/output_6_3.png)
     
 
 
@@ -408,7 +408,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_7_3.png)
+![png](../tutorials/img/output_7_3.png)
     
 
 
@@ -471,7 +471,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_8_3.png)
+![png](../tutorials/img/output_8_3.png)
     
 
 
@@ -534,7 +534,7 @@ res = qt.run(op, mode=1, print_backtest_log=False)
 
 
     
-![png](img/output_9_3.png)
+![png](../tutorials/img/output_9_3.png)
     
 
 
@@ -617,7 +617,7 @@ res = qt.run(op, mode=1, printlog=True)
 
 
     
-![png](img/output_11_3.png)
+![png](../tutorials/img/output_11_3.png)
     
 
 
@@ -680,7 +680,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_12_3.png)
+![png](../tutorials/img/output_12_3.png)
     
 
 
@@ -743,7 +743,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_13_3.png)
+![png](../tutorials/img/output_13_3.png)
     
 
 
@@ -806,7 +806,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_14_3.png)
+![png](../tutorials/img/output_14_3.png)
     
 
 
@@ -869,7 +869,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_15_3.png)
+![png](../tutorials/img/output_15_3.png)
     
 
 
@@ -932,7 +932,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_16_3.png)
+![png](../tutorials/img/output_16_3.png)
     
 
 
@@ -995,7 +995,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_17_3.png)
+![png](../tutorials/img/output_17_3.png)
     
 
 
@@ -1058,7 +1058,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_18_3.png)
+![png](../tutorials/img/output_18_3.png)
     
 
 
@@ -1121,7 +1121,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_19_3.png)
+![png](../tutorials/img/output_19_3.png)
     
 
 
@@ -1184,7 +1184,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_20_3.png)
+![png](../tutorials/img/output_20_3.png)
     
 
 
@@ -1247,7 +1247,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_21_3.png)
+![png](../tutorials/img/output_21_3.png)
     
 
 
@@ -1310,7 +1310,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_22_3.png)
+![png](../tutorials/img/output_22_3.png)
     
 
 
@@ -1373,7 +1373,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_23_3.png)
+![png](../tutorials/img/output_23_3.png)
     
 
 
@@ -1436,7 +1436,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_24_3.png)
+![png](../tutorials/img/output_24_3.png)
     
 
 
@@ -1499,7 +1499,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_25_3.png)
+![png](../tutorials/img/output_25_3.png)
     
 
 
@@ -1562,7 +1562,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_26_3.png)
+![png](../tutorials/img/output_26_3.png)
     
 
 
@@ -1625,7 +1625,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_27_3.png)
+![png](../tutorials/img/output_27_3.png)
     
 
 
@@ -1688,7 +1688,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_28_3.png)
+![png](../tutorials/img/output_28_3.png)
     
 
 
@@ -1751,7 +1751,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_29_3.png)
+![png](../tutorials/img/output_29_3.png)
     
 
 
@@ -1814,7 +1814,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_30_3.png)
+![png](../tutorials/img/output_30_3.png)
     
 
 
@@ -1878,7 +1878,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_31_3.png)
+![png](../tutorials/img/output_31_3.png)
     
 
 
@@ -1941,7 +1941,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_32_3.png)
+![png](../tutorials/img/output_32_3.png)
     
 
 
@@ -2004,7 +2004,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_33_3.png)
+![png](../tutorials/img/output_33_3.png)
     
 
 
@@ -2067,7 +2067,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_34_3.png)
+![png](../tutorials/img/output_34_3.png)
     
 
 
@@ -2130,7 +2130,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_35_3.png)
+![png](../tutorials/img/output_35_3.png)
     
 
 
@@ -2193,7 +2193,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_36_3.png)
+![png](../tutorials/img/output_36_3.png)
     
 
 
@@ -2256,7 +2256,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_37_3.png)
+![png](../tutorials/img/output_37_3.png)
     
 
 
@@ -2319,7 +2319,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_38_3.png)
+![png](../tutorials/img/output_38_3.png)
     
 
 
@@ -2382,7 +2382,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_39_3.png)
+![png](../tutorials/img/output_39_3.png)
     
 
 
@@ -2445,7 +2445,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_40_3.png)
+![png](../tutorials/img/output_40_3.png)
     
 
 
@@ -2508,7 +2508,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_41_3.png)
+![png](../tutorials/img/output_41_3.png)
     
 
 
@@ -2571,7 +2571,7 @@ res = qt.run(op, mode=1)
 
 
     
-![png](img/output_42_3.png)
+![png](../tutorials/img/output_42_3.png)
     
 
 
