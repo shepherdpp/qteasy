@@ -633,7 +633,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float]):
+    def fillna(self, with_val: [int, float, np.int, np.float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -649,7 +649,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float]):
+    def fillinf(self, with_val: [int, float, np.int, np.float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
@@ -749,16 +749,12 @@ class HistoryPanel():
         -------
         HistoryPanel, 一个新的History Panel对象
 
-        如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
+
         Examples
         --------
-        >>> import qteasy as qt
-        >>> hp1 = qt.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
-        ...                                 [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
-        ...                       levels=['000200', '000300'],
-        ...                       rows=pd.date_range('2020-01-01', periods=5),
-        ...                       columns=['close', 'open', 'high'])
-        >>> hp1
+        如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
+
+        hp1:
         share 0, label: 000200
                     close  open  high
         2020-01-01      8     9     9
@@ -766,6 +762,7 @@ class HistoryPanel():
         2020-01-03      4     8     4
         2020-01-04      1     0     7
         2020-01-05      8     7     9
+
         share 1, label: 000300
                     close  open  high
         2020-01-01      2     3     3
@@ -774,57 +771,25 @@ class HistoryPanel():
         2020-01-04      3     3     4
         2020-01-05      8     8     7
 
-        >>> hp2 = qt.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
-        ...                                 [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
-        ...                       levels=['000200', '000300'],
-        ...                       rows=pd.date_range('2020-01-04', periods=5),
-        ...                       columns=['close', 'open', 'low'])
-        >>> hp2
+        hp2:
         share 0, label: 000200
-                    close  open  low
-        2020-01-04      8     9    9
-        2020-01-05      7     5    5
-        2020-01-06      4     8    4
-        2020-01-07      1     0    7
-        2020-01-08      8     7    9
-        share 1, label: 000300
-                    close  open  low
-        2020-01-04      2     3    3
-        2020-01-05      5     4    6
-        2020-01-06      2     8    7
-        2020-01-07      3     3    4
-        2020-01-08      8     8    7
-
-        >>> hp3 = qt.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
-        ...                                 [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
-        ...                       levels=['000100', '000500'],
-        ...                       rows=pd.date_range('2020-01-07', periods=5),
-        ...                       columns=['high', 'open', 'low'])
-        >>> hp3
-
-        >>> hp1.join(hp2, same_shares=True)
-        share 0, label: 000200
-                    close  high  low  open
-        2020-01-01    8.0   9.0  NaN   9.0
-        2020-01-02    7.0   5.0  NaN   5.0
-        2020-01-03    4.0   4.0  NaN   8.0
-        2020-01-04    1.0   7.0  9.0   0.0
-        2020-01-05    8.0   9.0  5.0   7.0
-        2020-01-06    4.0   NaN  4.0   8.0
-        2020-01-07    1.0   NaN  7.0   0.0
-        2020-01-08    8.0   NaN  9.0   7.0
+                    close  open  high
+        2020-01-01      8     9     9
+        2020-01-02      7     5     5
+        2020-01-03      4     8     4
+        2020-01-04      1     0     7
+        2020-01-05      8     7     9
 
         share 1, label: 000300
-                    close  high  low  open
-        2020-01-01    2.0   3.0  NaN   3.0
-        2020-01-02    5.0   6.0  NaN   4.0
-        2020-01-03    2.0   7.0  NaN   8.0
-        2020-01-04    3.0   4.0  3.0   3.0
-        2020-01-05    8.0   7.0  6.0   8.0
-        2020-01-06    2.0   NaN  7.0   8.0
-        2020-01-07    3.0   NaN  4.0   3.0
-        2020-01-08    8.0   NaN  7.0   8.0
+                    close  open  high
+        2020-01-01      2     3     3
+        2020-01-02      5     4     6
+        2020-01-03      2     8     7
+        2020-01-04      3     3     4
+        2020-01-05      8     8     7
 
+
+        连接时可以指定两个HistoryPanel之间共享的标签类型，如
         """
 
         assert isinstance(other, HistoryPanel), \
@@ -1719,11 +1684,11 @@ def dataframe_to_hp(
     """
 
     available_column_types = ['shares', 'htypes', None]
-    from collections import Sized
+    from collections import Iterable
     assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
     if hdates is None:
         hdates = df.rename(index=pd.to_datetime).index
-    assert isinstance(hdates, Sized), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
+    assert isinstance(hdates, Iterable), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
     index_count = len(hdates)
     assert index_count == len(df.index), \
         f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
@@ -1767,7 +1732,7 @@ def dataframe_to_hp(
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(shares, Sized), f'TypeError: levels should be iterable, got {type(shares)} instead.'
+            assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         if htypes is None:
@@ -1786,7 +1751,7 @@ def dataframe_to_hp(
             assert len(htypes) == len(df.columns), \
                 f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(htypes, Sized), f'TypeError: levels should be iterable, got {type(htypes)} instead.'
+            assert isinstance(htypes, Iterable), f'TypeError: levels should be iterable, got {type(htypes)} instead.'
             assert len(htypes) == len(df.columns), \
                 f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         assert shares is not None, f'InputError, shares should be given when they can not inferred'

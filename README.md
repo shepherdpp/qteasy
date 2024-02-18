@@ -37,15 +37,13 @@
   - [投资策略的优化](#交易策略的参数调优)
   - [投资策略的实盘运行](#部署并开始交易策略的实盘运行)
 
-> Note:
-> 本项目处于密集开发阶段，如果大家使用中出现问题，欢迎通过[Issue](https://github.com/shepherdpp/qteasy/issues/new)报告给我，也欢迎各位贡献代码！
 
 ## 关于`qteasy`
 
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.23`
+- Latest Version: `1.0.17`
 - License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
@@ -68,7 +66,7 @@
 
 ### **创建交易策略**
 
-- 提供近七十种内置交易策略，可以直接搭积木式使用
+- 提供几十种内置交易策略，可以直接搭积木式使用
 - 快速创建自定义交易策略，灵活设置可调参数
 - 交易策略的回测、优化、评价，可视化输出回测结果
 
