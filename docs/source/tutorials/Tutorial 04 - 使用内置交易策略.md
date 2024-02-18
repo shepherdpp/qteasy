@@ -1,4 +1,4 @@
-# 使用内置交易策略
+# 4—使用内置交易策略
 
 qteasy提供了多种内置交易策略，用户可以很容易地直接使用这些交易策略，同时，qteasy提供了一套交易策略组合机制，用户可以将多个简单的交易策略组合成一个比较复杂的交易策略，策略的组合方式是可以灵活设定的。将多个简单交易策略组合成一个复杂的策略后，同样可以使用策略优化工具搜索整个复杂策略的最佳参数。
 
@@ -211,6 +211,7 @@ stg_macd.info()
 | ndayrate | `SelectingNDayRateChange` | 以股票过去N天的价格或数据指标的变动比例作为选股因子选股                                                                                                                                                                                                                       |
 | ndaychg | `SelectingNDayChange` | 以股票过去N天的价格或数据指标的变动值作为选股因子选股                                                                                                                                                                                                                        |
 | ndayvol | `SelectingNDayVolatility` | 根据股票以前N天的股价波动率作为选股因子                                                                                                                                                                                                                               |
+
 
 
 如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的Doc-string：
@@ -474,7 +475,7 @@ res = qt.run(op, mode=1)
 
 
 
-![png](../tutorials/img/output_10_1.png)
+![png](img/output_10_1.png)
     
 
 
@@ -532,7 +533,7 @@ res = qt.run(op, mode=1)
 
 
 
-![png](../tutorials/img/output_11_1.png)
+![png](img/output_11_1.png)
     
 
 
@@ -589,5 +590,5 @@ res = qt.run(op, mode=1)
 
 
 
-![png](../tutorials/img/output_12_1_2.png)
+![png](img/output_12_1_2.png)
     
