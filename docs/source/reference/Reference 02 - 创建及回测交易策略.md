@@ -550,7 +550,7 @@ qt.run(op)
 - 月度收益率统计频率直方图
 
 
-![png](img/output_12_2.png)
+![png](../tutorials/img/output_12_2.png)
     
 在`qteasy`模拟的交易过程中，可以设置丰富的参数，例如：
 
@@ -741,7 +741,7 @@ print(f'optimization completed, 50 parameters found, they are\n'
 
 
 
-![png](img/output_14_2.png)
+![png](../tutorials/img/output_14_2.png)
     
 
 
@@ -806,7 +806,7 @@ qt.run(op,
 
 
 
-![png](img/output_16_2.png)
+![png](../tutorials/img/output_16_2.png)
     
 ## 创建一个自定义策略
 

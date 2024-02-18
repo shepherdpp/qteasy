@@ -14,7 +14,7 @@
 
 ## `qteasy`安装前的准备工作
 
-### 1, 创建安装环境
+### 创建安装环境
 
 `qteasy`可以通过`pip`来安装，由于依赖包较多，为了避免各依赖包与现有环境中的包产生冲突，建议创建一个独立的`python`环境来安装`qteasy`。
 
@@ -46,7 +46,7 @@ conda activate qteasy-env
 ```commandline
 pip install qteasy
 ```
-### 2，安装`MySQL`数据库 (可选)
+### 安装`MySQL`数据库 (可选)
 
 `qteasy`可以管理大量的金融数据。`qteasy`的工作方式是将所有的金融数据下载到本地，清洗后存储到事先定义好的数据表中，在需要时（生成K线图、交易信号生成、模拟交易回测、交易结果评价等所有环节都需要用到金融数据）从本地数据源直接读取所需的数据。因此，必须在本地设置一个数据管理环境。
 
@@ -93,7 +93,7 @@ Query OK, 0 rows affected (0.06 sec)
 pip install pymysql
 ```
 
-### 3，创建`tushare`账号并获取API token (可选)
+### 创建`tushare`账号并获取API token (可选)
 
 `qteasy`目前主要依赖`tushare`来获取金融数据，系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
 
@@ -108,7 +108,7 @@ pip install pymysql
 
 未来计划增加其他金融数据提供商的API，以扩大数据来源。
 
-### 4，安装TA-lib (可选)
+### 安装TA-lib (可选)
 
 `qteasy`内置了大量的技术指标，这些技术指标的计算依赖于`TA-lib`，如果需要使用`qteasy`内置的所有技术指标，需要安装`TA-lib`。
 如果跳过这一步，将只能使用以下少数几种内置策略。下面简单介绍`TA-lib`的安装方法：
@@ -197,7 +197,7 @@ local_data_source = database
 
 以下几个配置信息是用户在使用`qteasy`前非常有必要配置的：
 
-### 1，配置`tushare`的API token
+### 配置`tushare`的API token
 
 注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare` token，将无法正常使用`tushare`的数据服务。
 
@@ -209,7 +209,7 @@ local_data_source = database
 tushare_token = 你的tushare token
 ```
 
-### 2，配置本地数据源
+### 配置本地数据源
 
 默认情况下，`qteasy`使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用`qteasy`，用户还应该完成本地数据源的基本配置。
 
@@ -280,4 +280,4 @@ qt.get_history_data('open, high, low, close, vol', shares='000001.SZ', start='20
 
 ### API 参考
 
-关于qteasy环境变量的AP，以及所有的环境变量，请参考 [Configuration APIs](../api_reference.rst)
+关于qteasy环境变量的AP，以及所有的环境变量，请参考 [Configuration APIs](../api/api_reference.rst)

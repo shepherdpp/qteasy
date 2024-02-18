@@ -474,7 +474,7 @@ res = qt.run(op, mode=1)
 
 
 
-![png](img/output_10_1.png)
+![png](../tutorials/img/output_10_1.png)
     
 
 
@@ -532,7 +532,7 @@ res = qt.run(op, mode=1)
 
 
 
-![png](img/output_11_1.png)
+![png](../tutorials/img/output_11_1.png)
     
 
 
@@ -589,5 +589,5 @@ res = qt.run(op, mode=1)
 
 
 
-![png](img/output_12_1_2.png)
+![png](../tutorials/img/output_12_1_2.png)
     

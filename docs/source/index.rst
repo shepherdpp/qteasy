@@ -24,8 +24,8 @@ Why QTEASY?
 3. **使用简单** 提供大量内置交易策略，用户可以搭积木式地创建自己的交易策略
 4. **灵活多变** 使用qteasy提供的策略类，用户可以自行创建自己的交易策略，灵活设置可调参数
 
-What Can You Do with QTEASY？
-----------------------------
+What Can You Do with QTEASY?
+-----------------------------
 
 下载金融历史数据
 ~~~~~~~~~~~~~~~~~~~~
@@ -35,6 +35,8 @@ What Can You Do with QTEASY？
 - 本地金融数据可视化
 
 .. image:: img/output_3_4.png
+    :width: 600px
+    :align: center
 
 创建交易策略
 ~~~~~~~~~~~~~~~~~~~~
@@ -44,6 +46,8 @@ What Can You Do with QTEASY？
 - 交易策略的回测、优化、评价，可视化输出回测结果
 
 .. image:: img/output_14_3.png
+    :width: 600px
+    :align: center
 
 实盘交易模拟
 ~~~~~~~~~~~~~~~~~~~~
@@ -55,8 +59,14 @@ What Can You Do with QTEASY？
 - 手动控制交易进程、调整交易参数，手动下单
 
 .. image:: img/output_27_1.png
+    :width: 600px
+    :align: center
 .. image:: img/output_27_2.png
+    :width: 600px
+    :align: center
 .. image:: img/output_27_3.png
+    :width: 600px
+    :align: center
 
 Getting Started
 ---------------
@@ -76,14 +86,7 @@ Getting Started
    :numbered:
    :glob:
 
-   tutorials/Tutorial 01 - basics
-   tutorials/Tutorial 02 - data
-   tutorials/Tutorial 03 - create_strategy
-   tutorials/Tutorial 04 - built_ins
-   tutorials/Tutorial 05 - 创建自定义交易策略
-   tutorials/Tutorial 06 - 交易策略的优化
-   tutorials/Tutorial 07 - 交易策略的部署及运行
-   tutorials/Tutorial 08 - 历史数据的操作和分析
+   tutorials/*
 
 
 .. toctree::
@@ -92,9 +95,7 @@ Getting Started
     :numbered:
     :glob:
 
-    tutorials/Reference 01 - 内置交易策略的回测结果
-    tutorials/Reference 02 - 创建及回测交易策略
-    tutorials/Reference 03 - 内置交易策略清单
+    reference/*
 
 
 .. toctree::
@@ -112,13 +113,7 @@ Getting Started
     :numbered:
     :glob:
 
-    api_reference
-    use_qteasy
-    History_Data
-    Built_In
-    Strategies
-    HistoryPanel
-    Operators
+    api/*
 
 
 .. toctree::
@@ -126,12 +121,14 @@ Getting Started
    :maxdepth: 1
    :glob:
 
-   RELEASE_HISTORY
+   release_history
 
 
-.. license::
+.. toctree::
    :caption: License
-   :doc: LICENSE
+   :glob:
+
+   license.txt
 
 
 .. toctree::
