@@ -34,7 +34,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
-    'sphinx-markdown-checkbox',
+    # 'sphinx-markdown-checkbox',
 ]
 
 templates_path = ['_templates']
