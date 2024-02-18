@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.0.24 (2024-02-18)
+- Corrected a mistake introduced since version 1.0.18, with wrongly merged incomplete and untested features in broker. this bug will cause failure of executiong orders in live trade mode.
+
 ## 1.0.23 (2024-02-15)
 - Fixed a bug that will cause wrong type conversion when filtering stocks with `qt.filter_stocks()` and creating candle charts with `qt.candle()`
 
