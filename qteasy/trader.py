@@ -170,13 +170,12 @@ class TraderShell(Cmd):
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
                 live_prices.set_index('symbol', inplace=True)
 
-            #     # if self.trader.debug:
-            #     #     self.trader.send_message('live prices acquired to update watched prices!')
-            # else:
-            #
-            #     if self.trader.debug:
-            #         self.trader.send_message('Failed to acquire live prices to update watch price string!')
+                if self.trader.debug:
+                    self.trader.send_message('live prices acquired to update watched prices!')
+            else:
 
+                if self.trader.debug:
+                    self.trader.send_message('Failed to acquire live prices to update watch price string!')
             watched_prices = ''
             for symbol in symbols:
                 if symbol in live_prices.index:
@@ -1294,8 +1293,8 @@ class TraderShell(Cmd):
                             from threading import Thread
                             t = Thread(target=self.update_watched_prices, daemon=True)
                             t.start()
-                            # if self.trader.debug:
-                                # self.trader.send_message(f'Acquiring watched prices in a new thread<{t.name}>')
+                            if self.trader.debug:
+                                self.trader.send_message(f'Acquiring watched prices in a new thread<{t.name}>')
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -2184,7 +2183,6 @@ class Trader(object):
                 submitted_qty += 1
 
         self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
-
         return submitted_qty
 
     def _process_result(self, result):
