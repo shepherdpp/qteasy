@@ -97,7 +97,18 @@ class Broker(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self):
+    def __init__(self, data_source=None):
+        """ 生成一个Broker对象
+
+        Parameters
+        ----------
+        data_source: DataSource or None
+            交易所的数据源，可以是数据库、API等，如果为None，则使用QT_DATA_SOURCE
+        """
+        if data_source is None:
+            from qteasy import QT_DATA_SOURCE
+            data_source = QT_DATA_SOURCE
+        self._data_source = data_source
         self.broker_name = 'BaseBroker'
         self.user_name = ''
         self.password = ''
@@ -112,6 +123,10 @@ class Broker(object):
         self.order_queue = Queue()
         self.result_queue = Queue()
         self.broker_messages = Queue()
+
+    @property
+    def data_source(self):
+        return self._data_source
 
     def register(self, debug=False, **kwargs):
         """ Broker对象在开始运行前的注册过程，作用是设置broker的状态为is_registered
@@ -248,9 +263,8 @@ class Broker(object):
                               f'order_direction={order["direction"]}\n')
         pos_id = order['pos_id']
         from qteasy.trade_recording import get_position_by_id
-        from qteasy import QT_DATA_SOURCE
         try:
-            position = get_position_by_id(pos_id=pos_id, data_source=QT_DATA_SOURCE)
+            position = get_position_by_id(pos_id=pos_id, data_source=self.data_source)
         except RuntimeError as e:
             raise RuntimeError(e)
         symbol = position['symbol']
@@ -413,8 +427,8 @@ class SimpleBroker(Broker):
     ----------
     """
 
-    def __init__(self):
-        super(SimpleBroker, self).__init__()
+    def __init__(self, data_source=None):
+        super(SimpleBroker, self).__init__(data_source=data_source)
         self.broker_name = 'SimpleBroker'
 
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
@@ -500,7 +514,8 @@ class SimulatorBroker(Broker):
                  moq_sell=0.0,
                  delay=1.0,
                  price_deviation=0.0,
-                 probabilities=(0.9, 0.08, 0.02)):
+                 probabilities=(0.9, 0.08, 0.02),
+                 data_source=None):
         """ 生成一个Broker对象
 
         Parameters
@@ -533,7 +548,7 @@ class SimulatorBroker(Broker):
             模拟完全成交、部分成交和未成交三种情况出现的概率
 
         """
-        super(SimulatorBroker, self).__init__()
+        super(SimulatorBroker, self).__init__(data_source=data_source)
         self.broker_name = 'SimulatorBroker'
         self.fee_rate_buy = fee_rate_buy
         self.fee_rate_sell = fee_rate_sell
@@ -669,8 +684,8 @@ class NotImplementedBroker(Broker):
     """ NotImplementedBroker raises NotImplementedError when __init__() is called
     """
 
-    def __init__(self):
-        super(NotImplementedBroker, self).__init__()
+    def __init__(self, data_source=None):
+        super(NotImplementedBroker, self).__init__(data_source=data_source)
         raise NotImplementedError('NotImplementedBroker is not implemented yet')
 
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
