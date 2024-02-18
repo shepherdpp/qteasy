@@ -1611,7 +1611,7 @@ class Trader(object):
     def register_broker(self, debug=False, **kwargs):
         """ 注册broker，以便实现登录等处理
         """
-        self.broker.log_in(debug=debug, **kwargs)
+        self.broker.register(debug=debug, **kwargs)
 
     def run(self):
         """ 交易系统的main loop：
@@ -2171,7 +2171,7 @@ class Trader(object):
             # 逐一提交交易信号
             if submit_order(order_id=order_id, data_source=self._datasource) is not None:
                 trade_order['order_id'] = order_id
-                self._broker.instruction_queue.put(trade_order)
+                self._broker.order_queue.put(trade_order)
                 # format the message depending on buy/sell orders
                 if d == 'buy':  # red for buy
                     self.send_message(f'<NEW ORDER {order_id}>: <{name}-{sym}> [bold red]{d}-{pos} '
@@ -2330,7 +2330,7 @@ class Trader(object):
             return
 
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
-        order_queue = self.broker.instruction_queue
+        order_queue = self.broker.order_queue
         # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
         #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
         #   result_queue中的结果全部处理完毕，或者超过一定时间
