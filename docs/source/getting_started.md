@@ -125,7 +125,7 @@ qt.get_history_data(htypes='open, high, low, close',
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](img/output_5_2.png)
+<img style="width: 900px;" src="img/output_5_2.png">
     
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持功能如下：

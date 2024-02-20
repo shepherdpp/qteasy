@@ -169,7 +169,7 @@ import qteasy as qt
 print(qt.__version__)
 ```
 
-第一次导入`qteasy`时会自动初始化，初始化过程会创建一个`qteasy.cnf`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改`qteasy`的环境配置变量。
+第一次导入`qteasy`时会自动初始化，初始化过程会创建一个`qteasy.cfg`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改`qteasy`的环境配置变量。
 
 用户可以将一些关键配置信息存放在`qteasy.cfg`文件中，这样`qteasy`在导入时会自动读取这些配置信息。
 
@@ -180,7 +180,7 @@ print(qt.__version__)
 > print(qt.QT_ROOT_PATH)
 > ```
 
-第一次初始化后的`qteasy.cnf`文件内容如下：
+第一次初始化后的`qteasy.cfg`文件内容如下：
 
 ```
 # qteasy configuration file
@@ -201,9 +201,9 @@ local_data_source = database
 
 注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare` token，将无法正常使用`tushare`的数据服务。
 
-如果您按照教程前一节的内容创建了`tushare`账号并获取了token，可以将token写入`qteasy.cnf`文件中，这样在导入`qteasy`时就会自动读取这个token。
+如果您按照教程前一节的内容创建了`tushare`账号并获取了token，可以将token写入`qteasy.cfg`文件中，这样在导入`qteasy`时就会自动读取这个token。
 
-在`qteasy.cnf`文件中添加以下内容：
+在`qteasy.cfg`文件中添加以下内容：
 
 ```
 tushare_token = 你的tushare token
@@ -213,9 +213,9 @@ tushare_token = 你的tushare token
 
 默认情况下，`qteasy`使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用`qteasy`，用户还应该完成本地数据源的基本配置。
 
-如果您按照教程前一节的内容创建了`mysql`数据库，可以将数据库的配置信息写入`qteasy.cnf`文件中，这样`qteasy`就会连接到您指定的数据库，将金融数据存储到数据库中。
+如果您按照教程前一节的内容创建了`mysql`数据库，可以将数据库的配置信息写入`qteasy.cfg`文件中，这样`qteasy`就会连接到您指定的数据库，将金融数据存储到数据库中。
 
-在`qteasy.cnf`文件中添加以下内容：
+在`qteasy.cfg`文件中添加以下内容：
 
 ```
 local_data_source = database

@@ -35,7 +35,7 @@ What Can You Do with QTEASY?
 - 本地金融数据可视化
 
 .. image:: img/output_3_4.png
-    :width: 600px
+    :width: 900px
     :align: center
 
 创建交易策略
@@ -46,7 +46,7 @@ What Can You Do with QTEASY?
 - 交易策略的回测、优化、评价，可视化输出回测结果
 
 .. image:: img/output_14_3.png
-    :width: 600px
+    :width: 900px
     :align: center
 
 实盘交易模拟
@@ -59,13 +59,13 @@ What Can You Do with QTEASY?
 - 手动控制交易进程、调整交易参数，手动下单
 
 .. image:: img/output_27_1.png
-    :width: 600px
+    :width: 900px
     :align: center
 .. image:: img/output_27_2.png
-    :width: 600px
+    :width: 900px
     :align: center
 .. image:: img/output_27_3.png
-    :width: 600px
+    :width: 900px
     :align: center
 
 Getting Started
@@ -77,7 +77,7 @@ Getting Started
 
    getting_started
    help
-   roadmap
+   roadmap.rst
 
 
 .. toctree::
