@@ -46,7 +46,7 @@
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
 - Latest Version: `1.0.24`
-- License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+- License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
 

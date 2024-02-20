@@ -22,28 +22,28 @@
 
 要使用`venv`创建虚拟环境，macOS和Linux用户可以打开终端，进入您需要创建环境的路径，输入以下命令，在当前目录下创建一个名为`qteasy-env`的虚拟环境，并激活环境：
 
-```commandline
+```bash
 python -m venv qteasy-env  
 source qteasy-env/bin/activate
 ```
 
 Windows用户可以打开命令提示符，进入您需要创建环境的文件夹，输入以下命令，创建虚拟环境并激活：
 
-```commandline
+```bash
 py -m venv qteasy-env  
 .venv\Scripts\activate
 ```
 
 要使用conda创建虚拟环境，可以打开终端，输入以下命令，创建一个名为`qteasy-env`的虚拟环境，并激活环境：
 
-```commandline
+```bash
 conda create -n qteasy-env python=3.8
 conda activate qteasy-env
 ```
 
 在激活的虚拟环境中，使用以下命令安装`qteasy`：
 
-```commandline
+```bash
 pip install qteasy
 ```
 ### 安装`MySQL`数据库 (可选)
@@ -89,7 +89,7 @@ Query OK, 0 rows affected (0.06 sec)
 
 #### 安装`pymysql`
 
-```commandline
+```bash
 pip install pymysql
 ```
 
@@ -153,7 +153,7 @@ $ sudo make install
 ```
 安装完成C语言`TA-Lib`后，可以安装`TA-Lib`的`python wrapper`：
 
-```commandline
+```bash
 pip install TA-Lib
 ```
 

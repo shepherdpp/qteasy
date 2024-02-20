@@ -24,8 +24,8 @@ requirements:
 
 about:
   home: https://github.com/shepherdpp/qteasy
-  license: CC0 1.0 Universal
-  license_familY: CC0
+  license: BSD 3-Clause
+  license_familY: BSD
   license_file: LICENSE
   summary: "A fast quantitative investment tool kit"
 

@@ -9,4 +9,4 @@
 
 ## 使用`qteasy`中遇到问题
 
-如果你在使用`qteasy`中遇到问题，可以进入qteasy的[讨论区](https://github.com/shepherdpp/qteasy/discussions)提交问题参与讨论。
+如果你在使用`qteasy`中遇到问题，可以进入`qteasy`的[讨论区](https://github.com/shepherdpp/qteasy/discussions)提交问题参与讨论。

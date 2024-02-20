@@ -46,7 +46,7 @@
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
 - Latest Version: `1.0.24`
-- License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+- License: BSD 3-Clause License
 
 QTEASY is a fast quantitative investment package created for traders, with following features:
 
