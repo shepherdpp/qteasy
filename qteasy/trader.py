@@ -47,7 +47,7 @@ UNIT_TO_TABLE = {
         }
 
 
-def parse_shell_argument(arg: str = None, default=None, command_name=None) -> list:
+def parse_shell_argument(arg: str = None, default=None, command_name=None, escape_dash=False) -> list:
     """ 解析输入的参数, 返回解析后的参数列表，
 
     解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
@@ -60,11 +60,24 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
         输入的参数
     default: str, default None
         如果输入参数为空，返回的默认值
+    command_name: str, default None
+        当用户使用原来的parameter格式时（不带"-"），打印DeprecatedWarning时使用
+    escape_dash: bool, default False
+        是否逃避检查参数中的"-"字符，默认为False，检查并在参数中添加"-"字符，如果为True，则不检查添加
+        这是
 
     Returns:
     --------
     args: list
         解析后的参数
+
+    Notes:
+    ------
+    本函数中设置了escape_dash参数，同时也设置了一些条件，避免在参数前添加"-"字符，这是
+    在参数解析方式升级以前，照顾有些带参数的命令不应该带有"-"的情况作出的妥协性做法
+        例如：
+        1. "watch 000651.SH" 不应该修改为 "watch -000651.SH"，因此纯数字开头的参数不添加"-"
+        2. "config mode" 不应该修改为 "config --mode"，此时应该在命令执行函数中调用parse_sell_argument时设置escape_dash=True
     """
     # TODO: should return:
     #  a dict that contains values of all arguments, such as:
@@ -84,17 +97,28 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
         # update args, add "-" in short args and "--" in long args
         new_args = []
         example_arg = ''
+        wait_for_value = False  # flag to check if the next arg is a value of the previous arg
         for arg in args:
             if len(arg) == 1 and (not arg.isdigit()):
                 new_args.append("-" + arg)
                 example_arg = "-" + arg
+                wait_for_value = True
             elif all(char.isdigit() for char in arg[:2]):  # do nothing for parameters started with at least two digits
                 new_args.append(arg)
+                wait_for_value = False
             elif arg[0] == '-':  # do nothing if arg starts with '-' or '--' already
                 new_args.append(arg)
+                wait_for_value = True
+            elif escape_dash:
+                new_args.append(arg)
+                wait_for_value = False
+            elif wait_for_value:
+                new_args.append(arg)
+                wait_for_value = False
             else:
                 new_args.append("--" + arg)
                 example_arg = "--" + arg
+                wait_for_value = True
 
         if example_arg:
             from rich import print as rprint
@@ -397,7 +421,7 @@ class TraderShell(Cmd):
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='buy')
         if len(args) < 3:
             print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
                   f'use "help buy" to see more info')
@@ -471,7 +495,7 @@ class TraderShell(Cmd):
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
-        args = parse_shell_argument(arg)
+        args = parse_shell_argument(arg, command_name='sell')
         if len(args) < 3:
             print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
                   f'use "help buy" to see more info')
@@ -693,7 +717,7 @@ class TraderShell(Cmd):
         import shutil
         column_width, _ = shutil.get_terminal_size()
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        args = parse_shell_argument(arg, command_name='config')
+        args = parse_shell_argument(arg, command_name='config', escape_dash=True)
         if len(args) == 0:
             config = self.trader.get_config()
             rprint(_vkwargs_to_text(config,
@@ -1107,15 +1131,15 @@ class TraderShell(Cmd):
         (QTEASY): strategies --set-par stg (1, 2, 3)
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
-
-        """
         # TODO: to change blender of strategies, use strategies blender|b <blender>
-        args = parse_shell_argument(arg, command_name='strategies')
+        """
+
+        args = parse_shell_argument(arg, command_name='strategies', escape_dash=True)
         if not args:
             self.trader.operator.info()
-        elif args[0] in ['-d', '--detail']:
+        elif args[0] in ['-d', '--detail', 'detail', 'd']:
             self.trader.operator.info(verbose=True)
-        elif args[0] in ['-s', '--set-par']:
+        elif args[0] in ['-s', '--set-par', 's', 'set-par']:
             if len(args) < 3:
                 print('To set up variable parameter of a strategy, input a valid strategy id and a parameter:\n'
                       'For Example, to set (1, 2, 3) as the parameter of strategy "custom", use:\n'
@@ -1170,21 +1194,13 @@ class TraderShell(Cmd):
         Usage:
         ------
         run stg1 [stg2] [stg3] ...
-        run --task|-t task_name [[arg1] [arg2] ...]
+        run task|t task_name [[arg1] [arg2] ...]
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
             return
-        argument = str_to_list(arg, sep_char=' ')
-        if not isinstance(argument, list):
-            print('Invalid argument, use "strategies" to view all strategy ids.\n'
-                  'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
-            return
-        if not argument:
-            print('A valid strategy id must be given, use "strategies" to view all ids.\n'
-                  'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
-            return
-        if not argument[0] in ['--task', '-t']:  # run strategies
+        argument = parse_shell_argument(arg, command_name='run', escape_dash=True)
+        if not argument[0] in ['task', 't']:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
             if not all([strategy in all_strategy_ids for strategy in argument]):
                 invalid_stg = [stg for stg in argument if stg not in all_strategy_ids]

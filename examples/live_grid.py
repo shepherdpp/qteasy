@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
 
-    alpha = GridTrade(pars=(0.3, 2000, 36.7),  # 当基准网格为0时，代表首次运行，此时买入1000股，并设置当前价为基准网格
+    alpha = GridTrade(pars=(0.3, 2000, 38.0),  # 当基准网格为0时，代表首次运行，此时买入1000股，并设置当前价为基准网格
                       par_count=3,
                       par_types=['float', 'int', 'float'],
                       par_range=[(0.1, 2), (100, 3000), (0, 40)],
