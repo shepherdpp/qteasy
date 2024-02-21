@@ -160,10 +160,11 @@ class Broker(object):
         一个Generator，可以分批返回交易结果，直至订单处理完毕或出现错误。每一个transaction都会在单
         独的线程中运行
         """
+        from threading import Thread
         if not self.is_registered:
             raise RuntimeError(f'broker is not registered!')
         if self.debug:
-            self.post_message(f'is running...')
+            self.send_message(f'is running...')
         self.status = 'init'
         while True:
             try:
@@ -200,12 +201,12 @@ class Broker(object):
             except KeyboardInterrupt:
                 # 如果Broker被用户强制退出，处理尚未完成的交易订单
                 if self.debug:
-                    self.post_message('Broker will be stopped by user.')
+                    self.send_message('Broker will be stopped by user.')
                 self.status = 'stopped'
                 continue
             except Exception as e:
                 # 如果Broker出现异常，打印异常信息，并继续运行
-                self.post_message(f'Runtime exception: {e}, please check system log for details')
+                self.send_message(f'Runtime exception: {e}, please check system log for details')
                 if self.debug:
                     import traceback
                     traceback.print_exc()
@@ -257,7 +258,7 @@ class Broker(object):
         """
 
         if self.debug:
-            self.post_message(f'_parse_order():\nsubmit order components of order(ID) {order["order_id"]}:\n'
+            self.send_message(f'_parse_order():\nsubmit order components of order(ID) {order["order_id"]}:\n'
                               f'quantity:{order["qty"]}\norder_price={order["price"]}\n'
                               f'order_direction={order["direction"]}\n')
         pos_id = order['pos_id']
@@ -317,7 +318,7 @@ class Broker(object):
 
             # 确认数据格式正确后，将数据圆整到合适的精度，并组装为raw_trade_result
             if self.debug:
-                self.post_message(f'method: _get_result(): got transaction result for order(ID) {order["order_id"]}\n'
+                self.send_message(f'method: _get_result(): got transaction result for order(ID) {order["order_id"]}\n'
                                   f'result_type={result_type}, \nqty={qty}, \n'
                                   f'filled_price={filled_price}, \nfee={fee}')
             # 圆整qty、filled_qty和fee
@@ -348,7 +349,7 @@ class Broker(object):
 
             # 将trade_result放入result_queue
             if self.debug:
-                self.post_message(f'method _get_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
+                self.send_message(f'method _get_result(): created raw trade result for order(ID) {order["order_id"]}:\n'
 
                                   f'{raw_trade_result}')
             self.result_queue.put(raw_trade_result)
