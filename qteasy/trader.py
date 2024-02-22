@@ -463,6 +463,8 @@ class TraderShell(Cmd):
             'status':         'created',
         }
 
+        # 检查
+
         order_id = record_trade_order(trade_order, data_source=datasource)
         # 逐一提交交易信号
         if submit_order(order_id=order_id, data_source=datasource) is not None:
@@ -1200,6 +1202,11 @@ class TraderShell(Cmd):
             print('Running strategy manually is only available in DEBUG mode')
             return
         argument = parse_shell_argument(arg, command_name='run', escape_dash=True)
+        if not argument:
+            print('No argument found, please input a valid strategy id or task name:\n'
+                  'run stg1 [stg2] [stg3] ... to run strategies\n'
+                  'run task|t task_name [[arg1] [arg2] ...] to run tasks')
+            return
         if not argument[0] in ['task', 't']:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
             if not all([strategy in all_strategy_ids for strategy in argument]):
