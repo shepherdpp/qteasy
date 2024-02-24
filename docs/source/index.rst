@@ -72,12 +72,15 @@ Getting Started
 ---------------
 
 .. toctree::
+   :caption: Getting Started 快速入门
    :maxdepth: 1
    :glob:
 
    getting_started
    help
    roadmap.rst
+   CONTRIBUTING
+   CODE_OF_CONDUCT
 
 
 .. toctree::

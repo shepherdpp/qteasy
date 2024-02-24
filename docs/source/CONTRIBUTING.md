@@ -1,11 +1,13 @@
-## Contributing Basics
+# 贡献代码
+
+## Contributing Basics / 贡献代码基础
 
 - Contributing can be as simple as **asking questions**, **report issues**, participating in discussions, suggesting enhancements, etc.  **All of these are valuable!**  There are many ways to contribute.  I also very much appreciate when you share the creative things you've done *using* qteasy (both code and plot images).  And, of course, writing code for qteasy is also a great way to contribute.    Thank you.
 
 - All of the usual/typical open source contribution guidelines apply (see for example, **[Open Source Guide to Contributing](https://opensource.guide/how-to-contribute/)**).  Therefore, here, on this page, I will mention just a few items that I may be particular about in **qteasy**.
 
 ---
-## Report Issues
+## [Report Issues](https://github.com/shepherdpp/qteasy/issues/new)
 - Please provide clear description of the issue and the information of Environment you are working in. Preferably, include following sections in your description:
   - **Your Expectation**: describe what you are trying to achieve while you encountered the issue
   - **Your Method**: provide your code that you think would have given expected results
