@@ -957,7 +957,7 @@ def process_loop_results(operator,
                                      columns=op_sum_index).T
         log_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_log.csv')
         op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name)
-        
+
         # 生成 trade log 摘要表 (a more concise and human-readable format of trading log
         # create share trading logs:
         logger_core.info(f'generating abstract trading log ...')

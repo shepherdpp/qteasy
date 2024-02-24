@@ -11,6 +11,7 @@
 # trading orders and submit to class Broker
 # ======================================
 
+import os
 import time
 import sys
 
@@ -1407,6 +1408,28 @@ class Trader(object):
         执行任务
     """
 
+    trade_log_file_headers = [
+        'datetime',  # 交易或变动发生时间
+        'position_id',  # 交易或变动发生的持仓ID
+        'symbol',  # 股票代码
+        'name',  # 股票名称
+        'position_type',   # 交易或变动发生的持仓类型，long or short
+        'qty_change',  # 持仓变动数量
+        'qty',  # 变动后的持仓数量
+        'available_qty_change',  # 可用持仓变动数量
+        'available_qty',  # 变动后的可用持仓数量
+        'cost_change',  # 持仓成本变动
+        'cost',  # 变动后的持仓成本
+        'cash_change',  # 现金变动
+        'cash',  # 变动后的现金
+        'available_cash_change',  # 可用现金变动
+        'available_cash',  # 变动后的可用现金
+        'total_invest_change',  # 总投资变动
+        'total_invest',  # 变动后的总投资
+        'reason',  # 交易或变动的原因
+        'order_id',  # 如果是订单交易导致变动，记录订单ID
+    ]
+
     def __init__(self, account_id, operator, broker, config, datasource, debug=False):
         """ 初始化Trader
 
@@ -1474,6 +1497,10 @@ class Trader(object):
         self.live_price_channel = self._config['live_price_acquire_channel']
         self.live_price_freq = self._config['live_price_acquire_freq']
         self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
+
+        # 创建交易记录文件名， 规则为：live_log_account_id_account_name.log
+        self.trade_log_file_name = None
+        self.trade_log_path_name = None
 
         self.account = get_account(self.account_id, data_source=self._datasource)
 
@@ -1590,6 +1617,22 @@ class Trader(object):
     @property
     def datasource(self):
         return self._datasource
+
+    @property
+    def log_file_exists(self):
+        """ 返回交易记录文件是否存在
+        """
+        account = get_account(self.account_id, data_source=self._datasource)
+        account_name = account['user_name']
+        if self.trade_log_file_name is None:
+            self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
+        log_file_path_name = os.path.join(self._config['trade_log_file_path'], self.trade_log_file_name)
+
+        try:
+            with open(log_file_path_name, 'r'):
+                return True
+        except FileNotFoundError:
+            return False
 
     # ================== methods ==================
     def get_current_tz_datetime(self):
@@ -1986,6 +2029,82 @@ class Trader(object):
         )
         return order_result_details
 
+    def init_log_file(self) -> str:
+        """ 创建一个新的trade_log记录文件，写入文件header，清除文件内容
+
+        Returns
+        -------
+        log_file_path_name: str
+            交易记录文件的路径和文件名
+        """
+        import csv
+        account = get_account(self.account_id, data_source=self._datasource)
+        account_name = account['user_name']
+        if self.trade_log_file_name is None:
+            self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
+        log_file_path_name = os.path.join(self._config['trade_log_file_path'], self.trade_log_file_name)
+
+        if os.path.exists(log_file_path_name):
+            os.remove(log_file_path_name)
+
+        with open(log_file_path_name, mode='w', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            row = self.trade_log_file_headers
+            writer.writerow(row=row)
+
+        return log_file_path_name
+
+    def write_log_file(self, **log_content: dict):
+        """ 写入log到trade_log记录文件的最后一行
+
+        log文件必须存在，否则会报错
+
+        Parameters
+        ----------
+        log_content: dict
+            log信息，包括日期、时间、log内容等
+
+        Raises
+        ------
+        FileNotFoundError
+            如果log文件不存在
+
+        """
+        if not self.log_file_exists:
+            raise FileNotFoundError('log file does not exist')
+
+        base_log_content = {
+            k: v for k, v in
+            zip(self.trade_log_file_headers,
+                [None]*len(self.trade_log_file_headers))
+        }
+        # remove keys from log_content that are not in base_log_content
+        log_content = {
+            k: v for k, v in
+            log_content.items() if
+            k in base_log_content
+        }
+        # add datetime to log_content
+        log_content['datetime'] = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
+        # update base_log_content with log_content
+        base_log_content.update(log_content)
+
+        import csv
+        with open(self.trade_log_path_name, mode='a', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=self.trade_log_file_headers)
+            # append log_content to the end of the file
+            writer.writerow(base_log_content)
+
+    def read_log_file(self) -> pd.DataFrame:
+        """ 读取trade_log记录文件的内容
+
+        Returns
+        -------
+        log: pd.DataFrame
+
+        """
+        pass
+
     # ============ definition of tasks ================
     def _start(self):
         """ 启动交易系统 """
@@ -2305,12 +2424,13 @@ class Trader(object):
         )
         self.send_message(f'missing data acquired!')
 
-        # 检查账户重的成交结果，完成全部交易结果的交割
+        # 检查账户中的成交结果，完成全部交易结果的交割
         delivery_result = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
                 config=self._config
         )
+        # 生成交割结果信息推送到信息队列
         for res in delivery_result:
             order_id = delivery_result['order_id']
             if res['pos_id']:  # 发生了股票/资产交割，更新了资产股票的可用持仓数量
@@ -2334,6 +2454,15 @@ class Trader(object):
 
                 self.send_message(f'<DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
                                   f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
+
+        # 检查交易记录文件是否存在，如果不存在则创建新的交易记录文件
+        if self.log_file_exists:
+            pass
+        else:
+            self.send_message(f'Trade log file for account ({self.account_id}) not found,'
+                              f' new trade log {self.trade_log_file_name} will be created in '
+                              f'{self._config["trade_log_file_path"]}')
+            self.init_log_file()
 
         # 获取当日实时价格
         self._update_live_price()
@@ -2679,7 +2808,7 @@ class Trader(object):
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
-    def _change_cash(self, amount):
+    def _change_cash(self, amount: float) -> None:
         """ 手动修改现金，根据amount的正负号，增加或减少现金
 
         修改后持有现金/可用现金/总投资金额都会发生变化

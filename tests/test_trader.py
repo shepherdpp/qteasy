@@ -61,7 +61,7 @@ class TestTrader(unittest.TestCase):
         # 创建测试数据源
         data_test_dir = 'data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        test_ds = DataSource('file', file_type='hdf', file_loc=data_test_dir)
+        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
         # test_ds = DataSource(
         #         'db',
         #         host=QT_CONFIG['test_db_host'],
@@ -253,6 +253,61 @@ class TestTrader(unittest.TestCase):
                 datasource=test_ds,
                 debug=False,
         )
+
+    def test_trade_logging(self):
+        """ test all documents related to trade logging file operations
+        init_log_file
+
+        """
+        print(f'test property log_file_exists')
+        ts = self.ts
+        self.assertIsNone(ts.trade_log_file_name)
+        self.assertIsNone(ts.trade_log_path_name)
+        res = ts.init_log_file()
+        self.assertIsNotNone(ts.trade_log_file_name)
+        self.assertIsNotNone(ts.trade_log_path_name)
+        self.assertEqual(res, ts.trade_log_path_name)
+        # remove the file and re-init
+        import os
+        log_file_path_name = os.path.join(ts._config['trade_log_file_path'], ts.trade_log_file_name)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        self.assertTrue(ts.log_file_exists)
+
+        # remove the log file
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.log_file_exists)
+
+        print(f'test function init_log_file')
+        ts.init_log_file()
+        self.assertTrue(ts.log_file_exists)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0], ts.trade_log_file_headers)
+
+        print(f'test function write_log_file')
+        log_content = {
+            'position_id': 1,
+            'order_id': 1,
+            'symbol': '000001.SZ',
+            'name': '招商银行',
+            'qty_change': 100,
+            'qty': 100,
+        }
+        ts.write_log_file(**log_content)
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[1], [str(v) for v in log_content.values()])
+        # remove the log file
 
     def test_trader_status(self):
         """Test class Trader"""
