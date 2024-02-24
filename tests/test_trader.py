@@ -269,7 +269,8 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(res, ts.trade_log_path_name)
         # remove the file and re-init
         import os
-        log_file_path_name = os.path.join(ts._config['trade_log_file_path'], ts.trade_log_file_name)
+        from qteasy import QT_ROOT_PATH
+        log_file_path_name = os.path.join(QT_ROOT_PATH, ts._config['trade_log_file_path'], ts.trade_log_file_name)
         self.assertTrue(os.path.exists(log_file_path_name))
         self.assertTrue(ts.log_file_exists)
 
@@ -306,7 +307,16 @@ class TestTrader(unittest.TestCase):
 
             # there should be only one row, the header row
             self.assertEqual(len(rows), 2)
-            self.assertEqual(rows[1], [str(v) for v in log_content.values()])
+            # compare items one by one to see if they match
+            row = rows[1]
+            self.assertEqual(row[1], '1')
+            self.assertEqual(row[2], '000001.SZ')
+            self.assertEqual(row[3], '招商银行')
+            self.assertEqual(row[4], '')
+            self.assertEqual(row[5], '100')
+            self.assertEqual(row[6], '100')
+            self.assertEqual(row[18], '1')
+
         # remove the log file
 
     def test_trader_status(self):

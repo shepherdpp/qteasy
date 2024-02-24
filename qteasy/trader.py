@@ -1626,7 +1626,9 @@ class Trader(object):
         account_name = account['user_name']
         if self.trade_log_file_name is None:
             self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
-        log_file_path_name = os.path.join(self._config['trade_log_file_path'], self.trade_log_file_name)
+        from qteasy import QT_ROOT_PATH
+        log_path = os.path.join(QT_ROOT_PATH, self._config['trade_log_file_path'])
+        log_file_path_name = os.path.join(log_path, self.trade_log_file_name)
 
         try:
             with open(log_file_path_name, 'r'):
@@ -2042,7 +2044,9 @@ class Trader(object):
         account_name = account['user_name']
         if self.trade_log_file_name is None:
             self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
-        log_file_path_name = os.path.join(self._config['trade_log_file_path'], self.trade_log_file_name)
+        from qteasy import QT_ROOT_PATH
+        log_path = os.path.join(QT_ROOT_PATH, self._config['trade_log_file_path'])
+        log_file_path_name = os.path.join(log_path, self.trade_log_file_name)
 
         if os.path.exists(log_file_path_name):
             os.remove(log_file_path_name)
@@ -2050,7 +2054,8 @@ class Trader(object):
         with open(log_file_path_name, mode='w', encoding='utf-8') as f:
             writer = csv.writer(f)
             row = self.trade_log_file_headers
-            writer.writerow(row=row)
+            writer.writerow(row)
+            self.trade_log_path_name = log_file_path_name
 
         return log_file_path_name
 

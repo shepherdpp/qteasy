@@ -4620,7 +4620,7 @@ class DataSource:
 
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
-                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False):
+                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False) -> None:
         """ 批量下载历史数据并保存到本地数据仓库
 
         Parameters
@@ -4738,10 +4738,14 @@ class DataSource:
                     tables_to_refill.update(
                             table_master.loc[table_master.table_usage == item.lower()].index.to_list()
                     )
-            for item in dtypes:
+            for item in dtypes:  # 如果给出了dtypes，进一步筛选tables中的表，删除不需要的
+                tables_to_keep = set()
                 for tbl, schema in table_master.schema.iteritems():
                     if item.lower() in TABLE_SCHEMA[schema]['columns']:
-                        tables_to_refill.add(tbl)
+                        tables_to_keep.add(tbl)
+                tables_to_refill.intersection_update(
+                        tables_to_keep
+                )
 
             if freqs is not None:
                 tables_to_keep = set()
