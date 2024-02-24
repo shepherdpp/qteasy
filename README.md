@@ -38,7 +38,10 @@
   - [投资策略的实盘运行](#部署并开始交易策略的实盘运行)
 
 > Note:
-> 本项目处于密集开发阶段，如果大家使用中出现问题，欢迎通过[Issue](https://github.com/shepherdpp/qteasy/issues/new)报告给我，也欢迎各位贡献代码！
+> 
+> 目前`qteays`正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎[Issue-报告bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=)给我，也可以进入[讨论区](https://github.com/shepherdpp/qteasy/discussions)参与讨论。也欢迎各位贡献代码！
+>
+> 我会尽快修复问题并回复大家的问题。
 
 ## 关于`qteasy`
 
@@ -47,6 +50,7 @@
 - Created: 2019, July, 16
 - Latest Version: `1.0.24`
 - License: BSD 3-Clause License
+
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
 
