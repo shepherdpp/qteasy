@@ -924,9 +924,11 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
         delivery_result['updated_qty'] = position['available_qty']
 
     elif trade_direction == 'sell':
+        position_id = order_detail['pos_id']
         delivery_result['account_id'] = account_id
         account = get_account(account_id, data_source=data_source)
         delivery_result['order_id'] = order_id
+        delivery_result['pos_id'] = position_id
         delivery_result['prev_amount'] = account['available_cash']
         update_account_balance(
                 account_id=account_id,
@@ -965,18 +967,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     Returns
     -------
-    result_detail: dict
-        交易结果的详细信息, 包含以下字段
-        'result_id': int, 交易结果的id
-        'order_id': int, 交易订单的id
-        'status': str, 交易订单的状态
-        'filled_qty': float, 交易订单的成交数量
-        'canceled_qty': float, 交易订单的取消数量
-        'price': float, 交易订单的成交价格
-        'transaction_fee': float, 交易订单的交易费用
-        'delivery_amount': float, 交易订单的交割数量
-        'delivery_status': str, 交易订单的交割状态
-
+    result_id: int
+        交易结果的ID
     """
     # TODO: 一个函数只做一件事情，我感觉这个函数太长了
 
@@ -1083,20 +1075,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
     #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
 
-    # 记录交易结果详细信息，返回后用于登记trade_log
-    name = get_symbol_names(datasource=data_source, symbols=order_detail['symbol'])
-    # 交易结果基本信息
-    result_detail = {
-        'result_id':            result_id,
-        'order_id':             order_id,
-        'position_id':          order_detail['pos_id'],
-        'symbol':               order_detail['symbol'],
-        'name':                 name,
-        'position_type':        order_detail['position'],
-        'qty_change':           position_change,
-        'qty':                  owned_qty + position_change,
-        'available_qty_change': position_change
-    }
     # TODO: 买入或卖出的交易结果应该只更新qty/cash
     #  而available_qty/available_cash统一应该留到订单交易后交割时更新
     #  （在交易后立即更新，但允许部分交割，只有完全交割后才修改状态）
@@ -1123,14 +1101,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 qty_change=position_change,
                 cost=new_cost,
         )
-        # 进一步更新交易详情信息(在买入条件下，available_cash立即减少)：
-        result_detail.update({
-            'qty_change':           position_change,
-            'available_qty_change': 0.,
-            'cost_change':          new_cost - prev_cost,
-            'cash_change':          cash_change,
-            'available_cash_change': cash_change
-        })
     # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
     else:  # order_detail['direction'] == 'sell', 因为其他情况已经在前面raise ValueError了
         update_account_balance(
@@ -1152,35 +1122,10 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 available_qty_change=position_change,
                 cost=new_cost,
         )
-        # 进一步更新交易详情信息(在卖出条件下，available_qty立即减少)：
-        result_detail.update({
-            'qty_change':           position_change,
-            'available_qty_change': position_change,
-            'cost_change':          new_cost - prev_cost,
-            'cash_change':          cash_change,
-            'available_cash_change': 0.,
-        })
     # 更新交易订单的状态
     update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
 
-    # 检查修改后的position和account结果，写入result_detail
-    position_info = get_position_by_id(order_detail['pos_id'], data_source=data_source)
-    owned_qty = position_info['qty']
-    available_qty = position_info['available_qty']
-    position_cost = position_info['cost']
-    account_info = get_account(order_detail['account_id'], data_source=data_source)
-    own_cash = account_info['cash_amount']
-    available_cash = account_info['available_cash']
-
-    result_detail.update({
-        'qty': owned_qty,
-        'available_qty': available_qty,
-        'cost': position_cost,
-        'cash': own_cash,
-        'available_cash': available_cash
-    })
-
-    return result_detail
+    return result_id
 
 
 def get_last_trade_result_summary(account_id, shares=None, data_source=None):

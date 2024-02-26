@@ -2357,7 +2357,7 @@ class Trader(object):
 
         # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
         try:
-            result_id = process_trade_result(result, data_source=self._datasource)['result_id']
+            result_id = process_trade_result(result, data_source=self._datasource)
         except Exception as e:
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
             if self.debug:
@@ -2366,6 +2366,7 @@ class Trader(object):
             return
         # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）
         if result_id is not None:
+
             result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
             order_id = result_detail['order_id']
             order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
@@ -2384,10 +2385,31 @@ class Trader(object):
             pos_id = order_detail['pos_id']
             position = get_position_by_id(pos_id, data_source=self._datasource)
             post_qty, post_available, post_cost = position['qty'], position['available_qty'], position['cost']
+            symbol = position['symbol']
             # 读取持有现金
             account = get_account(self.account_id, data_source=self._datasource)
             post_cash_amount = account['cash_amount']
             post_available_cash = account['available_cash']
+            trade_log = {
+                'order_id': order_id,
+                'position_id': pos_id,
+                'symbol': symbol,
+                'position_type': position['position'],
+                'name': get_symbol_names(datasource=self.datasource, symbols=symbol),
+                'qty_change': post_qty - pre_qty,
+                'qty': post_qty,
+                'available_qty_change': post_available - pre_available,
+                'available_qty': post_available,
+                'cost_change': post_cost - pre_cost,
+                'cost': post_cost,
+                'cash_change': post_cash_amount - pre_cash_amount,
+                'cash': post_cash_amount,
+                'available_cash_change': post_available_cash - pre_available_cash,
+                'available_cash': post_available_cash,
+                'reason': 'order'
+            }
+            self.write_log_file(**trade_log)
+            # 生成system_log
             if pre_qty != post_qty:
                 self.send_message(f'<RESULT>: {sym}({pos}): '
                                   f'own {pre_qty:.2f}->{post_qty:.2f}; '
@@ -2441,21 +2463,49 @@ class Trader(object):
                 pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
                 symbol = pos['symbol']
                 pos_type = pos['position']
-                prev_qty = delivery_result['prev_qty']
-                updated_qty = delivery_result['updated_qty']
+                prev_qty = res['prev_qty']
+                updated_qty = res['updated_qty']
                 color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
 
                 name = get_symbol_names(self.datasource, symbols=symbol)
+                # 生成trade_log并写入文件
+                trade_log = {
+                    'reason':  'delivery',
+                    'order_id': order_id,
+                    'position_id': res['pos_id'],
+                    'symbol': symbol,
+                    'position_type': pos_type,
+                    'name': get_symbol_names(datasource=self.datasource, symbols=pos['symbol']),
+                    'available_qty_change': updated_qty - prev_qty,
+                    'available_qty': updated_qty,
+                }
+                self.write_log_file(**trade_log)
+                # 发送system log信息
                 self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                                   f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
 
             if res['account_id']:  # 发生了现金交割，更新了账户现金的可用数量
+                pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
+                symbol = pos['symbol']
+                pos_type = pos['position']
                 account = get_account(account_id=self.account_id, data_source=self.datasource)
                 account_name = account['user_name']
-                prev_amount = delivery_result['prev_amount']
-                updated_amount = delivery_result['updated_amount']
+                prev_amount = res['prev_amount']
+                updated_amount = res['updated_amount']
                 color_tag = 'bold red' if prev_amount > updated_amount else 'bold green'
-
+                # 生成trade_log并写入文件
+                trade_log = {
+                    'reason':                'delivery',
+                    'order_id':              order_id,
+                    'position_id':           res['pos_id'],
+                    'symbol':                symbol,
+                    'position_type':         pos_type,
+                    'name':                  get_symbol_names(datasource=self.datasource, symbols=pos['symbol']),
+                    'available_cash_change': updated_amount - prev_amount,
+                    'available_cash':        updated_amount
+                }
+                self.write_log_file(**trade_log)
+                # 发送system log信息
                 self.send_message(f'<DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
                                   f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
 
@@ -2852,6 +2902,7 @@ class Trader(object):
             'cash':                     f'{amount + cash_amount:.3f}',
             'available_cash_change':    f'{amount:.3f}',
             'available_cash':           f'{amount + available_cash:.3f}',
+            'reason':                   'manual_change'
         }
         self.write_log_file(**log_content)
         # 发送消息通知现金变动并记录system log
@@ -2981,6 +3032,7 @@ class Trader(object):
             'available_qty':        f'{position["available_qty"] + quantity:.3f}',
             'cost_change':          f'{new_average_cost - current_total_cost:.3f}',
             'cost':                 f'{new_average_cost:.3f}',
+            'reason':               'manual change'
         }
         self.write_log_file(**log_content)
         # 发送消息通知持仓变动并记录system log
