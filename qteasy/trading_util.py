@@ -755,11 +755,6 @@ def cancel_order(order_id, data_source=None, config=None):
             order_details['qty'] - total_filled_qty,
             AMOUNT_DECIMAL_PLACES,
     )
-    # debug
-    # print(f'[DEBUG]: canceling order {order_id}, order result:\n {order_results}\n'
-    #       f'total filled qty: {total_filled_qty}\n'
-    #       f'already canceled qty: {already_canceled_qty}\n'
-    #       f'remaining qty: {remaining_qty}\n')
 
     if remaining_qty <= 0:
         raise RuntimeError(f'order status wrong: remaining qty should be larger than 0'
@@ -961,7 +956,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     Parameters
     ----------
     raw_trade_result: dict
-        原始交易结果, 与正式交易结果的区别在于，原始交易结果不包含execution_time字段
+        原始交易结果, 与正式交易结果的区别在于，原始交易结果不包含execution_time字段，
+        原始交易结果是尚未确认的交易结果，只有确认有足够的现金和持仓时才能确认交易结果
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
     config: dict, optional
@@ -969,9 +965,20 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     Returns
     -------
-    result_id: int
-        交易结果的id
+    result_detail: dict
+        交易结果的详细信息, 包含以下字段
+        'result_id': int, 交易结果的id
+        'order_id': int, 交易订单的id
+        'status': str, 交易订单的状态
+        'filled_qty': float, 交易订单的成交数量
+        'canceled_qty': float, 交易订单的取消数量
+        'price': float, 交易订单的成交价格
+        'transaction_fee': float, 交易订单的交易费用
+        'delivery_amount': float, 交易订单的交割数量
+        'delivery_status': str, 交易订单的交割状态
+
     """
+    # TODO: 一个函数只做一件事情，我感觉这个函数太长了
 
     if not isinstance(raw_trade_result, dict):
         raise TypeError(f'raw_trade_result must be a dict, got {type(raw_trade_result)} instead')
@@ -1030,18 +1037,13 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
                 CASH_DECIMAL_PLACES,
         )
-        # print(f'[DEBUG]: in process_trade_result(): selling stock, position_change: {position_change}\n'
-        #       f'cash_change = {raw_trade_result["filled_qty"]} * {raw_trade_result["price"]} - '
-        #       f'{raw_trade_result["transaction_fee"]} = {cash_change}, ')
+
     elif order_detail['direction'] == 'buy':
         position_change = raw_trade_result['filled_qty']
         cash_change = np.round(
                 - raw_trade_result['filled_qty'] * raw_trade_result['price'] - raw_trade_result['transaction_fee'],
                 CASH_DECIMAL_PLACES,
         )
-        # print(f'[DEBUG]: in process_trade_result(): buying stock, position_change: {position_change}\n'
-        #       f'cash_change = - {raw_trade_result["filled_qty"]} * {raw_trade_result["price"]} - '
-        #       f'{raw_trade_result["transaction_fee"]} = {cash_change}, ')
     else:  # for any other unexpected direction
         raise ValueError(f'Invalid direction: {order_detail["direction"]}')
 
@@ -1053,13 +1055,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         position_cost = 0
 
     available_cash = get_account_cash_availabilities(order_detail['account_id'], data_source=data_source)[1]
-
-    # print(f'[DEBUG]: updating account balance and position for order {order_id}...\n'
-    #       f'result: {raw_trade_result}\n'
-    #       f'position_change: {position_change}\n'
-    #       f'cash_change: {cash_change}\n'
-    #       f'available_qty: {available_qty}\n'
-    #       f'available_cash: {available_cash}\n')
 
     # 如果position_change小于available_position_amount，则抛出异常
     if available_qty + position_change < 0:
@@ -1088,6 +1083,25 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
     #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
 
+    # 记录交易结果详细信息，返回后用于登记trade_log
+    name = get_symbol_names(datasource=data_source, symbols=order_detail['symbol'])
+    # 交易结果基本信息
+    result_detail = {
+        'result_id':            result_id,
+        'order_id':             order_id,
+        'position_id':          order_detail['pos_id'],
+        'symbol':               order_detail['symbol'],
+        'name':                 name,
+        'position_type':        order_detail['position'],
+        'qty_change':           position_change,
+        'qty':                  owned_qty + position_change,
+        'available_qty_change': position_change
+    }
+    # TODO: 买入或卖出的交易结果应该只更新qty/cash
+    #  而available_qty/available_cash统一应该留到订单交易后交割时更新
+    #  （在交易后立即更新，但允许部分交割，只有完全交割后才修改状态）
+    #  这一条需要讨论，不一定合理
+
     # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
     if order_detail['direction'] == 'buy':
         update_account_balance(
@@ -1109,6 +1123,14 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 qty_change=position_change,
                 cost=new_cost,
         )
+        # 进一步更新交易详情信息(在买入条件下，available_cash立即减少)：
+        result_detail.update({
+            'qty_change':           position_change,
+            'available_qty_change': 0.,
+            'cost_change':          new_cost - prev_cost,
+            'cash_change':          cash_change,
+            'available_cash_change': cash_change
+        })
     # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
     else:  # order_detail['direction'] == 'sell', 因为其他情况已经在前面raise ValueError了
         update_account_balance(
@@ -1130,10 +1152,35 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 available_qty_change=position_change,
                 cost=new_cost,
         )
+        # 进一步更新交易详情信息(在卖出条件下，available_qty立即减少)：
+        result_detail.update({
+            'qty_change':           position_change,
+            'available_qty_change': position_change,
+            'cost_change':          new_cost - prev_cost,
+            'cash_change':          cash_change,
+            'available_cash_change': 0.,
+        })
     # 更新交易订单的状态
     update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
 
-    return result_id
+    # 检查修改后的position和account结果，写入result_detail
+    position_info = get_position_by_id(order_detail['pos_id'], data_source=data_source)
+    owned_qty = position_info['qty']
+    available_qty = position_info['available_qty']
+    position_cost = position_info['cost']
+    account_info = get_account(order_detail['account_id'], data_source=data_source)
+    own_cash = account_info['cash_amount']
+    available_cash = account_info['available_cash']
+
+    result_detail.update({
+        'qty': owned_qty,
+        'available_qty': available_qty,
+        'cost': position_cost,
+        'cash': own_cash,
+        'available_cash': available_cash
+    })
+
+    return result_detail
 
 
 def get_last_trade_result_summary(account_id, shares=None, data_source=None):
@@ -1413,6 +1460,11 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
     >>> get_symbol_names(datasource, ['000001.SZ', '000002.SZ'])
     ['平安银行', '万科A']
     """
+    from qteasy import DataSource, QT_DATA_SOURCE
+    if datasource is None:
+        datasource = QT_DATA_SOURCE
+    if not isinstance(datasource, DataSource):
+        raise TypeError(f'datasource must be an instance of DataSource, got {type(datasource)} instead')
 
     if isinstance(symbols, str):
         symbols = str_to_list(symbols)

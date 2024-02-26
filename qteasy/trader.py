@@ -1409,25 +1409,23 @@ class Trader(object):
     """
 
     trade_log_file_headers = [
-        'datetime',  # 交易或变动发生时间
-        'position_id',  # 交易或变动发生的持仓ID
-        'symbol',  # 股票代码
-        'name',  # 股票名称
-        'position_type',   # 交易或变动发生的持仓类型，long or short
-        'qty_change',  # 持仓变动数量
-        'qty',  # 变动后的持仓数量
-        'available_qty_change',  # 可用持仓变动数量
-        'available_qty',  # 变动后的可用持仓数量
-        'cost_change',  # 持仓成本变动
-        'cost',  # 变动后的持仓成本
-        'cash_change',  # 现金变动
-        'cash',  # 变动后的现金
-        'available_cash_change',  # 可用现金变动
-        'available_cash',  # 变动后的可用现金
-        'total_invest_change',  # 总投资变动
-        'total_invest',  # 变动后的总投资
-        'reason',  # 交易或变动的原因
-        'order_id',  # 如果是订单交易导致变动，记录订单ID
+        'datetime',                 # 0, 交易或变动发生时间
+        'position_id',              # 1, 交易或变动发生的持仓ID
+        'symbol',                   # 2, 股票代码
+        'name',                     # 3, 股票名称
+        'position_type',            # 4, 交易或变动发生的持仓类型，long / short
+        'qty_change',               # 5, 持仓变动数量
+        'qty',                      # 6, 变动后的持仓数量
+        'available_qty_change',     # 7, 可用持仓变动数量
+        'available_qty',            # 8, 变动后的可用持仓数量
+        'cost_change',              # 9, 持仓成本变动
+        'cost',                     # 10, 变动后的持仓成本
+        'cash_change',              # 11, 现金变动
+        'cash',                     # 12, 变动后的现金
+        'available_cash_change',    # 13, 可用现金变动
+        'available_cash',           # 14, 变动后的可用现金
+        'reason',                   # 15, 交易或变动的原因
+        'order_id',                 # 16, 如果是订单交易导致变动，记录订单ID
     ]
 
     def __init__(self, account_id, operator, broker, config, datasource, debug=False):
@@ -2359,13 +2357,14 @@ class Trader(object):
 
         # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
         try:
-            result_id = process_trade_result(result, data_source=self._datasource)
+            result_id = process_trade_result(result, data_source=self._datasource)['result_id']
         except Exception as e:
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
             if self.debug:
                 import traceback
                 traceback.print_exc()
             return
+        # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）
         if result_id is not None:
             result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
             order_id = result_detail['order_id']
@@ -2847,7 +2846,17 @@ class Trader(object):
                 data_source=self.datasource,
                 **amount_change
         )
+        # 在trade_log中记录现金变动
+        log_content = {
+            'cash_change':              f'{amount:.3f}',
+            'cash':                     f'{amount + cash_amount:.3f}',
+            'available_cash_change':    f'{amount:.3f}',
+            'available_cash':           f'{amount + available_cash:.3f}',
+        }
+        self.write_log_file(**log_content)
+        # 发送消息通知现金变动并记录system log
         self.send_message(f'Cash amount changed to {self.account_cash}')
+
         return
 
     def _change_position(self, symbol, quantity, price, side=None):
@@ -2959,6 +2968,25 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
+        # 在trade_log中记录持仓变动
+        name = get_symbol_names(self.datasource, symbols=symbol)
+        log_content = {
+            'position_id':          position_id,
+            'symbol':               position['symbol'],
+            'position_type':        position['position'],  # 'long' or 'short'
+            'name':                 name,
+            'qty_change':           f'{quantity:.3f}',
+            'qty':                  f'{position["qty"] + quantity:.3f}',
+            'available_qty_change': f'{quantity:.3f}',
+            'available_qty':        f'{position["available_qty"] + quantity:.3f}',
+            'cost_change':          f'{new_average_cost - current_total_cost:.3f}',
+            'cost':                 f'{new_average_cost:.3f}',
+        }
+        self.write_log_file(**log_content)
+        # 发送消息通知持仓变动并记录system log
+        self.send_message(f'Position {position["symbol"]}/{position["position"]} '
+                          f'changed to {position["qty"] + quantity}')
+
         return
 
     def _update_live_price(self):
