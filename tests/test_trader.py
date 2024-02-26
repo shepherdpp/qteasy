@@ -61,7 +61,7 @@ class TestTrader(unittest.TestCase):
         # 创建测试数据源
         data_test_dir = 'data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        test_ds = DataSource('file', file_type='hdf', file_loc=data_test_dir)
+        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
         # test_ds = DataSource(
         #         'db',
         #         host=QT_CONFIG['test_db_host'],
@@ -253,6 +253,160 @@ class TestTrader(unittest.TestCase):
                 datasource=test_ds,
                 debug=False,
         )
+
+    def test_trade_logging(self):
+        """ test all documents related to trade logging file operations
+        init_log_file
+
+        """
+        print(f'test property log_file_exists')
+        ts = self.ts
+        self.assertIsNone(ts.trade_log_file_name)
+        self.assertIsNone(ts.trade_log_path_name)
+        res = ts.init_log_file()
+        self.assertIsNotNone(ts.trade_log_file_name)
+        self.assertIsNotNone(ts.trade_log_path_name)
+        self.assertEqual(res, ts.trade_log_path_name)
+        # remove the file and re-init
+        import os
+        from qteasy import QT_ROOT_PATH
+        log_file_path_name = os.path.join(QT_ROOT_PATH, ts._config['trade_log_file_path'], ts.trade_log_file_name)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        self.assertTrue(ts.log_file_exists)
+        self.assertIsNotNone(ts.trade_log_file_name)
+        self.assertIsNotNone(ts.trade_log_path_name)
+
+        # remove the log file
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.log_file_exists)
+        self.assertIsNone(ts.trade_log_file_name)
+        self.assertIsNone(ts.trade_log_path_name)
+
+        print(f'test function init_log_file')
+        ts.init_log_file()
+        self.assertTrue(ts.log_file_exists)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0], ts.trade_log_file_headers)
+
+        print(f'test function write_log_file')
+        log_content = {
+            'position_id': 1,
+            'order_id': 1,
+            'symbol': '000001.SZ',
+            'name': '招商银行',
+            'qty_change': 100,
+            'qty': 100,
+        }
+        ts.write_log_file(**log_content)
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 2)
+            # compare items one by one to see if they match
+            row = rows[1]
+            self.assertEqual(row[1], '1')
+            self.assertEqual(row[2], '000001.SZ')
+            self.assertEqual(row[3], '招商银行')
+            self.assertEqual(row[4], '')
+            self.assertEqual(row[5], '100')
+            self.assertEqual(row[6], '100')
+            self.assertEqual(row[16], '1')
+
+        print(f'test writing multiple rows in the file and verify every row')
+        log_content = {
+            'position_id': 1,
+            'order_id': 2,
+            'symbol': '000651.SZ',
+            'name': '格力电器',
+            'qty_change': 200,
+            'qty': 200,
+            'cost': 70.5,
+            'reason': 'order',
+            'position_type': 'long',
+        }
+        ts.write_log_file(**log_content)
+        log_content = {
+            'position_id': 1,
+            'order_id': 3,
+            'symbol': '000004.SZ',
+            'name': '国农科技',
+            'qty_change': -200,
+            'qty': 100,
+            'cost': 80.5,
+            'reason': 'order',
+        }
+        ts.write_log_file(**log_content)
+        log_content = {
+            'cash_change': 10000.0,
+            'cash': 100000.0,
+            'available_cash_change': 10000.0,
+            'available_cash': 100000.0,
+            'reason': 'manual change',
+        }
+        ts.write_log_file(**log_content)
+
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 5)
+            # compare items one by one to see if they match
+            row = rows[1]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], '1')
+            self.assertEqual(row[2], '000001.SZ')
+            self.assertEqual(row[3], '招商银行')
+            self.assertEqual(row[4], '')
+            self.assertEqual(row[5], '100')
+            self.assertEqual(row[6], '100')
+            self.assertEqual(row[16], '1')
+            row = rows[2]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], '1')
+            self.assertEqual(row[2], '000651.SZ')
+            self.assertEqual(row[3], '格力电器')
+            self.assertEqual(row[4], 'long')
+            self.assertEqual(row[5], '200')
+            self.assertEqual(row[6], '200')
+            self.assertEqual(row[10], '70.5')
+            self.assertEqual(row[15], 'order')
+            self.assertEqual(row[16], '2')
+            row = rows[3]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], '1')
+            self.assertEqual(row[2], '000004.SZ')
+            self.assertEqual(row[3], '国农科技')
+            self.assertEqual(row[4], '')
+            self.assertEqual(row[5], '-200')
+            self.assertEqual(row[6], '100')
+            self.assertEqual(row[10], '80.5')
+            self.assertEqual(row[15], 'order')
+            self.assertEqual(row[16], '3')
+            row = rows[4]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], '')
+            self.assertEqual(row[2], '')
+            self.assertEqual(row[4], '')
+            self.assertEqual(row[11], '10000.0')
+            self.assertEqual(row[12], '100000.0')
+            self.assertEqual(row[13], '10000.0')
+            self.assertEqual(row[14], '100000.0')
+            self.assertEqual(row[15], 'manual change')
+            self.assertEqual(row[16], '')
+
+        # remove the log file and check if it is removed
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.log_file_exists)
 
     def test_trader_status(self):
         """Test class Trader"""

@@ -131,8 +131,8 @@ else:
 np.seterr(divide='ignore', invalid='ignore')
 
 # 设置qteasy回测交易报告以及错误报告的存储路径
-QT_SYS_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['sys_log_file_path'])
-QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])
+QT_SYS_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['sys_log_file_path'])  # 系统日志存储路径
+QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])  # 交易记录存储路径，包括回测和实盘交易
 
 # 设置系统日志以及交易日志的存储路径，如果路径不存在，则新建一个文件夹
 os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)

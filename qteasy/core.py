@@ -714,12 +714,6 @@ def apply_loop(operator: Operator,
                     op_log_cash.append(rnd(own_cash, 3))
                     op_log_available_cash.append(rnd(available_cash, 3))
                     op_log_value.append(rnd(total_value, 3))
-                # debug
-                # print(f'step {i} {op_type} looping result on {current_date}, total Value {total_value}::\n'
-                #       f'op from calculation: {current_op}, prices: {current_prices}\n'
-                #       f'cash change: {cash_changed}, own cash: {own_cash}\n'
-                #       f'amount changed: {amount_changed}, '
-                #       f'own amounts: {own_amounts}\n')
 
             # 保存计算结果
             cashes.append(own_cash)
@@ -961,8 +955,9 @@ def process_loop_results(operator,
         op_summary_df = pd.DataFrame(op_summary_matrix,
                                      index=['add. invest', 'own cash', 'available cash', 'value'],
                                      columns=op_sum_index).T
-        log_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_log.csv'
+        log_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_log.csv')
         op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name)
+
         # 生成 trade log 摘要表 (a more concise and human-readable format of trading log
         # create share trading logs:
         logger_core.info(f'generating abstract trading log ...')
@@ -990,7 +985,7 @@ def process_loop_results(operator,
                       '6, available amounts',
                       '7, summary']
         op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
-        record_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_records.csv'
+        record_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_records.csv')
         # TODO: 可以增加一个config属性来控制交易摘要表的生成规则：
         #  如果how == 'left' 保留无交易日期的记录
         #  如果how == 'right', 不显示无交易日期的记录
