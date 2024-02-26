@@ -273,10 +273,14 @@ class TestTrader(unittest.TestCase):
         log_file_path_name = os.path.join(QT_ROOT_PATH, ts._config['trade_log_file_path'], ts.trade_log_file_name)
         self.assertTrue(os.path.exists(log_file_path_name))
         self.assertTrue(ts.log_file_exists)
+        self.assertIsNotNone(ts.trade_log_file_name)
+        self.assertIsNotNone(ts.trade_log_path_name)
 
         # remove the log file
         os.remove(log_file_path_name)
         self.assertFalse(ts.log_file_exists)
+        self.assertIsNone(ts.trade_log_file_name)
+        self.assertIsNone(ts.trade_log_path_name)
 
         print(f'test function init_log_file')
         ts.init_log_file()

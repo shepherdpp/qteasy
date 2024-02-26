@@ -470,7 +470,7 @@ class TraderShell(Cmd):
         # 逐一提交交易信号
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
-            broker.instruction_queue.put(trade_order)
+            broker.order_queue.put(trade_order)
         pass
 
     def do_sell(self, arg):
@@ -544,7 +544,7 @@ class TraderShell(Cmd):
         # 逐一提交交易信号
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
-            broker.instruction_queue.put(trade_order)
+            broker.order_queue.put(trade_order)
         pass
 
     def do_positions(self, arg):
@@ -1627,11 +1627,14 @@ class Trader(object):
         from qteasy import QT_ROOT_PATH
         log_path = os.path.join(QT_ROOT_PATH, self._config['trade_log_file_path'])
         log_file_path_name = os.path.join(log_path, self.trade_log_file_name)
+        self.trade_log_path_name = log_file_path_name
 
         try:
             with open(log_file_path_name, 'r'):
                 return True
         except FileNotFoundError:
+            self.trade_log_file_name = None
+            self.trade_log_path_name = None
             return False
 
     # ================== methods ==================
@@ -2075,6 +2078,8 @@ class Trader(object):
         """
         if not self.log_file_exists:
             raise FileNotFoundError('log file does not exist')
+        if self.trade_log_path_name is None:
+            raise RuntimeError(f'trade_log_path_name can not be None!')
 
         base_log_content = {
             k: v for k, v in
@@ -2091,6 +2096,15 @@ class Trader(object):
         log_content['datetime'] = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
         # update base_log_content with log_content
         base_log_content.update(log_content)
+
+        # 调整各个数据的格式:
+        for key in base_log_content:
+            if key in ['qty_change', 'qty', 'available_qty_change', 'available_qty',
+                       'cash_change', 'cash', 'available_cash_change', 'available_cash',
+                       'cost_change', 'cost']:
+                if base_log_content[key] is None:
+                    continue
+                base_log_content[key] = f'{base_log_content[key]:.3f}'
 
         import csv
         with open(self.trade_log_path_name, mode='a', encoding='utf-8') as f:
@@ -2458,32 +2472,7 @@ class Trader(object):
         )
         # 生成交割结果信息推送到信息队列
         for res in delivery_result:
-            order_id = delivery_result['order_id']
-            if res['pos_id']:  # 发生了股票/资产交割，更新了资产股票的可用持仓数量
-                pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
-                symbol = pos['symbol']
-                pos_type = pos['position']
-                prev_qty = res['prev_qty']
-                updated_qty = res['updated_qty']
-                color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
-
-                name = get_symbol_names(self.datasource, symbols=symbol)
-                # 生成trade_log并写入文件
-                trade_log = {
-                    'reason':  'delivery',
-                    'order_id': order_id,
-                    'position_id': res['pos_id'],
-                    'symbol': symbol,
-                    'position_type': pos_type,
-                    'name': get_symbol_names(datasource=self.datasource, symbols=pos['symbol']),
-                    'available_qty_change': updated_qty - prev_qty,
-                    'available_qty': updated_qty,
-                }
-                self.write_log_file(**trade_log)
-                # 发送system log信息
-                self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
-                                  f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
-
+            order_id = res['order_id']
             if res['account_id']:  # 发生了现金交割，更新了账户现金的可用数量
                 pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
                 symbol = pos['symbol']
@@ -2508,6 +2497,32 @@ class Trader(object):
                 # 发送system log信息
                 self.send_message(f'<DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
                                   f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
+
+            elif res['pos_id']:  # 发生了股票/资产交割，更新了资产股票的可用持仓数量
+                pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
+                symbol = pos['symbol']
+                pos_type = pos['position']
+                prev_qty = res['prev_qty']
+                updated_qty = res['updated_qty']
+                print(f'got result {res}')
+                color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
+
+                name = get_symbol_names(self.datasource, symbols=symbol)
+                # 生成trade_log并写入文件
+                trade_log = {
+                    'reason':  'delivery',
+                    'order_id': order_id,
+                    'position_id': res['pos_id'],
+                    'symbol': symbol,
+                    'position_type': pos_type,
+                    'name': get_symbol_names(datasource=self.datasource, symbols=pos['symbol']),
+                    'available_qty_change': updated_qty - prev_qty,
+                    'available_qty': updated_qty,
+                }
+                self.write_log_file(**trade_log)
+                # 发送system log信息
+                self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
+                                  f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
 
         # 检查交易记录文件是否存在，如果不存在则创建新的交易记录文件
         if self.log_file_exists:
@@ -2896,12 +2911,16 @@ class Trader(object):
                 data_source=self.datasource,
                 **amount_change
         )
+        cash_amount, available_cash, total_invest = get_account_cash_availabilities(
+                account_id=self.account_id,
+                data_source=self.datasource
+        )
         # 在trade_log中记录现金变动
         log_content = {
-            'cash_change':              f'{amount:.3f}',
-            'cash':                     f'{amount + cash_amount:.3f}',
-            'available_cash_change':    f'{amount:.3f}',
-            'available_cash':           f'{amount + available_cash:.3f}',
+            'cash_change':              amount,
+            'cash':                     cash_amount,
+            'available_cash_change':    amount,
+            'available_cash':           available_cash,
             'reason':                   'manual_change'
         }
         self.write_log_file(**log_content)
@@ -3004,7 +3023,8 @@ class Trader(object):
         if quantity < 0 and position['available_qty'] < -quantity:
             print(f'Not enough position to decrease, available position: {position["available_qty"]}')
             return
-        current_total_cost = position['cost'] * position['qty']
+        prev_cost = position['cost']
+        current_total_cost = prev_cost * position['qty']
         additional_cost = np.round(price * float(quantity), 2)
         new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
         if np.isinf(new_average_cost):
@@ -3020,18 +3040,22 @@ class Trader(object):
                 **position_data
         )
         # 在trade_log中记录持仓变动
+        position = get_position_by_id(
+                pos_id=position_id,
+                data_source=self.datasource,
+        )
         name = get_symbol_names(self.datasource, symbols=symbol)
         log_content = {
             'position_id':          position_id,
             'symbol':               position['symbol'],
             'position_type':        position['position'],  # 'long' or 'short'
             'name':                 name,
-            'qty_change':           f'{quantity:.3f}',
-            'qty':                  f'{position["qty"] + quantity:.3f}',
-            'available_qty_change': f'{quantity:.3f}',
-            'available_qty':        f'{position["available_qty"] + quantity:.3f}',
-            'cost_change':          f'{new_average_cost - current_total_cost:.3f}',
-            'cost':                 f'{new_average_cost:.3f}',
+            'qty_change':           quantity,
+            'qty':                  position["qty"],
+            'available_qty_change': quantity,
+            'available_qty':        position["available_qty"],
+            'cost_change':          position['cost'] - prev_cost,
+            'cost':                 position['cost'],
             'reason':               'manual change'
         }
         self.write_log_file(**log_content)
