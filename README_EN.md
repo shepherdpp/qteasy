@@ -37,8 +37,10 @@
   - [Deploy Strategy](#deploy-the-strategy-and-start-live-trading)
   - [Optimizing Strategy](#optimize-adjustable-parameters-of-a-strategy)
 
-> Note:
-> This project is under active development. Please feel free to contribute to this project, or report any [issues](https://github.com/shepherdpp/qteasy/issues/new).
+> **Note:**
+> 
+> `qteasy` is under active development and testing. There may be some bugs and issues in the software. If you encounter any problem, please [REPORT A BUG](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=) or issue a new [FEATURE REQUEST](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=), or join me in the [Discussion](github.com/shepherdpp/qteasy/discussions).
+> I will fix the problem as soon as possible and reply to everyone's questions.
 
 
 ## Introduction
@@ -47,6 +49,7 @@
 - Created: 2019, July, 16
 - Latest Version: `1.0.25`
 - License: BSD 3-Clause License
+
 
 QTEASY is a fast quantitative investment package created for traders, with following features:
 
