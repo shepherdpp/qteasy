@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.0.25 (2024-2-28)
+- Now trade logs are saved in a file in live trade mode, the file is saved in the same directory as set in `qt.config['trade_log_file_path']`
+- Fixed a few bugs in live trade mode, and added information print outs on errors
+
 ## 1.0.24 (2024-02-18)
 - Corrected a mistake introduced since version 1.0.18, with wrongly merged incomplete and untested features in broker. this bug will cause failure of executiong orders in live trade mode.
 

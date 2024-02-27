@@ -2409,7 +2409,7 @@ class Trader(object):
                 'position_id': pos_id,
                 'symbol': symbol,
                 'position_type': position['position'],
-                'name': get_symbol_names(datasource=self.datasource, symbols=symbol),
+                'name': get_symbol_names(datasource=self.datasource, symbols=symbol)[0],
                 'qty_change': post_qty - pre_qty,
                 'qty': post_qty,
                 'available_qty_change': post_available - pre_available,
@@ -2489,7 +2489,7 @@ class Trader(object):
                     'position_id':           res['pos_id'],
                     'symbol':                symbol,
                     'position_type':         pos_type,
-                    'name':                  get_symbol_names(datasource=self.datasource, symbols=pos['symbol']),
+                    'name':                  get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
                     'available_cash_change': updated_amount - prev_amount,
                     'available_cash':        updated_amount
                 }
@@ -2515,7 +2515,7 @@ class Trader(object):
                     'position_id': res['pos_id'],
                     'symbol': symbol,
                     'position_type': pos_type,
-                    'name': get_symbol_names(datasource=self.datasource, symbols=pos['symbol']),
+                    'name': get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
                     'available_qty_change': updated_qty - prev_qty,
                     'available_qty': updated_qty,
                 }
@@ -3044,7 +3044,7 @@ class Trader(object):
                 pos_id=position_id,
                 data_source=self.datasource,
         )
-        name = get_symbol_names(self.datasource, symbols=symbol)
+        name = get_symbol_names(self.datasource, symbols=symbol)[0]
         log_content = {
             'position_id':          position_id,
             'symbol':               position['symbol'],
