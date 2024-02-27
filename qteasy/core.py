@@ -970,7 +970,6 @@ def process_loop_results(operator,
                 share_name = get_basic_info(share, printout=False)['name']
             except Exception as e:
                 share_name = 'unknown'
-                # logger_core.warning(f'Error encountered getting share names\n{e}')
             share_df['name'] = share_name
             share_logs.append(share_df)
 
@@ -1052,8 +1051,13 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
 
     ds = qteasy.QT_DATA_SOURCE
     # ts_code是dataframe的index
-    share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
-                                                      'market', 'list_date', 'exchange']]
+    share_basics = ds.read_table_data('stock_basic')
+    if not share_basics.empty:
+        share_basics = share_basics[['symbol', 'name', 'area', 'industry',
+                                     'market', 'list_date', 'exchange']]
+    else:
+        raise ValueError('No stock basic data found, please download stock basic data, call '
+                         '"qt.refill_data_source(tables="stock_basic")"')
     if share_basics is None or share_basics.empty:
         return pd.DataFrame()
 

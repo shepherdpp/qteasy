@@ -5,11 +5,12 @@
 ## 报告bug或者功能请求
 
 目前`qteays`正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎[Issue-报告bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=)给我，
+
 在提交功能请求以前，请先访问我们的 [开发路线图](https://qteasy.readthedocs.io/zh/latest/roadmap.html) 查阅你的功能请求是否已经在开发中。
 
 ## 使用`qteasy`中遇到问题
 
-如果你在使用`qteasy`中遇到问题，可以进入`qteasy`的[讨论区](https://github.com/shepherdpp/qteasy/discussions)参与讨论。
+如果你在使用`qteasy`中遇到问题，可以进入`qteasy`的[讨论区](https://github.com/shepherdpp/qteasy/discussions)提交问题参与讨论。
 
 ## 贡献代码
 

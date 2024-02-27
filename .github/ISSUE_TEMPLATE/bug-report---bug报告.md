@@ -20,8 +20,8 @@ A clear and concise description of what you expected to happen. / 简明扼要�
 
 **Environment (please complete the following information) / 请提供更多环境信息:**
  - OS: [e.g. iOS] 
- - Versions [versions of your python environment and qteasy / Python的版本和qteasy的版本]
- - Environment [e.g. versions of key packages like numpy/pandas/talib, etc / 关键软件包的版本，如numpy/pandas等等]
+ - Versions [versions of your `python` environment and `qteasy` / `Python`的版本和`qteasy`的版本]
+ - Environment [e.g. versions of key packages like `numpy/pandas/talib`, etc / 关键软件包的版本，如`numpy/pandas`等等]
  - DataSource [e.g. type of datasource and overview with `qt.get_table_overview()` / 数据源信息，使用`qt.get_table_overview()`获取]
 
 **Additional context / 其他信息**
