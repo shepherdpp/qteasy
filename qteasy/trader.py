@@ -1410,22 +1410,26 @@ class Trader(object):
 
     trade_log_file_headers = [
         'datetime',                 # 0, 交易或变动发生时间
-        'position_id',              # 1, 交易或变动发生的持仓ID
-        'symbol',                   # 2, 股票代码
-        'name',                     # 3, 股票名称
-        'position_type',            # 4, 交易或变动发生的持仓类型，long / short
-        'qty_change',               # 5, 持仓变动数量
-        'qty',                      # 6, 变动后的持仓数量
-        'available_qty_change',     # 7, 可用持仓变动数量
-        'available_qty',            # 8, 变动后的可用持仓数量
-        'cost_change',              # 9, 持仓成本变动
-        'cost',                     # 10, 变动后的持仓成本
-        'cash_change',              # 11, 现金变动
-        'cash',                     # 12, 变动后的现金
-        'available_cash_change',    # 13, 可用现金变动
-        'available_cash',           # 14, 变动后的可用现金
-        'reason',                   # 15, 交易或变动的原因
-        'order_id',                 # 16, 如果是订单交易导致变动，记录订单ID
+        'reason',                   # 1, 交易或变动的原因: order / delivery / manual
+        'order_id',                 # 2, 如果是订单交易导致变动，记录订单ID
+        'position_id',              # 3, 交易或变动发生的持仓ID
+        'symbol',                   # 4, 股票代码
+        'name',                     # 5, 股票名称
+        'position_type',            # 6, 交易或变动发生的持仓类型，long / short
+        'direction',                # 7, 交易方向，buy / sell
+        'trade_qty',                # 8, 交易数量
+        'price',                    # 9, 成交价格
+        'trade_cost',               # 10, 交易费用
+        'qty_change',               # 11, 持仓变动数量
+        'qty',                      # 12, 变动后的持仓数量
+        'available_qty_change',     # 13, 可用持仓变动数量
+        'available_qty',            # 14, 变动后的可用持仓数量
+        'cost_change',              # 15, 持仓成本变动
+        'holding_cost',             # 16, 变动后的持仓成本
+        'cash_change',              # 17, 现金变动
+        'cash',                     # 18, 变动后的现金
+        'available_cash_change',    # 19, 可用现金变动
+        'available_cash',           # 20, 变动后的可用现金
     ]
 
     def __init__(self, account_id, operator, broker, config, datasource, debug=False):
@@ -1619,6 +1623,8 @@ class Trader(object):
     @property
     def log_file_exists(self):
         """ 返回交易记录文件是否存在
+
+        同时检查交易记录文件格式是否正确，header内容是否与self.trade_log_file_header一致
         """
         account = get_account(self.account_id, data_source=self._datasource)
         account_name = account['user_name']
@@ -1630,8 +1636,19 @@ class Trader(object):
         self.trade_log_path_name = log_file_path_name
 
         try:
-            with open(log_file_path_name, 'r'):
-                return True
+            import csv
+            with open(log_file_path_name, 'r') as f:
+                # 读取文件第一行，确认与self.trade_log_file_header完全相同
+                reader = csv.reader(f)
+                read_header = next(reader)
+                if read_header == self.trade_log_file_headers:
+                    return True
+
+                # 如果文件header不匹配，认为文件不存在
+                self.trade_log_file_name = None
+                self.trade_log_path_name = None
+                return False
+
         except FileNotFoundError:
             self.trade_log_file_name = None
             self.trade_log_path_name = None
@@ -1928,6 +1945,10 @@ class Trader(object):
     def send_message(self, message: str, new_line=True):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
 
+        根据消息类型，在添加到消息队列的同时，执行不同的操作：
+        - 如果消息是debug信息，且当前状态为debug，则打印信息、添加到队列并添加到log文件
+        - 如果消息是覆盖型信息，添加到队列，不进入log文件
+
         Parameters
         ----------
         message: str
@@ -2077,7 +2098,7 @@ class Trader(object):
 
         """
         if not self.log_file_exists:
-            raise FileNotFoundError('log file does not exist')
+            raise FileNotFoundError('trade log file does not exist')
         if self.trade_log_path_name is None:
             raise RuntimeError(f'trade_log_path_name can not be None!')
 
@@ -2101,7 +2122,7 @@ class Trader(object):
         for key in base_log_content:
             if key in ['qty_change', 'qty', 'available_qty_change', 'available_qty',
                        'cash_change', 'cash', 'available_cash_change', 'available_cash',
-                       'cost_change', 'cost']:
+                       'cost_change', 'holding_cost', 'trade_cost', 'qty', 'trade_qty']:
                 if base_log_content[key] is None:
                     continue
                 base_log_content[key] = f'{base_log_content[key]:.3f}'
@@ -2380,21 +2401,24 @@ class Trader(object):
             return
         # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）
         if result_id is not None:
-
+            # 获取交易结果和订单信息
             result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
             order_id = result_detail['order_id']
             order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
             pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
             status = order_detail['status']
-            filled_qty, filled_price = result_detail['filled_qty'], result_detail['price']
+
+            filled_qty = result_detail['filled_qty']
+            filled_price =  result_detail['price']
+            trade_cost = result_detail['transaction_fee']
+
             # send message to indicate execution of order
             self.send_message(f'<ORDER EXECUTED {order_id}>: '
                               f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price} '
                               f'with fee: {result_detail["transaction_fee"]}')
             # send message to indicate change of positions / cashes
-            # 读取交易处理以后的账户信息和持仓信息
-            order_id = result['order_id']
-            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
+            # order_id = result['order_id']
+            # order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
             # 读取持仓信息
             pos_id = order_detail['pos_id']
             position = get_position_by_id(pos_id, data_source=self._datasource)
@@ -2404,23 +2428,32 @@ class Trader(object):
             account = get_account(self.account_id, data_source=self._datasource)
             post_cash_amount = account['cash_amount']
             post_available_cash = account['available_cash']
+            names = get_symbol_names(datasource=self.datasource, symbols=symbol)
+            if names:
+                name = names[0]
+            else:
+                name = 'Not Found!'
             trade_log = {
+                'reason': 'order',
                 'order_id': order_id,
                 'position_id': pos_id,
                 'symbol': symbol,
+                'name': name,
                 'position_type': position['position'],
-                'name': get_symbol_names(datasource=self.datasource, symbols=symbol)[0],
+                'direction': order_detail['direction'],
+                'trade_qty': filled_qty,
+                'price': filled_price,
+                'trade_cost': trade_cost,
                 'qty_change': post_qty - pre_qty,
                 'qty': post_qty,
                 'available_qty_change': post_available - pre_available,
                 'available_qty': post_available,
                 'cost_change': post_cost - pre_cost,
-                'cost': post_cost,
+                'holding_cost': post_cost,
                 'cash_change': post_cash_amount - pre_cash_amount,
                 'cash': post_cash_amount,
                 'available_cash_change': post_available_cash - pre_available_cash,
                 'available_cash': post_available_cash,
-                'reason': 'order'
             }
             self.write_log_file(**trade_log)
             # 生成system_log
@@ -2470,6 +2503,16 @@ class Trader(object):
                 data_source=self._datasource,
                 config=self._config
         )
+
+        # 检查交易记录文件是否存在，如果不存在则创建新的交易记录文件
+        if self.log_file_exists:
+            pass
+        else:
+            self.send_message(f'Trade log file for account ({self.account_id}) not found,'
+                              f' new trade log {self.trade_log_file_name} will be created in '
+                              f'{self._config["trade_log_file_path"]}')
+            self.init_log_file()
+
         # 生成交割结果信息推送到信息队列
         for res in delivery_result:
             order_id = res['order_id']
@@ -2523,15 +2566,6 @@ class Trader(object):
                 # 发送system log信息
                 self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                                   f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
-
-        # 检查交易记录文件是否存在，如果不存在则创建新的交易记录文件
-        if self.log_file_exists:
-            pass
-        else:
-            self.send_message(f'Trade log file for account ({self.account_id}) not found,'
-                              f' new trade log {self.trade_log_file_name} will be created in '
-                              f'{self._config["trade_log_file_path"]}')
-            self.init_log_file()
 
         # 获取当日实时价格
         self._update_live_price()
@@ -3044,8 +3078,13 @@ class Trader(object):
                 pos_id=position_id,
                 data_source=self.datasource,
         )
-        name = get_symbol_names(self.datasource, symbols=symbol)[0]
+        names = get_symbol_names(self.datasource, symbols=symbol)
+        if names:
+            name = names[0]
+        else:
+            name = 'Not Found!'
         log_content = {
+            'reason':               'manual',
             'position_id':          position_id,
             'symbol':               position['symbol'],
             'position_type':        position['position'],  # 'long' or 'short'
@@ -3055,8 +3094,7 @@ class Trader(object):
             'available_qty_change': quantity,
             'available_qty':        position["available_qty"],
             'cost_change':          position['cost'] - prev_cost,
-            'cost':                 position['cost'],
-            'reason':               'manual change'
+            'holding_cost':         position['cost'],
         }
         self.write_log_file(**log_content)
         # 发送消息通知持仓变动并记录system log
