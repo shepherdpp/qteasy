@@ -137,19 +137,29 @@ QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])
 # 设置系统日志以及交易日志的存储路径，如果路径不存在，则新建一个文件夹
 os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
 os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
+# 设置loggings，创建logger
 debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'qteasy.log'),
                                                           backupCount=3, when='midnight')
+live_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'live_trade.log'),
+                                                         backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
 error_handler.setLevel(logging.ERROR)
 formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s -: %(message)s')
 debug_handler.setFormatter(formatter)
 error_handler.setFormatter(formatter)
+# 创建两个logger，一个是正常运行(回测、优化等）的logger，另一个是实盘运行logger
 logger_core = logging.getLogger('core')
 logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
 logger_core.setLevel(logging.INFO)
 logger_core.propagate = False
+
+logger_live = logging.getLogger('live')
+logger_live.addHandler(live_handler)
+logger_live.addHandler(error_handler)
+logger_live.setLevel(logging.INFO)
+logger_live.propagate = False
 
 logger_core.info('qteasy loaded!')
 
@@ -169,5 +179,6 @@ __all__ = [
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
     'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
     'utilfuncs',
-    'QT_CONFIG', 'ConfigDict', '__version__'
+    'QT_CONFIG', 'ConfigDict', '__version__',
+    'logger_core', 'logger_live',
 ]
