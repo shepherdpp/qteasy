@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.0.26 (2024-2-29)
+- Now live trade logs are kept in system log files, live logs are saved in the same file, with different account number as prefix
+- Fixed bugs
+
 ## 1.0.25 (2024-2-28)
 - Now trade logs are saved in a file in live trade mode, the file is saved in the same directory as set in `qt.config['trade_log_file_path']`
 - Fixed a few bugs in live trade mode, and added information print outs on errors
