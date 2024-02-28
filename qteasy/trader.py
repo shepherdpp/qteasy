@@ -1630,9 +1630,8 @@ class Trader(object):
         account_name = account['user_name']
         if self.trade_log_file_name is None:
             self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
-        from qteasy import QT_ROOT_PATH
-        log_path = os.path.join(QT_ROOT_PATH, self._config['trade_log_file_path'])
-        log_file_path_name = os.path.join(log_path, self.trade_log_file_name)
+        from qteasy import QT_TRADE_LOG_PATH
+        log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, self.trade_log_file_name)
         self.trade_log_path_name = log_file_path_name
 
         try:
@@ -1718,6 +1717,11 @@ class Trader(object):
         market_close_day_loop_interval = 1
         current_date_time = self.get_current_tz_datetime()  # 产生当地时间
         current_date = current_date_time.date()
+
+        # 检查是否有交易记录文件，如果没有，创建一个新的交易记录文件
+        if not self.log_file_exists:
+            self.init_log_file()
+
         try:
             while self.status != 'stopped':
                 pre_date = current_date
@@ -1942,7 +1946,7 @@ class Trader(object):
         order_ids = trade_orders.index.values
         return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
 
-    def send_message(self, message: str, new_line=True):
+    def send_message(self, message: str, new_line=True, debug=False):
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
 
         根据消息类型，在添加到消息队列的同时，执行不同的操作：
@@ -1955,22 +1959,34 @@ class Trader(object):
             消息内容
         new_line: bool, default True
             是否在消息后添加换行符
+        debug: bool, default False
+            是否是debug信息
         """
+
+        from qteasy import logger_core
+
         time_string = self.get_current_tz_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
         if self.time_zone != 'local':
             tz = f"({self.time_zone.split('/')[-1]})"
         else:
             tz = ''
+
+        # 在message前添加时间、状态等信息
         message = f'<{time_string}{tz}>{self.status}: {message}'
         if not new_line:
             message += '_R'
-        if self.debug:
+        if debug & self.debug:
             message = f'<DEBUG>{message}'
+
+        # 处理消息，区分不同情况，需要打印、发送消息且写入log文件
         if self.debug and (message[-2:] != '_R'):
+            # 如果在debug模式下且不是覆盖型信息，直接打印
             text_width = int(shutil.get_terminal_size().columns)
-            print(f'{message: <{text_width - 2}}')  # 如果在debug模式下且不是覆盖型信息，直接打印
+            print(f'{message: <{text_width - 2}}')
+            logger_core.debug(message)
         else:
             self.message_queue.put(message)
+            logger_core.info(message)
 
     def add_task(self, task, kwargs=None):
         """ 添加任务到任务队列
@@ -2066,9 +2082,8 @@ class Trader(object):
         account_name = account['user_name']
         if self.trade_log_file_name is None:
             self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
-        from qteasy import QT_ROOT_PATH
-        log_path = os.path.join(QT_ROOT_PATH, self._config['trade_log_file_path'])
-        log_file_path_name = os.path.join(log_path, self.trade_log_file_name)
+        from qteasy import QT_TRADE_LOG_PATH
+        log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, self.trade_log_file_name)
 
         if os.path.exists(log_file_path_name):
             os.remove(log_file_path_name)
@@ -2416,9 +2431,6 @@ class Trader(object):
             self.send_message(f'<ORDER EXECUTED {order_id}>: '
                               f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price} '
                               f'with fee: {result_detail["transaction_fee"]}')
-            # send message to indicate change of positions / cashes
-            # order_id = result['order_id']
-            # order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
             # 读取持仓信息
             pos_id = order_detail['pos_id']
             position = get_position_by_id(pos_id, data_source=self._datasource)
@@ -2428,11 +2440,7 @@ class Trader(object):
             account = get_account(self.account_id, data_source=self._datasource)
             post_cash_amount = account['cash_amount']
             post_available_cash = account['available_cash']
-            names = get_symbol_names(datasource=self.datasource, symbols=symbol)
-            if names:
-                name = names[0]
-            else:
-                name = 'Not Found!'
+            name = get_symbol_names(datasource=self.datasource, symbols=symbol)[0]
             trade_log = {
                 'reason': 'order',
                 'order_id': order_id,
@@ -3078,11 +3086,7 @@ class Trader(object):
                 pos_id=position_id,
                 data_source=self.datasource,
         )
-        names = get_symbol_names(self.datasource, symbols=symbol)
-        if names:
-            name = names[0]
-        else:
-            name = 'Not Found!'
+        name = get_symbol_names(self.datasource, symbols=symbol)[0]
         log_content = {
             'reason':               'manual',
             'position_id':          position_id,

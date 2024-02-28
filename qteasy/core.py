@@ -1736,6 +1736,8 @@ def get_history_data(htypes,
         如果返回DataFrame对象，设置dataframe的分组策略
         - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
         - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
+    flatten: bool, 默认False # TODO: new in next version
+        是否返回平坦的数据，即数据的列名为htype的组合
     **kwargs:
         用于生成trade_time_index的参数，包括：
         drop_nan: bool

@@ -3538,8 +3538,9 @@ class DataSource:
         file_path_name: str
             导出的文件的完整路径
         """
+        # TODO: Implement this function: export_table_data
         # 如果table不合法，则抛出异常
-        table_master = self.get_table_master()
+        table_master = get_table_master()
         non_sys_tables = table_master[table_master['table_usage'] != 'sys'].index.to_list()
         if table not in non_sys_tables:
             raise ValueError(f'Invalid table name: {table}!')
@@ -5918,12 +5919,13 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     return list(data_table_map.index)
 
 
-def ensure_sys_table(table):
+def ensure_sys_table(table: str) -> None:
     """ 检察table是不是sys表
 
     Parameters
     ----------
-    table:
+    table: str
+        表名称
 
     Returns
     -------

@@ -1396,7 +1396,8 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
     Returns
     -------
     names: list
-        股票名称列表
+        股票名称列表，如果某个名称无法获取，该列表元素为'N/A'
+        本函数不会返回空列表，除非输入的symbols为空列表
 
     Examples
     --------
@@ -1404,6 +1405,8 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
     ['平安银行']
     >>> get_symbol_names(datasource, ['000001.SZ', '000002.SZ'])
     ['平安银行', '万科A']
+    >>> get_symbol_names(datasource, ['no_such_symbol', '000001.SZ'])
+    ['N/A', '平安银行']
     """
     from qteasy import DataSource, QT_DATA_SOURCE
     if datasource is None:
@@ -1415,6 +1418,9 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
         symbols = str_to_list(symbols)
     if not isinstance(symbols, list):
         raise TypeError(f'symbols must be str or list of str, got {type(symbols)} instead')
+
+    if not symbols:
+        return []
 
     if asset_types is None:
         asset_types = ['stock', 'index', 'fund', 'future', 'option']
@@ -1445,7 +1451,7 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
             ),
     )
     try:
-        names_found = all_basics.reindex(index=symbols).name.tolist()
+        names_found = all_basics.reindex(index=symbols)["name"].tolist()
     except Exception as e:
         raise RuntimeError(f'Error in get_symbol_names(): {e}')
     # replace all nan with 'N/A'
