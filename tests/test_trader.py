@@ -72,7 +72,8 @@ class TestTrader(unittest.TestCase):
         # )
         test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
-        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results',
+                      'stock_daily']:
             if test_ds.table_data_exists(table):
                 test_ds.drop_table_data(table)
         # 创建一个ID=1的账户
@@ -87,20 +88,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        # 下载测试所需的基本数据
-        print('Downloading test data...')
-        # TODO: 这里如果设置parallel=True，会导致下载数据时死锁，原因不明
-        test_ds.refill_local_source(
-                tables='stock_daily',
-                symbols='000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
-                start_date='2023-06-04',
-                end_date='2023-07-02',
-                freqs='D',
-                asset_types='E',
-                dtypes='close',
-                parallel=False,
-        )
-        self.stoppage = 1.5
+        self.stoppage = 0.5
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (
@@ -428,7 +416,11 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(ts, Trader)
         Thread(target=ts.run).start()
         time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'sleeping')
+        if self.ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
         time.sleep(self.stoppage)
@@ -496,6 +488,7 @@ class TestTrader(unittest.TestCase):
     def test_trader_properties_methods(self):
         """Test function run_task"""
         ts = self.ts
+        ts.init_log_file()
         self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
@@ -592,15 +585,25 @@ class TestTrader(unittest.TestCase):
         print('added task start')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        # 新的trader创建后，如果当前是交易时段，status为running，否则为sleeping，因此这里的status可能是running或者sleeping，需要根据market_open判断
+        if self.ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
         ts.add_task('pre_open')
         time.sleep(self.stoppage)
         print('added task pre_open')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        if self.ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
+
         ts.add_task('open_market')
         time.sleep(self.stoppage)
         print('added task open_market')
