@@ -1654,7 +1654,8 @@ TABLE_MASTERS = {
 # Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_SCHEMA = {
 
-    # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
+    # TODO: for v1.1:
+    #  在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
     'sys_op_live_accounts':  # 交易账户表
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash', 'total_invest'],
          'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double', 'double'],

@@ -33,8 +33,10 @@ from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _update_config_kwargs, ConfigDict
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
-#TODO: reduce the size of this file, split it into several files
 
+
+# TODO: for v1.1:
+#  reduce the size of this file, split it into several files
 
 @njit
 def _loop_step(signal_type: int,
@@ -779,9 +781,9 @@ def apply_loop_core(share_count,
     cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
     stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
     signal_count = len(op_list_bt_indices)
-    cashes = np.empty(shape=(signal_count, ))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
-    fees = np.empty(shape=(signal_count, ))  # 交易费用，记录每个操作时点产生的交易费用
-    values = np.empty(shape=(signal_count, ))  # 资产总价值，记录每个操作时点的资产和现金价值总和
+    cashes = np.empty(shape=(signal_count,))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
+    fees = np.empty(shape=(signal_count,))  # 交易费用，记录每个操作时点产生的交易费用
+    values = np.empty(shape=(signal_count,))  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = np.empty(shape=(signal_count, share_count))
     total_value = 0
     prev_date = 0
@@ -2446,9 +2448,10 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
                                     interest_rate=config['riskfree_ir'])
         invest_start = regulate_date_format(invest_cash_plan.first_day)
         if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            warn(f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                 f' date will be used!',
-                 RuntimeWarning)
+            warn(
+                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
+                f' date will be used!',
+                RuntimeWarning)
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config['opti_cash_dates'] is None:
@@ -2484,9 +2487,9 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
                 interest_rate=config['riskfree_ir'])
         test_start = regulate_date_format(test_cash_plan.first_day)
         if pd.to_datetime(test_start) != pd.to_datetime(config['test_start']):
-                warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
-                     f' date will be used!',
-                     RuntimeWarning)
+            warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = oper.max_window_length
@@ -2610,7 +2613,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     ).slice_to_dataframe(htype=config['benchmark_dtype'])
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
-           invest_cash_plan, opti_cash_plan, test_cash_plan
+        invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
 def reconnect_ds(data_source=None):

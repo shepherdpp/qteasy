@@ -96,6 +96,13 @@ class Broker(object):
     """
     __metaclass__ = ABCMeta
 
+    # TODO: for v1.1:
+    #  重构Broker类，使Broker基类提供通用的接口，如log_in, log_out, run, transaction等
+    #  并将具体的交易所实现放在子类中，如SimulatorBroker, SimpleBroker等
+    #  重构后的Broker类应该是一个抽象类，不能直接实例化，只能通过子类实例化
+    #  重构后的Broker类提供的接口可以通用于模拟交易所和真实交易所，同时所有的接口以真实交易所的接口
+    #  为标准，模拟交易所的接口应该尽量与真实交易所的接口保持一致
+
     def __init__(self):
         self.broker_name = 'BaseBroker'
         self.user_name = ''

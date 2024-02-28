@@ -866,7 +866,7 @@ class BaseStrategy:
             策略运行的输出，包括交易信号、交易指令等
         """
 
-        # TODO: (v1.1规划更新)
+        # TODO: for v1.1规划更新
         #  改变trade_data的定义。删除trade_data，允许用户在hist_data和ref_data
         #  中定义持仓量、成交量、成交价等数据，这些数据类型通过特殊的数据类型关键字指定，因此客户在策略定
         #  义时可以通过data_type来灵活地指定所需的数据，不需要专门的trade_data数据类型了。

@@ -16,7 +16,7 @@ import sys
 
 import pandas as pd
 import numpy as np
-import shutil
+import shutil, shlex
 
 from threading import Timer
 from queue import Queue
@@ -46,7 +46,7 @@ UNIT_TO_TABLE = {
         }
 
 
-def parse_shell_argument(arg: str = None, default=None, command_name=None) -> list:
+def parse_shell_argument(arg: str = None, arg_parser=None) -> list:
     """ 解析输入的参数, 返回解析后的参数列表，
 
     解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
@@ -57,51 +57,32 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None) -> li
     -----------
     arg: str
         输入的参数
-    default: str, default None
-        如果输入参数为空，返回的默认值
+    arg_parse: argparse.ArgumentParser
+        针对不同命令的参数解析器对象
+    command_name: str
+        当前命令的名称
 
     Returns:
     --------
     args: list
         解析后的参数
     """
-    # TODO: should return:
+    # TODO: for v1.1:
+    #  完全采用类似命令行工具的参数形式，并按此解析参数类型
+    #  should return:
     #  a dict that contains values of all arguments, such as:
     #  {'arg1': (value),
     #   'arg2': value2}
-    #  maybe should use parser to parse arguments, arguments defined in each command
-    if arg is None:
-        return [] if default is None else [default]
-    arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
-    while '  ' in arg:
-        arg = arg.replace('  ', ' ')  # 删除字符间多余的空格
-    if arg == '':
-        return [] if default is None else [default]
-    args = arg.split(' ')
-    # 当用户仍然使用原来的parameter格式时（不带"-"），打印DeprecatedWarning
-    if any(arg[0] != '-' for arg in args):
-        # update args, add "-" in short args and "--" in long args
-        new_args = []
-        example_arg = ''
-        for arg in args:
-            if len(arg) == 1 and (not arg.isdigit()):
-                new_args.append("-" + arg)
-                example_arg = "-" + arg
-            elif all(char.isdigit() for char in arg[:2]):  # do nothing for parameters started with at least two digits
-                new_args.append(arg)
-            elif arg[0] == '-':  # do nothing if arg starts with '-' or '--' already
-                new_args.append(arg)
-            else:
-                new_args.append("--" + arg)
-                example_arg = "--" + arg
+    #  use parser to parse arguments, arguments defined in each command
 
-        if example_arg:
-            from rich import print as rprint
-            rprint(f'[bold red]FutureWarning[/bold red]: plain style parameters will be deprecated in future versions, '
-                   f'use "{command_name} {example_arg}" instead\n')
-
-        args = new_args
-
+    args = shlex.split(arg)
+    if not args:
+        return []
+    try:
+        args = arg_parser.parse_args(args)
+    except:
+        raise ValueError(f'Error: failed to parse arguments: {args}')
+    print args.names
     return args
 
 
