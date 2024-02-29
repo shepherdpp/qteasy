@@ -11,30 +11,31 @@
 # trading orders and submit to class Broker
 # ======================================
 
-import time
+import shlex
+import shutil
 import sys
-
-import pandas as pd
-import numpy as np
-import shutil, shlex
-
-from threading import Timer
-from queue import Queue
+import time
+import argparse
 from cmd import Cmd
+from queue import Queue
+from threading import Timer
+
+import numpy as np
+import pandas as pd
 from rich import print as rprint
 
 import qteasy
-from qteasy import Operator, DataSource, ConfigDict
-from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration, adjust_string_length
-from qteasy.utilfuncs import get_current_tz_datetime
+from qteasy import ConfigDict, DataSource, Operator
 from qteasy.broker import Broker
-from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
+from qteasy.core import check_and_prepare_live_trade_data
+from qteasy.trade_recording import get_account, get_account_position_availabilities, get_account_position_details
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
-from qteasy.trade_recording import new_account, get_or_create_position, update_position
-from qteasy.trading_util import parse_trade_signal, submit_order, process_trade_result
-from qteasy.trading_util import process_trade_delivery, create_daily_task_schedule, cancel_order
+from qteasy.trade_recording import get_or_create_position, new_account, update_position
+from qteasy.trading_util import cancel_order, create_daily_task_schedule, process_trade_delivery
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names
+from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order
+from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, sec_to_duration, str_to_list
+from qteasy.utilfuncs import get_current_tz_datetime
 
 UNIT_TO_TABLE = {
             'h':     'stock_hourly',
@@ -82,7 +83,6 @@ def parse_shell_argument(arg: str = None, arg_parser=None) -> list:
         args = arg_parser.parse_args(args)
     except:
         raise ValueError(f'Error: failed to parse arguments: {args}')
-    print args.names
     return args
 
 
@@ -118,6 +118,130 @@ class TraderShell(Cmd):
             'Type "help <command>" to get help for more commands.\n'
     prompt = '(QTEASY) '
 
+    argparsers = {
+        'status':       argparse.ArgumentParser(description='Show trader status'),
+        'pause':        argparse.ArgumentParser(description='Pause trader'),
+        'resume':       argparse.ArgumentParser(description='Resume trader'),
+        'bye':          argparse.ArgumentParser(description='Stop trader and exit shell'),
+        'exit':         argparse.ArgumentParser(description='Stop trader and exit shell'),
+        'stop':         argparse.ArgumentParser(description='Stop trader and exit shell'),
+        'watch':        argparse.ArgumentParser(description='Add or remove stock symbols to watch list'),
+        'buy':          argparse.ArgumentParser(description='Manually create buy-in order'),
+        'sell':         argparse.ArgumentParser(description='Manually create sell-out order'),
+        'positions':    argparse.ArgumentParser(description='Get account positions'),
+        'overview':     argparse.ArgumentParser(description='Get trader overview, same as info'),
+        'config':       argparse.ArgumentParser(description='Show or change qteasy configurations'),
+        'history':      argparse.ArgumentParser(description='List trade history of a stock'),
+        'orders':       argparse.ArgumentParser(description='Get account orders'),
+        'dashboard':    argparse.ArgumentParser(description='Exit shell and enter dashboard'),
+        'strategies':   argparse.ArgumentParser(description='Show or change strategy parameters'),
+        'agenda':       argparse.ArgumentParser(description='Show trade agenda'),
+        'run':          argparse.ArgumentParser(description='Run strategies manually'),
+    }
+
+    command_arguments = {
+        'status':       [],
+        'pause':        [],
+        'resume':       [],
+        'bye':          [],
+        'exit':         [],
+        'stop':         [],
+        'watch':        [('symbols',),
+                         ('--position', '--positions', '-pos', '-p'),
+                         ('--remove', '-r'),
+                         ('--clear', '-c')],
+        'buy':          [('amount',),
+                         ('symbol',),
+                         ('--price', '-p'),
+                         ('--side', '-s'),
+                         ('--force', '-f')],
+        'sell':         [('amount',),
+                         ('symbol',),
+                         ('--price', '-p'),
+                         ('--side', '-s'),
+                         ('--force', '-f')],
+        'positions':    [],
+        'overview':     [('--detail', '-d')],
+        'config':       [('keys',),
+                         ('--level', '-l'),
+                         ('--set', '-s')],
+        'history':      [('symbol',)],
+        'orders':       [],
+        'dashboard':    [],
+        'strategies':   [],
+        'agenda':       [],
+        'run':          [],
+    }
+
+    command_arg_properties = {
+        'status':       [],
+        'pause':        [],
+        'resume':       [],
+        'bye':          [],
+        'exit':         [],
+        'stop':         [],
+        'watch':        [{'action': 'append',
+                          'nargs': '+',
+                          'help': 'stock symbols to add to watch list'},
+                         {'action': 'store_true',
+                          'help': 'add 5 stocks from position list to watch list'},
+                         {'action': 'store',
+                          'type':   int,
+                          'help': 'remove stock symbols from watch list'},
+                         {'action': 'store_true',
+                          'help': 'clear watch list'}],
+        'buy':          [{'action': 'store',
+                          'type':   float,
+                          'help': 'amount of shares to buy'},
+                         {'action': 'store',
+                          'help': 'stock symbol to buy'},
+                         {'action': 'store',
+                          'type':   float,
+                          'default': 0.0,  # default to market price
+                          'help': 'price to buy at'},
+                         {'action': 'store_true',
+                          'default': 'long',
+                          'choices': ['long', 'short'],
+                          'help': 'order position side, default long'},
+                         {'action': 'store_true',
+                          'help': 'force buy regardless of current prices'}],
+        'sell':         [{'action': 'store',
+                          'type':   float,
+                          'help': 'amount of shares to sell'},
+                         {'action': 'store',
+                          'help': 'stock symbol to sell'},
+                         {'action': 'store',
+                          'type':   float,
+                          'default': 0.0,  # default to market price
+                          'help': 'price to sell at'},
+                         {'action': 'store_true',
+                          'default': 'long',
+                          'choices': ['long', 'short'],
+                          'help': 'order position side, default long'},
+                         {'action': 'store_true',
+                          'help': 'force sell regardless of current prices'}],
+        'positions':    [],
+        'overview':     [{'action': 'store_true',
+                          'help':   'show detailed account info'}],
+        'config':       [{'action': 'append',
+                          'nargs': '*',
+                          'help': 'config keys to show or change'},
+                         {'action': 'count',
+                          'default': 0,
+                          'help': 'config level to show or change'},
+                         {'action': 'append',
+                          'nargs': '*',
+                          'help': 'config values to set or change for keys'}],
+        'history':      [{'action': 'store',
+                          'default': 'all',
+                          'help':   'stock symbol to show history for'}],
+        'orders':       [],
+        'dashboard':    [],
+        'strategies':   [],
+        'agenda':       [],
+        'run':          [],
+    }
+
     def __init__(self, trader):
         super().__init__(completekey='tab')
         self._trader = trader
@@ -126,6 +250,8 @@ class TraderShell(Cmd):
         self._watch_list = ['000001.SH']  # default watched price is SH index
         self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
+
+        self.init_arg_parsers()
 
     @property
     def trader(self):
@@ -178,8 +304,19 @@ class TraderShell(Cmd):
                                    'Use "watch" command to add stocks to watch list. =='
         return
 
+    # ----- command arg parsers -----
+    def init_arg_parsers(self):
+        """ 初始化命令参数解析器
+        """
+        for command in self.argparsers:
+            args = self.command_arguments[command]
+            arg_properties = self.command_arg_properties[command]
+            if not args:
+                continue
+            for arg, arg_property in zip(args, arg_properties):
+                self.argparsers[command].add_argument(*arg, **arg_property)
+
     # ----- basic commands -----
-    # TODO: add escape warning when realtime data acquiring is not available
     def do_status(self, arg):
         """ Show trader status
 
@@ -321,7 +458,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, command_name='watch')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['watch'])
         if not args:
             sys.stdout.write(f'Current watch list: {self._watch_list}\n'
                              f'input symbols to add to watch list, like 000651.SZ\n')
@@ -361,7 +498,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        buy AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+        buy AMOUNT SYMBOL [--price | -p PRICE] [--side | -s 'long'/'short'] [--force | -f]
 
         Notes:
         ------
@@ -370,9 +507,9 @@ class TraderShell(Cmd):
         Examples:
         ---------
         # buy in 100 shares of 000651.SH at price 32.5
-        buy 100 000651.SH 32.5
+        buy 100 000651.SH -p 32.5
         # buy short 100 shares of 000651.SH at price 30.0
-        buy 100 000651.SH 30.0 --short
+        buy 100 000651.SH -p 30.0 -s short
         """
         account_id = self.trader.account_id
         datasource = self.trader.datasource
@@ -435,7 +572,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        sell AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+        sell AMOUNT SYMBOL [--price | -p PRICE] [--side | -s 'long'/'short'] [--force | -f]
 
         Notes:
         ------
@@ -444,9 +581,9 @@ class TraderShell(Cmd):
         Examples:
         ---------
         # sell out 100 shares of 000651.SH at price 32.5
-        sell 100 000651.Sh 32.5
+        sell 100 000651.Sh -p 32.5
         # sell short 100 shares of 000651 at price 30.0
-        sell 100 000651.SH 30.0 --short
+        sell 100 000651.SH -p 30.0 -s short
         """
         account_id = self.trader.account_id
         datasource = self.trader.datasource
@@ -635,7 +772,7 @@ class TraderShell(Cmd):
         overview [--detail|-d]
         """
         detail = False
-        args = parse_shell_argument(arg, command_name='overview')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['overview'])
         if args:
             if args[0] in ['--detail', '-d']:
                 detail = True
@@ -656,7 +793,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        config [[level]|[key]] [value]
+        config KEY [--level | -l] [--set -s value]
 
         Examples:
         ---------
@@ -673,7 +810,7 @@ class TraderShell(Cmd):
         import shutil
         column_width, _ = shutil.get_terminal_size()
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        args = parse_shell_argument(arg, command_name='config')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['config'])
         if len(args) == 0:
             config = self.trader.get_config()
             rprint(_vkwargs_to_text(config,
@@ -736,7 +873,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, command_name='history')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['history'])
         history = self._trader.history_orders()
 
         if history.empty:
@@ -835,7 +972,7 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, default='--today', command_name='orders')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['orders'])
         order_details = self._trader.history_orders()
 
         for argument in args:
