@@ -133,9 +133,10 @@ class TraderShell(Cmd):
         'config':       argparse.ArgumentParser(description='Show or change qteasy configurations'),
         'history':      argparse.ArgumentParser(description='List trade history of a stock'),
         'orders':       argparse.ArgumentParser(description='Get account orders'),
+        'change':       argparse.ArgumentParser(description='Change account cash and positions'),
         'dashboard':    argparse.ArgumentParser(description='Exit shell and enter dashboard'),
         'strategies':   argparse.ArgumentParser(description='Show or change strategy parameters'),
-        'agenda':       argparse.ArgumentParser(description='Show trade agenda'),
+        'schedule':     argparse.ArgumentParser(description='Show trade agenda'),
         'run':          argparse.ArgumentParser(description='Run strategies manually'),
     }
 
@@ -166,11 +167,27 @@ class TraderShell(Cmd):
                          ('--level', '-l'),
                          ('--set', '-s')],
         'history':      [('symbol',)],
-        'orders':       [],
+        'orders':       [('symbol',),
+                         ('--status', '-s'),
+                         ('--time', '-t'),
+                         ('--type', '-y'),
+                         ('--side', '-d')],
+        'change':       [('symbol',),
+                         ('--amount', '-a'),
+                         ('--price', '-p'),
+                         ('--side', '-s'),
+                         ('--cash', '-c')],
         'dashboard':    [],
-        'strategies':   [],
-        'agenda':       [],
-        'run':          [],
+        'strategies':   [('strategy',),
+                         ('--detail', '-d'),
+                         ('--set-par', '--set', '-s'),
+                         ('--blender', '-b'),
+                         ('--timing', '-t'),
+                         ('--help', '-h'),],
+        'schedule':     [],
+        'run':          [('strategy',),
+                         ('--task', '-t'),
+                         ('--args', '-a')],
     }
 
     command_arg_properties = {
@@ -235,11 +252,73 @@ class TraderShell(Cmd):
         'history':      [{'action': 'store',
                           'default': 'all',
                           'help':   'stock symbol to show history for'}],
-        'orders':       [],
+        'orders':       [{'action': 'append',
+                          'nargs': '*',  # nargs='+' will require at least one argument
+                          'help': 'stock symbol to show orders for'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'choices': ['filled', 'f', 'canceled', 'c', 'partial-filled', 'p'],
+                          'help': 'order status to show'},
+                         {'action': 'store',
+                          'default': 'today',
+                          'choices': ['today', 't', 'yesterday', 'y', '3day', '3', 'week', 'w',
+                                      'month', 'm', 'all', 'a'],
+                          'help': 'order time to show'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'choices': ['buy', 'sell', 'b', 's', 'all', 'a'],
+                          'help': 'order type to show'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'choices': ['long', 'short', 'l', 's', 'all', 'a'],
+                          'help': 'order side to show'}],
+        'change':       [{'action': 'store',
+                          'help': 'symbol to change position for'},
+                         {'action': 'store',
+                          'default': 0,
+                          'type':   float,
+                          'help': 'amount of shares to change'},
+                         {'action': 'store',
+                          'default': 0.0,  # default to market price
+                          'type':   float,
+                          'help': 'price to change position at'},
+                         {'action': 'store',
+                          'default': 'long',
+                          'choices': ['l', 'long', 's', 'short'],
+                          'help': 'side of the position to change'},
+                         {'action': 'store',
+                          'default': 0.0,  # default not to change cash
+                          'type':   float,
+                          'help': 'amount of cash to change for current account'}],
         'dashboard':    [],
-        'strategies':   [],
-        'agenda':       [],
-        'run':          [],
+        'strategies':   [{'action': 'extend',
+                          'nargs': '*',  # nargs='+' will require at least one argument
+                          'help': 'strategy to show or change parameters for'},
+                         {'action': 'store_true',
+                          'help': 'show detailed strategy info'},
+                         {'action': 'extend',
+                          'nargs': '*',
+                          'help': 'set parameters for strategy'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'type':   str,
+                          'help': 'set blender for strategies'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'help': 'The strategy run timing of the strategies whose blender is set'}],
+        'schedule':     [],
+        'run':          [{'action': 'extend',
+                          'nargs': '*',
+                          'help': 'strategies to run'},
+                         {'action': 'store',
+                          'default': 'none',
+                          'choices': ['none', 'stop', 'sleep', 'pause',
+                                      'run_strategy', 'process_result', 'pre_open',
+                                      'open_market', 'close_market', 'acquire_live_price'],
+                          'help': 'task to run'},
+                         {'action': 'extend',
+                          'nargs': '*',
+                          'help': 'arguments for the task to run'}],
     }
 
     def __init__(self, trader):
@@ -958,8 +1037,8 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders --today|-t [--filled|-f] [--canceled|-c] [--partial-filled|-p] [--last_hour|-l|-h] [--yesterday|-y]
-        [--3day|-3] [--week|-w] [--month|-m] [--buy|-b] [--sell|-s] [--long|-lg] [--short|-sh] [symbol like '000001.SZ']
+        orders SYMBOLS [SYMBOLS] [--time | -t t TODAY | y YESTERDAY | 3 3DAY | w WEEK | m MONTH | l LAST_HOUR]
+        [--status | s f FILLED | c CANCELED | p PARTIAL-FILLED] [--type | b BUY | s SELL] [--side | -d l LONG | s SHORT]
 
         Examples:
         ---------
@@ -967,7 +1046,7 @@ class TraderShell(Cmd):
         - display all orders of today
         (QTEASY): orders 000001
         - display all orders of stock 000001
-        (QTEASY): orders --filled --today 000001
+        (QTEASY): orders 000001 -s filled -t today
         - display all filled orders of stock 000001 executed today
         """
 
@@ -1083,18 +1162,17 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        change symbol amount price [--long|-l|--short|-s]
-        change [--cash|-c amount]
+        change symbol [--amount | -a AMOUNT] [--price | -p PRICE] [--side | -s l LONG | s SHORT] [--cash | -c amount]
 
         Examples:
         ---------
-        change 000001.SZ 1000 10.5:
+        change 000001.SZ -a 1000 -p 10.5:
             add 1000 shares of 000001.SZ to trader account with price 10.5 on long side (default)
-        change --cash/-c 1000000:
+        change -c 1000000:
             add 1000000 cash to trader account
         """
 
-        args = parse_shell_argument(arg, command_name='change')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['change'])
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
         if not args:
@@ -1212,7 +1290,9 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        strategies [--detail|-d] [--set-par|-s strategy_id pars]
+        strategies STRATEGY_ID [--detail | -d] [--set-par | -s PARS]
+                               [--blender | -b BLENDER] [--timing | -t TIMING]
+                               [--help | -h]
 
         Examples:
         ---------
@@ -1220,14 +1300,14 @@ class TraderShell(Cmd):
         (QTEASY): strategies
         to display strategies information in detail:
         (QTEASY): strategies --detail
-        to set parameters for strategy "stg":
-        (QTEASY): strategies --set-par stg (1, 2, 3)
+        to set parameters (1, 2, 3) for strategy "stg":
+        (QTEASY): strategies stg --set-par 1 2 3
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
 
         """
         # TODO: to change blender of strategies, use strategies blender|b <blender>
-        args = parse_shell_argument(arg, command_name='strategies')
+        args = parse_shell_argument(arg, arg_parser=self.argparsers['strategies'])
         if not args:
             self.trader.operator.info()
         elif args[0] in ['-d', '--detail']:
@@ -1273,6 +1353,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         schedule
+
+        Examples:
+        ---------
+        to display current strategy task schedule:
+        (QTEASY): schedule
         """
         if arg:
             print('schedule command does not accept arguments.')
@@ -1286,8 +1371,18 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        run stg1 [stg2] [stg3] ...
-        run --task|-t task_name [[arg1] [arg2] ...]
+        run [STG1] [STG2] [STG3]...[--task | -t TASK] [--args | -a ARG1 ARG2 ...]
+
+        Examples:
+        ---------
+        to run strategy "stg1":
+        (QTEASY): run stg1
+        to run strategy "stg1" and "stg2":
+        (QTEASY): run stg1 stg2
+        to run task "task1":
+        (QTEASY): run --task task1
+        to run task "task1" with arguments "arg1" and "arg2":
+        (QTEASY): run --task task1 --args arg1 arg2
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
