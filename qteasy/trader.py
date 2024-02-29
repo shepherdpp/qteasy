@@ -216,7 +216,7 @@ class TraderShell(Cmd):
                           'type':   float,
                           'default': 0.0,  # default to market price
                           'help': 'price to buy at'},
-                         {'action': 'store_true',
+                         {'action': 'store',
                           'default': 'long',
                           'choices': ['long', 'short'],
                           'help': 'order position side, default long'},
@@ -231,7 +231,7 @@ class TraderShell(Cmd):
                           'type':   float,
                           'default': 0.0,  # default to market price
                           'help': 'price to sell at'},
-                         {'action': 'store_true',
+                         {'action': 'store',
                           'default': 'long',
                           'choices': ['long', 'short'],
                           'help': 'order position side, default long'},
@@ -291,12 +291,12 @@ class TraderShell(Cmd):
                           'type':   float,
                           'help': 'amount of cash to change for current account'}],
         'dashboard':    [],
-        'strategies':   [{'action': 'extend',
+        'strategies':   [{'action': 'append',
                           'nargs': '*',  # nargs='+' will require at least one argument
                           'help': 'strategy to show or change parameters for'},
                          {'action': 'store_true',
                           'help': 'show detailed strategy info'},
-                         {'action': 'extend',
+                         {'action': 'append',
                           'nargs': '*',
                           'help': 'set parameters for strategy'},
                          {'action': 'store',
@@ -307,7 +307,7 @@ class TraderShell(Cmd):
                           'default': 'all',
                           'help': 'The strategy run timing of the strategies whose blender is set'}],
         'schedule':     [],
-        'run':          [{'action': 'extend',
+        'run':          [{'action': 'append',
                           'nargs': '*',
                           'help': 'strategies to run'},
                          {'action': 'store',
@@ -316,7 +316,7 @@ class TraderShell(Cmd):
                                       'run_strategy', 'process_result', 'pre_open',
                                       'open_market', 'close_market', 'acquire_live_price'],
                           'help': 'task to run'},
-                         {'action': 'extend',
+                         {'action': 'append',
                           'nargs': '*',
                           'help': 'arguments for the task to run'}],
     }
@@ -393,7 +393,11 @@ class TraderShell(Cmd):
             if not args:
                 continue
             for arg, arg_property in zip(args, arg_properties):
-                self.argparsers[command].add_argument(*arg, **arg_property)
+                try:
+                    self.argparsers[command].add_argument(*arg, **arg_property)
+                except:
+                    raise RuntimeError(f'Error: failed to add argument {arg} to parser for command {command}\n'
+                                       f'pars: {arg_property}')
 
     # ----- basic commands -----
     def do_status(self, arg):
@@ -402,6 +406,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         status
+
+        Examples:
+        ---------
+        to show trader status:
+        (QTEASY) status
         """
 
         from rich import print as rprint
@@ -421,6 +430,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         pause
+
+        Examples:
+        ---------
+        to pause trader:
+        (QTEASY) pause
         """
         if arg:
             sys.stdout.write(f'pause command does not accept arguments\n')
@@ -437,6 +451,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         resume
+
+        Examples:
+        ---------
+        to resume trader:
+        (QTEASY) resume
         """
         if arg:
             sys.stdout.write(f'resume command does not accept arguments\n')
@@ -454,9 +473,10 @@ class TraderShell(Cmd):
         ------
         bye
 
-        Aliases:
-        --------
-        exit, stop
+        Examples:
+        ---------
+        to stop trader and exit shell:
+        (QTEASY) bye
         """
         if arg:
             sys.stdout.write(f'bye command does not accept arguments\n')
@@ -478,9 +498,10 @@ class TraderShell(Cmd):
         ------
         exit
 
-        Aliases:
-        --------
-        bye, stop
+        Examples:
+        ---------
+        to stop trader and exit shell:
+        (QTEASY) exit
         """
         self.do_bye(arg)
         return True
@@ -495,9 +516,10 @@ class TraderShell(Cmd):
         ------
         stop
 
-        Aliases:
-        --------
-        bye, exit
+        Examples:
+        ---------
+        to stop trader and exit shell:
+        (QTEASY) stop
         """
         self.do_bye(arg)
         return True
@@ -511,6 +533,13 @@ class TraderShell(Cmd):
         Usage:
         ------
         info [--detail｜-d]
+
+        Examples:
+        ---------
+        to get trader info:
+        (QTEASY) info
+        to get detailed trader info:
+        (QTEASY) info --detail
         """
         self.do_overview(arg)
 
@@ -529,11 +558,18 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        watch [SYMBOL [SYMBOL ...]] [--position|--positions|-pos|-p]
+        watch SYMBOL [SYMBOL ...] [--position | --positions | -pos | -p] [--remove | -r] [--clear | -c]
 
-        symbol:     Add symbols explicitly to watch list:
-        position:   Add 5 symbols from position list to watch list:
-        watch
+        Examples:
+        ---------
+        to add stock symbols to watch list:
+        (QTEASY) watch 000651.SZ 600036.SH 000550.SZ
+        to add 5 stocks from position list to watch list:
+        (QTEASY) watch --position
+        to remove stock symbols from watch list:
+        (QTEASY) watch -r 000651.SZ 600036.SH
+        to clear watch list:
+        (QTEASY) watch -c
         """
 
         from rich import print as rprint
@@ -577,7 +613,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        buy AMOUNT SYMBOL [--price | -p PRICE] [--side | -s 'long'/'short'] [--force | -f]
+        buy AMOUNT SYMBOL [--price | -p PRICE] [--side | -s l LONG | s SHORT] [--force | -f]
 
         Notes:
         ------
@@ -585,10 +621,10 @@ class TraderShell(Cmd):
 
         Examples:
         ---------
-        # buy in 100 shares of 000651.SH at price 32.5
-        buy 100 000651.SH -p 32.5
-        # buy short 100 shares of 000651.SH at price 30.0
-        buy 100 000651.SH -p 30.0 -s short
+        to buy 100 shares of 000651.SH at price 32.5
+        (QTEASY) buy 100 000651.Sh -p 32.5
+        to buy short 100 shares of 000651 at price 30.0
+        (QTEASY) buy 100 000651.SH -p 30.0 -s short
         """
         account_id = self.trader.account_id
         datasource = self.trader.datasource
@@ -651,7 +687,7 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        sell AMOUNT SYMBOL [--price | -p PRICE] [--side | -s 'long'/'short'] [--force | -f]
+        sell AMOUNT SYMBOL [--price | -p PRICE] [--side | -s l LONG | s SHORT] [--force | -f]
 
         Notes:
         ------
@@ -659,10 +695,10 @@ class TraderShell(Cmd):
 
         Examples:
         ---------
-        # sell out 100 shares of 000651.SH at price 32.5
-        sell 100 000651.Sh -p 32.5
-        # sell short 100 shares of 000651 at price 30.0
-        sell 100 000651.SH -p 30.0 -s short
+        to sell 100 shares of 000651.SH at price 32.5
+        (QTEASY) sell 100 000651.Sh -p 32.5
+        to sell short 100 shares of 000651 at price 30.0
+        (QTEASY) sell 100 000651.SH -p 30.0 -s short
         """
         account_id = self.trader.account_id
         datasource = self.trader.datasource
@@ -724,6 +760,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         positions
+
+        Examples:
+        ---------
+        to get account positions:
+        (QTEASY) positions
         """
 
         if arg:
@@ -848,7 +889,14 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        overview [--detail|-d]
+        overview [--detail | -d]
+
+        Examples:
+        ---------
+        to get trader overview:
+        (QTEASY) overview
+        to get detailed trader overview:
+        (QTEASY) overview --detail
         """
         detail = False
         args = parse_shell_argument(arg, arg_parser=self.argparsers['overview'])
@@ -876,12 +924,14 @@ class TraderShell(Cmd):
 
         Examples:
         ---------
-        config 3
-        - display all qt configurations to level 3
-        config mode
-        - display current value, default value and explanation of configure key 'mode'
-        config mode 2
-        - change configure key 'mode' to value 2
+        to show all configures:
+        (QTEASY) config
+        to show configures until level 3:
+        (QTEASY) config -lll
+        to show value of configure key "key1":
+        (QTEASY) config key1
+        to change value of configure key "key1" to "value1":
+        (QTEASY) config key1 -s value1
         """
 
         from qteasy._arg_validators import _vkwargs_to_text
@@ -949,6 +999,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         history [symbol]
+
+        Examples:
+        ---------
+        to show trade history of stock 000001:
+        (QTEASY) history 000001
         """
 
         from rich import print as rprint
@@ -1037,17 +1092,22 @@ class TraderShell(Cmd):
 
         Usage:
         ------
-        orders SYMBOLS [SYMBOLS] [--time | -t t TODAY | y YESTERDAY | 3 3DAY | w WEEK | m MONTH | l LAST_HOUR]
-        [--status | s f FILLED | c CANCELED | p PARTIAL-FILLED] [--type | b BUY | s SELL] [--side | -d l LONG | s SHORT]
+        orders SYMBOLS [SYMBOLS...] [--time | -t t TODAY | y YESTERDAY | 3 3DAY | w WEEK | m MONTH | l LAST_HOUR]
+                                    [--status | -s f FILLED | c CANCELED | p PARTIAL-FILLED]
+                                    [--type | -y | b BUY | s SELL] [--side | -d l LONG | s SHORT]
 
         Examples:
         ---------
-        (QTEASY): orders
-        - display all orders of today
-        (QTEASY): orders 000001
-        - display all orders of stock 000001
-        (QTEASY): orders 000001 -s filled -t today
-        - display all filled orders of stock 000001 executed today
+        to get today's orders:
+        (QTEASY) orders
+        to get yesterday's orders:
+        (QTEASY) orders -t yesterday
+        to get orders of stock 000001:
+        (QTEASY) orders 000001
+        to get filled orders of stock 000001:
+        (QTEASY) orders 000001 -s filled
+        to get filled buy orders of stock 000001:
+        (QTEASY) orders 000001 -s filled -y buy
         """
 
         from rich import print as rprint
@@ -1166,10 +1226,16 @@ class TraderShell(Cmd):
 
         Examples:
         ---------
-        change 000001.SZ -a 1000 -p 10.5:
-            add 1000 shares of 000001.SZ to trader account with price 10.5 on long side (default)
-        change -c 1000000:
-            add 1000000 cash to trader account
+        to change cash to increase 1000:
+        (QTEASY) change --cash 1000
+        to change cash to decrease 1000:
+        (QTEASY) change --cash -1000
+        to change position of 000651.SH to increase 100 shares:
+        (QTEASY) change 000651.SH --amount 100
+        to change position of 000651.SH to increase 100 shares at price 32.5:
+        (QTEASY) change 000651.SH --amount 100 --price 32.5
+        to change short side of position of 000651.SH to increase 100 shares at price 32.5:
+        (QTEASY) change 000651.SH --amount 100 --price 32.5 --side short
         """
 
         args = parse_shell_argument(arg, arg_parser=self.argparsers['change'])
@@ -1271,6 +1337,11 @@ class TraderShell(Cmd):
         Usage:
         ------
         dashboard
+
+        Examples:
+        ---------
+        to enter dashboard mode:
+        (QTEASY) dashboard
         """
         if arg:
             print('dashboard command does not accept arguments.')
@@ -1304,7 +1375,6 @@ class TraderShell(Cmd):
         (QTEASY): strategies stg --set-par 1 2 3
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
-
         """
         # TODO: to change blender of strategies, use strategies blender|b <blender>
         args = parse_shell_argument(arg, arg_parser=self.argparsers['strategies'])
