@@ -89,8 +89,15 @@ class TraderShell(Cmd):
         'bye':          argparse.ArgumentParser(prog='bye', description='Stop trader and exit shell'),
         'exit':         argparse.ArgumentParser(prog='exit', description='Stop trader and exit shell'),
         'stop':         argparse.ArgumentParser(prog='stop', description='Stop trader and exit shell'),
-        'watch':        argparse.ArgumentParser(prog='watch', description='Add or remove stock symbols to watch list'),
-        'buy':          argparse.ArgumentParser(prog='', description='Manually create buy-in order'),
+        'watch':        argparse.ArgumentParser(prog='watch', description='Add or remove stock symbols to watch list',
+                                                usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
+                                                      '[REMOVE [REMOVE ...]]] [--clear]'),
+        'buy':          argparse.ArgumentParser(prog='', description='Manually create buy-in order',
+                                                usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                                      '[--force]',
+                                                epilog='the order will be submitted to broker and will be executed'
+                                                       ' according to broker rules, Currently only market price '
+                                                       'orders can be submitted'),
         'sell':         argparse.ArgumentParser(prog='', description='Manually create sell-out order'),
         'positions':    argparse.ArgumentParser(prog='', description='Get account positions'),
         'overview':     argparse.ArgumentParser(prog='', description='Get trader overview, same as info'),
@@ -187,7 +194,7 @@ class TraderShell(Cmd):
                           'choices': ['long', 'short'],
                           'help': 'order position side, default long'},
                          {'action': 'store_true',
-                          'help': 'force buy regardless of current prices'}],
+                          'help': 'force buy regardless of current prices (NOT IMPLEMENTED YET)'}],
         'sell':         [{'action': 'store',
                           'type':   float,
                           'help': 'amount of shares to sell'},
@@ -396,6 +403,67 @@ class TraderShell(Cmd):
 
         return args
 
+    def check_buy_sell_args(self, args, type):
+        """ 检查买卖参数是否合法
+
+        Parameters
+        ----------
+        args: Namespace
+            命令行参数对象
+        type: str
+            买卖类型，'buy' 或 'sell'
+
+        Returns
+        -------
+        bool
+            参数是否合法
+        """
+
+        qty = args.amount
+        symbol = args.symbol.upper()
+        price = args.price
+
+        # check if qty and price are legal
+        if qty <= 0:
+            print("Qty can not be less or equal to 0, please check your input!")
+            return False
+        if price < 0:
+            print("Price can not be less than 0, please check your input!")
+            return False
+
+        # check if qty meets the moq
+        if type == 'buy':
+            moq = self.trader.get_config('trade_batch_size')['trade_batch_size']
+        else:
+            moq = self.trader.get_config('sell_batch_size')['sell_batch_size']
+        if qty % moq != 0:
+            print(f'Qty should be a multiple of the minimum order quantity ({moq}), please check your input!')
+            return False
+
+        # check if symbol is legal
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+        if not is_complete_cn_stock_symbol_like(symbol):
+            print(f'Wrong symbol is given: {symbol}, please input full symbol code like "000651.SZ"')
+            return False
+
+        # if price == 0, use live price
+        if price == 0:
+            if self.trader.live_price is None:
+                print(f'No live price data available, price should be given!')
+                return False
+            try:
+                price = self.trader.live_price[symbol]
+            except KeyError:
+                print(f'No live price data for {symbol} available, price should be given!')
+                return False
+
+        # the symbol must be in the pool
+        if symbol not in self.trader.asset_pool:
+            print(f'{symbol} is not in the asset pool, can not be bought!')
+            return False
+
+        return True
+
     # ----- basic commands -----
     def do_status(self, arg):
         """usage: status [-h]
@@ -498,7 +566,7 @@ class TraderShell(Cmd):
         to stop trader and exit shell:
         (QTEASY) exit
         """
-        self.do_bye(arg)
+        return self.do_bye(arg)
 
     def do_stop(self, arg):
         """usage: bye [-h]
@@ -513,7 +581,7 @@ class TraderShell(Cmd):
         to stop trader and exit shell:
         (QTEASY) stop
         """
-        self.do_bye(arg)
+        return self.do_bye(arg)
 
     def do_info(self, arg):
         """usage: info [--detail｜-d] [-h]
@@ -530,21 +598,20 @@ class TraderShell(Cmd):
         to get detailed trader info:
         (QTEASY) info --detail
         """
-        self.do_overview(arg)
+        return self.do_overview(arg)
 
     def do_pool(self, arg):
-        """ print information of the asset pool
+        """print information of the asset pool
 
         Print detailed information of all stocks in the asset pool, including
         stock symbol, name, company name, industry, listed date, etc.
 
         """
         # TODO: implement this function
-        return
+        return False
 
     def do_watch(self, arguments):
-        """usage: watch [-h] [--position] [--remove [REMOVE [REMOVE ...]]] [--clear]
-             [symbols [symbols ...]]
+        """usage: watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove [REMOVE [REMOVE ...]]] [--clear]
 
         Add or remove stock symbols to watch list
 
@@ -589,20 +656,20 @@ class TraderShell(Cmd):
         else:
             args.remove = [symbol.upper() for symbol_list in args.remove for symbol in symbol_list]
 
-        from .utilfuncs import TS_CODE_IDENTIFIER_CN_STOCK
-        import re
+        from .utilfuncs import is_complete_cn_stock_symbol_like
 
         illegal_symbols = []
         for symbol in args.symbols:
-            # 添加symbols到watch list，除非该代码已在watch list中
-            if re.match(TS_CODE_IDENTIFIER_CN_STOCK, symbol):
-                if symbol not in self._watch_list:
-                    self._watch_list.append(symbol)
-                # 检查watch_list中代码个数是否超过5个，如果超过，删除最早添加的代码
-                if len(self._watch_list) > 5:
-                    self._watch_list.pop(0)
-            else:
+            if not is_complete_cn_stock_symbol_like(symbol):
                 illegal_symbols.append(symbol)
+                continue
+
+            # 添加symbols到watch list，除非该代码已在watch list中
+            if symbol not in self._watch_list:
+                self._watch_list.append(symbol)
+            # 检查watch_list中代码个数是否超过5个，如果超过，删除最早添加的代码
+            if len(self._watch_list) > 5:
+                self._watch_list.pop(0)
 
         # 如果arg.position == True，则将当前持仓量最大的股票代码添加到watch list
         if args.position:
@@ -634,19 +701,24 @@ class TraderShell(Cmd):
             rprint(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
 
     def do_buy(self, arg):
-        """ Manually create buy-in order: buy AMOUNT shares of SYMBOL with PRICE
-        the order will be submitted to broker and will be executed according to broker rules
+        """usage: buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
-        --long / --short indicates position to buy, default long
-        --force indicates force buy regardless of current prices # TODO: to be implemented
+        Manually create buy-in order
 
-        Usage:
-        ------
-        buy AMOUNT SYMBOL [--price | -p PRICE] [--side | -s l LONG | s SHORT] [--force | -f]
+        positional arguments:
+          amount                amount of shares to buy
+          symbol                stock symbol to buy
 
-        Notes:
-        ------
-        Currently only market price orders can be submitted
+        optional arguments:
+          -h, --help            show this help message and exit
+          --price PRICE, -p PRICE
+                                price to buy at
+          --side {long,short}, -s {long,short}
+                                order position side, default long
+          --force, -f           force buy regardless of current prices (NOT IMPLEMENTED YET)
+
+        the order will be submitted to broker and will be executed according to broker
+        rules, Currently only market price orders can be submitted
 
         Examples:
         ---------
@@ -655,35 +727,24 @@ class TraderShell(Cmd):
         to buy short 100 shares of 000651 at price 30.0
         (QTEASY) buy 100 000651.SH -p 30.0 -s short
         """
+
+        args = self.parse_args('buy', arg)
+        if not args:
+            return False
+
+        if not self.check_buy_sell_args(args, 'buy'):
+            return False
+
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
-        args = parse_shell_argument(arg)
-        if len(args) < 3:
-            print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
-                  f'use "help buy" to see more info')
-            return
-        try:
-            qty = float(args[0])
-            symbol = args[1].upper()
-            price = float(args[2])
-            position = 'long'
-        except:
-            print(f'Wrong format for positional argument AMOUNT or PRICE, please check your input. '
-                  f'use "help buy" to see more info')
-            return
-        if len(args) >= 4:
-            if args[3] not in ['--long', '-l', '--short', '-s']:
-                print(f'Wrong argument: {args[3]}, use "help buy" to see more info')
-                return
-            if args[3] in ['--short', '-s']:
-                position = 'short'
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
-        if not is_complete_cn_stock_symbol_like(symbol):
-            print(f'Wrong symbol is given: {symbol}, please check your input!')
-            return
-        if qty <= 0 or price <= 0:
-            print(f'Qty or price can not be less or equal to 0, please check your input!')
+
+        qty = args.amount
+        symbol = args.symbol.upper()
+        price = args.price
+        position = args.side
+
+        # start to add order
         pos_id = get_or_create_position(account_id=account_id,
                                         symbol=symbol,
                                         position_type=position,
@@ -708,19 +769,24 @@ class TraderShell(Cmd):
         pass
 
     def do_sell(self, arg):
-        """ Manually create sell-out order: sell AMOUNT shares of SYMBOL with PRICE
-        the order will be submitted to broker and will be executed according to broker rules
+        """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
-        --long / --short indicates position to buy, default long
-        --force indicates force buy regardless of current prices # TODO: to be implemented
+        Manually create buy-in order
 
-        Usage:
-        ------
-        sell AMOUNT SYMBOL [--price | -p PRICE] [--side | -s l LONG | s SHORT] [--force | -f]
+        positional arguments:
+          amount                amount of shares to sell
+          symbol                stock symbol to sell
 
-        Notes:
-        ------
-        Currently only market price orders can be submitted
+        optional arguments:
+          -h, --help            show this help message and exit
+          --price PRICE, -p PRICE
+                                price to sell at
+          --side {long,short}, -s {long,short}
+                                order position side, default long
+          --force, -f           force sell regardless of current prices (NOT IMPLEMENTED YET)
+
+        the order will be submitted to broker and will be executed according to broker
+        rules, Currently only market price orders can be submitted
 
         Examples:
         ---------
@@ -729,35 +795,23 @@ class TraderShell(Cmd):
         to sell short 100 shares of 000651 at price 30.0
         (QTEASY) sell 100 000651.SH -p 30.0 -s short
         """
+
+        args = self.parse_args('sell', arg)
+        if not args:
+            return False
+
+        if not self.check_buy_sell_args(args, 'sell'):
+            return False
+
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
-        args = parse_shell_argument(arg)
-        if len(args) < 3:
-            print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
-                  f'use "help buy" to see more info')
-            return
-        try:
-            qty = float(args[0])
-            symbol = args[1].upper()
-            price = float(args[2])
-            position = 'long'
-        except:
-            print(f'Wrong format for positional argument AMOUNT or PRICE, please check your input. '
-                  f'use "help buy" to see more info')
-            return
-        if len(args) >= 4:
-            if args[3] not in ['--long', '-l', '--short', '-s']:
-                print(f'Wrong argument: {args[3]}, use "help buy" to see more info')
-                return
-            if args[3] in ['--short', '-s']:
-                position = 'short'
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
-        if not is_complete_cn_stock_symbol_like(symbol):
-            print(f'Wrong symbol is given: {symbol}, please check your input!')
-            return
-        if qty <= 0 or price <= 0:
-            print(f'Qty or price can not be less or equal to 0, please check your input!')
+
+        qty = args.amount
+        symbol = args.symbol.upper()
+        price = args.price
+        position = args.side
+
         pos_id = get_or_create_position(account_id=account_id,
                                         symbol=symbol,
                                         position_type=position,
@@ -2561,7 +2615,6 @@ class Trader(object):
                 self.send_message(f'<RESULT>: account cash changed: '
                                   f'cash: ¥{pre_cash_amount:,.2f}->¥{post_cash_amount:,.2f}'
                                   f'available: ¥{pre_available_cash:,.2f}->¥{post_available_cash:,.2f}')
-
 
     def _pre_open(self):
         """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
