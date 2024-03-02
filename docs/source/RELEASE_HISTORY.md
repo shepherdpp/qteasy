@@ -8,7 +8,10 @@
   - All commands are now more thouroughly tested and debugged
   - Arguments of some of the commands are now re-designed and re-organized to be more intuitive and easier to use:
     - `watch` command now supports `--remove` / `-r` to remove symbols from watch list, and `--clear` / `-c` to clear the list
-    - `run` command now supports `--strategy` / `-s` to specify strategy name, and `--freq` / `-f` to specify running frequency
+    - `buy` and `sell` commands now uses `--price` / `-p` to specify price, and `--side` / `-s` to specify position side
+    - `info` and `overview` commands now support new argument `--system` to show system info, and `verbose` will be replaced by `detail` in future versions
+    - `history` command now accepts explicit argument `all` to show all history
+    - 
 
 ## 1.0.17 (2024-01-29)
 - improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug

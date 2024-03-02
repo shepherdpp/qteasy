@@ -80,13 +80,15 @@ class TraderShell(Cmd):
     prompt = '(QTEASY) '
 
     argparsers = {
-        'status':       argparse.ArgumentParser(prog='status', description='Show trader status'),
+        'status':       argparse.ArgumentParser(prog='status', description='Show trader status',
+                                                usage='status [-h]',),
         'pause':        argparse.ArgumentParser(prog='pause', description='Pause trader',
                                                 usage='pause [-h]',
                                                 epilog='When trader is paused, strategies will not be executed, '
                                                        'orders will not be submitted, submitted orders will be '
                                                        'suspended until trader is resumed'),
-        'resume':       argparse.ArgumentParser(prog='resume', description='Resume trader'),
+        'resume':       argparse.ArgumentParser(prog='resume', description='Resume trader',
+                                                usage='resume [-h]',),
         'bye':          argparse.ArgumentParser(prog='bye', description='Stop trader and exit shell',
                                                 usage='bye [-h]',
                                                 epilog='You can also exit shell using command "exit" or "stop"'),
@@ -123,14 +125,38 @@ class TraderShell(Cmd):
                                                 usage='overview [-h] [--detail] [--system]',
                                                 epilog='Get trader info, including basic information of current '
                                                        'account, and current cash and positions'),
-        'config':       argparse.ArgumentParser(prog='', description='Show or change qteasy configurations'),
-        'history':      argparse.ArgumentParser(prog='', description='List trade history of a stock'),
-        'orders':       argparse.ArgumentParser(prog='', description='Get account orders'),
-        'change':       argparse.ArgumentParser(prog='', description='Change account cash and positions'),
-        'dashboard':    argparse.ArgumentParser(prog='', description='Exit shell and enter dashboard'),
-        'strategies':   argparse.ArgumentParser(prog='', description='Show or change strategy parameters'),
-        'schedule':     argparse.ArgumentParser(prog='', description='Show trade agenda'),
-        'run':          argparse.ArgumentParser(prog='', description='Run strategies manually'),
+        'config':       argparse.ArgumentParser(prog='config', description='Show or change qteasy configurations',
+                                                usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--set SET]'),
+        'history':      argparse.ArgumentParser(prog='history', description='List trade history of a stock',
+                                                usage='history [SYMBOL] [-h]',
+                                                epilog='List all trade history of one particular stock, displaying '
+                                                       'every buy-in and sell-out in a table format. '
+                                                       'symbol like 000651 is accepted.'),
+        'orders':       argparse.ArgumentParser(prog='orders', description='Get account orders',
+                                                usage='usage: orders [SYMBOL [SYMBOL ...]] [-h] '
+                                                      '[--status {filled,f,canceled,c,partial-filled,p}] '
+                                                      '[--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}] '
+                                                      '[--type {buy,sell,b,s,all,a}] '
+                                                      '[--side {long,short,l,s,all,a}]'),
+        'change':       argparse.ArgumentParser(prog='change', description='Change account cash and positions',
+                                                usage='change SYMBOL [-h] [--amount AMOUNT] [--price PRICE] '
+                                                      '[--side {l,long,s,short}] [--cash CASH]',
+                                                epilog='Change cash or positions or both. nothing will be changed '
+                                                       'if amount or cash is not given, price is used to calculate '
+                                                       'new cost, if not given, current price will be used'),
+        'dashboard':    argparse.ArgumentParser(prog='', description='Exit shell and enter dashboard',
+                                                usage='dashboard [-h]'),
+        'strategies':   argparse.ArgumentParser(prog='', description='Show or change strategy parameters',
+                                                usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
+                                                      '[--set-par [SET_PAR [SEeT_PAR ...]]] [--blender BLENDER] '
+                                                      '[--timing TIMING]'),
+        'schedule':     argparse.ArgumentParser(prog='', description='Show trade agenda',
+                                                usage='schedule [-h]'),
+        'run':          argparse.ArgumentParser(prog='', description='Run strategies manually',
+                                                usage='run [STRATEGY [STRATEGY ...]] [-h] '
+                                                      '[--task {none,stop,sleep,pause,run_strategy,process_result,'
+                                                      'pre_open,open_market,close_market,acquire_live_price}] '
+                                                      '[--args [ARGS [ARGS ...]]]'),
     }
 
     command_arguments = {
@@ -247,14 +273,16 @@ class TraderShell(Cmd):
                           'nargs': '*',
                           'help': 'config keys to show or change'},
                          {'action': 'count',
-                          'default': 0,
+                          'default': 2,
                           'help': 'config level to show or change'},
                          {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                           'nargs': '*',
                           'help': 'config values to set or change for keys'}],
         'history':      [{'action': 'store',
+                          'nargs': '?',  # nargs='?' will require at most one argument
                           'default': 'all',
-                          'help':   'stock symbol to show history for'}],
+                          'type':   str,
+                          'help':   'stock symbol to show history for, if not given, show history for all'}],
         'orders':       [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                           'nargs': '*',  # nargs='+' will require at least one argument
                           'help': 'stock symbol to show orders for'},
@@ -1041,17 +1069,24 @@ class TraderShell(Cmd):
             return self.do_positions(arg='')
 
     def do_config(self, arg):
-        """ Show or change qteasy configurations
+        """usage: config [KEYS [kEYS ...]] [-h] [--level] [--set [SET [SET ...]]]
+
+        Show or change qteasy configurations
+
+        positional arguments:
+          keys                  config keys to show or change
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --level, -l           config level to show or change, default to level 2
+          --set [SET [SET ...]], -s [SET [SET ...]]
+                                config values to set or change for key, a key must be given to set value
 
         Display current qt configurations to designated level, if level is not given, display
         until level 2.
         if configure key is given and value is not given, display current value, default value
         and explanation of the configure key.
         if configure key and a value is given, change the configure key to the given value.
-
-        Usage:
-        ------
-        config KEY [--level | -l] [--set -s value]
 
         Examples:
         ---------
@@ -1065,12 +1100,15 @@ class TraderShell(Cmd):
         (QTEASY) config key1 -s value1
         """
 
+        args = self.parse_args('config', arg)
+        if not args:
+            return False
+
         from qteasy._arg_validators import _vkwargs_to_text
         from rich import print as rprint
         import shutil
         column_width, _ = shutil.get_terminal_size()
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        args = parse_shell_argument(arg, arg_parser=self.argparsers['config'])
         if len(args) == 0:
             config = self.trader.get_config()
             rprint(_vkwargs_to_text(config,
@@ -1122,14 +1160,18 @@ class TraderShell(Cmd):
             return
 
     def do_history(self, arg):
-        """ List trade history of a stock
+        """usage: history [SYMBOL] [-h]
 
-        List all trade history of one particular stock, displaying every buy-in and sell-out
-        in a table format. a symbol is required.
+        List trade history of a stock
 
-        Usage:
-        ------
-        history [symbol]
+        positional arguments:
+          symbol      stock symbol to show history for, if not given, show history for all
+
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        List all trade history of one particular stock, displaying every buy-in and
+        sell-out in a table format. symbol like 000651 is accepted.
 
         Examples:
         ---------
@@ -1138,24 +1180,30 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, arg_parser=self.argparsers['history'])
+        args = self.parse_args('history', arg)
+        if not args:
+            return False
+
         history = self._trader.history_orders()
 
         if history.empty:
             print('No trade history found.')
             return
 
-        for argument in args:
+        symbol = args.symbol.upper()
+
+        if symbol != 'ALL':
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
-            if is_complete_cn_stock_symbol_like(argument.upper()):
-                history = history[history['symbol'] == argument.upper()]
+            if is_complete_cn_stock_symbol_like(symbol):
+                history = history[history['symbol'] == symbol]
                 # select orders by order symbol arguments like '000001'
-            elif is_cn_stock_symbol_like(argument):
-                possible_complete_symbols = [argument + '.SH', argument + '.SZ', argument + '.BJ']
+            elif is_cn_stock_symbol_like(symbol):
+                possible_complete_symbols = [symbol + '.SH', symbol + '.SZ', symbol + '.BJ']
                 history = history[history['symbol'].isin(possible_complete_symbols)]
             else:
                 # if argument is not a symbol, use the first available symbol in order details
-                history = history[history['symbol'] == history['symbol'].iloc[0]]
+                print(f'Wrong symbol is given: {symbol}, please input full symbol code like "000651" or "000651.SZ"')
+                return False
 
         # remove rows whose value in column 'filled_qty' is 0, and sort by 'filled_time'
         history = history[history['filled_qty'] != 0]
@@ -1217,15 +1265,25 @@ class TraderShell(Cmd):
         )
 
     def do_orders(self, arg):
-        """ Get trader orders
+        """ usage: orders [SYMBOL [SYMBOL ...]] [-h] [--status {filled,f,canceled,c,partial-filled,p}]
+                [--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}]
+                [--type {buy,sell,b,s,all,a}] [--side {long,short,l,s,all,a}]
 
-        Get trader orders, use arguments to specify orders to get, default is today's orders
+        Get account orders
 
-        Usage:
-        ------
-        orders SYMBOLS [SYMBOLS...] [--time | -t t TODAY | y YESTERDAY | 3 3DAY | w WEEK | m MONTH | l LAST_HOUR]
-                                    [--status | -s f FILLED | c CANCELED | p PARTIAL-FILLED]
-                                    [--type | -y | b BUY | s SELL] [--side | -d l LONG | s SHORT]
+        positional arguments:
+          symbol                stock symbol to show orders for
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --status {filled,f,canceled,c,partial-filled,p}, -s {filled,f,canceled,c,partial-filled,p}
+                                order status to show
+          --time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}, -t {today,t,yesterday,y,3day,3,week,w,month,m,all,a}
+                                order time to show
+          --type {buy,sell,b,s,all,a}, -y {buy,sell,b,s,all,a}
+                                order type to show
+          --side {long,short,l,s,all,a}, -d {long,short,l,s,all,a}
+                                order side to show
 
         Examples:
         ---------
@@ -1242,7 +1300,10 @@ class TraderShell(Cmd):
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, arg_parser=self.argparsers['orders'])
+        args = self.parse_args('orders', arg)
+        if not args:
+            return False
+
         order_details = self._trader.history_orders()
 
         for argument in args:
@@ -1345,11 +1406,27 @@ class TraderShell(Cmd):
                 ))
 
     def do_change(self, arg):
-        """ Change trader cash and positions
-        to change cash, amount must be given
-        to change a position, amount and symbol must be given, price is used to update cost,
-        if not given, current price will be used, side is used to specify long or short side,
-        if not given, long side will be used
+        """usage: change SYMBOL [-h] [--amount AMOUNT] [--price PRICE] [--side {l,long,s,short}]
+                [--cash CASH]
+
+        Change account cash and positions
+
+        positional arguments:
+          symbol                symbol to change position for
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --amount AMOUNT, -a AMOUNT
+                                amount of shares to change
+          --price PRICE, -p PRICE
+                                price to change position at
+          --side {l,long,s,short}, -s {l,long,s,short}
+                                side of the position to change
+          --cash CASH, -c CASH  amount of cash to change for current account
+
+           Change trader cash and positions
+
+        Change cash or positions or both. nothing will be changed if amount or cash is not given, price is used to calculate new cost, if not given, current price will be used
 
         Usage:
         ------
@@ -1369,12 +1446,11 @@ class TraderShell(Cmd):
         (QTEASY) change 000651.SH --amount 100 --price 32.5 --side short
         """
 
-        args = parse_shell_argument(arg, arg_parser=self.argparsers['change'])
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
-
+        args = self.parse_args('change', arg)
         if not args:
-            print('Please input valid arguments.')
-            return
+            return False
+
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
 
         if args[0] in ['--cash', '-c']:
             # change cash
@@ -1463,20 +1539,23 @@ class TraderShell(Cmd):
         )
 
     def do_dashboard(self, arg):
-        """ Enter dashboard mode, live status will be displayed
+        """usage: dashboard [-h]
 
-        Usage:
-        ------
-        dashboard
+        Exit shell and enter dashboard
+
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
         to enter dashboard mode:
         (QTEASY) dashboard
         """
-        if arg:
-            print('dashboard command does not accept arguments.')
+
+        args = self.parse_args('dashboard', arg)
+        if not args:
             return False
+
         if not self.trader.debug:
             import os
             # check os type of current system, and then clear screen
@@ -1488,13 +1567,24 @@ class TraderShell(Cmd):
         return True
 
     def do_strategies(self, arg: str):
-        """ Show strategies information or set parameters for a strategy
+        """usage: strategies [STRATEGYy [STRATEGY ...]] [-h] [--detail] [--set-par [SET_PAR [SET_PAR ...]]]
+                [--blender BLENDER] [--timing TIMING]
 
-        Usage:
-        ------
-        strategies STRATEGY_ID [--detail | -d] [--set-par | -s PARS]
-                               [--blender | -b BLENDER] [--timing | -t TIMING]
-                               [--help | -h]
+        Show or change strategy parameters
+
+        positional arguments:
+          strategy              strategy to show or change parameters for
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --detail, -d          show detailed strategy info
+          --set-par [SET_PAR [SET_PAR ...]], --set [SET_PAR [SET_PAR ...]], -s [SET_PAR [SET_PAR ...]]
+                                set parameters for strategy
+          --blender BLENDER, -b BLENDER
+                                set blender for strategies, not implemented yet
+          --timing TIMING, -t TIMING
+                                The strategy run timing of the strategies whose
+                                blender is set, not implemented yet
 
         Examples:
         ---------
@@ -1507,8 +1597,12 @@ class TraderShell(Cmd):
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
         """
+
         # TODO: to change blender of strategies, use strategies blender|b <blender>
-        args = parse_shell_argument(arg, arg_parser=self.argparsers['strategies'])
+        args = self.parse_args('strategies', arg)
+        if not args:
+            return False
+
         if not args:
             self.trader.operator.info()
         elif args[0] in ['-d', '--detail']:
@@ -1549,30 +1643,42 @@ class TraderShell(Cmd):
             print(f'Not implemented yet.')
 
     def do_schedule(self, arg):
-        """ Show current strategy task schedule
+        """ usage: schedule [-h]
 
-        Usage:
-        ------
-        schedule
+        Show trade agenda
+
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
         to display current strategy task schedule:
         (QTEASY): schedule
         """
-        if arg:
-            print('schedule command does not accept arguments.')
-            return
+        args = self.parse_args('schedule', arg)
+        if not args:
+            return False
+
         print(f'Execution Schedule:')
         self.trader.show_schedule()
 
-    def do_run(self, arg: str):
-        """ To force run a strategy or a task in current setup, only available in DEBUG mode.
-        strategy id can be found in strategies command.
+    def do_run(self, arg):
+        """usage: run [STRATEGY [STRATEGY ...]] [-h]
+                [--task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}]
+                [--args [ARGS [ARGS ...]]]
 
-        Usage:
-        ------
-        run [STG1] [STG2] [STG3]...[--task | -t TASK] [--args | -a ARG1 ARG2 ...]
+
+        Run strategies manually
+
+        positional arguments:
+          strategy              strategies to run
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}, -t {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}
+                                task to run
+          --args [ARGS [ARGS ...]], -a [ARGS [ARGS ...]]
+                                arguments for the task to run
 
         Examples:
         ---------
@@ -1587,20 +1693,24 @@ class TraderShell(Cmd):
         """
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
-            return
-        argument = str_to_list(arg, sep_char=' ')
-        if not isinstance(argument, list):
+            return False
+
+        args = self.parse_args('run', arg)
+        if not args:
+            return False
+
+        if not isinstance(args, list):
             print('Invalid argument, use "strategies" to view all strategy ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        if not argument:
+        if not args:
             print('A valid strategy id must be given, use "strategies" to view all ids.\n'
                   'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
             return
-        if not argument[0] in ['--task', '-t']:  # run strategies
+        if not args[0] in ['--task', '-t']:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
-            if not all([strategy in all_strategy_ids for strategy in argument]):
-                invalid_stg = [stg for stg in argument if stg not in all_strategy_ids]
+            if not all([strategy in all_strategy_ids for strategy in args]):
+                invalid_stg = [stg for stg in args if stg not in all_strategy_ids]
                 print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
                 return
 
@@ -1611,7 +1721,7 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', argument, run_in_main_thread=True)
+                self.trader.run_task('run_strategy', args, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
@@ -1620,10 +1730,10 @@ class TraderShell(Cmd):
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
-            if len(argument) == 1:
+            if len(args) == 1:
                 print('Please input a valid task name.')
                 return
-            task_name = argument[1]
+            task_name = args[1]
             try:
                 self.trader.run_task(task_name, run_in_main_thread=True)
             except Exception as e:
