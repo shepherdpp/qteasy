@@ -11,7 +11,10 @@
     - `buy` and `sell` commands now uses `--price` / `-p` to specify price, and `--side` / `-s` to specify position side
     - `info` and `overview` commands now support new argument `--system` to show system info, and `verbose` will be replaced by `detail` in future versions
     - `history` command now accepts explicit argument `all` to show all history
-    - 
+    - `orders` command now accepts order filter arguments with optional tags `--status`, `--time`, `--side`, and `--type`
+    - `config` command now support `--set` / `-s` to set configurations, and set view levels with count of `--level` / `-l`
+    - `strategies` command now supports `--set-par` to set strategy optimizable parameters, and to be implemented: possible to set blenders with `--blender` and `--timing`
+    - `run` command now supports running tasks with arguments given with optional flag `--args` / `-a`
 
 ## 1.0.17 (2024-01-29)
 - improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
