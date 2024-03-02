@@ -80,25 +80,28 @@ class TraderShell(Cmd):
     prompt = '(QTEASY) '
 
     argparsers = {
-        'status':       argparse.ArgumentParser(prog='status', usage='status', description='Show trader status'),
-        'pause':        argparse.ArgumentParser(usage='pause', description='Pause trader'),
-        'resume':       argparse.ArgumentParser(usage='resume', description='Resume trader'),
-        'bye':          argparse.ArgumentParser(usage='', description='Stop trader and exit shell'),
-        'exit':         argparse.ArgumentParser(usage='', description='Stop trader and exit shell'),
-        'stop':         argparse.ArgumentParser(usage='', description='Stop trader and exit shell'),
+        'status':       argparse.ArgumentParser(prog='status', description='Show trader status'),
+        'pause':        argparse.ArgumentParser(prog='pause', description='Pause trader',
+                                                epilog='When trader is paused, strategies will not be executed, '
+                                                       'orders will not be submitted, submitted orders will be '
+                                                       'suspended until trader is resumed'),
+        'resume':       argparse.ArgumentParser(prog='resume', description='Resume trader'),
+        'bye':          argparse.ArgumentParser(prog='bye', description='Stop trader and exit shell'),
+        'exit':         argparse.ArgumentParser(prog='exit', description='Stop trader and exit shell'),
+        'stop':         argparse.ArgumentParser(prog='stop', description='Stop trader and exit shell'),
         'watch':        argparse.ArgumentParser(prog='watch', description='Add or remove stock symbols to watch list'),
-        'buy':          argparse.ArgumentParser(usage='', description='Manually create buy-in order'),
-        'sell':         argparse.ArgumentParser(usage='', description='Manually create sell-out order'),
-        'positions':    argparse.ArgumentParser(usage='', description='Get account positions'),
-        'overview':     argparse.ArgumentParser(usage='', description='Get trader overview, same as info'),
-        'config':       argparse.ArgumentParser(usage='', description='Show or change qteasy configurations'),
-        'history':      argparse.ArgumentParser(usage='', description='List trade history of a stock'),
-        'orders':       argparse.ArgumentParser(usage='', description='Get account orders'),
-        'change':       argparse.ArgumentParser(usage='', description='Change account cash and positions'),
-        'dashboard':    argparse.ArgumentParser(usage='', description='Exit shell and enter dashboard'),
-        'strategies':   argparse.ArgumentParser(usage='', description='Show or change strategy parameters'),
-        'schedule':     argparse.ArgumentParser(usage='', description='Show trade agenda'),
-        'run':          argparse.ArgumentParser(usage='', description='Run strategies manually'),
+        'buy':          argparse.ArgumentParser(prog='', description='Manually create buy-in order'),
+        'sell':         argparse.ArgumentParser(prog='', description='Manually create sell-out order'),
+        'positions':    argparse.ArgumentParser(prog='', description='Get account positions'),
+        'overview':     argparse.ArgumentParser(prog='', description='Get trader overview, same as info'),
+        'config':       argparse.ArgumentParser(prog='', description='Show or change qteasy configurations'),
+        'history':      argparse.ArgumentParser(prog='', description='List trade history of a stock'),
+        'orders':       argparse.ArgumentParser(prog='', description='Get account orders'),
+        'change':       argparse.ArgumentParser(prog='', description='Change account cash and positions'),
+        'dashboard':    argparse.ArgumentParser(prog='', description='Exit shell and enter dashboard'),
+        'strategies':   argparse.ArgumentParser(prog='', description='Show or change strategy parameters'),
+        'schedule':     argparse.ArgumentParser(prog='', description='Show trade agenda'),
+        'run':          argparse.ArgumentParser(prog='', description='Run strategies manually'),
     }
 
     command_arguments = {
@@ -385,21 +388,22 @@ class TraderShell(Cmd):
         try:
             args = arg_parser.parse_args(shlex.split(args))
         except argparse.ArgumentError as e:  # wrong argument, this should work for python >= 3.11
-            print(f'{e}\nWrong argument, use "help {command}" to see more info')
+            print(f'{e}')
             return None
         except SystemExit:  # wrong argument, this should work for python < 3.10
-            print(f'Wrong argument, use "help {command}" to see more info')
+            # print(f'Wrong argument, use "help {command}" to see more info')
             return None
 
         return args
 
     # ----- basic commands -----
     def do_status(self, arg):
-        """ Show trader status
+        """usage: status [-h]
 
-        Usage:
-        ------
-        status
+        Show trader status
+
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
@@ -418,14 +422,15 @@ class TraderShell(Cmd):
                    f'current day is trade day: {self.trader.is_trade_day} \n')
 
     def do_pause(self, arg):
-        """ Pause trader
+        """usage: pause [-h]
 
-        When trader is paused, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Pause trader
 
-        Usage:
-        ------
-        pause
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        When trader is paused, strategies will not be executed, orders will not be
+        submitted, submitted orders will be suspended until trader is resumed
 
         Examples:
         ---------
@@ -439,14 +444,12 @@ class TraderShell(Cmd):
         sys.stdout.write(f'Pausing trader...\n')
 
     def do_resume(self, arg):
-        """ Resume trader
+        """usage: resume [-h]
 
-        When trader is resumed, strategies will be executed, orders will be submitted,
-        suspended orders will be resumed
+        Resume trader
 
-        Usage:
-        ------
-        resume
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
@@ -460,14 +463,12 @@ class TraderShell(Cmd):
         sys.stdout.write(f'Resuming trader...\n')
 
     def do_bye(self, arg):
-        """ Stop trader and exit shell
+        """usage: bye [-h]
 
-        When trader is stopped, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Stop trader and exit shell
 
-        Usage:
-        ------
-        bye
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
@@ -485,14 +486,12 @@ class TraderShell(Cmd):
         return True
 
     def do_exit(self, arg):
-        """ Stop trader and exit shell
+        """usage: bye [-h]
 
-        When trader is stopped, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Stop trader and exit shell
 
-        Usage:
-        ------
-        exit
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
@@ -500,17 +499,14 @@ class TraderShell(Cmd):
         (QTEASY) exit
         """
         self.do_bye(arg)
-        return True
 
     def do_stop(self, arg):
-        """ Stop trader and exit shell
+        """usage: bye [-h]
 
-        When trader is stopped, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Stop trader and exit shell
 
-        Usage:
-        ------
-        stop
+        optional arguments:
+          -h, --help  show this help message and exit
 
         Examples:
         ---------
@@ -518,17 +514,14 @@ class TraderShell(Cmd):
         (QTEASY) stop
         """
         self.do_bye(arg)
-        return True
 
     def do_info(self, arg):
-        """ Get trader info, same as overview
+        """usage: info [--detail｜-d] [-h]
+
+        Get trader info, same as overview
 
         Get trader info, including basic information of current account, and
         current cash and positions.
-
-        Usage:
-        ------
-        info [--detail｜-d]
 
         Examples:
         ---------
@@ -550,12 +543,21 @@ class TraderShell(Cmd):
         return
 
     def do_watch(self, arguments):
-        """ Add or remove stock symbols to watch list
+        """usage: watch [-h] [--position] [--remove [REMOVE [REMOVE ...]]] [--clear]
+             [symbols [symbols ...]]
 
-        Usage:
-        ------
-        watch [SYMBOL [SYMBOL ...]] [--position | --positions | -pos | -p]
-              [--remove | -r SYMBOL [SYMBOL ...]] [--clear | -c]
+        Add or remove stock symbols to watch list
+
+        positional arguments:
+          symbols               stock symbols to add to watch list
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --position, --positions, -pos, -p
+                                add 5 stocks from position list to watch list
+          --remove [REMOVE [REMOVE ...]], -r [REMOVE [REMOVE ...]]
+                                remove stock symbols from watch list
+          --clear, -c           clear watch list
 
         Examples:
         ---------
@@ -612,11 +614,14 @@ class TraderShell(Cmd):
             self._watch_list = top_5_pos
 
         # 如果arg.remove不为空，则将remove中的股票代码从watch list中删除
+        symbols_not_found = []
         if args.remove:
             for symbol in args.remove:
                 print(f'is removing symbol {symbol} from watch list {self._watch_list}')
                 if symbol in self._watch_list:
                     self._watch_list.remove(symbol)
+                else:
+                    symbols_not_found.append(symbol)
 
         # 如果arg.clear == True，则清空watch list
         if args.clear:
@@ -625,6 +630,8 @@ class TraderShell(Cmd):
         rprint(f'current watch list: {self._watch_list}')
         if illegal_symbols:
             rprint(f'Illegal symbols in arguments: {illegal_symbols}, input symbols in the form like "000651.SZ"')
+        if symbols_not_found:
+            rprint(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
 
     def do_buy(self, arg):
         """ Manually create buy-in order: buy AMOUNT shares of SYMBOL with PRICE

@@ -11,12 +11,14 @@
 # ======================================
 
 import os
+import sys
 import warnings
 
 import tushare as ts
 import numpy as np
 import logging
 from logging.handlers import TimedRotatingFileHandler
+from argparse import Namespace
 
 import qteasy.utilfuncs
 from .core import run, set_config, get_configurations, get_config
@@ -36,6 +38,13 @@ from ._arg_validators import QT_CONFIG, ConfigDict
 
 
 __version__ = '1.1.0'
+version_info = Namespace(
+    major=1,
+    minor=1,
+    micro=0,
+    releaselevel='beta',
+    serial=0
+)
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -152,6 +161,18 @@ logger_core.setLevel(logging.INFO)
 logger_core.propagate = False
 
 logger_core.info('qteasy loaded!')
+
+# 检查当前python的版本信息，打印相关的warning信息
+py_version = sys.version_info
+py_ver_major = py_version.major
+py_ver_minor = py_version.minor
+
+# if py_ver_major < 3 or (py_ver_major == 3 and py_ver_minor <= 6):
+#     warnings.warn(f'qteasy is not fully tested on Python version {py_ver_major}.{py_ver_minor}, '
+#                   f'it is highly recommended to use python 3.8 or later for qteasy!')
+# elif py_ver_major == 3 and py_ver_minor == 7:
+#     warnings.warn(f'A few features of qteasy are planned to be deprecated in Python 3.7, '
+#                   f'please updated to python 3.8 or later for qteasy!', DeprecationWarning)
 
 __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config',
