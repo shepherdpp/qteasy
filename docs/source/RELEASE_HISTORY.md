@@ -1,5 +1,15 @@
 # RELEASE HISTORY
 
+## 1.1.0 (2024-03-0?)
+- New feature: The QTEASY shell is now parsing command arguments in a better and more intuitive way
+  - Now all commands support `--parameter` / `-p` style parameters, same way as all other CLI tools
+  - All commands now support `--help` and `-h` to show help messages, are now fully documented in the shell help message
+  - All commands now have better error handling and usage messages when wrong arguments are given
+  - All commands are now more thouroughly tested and debugged
+  - Arguments of some of the commands are now re-designed and re-organized to be more intuitive and easier to use:
+    - `watch` command now supports `--remove` / `-r` to remove symbols from watch list, and `--clear` / `-c` to clear the list
+    - `run` command now supports `--strategy` / `-s` to specify strategy name, and `--freq` / `-f` to specify running frequency
+
 ## 1.0.17 (2024-01-29)
 - improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
 - fixed a bug that will cause error acquiring live price in live trade mode if running freq is lower than 1 hour
