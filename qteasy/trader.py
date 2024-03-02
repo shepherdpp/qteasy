@@ -82,25 +82,47 @@ class TraderShell(Cmd):
     argparsers = {
         'status':       argparse.ArgumentParser(prog='status', description='Show trader status'),
         'pause':        argparse.ArgumentParser(prog='pause', description='Pause trader',
+                                                usage='pause [-h]',
                                                 epilog='When trader is paused, strategies will not be executed, '
                                                        'orders will not be submitted, submitted orders will be '
                                                        'suspended until trader is resumed'),
         'resume':       argparse.ArgumentParser(prog='resume', description='Resume trader'),
-        'bye':          argparse.ArgumentParser(prog='bye', description='Stop trader and exit shell'),
-        'exit':         argparse.ArgumentParser(prog='exit', description='Stop trader and exit shell'),
-        'stop':         argparse.ArgumentParser(prog='stop', description='Stop trader and exit shell'),
+        'bye':          argparse.ArgumentParser(prog='bye', description='Stop trader and exit shell',
+                                                usage='bye [-h]',
+                                                epilog='You can also exit shell using command "exit" or "stop"'),
+        'exit':         argparse.ArgumentParser(prog='exit', description='Stop trader and exit shell',
+                                                usage='exit [-h]',
+                                                epilog='You can also exit shell using command "bye" or "stop"'),
+        'stop':         argparse.ArgumentParser(prog='stop', description='Stop trader and exit shell',
+                                                usage='stop [-h]',
+                                                epilog='You can also exit shell using command "exit" or "bye"'),
+        'info':         argparse.ArgumentParser(prog='info', description='Get trader info, same as overview',
+                                                usage='info [-h] [--detail] [--system]',
+                                                epilog='Get trader info, including basic information of current '
+                                                       'account, and current cash and positions'),
         'watch':        argparse.ArgumentParser(prog='watch', description='Add or remove stock symbols to watch list',
                                                 usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
                                                       '[REMOVE [REMOVE ...]]] [--clear]'),
-        'buy':          argparse.ArgumentParser(prog='', description='Manually create buy-in order',
+        'buy':          argparse.ArgumentParser(prog='buy', description='Manually create buy-in order',
                                                 usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
                                                       '[--force]',
                                                 epilog='the order will be submitted to broker and will be executed'
                                                        ' according to broker rules, Currently only market price '
                                                        'orders can be submitted'),
-        'sell':         argparse.ArgumentParser(prog='', description='Manually create sell-out order'),
-        'positions':    argparse.ArgumentParser(prog='', description='Get account positions'),
-        'overview':     argparse.ArgumentParser(prog='', description='Get trader overview, same as info'),
+        'sell':         argparse.ArgumentParser(prog='sell', description='Manually create sell-out order',
+                                                usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                                      '[--force]',
+                                                epilog='the order will be submitted to broker and will be executed'
+                                                       ' according to broker rules, Currently only market price '
+                                                       'orders can be submitted'),
+        'positions':    argparse.ArgumentParser(prog='positions', description='Get account positions',
+                                                usage='positions [-h]',
+                                                epilog='Print out holding quantities and available quantities '
+                                                       'of all positions'),
+        'overview':     argparse.ArgumentParser(prog='overview', description='Get trader overview, same as info',
+                                                usage='overview [-h] [--detail] [--system]',
+                                                epilog='Get trader info, including basic information of current '
+                                                       'account, and current cash and positions'),
         'config':       argparse.ArgumentParser(prog='', description='Show or change qteasy configurations'),
         'history':      argparse.ArgumentParser(prog='', description='List trade history of a stock'),
         'orders':       argparse.ArgumentParser(prog='', description='Get account orders'),
@@ -118,6 +140,8 @@ class TraderShell(Cmd):
         'bye':          [],
         'exit':         [],
         'stop':         [],
+        'info':         [('--detail', '-d'),
+                         ('--system', '-s')],
         'watch':        [('symbols',),
                          ('--position', '--positions', '-pos', '-p'),
                          ('--remove', '-r'),
@@ -169,6 +193,10 @@ class TraderShell(Cmd):
         'bye':          [],
         'exit':         [],
         'stop':         [],
+        'info':         [{'action': 'store_true',
+                          'help':   'show detailed account info'},
+                         {'action': 'store_true',
+                          'help':   'show system info'}],
         'watch':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                           'nargs': '*',  # nargs='+' will require at least one argument
                           'help': 'stock symbols to add to watch list'},
@@ -538,6 +566,8 @@ class TraderShell(Cmd):
         optional arguments:
           -h, --help  show this help message and exit
 
+        You can also exit shell using command "exit" or "stop"
+
         Examples:
         ---------
         to stop trader and exit shell:
@@ -554,12 +584,14 @@ class TraderShell(Cmd):
         return True
 
     def do_exit(self, arg):
-        """usage: bye [-h]
+        """usage: exit [-h]
 
         Stop trader and exit shell
 
         optional arguments:
           -h, --help  show this help message and exit
+
+        You can also exit shell using command "bye" or "stop"
 
         Examples:
         ---------
@@ -569,12 +601,14 @@ class TraderShell(Cmd):
         return self.do_bye(arg)
 
     def do_stop(self, arg):
-        """usage: bye [-h]
+        """usage: stop [-h]
 
         Stop trader and exit shell
 
         optional arguments:
           -h, --help  show this help message and exit
+
+        You can also exit shell using command "exit" or "bye"
 
         Examples:
         ---------
@@ -584,9 +618,14 @@ class TraderShell(Cmd):
         return self.do_bye(arg)
 
     def do_info(self, arg):
-        """usage: info [--detail｜-d] [-h]
+        """usage: info [-h] [--detail] [--system]
 
         Get trader info, same as overview
+
+        optional arguments:
+          -h, --help    show this help message and exit
+          --detail, -d  show detailed account info
+          --system, -s  show system info
 
         Get trader info, including basic information of current account, and
         current cash and positions.
@@ -700,6 +739,8 @@ class TraderShell(Cmd):
         if symbols_not_found:
             rprint(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
 
+        return False
+
     def do_buy(self, arg):
         """usage: buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
@@ -766,7 +807,8 @@ class TraderShell(Cmd):
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.instruction_queue.put(trade_order)
-        pass
+
+        return False
 
     def do_sell(self, arg):
         """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
@@ -833,16 +875,18 @@ class TraderShell(Cmd):
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.instruction_queue.put(trade_order)
-        pass
+
+        return False
 
     def do_positions(self, arg):
-        """ Get account positions
+        """usage: positions [-h]
 
-        Get account positions, including all positions and available positions
+        Get account positions
 
-        Usage:
-        ------
-        positions
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        Print out holding quantities and available quantities of all positions
 
         Examples:
         ---------
@@ -850,9 +894,10 @@ class TraderShell(Cmd):
         (QTEASY) positions
         """
 
-        if arg:
-            sys.stdout.write(f'positions command does not accept arguments\n')
+        args = self.parse_args('positions', arg)
+        if not args:
             return False
+
         from rich import print as rprint
         print(f'current positions: \n')
         pos = self._trader.account_position_info
@@ -964,15 +1009,20 @@ class TraderShell(Cmd):
             nan_profit_pos_string = ''
         rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
 
+        return False
+
     def do_overview(self, arg):
-        """ Get trader overview, same as info
+        """usage: overview [-h] [--detail] [--system]
+
+        Get trader overview, same as info
+
+        optional arguments:
+          -h, --help    show this help message and exit
+          --detail, -d  show detailed account info
+          --system, -s  show system info Get trader overview, same as info
 
         Get trader overview, including basic information of current account, and
         current cash and positions.
-
-        Usage:
-        ------
-        overview [--detail | -d] [--system | -s]
 
         Examples:
         ---------
@@ -981,16 +1031,14 @@ class TraderShell(Cmd):
         to get detailed trader overview:
         (QTEASY) overview --detail
         """
-        detail = False
-        args = parse_shell_argument(arg, arg_parser=self.argparsers['overview'])
-        if args:
-            if args[0] in ['--detail', '-d']:
-                detail = True
-            else:
-                print('argument not valid, input "detail" or "d" to get detailed info')
-        self._trader.info(verbose=detail)
-        if detail:
-            self.do_positions(arg=None)
+        args = self.parse_args('overview', arg)
+        if not args:
+            return False
+
+        self.trader.info(detail=args.detail, system=args.system)
+
+        if args.detail:
+            return self.do_positions(arg='')
 
     def do_config(self, arg):
         """ Show or change qteasy configurations
@@ -1464,7 +1512,7 @@ class TraderShell(Cmd):
         if not args:
             self.trader.operator.info()
         elif args[0] in ['-d', '--detail']:
-            self.trader.operator.info(verbose=True)
+            self.trader.operator.info()
         elif args[0] in ['-s', '--set-par']:
             if len(args) < 3:
                 print('To set up variable parameter of a strategy, input a valid strategy id and a parameter:\n'
@@ -2075,13 +2123,17 @@ class Trader(object):
                 traceback.print_exc()
         return
 
-    def info(self, verbose=False, width=80):
+    def info(self, verbose=False, detail=False, system=False, width=80):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
 
         Parameters:
         -----------
         verbose: bool, default False
-            是否打印详细信息(系统信息、账户信息、交易状态信息等)，如否，则只打印账户持仓等基本信息
+            是否打印详细信息(账户信息、交易状态信息等), to be deprecated, use detail instead
+        detail: bool, default False
+            是否打印详细信息(账户持仓、账户现金等)，如否，则只打印账户持仓等基本信息
+        system: bool, default False
+            是否打印系统信息
         width: int, default 80
             打印信息的宽度
 
@@ -2091,6 +2143,12 @@ class Trader(object):
         """
 
         from rich import print as rprint
+
+        detail = detail or verbose
+
+        if verbose:
+            import warnings
+            warnings.warn('verbose argument is deprecated, use detail instead', DeprecationWarning)
 
         semi_width = int(width * 0.75)
         position_info = self.account_position_info
@@ -2104,7 +2162,7 @@ class Trader(object):
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
         total_profit_ratio = total_profit / total_market_value
-        if verbose:
+        if system:
             # System Info
             rprint(f'{" System Info ":=^{width}}')
             rprint(f'{"python":<{semi_width - 20}}{sys.version}')
@@ -2121,6 +2179,7 @@ class Trader(object):
                    f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
             rprint(f'{"Trade log file path":<{semi_width - 20}}'
                    f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
+        if detail:
             # Account information
             rprint(f'{" Account Overview ":=^{width}}')
             rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
@@ -2191,12 +2250,11 @@ class Trader(object):
                 s=' '.join(self.asset_pool),
                 n=width - 2,
         )
-        if verbose:
+        if detail:
             print(f'{" Investment ":=^{width}}')
             rprint(f'Current Investment Type:        {self.asset_type}')
             rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
                    f'=={asset_pool_string}\n')
-        return None
 
     def trade_results(self, status='filled'):
         """ 返回账户的交易结果

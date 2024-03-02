@@ -500,8 +500,8 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
                 raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
             if len(matched_codes) > 1:
                 logger_core.info(f'More than one matching code is found with input ({stock}):\n'
-                                    f'{code_matched}\n'
-                                    f'\nonly the first will be used to plot.')
+                                 f'{code_matched}\n'
+                                 f'\nonly the first will be used to plot.')
         elif stock_part == 2:
             matched_codes.append(stock)
         else:
