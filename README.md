@@ -145,7 +145,7 @@ tushare_token = <你的tushare API Token>
 默认情况下`qteasy`使用存储在`data/`路径下的`.csv`文件作为数据源，不需要特殊设置。
 如果设置使用`mysql`数据库作为本地数据源，在配置文件中添加以下配置：
 
-```
+```text
 local_data_source = database  
 
 local_db_host = <host name>

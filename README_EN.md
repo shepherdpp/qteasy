@@ -147,7 +147,7 @@ tushare_token = <Your tushare API Token>
 Add following configurations to the configuration file to use `MySQL` database as local data source:
 
 
-```bash
+```text
 local_data_source = database  
 local_db_host = <host name>
 local_db_port = <port number>
