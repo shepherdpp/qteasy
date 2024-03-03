@@ -219,13 +219,37 @@ tushare_token = 你的tushare token
 
 ```
 local_data_source = database
-database_host = <你的数据库主机名，如local_host>
-database_port = <你的数据库端口，如3306>
-database_user = <你的数据库用户名>
-database_password = <你的数据库连接密码>
-database_name = <保存金融数据的数据库名，如qt_base>
+local_db_host = <你的数据库主机名，如localhost>
+local_db_port = <你的数据库端口，如3306>
+local_db_user = <你的数据库用户名>
+local_db_password = <你的数据库连接密码>
+local_db_name = <保存金融数据的数据库名，如qt_database>
 ```
 如果不做上述配置，`qteasy`会使用默认的csv文件作为本地数据源。
+
+> 请注意，在文件中给出配置信息的时候，请不要加`<`和`>`，否则，这些字符也会被认为是`token`或者数据库名的一部份。从而导致连接数据库失败。
+>
+> `qteasy`在解析配置文件的时候，会根据配置的类型，自动转换为正确的格式，例如，数据库端口`3306`应该是`int`变量，直接使用：
+> 
+> ```
+> local_db_port = 3306
+> ```
+> 
+> 即可。`qteasy`会将字符串`3306`转换为`int`型`3306`。·
+> 
+> 下面这个配置文件的例子是正确的：
+> 
+> ```
+> tushare_token = 2dff3f034aa966479c81e4b4b0736fb081b740abb2xxxxxxxxxxxxxxxxxxxxx
+> 
+> local_data_source = database
+> 
+> local_db_host = localhost
+> local_db_port = 3306
+> local_db_user = user_name
+> local_db_password = pass_word
+> local_db_name = qt_db
+> ```
 
 ## 开始下载第一批金融数据
 
