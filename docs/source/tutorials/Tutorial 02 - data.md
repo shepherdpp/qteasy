@@ -67,6 +67,27 @@ UserWarning: trade calendar is not loaded, some utility functions may not work p
 ```
 qteasy提供了一个函数get_table_overview()来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。
 
+> ### 常见问题提示
+> 
+> 有时候，在使用数据库作为数据源，并从数据库中读取数据时，您可能会看到以下提示信息：
+> ```text
+> UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+> ```
+> 
+> 总的来说，这是一条`UserWarning`。其实应该并没有错误发生，数据读取应该是成功的。出现这条警告信息的原因跟您安装的`pandas`的版本有关。您不需要安装`sqlalchemy`，`qteasy`已经移除了对`sqlalchemy`的依赖.
+> 为了确认为何会出现这条警告，请检查一下您的`pandas`版本.
+> 
+> ```python
+> import pandas as pd
+> pd.__version__
+> ```
+> 
+> 如果您使用的`pandas`版本为1.1以上，有可能会出现这条`UserWarning`，但一般来说应该不会影响使用：
+> 这是因为`qteasy`使用`pymysql`作为数据库连接API，但`pandas`从1.1版本以后，逐步开始将`pymysql`的支持去掉了，尽管经过测试，在`pandas`的1.5版本下`qteasy`仍然能够正确读取数据，但是会收到警告信息。
+> 
+> 以上问题已经进入了我的修改清单，在接下来的小升级中，会去掉对`pandas`的sql API依赖，直接使用`pymysql`读取数据库，这样就不会出现这条警告信息了。如果您不希望看到这条警告信息，也可以降级`pandas`的版本到`1.1.0`。`qteasy`在开发初期一致固定使用较低版本的`pandas`，绝大部分的稳定性测试基于`pandas`的1.1版本，如果使用1.1版本的`pandas`就不会出现这个提示信息，其他所有功能也都正常。
+> 
+> 
 
 ```python
 import qteasy as qt
