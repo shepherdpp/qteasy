@@ -2928,7 +2928,16 @@ class DataSource:
             sql += f'WHERE {date_filter}'
         sql += ''
         try:
-            df = pd.read_sql_query(sql, con=con)
+            cursor = con.cursor()
+            cursor.execute(sql)
+            con.commit()
+
+            data = cursor.fetchall()
+            df = pd.DataFrame(data)
+            # make sure df has correct column names
+            df.columns = [i[0] for i in cursor.description]
+
+            # df = pd.read_sql_query(sql, con=con)  # TODO: v1.0.27: remove pd API with databases
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
