@@ -371,6 +371,7 @@ class TraderShell(Cmd):
     def status(self):
         return self._status
 
+    @property
     def watch_list(self):
         return self._watch_list
 
@@ -1299,6 +1300,8 @@ class TraderShell(Cmd):
         (QTEASY) orders 000001 -s filled -y buy
         """
 
+        # TODO: update this command
+
         from rich import print as rprint
         args = self.parse_args('orders', arg)
         if not args:
@@ -1445,6 +1448,7 @@ class TraderShell(Cmd):
         to change short side of position of 000651.SH to increase 100 shares at price 32.5:
         (QTEASY) change 000651.SH --amount 100 --price 32.5 --side short
         """
+        # TODO: update this command
 
         args = self.parse_args('change', arg)
         if not args:
@@ -1598,6 +1602,8 @@ class TraderShell(Cmd):
         (QTEASY): strategies --blender <blender> (not implemented yet)
         """
 
+        # TOOD: update this command
+
         # TODO: to change blender of strategies, use strategies blender|b <blender>
         args = self.parse_args('strategies', arg)
         if not args:
@@ -1655,6 +1661,7 @@ class TraderShell(Cmd):
         to display current strategy task schedule:
         (QTEASY): schedule
         """
+
         args = self.parse_args('schedule', arg)
         if not args:
             return False
@@ -1691,6 +1698,9 @@ class TraderShell(Cmd):
         to run task "task1" with arguments "arg1" and "arg2":
         (QTEASY): run --task task1 --args arg1 arg2
         """
+
+        # TODO: update this command
+
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
             return False
@@ -1853,6 +1863,7 @@ class TraderShell(Cmd):
                 else:
                     continue
                 t.cancel()
+                # TODO: 上面这种5秒定时的方式有问题，如果用户五秒后再次按下Ctrl+C，会导致Shell异常退出
                 continue
             # looks like finally block is better than except block here
             except Exception as e:

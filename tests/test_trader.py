@@ -19,7 +19,7 @@ import numpy as np
 from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_trade_delivery
-from qteasy.trader import Trader
+from qteasy.trader import Trader, TraderShell
 from qteasy.broker import SimulatorBroker, Broker
 
 
@@ -62,14 +62,7 @@ class TestTrader(unittest.TestCase):
         data_test_dir = 'data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
         test_ds = DataSource('file', file_type='hdf', file_loc=data_test_dir)
-        # test_ds = DataSource(
-        #         'db',
-        #         host=QT_CONFIG['test_db_host'],
-        #         port=QT_CONFIG['test_db_port'],
-        #         user=QT_CONFIG['test_db_user'],
-        #         password=QT_CONFIG['test_db_password'],
-        #         db_name=QT_CONFIG['test_db_name']
-        # )
+
         test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
@@ -717,4 +710,3 @@ class TestTrader(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
