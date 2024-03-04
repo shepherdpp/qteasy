@@ -190,7 +190,14 @@ class TestTraderShell(unittest.TestCase):
         """ test pool command"""
         tss = self.tss
 
-        raise NotImplementedError('test pool command')
+        print('testing pool command that runs normally and returns None')
+        self.assertIsNone(tss.do_pool(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_pool('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_pool('wrong_argument'))
 
     def test_command_watch(self):
         """ test watch command"""
@@ -570,7 +577,26 @@ class TestTraderShell(unittest.TestCase):
         """ test orders command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing orders command that runs normally and returns None')
+        self.assertIsNone(tss.do_orders(''))
+        self.assertIsNone(tss.do_orders('000001'))
+        self.assertIsNone(tss.do_orders('--status filled'))
+        self.assertIsNone(tss.do_orders('-s canceled'))
+        self.assertIsNone(tss.do_orders('--time today'))
+        self.assertIsNone(tss.do_orders('-t yesterday'))
+        self.assertIsNone(tss.do_orders('--type buy'))
+        self.assertIsNone(tss.do_orders('-y sell'))
+        self.assertIsNone(tss.do_orders('--side long'))
+        self.assertIsNone(tss.do_orders('-d short'))
+        self.assertIsNone(tss.do_orders('000001 --status filled -t today --type buy -d long'))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_orders('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_orders('wrong_argument'))
+        self.assertFalse(tss.do_orders('000001 -w wrong_optional_argument'))
+        self.assertFalse(tss.do_orders('000001 -t wrong_optional_argument'))
 
     def test_command_change(self):
         """ test change command"""
@@ -628,7 +654,14 @@ class TestTraderShell(unittest.TestCase):
         """ test run command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing run command that runs normally and returns None')
+        self.assertIsNone(tss.do_run(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_run('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_run('wrong_argument'))
 
 
 if __name__ == '__main__':

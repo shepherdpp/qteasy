@@ -1622,7 +1622,7 @@ class TraderShell(Cmd):
         strategies = [stg for stg_list in args.keys for stg in stg_list] if args.keys else []
         detail = args.detail
 
-        elif args[0] in ['-d', '--detail']:
+        if args[0] in ['-d', '--detail']:
             self.trader.operator.info()
         elif args[0] in ['-s', '--set-par']:
             if len(args) < 3:
