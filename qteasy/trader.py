@@ -498,16 +498,18 @@ class TraderShell(Cmd):
             参数是否合法
         """
 
+        import rich
+
         qty = args.amount
         symbol = args.symbol.upper()
         price = args.price
 
         # check if qty and price are legal
         if qty <= 0:
-            print("Qty can not be less or equal to 0, please check your input!")
+            rich.print("[bold red]Qty can not be less or equal to 0[/bold red]")
             return False
         if price < 0:
-            print("Price can not be less than 0, please check your input!")
+            rich.print("[bold red]Price can not be less than 0[/bold red]")
             return False
 
         # check if qty meets the moq
@@ -515,8 +517,9 @@ class TraderShell(Cmd):
             moq = self.trader.get_config('trade_batch_size')['trade_batch_size']
         else:
             moq = self.trader.get_config('sell_batch_size')['sell_batch_size']
-        if qty % moq != 0:
-            print(f'Qty should be a multiple of the minimum order quantity ({moq}), please check your input!')
+
+        if moq != 0 and qty % moq != 0:
+            rich.print(f'[bold red]Qty should be a multiple of the minimum order quantity ({moq})[/bold red]')
             return False
 
         # check if symbol is legal
@@ -527,18 +530,18 @@ class TraderShell(Cmd):
 
         # if price == 0, use live price
         if price == 0:
-            if self.trader.live_price is None:
-                print(f'No live price data available, price should be given!')
+            if self.trader.live_prices is None:
+                rich.print(f'[bold red]No live price data available, price should be given![/bold red')
                 return False
             try:
-                price = self.trader.live_price[symbol]
+                args.price = self.trader.live_prices[symbol]
             except KeyError:
-                print(f'No live price data for {symbol} available, price should be given!')
+                rich.print(f'[bold red]No live price data for {symbol} available, price should be given![/bold red')
                 return False
 
         # the symbol must be in the pool
         if symbol not in self.trader.asset_pool:
-            print(f'{symbol} is not in the asset pool, can not be bought!')
+            rich.print(f'[bold red]{symbol} is not in the asset pool, can not be bought![/bold red')
             return False
 
         return True
@@ -858,8 +861,6 @@ class TraderShell(Cmd):
             trade_order['order_id'] = order_id
             broker.instruction_queue.put(trade_order)
 
-        return False
-
     def do_sell(self, arg):
         """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
@@ -925,8 +926,6 @@ class TraderShell(Cmd):
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.instruction_queue.put(trade_order)
-
-        return False
 
     def do_positions(self, arg):
         """usage: positions [-h]

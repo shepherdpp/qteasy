@@ -5,15 +5,15 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-03-04
 # Desc:
-#   Unittest for trader shell functions
+#   Unittest for trader shell properties
+# and commands.
 # ======================================
 
 import unittest
 
 from qteasy import DataSource, Operator
 from qteasy.trader import Trader, TraderShell
-from qteasy.trading_util import read_trade_order
-from qteasy.trade_recording import new_account
+from qteasy.trade_recording import new_account, read_trade_order_detail
 from qteasy.broker import SimulatorBroker
 
 
@@ -33,6 +33,8 @@ class TestTraderShell(unittest.TestCase):
             'stock_delivery_period': 0,
             'asset_pool':            '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
             'asset_type':            'E',
+            'trade_batch_size':      100,
+            'sell_batch_size':       100,
             'PT_buy_threshold':      0.05,
             'PT_sell_threshold':     0.05,
             'allow_sell_short':      False,
@@ -193,16 +195,118 @@ class TestTraderShell(unittest.TestCase):
     def test_command_buy(self):
         """ test buy command"""
         tss = self.tss
+        # set live prices in trader for all assets for testing
+        tss.trader.live_prices = {
+            '000001.SZ': 10.0,
+            '000002.SZ': 20.0,
+            '000004.SZ': 30.0,
+            '000005.SZ': 40.0,
+            '000006.SZ': 50.0,
+            '000007.SZ': 60.0,
+        }
 
         print('testing buy command that runs normally and returns None')
-        self.assertIsNone(tss.do_buy('000001.SH 100 10.0'))
-        order = read_trade_order()
+        self.assertIsNone(tss.do_buy('100 000001.SZ -p 10.0'))
+        order = read_trade_order_detail(order_id=1, data_source=tss.trader.datasource)
+        self.assertEqual(order['account_id'], 1)
+        self.assertEqual(order['position'], 'long')
+        self.assertEqual(order['symbol'], '000001.SZ')
+        self.assertEqual(order['direction'], 'buy')
+        self.assertEqual(order['qty'], 100)
+        self.assertEqual(order['order_type'], 'market')
+        self.assertEqual(order['price'], 10.0)
+        self.assertIsNone(tss.do_buy('100 000001.SZ -p 30 -s long'))
+        order = read_trade_order_detail(order_id=2, data_source=tss.trader.datasource)
+        self.assertEqual(order['account_id'], 1)
+        self.assertEqual(order['position'], 'long')
+        self.assertEqual(order['symbol'], '000001.SZ')
+        self.assertEqual(order['direction'], 'buy')
+        self.assertEqual(order['qty'], 100)
+        self.assertEqual(order['order_type'], 'market')
+        self.assertEqual(order['price'], 30.0)
+        print(f'testing buy command with no price given and use live price')
+        print('trader live price is:', tss.trader.live_prices)
+        self.assertIsNone(tss.do_buy('100 000002.SZ'))
+        order = read_trade_order_detail(order_id=3, data_source=tss.trader.datasource)
+        self.assertEqual(order['account_id'], 1)
+        self.assertEqual(order['position'], 'long')
+        self.assertEqual(order['symbol'], '000002.SZ')
+        self.assertEqual(order['direction'], 'buy')
+        self.assertEqual(order['qty'], 100)
+        self.assertEqual(order['order_type'], 'market')
+        self.assertEqual(order['price'], 20.0)
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_buy('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_buy('no_qty 000001.SZ -p 10.0'))
+        self.assertFalse(tss.do_buy('100 wrong_symbol -p 10.0'))
+        self.assertFalse(tss.do_buy('100 000001.SZ -p 10.0 -s wrong_position'))
+        self.assertFalse(tss.do_buy('100 000001.SZ -p -s long'))  # no price given
+        self.assertFalse(tss.do_buy('-100 000001.SZ -p 10.0 -s long'))  # negative qty
+        self.assertFalse(tss.do_buy('100 000001.SZ -p -10.0 -s long'))  # negative price
+        self.assertFalse(tss.do_buy('100 000001.SZ -p 10.0 -s long -w wrong_argument'))
+        self.assertFalse(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty not multiple of moq
+        print(f'change moq to 0 and then test again')
+        self.assertIsNone(tss.do_config('trade_batch_size -s 0'))
+        self.assertIsNone(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty now accepted
+
 
     def test_command_sell(self):
         """ test sell command"""
         tss = self.tss
+        # set live prices in trader for all assets for testing
+        tss.trader.live_prices = {
+            '000001.SZ': 10.0,
+            '000002.SZ': 20.0,
+            '000004.SZ': 30.0,
+            '000005.SZ': 40.0,
+            '000006.SZ': 50.0,
+            '000007.SZ': 60.0,
+        }
 
-        raise NotImplementedError
+        print('testing sell command that runs normally and returns None')
+        self.assertIsNone(tss.do_sell('100 000001.SZ -p 10.0'))
+        order = read_trade_order_detail(order_id=1, data_source=tss.trader.datasource)
+        self.assertEqual(order['account_id'], 1)
+        self.assertEqual(order['position'], 'long')
+        self.assertEqual(order['symbol'], '000001.SZ')
+        self.assertEqual(order['direction'], 'sell')
+        self.assertEqual(order['qty'], 100)
+        self.assertEqual(order['order_type'], 'market')
+        self.assertEqual(order['price'], 10.0)
+        self.assertIsNone(tss.do_sell('100 000001.SZ -p 30 -s long'))
+        order = read_trade_order_detail(order_id=2, data_source=tss.trader.datasource)
+        self.assertEqual(order['account_id'], 1)
+        self.assertEqual(order['position'], 'long')
+        self.assertEqual(order['symbol'], '000001.SZ')
+        self.assertEqual(order['direction'], 'sell')
+        self.assertEqual(order['qty'], 100)
+        self.assertEqual(order['order_type'], 'market')
+        self.assertEqual(order['price'], 30.0)
+        print(f'testing sell command with no price given and use live price')
+        print('trader live price is:', tss.trader.live_prices)
+        self.assertIsNone(tss.do_sell('100 000002.SZ'))
+        order = read_trade_order_detail(order_id=3, data_source=tss.trader.datasource)
+        self.assertEqual(order['account_id'], 1)
+        self.assertEqual(order['position'], 'long')
+        self.assertEqual(order['symbol'], '000002.SZ')
+        self.assertEqual(order['direction'], 'sell')
+        self.assertEqual(order['qty'], 100)
+        self.assertEqual(order['order_type'], 'market')
+        self.assertEqual(order['price'], 20.0)
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_sell('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_sell('no_qty 000001.SZ -p 10.0'))
+        self.assertFalse(tss.do_sell('100 wrong_symbol -p 10.0'))
+        self.assertFalse(tss.do_sell('100 000001.SZ -p 10.0 -s long'))
+        self.assertFalse(tss.do_sell('100 000001.SZ -p -s long'))  # no price given
+        self.assertFalse(tss.do_sell('-100 000001.SZ -p 10.0 -s long'))  # negative qty
+        self.assertFalse(tss.do_sell('100 000001.SZ -p -10.0 -s long'))  # negative price
 
     def test_command_positions(self):
         """ test positions command"""
@@ -297,6 +401,7 @@ class TestTraderShell(unittest.TestCase):
         tss = self.tss
 
         raise NotImplementedError
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -855,7 +855,7 @@ def query_trade_orders(account_id,
     return pd.concat(res)
 
 
-# 2 2nd level functions for trade signal
+# 2 2nd level functions for trade signal TODO: (maybe) move to trading_util.py
 def read_trade_order_detail(order_id, data_source=None):
     """ 从数据库中读取交易信号的详细信息，包括从关联表中读取symbol和position的信息
 
