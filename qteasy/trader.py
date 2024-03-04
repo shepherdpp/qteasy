@@ -155,7 +155,7 @@ class TraderShell(Cmd):
                             usage='dashboard [-h]'),
         'strategies':  dict(prog='', description='Show or change strategy parameters',
                             usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
-                                  '[--set-par [SET_PAR [SEeT_PAR ...]]] [--blender BLENDER] '
+                                  '[--set-par [SET_VAL [SET_VAL ...]]] [--blender BLENDER] '
                                   '[--timing TIMING]'),
         'schedule':    dict(prog='', description='Show trade agenda',
                             usage='schedule [-h]'),
@@ -1237,12 +1237,11 @@ class TraderShell(Cmd):
         history['name'] = [adjust_string_length(name, 8, hans_aware=True, padding='left') for name in all_names]
 
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
-        # for earning rate
-        # Error will be raised if execution_time is NaT. will print out normal format in this case
+        #  for earning rate
+        #  Error will be raised if execution_time is NaT. will print out normal format in this case
         if np.any(pd.isna(history.execution_time)):
             history.execution_time = history.execution_time.fillna(pd.to_datetime('1970-01-01'))
-        # else:
-        # print(history)
+
         rprint(
                 history.to_string(
                         columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
@@ -1252,7 +1251,7 @@ class TraderShell(Cmd):
                                 'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
                                 'name'],
                         formatters={
-                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x)),
                             'name':         '{:8s}'.format,
                             'operation':    '{:s}'.format,
                             'filled_qty':   '{:,.2f}'.format,
@@ -1407,8 +1406,8 @@ class TraderShell(Cmd):
                                     'price_filled':   '¥{:,.2f}'.format,
                                     'filled_qty':     '{:,.2f}'.format,
                                     'canceled_qty':   '{:,.2f}'.format,
-                                    'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
-                                    'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
+                                    'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x)),
+                                    'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x))
                                     },
                         col_space={
                             'price_quoted': 10,
@@ -1582,7 +1581,7 @@ class TraderShell(Cmd):
         return True
 
     def do_strategies(self, arg: str):
-        """usage: strategies [STRATEGYy [STRATEGY ...]] [-h] [--detail] [--set-par [SET_PAR [SET_PAR ...]]]
+        """usage: strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] [--set-par [SET_VAL [SET_VAL ...]]]
                 [--blender BLENDER] [--timing TIMING]
 
         Show or change strategy parameters
@@ -1620,8 +1619,9 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        if not args:
-            self.trader.operator.info()
+        strategies = [stg for stg_list in args.keys for stg in stg_list] if args.keys else []
+        detail = args.detail
+
         elif args[0] in ['-d', '--detail']:
             self.trader.operator.info()
         elif args[0] in ['-s', '--set-par']:

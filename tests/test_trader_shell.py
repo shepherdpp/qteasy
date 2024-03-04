@@ -10,10 +10,13 @@
 # ======================================
 
 import unittest
+import time
 
 from qteasy import DataSource, Operator
 from qteasy.trader import Trader, TraderShell
-from qteasy.trade_recording import new_account, read_trade_order_detail
+from qteasy.trading_util import process_trade_delivery, process_trade_result, submit_order, update_position
+from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
+from qteasy.trade_recording import get_or_create_position, get_position_by_id
 from qteasy.broker import SimulatorBroker
 
 
@@ -59,6 +62,15 @@ class TestTraderShell(unittest.TestCase):
 
         # 创建一个ID=1的账户
         new_account('test_user1', 100000, test_ds)
+        # 添加初始持仓
+        get_or_create_position(account_id=1, symbol='000001.SZ', position_type='long', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000004.SZ', position_type='long', data_source=test_ds)
+        get_or_create_position(account_id=1, symbol='000005.SZ', position_type='long', data_source=test_ds)
+        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
+        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
+        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
+        update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
         self.ts = Trader(
                 account_id=1,
@@ -397,8 +409,162 @@ class TestTraderShell(unittest.TestCase):
     def test_command_history(self):
         """ test history command"""
         tss = self.tss
+        test_ds = tss.trader.datasource
 
-        raise NotImplementedError
+        # 添加测试交易订单以及交易结果
+        print('Adding test trade orders and results...')
+        self.stoppage = 0.1
+        parsed_signals_batch = (
+            ['000001.SZ', '000002.SZ', '000004.SZ', '000006.SZ', '000007.SZ', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'sell', 'sell', 'buy', 'buy'],
+            [100, 100, 300, 400, 500],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        # save first batch of signals
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=parsed_signals_batch[0],
+                positions=parsed_signals_batch[1],
+                directions=parsed_signals_batch[2],
+                quantities=parsed_signals_batch[3],
+                prices=parsed_signals_batch[4],
+                data_source=test_ds,
+        )
+        # submit orders
+        for order_id in order_ids:
+            submit_order(order_id, test_ds)
+
+        parsed_signals_batch = (
+            ['000001.SZ', '000004.SZ', '000005.SZ', '000007.SZ', ],
+            ['long', 'long', 'long', 'long'],
+            ['sell', 'buy', 'buy', 'sell'],
+            [200, 200, 100, 300],
+            [70.0, 30.0, 56.0, 79.0],
+        )
+        # save first batch of signals
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=parsed_signals_batch[0],
+                positions=parsed_signals_batch[1],
+                directions=parsed_signals_batch[2],
+                quantities=parsed_signals_batch[3],
+                prices=parsed_signals_batch[4],
+                data_source=test_ds,
+        )
+        # submit orders
+        for order_id in order_ids:
+            submit_order(order_id, test_ds)
+
+        # 添加交易订单执行结果
+        delivery_config = {
+            'cash_delivery_period':  0,
+            'stock_delivery_period': 0,
+        }
+        raw_trade_result = {
+            'order_id':        1,
+            'filled_qty':      100,
+            'price':           60.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        2,
+            'filled_qty':      100,
+            'price':           70.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        3,
+            'filled_qty':      200,
+            'price':           80.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        4,
+            'filled_qty':      400,
+            'price':           89.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        5,
+            'filled_qty':      500,
+            'price':           100.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        3,
+            'filled_qty':      100,
+            'price':           78.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        6,
+            'filled_qty':      200,
+            'price':           69.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        7,
+            'filled_qty':      200,
+            'price':           31.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        time.sleep(self.stoppage)
+        raw_trade_result = {
+            'order_id':        9,
+            'filled_qty':      300,
+            'price':           91.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        # order 8 is canceled
+        time.sleep(self.stoppage)
+        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+
+        print('testing history command that runs normally and returns None')
+        self.assertIsNone(tss.do_history(''))
+        self.assertIsNone(tss.do_history('000001.SZ'))
+        self.assertIsNone(tss.do_history('000002.SZ'))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_history('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_history('wrong_argument'))
+        self.assertFalse(tss.do_history('000001.SZ -w wrong_optional_argument'))
 
     def test_command_orders(self):
         """ test orders command"""
@@ -410,7 +576,12 @@ class TestTraderShell(unittest.TestCase):
         """ test change command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing change command that runs normally and returns None')
+        position = get_position_by_id(1, tss.trader.datasource)
+        self.assertEqual(position['qty'], 200)
+        self.assertIsNone(tss.do_change('000001 300'))
+        position = get_position_by_id(1, tss.trader.datasource)
+        self.assertEqual(position['qty'], 300)
 
     def test_command_dashboard(self):
         """ test dashboard command"""
@@ -429,7 +600,16 @@ class TestTraderShell(unittest.TestCase):
         """ test strategies command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing strategies command that runs normally and returns None')
+        self.assertIsNone(tss.do_strategies(''))
+        self.assertIsNone(tss.do_strategies('-d'))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_strategies('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_strategies('wrong_argument'))
+        self.assertFalse(tss.do_strategies('-w wrong_optional_argument'))
 
     def test_command_schedule(self):
         """ test schedule command"""
