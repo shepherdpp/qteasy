@@ -79,84 +79,84 @@ class TraderShell(Cmd):
             'Type "help <command>" to get help for more commands.\n'
     prompt = '(QTEASY) '
 
-    argparsers = {
-        'status':       argparse.ArgumentParser(prog='status', description='Show trader status',
-                                                usage='status [-h]',),
-        'pause':        argparse.ArgumentParser(prog='pause', description='Pause trader',
-                                                usage='pause [-h]',
-                                                epilog='When trader is paused, strategies will not be executed, '
-                                                       'orders will not be submitted, submitted orders will be '
-                                                       'suspended until trader is resumed'),
-        'resume':       argparse.ArgumentParser(prog='resume', description='Resume trader',
-                                                usage='resume [-h]',),
-        'bye':          argparse.ArgumentParser(prog='bye', description='Stop trader and exit shell',
-                                                usage='bye [-h]',
-                                                epilog='You can also exit shell using command "exit" or "stop"'),
-        'exit':         argparse.ArgumentParser(prog='exit', description='Stop trader and exit shell',
-                                                usage='exit [-h]',
-                                                epilog='You can also exit shell using command "bye" or "stop"'),
-        'stop':         argparse.ArgumentParser(prog='stop', description='Stop trader and exit shell',
-                                                usage='stop [-h]',
-                                                epilog='You can also exit shell using command "exit" or "bye"'),
-        'info':         argparse.ArgumentParser(prog='info', description='Get trader info, same as overview',
-                                                usage='info [-h] [--detail] [--system]',
-                                                epilog='Get trader info, including basic information of current '
-                                                       'account, and current cash and positions'),
-        'watch':        argparse.ArgumentParser(prog='watch', description='Add or remove stock symbols to watch list',
-                                                usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
-                                                      '[REMOVE [REMOVE ...]]] [--clear]'),
-        'buy':          argparse.ArgumentParser(prog='buy', description='Manually create buy-in order',
-                                                usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
-                                                      '[--force]',
-                                                epilog='the order will be submitted to broker and will be executed'
-                                                       ' according to broker rules, Currently only market price '
-                                                       'orders can be submitted'),
-        'sell':         argparse.ArgumentParser(prog='sell', description='Manually create sell-out order',
-                                                usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
-                                                      '[--force]',
-                                                epilog='the order will be submitted to broker and will be executed'
-                                                       ' according to broker rules, Currently only market price '
-                                                       'orders can be submitted'),
-        'positions':    argparse.ArgumentParser(prog='positions', description='Get account positions',
-                                                usage='positions [-h]',
-                                                epilog='Print out holding quantities and available quantities '
-                                                       'of all positions'),
-        'overview':     argparse.ArgumentParser(prog='overview', description='Get trader overview, same as info',
-                                                usage='overview [-h] [--detail] [--system]',
-                                                epilog='Get trader info, including basic information of current '
-                                                       'account, and current cash and positions'),
-        'config':       argparse.ArgumentParser(prog='config', description='Show or change qteasy configurations',
-                                                usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--set SET]'),
-        'history':      argparse.ArgumentParser(prog='history', description='List trade history of a stock',
-                                                usage='history [SYMBOL] [-h]',
-                                                epilog='List all trade history of one particular stock, displaying '
-                                                       'every buy-in and sell-out in a table format. '
-                                                       'symbol like 000651 is accepted.'),
-        'orders':       argparse.ArgumentParser(prog='orders', description='Get account orders',
-                                                usage='usage: orders [SYMBOL [SYMBOL ...]] [-h] '
-                                                      '[--status {filled,f,canceled,c,partial-filled,p}] '
-                                                      '[--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}] '
-                                                      '[--type {buy,sell,b,s,all,a}] '
-                                                      '[--side {long,short,l,s,all,a}]'),
-        'change':       argparse.ArgumentParser(prog='change', description='Change account cash and positions',
-                                                usage='change SYMBOL [-h] [--amount AMOUNT] [--price PRICE] '
-                                                      '[--side {l,long,s,short}] [--cash CASH]',
-                                                epilog='Change cash or positions or both. nothing will be changed '
-                                                       'if amount or cash is not given, price is used to calculate '
-                                                       'new cost, if not given, current price will be used'),
-        'dashboard':    argparse.ArgumentParser(prog='', description='Exit shell and enter dashboard',
-                                                usage='dashboard [-h]'),
-        'strategies':   argparse.ArgumentParser(prog='', description='Show or change strategy parameters',
-                                                usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
-                                                      '[--set-par [SET_PAR [SEeT_PAR ...]]] [--blender BLENDER] '
-                                                      '[--timing TIMING]'),
-        'schedule':     argparse.ArgumentParser(prog='', description='Show trade agenda',
-                                                usage='schedule [-h]'),
-        'run':          argparse.ArgumentParser(prog='', description='Run strategies manually',
-                                                usage='run [STRATEGY [STRATEGY ...]] [-h] '
-                                                      '[--task {none,stop,sleep,pause,run_strategy,process_result,'
-                                                      'pre_open,open_market,close_market,acquire_live_price}] '
-                                                      '[--args [ARGS [ARGS ...]]]'),
+    argparser_properties = {
+        'status':      dict(prog='status', description='Show trader status',
+                            usage='status [-h]',),
+        'pause':       dict(prog='pause', description='Pause trader',
+                            usage='pause [-h]',
+                            epilog='When trader is paused, strategies will not be executed, '
+                                   'orders will not be submitted, submitted orders will be '
+                                   'suspended until trader is resumed'),
+        'resume':      dict(prog='resume', description='Resume trader',
+                            usage='resume [-h]',),
+        'bye':         dict(prog='bye', description='Stop trader and exit shell',
+                            usage='bye [-h]',
+                            epilog='You can also exit shell using command "exit" or "stop"'),
+        'exit':        dict(prog='exit', description='Stop trader and exit shell',
+                            usage='exit [-h]',
+                            epilog='You can also exit shell using command "bye" or "stop"'),
+        'stop':        dict(prog='stop', description='Stop trader and exit shell',
+                            usage='stop [-h]',
+                            epilog='You can also exit shell using command "exit" or "bye"'),
+        'info':        dict(prog='info', description='Get trader info, same as overview',
+                            usage='info [-h] [--detail] [--system]',
+                            epilog='Get trader info, including basic information of current '
+                                   'account, and current cash and positions'),
+        'watch':       dict(prog='watch', description='Add or remove stock symbols to watch list',
+                            usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
+                                  '[REMOVE [REMOVE ...]]] [--clear]'),
+        'buy':         dict(prog='buy', description='Manually create buy-in order',
+                            usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                  '[--force]',
+                            epilog='the order will be submitted to broker and will be executed'
+                                   ' according to broker rules, Currently only market price '
+                                   'orders can be submitted'),
+        'sell':        dict(prog='sell', description='Manually create sell-out order',
+                            usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                  '[--force]',
+                            epilog='the order will be submitted to broker and will be executed'
+                                   ' according to broker rules, Currently only market price '
+                                   'orders can be submitted'),
+        'positions':   dict(prog='positions', description='Get account positions',
+                            usage='positions [-h]',
+                            epilog='Print out holding quantities and available quantities '
+                                   'of all positions'),
+        'overview':    dict(prog='overview', description='Get trader overview, same as info',
+                            usage='overview [-h] [--detail] [--system]',
+                            epilog='Get trader info, including basic information of current '
+                                   'account, and current cash and positions'),
+        'config':      dict(prog='config', description='Show or change qteasy configurations',
+                            usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--set SET]'),
+        'history':     dict(prog='history', description='List trade history of a stock',
+                            usage='history [SYMBOL] [-h]',
+                            epilog='List all trade history of one particular stock, displaying '
+                                   'every buy-in and sell-out in a table format. '
+                                   'symbol like 000651 is accepted.'),
+        'orders':      dict(prog='orders', description='Get account orders',
+                            usage='usage: orders [SYMBOL [SYMBOL ...]] [-h] '
+                                  '[--status {filled,f,canceled,c,partial-filled,p}] '
+                                  '[--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}] '
+                                  '[--type {buy,sell,b,s,all,a}] '
+                                  '[--side {long,short,l,s,all,a}]'),
+        'change':      dict(prog='change', description='Change account cash and positions',
+                            usage='change SYMBOL [-h] [--amount AMOUNT] [--price PRICE] '
+                                  '[--side {l,long,s,short}] [--cash CASH]',
+                            epilog='Change cash or positions or both. nothing will be changed '
+                                   'if amount or cash is not given, price is used to calculate '
+                                   'new cost, if not given, current price will be used'),
+        'dashboard':   dict(prog='', description='Exit shell and enter dashboard',
+                            usage='dashboard [-h]'),
+        'strategies':  dict(prog='', description='Show or change strategy parameters',
+                            usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
+                                  '[--set-par [SET_PAR [SEeT_PAR ...]]] [--blender BLENDER] '
+                                  '[--timing TIMING]'),
+        'schedule':    dict(prog='', description='Show trade agenda',
+                            usage='schedule [-h]'),
+        'run':         dict(prog='', description='Run strategies manually',
+                            usage='run [STRATEGY [STRATEGY ...]] [-h] '
+                                  '[--task {none,stop,sleep,pause,run_strategy,process_result,'
+                                  'pre_open,open_market,close_market,acquire_live_price}] '
+                                  '[--args [ARGS [ARGS ...]]]'),
     }
 
     command_arguments = {
@@ -361,6 +361,8 @@ class TraderShell(Cmd):
         self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
 
+        self.argparsers = {}
+
         self.init_arg_parsers()
 
     @property
@@ -419,6 +421,16 @@ class TraderShell(Cmd):
     def init_arg_parsers(self):
         """ 初始化命令参数解析器
         """
+        if self.argparsers:
+            return
+
+        # create instances of argparsers for each command
+        for command in self.argparser_properties:
+            self.argparsers[command] = argparse.ArgumentParser(
+                    **self.argparser_properties[command],
+            )
+
+        # add arguments to each argparser
         for command in self.argparsers:
             args = self.command_arguments[command]
             arg_properties = self.command_arg_properties[command]
@@ -566,7 +578,7 @@ class TraderShell(Cmd):
         if not args:
             return False
         self.trader.add_task('pause')
-        sys.stdout.write(f'Pausing trader...\n')
+        sys.stdout.write(f'Pausing trader... use command status to check current status\n')
 
     def do_resume(self, arg):
         """usage: resume [-h]
@@ -768,8 +780,6 @@ class TraderShell(Cmd):
         if symbols_not_found:
             rprint(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
 
-        return False
-
     def do_buy(self, arg):
         """usage: buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
@@ -832,7 +842,8 @@ class TraderShell(Cmd):
         }
 
         order_id = record_trade_order(trade_order, data_source=datasource)
-        # 逐一提交交易信号
+
+        # 提交交易订单
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.instruction_queue.put(trade_order)

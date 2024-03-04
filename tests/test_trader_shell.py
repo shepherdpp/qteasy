@@ -65,15 +65,129 @@ class TestTraderShell(unittest.TestCase):
         tss = self.tss
 
         self.assertEqual(tss.trader, self.ts)
-        self.assertEqual(tss.status, 'ready')
-        self.assertEqual(tss.watch_list, [])
+        self.assertEqual(tss.status, None)
+        self.assertEqual(tss.watch_list, ['000001.SH'])
 
     def test_command_status(self):
-
+        """ test status command """
         tss = self.tss
-        
-        arguments = ''
-        tss.do_status(arguments)
+
+        print('testing status command that runs normally and returns None')
+        self.assertIsNone(tss.do_status(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_status('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_status('wrong_argument'))
+
+    def test_command_pause(self):
+        """ test pause command"""
+        tss = self.tss
+
+        print('testing pause command that runs normally and returns None')
+        self.assertIsNone(tss.do_pause(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_pause('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_pause('wrong_argument'))
+
+    def test_command_resume(self):
+        """ test resume command"""
+        tss = self.tss
+
+        print('testing resume command that runs normally and returns None')
+        self.assertIsNone(tss.do_resume(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_resume('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_resume('wrong_argument'))
+
+    def test_command_bye(self):
+        """ test bye command"""
+        tss = self.tss
+
+        print('testing bye command that runs normally and returns True to exit the shell')
+        self.assertTrue(tss.do_bye(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_bye('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_bye('wrong_argument'))
+
+    def test_command_stop(self):
+        """ test stop command"""
+        tss = self.tss
+
+        print('testing stop command that runs normally and returns True to exit the shell')
+        self.assertTrue(tss.do_stop(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_stop('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_stop('wrong_argument'))
+
+    def test_command_exit(self):
+        """ test exit command"""
+        tss = self.tss
+
+        print('testing exit command that runs normally and returns True to exit the shell')
+        self.assertTrue(tss.do_exit(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_exit('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_exit('wrong_argument'))
+
+    def test_command_pool(self):
+        """ test pool command"""
+        tss = self.tss
+
+        raise NotImplementedError('test pool command')
+
+    def test_command_watch(self):
+        """ test watch command"""
+        tss = self.tss
+
+        print('testing watch command that runs normally and returns None')
+        self.assertIsNone(tss.do_watch(''))
+
+        print('testing add a new stock to watch list')
+        self.assertIsNone(tss.do_watch('000002.SZ'))
+        self.assertEqual(tss.watch_list, ['000001.SH', '000002.SZ'])
+        self.assertIsNone(tss.do_watch('000002.SZ'))
+        self.assertEqual(tss.watch_list, ['000001.SH', '000002.SZ'])
+
+        print('testing remove a stock from watch list')
+        self.assertIsNone(tss.do_watch('-r 000001.SH'))
+        self.assertEqual(tss.watch_list, ['000002.SZ'])
+        self.assertIsNone(tss.do_watch('-r 000001.SH'))
+        self.assertEqual(tss.watch_list, ['000002.SZ'])
+
+        print('testing remove all stocks from watch list')
+        self.assertIsNone(tss.do_watch('-c'))
+        self.assertEqual(tss.watch_list, [])
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_watch('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_watch('wrong_argument'))
+
+    def test_command_buy(self):
+        """ test buy command"""
+        tss = self.tss
+
+        print('testing buy command that runs normally and returns None')
+        self.assertIsNone(tss.do_buy('000001.SH 100 10.0'))
+
 
 
 if __name__ == '__main__':
