@@ -1058,8 +1058,6 @@ class TraderShell(Cmd):
             nan_profit_pos_string = ''
         rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
 
-        return False
-
     def do_overview(self, arg):
         """usage: overview [-h] [--detail] [--system]
 

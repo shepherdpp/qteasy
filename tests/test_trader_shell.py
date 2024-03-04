@@ -144,6 +144,23 @@ class TestTraderShell(unittest.TestCase):
         print(f'testing run command with wrong arguments and returns False')
         self.assertFalse(tss.do_stop('wrong_argument'))
 
+    def test_command_info(self):
+        """ test info command"""
+        tss = self.tss
+
+        print('testing info command that runs normally and returns None')
+        self.assertIsNone(tss.do_info(''))
+        self.assertIsNone(tss.do_info('-d'))
+        self.assertIsNone(tss.do_info('-s'))
+        self.assertIsNone(tss.do_info('-d -s'))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_info('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_info('wrong_argument'))
+        self.assertFalse(tss.do_info('-d -w wrong_optional_argument'))
+
     def test_command_exit(self):
         """ test exit command"""
         tss = self.tss
@@ -252,7 +269,6 @@ class TestTraderShell(unittest.TestCase):
         self.assertIsNone(tss.do_config('trade_batch_size -s 0'))
         self.assertIsNone(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty now accepted
 
-
     def test_command_sell(self):
         """ test sell command"""
         tss = self.tss
@@ -312,13 +328,31 @@ class TestTraderShell(unittest.TestCase):
         """ test positions command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing positions command that runs normally and returns None')
+        self.assertIsNone(tss.do_positions(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_positions('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_positions('wrong_argument'))
 
     def test_command_overview(self):
         """ test overview command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing overview command that runs normally and returns None')
+        self.assertIsNone(tss.do_overview(''))
+        self.assertIsNone(tss.do_overview('-d'))
+        self.assertIsNone(tss.do_overview('-s'))
+        self.assertIsNone(tss.do_overview('-d -s'))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_overview('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_overview('wrong_argument'))
+        self.assertFalse(tss.do_overview('-d -w wrong_optional_argument'))
 
     def test_command_config(self):
         """ test config command"""
@@ -382,7 +416,14 @@ class TestTraderShell(unittest.TestCase):
         """ test dashboard command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing dashboard command that runs normally and returns True to exit the shell')
+        self.assertTrue(tss.do_dashboard(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_dashboard('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_dashboard('wrong_argument'))
 
     def test_command_strategies(self):
         """ test strategies command"""
@@ -394,7 +435,14 @@ class TestTraderShell(unittest.TestCase):
         """ test schedule command"""
         tss = self.tss
 
-        raise NotImplementedError
+        print('testing schedule command that runs normally and returns None')
+        self.assertIsNone(tss.do_schedule(''))
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_schedule('-h'))
+
+        print('testing schedule command with wrong arguments and returns False')
+        self.assertFalse(tss.do_schedule('wrong_argument'))
 
     def test_command_run(self):
         """ test run command"""
