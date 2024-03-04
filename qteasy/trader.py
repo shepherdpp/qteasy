@@ -80,11 +80,7 @@ def parse_shell_argument(arg: str = None, default=None, command_name=None, escap
         1. "watch 000651.SH" 不应该修改为 "watch -000651.SH"，因此纯数字开头的参数不添加"-"
         2. "config mode" 不应该修改为 "config --mode"，此时应该在命令执行函数中调用parse_sell_argument时设置escape_dash=True
     """
-    # TODO: should return:
-    #  a dict that contains values of all arguments, such as:
-    #  {'arg1': (value),
-    #   'arg2': value2}
-    #  maybe should use parser to parse arguments, arguments defined in each command
+
     if arg is None:
         return [] if default is None else [default]
     arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
