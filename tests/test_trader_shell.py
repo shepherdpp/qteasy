@@ -9,10 +9,11 @@
 # ======================================
 
 import unittest
-import time
 
 from qteasy import DataSource, Operator
 from qteasy.trader import Trader, TraderShell
+from qteasy.trading_util import read_trade_order
+from qteasy.trade_recording import new_account
 from qteasy.broker import SimulatorBroker
 
 
@@ -49,6 +50,14 @@ class TestTraderShell(unittest.TestCase):
         broker = SimulatorBroker()
 
         test_ds.reconnect()
+        # 清空测试数据源中的所有相关表格数据
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
+            if test_ds.table_data_exists(table):
+                test_ds.drop_table_data(table)
+
+        # 创建一个ID=1的账户
+        new_account('test_user1', 100000, test_ds)
+
         self.ts = Trader(
                 account_id=1,
                 operator=operator,
@@ -187,8 +196,107 @@ class TestTraderShell(unittest.TestCase):
 
         print('testing buy command that runs normally and returns None')
         self.assertIsNone(tss.do_buy('000001.SH 100 10.0'))
+        order = read_trade_order()
 
+    def test_command_sell(self):
+        """ test sell command"""
+        tss = self.tss
 
+        raise NotImplementedError
+
+    def test_command_positions(self):
+        """ test positions command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_overview(self):
+        """ test overview command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_config(self):
+        """ test config command"""
+        tss = self.tss
+
+        print(f'testing running with no arguments and print out configs up to level 2')
+        self.assertIsNone(tss.do_config(''))
+        print(f'testing running with -l 3 and print out configs up to level 3')
+        self.assertIsNone(tss.do_config('-lll'))
+        print(f'testing running with one key given and print out the value of the key')
+        self.assertIsNone(tss.do_config('mode'))
+        self.assertIsNone(tss.do_config('time_zone'))
+        print(f'testing running with multiple keys given')
+        self.assertIsNone(tss.do_config('mode time_zone'))
+        print(f'testing running with multiple keys given with details')
+        self.assertIsNone(tss.do_config('mode time_zone -d'))
+        print(f'testing running with user defined keys')
+        self.assertIsNone(tss.do_config('user_defined_key'))
+        self.assertIsNone(tss.do_config('user_defined_key -d'))
+        print(f'testing running with values to set to config key')
+        self.assertEqual(tss.trader.config['mode'], 0)
+        self.assertIsNone(tss.do_config('mode -s 1'))
+        self.assertEqual(tss.trader.config['mode'], 1)
+        self.assertEqual(tss.trader.config['time_zone'], 'local')
+        self.assertIsNone(tss.do_config('mode time_zone -s 0 Asia/Shanghai'))
+        self.assertEqual(tss.trader.config['mode'], 0)
+        self.assertEqual(tss.trader.config['time_zone'], 'Asia/Shanghai')
+        self.assertIsNone(tss.do_config('mode time_zone -s 35 Asia/Shanghai'))
+        self.assertEqual(tss.trader.config['mode'], 0)
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_config('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_config('user_defined_key -d positional_arg_in_wrong_place'))
+        self.assertFalse(tss.do_config('--wrong_optional_arg'))
+        self.assertFalse(tss.do_config('-w'))
+        self.assertFalse(tss.do_config('argument -l 2'))
+        self.assertFalse(tss.do_config('argument -l -s value_1 too_many_set_values'))
+        self.assertFalse(tss.do_config('argument too_many_args -s too_few_set_value'))
+
+    def test_command_history(self):
+        """ test history command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_orders(self):
+        """ test orders command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_change(self):
+        """ test change command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_dashboard(self):
+        """ test dashboard command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_strategies(self):
+        """ test strategies command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_schedule(self):
+        """ test schedule command"""
+        tss = self.tss
+
+        raise NotImplementedError
+
+    def test_command_run(self):
+        """ test run command"""
+        tss = self.tss
+
+        raise NotImplementedError
 
 if __name__ == '__main__':
     unittest.main()

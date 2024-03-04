@@ -58,6 +58,9 @@ class TraderShell(Cmd):
     - exit: 停止交易系统并退出shell
     - stop: 停止交易系统并退出shell
     - info: 查看交易系统信息
+    - watch: 添加或删除股票到监视列表
+    - buy: 手动创建买入订单
+    - sell: 手动创建卖出订单
     - change: 手动修改交易系统的资金和持仓
     - positions: 查看账户持仓
     - orders: 查看账户订单
@@ -66,9 +69,13 @@ class TraderShell(Cmd):
     - config: 查看或修改qt_config配置信息
     - dashboard: 退出shell，进入dashboard模式
     - strategies: 查看策略信息，或者修改策略参数
-    - agenda: 查看交易日程
+    - schedule: 查看交易日程
     - help: 查看帮助信息
     - run: 手动运行交易策略，此功能仅在debug模式下可用
+
+    qteasy Shell的命令支持参数解析，用户可以通过命令行参数来调整命令的行为，要查看所有命令的帮助，
+    可以使用命令 "help" 或者 "?"，要查看某个命令的帮助，可以使用命令 "help <command>" 或者
+    命令的-h参数，如<command -h>。
 
     在Shell运行过程中按下 ctrl + c 进入状态选单，用户可以选择进入dashboard模式或者退出shell
 
@@ -126,7 +133,7 @@ class TraderShell(Cmd):
                             epilog='Get trader info, including basic information of current '
                                    'account, and current cash and positions'),
         'config':      dict(prog='config', description='Show or change qteasy configurations',
-                            usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--set SET]'),
+                            usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--detail] [--set SET]'),
         'history':     dict(prog='history', description='List trade history of a stock',
                             usage='history [SYMBOL] [-h]',
                             epilog='List all trade history of one particular stock, displaying '
@@ -187,6 +194,7 @@ class TraderShell(Cmd):
                          ('--system', '-s')],
         'config':       [('keys',),
                          ('--level', '-l'),
+                         ('--detail', '-d'),
                          ('--set', '-s')],
         'history':      [('symbol',)],
         'orders':       [('symbol',),
@@ -275,6 +283,8 @@ class TraderShell(Cmd):
                          {'action': 'count',
                           'default': 2,
                           'help': 'config level to show or change'},
+                         {'action': 'store_true',
+                          'help': 'show detailed config info'},
                          {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                           'nargs': '*',
                           'help': 'config values to set or change for keys'}],
@@ -1081,7 +1091,7 @@ class TraderShell(Cmd):
             return self.do_positions(arg='')
 
     def do_config(self, arg):
-        """usage: config [KEYS [kEYS ...]] [-h] [--level] [--set [SET [SET ...]]]
+        """usage: config [KEYS [kEYS ...]] [-h] [--level] [--detail] [--set [SET [SET ...]]]
 
         Show or change qteasy configurations
 
@@ -1091,6 +1101,7 @@ class TraderShell(Cmd):
         optional arguments:
           -h, --help            show this help message and exit
           --level, -l           config level to show or change, default to level 2
+          --detail, -d          show detailed config info
           --set [SET [SET ...]], -s [SET [SET ...]]
                                 config values to set or change for key, a key must be given to set value
 
@@ -1117,59 +1128,51 @@ class TraderShell(Cmd):
             return False
 
         from qteasy._arg_validators import _vkwargs_to_text
-        from rich import print as rprint
+        import rich
         import shutil
+
+        # get terminal width and set print width to 75% of terminal width
         column_width, _ = shutil.get_terminal_size()
         column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        if len(args) == 0:
-            config = self.trader.get_config()
-            rprint(_vkwargs_to_text(config,
-                                    level=[0],
-                                    info=True,
-                                    verbose=False,
-                                    width=column_width)
-                   )
-        elif len(args) == 1:
-            if args[0].isdigit():  # arg is level
-                config = self.trader.get_config()
-                level = int(args[0])
-                rprint(_vkwargs_to_text(config,
-                                        level=list(range(0, level + 1)),
+
+        keys = [str(key) for key_list in args.keys for key in key_list] if args.keys else []
+        set_values = [str(value) for value_list in args.set for value in value_list] if args.set else []
+        level = args.level
+        verbose = args.detail
+
+        get_config = self.trader.get_config
+        if not keys:  # no keys given, show all configures
+            configs = get_config()
+            rich.print(_vkwargs_to_text(configs,
+                                        level=level,
                                         info=True,
-                                        verbose=False,
+                                        verbose=verbose,
                                         width=column_width)
                        )
-            else:  # arg is key
-                config = self.trader.get_config(args[0])
-                key = args[0]
-                value = config[key]
-                if value is None:
-                    print(f'configure key "{key}" not found.')
-                    return
-                rprint(_vkwargs_to_text(config,
+        # if keys are given and set_values are not given, show configure values
+        elif keys and not set_values:
+            configs = {key: get_config(key)[key] for key in keys}
+            rich.print(_vkwargs_to_text(configs,
                                         level='all',
                                         info=True,
-                                        verbose=True,
+                                        verbose=verbose,
                                         width=column_width)
                        )
-        elif len(args) == 2:
-            key = args[0]
-            value = args[1]
-            try:
-                result = self.trader.update_config(key, value)
-                if result:
-                    rprint(f'configure key "{key}" has been changed to "{value}".')
-                else:
-                    rprint(f'configure key "{key}" can not be changed to "{value}".')
-            except Exception as e:
-                print(f'Error: {e}')
-                if self.trader.debug:
-                    import traceback
-                    traceback.print_exc()
-            return
-        else:
-            rprint(f'config command does not accept more than 2 arguments\n')
-            return
+        # if keys are given and set_values are also given, set configure values
+        elif keys and set_values:
+            if len(keys) != len(set_values):
+                rich.print(f'[bold red]Number of keys and values do not match: {len(keys)} keys and '
+                           f'{len(set_values)} values[/bold red]')
+                return False
+
+            # update configure values one by one
+            for key, value in zip(keys, set_values):
+                try:
+                    self.trader.update_config(key, value)
+                    rich.print(f'[bold green]configure key "{key}" has been changed to "{value}".[bold green]')
+                except:
+                    rich.print(f'[bold red]configure key "{key}" can not be changed to "{value}".[/bold red]')
+                    continue
 
     def do_history(self, arg):
         """usage: history [SYMBOL] [-h]
@@ -2112,6 +2115,10 @@ class Trader(object):
     @property
     def datasource(self):
         return self._datasource
+
+    @property
+    def config(self):
+        return self._config
 
     # ================== methods ==================
     def get_current_tz_datetime(self):
