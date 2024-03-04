@@ -2475,12 +2475,12 @@ class DataSource:
             if password is None:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
+            self.source_type = 'db'
+            con = pymysql.connect(host=host,
+                                  port=port,
+                                  user=user,
+                                  password=password)
             try:
-                self.source_type = 'db'
-                con = pymysql.connect(host=host,
-                                      port=port,
-                                      user=user,
-                                      password=password)
                 # 检查db是否存在，当db不存在时创建新的db
                 cursor = con.cursor()
                 sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
@@ -2489,7 +2489,6 @@ class DataSource:
                 sql = f"USE {db_name}"
                 cursor.execute(sql)
                 con.commit()
-                con.close()
                 # create mysql database connection info
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
                 self.host = host
@@ -2505,6 +2504,8 @@ class DataSource:
                               f' will fall back to default type', RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
+            finally:
+                con.close()
 
         if source_type.lower() == 'file':
             # set up file type and file location
@@ -2933,11 +2934,9 @@ class DataSource:
             con.commit()
 
             data = cursor.fetchall()
-            df = pd.DataFrame(data)
-            # make sure df has correct column names
-            df.columns = [i[0] for i in cursor.description]
+            # return data in forms of DataFrame with correct column names
+            df = pd.DataFrame(data, columns=[i[0] for i in cursor.description])
 
-            # df = pd.read_sql_query(sql, con=con)  # TODO: v1.0.27: remove pd API with databases
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')

@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.0.27 (2024-3-5)
+- Removed dependency on pandas to load dataframes from database, which will arouse UserWarnings in higher versions of pandas, requesting users to install sqlalchemy
+
 ## 1.0.26 (2024-2-29)
 - Now live trade logs are kept in system log files, live logs are saved in the same file, with different account number as prefix
 - Fixed bugs

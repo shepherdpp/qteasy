@@ -40,6 +40,7 @@ class TestDataSource(unittest.TestCase):
         # TODO: do not explicitly leave password and user in the code
         from qteasy import QT_CONFIG
 
+        print('preparing test data sources with configurations...')
         self.ds_db = DataSource(
                 'db',
                 host=QT_CONFIG['test_db_host'],
@@ -48,9 +49,15 @@ class TestDataSource(unittest.TestCase):
                 password=QT_CONFIG['test_db_password'],
                 db_name=QT_CONFIG['test_db_name']
         )
+        print(f'created test data source: {self.ds_db}')
         self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
+        print(f'created test data source: {self.ds_csv}')
         self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
+        print(f'created test data source: {self.ds_hdf}')
         self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
+        print(f'created test data source: {self.ds_fth}')
+
+        print('preparing test data...')
         self.df = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                            '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
@@ -929,8 +936,11 @@ class TestDataSource(unittest.TestCase):
                          }
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
 
+        print(f'test downloading and updating table data from tushare')
+
         for table in tables_to_test:
             # 删除已有的表
+            print(f'dropping table arr ({table}) from all data sources')
             for ds in all_data_sources:
                 ds.drop_table_data(table)
             # 下载并写入数据到表中
