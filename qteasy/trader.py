@@ -109,6 +109,8 @@ class TraderShell(Cmd):
                             usage='info [-h] [--detail] [--system]',
                             epilog='Get trader info, including basic information of current '
                                    'account, and current cash and positions'),
+        'pool':        dict(prog='pool', description='Show details of asset pool',
+                            usage='pool [-h]'),
         'watch':       dict(prog='watch', description='Add or remove stock symbols to watch list',
                             usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
                                   '[REMOVE [REMOVE ...]]] [--clear]'),
@@ -175,6 +177,7 @@ class TraderShell(Cmd):
         'stop':         [],
         'info':         [('--detail', '-d'),
                          ('--system', '-s')],
+        'pool':         [],
         'watch':        [('symbols',),
                          ('--position', '--positions', '-pos', '-p'),
                          ('--remove', '-r'),
@@ -212,8 +215,7 @@ class TraderShell(Cmd):
                          ('--detail', '-d'),
                          ('--set-par', '--set', '-s'),
                          ('--blender', '-b'),
-                         ('--timing', '-t'),
-                         ('--help', '-h'),],
+                         ('--timing', '-t')],
         'schedule':     [],
         'run':          [('strategy',),
                          ('--task', '-t'),
@@ -231,6 +233,7 @@ class TraderShell(Cmd):
                           'help':   'show detailed account info'},
                          {'action': 'store_true',
                           'help':   'show system info'}],
+        'pool':         [],
         'watch':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                           'nargs': '*',  # nargs='+' will require at least one argument
                           'help': 'stock symbols to add to watch list'},
@@ -341,13 +344,14 @@ class TraderShell(Cmd):
                           'help': 'show detailed strategy info'},
                          {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                           'nargs': '*',
+                          'dest': 'set_val',
                           'help': 'set parameters for strategy'},
                          {'action': 'store',
-                          'default': 'all',
+                          'default': '',
                           'type':   str,
                           'help': 'set blender for strategies'},
                          {'action': 'store',
-                          'default': 'all',
+                          'default': '',
                           'help': 'The strategy run timing of the strategies whose blender is set'}],
         'schedule':     [],
         'run':          [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
@@ -702,8 +706,12 @@ class TraderShell(Cmd):
         stock symbol, name, company name, industry, listed date, etc.
 
         """
-        # TODO: implement this function
-        return False
+
+        args = self.parse_args('pool', arg)
+        if not args:
+            return False
+
+        return self.trader.asset_pool_detail()
 
     def do_watch(self, arguments):
         """usage: watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove [REMOVE [REMOVE ...]]] [--clear]
@@ -1584,56 +1592,72 @@ class TraderShell(Cmd):
         (QTEASY): strategies --detail
         to set parameters (1, 2, 3) for strategy "stg":
         (QTEASY): strategies stg --set-par 1 2 3
+        to set parameters (1, 2, 3) and (4, 5) for strategies "stg1" and "stg2" respectively:
+        (QTEASY): strategies stg1 stg2 -s 1 2 3 -s 4 5
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
         """
 
-        # TOOD: update this command
-
-        # TODO: to change blender of strategies, use strategies blender|b <blender>
         args = self.parse_args('strategies', arg)
         if not args:
             return False
 
-        strategies = [stg for stg_list in args.keys for stg in stg_list] if args.keys else []
+        strategies = [stg for stg_list in args.strategy for stg in stg_list] if args.strategy else []
         detail = args.detail
+        set_val = [tuple(val_list) for val_list in args.set_val] if args.set_val else []
+        timing = args.timing
+        blender = args.blender
 
-        if args[0] in ['-d', '--detail']:
-            self.trader.operator.info()
-        elif args[0] in ['-s', '--set-par']:
-            if len(args) < 3:
-                print('To set up variable parameter of a strategy, input a valid strategy id and a parameter:\n'
-                      'For Example, to set (1, 2, 3) as the parameter of strategy "custom", use:\n'
-                      '(QTEASY): strategies -s custom (1, 2, 3)')
-                return
-            strategy_id = args[1]
-            pars = args[2:]
+        if not strategies:
+            # if strategies are not given then display information of operator
+            self.trader.operator.info(verbose=detail)
+            return
+
+        if strategies and not set_val:
+            # if strategies are given without set values
+
+            strategy_ids = self.trader.operator.strategy_ids
+            # check if strategies are all valid strategy ids
+            if any(stg not in strategy_ids for stg in strategies):
+                wrong_stg = [stg not in strategy_ids for stg in strategies]
+                print(f'Strategies ({wrong_stg}) are not valid strategy ids, please check your input!')
+                return False
+            # show strategy info one by one
+            for stg in strategies:
+                self.trader.operator[stg].info()
+            return
+
+        elif strategies and set_val:
+            # set the parameters of each strategy
+
+            # count of strategies should match that of set_val
+            if len(strategies) != len(set_val):
+                print(f'Number of strategies({len(strategies)}) must match set_val({len(set_val)})')
+                return False
+
+            for stg, val in zip(strategies, set_val):
+                try:
+                    self.trader.operator.set_parameter(stg_id=stg, pars=val)
+                except Exception as e:
+                    print(f'Can not set {val} to {stg}, Error: {e}')
+                    self.trader.operator.info()
+                    if self.trader.debug:
+                        import traceback
+                        traceback.print_exc()
+                    continue
+                print(f'Parameter {val} has been set to strategy {stg}.')
+
+        elif timing and blender:
             try:
-                new_pars = eval(','.join(pars))
+                self.trader.operator.set_blender(blender=blender, run_timing=timing)
+                print(f'Blender {blender} has been set to run timing {timing}')
             except Exception as e:
-                print(f'Invalid parameter ({",".join(pars)})! Error: {e}')
-                if self.trader.debug:
-                    import traceback
-                    traceback.print_exc()
-                return
-            if not isinstance(new_pars, tuple):
-                print(f'Invalid parameter ({new_pars})! Parameter should be a tuple')
-            if not isinstance(new_pars, tuple):
-                print(f'Invalid parameter ({new_pars})! Please input a valid parameter.')
-                return
-            try:
-                self.trader.operator.set_parameter(stg_id=strategy_id, pars=new_pars)
-            except Exception as e:
-                print(f'Can not set {new_pars} to {strategy_id}, Error: {e}')
+                print(f'Can not set {blender} to {timing}, Error: {e}')
                 self.trader.operator.info()
                 if self.trader.debug:
                     import traceback
                     traceback.print_exc()
                 return
-            print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
-            self.trader.operator.info()
-        elif args[0] in ['-b', '--blender']:
-            print(f'Not implemented yet.')
 
     def do_schedule(self, arg):
         """ usage: schedule [-h]
@@ -2497,6 +2521,17 @@ class Trader(object):
                          'delivery_status'],
         )
         return order_result_details
+
+    def asset_pool_detail(self):
+        """ 显示asset_pool的详细信息"""
+        # get all symbols from asset pool, display their master info
+        asset_pool = self.asset_pool
+        stock_basic = self.datasource.read_table_data(table='stock_basic')
+        if stock_basic.empty:
+            print(f'No stock basic data found in the datasource, acquire data with '
+                  f'"qt.refill_data_source(tables="stock_basic")"')
+            return
+        print(stock_basic.reindex(index=asset_pool))
 
     # ============ definition of tasks ================
     def _start(self):
