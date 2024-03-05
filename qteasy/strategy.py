@@ -396,7 +396,9 @@ class BaseStrategy:
 
     @property
     def pars(self):
-        """策略参数，元组"""
+        """策略参数，元组
+        :return:
+        """
         return self._pars
 
     @pars.setter
@@ -649,10 +651,17 @@ class BaseStrategy:
             return 1
         if isinstance(pars, dict):
             return self.set_dict_pars(pars)
+        # try correct par types
+        try:
+            pars = self.correct_pars_type(pars)
+        except:
+            return 0
         # now pars should be tuples
         if self.check_pars(pars):
             self._pars = pars
             return 1
+        else:
+            return 0
 
     def check_pars(self, pars):
         """检查pars(一个tuple)是否符合strategy的参数设置"""
@@ -665,17 +674,13 @@ class BaseStrategy:
                                  f' got {len(pars)} ({pars}).')
             if par_type in ['int', 'discr']:
                 # 如果par_type是int或者discr，那么par应该是一个整数
-                try:
-                    par = int(par)
-                except Exception:
-                    raise Exception(f'Invalid parameter, {par} can not be converted to an integer')
+                if not isinstance(par, int):
+                    raise Exception(f'Invalid parameter, it should be an integer, got {type(par)}')
 
             if par_type in ['float', 'conti']:
-                # 如果par_type是float或者conti，那么par应该是一个浮点数
-                try:
-                    par = float(par)
-                except Exception:
-                    raise Exception(f'Invalid parameter, {par} can not be converted to a float number')
+                # 如果par_type是float或者conti，那么par应该是一个浮点数/整数
+                if not isinstance(par, (int, float)):
+                    raise Exception(f'Invalid parameter, it should be a float or an integer, got {type(par)}')
 
             if par_type in ['enum']:
                 # 如果par_type是enum，那么par应该是par_range中的一个元素
@@ -687,6 +692,31 @@ class BaseStrategy:
                 if (par < l_bound) or (par > u_bound):
                     raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
         return True
+
+    def correct_pars_type(self, pars):
+        """ 将可能为字符串格式的pars根据type调整为正确的格式
+
+        Returns
+        -------
+        pars: tuple
+            pars in corrected type
+        """
+        corrected_pars = [None] * self._par_count
+        try:
+            for i in range(self._par_count):
+                par = pars[i]
+                p_type = self.par_types[i]
+                if p_type in ['int', 'descr']:
+                    corrected_pars[i] = int(par)
+                elif p_type in ['float', 'conti']:
+                    corrected_pars[i] = float(par)
+                else:
+                    corrected_pars[i] = par
+
+            return tuple(corrected_pars)
+
+        except Exception as e:
+            raise RuntimeError({e})
 
     def set_dict_pars(self, pars: dict) -> int:
         """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合

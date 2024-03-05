@@ -1524,9 +1524,7 @@ class Operator:
             raise KeyError(f'Specified strategie does not exist or can not be found!')
         # 逐一修改该策略对象的各个参数
         if pars is not None:  # 设置策略参数
-            if strategy.set_pars(pars):
-                pass
-            else:
+            if not strategy.set_pars(pars):
                 raise ValueError(f'parameter setting error')
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)

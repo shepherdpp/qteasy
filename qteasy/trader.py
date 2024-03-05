@@ -1608,12 +1608,12 @@ class TraderShell(Cmd):
         timing = args.timing
         blender = args.blender
 
-        if not strategies:
+        if not strategies and not blender:
             # if strategies are not given then display information of operator
             self.trader.operator.info(verbose=detail)
             return
 
-        if strategies and not set_val:
+        elif strategies and not set_val:
             # if strategies are given without set values
 
             strategy_ids = self.trader.operator.strategy_ids
@@ -1624,7 +1624,7 @@ class TraderShell(Cmd):
                 return False
             # show strategy info one by one
             for stg in strategies:
-                self.trader.operator[stg].info()
+                self.trader.operator[stg].info(verbose=detail)
             return
 
         elif strategies and set_val:
@@ -1637,15 +1637,16 @@ class TraderShell(Cmd):
 
             for stg, val in zip(strategies, set_val):
                 try:
-                    self.trader.operator.set_parameter(stg_id=stg, pars=val)
+                    # correct par type before setting
+                    op = self.trader.operator
+                    op.set_parameter(stg_id=stg, pars=val)
+                    print(f'Parameter {val} has been set to strategy {stg}.')
                 except Exception as e:
                     print(f'Can not set {val} to {stg}, Error: {e}')
-                    self.trader.operator.info()
                     if self.trader.debug:
                         import traceback
                         traceback.print_exc()
-                    continue
-                print(f'Parameter {val} has been set to strategy {stg}.')
+                    return False
 
         elif timing and blender:
             try:
@@ -1653,11 +1654,10 @@ class TraderShell(Cmd):
                 print(f'Blender {blender} has been set to run timing {timing}')
             except Exception as e:
                 print(f'Can not set {blender} to {timing}, Error: {e}')
-                self.trader.operator.info()
                 if self.trader.debug:
                     import traceback
                     traceback.print_exc()
-                return
+                return False
 
     def do_schedule(self, arg):
         """ usage: schedule [-h]

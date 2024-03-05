@@ -726,8 +726,6 @@ class TestTraderShell(unittest.TestCase):
         self.assertFalse(tss.do_change('000001 -a 100 -p 10 -c not_a_number'))
         self.assertFalse(tss.do_change('000001 -a 100 -p 10 -c -10'))  # negative cash
 
-
-
     def test_command_dashboard(self):
         """ test dashboard command"""
         tss = self.tss
@@ -746,15 +744,59 @@ class TestTraderShell(unittest.TestCase):
         tss = self.tss
 
         print('testing strategies command that runs normally and returns None')
+
+        print(f'\n-----------------------\n'
+              f'testing operator info get without detail')
         self.assertIsNone(tss.do_strategies(''))
+        print(f'\n-----------------------\n'
+              f'testing operator info get with detail')
         self.assertIsNone(tss.do_strategies('-d'))
 
-        print(f'testing getting help and returns False')
+        print(f'\n-----------------------\n'
+              f'testing strategies info get by id without detail')
+        self.assertIsNone(tss.do_strategies('dma'))
+        self.assertIsNone(tss.do_strategies('macd'))
+
+        print(f'\n-----------------------\n'
+              f'testing strategies info get two ids without detail')
+        self.assertIsNone(tss.do_strategies('macd dma'))
+
+        print(f'\n-----------------------\n'
+              f'testing strategies info get by id with detail')
+        self.assertIsNone(tss.do_strategies('dma -d'))
+        self.assertIsNone(tss.do_strategies('macd -d'))
+
+        print(f'\n-----------------------\n'
+              f'testing strategies info get two ids with detail')
+        self.assertIsNone(tss.do_strategies('macd dma -d'))
+
+        print('\ntesting setting pars to one and two strategies')
+        self.assertEqual(tss.trader.operator['macd'].pars, (12, 26, 9))
+        self.assertIsNone(tss.do_strategies('macd -s 35 25 55'))
+        self.assertEqual(tss.trader.operator['macd'].pars, (35, 25, 55))
+        self.assertEqual(tss.trader.operator['dma'].pars, (12, 26, 9))
+        self.assertIsNone(tss.do_strategies('dma -s 35 25 55'))
+        self.assertEqual(tss.trader.operator['dma'].pars, (35, 25, 55))
+        self.assertIsNone(tss.do_strategies('dma macd -s 40 41 42 -s 43 44 45'))
+        self.assertEqual(tss.trader.operator['dma'].pars, (40, 41, 42))
+        self.assertEqual(tss.trader.operator['macd'].pars, (43, 44, 45))
+
+        print('\ntesting setting blender to timing')
+        self.assertIsNone(tss.do_strategies('-b s0*s1 -t close'))
+
+        print(f'\ntesting getting help and returns False')
         self.assertFalse(tss.do_strategies('-h'))
 
         print(f'testing run command with wrong arguments and returns False')
-        self.assertFalse(tss.do_strategies('wrong_argument'))
+        self.assertFalse(tss.do_strategies('wrong_strategy'))
         self.assertFalse(tss.do_strategies('-w wrong_optional_argument'))
+        self.assertFalse(tss.do_strategies('dma -s wrong par types'))
+        self.assertFalse(tss.do_strategies('dma -s 1 2 3'))  # out of range pars
+        self.assertFalse(tss.do_strategies('dma -s 44 44 44 44'))  # too many pars
+        self.assertFalse(tss.do_strategies('dma macd -s 44 44 44'))  # value not match strategy
+        self.assertFalse(tss.do_strategies('-d blender -s 44 44 44'))  # blender without timing
+        self.assertFalse(tss.do_strategies('-d blender -t wrong_timing'))
+        self.assertFalse(tss.do_strategies('-d wrong_blender -t wrong_timing'))
 
     def test_command_schedule(self):
         """ test schedule command"""
