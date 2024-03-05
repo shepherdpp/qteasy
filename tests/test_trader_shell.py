@@ -16,7 +16,7 @@ from qteasy import DataSource, Operator
 from qteasy.trader import Trader, TraderShell
 from qteasy.trading_util import process_trade_delivery, process_trade_result, submit_order, update_position
 from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
-from qteasy.trade_recording import get_or_create_position, get_position_by_id
+from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account
 from qteasy.broker import SimulatorBroker
 
 
@@ -67,10 +67,10 @@ class TestTraderShell(unittest.TestCase):
         get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000004.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000005.SZ', position_type='long', data_source=test_ds)
-        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
-        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
-        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
-        update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
+        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200, cost=10)
+        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200, cost=10)
+        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300, cost=10)
+        update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100, cost=10)
 
         self.ts = Trader(
                 account_id=1,
@@ -603,11 +603,130 @@ class TestTraderShell(unittest.TestCase):
         tss = self.tss
 
         print('testing change command that runs normally and returns None')
+        print('testing change quantity without price')
         position = get_position_by_id(1, tss.trader.datasource)
         self.assertEqual(position['qty'], 200)
-        self.assertIsNone(tss.do_change('000001 300'))
+        self.assertEqual(position['available_qty'], 200)
+        self.assertEqual(position['cost'], 10)
+        self.assertIsNone(tss.do_change('000001 --amount 100'))
         position = get_position_by_id(1, tss.trader.datasource)
         self.assertEqual(position['qty'], 300)
+        self.assertEqual(position['available_qty'], 300)
+        self.assertEqual(position['cost'], 10)
+        self.assertIsNone(tss.do_change('000001 -a -100'))
+        position = get_position_by_id(1, tss.trader.datasource)
+        self.assertEqual(position['qty'], 200)
+        self.assertEqual(position['available_qty'], 200)
+        self.assertEqual(position['cost'], 10)
+        print('testing reducing quantity exceeding holding qty')
+        self.assertIsNone(tss.do_change('000001 -a -300'))  # reduce 300 out of 200 will leads to no change
+        position = get_position_by_id(1, tss.trader.datasource)
+        self.assertEqual(position['qty'], 200)
+        self.assertEqual(position['available_qty'], 200)
+        self.assertEqual(position['cost'], 10)
+        print('testing add short side quantity')
+        self.assertIsNone(tss.do_change('000001 -a 300 -s short'))  # 已经拥有000001多头仓位的同时不能拥有空头仓位
+        with self.assertRaises(RuntimeError):
+            get_position_by_id(5, tss.trader.datasource)
+        # 必须首先将多头仓位将为0后才能添加空头仓位
+        self.assertIsNone(tss.do_change('000001 -a -200'))
+        self.assertIsNone(tss.do_change('000001 -a 200 -s short'))
+        position_1 = get_position_by_id(1, tss.trader.datasource)
+        position_5 = get_position_by_id(5, tss.trader.datasource)
+        # 多头仓位已经为0，空头仓位200
+        self.assertEqual(position_1['symbol'], '000001.SZ')
+        self.assertEqual(position_1['position'], 'long')
+        self.assertEqual(position_1['qty'], 0)
+        self.assertEqual(position_1['available_qty'], 0)
+        self.assertEqual(position_1['cost'], 0)
+
+        self.assertEqual(position_5['symbol'], '000001.SZ')
+        self.assertEqual(position_5['position'], 'short')
+        self.assertEqual(position_5['qty'], 200)
+        self.assertEqual(position_5['available_qty'], 200)
+        self.assertEqual(position_5['cost'], 10)
+        # clear short position of 000001 again
+        self.assertIsNone(tss.do_change('000001 -a -200 -s short'))
+
+        print('testing change quantity with price')
+        self.assertIsNone(tss.do_change('000001 --amount 200 --price 10'))
+        self.assertIsNone(tss.do_change('000001 --amount 200 --price 20'))
+        position = get_position_by_id(1, tss.trader.datasource)
+        self.assertEqual(position['qty'], 400)
+        self.assertEqual(position['available_qty'], 400)
+        self.assertEqual(position['cost'], 15)
+        self.assertIsNone(tss.do_change('000001 -a -200 -p 10'))
+        position = get_position_by_id(1, tss.trader.datasource)
+        self.assertEqual(position['qty'], 200)
+        self.assertEqual(position['available_qty'], 200)
+        self.assertEqual(position['cost'], 20)
+        print(f'testing change cash and available cashes')
+        account = get_account(1, data_source=tss.trader.datasource)
+        # import pdb; pdb.set_trace()
+        self.assertEqual(account['cash_amount'], 100000)
+        self.assertEqual(account['available_cash'], 100000)
+        self.assertEqual(account['total_invest'], 100000)
+        self.assertIsNone(tss.do_change('--cash 10000'))
+        account = get_account(1, data_source=tss.trader.datasource)
+        self.assertEqual(account['cash_amount'], 110000)
+        self.assertEqual(account['available_cash'], 110000)
+        self.assertEqual(account['total_invest'], 110000)
+        self.assertIsNone(tss.do_change('-c -10000'))
+        account = get_account(1, data_source=tss.trader.datasource)
+        self.assertEqual(account['cash_amount'], 100000)
+        self.assertEqual(account['available_cash'], 100000)
+        self.assertEqual(account['total_invest'], 100000)
+        print('testing reducing cash amount exceeding on hand cash')
+        self.assertIsNone(tss.do_change('-c -300000'))  # reducing 300k out of 100k will change nothing
+        account = get_account(1, data_source=tss.trader.datasource)
+        self.assertEqual(account['cash_amount'], 100000)
+        self.assertEqual(account['available_cash'], 100000)
+        self.assertEqual(account['total_invest'], 100000)
+
+        print(f'testing change cash and position quantities in the same time')
+        position = get_position_by_id(2, tss.trader.datasource)
+        account = get_account(1, data_source=tss.trader.datasource)
+        self.assertEqual(position['qty'], 200)
+        self.assertEqual(position['available_qty'], 200)
+        self.assertEqual(position['cost'], 10)
+        self.assertEqual(account['cash_amount'], 100000)
+        self.assertEqual(account['available_cash'], 100000)
+        self.assertEqual(account['total_invest'], 100000)
+        self.assertIsNone(tss.do_change('000002 --amount 300 --cash 10000 --price 20'))
+        position = get_position_by_id(2, tss.trader.datasource)
+        account = get_account(1, data_source=tss.trader.datasource)
+        self.assertEqual(position['qty'], 500)
+        self.assertEqual(position['available_qty'], 500)
+        self.assertEqual(position['cost'], 16)
+        self.assertEqual(account['cash_amount'], 110000)
+        self.assertEqual(account['available_cash'], 110000)
+        self.assertEqual(account['total_invest'], 110000)
+        self.assertIsNone(tss.do_change('000002 -a -200 -c -10000 -p 10'))
+        position = get_position_by_id(2, tss.trader.datasource)
+        account = get_account(1, data_source=tss.trader.datasource)
+        self.assertEqual(position['qty'], 300)
+        self.assertEqual(position['available_qty'], 300)
+        self.assertEqual(position['cost'], 20)
+        self.assertEqual(account['cash_amount'], 100000)
+        self.assertEqual(account['available_cash'], 100000)
+        self.assertEqual(account['total_invest'], 100000)
+
+        print(f'testing getting help and returns False')
+        self.assertFalse(tss.do_change('-h'))
+
+        print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_change('wrong_argument'))
+        self.assertFalse(tss.do_change('000001 -w wrong_optional_argument'))
+        self.assertFalse(tss.do_change('000001 -t wrong_optional_argument'))
+        self.assertFalse(tss.do_change('000100 -a 100'))  # symbol not in pool
+        self.assertFalse(tss.do_change('000001 -a -100'))  # negative quantity
+        self.assertFalse(tss.do_change('000001 -a not_a_number'))
+        self.assertFalse(tss.do_change('000001 -a 100 -p not_a_number'))
+        self.assertFalse(tss.do_change('000001 -a 100 -p -10'))  # negative price
+        self.assertFalse(tss.do_change('000001 -a 100 -p 10 -c not_a_number'))
+        self.assertFalse(tss.do_change('000001 -a 100 -p 10 -c -10'))  # negative cash
+
+
 
     def test_command_dashboard(self):
         """ test dashboard command"""

@@ -146,7 +146,7 @@ class TraderShell(Cmd):
                                   '[--type {buy,sell,b,s,all,a}] '
                                   '[--side {long,short,l,s,all,a}]'),
         'change':      dict(prog='change', description='Change account cash and positions',
-                            usage='change SYMBOL [-h] [--amount AMOUNT] [--price PRICE] '
+                            usage='change [SYMBOL] [-h] [--amount AMOUNT] [--price PRICE] '
                                   '[--side {l,long,s,short}] [--cash CASH]',
                             epilog='Change cash or positions or both. nothing will be changed '
                                    'if amount or cash is not given, price is used to calculate '
@@ -314,6 +314,8 @@ class TraderShell(Cmd):
                           'choices': ['long', 'short', 'l', 's', 'all', 'a'],
                           'help': 'order side to show'}],
         'change':       [{'action': 'store',
+                          'nargs': '?',  # one or zero (default value) argument is allowed
+                          'default': '',
                           'help': 'symbol to change position for'},
                          {'action': 'store',
                           'default': 0,
@@ -1419,7 +1421,7 @@ class TraderShell(Cmd):
                 ))
 
     def do_change(self, arg):
-        """usage: change SYMBOL [-h] [--amount AMOUNT] [--price PRICE] [--side {l,long,s,short}]
+        """usage: change [SYMBOL] [-h] [--amount AMOUNT] [--price PRICE] [--side {l,long,s,short}]
                 [--cash CASH]
 
         Change account cash and positions
@@ -1439,7 +1441,8 @@ class TraderShell(Cmd):
 
            Change trader cash and positions
 
-        Change cash or positions or both. nothing will be changed if amount or cash is not given, price is used to calculate new cost, if not given, current price will be used
+        Change cash or positions or both. nothing will be changed if amount or cash is not given,
+        price is used to calculate new cost, if not given, current price will be used
 
         Usage:
         ------
@@ -1458,99 +1461,72 @@ class TraderShell(Cmd):
         to change short side of position of 000651.SH to increase 100 shares at price 32.5:
         (QTEASY) change 000651.SH --amount 100 --price 32.5 --side short
         """
-        # TODO: update this command
 
         args = self.parse_args('change', arg)
         if not args:
             return False
 
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
 
-        if args[0] in ['--cash', '-c']:
-            # change cash
-            if len(args) < 2:
-                print('Please input cash value to increase (+) or to decrease (-).')
-                return
-            try:
-                amount = float(args[1])
-            except ValueError:
-                print('Please input cash value to increase (+) or to decrease (-).')
-                return
+        symbol = args.symbol.upper()
+        qty = args.amount
+        price = args.price
+        side = args.side
+        cash_amount = args.cash
 
-            self.trader._change_cash(amount)
-            return
+        # either qty or cash amount should be given
+        if qty == 0 and cash_amount == 0:
+            print('Please input one of position amount or cash to change.')
+            return False
 
-        symbol = None
-        if is_cn_stock_symbol_like(args[0].upper()):
+        # check the format of symbol
+        if is_cn_stock_symbol_like(symbol):
             # check if input matches one of symbols in trader asset pool
             asset_pool = self.trader.asset_pool
             asset_pool_striped = [symbol.split('.')[0] for symbol in asset_pool]
-            if args[0] not in asset_pool_striped:
-                print(f'symbol {args[0]} not in trader asset pool, please check your input.')
-                return
-            symbol = asset_pool[asset_pool_striped.index(args[0])]
+            if symbol not in asset_pool_striped:
+                print(f'symbol {symbol} not in trader asset pool, please check your input.')
+                return False
+            symbol = asset_pool[asset_pool_striped.index(symbol)]
 
-        if is_complete_cn_stock_symbol_like(args[0].upper()):
-            symbol = args[0].upper()
+        if symbol != '' and not is_complete_cn_stock_symbol_like(symbol):
+            print(f'"{symbol}" invalid: Please input a valid symbol to change position holdings.')
+            return False
 
-        if symbol is None:
-            print(f'"{args[0]}" invalid: Please input a valid symbol to change position holdings.')
-            return
+        # get current price if price is not given
+        if price == 0:
+            try:
+                freq = self.trader.operator.op_data_freq
+                last_available_data = self.trader.datasource.get_history_data(
+                        shares=[symbol],
+                        htypes='close',
+                        asset_type=self.trader.asset_type,
+                        freq=freq,
+                        row_count=10,
+                )
+                current_price = last_available_data['close'][symbol][-1]
+            except Exception as e:
+                print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
+                import traceback
+                traceback.print_exc()
+                current_price = 10.00
+            price = current_price
 
-        if len(args) < 2:
-            print('Please input valid arguments.')
-            return
-
-        # change positions: amount and symbol must be given, minus sign decrease. price is used to update cost,
-        # if not given, current price will be used, side is used to specify long or short side, if not given,
-        # current none-zero side will be used, if both sides are zero, long side will be used. if none-zero side
-        # existed, the other side can not be changed.
-        volume = float(args[1])
-        try:
-            freq = self.trader.operator.op_data_freq
-            last_available_data = self.trader.datasource.get_history_data(
-                    shares=[symbol],
-                    htypes='close',
-                    asset_type=self.trader.asset_type,
-                    freq=freq,
-                    row_count=10,
+        if qty != 0:
+            if side in ['s', 'short']:
+                side = 'short'
+            if side in ['l', 'long']:
+                side = 'long'
+            self._trader.manual_change_position(
+                    symbol=symbol,
+                    quantity=qty,
+                    price=price,
+                    side=side,
             )
-            current_price = last_available_data['close'][symbol][-1]
-        except Exception as e:
-            print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
-            import traceback
-            traceback.print_exc()
-            current_price = 10.00
-        if len(args) == 2:
-            # 只给出两个参数，默认使用最新价格、side为已有的非零持仓
-            price = current_price
-            side = None
-        elif (len(args) == 3) and (args[2] in ['--long', '--short', '-l', '-s']):
-            # 只给出side参数，默认使用最新价格
-            price = current_price
-            side = 'long' if args[2] in ['--long', '-l'] else 'short'
-        elif (len(args) == 3) and (is_number_like(args[2])):
-            # 只给出price参数，默认使用已有的非零持仓side
-            price = float(args[2])
-            side = None
-        elif (len(args) == 4) and (is_number_like(args[2])) and (args[3] in ['--long', '--short', '-l', '-s']):
-            # 既给出了价格，又给出了side
-            price = float(args[2])
-            side = 'long' if args[3] in ['--long', '-l'] else 'short'
-        elif (len(args) == 4) and (is_number_like(args[3])) and (args[2] in ['--long', '--short', '-l', '-s']):
-            # 既给出了价格，又给出了side
-            price = float(args[3])
-            side = 'long' if args[2] in ['--long', '-l'] else 'short'
-        else:  # not a valid input
-            print(f'{args} is not a valid input, Please input valid arguments.')
-            return
 
-        self._trader._change_position(
-                symbol=symbol,
-                quantity=volume,
-                price=price,
-                side=side,
-        )
+        if cash_amount != 0:
+            # change cash
+            self.trader.manual_change_cash(amount=cash_amount)
 
     def do_dashboard(self, arg):
         """usage: dashboard [-h]
@@ -3187,7 +3163,7 @@ class Trader(object):
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
-    def _change_cash(self, amount):
+    def manual_change_cash(self, amount):
         """ 手动修改现金，根据amount的正负号，增加或减少现金
 
         修改后持有现金/可用现金/总投资金额都会发生变化
@@ -3224,14 +3200,14 @@ class Trader(object):
         self.send_message(f'Cash amount changed to {self.account_cash}')
         return
 
-    def _change_position(self, symbol, quantity, price, side=None):
+    def manual_change_position(self, symbol, quantity, price, side=None):
         """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
 
         修改后持仓的数量 = 原持仓数量 + quantity
         如果找不到指定标的和方向的仓位，则创建一个新的仓位
         如果不指定方向，则查找当前持有的非零仓位，使用持有仓位的方向，如果没有持有非零仓位，则默认为'long'方向
-        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作
-        如果quantity为负且绝对值大于可用数量，则忽略该操作
+        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作，并打印提示
+        如果quantity为负且绝对值大于可用数量，则忽略该操作，并打印提示
 
         Parameters
         ----------
@@ -3267,6 +3243,8 @@ class Trader(object):
                     position_type=side,
                     data_source=self.datasource,
             )
+            if self.debug:
+                print('Position to be modified does not exist, new position is created!')
         elif len(position_ids) == 1:
             # found one position, use it, if side is not consistent, create a new one on the other side
             position_id = position_ids[0]
@@ -3278,7 +3256,8 @@ class Trader(object):
                 side = position['position']
             if side != position['position']:
                 if position['qty'] != 0:
-                    print(f'Position {position_id} is not empty, cannot change side')
+                    print(f'Can not modify position {symbol}@ {side} while {symbol}@ {position["position"]}'
+                          f' still has {position["qty"]} shares, reduce it to 0 first!')
                     return
                 else:
                     position_id = get_or_create_position(
@@ -3312,16 +3291,16 @@ class Trader(object):
                 data_source=self.datasource,
         )
         if self.debug:
-            print(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
-                  f'from {position["qty"]} to {position["qty"] + quantity}')
+            self.send_message(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
+                              f'from {position["qty"]} to {position["qty"] + quantity}')
         # 如果减少持仓，则可用持仓数量必须足够，否则退出
         if quantity < 0 and position['available_qty'] < -quantity:
-            print(f'Not enough position to decrease, available position: {position["available_qty"]}')
+            print(f'Not enough position to decrease, available: {position["available_qty"]}, skipping operation')
             return
         current_total_cost = position['cost'] * position['qty']
         additional_cost = np.round(price * float(quantity), 2)
         new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
-        if np.isinf(new_average_cost):
+        if np.isnan(new_average_cost):
             new_average_cost = 0
         position_data = {
             'qty_change':           quantity,
