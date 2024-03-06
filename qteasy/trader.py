@@ -163,7 +163,7 @@ class TraderShell(Cmd):
                             usage='schedule [-h]'),
         'run':         dict(prog='', description='Run strategies manually',
                             usage='run [STRATEGY [STRATEGY ...]] [-h] '
-                                  '[--task {none,stop,sleep,pause,run_strategy,process_result,'
+                                  '[--task {none,stop,sleep,pause,process_result,'
                                   'pre_open,open_market,close_market,acquire_live_price}] '
                                   '[--args [ARGS [ARGS ...]]]'),
     }
@@ -358,8 +358,8 @@ class TraderShell(Cmd):
                           'nargs': '*',
                           'help': 'strategies to run'},
                          {'action': 'store',
-                          'default': 'none',
-                          'choices': ['none', 'stop', 'sleep', 'pause',
+                          'default': '',
+                          'choices': ['none', 'stop', 'sleep', 'pause', 'resume',
                                       'run_strategy', 'process_result', 'pre_open',
                                       'open_market', 'close_market', 'acquire_live_price'],
                           'help': 'task to run'},
@@ -1710,8 +1710,6 @@ class TraderShell(Cmd):
         (QTEASY): run --task task1 --args arg1 arg2
         """
 
-        # TODO: update this command
-
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
             return False
@@ -1720,20 +1718,20 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        if not isinstance(args, list):
-            print('Invalid argument, use "strategies" to view all strategy ids.\n'
-                  'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
-            return
-        if not args:
-            print('A valid strategy id must be given, use "strategies" to view all ids.\n'
-                  'Use: run stg1 [stg2] [stg3] ... to run one or more strategies')
-            return
-        if not args[0] in ['--task', '-t']:  # run strategies
+        strategies = [stg for stg_list in args.strategy for stg in stg_list] if args.strategy else []
+        task = args.task
+        task_args = [t_arg for arg_list in args.args for t_arg in arg_list] if args.args else []
+
+        if not strategies and not task:
+            print('Please input a valid strategy id or task name.')
+            return False
+
+        elif strategies:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
-            if not all([strategy in all_strategy_ids for strategy in args]):
+            if not all([strategy in all_strategy_ids for strategy in strategies]):
                 invalid_stg = [stg for stg in args if stg not in all_strategy_ids]
                 print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
-                return
+                return False
 
             current_trader_status = self.trader.status
             current_broker_status = self.trader.broker.status
@@ -1742,25 +1740,27 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', args, run_in_main_thread=True)
+                self.trader.run_task('run_strategy', strategies, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
                 print(traceback.format_exc())
+                return False
 
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
-            if len(args) == 1:
-                print('Please input a valid task name.')
-                return
-            task_name = args[1]
+            if task not in ['stop', 'sleep', 'pause', 'process_result', 'pre_open']:
+                print(f'Invalid task name: {task}, please input a valid task name.')
+                return False
             try:
-                self.trader.run_task(task_name, run_in_main_thread=True)
+                task_args = tuple(task_args)
+                self.trader.run_task(task, *task_args, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')
                 print(traceback.format_exc())
+                return False
 
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:

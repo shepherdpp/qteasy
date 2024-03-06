@@ -577,6 +577,9 @@ class TestTraderShell(unittest.TestCase):
         """ test orders command"""
         tss = self.tss
 
+        # add testing orders to test data source
+
+
         print('testing orders command that runs normally and returns None')
         self.assertIsNone(tss.do_orders(''))
         self.assertIsNone(tss.do_orders('000001'))
@@ -817,6 +820,9 @@ class TestTraderShell(unittest.TestCase):
 
         print('testing run command that runs normally and returns None')
         self.assertIsNone(tss.do_run(''))
+        self.assertIsNone(tss.do_run('dma'))
+        self.assertIsNone(tss.do_run('macd'))
+        self.assertIsNone(tss.do_run('--task pause'))
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_run('-h'))
