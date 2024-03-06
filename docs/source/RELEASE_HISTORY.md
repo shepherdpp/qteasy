@@ -5,7 +5,7 @@
   - Now all commands support `--parameter` / `-p` style parameters, same way as all other CLI tools
   - All commands now support `--help` and `-h` to show help messages, are now fully documented in the shell help message
   - All commands now have better error handling and usage messages when wrong arguments are given
-  - All commands are now more thouroughly tested and debugged
+  - All commands are now thoroughly tested and debugged
   - Arguments of some of the commands are now re-designed and re-organized to be more intuitive and easier to use:
     - `watch` command now supports `--remove` / `-r` to remove symbols from watch list, and `--clear` / `-c` to clear the list
     - `buy` and `sell` commands now uses `--price` / `-p` to specify price, and `--side` / `-s` to specify position side
@@ -15,6 +15,7 @@
     - `config` command now support `--set` / `-s` to set configurations, and set view levels with count of `--level` / `-l`
     - `strategies` command now supports `--set-par` to set strategy optimizable parameters, and to be implemented: possible to set blenders with `--blender` and `--timing`
     - `run` command now supports running tasks with arguments given with optional flag `--args` / `-a`
+    - `orders` command now works with new optional arguments for time, type, side and status in more logical way
 
 ## 1.0.17 (2024-01-29)
 - improved trader shell command "run", now it can run a strategy in main thread, making it easier to debug
