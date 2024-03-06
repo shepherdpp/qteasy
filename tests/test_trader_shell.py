@@ -578,19 +578,111 @@ class TestTraderShell(unittest.TestCase):
         tss = self.tss
 
         # add testing orders to test data source
+        print('Adding test trade orders and results...')
+        self.stoppage = 0.1
+        parsed_signals_batch = (
+            ['000001.SZ', '000002.SZ', '000004.SZ', '000006.SZ', '000007.SZ', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'sell', 'sell', 'buy', 'buy'],
+            [100, 100, 300, 400, 500],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        # save first batch of signals
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=parsed_signals_batch[0],
+                positions=parsed_signals_batch[1],
+                directions=parsed_signals_batch[2],
+                quantities=parsed_signals_batch[3],
+                prices=parsed_signals_batch[4],
+                data_source=tss.trader.datasource,
+        )
+        # submit orders
+        for order_id in order_ids:
+            submit_order(order_id, tss.trader.datasource)
 
+        # create order results
+        delivery_config = {
+            'cash_delivery_period':  0,
+            'stock_delivery_period': 0,
+        }
+        # order 1 is filled
+        raw_trade_result = {
+            'order_id':        1,
+            'filled_qty':      100,
+            'price':           60.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        time.sleep(self.stoppage)
+        # order 2 is filled
+        raw_trade_result = {
+            'order_id':        2,
+            'filled_qty':      100,
+            'price':           70.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        time.sleep(self.stoppage)
+        # order 3 is partially-filled
+        raw_trade_result = {
+            'order_id':        3,
+            'filled_qty':      200,
+            'price':           80.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        time.sleep(self.stoppage)
+        # order 4 is partially-filled
+        raw_trade_result = {
+            'order_id':        4,
+            'filled_qty':      200,
+            'price':           89.5,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        time.sleep(self.stoppage)
+        # order 5 is canceled
+        raw_trade_result = {
+            'order_id':        5,
+            'filled_qty':      0,
+            'price':           0.0,
+            'transaction_fee': 0.0,
+            'canceled_qty':    500.0,
+        }
+        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        time.sleep(self.stoppage)
 
         print('testing orders command that runs normally and returns None')
+        print(f'\nprint all orders')
         self.assertIsNone(tss.do_orders(''))
+        print(f'\nprint orders of 000001.SZ')
         self.assertIsNone(tss.do_orders('000001'))
+        print(f'\nprint orders that are filled')
         self.assertIsNone(tss.do_orders('--status filled'))
+        print(f'\nprint orders that are canceled')
         self.assertIsNone(tss.do_orders('-s canceled'))
+        print(f'\nprint orders that are executed today')
         self.assertIsNone(tss.do_orders('--time today'))
+        print(f'\nprint orders that are executed yesterday')
         self.assertIsNone(tss.do_orders('-t yesterday'))
+        print(f'\nprint orders that are buy orders')
         self.assertIsNone(tss.do_orders('--type buy'))
+        print(f'\nprint orders that are sell orders')
         self.assertIsNone(tss.do_orders('-y sell'))
+        print(f'\nprint orders that are on the long side')
         self.assertIsNone(tss.do_orders('--side long'))
+        print(f'\nprint orders that are on the short side')
         self.assertIsNone(tss.do_orders('-d short'))
+        print(f'\nprint buy long orders of 000001.SZ that are filled today')
         self.assertIsNone(tss.do_orders('000001 --status filled -t today --type buy -d long'))
 
         print(f'testing getting help and returns False')
@@ -819,16 +911,18 @@ class TestTraderShell(unittest.TestCase):
         tss = self.tss
 
         print('testing run command that runs normally and returns None')
-        self.assertIsNone(tss.do_run(''))
         self.assertIsNone(tss.do_run('dma'))
         self.assertIsNone(tss.do_run('macd'))
+        self.assertIsNone(tss.do_run('dma macd'))
         self.assertIsNone(tss.do_run('--task pause'))
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_run('-h'))
 
         print(f'testing run command with wrong arguments and returns False')
+        self.assertFalse(tss.do_run(''))
         self.assertFalse(tss.do_run('wrong_argument'))
+        self.assertFalse(tss.do_run('-- wrong task'))
 
 
 if __name__ == '__main__':

@@ -200,7 +200,7 @@ class TraderShell(Cmd):
                          ('--detail', '-d'),
                          ('--set', '-s')],
         'history':      [('symbol',)],
-        'orders':       [('symbol',),
+        'orders':       [('symbols',),
                          ('--status', '-s'),
                          ('--time', '-t'),
                          ('--type', '-y'),
@@ -1320,77 +1320,92 @@ class TraderShell(Cmd):
         (QTEASY) orders 000001 -s filled -y buy
         """
 
-        # TODO: update this command
-
         from rich import print as rprint
         args = self.parse_args('orders', arg)
         if not args:
             return False
 
+        symbols = [symbol for symbol_list in args.symbols for symbol in symbol_list] if args.symbols else []
+        status = args.status
+        order_time = args.time
+        order_type = args.type
+        side = args.side
+
         order_details = self._trader.history_orders()
 
-        for argument in args:
-            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
-            # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-            if argument in ['--last_hour', '-l', '-h', '--today', '-t', '--yesterday', '-y',
-                            '--3day', '-3', '--week', '-w', '--month', '-m']:
-                # create order time ranges
-                end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
-                if argument in ['--last_hour', '-l']:
-                    start = pd.to_datetime(end) - pd.Timedelta(hours=1)
-                elif argument in ['--today', '-t']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--yesterday', '-y']:
-                    yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = yesterday.strftime("%Y-%m-%d 00:00:00")
-                    end = yesterday.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--3day', '-3']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=3)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--week', '-w']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=7)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--month', '-m']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=30)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                else:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
+        # filter orders by arguments
 
-                # select orders by time range
-                order_details = order_details[(order_details['submitted_time'] >= start) &
-                                              (order_details['submitted_time'] <= end)]
-            # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
-            elif argument in ['--filled', '-f', '--canceled', '-c', '--partial-filled', '-p']:
-                if argument in ['--filled', '-f']:
-                    order_details = order_details[order_details['status'] == 'filled']
-                elif argument in ['--canceled', '-c']:
-                    order_details = order_details[order_details['status'] == 'canceled']
-                elif argument in ['--partial-filled', '-p']:
-                    order_details = order_details[order_details['status'] == 'partial-filled']
-            # select orders by order side arguments like 'long', 'short'
-            elif argument in ['--long', '-lg', '--short', '-sh']:
-                if argument in ['--long', '-lg']:
-                    order_details = order_details[order_details['position'] == 'long']
-                elif argument in ['--short', '-sh']:
-                    order_details = order_details[order_details['position'] == 'short']
-            # select orders by order side arguments like 'buy', 'sell'
-            elif argument in ['--buy', '-b', '--sell', '-s']:
-                if argument in ['--buy', '-b']:
-                    order_details = order_details[order_details['direction'] == 'buy']
-                elif argument in ['--sell', '-s']:
-                    order_details = order_details[order_details['direction'] == 'sell']
+        # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
+        end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
+        if order_time in ['last_hour', 'l']:
+            start = pd.to_datetime(end) - pd.Timedelta(hours=1)
+        elif order_time in ['today', 't']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['yesterday', 'y']:
+            yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = yesterday.strftime("%Y-%m-%d 00:00:00")
+            end = yesterday.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['3day', '3']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=3)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['week', 'w']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=7)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['month', 'm']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=30)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        else:
+            start = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+
+        # select orders by time range
+        order_details = order_details[(order_details['submitted_time'] >= start) &
+                                      (order_details['submitted_time'] <= end)]
+
+        # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
+        if status in ['filled', 'f']:
+            order_details = order_details[order_details['status'] == 'filled']
+        elif status in ['canceled', 'c']:
+            order_details = order_details[order_details['status'] == 'canceled']
+        elif status in ['partial-filled', 'p']:
+            order_details = order_details[order_details['status'] == 'partial-filled']
+        else:  # default to show all statuses
+            pass
+
+        # select orders by order side arguments like 'long', 'short'
+        if side in ['long', 'l']:
+            order_details = order_details[order_details['position'] == 'long']
+        elif side in ['short', 's']:
+            order_details = order_details[order_details['position'] == 'short']
+        else:  # default to show all sides
+            pass
+
+        # select orders by order side arguments like 'buy', 'sell'
+        if order_type in ['buy', 'b']:
+            order_details = order_details[order_details['direction'] == 'buy']
+        elif order_type in ['sell', 's']:
+            order_details = order_details[order_details['direction'] == 'sell']
+        else:  # default to show all directions
+            pass
+
             # select orders by order symbol arguments like '000001.SZ'
-            elif is_complete_cn_stock_symbol_like(argument.upper()):
-                order_details = order_details[order_details['symbol'] == argument.upper()]
+
+        # normalize symbols to upper case and with suffix codes
+        if symbols:
+            symbols = [symbol.upper() for symbol in symbols]
+
+        for symbol in symbols:
+            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
+            if is_complete_cn_stock_symbol_like(symbol.upper()):
+                order_details = order_details[order_details['symbol'] == symbol.upper()]
             # select orders by order symbol arguments like '000001'
-            elif is_cn_stock_symbol_like(argument):
-                possible_complete_symbols = [argument + '.SH', argument + '.SZ', argument + '.BJ']
+            elif is_cn_stock_symbol_like(symbol):
+                possible_complete_symbols = [symbol + '.SH', symbol + '.SZ', symbol + '.BJ']
                 order_details = order_details[order_details['symbol'].isin(possible_complete_symbols)]
             else:
-                print(f'"{argument}" invalid: Please input a valid symbol to get order details.')
-                return
+                print(f'"{symbol}" invalid: Please input a valid symbol to get order details.')
+                return False
 
         if order_details.empty:
             rprint(f'No orders found with argument ({args}). try other arguments.')
@@ -1729,7 +1744,7 @@ class TraderShell(Cmd):
         elif strategies:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
             if not all([strategy in all_strategy_ids for strategy in strategies]):
-                invalid_stg = [stg for stg in args if stg not in all_strategy_ids]
+                invalid_stg = [stg for stg in strategies if stg not in all_strategy_ids]
                 print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
                 return False
 
@@ -1745,7 +1760,7 @@ class TraderShell(Cmd):
                 import traceback
                 print(f'Error in running strategy: {e}')
                 print(traceback.format_exc())
-                return False
+                return
 
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
@@ -2520,6 +2535,9 @@ class Trader(object):
                          'price_filled', 'filled_qty', 'canceled_qty', 'transaction_fee', 'execution_time',
                          'delivery_status'],
         )
+        # correct the data types of some columns
+        order_result_details['submitted_time'] = pd.to_datetime(order_result_details['submitted_time'])
+        order_result_details['execution_time'] = pd.to_datetime(order_result_details['execution_time'])
         return order_result_details
 
     def asset_pool_detail(self):
