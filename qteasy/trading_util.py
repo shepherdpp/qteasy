@@ -809,79 +809,18 @@ def process_account_delivery(account_id, data_source=None, config=None):
     undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
     if undelivered_results is None:
         return
+
+    delivery_result = []
     # 循环处理每一条未交割的交易结果：
     for result_id, result in undelivered_results.iterrows():
-        # 读取交易结果的signal_detail，如果account_id不匹配，则跳过，如果signal_detail不存在，则报错
-        order_detail = read_trade_order_detail(result.order_id, data_source=data_source)
-        if order_detail is None:
-            raise RuntimeError(f'No order_detail found for order_id {result.order_id}')
-        if order_detail['account_id'] != account_id:
-            # debug
-            # print(f'[DEBUG] in function process_account_delivery(), result({result_id}) '
-            #       f'is not for account {account_id}, will skip')
-            continue
-        # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
-        trade_direction = order_detail['direction']
-        if trade_direction == 'buy':
-            delivery_period = config['stock_delivery_period']
-        elif trade_direction == 'sell':
-            delivery_period = config['cash_delivery_period']
-        else:
-            raise ValueError(f'Invalid direction: {trade_direction}')
-        # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
-        execution_date = pd.to_datetime(result.execution_time).date()
-        current_date = pd.to_datetime('today').date()
-        day_diff = (current_date - execution_date).days
-        if day_diff < delivery_period:
-            # debug
-            # print(f'[DEBUG] in function process_account_delivery(), result({result_id}) is not due for delivery, '
-            #       f'execution_date: {execution_date}, current_date: {current_date}, '
-            #       f'delivery_period: {delivery_period}')
-            continue
-        # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
-        # debug
-        # print(f'[DEBUG] in function process_account_delivery(), will process result({result_id}): \n{result}')
-        if trade_direction == 'buy':
-            position_id = order_detail['pos_id']
-            try:
-                position = get_position_by_id(position_id, data_source=data_source)
-                # debug
-                # print(f'[DEBUG]updating position {position}: \n'
-                #       f'position_id: {position_id}\n'
-                #       f'available_qty_change: {result.delivery_amount}\n'
-                #       f'order_detail: {order_detail}\n')
-                update_position(
-                        position_id=position_id,
-                        data_source=data_source,
-                        available_qty_change=result.delivery_amount,
-                )
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                raise e
-        elif trade_direction == 'sell':
-            account_id = order_detail['account_id']
-            try:
-                # debug
-                # account = get_account(account_id, data_source=data_source)
-                # print(f'[DEBUG] updating account {account}:\n'
-                #       f'available_cash_change: {result.delivery_amount}\n'
-                #       f'order_detail: {order_detail}\n')
-                update_account_balance(
-                        account_id=account_id,
-                        data_source=data_source,
-                        available_cash_change=result.delivery_amount,
-                )
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                raise e
-        else:
-            raise ValueError(f'Invalid direction: {trade_direction}')
-        update_trade_result(
+
+        res = deliver_trade_result(
                 result_id=result_id,
+                account_id=account_id,
+                result=result.to_dict(),
+                stock_delivery_period=config['stock_delivery_period'],
+                cash_delivery_period=config['cash_delivery_period'],
                 data_source=data_source,
-                delivery_status='DL',
         )
 
         if res:
