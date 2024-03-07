@@ -110,12 +110,10 @@ def _loop_step(signal_type: int,
     allow_sell_short: bool
         True:   允许买空卖空
         False:  默认值，只允许买入多头仓位
-
-        :param moq_buy: float:
-            投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
-
-        :param moq_sell: float:
-            投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    moq_buy: float:
+        投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    moq_sell: float:
+        投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
     Returns
     -------

@@ -80,16 +80,16 @@ class BaseStrategy:
             name: str = 'strategy name',
             description: str = 'intro text of strategy',
             par_count: int = None,
-            par_types: [list, str] = None,
+            par_types: [[str], str] = None,
             par_range: [list, tuple] = None,
             strategy_run_freq: str = 'd',
             sample_freq: str = None,  # to be deprecated
             strategy_run_timing: str = 'close',
             bt_price_type: str = None,  # to be deprecated
-            strategy_data_types: [str, list] = 'close',
-            data_types: [str, list] = None,  # to be deprecated
+            strategy_data_types: [str, [str]] = 'close',
+            data_types: [str, [str]] = None,  # to be deprecated
             use_latest_data_cycle: bool = True,
-            reference_data_types: [str, list] = '',
+            reference_data_types: [str, [str]] = '',
             data_freq: str = 'd',
             window_length: int = 270,
     ):
@@ -257,6 +257,7 @@ class BaseStrategy:
                 par_range = par_range[0:par_count]
 
         self._pars = None
+        self._opt_tag = None
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
         self._stg_name = name  # 策略的名称
@@ -661,7 +662,7 @@ class BaseStrategy:
         else:
             return 0
 
-    def check_pars(self, pars):
+    def check_pars(self, pars: tuple) -> bool:
         """检查pars(一个tuple)是否符合strategy的参数设置"""
         for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
             if not isinstance(pars, tuple):
@@ -691,8 +692,13 @@ class BaseStrategy:
                     raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
         return True
 
-    def correct_pars_type(self, pars):
+    def correct_pars_type(self, pars: tuple) -> tuple:
         """ 将可能为字符串格式的pars根据type调整为正确的格式
+
+        Parameters
+        ----------
+        pars: tuple
+            策略参数
 
         Returns
         -------
@@ -703,7 +709,8 @@ class BaseStrategy:
         if len(pars) != self._par_count:
             raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
                              f' got {len(pars)} ({pars}).')
-        corrected_pars = [None] * self._par_count
+        # corrected_pars = [None] * self._par_count
+        corrected_pars = [None for _ in range(self._par_count)]
         try:
             for i in range(self._par_count):
                 par = pars[i]
@@ -728,7 +735,7 @@ class BaseStrategy:
         if not isinstance(pars, dict):
             raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
         if len(pars) == 0:
-            return self.set_pars(pars=None)
+            return self.set_pars(None)
         for key in pars.keys():
             if not isinstance(key, str):
                 raise TypeError(f'Invalid parameter, all keys of dict type parameter should be a stock code,'
