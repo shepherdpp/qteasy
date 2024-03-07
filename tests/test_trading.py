@@ -20,7 +20,7 @@ from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
-from qteasy.trading_util import process_trade_result, process_trade_delivery, create_daily_task_schedule
+from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -1675,7 +1675,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 1, trade signal: \n'
               f'{read_trade_order_detail(1, data_source=self.test_ds)}\n')
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1730,7 +1730,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 2, trade signal: \n'
               f'{read_trade_order_detail(2, data_source=self.test_ds)}\n')
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1791,7 +1791,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 3, trade signal: \n'
               f'{read_trade_order_detail(3, data_source=self.test_ds)}\n')
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1852,7 +1852,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 4, trade signal: \n'
               f'{read_trade_order_detail(4, data_source=self.test_ds)}\n')
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1938,7 +1938,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 7, trade signal: \n'
               f'{read_trade_order_detail(7, data_source=self.test_ds)}\n')
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1999,7 +1999,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 9, trade signal: \n'
               f'{read_trade_order_detail(9, data_source=self.test_ds)}\n')
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2057,7 +2057,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'transaction_fee': 23.9,
             'canceled_qty':    0.0,
         }
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2093,7 +2093,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(trade_result['delivery_status'], 'ND')
 
         # process trade result delivery for the last order
-        process_trade_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,

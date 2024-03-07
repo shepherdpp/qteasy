@@ -775,7 +775,7 @@ def cancel_order(order_id, data_source=None, config=None):
     )
 
 
-def process_trade_delivery(account_id, data_source=None, config=None):
+def process_account_delivery(account_id, data_source=None, config=None):
     """ 处理account_id账户中所有持仓和现金的交割
 
     从交易历史中读取尚未交割的现金和持仓，根据config中的设置值 'cash_delivery_period' 和
@@ -795,7 +795,6 @@ def process_trade_delivery(account_id, data_source=None, config=None):
     -------
     None
     """
-    # TODO: further test this function
 
     if not isinstance(account_id, (int, np.int64)):
         raise TypeError('account_id must be an int')
@@ -818,7 +817,7 @@ def process_trade_delivery(account_id, data_source=None, config=None):
             raise RuntimeError(f'No order_detail found for order_id {result.order_id}')
         if order_detail['account_id'] != account_id:
             # debug
-            # print(f'[DEBUG] in function process_trade_delivery(), result({result_id}) '
+            # print(f'[DEBUG] in function process_account_delivery(), result({result_id}) '
             #       f'is not for account {account_id}, will skip')
             continue
         # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
@@ -835,13 +834,13 @@ def process_trade_delivery(account_id, data_source=None, config=None):
         day_diff = (current_date - execution_date).days
         if day_diff < delivery_period:
             # debug
-            # print(f'[DEBUG] in function process_trade_delivery(), result({result_id}) is not due for delivery, '
+            # print(f'[DEBUG] in function process_account_delivery(), result({result_id}) is not due for delivery, '
             #       f'execution_date: {execution_date}, current_date: {current_date}, '
             #       f'delivery_period: {delivery_period}')
             continue
         # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
         # debug
-        # print(f'[DEBUG] in function process_trade_delivery(), will process result({result_id}): \n{result}')
+        # print(f'[DEBUG] in function process_account_delivery(), will process result({result_id}): \n{result}')
         if trade_direction == 'buy':
             position_id = order_detail['pos_id']
             try:

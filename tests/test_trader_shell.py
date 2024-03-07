@@ -14,7 +14,7 @@ import time
 
 from qteasy import DataSource, Operator
 from qteasy.trader import Trader, TraderShell
-from qteasy.trading_util import process_trade_delivery, process_trade_result, submit_order, update_position
+from qteasy.trading_util import process_account_delivery, process_trade_result, submit_order, update_position
 from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account
 from qteasy.broker import SimulatorBroker
@@ -476,7 +476,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        2,
@@ -486,7 +486,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -496,7 +496,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        4,
@@ -506,7 +506,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        5,
@@ -516,7 +516,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -526,7 +526,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        6,
@@ -536,7 +536,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        7,
@@ -546,7 +546,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        9,
@@ -556,10 +556,10 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         # order 8 is canceled
         time.sleep(self.stoppage)
-        process_trade_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
 
         print('testing history command that runs normally and returns None')
         self.assertIsNone(tss.do_history(''))
@@ -615,7 +615,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
-        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 2 is filled
         raw_trade_result = {
@@ -626,7 +626,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
-        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 3 is partially-filled
         raw_trade_result = {
@@ -637,7 +637,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
-        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 4 is partially-filled
         raw_trade_result = {
@@ -648,7 +648,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
-        process_trade_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 5 is canceled
         raw_trade_result = {
