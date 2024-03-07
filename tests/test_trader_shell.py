@@ -80,6 +80,7 @@ class TestTraderShell(unittest.TestCase):
                 datasource=test_ds,
                 debug=False,)
         self.ts.debug = True
+        self.ts.init_log_file()
 
         self.tss = TraderShell(self.ts)
 

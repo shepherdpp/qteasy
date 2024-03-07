@@ -2165,10 +2165,10 @@ class Trader(object):
         return self._datasource
 
     @property
-
     def config(self):
         return self._config
 
+    @property
     def log_file_exists(self):
         """ 返回交易记录文件是否存在
 

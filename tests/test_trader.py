@@ -19,7 +19,7 @@ import numpy as np
 from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_account_delivery
-from qteasy.trader import Trader, TraderShell
+from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
 

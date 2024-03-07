@@ -651,11 +651,9 @@ class BaseStrategy:
             return 1
         if isinstance(pars, dict):
             return self.set_dict_pars(pars)
+
         # try correct par types
-        try:
-            pars = self.correct_pars_type(pars)
-        except:
-            return 0
+        pars = self.correct_pars_type(pars)
         # now pars should be tuples
         if self.check_pars(pars):
             self._pars = pars
@@ -700,7 +698,11 @@ class BaseStrategy:
         -------
         pars: tuple
             pars in corrected type
+
         """
+        if len(pars) != self._par_count:
+            raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
+                             f' got {len(pars)} ({pars}).')
         corrected_pars = [None] * self._par_count
         try:
             for i in range(self._par_count):
