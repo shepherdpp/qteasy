@@ -61,11 +61,11 @@ class TestTrader(unittest.TestCase):
         # 创建测试数据源
         data_test_dir = 'data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        test_ds = DataSource('file', file_type='hdf', file_loc=data_test_dir)
-
+        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
         test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
-        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results',
+                      'stock_daily']:
             if test_ds.table_data_exists(table):
                 test_ds.drop_table_data(table)
         # 创建一个ID=1的账户
@@ -80,20 +80,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        # 下载测试所需的基本数据
-        print('Downloading test data...')
-        # # TODO: 这里如果设置parallel=True，会导致下载数据时死锁，原因不明
-        # test_ds.refill_local_source(
-        #         tables='stock_daily',
-        #         symbols='000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
-        #         start_date='2023-06-04',
-        #         end_date='2023-07-22',
-        #         freqs='D',
-        #         asset_types='E',
-        #         dtypes='close',
-        #         parallel=False,
-        # )
-        self.stoppage = 1.5
+        self.stoppage = 0.5
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (
@@ -247,13 +234,185 @@ class TestTrader(unittest.TestCase):
                 debug=False,
         )
 
+    def test_trade_logging(self):
+        """ test all documents related to trade logging file operations
+        init_log_file
+
+        """
+        print(f'test property log_file_exists')
+        ts = self.ts
+        self.assertIsNone(ts.trade_log_file_name)
+        self.assertIsNone(ts.trade_log_path_name)
+        res = ts.init_log_file()
+        self.assertIsNotNone(ts.trade_log_file_name)
+        self.assertIsNotNone(ts.trade_log_path_name)
+        self.assertEqual(res, ts.trade_log_path_name)
+        # remove the file and re-init
+        import os
+        from qteasy import QT_ROOT_PATH
+        log_file_path_name = os.path.join(QT_ROOT_PATH, ts._config['trade_log_file_path'], ts.trade_log_file_name)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        self.assertTrue(ts.log_file_exists)
+        self.assertIsNotNone(ts.trade_log_file_name)
+        self.assertIsNotNone(ts.trade_log_path_name)
+
+        # remove the log file
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.log_file_exists)
+        self.assertIsNone(ts.trade_log_file_name)
+        self.assertIsNone(ts.trade_log_path_name)
+
+        print(f'test function init_log_file')
+        ts.init_log_file()
+        self.assertTrue(ts.log_file_exists)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0], ts.trade_log_file_headers)
+
+        print(f'test function write_log_file')
+        log_content = {
+            'position_id': 1,
+            'order_id': 1,
+            'symbol': '000001.SZ',
+            'name': '招商银行',
+            'qty_change': 100,
+            'qty': 100,
+        }
+        ts.write_log_file(**log_content)
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 2)
+            # compare items one by one to see if they match
+            row = rows[1]
+            self.assertEqual(row[3], '1')
+            self.assertEqual(row[4], '000001.SZ')
+            self.assertEqual(row[5], '招商银行')
+            self.assertEqual(row[6], '')
+            self.assertEqual(row[11], '100.000')
+            self.assertEqual(row[12], '100.000')
+            self.assertEqual(row[2], '1')
+
+        print(f'test writing multiple rows in the file and verify every row')
+        log_content = {
+            'position_id': 1,
+            'order_id': 2,
+            'symbol': '000651.SZ',
+            'name': '格力电器',
+            'qty_change': 200,
+            'qty': 200,
+            'holding_cost': 70.5,
+            'reason': 'order',
+            'position_type': 'long',
+        }
+        ts.write_log_file(**log_content)
+        log_content = {
+            'position_id': 1,
+            'order_id': 3,
+            'symbol': '000004.SZ',
+            'name': '国农科技',
+            'qty_change': -200,
+            'qty': 100,
+            'holding_cost': 80.5,
+            'reason': 'order',
+        }
+        ts.write_log_file(**log_content)
+        log_content = {
+            'reason': 'manual',
+            'cash_change': 10000.0,
+            'cash': 100000.0,
+            'available_cash_change': 10000.0,
+            'available_cash': 100000.0,
+        }
+        ts.write_log_file(**log_content)
+
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be only one row, the header row
+            self.assertEqual(len(rows), 5)
+            # compare items one by one to see if they match
+            row = rows[1]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[2], '1')
+            self.assertEqual(row[3], '1')
+            self.assertEqual(row[4], '000001.SZ')
+            self.assertEqual(row[5], '招商银行')
+            self.assertEqual(row[6], '')
+            self.assertEqual(row[11], '100.000')
+            self.assertEqual(row[12], '100.000')
+            row = rows[2]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], 'order')
+            self.assertEqual(row[2], '2')
+            self.assertEqual(row[3], '1')
+            self.assertEqual(row[4], '000651.SZ')
+            self.assertEqual(row[5], '格力电器')
+            self.assertEqual(row[6], 'long')
+            self.assertEqual(row[11], '200.000')
+            self.assertEqual(row[12], '200.000')
+            self.assertEqual(row[16], '70.500')
+            row = rows[3]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], 'order')
+            self.assertEqual(row[2], '3')
+            self.assertEqual(row[3], '1')
+            self.assertEqual(row[4], '000004.SZ')
+            self.assertEqual(row[5], '国农科技')
+            self.assertEqual(row[6], '')
+            self.assertEqual(row[11], '-200.000')
+            self.assertEqual(row[12], '100.000')
+            self.assertEqual(row[16], '80.500')
+            row = rows[4]
+            self.assertNotEqual(row[0], '')
+            self.assertEqual(row[1], 'manual')
+            self.assertEqual(row[2], '')
+            self.assertEqual(row[4], '')
+            self.assertEqual(row[17], '10000.000')
+            self.assertEqual(row[18], '100000.000')
+            self.assertEqual(row[19], '10000.000')
+            self.assertEqual(row[20], '100000.000')
+
+        # remove the log file and check if it is removed
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.log_file_exists)
+
+        # if a wrong file is stored with correct name, it should be checked,
+        # removed and a new correct file should be created
+        # write a csv file with wrong header
+        with open(log_file_path_name, mode='w', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            row = ['some', 'random', 'but', 'wrong', 'headers']
+            writer.writerow(row)
+
+        self.assertFalse(ts.log_file_exists)
+        # use ts.init_log_file will remove wrong file and create correct one
+        ts.init_log_file()
+        self.assertTrue(ts.log_file_exists)
+
+        # remove the log file and check if it is removed
+        os.remove(log_file_path_name)
+
     def test_trader_status(self):
         """Test class Trader"""
         ts = self.ts
         self.assertIsInstance(ts, Trader)
         Thread(target=ts.run).start()
         time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'sleeping')
+        if self.ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
         time.sleep(self.stoppage)
@@ -321,6 +480,7 @@ class TestTrader(unittest.TestCase):
     def test_trader_properties_methods(self):
         """Test function run_task"""
         ts = self.ts
+        ts.init_log_file()
         self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
@@ -417,15 +577,25 @@ class TestTrader(unittest.TestCase):
         print('added task start')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        # 新的trader创建后，如果当前是交易时段，status为running，否则为sleeping，因此这里的status可能是running或者sleeping，需要根据market_open判断
+        if self.ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
         ts.add_task('pre_open')
         time.sleep(self.stoppage)
         print('added task pre_open')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        if self.ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
+
         ts.add_task('open_market')
         time.sleep(self.stoppage)
         print('added task open_market')
@@ -693,7 +863,7 @@ class TestTrader(unittest.TestCase):
             print(f'current trader status: {ts.status}')
             print(f'current broker status: {ts.broker.status}')
             print(f'current cash and positions: \n{ts.account_positions}, \n{ts.account_cash}')
-            print(f'count of trade orders in queue: {ts.broker.instruction_queue.unfinished_tasks} orders unprocessed')
+            print(f'count of trade orders in queue: {ts.broker.order_queue.unfinished_tasks} orders unprocessed')
             print(f'count of trade results in queue: {ts.broker.result_queue.unfinished_tasks} results generated')
             # waite 5 seconds for order execution results to be generated
             time.sleep(5)

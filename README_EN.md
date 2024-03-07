@@ -37,12 +37,17 @@
   - [Deploy Strategy](#deploy-the-strategy-and-start-live-trading)
   - [Optimizing Strategy](#optimize-adjustable-parameters-of-a-strategy)
 
+> **Note:**
+> 
+> `qteasy` is under active development and testing. There may be some bugs and issues in the software. If you encounter any problem, please [REPORT A BUG](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=) or issue a new [FEATURE REQUEST](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=), or join me in the [Discussion](github.com/shepherdpp/qteasy/discussions).
+> I will fix the problem as soon as possible and reply to everyone's questions.
+
 ## Introduction
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
 - Latest Version: `1.1.0`
-- License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+- License: BSD 3-Clause License
 
 QTEASY is a fast quantitative investment package created for traders, with following features:
 
@@ -127,7 +132,7 @@ tushare_token = <Your tushare API Token>
 Add following configurations to the configuration file to use `MySQL` database as local data source:
 
 
-```bash
+```text
 local_data_source = database  
 local_db_host = <host name>
 local_db_port = <port number>

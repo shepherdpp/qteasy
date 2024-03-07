@@ -2847,10 +2847,57 @@ class TestTradingUtilFuncs(unittest.TestCase):
             if self.test_ds.table_data_exists(table):
                 self.test_ds.drop_table_data(table)
 
-        self.test_ds.refill_local_source(
-                tables='stock_basic, index_basic',
-                parallel=False,
+        # TODO: 此处手动添加所需要的数据，避免从网上下载导致测试失败
+        # self.test_ds.refill_local_source(
+        #         tables='stock_basic, index_basic',
+        #         parallel=False,
+        # )
+        stock_basic_df = pd.DataFrame({
+            'ts_code': ['000001.SZ', '000002.SZ', '000004.SZ', '600251.SH', '000006.SZ', '000008.SZ'],
+            'symbol': ['000001', '000002', '000004', '600251', '000006', '000008'],
+            'name': ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'],
+            'area': ['深圳', '深圳', '深圳', '深圳', '深圳', '深圳'],
+            'industry': ['银行', '全国地产', '软件服务', '农药化肥', '区域地产', '其他商业'],
+            'full_name': ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'],
+            'en_name': ['Ping An Bank', 'Vanke A', 'Guohua Network Security', 'Guannong Shares', 'Shenzhen Zhenye A', 'Shenzhou High Speed Railway'],
+            'cnspell': ['PAYH', 'WK', 'GHWA', 'GN', 'SZYA', 'SZGJ'],
+            'market': ['主板', '主板', '主板', '主板', '主板', '主板'],
+            'exchange': ['SZSE', 'SZSE', 'SZSE', 'SSE', 'SZSE', 'SZSE'],
+            'curr_type': ['CNY', 'CNY', 'CNY', 'CNY', 'CNY', 'CNY'],
+            'list_status': ['L', 'L', 'L', 'L', 'L', 'L'],
+            'list_date': ['19910403', '19910129', '19910114', '19901210', '19920427', '19910625'],
+            'delist_date': ['22001231', '22001231', '22001231', '22001231', '22001231', '22001231'],
+            'is_hs': ['N', 'N', 'N', 'N', 'N', 'N'],
+        })
+        stock_basic = self.test_ds.fetch_history_table_data(
+                table='stock_basic',
+                channel='df',
+                df=stock_basic_df,
         )
+        self.test_ds.update_table_data('stock_basic', stock_basic)
+
+        index_basic_df = pd.DataFrame({
+            'ts_code': ['000001.SH', '000002.SH', '000004.SH', '000006.SH', '000008.SH'],
+            'name': ['上证指数', 'A股指数', '工业指数', '地产指数', '综合指数'],
+            'fullname': ['上证指数', 'A股指数', '工业指数', '地产指数', '综合指数'],
+            'market': ['上证', '上证', '上证', '上证', '上证'],
+            'publisher': ['上证', '上证', '上证', '上证', '上证'],
+            'index_type': ['1', '1', '1', '1', '1'],
+            'category': ['1', '1', '1', '1', '1'],
+            'base_date': ['19901219', '19910129', '19910114', '19910129', '19910114'],
+            'base_point': ['100.0', '100.0', '100.0', '100.0', '100.0'],
+            'list_date': ['19910403', '19910129', '19910114', '19910129', '19910114'],
+            'weight_rule': ['等权', '等权', '等权', '等权', '等权'],
+            'desc': ['描述', '描述', '描述', '描述', '描述'],
+            'exp_date': ['22001231', '22001231', '22001231', '22001231', '22001231'],
+        })
+        index_basic = self.test_ds.fetch_history_table_data(
+                table='index_basic',
+                channel='df',
+                df=index_basic_df,
+        )
+        self.test_ds.update_table_data('index_basic', index_basic)
+
         # test get_symbol_names with only stock symbols
         print('test get_symbol_names with only stock symbols')
         symbol_names = get_symbol_names(
@@ -2900,10 +2947,37 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # download func basic data and names will be returned after refresh
         print('test get_symbol_names with symbols whose basic data is now downloaded but not refreshed')
-        self.test_ds.refill_local_source(
-                tables='fund_basic',
-                parallel=False
+
+        fund_basic_df = pd.DataFrame({
+            'ts_code': ['000606.OF', '000291.OF'],
+            'name': ['天弘优选', '鹏华普悦'],
+            'management': ['天弘基金', '鹏华基金'],
+            'custodian': ['中国银行', '中国银行'],
+            'fund_type': ['股票型', '股票型'],
+            'found_date': ['20150130', '20150130'],
+            'due_date': ['22001231', '22001231'],
+            'list_date': ['20150130', '20150130'],
+            'issue_date': ['20150130', '20150130'],
+            'delist_date': ['22001231', '22001231'],
+            'issue_amount': ['1000000000.0', '1000000000.0'],
+            'm_fee': ['0.1', '0.1'],
+            'c_fee': ['0.1', '0.1'],
+            'duration_year': ['3.0', '3.0'],
+            'p_value': ['1.0', '1.0'],
+            'min_amount': ['100.0', '100.0'],
+            'exp_return': ['0.1', '0.1'],
+            'benchmark': ['沪深300', '沪深300'],
+            'status': ['在售', '在售'],
+            'invest_type': ['股票型', '股票型'],
+            'type': ['开放式', '开放式'],
+        })
+        fund_basic = self.test_ds.fetch_history_table_data(
+                table='fund_basic',
+                channel='df',
+                df=fund_basic_df,
         )
+        self.test_ds.update_table_data('fund_basic', fund_basic)
+
         print(symbol_names)
         symbol_names = get_symbol_names(
                 self.test_ds,

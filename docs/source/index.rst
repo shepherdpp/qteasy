@@ -14,7 +14,7 @@
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
 - Latest Version: `1.1.0`
-- License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+- License: BSD 3-Clause
 
 Introduction
 ------------
@@ -25,25 +25,63 @@ QTEASY是为量化交易人员开发的一套量化交易策略开发工具包�
 2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
 3. 交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息
 
-Why QTEASY?
------------
+What Can You Do with QTEASY?
+-----------------------------
 
-使用QTEASY有哪些好处？
+下载金融历史数据
+~~~~~~~~~~~~~~~~~~~~
 
-1. 数据下载、清洗、存储、查询，策略创建、回测、优化、实盘运行，一站式解决方案
-2. 我的策略我做主，策略完全本地运行，本地数据回测，不依赖于网络平台，不受任何平台的限制
-3. 提供大量内置交易策略，支持多个策略的组合，自定义组合公式，支持自定义交易策略
-4. 可以设定可调参数优化策略性能，提供多种优化算法，包括网格搜索、随机搜索、遗传算法等
-5. 回测速度快，精度高，多角度自定义交易费率和交易规则，支持多种回测结果的可视化
+- 获取、清洗、本地存储大量金融历史数据
+- 检索、处理、调用本地数据
+- 本地金融数据可视化
+
+.. image:: img/output_3_4.png
+    :width: 900px
+    :align: center
+
+创建交易策略
+~~~~~~~~~~~~~~~~~~~~
+
+- 提供近七十种内置交易策略，可以直接搭积木式使用
+- 快速创建自定义交易策略，灵活设置可调参数
+- 交易策略的回测、优化、评价，可视化输出回测结果
+
+.. image:: img/output_14_3.png
+    :width: 900px
+    :align: center
+
+实盘交易模拟
+~~~~~~~~~~~~~~~~~~~~
+
+- 读取实时市场数据，实盘运行交易策略
+- 生成交易信号，模拟交易结果
+- 跟踪记录交易日志、股票持仓、账户资金变化等信息
+- 随时查看交易过程，检查盈亏情况
+- 手动控制交易进程、调整交易参数，手动下单
+
+.. image:: img/output_27_1.png
+    :width: 900px
+    :align: center
+.. image:: img/output_27_2.png
+    :width: 900px
+    :align: center
+.. image:: img/output_27_3.png
+    :width: 900px
+    :align: center
 
 Getting Started
 ---------------
 
 .. toctree::
+   :caption: Getting Started 快速入门
    :maxdepth: 1
    :glob:
 
    getting_started
+   help
+   roadmap.rst
+   CONTRIBUTING
+   CODE_OF_CONDUCT
 
 Tutorials
 ---------

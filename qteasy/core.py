@@ -716,12 +716,6 @@ def apply_loop(operator: Operator,
                     op_log_cash.append(rnd(own_cash, 3))
                     op_log_available_cash.append(rnd(available_cash, 3))
                     op_log_value.append(rnd(total_value, 3))
-                # debug
-                # print(f'step {i} {op_type} looping result on {current_date}, total Value {total_value}::\n'
-                #       f'op from calculation: {current_op}, prices: {current_prices}\n'
-                #       f'cash change: {cash_changed}, own cash: {own_cash}\n'
-                #       f'amount changed: {amount_changed}, '
-                #       f'own amounts: {own_amounts}\n')
 
             # 保存计算结果
             cashes.append(own_cash)
@@ -963,8 +957,9 @@ def process_loop_results(operator,
         op_summary_df = pd.DataFrame(op_summary_matrix,
                                      index=['add. invest', 'own cash', 'available cash', 'value'],
                                      columns=op_sum_index).T
-        log_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_log.csv'
+        log_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_log.csv')
         op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name)
+
         # 生成 trade log 摘要表 (a more concise and human-readable format of trading log
         # create share trading logs:
         logger_core.info(f'generating abstract trading log ...')
@@ -977,7 +972,6 @@ def process_loop_results(operator,
                 share_name = get_basic_info(share, printout=False)['name']
             except Exception as e:
                 share_name = 'unknown'
-                # logger_core.warning(f'Error encountered getting share names\n{e}')
             share_df['name'] = share_name
             share_logs.append(share_df)
 
@@ -992,7 +986,7 @@ def process_loop_results(operator,
                       '6, available amounts',
                       '7, summary']
         op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
-        record_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_records.csv'
+        record_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_records.csv')
         # TODO: 可以增加一个config属性来控制交易摘要表的生成规则：
         #  如果how == 'left' 保留无交易日期的记录
         #  如果how == 'right', 不显示无交易日期的记录
@@ -1059,8 +1053,13 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
 
     ds = qteasy.QT_DATA_SOURCE
     # ts_code是dataframe的index
-    share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
-                                                      'market', 'list_date', 'exchange']]
+    share_basics = ds.read_table_data('stock_basic')
+    if not share_basics.empty:
+        share_basics = share_basics[['symbol', 'name', 'area', 'industry',
+                                     'market', 'list_date', 'exchange']]
+    else:
+        raise ValueError('No stock basic data found, please download stock basic data, call '
+                         '"qt.refill_data_source(tables="stock_basic")"')
     if share_basics is None or share_basics.empty:
         return pd.DataFrame()
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
@@ -1733,6 +1732,8 @@ def get_history_data(htypes,
         如果返回DataFrame对象，设置dataframe的分组策略
         - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
         - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
+    flatten: bool, 默认False # TODO: new in next version
+        是否返回平坦的数据，即数据的列名为htype的组合
     **kwargs:
         用于生成trade_time_index的参数，包括：
         drop_nan: bool

@@ -24,11 +24,9 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
-- [基本介绍](#关于`QTEASY`)
-- [QTEASY文档](#QTEASY文档)
-- [安装依赖包](#安装及依赖)
-  - [安装`qteasy`](#QTEASY的安装)
-  - [安装依赖包](#安装依赖包)
+- [`qteasy`能做什么](#qteasy能做什么？)
+- [安装](#安装)
+- [QTEASY文档](#文档)
 - [10分钟了解Qteasy的功能](#10分钟了解QTEASY的功能)
   - [初始配置——本地数据源](#配置本地数据源)
   - [下载股票价格并可视化](#下载金融历史数据)
@@ -37,6 +35,11 @@
   - [投资策略的优化](#交易策略的参数调优)
   - [投资策略的实盘运行](#部署并开始交易策略的实盘运行)
 
+> Note:
+> 
+> 目前`qteays`正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎[Issue-报告bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=)给我，也可以进入[讨论区](https://github.com/shepherdpp/qteasy/discussions)参与讨论。也欢迎各位贡献代码！
+>
+> 我会尽快修复问题并回复大家的问题。
 
 ## 关于`qteasy`
 
@@ -44,7 +47,7 @@
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
 - Latest Version: `1.1.0`
-- License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+- License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
 
@@ -53,7 +56,7 @@
 3. **使用简单** 提供大量内置交易策略，用户可以搭积木式地创建自己的交易策略
 4. **灵活多变** 使用qteasy提供的策略类，用户可以自行创建自己的交易策略，灵活设置可调参数
 
-## `qteasy`能做什么？
+## qteasy能做什么？
 
 
 ### **金融历史数据**: 
@@ -141,7 +144,7 @@ tushare_token = <你的tushare API Token>
 默认情况下`qteasy`使用存储在`data/`路径下的`.csv`文件作为数据源，不需要特殊设置。
 如果设置使用`mysql`数据库作为本地数据源，在配置文件中添加以下配置：
 
-```
+```text
 local_data_source = database  
 
 local_db_host = <host name>

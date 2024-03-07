@@ -2476,12 +2476,12 @@ class DataSource:
             if password is None:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
+            self.source_type = 'db'
+            con = pymysql.connect(host=host,
+                                  port=port,
+                                  user=user,
+                                  password=password)
             try:
-                self.source_type = 'db'
-                con = pymysql.connect(host=host,
-                                      port=port,
-                                      user=user,
-                                      password=password)
                 # 检查db是否存在，当db不存在时创建新的db
                 cursor = con.cursor()
                 sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
@@ -2490,7 +2490,6 @@ class DataSource:
                 sql = f"USE {db_name}"
                 cursor.execute(sql)
                 con.commit()
-                con.close()
                 # create mysql database connection info
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
                 self.host = host
@@ -2506,6 +2505,8 @@ class DataSource:
                               f' will fall back to default type', RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
+            finally:
+                con.close()
 
         if source_type.lower() == 'file':
             # set up file type and file location
@@ -2929,7 +2930,14 @@ class DataSource:
             sql += f'WHERE {date_filter}'
         sql += ''
         try:
-            df = pd.read_sql_query(sql, con=con)
+            cursor = con.cursor()
+            cursor.execute(sql)
+            con.commit()
+
+            data = cursor.fetchall()
+            # return data in forms of DataFrame with correct column names
+            df = pd.DataFrame(data, columns=[i[0] for i in cursor.description])
+
             return df
         except Exception as e:
             raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
@@ -3539,8 +3547,9 @@ class DataSource:
         file_path_name: str
             导出的文件的完整路径
         """
+        # TODO: Implement this function: export_table_data
         # 如果table不合法，则抛出异常
-        table_master = self.get_table_master()
+        table_master = get_table_master()
         non_sys_tables = table_master[table_master['table_usage'] != 'sys'].index.to_list()
         if table not in non_sys_tables:
             raise ValueError(f'Invalid table name: {table}!')
@@ -4621,7 +4630,7 @@ class DataSource:
 
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
-                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False):
+                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False) -> None:
         """ 批量下载历史数据并保存到本地数据仓库
 
         Parameters
@@ -4739,10 +4748,14 @@ class DataSource:
                     tables_to_refill.update(
                             table_master.loc[table_master.table_usage == item.lower()].index.to_list()
                     )
-            for item in dtypes:
+            for item in dtypes:  # 如果给出了dtypes，进一步筛选tables中的表，删除不需要的
+                tables_to_keep = set()
                 for tbl, schema in table_master.schema.iteritems():
                     if item.lower() in TABLE_SCHEMA[schema]['columns']:
-                        tables_to_refill.add(tbl)
+                        tables_to_keep.add(tbl)
+                tables_to_refill.intersection_update(
+                        tables_to_keep
+                )
 
             if freqs is not None:
                 tables_to_keep = set()
@@ -5915,12 +5928,13 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     return list(data_table_map.index)
 
 
-def ensure_sys_table(table):
+def ensure_sys_table(table: str) -> None:
     """ 检察table是不是sys表
 
     Parameters
     ----------
-    table:
+    table: str
+        表名称
 
     Returns
     -------

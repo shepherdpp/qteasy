@@ -7,6 +7,8 @@ readthedocs-sphinx-search==0.3.2
 sphinx-markdown-tables==0.0.17
 myst_parser==1.0.0
 sphinxcontrib-napoleon==0.7
+sphinx_markdown_checkbox==0.1.0
+pycmarkgfm==1.2.1
 tushare==1.2.89
 numba==0.56.4
 numpy==1.21.5

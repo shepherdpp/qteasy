@@ -20,6 +20,12 @@ version = '1.1.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+source_parsers = {
+    '.md': 'recommonmark.parser.CommonMarkParser',
+}
+
+source_suffix = ['.rst', '.md']
+
 extensions = [
     'myst_parser',
     'sphinx.ext.duration',
@@ -28,6 +34,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
+    # 'sphinx-markdown-checkbox',
 ]
 
 templates_path = ['_templates']

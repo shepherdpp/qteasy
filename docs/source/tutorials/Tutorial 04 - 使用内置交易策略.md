@@ -5,18 +5,6 @@ qteasy提供了多种内置交易策略，用户可以很容易地直接使用�
 在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。
 
 
-
-```python
-import qteasy as qt
-```
-
-
-`qteasy`的内置交易策略可以通过qteasy.built_in模块来访问，通过以下几个方法可以获取内置策略的清单：
-
-### `qt.built_ins(stg_id=None)`
-
-### `qt.built_in_strategies(stg_id=None)`
-
 ### `qt.built_in_list(stg_id=None)`
 
 上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。
