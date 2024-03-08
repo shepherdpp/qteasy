@@ -1,7 +1,7 @@
 # RELEASE HISTORY
 
 
-## 1.1.0 (2024-03-0?)
+## 1.1.0 (2024-03-08)
 - New feature: The QTEASY shell is now parsing command arguments in a better and more intuitive way
   - Now all commands support `--parameter` / `-p` style parameters, same way as all other CLI tools
   - All commands now support `--help` and `-h` to show help messages, are now fully documented in the shell help message
