@@ -793,8 +793,7 @@ def process_account_delivery(account_id, data_source=None, config=None):
 
     Returns
     -------
-    list_of_delivery_result: list of dict,
-        以列表形式返回的所有有效交割结果
+    None
     """
 
     if not isinstance(account_id, (int, np.int64)):

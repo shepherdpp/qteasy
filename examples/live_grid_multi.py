@@ -71,7 +71,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     alpha = MultiGridTrade(
             pars={'000651.SZ': (0.2, 500, 39.0),
-                  '600036.SH': (0.3, 600, 30.7),
+                  '600036.SH': (0.3, 600, 31.9),
                   '601398.SH': (0.1, 1000, 5.4)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
             par_count=3,
             par_types=['float', 'int', 'float'],

@@ -1654,7 +1654,8 @@ TABLE_MASTERS = {
 # Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_SCHEMA = {
 
-    # TODO: 在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
+    # TODO: for v1.1:
+    #  在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
     'sys_op_live_accounts':  # 交易账户表
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash', 'total_invest'],
          'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double', 'double'],
@@ -4525,8 +4526,8 @@ class DataSource:
                                f'To check data availability, use one of the following:\n'
                                f'Availability of all tables:     qt.get_table_overview()，or\n'
                                f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
-                               f'To fill datasource:             qt.refill_data_source(tables=\'table_name\', '
-                               f'start=\'YYYYMMDD\', end=\'YYYYMMDD\', **kwargs)')
+                               f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
+                               f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         adj_factors = {}
         if adj.lower() not in ['none', 'n']:
@@ -4725,7 +4726,7 @@ class DataSource:
         code_end = None
         if symbols is not None:
             if not isinstance(symbols, (str, list)):
-                raise TypeError(f'symbols should be a string or list, got {type(symbols)} instead.')
+                raise TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
             if isinstance(symbols, str):
                 if len(str_to_list(symbols, ':')) == 2:
                     code_start, code_end = str_to_list(symbols, ':')

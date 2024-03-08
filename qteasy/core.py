@@ -33,8 +33,10 @@ from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _update_config_kwargs, ConfigDict
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
-#TODO: reduce the size of this file, split it into several files
 
+
+# TODO: for v1.1:
+#  reduce the size of this file, split it into several files
 
 @njit
 def _loop_step(signal_type: int,
@@ -108,12 +110,10 @@ def _loop_step(signal_type: int,
     allow_sell_short: bool
         True:   允许买空卖空
         False:  默认值，只允许买入多头仓位
-
-        :param moq_buy: float:
-            投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
-
-        :param moq_sell: float:
-            投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    moq_buy: float:
+        投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    moq_sell: float:
+        投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
     Returns
     -------
@@ -773,9 +773,9 @@ def apply_loop_core(share_count,
     cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
     stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
     signal_count = len(op_list_bt_indices)
-    cashes = np.empty(shape=(signal_count, ))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
-    fees = np.empty(shape=(signal_count, ))  # 交易费用，记录每个操作时点产生的交易费用
-    values = np.empty(shape=(signal_count, ))  # 资产总价值，记录每个操作时点的资产和现金价值总和
+    cashes = np.empty(shape=(signal_count,))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
+    fees = np.empty(shape=(signal_count,))  # 交易费用，记录每个操作时点产生的交易费用
+    values = np.empty(shape=(signal_count,))  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = np.empty(shape=(signal_count, share_count))
     total_value = 0
     prev_date = 0
@@ -1060,13 +1060,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
                          '"qt.refill_data_source(tables="stock_basic")"')
     if share_basics is None or share_basics.empty:
         return pd.DataFrame()
-
-    if share_basics.list_date.dtype == 'int':
-        share_basics['list_date'] = pd.to_datetime(share_basics.list_date.astype(str))
-    elif share_basics.list_date.dtype == 'float':
-        share_basics['list_date'] = pd.to_datetime(share_basics.list_date.astype(int).astype(str))
-    elif share_basics.list_date.dtype == 'O':
-        share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
+    share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
     none_matched = dict()
     # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
     # print('looking for none matching arguments')
@@ -1293,7 +1287,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
     ds = qteasy.QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     matched_count = matched_codes['count']
@@ -1587,7 +1581,7 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False):
 
 
 def refill_data_source(data_source=None, **kwargs):
-    """ 填充数据源
+    """ 填充数据数据源
 
     Parameters
     ----------
@@ -1622,8 +1616,8 @@ def refill_data_source(data_source=None, **kwargs):
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
         end_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        symbols: str or list of str, default: None
-            **注意，不是所有情况下symbols参数都有效
+        code_range: str or list of str, default: None
+            **注意，不是所有情况下code_range参数都有效
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'
@@ -2103,7 +2097,7 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
         if not isinstance(config_key, list):
             raise TypeError(f'config_key should be a string or list of strings, got {type(config_key)}')
         assert all(isinstance(item, str) for item in config_key)
-        kwargs = {key: QT_CONFIG[key] for key in config_key}
+        kwargs = {key: QT_CONFIG[config_key] for key in config_key}
         level = [0, 1, 2, 3, 4, 5]
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
@@ -2263,7 +2257,7 @@ def _check_config_file_name(file_name, allow_default_name=False):
 
 def save_config(config=None, file_name=None, overwrite=True, initial_config=False):
     """ 将config保存为一个文件
-    TODO: 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
+    尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
 
     Parameters
     ----------
@@ -2453,9 +2447,10 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
                                     interest_rate=config['riskfree_ir'])
         invest_start = regulate_date_format(invest_cash_plan.first_day)
         if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            warn(f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                 f' date will be used!',
-                 RuntimeWarning)
+            warn(
+                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
+                f' date will be used!',
+                RuntimeWarning)
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config['opti_cash_dates'] is None:
@@ -2491,9 +2486,9 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
                 interest_rate=config['riskfree_ir'])
         test_start = regulate_date_format(test_cash_plan.first_day)
         if pd.to_datetime(test_start) != pd.to_datetime(config['test_start']):
-                warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
-                     f' date will be used!',
-                     RuntimeWarning)
+            warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = oper.max_window_length
@@ -2617,7 +2612,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     ).slice_to_dataframe(htype=config['benchmark_dtype'])
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
-           invest_cash_plan, opti_cash_plan, test_cash_plan
+        invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
 def reconnect_ds(data_source=None):
@@ -3222,8 +3217,6 @@ def _evaluate_all_parameters(par_generator,
     i = 0
     best_so_far = 0
     opti_target = config.optimize_target
-    import shutil
-    screen_width = shutil.get_terminal_size().columns
     # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
@@ -3245,9 +3238,7 @@ def _evaluate_all_parameters(par_generator,
             if target_value > best_so_far:
                 best_so_far = target_value
             if i % 10 == 0:
-                progress_bar(i, total,
-                             comments=f'best performance: {best_so_far:.3f}',
-                             row_width=screen_width)
+                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 禁用多进程计算方式，使用单进程计算
     else:
         for par in par_generator:
@@ -3264,12 +3255,9 @@ def _evaluate_all_parameters(par_generator,
             if target_value > best_so_far:
                 best_so_far = target_value
             if i % 10 == 0:
-                progress_bar(i, total,
-                             comments=f'best performance: {best_so_far:.3f}',
-                             row_width=screen_width)
+                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-    progress_bar(i, i,
-                 row_width=screen_width)
+    progress_bar(i, i)
 
     return pool
 
@@ -3804,10 +3792,7 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
             current_volume += subspace.volume
         current_round += 1
         space_count_in_round = len(spaces)
-        progress_bar(i,
-                     total_calc_rounds,
-                     f'start next round with {space_count_in_round} spaces',
-                     row_width=50)
+        progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs

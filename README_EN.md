@@ -42,53 +42,33 @@
 > `qteasy` is under active development and testing. There may be some bugs and issues in the software. If you encounter any problem, please [REPORT A BUG](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=) or issue a new [FEATURE REQUEST](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=), or join me in the [Discussion](github.com/shepherdpp/qteasy/discussions).
 > I will fix the problem as soon as possible and reply to everyone's questions.
 
-
 ## Introduction
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.27`
+- Latest Version: `1.1.0`
 - License: BSD 3-Clause License
-
 
 QTEASY is a fast quantitative investment package created for traders, with following features:
 
-1. **Complete Work Flow** from financial data acquisition, storage, to strategy development, backtesting, optimization, and live trading
-2. **Fully Localized** All financial data, strategy calculation and optimization processes are fully localized and do not rely on any cloud services
-3. **Easy to Use** Provides a large number of built-in trading strategies, users can create their own trading strategies in a modular way
-4. **Highly Versatile** With the strategy class provided by qteasy, users can create their own trading strategies and set adjustable parameters flexibly
+1. Acquire, clean, organize, visualize, store and query financial data, including stock price, financial statements, technical indicators, and basic information of stocks and funds. Downloaded data can be stored locally in forms of csv files or MySQL database. Data can be acquired from Tushare, eastMoney, etc.
+2. Create, backtest and assess investment strategies, and optimize adjustable parameters of strategies with a series of optimization algorithms.
+3. Deploy strategies and start live trading with real-time data, and record trading logs, account positions and funds.
 
-## What can `qteasy` do?
+Following functions are in development plan:
+1. *Provide common financial statistical analysis tools and integrate them into the HistoryPanel object (in development)*
+2. *Connect with automated trading system and realize automated trading (in development)*
 
-### **Financial Historical Data**:
-
-- Acquire, clean, and store a large amount of financial historical data
-- Retrieve, process, and extract local data for analysis
-- Visualize local financial data with candlestick charts
-
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
-
-### **Create trading strategies**
-
-- Provides nearly 70 built-in trading strategies, that can be used directly
-- Quickly create custom trading strategies, and set adjustable parameters flexibly
-- Backtest, optimize, and evaluate trading strategies, and visualize backtest results
-
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
-
-### **Simulate live trading**
-
-- Acquire real-time market data and prices, and run trading strategies in live trading mode
-- Create trading signals, simulate trading results, and visualize trading process
-- Track and record trading logs, stock holdings, account fund changes, and other information
-- View trading process at any time, and check profit and loss situation
-- Manually control trading process, adjust trading parameters, and place orders manually
-
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
+The target of this module is to provide effective vectorized backtesting and assessment of investment 
+strategies, with highly versertility and flexibility
 
 
+## QTEASY Documentations
+
+You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io):
+
+
+## Installation and dependencies
 
 ### Install `qteay` from PyPI
 
@@ -96,23 +76,28 @@ QTEASY is a fast quantitative investment package created for traders, with follo
 $ pip install qteasy
 ```
 
-### Documentations
-
-- [QTEASY documents](https://qteasy.readthedocs.io)
-
 ### python version
 - *`python` version >= 3.6* 
 
-### Install optional dependencies
+### Install dependencies
 
-All necessary dependencies of `qteasy` can be installed with `pip`, but if you need to use all the functions of `qteasy`, you need to install the following dependencies:
+This project requires and depends on following packages:
+- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
+- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
+- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
+- *`tushare` version >= 1.2.89*    `pip install tushare`
+- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
-- **`ta-lib: == 0.4.18`**, a C language library for technical analysis, used to calculate technical indicators, such as moving averages, MACD, KDJ, etc.
-- **`pymysql: == 1.0.2`**, used to connect to MySQL database, store local data in MySQL database (qteasy defaults to using csv files as local data sources, but it is recommended to use a MySQL database when the data volume is large, see [qteasy tutorial](https://qteasy.readthedocs.io) for details)
+
+A local datasource should be setup for `qteasy` to work properly. a series of .csv files will be used to store 
+financial data in default case. Other types of datasource can be used, such as MySQL database, but other dependencies
+should be installed. find more details in the tutorial.
 
 ##  Gets to know qteasy in 10 Min
 
 ### Import the module 
+
 
 ```python
 import qteasy as qt

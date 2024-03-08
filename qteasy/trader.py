@@ -11,32 +11,32 @@
 # trading orders and submit to class Broker
 # ======================================
 
+import shlex
 import os
-import time
-import sys
-
-import pandas as pd
-import numpy as np
 import shutil
-
-from threading import Timer
-from queue import Queue
+import sys
+import time
+import argparse
 from cmd import Cmd
+from queue import Queue
+from threading import Timer
+
+import numpy as np
+import pandas as pd
 from rich import print as rprint
 
 import qteasy
-from qteasy import Operator, DataSource, ConfigDict
-from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.utilfuncs import str_to_list, TIME_FREQ_LEVELS, parse_freq_string, sec_to_duration, adjust_string_length
-from qteasy.utilfuncs import get_current_tz_datetime
+from qteasy import ConfigDict, DataSource, Operator
 from qteasy.broker import Broker
-from qteasy.trade_recording import get_account, get_account_position_details, get_account_position_availabilities
+from qteasy.core import check_and_prepare_live_trade_data
+from qteasy.trade_recording import get_account, get_account_position_availabilities, get_account_position_details
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
-from qteasy.trade_recording import new_account, get_or_create_position, update_position, read_trade_order_detail
-from qteasy.trade_recording import get_position_by_id
-from qteasy.trading_util import parse_trade_signal, submit_order, process_trade_result
-from qteasy.trading_util import process_account_delivery, create_daily_task_schedule, cancel_order
-from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names
+from qteasy.trade_recording import get_or_create_position, new_account, update_position
+from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
+from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
+from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order
+from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, sec_to_duration, str_to_list
+from qteasy.utilfuncs import get_current_tz_datetime
 
 UNIT_TO_TABLE = {
             'h':     'stock_hourly',
@@ -46,85 +46,6 @@ UNIT_TO_TABLE = {
             '1min':  'stock_1min',
             'min':   'stock_1min',
         }
-
-
-def parse_shell_argument(arg: str = None, default=None, command_name=None, escape_dash=False) -> list:
-    """ 解析输入的参数, 返回解析后的参数列表，
-
-    解析输入参数，所有的输入参数都是字符串，包括命令后的所有字符
-    首先删除多余的空格，将字符串全部转化为小写，再将字符串以空格分割成参数列表。如果输入是空字符串，转化为空列表。
-    参数列表中所有参数的类型都是字符串，在调用时各自转换为相应的类型
-
-    Parameters:
-    -----------
-    arg: str
-        输入的参数
-    default: str, default None
-        如果输入参数为空，返回的默认值
-    command_name: str, default None
-        当用户使用原来的parameter格式时（不带"-"），打印DeprecatedWarning时使用
-    escape_dash: bool, default False
-        是否逃避检查参数中的"-"字符，默认为False，检查并在参数中添加"-"字符，如果为True，则不检查添加
-        这是
-
-    Returns:
-    --------
-    args: list
-        解析后的参数
-
-    Notes:
-    ------
-    本函数中设置了escape_dash参数，同时也设置了一些条件，避免在参数前添加"-"字符，这是
-    在参数解析方式升级以前，照顾有些带参数的命令不应该带有"-"的情况作出的妥协性做法
-        例如：
-        1. "watch 000651.SH" 不应该修改为 "watch -000651.SH"，因此纯数字开头的参数不添加"-"
-        2. "config mode" 不应该修改为 "config --mode"，此时应该在命令执行函数中调用parse_sell_argument时设置escape_dash=True
-    """
-
-    if arg is None:
-        return [] if default is None else [default]
-    arg = arg.lower().strip()  # 将字符串全部转化为小写并删除首尾空格
-    while '  ' in arg:
-        arg = arg.replace('  ', ' ')  # 删除字符间多余的空格
-    if arg == '':
-        return [] if default is None else [default]
-    args = arg.split(' ')
-    # 当用户仍然使用原来的parameter格式时（不带"-"），打印DeprecatedWarning
-    if any(arg[0] != '-' for arg in args):
-        # update args, add "-" in short args and "--" in long args
-        new_args = []
-        example_arg = ''
-        wait_for_value = False  # flag to check if the next arg is a value of the previous arg
-        for arg in args:
-            if len(arg) == 1 and (not arg.isdigit()):
-                new_args.append("-" + arg)
-                example_arg = "-" + arg
-                wait_for_value = True
-            elif all(char.isdigit() for char in arg[:2]):  # do nothing for parameters started with at least two digits
-                new_args.append(arg)
-                wait_for_value = False
-            elif arg[0] == '-':  # do nothing if arg starts with '-' or '--' already
-                new_args.append(arg)
-                wait_for_value = True
-            elif escape_dash:
-                new_args.append(arg)
-                wait_for_value = False
-            elif wait_for_value:
-                new_args.append(arg)
-                wait_for_value = False
-            else:
-                new_args.append("--" + arg)
-                example_arg = "--" + arg
-                wait_for_value = True
-
-        if example_arg:
-            from rich import print as rprint
-            rprint(f'[bold red]FutureWarning[/bold red]: plain style parameters will be deprecated in future versions, '
-                   f'use "{command_name} {example_arg}" instead\n')
-
-        args = new_args
-
-    return args
 
 
 class TraderShell(Cmd):
@@ -138,6 +59,9 @@ class TraderShell(Cmd):
     - exit: 停止交易系统并退出shell
     - stop: 停止交易系统并退出shell
     - info: 查看交易系统信息
+    - watch: 添加或删除股票到监视列表
+    - buy: 手动创建买入订单
+    - sell: 手动创建卖出订单
     - change: 手动修改交易系统的资金和持仓
     - positions: 查看账户持仓
     - orders: 查看账户订单
@@ -146,9 +70,13 @@ class TraderShell(Cmd):
     - config: 查看或修改qt_config配置信息
     - dashboard: 退出shell，进入dashboard模式
     - strategies: 查看策略信息，或者修改策略参数
-    - agenda: 查看交易日程
+    - schedule: 查看交易日程
     - help: 查看帮助信息
     - run: 手动运行交易策略，此功能仅在debug模式下可用
+
+    qteasy Shell的命令支持参数解析，用户可以通过命令行参数来调整命令的行为，要查看所有命令的帮助，
+    可以使用命令 "help" 或者 "?"，要查看某个命令的帮助，可以使用命令 "help <command>" 或者
+    命令的-h参数，如<command -h>。
 
     在Shell运行过程中按下 ctrl + c 进入状态选单，用户可以选择进入dashboard模式或者退出shell
 
@@ -159,6 +87,288 @@ class TraderShell(Cmd):
             'Type "help <command>" to get help for more commands.\n'
     prompt = '(QTEASY) '
 
+    argparser_properties = {
+        'status':      dict(prog='status', description='Show trader status',
+                            usage='status [-h]',),
+        'pause':       dict(prog='pause', description='Pause trader',
+                            usage='pause [-h]',
+                            epilog='When trader is paused, strategies will not be executed, '
+                                   'orders will not be submitted, submitted orders will be '
+                                   'suspended until trader is resumed'),
+        'resume':      dict(prog='resume', description='Resume trader',
+                            usage='resume [-h]',),
+        'bye':         dict(prog='bye', description='Stop trader and exit shell',
+                            usage='bye [-h]',
+                            epilog='You can also exit shell using command "exit" or "stop"'),
+        'exit':        dict(prog='exit', description='Stop trader and exit shell',
+                            usage='exit [-h]',
+                            epilog='You can also exit shell using command "bye" or "stop"'),
+        'stop':        dict(prog='stop', description='Stop trader and exit shell',
+                            usage='stop [-h]',
+                            epilog='You can also exit shell using command "exit" or "bye"'),
+        'info':        dict(prog='info', description='Get trader info, same as overview',
+                            usage='info [-h] [--detail] [--system]',
+                            epilog='Get trader info, including basic information of current '
+                                   'account, and current cash and positions'),
+        'pool':        dict(prog='pool', description='Show details of asset pool',
+                            usage='pool [-h]'),
+        'watch':       dict(prog='watch', description='Add or remove stock symbols to watch list',
+                            usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
+                                  '[REMOVE [REMOVE ...]]] [--clear]'),
+        'buy':         dict(prog='buy', description='Manually create buy-in order',
+                            usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                  '[--force]',
+                            epilog='the order will be submitted to broker and will be executed'
+                                   ' according to broker rules, Currently only market price '
+                                   'orders can be submitted'),
+        'sell':        dict(prog='sell', description='Manually create sell-out order',
+                            usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                  '[--force]',
+                            epilog='the order will be submitted to broker and will be executed'
+                                   ' according to broker rules, Currently only market price '
+                                   'orders can be submitted'),
+        'positions':   dict(prog='positions', description='Get account positions',
+                            usage='positions [-h]',
+                            epilog='Print out holding quantities and available quantities '
+                                   'of all positions'),
+        'overview':    dict(prog='overview', description='Get trader overview, same as info',
+                            usage='overview [-h] [--detail] [--system]',
+                            epilog='Get trader info, including basic information of current '
+                                   'account, and current cash and positions'),
+        'config':      dict(prog='config', description='Show or change qteasy configurations',
+                            usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--detail] [--set SET]'),
+        'history':     dict(prog='history', description='List trade history of a stock',
+                            usage='history [SYMBOL] [-h]',
+                            epilog='List all trade history of one particular stock, displaying '
+                                   'every buy-in and sell-out in a table format. '
+                                   'symbol like 000651 is accepted.'),
+        'orders':      dict(prog='orders', description='Get account orders',
+                            usage='usage: orders [SYMBOL [SYMBOL ...]] [-h] '
+                                  '[--status {filled,f,canceled,c,partial-filled,p}] '
+                                  '[--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}] '
+                                  '[--type {buy,sell,b,s,all,a}] '
+                                  '[--side {long,short,l,s,all,a}]'),
+        'change':      dict(prog='change', description='Change account cash and positions',
+                            usage='change [SYMBOL] [-h] [--amount AMOUNT] [--price PRICE] '
+                                  '[--side {l,long,s,short}] [--cash CASH]',
+                            epilog='Change cash or positions or both. nothing will be changed '
+                                   'if amount or cash is not given, price is used to calculate '
+                                   'new cost, if not given, current price will be used'),
+        'dashboard':   dict(prog='', description='Exit shell and enter dashboard',
+                            usage='dashboard [-h]'),
+        'strategies':  dict(prog='', description='Show or change strategy parameters',
+                            usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
+                                  '[--set-par [SET_VAL [SET_VAL ...]]] [--blender BLENDER] '
+                                  '[--timing TIMING]'),
+        'schedule':    dict(prog='', description='Show trade agenda',
+                            usage='schedule [-h]'),
+        'run':         dict(prog='', description='Run strategies manually',
+                            usage='run [STRATEGY [STRATEGY ...]] [-h] '
+                                  '[--task {none,stop,sleep,pause,process_result,'
+                                  'pre_open,open_market,close_market,acquire_live_price}] '
+                                  '[--args [ARGS [ARGS ...]]]'),
+    }
+
+    command_arguments = {
+        'status':       [],
+        'pause':        [],
+        'resume':       [],
+        'bye':          [],
+        'exit':         [],
+        'stop':         [],
+        'info':         [('--detail', '-d'),
+                         ('--system', '-s')],
+        'pool':         [],
+        'watch':        [('symbols',),
+                         ('--position', '--positions', '-pos', '-p'),
+                         ('--remove', '-r'),
+                         ('--clear', '-c')],
+        'buy':          [('amount',),
+                         ('symbol',),
+                         ('--price', '-p'),
+                         ('--side', '-s'),
+                         ('--force', '-f')],
+        'sell':         [('amount',),
+                         ('symbol',),
+                         ('--price', '-p'),
+                         ('--side', '-s'),
+                         ('--force', '-f')],
+        'positions':    [],
+        'overview':     [('--detail', '-d'),
+                         ('--system', '-s')],
+        'config':       [('keys',),
+                         ('--level', '-l'),
+                         ('--detail', '-d'),
+                         ('--set', '-s')],
+        'history':      [('symbol',)],
+        'orders':       [('symbols',),
+                         ('--status', '-s'),
+                         ('--time', '-t'),
+                         ('--type', '-y'),
+                         ('--side', '-d')],
+        'change':       [('symbol',),
+                         ('--amount', '-a'),
+                         ('--price', '-p'),
+                         ('--side', '-s'),
+                         ('--cash', '-c')],
+        'dashboard':    [],
+        'strategies':   [('strategy',),
+                         ('--detail', '-d'),
+                         ('--set-par', '--set', '-s'),
+                         ('--blender', '-b'),
+                         ('--timing', '-t')],
+        'schedule':     [],
+        'run':          [('strategy',),
+                         ('--task', '-t'),
+                         ('--args', '-a')],
+    }
+
+    command_arg_properties = {
+        'status':       [],
+        'pause':        [],
+        'resume':       [],
+        'bye':          [],
+        'exit':         [],
+        'stop':         [],
+        'info':         [{'action': 'store_true',
+                          'help':   'show detailed account info'},
+                         {'action': 'store_true',
+                          'help':   'show system info'}],
+        'pool':         [],
+        'watch':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',  # nargs='+' will require at least one argument
+                          'help': 'stock symbols to add to watch list'},
+                         {'action': 'store_true',
+                          'dest': 'position',
+                          'help': 'add 5 stocks from position list to watch list'},
+                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',  # nargs='+' will require at least one argument
+                          'help': 'remove stock symbols from watch list'},
+                         {'action': 'store_true',
+                          'help': 'clear watch list'}],
+        'buy':          [{'action': 'store',
+                          'type':   float,
+                          'help': 'amount of shares to buy'},
+                         {'action': 'store',
+                          'help': 'stock symbol to buy'},
+                         {'action': 'store',
+                          'type':   float,
+                          'default': 0.0,  # default to market price
+                          'help': 'price to buy at'},
+                         {'action': 'store',
+                          'default': 'long',
+                          'choices': ['long', 'short'],
+                          'help': 'order position side, default long'},
+                         {'action': 'store_true',
+                          'help': 'force buy regardless of current prices (NOT IMPLEMENTED YET)'}],
+        'sell':         [{'action': 'store',
+                          'type':   float,
+                          'help': 'amount of shares to sell'},
+                         {'action': 'store',
+                          'help': 'stock symbol to sell'},
+                         {'action': 'store',
+                          'type':   float,
+                          'default': 0.0,  # default to market price
+                          'help': 'price to sell at'},
+                         {'action': 'store',
+                          'default': 'long',
+                          'choices': ['long', 'short'],
+                          'help': 'order position side, default long'},
+                         {'action': 'store_true',
+                          'help': 'force sell regardless of current prices'}],
+        'positions':    [],
+        'overview':     [{'action': 'store_true',
+                          'help':   'show detailed account info'},
+                         {'action': 'store_true',
+                          'help':   'show system info'}],
+        'config':       [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',
+                          'help': 'config keys to show or change'},
+                         {'action': 'count',
+                          'default': 2,
+                          'help': 'config level to show or change'},
+                         {'action': 'store_true',
+                          'help': 'show detailed config info'},
+                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',
+                          'help': 'config values to set or change for keys'}],
+        'history':      [{'action': 'store',
+                          'nargs': '?',  # nargs='?' will require at most one argument
+                          'default': 'all',
+                          'type':   str,
+                          'help':   'stock symbol to show history for, if not given, show history for all'}],
+        'orders':       [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',  # nargs='+' will require at least one argument
+                          'help': 'stock symbol to show orders for'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'choices': ['filled', 'f', 'canceled', 'c', 'partial-filled', 'p'],
+                          'help': 'order status to show'},
+                         {'action': 'store',
+                          'default': 'today',
+                          'choices': ['today', 't', 'yesterday', 'y', '3day', '3', 'week', 'w',
+                                      'month', 'm', 'all', 'a'],
+                          'help': 'order time to show'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'choices': ['buy', 'sell', 'b', 's', 'all', 'a'],
+                          'help': 'order type to show'},
+                         {'action': 'store',
+                          'default': 'all',
+                          'choices': ['long', 'short', 'l', 's', 'all', 'a'],
+                          'help': 'order side to show'}],
+        'change':       [{'action': 'store',
+                          'nargs': '?',  # one or zero (default value) argument is allowed
+                          'default': '',
+                          'help': 'symbol to change position for'},
+                         {'action': 'store',
+                          'default': 0,
+                          'type':   float,
+                          'help': 'amount of shares to change'},
+                         {'action': 'store',
+                          'default': 0.0,  # default to market price
+                          'type':   float,
+                          'help': 'price to change position at'},
+                         {'action': 'store',
+                          'default': 'long',
+                          'choices': ['l', 'long', 's', 'short'],
+                          'help': 'side of the position to change'},
+                         {'action': 'store',
+                          'default': 0.0,  # default not to change cash
+                          'type':   float,
+                          'help': 'amount of cash to change for current account'}],
+        'dashboard':    [],
+        'strategies':   [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',  # nargs='+' will require at least one argument
+                          'help': 'strategy to show or change parameters for'},
+                         {'action': 'store_true',
+                          'help': 'show detailed strategy info'},
+                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',
+                          'dest': 'set_val',
+                          'help': 'set parameters for strategy'},
+                         {'action': 'store',
+                          'default': '',
+                          'type':   str,
+                          'help': 'set blender for strategies'},
+                         {'action': 'store',
+                          'default': '',
+                          'help': 'The strategy run timing of the strategies whose blender is set'}],
+        'schedule':     [],
+        'run':          [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',
+                          'help': 'strategies to run'},
+                         {'action': 'store',
+                          'default': '',
+                          'choices': ['none', 'stop', 'sleep', 'pause', 'resume',
+                                      'run_strategy', 'process_result', 'pre_open',
+                                      'open_market', 'close_market', 'acquire_live_price'],
+                          'help': 'task to run'},
+                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                          'nargs': '*',
+                          'help': 'arguments for the task to run'}],
+    }
+
     def __init__(self, trader):
         super().__init__(completekey='tab')
         self._trader = trader
@@ -168,6 +378,10 @@ class TraderShell(Cmd):
         self._watched_prices = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
 
+        self.argparsers = {}
+
+        self.init_arg_parsers()
+
     @property
     def trader(self):
         return self._trader
@@ -176,6 +390,7 @@ class TraderShell(Cmd):
     def status(self):
         return self._status
 
+    @property
     def watch_list(self):
         return self._watch_list
 
@@ -219,72 +434,208 @@ class TraderShell(Cmd):
                                    'Use "watch" command to add stocks to watch list. =='
         return
 
-    # ----- basic commands -----
-    # TODO: add escape warning when realtime data acquiring is not available
-    def do_status(self, arg):
-        """ Show trader status
+    # ----- command arg parsers -----
+    def init_arg_parsers(self):
+        """ 初始化命令参数解析器
+        """
+        if self.argparsers:
+            return
 
-        Usage:
-        ------
-        status
+        # create instances of argparsers for each command
+        for command in self.argparser_properties:
+            self.argparsers[command] = argparse.ArgumentParser(
+                    **self.argparser_properties[command],
+            )
+
+        # add arguments to each argparser
+        for command in self.argparsers:
+            args = self.command_arguments[command]
+            arg_properties = self.command_arg_properties[command]
+            if not args:
+                continue
+            for arg, arg_property in zip(args, arg_properties):
+                try:
+                    self.argparsers[command].add_argument(*arg, **arg_property)
+                except:
+                    raise RuntimeError(f'Error: failed to add argument {arg} to parser for command {command}\n'
+                                       f'pars: {arg_property}')
+
+    def parse_args(self, command, args=None):
+        """ 解析命令行参数
+
+        Parameters
+        ----------
+        command: str
+            需要解析参数的命令
+        args: str
+            需要被解析的参数
+
+        Returns
+        -------
+        args: Namespace
+            解析后的参数，一个Namespace对象
+        """
+        if command not in self.argparsers:
+            raise ValueError(f'Command {command} not found in argparsers')
+        arg_parser = self.argparsers[command]
+        try:
+            args = arg_parser.parse_args(shlex.split(args))
+        except argparse.ArgumentError as e:  # wrong argument, this should work for python >= 3.11
+            print(f'{e}')
+            return None
+        except SystemExit:  # wrong argument, this should work for python < 3.10
+            # print(f'Wrong argument, use "help {command}" to see more info')
+            return None
+
+        return args
+
+    def check_buy_sell_args(self, args, type):
+        """ 检查买卖参数是否合法
+
+        Parameters
+        ----------
+        args: Namespace
+            命令行参数对象
+        type: str
+            买卖类型，'buy' 或 'sell'
+
+        Returns
+        -------
+        bool
+            参数是否合法
         """
 
-        from rich import print as rprint
-        if arg:
-            rprint(f'status command does not accept arguments\n')
-        rprint(f'current trader status: {self.trader.status} \n'
-               f'current broker name: {self.trader.broker.broker_name} \n'
-               f'current broker status: {self.trader.broker.status} \n'
-               f'current day is trade day: {self.trader.is_trade_day} \n')
+        import rich
+
+        qty = args.amount
+        symbol = args.symbol.upper()
+        price = args.price
+
+        # check if qty and price are legal
+        if qty <= 0:
+            rich.print("[bold red]Qty can not be less or equal to 0[/bold red]")
+            return False
+        if price < 0:
+            rich.print("[bold red]Price can not be less than 0[/bold red]")
+            return False
+
+        # check if qty meets the moq
+        if type == 'buy':
+            moq = self.trader.get_config('trade_batch_size')['trade_batch_size']
+        else:
+            moq = self.trader.get_config('sell_batch_size')['sell_batch_size']
+
+        if moq != 0 and qty % moq != 0:
+            rich.print(f'[bold red]Qty should be a multiple of the minimum order quantity ({moq})[/bold red]')
+            return False
+
+        # check if symbol is legal
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+        if not is_complete_cn_stock_symbol_like(symbol):
+            print(f'Wrong symbol is given: {symbol}, please input full symbol code like "000651.SZ"')
+            return False
+
+        # if price == 0, use live price
+        if price == 0:
+            if self.trader.live_price is None:
+                rich.print(f'[bold red]No live price data available, price should be given![/bold red')
+                return False
+            try:
+                args.price = self.trader.live_price[symbol]
+            except KeyError:
+                rich.print(f'[bold red]No live price data for {symbol} available, price should be given![/bold red')
+                return False
+
+        # the symbol must be in the pool
+        if symbol not in self.trader.asset_pool:
+            rich.print(f'[bold red]{symbol} is not in the asset pool, can not be bought![/bold red')
+            return False
+
+        return True
+
+    # ----- basic commands -----
+    def do_status(self, arg):
+        """usage: status [-h]
+
+        Show trader status
+
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        Examples:
+        ---------
+        to show trader status:
+        (QTEASY) status
+        """
+
+        import rich
+        args = self.parse_args('status', arg)
+        if not args:
+            return False
+
+        rich.print(f'current trader status: {self.trader.status} \n'
+                   f'current broker name: {self.trader.broker.broker_name} \n'
+                   f'current broker status: {self.trader.broker.status} \n'
+                   f'current day is trade day: {self.trader.is_trade_day} \n')
 
     def do_pause(self, arg):
-        """ Pause trader
+        """usage: pause [-h]
 
-        When trader is paused, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Pause trader
 
-        Usage:
-        ------
-        pause
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        When trader is paused, strategies will not be executed, orders will not be
+        submitted, submitted orders will be suspended until trader is resumed
+
+        Examples:
+        ---------
+        to pause trader:
+        (QTEASY) pause
         """
-        if arg:
-            sys.stdout.write(f'pause command does not accept arguments\n')
+        args = self.parse_args('pause', arg)
+        if not args:
             return False
         self.trader.add_task('pause')
-        sys.stdout.write(f'Pausing trader...\n')
+        sys.stdout.write(f'Pausing trader... use command status to check current status\n')
 
     def do_resume(self, arg):
-        """ Resume trader
+        """usage: resume [-h]
 
-        When trader is resumed, strategies will be executed, orders will be submitted,
-        suspended orders will be resumed
+        Resume trader
 
-        Usage:
-        ------
-        resume
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        Examples:
+        ---------
+        to resume trader:
+        (QTEASY) resume
         """
-        if arg:
-            sys.stdout.write(f'resume command does not accept arguments\n')
+        args = self.parse_args('resume', arg)
+        if not args:
             return False
         self.trader.add_task('resume')
         sys.stdout.write(f'Resuming trader...\n')
 
     def do_bye(self, arg):
-        """ Stop trader and exit shell
+        """usage: bye [-h]
 
-        When trader is stopped, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Stop trader and exit shell
 
-        Usage:
-        ------
-        bye
+        optional arguments:
+          -h, --help  show this help message and exit
 
-        Aliases:
-        --------
-        exit, stop
+        You can also exit shell using command "exit" or "stop"
+
+        Examples:
+        ---------
+        to stop trader and exit shell:
+        (QTEASY) bye
         """
-        if arg:
-            sys.stdout.write(f'bye command does not accept arguments\n')
+        args = self.parse_args('bye', arg)
+        if not args:
             return False
         print(f'canceling all unfinished orders')
         self.trader.add_task('post_close')
@@ -294,156 +645,210 @@ class TraderShell(Cmd):
         return True
 
     def do_exit(self, arg):
-        """ Stop trader and exit shell
+        """usage: exit [-h]
 
-        When trader is stopped, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Stop trader and exit shell
 
-        Usage:
-        ------
-        exit
+        optional arguments:
+          -h, --help  show this help message and exit
 
-        Aliases:
-        --------
-        bye, stop
+        You can also exit shell using command "bye" or "stop"
+
+        Examples:
+        ---------
+        to stop trader and exit shell:
+        (QTEASY) exit
         """
-        self.do_bye(arg)
-        return True
+        return self.do_bye(arg)
 
     def do_stop(self, arg):
-        """ Stop trader and exit shell
+        """usage: stop [-h]
 
-        When trader is stopped, strategies will not be executed, orders will not be submitted,
-        submitted orders will be suspended until trader is resumed
+        Stop trader and exit shell
 
-        Usage:
-        ------
-        stop
+        optional arguments:
+          -h, --help  show this help message and exit
 
-        Aliases:
-        --------
-        bye, exit
+        You can also exit shell using command "exit" or "bye"
+
+        Examples:
+        ---------
+        to stop trader and exit shell:
+        (QTEASY) stop
         """
-        self.do_bye(arg)
-        return True
+        return self.do_bye(arg)
 
     def do_info(self, arg):
-        """ Get trader info, same as overview
+        """usage: info [-h] [--detail] [--system]
+
+        Get trader info, same as overview
+
+        optional arguments:
+          -h, --help    show this help message and exit
+          --detail, -d  show detailed account info
+          --system, -s  show system info
 
         Get trader info, including basic information of current account, and
         current cash and positions.
 
-        Usage:
-        ------
-        info [--detail｜-d]
+        Examples:
+        ---------
+        to get trader info:
+        (QTEASY) info
+        to get detailed trader info:
+        (QTEASY) info --detail
         """
-        self.do_overview(arg)
+        return self.do_overview(arg)
 
     def do_pool(self, arg):
-        """ print information of the asset pool
+        """print information of the asset pool
 
         Print detailed information of all stocks in the asset pool, including
         stock symbol, name, company name, industry, listed date, etc.
 
         """
-        # TODO: implement this function
-        return
 
-    def do_watch(self, arg):
-        """ Add or remove stock symbols to watch list
-
-        Usage:
-        ------
-        watch [SYMBOL [SYMBOL ...]] [--position|--positions|-pos|-p]
-
-        symbol:     Add symbols explicitly to watch list:
-        position:   Add 5 symbols from position list to watch list:
-        watch
-        """
-
-        from rich import print as rprint
-        args = parse_shell_argument(arg, command_name='watch')
+        args = self.parse_args('pool', arg)
         if not args:
-            sys.stdout.write(f'Current watch list: {self._watch_list}\n'
-                             f'input symbols to add to watch list, like 000651.SZ\n')
             return False
-        if args:
-            arg_count = len(args)
-            if arg_count > 5:
-                args = args[:5]
-        from .utilfuncs import TS_CODE_IDENTIFIER_CN_STOCK
-        import re
-        for arg in args:
-            # 如果arg=='--position' 或者 '--positions'，则将当前持仓量最大的股票代码添加到watch list
-            if arg in ['--position', '--positions', '-pos', '-p']:
-                pos = self._trader.account_position_info
-                if pos.empty:
-                    print('No holding position at the moment.')
-                    continue
-                top_5_pos = pos.sort_values(by='market_value', ascending=False).head(5)
-                top_5_pos = top_5_pos.index.tolist()
-                self._watch_list = top_5_pos
-                continue
-            # 检查arg是否股票代码，如果是，添加到watch list，除非该代码已在watch list中
-            if re.match(TS_CODE_IDENTIFIER_CN_STOCK, arg.upper()):
-                if arg not in self._watch_list:
-                    self._watch_list.append(arg.upper())
-                # 检查watch_list中代码个数是否超过5个，如果超过，删除最早添加的代码
-                if len(self._watch_list) > 5:
-                    self._watch_list.pop(0)
-        rprint(f'current watch list: {self._watch_list}')
 
-    def do_buy(self, arg):
-        """ Manually create buy-in order: buy AMOUNT shares of SYMBOL with PRICE
-        the order will be submitted to broker and will be executed according to broker rules
+        return self.trader.asset_pool_detail()
 
-        --long / --short indicates position to buy, default long
-        --force indicates force buy regardless of current prices # TODO: to be implemented
+    def do_watch(self, arguments):
+        """usage: watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove [REMOVE [REMOVE ...]]] [--clear]
 
-        Usage:
-        ------
-        buy AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+        Add or remove stock symbols to watch list
 
-        Notes:
-        ------
-        Currently only market price orders can be submitted
+        positional arguments:
+          symbols               stock symbols to add to watch list
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --position, --positions, -pos, -p
+                                add 5 stocks from position list to watch list
+          --remove [REMOVE [REMOVE ...]], -r [REMOVE [REMOVE ...]]
+                                remove stock symbols from watch list
+          --clear, -c           clear watch list
 
         Examples:
         ---------
-        # buy in 100 shares of 000651.SH at price 32.5
-        buy 100 000651.SH 32.5
-        # buy short 100 shares of 000651.SH at price 30.0
-        buy 100 000651.SH 30.0 --short
+        to view current watch list
+        (QTEASY) watch
+        to add stock symbols to watch list:
+        (QTEASY) watch 000651.SZ 600036.SH 000550.SZ
+        to add 5 stocks from position list to watch list:
+        (QTEASY) watch --position
+        to remove stock symbols from watch list:
+        (QTEASY) watch -r 000651.SZ 600036.SH
+        to clear watch list:
+        (QTEASY) watch -c
         """
+
+        from rich import print as rprint
+        args = self.parse_args('watch', arguments)
+        if not args:
+            return False
+
+        # TODO: for python version >= 3.8, list args are extended then flatten nested list is not needed
+        if args.symbols is None:
+            args.symbols = []
+        else:
+            args.symbols = [symbol.upper() for symbol_list in args.symbols for symbol in symbol_list]
+
+        if args.remove is None:
+            args.remove = []
+        else:
+            args.remove = [symbol.upper() for symbol_list in args.remove for symbol in symbol_list]
+
+        from .utilfuncs import is_complete_cn_stock_symbol_like
+
+        illegal_symbols = []
+        for symbol in args.symbols:
+            if not is_complete_cn_stock_symbol_like(symbol):
+                illegal_symbols.append(symbol)
+                continue
+
+            # 添加symbols到watch list，除非该代码已在watch list中
+            if symbol not in self._watch_list:
+                self._watch_list.append(symbol)
+            # 检查watch_list中代码个数是否超过5个，如果超过，删除最早添加的代码
+            if len(self._watch_list) > 5:
+                self._watch_list.pop(0)
+
+        # 如果arg.position == True，则将当前持仓量最大的股票代码添加到watch list
+        if args.position:
+            pos = self._trader.account_position_info
+            if pos.empty:
+                print('No holding position at the moment.')
+            top_5_pos = pos.sort_values(by='market_value', ascending=False).head(5)
+            top_5_pos = top_5_pos.index.tolist()
+            self._watch_list = top_5_pos
+
+        # 如果arg.remove不为空，则将remove中的股票代码从watch list中删除
+        symbols_not_found = []
+        if args.remove:
+            for symbol in args.remove:
+                print(f'is removing symbol {symbol} from watch list {self._watch_list}')
+                if symbol in self._watch_list:
+                    self._watch_list.remove(symbol)
+                else:
+                    symbols_not_found.append(symbol)
+
+        # 如果arg.clear == True，则清空watch list
+        if args.clear:
+            self._watch_list = []
+
+        rprint(f'current watch list: {self._watch_list}')
+        if illegal_symbols:
+            rprint(f'Illegal symbols in arguments: {illegal_symbols}, input symbols in the form like "000651.SZ"')
+        if symbols_not_found:
+            rprint(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
+
+    def do_buy(self, arg):
+        """usage: buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
+
+        Manually create buy-in order
+
+        positional arguments:
+          amount                amount of shares to buy
+          symbol                stock symbol to buy
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --price PRICE, -p PRICE
+                                price to buy at
+          --side {long,short}, -s {long,short}
+                                order position side, default long
+          --force, -f           force buy regardless of current prices (NOT IMPLEMENTED YET)
+
+        the order will be submitted to broker and will be executed according to broker
+        rules, Currently only market price orders can be submitted
+
+        Examples:
+        ---------
+        to buy 100 shares of 000651.SH at price 32.5
+        (QTEASY) buy 100 000651.Sh -p 32.5
+        to buy short 100 shares of 000651 at price 30.0
+        (QTEASY) buy 100 000651.SH -p 30.0 -s short
+        """
+
+        args = self.parse_args('buy', arg)
+        if not args:
+            return False
+
+        if not self.check_buy_sell_args(args, 'buy'):
+            return False
+
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
-        args = parse_shell_argument(arg, command_name='buy')
-        if len(args) < 3:
-            print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
-                  f'use "help buy" to see more info')
-            return
-        try:
-            qty = float(args[0])
-            symbol = args[1].upper()
-            price = float(args[2])
-            position = 'long'
-        except:
-            print(f'Wrong format for positional argument AMOUNT or PRICE, please check your input. '
-                  f'use "help buy" to see more info')
-            return
-        if len(args) >= 4:
-            if args[3] not in ['--long', '-l', '--short', '-s']:
-                print(f'Wrong argument: {args[3]}, use "help buy" to see more info')
-                return
-            if args[3] in ['--short', '-s']:
-                position = 'short'
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
-        if not is_complete_cn_stock_symbol_like(symbol):
-            print(f'Wrong symbol is given: {symbol}, please check your input!')
-            return
-        if qty <= 0 or price <= 0:
-            print(f'Qty or price can not be less or equal to 0, please check your input!')
+
+        qty = args.amount
+        symbol = args.symbol.upper()
+        price = args.price
+        position = args.side
+
+        # start to add order
         pos_id = get_or_create_position(account_id=account_id,
                                         symbol=symbol,
                                         position_type=position,
@@ -463,63 +868,57 @@ class TraderShell(Cmd):
         # 检查
 
         order_id = record_trade_order(trade_order, data_source=datasource)
-        # 逐一提交交易信号
+
+        # 提交交易订单
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.order_queue.put(trade_order)
         pass
 
     def do_sell(self, arg):
-        """ Manually create sell-out order: sell AMOUNT shares of SYMBOL with PRICE
-        the order will be submitted to broker and will be executed according to broker rules
+        """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
-        --long / --short indicates position to buy, default long
-        --force indicates force buy regardless of current prices # TODO: to be implemented
+        Manually create buy-in order
 
-        Usage:
-        ------
-        sell AMOUNT SYMBOL PRICE [--long|-l|--short|-s] [--force|-f]
+        positional arguments:
+          amount                amount of shares to sell
+          symbol                stock symbol to sell
 
-        Notes:
-        ------
-        Currently only market price orders can be submitted
+        optional arguments:
+          -h, --help            show this help message and exit
+          --price PRICE, -p PRICE
+                                price to sell at
+          --side {long,short}, -s {long,short}
+                                order position side, default long
+          --force, -f           force sell regardless of current prices (NOT IMPLEMENTED YET)
+
+        the order will be submitted to broker and will be executed according to broker
+        rules, Currently only market price orders can be submitted
 
         Examples:
         ---------
-        # sell out 100 shares of 000651.SH at price 32.5
-        sell 100 000651.Sh 32.5
-        # sell short 100 shares of 000651 at price 30.0
-        sell 100 000651.SH 30.0 --short
+        to sell 100 shares of 000651.SH at price 32.5
+        (QTEASY) sell 100 000651.Sh -p 32.5
+        to sell short 100 shares of 000651 at price 30.0
+        (QTEASY) sell 100 000651.SH -p 30.0 -s short
         """
+
+        args = self.parse_args('sell', arg)
+        if not args:
+            return False
+
+        if not self.check_buy_sell_args(args, 'sell'):
+            return False
+
         account_id = self.trader.account_id
         datasource = self.trader.datasource
         broker = self.trader.broker
-        args = parse_shell_argument(arg, command_name='sell')
-        if len(args) < 3:
-            print(f'Not enough argument, Command buy takes at least 3 positional arguments: AMOUNT SYMBOL and PRICE. '
-                  f'use "help buy" to see more info')
-            return
-        try:
-            qty = float(args[0])
-            symbol = args[1].upper()
-            price = float(args[2])
-            position = 'long'
-        except:
-            print(f'Wrong format for positional argument AMOUNT or PRICE, please check your input. '
-                  f'use "help buy" to see more info')
-            return
-        if len(args) >= 4:
-            if args[3] not in ['--long', '-l', '--short', '-s']:
-                print(f'Wrong argument: {args[3]}, use "help buy" to see more info')
-                return
-            if args[3] in ['--short', '-s']:
-                position = 'short'
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
-        if not is_complete_cn_stock_symbol_like(symbol):
-            print(f'Wrong symbol is given: {symbol}, please check your input!')
-            return
-        if qty <= 0 or price <= 0:
-            print(f'Qty or price can not be less or equal to 0, please check your input!')
+
+        qty = args.amount
+        symbol = args.symbol.upper()
+        price = args.price
+        position = args.side
+
         pos_id = get_or_create_position(account_id=account_id,
                                         symbol=symbol,
                                         position_type=position,
@@ -544,18 +943,25 @@ class TraderShell(Cmd):
         pass
 
     def do_positions(self, arg):
-        """ Get account positions
+        """usage: positions [-h]
 
-        Get account positions, including all positions and available positions
+        Get account positions
 
-        Usage:
-        ------
-        positions
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        Print out holding quantities and available quantities of all positions
+
+        Examples:
+        ---------
+        to get account positions:
+        (QTEASY) positions
         """
 
-        if arg:
-            sys.stdout.write(f'positions command does not accept arguments\n')
+        args = self.parse_args('positions', arg)
+        if not args:
             return False
+
         from rich import print as rprint
         print(f'current positions: \n')
         pos = self._trader.account_position_info
@@ -668,28 +1074,48 @@ class TraderShell(Cmd):
         rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
 
     def do_overview(self, arg):
-        """ Get trader overview, same as info
+        """usage: overview [-h] [--detail] [--system]
+
+        Get trader overview, same as info
+
+        optional arguments:
+          -h, --help    show this help message and exit
+          --detail, -d  show detailed account info
+          --system, -s  show system info Get trader overview, same as info
 
         Get trader overview, including basic information of current account, and
         current cash and positions.
 
-        Usage:
-        ------
-        overview [--detail|-d]
+        Examples:
+        ---------
+        to get trader overview:
+        (QTEASY) overview
+        to get detailed trader overview:
+        (QTEASY) overview --detail
         """
-        detail = False
-        args = parse_shell_argument(arg, command_name='overview')
-        if args:
-            if args[0] in ['--detail', '-d']:
-                detail = True
-            else:
-                print('argument not valid, input "detail" or "d" to get detailed info')
-        self._trader.info(verbose=detail)
-        if detail:
-            self.do_positions(arg=None)
+        args = self.parse_args('overview', arg)
+        if not args:
+            return False
+
+        self.trader.info(detail=args.detail, system=args.system)
+
+        if args.detail:
+            return self.do_positions(arg='')
 
     def do_config(self, arg):
-        """ Show or change qteasy configurations
+        """usage: config [KEYS [kEYS ...]] [-h] [--level] [--detail] [--set [SET [SET ...]]]
+
+        Show or change qteasy configurations
+
+        positional arguments:
+          keys                  config keys to show or change
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --level, -l           config level to show or change, default to level 2
+          --detail, -d          show detailed config info
+          --set [SET [SET ...]], -s [SET [SET ...]]
+                                config values to set or change for key, a key must be given to set value
 
         Display current qt configurations to designated level, if level is not given, display
         until level 2.
@@ -697,106 +1123,116 @@ class TraderShell(Cmd):
         and explanation of the configure key.
         if configure key and a value is given, change the configure key to the given value.
 
-        Usage:
-        ------
-        config [[level]|[key]] [value]
+        Examples:
+        ---------
+        to show all configures:
+        (QTEASY) config
+        to show configures until level 3:
+        (QTEASY) config -lll
+        to show value of configure key "key1":
+        (QTEASY) config key1
+        to change value of configure key "key1" to "value1":
+        (QTEASY) config key1 -s value1
+        """
+
+        args = self.parse_args('config', arg)
+        if not args:
+            return False
+
+        from qteasy._arg_validators import _vkwargs_to_text
+        import rich
+        import shutil
+
+        # get terminal width and set print width to 75% of terminal width
+        column_width, _ = shutil.get_terminal_size()
+        column_width = int(column_width * 0.75) if column_width > 120 else column_width
+
+        keys = [str(key) for key_list in args.keys for key in key_list] if args.keys else []
+        set_values = [str(value) for value_list in args.set for value in value_list] if args.set else []
+        level = args.level
+        verbose = args.detail
+
+        get_config = self.trader.get_config
+        if not keys:  # no keys given, show all configures
+            configs = get_config()
+            rich.print(_vkwargs_to_text(configs,
+                                        level=level,
+                                        info=True,
+                                        verbose=verbose,
+                                        width=column_width)
+                       )
+        # if keys are given and set_values are not given, show configure values
+        elif keys and not set_values:
+            configs = {key: get_config(key)[key] for key in keys}
+            rich.print(_vkwargs_to_text(configs,
+                                        level='all',
+                                        info=True,
+                                        verbose=verbose,
+                                        width=column_width)
+                       )
+        # if keys are given and set_values are also given, set configure values
+        elif keys and set_values:
+            if len(keys) != len(set_values):
+                rich.print(f'[bold red]Number of keys and values do not match: {len(keys)} keys and '
+                           f'{len(set_values)} values[/bold red]')
+                return False
+
+            # update configure values one by one
+            for key, value in zip(keys, set_values):
+                try:
+                    self.trader.update_config(key, value)
+                    rich.print(f'[bold green]configure key "{key}" has been changed to "{value}".[bold green]')
+                except:
+                    rich.print(f'[bold red]configure key "{key}" can not be changed to "{value}".[/bold red]')
+                    continue
+
+    def do_history(self, arg):
+        """usage: history [SYMBOL] [-h]
+
+        List trade history of a stock
+
+        positional arguments:
+          symbol      stock symbol to show history for, if not given, show history for all
+
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        List all trade history of one particular stock, displaying every buy-in and
+        sell-out in a table format. symbol like 000651 is accepted.
 
         Examples:
         ---------
-        config 3
-        - display all qt configurations to level 3
-        config mode
-        - display current value, default value and explanation of configure key 'mode'
-        config mode 2
-        - change configure key 'mode' to value 2
-        """
-
-        from qteasy._arg_validators import _vkwargs_to_text
-        from rich import print as rprint
-        import shutil
-        column_width, _ = shutil.get_terminal_size()
-        column_width = int(column_width * 0.75) if column_width > 120 else column_width
-        args = parse_shell_argument(arg, command_name='config', escape_dash=True)
-        if len(args) == 0:
-            config = self.trader.get_config()
-            rprint(_vkwargs_to_text(config,
-                                    level=[0],
-                                    info=True,
-                                    verbose=False,
-                                    width=column_width)
-                   )
-        elif len(args) == 1:
-            if args[0].isdigit():  # arg is level
-                config = self.trader.get_config()
-                level = int(args[0])
-                rprint(_vkwargs_to_text(config,
-                                        level=list(range(0, level + 1)),
-                                        info=True,
-                                        verbose=False,
-                                        width=column_width)
-                       )
-            else:  # arg is key
-                config = self.trader.get_config(args[0])
-                key = args[0]
-                value = config[key]
-                if value is None:
-                    print(f'configure key "{key}" not found.')
-                    return
-                rprint(_vkwargs_to_text(config,
-                                        level='all',
-                                        info=True,
-                                        verbose=True,
-                                        width=column_width)
-                       )
-        elif len(args) == 2:
-            key = args[0]
-            value = args[1]
-            try:
-                result = self.trader.update_config(key, value)
-                if result:
-                    rprint(f'configure key "{key}" has been changed to "{value}".')
-                else:
-                    rprint(f'configure key "{key}" can not be changed to "{value}".')
-            except Exception as e:
-                print(f'Error: {e}')
-                if self.trader.debug:
-                    import traceback
-                    traceback.print_exc()
-            return
-        else:
-            rprint(f'config command does not accept more than 2 arguments\n')
-            return
-
-    def do_history(self, arg):
-        """ List trade history of a stock
-
-        List all trade history of one particular stock, displaying every buy-in and sell-out
-        in a table format. a symbol is required.
-
-        Usage:
-        ------
-        history [symbol]
+        to show trade history of stock 000001:
+        (QTEASY) history 000001
+        to show trade history of all stocks:
+        (QTEASY) history
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, command_name='history')
+        args = self.parse_args('history', arg)
+        if not args:
+            return False
+
         history = self._trader.history_orders()
 
         if history.empty:
             print('No trade history found.')
             return
 
-        for argument in args:
+        symbol = args.symbol.upper()
+
+        if symbol != 'ALL':
             from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
-            if is_complete_cn_stock_symbol_like(argument.upper()):
-                history = history[history['symbol'] == argument.upper()]
+            if is_complete_cn_stock_symbol_like(symbol):
+                history = history[history['symbol'] == symbol]
                 # select orders by order symbol arguments like '000001'
-            elif is_cn_stock_symbol_like(argument):
-                possible_complete_symbols = [argument + '.SH', argument + '.SZ', argument + '.BJ']
+            elif is_cn_stock_symbol_like(symbol):
+                possible_complete_symbols = [symbol + '.SH', symbol + '.SZ', symbol + '.BJ']
                 history = history[history['symbol'].isin(possible_complete_symbols)]
             else:
                 # if argument is not a symbol, use the first available symbol in order details
-                history = history[history['symbol'] == history['symbol'].iloc[0]]
+                print(f'Wrong symbol is given: {symbol}, please input full symbol code like "000651" or "000651.SZ"')
+                return False
 
         # remove rows whose value in column 'filled_qty' is 0, and sort by 'filled_time'
         history = history[history['filled_qty'] != 0]
@@ -818,12 +1254,11 @@ class TraderShell(Cmd):
         history['name'] = [adjust_string_length(name, 8, hans_aware=True, padding='left') for name in all_names]
 
         # display history with to_string method with 2 digits precision for all numbers and 3 digits percentage
-        # for earning rate
-        # Error will be raised if execution_time is NaT. will print out normal format in this case
+        #  for earning rate
+        #  Error will be raised if execution_time is NaT. will print out normal format in this case
         if np.any(pd.isna(history.execution_time)):
             history.execution_time = history.execution_time.fillna(pd.to_datetime('1970-01-01'))
-        # else:
-        # print(history)
+
         rprint(
                 history.to_string(
                         columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
@@ -833,7 +1268,7 @@ class TraderShell(Cmd):
                                 'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
                                 'name'],
                         formatters={
-                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
+                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x)),
                             'name':         '{:8s}'.format,
                             'operation':    '{:s}'.format,
                             'filled_qty':   '{:,.2f}'.format,
@@ -858,91 +1293,126 @@ class TraderShell(Cmd):
         )
 
     def do_orders(self, arg):
-        """ Get trader orders
+        """ usage: orders [SYMBOL [SYMBOL ...]] [-h] [--status {filled,f,canceled,c,partial-filled,p}]
+                [--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}]
+                [--type {buy,sell,b,s,all,a}] [--side {long,short,l,s,all,a}]
 
-        Get trader orders, use arg to specify orders to get, default is today's orders
+        Get account orders
 
-        Usage:
-        ------
-        orders --today|-t [--filled|-f] [--canceled|-c] [--partial-filled|-p] [--last_hour|-l|-h] [--yesterday|-y]
-        [--3day|-3] [--week|-w] [--month|-m] [--buy|-b] [--sell|-s] [--long|-lg] [--short|-sh] [symbol like '000001.SZ']
+        positional arguments:
+          symbol                stock symbol to show orders for
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --status {filled,f,canceled,c,partial-filled,p}, -s {filled,f,canceled,c,partial-filled,p}
+                                order status to show
+          --time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}, -t {today,t,yesterday,y,3day,3,week,w,month,m,all,a}
+                                order time to show
+          --type {buy,sell,b,s,all,a}, -y {buy,sell,b,s,all,a}
+                                order type to show
+          --side {long,short,l,s,all,a}, -d {long,short,l,s,all,a}
+                                order side to show
 
         Examples:
         ---------
-        (QTEASY): orders
-        - display all orders of today
-        (QTEASY): orders 000001
-        - display all orders of stock 000001
-        (QTEASY): orders --filled --today 000001
-        - display all filled orders of stock 000001 executed today
+        to get today's orders:
+        (QTEASY) orders
+        to get yesterday's orders:
+        (QTEASY) orders -t yesterday
+        to get orders of stock 000001:
+        (QTEASY) orders 000001
+        to get filled orders of stock 000001:
+        (QTEASY) orders 000001 -s filled
+        to get filled buy orders of stock 000001:
+        (QTEASY) orders 000001 -s filled -y buy
         """
 
         from rich import print as rprint
-        args = parse_shell_argument(arg, default='--today', command_name='orders')
+        args = self.parse_args('orders', arg)
+        if not args:
+            return False
+
+        symbols = [symbol for symbol_list in args.symbols for symbol in symbol_list] if args.symbols else []
+        status = args.status
+        order_time = args.time
+        order_type = args.type
+        side = args.side
+
         order_details = self._trader.history_orders()
 
-        for argument in args:
-            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
-            # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-            if argument in ['--last_hour', '-l', '-h', '--today', '-t', '--yesterday', '-y',
-                            '--3day', '-3', '--week', '-w', '--month', '-m']:
-                # create order time ranges
-                end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
-                if argument in ['--last_hour', '-l']:
-                    start = pd.to_datetime(end) - pd.Timedelta(hours=1)
-                elif argument in ['--today', '-t']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--yesterday', '-y']:
-                    yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = yesterday.strftime("%Y-%m-%d 00:00:00")
-                    end = yesterday.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--3day', '-3']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=3)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--week', '-w']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=7)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                elif argument in ['--month', '-m']:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=30)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
-                else:
-                    start = pd.to_datetime(end) - pd.Timedelta(days=1)
-                    start = start.strftime("%Y-%m-%d 23:59:59")
+        # filter orders by arguments
 
-                # select orders by time range
-                order_details = order_details[(order_details['submitted_time'] >= start) &
-                                              (order_details['submitted_time'] <= end)]
-            # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
-            elif argument in ['--filled', '-f', '--canceled', '-c', '--partial-filled', '-p']:
-                if argument in ['--filled', '-f']:
-                    order_details = order_details[order_details['status'] == 'filled']
-                elif argument in ['--canceled', '-c']:
-                    order_details = order_details[order_details['status'] == 'canceled']
-                elif argument in ['--partial-filled', '-p']:
-                    order_details = order_details[order_details['status'] == 'partial-filled']
-            # select orders by order side arguments like 'long', 'short'
-            elif argument in ['--long', '-lg', '--short', '-sh']:
-                if argument in ['--long', '-lg']:
-                    order_details = order_details[order_details['position'] == 'long']
-                elif argument in ['--short', '-sh']:
-                    order_details = order_details[order_details['position'] == 'short']
-            # select orders by order side arguments like 'buy', 'sell'
-            elif argument in ['--buy', '-b', '--sell', '-s']:
-                if argument in ['--buy', '-b']:
-                    order_details = order_details[order_details['direction'] == 'buy']
-                elif argument in ['--sell', '-s']:
-                    order_details = order_details[order_details['direction'] == 'sell']
+        # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
+        end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
+        if order_time in ['last_hour', 'l']:
+            start = pd.to_datetime(end) - pd.Timedelta(hours=1)
+        elif order_time in ['today', 't']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['yesterday', 'y']:
+            yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = yesterday.strftime("%Y-%m-%d 00:00:00")
+            end = yesterday.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['3day', '3']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=3)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['week', 'w']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=7)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['month', 'm']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=30)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        else:
+            start = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+
+        # select orders by time range
+        order_details = order_details[(order_details['submitted_time'] >= start) &
+                                      (order_details['submitted_time'] <= end)]
+
+        # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
+        if status in ['filled', 'f']:
+            order_details = order_details[order_details['status'] == 'filled']
+        elif status in ['canceled', 'c']:
+            order_details = order_details[order_details['status'] == 'canceled']
+        elif status in ['partial-filled', 'p']:
+            order_details = order_details[order_details['status'] == 'partial-filled']
+        else:  # default to show all statuses
+            pass
+
+        # select orders by order side arguments like 'long', 'short'
+        if side in ['long', 'l']:
+            order_details = order_details[order_details['position'] == 'long']
+        elif side in ['short', 's']:
+            order_details = order_details[order_details['position'] == 'short']
+        else:  # default to show all sides
+            pass
+
+        # select orders by order side arguments like 'buy', 'sell'
+        if order_type in ['buy', 'b']:
+            order_details = order_details[order_details['direction'] == 'buy']
+        elif order_type in ['sell', 's']:
+            order_details = order_details[order_details['direction'] == 'sell']
+        else:  # default to show all directions
+            pass
+
             # select orders by order symbol arguments like '000001.SZ'
-            elif is_complete_cn_stock_symbol_like(argument.upper()):
-                order_details = order_details[order_details['symbol'] == argument.upper()]
+
+        # normalize symbols to upper case and with suffix codes
+        if symbols:
+            symbols = [symbol.upper() for symbol in symbols]
+
+        for symbol in symbols:
+            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
+            if is_complete_cn_stock_symbol_like(symbol.upper()):
+                order_details = order_details[order_details['symbol'] == symbol.upper()]
             # select orders by order symbol arguments like '000001'
-            elif is_cn_stock_symbol_like(argument):
-                possible_complete_symbols = [argument + '.SH', argument + '.SZ', argument + '.BJ']
+            elif is_cn_stock_symbol_like(symbol):
+                possible_complete_symbols = [symbol + '.SH', symbol + '.SZ', symbol + '.BJ']
                 order_details = order_details[order_details['symbol'].isin(possible_complete_symbols)]
             else:
-                print(f'"{argument}" invalid: Please input a valid symbol to get order details.')
-                return
+                print(f'"{symbol}" invalid: Please input a valid symbol to get order details.')
+                return False
 
         if order_details.empty:
             rprint(f'No orders found with argument ({args}). try other arguments.')
@@ -968,8 +1438,8 @@ class TraderShell(Cmd):
                                     'price_filled':   '¥{:,.2f}'.format,
                                     'filled_qty':     '{:,.2f}'.format,
                                     'canceled_qty':   '{:,.2f}'.format,
-                                    'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D")),
-                                    'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x, unit="D"))
+                                    'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x)),
+                                    'submitted_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x))
                                     },
                         col_space={
                             'price_quoted': 10,
@@ -981,128 +1451,131 @@ class TraderShell(Cmd):
                 ))
 
     def do_change(self, arg):
-        """ Change trader cash and positions
-        to change cash, amount must be given
-        to change a position, amount and symbol must be given, price is used to update cost,
-        if not given, current price will be used, side is used to specify long or short side,
-        if not given, long side will be used
+        """usage: change [SYMBOL] [-h] [--amount AMOUNT] [--price PRICE] [--side {l,long,s,short}]
+                [--cash CASH]
+
+        Change account cash and positions
+
+        positional arguments:
+          symbol                symbol to change position for
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --amount AMOUNT, -a AMOUNT
+                                amount of shares to change
+          --price PRICE, -p PRICE
+                                price to change position at
+          --side {l,long,s,short}, -s {l,long,s,short}
+                                side of the position to change
+          --cash CASH, -c CASH  amount of cash to change for current account
+
+           Change trader cash and positions
+
+        Change cash or positions or both. nothing will be changed if amount or cash is not given,
+        price is used to calculate new cost, if not given, current price will be used
 
         Usage:
         ------
-        change symbol amount price [--long|-l|--short|-s]
-        change [--cash|-c amount]
+        change symbol [--amount | -a AMOUNT] [--price | -p PRICE] [--side | -s l LONG | s SHORT] [--cash | -c amount]
 
         Examples:
         ---------
-        change 000001.SZ 1000 10.5:
-            add 1000 shares of 000001.SZ to trader account with price 10.5 on long side (default)
-        change --cash/-c 1000000:
-            add 1000000 cash to trader account
+        to change cash to increase 1000:
+        (QTEASY) change --cash 1000
+        to change cash to decrease 1000:
+        (QTEASY) change --cash -1000
+        to change position of 000651.SH to increase 100 shares:
+        (QTEASY) change 000651.SH --amount 100
+        to change position of 000651.SH to increase 100 shares at price 32.5:
+        (QTEASY) change 000651.SH --amount 100 --price 32.5
+        to change short side of position of 000651.SH to increase 100 shares at price 32.5:
+        (QTEASY) change 000651.SH --amount 100 --price 32.5 --side short
         """
 
-        args = parse_shell_argument(arg, command_name='change')
-        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like, is_number_like
-
+        args = self.parse_args('change', arg)
         if not args:
-            print('Please input valid arguments.')
-            return
+            return False
 
-        if args[0] in ['--cash', '-c']:
-            # change cash
-            if len(args) < 2:
-                print('Please input cash value to increase (+) or to decrease (-).')
-                return
-            try:
-                amount = float(args[1])
-            except ValueError:
-                print('Please input cash value to increase (+) or to decrease (-).')
-                return
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
 
-            self.trader._change_cash(amount)
-            return
+        symbol = args.symbol.upper()
+        qty = args.amount
+        price = args.price
+        side = args.side
+        cash_amount = args.cash
 
-        symbol = None
-        if is_cn_stock_symbol_like(args[0].upper()):
+        # either qty or cash amount should be given
+        if qty == 0 and cash_amount == 0:
+            print('Please input one of position amount or cash to change.')
+            return False
+
+        # check the format of symbol
+        if is_cn_stock_symbol_like(symbol):
             # check if input matches one of symbols in trader asset pool
             asset_pool = self.trader.asset_pool
             asset_pool_striped = [symbol.split('.')[0] for symbol in asset_pool]
-            if args[0] not in asset_pool_striped:
-                print(f'symbol {args[0]} not in trader asset pool, please check your input.')
-                return
-            symbol = asset_pool[asset_pool_striped.index(args[0])]
+            if symbol not in asset_pool_striped:
+                print(f'symbol {symbol} not in trader asset pool, please check your input.')
+                return False
+            symbol = asset_pool[asset_pool_striped.index(symbol)]
 
-        if is_complete_cn_stock_symbol_like(args[0].upper()):
-            symbol = args[0].upper()
+        if symbol != '' and not is_complete_cn_stock_symbol_like(symbol):
+            print(f'"{symbol}" invalid: Please input a valid symbol to change position holdings.')
+            return False
 
-        if symbol is None:
-            print(f'"{args[0]}" invalid: Please input a valid symbol to change position holdings.')
-            return
+        # get current price if price is not given
+        if price == 0:
+            try:
+                freq = self.trader.operator.op_data_freq
+                last_available_data = self.trader.datasource.get_history_data(
+                        shares=[symbol],
+                        htypes='close',
+                        asset_type=self.trader.asset_type,
+                        freq=freq,
+                        row_count=10,
+                )
+                current_price = last_available_data['close'][symbol][-1]
+            except Exception as e:
+                print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
+                import traceback
+                traceback.print_exc()
+                current_price = 10.00
+            price = current_price
 
-        if len(args) < 2:
-            print('Please input valid arguments.')
-            return
-
-        # change positions: amount and symbol must be given, minus sign decrease. price is used to update cost,
-        # if not given, current price will be used, side is used to specify long or short side, if not given,
-        # current none-zero side will be used, if both sides are zero, long side will be used. if none-zero side
-        # existed, the other side can not be changed.
-        volume = float(args[1])
-        try:
-            freq = self.trader.operator.op_data_freq
-            last_available_data = self.trader.datasource.get_history_data(
-                    shares=[symbol],
-                    htypes='close',
-                    asset_type=self.trader.asset_type,
-                    freq=freq,
-                    row_count=10,
+        if qty != 0:
+            if side in ['s', 'short']:
+                side = 'short'
+            if side in ['l', 'long']:
+                side = 'long'
+            self._trader.manual_change_position(
+                    symbol=symbol,
+                    quantity=qty,
+                    price=price,
+                    side=side,
             )
-            current_price = last_available_data['close'][symbol][-1]
-        except Exception as e:
-            print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
-            import traceback
-            traceback.print_exc()
-            current_price = 10.00
-        if len(args) == 2:
-            # 只给出两个参数，默认使用最新价格、side为已有的非零持仓
-            price = current_price
-            side = None
-        elif (len(args) == 3) and (args[2] in ['--long', '--short', '-l', '-s']):
-            # 只给出side参数，默认使用最新价格
-            price = current_price
-            side = 'long' if args[2] in ['--long', '-l'] else 'short'
-        elif (len(args) == 3) and (is_number_like(args[2])):
-            # 只给出price参数，默认使用已有的非零持仓side
-            price = float(args[2])
-            side = None
-        elif (len(args) == 4) and (is_number_like(args[2])) and (args[3] in ['--long', '--short', '-l', '-s']):
-            # 既给出了价格，又给出了side
-            price = float(args[2])
-            side = 'long' if args[3] in ['--long', '-l'] else 'short'
-        elif (len(args) == 4) and (is_number_like(args[3])) and (args[2] in ['--long', '--short', '-l', '-s']):
-            # 既给出了价格，又给出了side
-            price = float(args[3])
-            side = 'long' if args[2] in ['--long', '-l'] else 'short'
-        else:  # not a valid input
-            print(f'{args} is not a valid input, Please input valid arguments.')
-            return
 
-        self._trader._change_position(
-                symbol=symbol,
-                quantity=volume,
-                price=price,
-                side=side,
-        )
+        if cash_amount != 0:
+            # change cash
+            self.trader.manual_change_cash(amount=cash_amount)
 
     def do_dashboard(self, arg):
-        """ Enter dashboard mode, live status will be displayed
+        """usage: dashboard [-h]
 
-        Usage:
-        ------
-        dashboard
+        Exit shell and enter dashboard
+
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        Examples:
+        ---------
+        to enter dashboard mode:
+        (QTEASY) dashboard
         """
-        if arg:
-            print('dashboard command does not accept arguments.')
+
+        args = self.parse_args('dashboard', arg)
+        if not args:
             return False
+
         if not self.trader.debug:
             import os
             # check os type of current system, and then clear screen
@@ -1114,11 +1587,24 @@ class TraderShell(Cmd):
         return True
 
     def do_strategies(self, arg: str):
-        """ Show strategies information or set parameters for a strategy
+        """usage: strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] [--set-par [SET_VAL [SET_VAL ...]]]
+                [--blender BLENDER] [--timing TIMING]
 
-        Usage:
-        ------
-        strategies [--detail|-d] [--set-par|-s strategy_id pars]
+        Show or change strategy parameters
+
+        positional arguments:
+          strategy              strategy to show or change parameters for
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --detail, -d          show detailed strategy info
+          --set-par [SET_PAR [SET_PAR ...]], --set [SET_PAR [SET_PAR ...]], -s [SET_PAR [SET_PAR ...]]
+                                set parameters for strategy
+          --blender BLENDER, -b BLENDER
+                                set blender for strategies, not implemented yet
+          --timing TIMING, -t TIMING
+                                The strategy run timing of the strategies whose
+                                blender is set, not implemented yet
 
         Examples:
         ---------
@@ -1126,90 +1612,149 @@ class TraderShell(Cmd):
         (QTEASY): strategies
         to display strategies information in detail:
         (QTEASY): strategies --detail
-        to set parameters for strategy "stg":
-        (QTEASY): strategies --set-par stg (1, 2, 3)
+        to set parameters (1, 2, 3) for strategy "stg":
+        (QTEASY): strategies stg --set-par 1 2 3
+        to set parameters (1, 2, 3) and (4, 5) for strategies "stg1" and "stg2" respectively:
+        (QTEASY): strategies stg1 stg2 -s 1 2 3 -s 4 5
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
-        # TODO: to change blender of strategies, use strategies blender|b <blender>
         """
 
-        args = parse_shell_argument(arg, command_name='strategies', escape_dash=True)
+        args = self.parse_args('strategies', arg)
         if not args:
-            self.trader.operator.info()
-        elif args[0] in ['-d', '--detail', 'detail', 'd']:
-            self.trader.operator.info(verbose=True)
-        elif args[0] in ['-s', '--set-par', 's', 'set-par']:
-            if len(args) < 3:
-                print('To set up variable parameter of a strategy, input a valid strategy id and a parameter:\n'
-                      'For Example, to set (1, 2, 3) as the parameter of strategy "custom", use:\n'
-                      '(QTEASY): strategies -s custom (1, 2, 3)')
-                return
-            strategy_id = args[1]
-            pars = args[2:]
+            return False
+
+        strategies = [stg for stg_list in args.strategy for stg in stg_list] if args.strategy else []
+        detail = args.detail
+        set_val = [tuple(val_list) for val_list in args.set_val] if args.set_val else []
+        timing = args.timing
+        blender = args.blender
+
+        if not strategies and not blender:
+            # if strategies are not given then display information of operator
+            self.trader.operator.info(verbose=detail)
+            return
+
+        elif strategies and not set_val:
+            # if strategies are given without set values
+
+            strategy_ids = self.trader.operator.strategy_ids
+            # check if strategies are all valid strategy ids
+            if any(stg not in strategy_ids for stg in strategies):
+                wrong_stg = [stg not in strategy_ids for stg in strategies]
+                print(f'Strategies ({wrong_stg}) are not valid strategy ids, please check your input!')
+                return False
+            # show strategy info one by one
+            for stg in strategies:
+                self.trader.operator[stg].info(verbose=detail)
+            return
+
+        elif strategies and set_val:
+            # set the parameters of each strategy
+
+            # count of strategies should match that of set_val
+            if len(strategies) != len(set_val):
+                print(f'Number of strategies({len(strategies)}) must match set_val({len(set_val)})')
+                return False
+
+            for stg, val in zip(strategies, set_val):
+                try:
+                    # correct par type before setting
+                    op = self.trader.operator
+                    op.set_parameter(stg_id=stg, pars=val)
+                    print(f'Parameter {val} has been set to strategy {stg}.')
+                except Exception as e:
+                    print(f'Can not set {val} to {stg}, Error: {e}')
+                    if self.trader.debug:
+                        import traceback
+                        traceback.print_exc()
+                    return False
+
+        elif timing and blender:
             try:
-                new_pars = eval(','.join(pars))
+                self.trader.operator.set_blender(blender=blender, run_timing=timing)
+                print(f'Blender {blender} has been set to run timing {timing}')
             except Exception as e:
-                print(f'Invalid parameter ({",".join(pars)})! Error: {e}')
+                print(f'Can not set {blender} to {timing}, Error: {e}')
                 if self.trader.debug:
                     import traceback
                     traceback.print_exc()
-                return
-            if not isinstance(new_pars, tuple):
-                print(f'Invalid parameter ({new_pars})! Parameter should be a tuple')
-            if not isinstance(new_pars, tuple):
-                print(f'Invalid parameter ({new_pars})! Please input a valid parameter.')
-                return
-            try:
-                self.trader.operator.set_parameter(stg_id=strategy_id, pars=new_pars)
-            except Exception as e:
-                print(f'Can not set {new_pars} to {strategy_id}, Error: {e}')
-                self.trader.operator.info()
-                if self.trader.debug:
-                    import traceback
-                    traceback.print_exc()
-                return
-            print(f'Parameter {new_pars} has been set to strategy {strategy_id}.')
-            self.trader.operator.info()
-        elif args[0] in ['-b', '--blender']:
-            print(f'Not implemented yet.')
+                return False
 
     def do_schedule(self, arg):
-        """ Show current strategy task schedule
+        """ usage: schedule [-h]
 
-        Usage:
-        ------
-        schedule
+        Show trade agenda
+
+        optional arguments:
+          -h, --help  show this help message and exit
+
+        Examples:
+        ---------
+        to display current strategy task schedule:
+        (QTEASY): schedule
         """
-        if arg:
-            print('schedule command does not accept arguments.')
-            return
+
+        args = self.parse_args('schedule', arg)
+        if not args:
+            return False
+
         print(f'Execution Schedule:')
         self.trader.show_schedule()
 
-    def do_run(self, arg: str):
-        """ To force run a strategy or a task in current setup, only available in DEBUG mode.
-        strategy id can be found in strategies command.
+    def do_run(self, arg):
+        """usage: run [STRATEGY [STRATEGY ...]] [-h]
+                [--task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}]
+                [--args [ARGS [ARGS ...]]]
 
-        Usage:
-        ------
-        run stg1 [stg2] [stg3] ...
-        run task|t task_name [[arg1] [arg2] ...]
+
+        Run strategies manually
+
+        positional arguments:
+          strategy              strategies to run
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}, -t {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}
+                                task to run
+          --args [ARGS [ARGS ...]], -a [ARGS [ARGS ...]]
+                                arguments for the task to run
+
+        Examples:
+        ---------
+        to run strategy "stg1":
+        (QTEASY): run stg1
+        to run strategy "stg1" and "stg2":
+        (QTEASY): run stg1 stg2
+        to run task "task1":
+        (QTEASY): run --task task1
+        to run task "task1" with arguments "arg1" and "arg2":
+        (QTEASY): run --task task1 --args arg1 arg2
+
         """
+
         if not self.trader.debug:
             print('Running strategy manually is only available in DEBUG mode')
-            return
-        argument = parse_shell_argument(arg, command_name='run', escape_dash=True)
-        if not argument:
-            print('No argument found, please input a valid strategy id or task name:\n'
-                  'run stg1 [stg2] [stg3] ... to run strategies\n'
-                  'run task|t task_name [[arg1] [arg2] ...] to run tasks')
-            return
-        if not argument[0] in ['task', 't']:  # run strategies
+            return False
+
+        args = self.parse_args('run', arg)
+        if not args:
+            return False
+
+        strategies = [stg for stg_list in args.strategy for stg in stg_list] if args.strategy else []
+        task = args.task
+        task_args = [t_arg for arg_list in args.args for t_arg in arg_list] if args.args else []
+
+        if not strategies and not task:
+            print('Please input a valid strategy id or task name.')
+            return False
+
+        elif strategies:  # run strategies
             all_strategy_ids = self.trader.operator.strategy_ids
-            if not all([strategy in all_strategy_ids for strategy in argument]):
-                invalid_stg = [stg for stg in argument if stg not in all_strategy_ids]
+            if not all([strategy in all_strategy_ids for strategy in strategies]):
+                invalid_stg = [stg for stg in strategies if stg not in all_strategy_ids]
                 print(f'Invalid strategy id: {invalid_stg}, use "strategies" to view all valid strategy ids.')
-                return
+                return False
 
             current_trader_status = self.trader.status
             current_broker_status = self.trader.broker.status
@@ -1218,25 +1763,27 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', argument, run_in_main_thread=True)
+                self.trader.run_task('run_strategy', strategies, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
                 print(traceback.format_exc())
+                return
 
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
-            if len(argument) == 1:
-                print('Please input a valid task name.')
-                return
-            task_name = argument[1]
+            if task not in ['stop', 'sleep', 'pause', 'process_result', 'pre_open']:
+                print(f'Invalid task name: {task}, please input a valid task name.')
+                return False
             try:
-                self.trader.run_task(task_name, run_in_main_thread=True)
+                task_args = tuple(task_args)
+                self.trader.run_task(task, *task_args, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')
                 print(traceback.format_exc())
+                return False
 
     # ----- overridden methods -----
     def precmd(self, line: str) -> str:
@@ -1350,6 +1897,7 @@ class TraderShell(Cmd):
                 else:
                     continue
                 t.cancel()
+                # TODO: 上面这种5秒定时的方式有问题，如果用户五秒后再次按下Ctrl+C，会导致Shell异常退出
                 continue
             # looks like finally block is better than except block here
             except Exception as e:
@@ -1617,6 +2165,10 @@ class Trader(object):
         return self._datasource
 
     @property
+    def config(self):
+        return self._config
+
+    @property
     def log_file_exists(self):
         """ 返回交易记录文件是否存在
 
@@ -1796,13 +2348,17 @@ class Trader(object):
                 traceback.print_exc()
         return
 
-    def info(self, verbose=False, width=80):
+    def info(self, verbose=False, detail=False, system=False, width=80):
         """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
 
         Parameters:
         -----------
         verbose: bool, default False
-            是否打印详细信息(系统信息、账户信息、交易状态信息等)，如否，则只打印账户持仓等基本信息
+            是否打印详细信息(账户信息、交易状态信息等), to be deprecated, use detail instead
+        detail: bool, default False
+            是否打印详细信息(账户持仓、账户现金等)，如否，则只打印账户持仓等基本信息
+        system: bool, default False
+            是否打印系统信息
         width: int, default 80
             打印信息的宽度
 
@@ -1812,6 +2368,12 @@ class Trader(object):
         """
 
         from rich import print as rprint
+
+        detail = detail or verbose
+
+        if verbose:
+            import warnings
+            warnings.warn('verbose argument is deprecated, use detail instead', DeprecationWarning)
 
         semi_width = int(width * 0.75)
         position_info = self.account_position_info
@@ -1825,7 +2387,7 @@ class Trader(object):
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
         total_profit_ratio = total_profit / total_market_value
-        if verbose:
+        if system:
             # System Info
             rprint(f'{" System Info ":=^{width}}')
             rprint(f'{"python":<{semi_width - 20}}{sys.version}')
@@ -1842,6 +2404,7 @@ class Trader(object):
                    f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
             rprint(f'{"Trade log file path":<{semi_width - 20}}'
                    f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
+        if detail:
             # Account information
             rprint(f'{" Account Overview ":=^{width}}')
             rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
@@ -1912,12 +2475,11 @@ class Trader(object):
                 s=' '.join(self.asset_pool),
                 n=width - 2,
         )
-        if verbose:
+        if detail:
             print(f'{" Investment ":=^{width}}')
             rprint(f'Current Investment Type:        {self.asset_type}')
             rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
                    f'=={asset_pool_string}\n')
-        return None
 
     def trade_results(self, status='filled'):
         """ 返回账户的交易结果
@@ -2066,7 +2628,21 @@ class Trader(object):
                          'price_filled', 'filled_qty', 'canceled_qty', 'transaction_fee', 'execution_time',
                          'delivery_status'],
         )
+        # correct the data types of some columns
+        order_result_details['submitted_time'] = pd.to_datetime(order_result_details['submitted_time'])
+        order_result_details['execution_time'] = pd.to_datetime(order_result_details['execution_time'])
         return order_result_details
+
+    def asset_pool_detail(self):
+        """ 显示asset_pool的详细信息"""
+        # get all symbols from asset pool, display their master info
+        asset_pool = self.asset_pool
+        stock_basic = self.datasource.read_table_data(table='stock_basic')
+        if stock_basic.empty:
+            print(f'No stock basic data found in the datasource, acquire data with '
+                  f'"qt.refill_data_source(tables="stock_basic")"')
+            return
+        print(stock_basic.reindex(index=asset_pool))
 
     def init_log_file(self) -> str:
         """ 创建一个新的trade_log记录文件，写入文件header，清除文件内容
@@ -2368,11 +2944,11 @@ class Trader(object):
                 self._broker.order_queue.put(trade_order)
                 # format the message depending on buy/sell orders
                 if d == 'buy':  # red for buy
-                    self.send_message(f'<NEW ORDER {order_id}>: <{name}-{sym}> [bold red]{d}-{pos} '
-                                      f'{qty} shares @ ¥{price}[/bold red]')
+                    self.send_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold red]{d}-{pos} '
+                                      f'{qty} shares @ {price}[/bold red]')
                 else:  # green for sell
-                    self.send_message(f'<NEW ORDER {order_id}>: <{name}-{sym}> [bold green]{d}-{pos} '
-                                      f'{qty} shares @ ¥{price}[/bold green]')
+                    self.send_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold green]{d}-{pos} '
+                                      f'{qty} shares @ {price}[/bold green]')
                 # 记录已提交的交易数量
                 submitted_qty += 1
 
@@ -2428,8 +3004,12 @@ class Trader(object):
 
             # send message to indicate execution of order
             self.send_message(f'<ORDER EXECUTED {order_id}>: '
-                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price} '
-                              f'with fee: {result_detail["transaction_fee"]}')
+                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
+            # send message to indicate change of positions / cashes
+            # 读取交易处理以后的账户信息和持仓信息
+            order_id = result['order_id']
+            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
+
             # 读取持仓信息
             pos_id = order_detail['pos_id']
             position = get_position_by_id(pos_id, data_source=self._datasource)
@@ -2502,7 +3082,6 @@ class Trader(object):
                 config=config,
                 datasource=datasource,
         )
-        self.send_message(f'missing data acquired!')
 
         # 检查账户中的成交结果，完成全部交易结果的交割
         delivery_result = process_account_delivery(
@@ -2584,7 +3163,8 @@ class Trader(object):
         2，处理当日已成交的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
-        self.send_message('Processing post_close activities...')
+        if self.debug:
+            self.send_message('running task post_close')
 
         if self.is_market_open:
             if self.debug:
@@ -2622,15 +3202,11 @@ class Trader(object):
             # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
             # TODO: here "submitted" orders can not be canceled, need to be fixed
             cancel_order(order_id=order_id, data_source=self._datasource)
-            order_details = read_trade_order_detail(order_id, data_source=self._datasource)
-            sym = order_details['symbol']
-            name = get_symbol_names(self._datasource, [sym])[0]
-            d = order_details['direction']
-            pos = order_details['position']
-            qty = order_details['qty']
-            price = order_details['price']
-            self.send_message(f'<CANCELED ORDER {order_id}>: <{name}-{sym}> {d}-{pos} '
-                                      f'{qty} shares @ ¥{price}')
+            self.send_message(f'canceled unfilled orders')
+
+        # 检查今日成交结果，完成交易结果的交割
+
+        self.send_message('processed trade delivery')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -2918,7 +3494,7 @@ class Trader(object):
         else:
             raise ValueError(f'Invalid current time: {current_time}')
 
-    def _change_cash(self, amount: float) -> None:
+    def manual_change_cash(self, amount):
         """ 手动修改现金，根据amount的正负号，增加或减少现金
 
         修改后持有现金/可用现金/总投资金额都会发生变化
@@ -2970,14 +3546,14 @@ class Trader(object):
 
         return
 
-    def _change_position(self, symbol, quantity, price, side=None):
+    def manual_change_position(self, symbol, quantity, price, side=None):
         """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
 
         修改后持仓的数量 = 原持仓数量 + quantity
         如果找不到指定标的和方向的仓位，则创建一个新的仓位
         如果不指定方向，则查找当前持有的非零仓位，使用持有仓位的方向，如果没有持有非零仓位，则默认为'long'方向
-        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作
-        如果quantity为负且绝对值大于可用数量，则忽略该操作
+        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作，并打印提示
+        如果quantity为负且绝对值大于可用数量，则忽略该操作，并打印提示
 
         Parameters
         ----------
@@ -3013,6 +3589,8 @@ class Trader(object):
                     position_type=side,
                     data_source=self.datasource,
             )
+            if self.debug:
+                print('Position to be modified does not exist, new position is created!')
         elif len(position_ids) == 1:
             # found one position, use it, if side is not consistent, create a new one on the other side
             position_id = position_ids[0]
@@ -3024,7 +3602,8 @@ class Trader(object):
                 side = position['position']
             if side != position['position']:
                 if position['qty'] != 0:
-                    print(f'Position {position_id} is not empty, cannot change side')
+                    print(f'Can not modify position {symbol}@ {side} while {symbol}@ {position["position"]}'
+                          f' still has {position["qty"]} shares, reduce it to 0 first!')
                     return
                 else:
                     position_id = get_or_create_position(
@@ -3058,17 +3637,17 @@ class Trader(object):
                 data_source=self.datasource,
         )
         if self.debug:
-            print(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
-                  f'from {position["qty"]} to {position["qty"] + quantity}')
+            self.send_message(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
+                              f'from {position["qty"]} to {position["qty"] + quantity}')
         # 如果减少持仓，则可用持仓数量必须足够，否则退出
         if quantity < 0 and position['available_qty'] < -quantity:
-            print(f'Not enough position to decrease, available position: {position["available_qty"]}')
+            print(f'Not enough position to decrease, available: {position["available_qty"]}, skipping operation')
             return
         prev_cost = position['cost']
         current_total_cost = prev_cost * position['qty']
         additional_cost = np.round(price * float(quantity), 2)
         new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
-        if np.isinf(new_average_cost):
+        if np.isnan(new_average_cost):
             new_average_cost = 0
         position_data = {
             'qty_change':           quantity,

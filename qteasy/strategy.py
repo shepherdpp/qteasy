@@ -80,16 +80,16 @@ class BaseStrategy:
             name: str = 'strategy name',
             description: str = 'intro text of strategy',
             par_count: int = None,
-            par_types: [list, str] = None,
+            par_types: [[str], str] = None,
             par_range: [list, tuple] = None,
             strategy_run_freq: str = 'd',
             sample_freq: str = None,  # to be deprecated
             strategy_run_timing: str = 'close',
             bt_price_type: str = None,  # to be deprecated
-            strategy_data_types: [str, list] = 'close',
-            data_types: [str, list] = None,  # to be deprecated
+            strategy_data_types: [str, [str]] = 'close',
+            data_types: [str, [str]] = None,  # to be deprecated
             use_latest_data_cycle: bool = True,
-            reference_data_types: [str, list] = '',
+            reference_data_types: [str, [str]] = '',
             data_freq: str = 'd',
             window_length: int = 270,
     ):
@@ -257,6 +257,7 @@ class BaseStrategy:
                 par_range = par_range[0:par_count]
 
         self._pars = None
+        self._opt_tag = None
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
         self._stg_name = name  # 策略的名称
@@ -396,7 +397,9 @@ class BaseStrategy:
 
     @property
     def pars(self):
-        """策略参数，元组"""
+        """策略参数，元组
+        :return:
+        """
         return self._pars
 
     @pars.setter
@@ -649,12 +652,17 @@ class BaseStrategy:
             return 1
         if isinstance(pars, dict):
             return self.set_dict_pars(pars)
+
+        # try correct par types
+        pars = self.correct_pars_type(pars)
         # now pars should be tuples
         if self.check_pars(pars):
             self._pars = pars
             return 1
+        else:
+            return 0
 
-    def check_pars(self, pars):
+    def check_pars(self, pars: tuple) -> bool:
         """检查pars(一个tuple)是否符合strategy的参数设置"""
         for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
             if not isinstance(pars, tuple):
@@ -665,17 +673,13 @@ class BaseStrategy:
                                  f' got {len(pars)} ({pars}).')
             if par_type in ['int', 'discr']:
                 # 如果par_type是int或者discr，那么par应该是一个整数
-                try:
-                    par = int(par)
-                except Exception:
-                    raise Exception(f'Invalid parameter, {par} can not be converted to an integer')
+                if not isinstance(par, int):
+                    raise Exception(f'Invalid parameter, it should be an integer, got {type(par)}')
 
             if par_type in ['float', 'conti']:
-                # 如果par_type是float或者conti，那么par应该是一个浮点数
-                try:
-                    par = float(par)
-                except Exception:
-                    raise Exception(f'Invalid parameter, {par} can not be converted to a float number')
+                # 如果par_type是float或者conti，那么par应该是一个浮点数/整数
+                if not isinstance(par, (int, float)):
+                    raise Exception(f'Invalid parameter, it should be a float or an integer, got {type(par)}')
 
             if par_type in ['enum']:
                 # 如果par_type是enum，那么par应该是par_range中的一个元素
@@ -688,6 +692,41 @@ class BaseStrategy:
                     raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
         return True
 
+    def correct_pars_type(self, pars: tuple) -> tuple:
+        """ 将可能为字符串格式的pars根据type调整为正确的格式
+
+        Parameters
+        ----------
+        pars: tuple
+            策略参数
+
+        Returns
+        -------
+        pars: tuple
+            pars in corrected type
+
+        """
+        if len(pars) != self._par_count:
+            raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
+                             f' got {len(pars)} ({pars}).')
+        # corrected_pars = [None] * self._par_count
+        corrected_pars = [None for _ in range(self._par_count)]
+        try:
+            for i in range(self._par_count):
+                par = pars[i]
+                p_type = self.par_types[i]
+                if p_type in ['int', 'descr']:
+                    corrected_pars[i] = int(par)
+                elif p_type in ['float', 'conti']:
+                    corrected_pars[i] = float(par)
+                else:
+                    corrected_pars[i] = par
+
+            return tuple(corrected_pars)
+
+        except Exception as e:
+            raise RuntimeError({e})
+
     def set_dict_pars(self, pars: dict) -> int:
         """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
             检查dict的合法性，并设置参数
@@ -696,7 +735,7 @@ class BaseStrategy:
         if not isinstance(pars, dict):
             raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
         if len(pars) == 0:
-            return self.set_pars(pars=None)
+            return self.set_pars(None)
         for key in pars.keys():
             if not isinstance(key, str):
                 raise TypeError(f'Invalid parameter, all keys of dict type parameter should be a stock code,'
@@ -866,7 +905,7 @@ class BaseStrategy:
             策略运行的输出，包括交易信号、交易指令等
         """
 
-        # TODO: (v1.1规划更新)
+        # TODO: for v1.1规划更新
         #  改变trade_data的定义。删除trade_data，允许用户在hist_data和ref_data
         #  中定义持仓量、成交量、成交价等数据，这些数据类型通过特殊的数据类型关键字指定，因此客户在策略定
         #  义时可以通过data_type来灵活地指定所需的数据，不需要专门的trade_data数据类型了。

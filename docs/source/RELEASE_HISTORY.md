@@ -1,5 +1,23 @@
 # RELEASE HISTORY
 
+
+## 1.1.0 (2024-03-0?)
+- New feature: The QTEASY shell is now parsing command arguments in a better and more intuitive way
+  - Now all commands support `--parameter` / `-p` style parameters, same way as all other CLI tools
+  - All commands now support `--help` and `-h` to show help messages, are now fully documented in the shell help message
+  - All commands now have better error handling and usage messages when wrong arguments are given
+  - All commands are now thoroughly tested and debugged
+  - Arguments of some commands are now re-designed and re-organized to be more intuitive and easier to use:
+    - `watch` command now supports `--remove` / `-r` to remove symbols from watch list, and `--clear` / `-c` to clear the list
+    - `buy` and `sell` commands now uses `--price` / `-p` to specify price, and `--side` / `-s` to specify position side
+    - `info` and `overview` commands now support new argument `--system` to show system info, and `verbose` will be replaced by `detail` in future versions
+    - `history` command now accepts explicit argument `all` to show all history
+    - `orders` command now accepts order filter arguments with optional tags `--status`, `--time`, `--side`, and `--type`
+    - `config` command now support `--set` / `-s` to set configurations, and set view levels with count of `--level` / `-l`
+    - `strategies` command now supports `--set-par` to set strategy optimizable parameters, and to be implemented: possible to set blenders with `--blender` and `--timing`
+    - `run` command now supports running tasks with arguments given with optional flag `--args` / `-a`
+    - `orders` command now works with new optional arguments for time, type, side and status in more logical way
+    
 ## 1.0.27 (2024-3-5)
 - Removed dependency on pandas to load dataframes from database, which will arouse UserWarnings in higher versions of pandas, requesting users to install sqlalchemy
 
@@ -9,10 +27,10 @@
 
 ## 1.0.25 (2024-2-28)
 - Now trade logs are saved in a file in live trade mode, the file is saved in the same directory as set in `qt.config['trade_log_file_path']`
-- Fixed a few bugs in live trade mode, and added information print outs on errors
+- Fixed a few bugs in live trade mode, and added information print-outs on errors
 
 ## 1.0.24 (2024-02-18)
-- Corrected a mistake introduced since version 1.0.18, with wrongly merged incomplete and untested features in broker. this bug will cause failure of executiong orders in live trade mode.
+- Corrected a mistake introduced since version 1.0.18, with wrongly merged incomplete and untested features in broker. this bug will cause failure of execution orders in live trade mode.
 
 ## 1.0.23 (2024-02-15)
 - Fixed a bug that will cause wrong type conversion when filtering stocks with `qt.filter_stocks()` and creating candle charts with `qt.candle()`
@@ -33,7 +51,7 @@
 - Updated dependencies, made package more use-able for beginners with no `ta-lib` and only basic `tushare` credits
 
 ## 1.0.18 (2024-02-05)
-- Improved trader shell live messages: now order execution results are better displayed with more info regarding change of stock qty and cash amounts
+- Improved Trader Shell live messages: now order execution results are better displayed with more info regarding change of stock qty and cash amounts
 - Command INFO and OVERVIEW in trader shell now will not print out system information in default.
 - Updated version requirements for numpy
 - Bug fixes
@@ -63,7 +81,7 @@
 - Improvements in Trader Shell
   - Now users can scroll to previous commands with up and down keys in Command mode
   - Created new command `buy` / `sell` to allow users to manually submit orders to broker
-  - Optimized shell tasks and let live price acquisition to run in back ground threads
+  - Optimized shell tasks and let live price acquisition to run in background threads
 - In Broker:
   - Optimized behavior of Simulator Broker, to return execution result according to live prices
   - Fixed bugs: order execution will not block each other
@@ -79,7 +97,7 @@
 - two new commands will be added to Shell: `buy` and `sell` 
 
 ## 1.0.11 (2023-12-03)
-- Implemented "--perameter" / "-p" style parameter in Trader Shell, the old style will be deprecated in later versions
+- Implemented "--parameter" / "-p" style parameter in Trader Shell, the old style will be deprecated in later versions
 - Allowed users to set up live trade broker parameters with QT configurations
 - Allowed users to set up live trade running time zone
 - Made dependency ta-lib as optional, kept a few critical built in strategies usable without `ta-lib`
@@ -99,7 +117,7 @@
 - Fixed bugs
 
 ## 1.0.7 (2023-11-11)
-- Improved Strategy class, added Strategy.use_latest_data_cycle property to allow use latest prices to create trade signals
+- Improved Strategy class, added Strategy.use_latest_data_cycle property to allow use the latest prices to create trade signals
 - now stock names are displayed in qt shell
 - Added shell command `watch`, to watch stock price in realtime
 - Implemented live price acquiring channel eastmoney

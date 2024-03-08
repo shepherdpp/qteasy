@@ -62,14 +62,6 @@ class TestTrader(unittest.TestCase):
         data_test_dir = 'data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
         test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
-        # test_ds = DataSource(
-        #         'db',
-        #         host=QT_CONFIG['test_db_host'],
-        #         port=QT_CONFIG['test_db_port'],
-        #         user=QT_CONFIG['test_db_user'],
-        #         password=QT_CONFIG['test_db_password'],
-        #         db_name=QT_CONFIG['test_db_name']
-        # )
         test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results',
@@ -537,38 +529,38 @@ class TestTrader(unittest.TestCase):
                                                            'submitted_time', 'status'])
         # test manual change of cashes and positions
         self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
-        ts._change_cash(10000.0)
+        ts.manual_change_cash(10000.0)
         self.assertEqual(ts.account_cash, (83905.0, 83905.0, 110000.0))
-        ts._change_cash(-10000.0)
+        ts.manual_change_cash(-10000.0)
         self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
         # test too large cash change
-        ts._change_cash(-100000.0)
+        ts.manual_change_cash(-100000.0)
         self.assertEqual(ts.account_cash, (73905.0, 73905.0, 100000.0))
 
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
-        ts._change_position('000001.SZ', 200.0, 10.0)
+        ts.manual_change_position('000001.SZ', 200.0, 10.0)
         self.assertTrue(np.allclose(ts.account_positions['qty'], [300.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [300.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
-        ts._change_position('000001.SZ', -100.0, 10.0)
+        ts.manual_change_position('000001.SZ', -100.0, 10.0)
         self.assertTrue(np.allclose(ts.account_positions['qty'], [200.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [200.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
-        ts._change_position('000001.SZ', -100.0, 10.0, 'long')
+        ts.manual_change_position('000001.SZ', -100.0, 10.0, 'long')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
         # wrong side of position change will be ignored
-        ts._change_position('000001.SZ', -100.0, 10.0, 'short')
+        ts.manual_change_position('000001.SZ', -100.0, 10.0, 'short')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
         # the other side of position change can be done when this side is cleared
-        ts._change_position('000001.SZ', -100.0, 10.0, 'long')
+        ts.manual_change_position('000001.SZ', -100.0, 10.0, 'long')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [0.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [0.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
-        ts._change_position('000001.SZ', 100.0, 10.0, 'short')
+        ts.manual_change_position('000001.SZ', 100.0, 10.0, 'short')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
         # if reduced qty is larger than current qty, the change will be ignored
-        ts._change_position('000001.SZ', -200.0, 10.0, 'short')
+        ts.manual_change_position('000001.SZ', -200.0, 10.0, 'short')
         self.assertTrue(np.allclose(ts.account_positions['qty'], [-100.0, 100.0, 200.0, 200.0, 400.0, 200.0]))
         self.assertTrue(np.allclose(ts.account_positions['available_qty'], [-100.0, 100.0, 200.0, 100.0, 400.0, 200.0]))
 
@@ -888,4 +880,3 @@ class TestTrader(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

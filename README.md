@@ -46,9 +46,8 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.0.27`
+- Latest Version: `1.1.0`
 - License: BSD 3-Clause License
-
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
 
@@ -70,7 +69,7 @@
 
 ### **创建交易策略**
 
-- 提供近七十种内置交易策略，可以直接搭积木式使用
+- 提供几十种内置交易策略，可以直接搭积木式使用
 - 快速创建自定义交易策略，灵活设置可调参数
 - 交易策略的回测、优化、评价，可视化输出回测结果
 
