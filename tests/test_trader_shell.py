@@ -233,7 +233,7 @@ class TestTraderShell(unittest.TestCase):
         """ test buy command"""
         tss = self.tss
         # set live prices in trader for all assets for testing
-        tss.trader.live_prices = {
+        tss.trader.live_price = {
             '000001.SZ': 10.0,
             '000002.SZ': 20.0,
             '000004.SZ': 30.0,
@@ -262,7 +262,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertEqual(order['order_type'], 'market')
         self.assertEqual(order['price'], 30.0)
         print(f'testing buy command with no price given and use live price')
-        print('trader live price is:', tss.trader.live_prices)
+        print('trader live price is:', tss.trader.live_price)
         self.assertIsNone(tss.do_buy('100 000002.SZ'))
         order = read_trade_order_detail(order_id=3, data_source=tss.trader.datasource)
         self.assertEqual(order['account_id'], 1)
@@ -293,7 +293,7 @@ class TestTraderShell(unittest.TestCase):
         """ test sell command"""
         tss = self.tss
         # set live prices in trader for all assets for testing
-        tss.trader.live_prices = {
+        tss.trader.live_price = {
             '000001.SZ': 10.0,
             '000002.SZ': 20.0,
             '000004.SZ': 30.0,
@@ -322,7 +322,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertEqual(order['order_type'], 'market')
         self.assertEqual(order['price'], 30.0)
         print(f'testing sell command with no price given and use live price')
-        print('trader live price is:', tss.trader.live_prices)
+        print('trader live price is:', tss.trader.live_price)
         self.assertIsNone(tss.do_sell('100 000002.SZ'))
         order = read_trade_order_detail(order_id=3, data_source=tss.trader.datasource)
         self.assertEqual(order['account_id'], 1)

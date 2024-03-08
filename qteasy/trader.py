@@ -537,11 +537,11 @@ class TraderShell(Cmd):
 
         # if price == 0, use live price
         if price == 0:
-            if self.trader.live_prices is None:
+            if self.trader.live_price is None:
                 rich.print(f'[bold red]No live price data available, price should be given![/bold red')
                 return False
             try:
-                args.price = self.trader.live_prices[symbol]
+                args.price = self.trader.live_price[symbol]
             except KeyError:
                 rich.print(f'[bold red]No live price data for {symbol} available, price should be given![/bold red')
                 return False
