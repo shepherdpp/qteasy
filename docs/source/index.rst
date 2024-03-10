@@ -8,7 +8,11 @@
 
 .. note::
 
-   This project is under active development.
+   目前`qteays`正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！
+
+.. _报告Issue: https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=
+.. _新功能需求: https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=
+.. _讨论区: https://github.com/shepherdpp/qteasy/discussions
 
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
@@ -69,8 +73,6 @@ What Can You Do with QTEASY?
     :width: 900px
     :align: center
 
-Getting Started
----------------
 
 .. toctree::
    :caption: GETTING STARTED 快速入门
@@ -83,8 +85,6 @@ Getting Started
    CONTRIBUTING
    CODE_OF_CONDUCT
 
-Tutorials
----------
 
 .. toctree::
    :caption: TUTORIALS 使用教程
@@ -94,8 +94,6 @@ Tutorials
 
    tutorials/*
 
-References
-----------
 
 .. toctree::
     :caption: REFERENCES 参考文档
@@ -105,8 +103,6 @@ References
 
     references/*
 
-Examples
---------
 
 .. toctree::
     :caption: EXAMPLES 自定义策略示例
@@ -117,9 +113,6 @@ Examples
     examples/*
 
 
-API Reference
--------------
-
 .. toctree::
    :caption: API REFERENCE 参考
    :numbered: 1
@@ -128,8 +121,6 @@ API Reference
 
    api/*
 
-Change Log
-----------
 
 .. toctree::
    :caption: RELEASE HISTORY 发行版本历史
@@ -139,16 +130,11 @@ Change Log
    RELEASE_HISTORY
 
 
-LICENSE
--------
-
 .. toctree::
    :caption: LICENSE
 
    LICENSE
 
-ABOUT
------
 
 .. toctree::
    :caption: ABOUT 关于
@@ -157,8 +143,6 @@ ABOUT
 
    about
 
-FAQ
----
 .. toctree::
    :caption: FAQ 常见问题
    :maxdepth: 1
