@@ -1,14 +1,28 @@
-# 使用内置交易策略
+`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，[Github地址在这里](https://github.com/shepherdpp/qteasy)，具备以下功能：
 
-qteasy提供了多种内置交易策略，用户可以很容易地直接使用这些交易策略，同时，qteasy提供了一套交易策略组合机制，用户可以将多个简单的交易策略组合成一个比较复杂的交易策略，策略的组合方式是可以灵活设定的。将多个简单交易策略组合成一个复杂的策略后，同样可以使用策略优化工具搜索整个复杂策略的最佳参数。
+- 金融数据的获取、清洗、存储以及处理、可视化、使用
+- 量化交易策略的创建，并提供大量内置基本交易策略
+- 向量化的高速交易策略回测及交易结果评价
+- 交易策略参数的优化以及评价
+- 交易策略的部署、实盘运行
 
-在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。
+通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。
+## 开始前的准备工作
+
+在开始本节教程前，请先确保您已经掌握了下面的内容：
+
+- 安装、配置qteasy —— 详情请参阅[QTEASY教程1](1-get-started.md)
+- 设置了一个本地数据源，并已经将足够的历史数据下载到本地（包括交易日历、股票/基金/指数基本信息、股票/基金/指数的价格数据以及财务指标或其他财务数据——详情请参阅[QTEASY教程2](2-get-data.md)
+- 学会创建交易员对象，使用一个内置交易策略并回测其历史表现，检查回测日志、明白如何调整策略的运行参数或可调参数，改进策略的表现——[QTEASY教程3](3-start-first-strategy.md)
+
+在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于如何创建交易员对象运行策略，使用历史数据回测策略，检查回测交易记录，修改策略等等相关内容。对qteasy的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。
+
+## 本节的目标
+
+在本节中，我们将了解如果使用qteasy`中更多的内置策略，如何使交易员同时运行多个交易策略，如何使用策略混合器(blender)来使用交易策略生成不同的组合策略，
 
 
-### `qt.built_in_list(stg_id=None)`
-
-上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。
-如果给出stg_id，则打印出指定的交易策略的详细信息。例如：
+目前qteasy支持超过70种内置交易策略，全部都是开箱即用，完整的内置交易策略清单请参见[参考文档](../references/4-build-in-strategy-blender.md)：
 
 ```python
 # 获取内置交易策略的清单
@@ -39,166 +53,20 @@ stg_list = qt.built_ins('dma')
     策略不支持参考数据，不支持交易数据
 
 
-### `qt.get_built_in_strategy(id)`
-
-在qteasy中，可以直接使用策略的ID获取内置交易策略
-
-除了使用qt.get_built_in_strategy()获取交易策略以外，在创建Operator对象的时候，将内置交易策略的ID作为参数传入，也可以直接创建交易策略。
-
-
-```python
-# 获取内置交易策略的ID
-strategy_ids = qt.built_ins().keys()
-print(list(strategy_ids)[:10])
-```
-
-    ['crossline', 'macd', 'dma', 'trix', 'cdl', 'bband', 's-bband', 'sarext', 'ssma', 'sdema']
-
-
-
-```python
-# 使用策略ID获取交易策略
-stg = qt.get_built_in_strategy('trix')
-# 显示策略的相关信息
-stg.info()
-```
-
-    Strategy_type:      RuleIterator
-    Strategy name:      TRIX
-    Description:        TRIX strategy, determine long/short position according to triple exponential weighted moving average prices
-    Strategy Parameter: (25, 125)
-    
-    Strategy Properties     Property Value
-    ---------------------------------------
-    Parameter count         2
-    Parameter types         ['int', 'int']
-    Parameter range         [(2, 50), (3, 150)]
-    Data frequency          d
-    Sample frequency        d
-    Window length           270
-    Data types              ['close']
-
-
-
-
-```python
-# 通过策略ID直接生成Operator
-op = qt.Operator(strategies='dma, macd')
-# 通过op.get_stg或op[]获取交易策略
-stg_dma = op.get_stg('dma')
-stg_macd = op['macd']
-
-# 查看两个交易策略的相关信息
-stg_dma.info()
-stg_macd.info()
-```
-
-    Strategy_type:      RuleIterator
-    Strategy name:      DMA
-    Description:        Quick DMA strategy, determine long/short position according to differences of moving average prices with simple timing strategy
-    Strategy Parameter: (12, 26, 9)
-    
-    Strategy Properties     Property Value
-    ---------------------------------------
-    Parameter count         3
-    Parameter types         ['int', 'int', 'int']
-    Parameter range         [(10, 250), (10, 250), (10, 250)]
-    Data frequency          d
-    Sample frequency        d
-    Window length           270
-    Data types              ['close']
-    
-    Strategy_type:      RuleIterator
-    Strategy name:      MACD
-    Description:        MACD strategy, determine long/short position according to differences of exponential weighted moving average prices
-    Strategy Parameter: (12, 26, 9)
-    
-    Strategy Properties     Property Value
-    ---------------------------------------
-    Parameter count         3
-    Parameter types         ['int', 'int', 'int']
-    Parameter range         [(10, 250), (10, 250), (10, 250)]
-    Data frequency          d
-    Sample frequency        d
-    Window length           270
-    Data types              ['close']
-
-
-
-目前qteasy支持的内置交易策略如下：
-
-| ID    | 策略名称    | 说明                                                                                                                                                                                                                                                 | 
-|:-------|:--------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| crossline | `TimingCrossline` | crossline择时策略类，利用长短均线的交叉确定多空状态<br />1，当短均线位于长均线上方，且距离大于l\*m%时，设置仓位目标为1<br />2，当短均线位于长均线下方，且距离大于l\*m%时，设置仓位目标为-1<br />3，当长短均线之间的距离不大于l\*m%时，设置仓位目标为0                                                                                                |
-| macd | `TimingMACD` | MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br />2，当MACD值小于0时，设置仓位目标为0                                                                                                                                                              |
-| dma | `TimingDMA` | DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0                                                                                                                                                |
-| trix | `TimingTRIX` | TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断:<br />计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：<br />1， TRIX位于MATRIX上方时，设置仓位目标为1<br />2， TRIX位于MATRIX下方时，设置仓位目标位-1                                                                                                   |
-| cdl | `TimingCDL` | CDL择时策略，在K线图中找到符合要求的cdldoji模式<br />搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算 等效cdldoji匹配数量，以匹配数量为交易信号。                                                                                                                                          |
-| bband | TimingBBand | 布林带线交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，在价格上穿或下穿布林带线上下轨时产生交易信号。布林带线的均线类型不可选<br />1，当价格上穿上轨时，产生全仓买入信号<br />2，当价格下穿下轨时，产生全仓卖出信号                                                                                                                           |
-| s-bband | SoftBBand | 布林带线渐进交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，交易信号不是一次性产生的，而是逐步渐进买入和卖出。计算BBAND，检查价格是否超过BBAND的上轨或下轨：<br />1，当价格大于上轨后，每天产生10%的比例买入交易信号<br />2，当价格低于下轨后，每天产生33%的比例卖出交易信号                                                                                       |
-| sarext | `TimingSAREXT` | 扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号                                                                                                                                                                                                             |
-| ssma | `SCRSSMA` | 单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例                                                                                                                                                                                                      |
-| sdema | `SCRSDEMA` | 单均线交叉策略——DEMA均线(双重指数平滑移动平均线)：根据股价与DEMA均线的相对位置设定持仓比例                                                                                                                                                                                                |
-| sema | `SCRSEMA` | 单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例                                                                                                                                                                                                     |
-| sht | `SCRSHT` | 单均线交叉策略——HT(希尔伯特变换瞬时趋势线)：根据股价与HT线的相对位置设定持仓比例                                                                                                                                                                                                       |
-| skama | `SCRSKAMA` | 单均线交叉策略——KAMA均线(考夫曼自适应移动均线)：根据股价与KAMA均线的相对位置设定持仓比例                                                                                                                                                                                                 |
-| smama | `SCRSMAMA` | 单均线交叉策略——MAMA均线(MESA自适应移动平均线)：根据股价与MAMA均线的相对位置设定持仓比例                                                                                                                                                                                               |
-| st3 | `SCRST3` | 单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例                                                                                                                                                                                                    |
-| stema | `SCRSTEMA` | 单均线交叉策略——TEMA均线(三重指数平滑移动平均线)：根据股价与TEMA均线的相对位置设定持仓比例                                                                                                                                                                                                |
-| strima | `SCRSTRIMA` | 单均线交叉策略——TRIMA均线(三重指数平滑移动平均线)：根据股价与TRIMA均线的相对位置设定持仓比例                                                                                                                                                                                              |
-| swma | `SCRSWMA` | 单均线交叉策略——WMA均线(加权移动平均线)：根据股价与WMA均线的相对位置设定持仓比例                                                                                                                                                                                                      |
-| dsma | `DCRSSMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于SMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                             |
-| ddema | `DCRSDEMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于DEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                            |
-| dema | `DCRSEMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于EMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                             |
-| dkama | `DCRSKAMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于KAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                            |
-| dmama | `DCRSMAMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于MAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                            |
-| dt3 | `DCRST3` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于T3均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                              |
-| dtema | `DCRSTEMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于TEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                            |
-| dtrima | `DCRSTRIMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于TRIMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                           |
-| dwma | `DCRSWMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于WMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                             |
-| slsma | `SLPSMA` | 均线斜率交易策略——SMA均线(简单移动平均线)：<br />基于SMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                                     |
-| sldema | `SLPDEMA` | 均线斜率交易策略——DEMA均线(双重指数平滑移动平均线)：<br />基于DEMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                               |
-| slema | `SLPEMA` | 均线斜率交易策略——EMA均线(指数平滑移动平均线)：<br />基于EMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                                   |
-| slht | `SLPHT` | 均线斜率交易策略——HT均线(希尔伯特变换——瞬时趋势线线)：<br />基于HT计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                                |
-| slkama | `SLPKAMA` | 均线斜率交易策略——KAMA均线(考夫曼自适应移动平均线)：<br />基于KAMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                               |
-| slmama | `SLPMAMA` | 均线斜率交易策略——MAMA均线(MESA自适应移动平均线)：<br />基于MAMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                              |
-| slt3 | `SLPT3` | 均线斜率交易策略——T3均线(三重指数平滑移动平均线)：<br />基于T3计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                                   |
-| sltema | `SLPTEMA` | 均线斜率交易策略——TEMA均线(三重指数平滑移动平均线)：<br />基于TEMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                               |
-| sltrima | `SLPTRIMA` | 均线斜率交易策略——TRIMA均线(三重指数平滑移动平均线)：<br />基于TRIMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                             |
-| slwma | `SLPWMA` | 均线斜率交易策略——WMA均线(加权移动平均线)：<br />基于WMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                                     |
-| adx | `ADX` | ADX指标（平均定向运动指数）选股策略：<br />基于ADX指标判断当前趋势的强度，从而根据趋势强度产生交易信号<br />1, 当ADX大于25时，判断趋势向上，设定持仓比例为1<br />2, 当ADX介于20到25之间时，判断为中性趋势，设定持仓比例为0<br />3, 当ADX小于20时，判断趋势向下，设定持仓比例为-1                                                                             |
-| apo | `APO` | APO指标（绝对价格震荡指标）选股策略：<br />基于APO指标判断当前股价变动的牛熊趋势，从而根据趋势产生交易信号<br />1, 当APO大于0时，判断为牛市趋势，设定持仓比例为1<br />2, 当ADX小于0时，判断为熊市趋势，设定持仓比例为-1                                                                                                                   |
-| aroon | `AROON` | AROON指标选股策略：<br />通过计算AROON指标趋势的强弱程度输出强多/空头和弱多/空头<br />1, 当UP在DOWN的上方时，输出弱多头<br />2, 当UP位于DOWN下方时，输出弱空头<br />3, 当UP大于70且DOWN小于30时，输出强多头<br />4, 当UP小于30且DOWN大于70时，输出强空头                                                                            |
-| aroonosc | `AROONOSC` | AROON Oscillator (AROON震荡指标) 选股策略：<br />当AROONOSC大于0时表示价格趋势向上，反之趋势向下，绝对值大于50时表示强烈的趋势<br />1, 当AROONOSC大于0时，输出弱多头<br />2, 当AROONOSC小于0时，输出弱空头<br />3, 当AROONOSC大于50时，输出强多头<br /> 4, 当AROONOSC小于-50时，输出强空头                                           |
-| cci | `CCI` | CCI (Commodity Channel Index商品渠道指数) 选股策略：<br />CCI商品渠道指数被用来判断当前股价位于超卖还是超买区间，本策略使用这个指标生成投资仓位目标<br />1, 当CCI大于0时，输出弱多头<br />2, 当CCI小于0时，输出弱空头<br />3, 当CCI大于50时，输出强多头<br />4, 当CCI小于-50时，输出强空头                                                       |
-| cmo | `CMO` | CMO (Chande Momentum Oscillator 钱德动量振荡器) 选股策略：<br />CMO 是一个在-100到100之间波动的动量指标，它被用来判断当前股价位于超卖还是超买区间，本策略使用这个指标生成投资仓位目标<br />1, 当CMO大于0时，输出弱多头<br />2, 当CMO小于0时，输出弱空头<br />3, 当CMO大于50时，输出强多头<br />4, 当CMO小于-50时，输出强空头                                |
-| macdext | `MACDEXT` | MACDEXT (Extendec MACD 扩展MACD指数) 选股策略：<br />本策略使用MACD指标生成持仓目标，但是与标准的MACD不同，MACDEXT的快、慢、及信号均线的类型均可选<br />1, 当hist>0时输出多头<br />2, 当hist<0时输出空头                                                                                                       |
-| mfi | `MFI` | MFI (Money Flow Index 货币流向指数) 交易策略：<br />MFI指数用于判断股价属于超买还是超卖状态，本策略使用MFI指标生成交易信号<br />1, 当MFI>20时，持续不断产生10%买入交易信号<br />2, 当MFI>80时，持续不断产生30%卖出交易信号，持续卖出持仓股票                                                                                         |
-| di | `DI` | DI (Directory Indicator 方向指标) 交易策略：<br />DI 指标包含负方向指标与正方向指标，它们分别表示价格上行和下行的趋势强度，本策略使用±DI指标生成交易信号<br />1, 当+DI > -DI时，设置持仓目标为1<br /> 2, 当+DI < -DI时，设置持仓目标为-1                                                                                        |
-| dm | `DM` | DM (Directional Movement 方向运动指标) 交易策略：<br />DM 指标包含负方向运动指标(Negative Directional Movement)与正方向运动指标(Positive Directional Movement)，它们分别表示价格上行和下行的趋势，本策略使用±DM指标生成交易信号<br />1, 当+DM > -DM时，设置持仓目标为1<br />2, 当+DM < -DM时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0 |
-| mom | `MOM` | MOM (momentum indicator 动量指标) 交易策略：<br />MOM 指标可以用于识别价格的上行或下行趋势的强度，当前价格高于N日前价格时，MOM为正，反之为负。<br />1, 当MOM > 0时，设置持仓目标为1<br />2, 当MOM < 0时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0                                                                            |
-| ppo | `PPO` | PO (Percentage Price Oscillator 百分比价格振荡器) 交易策略：<br />PPO 指标表示快慢两根移动均线之间的百分比差值，用于判断价格的变化趋势。长短均线的计算周期和均线类型均为策略参数。<br />1, 当PPO > 0时，设置持仓目标为1<br />2, 当PPO < 0时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0                                                        |
-| rsi | `RSI` | RSI (Relative Strength Index 相对强度指数) 交易策略：<br />RSI 指标度量最近价格变化的幅度，从而判断目前股票属于超卖还是超买状态<br />1, 当RSI > ulim时，设置持仓目标为1<br />2, 当RSI < llim时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0                                                                             |
-| stoch | `STOCH` | STOCH (Stochastic Indicator 随机指数) 交易策略：<br />STOCH 指标度量价格变化的动量，并且动量的大小判断价格趋势，并生成比例买卖交易信号。<br />1, 当k > 80时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当k < 20时，产生逐步买入信号，每周期买入总投资额的10%                                                                          |
-| stochf | `STOCHF` | STOCHF (Stochastic Fast Indicator 快速随机指标) 交易策略：<br /> STOCHF 指标度量价格变化的动量，与STOCH策略类似，使用快速随机指标判断价格趋势，并生成比例买卖交易信号。<br />1, 当k > 80时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当k < 20时，产生逐步买入信号，每周期买入总投资额的10%                                                    |
-| stochrsi | `STOCHRSI` | STOCHRSI (Stochastic Relative Strength Index 随机相对强弱指标) 交易策略：<br />STOCHRSI 指标度量价格变化的动量，该指标在0～1之间波动，表示相对的价格趋势强弱程度，并生成比例买卖交易信号<br />1, 当k > 0.8时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当k < 0.2时，产生逐步买入信号，每周期买入总投资额的10%                                     |
-| ultosc | `ULTOSC` | ULTOSC (Ultimate Oscillator Indicator 终极振荡器指标) 交易策略：<br />ULTOSC 指标通过三个不同的时间跨度计算价格动量，并根据多种不同动量之间的偏离值生成交易信号。<br />1, 当ULTOSC > u时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当ULTOSC < l时，产生逐步买入信号，每周期买入总投资额的10%                                                |
-| willr | `WILLR` | WILLR (William's %R 威廉姆斯百分比) 交易策略：<br />WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号<br />1, 当WILLR > -l时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当WILLR < -u时，产生逐步买入信号，每周期买入总投资额的10%                                                                              |
-| signal_none | `SignalNone` | 空交易信号策略：不生成任何交易信号的策略                                                                                                                                                                                                                               |
-| sellrate | `SellRate` | 变化率卖出信号策略：当价格的变化率超过阈值时，产生卖出信号<br />1，当change > 0，且day日涨幅大于change时，产生-1卖出信号<br />2，当change < 0，且day日跌幅大于change时，产生-1卖出信号                                                                                                                            |
-| buyrate | `BuyRate` | 变化率买入信号策略：当价格的变化率超过阈值时，产生买入信号<br />1，当change > 0，且day日涨幅大于change时，产生1买入信号<br />2，当change < 0，且day日跌幅大于change时，产生1买入信号                                                                                                                              |
-| long | `TimingLong` | 简单择时策略，整个历史周期上固定保持多头全仓状态                                                                                                                                                                                                                           |
-| short | `TimingShort` | 简单择时策略，整个历史周期上固定保持空头全仓状态                                                                                                                                                                                                                           |
-| zero | `TimingZero` | 简单择时策略，整个历史周期上固定保持空仓状态                                                                                                                                                                                                                             |
-| all | `SelectingAll` | 保持历史股票池中的所有股票都被选中，投资比例平均分配                                                                                                                                                                                                                         |
-| select_none | `SelectingNone` | 保持历史股票池中的所有股票都不被选中，投资仓位为0                                                                                                                                                                                                                          |
-| random | `SelectingRandom` | 在每个历史分段中，按照指定的比例（p<1时）随机抽取若干股票，或随机抽取指定数量（p>=1）的股票进入投资组合，投资比例平均分配                                                                                                                                                                                   |
-| finance | `SelectingAvgIndicator` | 以股票过去一段时间内的财务指标的平均值作为选股因子选股，基础选股策略：以股票的历史指标的平均值作为选股因子，因子排序参数可以作为策略参数传入，改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入                                                                                                                                         |
-| ndaylast | `SelectingNDayLast` | 以股票N天前的价格或数据指标作为选股因子选股                                                                                                                                                                                                                             |
-| ndayavg | `SelectingNDayAvg` | 以股票过去N天的价格或数据指标的平均值作为选股因子选股                                                                                                                                                                                                                        |
-| ndayrate | `SelectingNDayRateChange` | 以股票过去N天的价格或数据指标的变动比例作为选股因子选股                                                                                                                                                                                                                       |
-| ndaychg | `SelectingNDayChange` | 以股票过去N天的价格或数据指标的变动值作为选股因子选股                                                                                                                                                                                                                        |
-| ndayvol | `SelectingNDayVolatility` | 根据股票以前N天的股价波动率作为选股因子                                                                                                                                                                                                                               |
+| ID        | 策略名称    | 说明                                                                                                                                                           | 
+|:----------|:--------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| crossline | `TimingCrossline` | crossline择时策略类，利用长短均线的交叉确定多空状态<br />1，当短均线位于长均线上方，且距离大于l\*m%时，设置仓位目标为1<br />2，当短均线位于长均线下方，且距离大于l\*m%时，设置仓位目标为-1<br />3，当长短均线之间的距离不大于l\*m%时，设置仓位目标为0          |
+| macd      | `TimingMACD` | MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br />2，当MACD值小于0时，设置仓位目标为0                                                                        |
+| dma       | `TimingDMA` | DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0                                                          |
+| trix      | `TimingTRIX` | TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断:<br />计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：<br />1， TRIX位于MATRIX上方时，设置仓位目标为1<br />2， TRIX位于MATRIX下方时，设置仓位目标位-1             |
+| cdl       | `TimingCDL` | CDL择时策略，在K线图中找到符合要求的cdldoji模式<br />搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算 等效cdldoji匹配数量，以匹配数量为交易信号。                                                    |
+| bband     | TimingBBand | 布林带线交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，在价格上穿或下穿布林带线上下轨时产生交易信号。布林带线的均线类型不可选<br />1，当价格上穿上轨时，产生全仓买入信号<br />2，当价格下穿下轨时，产生全仓卖出信号                                     |
+| s-bband   | SoftBBand | 布林带线渐进交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，交易信号不是一次性产生的，而是逐步渐进买入和卖出。计算BBAND，检查价格是否超过BBAND的上轨或下轨：<br />1，当价格大于上轨后，每天产生10%的比例买入交易信号<br />2，当价格低于下轨后，每天产生33%的比例卖出交易信号 |
+| sarext    | `TimingSAREXT` | 扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号                                                                                                                       |
+| ssma      | `SCRSSMA` | 单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例                                                                                                                |
+| sdema     | `SCRSDEMA` | 单均线交叉策略——DEMA均线(双重指数平滑移动平均线)：根据股价与DEMA均线的相对位置设定持仓比例                                                                                                          |
+| sema      | `SCRSEMA` | 单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例                                                                                                               |
+ | ...       | ...     | 完整的内置策略清单请见[参考文档](../references/4-build-in-strategy-blender.md)                                                                                                                                              |
 
 
 

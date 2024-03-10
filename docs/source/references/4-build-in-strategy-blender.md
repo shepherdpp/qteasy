@@ -5,6 +5,8 @@ qteasy提供了70多种内置交易策略，用户可以很容易地直接使用
 在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。
 
 
+### `qt.get_built_in_strategy(id)`
+
 ### `qt.built_in_list(stg_id=None)`
 
 上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。
@@ -39,7 +41,6 @@ stg_list = qt.built_ins('dma')
     策略不支持参考数据，不支持交易数据
 
 
-### `qt.get_built_in_strategy(id)`
 
 在qteasy中，可以直接使用策略的ID获取内置交易策略
 

@@ -73,7 +73,7 @@ Getting Started
 ---------------
 
 .. toctree::
-   :caption: Getting Started 快速入门
+   :caption: GETTING STARTED 快速入门
    :maxdepth: 1
    :glob:
 
@@ -87,7 +87,7 @@ Tutorials
 ---------
 
 .. toctree::
-   :caption: Tutorials 使用教程
+   :caption: TUTORIALS 使用教程
    :numbered: 1
    :maxdepth: 1
    :glob:
@@ -105,7 +105,7 @@ References
 ----------
 
 .. toctree::
-    :caption: References 参考文档
+    :caption: REFERENCES 参考文档
     :numbered: 1
     :maxdepth: 1
     :glob:
@@ -119,7 +119,7 @@ Examples
 --------
 
 .. toctree::
-    :caption: User-defined Strategies 自定义策略示例
+    :caption: EXAMPLES 自定义策略示例
     :numbered: 1
     :maxdepth: 1
     :glob:
@@ -131,7 +131,7 @@ API Reference
 -------------
 
 .. toctree::
-   :caption: API Reference 参考
+   :caption: API REFERENCE 参考
    :numbered: 1
    :maxdepth: 1
    :glob:
@@ -142,7 +142,7 @@ Change Log
 ----------
 
 .. toctree::
-   :caption: Change Log 版本历史
+   :caption: RELEASE HISTORY 发行版本历史
    :maxdepth: 1
    :glob:
 
@@ -159,6 +159,7 @@ ABOUT
 -----
 
 .. toctree::
+   :caption: ABOUT 关于
    :maxdepth: 1
    :glob:
 
@@ -167,6 +168,7 @@ ABOUT
 FAQ
 ---
 .. toctree::
+   :caption: FAQ 常见问题
    :maxdepth: 1
    :glob:
 
