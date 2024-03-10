@@ -1,6 +1,9 @@
 # 内置交易策略回测结果
 
 测试内置的择时策略和选股策略
+
+## 回测参数
+
 每种策略进行一次回测，回测区间苁1996年到2021年，测试使用默认策略参数，测试参数如下：
 
 * 回测区间起止日期：1996-04-13 —— 2021-04-13，持续25年
@@ -13,6 +16,11 @@ import qteasy as qt
 print(qt.__version__)
 ```
 
+## 均线类策略
+
+---
+
+### Crossline交叉线策略
 
 ```python
 import qteasy as qt
@@ -160,6 +168,8 @@ res = qt.run(op)
 
 ![png](../tutorials/img/output_3_3.png)
 
+---
+### MACD策略
 
 ```python
 op = qt.Operator(strategies=['macd'])
@@ -221,8 +231,8 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_4_3.png)
     
-
-
+---
+### DMA策略
 
 ```python
 op = qt.Operator(strategies=['dma'])
@@ -284,8 +294,8 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_5_3.png)
     
-
-
+---
+### TRIX 策略
 
 ```python
 op = qt.Operator(strategies=['trix'])
@@ -348,7 +358,10 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_6_3.png)
     
 
+---
+## K线模式识别策略
 
+### CDL 策略
 
 ```python
 op = qt.Operator(strategies=['cdl'])
@@ -410,6 +423,10 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_7_3.png)
     
+--- 
+## 动量类策略
+
+### Bollinger Band策略
 
 
 
@@ -473,8 +490,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_8_3.png)
     
-
-
+### S-BBAND 策略
 
 ```python
 op = qt.Operator(strategies=['s-bband'], signal_type='ps')
@@ -537,7 +553,7 @@ res = qt.run(op, mode=1, print_backtest_log=False)
 ![png](../tutorials/img/output_9_3.png)
     
 
-
+### SAREXT 策略
 
 ```python
 op = qt.Operator(strategies=['sarext'])
@@ -613,8 +629,9 @@ res = qt.run(op, mode=1, printlog=True)
     
     ===========END OF REPORT=============
     
+## 单均线交叉类测路
 
-
+### DEMA 单均线交叉策略
 
     
 ![png](../tutorials/img/output_11_3.png)
@@ -683,7 +700,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_12_3.png)
     
 
-
+### EMA 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['sema'])
@@ -746,7 +763,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_13_3.png)
     
 
-
+### HT_TRENDLINE 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['sht'])
@@ -809,7 +826,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_14_3.png)
     
 
-
+### KAMA 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['skama'])
@@ -872,7 +889,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_15_3.png)
     
 
-
+### MAMA 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['smama'])
@@ -935,7 +952,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_16_3.png)
     
 
-
+### FAMA 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['sfama'])
@@ -998,7 +1015,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_17_3.png)
     
 
-
+### T3 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['st3'])
@@ -1061,7 +1078,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_18_3.png)
     
 
-
+### TEMA 单均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['stema'])
@@ -1123,6 +1140,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_19_3.png)
     
+### TRIMA 单均线交叉策略
 
 
 
@@ -1186,7 +1204,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_20_3.png)
     
-
+### WMA 单均线交叉策略
 
 
 ```python
@@ -1250,7 +1268,9 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_21_3.png)
     
 
+## 双均线交叉交易策略类
 
+### SMA 双均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['dsma'])
@@ -1312,7 +1332,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_22_3.png)
     
-
+### DEMA 双均线交叉策略
 
 
 ```python
@@ -1375,7 +1395,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_23_3.png)
     
-
+### EMA 双均线交叉策略
 
 
 ```python
@@ -1438,7 +1458,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_24_3.png)
     
-
+### KAMA 双均线交叉策略
 
 
 ```python
@@ -1502,7 +1522,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_25_3.png)
     
 
-
+### MAMA 双均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['dmama'])
@@ -1564,7 +1584,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_26_3.png)
     
-
+### FAMA 双均线交叉策略
 
 
 ```python
@@ -1628,7 +1648,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_27_3.png)
     
 
-
+### T3 双均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['dt3'])
@@ -1690,7 +1710,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_28_3.png)
     
-
+### TEMA 双均线交叉策略
 
 
 ```python
@@ -1753,7 +1773,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_29_3.png)
     
-
+### TRIMA 双均线交叉策略
 
 
 ```python
@@ -1817,7 +1837,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_30_3.png)
     
 
-
+### WMA 双均线交叉策略
 
 ```python
 op = qt.Operator(strategies=['dwma'])
@@ -1881,7 +1901,9 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_31_3.png)
     
 
+## 均线斜率回归策略类
 
+### SMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['slsma'])
@@ -1944,7 +1966,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_32_3.png)
     
 
-
+### DEMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['sldema'])
@@ -2006,6 +2028,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_33_3.png)
     
+### EMA 均线斜率回归策略
 
 
 
@@ -2069,7 +2092,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_34_3.png)
     
-
+### HT_TRENDLINE 均线斜率回归策略
 
 
 ```python
@@ -2133,7 +2156,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_35_3.png)
     
 
-
+### KAMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['slkama'])
@@ -2196,7 +2219,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_36_3.png)
     
 
-
+### MAMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['slmama'])
@@ -2258,7 +2281,7 @@ res = qt.run(op, mode=1)
     
 ![png](../tutorials/img/output_37_3.png)
     
-
+### FAMA 均线斜率回归策略
 
 
 ```python
@@ -2322,7 +2345,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_38_3.png)
     
 
-
+### T3 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['slt3'])
@@ -2385,7 +2408,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_39_3.png)
     
 
-
+### TEMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['sltema'])
@@ -2448,7 +2471,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_40_3.png)
     
 
-
+### TRIMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['sltrima'])
@@ -2511,7 +2534,7 @@ res = qt.run(op, mode=1)
 ![png](../tutorials/img/output_41_3.png)
     
 
-
+### WMA 均线斜率回归策略
 
 ```python
 op = qt.Operator(strategies=['slwma'])

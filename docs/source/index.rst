@@ -88,7 +88,7 @@ Tutorials
 
 .. toctree::
    :caption: TUTORIALS 使用教程
-   :numbered: 1
+   :numbered: 2
    :maxdepth: 1
    :glob:
 
@@ -99,7 +99,7 @@ References
 
 .. toctree::
     :caption: REFERENCES 参考文档
-    :numbered: 1
+    :numbered: 2
     :maxdepth: 1
     :glob:
 
@@ -110,7 +110,7 @@ Examples
 
 .. toctree::
     :caption: EXAMPLES 自定义策略示例
-    :numbered: 1
+    :numbered: 2
     :maxdepth: 1
     :glob:
 
