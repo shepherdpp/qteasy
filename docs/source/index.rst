@@ -119,7 +119,7 @@ Examples
 --------
 
 .. toctree::
-    :caption: Examples 使用示例
+    :caption: User-defined Strategies 自定义策略示例
     :numbered: 1
     :maxdepth: 1
     :glob:
