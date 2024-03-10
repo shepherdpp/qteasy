@@ -160,9 +160,9 @@ Filling data source file://csv@qt_root/data/ ...
 qt.candle('000300.SH', start='20110101', end='20201231', asset_type='IDX', mav=[])
 qt.candle('399001.SZ', start='20110101', end='20201231', asset_type='IDX', mav=[])
 ```
-![在这里插入图片描述](https://img-blog.csdnimg.cn/44fcf03d3c794a99998e460bbe4b7047.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-01.png)
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/b4f87e7013d447bcae9fbeed235d9bb4.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-02.png)
 
 ### 配置回测参数
 
@@ -254,7 +254,7 @@ Max drawdown:                    50.57%
 
 ### 可视化报告的使用
 由于设置了`visual=True`，在回测报告的最后，还能看到运行结果的可视化图表报告如下：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/2262257d1d8f4481afea02a5501222bd.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-03.png)
 可视化图表是`qteasy`的一个很有用的功能。首先我们可以看到回测的历史回报率曲线图。这个曲线图以百分比为单位，将投资组合的回报率曲线和一个参考曲线（默认情况下参考曲线是沪深300指数，可以通过`qt.configure(reference_asset='xxxxxx.xx')`来设置为不同的指数）的收益率对比。红色曲线为投资组合的收益率，而蓝色曲线为参考指数收益率。
 在这张图的参考指数曲线上，会用红、绿色箭头标注所有的买卖点，同时，图表在持有仓位的时间区间填充上绿色，响应没有持仓（空仓）的时段会保持为白色，这样就很容易看出整个投资历史上组合的回报率，以及买卖、持仓的大致时段和比例。
 
@@ -263,24 +263,24 @@ Max drawdown:                    50.57%
 最下面还有并列的三张图表，分别统计了历史上历年或历月的收益率，其中可以看到整个十年中有三年（2011年、2016年和2018年）的收益率是负的，其余年份均实现了正收益。
 
 了解了可视化图表，我们来分析历史曲线，大家可以看着历史回报率曲线图，并开始设想，加入我按这个投资策略开始投资，从2015年6月3日开始，我的收益率会如何？结果是：到2016年6月13日亏损50.6%，然后一直到2020年2月才能解套！如下图：
-![最大一次回撤持续了近五年](https://img-blog.csdnimg.cn/07a3673b36b44a0b934e23c7aaacf5d1.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![最大一次回撤持续了近五年](img/tutorial02-04.png)
 同样，我们从第六张underwater图中也可以看到，在整个十年投资期间，总资产不断地出现回撤，50%回撤是最大最深的一次，但前期还有31%、22%的多次回撤，而且长度都不短，整个投资就是“长期被套牢，偶尔能翻盘”的状况，我相信，没有几个投资者能够熬得住这样的煎熬的，对吧？
 
-![整个十年基本上都属于深度套牢状态](https://img-blog.csdnimg.cn/9aa4c4e3d6b149ec93fff3b3303678da.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![整个十年基本上都属于深度套牢状态](img/tutorial02-05.png)
 如上图，整个十年间除2015年前后或者2020年下半年以外，几乎都处于潜水套牢状态。
 
 因此，我们可以想办法改进一下这个策略，看看如何能够降低回撤，提升策略的性能。为此，我们需要仔细分析模拟交易回测过程中的每一笔交易，寻找降低回撤的办法。要查看回测交易的每一个细节，那就需要查看交易明细报告。
 
 ### 交易明细报告
 我们在回测的时候，设置了`print_backtest_log=True`，因此系统会生成详细的交易明细报告。这份报告被保存在了`qteasy/log`路径下，可以看到包含两个报告，两个报告都保存为csv文件，便于用Excel打开：
-![两个交易明细报告](https://img-blog.csdnimg.cn/1236911be7274f70ba01761de13b2ec7.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![两个交易明细报告](img/tutorial02-06.png)
 打开第一个文件可以看到交易日志，交易日志中记录了每一个交易日资金的变动，持股的变动、每种股票的交易明细等信息，不管是否有交易或持股变动，每天都有记录：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/46037e2e15ce4f479cb7a19cafa4f897.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-07.png)
 从上面的文件中可以看到，1月4日买入了31份沪深300指数，到1月5日收盘时卖出了持有的沪深300指数31份，并在1月6日收盘时买入87份创业板指，并在1月7日继续持有。。。
 而打开trade_records.csv文件可以看到，这里记录了每一笔成交的交易，包括交易日期、买卖方向、交易份额、价格、总金额、交易费率等等信息，由于只记录有交易的实际发生，因此信息更加紧凑：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/a6e1fd5edec54f50bbb680c448927707.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-08.png)
 仔细分析上面的表格，会发现这个投资策略除了在换股的时候以外，都是满仓持有的，在2015年中的股灾期间也不例外，我们找到这段时间会发现，从2015年的6月18日开始，不管是沪深300指数还是创业板指数，他们的20日收益率都已经由正转负，表明后市已经开始下跌了，然而此时策略仍然坚定地持有创业板指，这是因为创业板指的跌幅要小于沪深300，也就是收益率大于沪深300：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/639b2624d4294dfa8dbd9620f138768a.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-09.png)
 所以其实这时候我们的策略仍然选择了正确的指数，只不过因为两个指数都在跌，我们的策略选择了跌的少的那一个持有，减少了我们的损失。
 
 那么，我们可否从这里出发改进我们的策略呢？思路很简单，我们可以加一条规则：
@@ -355,7 +355,7 @@ Max drawdown:                    20.26%
 ===========END OF REPORT=============
 ```
 可视化图表如下：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/8434e8a2b9084b62bfc88bcf9e3f2d42.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU2hlcGhlcmRwcHo=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
+![在这里插入图片描述](img/tutorial02-10.png)
 从资产收益率图上可以看到，原来一片绿色（全程持仓）变成了白绿相间（白色区间空仓持币），资产回撤情况得到了大幅度优化：从原来的50%回撤降低到了20%左右。而且总回报率也大大提升：
 
 - 资产总额从改进前的五十多万提高到一百万
