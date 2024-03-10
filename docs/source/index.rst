@@ -92,14 +92,7 @@ Tutorials
    :maxdepth: 1
    :glob:
 
-   tutorials/1-get-started
-   tutorials/2-get-data
-   tutorials/3-start-first-strategy
-   tutorials/4-build-strategies
-   tutorials/Tutorial 05 - 创建自定义交易策略
-   tutorials/Tutorial 06 - 交易策略的优化
-   tutorials/Tutorial 07 - 交易策略的部署及运行
-   tutorials/Tutorial 08 - 历史数据的操作和分析
+   tutorials/*
 
 References
 ----------
@@ -110,10 +103,7 @@ References
     :maxdepth: 1
     :glob:
 
-    references/Reference 01 - 内置交易策略的回测结果
-    references/Reference 02 - 金融数据获取及管理
-    references/Reference 03 - 交易策略及回测基本操作
-    references/Reference 04 - 内置交易策略及混合器
+    references/*
 
 Examples
 --------
@@ -152,8 +142,10 @@ Change Log
 LICENSE
 -------
 
-.. license
-   :doc: LICENSE
+.. toctree::
+   :caption: LICENSE
+
+   LICENSE
 
 ABOUT
 -----

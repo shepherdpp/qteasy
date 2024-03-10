@@ -49,7 +49,7 @@ stg = qt.built_in.DMA()
 # 通过stg.info()可以查看策略的主要信息：
 stg.info()
 ```
-```commandline
+``` text
 Strategy_type:      RuleIterator
 Strategy name:      DMA
 Description:        Quick DMA strategy, determine long/short position according to differences of moving average prices with simple timing strategy
@@ -80,7 +80,7 @@ Data parameters         270 d
 qt.built_ins('dma')
 ```
 得到：
-```commandline
+``` text
  DMA择时策略
 
     策略参数：

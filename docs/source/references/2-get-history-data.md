@@ -97,7 +97,7 @@ qt.find_history_data('pe')
 ```
 
 输出如下：
-```commandline
+``` text
 matched following history data, 
 use "qt.get_history_data()" to load these historical data by its data_id:
 ------------------------------------------------------------------------
@@ -113,7 +113,7 @@ pe_2          d     E  stock_indicator2                  股票技术指标 - �
 import qteasy as qt
 qt.get_history_data('pe', '000001.SZ', start="20220101", end="20220201")
 ```
-```commandline
+``` text
 Out[16]: 
 {'000001.SZ':
                   pe
