@@ -955,7 +955,7 @@ data = qt.candle('000004.SZ')
 ```
 
 
-![png](img/output_20_2.png)
+![png](../tutorials/img/output_20_2.png)
     
 
 
@@ -967,7 +967,7 @@ data = qt.candle('000004.SZ', start='20220110', end='20220318', adj='b', freq='H
 ```
 
 
-![png](img/output_22_2.png)
+![png](../tutorials/img/output_22_2.png)
     
 
 
@@ -979,7 +979,7 @@ data = qt.candle('国华网安', start='20220110', end='20220318', adj='b', freq
 ```
 
 
-![png](img/output_24_2.png)
+![png](../tutorials/img/output_24_2.png)
 
 下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等
 ```python
@@ -998,35 +998,35 @@ df = qt.candle('110025', asset_type='FD', adj='f', mav=[9, 28])
 df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
 ```
 
-![png](img/output_18_1.png)
+![png](../tutorials/img/output_18_1.png)
     
 
-![png](img/output_18_2.png)
+![png](../tutorials/img/output_18_2.png)
     
 
-![png](img/output_18_3_copy.png)
+![png](../tutorials/img/output_18_3_copy.png)
     
 
-![png](img/output_18_4.png)
+![png](../tutorials/img/output_18_4.png)
     
 
-![png](img/output_18_5.png)
+![png](../tutorials/img/output_18_5.png)
 
 
-![png](img/output_18_6.png)
+![png](../tutorials/img/output_18_6.png)
     
 
-![png](img/output_18_7.png)
+![png](../tutorials/img/output_18_7.png)
     
 
-![png](img/output_18_8.png)
+![png](../tutorials/img/output_18_8.png)
     
 
-![png](img/output_18_9.png)
+![png](../tutorials/img/output_18_9.png)
     
 
-![png](img/output_18_10.png)
+![png](../tutorials/img/output_18_10.png)
     
 
-![png](img/output_18_11.png)
+![png](../tutorials/img/output_18_11.png)
     
