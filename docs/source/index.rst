@@ -87,26 +87,43 @@ Tutorials
 ---------
 
 .. toctree::
+   :caption: Tutorials 使用教程
+   :numbered: 1
    :maxdepth: 1
    :glob:
 
-   tutorials/Tutorial 01 - 系统基础配置
-   tutorials/Tutorial 02 - 金融数据获取及管理
-   tutorials/Tutorial 03 - 交易策略及回测基本操作
-   tutorials/Tutorial 04 - 使用内置交易策略
+   tutorials/1-get-started
+   tutorials/2-get-data
+   tutorials/3-start-first-strategy
+   tutorials/4-build-strategies
    tutorials/Tutorial 05 - 创建自定义交易策略
    tutorials/Tutorial 06 - 交易策略的优化
    tutorials/Tutorial 07 - 交易策略的部署及运行
    tutorials/Tutorial 08 - 历史数据的操作和分析
 
+References
+----------
+
+.. toctree::
+    :caption: References 参考文档
+    :numbered: 1
+    :maxdepth: 1
+    :glob:
+
+    references/Reference 01 - 内置交易策略的回测结果
+    references/Reference 02 - 金融数据获取及管理
+    references/Reference 03 - 交易策略及回测基本操作
+    references/Reference 04 - 内置交易策略及混合器
+
 Examples
 --------
 
 .. toctree::
+    :caption: Examples 使用示例
+    :numbered: 1
     :maxdepth: 1
     :glob:
 
-    tutorials/Reference 01 - 内置交易策略的回测结果
     examples/*
 
 
@@ -114,21 +131,18 @@ API Reference
 -------------
 
 .. toctree::
+   :caption: API Reference 参考
+   :numbered: 1
    :maxdepth: 1
    :glob:
 
-   api_reference
-   use_qteasy
-   History_Data
-   Built_In
-   Strategies
-   HistoryPanel
-   Operators
+   api/*
 
 Change Log
 ----------
 
 .. toctree::
+   :caption: Change Log 版本历史
    :maxdepth: 1
    :glob:
 
