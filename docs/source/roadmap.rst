@@ -33,7 +33,7 @@
  - ✅ 从tushare获取数据
  - ⬜ 从东方财经  ``eastmoney`` 获取数据
  - ⬜ 从 ``akshare`` 获取数据
- - ⬜ 从 ``baostock``获取数据
+ - ⬜ 从 ``baostock`` 获取数据
  - ⬜ 从 ``joinquant`` 获取数据
 - ✅ 从本地数据源获取数据，以 ``DataFrame`` 或 ``HistoryPanel`` 的形式返回
 - ✅ 本地存储K线数据直接输出为K线图，支持平移缩放
