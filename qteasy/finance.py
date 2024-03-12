@@ -97,16 +97,16 @@ def update_cost(c, **kwargs):
 
 
 @njit
-def calculate(trade_values: np.ndarray,
-              is_buying,
-              fixed_fees,
-              buy_fix,
-              sell_fix,
-              buy_rate,
-              sell_rate,
-              buy_min,
-              sell_min,
-              slipage) -> float:
+def calculate_fees(trade_values: np.ndarray,
+                   is_buying,
+                   fixed_fees,
+                   buy_fix,
+                   sell_fix,
+                   buy_rate,
+                   sell_rate,
+                   buy_min,
+                   sell_min,
+                   slipage) -> float:
     """直接调用对象，计算交易费率或交易费用
 
     采用两种模式计算：
@@ -207,22 +207,9 @@ def get_selling_result(prices: np.ndarray,
         a_sold = np.trunc(a_to_sell / moq) * moq
     sold_values = a_sold * prices
     if sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
-        rates = calculate(trade_values=sold_values,
-                          is_buying=False,
-                          fixed_fees=False,
-                          buy_fix=buy_fix,
-                          sell_fix=sell_fix,
-                          buy_rate=buy_rate,
-                          sell_rate=sell_rate,
-                          buy_min=buy_min,
-                          sell_min=sell_min,
-                          slipage=slipage)
-        cash_gained = (-1 * sold_values * (1 - rates))
-        fees = -(sold_values * rates)
-    else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
-        fixed_fees = calculate(trade_values=sold_values,
+        rates = calculate_fees(trade_values=sold_values,
                                is_buying=False,
-                               fixed_fees=True,
+                               fixed_fees=False,
                                buy_fix=buy_fix,
                                sell_fix=sell_fix,
                                buy_rate=buy_rate,
@@ -230,6 +217,19 @@ def get_selling_result(prices: np.ndarray,
                                buy_min=buy_min,
                                sell_min=sell_min,
                                slipage=slipage)
+        cash_gained = (-1 * sold_values * (1 - rates))
+        fees = -(sold_values * rates)
+    else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
+        fixed_fees = calculate_fees(trade_values=sold_values,
+                                    is_buying=False,
+                                    fixed_fees=True,
+                                    buy_fix=buy_fix,
+                                    sell_fix=sell_fix,
+                                    buy_rate=buy_rate,
+                                    sell_rate=sell_rate,
+                                    buy_min=buy_min,
+                                    sell_min=sell_min,
+                                    slipage=slipage)
         fees = np.where(a_sold, fixed_fees, 0)
         cash_gained = - sold_values - fees
     return a_sold, cash_gained, fees
@@ -274,16 +274,16 @@ def get_purchase_result(prices: np.ndarray,
         # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
         # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
         cash_to_spend = np.where(np.abs(cash_to_spend) < buy_min, 0, cash_to_spend)
-        rates = calculate(trade_values=cash_to_spend,
-                          is_buying=True,
-                          fixed_fees=False,
-                          buy_fix=buy_fix,
-                          sell_fix=sell_fix,
-                          buy_rate=buy_rate,
-                          sell_rate=sell_rate,
-                          buy_min=buy_min,
-                          sell_min=sell_min,
-                          slipage=slipage)
+        rates = calculate_fees(trade_values=cash_to_spend,
+                               is_buying=True,
+                               fixed_fees=False,
+                               buy_fix=buy_fix,
+                               sell_fix=sell_fix,
+                               buy_rate=buy_rate,
+                               sell_rate=sell_rate,
+                               buy_min=buy_min,
+                               sell_min=sell_min,
+                               slipage=slipage)
         # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
         if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
             a_purchased = np.where(prices,
@@ -301,16 +301,16 @@ def get_purchase_result(prices: np.ndarray,
         # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将绝对值小于buy_fix的金额置0
         # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
         cash_to_spend = np.where(np.abs(cash_to_spend) < buy_fix, 0, cash_to_spend)
-        fixed_fees = calculate(trade_values=cash_to_spend,
-                               is_buying=True,
-                               fixed_fees=True,
-                               buy_fix=buy_fix,
-                               sell_fix=sell_fix,
-                               buy_rate=buy_rate,
-                               sell_rate=sell_rate,
-                               buy_min=buy_min,
-                               sell_min=sell_min,
-                               slipage=slipage)
+        fixed_fees = calculate_fees(trade_values=cash_to_spend,
+                                    is_buying=True,
+                                    fixed_fees=True,
+                                    buy_fix=buy_fix,
+                                    sell_fix=sell_fix,
+                                    buy_rate=buy_rate,
+                                    sell_rate=sell_rate,
+                                    buy_min=buy_min,
+                                    sell_min=sell_min,
+                                    slipage=slipage)
         if moq == 0.:
             a_purchased = np.fmax(np.where(prices,
                                            (cash_to_spend - fixed_fees) / prices,
@@ -366,8 +366,8 @@ class CashPlan:
 
     Examples
     --------
-    >>> plan = CashPlan(dates='2020-01-01', amounts=10000)
-    >>> plan.info()
+    >>> plan1 = CashPlan(dates='2020-01-01', amounts=10000)
+    >>> plan1.info()
     <class 'qteasy.finance.CashPlan'>
     Investment is one-off amount of ¥10,000.00 on 2020-01-01
     Interest rate: 0.00%, equivalent final value: ¥10,000.00:

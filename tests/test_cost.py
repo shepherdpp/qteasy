@@ -13,7 +13,7 @@ import unittest
 import qteasy as qt
 import numpy as np
 
-from qteasy.finance import get_selling_result, get_purchase_result, calculate
+from qteasy.finance import get_selling_result, get_purchase_result, calculate_fees
 
 
 class TestCost(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestCost(unittest.TestCase):
         self.assertEqual(self.r['buy_min'], 5., 'Item got is incorrect')
         self.assertEqual(self.r['sell_min'], 0.0, 'Item got is incorrect')
         self.assertEqual(self.r['slipage'], 0.0, 'Item got is incorrect')
-        self.assertEqual(np.allclose(calculate(self.amounts, None, None, **self.r),
+        self.assertEqual(np.allclose(calculate_fees(self.amounts, None, None, **self.r),
                                      [0.003, 0.003, 0.003]),
                          True,
                          'fee calculation wrong')
