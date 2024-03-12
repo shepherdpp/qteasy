@@ -2019,7 +2019,8 @@ def run(operator, **kwargs):
     except Exception as e:
         raise ValueError(f'operator object is not ready for running, please check following info:\n'
                          f'{e}')
-
+    from .optimization import _search_ga, _search_aco, _search_pso, _search_grid, _search_gradient
+    from .optimization import _search_montecarlo, _search_incremental, _create_mock_data
     optimization_methods = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,

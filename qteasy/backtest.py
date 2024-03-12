@@ -911,6 +911,7 @@ def process_loop_results(operator,
 
     # 生成trade_log，index为MultiIndex，因为每天的交易可能有多种价格
     if trade_log:
+        from .core import get_basic_info
         # create complete trading log
         logger_core.info(f'generating complete trading log ...')
         op_log_index = pd.MultiIndex.from_product(
