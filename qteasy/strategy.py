@@ -943,7 +943,7 @@ class BaseStrategy:
             else:
                 ref_data_list = ref_data[data_idx]
             if trade_data is None:
-                warnings.warn('trade_data is deprecated, use hist_data and ref_data instead', DeprecationWarning)
+                # warnings.warn('trade_data is deprecated, use hist_data and ref_data instead', DeprecationWarning)
                 trade_data_list = all_none_list
             else:
                 trade_data_list = [trade_data] * signal_count
