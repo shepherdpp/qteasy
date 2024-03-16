@@ -2225,6 +2225,10 @@ class Trader(object):
         except FileNotFoundError:
             return False
 
+    def sys_log_file_exists(self):
+        """ 返回系统记录文件是否存在 """
+        return os.path.exists(self.sys_log_file_path_name)
+
     # ================== methods ==================
     def get_current_tz_datetime(self):
         """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
@@ -2685,7 +2689,12 @@ class Trader(object):
             系统信息logger
         """
 
-        live_handler = logging.FileHandler(filename=self.sys_log_file_path_name)
+        live_handler = logging.FileHandler(
+                filename=self.sys_log_file_path_name,
+                mode='a',
+                encoding='utf-8',
+                delay=False,
+        )
         logger_live = logging.getLogger('live')
         logger_live.addHandler(live_handler)
         logger_live.setLevel(logging.INFO)
@@ -2694,12 +2703,14 @@ class Trader(object):
         return logger_live
 
     def init_system_logger(self) -> None:
-        """ 检查系统logger属性是否已经设置好，如果没有，则初始化系统logger属性
+        """ 检查系统logger属性是否已经设置，或者log文件存在，如果没有，则初始化系统logger属性
 
         Returns
         -------
         None
         """
+        if not self.sys_log_file_exists():
+            self.live_sys_logger = None
         if self.live_sys_logger is None:
             self.live_sys_logger = self.new_sys_logger()
 
@@ -2818,7 +2829,13 @@ class Trader(object):
         if not os.path.exists(log_file_path):
             return []
         with open(log_file_path, 'r') as f:
-            
+            # read last row_count lines from f
+            if row_count:
+                lines = f.readlines()[-row_count:]
+            else:
+                lines = f.readlines()
+
+        return lines
 
     # ============ definition of tasks ================
     def _start(self):

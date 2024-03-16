@@ -245,10 +245,32 @@ class TestTrader(unittest.TestCase):
         # remove test sys_log_file
         sys_log_file_path = ts.sys_log_file_path_name
         os.remove(sys_log_file_path)
+        self.assertFalse(os.path.exists(sys_log_file_path))
+        ts.init_system_logger()
         print(f'test log to system log file')
+        logger = ts.live_sys_logger
+        logger.info('test info message')
+        logger.warning('test warning message')
+        logger.error('test error message')
+        logger.critical('test critical message')
+        self.assertTrue(os.path.exists(sys_log_file_path))
+        with open(sys_log_file_path, 'r') as f:
+            lines = f.readlines()
+            print(f'lines written to system log file: \n{lines}')
+            self.assertEqual(len(lines), 4)
+            self.assertEqual(lines[0], 'test info message\n')
+            self.assertEqual(lines[1], 'test warning message\n')
+            self.assertEqual(lines[2], 'test error message\n')
+            self.assertEqual(lines[3], 'test critical message\n')
 
         print(f'test reading contents from system log file')
+        log_content = ts.read_sys_log()
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
 
+        # remove the log file and check if it is removed
+        os.remove(sys_log_file_path)
+        self.assertFalse(os.path.exists(sys_log_file_path))
 
     def test_trade_logging(self):
         """ test all documents related to trade logging file operations
@@ -427,6 +449,7 @@ class TestTrader(unittest.TestCase):
         print(f'test reading dataframe from trade log files')
         df = ts.read_trade_log()
         self.assertIsInstance(df, pd.DataFrame)
+        print(f'trade log dataframe: \n{df}')
 
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
