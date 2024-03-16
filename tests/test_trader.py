@@ -268,6 +268,22 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(log_content, list)
         self.assertEqual(log_content, lines)
 
+        log_content = ts.read_sys_log(row_count=2)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines[-2:])
+
+        log_content = ts.read_sys_log(row_count=20)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
+        log_content = ts.read_sys_log(row_count=0)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
+        log_content = ts.read_sys_log(row_count=-1)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
         # remove the log file and check if it is removed
         os.remove(sys_log_file_path)
         self.assertFalse(os.path.exists(sys_log_file_path))

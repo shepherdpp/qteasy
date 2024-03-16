@@ -1577,14 +1577,18 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        if not self.trader.debug:
-            import os
-            # check os type of current system, and then clear screen
-            os.system('cls' if os.name == 'nt' else 'clear')
+        import os
+        # check os type of current system, and then clear screen
+        os.system('cls' if os.name == 'nt' else 'clear')
+
         self._status = 'dashboard'
         print('\nWelcome to TraderShell! currently in dashboard mode, live status will be displayed here.\n'
               'You can not input commands in this mode, if you want to enter interactive mode, please'
               'press "Ctrl+C" to exit dashboard mode and select from prompted options.\n')
+        # read all system logs and display them on the screen
+        lines = self.trader.read_sys_log(row_count=30)
+        print()
+        print(''.join(lines))
         return True
 
     def do_strategies(self, arg: str):
@@ -2578,7 +2582,7 @@ class Trader(object):
         self.message_queue.put(message)
         if normal_message:
             # 如果不是覆盖型信息，同时写入log文件
-            logger_live.info(f'[Account-{account_id}]:{message}')
+            logger_live.info(message)
 
         if self.debug and normal_message:
             # 如果在debug模式下同时打印非覆盖型信息，确保interactive模式下也能看到debug信息
@@ -2830,10 +2834,13 @@ class Trader(object):
             return []
         with open(log_file_path, 'r') as f:
             # read last row_count lines from f
-            if row_count:
-                lines = f.readlines()[-row_count:]
-            else:
-                lines = f.readlines()
+            lines = f.readlines()
+
+            if row_count is None:
+                row_count = len(lines)
+
+            if row_count > 0:
+                lines = lines[-row_count:]
 
         return lines
 
