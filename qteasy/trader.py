@@ -17,6 +17,7 @@ import shutil
 import sys
 import time
 import argparse
+import logging
 from cmd import Cmd
 from queue import Queue
 from threading import Timer
@@ -1576,14 +1577,18 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        if not self.trader.debug:
-            import os
-            # check os type of current system, and then clear screen
-            os.system('cls' if os.name == 'nt' else 'clear')
+        import os
+        # check os type of current system, and then clear screen
+        os.system('cls' if os.name == 'nt' else 'clear')
+
         self._status = 'dashboard'
         print('\nWelcome to TraderShell! currently in dashboard mode, live status will be displayed here.\n'
               'You can not input commands in this mode, if you want to enter interactive mode, please'
               'press "Ctrl+C" to exit dashboard mode and select from prompted options.\n')
+        # read all system logs and display them on the screen
+        lines = self.trader.read_sys_log(row_count=30)
+        print()
+        print(''.join(lines))
         return True
 
     def do_strategies(self, arg: str):
@@ -2005,15 +2010,6 @@ class Trader(object):
         if not isinstance(datasource, DataSource):
             raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
-        # TODO: 确定所有的config都在QT_CONFIG中后，default_config就不再需要了
-        # default_config = ConfigDict(
-        #         {
-        #                 'exchange':                         'SSE',
-        #                 'market_close_day_loop_interval':   0,
-        #                 'market_open_day_loop_interval':    0,
-        #         }
-        # )
-
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
@@ -2044,9 +2040,7 @@ class Trader(object):
         self.live_price_freq = self._config['live_price_acquire_freq']
         self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
 
-        # 创建交易记录文件名， 规则为：live_log_account_id_account_name.log
-        self.trade_log_file_name = None
-        self.trade_log_path_name = None
+        self.live_sys_logger = None
 
         self.account = get_account(self.account_id, data_source=self._datasource)
 
@@ -2169,18 +2163,56 @@ class Trader(object):
         return self._config
 
     @property
-    def log_file_exists(self):
+    def _log_file_name(self):
+        """ 返回视盘交易和系统记录文件的文件名
+
+        Returns
+        -------
+        file_name: str
+            文件名不含扩展名，系统记录文件扩展名为.lo，交易记录文件扩展名为.csv
+        """
+        account = get_account(self.account_id, data_source=self._datasource)
+        account_name = account['user_name']
+        return f'live_log_{self.account_id}_{account_name}'
+
+    @property
+    def sys_log_file_path_name(self):
+        """ 返回实盘系统记录文件的路径和文件名，文件路径为QT_SYS_LOG_PATH
+
+        Returns
+        -------
+        file_path_name: str
+            完整的系统记录文件路径和文件名，含扩展名.log
+        """
+
+        from qteasy import QT_SYS_LOG_PATH
+        sys_log_file_name = self._log_file_name + '.log'
+        log_file_path_name = os.path.join(QT_SYS_LOG_PATH, sys_log_file_name)
+        return log_file_path_name
+
+    @property
+    def trade_log_file_path_name(self):
+        """ 返回实盘交易记录文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
+
+        Returns
+        -------
+        file_path_name: str
+            完整的系统记录文件路径和文件名，含扩展名.csv
+        """
+
+        from qteasy import QT_TRADE_LOG_PATH
+        trade_log_file_name = self._log_file_name + '.csv'
+        log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
+        return log_file_path_name
+
+    @property
+    def trade_log_file_is_valid(self):
         """ 返回交易记录文件是否存在
 
         同时检查交易记录文件格式是否正确，header内容是否与self.trade_log_file_header一致
         """
-        account = get_account(self.account_id, data_source=self._datasource)
-        account_name = account['user_name']
-        if self.trade_log_file_name is None:
-            self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
-        from qteasy import QT_TRADE_LOG_PATH
-        log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, self.trade_log_file_name)
-        self.trade_log_path_name = log_file_path_name
+
+        log_file_path_name = self.trade_log_file_path_name
 
         try:
             import csv
@@ -2192,14 +2224,14 @@ class Trader(object):
                     return True
 
                 # 如果文件header不匹配，认为文件不存在
-                self.trade_log_file_name = None
-                self.trade_log_path_name = None
                 return False
 
         except FileNotFoundError:
-            self.trade_log_file_name = None
-            self.trade_log_path_name = None
             return False
+
+    def sys_log_file_exists(self):
+        """ 返回系统记录文件是否存在 """
+        return os.path.exists(self.sys_log_file_path_name)
 
     # ================== methods ==================
     def get_current_tz_datetime(self):
@@ -2253,23 +2285,28 @@ class Trader(object):
         2，如果当前是交易日，检查当前时间是否在task_daily_agenda中，如果在，则将任务添加到task_queue中
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
+
+        # 初始化交易记录文件
+        self.init_trade_log_file()
+        # 初始化系统logger
+        self.init_system_logger()
+
+        # 初始化trader的状态，初始化任务计划
         self.status = 'sleeping'
         self._check_trade_day()
         self._initialize_schedule()
-        self.send_message(f'Trader is running with account_id: {self.account_id}\n'
-                          f'Started on date / time: '
+        self.send_message(f'Trader is started, running with account_id: {self.account_id}\n'
+                          f' = Started on date / time: '
                           f'{self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")}\n'
-                          f'current day is trade day: {self.is_trade_day}\n'
-                          f'running agenda: {self.task_daily_schedule}')
+                          f' = current day is trade day: {self.is_trade_day}\n'
+                          f' = running agenda (first 5 tasks): {self.task_daily_schedule[:5]}')
+
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
         current_date_time = self.get_current_tz_datetime()  # 产生当地时间
         current_date = current_date_time.date()
 
-        # 检查是否有交易记录文件，如果没有，创建一个新的交易记录文件
-        if not self.log_file_exists:
-            self.init_log_file()
-
+        # 在try-block中开始主循环，以抓取KeyboardInterrupt
         try:
             while self.status != 'stopped':
                 pre_date = current_date
@@ -2337,7 +2374,8 @@ class Trader(object):
                 time.sleep(sleep_interval)
             else:
                 # process trader when trader is normally stopped
-                self.send_message('Trader completed and exited.')
+                self.send_message(f'Trader completed and exited.\n'
+                                  f'{"=" * 20}')
         except KeyboardInterrupt:
             self.send_message('KeyboardInterrupt, stopping trader...')
             self.run_task('stop')
@@ -2519,7 +2557,10 @@ class Trader(object):
             是否在消息后添加换行符
         """
 
-        from qteasy import logger_live
+        if self.live_sys_logger is None:
+            logger_live = self.new_sys_logger()
+        else:
+            logger_live = self.live_sys_logger
 
         account_id = self.account_id
 
@@ -2542,7 +2583,7 @@ class Trader(object):
         self.message_queue.put(message)
         if normal_message:
             # 如果不是覆盖型信息，同时写入log文件
-            logger_live.info(f'[Account-{account_id}]:{message}')
+            logger_live.info(message)
 
         if self.debug and normal_message:
             # 如果在debug模式下同时打印非覆盖型信息，确保interactive模式下也能看到debug信息
@@ -2644,7 +2685,54 @@ class Trader(object):
             return
         print(stock_basic.reindex(index=asset_pool))
 
-    def init_log_file(self) -> str:
+    def new_sys_logger(self) -> logging.Logger:
+        """ 返回一个系统logger
+
+        Returns
+        -------
+        logger: logging.Logger
+            系统信息logger
+        """
+
+        live_handler = logging.FileHandler(
+                filename=self.sys_log_file_path_name,
+                mode='a',
+                encoding='utf-8',
+                delay=False,
+        )
+        logger_live = logging.getLogger('live')
+        logger_live.addHandler(live_handler)
+        logger_live.setLevel(logging.INFO)
+        logger_live.propagate = False
+
+        return logger_live
+
+    def init_system_logger(self) -> None:
+        """ 检查系统logger属性是否已经设置，或者log文件存在，如果没有，则初始化系统logger属性
+
+        Returns
+        -------
+        None
+        """
+        if not self.sys_log_file_exists():
+            self.live_sys_logger = None
+        if self.live_sys_logger is None:
+            self.live_sys_logger = self.new_sys_logger()
+
+    def init_trade_log_file(self) -> None:
+        """ 检查交易log文件是否存在且合法，如果不存在或格式不合法，则刷新文件
+
+        Returns
+        -------
+        None
+        """
+
+        if self.trade_log_file_is_valid:
+            pass
+        else:
+            self.renew_trade_log_file()
+
+    def renew_trade_log_file(self) -> str:
         """ 创建一个新的trade_log记录文件，写入文件header，清除文件内容
 
         Returns
@@ -2653,12 +2741,7 @@ class Trader(object):
             交易记录文件的路径和文件名
         """
         import csv
-        account = get_account(self.account_id, data_source=self._datasource)
-        account_name = account['user_name']
-        if self.trade_log_file_name is None:
-            self.trade_log_file_name = f'live_log_{self.account_id}_{account_name}.csv'
-        from qteasy import QT_TRADE_LOG_PATH
-        log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, self.trade_log_file_name)
+        log_file_path_name = self.trade_log_file_path_name
 
         if os.path.exists(log_file_path_name):
             os.remove(log_file_path_name)
@@ -2667,7 +2750,6 @@ class Trader(object):
             writer = csv.writer(f)
             row = self.trade_log_file_headers
             writer.writerow(row)
-            self.trade_log_path_name = log_file_path_name
 
         return log_file_path_name
 
@@ -2687,10 +2769,8 @@ class Trader(object):
             如果log文件不存在
 
         """
-        if not self.log_file_exists:
-            raise FileNotFoundError('trade log file does not exist')
-        if self.trade_log_path_name is None:
-            raise RuntimeError(f'trade_log_path_name can not be None!')
+        if not self.trade_log_file_is_valid:
+            raise FileNotFoundError('trade log file does not exist or is not valid')
 
         base_log_content = {
             k: v for k, v in
@@ -2718,20 +2798,52 @@ class Trader(object):
                 base_log_content[key] = f'{base_log_content[key]:.3f}'
 
         import csv
-        with open(self.trade_log_path_name, mode='a', encoding='utf-8') as f:
+        with open(self.trade_log_file_path_name, mode='a', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=self.trade_log_file_headers)
             # append log_content to the end of the file
             writer.writerow(base_log_content)
 
-    def read_log_file(self) -> pd.DataFrame:
-        """ 读取trade_log记录文件的内容
+    def read_trade_log(self) -> pd.DataFrame:
+        """ 读取trade_log记录文件的全部内容
 
         Returns
         -------
-        log: pd.DataFrame
-
+        trade_log: pd.DataFrame
         """
-        pass
+        if self.trade_log_file_is_valid:
+            df = pd.read_csv(self.trade_log_file_path_name)
+            return df
+        else:
+            return pd.DataFrame()
+
+    def read_sys_log(self, row_count: int = None) -> list:
+        """ 从系统log文件中读取文本信息，保存在一个列表中，如果指定row_count = N，则读取倒数N行
+
+        Parameters
+        ----------
+        row_count: int, optional
+        如果给出row_count，则只读取倒数row_count行文本，如果为None，读取所有文本
+
+        Returns
+        -------
+        sys_logs: list of str
+            逐行读取的系统log文本
+        """
+
+        log_file_path = self.sys_log_file_path_name
+        if not os.path.exists(log_file_path):
+            return []
+        with open(log_file_path, 'r') as f:
+            # read last row_count lines from f
+            lines = f.readlines()
+
+            if row_count is None:
+                row_count = len(lines)
+
+            if row_count > 0:
+                lines = lines[-row_count:]
+
+        return lines
 
     # ============ definition of tasks ================
     def _start(self):
@@ -3087,17 +3199,8 @@ class Trader(object):
         delivery_result = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
-                config=self._config
+                config=self._config,
         )
-
-        # 检查交易记录文件是否存在，如果不存在则创建新的交易记录文件
-        if self.log_file_exists:
-            pass
-        else:
-            self.send_message(f'Trade log file for account ({self.account_id}) not found,'
-                              f' new trade log {self.trade_log_file_name} will be created in '
-                              f'{self._config["trade_log_file_path"]}')
-            self.init_log_file()
 
         # 生成交割结果信息推送到信息队列
         for res in delivery_result:

@@ -775,7 +775,7 @@ def cancel_order(order_id, data_source=None, config=None):
     )
 
 
-def process_account_delivery(account_id, data_source=None, config=None):
+def process_account_delivery(account_id, data_source=None, config=None) -> list:
     """ 处理account_id账户中所有持仓和现金的交割
 
     从交易历史中读取尚未交割的现金和持仓，根据config中的设置值 'cash_delivery_period' 和
@@ -793,7 +793,8 @@ def process_account_delivery(account_id, data_source=None, config=None):
 
     Returns
     -------
-    None
+    delivery_result: list
+        包含所有交割结果的列表
     """
 
     if not isinstance(account_id, (int, np.int64)):

@@ -1,6 +1,10 @@
 # RELEASE HISTORY
 
 
+## 1.1.1 (2024-03-16)
+- corrected system log for live trade, now different live trade instances will log to different files
+- added capability of reading info from live trade log files and system log files
+
 ## 1.1.0 (2024-03-08)
 - New feature: The QTEASY shell is now parsing command arguments in a better and more intuitive way
   - Now all commands support `--parameter` / `-p` style parameters, same way as all other CLI tools

@@ -10,6 +10,7 @@
 
 import unittest
 import time
+import os
 
 from threading import Thread
 
@@ -233,38 +234,100 @@ class TestTrader(unittest.TestCase):
                 datasource=test_ds,
                 debug=False,
         )
+        self.ts.init_trade_log_file()
+        self.ts.init_system_logger()
+
+    def test_system_logging(self):
+        """ test all functions related to system logging
+
+        """
+        ts = self.ts
+        # remove test sys_log_file
+        sys_log_file_path = ts.sys_log_file_path_name
+        os.remove(sys_log_file_path)
+        self.assertFalse(os.path.exists(sys_log_file_path))
+        ts.init_system_logger()
+        print(f'test log to system log file')
+        logger = ts.live_sys_logger
+        logger.info('test info message')
+        logger.warning('test warning message')
+        logger.error('test error message')
+        logger.critical('test critical message')
+        self.assertTrue(os.path.exists(sys_log_file_path))
+        with open(sys_log_file_path, 'r') as f:
+            lines = f.readlines()
+            print(f'lines written to system log file: \n{lines}')
+            self.assertEqual(len(lines), 4)
+            self.assertEqual(lines[0], 'test info message\n')
+            self.assertEqual(lines[1], 'test warning message\n')
+            self.assertEqual(lines[2], 'test error message\n')
+            self.assertEqual(lines[3], 'test critical message\n')
+
+        print(f'test reading contents from system log file')
+        log_content = ts.read_sys_log()
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
+        log_content = ts.read_sys_log(row_count=2)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines[-2:])
+
+        log_content = ts.read_sys_log(row_count=20)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
+        log_content = ts.read_sys_log(row_count=0)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
+        log_content = ts.read_sys_log(row_count=-1)
+        self.assertIsInstance(log_content, list)
+        self.assertEqual(log_content, lines)
+
+        # remove the log file and check if it is removed
+        os.remove(sys_log_file_path)
+        self.assertFalse(os.path.exists(sys_log_file_path))
 
     def test_trade_logging(self):
         """ test all documents related to trade logging file operations
-        init_log_file
+        renew_trade_log_file
 
         """
-        print(f'test property log_file_exists')
+
+        print(f'test property trade_log_file_is_valid')
         ts = self.ts
-        self.assertIsNone(ts.trade_log_file_name)
-        self.assertIsNone(ts.trade_log_path_name)
-        res = ts.init_log_file()
-        self.assertIsNotNone(ts.trade_log_file_name)
-        self.assertIsNotNone(ts.trade_log_path_name)
-        self.assertEqual(res, ts.trade_log_path_name)
+        trade_log_file_path_name = ts.trade_log_file_path_name
+        # remove the log file
+        os.remove(trade_log_file_path_name)
+        self.assertFalse(ts.trade_log_file_is_valid)
+        self.assertFalse(os.path.exists(trade_log_file_path_name))
+
+        self.assertFalse(os.path.exists(trade_log_file_path_name))
+        res = ts.renew_trade_log_file()
+        self.assertTrue(os.path.exists(trade_log_file_path_name))
+        self.assertEqual(res, ts.trade_log_file_path_name)
         # remove the file and re-init
-        import os
-        from qteasy import QT_ROOT_PATH
-        log_file_path_name = os.path.join(QT_ROOT_PATH, ts._config['trade_log_file_path'], ts.trade_log_file_name)
+        log_file_path_name = ts.trade_log_file_path_name
         self.assertTrue(os.path.exists(log_file_path_name))
-        self.assertTrue(ts.log_file_exists)
-        self.assertIsNotNone(ts.trade_log_file_name)
-        self.assertIsNotNone(ts.trade_log_path_name)
+        self.assertTrue(ts.trade_log_file_is_valid)
 
         # remove the log file
         os.remove(log_file_path_name)
-        self.assertFalse(ts.log_file_exists)
-        self.assertIsNone(ts.trade_log_file_name)
-        self.assertIsNone(ts.trade_log_path_name)
+        self.assertFalse(ts.trade_log_file_is_valid)
+        self.assertFalse(os.path.exists(log_file_path_name))
 
-        print(f'test function init_log_file')
-        ts.init_log_file()
-        self.assertTrue(ts.log_file_exists)
+        # create a file with wrong format
+        import csv
+        with open(log_file_path_name, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow('wrong content!')
+
+        self.assertTrue(os.path.exists(log_file_path_name))
+        self.assertFalse(ts.trade_log_file_is_valid)
+
+        print(f'test function renew_trade_log_file')
+        ts.renew_trade_log_file()
+        self.assertTrue(ts.trade_log_file_is_valid)
         self.assertTrue(os.path.exists(log_file_path_name))
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -384,7 +447,7 @@ class TestTrader(unittest.TestCase):
 
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
-        self.assertFalse(ts.log_file_exists)
+        self.assertFalse(ts.trade_log_file_is_valid)
 
         # if a wrong file is stored with correct name, it should be checked,
         # removed and a new correct file should be created
@@ -394,10 +457,15 @@ class TestTrader(unittest.TestCase):
             row = ['some', 'random', 'but', 'wrong', 'headers']
             writer.writerow(row)
 
-        self.assertFalse(ts.log_file_exists)
-        # use ts.init_log_file will remove wrong file and create correct one
-        ts.init_log_file()
-        self.assertTrue(ts.log_file_exists)
+        self.assertFalse(ts.trade_log_file_is_valid)
+        # use ts.renew_trade_log_file will remove wrong file and create correct one
+        ts.renew_trade_log_file()
+        self.assertTrue(ts.trade_log_file_is_valid)
+
+        print(f'test reading dataframe from trade log files')
+        df = ts.read_trade_log()
+        self.assertIsInstance(df, pd.DataFrame)
+        print(f'trade log dataframe: \n{df}')
 
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
@@ -410,8 +478,10 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         if self.ts.is_market_open:
             self.assertEqual(ts.status, 'running')
+            prev_status = 'running'
         else:
             self.assertEqual(ts.status, 'sleeping')
+            prev_status = 'sleeping'
 
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
@@ -480,7 +550,7 @@ class TestTrader(unittest.TestCase):
     def test_trader_properties_methods(self):
         """Test function run_task"""
         ts = self.ts
-        ts.init_log_file()
+        ts.renew_trade_log_file()
         self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
@@ -592,17 +662,21 @@ class TestTrader(unittest.TestCase):
         if self.ts.is_market_open:
             self.assertEqual(ts.status, 'running')
             self.assertEqual(ts.broker.status, 'running')
+            prev_status = 'running'
+            broker_prev_status = 'running'
         else:
             self.assertEqual(ts.status, 'sleeping')
             self.assertEqual(ts.broker.status, 'init')
+            prev_status = 'sleeping'
+            broker_prev_status = 'init'
 
         ts.add_task('open_market')
         time.sleep(self.stoppage)
         print('added task open_market')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
+        self.assertEqual(ts.status, prev_status)
+        self.assertEqual(ts.broker.status, broker_prev_status)
         ts.add_task('run_strategy', {'strategy_ids': ['macd']})
         time.sleep(self.stoppage)
         print('added task run_strategy - macd')

@@ -582,7 +582,7 @@ class BaseStrategy:
         str2 = f'{self.name})'
         return ''.join([str1, str2])
 
-    def info(self, verbose: bool = True, stg_id=None):
+    def info(self, verbose: bool = True, stg_id: str = None) -> None:
         """打印所有相关信息和主要属性
 
         Parameters
@@ -704,8 +704,8 @@ class BaseStrategy:
         -------
         pars: tuple
             pars in corrected type
-
         """
+
         if len(pars) != self._par_count:
             raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
                              f' got {len(pars)} ({pars}).')
@@ -744,7 +744,7 @@ class BaseStrategy:
             self._pars = pars
             return 1
 
-    def update_pars(self, pars):
+    def update_pars(self, pars: (tuple, dict)) -> None:
         """ 极简方式更新策略的参数，默认参数格式正确，不检查参数的合规性"""
         self._pars = pars
 
@@ -764,13 +764,13 @@ class BaseStrategy:
         return par_range
 
     def set_hist_pars(self,
-                      data_freq=None,
-                      strategy_run_freq=None,
-                      window_length=None,
-                      strategy_data_types=None,
-                      strategy_run_timing=None,
-                      reference_data_types=None,
-                      use_latest_data_cycle=None):
+                      data_freq: str = None,
+                      strategy_run_freq: str = None,
+                      window_length: int = None,
+                      strategy_data_types: str = None,
+                      strategy_run_timing: str = None,
+                      reference_data_types: str = None,
+                      use_latest_data_cycle: bool = None) -> None:
         """ 设置策略的历史数据回测相关属性
 
         Parameters
@@ -884,7 +884,7 @@ class BaseStrategy:
     def generate(self,
                  hist_data: np.ndarray,
                  ref_data: np.ndarray = None,
-                 trade_data: np.ndarray = None,
+                 trade_data: np.ndarray = None,  # deprecated since v1.1
                  data_idx=None):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
 
@@ -894,8 +894,8 @@ class BaseStrategy:
             策略运行所需的历史数据，包括价格数据、指标数据等
         ref_data: np.ndarray
             策略运行所需的参考数据，包括价格数据、指标数据等
-        trade_data: np.ndarray
-            策略运行所需的交易数据，包括价格数据、指标数据等  # TODO (v1.1删除)
+        trade_data: np.ndarray  # deprecated since v1.1
+            策略运行所需的交易数据，包括价格数据、指标数据等  # TODO (v1.1 Deprecate, v1.2 删除)
         data_idx: int or np.ndarray
             策略运行所需的历史数据的索引，用于在历史数据中定位当前运行的数据
 
@@ -943,6 +943,7 @@ class BaseStrategy:
             else:
                 ref_data_list = ref_data[data_idx]
             if trade_data is None:
+                # warnings.warn('trade_data is deprecated, use hist_data and ref_data instead', DeprecationWarning)
                 trade_data_list = all_none_list
             else:
                 trade_data_list = [trade_data] * signal_count
@@ -965,7 +966,7 @@ class BaseStrategy:
             策略运行所需的历史数片段，包括价格数据、指标数据等
         ref_seg: np.ndarray
             策略运行所需的参考数片段，包括价格数据、指标数据等
-        trade_data: np.ndarray
+        trade_data: np.ndarray  depreciated since v1.1
             策略运行所需的交易数据片段，包括价格数据、指标数据等
 
         Returns
