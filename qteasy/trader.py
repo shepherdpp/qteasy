@@ -2374,8 +2374,8 @@ class Trader(object):
                 time.sleep(sleep_interval)
             else:
                 # process trader when trader is normally stopped
-                self.send_message(f'Trader completed and exited.\n'
-                                  f'{"=" * 20}')
+                self.send_message(f'Trader is stopped.\n'
+                                  f'{"=" * 20}\n')
         except KeyboardInterrupt:
             self.send_message('KeyboardInterrupt, stopping trader...')
             self.run_task('stop')
