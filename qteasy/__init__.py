@@ -37,11 +37,11 @@ from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
 
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 version_info = Namespace(
     major=1,
     minor=1,
-    micro=0,
+    micro=1,
     releaselevel='beta',
     serial=0
 )

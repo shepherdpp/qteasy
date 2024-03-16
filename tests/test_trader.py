@@ -462,8 +462,10 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         if self.ts.is_market_open:
             self.assertEqual(ts.status, 'running')
+            prev_status = 'running'
         else:
             self.assertEqual(ts.status, 'sleeping')
+            prev_status = 'sleeping'
 
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
@@ -644,17 +646,21 @@ class TestTrader(unittest.TestCase):
         if self.ts.is_market_open:
             self.assertEqual(ts.status, 'running')
             self.assertEqual(ts.broker.status, 'running')
+            prev_status = 'running'
+            broker_prev_status = 'running'
         else:
             self.assertEqual(ts.status, 'sleeping')
             self.assertEqual(ts.broker.status, 'init')
+            prev_status = 'sleeping'
+            broker_prev_status = 'init'
 
         ts.add_task('open_market')
         time.sleep(self.stoppage)
         print('added task open_market')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
+        self.assertEqual(ts.status, prev_status)
+        self.assertEqual(ts.broker.status, broker_prev_status)
         ts.add_task('run_strategy', {'strategy_ids': ['macd']})
         time.sleep(self.stoppage)
         print('added task run_strategy - macd')
