@@ -2295,11 +2295,11 @@ class Trader(object):
         self.status = 'sleeping'
         self._check_trade_day()
         self._initialize_schedule()
-        self.send_message(f'Trader is running with account_id: {self.account_id}\n'
-                          f'Started on date / time: '
+        self.send_message(f'Trader is started, running with account_id: {self.account_id}\n'
+                          f' = Started on date / time: '
                           f'{self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")}\n'
-                          f'current day is trade day: {self.is_trade_day}\n'
-                          f'running agenda: {self.task_daily_schedule}')
+                          f' = current day is trade day: {self.is_trade_day}\n'
+                          f' = running agenda (first 5 tasks): {self.task_daily_schedule[:5]}')
 
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
