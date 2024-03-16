@@ -149,8 +149,6 @@ os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
 # 设置loggings，创建logger
 debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'qteasy.log'),
                                                           backupCount=3, when='midnight')
-live_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'live_trade.log'),
-                                                         backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
 error_handler.setLevel(logging.ERROR)
@@ -163,12 +161,6 @@ logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
 logger_core.setLevel(logging.INFO)
 logger_core.propagate = False
-
-logger_live = logging.getLogger('live')
-logger_live.addHandler(live_handler)
-logger_live.addHandler(error_handler)
-logger_live.setLevel(logging.INFO)
-logger_live.propagate = False
 
 logger_core.info('qteasy loaded!')
 
@@ -201,5 +193,5 @@ __all__ = [
     'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
     'utilfuncs',
     'QT_CONFIG', 'ConfigDict', '__version__',
-    'logger_core', 'logger_live',
+    'logger_core'
 ]

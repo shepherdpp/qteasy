@@ -234,37 +234,43 @@ class TestTrader(unittest.TestCase):
                 debug=False,
         )
 
+    def test_system_logging(self):
+        """ test all functions related to system loggings
+
+        :return:
+        """
+
     def test_trade_logging(self):
         """ test all documents related to trade logging file operations
-        init_log_file
+        init_trade_log_file
 
         """
-        print(f'test property log_file_exists')
+        print(f'test property trade_log_file_exists')
         ts = self.ts
         self.assertIsNone(ts.trade_log_file_name)
-        self.assertIsNone(ts.trade_log_path_name)
-        res = ts.init_log_file()
+        self.assertIsNone(ts.trade_log_file_path_name)
+        res = ts.init_trade_log_file()
         self.assertIsNotNone(ts.trade_log_file_name)
-        self.assertIsNotNone(ts.trade_log_path_name)
-        self.assertEqual(res, ts.trade_log_path_name)
+        self.assertIsNotNone(ts.trade_log_file_path_name)
+        self.assertEqual(res, ts.trade_log_file_path_name)
         # remove the file and re-init
         import os
         from qteasy import QT_ROOT_PATH
         log_file_path_name = os.path.join(QT_ROOT_PATH, ts._config['trade_log_file_path'], ts.trade_log_file_name)
         self.assertTrue(os.path.exists(log_file_path_name))
-        self.assertTrue(ts.log_file_exists)
+        self.assertTrue(ts.trade_log_file_exists)
         self.assertIsNotNone(ts.trade_log_file_name)
-        self.assertIsNotNone(ts.trade_log_path_name)
+        self.assertIsNotNone(ts.trade_log_file_path_name)
 
         # remove the log file
         os.remove(log_file_path_name)
-        self.assertFalse(ts.log_file_exists)
+        self.assertFalse(ts.trade_log_file_exists)
         self.assertIsNone(ts.trade_log_file_name)
-        self.assertIsNone(ts.trade_log_path_name)
+        self.assertIsNone(ts.trade_log_file_path_name)
 
-        print(f'test function init_log_file')
-        ts.init_log_file()
-        self.assertTrue(ts.log_file_exists)
+        print(f'test function init_trade_log_file')
+        ts.init_trade_log_file()
+        self.assertTrue(ts.trade_log_file_exists)
         self.assertTrue(os.path.exists(log_file_path_name))
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -384,7 +390,7 @@ class TestTrader(unittest.TestCase):
 
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
-        self.assertFalse(ts.log_file_exists)
+        self.assertFalse(ts.trade_log_file_exists)
 
         # if a wrong file is stored with correct name, it should be checked,
         # removed and a new correct file should be created
@@ -394,10 +400,10 @@ class TestTrader(unittest.TestCase):
             row = ['some', 'random', 'but', 'wrong', 'headers']
             writer.writerow(row)
 
-        self.assertFalse(ts.log_file_exists)
-        # use ts.init_log_file will remove wrong file and create correct one
-        ts.init_log_file()
-        self.assertTrue(ts.log_file_exists)
+        self.assertFalse(ts.trade_log_file_exists)
+        # use ts.init_trade_log_file will remove wrong file and create correct one
+        ts.init_trade_log_file()
+        self.assertTrue(ts.trade_log_file_exists)
 
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
@@ -480,7 +486,7 @@ class TestTrader(unittest.TestCase):
     def test_trader_properties_methods(self):
         """Test function run_task"""
         ts = self.ts
-        ts.init_log_file()
+        ts.init_trade_log_file()
         self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
         ts.run_task('start')
