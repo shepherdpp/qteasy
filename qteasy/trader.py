@@ -2202,7 +2202,7 @@ class Trader(object):
         return log_file_path_name
 
     @property
-    def trade_log_file_exists(self):
+    def trade_log_file_is_valid(self):
         """ 返回交易记录文件是否存在
 
         同时检查交易记录文件格式是否正确，header内容是否与self.trade_log_file_header一致
@@ -2278,18 +2278,10 @@ class Trader(object):
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
 
-        # 检查交易记录文件是否存在，如果不存在则创建新的交易记录文件
-        if self.trade_log_file_exists:
-            pass
-        else:
-            self.send_message(f'Trade log file for account ({self.account_id}) not found,'
-                              f' new trade log {self._log_file_name}.csv will be created in '
-                              f'{self._config["trade_log_file_path"]}')
-            self.init_trade_log_file()
-
-        # 确认实盘交易系统记录logger是否已经设置好，否则初始化系统logger
-        if self.live_sys_logger is None:
-            self.live_sys_logger = self.init_sys_logger()
+        # 初始化交易记录文件
+        self.init_trade_log_file()
+        # 初始化系统logger
+        self.init_system_logger()
 
         # 初始化trader的状态，初始化任务计划
         self.status = 'sleeping'
@@ -2556,7 +2548,10 @@ class Trader(object):
             是否在消息后添加换行符
         """
 
-        logger_live = self.live_sys_logger
+        if self.live_sys_logger is None:
+            logger_live = self.new_sys_logger()
+        else:
+            logger_live = self.live_sys_logger
 
         account_id = self.account_id
 
@@ -2681,8 +2676,8 @@ class Trader(object):
             return
         print(stock_basic.reindex(index=asset_pool))
 
-    def init_sys_logger(self) -> logging.Logger:
-        """ 初始化并返回一个系统logger
+    def new_sys_logger(self) -> logging.Logger:
+        """ 返回一个系统logger
 
         Returns
         -------
@@ -2698,7 +2693,30 @@ class Trader(object):
 
         return logger_live
 
-    def init_trade_log_file(self) -> str:
+    def init_system_logger(self) -> None:
+        """ 检查系统logger属性是否已经设置好，如果没有，则初始化系统logger属性
+
+        Returns
+        -------
+        None
+        """
+        if self.live_sys_logger is None:
+            self.live_sys_logger = self.new_sys_logger()
+
+    def init_trade_log_file(self) -> None:
+        """ 检查交易log文件是否存在且合法，如果不存在或格式不合法，则刷新文件
+
+        Returns
+        -------
+        None
+        """
+
+        if self.trade_log_file_is_valid:
+            pass
+        else:
+            self.renew_trade_log_file()
+
+    def renew_trade_log_file(self) -> str:
         """ 创建一个新的trade_log记录文件，写入文件header，清除文件内容
 
         Returns
@@ -2735,8 +2753,8 @@ class Trader(object):
             如果log文件不存在
 
         """
-        if not self.trade_log_file_exists:
-            raise FileNotFoundError('trade log file does not exist')
+        if not self.trade_log_file_is_valid:
+            raise FileNotFoundError('trade log file does not exist or is not valid')
 
         base_log_content = {
             k: v for k, v in
@@ -2776,7 +2794,11 @@ class Trader(object):
         -------
         trade_log: pd.DataFrame
         """
-        pass
+        if self.trade_log_file_is_valid:
+            df = pd.read_csv(self.trade_log_file_path_name)
+            return df
+        else:
+            return pd.DataFrame()
 
     def read_sys_log(self, row_count: int = None) -> list:
         """ 从系统log文件中读取文本信息，保存在一个列表中，如果指定row_count = N，则读取倒数N行
@@ -2792,7 +2814,11 @@ class Trader(object):
             逐行读取的系统log文本
         """
 
-        pass
+        log_file_path = self.sys_log_file_path_name
+        if not os.path.exists(log_file_path):
+            return []
+        with open(log_file_path, 'r') as f:
+            
 
     # ============ definition of tasks ================
     def _start(self):
