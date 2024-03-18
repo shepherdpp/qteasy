@@ -881,7 +881,12 @@ class TraderShell(Cmd):
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.order_queue.put(trade_order)
-        pass
+            print(f'Order <{order_id}> has been submitted to broker: '
+                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                  f'at price {trade_order["price"]:.2f}')
+
+            if not self.trader.is_market_open:
+                print(f'Market is not open, order might not be executed immediately')
 
     def do_sell(self, arg):
         """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
@@ -948,7 +953,12 @@ class TraderShell(Cmd):
         if submit_order(order_id=order_id, data_source=datasource) is not None:
             trade_order['order_id'] = order_id
             broker.order_queue.put(trade_order)
-        pass
+            print(f'Order <{order_id}> has been submitted to broker: '
+                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                  f'at price {trade_order["price"]:.2f}')
+
+            if not self.trader.is_market_open:
+                print(f'Market is not open, order might not be executed immediately')
 
     def do_positions(self, arg):
         """usage: positions [-h]
@@ -1583,6 +1593,9 @@ class TraderShell(Cmd):
 
         args = self.parse_args('dashboard', arg)
         if not args:
+            return False
+        if args.rewind < 0 or args.rewind > 999:
+            print('can not rewind more than 999 lines or less than 0 lines. please check your input.')
             return False
 
         import os
