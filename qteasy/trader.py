@@ -24,7 +24,7 @@ from threading import Timer
 
 import numpy as np
 import pandas as pd
-from rich import print as rprint
+import rich
 
 import qteasy
 from qteasy import ConfigDict, DataSource, Operator
@@ -40,13 +40,13 @@ from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_
 from qteasy.utilfuncs import get_current_tz_datetime
 
 UNIT_TO_TABLE = {
-            'h':     'stock_hourly',
-            '30min': 'stock_30min',
-            '15min': 'stock_15min',
-            '5min':  'stock_5min',
-            '1min':  'stock_1min',
-            'min':   'stock_1min',
-        }
+    'h':     'stock_hourly',
+    '30min': 'stock_30min',
+    '15min': 'stock_15min',
+    '5min':  'stock_5min',
+    '1min':  'stock_1min',
+    'min':   'stock_1min',
+}
 
 
 class TraderShell(Cmd):
@@ -89,285 +89,292 @@ class TraderShell(Cmd):
     prompt = '(QTEASY) '
 
     argparser_properties = {
-        'status':      dict(prog='status', description='Show trader status',
-                            usage='status [-h]',),
-        'pause':       dict(prog='pause', description='Pause trader',
-                            usage='pause [-h]',
-                            epilog='When trader is paused, strategies will not be executed, '
-                                   'orders will not be submitted, submitted orders will be '
-                                   'suspended until trader is resumed'),
-        'resume':      dict(prog='resume', description='Resume trader',
-                            usage='resume [-h]',),
-        'bye':         dict(prog='bye', description='Stop trader and exit shell',
-                            usage='bye [-h]',
-                            epilog='You can also exit shell using command "exit" or "stop"'),
-        'exit':        dict(prog='exit', description='Stop trader and exit shell',
-                            usage='exit [-h]',
-                            epilog='You can also exit shell using command "bye" or "stop"'),
-        'stop':        dict(prog='stop', description='Stop trader and exit shell',
-                            usage='stop [-h]',
-                            epilog='You can also exit shell using command "exit" or "bye"'),
-        'info':        dict(prog='info', description='Get trader info, same as overview',
-                            usage='info [-h] [--detail] [--system]',
-                            epilog='Get trader info, including basic information of current '
-                                   'account, and current cash and positions'),
-        'pool':        dict(prog='pool', description='Show details of asset pool',
-                            usage='pool [-h]'),
-        'watch':       dict(prog='watch', description='Add or remove stock symbols to watch list',
-                            usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
-                                  '[REMOVE [REMOVE ...]]] [--clear]'),
-        'buy':         dict(prog='buy', description='Manually create buy-in order',
-                            usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
-                                  '[--force]',
-                            epilog='the order will be submitted to broker and will be executed'
-                                   ' according to broker rules, Currently only market price '
-                                   'orders can be submitted'),
-        'sell':        dict(prog='sell', description='Manually create sell-out order',
-                            usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
-                                  '[--force]',
-                            epilog='the order will be submitted to broker and will be executed'
-                                   ' according to broker rules, Currently only market price '
-                                   'orders can be submitted'),
-        'positions':   dict(prog='positions', description='Get account positions',
-                            usage='positions [-h]',
-                            epilog='Print out holding quantities and available quantities '
-                                   'of all positions'),
-        'overview':    dict(prog='overview', description='Get trader overview, same as info',
-                            usage='overview [-h] [--detail] [--system]',
-                            epilog='Get trader info, including basic information of current '
-                                   'account, and current cash and positions'),
-        'config':      dict(prog='config', description='Show or change qteasy configurations',
-                            usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--detail] [--set SET]'),
-        'history':     dict(prog='history', description='List trade history of a stock',
-                            usage='history [SYMBOL] [-h]',
-                            epilog='List all trade history of one particular stock, displaying '
-                                   'every buy-in and sell-out in a table format. '
-                                   'symbol like 000651 is accepted.'),
-        'orders':      dict(prog='orders', description='Get account orders',
-                            usage='usage: orders [SYMBOL [SYMBOL ...]] [-h] '
-                                  '[--status {filled,f,canceled,c,partial-filled,p}] '
-                                  '[--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}] '
-                                  '[--type {buy,sell,b,s,all,a}] '
-                                  '[--side {long,short,l,s,all,a}]'),
-        'change':      dict(prog='change', description='Change account cash and positions',
-                            usage='change [SYMBOL] [-h] [--amount AMOUNT] [--price PRICE] '
-                                  '[--side {l,long,s,short}] [--cash CASH]',
-                            epilog='Change cash or positions or both. nothing will be changed '
-                                   'if amount or cash is not given, price is used to calculate '
-                                   'new cost, if not given, current price will be used'),
-        'dashboard':   dict(prog='', description='Exit shell and enter dashboard',
-                            usage='dashboard [-h]'),
-        'strategies':  dict(prog='', description='Show or change strategy parameters',
-                            usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
-                                  '[--set-par [SET_VAL [SET_VAL ...]]] [--blender BLENDER] '
-                                  '[--timing TIMING]'),
-        'schedule':    dict(prog='', description='Show trade agenda',
-                            usage='schedule [-h]'),
-        'run':         dict(prog='', description='Run strategies manually',
-                            usage='run [STRATEGY [STRATEGY ...]] [-h] '
-                                  '[--task {none,stop,sleep,pause,process_result,'
-                                  'pre_open,open_market,close_market,acquire_live_price}] '
-                                  '[--args [ARGS [ARGS ...]]]'),
+        'status':     dict(prog='status', description='Show trader status',
+                           usage='status [-h]', ),
+        'pause':      dict(prog='pause', description='Pause trader',
+                           usage='pause [-h]',
+                           epilog='When trader is paused, strategies will not be executed, '
+                                  'orders will not be submitted, submitted orders will be '
+                                  'suspended until trader is resumed'),
+        'resume':     dict(prog='resume', description='Resume trader',
+                           usage='resume [-h]', ),
+        'bye':        dict(prog='bye', description='Stop trader and exit shell',
+                           usage='bye [-h]',
+                           epilog='You can also exit shell using command "exit" or "stop"'),
+        'exit':       dict(prog='exit', description='Stop trader and exit shell',
+                           usage='exit [-h]',
+                           epilog='You can also exit shell using command "bye" or "stop"'),
+        'stop':       dict(prog='stop', description='Stop trader and exit shell',
+                           usage='stop [-h]',
+                           epilog='You can also exit shell using command "exit" or "bye"'),
+        'info':       dict(prog='info', description='Get trader info, same as overview',
+                           usage='info [-h] [--detail] [--system]',
+                           epilog='Get trader info, including basic information of current '
+                                  'account, and current cash and positions'),
+        'pool':       dict(prog='pool', description='Show details of asset pool',
+                           usage='pool [-h]'),
+        'watch':      dict(prog='watch', description='Add or remove stock symbols to watch list',
+                           usage='watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove '
+                                 '[REMOVE [REMOVE ...]]] [--clear]'),
+        'buy':        dict(prog='buy', description='Manually create buy-in order',
+                           usage='buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                 '[--force]',
+                           epilog='the order will be submitted to broker and will be executed'
+                                  ' according to broker rules, Currently only market price '
+                                  'orders can be submitted'),
+        'sell':       dict(prog='sell', description='Manually create sell-out order',
+                           usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
+                                 '[--force]',
+                           epilog='the order will be submitted to broker and will be executed'
+                                  ' according to broker rules, Currently only market price '
+                                  'orders can be submitted'),
+        'positions':  dict(prog='positions', description='Get account positions',
+                           usage='positions [-h]',
+                           epilog='Print out holding quantities and available quantities '
+                                  'of all positions'),
+        'overview':   dict(prog='overview', description='Get trader overview, same as info',
+                           usage='overview [-h] [--detail] [--system]',
+                           epilog='Get trader info, including basic information of current '
+                                  'account, and current cash and positions'),
+        'config':     dict(prog='config', description='Show or change qteasy configurations',
+                           usage='config [KEYS [KEYS ...]] [-h] [--level LEVEL] [--detail] [--set SET]'),
+        'history':    dict(prog='history', description='List trade history of a stock',
+                           usage='history [SYMBOL] [-h]',
+                           epilog='List all trade history of one particular stock, displaying '
+                                  'every buy-in and sell-out in a table format. '
+                                  'symbol like 000651 is accepted.'),
+        'orders':     dict(prog='orders', description='Get account orders',
+                           usage='usage: orders [SYMBOL [SYMBOL ...]] [-h] '
+                                 '[--status {filled,f,canceled,c,partial-filled,p}] '
+                                 '[--time {today,t,yesterday,y,3day,3,week,w,month,m,all,a}] '
+                                 '[--type {buy,sell,b,s,all,a}] '
+                                 '[--side {long,short,l,s,all,a}]'),
+        'change':     dict(prog='change', description='Change account cash and positions',
+                           usage='change [SYMBOL] [-h] [--amount AMOUNT] [--price PRICE] '
+                                 '[--side {l,long,s,short}] [--cash CASH]',
+                           epilog='Change cash or positions or both. nothing will be changed '
+                                  'if amount or cash is not given, price is used to calculate '
+                                  'new cost, if not given, current price will be used'),
+        'dashboard':  dict(prog='', description='Exit shell and enter dashboard',
+                           usage='dashboard [-h] [--rewind REWIND]',
+                           epilog='Exit shell and enter dashboard mode, where trading logs '
+                                  'are displayed in real time, provide an integer to rewind '
+                                  'previous rows of logs, default 50 rows'),
+        'strategies': dict(prog='', description='Show or change strategy parameters',
+                           usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
+                                 '[--set-par [SET_VAL [SET_VAL ...]]] [--blender BLENDER] '
+                                 '[--timing TIMING]'),
+        'schedule':   dict(prog='', description='Show trade agenda',
+                           usage='schedule [-h]'),
+        'run':        dict(prog='', description='Run strategies manually',
+                           usage='run [STRATEGY [STRATEGY ...]] [-h] '
+                                 '[--task {none,stop,sleep,pause,process_result,'
+                                 'pre_open,open_market,close_market,acquire_live_price}] '
+                                 '[--args [ARGS [ARGS ...]]]'),
     }
 
     command_arguments = {
-        'status':       [],
-        'pause':        [],
-        'resume':       [],
-        'bye':          [],
-        'exit':         [],
-        'stop':         [],
-        'info':         [('--detail', '-d'),
-                         ('--system', '-s')],
-        'pool':         [],
-        'watch':        [('symbols',),
-                         ('--position', '--positions', '-pos', '-p'),
-                         ('--remove', '-r'),
-                         ('--clear', '-c')],
-        'buy':          [('amount',),
-                         ('symbol',),
-                         ('--price', '-p'),
-                         ('--side', '-s'),
-                         ('--force', '-f')],
-        'sell':         [('amount',),
-                         ('symbol',),
-                         ('--price', '-p'),
-                         ('--side', '-s'),
-                         ('--force', '-f')],
-        'positions':    [],
-        'overview':     [('--detail', '-d'),
-                         ('--system', '-s')],
-        'config':       [('keys',),
-                         ('--level', '-l'),
-                         ('--detail', '-d'),
-                         ('--set', '-s')],
-        'history':      [('symbol',)],
-        'orders':       [('symbols',),
-                         ('--status', '-s'),
-                         ('--time', '-t'),
-                         ('--type', '-y'),
-                         ('--side', '-d')],
-        'change':       [('symbol',),
-                         ('--amount', '-a'),
-                         ('--price', '-p'),
-                         ('--side', '-s'),
-                         ('--cash', '-c')],
-        'dashboard':    [],
-        'strategies':   [('strategy',),
-                         ('--detail', '-d'),
-                         ('--set-par', '--set', '-s'),
-                         ('--blender', '-b'),
-                         ('--timing', '-t')],
-        'schedule':     [],
-        'run':          [('strategy',),
-                         ('--task', '-t'),
-                         ('--args', '-a')],
+        'status':     [],
+        'pause':      [],
+        'resume':     [],
+        'bye':        [],
+        'exit':       [],
+        'stop':       [],
+        'info':       [('--detail', '-d'),
+                       ('--system', '-s')],
+        'pool':       [],
+        'watch':      [('symbols',),
+                       ('--position', '--positions', '-pos', '-p'),
+                       ('--remove', '-r'),
+                       ('--clear', '-c')],
+        'buy':        [('amount',),
+                       ('symbol',),
+                       ('--price', '-p'),
+                       ('--side', '-s'),
+                       ('--force', '-f')],
+        'sell':       [('amount',),
+                       ('symbol',),
+                       ('--price', '-p'),
+                       ('--side', '-s'),
+                       ('--force', '-f')],
+        'positions':  [],
+        'overview':   [('--detail', '-d'),
+                       ('--system', '-s')],
+        'config':     [('keys',),
+                       ('--level', '-l'),
+                       ('--detail', '-d'),
+                       ('--set', '-s')],
+        'history':    [('symbol',)],
+        'orders':     [('symbols',),
+                       ('--status', '-s'),
+                       ('--time', '-t'),
+                       ('--type', '-y'),
+                       ('--side', '-d')],
+        'change':     [('symbol',),
+                       ('--amount', '-a'),
+                       ('--price', '-p'),
+                       ('--side', '-s'),
+                       ('--cash', '-c')],
+        'dashboard':  [('--rewind', '-r'),
+                       ],
+        'strategies': [('strategy',),
+                       ('--detail', '-d'),
+                       ('--set-par', '--set', '-s'),
+                       ('--blender', '-b'),
+                       ('--timing', '-t')],
+        'schedule':   [],
+        'run':        [('strategy',),
+                       ('--task', '-t'),
+                       ('--args', '-a')],
     }
 
     command_arg_properties = {
-        'status':       [],
-        'pause':        [],
-        'resume':       [],
-        'bye':          [],
-        'exit':         [],
-        'stop':         [],
-        'info':         [{'action': 'store_true',
-                          'help':   'show detailed account info'},
-                         {'action': 'store_true',
-                          'help':   'show system info'}],
-        'pool':         [],
-        'watch':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',  # nargs='+' will require at least one argument
-                          'help': 'stock symbols to add to watch list'},
-                         {'action': 'store_true',
-                          'dest': 'position',
-                          'help': 'add 5 stocks from position list to watch list'},
-                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',  # nargs='+' will require at least one argument
-                          'help': 'remove stock symbols from watch list'},
-                         {'action': 'store_true',
-                          'help': 'clear watch list'}],
-        'buy':          [{'action': 'store',
-                          'type':   float,
-                          'help': 'amount of shares to buy'},
-                         {'action': 'store',
-                          'help': 'stock symbol to buy'},
-                         {'action': 'store',
-                          'type':   float,
-                          'default': 0.0,  # default to market price
-                          'help': 'price to buy at'},
-                         {'action': 'store',
-                          'default': 'long',
-                          'choices': ['long', 'short'],
-                          'help': 'order position side, default long'},
-                         {'action': 'store_true',
-                          'help': 'force buy regardless of current prices (NOT IMPLEMENTED YET)'}],
-        'sell':         [{'action': 'store',
-                          'type':   float,
-                          'help': 'amount of shares to sell'},
-                         {'action': 'store',
-                          'help': 'stock symbol to sell'},
-                         {'action': 'store',
-                          'type':   float,
-                          'default': 0.0,  # default to market price
-                          'help': 'price to sell at'},
-                         {'action': 'store',
-                          'default': 'long',
-                          'choices': ['long', 'short'],
-                          'help': 'order position side, default long'},
-                         {'action': 'store_true',
-                          'help': 'force sell regardless of current prices'}],
-        'positions':    [],
-        'overview':     [{'action': 'store_true',
-                          'help':   'show detailed account info'},
-                         {'action': 'store_true',
-                          'help':   'show system info'}],
-        'config':       [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',
-                          'help': 'config keys to show or change'},
-                         {'action': 'count',
-                          'default': 2,
-                          'help': 'config level to show or change'},
-                         {'action': 'store_true',
-                          'help': 'show detailed config info'},
-                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',
-                          'help': 'config values to set or change for keys'}],
-        'history':      [{'action': 'store',
-                          'nargs': '?',  # nargs='?' will require at most one argument
-                          'default': 'all',
-                          'type':   str,
-                          'help':   'stock symbol to show history for, if not given, show history for all'}],
-        'orders':       [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',  # nargs='+' will require at least one argument
-                          'help': 'stock symbol to show orders for'},
-                         {'action': 'store',
-                          'default': 'all',
-                          'choices': ['filled', 'f', 'canceled', 'c', 'partial-filled', 'p'],
-                          'help': 'order status to show'},
-                         {'action': 'store',
-                          'default': 'today',
-                          'choices': ['today', 't', 'yesterday', 'y', '3day', '3', 'week', 'w',
-                                      'month', 'm', 'all', 'a'],
-                          'help': 'order time to show'},
-                         {'action': 'store',
-                          'default': 'all',
-                          'choices': ['buy', 'sell', 'b', 's', 'all', 'a'],
-                          'help': 'order type to show'},
-                         {'action': 'store',
-                          'default': 'all',
-                          'choices': ['long', 'short', 'l', 's', 'all', 'a'],
-                          'help': 'order side to show'}],
-        'change':       [{'action': 'store',
-                          'nargs': '?',  # one or zero (default value) argument is allowed
-                          'default': '',
-                          'help': 'symbol to change position for'},
-                         {'action': 'store',
-                          'default': 0,
-                          'type':   float,
-                          'help': 'amount of shares to change'},
-                         {'action': 'store',
-                          'default': 0.0,  # default to market price
-                          'type':   float,
-                          'help': 'price to change position at'},
-                         {'action': 'store',
-                          'default': 'long',
-                          'choices': ['l', 'long', 's', 'short'],
-                          'help': 'side of the position to change'},
-                         {'action': 'store',
-                          'default': 0.0,  # default not to change cash
-                          'type':   float,
-                          'help': 'amount of cash to change for current account'}],
-        'dashboard':    [],
-        'strategies':   [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',  # nargs='+' will require at least one argument
-                          'help': 'strategy to show or change parameters for'},
-                         {'action': 'store_true',
-                          'help': 'show detailed strategy info'},
-                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',
-                          'dest': 'set_val',
-                          'help': 'set parameters for strategy'},
-                         {'action': 'store',
-                          'default': '',
-                          'type':   str,
-                          'help': 'set blender for strategies'},
-                         {'action': 'store',
-                          'default': '',
-                          'help': 'The strategy run timing of the strategies whose blender is set'}],
-        'schedule':     [],
-        'run':          [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',
-                          'help': 'strategies to run'},
-                         {'action': 'store',
-                          'default': '',
-                          'choices': ['none', 'stop', 'sleep', 'pause', 'resume',
-                                      'run_strategy', 'process_result', 'pre_open',
-                                      'open_market', 'close_market', 'acquire_live_price'],
-                          'help': 'task to run'},
-                         {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                          'nargs': '*',
-                          'help': 'arguments for the task to run'}],
+        'status':     [],
+        'pause':      [],
+        'resume':     [],
+        'bye':        [],
+        'exit':       [],
+        'stop':       [],
+        'info':       [{'action': 'store_true',
+                        'help':   'show detailed account info'},
+                       {'action': 'store_true',
+                        'help':   'show system info'}],
+        'pool':       [],
+        'watch':      [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',  # nargs='+' will require at least one argument
+                        'help':   'stock symbols to add to watch list'},
+                       {'action': 'store_true',
+                        'dest':   'position',
+                        'help':   'add 5 stocks from position list to watch list'},
+                       {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',  # nargs='+' will require at least one argument
+                        'help':   'remove stock symbols from watch list'},
+                       {'action': 'store_true',
+                        'help':   'clear watch list'}],
+        'buy':        [{'action': 'store',
+                        'type':   float,
+                        'help':   'amount of shares to buy'},
+                       {'action': 'store',
+                        'help':   'stock symbol to buy'},
+                       {'action':  'store',
+                        'type':    float,
+                        'default': 0.0,  # default to market price
+                        'help':    'price to buy at'},
+                       {'action':  'store',
+                        'default': 'long',
+                        'choices': ['long', 'short'],
+                        'help':    'order position side, default long'},
+                       {'action': 'store_true',
+                        'help':   'force buy regardless of current prices (NOT IMPLEMENTED YET)'}],
+        'sell':       [{'action': 'store',
+                        'type':   float,
+                        'help':   'amount of shares to sell'},
+                       {'action': 'store',
+                        'help':   'stock symbol to sell'},
+                       {'action':  'store',
+                        'type':    float,
+                        'default': 0.0,  # default to market price
+                        'help':    'price to sell at'},
+                       {'action':  'store',
+                        'default': 'long',
+                        'choices': ['long', 'short'],
+                        'help':    'order position side, default long'},
+                       {'action': 'store_true',
+                        'help':   'force sell regardless of current prices'}],
+        'positions':  [],
+        'overview':   [{'action': 'store_true',
+                        'help':   'show detailed account info'},
+                       {'action': 'store_true',
+                        'help':   'show system info'}],
+        'config':     [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',
+                        'help':   'config keys to show or change'},
+                       {'action':  'count',
+                        'default': 2,
+                        'help':    'config level to show or change'},
+                       {'action': 'store_true',
+                        'help':   'show detailed config info'},
+                       {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',
+                        'help':   'config values to set or change for keys'}],
+        'history':    [{'action':  'store',
+                        'nargs':   '?',  # nargs='?' will require at most one argument
+                        'default': 'all',
+                        'type':    str,
+                        'help':    'stock symbol to show history for, if not given, show history for all'}],
+        'orders':     [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',  # nargs='+' will require at least one argument
+                        'help':   'stock symbol to show orders for'},
+                       {'action':  'store',
+                        'default': 'all',
+                        'choices': ['filled', 'f', 'canceled', 'c', 'partial-filled', 'p'],
+                        'help':    'order status to show'},
+                       {'action':  'store',
+                        'default': 'today',
+                        'choices': ['today', 't', 'yesterday', 'y', '3day', '3', 'week', 'w',
+                                    'month', 'm', 'all', 'a'],
+                        'help':    'order time to show'},
+                       {'action':  'store',
+                        'default': 'all',
+                        'choices': ['buy', 'sell', 'b', 's', 'all', 'a'],
+                        'help':    'order type to show'},
+                       {'action':  'store',
+                        'default': 'all',
+                        'choices': ['long', 'short', 'l', 's', 'all', 'a'],
+                        'help':    'order side to show'}],
+        'change':     [{'action':  'store',
+                        'nargs':   '?',  # one or zero (default value) argument is allowed
+                        'default': '',
+                        'help':    'symbol to change position for'},
+                       {'action':  'store',
+                        'default': 0,
+                        'type':    float,
+                        'help':    'amount of shares to change'},
+                       {'action':  'store',
+                        'default': 0.0,  # default to market price
+                        'type':    float,
+                        'help':    'price to change position at'},
+                       {'action':  'store',
+                        'default': 'long',
+                        'choices': ['l', 'long', 's', 'short'],
+                        'help':    'side of the position to change'},
+                       {'action':  'store',
+                        'default': 0.0,  # default not to change cash
+                        'type':    float,
+                        'help':    'amount of cash to change for current account'}],
+        'dashboard':  [{'action':  'store',
+                        'type':    int,
+                        'default': 50,
+                        'help':    'rewind previous rows of logs, default to 50'}],
+        'strategies': [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',  # nargs='+' will require at least one argument
+                        'help':   'strategy to show or change parameters for'},
+                       {'action': 'store_true',
+                        'help':   'show detailed strategy info'},
+                       {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',
+                        'dest':   'set_val',
+                        'help':   'set parameters for strategy'},
+                       {'action':  'store',
+                        'default': '',
+                        'type':    str,
+                        'help':    'set blender for strategies'},
+                       {'action':  'store',
+                        'default': '',
+                        'help':    'The strategy run timing of the strategies whose blender is set'}],
+        'schedule':   [],
+        'run':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',
+                        'help':   'strategies to run'},
+                       {'action':  'store',
+                        'default': '',
+                        'choices': ['none', 'stop', 'sleep', 'pause', 'resume',
+                                    'run_strategy', 'process_result', 'pre_open',
+                                    'open_market', 'close_market', 'acquire_live_price'],
+                        'help':    'task to run'},
+                       {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '*',
+                        'help':   'arguments for the task to run'}],
     }
 
     def __init__(self, trader):
@@ -745,7 +752,7 @@ class TraderShell(Cmd):
         (QTEASY) watch -c
         """
 
-        from rich import print as rprint
+        import rich
         args = self.parse_args('watch', arguments)
         if not args:
             return False
@@ -799,11 +806,11 @@ class TraderShell(Cmd):
         if args.clear:
             self._watch_list = []
 
-        rprint(f'current watch list: {self._watch_list}')
+        rich.print(f'current watch list: {self._watch_list}')
         if illegal_symbols:
-            rprint(f'Illegal symbols in arguments: {illegal_symbols}, input symbols in the form like "000651.SZ"')
+            rich.print(f'Illegal symbols in arguments: {illegal_symbols}, input symbols in the form like "000651.SZ"')
         if symbols_not_found:
-            rprint(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
+            rich.print(f'Symbols can not be removed from watch list because they are not there: {symbols_not_found}')
 
     def do_buy(self, arg):
         """usage: buy AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
@@ -963,7 +970,6 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        from rich import print as rprint
         print(f'current positions: \n')
         pos = self._trader.account_position_info
         if pos.empty:
@@ -1019,7 +1025,7 @@ class TraderShell(Cmd):
         if not losing_pos.empty:
             losing_pos_string = losing_pos.to_string(
                     columns=['qty', 'available_qty', 'cost', 'current_price',
-                                'market_value', 'profit', 'profit_ratio', 'name'],
+                             'market_value', 'profit', 'profit_ratio', 'name'],
                     header=None,
                     index_names=False,
                     formatters={'name':          '{:8s}'.format,
@@ -1047,7 +1053,7 @@ class TraderShell(Cmd):
         if not nan_profit_pos.empty:
             nan_profit_pos_string = nan_profit_pos.to_string(
                     columns=['qty', 'available_qty', 'cost', 'current_price',
-                                'market_value', 'profit', 'profit_ratio', 'name'],
+                             'market_value', 'profit', 'profit_ratio', 'name'],
                     header=None,
                     index_names=False,
                     formatters={'name':          '{:8s}'.format,
@@ -1072,7 +1078,7 @@ class TraderShell(Cmd):
             )
         else:
             nan_profit_pos_string = ''
-        rprint(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
+        rich.print(f'{pos_header_string}\n{earning_pos_string}\n{losing_pos_string}\n{nan_profit_pos_string}')
 
     def do_overview(self, arg):
         """usage: overview [-h] [--detail] [--system]
@@ -1209,7 +1215,6 @@ class TraderShell(Cmd):
         (QTEASY) history
         """
 
-        from rich import print as rprint
         args = self.parse_args('history', arg)
         if not args:
             return False
@@ -1260,7 +1265,7 @@ class TraderShell(Cmd):
         if np.any(pd.isna(history.execution_time)):
             history.execution_time = history.execution_time.fillna(pd.to_datetime('1970-01-01'))
 
-        rprint(
+        rich.print(
                 history.to_string(
                         columns=['execution_time', 'symbol', 'direction', 'filled_qty', 'price_filled',
                                  'transaction_fee', 'cum_qty', 'value', 'share_cost', 'earnings', 'earning_rate',
@@ -1269,24 +1274,24 @@ class TraderShell(Cmd):
                                 'trade_fee', 'holdings', 'holding value', 'cost', 'earnings', 'earning_rate',
                                 'name'],
                         formatters={
-                            'execution_time': lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x)),
-                            'name':         '{:8s}'.format,
-                            'operation':    '{:s}'.format,
-                            'filled_qty':   '{:,.2f}'.format,
-                            'price_filled': '¥{:,.2f}'.format,
+                            'execution_time':  lambda x: "{:%b%d %H:%M:%S}".format(pd.to_datetime(x)),
+                            'name':            '{:8s}'.format,
+                            'operation':       '{:s}'.format,
+                            'filled_qty':      '{:,.2f}'.format,
+                            'price_filled':    '¥{:,.2f}'.format,
                             'transaction_fee': '¥{:,.2f}'.format,
-                            'cum_qty':      '{:,.2f}'.format,
-                            'value':        '¥{:,.2f}'.format,
-                            'share_cost':   '¥{:,.2f}'.format,
-                            'earnings':     '¥{:,.2f}'.format,
-                            'earning_rate': '{:.3%}'.format,
+                            'cum_qty':         '{:,.2f}'.format,
+                            'value':           '¥{:,.2f}'.format,
+                            'share_cost':      '¥{:,.2f}'.format,
+                            'earnings':        '¥{:,.2f}'.format,
+                            'earning_rate':    '{:.3%}'.format,
                         },
                         col_space={
-                            'name': 8,
+                            'name':         8,
                             'price_filled': 10,
-                            'value': 12,
-                            'share_cost': 10,
-                            'earnings': 12,
+                            'value':        12,
+                            'share_cost':   10,
+                            'earnings':     12,
                         },
                         justify='right',
                         index=False,
@@ -1328,7 +1333,6 @@ class TraderShell(Cmd):
         (QTEASY) orders 000001 -s filled -y buy
         """
 
-        from rich import print as rprint
         args = self.parse_args('orders', arg)
         if not args:
             return False
@@ -1416,7 +1420,7 @@ class TraderShell(Cmd):
                 return False
 
         if order_details.empty:
-            rprint(f'No orders found with argument ({args}). try other arguments.')
+            rich.print(f'No orders found with argument ({args}). try other arguments.')
         else:
             symbols = order_details['symbol'].tolist()
             names = get_symbol_names(datasource=self.trader.datasource, symbols=symbols)
@@ -1425,7 +1429,7 @@ class TraderShell(Cmd):
             if np.any(pd.isna(order_details.execution_time)) or np.any(pd.isna(order_details.submitted_time)):
                 print(order_details)
             else:
-                rprint(order_details.to_string(
+                rich.print(order_details.to_string(
                         index=False,
                         columns=['execution_time', 'symbol', 'position', 'direction', 'qty', 'price_quoted',
                                  'submitted_time', 'status', 'price_filled', 'filled_qty', 'canceled_qty',
@@ -1445,7 +1449,7 @@ class TraderShell(Cmd):
                         col_space={
                             'price_quoted': 10,
                             'price_filled': 10,
-                            'filled_qty': 10,
+                            'filled_qty':   10,
                             'canceled_qty': 10,
                         },
                         justify='right',
@@ -1560,17 +1564,21 @@ class TraderShell(Cmd):
             self.trader.manual_change_cash(amount=cash_amount)
 
     def do_dashboard(self, arg):
-        """usage: dashboard [-h]
+        """usage: dashboard [-h] [--rewind REWIND]
 
         Exit shell and enter dashboard
 
         optional arguments:
-          -h, --help  show this help message and exit
+          -h, --help    show this help message and exit
+          --rewind REWIND, -r REWIND
+                        number of lines to rewind  (default: 50)
 
         Examples:
         ---------
         to enter dashboard mode:
         (QTEASY) dashboard
+        to enter dashboard mode and rewind 100 lines:
+        (QTEASY) dashboard -r 100
         """
 
         args = self.parse_args('dashboard', arg)
@@ -1586,9 +1594,8 @@ class TraderShell(Cmd):
               'You can not input commands in this mode, if you want to enter interactive mode, please'
               'press "Ctrl+C" to exit dashboard mode and select from prompted options.\n')
         # read all system logs and display them on the screen
-        lines = self.trader.read_sys_log(row_count=30)
-        print()
-        print(''.join(lines))
+        lines = self.trader.read_sys_log(row_count=args.rewind)
+        rich.print(''.join(lines))
         return True
 
     def do_strategies(self, arg: str):
@@ -1709,9 +1716,9 @@ class TraderShell(Cmd):
 
     def do_run(self, arg):
         """usage: run [STRATEGY [STRATEGY ...]] [-h]
-                [--task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}]
+                [--task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,
+                acquire_live_price}]
                 [--args [ARGS [ARGS ...]]]
-
 
         Run strategies manually
 
@@ -1720,7 +1727,9 @@ class TraderShell(Cmd):
 
         optional arguments:
           -h, --help            show this help message and exit
-          --task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}, -t {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,acquire_live_price}
+          --task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,
+          acquire_live_price}, -t {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,
+          close_market,acquire_live_price}
                                 task to run
           --args [ARGS [ARGS ...]], -a [ARGS [ARGS ...]]
                                 arguments for the task to run
@@ -1844,9 +1853,9 @@ class TraderShell(Cmd):
                                                            hans_aware=True,
                                                            format_tags=True)
                             message = f'{message: <{text_width - 2}}'
-                            rprint(message, end='\r')
+                            rich.print(message, end='\r')
                             if next_normal_message:
-                                rprint(message)
+                                rich.print(message)
                         else:
                             # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
                             if prev_message[-2:] == '_R':
@@ -1855,7 +1864,7 @@ class TraderShell(Cmd):
                                                            text_width - 2,
                                                            hans_aware=True,
                                                            format_tags=True)
-                            rprint(message)
+                            rich.print(message)
                         prev_message = message
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
@@ -1958,27 +1967,27 @@ class Trader(object):
     """
 
     trade_log_file_headers = [
-        'datetime',                 # 0, 交易或变动发生时间
-        'reason',                   # 1, 交易或变动的原因: order / delivery / manual
-        'order_id',                 # 2, 如果是订单交易导致变动，记录订单ID
-        'position_id',              # 3, 交易或变动发生的持仓ID
-        'symbol',                   # 4, 股票代码
-        'name',                     # 5, 股票名称
-        'position_type',            # 6, 交易或变动发生的持仓类型，long / short
-        'direction',                # 7, 交易方向，buy / sell
-        'trade_qty',                # 8, 交易数量
-        'price',                    # 9, 成交价格
-        'trade_cost',               # 10, 交易费用
-        'qty_change',               # 11, 持仓变动数量
-        'qty',                      # 12, 变动后的持仓数量
-        'available_qty_change',     # 13, 可用持仓变动数量
-        'available_qty',            # 14, 变动后的可用持仓数量
-        'cost_change',              # 15, 持仓成本变动
-        'holding_cost',             # 16, 变动后的持仓成本
-        'cash_change',              # 17, 现金变动
-        'cash',                     # 18, 变动后的现金
-        'available_cash_change',    # 19, 可用现金变动
-        'available_cash',           # 20, 变动后的可用现金
+        'datetime',  # 0, 交易或变动发生时间
+        'reason',  # 1, 交易或变动的原因: order / delivery / manual
+        'order_id',  # 2, 如果是订单交易导致变动，记录订单ID
+        'position_id',  # 3, 交易或变动发生的持仓ID
+        'symbol',  # 4, 股票代码
+        'name',  # 5, 股票名称
+        'position_type',  # 6, 交易或变动发生的持仓类型，long / short
+        'direction',  # 7, 交易方向，buy / sell
+        'trade_qty',  # 8, 交易数量
+        'price',  # 9, 成交价格
+        'trade_cost',  # 10, 交易费用
+        'qty_change',  # 11, 持仓变动数量
+        'qty',  # 12, 变动后的持仓数量
+        'available_qty_change',  # 13, 可用持仓变动数量
+        'available_qty',  # 14, 变动后的可用持仓数量
+        'cost_change',  # 15, 持仓成本变动
+        'holding_cost',  # 16, 变动后的持仓成本
+        'cash_change',  # 17, 现金变动
+        'cash',  # 18, 变动后的现金
+        'available_cash_change',  # 19, 可用现金变动
+        'available_cash',  # 20, 变动后的可用现金
     ]
 
     def __init__(self, account_id, operator, broker, config, datasource, debug=False):
@@ -2267,11 +2276,11 @@ class Trader(object):
                 columns=['datetime', 'task', 'parameters'],
         )
         schedule.set_index(keys='datetime', inplace=True)
-        from rich import print as rprint
+
         schedule_string = schedule.to_string()
         schedule_string = schedule_string.replace('[', '<')
         schedule_string = schedule_string.replace(']', '>')
-        rprint(schedule_string)
+        rich.print(schedule_string)
 
     def register_broker(self, debug=False, **kwargs):
         """ 注册broker，以便实现登录等处理
@@ -2405,8 +2414,6 @@ class Trader(object):
         None
         """
 
-        from rich import print as rprint
-
         detail = detail or verbose
 
         if verbose:
@@ -2427,43 +2434,43 @@ class Trader(object):
         total_profit_ratio = total_profit / total_market_value
         if system:
             # System Info
-            rprint(f'{" System Info ":=^{width}}')
-            rprint(f'{"python":<{semi_width - 20}}{sys.version}')
-            rprint(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
+            rich.print(f'{" System Info ":=^{width}}')
+            rich.print(f'{"python":<{semi_width - 20}}{sys.version}')
+            rich.print(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
             import tushare
-            rprint(f'{"tushare":<{semi_width - 20}}{tushare.__version__}')
+            rich.print(f'{"tushare":<{semi_width - 20}}{tushare.__version__}')
             try:
                 import talib
-                rprint(f'{"ta-lib":<{semi_width - 20}}{talib.__version__}')
+                rich.print(f'{"ta-lib":<{semi_width - 20}}{talib.__version__}')
             except ImportError:
-                rprint(f'{"ta-lib":<{semi_width - 20}}not installed')
-            rprint(f'{"Local DataSource":<{semi_width - 20}}{self.datasource}')
-            rprint(f'{"System log file path":<{semi_width - 20}}'
-                   f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
-            rprint(f'{"Trade log file path":<{semi_width - 20}}'
-                   f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
+                rich.print(f'{"ta-lib":<{semi_width - 20}}not installed')
+            rich.print(f'{"Local DataSource":<{semi_width - 20}}{self.datasource}')
+            rich.print(f'{"System log file path":<{semi_width - 20}}'
+                       f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
+            rich.print(f'{"Trade log file path":<{semi_width - 20}}'
+                       f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
         if detail:
             # Account information
-            rprint(f'{" Account Overview ":=^{width}}')
-            rprint(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
-            rprint(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
-            rprint(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
-            rprint(f'{"Started on":<{semi_width - 20}}{self.init_datetime}')
-            rprint(f'{"Time zone":<{semi_width - 20}}{self.get_config("time_zone")["time_zone"]}')
+            rich.print(f'{" Account Overview ":=^{width}}')
+            rich.print(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
+            rich.print(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
+            rich.print(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
+            rich.print(f'{"Started on":<{semi_width - 20}}{self.init_datetime}')
+            rich.print(f'{"Time zone":<{semi_width - 20}}{self.get_config("time_zone")["time_zone"]}')
             # Status and Settings
-            rprint(f'{" Status and Settings ":=^{width}}')
-            rprint(f'{"Trader Stats":<{semi_width - 20}}{self.status}')
-            rprint(f'{"Broker Status":<{semi_width - 20}}{self.broker.broker_name} / {self.broker.status}')
-            rprint(f'{"Live price update freq":<{semi_width - 20}}'
-                   f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}')
-            rprint(f'{"Strategy":<{semi_width - 20}}{self.operator.strategies}')
-            rprint(f'{"Strategy run frequency":<{semi_width - 20}}{self.operator.op_data_freq}')
-            rprint(f'{"Trade batch size(buy/sell)":<{semi_width - 20}}'
-                   f'{self.get_config("trade_batch_size")["trade_batch_size"]} '
-                   f'/ {self.get_config("sell_batch_size")["sell_batch_size"]}')
-            rprint(f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}'
-                   f'{self.get_config("cash_delivery_period")["cash_delivery_period"]} day / '
-                   f'{self.get_config("stock_delivery_period")["stock_delivery_period"]} day')
+            rich.print(f'{" Status and Settings ":=^{width}}')
+            rich.print(f'{"Trader Stats":<{semi_width - 20}}{self.status}')
+            rich.print(f'{"Broker Status":<{semi_width - 20}}{self.broker.broker_name} / {self.broker.status}')
+            rich.print(f'{"Live price update freq":<{semi_width - 20}}'
+                       f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}')
+            rich.print(f'{"Strategy":<{semi_width - 20}}{self.operator.strategies}')
+            rich.print(f'{"Strategy run frequency":<{semi_width - 20}}{self.operator.op_data_freq}')
+            rich.print(f'{"Trade batch size(buy/sell)":<{semi_width - 20}}'
+                       f'{self.get_config("trade_batch_size")["trade_batch_size"]} '
+                       f'/ {self.get_config("sell_batch_size")["sell_batch_size"]}')
+            rich.print(f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}'
+                       f'{self.get_config("cash_delivery_period")["cash_delivery_period"]} day / '
+                       f'{self.get_config("stock_delivery_period")["stock_delivery_period"]} day')
             buy_fix = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
             sell_fix = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
             buy_rate = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
@@ -2471,53 +2478,53 @@ class Trader(object):
             buy_min = float(self.get_config('cost_min_buy')['cost_min_buy'])
             sell_min = float(self.get_config('cost_min_sell')['cost_min_sell'])
             if (buy_fix > 0) or (sell_fix > 0):
-                rprint(f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}')
+                rich.print(f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}')
             if (buy_rate > 0) or (sell_rate > 0):
-                rprint(f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}')
+                rich.print(f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}')
             if (buy_min > 0) or (sell_min > 0):
-                rprint(f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}')
-            rprint(f'{"Market time (open/close)":<{semi_width - 20}}'
-                   f'{self.get_config("market_open_time_am")["market_open_time_am"]} / '
-                   f'{self.get_config("market_close_time_pm")["market_close_time_pm"]}')
+                rich.print(f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}')
+            rich.print(f'{"Market time (open/close)":<{semi_width - 20}}'
+                       f'{self.get_config("market_open_time_am")["market_open_time_am"]} / '
+                       f'{self.get_config("market_close_time_pm")["market_close_time_pm"]}')
         # Investment Return
         print(f'{" Returns ":=^{semi_width}}')
-        rprint(f'{"Benchmark":<{semi_width - 20}}¥ '
-               f'{self.get_config("benchmark_asset")["benchmark_asset"]}')
-        rprint(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
+        rich.print(f'{"Benchmark":<{semi_width - 20}}¥ '
+                   f'{self.get_config("benchmark_asset")["benchmark_asset"]}')
+        rich.print(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
         if total_value >= total_investment:
-            rprint(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
-            rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
-                   f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n'
-                   f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]')
+            rich.print(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
+            rich.print(f'{"Total Return of Investment":<{semi_width - 20}}'
+                       f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n'
+                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]')
         else:
-            rprint(f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]')
-            rprint(f'{"Total Return of Investment":<{semi_width - 20}}'
-                   f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
-                   f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]')
+            rich.print(f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]')
+            rich.print(f'{"Total Return of Investment":<{semi_width - 20}}'
+                       f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
+                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]')
         print(f'{" Cash ":=^{semi_width}}')
-        rprint(f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} ')
-        rprint(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
-        rprint(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
+        rich.print(f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} ')
+        rich.print(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
+        rich.print(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
         print(f'{" Stock Value ":=^{semi_width}}')
-        rprint(f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}')
+        rich.print(f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}')
         if total_profit >= 0:
-            rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
-            rprint(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]')
-            rprint(f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]')
+            rich.print(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
+            rich.print(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]')
+            rich.print(f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]')
         else:
-            rprint(f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold green]')
-            rprint(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]')
-            rprint(f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold green]')
-        asset_in_pool= len(self.asset_pool)
+            rich.print(f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold green]')
+            rich.print(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]')
+            rich.print(f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold green]')
+        asset_in_pool = len(self.asset_pool)
         asset_pool_string = adjust_string_length(
                 s=' '.join(self.asset_pool),
                 n=width - 2,
         )
         if detail:
             print(f'{" Investment ":=^{width}}')
-            rprint(f'Current Investment Type:        {self.asset_type}')
-            rprint(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
-                   f'=={asset_pool_string}\n')
+            rich.print(f'Current Investment Type:        {self.asset_type}')
+            rich.print(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
+                       f'=={asset_pool_string}\n')
 
     def trade_results(self, status='filled'):
         """ 返回账户的交易结果
@@ -2775,7 +2782,7 @@ class Trader(object):
         base_log_content = {
             k: v for k, v in
             zip(self.trade_log_file_headers,
-                [None]*len(self.trade_log_file_headers))
+                [None] * len(self.trade_log_file_headers))
         }
         # remove keys from log_content that are not in base_log_content
         log_content = {
@@ -3111,7 +3118,7 @@ class Trader(object):
             status = order_detail['status']
 
             filled_qty = result_detail['filled_qty']
-            filled_price =  result_detail['price']
+            filled_price = result_detail['price']
             trade_cost = result_detail['transaction_fee']
 
             # send message to indicate execution of order
@@ -3133,26 +3140,26 @@ class Trader(object):
             post_available_cash = account['available_cash']
             name = get_symbol_names(datasource=self.datasource, symbols=symbol)[0]
             trade_log = {
-                'reason': 'order',
-                'order_id': order_id,
-                'position_id': pos_id,
-                'symbol': symbol,
-                'name': name,
-                'position_type': position['position'],
-                'direction': order_detail['direction'],
-                'trade_qty': filled_qty,
-                'price': filled_price,
-                'trade_cost': trade_cost,
-                'qty_change': post_qty - pre_qty,
-                'qty': post_qty,
-                'available_qty_change': post_available - pre_available,
-                'available_qty': post_available,
-                'cost_change': post_cost - pre_cost,
-                'holding_cost': post_cost,
-                'cash_change': post_cash_amount - pre_cash_amount,
-                'cash': post_cash_amount,
+                'reason':                'order',
+                'order_id':              order_id,
+                'position_id':           pos_id,
+                'symbol':                symbol,
+                'name':                  name,
+                'position_type':         position['position'],
+                'direction':             order_detail['direction'],
+                'trade_qty':             filled_qty,
+                'price':                 filled_price,
+                'trade_cost':            trade_cost,
+                'qty_change':            post_qty - pre_qty,
+                'qty':                   post_qty,
+                'available_qty_change':  post_available - pre_available,
+                'available_qty':         post_available,
+                'cost_change':           post_cost - pre_cost,
+                'holding_cost':          post_cost,
+                'cash_change':           post_cash_amount - pre_cash_amount,
+                'cash':                  post_cash_amount,
                 'available_cash_change': post_available_cash - pre_available_cash,
-                'available_cash': post_available_cash,
+                'available_cash':        post_available_cash,
             }
             self.write_log_file(**trade_log)
             # 生成system_log
@@ -3242,14 +3249,14 @@ class Trader(object):
                 name = get_symbol_names(self.datasource, symbols=symbol)
                 # 生成trade_log并写入文件
                 trade_log = {
-                    'reason':  'delivery',
-                    'order_id': order_id,
-                    'position_id': res['pos_id'],
-                    'symbol': symbol,
-                    'position_type': pos_type,
-                    'name': get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
+                    'reason':               'delivery',
+                    'order_id':             order_id,
+                    'position_id':          res['pos_id'],
+                    'symbol':               symbol,
+                    'position_type':        pos_type,
+                    'name':                 get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
                     'available_qty_change': updated_qty - prev_qty,
-                    'available_qty': updated_qty,
+                    'available_qty':        updated_qty,
                 }
                 self.write_log_file(**trade_log)
                 # 发送system log信息
@@ -3637,11 +3644,11 @@ class Trader(object):
         )
         # 在trade_log中记录现金变动
         log_content = {
-            'cash_change':              amount,
-            'cash':                     cash_amount,
-            'available_cash_change':    amount,
-            'available_cash':           available_cash,
-            'reason':                   'manual_change'
+            'cash_change':           amount,
+            'cash':                  cash_amount,
+            'available_cash_change': amount,
+            'available_cash':        available_cash,
+            'reason':                'manual_change'
         }
         self.write_log_file(**log_content)
         # 发送消息通知现金变动并记录system log
@@ -3902,18 +3909,18 @@ def start_trader(
     broker_params = config['live_trade_broker_params']
     if (broker_type == 'simulator') and (broker_params is None):
         broker_params = {
-            "fee_rate_buy": config['cost_rate_buy'],
-            "fee_rate_sell": config['cost_rate_sell'],
-            "fee_min_buy": config['cost_min_buy'],
-            "fee_min_sell": config['cost_min_sell'],
-            "fee_fix_buy": config['cost_fixed_buy'],
-            "fee_fix_sell": config['cost_fixed_sell'],
-            "slipage": config['cost_slippage'],
-            "moq_buy": config['trade_batch_size'],
-            "moq_sell": config['sell_batch_size'],
-            "delay": 1.0,
+            "fee_rate_buy":    config['cost_rate_buy'],
+            "fee_rate_sell":   config['cost_rate_sell'],
+            "fee_min_buy":     config['cost_min_buy'],
+            "fee_min_sell":    config['cost_min_sell'],
+            "fee_fix_buy":     config['cost_fixed_buy'],
+            "fee_fix_sell":    config['cost_fixed_sell'],
+            "slipage":         config['cost_slippage'],
+            "moq_buy":         config['trade_batch_size'],
+            "moq_sell":        config['sell_batch_size'],
+            "delay":           1.0,
             "price_deviation": 0.001,
-            "probabilities": (0.9, 0.08, 0.02),
+            "probabilities":   (0.9, 0.08, 0.02),
         }
 
     from qteasy.broker import get_broker
