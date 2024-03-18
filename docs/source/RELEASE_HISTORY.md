@@ -1,6 +1,10 @@
 # RELEASE HISTORY
 
 
+## 1.1.2 (2024-03-18)
+- Added parameter --rewind to command dashboard, to allow users to rewind to previous system logs
+- Added more information print-outs for command buy and sell, to show if orders are submitted successfully
+
 ## 1.1.1 (2024-03-16)
 - corrected system log for live trade, now different live trade instances will log to different files
 - added capability of reading info from live trade log files and system log files

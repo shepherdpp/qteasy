@@ -828,12 +828,18 @@ class TestTraderShell(unittest.TestCase):
 
         print('testing dashboard command that runs normally and returns True to exit the shell')
         self.assertTrue(tss.do_dashboard(''))
+        self.assertTrue(tss.do_dashboard('--rewind 20'))
+        self.assertTrue(tss.do_dashboard('-r 20'))
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_dashboard('-h'))
 
         print(f'testing run command with wrong arguments and returns False')
         self.assertFalse(tss.do_dashboard('wrong_argument'))
+        self.assertFalse(tss.do_dashboard('-r not_an_int'))
+        self.assertFalse(tss.do_dashboard('-r -10'))  # negative number
+        self.assertFalse(tss.do_dashboard('-r 10_000'))  # too large number
+        self.assertFalse(tss.do_dashboard('-w wrong_optional_argument'))
 
     def test_command_strategies(self):
         """ test strategies command"""
