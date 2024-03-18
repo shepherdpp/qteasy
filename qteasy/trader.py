@@ -121,13 +121,15 @@ class TraderShell(Cmd):
                                  '[--force]',
                            epilog='the order will be submitted to broker and will be executed'
                                   ' according to broker rules, Currently only market price '
-                                  'orders can be submitted'),
+                                  'orders can be submitted, and the orders might not be executed '
+                                  'immediately if market is not open'),
         'sell':       dict(prog='sell', description='Manually create sell-out order',
                            usage='sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] '
                                  '[--force]',
                            epilog='the order will be submitted to broker and will be executed'
                                   ' according to broker rules, Currently only market price '
-                                  'orders can be submitted'),
+                                  'orders can be submitted, and the orders might not be executed '
+                                  'immediately if market is not open'),
         'positions':  dict(prog='positions', description='Get account positions',
                            usage='positions [-h]',
                            epilog='Print out holding quantities and available quantities '
@@ -830,7 +832,8 @@ class TraderShell(Cmd):
           --force, -f           force buy regardless of current prices (NOT IMPLEMENTED YET)
 
         the order will be submitted to broker and will be executed according to broker
-        rules, Currently only market price orders can be submitted
+        rules, Currently only market price orders can be submitted, and the orders might
+        not be executed immediately if market is not open
 
         Examples:
         ---------
@@ -891,7 +894,7 @@ class TraderShell(Cmd):
     def do_sell(self, arg):
         """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
 
-        Manually create buy-in order
+        Manually submit buy-in order
 
         positional arguments:
           amount                amount of shares to sell
@@ -906,7 +909,8 @@ class TraderShell(Cmd):
           --force, -f           force sell regardless of current prices (NOT IMPLEMENTED YET)
 
         the order will be submitted to broker and will be executed according to broker
-        rules, Currently only market price orders can be submitted
+        rules, Currently only market price orders can be submitted, and the orders might
+        not be executed immediately if market is not open
 
         Examples:
         ---------
