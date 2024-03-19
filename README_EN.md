@@ -49,18 +49,43 @@
 - Latest Version: `1.1.2`
 - License: BSD 3-Clause License
 
-QTEASY is a fast quantitative investment package created for traders, with following features:
+`qteasy` is a quantitative trading utility package for quantitative traders, with the following features:
 
-1. Acquire, clean, organize, visualize, store and query financial data, including stock price, financial statements, technical indicators, and basic information of stocks and funds. Downloaded data can be stored locally in forms of csv files or MySQL database. Data can be acquired from Tushare, eastMoney, etc.
-2. Create, backtest and assess investment strategies, and optimize adjustable parameters of strategies with a series of optimization algorithms.
-3. Deploy strategies and start live trading with real-time data, and record trading logs, account positions and funds.
+1. **Full process coverage** from financial data acquisition, storage, to trade strategy development, backtesting, optimization, and live trading
+2. **Completely localized** All financial data, strategy calculation and optimization processes are completely localized and do not rely on any cloud services
+3. **Easy to use** Provide a large number of built-in trading strategies, users can create their own trading strategies in a modular way
+4. **Versatile** Using the strategy class provided by `qteasy`, users can create their own trading strategies and set adjustable parameters flexibly
 
-Following functions are in development plan:
-1. *Provide common financial statistical analysis tools and integrate them into the HistoryPanel object (in development)*
-2. *Connect with automated trading system and realize automated trading (in development)*
+## What can `qteasy` do?
 
-The target of this module is to provide effective vectorized backtesting and assessment of investment 
-strategies, with highly versertility and flexibility
+### **金融历史数据**: 
+### **Manipulate financial data**
+
+- Acquire, clean, and store a large amount of financial historical data
+- Retrieve, process, and utilize local data
+- Visualize local financial data
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
+
+### **Create trading strategies**
+
+- Over 70 built-in trading strategies that can be used as building blocks into your own
+- Quickly create custom trading strategies and set adjustable parameters flexibly
+- Backtest, optimize, and evaluate trading strategies, visualize backtest results
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
+
+### **Simulate live trading**
+
+- Run trading strategies in live mode, simulating trading with real time prices
+- Generate trade signals, simulate trade results
+- Track trade logs, stock holdings, account fund changes, etc.
+- View trade process at any time, check profit and loss
+- Manually control trade process, adjust trade parameters, and manually place orders
+
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
 
 
 ## QTEASY Documentations
