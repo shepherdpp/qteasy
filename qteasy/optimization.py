@@ -313,6 +313,7 @@ def _evaluate_one_parameter(par,
             slipage=config.cost_slippage
     )
     st = time.time()
+    complete_values = None
     for start, end in zip(start_dates, end_dates):
         start_idx = op.get_hdate_idx(start)
         end_idx = op.get_hdate_idx(end)
@@ -376,6 +377,13 @@ def _evaluate_one_parameter(par,
     loop_run_time = et - st
     res_dict.update(perf)
     res_dict['loop_run_time'] = loop_run_time
+    import os
+    from qteasy import QT_TRADE_LOG_PATH
+    log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, 'trade_log.csv')
+    res_dict['trade_log'] = pd.read_csv(log_file_path_name) if log_backtest else None
+    log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, 'trade_records.csv')
+    res_dict['trade_record'] = pd.read_csv(log_file_path_name) if log_backtest else None
+    res_dict['complete_history'] = complete_values
     return res_dict
 
 

@@ -541,3 +541,4 @@ Users interact with, control and modify behavior of the live trading by inputtin
 - `history`: view trade history
 - `exit`: exit TraderShell
 - ... more commands please refer to `QTEASY` documentation
+

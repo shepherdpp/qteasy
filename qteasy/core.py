@@ -22,7 +22,7 @@ from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .finance import CashPlan
 from .qt_operator import Operator
-from .visual import _plot_loop_result, _print_loop_result, _print_test_result
+from .visual import _plot_loop_result, _loop_report_str, _print_test_result
 from .visual import _plot_test_result
 from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
@@ -2083,7 +2083,9 @@ def run(operator, **kwargs):
         )
         if config['report']:
             # 格式化输出回测结果
-            _print_loop_result(loop_result, config)
+            report = _loop_report_str(loop_result, config)
+            print(report)
+            loop_result['report'] = report
         if config['visual']:
             # 图表输出投资回报历史曲线
             _plot_loop_result(loop_result, config)

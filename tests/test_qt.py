@@ -10,6 +10,8 @@
 # ======================================
 import unittest
 
+import pandas as pd
+
 import qteasy as qt
 import numpy as np
 from qteasy.tsfuncs import stock_basic
@@ -374,25 +376,41 @@ class TestQT(unittest.TestCase):
         """测试策略的回测模式，结果可视化但不打印"""
         print(f'test plot with no buy-sell points and position indicators')
         qt.configuration(up_to=1, default=True)
-        qt.run(self.op,
-               mode=1,
-               trade_batch_size=1,
-               visual=True,
-               trade_log=False,
-               buy_sell_points=False,
-               show_positions=False,
-               invest_cash_dates='20070616')
+        res = qt.run(
+                self.op,
+                mode=1,
+                trade_batch_size=1,
+                visual=True,
+                trade_log=False,
+                buy_sell_points=False,
+                show_positions=False,
+                invest_cash_dates='20070616',
+        )
+        self.assertIsInstance(res, dict)
+        self.assertIsNone(res['trade_log'])
 
         print(f'test plot with both buy-sell points and position indicators')
         qt.configuration(up_to=1, default=True)
-        qt.run(self.op,
-               mode=1,
-               trade_batch_size=1,
-               visual=True,
-               trade_log=False,
-               buy_sell_points=True,
-               show_positions=True,
-               invest_cash_dates='20070604')
+        res = qt.run(
+                self.op,
+                mode=1,
+                trade_batch_size=1,
+                visual=True,
+                trade_log=True,
+                buy_sell_points=True,
+                show_positions=True,
+                invest_cash_dates='20070604',
+        )
+        self.assertIsInstance(res, dict)
+        self.assertIsNotNone(res['trade_log'])
+        self.assertIsInstance(res['report'], str)
+        print(res['trade_log'])
+        print(res['report'])
+        print(res['trade_record'])
+        print(res['final_value'])
+        print(res['info'])
+        print(res['sharp'])
+        self.assertAlmostEqual(res['final_value'], 348375.75, 0)
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
