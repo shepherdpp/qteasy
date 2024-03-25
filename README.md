@@ -46,7 +46,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.1.2`
+- Latest Version: `1.1.3`
 - License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
@@ -98,7 +98,7 @@ $ pip install qteasy
 
 
 ### python 版本
-- *`python` version >= 3.6* 
+- *`python` version >= 3.6, <= 3.8* 
 
 ### 安装可选依赖包
 

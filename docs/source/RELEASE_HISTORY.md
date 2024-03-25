@@ -1,5 +1,7 @@
 # RELEASE HISTORY
 
+## 1.1.3 (2024-03-25)
+- now trade_log, trade_records, full_histories are added to the results returned from backtest run, and can be accessed by `res['trade_log']`, `res['trade_records']`, and `res['full_histories']`
 
 ## 1.1.2 (2024-03-18)
 - Added parameter --rewind to command dashboard, to allow users to rewind to previous system logs
