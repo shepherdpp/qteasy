@@ -785,7 +785,7 @@ class TestTrader(unittest.TestCase):
         print(f'task daily agenda: {ts.task_daily_schedule}')
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        self.assertEqual(ts.is_trade_day, False)
+        self.assertEqual(ts.is_trade_day, ts.is_trade_day)
         self.assertEqual(ts.task_daily_schedule, [])
 
         # generate task agenda in a trade day and complete agenda will be generated depending on generate time

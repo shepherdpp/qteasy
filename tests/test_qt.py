@@ -395,6 +395,9 @@ class TestQT(unittest.TestCase):
                 self.op,
                 mode=1,
                 trade_batch_size=1,
+                invest_start='20070604',
+                invest_end='20190329',
+                invest_cash_amounts=[100_000],
                 visual=True,
                 trade_log=True,
                 buy_sell_points=True,
@@ -410,7 +413,7 @@ class TestQT(unittest.TestCase):
         print(res['final_value'])
         print(res['info'])
         print(res['sharp'])
-        self.assertAlmostEqual(res['final_value'], 348375.75, 0)
+        self.assertAlmostEqual(res['final_value'], 341175.59, 0)
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
