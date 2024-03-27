@@ -63,12 +63,13 @@ try:
         config_lines = f.readlines()
 
 except FileNotFoundError as e:
-    warnings.warn(f'qteasy.cfg not found, a new configuration file is created.')
-    with open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), mode='w', encoding='utf-8') as f:
+    qt_config_file_path_name = os.path.join(QT_ROOT_PATH, 'qteasy.cfg')
+    with open(qt_config_file_path_name, mode='w', encoding='utf-8') as f:
         intro = QT_CONFIG_FILE_INTRO
         f.write(intro)
 
     config_lines = []  # 本地配置文件行
+    warnings.warn(f'qteasy.cfg not found, a new configuration file is created, \nview file at: {qt_config_file_path_name}')
 except Exception as e:
     warnings.warn(f'Error reading configuration file, all configurations will fall back to default! \n{e}')
     config_lines = []
@@ -110,7 +111,8 @@ try:
 except Exception as e:
     warnings.warn(f'Failed Loading tushare_token, configure it in qteasy.cfg:\n'
                   f'tushare_token = your_token\n'
-                  f'for more information, please visit: https://tushare.pro/')
+                  f'for more information, check qteasy tutorial: '
+                  f'https://qteasy.readthedocs.io/zh/latest/tutorials/1-get-started.html')
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
 configure(only_built_in_keys=False, **qt_local_configs)
