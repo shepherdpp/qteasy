@@ -46,7 +46,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.1.3`
+- Latest Version: `1.1.4`
 - License: BSD 3-Clause License
 
 QTEASY is a fast quantitative investment package created for traders, with following features:
@@ -77,7 +77,7 @@ $ pip install qteasy
 ```
 
 ### python version
-- *`python` version >= 3.6, <= 3.8* 
+- *`python` version >= 3.6, < 3.9* 
 
 ### Install dependencies
 
