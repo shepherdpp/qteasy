@@ -41,7 +41,7 @@ __version__ = '1.1.4'
 version_info = Namespace(
     major=1,
     minor=1,
-    micro=3,
+    micro=4,
     releaselevel='beta',
     serial=0
 )
