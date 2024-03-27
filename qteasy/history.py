@@ -633,7 +633,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float, np.int, np.float]):
+    def fillna(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -649,7 +649,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float, np.int, np.float]):
+    def fillinf(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
