@@ -1450,9 +1450,9 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'\n      ===========END OF REPORT=============\n')
 
 
-def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=None):
-    """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
-        确保输出的格式美观一致
+def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=None) -> str:
+    """ 生成单次回测的结果格式化输出，根据columns、headers、formatter等参数选择性输出result中的结果
+        确保输出的格式美观一致，输出结果可以直接打印到控制台或者写入文件
 
     Parameters
     ----------
@@ -1472,65 +1472,71 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     if loop_results is None:
         return
     looped_values = loop_results['complete_values']
-    print(f'\n'
-          f'     ====================================\n'
-          f'     |                                  |\n'
-          f'     |       BACK TESTING RESULT        |\n'
-          f'     |                                  |\n'
-          f'     ====================================')
-    print(f'\nqteasy running mode: 1 - History back testing\n'
-          f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n'
-          f'time consumption for operation back looping:  {sec_to_duration(loop_results["loop_run_time"])}\n')
-    print(f'investment starts on      {looped_values.index[0]}\n'
-          f'ends on                   {looped_values.index[-1]}\n'
-          f'Total looped periods:     {loop_results["years"]:.1f} years.')
-    print(f'\n-------------operation summary:------------\n'
-          f'Only non-empty shares are displayed, call \n'
-          f'"loop_result["oper_count"]" for complete operation summary\n')
+    report_string = ''
+    report_string += f'\n' \
+                     f'     ====================================\n' \
+                     f'     |                                  |\n' \
+                     f'     |       BACK TESTING RESULT        |\n' \
+                     f'     |                                  |\n' \
+                     f'     ===================================='
+    report_string += f'\nqteasy running mode: 1 - History back testing\n' \
+          f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n' \
+          f'time consumption for operation back looping:  {sec_to_duration(loop_results["loop_run_time"])}\n'
+    report_string += f'investment starts on      {looped_values.index[0]}\n' \
+          f'ends on                   {looped_values.index[-1]}\n' \
+          f'Total looped periods:     {loop_results["years"]:.1f} years.'
+    report_string += f'\n-------------operation summary:------------\n' \
+          f'Only non-empty shares are displayed, call \n' \
+          f'"loop_result["oper_count"]" for complete operation summary\n'
     op_summary = loop_results['oper_count']
     op_summary = op_summary.loc[op_summary['empty'] != 1.0]
-    print(op_summary.to_string(columns=["sell",
-                                        "buy",
-                                        "total",
-                                        "long",
-                                        "short",
-                                        "empty"],
-                               header=["Sell Cnt",
-                                       "Buy Cnt",
-                                       "Total",
-                                       "Long pct",
-                                       "Short pct",
-                                       "Empty pct"],
-                               formatters={'sell':  '{:.0f}'.format,
-                                           'buy':   '{:.0f}'.format,
-                                           'total': '{:.0f}'.format,
-                                           'long':  '{:.1%}'.format,
-                                           'short': '{:.1%}'.format,
-                                           'empty': '{:.1%}'.format},
-                               justify='center',
-                               max_rows=20), '\n')
-    print(f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
-    print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
-          f'final value:              ¥{loop_results["final_value"]:12,.2f}')
-    print(f'Total return:             {loop_results["rtn"]:13.2%} \n'
-          f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}\n'
-          f'Skewness:                 {loop_results["skew"]:13.2f}\n'
-          f'Kurtosis:                 {loop_results["kurtosis"]:13.2f}')
-    print(f'Benchmark return:         {loop_results["ref_rtn"]:13.2%} \n'
-          f'Benchmark Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}')
-    print(f'\n------strategy loop_results indicators------ \n'
-          f'alpha:                    {loop_results["alpha"]:13.3f}\n'
-          f'Beta:                     {loop_results["beta"]:13.3f}\n'
-          f'Sharp ratio:              {loop_results["sharp"]:13.3f}\n'
-          f'Info ratio:               {loop_results["info"]:13.3f}\n'
-          f'250 day volatility:       {loop_results["volatility"]:13.3f}\n'
-          f'Max drawdown:             {loop_results["mdd"]:13.2%} \n'
-          f'    peak / valley:        {loop_results["peak_date"].date()} / {loop_results["valley_date"].date()}')
+    report_string += op_summary.to_string(
+            columns=["sell",
+                     "buy",
+                     "total",
+                     "long",
+                     "short",
+                     "empty"],
+            header=["Sell Cnt",
+                    "Buy Cnt",
+                    "Total",
+                    "Long pct",
+                    "Short pct",
+                    "Empty pct"],
+            formatters={'sell':  '{:.0f}'.format,
+                        'buy':   '{:.0f}'.format,
+                        'total': '{:.0f}'.format,
+                        'long':  '{:.1%}'.format,
+                        'short': '{:.1%}'.format,
+                        'empty': '{:.1%}'.format},
+            justify='center',
+            max_rows=20)
+    report_string += f'\n\n' \
+                     f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}\n' \
+                     f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n' \
+                     f'final value:              ¥{loop_results["final_value"]:12,.2f}\n' \
+                     f'Total return:             {loop_results["rtn"]:13.2%} \n' \
+                     f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}\n' \
+                     f'Skewness:                 {loop_results["skew"]:13.2f}\n' \
+                     f'Kurtosis:                 {loop_results["kurtosis"]:13.2f}\n' \
+                     f'Benchmark return:         {loop_results["ref_rtn"]:13.2%} \n' \
+                     f'Benchmark Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}\n' \
+                     f'\n------strategy loop_results indicators------ \n' \
+                     f'alpha:                    {loop_results["alpha"]:13.3f}\n' \
+                     f'Beta:                     {loop_results["beta"]:13.3f}\n' \
+                     f'Sharp ratio:              {loop_results["sharp"]:13.3f}\n' \
+                     f'Info ratio:               {loop_results["info"]:13.3f}\n' \
+                     f'250 day volatility:       {loop_results["volatility"]:13.3f}\n' \
+                     f'Max drawdown:             {loop_results["mdd"]:13.2%} \n' \
+                     f'    peak / valley:        {loop_results["peak_date"].date()} / ' \
+                     f'{loop_results["valley_date"].date()}'
     if not pd.isna(loop_results['recover_date']):
-        print(f'    recovered on:         {loop_results["recover_date"].date()}\n')
+        report_string += f'\n    recovered on:         {loop_results["recover_date"].date()}\n'
     else:
-        print(f'    recovered on:         Not recovered!\n')
-    print(f'===========END OF REPORT=============\n')
+        report_string += f'\n    recovered on:         Not recovered!\n'
+    report_string += f'\n===========END OF REPORT=============\n'
+
+    return report_string
 
 
 # TODO: like _plot_test_result, take the evaluate results on both opti and test hist data

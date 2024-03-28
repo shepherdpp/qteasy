@@ -129,7 +129,7 @@ def performance_statistics(performances: list, stats='mean'):
 
 def evaluate(looped_values: pd.DataFrame,
              hist_benchmark: pd.DataFrame,
-             benchmark_data: pd.DataFrame,
+             benchmark_data: str,
              cash_plan,
              indicators: str = 'final_value')->dict:
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
@@ -173,7 +173,7 @@ def evaluate(looped_values: pd.DataFrame,
         回测区间的历史价格记录
     hist_benchmark: pd.DataFrame,
         参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
-    benchmark_data: pd.DataFrame,
+    benchmark_data: str,
         参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
     cash_plan: CashPlan,
         投资计划
@@ -278,9 +278,9 @@ def eval_benchmark(looped_value, reference_value, reference_data):
 
     Parameters
     ----------
-    looped_value:
-    reference_value:
-    reference_data:
+    looped_value: pd.DataFrame
+    reference_value: pd.DataFrame
+    reference_data: str
 
     Returns
     -------

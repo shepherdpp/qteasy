@@ -1309,15 +1309,23 @@ def _trade_time_index(start=None,
     if freq is not None:
         freq = str(freq).lower()
     # 检查时间序列区间的开闭状况
-    closed = None
+    closed = 'both'
     if include_start:
         closed = 'left'
     if include_end:
         closed = 'right'
     if include_start and include_end:
-        closed = None
+        closed = 'both'
 
-    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
+    # noinspection PyTypeChecker
+    time_index = pd.date_range(
+            start=start,
+            end=end,
+            periods=periods,
+            freq=freq,
+            # closed=closed,  # closed parameter is deprecated since version 1.4.0
+            inclusive=closed,  # inclusive is added inplace of closed since 1.4.0
+    )
 
     if trade_days_only:
         # 剔除time_index中的non-trade day

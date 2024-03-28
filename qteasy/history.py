@@ -633,7 +633,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float, np.int, np.float]):
+    def fillna(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -649,7 +649,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float, np.int, np.float]):
+    def fillinf(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
@@ -1937,7 +1937,7 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
     res_values.fill(fill_value)
     for df_id in range(len(dfs)):
         extended_df = dfs[df_id].reindex(combined_index)
-        for col_name, series in extended_df.iteritems():
+        for col_name, series in extended_df.items():  # iteritems is deprecated since 1.5 and removed since 2.0
             if dataframe_as == 'shares':
                 if col_name not in combined_htypes_dict:
                     continue

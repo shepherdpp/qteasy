@@ -10,6 +10,7 @@
 
 import numpy as np
 try:
+    # noinspection PyUnresolvedReferences
     from talib import BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
         T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
         MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
