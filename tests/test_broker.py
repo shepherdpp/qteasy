@@ -9,6 +9,11 @@
 # ======================================
 
 import unittest
+import sys
+import tushare as ts
+import numpy as np
+import pandas as pd
+import qteasy as qt
 
 from qteasy.trade_recording import new_account, get_or_create_position, record_trade_order, read_trade_order
 
@@ -24,6 +29,12 @@ class TestBroker(unittest.TestCase):
 
     def setUp(self) -> None:
         """ create test accounts, positions and orders """
+        print('test environment info: ')
+        print(f' python version: {sys.version}')
+        print(f' tushare version: {ts.__version__}')
+        print(f' numpy version: {np.__version__}')
+        print(f' qteasy version: {qt.__version__}')
+        print(f' pandas version: {pd.__version__}')
         from qteasy import QT_CONFIG, DataSource
 
         self.test_ds = DataSource(

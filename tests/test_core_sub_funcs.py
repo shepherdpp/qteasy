@@ -156,7 +156,7 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
         date = pd.to_datetime('2000-01-01')
-        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(pd.Timestamp(date)).all())
 
         print(f'\nselect all stocks by list date')
         stock_pool = qt.filter_stock_codes(date='1997-01-01')
@@ -164,7 +164,7 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'check if all list date after "1997-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         date = pd.to_datetime('1997-01-01')
-        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(pd.Timestamp(date)).all())
 
         print(f'\nselect all stocks by exchange')
         stock_pool = qt.filter_stock_codes(exchange='SSE')
@@ -191,7 +191,7 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'check if all exchanges are in\n{area_list} \nand \n{industry_list}'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         date = pd.to_datetime('1998-01-01')
-        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(pd.Timestamp(date)).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(area_list).all())
 
