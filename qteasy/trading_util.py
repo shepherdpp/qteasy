@@ -1317,15 +1317,31 @@ def _trade_time_index(start=None,
     if include_start and include_end:
         closed = 'both'
 
-    # noinspection PyTypeChecker
-    time_index = pd.date_range(
-            start=start,
-            end=end,
-            periods=periods,
-            freq=freq,
-            # closed=closed,  # closed parameter is deprecated since version 1.4.0
-            inclusive=closed,  # inclusive is added inplace of closed since 1.4.0
-    )
+    '''
+    here temp code for parsing version of pandas
+    - if version is less than 1.4.0, use closed parameter
+    - if version is greater than 1.4.0, use inclusive parameter
+    '''
+    if pd.__version__ < '1.4.0':
+        # noinspection PyTypeChecker
+        closed = None if closed == 'both' else closed
+        time_index = pd.date_range(
+                start=start,
+                end=end,
+                periods=periods,
+                freq=freq,
+                closed=closed,
+        )
+    else:
+        # noinspection PyTypeChecker
+        time_index = pd.date_range(
+                start=start,
+                end=end,
+                periods=periods,
+                freq=freq,
+                # closed=closed,  # closed parameter is deprecated since version 1.4.0
+                inclusive=closed,  # inclusive is added inplace of closed since 1.4.0
+        )
 
     if trade_days_only:
         # 剔除time_index中的non-trade day

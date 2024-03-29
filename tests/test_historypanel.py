@@ -54,16 +54,16 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertSequenceEqual(list(self.hp.hdates), list(self.index))
         self.assertDictEqual(self.hp.columns, {'close': 0, 'open': 1, 'high': 2, 'low': 3})
         self.assertDictEqual(self.hp.levels, {'000100': 0, '000101': 1, '000102': 2, '000103': 3, '000104': 4})
-        row_dict = {Timestamp('2020-01-01 00:00:00', freq='D'): 0,
-                    Timestamp('2020-01-02 00:00:00', freq='D'): 1,
-                    Timestamp('2020-01-03 00:00:00', freq='D'): 2,
-                    Timestamp('2020-01-04 00:00:00', freq='D'): 3,
-                    Timestamp('2020-01-05 00:00:00', freq='D'): 4,
-                    Timestamp('2020-01-06 00:00:00', freq='D'): 5,
-                    Timestamp('2020-01-07 00:00:00', freq='D'): 6,
-                    Timestamp('2020-01-08 00:00:00', freq='D'): 7,
-                    Timestamp('2020-01-09 00:00:00', freq='D'): 8,
-                    Timestamp('2020-01-10 00:00:00', freq='D'): 9}
+        row_dict = {Timestamp('2020-01-01 00:00:00'): 0,
+                    Timestamp('2020-01-02 00:00:00'): 1,
+                    Timestamp('2020-01-03 00:00:00'): 2,
+                    Timestamp('2020-01-04 00:00:00'): 3,
+                    Timestamp('2020-01-05 00:00:00'): 4,
+                    Timestamp('2020-01-06 00:00:00'): 5,
+                    Timestamp('2020-01-07 00:00:00'): 6,
+                    Timestamp('2020-01-08 00:00:00'): 7,
+                    Timestamp('2020-01-09 00:00:00'): 8,
+                    Timestamp('2020-01-10 00:00:00'): 9}
         self.assertDictEqual(self.hp.rows, row_dict)
 
     def test_len(self):

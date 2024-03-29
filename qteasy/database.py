@@ -2467,7 +2467,7 @@ class DataSource:
                 import pymysql
             except ImportError:
                 raise ImportError(f'Missing dependency \'pymysql\' for datasource type '
-                                  f'\'database\'. Use pip or conda to install pymysql.')
+                                  f'\'database\'. Use pip or conda to install pymysql: $ pip install pymysql')
             # set up connection to the data base
             if not isinstance(port, int):
                 raise TypeError(f'port should be of type int')
@@ -2520,14 +2520,14 @@ class DataSource:
                     import tables
                 except ImportError:
                     raise ImportError(f'Missing optional dependency \'pytables\' for datasource file type '
-                                      f'\'hdf5\'. Use pip or conda to install pytables')
+                                      f'\'hdf5\'. Use pip or conda to install pytables: $ pip install tables')
                 file_type = 'hdf'
             if file_type in ['feather', 'fth']:
                 try:
                     import pyarrow
                 except ImportError:
                     raise ImportError(f'Missing optional dependency \'pyarrow\' for datasource file type '
-                                      f'\'feather\'. Use pip or conda to install pyarrow')
+                                      f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow')
                 file_type = 'fth'
             from qteasy import QT_ROOT_PATH
             self.file_path = path.join(QT_ROOT_PATH, file_loc)
