@@ -11,15 +11,14 @@
 import unittest
 
 import pandas as pd
-
+import numba as nb
 import qteasy as qt
 import numpy as np
-from qteasy.tsfuncs import stock_basic
 
 from qteasy.tafuncs import bbands
 from qteasy.tafuncs import sma
 
-from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg
+from qteasy.strategy import RuleIterator, GeneralStg
 
 
 class TestLSStrategy(RuleIterator):
@@ -264,6 +263,7 @@ class TestQT(unittest.TestCase):
         print(f'  qteasy version: {qt.__version__}')
         print(f'  qteasy root path: {qt.QT_ROOT_PATH}')
         print(f'  numpy version: {np.__version__}')
+        print(f'  numba version: {nb.__version__}')
         print(f'  pandas version: {pd.__version__}')
         self.op.set_parameter('dma', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
         self.op.set_parameter('macd', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])

@@ -73,6 +73,7 @@ def _evaluate_all_parameters(par_generator,
     i = 0
     best_so_far = 0
     opti_target = config.optimize_target
+
     # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
@@ -539,6 +540,8 @@ def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
 def _search_incremental(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法3: 增量递进搜索法
 
+    TODO: 当numpy版本高于1.21时，这个算法在parallel==True时会有极大的效率损失，应优化
+
     该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
     而且每一轮搜索都（大概率）更接近全局最优解。
     该算法的第一轮搜索就是标准的蒙特卡洛算法，在整个参数空间中随机取出一定数量的参数组合，使用这
@@ -619,7 +622,7 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
             # 逐个弹出子空间列表中的子空间，随机选择参数，生成参数生成器generator
             # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
             par_generator, total = space.extract(sample_count // space_count_in_round, how='rand')
-            # TODO: progress bar does not work properly, try to find a way to get progress bar working
+            # TODO: progress bar does not work properly, find a way to get progress bar working
             pool = pool + _evaluate_all_parameters(par_generator=par_generator,
                                                    total=total,
                                                    op=op,

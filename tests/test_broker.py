@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import qteasy as qt
 import numba as nb
+import talib as ta
 
 from qteasy.trade_recording import new_account, get_or_create_position, record_trade_order, read_trade_order
 
@@ -37,6 +38,8 @@ class TestBroker(unittest.TestCase):
         print(f' numba version: {nb.__version__}')
         print(f' qteasy version: {qt.__version__}')
         print(f' pandas version: {pd.__version__}')
+        print(f' talib version: {ta.__version__}')
+
         from qteasy import QT_CONFIG, DataSource
 
         self.test_ds = DataSource(
