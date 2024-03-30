@@ -2766,6 +2766,15 @@ class DataSource:
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
 
+    def delete_from_file(self, file_name, record_ids):
+        """ 从文件中删除指定的记录
+
+        :param file_name:
+        :param record_ids:
+        :return:
+        """
+        return 1
+
     def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
 
@@ -3092,6 +3101,15 @@ class DataSource:
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
         finally:
             con.close()
+
+    def delete_from_database(self, db_table, record_ids):
+        """ 从数据库表中删除数据
+
+        :param db_table:
+        :param record_ids:
+        :return:
+        """
+        return 1
 
     def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -4238,7 +4256,7 @@ class DataSource:
         else:
             return res_df if not res_df.empty else None
 
-    def update_sys_table_data(self, table, record_id, **data):
+    def update_sys_table_data(self, table:str, record_id:int, **data) -> int:
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
 
         每次只能更新一条数据，数据以dict形式给出
@@ -4302,7 +4320,7 @@ class DataSource:
         self.update_table_data(table, df_data, merge_type='update')
         return record_id
 
-    def insert_sys_table_data(self, table, **data):
+    def insert_sys_table_data(self, table:str, **data) -> int:
         """ 插入系统操作表的数据
 
         一次插入一条记录，数据以dict形式给出
@@ -4393,6 +4411,50 @@ class DataSource:
         # TODO: 这里为什么要用'ignore'而不是'update'? 现在改为'update'，
         #  test_database和test_trading测试都能通过，后续完整测试
         return record_id
+
+    def delete_sys_table_data(self, table, record_ids:[str]) -> int:
+        """ 删除系统数据表中的某些记录，被删除的记录的ID使用列表或tuple传入
+
+        parameters
+        ----------
+        table: str
+            需要删除数据的表名
+        record_ids: list of str
+            需要删除的记录的ID列表
+
+        Returns
+        -------
+        int
+            删除的记录数量
+        """
+
+        # 如果不是system table，直接返回0
+        try:
+            ensure_sys_table(table)
+        except KeyError:
+            f'{table} is not valid table, can not delete records from it.'
+            return 0
+        except TypeError:
+            f'{table} is not a system table, can not delete records from it.'
+            return 0
+        except Exception as e:
+            f'An error occurred when checking table {table}: {e}'
+            return 0
+
+        # 检查record_ids是否合法
+        if not isinstance(record_ids, (list, tuple)):
+            raise TypeError(f'record_ids should be a list or tuple, got {type(record_ids)} instead')
+        if not all(isinstance(rid, int) for rid in record_ids):
+            raise TypeError(f'all record_ids should be int, got {[type(rid) for rid in record_ids]} instead')
+
+        if self.source_type == 'db':
+            res = self.delete_from_database(table, record_ids)
+        elif self.source_type == 'file':
+            res = self.delete_from_file(table, record_ids)
+        else:
+            raise RuntimeError(f'invalid source type: {self.source_type}')
+
+        return res
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
