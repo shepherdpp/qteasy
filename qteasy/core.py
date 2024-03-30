@@ -2116,6 +2116,21 @@ def run(operator, **kwargs):
         )
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config['opti_method']
+
+        # 检查numpy的版本和优化算法，当numpy版本高于1.21,优化算法为2-incremental时，使用多进程计算反而会导致效率降低（原因尚待调查）
+        # TODO: 临时解决办法：
+        #  1, 当numpy版本高于1.21且算法为2-incremental时，强制禁用多进程计算，并打印warning信息
+        np_version = np.__version__
+        if np_version >= '1.22' and how == 2:
+            import warnings
+            config['parallel'] = False if config['parallel'] else config['parallel']
+            msg = f'Performance Warning: the optimization algorithm 2-incremental is much slower than ' \
+                  f'expected when numpy version is higher than 1.21 in parallel computing mode, ' \
+                  f'the parallel computing is disabled to avoid performance degradation.'
+            warnings.warn(msg, RuntimeWarning)
+            # import pdb; pdb.set_trace()
+
+        # 开始优化
         optimal_pars, perfs = optimization_methods[how](
                 hist=hist_opti,
                 benchmark=hist_benchmark,
@@ -2123,6 +2138,7 @@ def run(operator, **kwargs):
                 op=operator,
                 config=config
         )
+
         # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
         hist_opti_loop = hist_opti.fillna(0)
         result_pool = _evaluate_all_parameters(
@@ -2142,18 +2158,6 @@ def run(operator, **kwargs):
         if config['visual']:
             pass
             # _plot_test_result(opti_eval_res, config=config)
-
-        # 检查numpy的版本和优化算法，当numpy版本高于1.21,优化算法为2-incremental时，使用多进程计算反而会导致效率降低（原因尚待调查）
-        # TODO: 临时解决办法：
-        #  1, 当numpy版本高于1.21且算法为2-incremental时，强制禁用多进程计算，并打印warning信息
-        np_version = np.__version__
-        if np_version >= '1.21.5' and how == 2:
-            import warnings
-            config['parallel'] = False if config['parallel'] else config['parallel']
-            msg = f'Performance Warning: the optimization algorithm 2-incremental is much slower than ' \
-                  f'expected when numpy version is higher than 1.21 in parallel computing mode, ' \
-                  f'the parallel computing is disabled to avoid performance degradation.'
-            warnings.warn(msg, RuntimeWarning)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果，此时operator的交易数据已经分配好，无需再次分配
         if config['test_type'] in ['single', 'multiple']:
