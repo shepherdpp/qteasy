@@ -155,7 +155,7 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'check if all stock market is "主板", and list date after "2000-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
-        date = pd.to_datetime('2000-01-01')
+        date = pd.to_datetime('2000-01-01').date()
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by list date')
@@ -163,7 +163,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all list date after "1997-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
-        date = pd.to_datetime('1997-01-01')
+        date = pd.to_datetime('1997-01-01').date()
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by exchange')
@@ -191,7 +191,7 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'check if all exchanges are in\n{area_list} \nand \n{industry_list}'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         date = pd.to_datetime('1998-01-01')
-        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(pd.Timestamp(date)).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(area_list).all())
 

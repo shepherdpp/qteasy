@@ -1813,7 +1813,7 @@ class Operator:
         # TODO 从这里开始下面的操作都应该移动到core.py中，从而把CashPlan从Operator的设置过程中去掉
         #  使Operator与CashPlan无关。使二者脱钩
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
-        # import pdb; pdb.set_trace()
+
         operator_window_length = self.max_window_length
         op_list_hdates = hist_data.hdates[operator_window_length:]
 

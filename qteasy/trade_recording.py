@@ -200,6 +200,27 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     )
 
 
+def delete_account(id):
+    """ 删除账户
+
+    Parameters
+    ----------
+    id: int
+        账户的id
+
+    Returns
+    -------
+    None
+    """
+
+    import qteasy as qt
+    data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    raise NotImplementedError('This function is not implemented yet!')
+
+
 def get_position_by_id(pos_id, data_source=None):
     """ 通过pos_id获取持仓的信息
 

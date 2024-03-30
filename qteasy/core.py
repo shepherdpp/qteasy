@@ -22,7 +22,7 @@ from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .finance import CashPlan
 from .qt_operator import Operator
-from .visual import _plot_loop_result, _print_loop_result, _print_test_result
+from .visual import _plot_loop_result, _loop_report_str, _print_test_result
 from .visual import _plot_test_result
 from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
@@ -2083,7 +2083,9 @@ def run(operator, **kwargs):
         )
         if config['report']:
             # 格式化输出回测结果
-            _print_loop_result(loop_result, config)
+            report = _loop_report_str(loop_result, config)
+            print(report)
+            loop_result['report'] = report
         if config['visual']:
             # 图表输出投资回报历史曲线
             _plot_loop_result(loop_result, config)
@@ -2114,6 +2116,20 @@ def run(operator, **kwargs):
         )
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config['opti_method']
+
+        # 检查numpy的版本和优化算法，当numpy版本高于1.21,优化算法为2-incremental时，使用多进程计算反而会导致效率降低（原因尚待调查）
+        # TODO: 临时解决办法：
+        #  1, 当numpy版本高于1.21且算法为2-incremental时，强制禁用多进程计算，并打印warning信息
+        np_version = np.__version__
+        if np_version >= '1.22' and how == 2:
+            import warnings
+            config['parallel'] = False if config['parallel'] else config['parallel']
+            msg = f'Performance Warning: the optimization algorithm 2-incremental is much slower than ' \
+                  f'expected when numpy version is higher than 1.21 in parallel computing mode, ' \
+                  f'the parallel computing is disabled to avoid performance degradation.'
+            warnings.warn(msg, RuntimeWarning)
+
+        # 开始优化
         optimal_pars, perfs = optimization_methods[how](
                 hist=hist_opti,
                 benchmark=hist_benchmark,
@@ -2121,6 +2137,7 @@ def run(operator, **kwargs):
                 op=operator,
                 config=config
         )
+
         # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
         hist_opti_loop = hist_opti.fillna(0)
         result_pool = _evaluate_all_parameters(

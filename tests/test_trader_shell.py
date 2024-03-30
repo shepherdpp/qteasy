@@ -758,7 +758,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertEqual(position['cost'], 20)
         print(f'testing change cash and available cashes')
         account = get_account(1, data_source=tss.trader.datasource)
-        # import pdb; pdb.set_trace()
+
         self.assertEqual(account['cash_amount'], 100000)
         self.assertEqual(account['available_cash'], 100000)
         self.assertEqual(account['total_invest'], 100000)

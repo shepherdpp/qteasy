@@ -9,7 +9,7 @@ $ pip install qteasy
 ```
 
 ### python 版本
-- *`python` version >= 3.6* 
+- *`python` version >= 3.6, <=3.8* 
 
 ### 安装依赖包
 

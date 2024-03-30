@@ -1,16 +1,24 @@
 # RELEASE HISTORY
 
+## 1.1.4 (2024-03-30)
+- Updated version restrictions on dependencies, to solve the version conflicts between numba and numpy.
+- Slightly improved warning information when loading qteasy for the first time.
+- Fixed a few bugs that will cause compatibility issue with pandas > 2.0
+- Added performance warnings for strategy optimization method 2 when some numpy and numba versions will cause performance degrade in multiprocessing
+
+## 1.1.3 (2024-03-25)
+- now trade_log, trade_records, full_histories are added to the results returned from backtest run, and can be accessed by `res['trade_log']`, `res['trade_records']`, and `res['full_histories']`
 
 ## 1.1.2 (2024-03-18)
-- Added parameter --rewind to command dashboard, to allow users to rewind to previous system logs
-- Added more information print-outs for command buy and sell, to show if orders are submitted successfully
+- New parameter `--rewind` is now added to command `dashboard`, to allow users to view previously saved logs when switched to dashboard mode.
+- Added more information print-outs for command `buy` and `sell`, to show if orders are submitted successfully.
 
 ## 1.1.1 (2024-03-16)
 - corrected system log for live trade, now different live trade instances will log to different files
 - added capability of reading info from live trade log files and system log files
 
 ## 1.1.0 (2024-03-08)
-- New feature: The QTEASY shell is now parsing command arguments in a better and more intuitive way
+- New feature: The QTEASY shell is now parsing command arguments in a better and more intuitive way:
   - Now all commands support `--parameter` / `-p` style parameters, same way as all other CLI tools
   - All commands now support `--help` and `-h` to show help messages, are now fully documented in the shell help message
   - All commands now have better error handling and usage messages when wrong arguments are given
