@@ -10,6 +10,7 @@
 import os
 from os import path
 import pandas as pd
+import numpy as np
 import warnings
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -3004,7 +3005,10 @@ class DataSource:
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
-        df = df.where(pd.notna(df), None)
+        df = df.where(pd.notna(df), None)  # where-fill None in dataframe result in filling np.nan since pandas v2.0
+        pd_version = pd.__version__
+        if pd_version >= '2.0':
+            df.replace(np.nan, None, inplace=True)
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT IGNORE INTO "
         sql += f"`{db_table}` ("
@@ -3051,7 +3055,10 @@ class DataSource:
         update_cols = [item for item in tbl_columns if item not in primary_key]
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
-        df = df.where(pd.notna(df), None)
+        df = df.where(pd.notna(df), None)  # fill None in Dataframe will result in filling Nan since pandas v2.0
+        pd_version = pd.__version__
+        if pd_version >= '2.0':
+            df.replace(np.nan, None, inplace=True)
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO "
         sql += f"`{db_table}` ("

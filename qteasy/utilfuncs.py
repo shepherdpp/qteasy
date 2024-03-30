@@ -293,6 +293,13 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
+                    # TODO: define the error to escape retry: no permission, no such file, etc.
+                    exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError,]
+                    error_str = str(e)
+                    if ('没有' in error_str) or ('权限' in error_str) or ('找不到' in error_str):
+                        raise e
+                    if e.__class__ in exception_to_escape:
+                        raise e
                     msg = f'Error in {f.__name__}: {e.__class__}:{str(e)}, Retrying in {mdelay} seconds...'
                     if mute:
                         if logger:

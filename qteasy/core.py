@@ -2128,7 +2128,6 @@ def run(operator, **kwargs):
                   f'expected when numpy version is higher than 1.21 in parallel computing mode, ' \
                   f'the parallel computing is disabled to avoid performance degradation.'
             warnings.warn(msg, RuntimeWarning)
-            # import pdb; pdb.set_trace()
 
         # 开始优化
         optimal_pars, perfs = optimization_methods[how](
