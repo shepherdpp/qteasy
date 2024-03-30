@@ -1,8 +1,10 @@
 # RELEASE HISTORY
 
-## 1.1.4 (2024-03-28)
+## 1.1.4 (2024-03-30)
 - Updated version restrictions on dependencies, to solve the version conflicts between numba and numpy.
 - Slightly improved warning information when loading qteasy for the first time.
+- Fixed a few bugs that will cause compatibility issue with pandas > 2.0
+- Added performance warnings for strategy optimization method 2 when some numpy and numba versions will cause performance degrade in multiprocessing
 
 ## 1.1.3 (2024-03-25)
 - now trade_log, trade_records, full_histories are added to the results returned from backtest run, and can be accessed by `res['trade_log']`, `res['trade_records']`, and `res['full_histories']`
