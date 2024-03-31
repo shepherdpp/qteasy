@@ -657,6 +657,63 @@ class TestDataSource(unittest.TestCase):
                     self.assertEqual(target_values[i, j], loaded_values[i, j])
             self.assertEqual(list(df_res.columns), list(loaded_df.columns))
 
+    def test_delete_file_records(self):
+        """ test deleting a few records from a file"""
+        test_sys_df = pd.DataFrame(
+                {
+                    'account_id':     [1, 2, 3, 4, 5],
+                    'user_name':      ['account1', 'account2', 'account3', 'account4', 'account5'],
+                    'created_time':   ['2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12'],
+                    'cash_amount':    [1000, 2000, 3000, 4000, 5000],
+                    'available_cash': [1000, 2000, 3000, 4000, 5000],
+                    'total_invest':   [1000, 2000, 3000, 4000, 5000],
+                }
+        )
+        table_name = 'sys_op_live_account'
+
+        for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
+            # 删除测试路径中已经存在的数据文件
+            ds.drop_file(table_name)
+
+            self.assertFalse(ds.file_exists(table_name))
+            # 写入数据到csv, fth, hdf文件
+            ds.write_file(test_sys_df, table_name)
+
+            self.assertTrue(ds.file_exists(table_name))
+
+            # 删除csv, fth, hdf文件中的部分数据
+            res = ds.delete_file_records(table_name, 'account_id', [2, 4])
+
+            loaded_df = ds.read_file(table_name, primary_key=['account_id'], pk_dtypes=['int'])
+            set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+
+            self.assertEqual(res, 2)
+            self.assertEqual(loaded_df.shape[0], 3)
+            self.assertEqual(loaded_df.index[0], 1)
+            self.assertEqual(loaded_df.index[1], 3)
+            self.assertEqual(loaded_df.index[2], 5)
+            # check if all values are correct
+            self.assertEqual(loaded_df.loc[1, 'user_name'], 'account1')
+            self.assertEqual(loaded_df.loc[1, 'cash_amount'], 1000)
+            self.assertEqual(loaded_df.loc[1, 'available_cash'], 1000)
+            self.assertEqual(loaded_df.loc[1, 'total_invest'], 1000)
+            self.assertEqual(loaded_df.loc[3, 'user_name'], 'account3')
+            self.assertEqual(loaded_df.loc[3, 'cash_amount'], 3000)
+            self.assertEqual(loaded_df.loc[3, 'available_cash'], 3000)
+            self.assertEqual(loaded_df.loc[3, 'total_invest'], 3000)
+            self.assertEqual(loaded_df.loc[5, 'user_name'], 'account5')
+            self.assertEqual(loaded_df.loc[5, 'cash_amount'], 5000)
+            self.assertEqual(loaded_df.loc[5, 'available_cash'], 5000)
+            self.assertEqual(loaded_df.loc[5, 'total_invest'], 5000)
+
+        print('deleting records that are not in the file and with wrong primary key')
+        for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
+            res = ds.delete_file_records(table_name, primary_key='account_id', records=[2, 4])
+            self.assertEqual(res, 0)
+
+            with self.assertRaises(ValueError):
+                ds.delete_file_records(table_name, primary_key='account_id', records='1,2, 3')
+
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""
         print(f'write and read a MultiIndex dataframe to database')
@@ -786,11 +843,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_delete_database_records(self):
         """ test delete database records"""
-        print(f'write and read a MultiIndex dataframe to database')
-        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
-        print(f'following dataframe with multiple index will be written to local database:\n'
-              f'{df}')
-
+        print(f'delete records from database')
         con = connect(
                 host=self.ds_db.host,
                 port=self.ds_db.port,
@@ -835,6 +888,19 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(loaded_df.index[0], 1)
         self.assertEqual(loaded_df.index[1], 3)
         self.assertEqual(loaded_df.index[2], 5)
+        # check if all values are correct
+        self.assertEqual(loaded_df.loc[1, 'user_name'], 'account1')
+        self.assertEqual(loaded_df.loc[1, 'cash_amount'], 1000)
+        self.assertEqual(loaded_df.loc[1, 'available_cash'], 1000)
+        self.assertEqual(loaded_df.loc[1, 'total_invest'], 1000)
+        self.assertEqual(loaded_df.loc[3, 'user_name'], 'account3')
+        self.assertEqual(loaded_df.loc[3, 'cash_amount'], 3000)
+        self.assertEqual(loaded_df.loc[3, 'available_cash'], 3000)
+        self.assertEqual(loaded_df.loc[3, 'total_invest'], 3000)
+        self.assertEqual(loaded_df.loc[5, 'user_name'], 'account5')
+        self.assertEqual(loaded_df.loc[5, 'cash_amount'], 5000)
+        self.assertEqual(loaded_df.loc[5, 'available_cash'], 5000)
+        self.assertEqual(loaded_df.loc[5, 'total_invest'], 5000)
 
         print('delete records that are not found in the database table')
         res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])

@@ -2775,14 +2775,24 @@ class DataSource:
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
 
-    def delete_from_file(self, file_name, record_ids):
+    def delete_file_records(self, file_name, primary_key, record_ids) -> int:
         """ 从文件中删除指定的记录
 
-        :param file_name:
-        :param record_ids:
-        :return:
+        Parameters
+        ----------
+        file_name: str
+            文件名
+        primary_key: list of str
+            主键
+        record_ids: list of str
+            待删除的记录的主键值
+
+        Returns
+        -------
+        rows_deleted: int
+            删除的记录数
         """
-        return 1
+        return 0
 
     def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
@@ -4495,7 +4505,7 @@ class DataSource:
         if self.source_type == 'db':
             res = self.delete_database_records(table, record_ids)
         elif self.source_type == 'file':
-            res = self.delete_from_file(table, record_ids)
+            res = self.delete_file_records(table, record_ids)
         else:
             raise RuntimeError(f'invalid source type: {self.source_type}')
 
