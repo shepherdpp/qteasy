@@ -784,6 +784,76 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(cov,
                          ['20211112', '20211113'])
 
+    def test_delete_database_records(self):
+        """ test delete database records"""
+        print(f'write and read a MultiIndex dataframe to database')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        print(f'following dataframe with multiple index will be written to local database:\n'
+              f'{df}')
+
+        con = connect(
+                host=self.ds_db.host,
+                port=self.ds_db.port,
+                user=self.ds_db.__user__,
+                password=self.ds_db.__password__,
+                db=self.ds_db.db_name,
+        )
+        cursor = con.cursor()
+        table_name = 'sys_op_live_accounts'
+        # 删除数据库中的临时表
+        sql = f"DROP TABLE IF EXISTS {table_name}"
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+
+        test_sys_df = pd.DataFrame(
+                {
+                    'account_id': [1, 2, 3, 4, 5],
+                    'user_name': ['account1', 'account2', 'account3', 'account4', 'account5'],
+                    'created_time': ['2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12'],
+                    'cash_amount': [1000, 2000, 3000, 4000, 5000],
+                    'available_cash': [1000, 2000, 3000, 4000, 5000],
+                    'total_invest': [1000, 2000, 3000, 4000, 5000],
+                }
+        )
+
+        self.ds_db.write_database(test_sys_df, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
+        set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+        print(f'df retrieved from database is\n'
+              f'{loaded_df}\n')
+
+        print(f'delete records from database table')
+        res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])
+        loaded_df = self.ds_db.read_database(table_name)
+        set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+        print(f'df retrieved from database after deleting records is\n'
+              f'{loaded_df}\n')
+
+        self.assertEqual(res, 2)
+        self.assertEqual(loaded_df.shape[0], 3)
+        self.assertEqual(loaded_df.index[0], 1)
+        self.assertEqual(loaded_df.index[1], 3)
+        self.assertEqual(loaded_df.index[2], 5)
+
+        print('delete records that are not found in the database table')
+        res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])
+        loaded_df = self.ds_db.read_database(table_name)
+        set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+        print(f'df retrieved from database after deleting records is\n'
+              f'{loaded_df}\n')
+
+        self.assertEqual(res, 0)
+        self.assertEqual(loaded_df.shape[0], 3)
+        self.assertEqual(loaded_df.index[0], 1)
+        self.assertEqual(loaded_df.index[1], 3)
+        self.assertEqual(loaded_df.index[2], 5)
+
+        print('wrong parameters are given')
+        self.assertRaises(RuntimeError, self.ds_db.delete_database_records, table_name, 'wrong_key', [1])
+        self.assertRaises(TypeError, self.ds_db.delete_database_records, table_name, 'account_id', 1)
+        self.assertRaises(RuntimeError, self.ds_db.delete_database_records, table_name, 'account_id', '1, 2')
+
     def test_update_database(self):
         """ test the function update_database()"""
         print(f'update a database table with new arr on same primary key')
