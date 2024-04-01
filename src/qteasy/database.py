@@ -16,10 +16,10 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
-from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
-from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .utilfuncs import freq_dither
+from utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
+from utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
+from utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
+from utilfuncs import freq_dither
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']

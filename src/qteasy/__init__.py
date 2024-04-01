@@ -29,9 +29,9 @@ from .core import reconnect_ds, get_table_info, get_table_overview
 from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
 from .qt_operator import Operator
-from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
+from strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 from .built_in import built_ins, built_in_list, built_in_strategies, get_built_in_strategy
-from .visual import candle
+from visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
@@ -51,7 +51,7 @@ version_info = Namespace(
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
-QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
+QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'src/')
 
 # 准备从本地配置文件中读取预先存储的qteasy配置
 qt_local_configs = {}
@@ -62,11 +62,11 @@ QT_CONFIG_FILE_INTRO = '# qteasy configuration file\n' \
                        '# local_data_source = database\n\n'
 # 读取configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
 try:
-    with open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg')) as f:
+    with open(os.path.join(QT_ROOT_PATH, '../qteasy.cfg')) as f:
         config_lines = f.readlines()
 
 except FileNotFoundError as e:
-    qt_config_file_path_name = os.path.join(QT_ROOT_PATH, 'qteasy.cfg')
+    qt_config_file_path_name = os.path.join(QT_ROOT_PATH, '../qteasy.cfg')
     with open(qt_config_file_path_name, mode='w', encoding='utf-8') as f:
         intro = QT_CONFIG_FILE_INTRO
         f.write(intro)

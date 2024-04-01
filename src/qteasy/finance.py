@@ -14,7 +14,7 @@ import pandas as pd
 from numba import njit
 from collections import Iterable
 
-from .utilfuncs import ALL_COST_PARAMETERS
+from utilfuncs import ALL_COST_PARAMETERS
 
 
 def set_cost(**kwargs):

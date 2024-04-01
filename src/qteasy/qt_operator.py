@@ -16,9 +16,9 @@ import pandas as pd
 
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES
-from .strategy import BaseStrategy
+from utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
+from utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES
+from strategy import BaseStrategy
 from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
 from .blender import blender_parser
 

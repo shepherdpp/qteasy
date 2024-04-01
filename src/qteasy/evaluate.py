@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 import qteasy
-from .utilfuncs import str_to_list
-from .space import ResultPool
+from utilfuncs import str_to_list
+from space import ResultPool
 
 
 # TODO: 改进evaluate：生成完整的evaluate参数DataFrame

@@ -19,7 +19,7 @@ import numpy as np
 import time
 
 from qteasy import QT_CONFIG
-from .utilfuncs import get_current_tz_datetime
+from utilfuncs import get_current_tz_datetime
 
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']

@@ -18,7 +18,7 @@ import pandas as pd
 import numpy as np
 
 import qteasy
-from .history import get_history_panel
+from qteasy.history import get_history_panel
 from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
 
