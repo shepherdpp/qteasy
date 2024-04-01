@@ -12,7 +12,6 @@
 import numpy as np
 import pandas as pd
 from numba import njit
-from collections import Iterable
 
 from .utilfuncs import ALL_COST_PARAMETERS
 
@@ -428,7 +427,6 @@ class CashPlan:
             assert all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]), \
                 f'TypeError: amount should be number format, got unresolved format in amounts!'
             assert all([amount > 0 for amount in amounts]), f'InputError: Investment amount should be larger than 0'
-        assert isinstance(dates, Iterable), f"Expect Iterable input dates, got {type(dates)} instead!"
 
         if isinstance(dates, str):
             dates = dates.replace(' ', '')
