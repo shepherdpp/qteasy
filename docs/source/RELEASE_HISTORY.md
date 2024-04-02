@@ -1,6 +1,6 @@
 # RELEASE HISTORY
 
-## 1.1.7 (2024-04-03)
+## 1.1.5 (2024-04-03)
 - Now qteasy can be installed within python 3.9 and 3.10
 
 ## 1.1.4 (2024-03-30)
