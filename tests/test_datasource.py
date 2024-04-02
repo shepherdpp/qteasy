@@ -34,7 +34,7 @@ class TestDataSource(unittest.TestCase):
         """ execute before each test"""
         from qteasy import QT_ROOT_PATH
         self.qt_root_path = QT_ROOT_PATH
-        self.data_test_dir = 'data_test/'
+        self.data_test_dir = '../qteasy/data_test/'
         # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
         # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
         # TODO: do not explicitly leave password and user in the code
@@ -217,17 +217,17 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(self.ds_csv, DataSource)
         self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/data_test/')
         self.assertEqual(self.ds_csv.file_type, 'csv')
-        self.assertEqual(self.ds_csv.file_path, os.path.join(self.qt_root_path, 'data_test/'))
+        self.assertEqual(self.ds_csv.file_path, os.path.join(self.qt_root_path, '../qteasy/data_test/'))
 
         self.assertIsInstance(self.ds_hdf, DataSource)
         self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/data_test/')
         self.assertEqual(self.ds_hdf.file_type, 'hdf')
-        self.assertEqual(self.ds_hdf.file_path, os.path.join(self.qt_root_path, 'data_test/'))
+        self.assertEqual(self.ds_hdf.file_path, os.path.join(self.qt_root_path, '../qteasy/data_test/'))
 
         self.assertIsInstance(self.ds_fth, DataSource)
         self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/data_test/')
         self.assertEqual(self.ds_fth.file_type, 'fth')
-        self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, 'data_test/'))
+        self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, '../qteasy/data_test/'))
 
     def test_file_manipulates(self):
         """ test DataSource method file_exists and drop_file"""
