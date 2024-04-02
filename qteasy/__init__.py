@@ -43,9 +43,9 @@ version_info = Namespace(
         minor=1,
         patch=4,
         short=(1, 1),
-        full=(1, 1, 4),
-        string='1.1.4',
-        tuple=('1', '1', '4'),
+        full=(1, 1, 7),
+        string='1.1.7',
+        tuple=('1', '1', '7'),
         releaselevel='beta',
 )
 
