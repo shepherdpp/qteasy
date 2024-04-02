@@ -13,8 +13,8 @@ import pandas as pd
 import numpy as np
 
 import qteasy
-from utilfuncs import str_to_list, list_or_slice, labels_to_dict, ffill_3d_data
-from utilfuncs import fill_nan_data, fill_inf_data
+from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, ffill_3d_data
+from .utilfuncs import fill_nan_data, fill_inf_data
 
 
 class HistoryPanel():

@@ -18,9 +18,9 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .backtest import apply_loop, process_loop_results, _get_complete_hist
 from .history import HistoryPanel, stack_dataframes
-from utilfuncs import sec_to_duration, progress_bar
-from utilfuncs import next_market_trade_day
-from space import Space, ResultPool
+from .utilfuncs import sec_to_duration, progress_bar
+from .utilfuncs import next_market_trade_day
+from .space import Space, ResultPool
 from .finance import CashPlan, set_cost
 from .qt_operator import Operator
 from .evaluate import evaluate, performance_statistics

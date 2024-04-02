@@ -17,13 +17,13 @@ import datetime
 
 import qteasy
 from .history import get_history_panel, HistoryPanel
-from utilfuncs import str_to_list, regulate_date_format, match_ts_code
-from utilfuncs import next_market_trade_day
-from utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
+from .utilfuncs import str_to_list, regulate_date_format, match_ts_code
+from .utilfuncs import next_market_trade_day
+from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .finance import CashPlan
 from .qt_operator import Operator
-from visual import _plot_loop_result, _loop_report_str, _print_test_result
-from visual import _plot_test_result
+from .visual import _plot_loop_result, _loop_report_str, _print_test_result
+from .visual import _plot_test_result
 from ._arg_validators import _update_config_kwargs, ConfigDict
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 from .optimization import _evaluate_all_parameters, _evaluate_one_parameter

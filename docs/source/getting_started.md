@@ -18,7 +18,7 @@ $ pip install qteasy
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`mplfinance`*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
 使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
