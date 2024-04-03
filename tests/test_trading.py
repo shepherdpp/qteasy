@@ -38,7 +38,7 @@ class TestTradeRecording(unittest.TestCase):
         """ execute before each test"""
         from qteasy import QT_ROOT_PATH, QT_CONFIG
         self.qt_root_path = QT_ROOT_PATH
-        self.data_test_dir = 'data_test/'
+        self.data_test_dir = '../qteasy/data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
         # self.test_ds = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.test_ds = DataSource(
@@ -1438,7 +1438,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         """ execute before each test"""
         from qteasy import QT_ROOT_PATH, QT_CONFIG
         self.qt_root_path = QT_ROOT_PATH
-        self.data_test_dir = 'data_test/'
+        self.data_test_dir = '../qteasy/data_test/'
         QT_CONFIG['hist_dnld_retry_cnt'] = 2  # 减少重试次数，加快测试速度
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
         # self.test_ds = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)

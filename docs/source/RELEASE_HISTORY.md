@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.1.7 (2024-04-03)
+- Now qteasy can be installed in higher versions of python from 3.9 up to 3.12
+
 ## 1.1.4 (2024-03-30)
 - Updated version restrictions on dependencies, to solve the version conflicts between numba and numpy.
 - Slightly improved warning information when loading qteasy for the first time.

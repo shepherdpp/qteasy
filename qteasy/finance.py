@@ -12,7 +12,6 @@
 import numpy as np
 import pandas as pd
 from numba import njit
-from collections import Iterable
 
 from .utilfuncs import ALL_COST_PARAMETERS
 
@@ -422,13 +421,16 @@ class CashPlan:
 
         if isinstance(amounts, (int, float)):
             amounts = [amounts]
-        assert isinstance(amounts, (list, np.ndarray)), \
-            f'TypeError: amounts should be a list of numbers, got {type(amounts)} instead'
+        if not isinstance(amounts, (list, np.ndarray)):
+            msg = f'Amounts should be a list of numbers, got {type(amounts)} instead'
+            raise TypeError(msg)
         if isinstance(amounts, list):
-            assert all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]), \
-                f'TypeError: amount should be number format, got unresolved format in amounts!'
-            assert all([amount > 0 for amount in amounts]), f'InputError: Investment amount should be larger than 0'
-        assert isinstance(dates, Iterable), f"Expect Iterable input dates, got {type(dates)} instead!"
+            if not all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]):
+                msg = f'Amount should be number format, got unresolved format in amounts!'
+                raise TypeError(msg)
+            if not all([amount > 0 for amount in amounts]):
+                msg = f'Investment amount should be larger than 0'
+                raise ValueError(msg)
 
         if isinstance(dates, str):
             dates = dates.replace(' ', '')
@@ -438,15 +440,18 @@ class CashPlan:
         except Exception as e:
             raise KeyError(f'{e}, some of the input strings can not be converted to date time format!')
 
-        assert len(amounts) == len(dates), \
-            f'InputError: number of amounts should be equal to that of dates, can\'t match {len(amounts)} amounts in' \
-            f' to {len(dates)} days.'
+        if not len(amounts) == len(dates):
+            msg = f'Count of amounts should be equal to that of dates, can\'t match ' \
+                  f'{len(amounts)} amounts into {len(dates)} days.'
+            raise ValueError(msg)
 
         self._cash_plan = pd.DataFrame(amounts, index=dates, columns=['amount']).sort_index()
-        assert isinstance(interest_rate, float), \
-            f'TypeError, interest rate should be a float number, got {type(interest_rate)}'
-        assert 0. <= interest_rate <= 1., \
-            f'InputError, interest rate should be between 0 and 100%, got {interest_rate:.2%}'
+        if not isinstance(interest_rate, float):
+            msg = f'Interest rate should be a float number, got {type(interest_rate)}'
+            raise TypeError(msg)
+        if not 0. <= interest_rate <= 1.:  # 0 <= interest_rate <= 1
+            msg = f'InputError, interest rate should be between 0 and 100%, got {interest_rate:.2%}'
+            raise ValueError(msg)
         self._ir = interest_rate
 
     @property

@@ -60,7 +60,7 @@ class TestTrader(unittest.TestCase):
             'opti_start':           '2018-01-01',
         }
         # 创建测试数据源
-        data_test_dir = 'data_test/'
+        data_test_dir = '../qteasy/data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
         test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
         test_ds.reconnect()
