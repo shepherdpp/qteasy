@@ -206,7 +206,7 @@ def parse_freq_string(freq, std_freq_only=False):
 
     # 继续拆分main_freq与qty_part
     if len(main_freq) > 1:
-        maybe_qty = ''.join(re.findall('\d+', main_freq))
+        maybe_qty = ''.join(re.findall(r'\d+', main_freq))
         # 另外一种处理方法
         # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
         qty_len = len(maybe_qty)
@@ -218,7 +218,7 @@ def parse_freq_string(freq, std_freq_only=False):
         return None, None, None
 
     if (main_freq == 'MIN') and not std_freq_only:
-        available_qty = [''.join(re.findall('\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
+        available_qty = [''.join(re.findall(r'\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
         available_qty = [int(item) for item in available_qty if len(item) > 0]
         qty_fitness = [qty % item for item in available_qty]
         min_qty = available_qty[qty_fitness.index(0)]
@@ -1382,14 +1382,14 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     code_matched = {}
     count = 0
     import re
-    if re.match('[0-9A-Z]+\.[a-zA-Z]+$', code):
+    if re.match(r'[0-9A-Z]+\.[a-zA-Z]+$', code):
         # if code like "000100.SH"
         for at in asset_types:
             basic = asset_type_basics[at]
             ts_code = basic.loc[basic.index == code].name.to_dict()
             count += len(ts_code)
             code_matched.update({at: ts_code})
-    elif re.match('[0-9A-Z]+$', code):
+    elif re.match(r'[0-9A-Z]+$', code):
         # if code like all number inputs
         for at in asset_types:
             basic = asset_type_basics[at]
