@@ -1133,6 +1133,62 @@ class TestDataSource(unittest.TestCase):
                 print('all table data are cleared')
                 ds.overview()
 
+    def test_delete_table_data(self):
+        """ test function delete_table_data()"""
+
+        # all system tables and all datasources should be tested
+        tables_to_test = ['sys_op_live_account', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_records']
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+
+        # test data
+        test_account_df = pd.DataFrame(
+                {
+                    'account_id': [1, 2, 3, 4, 5],
+                    'user_name': ['account1', 'account2', 'account3', 'account4', 'account5'],
+                    'created_time': ['2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12'],
+                    'cash_amount': [1000, 2000, 3000, 4000, 5000],
+                    'available_cash': [1000, 2000, 3000, 4000, 5000],
+                    'total_invest': [1000, 2000, 3000, 4000, 5000],
+                }
+        )
+        test_positions_df = pd.DataFrame(
+                {
+                    'pos_id': [1, 2, 3, 4, 5],
+                    'account_id': [1, 1, 2, 3, 5],
+                    'symbol': ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+                    'position': ['long', 'short', 'long', 'short', 'long'],
+                    'qty': [100, 200, 300, 400, 500],
+                    'available_qty': [100, 200, 300, 400, 500],
+                    'cost': [10, 20, 30, 40, 50],
+                }
+        )
+        test_orders_df = pd.DataFrame(
+                {
+                    'order_id': [1, 2, 3, 4, 5],
+                    'pos_id': [1, 2, 3, 4, 5],
+                    'direction': ['buy', 'sell', 'buy', 'sell', 'buy'],
+                    'order_type': ['market', 'limit', 'market', 'limit', 'market'],
+                    'qty': [100, 200, 300, 400, 500],
+                    'price': [10, 20, 30, 40, 50],
+                    'submitted_time': ['2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12'],
+                    'status': ['partial-filled', 'filled', 'canceled', 'filled', 'canceled'],
+                }
+        )
+        test_results_df = pd.DataFrame(
+                {
+                    'result_id': [1, 2, 3, 4, 5],
+                    'order_id': [1, 2, 3, 4, 5],
+                    'filled_qty': [50, 100, 0, 400, 0],
+                    'price': [10, 20, 0, 40, 0],
+                    'transaction_fee': [1, 2, 0, 4, 0],
+                    'execution_time': ['2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12'],
+                    'canceled_qty': [0, 0, 300, 0, 500],
+                    'delivery_amount': [500, 1000, 0, 2000, 0],
+                    'delivery_status': ['delivered', 'delivered', 'delivered', 'delivered', 'delivered'],
+                }
+        )
+
+
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
         ds = qt.QT_DATA_SOURCE

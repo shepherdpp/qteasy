@@ -4522,10 +4522,13 @@ class DataSource:
         if not all(isinstance(rid, int) for rid in record_ids):
             raise TypeError(f'all record_ids should be int, got {[type(rid) for rid in record_ids]} instead')
 
+        table_master = get_table_master()
+        primary_key = table_master[table][4]
+
         if self.source_type == 'db':
-            res = self.delete_database_records(table, record_ids)
+            res = self.delete_database_records(table, primary_key=primary_key, record_ids=record_ids)
         elif self.source_type == 'file':
-            res = self.delete_file_records(table, record_ids)
+            res = self.delete_file_records(table, primary_key=primary_key, record_ids=record_ids)
         else:
             raise RuntimeError(f'invalid source type: {self.source_type}')
 
