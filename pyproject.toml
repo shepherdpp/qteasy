@@ -1,0 +1,71 @@
+# ======================================
+# File:     pyproject.toml
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2024-04-01
+# Desc:
+#   QTEASY setup build system
+#   configuration file compatible
+#   with setuptools >= 61.1.0
+# ======================================
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+#[tool.setuptools.package.find]
+#where = "qteasy/"
+
+[project]
+name = "qteasy"
+version = "1.1.7"
+authors = [
+  {name="jackie PENG", email="jackie.pengzhao@gmail.com" },
+]
+maintainers = [
+  {name="jackie PENG", email="jackie.pengzhao@gmail.com" },
+]
+description = "A fast quantitative investment tool kit"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.6"
+keywords = ["quantitative investment", "quantitative trading", "stock", "finance", "investment"]
+dependencies = [
+    "pandas>=1.4.0",
+    "numpy>=1.18.1",
+    "numba>=0.47.0",
+    "tushare>=1.2.89",
+    "mplfinance",
+    "rich>=10.0.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Other Audience",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Documentation :: Sphinx",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+
+[project.urls]
+Homepage = "https://github.com/shepherdpp/qteasy"
+Documentation = "https://qteasy.readthedocs.io/zh/latest/"
+Issues = "https://github.com/shepherdpp/qteasy/issues"
+
+[project.optional-dependencies]
+database = ["pymysql >= 1.0.0"]
+hdf = ["pytables >= 3.6.1"]
+feather = ["pyarrow >= 3"]

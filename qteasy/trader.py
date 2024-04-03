@@ -408,7 +408,7 @@ class TraderShell(Cmd):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
         if self._watch_list:
-            from .emfuncs import stock_live_kline_price
+            from qteasy.emfuncs import stock_live_kline_price
             symbols = self._watch_list
             live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
@@ -3816,7 +3816,7 @@ class Trader(object):
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
         if self.debug:
             self.send_message(f'Acquiring live price data')
-        from .emfuncs import stock_live_kline_price
+        from qteasy.emfuncs import stock_live_kline_price
         try:
             real_time_data = stock_live_kline_price(symbols=self.asset_pool)
         except Exception as e:

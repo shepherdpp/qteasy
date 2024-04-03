@@ -29,9 +29,6 @@ from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 from .optimization import _evaluate_all_parameters, _evaluate_one_parameter
 
 
-# TODO: for v1.1:
-#  reduce the size of this file, split it into several files
-
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     """根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame
 
@@ -1284,9 +1281,9 @@ def _check_config_file_name(file_name, allow_default_name=False):
     if not isinstance(file_name, str):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
     import re
-    if re.match('[a-zA-Z_]\w+$', file_name):
+    if re.match(r'[a-zA-Z_]\w+$', file_name):
         file_name = file_name + '.cfg'  # add .cfg suffix if not given
-    if not re.match('[a-zA-Z_]\w+\.cfg$', file_name):
+    if not re.match(r'[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
     if (file_name == 'qteasy.cfg') and (not allow_default_name):
         # TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
@@ -1326,7 +1323,7 @@ def save_config(config=None, file_name=None, overwrite=True, initial_config=Fals
 
     file_name = _check_config_file_name(file_name=file_name, allow_default_name=initial_config)
 
-    config_path = os.path.join(QT_ROOT_PATH, 'config/')
+    config_path = os.path.join(QT_ROOT_PATH, '../config/')
     if not os.path.exists(config_path):
         os.makedirs(config_path, exist_ok=False)
     if overwrite:
@@ -1367,7 +1364,7 @@ def load_config(config=None, file_name=None):
 
     file_name = _check_config_file_name(file_name=file_name, allow_default_name=False)
 
-    config_path = os.path.join(QT_ROOT_PATH, 'config/')
+    config_path = os.path.join(QT_ROOT_PATH, '../config/')
     try:
         with open(os.path.join(config_path, file_name), 'rb') as f:
             saved_config = pickle.load(f)
