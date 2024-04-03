@@ -659,19 +659,23 @@ class TestDataSource(unittest.TestCase):
 
     def test_delete_file_records(self):
         """ test deleting a few records from a file"""
-        test_sys_df = pd.DataFrame(
-                {
-                    'account_id':     [1, 2, 3, 4, 5],
-                    'user_name':      ['account1', 'account2', 'account3', 'account4', 'account5'],
-                    'created_time':   ['2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12'],
-                    'cash_amount':    [1000, 2000, 3000, 4000, 5000],
-                    'available_cash': [1000, 2000, 3000, 4000, 5000],
-                    'total_invest':   [1000, 2000, 3000, 4000, 5000],
-                }
-        )
-        table_name = 'sys_op_live_account'
 
         for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
+            # create a test dataframe
+            test_sys_df = pd.DataFrame(
+                    {
+                        'account_id':     [1, 2, 3, 4, 5],
+                        'user_name':      ['account1', 'account2', 'account3', 'account4', 'account5'],
+                        'created_time':   ['2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12'],
+                        'cash_amount':    [1000, 2000, 3000, 4000, 5000],
+                        'available_cash': [1000, 2000, 3000, 4000, 5000],
+                        'total_invest':   [1000, 2000, 3000, 4000, 5000],
+                    }
+            )
+            table_name = 'sys_op_live_account'
+            test_sys_df = set_primary_key_frame(test_sys_df, primary_key=['account_id'], pk_dtypes=['int'])
+            set_primary_key_index(test_sys_df, primary_key=['account_id'], pk_dtypes=['int'])
+
             # 删除测试路径中已经存在的数据文件
             ds.drop_file(table_name)
 
@@ -685,7 +689,7 @@ class TestDataSource(unittest.TestCase):
             res = ds.delete_file_records(table_name, 'account_id', [2, 4])
 
             loaded_df = ds.read_file(table_name, primary_key=['account_id'], pk_dtypes=['int'])
-            set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+            # set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
 
             self.assertEqual(res, 2)
             self.assertEqual(loaded_df.shape[0], 3)
@@ -708,11 +712,11 @@ class TestDataSource(unittest.TestCase):
 
         print('deleting records that are not in the file and with wrong primary key')
         for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
-            res = ds.delete_file_records(table_name, primary_key='account_id', records=[2, 4])
+            res = ds.delete_file_records(table_name, primary_key='account_id', record_ids=[2, 4])
             self.assertEqual(res, 0)
 
-            with self.assertRaises(ValueError):
-                ds.delete_file_records(table_name, primary_key='account_id', records='1,2, 3')
+            with self.assertRaises(TypeError):
+                ds.delete_file_records(table_name, primary_key='account_id', record_ids='1,2,3')
 
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""

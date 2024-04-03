@@ -2666,11 +2666,12 @@ class DataSource:
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
-        """ 将df写入本地文件
+        """ 将df写入本地文件，在把文件写入文件之前，需要将primary key写入index，使用
+        set_primary_key_index()函数
 
         Parameters
         ----------
-        df: 待写入文件的DataFrame
+        df: 待写入文件的DataFrame,primary key 为index
         file_name: 本地文件名(不含扩展名)
         Returns
         -------
@@ -2784,7 +2785,7 @@ class DataSource:
             文件名
         primary_key: list of str
             主键
-        record_ids: list of str
+        record_ids: list of int
             待删除的记录的主键值
 
         Returns
@@ -2792,7 +2793,26 @@ class DataSource:
         rows_deleted: int
             删除的记录数
         """
-        return 0
+        # check that all record_ids are integers
+        if not all(isinstance(record_id, int) for record_id in record_ids):
+            msg = f'All record_ids must be integers, got {record_ids} instead!'
+            raise TypeError(msg)
+        # read all data from file into a dataframe
+        primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
+        df = self.read_file(file_name, primary_key, pk_dtypes=['int'])
+        # check if the record_ids are in the dataframe, remove them if they are
+        rows_deleted = 0
+        for record_id in record_ids:
+            if record_id in df.index:
+                df.drop(record_id, inplace=True)
+                rows_deleted += 1
+
+        # write the updated dataframe back to the file, make sure primary keys are in index
+        df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=['int'])
+        set_primary_key_index(df, primary_key=primary_key, pk_dtypes=['int'])
+        self.write_file(df, file_name)
+
+        return rows_deleted
 
     def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
