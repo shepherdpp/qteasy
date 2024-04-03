@@ -37,21 +37,21 @@ from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
 
 
-__version__ = '1.1.4'
+__version__ = '1.1.7'
 version_info = Namespace(
         major=1,
         minor=1,
         patch=4,
         short=(1, 1),
-        full=(1, 1, 4),
-        string='1.1.4',
-        tuple=('1', '1', '4'),
+        full=(1, 1, 7),
+        string='1.1.7',
+        tuple=('1', '1', '7'),
         releaselevel='beta',
 )
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
-QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
+QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'system/')
 
 # 准备从本地配置文件中读取预先存储的qteasy配置
 qt_local_configs = {}

@@ -34,8 +34,10 @@ qteasy/qteasy.cnf
 qteasy/qteasy.log
 qteasy/log/qteasy.log
 qteasy/log/*
+qteasy/tradelog
+qteasy/tradelog/*
 *.log
-**qteasy/log/
+qteasy/log/
 *.cnf
 qteasy/config/qt_config.cfg
 qteasy/config/saved.cfg
@@ -55,3 +57,4 @@ examples/live_daily.py
 examples/live_grid.py
 examples/live_example.py
 docs/build/
+qteasy/__pycache__/*

@@ -56,7 +56,7 @@ ds_db
 
 ```python
 import qteasy as qt
-ds_csv = qt.DataSource(source_type='file', file_loc='qteasy/data', file_type='csv')
+ds_csv = qt.DataSource(source_type='file', file_loc='src/data', file_type='csv')
 
 print(ds_csv.connection_type)
 ds_csv
