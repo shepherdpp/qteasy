@@ -1137,7 +1137,7 @@ class TestDataSource(unittest.TestCase):
         """ test function delete_table_data()"""
 
         # all system tables and all datasources should be tested
-        tables_to_test = ['sys_op_live_account', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_records']
+        tables_to_test = ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
 
         # test data
@@ -1187,6 +1187,39 @@ class TestDataSource(unittest.TestCase):
                     'delivery_status': ['delivered', 'delivered', 'delivered', 'delivered', 'delivered'],
                 }
         )
+
+        test_data_for_tables = {
+            'sys_op_live_accounts': test_account_df,
+            'sys_op_positions': test_positions_df,
+            'sys_op_trade_orders': test_orders_df,
+            'sys_op_trade_results': test_results_df
+        }
+
+        # test on all data sources and tables
+        for ds in all_data_sources:
+            for table in tables_to_test:
+                print(f'dropping table {table} from datasource: {ds.source_type}-{ds.connection_type}')
+                ds.drop_table_data(table)
+                print(f'-- Done! --')
+                self.assertFalse(ds.table_data_exists(table))
+                print(f'table {table} is deleted from datasource: {ds.source_type}-{ds.connection_type}')
+
+                # write test data to the table
+                test_data = test_data_for_tables[table]
+                ds.write_table_data(test_data, table)
+
+                # check if the table is written
+                self.assertTrue(ds.table_data_exists(table))
+
+                # delete records from the table
+                ds.delete_sys_table_data(table, record_ids=[2, 4])
+
+                df = ds.read_table_data(table)
+                print(f'df read from arr source: \n{ds.source_type}-{ds.connection_type} \nis:\n{df}')
+                self.assertEqual(df.shape[0], 3)
+                self.assertEqual(df.index[0], 1)
+                self.assertEqual(df.index[1], 3)
+                self.assertEqual(df.index[2], 5)
 
 
     def test_get_history_panel_data(self):

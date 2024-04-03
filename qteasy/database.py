@@ -2785,7 +2785,7 @@ class DataSource:
             文件名
         primary_key: list of str
             主键
-        record_ids: list of int
+        record_ids: list of int or tuple of int
             待删除的记录的主键值
 
         Returns
@@ -4494,7 +4494,7 @@ class DataSource:
         ----------
         table: str
             需要删除数据的表名
-        record_ids: list of str
+        record_ids: list of int or tuple of int
             需要删除的记录的ID列表
 
         Returns
@@ -4522,8 +4522,8 @@ class DataSource:
         if not all(isinstance(rid, int) for rid in record_ids):
             raise TypeError(f'all record_ids should be int, got {[type(rid) for rid in record_ids]} instead')
 
-        table_master = get_table_master()
-        primary_key = table_master[table][4]
+        columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table, with_primary_keys=True)
+        primary_key = primary_keys[0]
 
         if self.source_type == 'db':
             res = self.delete_database_records(table, primary_key=primary_key, record_ids=record_ids)
