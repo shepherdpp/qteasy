@@ -1221,7 +1221,6 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(df.index[1], 3)
                 self.assertEqual(df.index[2], 5)
 
-
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
         ds = qt.QT_DATA_SOURCE
