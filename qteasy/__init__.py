@@ -20,7 +20,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from argparse import Namespace
 
-from .utilfuncs import is_integer_like, is_float_like
+from .utilfuncs import is_float_like, is_integer_like
 from .core import run, set_config, get_configurations, get_config
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source

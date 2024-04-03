@@ -2467,8 +2467,9 @@ class DataSource:
             try:
                 import pymysql
             except ImportError:
-                raise ImportError(f'Missing dependency \'pymysql\' for datasource type '
-                                  f'\'database\'. Use pip or conda to install pymysql: $ pip install pymysql')
+                msg = 'Missing dependency \'pymysql\' for datasource type \'database\'. ' \
+                        'Use pip or conda to install pymysql: $ pip install pymysql'
+                raise ImportError(msg)
             # set up connection to the data base
             if not isinstance(port, int):
                 raise TypeError(f'port should be of type int')
@@ -2502,8 +2503,11 @@ class DataSource:
                 self.__password__ = password
 
             except Exception as e:
-                warnings.warn(f'{str(e)}, Can not set data source type to "db",'
-                              f' will fall back to default type', RuntimeWarning)
+                msg = f'Failed creating database connection, {str(e)}' \
+                      f'Can not set data source type to "db", ' \
+                      f'will fall back to default type'
+
+                warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
             finally:
@@ -2512,31 +2516,36 @@ class DataSource:
         if source_type.lower() == 'file':
             # set up file type and file location
             if not isinstance(file_type, str):
-                raise TypeError(f'file type should be a string, got {type(file_type)} instead!')
+                msg = f'file type should be a string, got {type(file_type)} instead!'
+                raise TypeError(msg)
             file_type = file_type.lower()
             if file_type not in AVAILABLE_DATA_FILE_TYPES:
-                raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
+                msg = f'file type not recognized, supported file types are {AVAILABLE_DATA_FILE_TYPES}'
+                raise KeyError(msg)
             if file_type in ['hdf']:
                 try:
                     import tables
                 except ImportError:
-                    raise ImportError(f'Missing optional dependency \'pytables\' for datasource file type '
-                                      f'\'hdf5\'. Use pip or conda to install pytables: $ pip install tables')
+                    msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
+                          f'\'hdf\'. Use pip or conda to install pytables: $ pip install tables'
+                    raise ImportError(msg)
                 file_type = 'hdf'
             if file_type in ['feather', 'fth']:
                 try:
                     import pyarrow
                 except ImportError:
-                    raise ImportError(f'Missing optional dependency \'pyarrow\' for datasource file type '
-                                      f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow')
+                    msg = f'Missing optional dependency \'pyarrow\' for datasource file type ' \
+                          f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow'
+                    raise ImportError(msg)
                 file_type = 'fth'
             from qteasy import QT_ROOT_PATH
             self.file_path = path.join(QT_ROOT_PATH, file_loc)
             try:
                 os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
             except Exception:
-                raise SystemError(f'Failed creating data directory \'{file_loc}\' in qt root path, '
-                                  f'please check your input.')
+                msg = f'Failed creating data directory \'{file_loc}\' in qt root path, ' \
+                        f'please check your input.'
+                raise SystemError(msg)
             self.source_type = 'file'
             self.file_type = file_type
             self.file_loc = file_loc
@@ -2657,11 +2666,12 @@ class DataSource:
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
-        """ 将df写入本地文件
+        """ 将df写入本地文件，在把文件写入文件之前，需要将primary key写入index，使用
+        set_primary_key_index()函数
 
         Parameters
         ----------
-        df: 待写入文件的DataFrame
+        df: 待写入文件的DataFrame,primary key 为index
         file_name: 本地文件名(不含扩展名)
         Returns
         -------
@@ -2765,6 +2775,44 @@ class DataSource:
 
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
+
+    def delete_file_records(self, file_name, primary_key, record_ids) -> int:
+        """ 从文件中删除指定的记录
+
+        Parameters
+        ----------
+        file_name: str
+            文件名
+        primary_key: list of str
+            主键
+        record_ids: list of int or tuple of int
+            待删除的记录的主键值
+
+        Returns
+        -------
+        rows_deleted: int
+            删除的记录数
+        """
+        # check that all record_ids are integers
+        if not all(isinstance(record_id, int) for record_id in record_ids):
+            msg = f'All record_ids must be integers, got {record_ids} instead!'
+            raise TypeError(msg)
+        # read all data from file into a dataframe
+        primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
+        df = self.read_file(file_name, primary_key, pk_dtypes=['int'])
+        # check if the record_ids are in the dataframe, remove them if they are
+        rows_deleted = 0
+        for record_id in record_ids:
+            if record_id in df.index:
+                df.drop(record_id, inplace=True)
+                rows_deleted += 1
+
+        # write the updated dataframe back to the file, make sure primary keys are in index
+        df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=['int'])
+        set_primary_key_index(df, primary_key=primary_key, pk_dtypes=['int'])
+        self.write_file(df, file_name)
+
+        return rows_deleted
 
     def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
@@ -3072,26 +3120,71 @@ class DataSource:
         for col in update_cols[:-1]:
             sql += f"`{col}`=VALUES(`{col}`),\n"
         sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
+
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
         try:
-            import pymysql
-            con = pymysql.connect(
-                    host=self.host,
-                    port=self.port,
-                    user=self.__user__,
-                    password=self.__password__,
-                    db=self.db_name,
-            )
             cursor = con.cursor()
             rows_affected = cursor.executemany(sql, df_tuple)
             con.commit()
             return rows_affected
         except Exception as e:
             con.rollback()
-            raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
-                               f'Exception:\n{e}\n'
-                               f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
+            msg = f'Error during updating data to table {db_table} with following sql:\n' \
+                    f'Exception:\n{e}\n' \
+                    f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}'
+            raise RuntimeError(msg)
         finally:
             con.close()
+
+    def delete_database_records(self, db_table, primary_key, record_ids):
+        """ 从数据库表中删除数据
+
+        必须给出数据表的主键名，以及需要删除的记录的主键值
+
+        Parameters
+        ----------
+        db_table: str
+            数据表名
+        primary_key: str
+            数据表的主键名称列表
+        record_ids: list of str or tuple of str
+            需要删除的记录的主键值
+
+        Returns
+        -------
+        int: rows affected
+        """
+
+        # 生成删除记录的SQL语句
+        sql = f"DELETE FROM `{db_table}` WHERE "
+        # 设置删除的条件
+        sql += f"`{primary_key}` IN {tuple(record_ids)}"
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        try:
+            cursor = con.cursor()
+            rows_affected = cursor.execute(sql)
+            con.commit()
+            return rows_affected
+        except Exception as e:
+            con.rollback()
+            msg = f'Error during deleting data from table {db_table} with following sql:\n' \
+                    f'Exception:\n{e}\n' \
+                    f'SQL:\n{sql}'
+            raise RuntimeError(msg)
 
     def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -4238,7 +4331,7 @@ class DataSource:
         else:
             return res_df if not res_df.empty else None
 
-    def update_sys_table_data(self, table, record_id, **data):
+    def update_sys_table_data(self, table:str, record_id:int, **data) -> int:
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
 
         每次只能更新一条数据，数据以dict形式给出
@@ -4302,7 +4395,7 @@ class DataSource:
         self.update_table_data(table, df_data, merge_type='update')
         return record_id
 
-    def insert_sys_table_data(self, table, **data):
+    def insert_sys_table_data(self, table:str, **data) -> int:
         """ 插入系统操作表的数据
 
         一次插入一条记录，数据以dict形式给出
@@ -4393,6 +4486,53 @@ class DataSource:
         # TODO: 这里为什么要用'ignore'而不是'update'? 现在改为'update'，
         #  test_database和test_trading测试都能通过，后续完整测试
         return record_id
+
+    def delete_sys_table_data(self, table, record_ids) -> int:
+        """ 删除系统数据表中的某些记录，被删除的记录的ID使用列表或tuple传入
+
+        parameters
+        ----------
+        table: str
+            需要删除数据的表名
+        record_ids: list of int or tuple of int
+            需要删除的记录的ID列表
+
+        Returns
+        -------
+        int
+            删除的记录数量
+        """
+
+        # 如果不是system table，直接返回0
+        try:
+            ensure_sys_table(table)
+        except KeyError:
+            f'{table} is not valid table, can not delete records from it.'
+            return 0
+        except TypeError:
+            f'{table} is not a system table, can not delete records from it.'
+            return 0
+        except Exception as e:
+            f'An error occurred when checking table {table}: {e}'
+            return 0
+
+        # 检查record_ids是否合法
+        if not isinstance(record_ids, (list, tuple)):
+            raise TypeError(f'record_ids should be a list or tuple, got {type(record_ids)} instead')
+        if not all(isinstance(rid, int) for rid in record_ids):
+            raise TypeError(f'all record_ids should be int, got {[type(rid) for rid in record_ids]} instead')
+
+        columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table, with_primary_keys=True)
+        primary_key = primary_keys[0]
+
+        if self.source_type == 'db':
+            res = self.delete_database_records(table, primary_key=primary_key, record_ids=record_ids)
+        elif self.source_type == 'file':
+            res = self.delete_file_records(table, primary_key=primary_key, record_ids=record_ids)
+        else:
+            raise RuntimeError(f'invalid source type: {self.source_type}')
+
+        return res
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
@@ -5086,15 +5226,17 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     None
     """
     if not isinstance(df, pd.DataFrame):
-        raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+        msg = f'df should be a pandas DataFrame, got {type(df)} instead'
+        raise TypeError(msg)
     if df.empty:
         return df
     if not isinstance(primary_key, list):
-        raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        msg = f'primary key should be a list, got {type(primary_key)} instead'
+        raise TypeError(msg)
     all_columns = df.columns
     if not all(item in all_columns for item in primary_key):
-        raise KeyError(f'primary key contains invalid value: '
-                       f'{[item for item in primary_key if item not in all_columns]}')
+        msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
+        raise KeyError(msg)
 
     # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     set_datetime_format_frame(df, primary_key, pk_dtypes)
@@ -5745,7 +5887,7 @@ def get_dtype_map():
 
 
 @lru_cache(maxsize=1)
-def get_table_map():
+def get_table_map():  # deprecated
     """ 获取所有内置数据表的清单，to be deprecated
 
     Returns

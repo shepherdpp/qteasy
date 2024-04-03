@@ -657,6 +657,67 @@ class TestDataSource(unittest.TestCase):
                     self.assertEqual(target_values[i, j], loaded_values[i, j])
             self.assertEqual(list(df_res.columns), list(loaded_df.columns))
 
+    def test_delete_file_records(self):
+        """ test deleting a few records from a file"""
+
+        for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
+            # create a test dataframe
+            test_sys_df = pd.DataFrame(
+                    {
+                        'account_id':     [1, 2, 3, 4, 5],
+                        'user_name':      ['account1', 'account2', 'account3', 'account4', 'account5'],
+                        'created_time':   ['2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12'],
+                        'cash_amount':    [1000, 2000, 3000, 4000, 5000],
+                        'available_cash': [1000, 2000, 3000, 4000, 5000],
+                        'total_invest':   [1000, 2000, 3000, 4000, 5000],
+                    }
+            )
+            table_name = 'sys_op_live_account'
+            test_sys_df = set_primary_key_frame(test_sys_df, primary_key=['account_id'], pk_dtypes=['int'])
+            set_primary_key_index(test_sys_df, primary_key=['account_id'], pk_dtypes=['int'])
+
+            # 删除测试路径中已经存在的数据文件
+            ds.drop_file(table_name)
+
+            self.assertFalse(ds.file_exists(table_name))
+            # 写入数据到csv, fth, hdf文件
+            ds.write_file(test_sys_df, table_name)
+
+            self.assertTrue(ds.file_exists(table_name))
+
+            # 删除csv, fth, hdf文件中的部分数据
+            res = ds.delete_file_records(table_name, 'account_id', [2, 4])
+
+            loaded_df = ds.read_file(table_name, primary_key=['account_id'], pk_dtypes=['int'])
+            # set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+
+            self.assertEqual(res, 2)
+            self.assertEqual(loaded_df.shape[0], 3)
+            self.assertEqual(loaded_df.index[0], 1)
+            self.assertEqual(loaded_df.index[1], 3)
+            self.assertEqual(loaded_df.index[2], 5)
+            # check if all values are correct
+            self.assertEqual(loaded_df.loc[1, 'user_name'], 'account1')
+            self.assertEqual(loaded_df.loc[1, 'cash_amount'], 1000)
+            self.assertEqual(loaded_df.loc[1, 'available_cash'], 1000)
+            self.assertEqual(loaded_df.loc[1, 'total_invest'], 1000)
+            self.assertEqual(loaded_df.loc[3, 'user_name'], 'account3')
+            self.assertEqual(loaded_df.loc[3, 'cash_amount'], 3000)
+            self.assertEqual(loaded_df.loc[3, 'available_cash'], 3000)
+            self.assertEqual(loaded_df.loc[3, 'total_invest'], 3000)
+            self.assertEqual(loaded_df.loc[5, 'user_name'], 'account5')
+            self.assertEqual(loaded_df.loc[5, 'cash_amount'], 5000)
+            self.assertEqual(loaded_df.loc[5, 'available_cash'], 5000)
+            self.assertEqual(loaded_df.loc[5, 'total_invest'], 5000)
+
+        print('deleting records that are not in the file and with wrong primary key')
+        for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
+            res = ds.delete_file_records(table_name, primary_key='account_id', record_ids=[2, 4])
+            self.assertEqual(res, 0)
+
+            with self.assertRaises(TypeError):
+                ds.delete_file_records(table_name, primary_key='account_id', record_ids='1,2,3')
+
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""
         print(f'write and read a MultiIndex dataframe to database')
@@ -783,6 +844,85 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
+
+    def test_delete_database_records(self):
+        """ test delete database records"""
+        print(f'delete records from database')
+        con = connect(
+                host=self.ds_db.host,
+                port=self.ds_db.port,
+                user=self.ds_db.__user__,
+                password=self.ds_db.__password__,
+                db=self.ds_db.db_name,
+        )
+        cursor = con.cursor()
+        table_name = 'sys_op_live_accounts'
+        # 删除数据库中的临时表
+        sql = f"DROP TABLE IF EXISTS {table_name}"
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+
+        test_sys_df = pd.DataFrame(
+                {
+                    'account_id': [1, 2, 3, 4, 5],
+                    'user_name': ['account1', 'account2', 'account3', 'account4', 'account5'],
+                    'created_time': ['2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12', '2024-11-12'],
+                    'cash_amount': [1000, 2000, 3000, 4000, 5000],
+                    'available_cash': [1000, 2000, 3000, 4000, 5000],
+                    'total_invest': [1000, 2000, 3000, 4000, 5000],
+                }
+        )
+
+        self.ds_db.write_database(test_sys_df, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
+        set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+        print(f'df retrieved from database is\n'
+              f'{loaded_df}\n')
+
+        print(f'delete records from database table')
+        res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])
+        loaded_df = self.ds_db.read_database(table_name)
+        set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+        print(f'df retrieved from database after deleting records is\n'
+              f'{loaded_df}\n')
+
+        self.assertEqual(res, 2)
+        self.assertEqual(loaded_df.shape[0], 3)
+        self.assertEqual(loaded_df.index[0], 1)
+        self.assertEqual(loaded_df.index[1], 3)
+        self.assertEqual(loaded_df.index[2], 5)
+        # check if all values are correct
+        self.assertEqual(loaded_df.loc[1, 'user_name'], 'account1')
+        self.assertEqual(loaded_df.loc[1, 'cash_amount'], 1000)
+        self.assertEqual(loaded_df.loc[1, 'available_cash'], 1000)
+        self.assertEqual(loaded_df.loc[1, 'total_invest'], 1000)
+        self.assertEqual(loaded_df.loc[3, 'user_name'], 'account3')
+        self.assertEqual(loaded_df.loc[3, 'cash_amount'], 3000)
+        self.assertEqual(loaded_df.loc[3, 'available_cash'], 3000)
+        self.assertEqual(loaded_df.loc[3, 'total_invest'], 3000)
+        self.assertEqual(loaded_df.loc[5, 'user_name'], 'account5')
+        self.assertEqual(loaded_df.loc[5, 'cash_amount'], 5000)
+        self.assertEqual(loaded_df.loc[5, 'available_cash'], 5000)
+        self.assertEqual(loaded_df.loc[5, 'total_invest'], 5000)
+
+        print('delete records that are not found in the database table')
+        res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])
+        loaded_df = self.ds_db.read_database(table_name)
+        set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
+        print(f'df retrieved from database after deleting records is\n'
+              f'{loaded_df}\n')
+
+        self.assertEqual(res, 0)
+        self.assertEqual(loaded_df.shape[0], 3)
+        self.assertEqual(loaded_df.index[0], 1)
+        self.assertEqual(loaded_df.index[1], 3)
+        self.assertEqual(loaded_df.index[2], 5)
+
+        print('wrong parameters are given')
+        self.assertRaises(RuntimeError, self.ds_db.delete_database_records, table_name, 'wrong_key', [1])
+        self.assertRaises(TypeError, self.ds_db.delete_database_records, table_name, 'account_id', 1)
+        self.assertRaises(RuntimeError, self.ds_db.delete_database_records, table_name, 'account_id', '1, 2')
 
     def test_update_database(self):
         """ test the function update_database()"""
@@ -992,6 +1132,95 @@ class TestDataSource(unittest.TestCase):
                 ds.drop_table_data(table)
                 print('all table data are cleared')
                 ds.overview()
+
+    def test_delete_table_data(self):
+        """ test function delete_table_data()"""
+
+        # all system tables and all datasources should be tested
+        tables_to_test = ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+
+        # test data
+        test_account_df = pd.DataFrame(
+                {
+                    'account_id': [1, 2, 3, 4, 5],
+                    'user_name': ['account1', 'account2', 'account3', 'account4', 'account5'],
+                    'created_time': ['2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12'],
+                    'cash_amount': [1000, 2000, 3000, 4000, 5000],
+                    'available_cash': [1000, 2000, 3000, 4000, 5000],
+                    'total_invest': [1000, 2000, 3000, 4000, 5000],
+                }
+        )
+        test_positions_df = pd.DataFrame(
+                {
+                    'pos_id': [1, 2, 3, 4, 5],
+                    'account_id': [1, 1, 2, 3, 5],
+                    'symbol': ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+                    'position': ['long', 'short', 'long', 'short', 'long'],
+                    'qty': [100, 200, 300, 400, 500],
+                    'available_qty': [100, 200, 300, 400, 500],
+                    'cost': [10, 20, 30, 40, 50],
+                }
+        )
+        test_orders_df = pd.DataFrame(
+                {
+                    'order_id': [1, 2, 3, 4, 5],
+                    'pos_id': [1, 2, 3, 4, 5],
+                    'direction': ['buy', 'sell', 'buy', 'sell', 'buy'],
+                    'order_type': ['market', 'limit', 'market', 'limit', 'market'],
+                    'qty': [100, 200, 300, 400, 500],
+                    'price': [10, 20, 30, 40, 50],
+                    'submitted_time': ['2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12'],
+                    'status': ['partial-filled', 'filled', 'canceled', 'filled', 'canceled'],
+                }
+        )
+        test_results_df = pd.DataFrame(
+                {
+                    'result_id': [1, 2, 3, 4, 5],
+                    'order_id': [1, 2, 3, 4, 5],
+                    'filled_qty': [50, 100, 0, 400, 0],
+                    'price': [10, 20, 0, 40, 0],
+                    'transaction_fee': [1, 2, 0, 4, 0],
+                    'execution_time': ['2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12', '2023-11-12'],
+                    'canceled_qty': [0, 0, 300, 0, 500],
+                    'delivery_amount': [500, 1000, 0, 2000, 0],
+                    'delivery_status': ['delivered', 'delivered', 'delivered', 'delivered', 'delivered'],
+                }
+        )
+
+        test_data_for_tables = {
+            'sys_op_live_accounts': test_account_df,
+            'sys_op_positions': test_positions_df,
+            'sys_op_trade_orders': test_orders_df,
+            'sys_op_trade_results': test_results_df
+        }
+
+        # test on all data sources and tables
+        for ds in all_data_sources:
+            for table in tables_to_test:
+                print(f'dropping table {table} from datasource: {ds.source_type}-{ds.connection_type}')
+                ds.drop_table_data(table)
+                print(f'-- Done! --')
+                self.assertFalse(ds.table_data_exists(table))
+                print(f'table {table} is deleted from datasource: {ds.source_type}-{ds.connection_type}')
+
+                # write test data to the table
+                test_data = test_data_for_tables[table]
+                ds.write_table_data(test_data, table)
+
+                # check if the table is written
+                self.assertTrue(ds.table_data_exists(table))
+
+                # delete records from the table
+                ds.delete_sys_table_data(table, record_ids=[2, 4])
+
+                df = ds.read_table_data(table)
+                print(f'df read from arr source: \n{ds.source_type}-{ds.connection_type} \nis:\n{df}')
+                self.assertEqual(df.shape[0], 3)
+                self.assertEqual(df.index[0], 1)
+                self.assertEqual(df.index[1], 3)
+                self.assertEqual(df.index[2], 5)
+
 
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
