@@ -360,6 +360,9 @@ class TestQT(unittest.TestCase):
         qt.configuration(default=True)
         print(f'configuration with info=True, verbose=True\n')
         qt.configuration(default=True, verbose=True)
+        print(f'configuration with config_key')
+        qt.configuration('mode, time_zone, asset_pool')
+        qt.configuration(['mode', 'time_zone', 'asset_pool'])
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""

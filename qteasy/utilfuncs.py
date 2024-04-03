@@ -827,7 +827,8 @@ def maybe_trade_day(date):
     try:
         date = pd.to_datetime(date).floor(freq='d')
     except Exception:
-        raise ValueError('date is not a valid date time format, cannot be converted to timestamp')
+        msg = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise ValueError(msg)
     if date.weekday() > 4:
         return False
     for m, d in zip(public_holidays[0], public_holidays[1]):
@@ -925,24 +926,32 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
-        raise
+        raise ex
     if _date is None:
-        raise TypeError(f'{date} is not a valid date')
+        msg = f'{date} is not a valid date'
+        raise TypeError(msg)
     if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
                                                       'DCE', 'INE', 'IB', 'XHKG']:
-        raise TypeError(f'exchange \'{exchange}\' is not a valid input')
+        msg = f'exchange \'{exchange}\' is not a valid input'
+        raise TypeError(msg)
     if qteasy.QT_TRADE_CALENDAR is not None:
         try:
             exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
         except KeyError as e:
-            raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
+            e.extra_info = f'Trade Calender for exchange: {exchange} is not downloaded, please refill data'
+            raise e
         try:
             is_open = exchange_trade_cal.loc[_date].is_open
-        except KeyError:
-            raise ValueError(f'The date {_date} is out of trade calendar range, please refill data')
+        except KeyError as e:
+            e.extra_info = f'Trade Calendar for exchange: {exchange} is not available, please refill data'
+            raise e
         return is_open == 1
     else:
-        warnings.warn('Trade Calendar is not available, will use maybe_trade_day instead to check trade day')
+        msg = 'Trade Calendar is not available,  will use maybe_trade_day instead to check trade day\n' \
+                'Trade Calendar can be downloaded to DataSource, Use:\n' \
+                'qteasy.refill_data_source(tables="basics")\n' \
+                'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+        warnings.warn(msg, RuntimeWarning)
         return maybe_trade_day(_date)
 
 
@@ -967,17 +976,20 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
     """
     if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
                                                       'DCE', 'INE', 'IB', 'XHKG']:
-        raise TypeError(f'exchange \'{exchange}\' is not a valid input')
+        msg = f'exchange \'{exchange}\' is not a valid input'
+        raise TypeError(msg)
     if qteasy.QT_TRADE_CALENDAR is not None:
         try:
             exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
         except KeyError as e:
-            raise KeyError(f'Trade Calender for exchange: {e} was not properly downloaded, please refill data')
+            msg = f'Trade Calender for exchange: {e} was not properly downloaded, please refill data'
+            raise KeyError(msg)
         return exchange_trade_cal[exchange_trade_cal.is_open == 1].index.max()
     else:
-        raise RuntimeError('Trade Calendar is not available, please download basic data into DataSource, Use:\n'
-                           'qteasy.refill_data_source(tables="basics")\n'
-                           'see more details in qteasy docs')
+        msg = 'Trade Calendar is not available, please download basic data into DataSource, Use:\n' \
+               'qteasy.refill_data_source(tables="basics")\n' \
+               'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+        raise RuntimeError(msg)
 
 
 @lru_cache(maxsize=16)
@@ -1024,9 +1036,10 @@ def prev_market_trade_day(date, exchange='SSE'):
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
         return pd.to_datetime(pretrade_date)
     else:
-        raise RuntimeError('Trade Calendar is not available, please download basic data into DataSource, Use:\n'
-                           'qteasy.refill_data_source(tables="basics")\n'
-                           'see more details in qteasy docs')
+        msg = 'Trade Calendar is not available, please download basic data into DataSource, Use:\n' \
+                'qteasy.refill_data_source(tables="basics")\n' \
+                'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+        raise RuntimeError(msg)
 
 
 @lru_cache(maxsize=16)
@@ -1171,9 +1184,15 @@ def list_truncate(lst, trunc_size):
     >>> [[1,2,3,4], [5,6,7,8], [9,0]]
     """
 
-    assert isinstance(lst, list), f'first parameter should be a list, got {type(lst)}'
-    assert isinstance(trunc_size, int), f'second parameter should be an integer larger than 0'
-    assert trunc_size > 0, f'second parameter should be an integer larger than 0, got {trunc_size}'
+    if not isinstance(lst, list):
+        msg = f'first parameter should be a list, got {type(lst)}'
+        raise TypeError(msg)
+    if not isinstance(trunc_size, int):
+        msg = f'second parameter should be an integer larger than 0'
+        raise TypeError(msg)
+    if not trunc_size > 0:
+        msg = f'second parameter should be an integer larger than 0, got {trunc_size}'
+        raise ValueError(msg)
     total = len(lst)
     if total <= trunc_size:
         return [lst]
@@ -1965,17 +1984,23 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
     cut_off_proportion = 0.7
 
     if not isinstance(s, str):
-        raise TypeError(f'the first argument should be a string, got {type(s)} instead')
+        msg = f'the first argument should be a string, got {type(s)} instead'
+        raise TypeError(msg)
     if not isinstance(n, int):
-        raise TypeError(f'the second argument should be an integer, got {type(n)} instead')
+        msg = f'the second argument should be an integer, got {type(n)} instead'
+        raise TypeError(msg)
     if not isinstance(ellipsis, str):
-        raise TypeError(f'the padder should be a character, got {type(ellipsis)} instead')
+        msg = f'the padder should be a character, got {type(ellipsis)} instead'
+        raise TypeError(msg)
     if not len(ellipsis) == 1:
-        raise ValueError(f'the padder should be a single character, got {len(ellipsis)} characters')
+        msg = f'the padder should be a single character, got {len(ellipsis)} characters'
+        raise ValueError(msg)
     if not isinstance(padder, str):
-        raise TypeError(f'the padder should be a character, got {type(padder)} instead')
+        msg = f'the padder should be a character, got {type(padder)} instead'
+        raise TypeError(msg)
     if n < 1:
-        raise ValueError(f'the expected length should be larger than 0, got {n}')
+        msg = f'the expected length should be larger than 0, got {n}'
+        raise ValueError(msg)
 
     length = len(s)
     if hans_aware:
@@ -2150,7 +2175,8 @@ def _count_hans(s: str):
     """
     # for loop is faster than list comprehension and regex
     if not isinstance(s, str):
-        raise TypeError(f'the argument should be a string, got {type(s)} instead')
+        msg = f'should be a string, got {type(s)} instead'
+        raise TypeError(msg)
     hans_total = 0
     for char in s:
         if '\u4e00' <= char <= '\u9fff':
