@@ -2527,7 +2527,7 @@ class DataSource:
                     import tables
                 except ImportError:
                     msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
-                          f'\'hdf\'. Use pip or conda to install pytables: $ pip install tables'
+                          f'\'hdf\'. Please install pytables: $ conda install pytables'
                     raise ImportError(msg)
                 file_type = 'hdf'
             if file_type in ['feather', 'fth']:
