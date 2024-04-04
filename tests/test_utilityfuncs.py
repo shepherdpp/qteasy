@@ -169,8 +169,8 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_market_trade_day(date_christmas, exchange='XHKG'))
 
         # raises when date out of range
-        self.assertRaises(ValueError, is_market_trade_day, date_too_early)
-        self.assertRaises(ValueError, is_market_trade_day, date_too_late)
+        self.assertRaises(KeyError, is_market_trade_day, date_too_early)
+        self.assertRaises(KeyError, is_market_trade_day, date_too_late)
 
         date_trade = pd.to_datetime('20210401')
         date_holiday = pd.to_datetime('20210102')
@@ -198,9 +198,9 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(ls[1], [3, 4])
         self.assertEqual(ls[2], [5])
 
-        self.assertRaises(AssertionError, list_truncate, the_list, 0)
-        self.assertRaises(AssertionError, list_truncate, 12, 0)
-        self.assertRaises(AssertionError, list_truncate, 0, the_list)
+        self.assertRaises(ValueError, list_truncate, the_list, 0)
+        self.assertRaises(TypeError, list_truncate, 12, 0)
+        self.assertRaises(TypeError, list_truncate, 0, the_list)
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
