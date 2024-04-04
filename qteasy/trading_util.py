@@ -1474,6 +1474,8 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
                 all_data_types[asset_type.lower()] for asset_type in asset_types
             ),
     )
+    if all_basics.empty:
+        return ['N/A'] * len(symbols)
     try:
         names_found = all_basics.reindex(index=symbols)["name"].tolist()
     except Exception as e:

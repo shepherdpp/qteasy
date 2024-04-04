@@ -11,6 +11,7 @@
 
 import unittest
 import time
+import pandas as pd
 
 from qteasy import DataSource, Operator
 from qteasy.trader import Trader, TraderShell
@@ -55,6 +56,33 @@ class TestTraderShell(unittest.TestCase):
         broker = SimulatorBroker()
 
         test_ds.reconnect()
+
+        # 创建测试datasource需要的股票基础数据等数据
+        stock_basic = {
+            'ts_code': ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ'],
+            'symbol': ['000001', '000002', '000004', '000005', '000006', '000007'],
+            'name': ['平安银行', '万科A', '国农科技', '世纪星源', '深振业A', '全新好'],
+            'area': ['深圳', '深圳', '深圳', '深圳', '深圳', '深圳'],
+            'industry': ['银行', '全国地产', '生物制药', '环境保护', '区域地产', '食品'],
+            'full_name': ['平安银行股份有限公司', '万科企业股份有限公司', '国农科技股份有限公司', '世纪星源股份有限公司',
+                          '深圳市振业(集团)股份有限公司', '深圳市全新好股份有限公司'],
+            'enname': ['Ping An Bank Co., Ltd.', 'China Vanke Co., Ltd.',
+                       'China National Agricultural Technology Co., Ltd.', 'Shijixingyuan Co., Ltd.',
+                       'Shenzhen Zhenye(Group) Co., Ltd.', 'Shenzhen Quanxin Hao Co., Ltd.'],
+            'cnspell': ['PAYH', 'WK', 'GNKJ', 'SJXY', 'SZYA', 'SXH'],
+            'market': ['主板', '主板', '主板', '主板', '主板', '主板'],
+            'exchange': ['SZSE', 'SZSE', 'SZSE', 'SZSE', 'SZSE', 'SZSE'],
+            'curr_type': ['CNY', 'CNY', 'CNY', 'CNY', 'CNY', 'CNY'],
+            'list_status': ['L', 'L', 'L', 'L', 'L', 'L'],
+            'list_date': ['19910403', '19910129', '19951027', '19990602', '19921202', '19910809'],
+            'delist_date': ['', '', '', '', '', ''],
+            'is_hs': ['', '', '', '', '', ''],
+        }
+        stock_basic_df = pd.DataFrame(stock_basic)
+        # 创建测试数据源的股票基础数据
+        if not test_ds.table_data_exists('stock_basic'):
+            test_ds.write_table_data(stock_basic_df, 'stock_basic')
+
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
             if test_ds.table_data_exists(table):

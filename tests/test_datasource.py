@@ -965,6 +965,8 @@ class TestDataSource(unittest.TestCase):
             for j in range(cols):
                 if pd.isna(saved_values[i, j]):
                     self.assertTrue(pd.isna(loaded_values[i, j]))
+                elif isinstance(saved_values[i, j], pd.Timestamp):
+                    self.assertEqual(saved_values[i, j].date(), loaded_values[i, j])
                 else:
                     self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
