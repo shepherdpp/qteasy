@@ -102,27 +102,18 @@ $ pip install qteasy
 ```
 
 ### python version
-- *`python` version >= 3.6, < 3.9* 
+- *`python` version >= 3.6, < 3.13* 
 
 ### Install dependencies
 
-This project requires and depends on following packages:
-- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
-- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
-- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
-- *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
+All necessary dependencies of `qteasy` can be installed with `pip`, but if you need to use all the functions of `qteasy`, you need to install the following dependencies:
 
-
-A local datasource should be setup for `qteasy` to work properly. a series of .csv files will be used to store 
-financial data in default case. Other types of datasource can be used, such as MySQL database, but other dependencies
-should be installed. find more details in the tutorial.
+- **`ta-lib`**, you need to install `ta-lib` package to use all built-in strategies
+- **`pymysql`**, you need to install `pymysql` package to connect to MySQL database, store local data to MySQL database (qteasy uses csv files as default local data source, but it is recommended to use mysql database when the data volume is large, for details, please refer to [qteasy tutorial](https://qteasy.readthedocs.io))
 
 ##  Gets to know qteasy in 10 Min
 
-### Import the module 
-
+### Import the module
 
 ```python
 import qteasy as qt

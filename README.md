@@ -98,14 +98,14 @@ $ pip install qteasy
 
 
 ### python 版本
-- *`python` version >= 3.6, < 3.9* 
+- *`python` version >= 3.6, < 3.13* 
 
 ### 安装可选依赖包
 
 `qteasy`所有必要的依赖包都可以在pip安装的同时安装好，但如果需要使用`qteasy`的全部功能，需要安装以下依赖包：
 
-- **`ta-lib: == 0.4.18`**, 用于计算技术指标
-- **`pymysql: == 1.0.2`**, 用于连接MySQL数据库,将本地数据存储到MySQL数据库（qteasy默认使用csv文件作为本地数据源，但数据量大时推荐使用mysql数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
+- **`ta-lib`**, 以便使用所有的内置交易策略
+- **`pymysql`**, 用于连接MySQL数据库,将本地数据存储到MySQL数据库（qteasy默认使用csv文件作为本地数据源，但数据量大时推荐使用mysql数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
 
 ##  10分钟了解qteasy的功能
 
