@@ -20,7 +20,7 @@ from .finance import CashPlan, get_selling_result, get_purchase_result, get_cost
 from .qt_operator import Operator
 
 
-@njit(nogil=False, cache=False)
+@njit(nogil=False, cache=True)
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -670,7 +670,7 @@ def apply_loop(operator: Operator,
     return loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices
 
 
-@njit(nogil=True, cache=False)
+@njit(nogil=True, cache=True)
 def apply_loop_core(share_count: int,
                     looped_dates: np.ndarray,
                     inflation_factors: np.ndarray,
@@ -697,6 +697,14 @@ def apply_loop_core(share_count: int,
     """ apply_loop的核心function,不含任何numba不支持的元素，仅包含batch模式下，
         不需要生成trade_log的情形下运行核心循环的核心代码。
         在符合要求的情况下，这部分代码以njit方式加速运行，实现提速
+
+    TODO: v1.1: 优化代码，去除代码中使用list来进行交割日期计算的部分，使用numpy数组来代替，提高代码效率
+     避免产生numba warnings：
+     NumbaPendingDeprecationWarning:
+     Encountered the use of a type that is scheduled for deprecation: type 'reflected list'
+     found for argument 'looped_dates' of function 'apply_loop_core'.
+     For more information visit
+     https://numba.readthedocs.io/en/stable/reference/deprecation.html#deprecation-of-reflection-for-list-and-set-types
 
     Parameters
     ----------
