@@ -16,7 +16,7 @@ from numba import njit
 
 import qteasy
 from .history import HistoryPanel
-from .finance import CashPlan, get_selling_result, get_purchase_result
+from .finance import CashPlan, get_selling_result, get_purchase_result, get_cost_pamams
 from .qt_operator import Operator
 
 
@@ -28,13 +28,7 @@ def _loop_step(signal_type: int,
                available_amounts: np.ndarray,
                op: np.ndarray,
                prices: np.ndarray,
-               buy_fix: float,
-               sell_fix: float,
-               buy_rate: float,
-               sell_rate: float,
-               buy_min: float,
-               sell_min: float,
-               slipage: float,
+               cost_params: np.ndarray,
                pt_buy_threshold: float,
                pt_sell_threshold: float,
                maximize_cash_usage: bool,
@@ -66,18 +60,15 @@ def _loop_step(signal_type: int,
         本次交易的个股交易信号清单
     prices: np.ndarray，
         本次交易发生时各个股票的交易价格
-    buy_fix: float
-        交易成本：固定买入费用
-    sell_fix: float
-        交易成本：固定卖出费用
-    buy_rate: float
-        交易成本：固定买入费率
-    sell_rate: float
-        交易成本：固定卖出费率
-    buy_min: float
-        交易成本：最低买入费用
-    sell_min: float
-        交易成本：最低卖出费用
+    cost_params: np.ndarray
+        交易成本参数，包括固定买入费用、固定卖出费用、买入费率、卖出费率、最低买入费用、最低卖出费用
+        buy_fix: float, 交易成本：固定买入费用
+        sell_fix: float, 交易成本：固定卖出费用
+        buy_rate: float, 交易成本：固定买入费率
+        sell_rate: float, 交易成本：固定卖出费率
+        buy_min: float, 交易成本：最低买入费用
+        sell_min: float, 交易成本：最低卖出费用
+        slipage: float, 交易成本：滑点
     pt_buy_threshold: object Cost
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
     pt_sell_threshold: object Cost
@@ -192,13 +183,7 @@ def _loop_step(signal_type: int,
             prices=prices,
             a_to_sell=amounts_to_sell,
             moq=moq_sell,
-            buy_fix=buy_fix,
-            sell_fix=sell_fix,
-            buy_rate=buy_rate,
-            sell_rate=sell_rate,
-            buy_min=buy_min,
-            sell_min=sell_min,
-            slipage=slipage
+            cost_params=cost_params,
     )
 
     if maximize_cash_usage:
@@ -249,13 +234,7 @@ def _loop_step(signal_type: int,
             prices=prices,
             cash_to_spend=cash_to_spend,
             moq=moq_buy,
-            buy_fix=buy_fix,
-            sell_fix=sell_fix,
-            buy_rate=buy_rate,
-            sell_rate=sell_rate,
-            buy_min=buy_min,
-            sell_min=sell_min,
-            slipage=slipage
+            cost_params=cost_params,
     )
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
@@ -464,13 +443,7 @@ def apply_loop(operator: Operator,
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
     # 解析交易费率参数：
-    buy_fix = cost_rate['buy_fix']
-    sell_fix = cost_rate['sell_fix']
-    buy_rate = cost_rate['buy_rate']
-    sell_rate = cost_rate['sell_rate']
-    buy_min = cost_rate['buy_min']
-    sell_min = cost_rate['sell_min']
-    slipage = cost_rate['slipage']
+    cost_params = get_cost_pamams(cost_rate)
     # 确定是否属于PT+lazy的情形
     pt_and_lazy = (signal_type == 0) and (pt_signal_timing == 'lazy')
 
@@ -531,13 +504,7 @@ def apply_loop(operator: Operator,
                                                                signal_type,
                                                                op_list_bt_indices,
                                                                skip_op_signal,
-                                                               buy_fix,
-                                                               sell_fix,
-                                                               buy_rate,
-                                                               sell_rate,
-                                                               buy_min,
-                                                               sell_min,
-                                                               slipage,
+                                                               cost_params,
                                                                moq_buy,
                                                                moq_sell,
                                                                inflation_rate,
@@ -640,13 +607,7 @@ def apply_loop(operator: Operator,
                             available_amounts=available_amounts,
                             op=current_op,
                             prices=current_prices,
-                            buy_fix=buy_fix,
-                            sell_fix=sell_fix,
-                            buy_rate=buy_rate,
-                            sell_rate=sell_rate,
-                            buy_min=buy_min,
-                            sell_min=sell_min,
-                            slipage=slipage,
+                            cost_params=cost_params,
                             pt_buy_threshold=pt_buy_threshold,
                             pt_sell_threshold=pt_sell_threshold,
                             maximize_cash_usage=maximize_cash_usage,
@@ -710,23 +671,17 @@ def apply_loop(operator: Operator,
 
 
 @njit(nogil=True, cache=False)
-def apply_loop_core(share_count,
-                    looped_dates,
-                    inflation_factors,
-                    investment_date_pos,
-                    invest_amounts,
-                    price,
-                    op_list,
-                    signal_type,
-                    op_list_bt_indices,
-                    skip_op_signal,
-                    buy_fix: float,
-                    sell_fix: float,
-                    buy_rate: float,
-                    sell_rate: float,
-                    buy_min: float,
-                    sell_min: float,
-                    slipage: float,
+def apply_loop_core(share_count: int,
+                    looped_dates: np.ndarray,
+                    inflation_factors: np.ndarray,
+                    investment_date_pos: np.ndarray,
+                    invest_amounts: np.ndarray,
+                    price: np.ndarray,
+                    op_list: np.ndarray,
+                    signal_type: int,
+                    op_list_bt_indices: np.ndarray,
+                    skip_op_signal: np.ndarray,
+                    cost_params: np.ndarray,
                     moq_buy: float,
                     moq_sell: float,
                     inflation_rate: float,
@@ -742,6 +697,55 @@ def apply_loop_core(share_count,
     """ apply_loop的核心function,不含任何numba不支持的元素，仅包含batch模式下，
         不需要生成trade_log的情形下运行核心循环的核心代码。
         在符合要求的情况下，这部分代码以njit方式加速运行，实现提速
+
+    Parameters
+    ----------
+    share_count: int
+        股票数量
+    looped_dates: np.ndarray
+        回测日期序列
+    inflation_factors: np.ndarray
+        通货膨胀因子序列
+    investment_date_pos: np.ndarray
+        投资日期在回测日期序列中的位置
+    invest_amounts: np.ndarray
+        投资金额序列
+    price: np.ndarray
+        价格序列
+    op_list: np.ndarray
+        交易信号序列
+    signal_type: int
+        交易信号类型
+    op_list_bt_indices: np.ndarray
+        交易信号序列的回测序列
+    skip_op_signal: np.ndarray
+        交易信号跳过序列
+    cost_params: np.ndarray
+        交易费率参数
+    moq_buy: float
+        最小买入量
+    moq_sell: float
+        最小卖出量
+    inflation_rate: float
+        通货膨胀率，用于计算无风险利率
+    pt_buy_threshold: float
+        PT买入阈值
+    pt_sell_threshold: float
+        PT卖出阈值
+    cash_delivery_period: int
+        现金交割周期
+    stock_delivery_period: int
+        股票交割周期
+    allow_sell_short: bool
+        是否允许卖空
+    long_pos_limit: float
+        最大多头仓位
+    short_pos_limit: float
+        最大空头仓位
+    max_cash_usage: bool
+        是否最大化利用现金
+    price_priority_list: list
+        价格优先级列表
 
     Returns
     -------
@@ -803,6 +807,7 @@ def apply_loop_core(share_count,
                 amount_sold = np.zeros_like(current_op)
                 fee = np.zeros_like(current_op)
             else:
+                maximize_cash_usage = max_cash_usage and cash_delivery_period == 0
                 cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                         signal_type=signal_type,
                         own_cash=own_cash,
@@ -811,16 +816,10 @@ def apply_loop_core(share_count,
                         available_amounts=available_amounts,
                         op=current_op,
                         prices=current_prices,
-                        buy_fix=buy_fix,
-                        sell_fix=sell_fix,
-                        buy_rate=buy_rate,
-                        sell_rate=sell_rate,
-                        buy_min=buy_min,
-                        sell_min=sell_min,
-                        slipage=slipage,
+                        cost_params=cost_params,
                         pt_buy_threshold=pt_buy_threshold,
                         pt_sell_threshold=pt_sell_threshold,
-                        maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
+                        maximize_cash_usage=maximize_cash_usage,
                         allow_sell_short=allow_sell_short,
                         long_pos_limit=long_pos_limit,
                         short_pos_limit=short_pos_limit,
