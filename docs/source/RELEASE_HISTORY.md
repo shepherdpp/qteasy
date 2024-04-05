@@ -2,6 +2,7 @@
 
 ## 1.1.8 (2024-04-05)
 - Improved compatibility for higher versions of python from 3.9 up to 3.12
+- Improved compatibility for higher versions of pandas (v2.2.1), numpy (1.26.4), and numba (v0.59.1)
 - Fixed a bug that will cause failure of strategy optimizations in python 3.10 and above
 - Corrected and improved a few error messages
 

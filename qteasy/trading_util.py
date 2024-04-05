@@ -1383,7 +1383,8 @@ def _trade_time_index(start=None,
         year:       A-DEC/...
         由于周、季、年三种情况存在复合字符串，因此需要split
     '''
-    if freq_str[-1:].lower() in ['t', 'h']:
+    if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:] in ['min']):
+        # freq_str for min in pandas 2.0 is 'T', in pandas 2.2 is 'MIN'
         idx_am = time_index.indexer_between_time(
                 start_time=start_am,
                 end_time=end_am,
