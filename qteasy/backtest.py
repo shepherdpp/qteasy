@@ -20,7 +20,7 @@ from .finance import CashPlan, get_selling_result, get_purchase_result
 from .qt_operator import Operator
 
 
-@njit(nogil=False, cache=True)
+@njit(nogil=False, cache=False)
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -709,7 +709,7 @@ def apply_loop(operator: Operator,
     return loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices
 
 
-@njit(nogil=True, cache=True)
+@njit(nogil=True, cache=False)
 def apply_loop_core(share_count,
                     looped_dates,
                     inflation_factors,

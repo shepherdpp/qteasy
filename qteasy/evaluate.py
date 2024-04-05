@@ -634,12 +634,13 @@ def eval_return(looped_val, cash_plan):
 
     first_year = looped_val.index[0].year
     last_year = looped_val.index[-1].year
+    month_freq_code = 'ME' if pd.__version__ > '2.0' else 'M'  # freq='ME' if pandas_version > 2.0
     starts = pd.date_range(start=str(first_year - 1) + '1231',
                            end=str(last_year) + '1130',
-                           freq='M') + pd.Timedelta(1, 'd')
+                           freq=month_freq_code) + pd.Timedelta(1, 'd')
     ends = pd.date_range(start=str(first_year) + '0101',
                          end=str(last_year) + '1231',
-                         freq='M')
+                         freq=month_freq_code)
     # 计算每个月的收益率
     monthly_returns = list()
     for start, end in zip(starts, ends):
@@ -656,12 +657,13 @@ def eval_return(looped_val, cash_plan):
                                               'Sep', 'Oct', 'Nov', 'Dec'],
                                      index=range(first_year, last_year + 1))
     # 计算每年的收益率
+    year_freq_code = 'YE' if pd.__version__ > '2.0' else 'Y'  # freq='YE' if pandas_version > 2.0
     starts = pd.date_range(start=str(first_year - 1) + '1231',
                            end=str(last_year) + '1130',
-                           freq='Y') + pd.Timedelta(1, 'd')
+                           freq=year_freq_code) + pd.Timedelta(1, 'd')
     ends = pd.date_range(start=str(first_year) + '0101',
                          end=str(last_year) + '1231',
-                         freq='Y')
+                         freq=year_freq_code)
     # 组装出月度、年度收益率矩阵
     yearly_returns = list()
     for start, end in zip(starts, ends):

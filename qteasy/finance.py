@@ -16,6 +16,34 @@ from numba import njit
 from .utilfuncs import ALL_COST_PARAMETERS
 
 
+def validate_cost_dict(cost: dict) -> None:
+    """ 检查成本参数是否合法
+
+    Parameters
+    ----------
+    cost: dict
+        一个包含成本参数的字典
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    TypeError
+        如果cost不是一个字典
+    KeyError
+        如果cost中包含非法的成本参数
+    """
+    if not isinstance(cost, dict):
+        msg = f'Cost should be a dict, got {type(cost)} instead'
+        raise TypeError(msg)
+    if any(k not in ALL_COST_PARAMETERS for k in cost.keys()):
+        invalid_keys = [k for k in cost.keys() if k not in ALL_COST_PARAMETERS]
+        raise KeyError(f'Invalid cost parameters: {invalid_keys}')
+    return None
+
+
 def set_cost(**kwargs):
     """ 新建一个cost字典
 
@@ -62,11 +90,13 @@ def set_cost(**kwargs):
     return cost
 
 
-def update_cost(c, **kwargs):
+def update_cost(c: dict, **kwargs):
     """ 更新cost字典中各个值
 
     Parameters
     ----------
+    c: dict
+        一个包含成本参数的字典
     kwargs: dict
         可用的成本参数包括：
         - buy_fix: float, 固定买入费用，如果设置了固定费用，则费率和最低费用会被忽略
@@ -81,11 +111,7 @@ def update_cost(c, **kwargs):
     -------
     c: dict, 更新后的成本参数
     """
-    if not isinstance(c, dict):
-        raise TypeError(f'cost should be a dict, got {type(c)} instead')
-    if any(k not in ALL_COST_PARAMETERS for k in c.keys()):
-        invalid_keys = [k for k in c.keys() if k not in ALL_COST_PARAMETERS]
-        raise KeyError(f'invalid keys ({invalid_keys}) found in cost dict!')
+    validate_cost_dict(c)
     for k, v in kwargs.items():
         if k not in ALL_COST_PARAMETERS:
             continue
@@ -95,17 +121,46 @@ def update_cost(c, **kwargs):
     return c
 
 
+def get_cost_pamams(c: dict) -> np.ndarray:
+    """ 返回成本参数
+
+    Parameters
+    ----------
+    c: dict
+        一个包含成本参数的字典
+
+    Returns
+    -------
+    np.ndarray
+        一个包含成本参数的ndarray，包括以下参数：
+        fee_params[0]: buy_fix: float:
+            买入固定费用
+        fee_params[1]: sell_fix: float:
+            卖出固定费用
+        fee_params[2]: buy_rate: float:
+            买入费率
+        fee_params[3]: sell_rate: float:
+            卖出费率
+        fee_params[4]: buy_min: float:
+            买入最低费用
+        fee_params[5]: sell_min: float:
+            卖出最低费用
+        fee_params[6]: slipage: float:
+            滑点
+    """
+    validate_cost_dict(c)
+    return np.array([c['buy_fix'],
+                     c['sell_fix'],
+                     c['buy_rate'],
+                     c['sell_rate'],
+                     c['buy_min'],
+                     c['sell_min'],
+                     c['slipage']])
+
+
 @njit
-def calculate_fees(trade_values: np.ndarray,
-                   is_buying,
-                   fixed_fees,
-                   buy_fix,
-                   sell_fix,
-                   buy_rate,
-                   sell_rate,
-                   buy_min,
-                   sell_min,
-                   slipage) -> float:
+def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying: bool = True,
+                   fixed_fees: bool = False) -> np.ndarray:
     """直接调用对象，计算交易费率或交易费用
 
     采用两种模式计算：
@@ -115,29 +170,32 @@ def calculate_fees(trade_values: np.ndarray,
     Parameters
     ----------
     trade_values: ndarray:
-        总交易金额清单
-    is_buying: bool:
+        总交易金额清单，每一种股票的交易金额
+    cost_params: np.ndarray:
+        交易费用参数，一个ndarray，包括以下参数：
+        fee_params[0]: buy_fix: float:
+            买入固定费用
+        fee_params[1]: sell_fix: float:
+            卖出固定费用
+        fee_params[2]: buy_rate: float:
+            买入费率
+        fee_params[3]: sell_rate: float:
+            卖出费率
+        fee_params[4]: buy_min: float:
+            买入最低费用
+        fee_params[5]: sell_min: float:
+            卖出最低费用
+        fee_params[6]: slipage: float:
+            滑点
+    is_buying: bool, optional, default: True:
         当前是否计算买入费用或费率, 默认True
-    fixed_fees: bool:
+    fixed_fees: bool, optional, default: False:
         当前是否采用固定费用模式计算, 默认False
-    buy_fix: float:
-        买入固定费用
-    sell_fix: float:
-        卖出固定费用
-    buy_rate: float:
-        买入费率
-    sell_rate: float:
-        卖出费率
-    buy_min: float:
-        买入最低费用
-    sell_min: float:
-        卖出最低费用
-    slipage: float:
-        滑点
 
     Returns
     -------
     np.ndarray:
+        一个ndarray，每种股票的交易费用
     """
     if is_buying is None:
         is_buying = True
@@ -147,37 +205,40 @@ def calculate_fees(trade_values: np.ndarray,
     # TODO: 重写slipage的计算公式，使得slipage是一个交易费用的乘数，该乘数 = slipage * (qty / 100) ** 2
     if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
         if is_buying:
-            return buy_fix + slipage * trade_values ** 2
+            # buy_fix + slipage * trade_values ** 2
+            return cost_params[0] + cost_params[6] * trade_values ** 2
         else:
-            return sell_fix + slipage * trade_values ** 2
-    else:  # 采用固定费率模式计算
+            # sell_fix + slipage * trade_values ** 2
+            return cost_params[1] + cost_params[6] * trade_values ** 2
+    else:  # 采用固定费率模式计算, 返回费率而不是费用
         if is_buying:
-            if buy_min == 0.:
-                return buy_rate + slipage * trade_values
+            if cost_params[4] == 0.:  # if buy_min == 0
+                # return buy_rate + slipage * trade_values
+                return cost_params[2] + cost_params[6] * trade_values
             else:
-                min_rate = buy_min / (trade_values - buy_min)
-                return np.fmax(buy_rate, min_rate) + slipage * trade_values
+                # min_rate = buy_min / (trade_values - buy_min)
+                min_rate = cost_params[4] / (trade_values - cost_params[4])
+                # return max(buy_rate, min_rate) + slipage * trade_values
+                return np.fmax(cost_params[2], min_rate) + cost_params[6] * trade_values
         else:
-            if sell_min == 0.:
-                return sell_rate - slipage * trade_values
+            if cost_params[5] == 0.:  # if sell_min == 0
+                # return sell_rate - slipage * trade_values
+                return cost_params[3] - cost_params[6] * trade_values
             else:
-                min_rate = -sell_min / trade_values
+                # min_rate = -sell_min / trade_values
+                min_rate = -cost_params[5] / trade_values
                 # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
                 min_rate[np.isinf(min_rate)] = 0
-                return np.fmax(sell_rate, min_rate) + slipage * trade_values
+                # return max(sell_rate, min_rate) - slipage * trade_values
+                return np.fmax(cost_params[3], min_rate) + cost_params[6] * trade_values
 
 
 @njit
 def get_selling_result(prices: np.ndarray,
                        a_to_sell: np.ndarray,
                        moq,
-                       buy_fix,
-                       sell_fix,
-                       buy_rate,
-                       sell_rate,
-                       buy_min,
-                       sell_min,
-                       slipage):
+                       cost_params: np.ndarray,
+                       ) -> (np.ndarray, np.ndarray, np.ndarray):
     """计算出售投资产品的要素
 
     Parameters
@@ -185,13 +246,14 @@ def get_selling_result(prices: np.ndarray,
     prices: ndarray, 投资产品的价格
     a_to_sell: ndarray, 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
     moq: float, 卖出股票的最小交易单位
-    buy_fix: float, 买入固定费用
-    sell_fix: float, 卖出固定费用
-    buy_rate: float, 买入费率
-    sell_rate: float, 卖出费率
-    buy_min: float, 买入最低费用
-    sell_min: float, 卖出最低费用
-    slipage: float, 滑点
+    cost_params: np.ndarray, 交易费用参数，包括以下参数：
+        - buy_fix: float, 买入固定费用
+        - sell_fix: float, 卖出固定费用
+        - buy_rate: float, 买入费率
+        - sell_rate: float, 卖出费率
+        - buy_min: float, 买入最低费用
+        - sell_min: float, 卖出最低费用
+        - slipage: float, 滑点
 
     Returns
     -------
@@ -205,30 +267,13 @@ def get_selling_result(prices: np.ndarray,
     else:
         a_sold = np.trunc(a_to_sell / moq) * moq
     sold_values = a_sold * prices
+    sell_fix = cost_params[1]
     if sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
-        rates = calculate_fees(trade_values=sold_values,
-                               is_buying=False,
-                               fixed_fees=False,
-                               buy_fix=buy_fix,
-                               sell_fix=sell_fix,
-                               buy_rate=buy_rate,
-                               sell_rate=sell_rate,
-                               buy_min=buy_min,
-                               sell_min=sell_min,
-                               slipage=slipage)
+        rates = calculate_fees(trade_values=sold_values, cost_params=cost_params, is_buying=False, fixed_fees=False)
         cash_gained = (-1 * sold_values * (1 - rates))
         fees = -(sold_values * rates)
     else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
-        fixed_fees = calculate_fees(trade_values=sold_values,
-                                    is_buying=False,
-                                    fixed_fees=True,
-                                    buy_fix=buy_fix,
-                                    sell_fix=sell_fix,
-                                    buy_rate=buy_rate,
-                                    sell_rate=sell_rate,
-                                    buy_min=buy_min,
-                                    sell_min=sell_min,
-                                    slipage=slipage)
+        fixed_fees = calculate_fees(trade_values=sold_values, cost_params=cost_params, is_buying=False, fixed_fees=True)
         fees = np.where(a_sold, fixed_fees, 0)
         cash_gained = - sold_values - fees
     return a_sold, cash_gained, fees
@@ -238,13 +283,8 @@ def get_selling_result(prices: np.ndarray,
 def get_purchase_result(prices: np.ndarray,
                         cash_to_spend: np.ndarray,
                         moq,
-                        buy_fix,
-                        sell_fix,
-                        buy_rate,
-                        sell_rate,
-                        buy_min,
-                        sell_min,
-                        slipage):
+                        cost_params: np.ndarray,
+                        ) -> (np.ndarray, np.ndarray, np.ndarray):
     """获得购买资产时的要素
 
     Parameters
@@ -252,13 +292,14 @@ def get_purchase_result(prices: np.ndarray,
     prices: ndarray, 投资组合中每只股票的当前单价
     cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
     moq: float, 最小交易单位
-    buy_fix: float, 买入固定费用
-    sell_fix: float, 卖出固定费用
-    buy_rate: float, 买入费率
-    sell_rate: float, 卖出费率
-    buy_min: float, 买入最低费用
-    sell_min: float, 卖出最低费用
-    slipage: float, 滑点
+    cost_params: np.ndarray, 交易费用参数，包括以下参数：
+        - buy_fix: float, 买入固定费用
+        - sell_fix: float, 卖出固定费用
+        - buy_rate: float, 买入费率
+        - sell_rate: float, 卖出费率
+        - buy_min: float, 买入最低费用
+        - sell_min: float, 卖出最低费用
+        - slipage: float, 滑点
 
     Returns
     -------
@@ -267,22 +308,14 @@ def get_purchase_result(prices: np.ndarray,
     cash_spent: ndarray,     花费的总金额，包括购买成本在内
     fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
     """
-    # buy_min = buy_min
-    # buy_fix = buy_fix
+
+    buy_fix = cost_params[0]
+    buy_min = cost_params[4]
     if buy_fix == 0.:
         # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
         # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
         cash_to_spend = np.where(np.abs(cash_to_spend) < buy_min, 0, cash_to_spend)
-        rates = calculate_fees(trade_values=cash_to_spend,
-                               is_buying=True,
-                               fixed_fees=False,
-                               buy_fix=buy_fix,
-                               sell_fix=sell_fix,
-                               buy_rate=buy_rate,
-                               sell_rate=sell_rate,
-                               buy_min=buy_min,
-                               sell_min=sell_min,
-                               slipage=slipage)
+        rates = calculate_fees(trade_values=cash_to_spend, cost_params=cost_params, is_buying=True, fixed_fees=False)
         # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
         if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
             a_purchased = np.where(prices,
@@ -300,16 +333,7 @@ def get_purchase_result(prices: np.ndarray,
         # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将绝对值小于buy_fix的金额置0
         # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
         cash_to_spend = np.where(np.abs(cash_to_spend) < buy_fix, 0, cash_to_spend)
-        fixed_fees = calculate_fees(trade_values=cash_to_spend,
-                                    is_buying=True,
-                                    fixed_fees=True,
-                                    buy_fix=buy_fix,
-                                    sell_fix=sell_fix,
-                                    buy_rate=buy_rate,
-                                    sell_rate=sell_rate,
-                                    buy_min=buy_min,
-                                    sell_min=sell_min,
-                                    slipage=slipage)
+        fixed_fees = calculate_fees(trade_values=cash_to_spend, cost_params=cost_params, is_buying=True, fixed_fees=True)
         if moq == 0.:
             a_purchased = np.fmax(np.where(prices,
                                            (cash_to_spend - fixed_fees) / prices,
