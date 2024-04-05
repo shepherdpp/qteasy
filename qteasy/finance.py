@@ -225,8 +225,8 @@ def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying:
                 # return sell_rate - slipage * trade_values
                 return cost_params[3] - cost_params[6] * trade_values
             else:
-                # min_rate = -sell_min / trade_values
-                min_rate = -cost_params[5] / trade_values
+                # min_rate = - sell_min / trade_values
+                min_rate = - cost_params[5] / trade_values
                 # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
                 min_rate[np.isinf(min_rate)] = 0
                 # return max(sell_rate, min_rate) - slipage * trade_values
