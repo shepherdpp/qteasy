@@ -37,15 +37,15 @@ from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
 
 
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 version_info = Namespace(
         major=1,
         minor=1,
         patch=4,
         short=(1, 1),
-        full=(1, 1, 7),
-        string='1.1.7',
-        tuple=('1', '1', '7'),
+        full=(1, 1, 8),
+        string='1.1.8',
+        tuple=('1', '1', '8'),
         releaselevel='beta',
 )
 

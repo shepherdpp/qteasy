@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.1.8 (2024-04-05)
+- Improved compatibility for higher versions of python from 3.9 up to 3.12
+- Fixed a bug that will cause failure of strategy optimizations in python 3.10 and above
+- Corrected and improved a few error messages
+
 ## 1.1.7 (2024-04-03)
 - Now qteasy can be installed in higher versions of python from 3.9 up to 3.12
 
