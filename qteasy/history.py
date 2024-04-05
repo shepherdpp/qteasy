@@ -101,13 +101,13 @@ class HistoryPanel():
         values: ndarray
             一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
             如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-        levels: Iterables
+        levels: list or tuple
             HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
-        rows: Iterables
+        rows: list or tuple
             HistoryPanel的时间日期标签。
             datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
             行标签代表每一条数据对应的历史时间戳
-        columns: Iterables
+        columns: list or tuple
             HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
         """
 
@@ -1684,16 +1684,21 @@ def dataframe_to_hp(
     """
 
     available_column_types = ['shares', 'htypes', None]
-    from collections import Iterable
-    assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
+    if not isinstance(df, pd.DataFrame):
+        msg = f'Input df should be pandas DataFrame! got {type(df)} instead.'
+        raise TypeError(msg)
     if hdates is None:
         hdates = df.rename(index=pd.to_datetime).index
-    assert isinstance(hdates, Iterable), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
+    if not isinstance(hdates, (list, tuple)):
+        msg = f'TypeError, hdates should be list or tuple, got {type(hdates)} instead.'
+        raise TypeError(msg)
     index_count = len(hdates)
-    assert index_count == len(df.index), \
-        f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
-    assert column_type in available_column_types, f'column_type should be either "shares" or "htypes", ' \
-                                                  f'got {type(column_type)} instead!'
+    if not index_count == len(df.index):
+        msg = f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
+        raise ValueError(msg)
+    if not column_type in available_column_types:
+        msg = f'column_type should be either "shares" or "htypes", got {type(column_type)} instead!'
+        raise ValueError(msg)
     # TODO: Temp codes, implement this method when column_type is not given -- the column type should be infered
     #  by the input combination of shares and htypes
     if column_type is None:  # try to infer a proper column type
@@ -1732,7 +1737,8 @@ def dataframe_to_hp(
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
+            assert isinstance(shares, (list, tuple)), f'TypeError: levels should be list or tuple, ' \
+                                                      f'got {type(shares)} instead.'
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         if htypes is None:
@@ -1751,7 +1757,8 @@ def dataframe_to_hp(
             assert len(htypes) == len(df.columns), \
                 f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(htypes, Iterable), f'TypeError: levels should be iterable, got {type(htypes)} instead.'
+            assert isinstance(htypes, (list, tuple)), f'TypeError: levels should be list or tuple, ' \
+                                                      f'got {type(htypes)} instead.'
             assert len(htypes) == len(df.columns), \
                 f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         assert shares is not None, f'InputError, shares should be given when they can not inferred'
