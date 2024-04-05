@@ -335,7 +335,12 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
         alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
         # 当回测期间小于1年时，填充空白alpha值
         looped_value['alpha'] = np.nan
-        looped_value['alpha'].iloc[-1] = alpha
+        # looped_value['alpha'].iloc[-1] = alpha  # Chained assignment is not allowed soon
+        looped_value.at[looped_value.index[-1], 'alpha'] = alpha # use .at to avoid chained assignment
+        # following usage also works
+        # looped_value.loc[looped_value.index[-1], 'alpha'] = alpha
+        # or
+        # looped_value.iat[-1, looped_value.columns.get_loc('alpha')] = alpha
     else:  # loop_len > 250
         # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
@@ -388,7 +393,8 @@ def eval_beta(looped_value, reference_value, reference_data):
         ret_dev = looped_value['pct_change'].var()
         beta = looped_value['pct_change'].cov(ref_ret) / ret_dev
         looped_value['beta'] = np.nan
-        looped_value['beta'].iloc[-1] = beta
+        # looped_value['beta'].iloc[-1] = beta  # Chained assignment is not allowed soon
+        looped_value.at[looped_value.index[-1], 'beta'] = beta  # use .at to avoid chained assignment
         return beta
 
 
@@ -413,7 +419,8 @@ def eval_sharp(looped_value, riskfree_interest_rate: float = 0.0035):
         yearly_return = ret.mean() * 250
         sharp = (yearly_return - riskfree_interest_rate) / volatility
         looped_value['sharp'] = np.nan
-        looped_value['sharp'].iloc[-1] = sharp
+        # looped_value['sharp'].iloc[-1] = sharp  # Chained assignment is not allowed soon
+        looped_value.at[looped_value.index[-1], 'sharp'] = sharp  # use .at to avoid chained assignment
         return sharp
     else:  # loop_len > 250
         roll_yearly_return = ret.rolling(250).mean() * 250
@@ -450,7 +457,8 @@ def eval_volatility(looped_value, logarithm: bool = True):
     else:
         volatility = ret.std() * np.sqrt(250)
         looped_value['volatility'] = np.nan
-        looped_value['volatility'].iloc[-1] = volatility
+        # looped_value['volatility'].iloc[-1] = volatility  # Chained assignment is not allowed soon
+        looped_value.at[looped_value.index[-1], 'volatility'] = volatility  # use .at to avoid chained assignment
         return volatility
 
 
@@ -498,7 +506,8 @@ def eval_calmar(looped_value):
         ret = value[-1] / value[0] - 1
         calmar = ret / drawdown.max()
         looped_value['calmar'] = np.nan
-        looped_value['calmar'].iloc[-1] = calmar
+        # looped_value['calmar'].iloc[-1] = calmar  # Chained assignment is not allowed soon
+        looped_value.at[looped_value.index[-1], 'calmar'] = calmar  # use .at to avoid chained assignment
         return calmar
 
 
@@ -583,7 +592,7 @@ def eval_fv(looped_val):
     if 'value' not in looped_val:
         raise KeyError(f'the key \'value\' can not be found in given looped value!')
 
-    perf = looped_val['value'].iloc[-1]
+    perf = looped_val.at[looped_val.index[-1], 'value']
     return perf
 
 

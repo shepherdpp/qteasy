@@ -1357,7 +1357,11 @@ def _trade_time_index(start=None,
         if pd.isna(trade_cal.iloc[0]):
             date = pd.to_datetime(time_index[0].date())
             trade_cal.iloc[0] = calendar.loc[date]
-        trade_cal = trade_cal.fillna(method='ffill')
+
+        # Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or
+        # obj.bfill() instead.
+        # trade_cal = trade_cal.fillna(method='ffill')
+        trade_cal = trade_cal.ffill()
         time_index = trade_cal.loc[trade_cal == 1].index
 
     # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index

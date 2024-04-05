@@ -190,12 +190,14 @@ class Space:
     def volume(self):
         """输出空间的尺度，输出每个维度的跨度之乘积"""
         s = [ax.size for ax in self._axis]
-        return np.product(s)
+        # return np.product(s)  # np.product() will be deprecated in the future
+        return np.prod(s)
 
     @property
     def count(self):
         s = [ax.count for ax in self._axis]
-        return np.product(s)
+        # return np.product(s)  # np.product() will be deprecated in the future
+        return np.prod(s)
 
     def __repr__(self):
         output = []
