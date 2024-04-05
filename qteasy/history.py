@@ -1689,9 +1689,9 @@ def dataframe_to_hp(
         raise TypeError(msg)
     if hdates is None:
         hdates = df.rename(index=pd.to_datetime).index
-    if not isinstance(hdates, (list, tuple)):
-        msg = f'TypeError, hdates should be list or tuple, got {type(hdates)} instead.'
-        raise TypeError(msg)
+    # if not isinstance(hdates, (list, tuple)):
+    #     msg = f'TypeError, hdates should be list or tuple, got {type(hdates)} instead.'
+    #     raise TypeError(msg)
     index_count = len(hdates)
     if not index_count == len(df.index):
         msg = f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
@@ -1728,19 +1728,15 @@ def dataframe_to_hp(
                     column_type = 'shares'
             except:
                 raise ValueError(f'shares should be a list or a string, got {type(shares)} instead')
-        # print(f'got None in function for column_type, column type is set to {column_type}')
+
     if column_type == 'shares':
         if shares is None:
             shares = df.columns
-        elif isinstance(shares, str):
+        if isinstance(shares, str):
             shares = str_to_list(shares, sep_char=',')
-            assert len(shares) == len(df.columns), \
-                f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
-        else:
-            assert isinstance(shares, (list, tuple)), f'TypeError: levels should be list or tuple, ' \
-                                                      f'got {type(shares)} instead.'
-            assert len(shares) == len(df.columns), \
-                f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
+        if not len(shares) == len(df.columns):
+            msg = f'Can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
+            raise ValueError(msg)
         if htypes is None:
             raise KeyError(f', Please provide a valid name for the htype of the History Panel')
         assert isinstance(htypes, str), \

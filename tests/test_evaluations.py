@@ -371,19 +371,19 @@ class TestEvaluations(unittest.TestCase):
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
         # test max drawdown == 0:
         # TODO: investigate: how does divide by zero change?
-        self.assertAlmostEquals(eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
+        self.assertAlmostEqual(eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[1], 14)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[2], 50)
 
     # noinspection PyTypeChecker
     def test_info_ratio(self):
         reference = self.test_data1
-        self.assertAlmostEquals(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
-        self.assertAlmostEquals(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
-        self.assertAlmostEquals(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
-        self.assertAlmostEquals(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
-        self.assertAlmostEquals(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
-        self.assertAlmostEquals(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
 
     def test_volatility(self):
         self.assertAlmostEqual(eval_volatility(self.test_data1), 0.748646166)
@@ -507,7 +507,7 @@ class TestEvaluations(unittest.TestCase):
                                         0.34160916, 0.33811193, 0.33822709, 0.3391685, 0.33883381])
         test_volatility = eval_volatility(self.long_data)
         test_volatility_roll = self.long_data['volatility'].values
-        self.assertAlmostEqual = (test_volatility, np.nanmean(expected_volatility))
+        self.assertAlmostEqual(test_volatility, np.nanmean(expected_volatility))
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
     # noinspection PyCallingNonCallable
@@ -628,12 +628,12 @@ class TestEvaluations(unittest.TestCase):
 
     def test_beta(self):
         reference = self.test_data1
-        self.assertAlmostEquals(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
-        self.assertAlmostEquals(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
-        self.assertAlmostEquals(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
-        self.assertAlmostEquals(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
-        self.assertAlmostEquals(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
-        self.assertAlmostEquals(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
+        self.assertAlmostEqual(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
+        self.assertAlmostEqual(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
+        self.assertAlmostEqual(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
+        self.assertAlmostEqual(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
+        self.assertAlmostEqual(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
+        self.assertAlmostEqual(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
 
         self.assertRaises(TypeError, eval_beta, [1, 2, 3], reference, 'value')
         self.assertRaises(TypeError, eval_beta, self.test_data3, [1, 2, 3], 'value')
@@ -748,12 +748,12 @@ class TestEvaluations(unittest.TestCase):
 
     def test_alpha(self):
         reference = self.test_data1
-        self.assertAlmostEquals(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
-        self.assertAlmostEquals(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
-        self.assertAlmostEquals(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
-        self.assertAlmostEquals(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
-        self.assertAlmostEquals(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
-        self.assertAlmostEquals(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
+        self.assertAlmostEqual(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
+        self.assertAlmostEqual(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
+        self.assertAlmostEqual(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
+        self.assertAlmostEqual(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
+        self.assertAlmostEqual(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
+        self.assertAlmostEqual(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
 
         # 测试长数据的alpha计算
         expected_alpha = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -870,23 +870,23 @@ class TestEvaluations(unittest.TestCase):
     def test_benchmark(self):
         reference = self.test_data1
         tr, yr = eval_benchmark(self.test_data2, reference, 'value')
-        self.assertAlmostEquals(tr, 0.19509091)
-        self.assertAlmostEquals(yr, 0.929154957)
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data3, reference, 'value')
-        self.assertAlmostEquals(tr, 0.19509091)
-        self.assertAlmostEquals(yr, 0.929154957)
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data4, reference, 'value')
-        self.assertAlmostEquals(tr, 0.19509091)
-        self.assertAlmostEquals(yr, 0.929154957)
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data5, reference, 'value')
-        self.assertAlmostEquals(tr, 0.19509091)
-        self.assertAlmostEquals(yr, 0.929154957)
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data6, reference, 'value')
-        self.assertAlmostEquals(tr, 0.19509091)
-        self.assertAlmostEquals(yr, 0.929154957)
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data7, reference, 'value')
-        self.assertAlmostEquals(tr, 0.19509091)
-        self.assertAlmostEquals(yr, 0.929154957)
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
 
     def test_evaluate(self):
         """ 测试回测结果评价函数"""
