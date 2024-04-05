@@ -37,7 +37,6 @@ class TestDataSource(unittest.TestCase):
         self.data_test_dir = 'data_test/'
         # 测试数据不会放在默认的data路径下，以免与已有的文件混淆
         # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
-        # TODO: do not explicitly leave password and user in the code
         from qteasy import QT_CONFIG
 
         print('preparing test data sources with configurations...')
@@ -139,6 +138,11 @@ class TestDataSource(unittest.TestCase):
             'vol':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
             'amount':     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]
         })
+
+        # 删除datasource目录下可能存在的所有文件
+        for ds in [self.ds_csv, self.ds_hdf, self.ds_fth]:
+            for f in os.listdir(ds.file_path):
+                os.remove(os.path.join(ds.file_path, f))
 
     def test_properties(self):
         """test properties"""
@@ -961,6 +965,8 @@ class TestDataSource(unittest.TestCase):
             for j in range(cols):
                 if pd.isna(saved_values[i, j]):
                     self.assertTrue(pd.isna(loaded_values[i, j]))
+                elif isinstance(saved_values[i, j], pd.Timestamp):
+                    self.assertEqual(saved_values[i, j].date(), loaded_values[i, j])
                 else:
                     self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
@@ -2171,33 +2177,33 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(test_shuffled_signal_data['price'], res['price'])
                 self.assertEqual(test_shuffled_signal_data['qty'], res['qty'])
 
-            # 测试传入无效的id时是否引发KeyError异常
-            print(f'test passing invalid id to read_sys_table_data')
-            res = ds.read_sys_table_data(table, record_id=-1)
-            self.assertIsNone(res)
-            res = ds.read_sys_table_data(table, record_id=0)
-            self.assertIsNone(res)
-            res = ds.read_sys_table_data(table, record_id=999)
-            self.assertIsNone(res)
+                # 测试传入无效的id时是否引发KeyError异常
+                print(f'test passing invalid id to read_sys_table_data')
+                res = ds.read_sys_table_data(table, record_id=-1)
+                self.assertIsNone(res)
+                res = ds.read_sys_table_data(table, record_id=0)
+                self.assertIsNone(res)
+                res = ds.read_sys_table_data(table, record_id=999)
+                self.assertIsNone(res)
 
-            # 测试传入无效的表名时是否引发KeyError异常
-            with self.assertRaises(KeyError):
-                ds.read_sys_table_data('invalid_table')
+                # 测试传入无效的表名时是否引发KeyError异常
+                with self.assertRaises(KeyError):
+                    ds.read_sys_table_data('invalid_table')
 
-            # 测试传入无效的kwargs时是否引发KeyError异常
-            with self.assertRaises(KeyError):
-                ds.read_sys_table_data('test_table', invalid_column='test')
+                # 测试传入无效的kwargs时是否引发KeyError异常
+                with self.assertRaises(KeyError):
+                    ds.read_sys_table_data('test_table', invalid_column='test')
 
-            # 测试写入不正确的dict时是否返回错误
-            print(f'test writing wrong data fields into table')
-            with self.assertRaises(Exception):
-                ds.insert_sys_table_data(
-                    table,
-                    **{
-                        'wrong_key1': 'wrong_value',
-                        'wrong_key2': 321,
-                    }
-                )
+                # 测试写入不正确的dict时是否返回错误
+                print(f'test writing wrong data fields into table')
+                with self.assertRaises(Exception):
+                    ds.insert_sys_table_data(
+                        table,
+                        **{
+                            'wrong_key1': 'wrong_value',
+                            'wrong_key2': 321,
+                        }
+                    )
 
         # 测试读取指定id的记录
         # 循环使用所有的示例数据在所有的sys表上进行测试，测试覆盖所有的source_type

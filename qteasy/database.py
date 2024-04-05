@@ -2527,7 +2527,7 @@ class DataSource:
                     import tables
                 except ImportError:
                     msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
-                          f'\'hdf\'. Use pip or conda to install pytables: $ pip install tables'
+                          f'\'hdf\'. Please install pytables: $ conda install pytables'
                     raise ImportError(msg)
                 file_type = 'hdf'
             if file_type in ['feather', 'fth']:
@@ -2731,7 +2731,10 @@ class DataSource:
 
         if self.file_type == 'csv':
             # 这里针对csv文件进行了优化，通过分块读取文件，避免当文件过大时导致读取异常
-            df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)  # TODO: add try to escape file reading errors
+            try:
+                df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
+            except Exception as e:
+                raise RuntimeError(f'{e}, file reading error encountered.')
             df_picker = (chunk for chunk in df_reader)
             if (share_like_pk is not None) and (date_like_pk is not None):
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
@@ -2749,11 +2752,25 @@ class DataSource:
 
         if self.file_type == 'hdf':
             # TODO: hdf5/feather的大文件读取尚未优化
-            df = pd.read_hdf(file_path_name, 'df')  # TODO: add try to escape file reading errors
+            try:
+                df = pd.read_hdf(file_path_name, 'df')
+            except ValueError as e:
+                if 'pickle protocol: 5' in e.__str__():  # check when the file is written in a higher pickle protocol
+                    msg = f'File {file_name} is written in a higher version of python which uses pickle protocol 5, ' \
+                            f'to avoid this error, install pickle5 package and re-save the file.'
+                    raise EnvironmentError(msg)
+                else:
+                    raise RuntimeError(f'{e}, file reading error encountered.')
+            except Exception as e:
+                raise RuntimeError(f'{e}, file reading error encountered.')
+
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'fth':
             # TODO: feather大文件读取尚未优化
-            df = pd.read_feather(file_path_name)  # TODO: add try to escape file reading errors
+            try:
+                df = pd.read_feather(file_path_name)
+            except Exception as e:
+                raise RuntimeError(f'{e}, file reading error encountered.')
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
 

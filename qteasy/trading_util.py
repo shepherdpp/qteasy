@@ -1357,7 +1357,11 @@ def _trade_time_index(start=None,
         if pd.isna(trade_cal.iloc[0]):
             date = pd.to_datetime(time_index[0].date())
             trade_cal.iloc[0] = calendar.loc[date]
-        trade_cal = trade_cal.fillna(method='ffill')
+
+        # Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or
+        # obj.bfill() instead.
+        # trade_cal = trade_cal.fillna(method='ffill')
+        trade_cal = trade_cal.ffill()
         time_index = trade_cal.loc[trade_cal == 1].index
 
     # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
@@ -1383,7 +1387,8 @@ def _trade_time_index(start=None,
         year:       A-DEC/...
         由于周、季、年三种情况存在复合字符串，因此需要split
     '''
-    if freq_str[-1:].lower() in ['t', 'h']:
+    if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:] in ['min']):
+        # freq_str for min in pandas 2.0 is 'T', in pandas 2.2 is 'MIN'
         idx_am = time_index.indexer_between_time(
                 start_time=start_am,
                 end_time=end_am,
@@ -1474,6 +1479,8 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
                 all_data_types[asset_type.lower()] for asset_type in asset_types
             ),
     )
+    if all_basics.empty:
+        return ['N/A'] * len(symbols)
     try:
         names_found = all_basics.reindex(index=symbols)["name"].tolist()
     except Exception as e:

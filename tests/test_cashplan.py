@@ -43,9 +43,9 @@ class TestCashPlan(unittest.TestCase):
         self.cp2.info()
         self.cp3.info()
         # test assersion errors
-        self.assertRaises(AssertionError, qt.CashPlan, '2016-01-01', [10000, 10000])
-        self.assertRaises(AssertionError, qt.CashPlan, '', '')
-        self.assertRaises(AssertionError, qt.CashPlan, '', [])
+        self.assertRaises(ValueError, qt.CashPlan, '2016-01-01', [10000, 10000])
+        self.assertRaises(TypeError, qt.CashPlan, '', '')
+        self.assertRaises(ValueError, qt.CashPlan, '', [])
         self.assertRaises(KeyError, qt.CashPlan, '2020-20-20', 10000)
         # test empty cash plan
         empty = CashPlan([], [])

@@ -2904,10 +2904,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0]])
 
-        side_by_side_array = np.array([[i, out_line, sig_line]
+        side_by_side_array = [[i, out_line, sig_line]
                                        for
                                        i, out_line, sig_line
-                                       in zip(range(len(output)), output, sigmatrix)])
+                                       in zip(range(len(output)), output, sigmatrix)]
+        # side_by_side_array = np.array(side_by_side_array)
         print(f'output and signal matrix lined up side by side is \n'
               f'{side_by_side_array}')
         self.assertEqual(sigmatrix.shape, output.shape)
@@ -2993,10 +2994,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
                               [0.0, 1.0, 0.0],
                               [0.0, 1.0, 0.0]])
 
-        side_by_side_array = np.array([[i, out_line == sig_line, out_line, sig_line]
+        side_by_side_array = [[i, out_line == sig_line, out_line, sig_line]
                                        for
                                        i, out_line, sig_line
-                                       in zip(range(len(output)), output, sigmatrix)])
+                                       in zip(range(len(output)), output, sigmatrix)]
+        # side_by_side_array = np.array(side_by_side_array)
         print(f'output and signal matrix lined up side by side is \n'
               f'{side_by_side_array}')
         self.assertEqual(sigmatrix.shape, output.shape)
