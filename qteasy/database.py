@@ -3121,9 +3121,10 @@ class DataSource:
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notna(df), None)  # fill None in Dataframe will result in filling Nan since pandas v2.0
-        pd_version = pd.__version__
-        if pd_version >= '2.0':
-            df.replace(np.nan, None, inplace=True)
+        # pd_version = pd.__version__
+        # if pd_version >= '2.0':
+        #     df.replace(np.nan, None, inplace=True)
+        df.replace(np.nan, None, inplace=True)
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO "
         sql += f"`{db_table}` ("
@@ -4275,7 +4276,8 @@ class DataSource:
                 cursor.execute(sql, (db_name, table))
                 con.commit()
                 res = cursor.fetchall()
-                return res[0][0] - 1
+                # return last id if
+                return res[0][0] - 1 if res[0][0] is not None else 1
             except Exception as e:
                 raise RuntimeError(
                     f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')

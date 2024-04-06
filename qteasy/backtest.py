@@ -490,10 +490,10 @@ def apply_loop(operator: Operator,
 
     if (op_type == 'batch') and (not trade_log):
         # batch模式下调用apply_loop_core函数:
-        looped_day_indices = list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int'))
+        looped_day_indices = np.array(list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int')))
         # 2, 将invset_dict处理为两个列表：invest_date_indices, invest_amount，因为invest_dict无法被Numba处理
-        investment_date_pos = list(investment_date_pos)
-        invest_amounts = list(invest_dict.values())
+        investment_date_pos = np.array(list(investment_date_pos))
+        invest_amounts = np.array(list(invest_dict.values()))
         cashes, fees, values, amounts_matrix = apply_loop_core(share_count,
                                                                looped_day_indices,
                                                                inflation_factors,
@@ -764,8 +764,8 @@ def apply_loop_core(share_count: int,
     available_cash = 0.  # 每期可用现金总额
     own_amounts = np.zeros(shape=(share_count,))  # 投资组合中各个资产的持有数量，初始值为全0向量
     available_amounts = np.zeros(shape=(share_count,))  # 每期可用的资产数量
-    cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
-    stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
+    cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列  # TODO: 使用numpy数组代替list
+    stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列  # TODO: 使用numpy数组代替list
     signal_count = len(op_list_bt_indices)
     cashes = np.empty(shape=(signal_count,))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = np.empty(shape=(signal_count,))  # 交易费用，记录每个操作时点产生的交易费用
