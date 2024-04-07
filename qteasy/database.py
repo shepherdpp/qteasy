@@ -5500,7 +5500,7 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     1    4
     2    5
     3    6
-
+    TODO: test this function
     """
 
     if not isinstance(df, pd.DataFrame):
@@ -5537,7 +5537,7 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     return df
 
 
-def set_datetime_format_frame(df, primary_key, pk_dtypes):
+def set_datetime_format_frame(df, primary_key: [str], pk_dtypes: [str]) -> None:
     """ 根据primary_key的rule为df的主键设置正确的时间日期类型
 
     Parameters
@@ -5578,12 +5578,14 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     1970-01-01 00:00:00.000000003    6
 
     """
-    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
-    if ("date" in pk_dtypes) or ("TimeStamp" in pk_dtypes):
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date", "datetime"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    datetime_dtypes = ['date', 'datetime', 'TimeStamp']
+
+    if any(dtype in pk_dtypes for dtype in datetime_dtypes):
         # 需要设置正确的时间日期格式：
         # 有时候pk会包含多列，可能有多个时间日期，因此需要逐个设置
         for pk_item, dtype in zip(primary_key, pk_dtypes):
-            if dtype in ['date', 'TimeStamp']:
+            if dtype in datetime_dtypes:
                 df[pk_item] = pd.to_datetime(df[pk_item])
     return None
 
