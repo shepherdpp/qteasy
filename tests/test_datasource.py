@@ -2306,6 +2306,8 @@ class TestDataSource(unittest.TestCase):
                 print(f'\nreading data with "id = {id_to_read}"...\n'
                       f'following data are read from table {table}\n'
                       f'{res}\n')
+                # if res is None:
+                #     import pdb; pdb.set_trace()
                 self.assertIsNotNone(res)
                 for origin, read in zip(datas[id_to_read].values(), res.values()):
                     print(f'origin: {origin}->{type(origin)}, read: {read}->{type(read)}')
