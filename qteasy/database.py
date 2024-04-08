@@ -3121,10 +3121,10 @@ class DataSource:
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notna(df), None)  # fill None in Dataframe will result in filling Nan since pandas v2.0
-        # pd_version = pd.__version__
-        # if pd_version >= '2.0':
-        #     df.replace(np.nan, None, inplace=True)
-        df.replace(np.nan, None, inplace=True)
+        pd_version = pd.__version__
+        if pd_version >= '2.0':
+            df.replace(np.nan, None, inplace=True)
+        # df.replace(np.nan, None, inplace=True)  # fill Nan with None in pandas<2.0 will only fill previous value
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO "
         sql += f"`{db_table}` ("
