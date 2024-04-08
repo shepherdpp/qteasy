@@ -61,10 +61,10 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
 
-    alpha = GridTrade(pars=(0.3, 2000, 0.0),  # 当基准网格为0时，代表首次运行，此时买入1000股，并设置当前价为基准网格
+    alpha = GridTrade(pars=(0.35, 2000, 40.3),  # 当基准网格为0时，代表首次运行，此时买入1000股，并设置当前价为基准网格
                       par_count=3,
                       par_types=['float', 'int', 'float'],
-                      par_range=[(0.1, 2), (100, 3000), (0, 40)],
+                      par_range=[(0.1, 2), (100, 3000), (0, 400)],
                       name='GridTrade',
                       description='网格交易策略，当前股票价格波动幅度超过网格尺寸时，产生卖出或买入交易信号，并更新网格',
                       strategy_run_timing='close',
