@@ -3813,7 +3813,7 @@ class DataSource:
             try:
                 dnld_data = acquire_data(api_name, **kwargs)
             except Exception as e:
-                raise Exception(f'data {table} can not be acquired from tushare\n{e}')
+                raise Exception(f'{e}: data {table} can not be acquired from tushare')
         else:
             raise NotImplementedError
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
@@ -5125,9 +5125,10 @@ class DataSource:
                                                f'{total_written}wrtn in {strftime_elapsed}\n')
             except Exception as e:
                 total_written += self.update_table_data(table, dnld_data)
-                warnings.warn(f'\n{e.__class__}:{str(e)} \ndownload process interrupted at [{table}]:'
-                              f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n'
-                              f'{total_written} rows downloaded, will proceed with next table!')
+                msg = f'\n{str(e)}: \ndownload process interrupted at [{table}]:' \
+                              f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n' \
+                              f'{total_written} rows downloaded, will proceed with next table!'
+                warnings.warn(msg)
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
 
@@ -5500,7 +5501,6 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     1    4
     2    5
     3    6
-    TODO: test this function
     """
 
     if not isinstance(df, pd.DataFrame):
@@ -5511,9 +5511,12 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
-    # TODO: 增加检查：primary_key中的元素是否在df.column中存，
-    #  如果不存在，df必须有index，且index.name必须存在且与primary_key中的元素一致
-    #  否则报错
+
+    all_columns = df.columns
+    if not all(item in all_columns for item in primary_key):
+        if not all(key in df.index.names for key in primary_key):
+            msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
+            raise KeyError(msg)
 
     idx_columns = list(df.index.names)
     pk_columns = primary_key

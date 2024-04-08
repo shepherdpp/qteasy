@@ -1869,6 +1869,63 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
         self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
 
+    def test_manipulating_primary_keys(self):
+        """  testing functions that manipulate dataframes with their primary keys, including setting up primary keys in
+        index and columns, and resetting primary keys:
+        1. set_primary_key_frame
+        2. set_primary_key_index
+        """
+
+        df = pd.DataFrame(np.random.randint(0, 100, size=(10, 5)), columns=list('ABCDE'))
+        # test function set_primary_key_index()
+        print('test function set_primary_key_index()')
+        set_primary_key_index(df, ['A'], ['int'])
+        print(df)
+        self.assertEqual(df.index.name, 'A')
+        self.assertTrue(all(item in df.columns for item in ['B', 'C', 'D', 'E']))
+        print('set primary key to column A and type is float')
+        df = set_primary_key_frame(df, ['A'], ['int'])
+        print(df)
+        self.assertIsNone(df.index.name)
+        self.assertTrue(all(item in df.columns for item in ['A', 'B', 'C', 'D', 'E']))
+        print('set primary key to column A and B')
+        set_primary_key_index(df, ['A', 'B'], ['int', 'str'])
+        print(df)
+        self.assertEqual(df.index.names, ['A', 'B'])
+        self.assertTrue(all(item in df.columns for item in ['C', 'D', 'E']))
+        df = set_primary_key_frame(df, ['A', 'B'], [])
+        print(df)
+        print('set primary key to column A and C')
+        df = set_primary_key_frame(df, ['A', 'C'], ['float', 'str'])  # dtypes are not working here
+        print(df)
+        self.assertIsNone(df.index.name)
+        self.assertTrue(all(item in df.columns for item in ['A', 'C', 'B', 'D', 'E']))
+        self.assertEqual(df.columns[0], 'A')  # A should be the first column
+        self.assertEqual(df.columns[1], 'C')  # C should be the second column
+        self.assertEqual(df.A.dtype, 'int')
+        self.assertEqual(df.C.dtype, 'int')
+        # test function set_primary_key_frame()
+        print('test function set_primary_key_frame()')
+        print('set primary key to column A and type is datetime')
+        df = set_primary_key_frame(df, ['A'], ['datetime'])  # only datetime dtype will force type conversion
+        print(df)
+        self.assertIsNone(df.index.name)
+        self.assertTrue(all(item in df.columns for item in ['A', 'B', 'C', 'D', 'E']))
+        self.assertEqual(df.columns[0], 'A')  # A should be the first column
+        self.assertEqual(df.A.dtype, 'datetime64[ns]')
+
+        # test raises with wrong input
+        with self.assertRaises(TypeError):
+            set_primary_key_index('wrong_input', ['A'], ['int'])  # wrong input type
+            set_primary_key_frame('wrong_input', ['A'], ['int'])  # wrong input type
+            set_primary_key_index(df, 'A', ['int', 'str'])  # wrong input type
+            set_primary_key_frame(df, 'A', ['int', 'str'])  # wrong input type
+            set_primary_key_index(df, ['A'], 'int')  # wrong input type
+            set_primary_key_frame(df, ['A'], 'int')  # wrong input type
+        with self.assertRaises(KeyError):
+            set_primary_key_index(df, ['Not_in_frame'], ['int'])  # wrong input key
+            set_primary_key_frame(df, ['Not_in_frame'], ['int'])  # wrong input key
+
     def test_insert_read_sys_table_data(self):
         # 测试正常情况下写入及读取表的数据
         test_order_data = {

@@ -1337,6 +1337,8 @@ def _plot_test_result(opti_eval_res: list,
             p_type = config.indicator_plot_type
             # 在图表中应该舍去np.inf值，暂时将inf作为na值处理，因此可以使用dropna()去除inf值
             with pd.option_context('mode.use_inf_as_na', True):
+                # TODO: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version.
+                #  Convert inf values to NaN before operating instead.
                 opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
                 test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
                 opti_v = opti_indicator_df[name].fillna(np.nan)
