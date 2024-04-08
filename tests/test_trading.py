@@ -29,7 +29,7 @@ from qteasy.trade_recording import query_trade_orders, get_position_by_id, updat
 from qteasy.trade_recording import get_position_ids, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_account_cash_availabilities, get_account_position_availabilities
 from qteasy.trade_recording import write_trade_result, get_account_position_details, read_trade_result_by_id
-from qteasy.trade_recording import read_trade_results_by_order_id
+from qteasy.trade_recording import read_trade_results_by_order_id, delete_account
 
 
 class TestTradeRecording(unittest.TestCase):
@@ -50,7 +50,7 @@ class TestTradeRecording(unittest.TestCase):
                 db_name=QT_CONFIG['test_db_name']
         )
         # 清空测试数据源中的所有相关表格数据
-        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
+        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
             if self.test_ds.table_data_exists(table):
                 self.test_ds.drop_table_data(table)
 
@@ -436,33 +436,33 @@ class TestTradeRecording(unittest.TestCase):
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
         # test recording and reading signals
         test_signal = {
-            'pos_id': 1,
-            'direction': 'buy',
-            'order_type': 'market',
-            'qty': 300,
-            'price': 10.0,
+            'pos_id':         1,
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            300,
+            'price':          10.0,
             'submitted_time': None,
-            'status': 'created',
+            'status':         'created',
         }
         record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
-            'pos_id': 2,
-            'direction': 'buy',
-            'order_type': 'market',
-            'qty': 200,
-            'price': 10.0,
+            'pos_id':         2,
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            200,
+            'price':          10.0,
             'submitted_time': None,
-            'status': 'created',
+            'status':         'created',
         }
         record_trade_order(test_signal, data_source=self.test_ds)
         test_signal = {
-            'pos_id': 3,
-            'direction': 'sell',
-            'order_type': 'market',
-            'qty': 100,
-            'price': 10.0,
+            'pos_id':         3,
+            'direction':      'sell',
+            'order_type':     'market',
+            'qty':            100,
+            'price':          10.0,
             'submitted_time': None,
-            'status': 'created',
+            'status':         'created',
         }
         record_trade_order(test_signal, data_source=self.test_ds)
         signal = read_trade_order(1, data_source=self.test_ds)
@@ -497,24 +497,24 @@ class TestTradeRecording(unittest.TestCase):
         with self.assertRaises(TypeError):
             record_trade_order('test', data_source=self.test_ds)
         bad_signal = {
-            'account_id': 'a',
-            'pos_id': 'a',
-            'direction': 'buy',
-            'order_type': 'market',
-            'qty': 300,
-            'price': 10.0,
+            'account_id':     'a',
+            'pos_id':         'a',
+            'direction':      'buy',
+            'order_type':     'market',
+            'qty':            300,
+            'price':          10.0,
             'submitted_time': None,
         }
         with self.assertRaises(TypeError):
             record_trade_order(bad_signal, data_source=self.test_ds)
         bad_signal = {
             'account_id': 1,
-            'pos_id': 1,
-            'direction': 'buy',
+            'pos_id':     1,
+            'direction':  'buy',
             'order_type': 'market',
-            'qty': -300,
-            'price': -10.0,
-            'status': 'created',
+            'qty':        -300,
+            'price':      -10.0,
+            'status':     'created',
         }
         with self.assertRaises(RuntimeError):
             record_trade_order(bad_signal, data_source=self.test_ds)
@@ -915,7 +915,7 @@ class TestTradeRecording(unittest.TestCase):
         get_or_create_position(2, 'GOOG', 'long', self.test_ds)  # pos_id = 6, qty = 1000
         get_or_create_position(2, 'FB', 'long', self.test_ds)  # pos_id = 7
         get_or_create_position(2, 'AAPL', 'long', self.test_ds)  # pos_id = 8
-        get_or_create_position(2, 'AMZN', 'long', self.test_ds)   # pos_id = 9
+        get_or_create_position(2, 'AMZN', 'long', self.test_ds)  # pos_id = 9
         get_or_create_position(2, 'MSFT', 'long', self.test_ds)  # pos_id = 10
         get_or_create_position(2, 'GOOG', 'short', self.test_ds)  # pos_id = 11
         get_or_create_position(2, 'FB', 'short', self.test_ds)  # pos_id = 12
@@ -1246,12 +1246,12 @@ class TestTradeRecording(unittest.TestCase):
             self.test_ds.drop_table_data('sys_op_trade_results')
         # 生成一个trade_result
         trade_result = {
-            'order_id': 1,
-            'filled_qty': 100.0,
-            'price': 10.0,
+            'order_id':        1,
+            'filled_qty':      100.0,
+            'price':           10.0,
             'transaction_fee': 5.0,
-            'execution_time': pd.to_datetime('now'),
-            'canceled_qty': 0.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    0.0,
             'delivery_amount': 100.0,
             'delivery_status': 'ND',
         }
@@ -1268,24 +1268,24 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(trade_result['canceled_qty'], 0.0)
         # 再次写入两个trade_results，order_id分别为1, 2，检查是否能正确读取order_id为1的两条交易结果
         trade_result = {
-            'order_id': 1,
-            'filled_qty': 200.0,
-            'price': 10.5,
+            'order_id':        1,
+            'filled_qty':      200.0,
+            'price':           10.5,
             'transaction_fee': 5.0,
-            'execution_time': pd.to_datetime('now'),
-            'canceled_qty': 0.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    0.0,
             'delivery_amount': 200.0,
             'delivery_status': 'ND',
         }
         result_id = write_trade_result(trade_result, data_source=self.test_ds)
         self.assertEqual(result_id, 2)
         trade_result = {
-            'order_id': 2,
-            'filled_qty': 0.0,
-            'price': 10.0,
+            'order_id':        2,
+            'filled_qty':      0.0,
+            'price':           10.0,
             'transaction_fee': 5.0,
-            'execution_time': pd.to_datetime('now'),
-            'canceled_qty': 100.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    100.0,
             'delivery_amount': 0.0,
             'delivery_status': 'ND',
         }
@@ -1323,113 +1323,254 @@ class TestTradeRecording(unittest.TestCase):
             write_trade_result(None, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
-                'order_id': '1',
-                'filled_qty': 200.0,
-                'price': 10.5,
+                'order_id':        '1',
+                'filled_qty':      200.0,
+                'price':           10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': '200.0',
-                'price': 10.5,
+                'order_id':        1,
+                'filled_qty':      '200.0',
+                'price':           10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': 200.0,
-                'price': '10.5',
+                'order_id':        1,
+                'filled_qty':      200.0,
+                'price':           '10.5',
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': 200.0,
-                'price': 10.5,
+                'order_id':        1,
+                'filled_qty':      200.0,
+                'price':           10.5,
                 'transaction_fee': '5.0',
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(TypeError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': 200.0,
-                'price': 10.5,
+                'order_id':        1,
+                'filled_qty':      200.0,
+                'price':           10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': '0.0',
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    '0.0',
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
-                'order_id': -1,
-                'filled_qty': 200.0,
-                'price': 10.5,
+                'order_id':        -1,
+                'filled_qty':      200.0,
+                'price':           10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': -200.0,
-                'price': 10.5,
+                'order_id':        1,
+                'filled_qty':      -200.0,
+                'price':           10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': 200.0,
-                'price': -10.5,
+                'order_id':        1,
+                'filled_qty':      200.0,
+                'price':           -10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': 200.0,
-                'price': 10.5,
+                'order_id':        1,
+                'filled_qty':      200.0,
+                'price':           10.5,
                 'transaction_fee': -5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': 0.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    0.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
         with self.assertRaises(ValueError):
             write_trade_result({
-                'order_id': 1,
-                'filled_qty': 200.0,
-                'price': 10.5,
+                'order_id':        1,
+                'filled_qty':      200.0,
+                'price':           10.5,
                 'transaction_fee': 5.0,
-                'execution_time': pd.to_datetime('now'),
-                'canceled_qty': -100.0,
+                'execution_time':  pd.to_datetime('now'),
+                'canceled_qty':    -100.0,
                 'delivery_amount': 200.0,
                 'delivery_status': 'ND',
             }, data_source=self.test_ds)
 
+    def test_delete_account(self):
+        """ test function delete_account """
+        # create and add test accounts, positions, trade orders and trade results
+        new_account('test_user1', 100000, self.test_ds)
+        new_account('test_user2', 150000, self.test_ds)
+        get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'AMZN', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'FB', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'AMZN', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'FB', 'long', data_source=self.test_ds)
+        update_position(1, data_source=self.test_ds, qty_change=100, available_qty_change=100)
+        update_position(2, data_source=self.test_ds, qty_change=200, available_qty_change=200)
+        update_position(3, data_source=self.test_ds, qty_change=300, available_qty_change=300)
+        update_position(4, data_source=self.test_ds, qty_change=400, available_qty_change=400)
+        update_position(5, data_source=self.test_ds, qty_change=500, available_qty_change=500)
+        update_position(6, data_source=self.test_ds, qty_change=600, available_qty_change=600)
+        update_position(7, data_source=self.test_ds, qty_change=700, available_qty_change=700)
+        update_position(8, data_source=self.test_ds, qty_change=800, available_qty_change=800)
+        update_position(9, data_source=self.test_ds, qty_change=900, available_qty_change=900)
+        update_position(10, data_source=self.test_ds, qty_change=1000, available_qty_change=1000)
+        parsed_signals_batch_1 = (
+            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'sell', 'sell', 'buy', 'buy'],
+            [100, 100, 100, 100, 100],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        # create trade orders for account 1
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=parsed_signals_batch_1[0],
+                positions=parsed_signals_batch_1[1],
+                directions=parsed_signals_batch_1[2],
+                quantities=parsed_signals_batch_1[3],
+                prices=parsed_signals_batch_1[4],
+                data_source=self.test_ds,
+        )
+        orders_created = query_trade_orders(account_id=1, data_source=self.test_ds)
+        print(f'orders_written: {order_ids}\norders_read: \n{orders_created}')
+        # create trade orders for account 2
+        parsed_signals_batch_2 = (
+            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['long', 'long', 'long', 'long', 'long'],
+            ['buy', 'sell', 'sell', 'buy', 'buy'],
+            [200, 200, 200, 200, 200],
+            [60.0, 70.0, 80.0, 90.0, 100.0],
+        )
+        order_ids = save_parsed_trade_orders(
+                account_id=2,
+                symbols=parsed_signals_batch_2[0],
+                positions=parsed_signals_batch_2[1],
+                directions=parsed_signals_batch_2[2],
+                quantities=parsed_signals_batch_2[3],
+                prices=parsed_signals_batch_2[4],
+                data_source=self.test_ds,
+        )
+        orders_created = query_trade_orders(account_id=2, data_source=self.test_ds)
+        print(f'orders_written: {order_ids}\norders_read: \n{orders_created}')
+        # create trade results for account 1
+        trade_result = {
+            'order_id':        1,
+            'filled_qty':      100.0,
+            'price':           10.0,
+            'transaction_fee': 5.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    0.0,
+            'delivery_amount': 100.0,
+            'delivery_status': 'ND',
+        }
+        # 将trade_result写入datasource
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        trade_result = {
+            'order_id':        2,
+            'filled_qty':      200.0,
+            'price':           10.5,
+            'transaction_fee': 5.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    0.0,
+            'delivery_amount': 200.0,
+            'delivery_status': 'ND',
+        }
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        # create trade results for account 2
+        trade_result = {
+            'order_id':        6,
+            'filled_qty':      200.0,
+            'price':           10.0,
+            'transaction_fee': 5.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    0.0,
+            'delivery_amount': 300.0,
+            'delivery_status': 'ND',
+        }
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        trade_result = {
+            'order_id':        7,
+            'filled_qty':      200.0,
+            'price':           10.5,
+            'transaction_fee': 5.0,
+            'execution_time':  pd.to_datetime('now'),
+            'canceled_qty':    0.0,
+            'delivery_amount': 400.0,
+            'delivery_status': 'ND',
+        }
+        result_id = write_trade_result(trade_result, data_source=self.test_ds)
+        # read all data from tables and print to check
+        print(f'before deleting:')
+        accounts = self.test_ds.read_sys_table_data('sys_op_live_accounts')
+        positions = self.test_ds.read_sys_table_data('sys_op_positions')
+        orders = self.test_ds.read_sys_table_data('sys_op_trade_orders')
+        results = self.test_ds.read_sys_table_data('sys_op_trade_results')
+        print(f'accounts: \n{accounts}\npositions: \n{positions}\norders: \n{orders}\nresults: \n{results}')
+        self.assertEqual(accounts.index.to_list(), [1, 2])
+        self.assertEqual(positions.index.to_list(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        self.assertEqual(orders.index.to_list(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        self.assertEqual(results.index.to_list(), [1, 2, 3, 4])
+        # delete account 2
+        delete_account(2, data_source=self.test_ds)
+        # read all data from tables and print to check
+        print(f'after deleting:')
+        accounts = self.test_ds.read_sys_table_data('sys_op_live_accounts')
+        positions = self.test_ds.read_sys_table_data('sys_op_positions')
+        orders = self.test_ds.read_sys_table_data('sys_op_trade_orders')
+        results = self.test_ds.read_sys_table_data('sys_op_trade_results')
+        print(f'accounts: \n{accounts}\npositions: \n{positions}\norders: \n{orders}\nresults: \n{results}')
+        self.assertEqual(accounts.index.to_list(), [1])
+        self.assertEqual(positions.index.to_list(), [1, 2, 3, 4, 5])
+        self.assertEqual(orders.index.to_list(), [1, 2, 3, 4, 5])
+        self.assertEqual(results.index.to_list(), [1, 2])
+        # test fail to delete account with bad input
+        with self.assertRaises(TypeError):
+            delete_account('1', data_source=self.test_ds)
+            delete_account(None, data_source=self.test_ds)
+            delete_account(1, data_source='not_a_datasource')
+            delete_account(-1, data_source=self.test_ds)
+            delete_account(3, data_source=self.test_ds)
 
 class TestTradingUtilFuncs(unittest.TestCase):
     """ test trading util funcs """
@@ -1463,13 +1604,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(stg.strategy_run_freq, 'd')
         self.assertEqual(stg.strategy_run_timing, 'close')
         config = {
-            'market_open_time_am': '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm': '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange': 'SSE',
+            'market_open_time_am':               '09:30:00',
+            'market_close_time_pm':              '15:30:00',
+            'market_open_time_pm':               '13:00:00',
+            'market_close_time_am':              '11:30:00',
+            'exchange':                          'SSE',
             'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq': '15min',
+            'live_price_acquire_freq':           '15min',
         }
         agenda = create_daily_task_schedule(op, config)
         print(f'agenda: {agenda}')
@@ -1495,13 +1636,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         stg.strategy_run_freq = 'h'
         stg.strategy_run_timing = 'open'
         config = {
-            'market_open_time_am': '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm': '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange': 'SSE',
+            'market_open_time_am':               '09:30:00',
+            'market_close_time_pm':              '15:30:00',
+            'market_open_time_pm':               '13:00:00',
+            'market_close_time_am':              '11:30:00',
+            'exchange':                          'SSE',
             'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq': '15min',
+            'live_price_acquire_freq':           '15min',
         }
         agenda = create_daily_task_schedule(op, config)
         print(f'agenda: {agenda}')
@@ -1533,13 +1674,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         stg.strategy_run_freq = 'd'
         stg.strategy_run_timing = '10:30'
         config = {
-            'market_open_time_am': '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm': '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange': 'SSE',
+            'market_open_time_am':               '09:30:00',
+            'market_close_time_pm':              '15:30:00',
+            'market_open_time_pm':               '13:00:00',
+            'market_close_time_am':              '11:30:00',
+            'exchange':                          'SSE',
             'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq': '60min',
+            'live_price_acquire_freq':           '60min',
         }
         agenda = create_daily_task_schedule(op, config)
         print(f'agenda: {agenda}')
@@ -1585,7 +1726,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             self.test_ds.drop_table_data('sys_op_trade_results')
         # 重新创建account及trade_signal数据, position会在submit_signal中自动创建
         delivery_config = {
-            'cash_delivery_period': 0,
+            'cash_delivery_period':  0,
             'stock_delivery_period': 0,
         }
         # create test accounts
@@ -1666,11 +1807,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # 生成交易结果并逐个处理, 注意raw_results没有execution_time字段
         # signal 1 is filled with 100 shares at 60.5, transaction fee is 5.0
         raw_trade_result = {
-            'order_id': 1,
-            'filled_qty': 100,
-            'price': 60.5,
+            'order_id':        1,
+            'filled_qty':      100,
+            'price':           60.5,
             'transaction_fee': 5.0,
-            'canceled_qty': 0.0,
+            'canceled_qty':    0.0,
         }
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 1, trade signal: \n'
@@ -1721,11 +1862,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # order 2 is canceled with no transaction fee
         raw_trade_result = {
-            'order_id': 2,
-            'filled_qty': 0,
-            'price': 0.0,
+            'order_id':        2,
+            'filled_qty':      0,
+            'price':           0.0,
             'transaction_fee': 0.0,
-            'canceled_qty': 100.0,
+            'canceled_qty':    100.0,
         }
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 2, trade signal: \n'
@@ -1782,11 +1923,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # signal 3 is partially filled with 100 shares bought at 81, with transaction fee 12.5
         raw_trade_result = {
-            'order_id': 3,
-            'filled_qty': 100.0,
-            'price': 81.0,
+            'order_id':        3,
+            'filled_qty':      100.0,
+            'price':           81.0,
             'transaction_fee': 12.5,
-            'canceled_qty': 0.0,
+            'canceled_qty':    0.0,
         }
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 3, trade signal: \n'
@@ -1843,11 +1984,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # signal 4 is filled with 400 shares bought at 89.5, with transaction fee 7.5
         raw_trade_result = {
-            'order_id': 4,
-            'filled_qty': 400.0,
-            'price': 89.5,
+            'order_id':        4,
+            'filled_qty':      400.0,
+            'price':           89.5,
             'transaction_fee': 7.5,
-            'canceled_qty': 0.0,
+            'canceled_qty':    0.0,
         }
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 4, trade signal: \n'
@@ -1929,11 +2070,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # signal 7 is filled with 100 shares sold at 90.0, with transaction fee 5.5
         raw_trade_result = {
-            'order_id': 7,
-            'filled_qty': 100.0,
-            'price': 90.0,
+            'order_id':        7,
+            'filled_qty':      100.0,
+            'price':           90.0,
             'transaction_fee': 5.5,
-            'canceled_qty': 0.0,
+            'canceled_qty':    0.0,
         }
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 7, trade signal: \n'
@@ -1951,7 +2092,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
         trade_result = read_trade_result_by_id(5, data_source=self.test_ds)
         # check cash availability
         own_cash, available_cash, total_invest = get_account_cash_availabilities(1, data_source=self.test_ds)
-        self.assertEqual(own_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5 + 100 * 90.0 - 5.5)
+        self.assertEqual(own_cash,
+                         100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5 + 100 * 90.0 - 5.5)
         self.assertEqual(available_cash, 100000.0 - 100 * 60.5 - 5.0 - 100 * 81.0 - 12.5 - 400 * 89.5 - 7.5)
         self.assertAlmostEqual(total_invest, 100000.0)
         trade_signal_detail = read_trade_order_detail(7, data_source=self.test_ds)
@@ -1990,11 +2132,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # signal 9 is partially filled with 300 shares sold at 140.0, with transaction fee 65.3
         raw_trade_result = {
-            'order_id': 9,
-            'filled_qty': 300.0,
-            'price': 140.0,
+            'order_id':        9,
+            'filled_qty':      300.0,
+            'price':           140.0,
             'transaction_fee': 65.3,
-            'canceled_qty': 0.0,
+            'canceled_qty':    0.0,
         }
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 9, trade signal: \n'
@@ -2051,7 +2193,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # partially filled order 9 with 99 shares sold at 191.0, with transaction fee 23.9
         raw_trade_result = {
-            'order_id':       9,
+            'order_id':        9,
             'filled_qty':      99.0,
             'price':           191.0,
             'transaction_fee': 23.9,
@@ -2150,24 +2292,24 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_amounts = np.array([500., 500., 1000.])
         available_cash = 100000.0
         test_config = {
-            'PT_buy_threshold': 0.0,
+            'PT_buy_threshold':  0.0,
             'PT_sell_threshold': 0.0,
-            'allow_sell_short': True,
-            'trade_batch_size': 100.,
-            'sell_batch_size': 1.,
+            'allow_sell_short':  True,
+            'trade_batch_size':  100.,
+            'sell_batch_size':   1.,
         }
         # create test data for PT signal and parse it
         pt_signal = np.array([0.1, 0.1, 0.1])
         parsed_signal_elements = parse_trade_signal(
-            signals=pt_signal,
-            signal_type='pt',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=pt_signal,
+                signal_type='pt',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2176,15 +2318,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[3], [200.0, 200.0, 300.0])
         pt_signal = np.array([-0.1, 0.2, 0.3])
         parsed_signal_elements = parse_trade_signal(
-            signals=pt_signal,
-            signal_type='pt',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=pt_signal,
+                signal_type='pt',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2195,15 +2337,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # create test data for PS signal and parse it
         ps_signal = np.array([0.1, 0.1, 0.1])
         parsed_signal_elements = parse_trade_signal(
-            signals=ps_signal,
-            signal_type='ps',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=ps_signal,
+                signal_type='ps',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2212,15 +2354,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[3], [700.0, 700.0, 700.0])
         ps_signal = np.array([-1.5, -1, 0.3])
         parsed_signal_elements = parse_trade_signal(
-            signals=ps_signal,
-            signal_type='ps',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=ps_signal,
+                signal_type='ps',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2231,15 +2373,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # create test data for VS signal and parse it
         vs_signal = np.array([300, 400, 500])
         parsed_signal_elements = parse_trade_signal(
-            signals=vs_signal,
-            signal_type='vs',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=vs_signal,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2248,15 +2390,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[3], [300.0, 400.0, 500.0])
         vs_signal = np.array([-1300, 400, -500])
         parsed_signal_elements = parse_trade_signal(
-            signals=vs_signal,
-            signal_type='vs',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=vs_signal,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2266,24 +2408,24 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # test allow_sell_short = False
         test_config = {
-            'PT_buy_threshold': 0.1,
+            'PT_buy_threshold':  0.1,
             'PT_sell_threshold': -0.1,
-            'allow_sell_short': False,
-            'trade_batch_size': 0.,
-            'sell_batch_size': 0.,
+            'allow_sell_short':  False,
+            'trade_batch_size':  0.,
+            'sell_batch_size':   0.,
         }
         # test pt signal previously used
         pt_signal = np.array([-0.1, 0.2, 0.3])
         parsed_signal_elements = parse_trade_signal(
-            signals=pt_signal,
-            signal_type='pt',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=pt_signal,
+                signal_type='pt',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with signal {pt_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2293,15 +2435,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test ps signal previously used
         ps_signal = np.array([-1.5, -1, 0.3])
         parsed_signal_elements = parse_trade_signal(
-            signals=ps_signal,
-            signal_type='ps',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=ps_signal,
+                signal_type='ps',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with signal {ps_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2311,15 +2453,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test vs signal previously used
         vs_signal = np.array([-1300, 400, -500])
         parsed_signal_elements = parse_trade_signal(
-            signals=vs_signal,
-            signal_type='vs',
-            shares=shares,
-            prices=prices,
-            own_amounts=own_shares,
-            own_cash=own_cash,
-            available_amounts=available_amounts,
-            available_cash=available_cash,
-            config=test_config,
+                signals=vs_signal,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_shares,
+                own_cash=own_cash,
+                available_amounts=available_amounts,
+                available_cash=available_cash,
+                config=test_config,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2853,21 +2995,22 @@ class TestTradingUtilFuncs(unittest.TestCase):
         #         parallel=False,
         # )
         stock_basic_df = pd.DataFrame({
-            'ts_code': ['000001.SZ', '000002.SZ', '000004.SZ', '600251.SH', '000006.SZ', '000008.SZ'],
-            'symbol': ['000001', '000002', '000004', '600251', '000006', '000008'],
-            'name': ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'],
-            'area': ['深圳', '深圳', '深圳', '深圳', '深圳', '深圳'],
-            'industry': ['银行', '全国地产', '软件服务', '农药化肥', '区域地产', '其他商业'],
-            'full_name': ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'],
-            'en_name': ['Ping An Bank', 'Vanke A', 'Guohua Network Security', 'Guannong Shares', 'Shenzhen Zhenye A', 'Shenzhou High Speed Railway'],
-            'cnspell': ['PAYH', 'WK', 'GHWA', 'GN', 'SZYA', 'SZGJ'],
-            'market': ['主板', '主板', '主板', '主板', '主板', '主板'],
-            'exchange': ['SZSE', 'SZSE', 'SZSE', 'SSE', 'SZSE', 'SZSE'],
-            'curr_type': ['CNY', 'CNY', 'CNY', 'CNY', 'CNY', 'CNY'],
+            'ts_code':     ['000001.SZ', '000002.SZ', '000004.SZ', '600251.SH', '000006.SZ', '000008.SZ'],
+            'symbol':      ['000001', '000002', '000004', '600251', '000006', '000008'],
+            'name':        ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'],
+            'area':        ['深圳', '深圳', '深圳', '深圳', '深圳', '深圳'],
+            'industry':    ['银行', '全国地产', '软件服务', '农药化肥', '区域地产', '其他商业'],
+            'full_name':   ['平安银行', '万科A', '国华网安', '冠农股份', '深振业A', '神州高铁'],
+            'en_name':     ['Ping An Bank', 'Vanke A', 'Guohua Network Security', 'Guannong Shares',
+                            'Shenzhen Zhenye A', 'Shenzhou High Speed Railway'],
+            'cnspell':     ['PAYH', 'WK', 'GHWA', 'GN', 'SZYA', 'SZGJ'],
+            'market':      ['主板', '主板', '主板', '主板', '主板', '主板'],
+            'exchange':    ['SZSE', 'SZSE', 'SZSE', 'SSE', 'SZSE', 'SZSE'],
+            'curr_type':   ['CNY', 'CNY', 'CNY', 'CNY', 'CNY', 'CNY'],
             'list_status': ['L', 'L', 'L', 'L', 'L', 'L'],
-            'list_date': ['19910403', '19910129', '19910114', '19901210', '19920427', '19910625'],
+            'list_date':   ['19910403', '19910129', '19910114', '19901210', '19920427', '19910625'],
             'delist_date': ['22001231', '22001231', '22001231', '22001231', '22001231', '22001231'],
-            'is_hs': ['N', 'N', 'N', 'N', 'N', 'N'],
+            'is_hs':       ['N', 'N', 'N', 'N', 'N', 'N'],
         })
         stock_basic = self.test_ds.fetch_history_table_data(
                 table='stock_basic',
@@ -2877,19 +3020,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.test_ds.update_table_data('stock_basic', stock_basic)
 
         index_basic_df = pd.DataFrame({
-            'ts_code': ['000001.SH', '000002.SH', '000004.SH', '000006.SH', '000008.SH'],
-            'name': ['上证指数', 'A股指数', '工业指数', '地产指数', '综合指数'],
-            'fullname': ['上证指数', 'A股指数', '工业指数', '地产指数', '综合指数'],
-            'market': ['上证', '上证', '上证', '上证', '上证'],
-            'publisher': ['上证', '上证', '上证', '上证', '上证'],
-            'index_type': ['1', '1', '1', '1', '1'],
-            'category': ['1', '1', '1', '1', '1'],
-            'base_date': ['19901219', '19910129', '19910114', '19910129', '19910114'],
-            'base_point': ['100.0', '100.0', '100.0', '100.0', '100.0'],
-            'list_date': ['19910403', '19910129', '19910114', '19910129', '19910114'],
+            'ts_code':     ['000001.SH', '000002.SH', '000004.SH', '000006.SH', '000008.SH'],
+            'name':        ['上证指数', 'A股指数', '工业指数', '地产指数', '综合指数'],
+            'fullname':    ['上证指数', 'A股指数', '工业指数', '地产指数', '综合指数'],
+            'market':      ['上证', '上证', '上证', '上证', '上证'],
+            'publisher':   ['上证', '上证', '上证', '上证', '上证'],
+            'index_type':  ['1', '1', '1', '1', '1'],
+            'category':    ['1', '1', '1', '1', '1'],
+            'base_date':   ['19901219', '19910129', '19910114', '19910129', '19910114'],
+            'base_point':  ['100.0', '100.0', '100.0', '100.0', '100.0'],
+            'list_date':   ['19910403', '19910129', '19910114', '19910129', '19910114'],
             'weight_rule': ['等权', '等权', '等权', '等权', '等权'],
-            'desc': ['描述', '描述', '描述', '描述', '描述'],
-            'exp_date': ['22001231', '22001231', '22001231', '22001231', '22001231'],
+            'desc':        ['描述', '描述', '描述', '描述', '描述'],
+            'exp_date':    ['22001231', '22001231', '22001231', '22001231', '22001231'],
         })
         index_basic = self.test_ds.fetch_history_table_data(
                 table='index_basic',
@@ -2949,27 +3092,27 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print('test get_symbol_names with symbols whose basic data is now downloaded but not refreshed')
 
         fund_basic_df = pd.DataFrame({
-            'ts_code': ['000606.OF', '000291.OF'],
-            'name': ['天弘优选', '鹏华普悦'],
-            'management': ['天弘基金', '鹏华基金'],
-            'custodian': ['中国银行', '中国银行'],
-            'fund_type': ['股票型', '股票型'],
-            'found_date': ['20150130', '20150130'],
-            'due_date': ['22001231', '22001231'],
-            'list_date': ['20150130', '20150130'],
-            'issue_date': ['20150130', '20150130'],
-            'delist_date': ['22001231', '22001231'],
-            'issue_amount': ['1000000000.0', '1000000000.0'],
-            'm_fee': ['0.1', '0.1'],
-            'c_fee': ['0.1', '0.1'],
+            'ts_code':       ['000606.OF', '000291.OF'],
+            'name':          ['天弘优选', '鹏华普悦'],
+            'management':    ['天弘基金', '鹏华基金'],
+            'custodian':     ['中国银行', '中国银行'],
+            'fund_type':     ['股票型', '股票型'],
+            'found_date':    ['20150130', '20150130'],
+            'due_date':      ['22001231', '22001231'],
+            'list_date':     ['20150130', '20150130'],
+            'issue_date':    ['20150130', '20150130'],
+            'delist_date':   ['22001231', '22001231'],
+            'issue_amount':  ['1000000000.0', '1000000000.0'],
+            'm_fee':         ['0.1', '0.1'],
+            'c_fee':         ['0.1', '0.1'],
             'duration_year': ['3.0', '3.0'],
-            'p_value': ['1.0', '1.0'],
-            'min_amount': ['100.0', '100.0'],
-            'exp_return': ['0.1', '0.1'],
-            'benchmark': ['沪深300', '沪深300'],
-            'status': ['在售', '在售'],
-            'invest_type': ['股票型', '股票型'],
-            'type': ['开放式', '开放式'],
+            'p_value':       ['1.0', '1.0'],
+            'min_amount':    ['100.0', '100.0'],
+            'exp_return':    ['0.1', '0.1'],
+            'benchmark':     ['沪深300', '沪深300'],
+            'status':        ['在售', '在售'],
+            'invest_type':   ['股票型', '股票型'],
+            'type':          ['开放式', '开放式'],
         })
         fund_basic = self.test_ds.fetch_history_table_data(
                 table='fund_basic',

@@ -1227,6 +1227,15 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(df.index[1], 3)
                 self.assertEqual(df.index[2], 5)
 
+                # delete records from the table
+                ds.delete_sys_table_data(table, record_ids=[1])
+
+                df = ds.read_table_data(table)
+                print(f'df read from arr source: \n{ds.source_type}-{ds.connection_type} \nis:\n{df}')
+                self.assertEqual(df.shape[0], 2)
+                self.assertEqual(df.index[0], 3)
+                self.assertEqual(df.index[1], 5)
+
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
         ds = qt.QT_DATA_SOURCE

@@ -3183,7 +3183,10 @@ class DataSource:
         # 生成删除记录的SQL语句
         sql = f"DELETE FROM `{db_table}` WHERE "
         # 设置删除的条件
-        sql += f"`{primary_key}` IN {tuple(record_ids)}"
+        if len(record_ids) > 1:
+            sql += f"`{primary_key}` IN {tuple(record_ids)}"
+        elif len(record_ids) == 1:
+            sql += f"`{primary_key}` = {record_ids[0]}"
         import pymysql
         con = pymysql.connect(
                 host=self.host,
@@ -4506,7 +4509,7 @@ class DataSource:
         #  test_database和test_trading测试都能通过，后续完整测试
         return record_id
 
-    def delete_sys_table_data(self, table, record_ids) -> int:
+    def delete_sys_table_data(self, table: str, record_ids: (list, tuple)) -> int:
         """ 删除系统数据表中的某些记录，被删除的记录的ID使用列表或tuple传入
 
         parameters
