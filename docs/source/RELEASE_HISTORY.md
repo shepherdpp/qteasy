@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.1.9 (2024-04-09)
+- Fixed a bug that might cause error extracting minute level data from local data source
+- Improved compatibilities
+
 ## 1.1.8 (2024-04-05)
 - Improved compatibility for higher versions of python from 3.9 up to 3.12
 - Improved compatibility for higher versions of pandas (v2.2.1), numpy (1.26.4), and numba (v0.59.1)

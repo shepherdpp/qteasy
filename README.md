@@ -46,7 +46,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.1.8`
+- Latest Version: `1.1.9`
 - License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
@@ -98,14 +98,14 @@ $ pip install qteasy
 
 
 ### python 版本
-- *`python` version >= 3.6, < 3.9* 
+- *`python` version >= 3.6* 
 
 ### 安装可选依赖包
 
 `qteasy`所有必要的依赖包都可以在pip安装的同时安装好，但如果需要使用`qteasy`的全部功能，需要安装以下依赖包：
 
-- **`ta-lib: == 0.4.18`**, 用于计算技术指标
-- **`pymysql: == 1.0.2`**, 用于连接MySQL数据库,将本地数据存储到MySQL数据库（qteasy默认使用csv文件作为本地数据源，但数据量大时推荐使用mysql数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
+- **`ta-lib`**, 用于计算技术指标
+- **`pymysql`**, 用于连接MySQL数据库,将本地数据存储到MySQL数据库（qteasy默认使用csv文件作为本地数据源，但数据量大时推荐使用mysql数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
 
 ##  10分钟了解qteasy的功能
 

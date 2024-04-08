@@ -12,7 +12,7 @@
 import os
 import pandas as pd
 import numpy as np
-from numba import njit
+from numba import njit  # try taichi, which might be even faster
 
 import qteasy
 from .history import HistoryPanel

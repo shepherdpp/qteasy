@@ -46,7 +46,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.1.8`
+- Latest Version: `1.1.9`
 - License: BSD 3-Clause License
 
 `qteasy` is a quantitative trading utility package for quantitative traders, with the following features:
@@ -102,7 +102,7 @@ $ pip install qteasy
 ```
 
 ### python version
-- *`python` version >= 3.6, < 3.9* 
+- *`python` version >= 3.6* 
 
 ### Install dependencies
 
@@ -111,7 +111,7 @@ This project requires and depends on following packages:
 - *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
 - *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
 - *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance` version >= 0.11*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
+- *`mplfinance`*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
 - *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
 
 
