@@ -200,7 +200,7 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     )
 
 
-def delete_account(account_id: int, data_source = None) -> None:
+def delete_account(account_id: int, data_source=None) -> None:
     """ 删除账户，删除账户时，需要同时删除账户的持仓和交易信号。如果账户不存在，则直接返回None
     在删除账户时，同时删除账户的持仓和交易信号，如果删除账户的持仓或交易信号失败，则会回滚删除操作
 
