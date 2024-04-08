@@ -22,7 +22,7 @@ TIMEZONE = 'Asia/Shanghai'
 
 
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
-#  避免交易信号从不同的数据源中获取，导致交易信号的不一致性
+#  避免交易信号从不同的数据源中获取，导致交易信号的不一致性 ?? 这是不是最好的做法？？
 # 9 foundational functions for account and position management
 def new_account(user_name, cash_amount, data_source=None, **account_data):
     """ 创建一个新的账户
@@ -200,25 +200,78 @@ def update_account_balance(account_id, data_source=None, **cash_change):
     )
 
 
-def delete_account(id):
-    """ 删除账户
+def delete_account(account_id: int, data_source=None) -> None:
+    """ 删除账户，删除账户时，需要同时删除账户的持仓和交易信号。如果账户不存在，则直接返回None
+    在删除账户时，同时删除账户的持仓和交易信号，如果删除账户的持仓或交易信号失败，则会回滚删除操作
 
     Parameters
     ----------
-    id: int
+    account_id: int
         账户的id
+    data_source: DataSource, optional
+        进行操作的数据源, 默认为None, 表示使用默认的数据源
 
     Returns
     -------
     None
     """
 
-    import qteasy as qt
-    data_source = qt.QT_DATA_SOURCE
-    if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+    if data_source is None:
+        import qteasy as qt
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        msg = f'data_source must be a DataSource instance, got {type(data_source)} instead'
+        raise TypeError(msg)
 
-    raise NotImplementedError('This function is not implemented yet!')
+    # 检查account_id是否存在，如果不存在，则直接返回None
+    account = get_account(account_id, data_source=data_source)
+    if account is None:
+        # Nothing is deleted
+        return None
+
+    # 找出与account_id相关的所有持仓和交易订单记忆交易结果
+    positions = get_account_positions(account_id, data_source=data_source)
+    pos_ids = positions.index.tolist() if not positions.empty else []
+    orders = query_trade_orders(account_id=account_id, data_source=data_source)
+    order_ids = orders.index.tolist() if not orders.empty else []
+    results = read_trade_results_by_order_id(order_id=order_ids, data_source=data_source)
+    result_ids = results.index.tolist() if not results.empty else []
+
+    # 临时保留将要操作的完整数据表，以便回滚
+    account_table_data = data_source.read_sys_table_data('sys_op_live_accounts')
+    position_table_data = data_source.read_sys_table_data('sys_op_positions')
+    order_table_data = data_source.read_sys_table_data('sys_op_trade_orders')
+    result_table_data = data_source.read_sys_table_data('sys_op_trade_results')
+
+    # 开始删除数据：
+    print(f'Deleting account {account_id} ...')
+    print(f'Following records will be deleted: \n'
+          f'account: {account_id}\n'
+          f'positions: {pos_ids}\n'
+          f'orders: {order_ids}\n'
+          f'results: {result_ids}')
+    try:
+        # 删除账户
+        data_source.delete_sys_table_data('sys_op_live_accounts', record_ids=[account_id])
+        # 删除持仓
+        data_source.delete_sys_table_data('sys_op_positions', record_ids=pos_ids)
+        # 删除交易信号
+        data_source.delete_sys_table_data('sys_op_trade_orders', record_ids=order_ids)
+        # 删除交易结果
+        data_source.delete_sys_table_data('sys_op_trade_results', record_ids=result_ids)
+    except Exception as e:
+        # 如果删除失败，则回滚删除操作
+        data_source.drop_table_data('sys_op_live_accounts')
+        data_source.drop_table_data('sys_op_positions')
+        data_source.drop_table_data('sys_op_trade_orders')
+        data_source.drop_table_data('sys_op_trade_results')
+        data_source.write_table_data(account_table_data, 'sys_op_live_accounts')
+        data_source.write_table_data(position_table_data, 'sys_op_positions')
+        data_source.write_table_data(order_table_data, 'sys_op_trade_orders')
+        data_source.write_table_data(result_table_data, 'sys_op_trade_results')
+        import warnings
+        msg = f'Error occurred: {e}, delete account failed, rollback to previous state!'
+        warnings.warn(msg, RuntimeWarning)
 
 
 def get_position_by_id(pos_id, data_source=None):

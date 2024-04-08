@@ -296,7 +296,7 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                     # TODO: define the error to escape retry: no permission, no such file, etc.
                     exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError,]
                     error_str = str(e)
-                    if ('没有访问该接口的权限' in error_str) or ('token凭证码' in error_str):
+                    if ('没有访问该接口的权限' in error_str) or ('api init error' in error_str):
                         raise e
                     if e.__class__ in exception_to_escape:
                         raise e

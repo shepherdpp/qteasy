@@ -46,7 +46,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.1.8`
+- Latest Version: `1.1.9`
 - License: BSD 3-Clause License
 
 `qteasy` is a quantitative trading utility package for quantitative traders, with the following features:
@@ -102,6 +102,7 @@ $ pip install qteasy
 ```
 
 ### python version
+
 - *`python` version >= 3.6, < 3.13* 
 
 ### Install dependencies

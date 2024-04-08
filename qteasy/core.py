@@ -2116,7 +2116,7 @@ def run(operator, **kwargs):
 
         # 检查numpy的版本和优化算法，当numpy版本高于1.21,优化算法为2-incremental时，使用多进程计算反而会导致效率降低（原因尚待调查）
         # TODO: 临时解决办法：
-        #  1, 当numpy版本高于1.21且算法为2-incremental时，强制禁用多进程计算，并打印warning信息
+        #  1, 当numpy版本高于1.22且算法为2-incremental时，强制禁用多进程计算，并打印warning信息
         np_version = np.__version__
         if np_version >= '1.22' and how == 2:
             import warnings

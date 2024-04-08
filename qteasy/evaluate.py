@@ -643,7 +643,8 @@ def eval_return(looped_val, cash_plan):
 
     first_year = looped_val.index[0].year
     last_year = looped_val.index[-1].year
-    month_freq_code = 'ME' if pd.__version__ > '2.0' else 'M'  # freq='ME' if pandas_version > 2.0
+
+    month_freq_code = 'ME' if pd.__version__ > '2.2' else 'M'  # freq='ME' if pandas_version > 2.0
     starts = pd.date_range(start=str(first_year - 1) + '1231',
                            end=str(last_year) + '1130',
                            freq=month_freq_code) + pd.Timedelta(1, 'd')
@@ -666,7 +667,7 @@ def eval_return(looped_val, cash_plan):
                                               'Sep', 'Oct', 'Nov', 'Dec'],
                                      index=range(first_year, last_year + 1))
     # 计算每年的收益率
-    year_freq_code = 'YE' if pd.__version__ > '2.0' else 'Y'  # freq='YE' if pandas_version > 2.0
+    year_freq_code = 'YE' if pd.__version__ > '2.2' else 'Y'  # freq='YE' if pandas_version > 2.0
     starts = pd.date_range(start=str(first_year - 1) + '1231',
                            end=str(last_year) + '1130',
                            freq=year_freq_code) + pd.Timedelta(1, 'd')

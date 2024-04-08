@@ -3124,6 +3124,7 @@ class DataSource:
         pd_version = pd.__version__
         if pd_version >= '2.0':
             df.replace(np.nan, None, inplace=True)
+        # df.replace(np.nan, None, inplace=True)  # fill Nan with None in pandas<2.0 will only fill previous value
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO "
         sql += f"`{db_table}` ("
@@ -3182,7 +3183,10 @@ class DataSource:
         # 生成删除记录的SQL语句
         sql = f"DELETE FROM `{db_table}` WHERE "
         # 设置删除的条件
-        sql += f"`{primary_key}` IN {tuple(record_ids)}"
+        if len(record_ids) > 1:
+            sql += f"`{primary_key}` IN {tuple(record_ids)}"
+        elif len(record_ids) == 1:
+            sql += f"`{primary_key}` = {record_ids[0]}"
         import pymysql
         con = pymysql.connect(
                 host=self.host,
@@ -3812,7 +3816,7 @@ class DataSource:
             try:
                 dnld_data = acquire_data(api_name, **kwargs)
             except Exception as e:
-                raise Exception(f'data {table} can not be acquired from tushare\n{e}')
+                raise Exception(f'{e}: data {table} can not be acquired from tushare')
         else:
             raise NotImplementedError
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
@@ -4275,7 +4279,8 @@ class DataSource:
                 cursor.execute(sql, (db_name, table))
                 con.commit()
                 res = cursor.fetchall()
-                return res[0][0] - 1
+                # return last id if
+                return res[0][0] - 1 if res[0][0] is not None else 1
             except Exception as e:
                 raise RuntimeError(
                     f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
@@ -4504,7 +4509,7 @@ class DataSource:
         #  test_database和test_trading测试都能通过，后续完整测试
         return record_id
 
-    def delete_sys_table_data(self, table, record_ids) -> int:
+    def delete_sys_table_data(self, table: str, record_ids: (list, tuple)) -> int:
         """ 删除系统数据表中的某些记录，被删除的记录的ID使用列表或tuple传入
 
         parameters
@@ -5123,9 +5128,10 @@ class DataSource:
                                                f'{total_written}wrtn in {strftime_elapsed}\n')
             except Exception as e:
                 total_written += self.update_table_data(table, dnld_data)
-                warnings.warn(f'\n{e.__class__}:{str(e)} \ndownload process interrupted at [{table}]:'
-                              f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n'
-                              f'{total_written} rows downloaded, will proceed with next table!')
+                msg = f'\n{str(e)}: \ndownload process interrupted at [{table}]:' \
+                              f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n' \
+                              f'{total_written} rows downloaded, will proceed with next table!'
+                warnings.warn(msg)
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
 
@@ -5498,7 +5504,6 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     1    4
     2    5
     3    6
-
     """
 
     if not isinstance(df, pd.DataFrame):
@@ -5509,9 +5514,12 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     if not isinstance(pk_dtypes, list):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
-    # TODO: 增加检查：primary_key中的元素是否在df.column中存，
-    #  如果不存在，df必须有index，且index.name必须存在且与primary_key中的元素一致
-    #  否则报错
+
+    all_columns = df.columns
+    if not all(item in all_columns for item in primary_key):
+        if not all(key in df.index.names for key in primary_key):
+            msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
+            raise KeyError(msg)
 
     idx_columns = list(df.index.names)
     pk_columns = primary_key
@@ -5535,7 +5543,7 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     return df
 
 
-def set_datetime_format_frame(df, primary_key, pk_dtypes):
+def set_datetime_format_frame(df, primary_key: [str], pk_dtypes: [str]) -> None:
     """ 根据primary_key的rule为df的主键设置正确的时间日期类型
 
     Parameters
@@ -5576,12 +5584,14 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     1970-01-01 00:00:00.000000003    6
 
     """
-    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
-    if ("date" in pk_dtypes) or ("TimeStamp" in pk_dtypes):
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date", "datetime"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    datetime_dtypes = ['date', 'datetime', 'TimeStamp']
+
+    if any(dtype in pk_dtypes for dtype in datetime_dtypes):
         # 需要设置正确的时间日期格式：
         # 有时候pk会包含多列，可能有多个时间日期，因此需要逐个设置
         for pk_item, dtype in zip(primary_key, pk_dtypes):
-            if dtype in ['date', 'TimeStamp']:
+            if dtype in datetime_dtypes:
                 df[pk_item] = pd.to_datetime(df[pk_item])
     return None
 

@@ -59,3 +59,7 @@ examples/live_example.py
 docs/build/
 qteasy/__pycache__/*
 *.nbi
+*.nbc
+/qteasy/__pycache__
+qteasy/__pycache__/backtest._loop_step-23.py37m.1.nbc
+/qteasy/__pycache__

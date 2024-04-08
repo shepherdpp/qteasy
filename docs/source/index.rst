@@ -17,7 +17,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.1.8`
+- Latest Version: `1.1.9`
 - License: BSD 3-Clause
 
 Introduction
