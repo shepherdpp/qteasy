@@ -111,7 +111,37 @@ pip install pymysql
 ### 安装TA-lib (可选)
 
 `qteasy`内置了大量的技术指标，这些技术指标的计算依赖于`TA-lib`，如果需要使用`qteasy`内置的所有技术指标，需要安装`TA-lib`。
-如果跳过这一步，将只能使用以下少数几种内置策略。下面简单介绍`TA-lib`的安装方法：
+如果跳过这一步，将只能使用以下内置策略，这里有[完整的内置策略清单及详细说明参考文档](https://qteasy.readthedocs.io/zh/latest/api/Built_In.html)以及[内置交易策略回测结果](https://qteasy.readthedocs.io/zh/latest/references/1-build-in-results.html):
+
+| ID    | 策略名称    | 说明                                                                                                                                                                                                                                                 | 
+|:-------|:--------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| crossline | `TimingCrossline` | crossline择时策略类，利用长短均线的交叉确定多空状态<br />1，当短均线位于长均线上方，且距离大于l\*m%时，设置仓位目标为1<br />2，当短均线位于长均线下方，且距离大于l\*m%时，设置仓位目标为-1<br />3，当长短均线之间的距离不大于l\*m%时，设置仓位目标为0                                                                                                |
+| macd | `TimingMACD` | MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br />2，当MACD值小于0时，设置仓位目标为0                                                                                                                                                              |
+| dma | `TimingDMA` | DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0                                                                                                                                                |
+| trix | `TimingTRIX` | TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断:<br />计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：<br />1， TRIX位于MATRIX上方时，设置仓位目标为1<br />2， TRIX位于MATRIX下方时，设置仓位目标位-1                                                                                                   |
+| ssma | `SCRSSMA` | 单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例                                                                                                                                                                                                      |
+| sema | `SCRSEMA` | 单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例                                                                                                                                                                                                     |
+| dsma | `DCRSSMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于SMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                             |
+| dema | `DCRSEMA` | 双均线交叉策略——SMA均线(简单移动平均线)：<br />基于EMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例                                                                                                                                                                             |
+| slema | `SLPEMA` | 均线斜率交易策略——EMA均线(指数平滑移动平均线)：<br />基于EMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标                                                                                                                                                                                   |
+| signal_none | `SignalNone` | 空交易信号策略：不生成任何交易信号的策略                                                                                                                                                                                                                               |
+| sellrate | `SellRate` | 变化率卖出信号策略：当价格的变化率超过阈值时，产生卖出信号<br />1，当change > 0，且day日涨幅大于change时，产生-1卖出信号<br />2，当change < 0，且day日跌幅大于change时，产生-1卖出信号                                                                                                                            |
+| buyrate | `BuyRate` | 变化率买入信号策略：当价格的变化率超过阈值时，产生买入信号<br />1，当change > 0，且day日涨幅大于change时，产生1买入信号<br />2，当change < 0，且day日跌幅大于change时，产生1买入信号                                                                                                                              |
+| long | `TimingLong` | 简单择时策略，整个历史周期上固定保持多头全仓状态                                                                                                                                                                                                                           |
+| short | `TimingShort` | 简单择时策略，整个历史周期上固定保持空头全仓状态                                                                                                                                                                                                                           |
+| zero | `TimingZero` | 简单择时策略，整个历史周期上固定保持空仓状态                                                                                                                                                                                                                             |
+| all | `SelectingAll` | 保持历史股票池中的所有股票都被选中，投资比例平均分配                                                                                                                                                                                                                         |
+| select_none | `SelectingNone` | 保持历史股票池中的所有股票都不被选中，投资仓位为0                                                                                                                                                                                                                          |
+| random | `SelectingRandom` | 在每个历史分段中，按照指定的比例（p<1时）随机抽取若干股票，或随机抽取指定数量（p>=1）的股票进入投资组合，投资比例平均分配                                                                                                                                                                                   |
+| finance | `SelectingAvgIndicator` | 以股票过去一段时间内的财务指标的平均值作为选股因子选股，基础选股策略：以股票的历史指标的平均值作为选股因子，因子排序参数可以作为策略参数传入，改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入                                                                                                                                         |
+| ndaylast | `SelectingNDayLast` | 以股票N天前的价格或数据指标作为选股因子选股                                                                                                                                                                                                                             |
+| ndayavg | `SelectingNDayAvg` | 以股票过去N天的价格或数据指标的平均值作为选股因子选股                                                                                                                                                                                                                        |
+| ndayrate | `SelectingNDayRateChange` | 以股票过去N天的价格或数据指标的变动比例作为选股因子选股                                                                                                                                                                                                                       |
+| ndaychg | `SelectingNDayChange` | 以股票过去N天的价格或数据指标的变动值作为选股因子选股                                                                                                                                                                                                                        |
+| ndayvol | `SelectingNDayVolatility` | 根据股票以前N天的股价波动率作为选股因子                                                                                                                                                                                                                               |
+
+
+下面简单介绍`TA-lib`的安装方法：
 
 完整的`TA-Lib`包无法通过pip安装，因为通过`pip install ta-lib`安装的只是TA-Lib包的一个`python wrapper`, 用户必须首先安装C语言的TA-Lib才能在python中使用它。
 
