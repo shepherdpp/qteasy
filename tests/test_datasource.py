@@ -2227,14 +2227,16 @@ class TestDataSource(unittest.TestCase):
                         self.assertEqual(origin, pd.to_datetime(read))
                     else:
                         self.assertEqual(origin, read)
-                # if ds.table_data_exists(table):
-                #     ds.drop_table_data(table)
+                if ds.table_data_exists(table):
+                    ds.drop_table_data(table)
                 print(f'write and read shuffled data')
                 ds.insert_sys_table_data('sys_op_trade_orders', **test_shuffled_signal_data)
                 last_id = ds.get_sys_table_last_id('sys_op_trade_orders')
                 res = ds.read_sys_table_data('sys_op_trade_orders', record_id=last_id)
                 print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
                       f'{res}\n')
+                if res is None:
+                    import pdb; pdb.set_trace()
                 self.assertIsNotNone(res)
                 self.assertEqual(test_shuffled_signal_data['pos_id'], res['pos_id'])
                 self.assertEqual(test_shuffled_signal_data['order_type'], res['order_type'])
