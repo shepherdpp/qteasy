@@ -10,10 +10,14 @@
 # ======================================
 
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TextArea, Tree
+from textual.containers import Container, Horizontal, VerticalScroll
+from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TextArea, Tree, Digits
 
 
-class ValueDisplay(Static):
+holding_columns = ("symbol", "qty", "available", "cost", "name", "price", "value", "profit", "profit_ratio", "last")
+
+
+class ValueDisplay(Digits):
     """ A widget to display the value of a variable."""
     pass
 
@@ -71,12 +75,51 @@ class TraderApp(App):
         """Create child widgets for the app."""
         yield Header()
         yield Footer()
-        yield ValueDisplay("Total Value: 0")
-        yield SysLog()
-        yield StrategyTree(label='Strategies')
-        yield HoldingTable()
-        yield InfoPanel()
-        yield ControlPanel()
+        yield VerticalScroll(
+            Container(
+                Horizontal(
+                    ValueDisplay("123456.78", id='cash'),
+                    ValueDisplay("123456.78", id='value'),
+                    InfoPanel(id='info'),
+                ),
+                Horizontal(
+                    HoldingTable(id='holdings'),
+                    StrategyTree(label='Strategies'),
+                ),
+                SysLog(id='log'),
+            ),
+            Container(
+                    ControlPanel(id='control'),
+            )
+        )
+
+    def on_mount(self) -> None:
+        """Actions to perform after mounting the app."""
+        # initialize widgets
+
+        # get the holdings from the trader
+        holdings = self.query_one(HoldingTable)
+        holdings.add_columns(*holding_columns)
+        pos = self.trader.account_position_info
+        if not pos.empty:
+            import numpy as np
+            pos.replace(np.nan, 0, inplace=True)
+            list_tuples = list(pos.itertuples(name=None))
+            holdings.add_row(*list_tuples[0])
+
+        # get the strategies from the trader
+        tree: Tree[dict] = self.query_one(StrategyTree)
+        tree.root.expand()
+        close = tree.root.add("Timing: close", expand=True)
+        close.add_leaf("DMA")
+        close.add_leaf("MACD")
+        close.add_leaf("Custom")
+
+        system_log = self.query_one(SysLog)
+        system_log.write("System started.")
+        system_log.write("System log initialized. this is a [bold red]new log.")
+
+        # self.trader.run()
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

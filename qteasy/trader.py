@@ -2150,7 +2150,7 @@ class Trader(object):
 
     @property
     def account_position_info(self):
-        """ 账户当前的持仓，一个tuple，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
+        """ 账户当前的持仓，一个DataFrame，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
         positions = self.account_positions
 
         # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
@@ -3965,8 +3965,7 @@ def start_trader(
         TraderShell(trader).run()
     elif ui_type == 'tui':
         from .tui import TraderApp
-        app = TraderApp(trader)
-        app.run()
+        TraderApp(trader).run()
     else:
         raise TypeError(f'Wrong ui type: ({ui_type})!')
 
