@@ -42,11 +42,11 @@ class ControlPanel(Static):
     """A widget to display control buttons."""
 
     def compose(self) -> ComposeResult:
-        yield Button("Start", name="start")
-        yield Button("Stop", name="stop")
-        yield Button("Pause", name="pause")
-        yield Button("Resume", name="resume")
-        yield Button("Exit", name="exit")
+        yield Button("Start", id='start', name="start")
+        yield Button("Stop", id='stop', name="stop")
+        yield Button("Pause", id='pause', name="pause")
+        yield Button("Resume", id='resume', name="resume")
+        yield Button("Exit", id='exit', name="exit")
 
 
 class TraderApp(App):
@@ -64,7 +64,7 @@ class TraderApp(App):
             A trader object to manage the trades.
         """
         super().__init__(*args, **kwargs)
-        self.dark = False
+        self.dark = True
         self.trader = trader
 
     def compose(self) -> ComposeResult:

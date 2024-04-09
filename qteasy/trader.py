@@ -3857,7 +3857,6 @@ def start_trader(
         datasource: DataSource = None,
         config: dict = None,
         debug: bool = False,
-        ui: bool = False,
 ):
     """ 启动交易。根据配置信息生成Trader对象，并启动TraderShell
 
@@ -3879,8 +3878,6 @@ def start_trader(
         配置信息字典
     debug: bool, optional, default False
         是否进入debug模式
-    ui: bool, optional, default False
-        是否启动用户界面
 
     Returns
     -------
@@ -3962,15 +3959,19 @@ def start_trader(
             config=config,
             datasource=datasource,
     )
-    if not ui:
+
+    ui_type = config['live_trade_ui_type']
+    if ui_type == 'cli':
         TraderShell(trader).run()
-    else:
+    elif ui_type == 'tui':
         from .tui import TraderApp
         app = TraderApp(trader)
         app.run()
+    else:
+        raise TypeError(f'Wrong ui type: ({ui_type})!')
 
 
-def refill_missing_datasource_data(operator, trader, config, datasource):
+def refill_missing_datasource_data(operator, trader, config, datasource) -> None:
     """ 针对日频或以上的数据，检查数据源中的数据可用性，下载缺失的数据到数据源
 
     在trader运行过程中，为了避免数据缺失，检查当前Datasource中的数据是否已经填充到最新日期，
@@ -4033,7 +4034,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
         end_date = trader.get_current_tz_datetime()
 
         datasource.refill_local_source(
-                tables='index_daily',
+                tables=related_tables,
                 dtypes=op_data_types,
                 freqs=op_data_freq,
                 asset_types=asset_types,
@@ -4041,7 +4042,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource):
                 end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
                 symbols=symbol_list,
                 parallel=True,
-                refresh_trade_calendar=True,
+                refresh_trade_calendar=False,
         )
 
-    return
+    return None
