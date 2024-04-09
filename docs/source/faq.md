@@ -2,10 +2,69 @@
 
 ## TABLE OF CONTENTS 问题目录
 
+- [如何搭建不同python版本的安装环境](如何搭建不同python版本的安装环境)
+- [使用国内的pip镜像源](使用国内的pip镜像源)
 - [如何安装TA-Lib](如何安装TA-Lib)
-- [python3.11环境下安装qteasy失败]()
+- [python3.11环境下安装qteasy失败](在较高版本python环境中安装qteasy)
 - [连接数据库失败](在qteasy.cfg中添加配置信息后，为何仍然提示数据库连接失败)
 - [系统提示建议安装sqlalchemy](从数据库中读取数据时，为什么会出现提示建议安装\`sqlalchemy\`\？)
+
+---
+
+## 如何搭建不同python版本的安装环境
+
+在qteasy Tutorial中，我们介绍了使用venv创建虚拟环境安装qteasy的方法。但是，有时候用户可能需要在不同的python版本下安装qteasy，例如在python3.9、python3.10、python3.11、python3.12等等版本下安装qteasy。这里我们介绍一种方法，可以在不同的python版本下安装qteasy。
+
+使用Anaconda创建不同python版本的环境：
+
+Anaconda是一个科学计算的Python发行版，它包含了conda、Python等180多个科学包及其依赖项。因此，我们可以使用Anaconda创建不同python版本的环境，然后在不同的环境下安装qteasy。
+
+Anaconda可以在其官网下载，下载地址为：[Anaconda](https://www.anaconda.com/products/distribution)。针对不同操作系统，下载对应的版本，然后安装。
+
+安装Anaconda后，我们可以使用conda命令创建不同的python版本的环境，并在其中安装python包。例如：
+
+```bash
+$ conda create -n py39 python=3.9  # 创建python3.9环境
+$ conda activate py39  # 激活python3.9环境
+$ pip install qteasy  # 在python3.9环境下安装qteasy
+```
+在conda环境中，使用pip安装的软件包也能被正确地识别和管理。
+
+下面有一些常用的conda命令：
+
+```bash
+$ conda env list  # 查看所有的环境
+$ conda activate py39  # 激活python3.9环境
+$ conda deactivate  # 退出当前环境
+$ conda remove -n py39 --all  # 删除python3.9环境
+$ conda list  # 查看当前环境下安装的包
+$ conda list -n py39  # 查看python3.9环境下安装的包
+```
+---
+
+## 使用国内的pip镜像源
+
+在国内，由于网络环境的原因，有时候使用pip安装python包会很慢，甚至失败。这时候，我们可以使用国内的pip镜像源，例如清华大学的pip镜像源。
+
+在使用pip安装python包时，可以使用`-i`参数指定pip镜像源，例如：
+
+```bash
+$ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple qteasy
+```
+---
+
+## 如何升级qteasy到最新版本
+
+在使用qteasy时，我们可能需要升级到最新版本。升级qteasy到最新版本的方法如下：
+
+```bash
+$ pip install qteasy --upgrade
+```
+如果要使用国内的清华镜像源，可以使用下面的命令：
+
+```bash
+$ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple qteasy --upgrade
+```
 
 ---
 
