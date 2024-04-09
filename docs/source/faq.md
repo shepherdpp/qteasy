@@ -58,6 +58,10 @@ $ sudo make install
 
 解决方案是升级到最新的`qteasy`版本。较新版本的`qteasy`已经在`python`3.7 ~ 3.12环境中进行了测试，可以在这些环境中正常运行。
 
+```bash
+$ pip install qteasy --upgrade
+```
+
 较早版本的`qteasy`没有在高版本的`python`环境中进行充分测试，因此存在一些兼容性问题。这样的问题主要存在于v1.1.4及以前的`qteasy`分发版中。
 
 同时，较早版本的`qteasy`在也使用了一些在高版本的`pandas`、`numpy`中即将被弃用的API，这也可能导致对高版本`pandas`、`numpy`的兼容性问题，在v1.1.7及以后版本的`qteasy`中，已经对这些问题进行了修复。
