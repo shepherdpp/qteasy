@@ -107,10 +107,27 @@ $ pip install qteasy
 
 ### Install dependencies
 
-All necessary dependencies of `qteasy` can be installed with `pip`, but if you need to use all the functions of `qteasy`, you need to install the following dependencies:
+All necessary dependencies of `qteasy` can be installed automatically when installing `qteasy` with `pip`, but in some special cases, you may need to specify optional dependencies when installing `qteasy` to install them at the same time, or install them manually:
 
-- **`ta-lib`**, you need to install `ta-lib` package to use all built-in strategies
-- **`pymysql`**, you need to install `pymysql` package to connect to MySQL database, store local data to MySQL database (qteasy uses csv files as default local data source, but it is recommended to use mysql database when the data volume is large, for details, please refer to [qteasy tutorial](https://qteasy.readthedocs.io))
+- **`pymysql`**, used to connect to `MySQL` database, store local data to `MySQL` database (qteasy uses `csv` files as default local data source, but it is recommended to use `MySQL` database when the data volume is large, see [qteasy tutorial](https://qteasy.readthedocs.io) for details), `pymysql` can be installed automatically when installing `qteasy`, or manually installed:
+    ```bash
+    $ pip install 'qteasy[database]'  # Install pymysql automatically together with qteasy
+    $ pip install pymysql  # Manually install pymysql
+    ```
+- **`pyarrow`**, used to operate `feather` files, store local data to `feather` files, `pyarrow` can be installed automatically when installing `qteasy`, or manually installed:
+    ```bash
+    $ pip install 'qteasy[feather]'  # Install pyarrow automatically together with qteasy
+    $ pip install pyarrow  # Manually install pyarrow
+    ```
+- **`pytables`**, used to operate `HDF` files, store local data to `HDF` files, `pytables` can not be installed automatically, you need to manually install it with conda:
+    ```bash
+    $ conda install pytables  # Install pytables
+    ```
+  - **`ta-lib`**, to use all built-in trading strategies, the following methods can install the `ta-lib` API for python, but it also depends on the C language `TA-Lib` package, please refer to [FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html#id2) for installation methods
+    ```bash
+    $ pip install 'qteasy[talib]'  # Install ta-lib automatically together with qteasy
+    $ pip install ta-lib  # Manually install ta-lib
+    ```
 
 ##  Gets to know qteasy in 10 Min
 

@@ -102,10 +102,28 @@ $ pip install qteasy
 
 ### 安装可选依赖包
 
-`qteasy`所有必要的依赖包都可以在pip安装的同时安装好，但如果需要使用`qteasy`的全部功能，需要安装以下依赖包：
+`qteasy`所有必要的依赖包都可以在`pip`安装的同时安装好，但某些特殊情况下，您需要在安装时指定可选依赖包，以便在安装`qteasy`时同时安装，或者手动安装依赖包：
 
-- **`ta-lib`**, 以便使用所有的内置交易策略
-- **`pymysql`**, 用于连接MySQL数据库,将本地数据存储到MySQL数据库（qteasy默认使用csv文件作为本地数据源，但数据量大时推荐使用mysql数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
+- **`pymysql`**, 用于连接`MySQL`数据库,将本地数据存储到`MySQL`数据库（`qteasy`默认使用`csv`文件作为本地数据源，但数据量大时推荐使用`mysql`数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
+`pymysql`可以在安装`qteasy`时自动安装，也可以手动安装：
+    ```bash
+    $ pip install 'qteasy[database]'  # 安装qteasy时自动安装pymysql
+    $ pip install pymysql  # 手动安装pymysql
+    ```
+- **`pyarrow`**, 用于操作`feather`文件，将本地数据存储为`feather`文件，`pyarrow`可以在安装`qteasy`时自动安装，也可以手动安装：
+    ```bash
+    $ pip install 'qteasy[feather]'  # 安装qteasy时自动安装pyarrow
+    $ pip install pyarrow  # 手动安装pyarrow
+    ```
+- **`pytables`**, 用于操作`HDF`文件，将本地数据存储到`HDF`文件，`pytables`不能自动安装，需要使用`conda`手动安装`pytables`：
+    ```bash
+    $ conda install pytables  # 安装pytables
+    ```
+- **`ta-lib`**, 以便使用所有的内置交易策略，下面的方法可以安装`ta-lib API`，但它还依赖C语言的`TA-Lib`包，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html#id2)
+    ```bash
+    $ pip install 'qteasy[talib]'  # 安装qteasy时自动安装ta-lib
+    $ pip install ta-lib  # 手动安装ta-lib
+    ```
 
 ##  10分钟了解qteasy的功能
 

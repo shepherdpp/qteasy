@@ -28,7 +28,7 @@ maintainers = [
 description = "A fast quantitative investment tool kit"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.6"
+requires-python = ">=3.6, <3.13"
 keywords = ["quantitative investment", "quantitative trading", "stock", "finance", "investment"]
 dependencies = [
     "pandas>=1.4.0",
@@ -66,6 +66,6 @@ Documentation = "https://qteasy.readthedocs.io/zh/latest/"
 Issues = "https://github.com/shepherdpp/qteasy/issues"
 
 [project.optional-dependencies]
+talib = ["ta-lib"]
 database = ["pymysql >= 1.0.0"]
-hdf = ["pytables >= 3.6.1"]
 feather = ["pyarrow >= 3"]

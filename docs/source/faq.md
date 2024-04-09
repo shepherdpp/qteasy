@@ -13,7 +13,7 @@
 
 ## 如何搭建不同python版本的安装环境
 
-在qteasy Tutorial中，我们介绍了使用venv创建虚拟环境安装qteasy的方法。但是，有时候用户可能需要在不同的python版本下安装qteasy，例如在python3.9、python3.10、python3.11、python3.12等等版本下安装qteasy。这里我们介绍一种方法，可以在不同的python版本下安装qteasy。
+在`qteasy` Tutorial中，我们介绍了使用`venv`创建虚拟环境安装`qteasy`的方法。但是，有时候用户可能需要在不同的`python`版本下安装`qteasy`，例如在`python`3.9、`python`3.10、`python`3.11、`python`3.12等等版本下安装`qteasy`。这里我们介绍一种方法，可以在不同的`python`版本下安装`qteasy`。
 
 使用Anaconda创建不同python版本的环境：
 
@@ -59,6 +59,11 @@ $ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple qteasy
 
 ```bash
 $ pip install qteasy --upgrade
+```
+或者使用下面的命令：
+
+```bash
+$ pip isntall qteasy -U
 ```
 如果要使用国内的清华镜像源，可以使用下面的命令：
 

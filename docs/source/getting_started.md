@@ -9,20 +9,32 @@ $ pip install qteasy
 ```
 
 ### python 版本
-- *`python` version >= 3.6* 
+- *`python` version >= 3.6, <3.13* 
 
 ### 安装依赖包
 
-这个项目依赖以下python package，有些安装包可能不能在安装`qteasy`的时候自动安装，此时可以手动安装:
-- *`pandas` version >= 1.1.0*    `pip install pandas` / `conda install pandas`
-- *`numpy` version >= 1.18.1*    `pip install numpy` / `conda install numpy`
-- *`numba` version >= 0.47*    `pip install numba` / `conda install numba`
-- *`tushare` version >= 1.2.89*    `pip install tushare`
-- *`mplfinance`*    `pip install mplfinance` / `conda install -c conda-forge mplfinance`
-- *`rich` version >= 10.0.0*    `pip install rich` / `conda install -c conda-forge rich`
+`qteasy`所有必要的依赖包都可以在`pip`安装的同时安装好，但某些特殊情况下，您需要在安装时指定可选依赖包，以便在安装`qteasy`时同时安装，或者手动安装依赖包：
 
-使用`qteasy`需要设置本地数据源，默认使用csv文件作为本地数据源，如果选用其他数据源，需要安装相应的依赖包，详情参见qteasy使用教程
-
+- **`pymysql`**, 用于连接`MySQL`数据库,将本地数据存储到`MySQL`数据库（`qteasy`默认使用`csv`文件作为本地数据源，但数据量大时推荐使用`mysql`数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
+`pymysql`可以在安装`qteasy`时自动安装，也可以手动安装：
+    ```bash
+    $ pip install 'qteasy[database]'  # 安装qteasy时自动安装pymysql
+    $ pip install pymysql  # 手动安装pymysql
+    ```
+- **`pyarrow`**, 用于操作`feather`文件，将本地数据存储为`feather`文件，`pyarrow`可以在安装`qteasy`时自动安装，也可以手动安装：
+    ```bash
+    $ pip install 'qteasy[feather]'  # 安装qteasy时自动安装pyarrow
+    $ pip install pyarrow  # 手动安装pyarrow
+    ```
+- **`pytables`**, 用于操作`HDF`文件，将本地数据存储到`HDF`文件，`pytables`不能自动安装，需要使用`conda`手动安装`pytables`：
+    ```bash
+    $ conda install pytables  # 安装pytables
+    ```
+- **`ta-lib`**, 以便使用所有的内置交易策略，下面的方法可以安装`ta-lib API`，但它还依赖C语言的`TA-Lib`包，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html#id2)
+    ```bash
+    $ pip install 'qteasy[talib]'  # 安装qteasy时自动安装ta-lib
+    $ pip install ta-lib  # 手动安装ta-lib
+    ```
 ##  10分钟了解qteasy的功能
 
 ### 导入`qteasy`
