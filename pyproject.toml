@@ -37,6 +37,7 @@ dependencies = [
     "tushare>=1.2.89",
     "mplfinance",
     "rich>=10.0.0",
+    "textual",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

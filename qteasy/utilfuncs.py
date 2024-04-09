@@ -98,6 +98,7 @@ def get_qt_argparser():
     parser.add_argument('-r', '--restart', action='store_true', default=False,
                         help='if set, remove all record and restart account')
     parser.add_argument('-d', '--debug', action='store_true', help='if set, start trader in debug mode')
+    parser.add_argument('-u', '--ui', action='store_true', default=False, help='if True, start trader in terminal ui')
 
     return parser
 

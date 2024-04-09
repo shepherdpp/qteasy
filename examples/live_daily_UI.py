@@ -3,13 +3,12 @@
 # Package:  qteasy
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
-# Created:  2023-12-11
+# Created:  2024-04-09
 # Desc:
-#   Desc:
 #   live_rolling:
 #   每日选股交易策略，从银行、汽车、酒店等行业股
 # 票中，每天选出价格高于20日前，且市盈率PE介于
-# 1.0～60之间的，持有到下一天。
+# 1.0～60之间的，持有到下一天，程序在TUI中运行。
 # ======================================
 
 import os
@@ -70,6 +69,7 @@ if __name__ == '__main__':
             live_trade_debug_mode=args.debug,
             live_trade_broker_type='random',
             live_trade_broker_params=None,
+            live_trade_ui_type='tui' if args.ui else 'cli',
             watched_price_refresh_interval=10,
     )
     datasource = qt.QT_DATA_SOURCE

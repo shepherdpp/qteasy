@@ -3849,14 +3849,15 @@ class Trader(object):
 
 
 def start_trader(
-        operator,
-        account_id=None,
-        user_name=None,
-        init_cash=None,
-        init_holdings=None,
-        datasource=None,
-        config=None,
-        debug=False,
+        operator: Operator,
+        account_id: int = None,
+        user_name: str = None,
+        init_cash: float = None,
+        init_holdings: dict = None,
+        datasource: DataSource = None,
+        config: dict = None,
+        debug: bool = False,
+        ui: bool = False,
 ):
     """ 启动交易。根据配置信息生成Trader对象，并启动TraderShell
 
@@ -3864,7 +3865,7 @@ def start_trader(
     ----------
     operator: Operator
         交易员 object
-    account_id: str, optional
+    account_id: int, optional
         交易账户ID, 如果ID小于0或者未给出，则需要新建一个账户
     user_name: str, optional
         交易账户用户名，如果未给出账户ID或为空，则需要新建一个账户，此时必须给出用户名
@@ -3874,10 +3875,12 @@ def start_trader(
         初始持仓股票代码和数量的字典{'symbol': amount}，只有创建新账户时有效
     datasource: DataSource, optional
         数据源 object
-    config: dict, optional
+    config: dict, optional, default None
         配置信息字典
-    debug: bool, optional
+    debug: bool, optional, default False
         是否进入debug模式
+    ui: bool, optional, default False
+        是否启动用户界面
 
     Returns
     -------
@@ -3959,8 +3962,12 @@ def start_trader(
             config=config,
             datasource=datasource,
     )
-
-    TraderShell(trader).run()
+    if not ui:
+        TraderShell(trader).run()
+    else:
+        from .tui import TraderApp
+        app = TraderApp(trader)
+        app.run()
 
 
 def refill_missing_datasource_data(operator, trader, config, datasource):
