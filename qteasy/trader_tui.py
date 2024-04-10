@@ -12,7 +12,7 @@
 import time
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, VerticalScroll
+from textual.containers import Container, Horizontal, VerticalScroll, Grid
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
 from textual.widgets import TabPane
 
@@ -80,7 +80,7 @@ class ControlPanel(Static):
 class TraderApp(App):
     """A Textual app to manage stopwatches."""
 
-    CSS_PATH = "tui_style.css"
+    CSS_PATH = "tui_style.tcss"
     BINDINGS = [("d", "toggle_dark", "Toggle dark mode")]
 
     def __init__(self, trader, *args, **kwargs):
@@ -127,27 +127,27 @@ class TraderApp(App):
         """Create child widgets for the app."""
         yield Header()
         yield Footer()
-        yield VerticalScroll(
-            Container(
-                Horizontal(
-                    ValueDisplay("123456.78", id='cash'),
-                    EarningDisplay("456.78", id='earning'),
-                    InfoPanel(id='info'),
-                ),
-                Horizontal(
-                    Tables(id='tables'),
-                    StrategyTree(label='strategies'),
-                ),
-                SysLog(id='log'),
-            ),
-            Container(
-                    ControlPanel(id='control'),
-            )
-        )
+        yield ValueDisplay("123456.78", id='cash')
+        yield EarningDisplay("456.78", id='earning')
+        yield InfoPanel(id='info', classes='box')
+        yield Tables(id='tables')
+        yield StrategyTree(label='strategies')
+        yield SysLog(id='log')
+        yield ControlPanel(id='control')
 
     def on_mount(self) -> None:
         """Actions to perform after mounting the app."""
         # initialize widgets
+        total_value = self.query_one(ValueDisplay)
+        total_value.update("0.00")
+        total_value.border_title = "Total Value"
+
+        earning = self.query_one(EarningDisplay)
+        earning.update("0.00")
+        earning.border_title = "Earning"
+
+        tables = self.query_one(Tables)
+        tables.border_title = "Tables"
 
         # get the holdings from the trader
         holdings = self.query_one(HoldingTable)
@@ -161,6 +161,7 @@ class TraderApp(App):
 
         # get the strategies from the trader
         tree = self.query_one(StrategyTree)
+        tree.border_title = "Strategies"
         tree.root.expand()
         close = tree.root.add("Timing: close", expand=True)
         close.add_leaf("DMA")
@@ -168,10 +169,12 @@ class TraderApp(App):
         close.add_leaf("Custom")
 
         system_log = self.query_one(SysLog)
+        system_log.border_title = "System Log"
         system_log.write("System started.")
         system_log.write("System log initialized. this is a [bold red]new log.[/bold red]")
 
         info = self.query_one(InfoPanel)
+        info.border_title = "Information"
         account = self.trader.account_id
         trader_status = self.trader.status
         info.update(f'Account: {account}\nStatus: {trader_status}')
