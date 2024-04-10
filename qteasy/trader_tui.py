@@ -9,16 +9,24 @@
 # qteasy live trade system.
 # ======================================
 
+import time
+
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TextArea, Tree, Digits
+from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
+from textual.widgets import TabPane
 
 
 holding_columns = ("symbol", "qty", "available", "cost", "name", "price", "value", "profit", "profit_ratio", "last")
 
 
 class ValueDisplay(Digits):
-    """ A widget to display the value of a variable."""
+    """ A widget to display the total value."""
+    pass
+
+
+class EarningDisplay(Digits):
+    """ A widget to display the value of a earnings."""
     pass
 
 
@@ -37,7 +45,23 @@ class HoldingTable(DataTable):
     pass
 
 
-class InfoPanel(TextArea):
+class OrderTable(DataTable):
+    """A widget to display current holdings."""
+    pass
+
+
+class Tables(TabbedContent):
+    """A widget to display tables."""
+
+    def compose(self) -> ComposeResult:
+        with TabbedContent():
+            with TabPane("Holdings"):
+                yield HoldingTable(id='holdings')
+            with TabPane("Orders"):
+                yield OrderTable(id='orders')
+
+
+class InfoPanel(Static):
     """A widget to display information."""
     pass
 
@@ -70,6 +94,34 @@ class TraderApp(App):
         super().__init__(*args, **kwargs)
         self.dark = True
         self.trader = trader
+        self.status = 'init'
+
+    def trader_event_loop(self):
+        """ Event loop for the trader. continually check message queue of trader and broker,
+        and update the UI accordingly.
+
+        this event loop should be running in a separate thread.
+
+        """
+        while True:
+            # check the message queue of the trader
+            msg = self.trader.message_queue.get()
+            if msg:
+                # update the UI
+                system_log = self.query_one(SysLog)
+                system_log.write(msg)
+
+            # check the message queue of the broker
+            msg = self.trader.broker.broker_messages.get()
+            if msg:
+                # update the UI
+                system_log = self.query_one(SysLog)
+                system_log.write(msg)
+
+            if self.status == 'stopped':
+                break
+
+            time.sleep(0.1)
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -79,12 +131,12 @@ class TraderApp(App):
             Container(
                 Horizontal(
                     ValueDisplay("123456.78", id='cash'),
-                    ValueDisplay("123456.78", id='value'),
+                    EarningDisplay("456.78", id='earning'),
                     InfoPanel(id='info'),
                 ),
                 Horizontal(
-                    HoldingTable(id='holdings'),
-                    StrategyTree(label='Strategies'),
+                    Tables(id='tables'),
+                    StrategyTree(label='strategies'),
                 ),
                 SysLog(id='log'),
             ),
@@ -108,7 +160,7 @@ class TraderApp(App):
             holdings.add_row(*list_tuples[0])
 
         # get the strategies from the trader
-        tree: Tree[dict] = self.query_one(StrategyTree)
+        tree = self.query_one(StrategyTree)
         tree.root.expand()
         close = tree.root.add("Timing: close", expand=True)
         close.add_leaf("DMA")
@@ -117,9 +169,32 @@ class TraderApp(App):
 
         system_log = self.query_one(SysLog)
         system_log.write("System started.")
-        system_log.write("System log initialized. this is a [bold red]new log.")
+        system_log.write("System log initialized. this is a [bold red]new log.[/bold red]")
 
-        # self.trader.run()
+        info = self.query_one(InfoPanel)
+        account = self.trader.account_id
+        trader_status = self.trader.status
+        info.update(f'Account: {account}\nStatus: {trader_status}')
+
+        # start the trader, broker and the trader event loop all in separate threads
+        from threading import Thread
+        Thread(target=self.trader_event_loop).start()
+        Thread(target=self.trader.run).start()
+        Thread(target=self.trader.broker.run).start()
+
+        self.status = 'running'
+
+    def _on_exit_app(self) -> None:
+        """Actions to perform before exiting the app.
+        confirms the exit action.
+        """
+        # stop the trader, broker and the trader event loop
+        self.status = 'stopped'
+        time.sleep(0.1)
+        self.trader.status = 'stopped'
+        time.sleep(0.1)
+        self.trader.broker.status = 'stopped'
+        time.sleep(0.1)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

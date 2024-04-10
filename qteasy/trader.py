@@ -437,6 +437,10 @@ class Trader(object):
         current_date = current_date_time.date()
 
         # 在try-block中开始主循环，以抓取KeyboardInterrupt
+        # TODO: 这里似乎应该重新思考trader和UI的关系，将trader和UI彻底分开：
+        #  1，抓取 KeyboardInterrupt 似乎应该是UI的任务，trader应该专注于交易任务
+        #  2，trader应该专注于交易任务，UI应该专注于交互任务，两者应该分开
+        #  3，覆盖型信息应该由UI负责，trader只发出与交易有关的消息，UI负责显示或者在没有消息时覆盖或刷新
         try:
             while self.status != 'stopped':
                 pre_date = current_date
@@ -516,23 +520,25 @@ class Trader(object):
                 traceback.print_exc()
         return
 
-    def info(self, verbose=False, detail=False, system=False, width=80):
-        """ 打印账户的概览，包括账户基本信息，持有现金和持仓信息
+    def info(self, verbose=False, detail=False, system=False, width=80, rich_print: bool = True) -> str:
+        """ 返回账户的概览信息，包括账户基本信息，持有现金和持仓信息
 
         Parameters:
         -----------
         verbose: bool, default False
-            是否打印详细信息(账户信息、交易状态信息等), to be deprecated, use detail instead
+            是否生成详细信息(账户信息、交易状态信息等), to be deprecated, use detail instead
         detail: bool, default False
-            是否打印详细信息(账户持仓、账户现金等)，如否，则只打印账户持仓等基本信息
+            是否生成详细信息(账户持仓、账户现金等)，如否，则只打印账户持仓等基本信息
         system: bool, default False
-            是否打印系统信息
+            是否生成系统信息
         width: int, default 80
-            打印信息的宽度
-
+            生成信息的宽度
+        rich_print: bool, default True
+            是否生成适合rich.print打印的信息
         Returns:
         --------
-        None
+        trader_info: str
+            账户的概览信息
         """
 
         detail = detail or verbose
@@ -553,6 +559,9 @@ class Trader(object):
         total_roi_rate = total_return_of_investment / total_investment
         position_level = total_market_value / total_value
         total_profit_ratio = total_profit / total_market_value
+
+        trader_info = ''
+
         if system:
             # System Info
             rich.print(f'{" System Info ":=^{width}}')
@@ -647,6 +656,8 @@ class Trader(object):
             rich.print(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
                        f'=={asset_pool_string}\n')
 
+        return trader_info
+
     def trade_results(self, status='filled'):
         """ 返回账户的交易结果
 
@@ -689,8 +700,6 @@ class Trader(object):
             logger_live = self.new_sys_logger()
         else:
             logger_live = self.live_sys_logger
-
-        account_id = self.account_id
 
         time_string = self.get_current_tz_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
         if self.time_zone != 'local':
@@ -1023,7 +1032,6 @@ class Trader(object):
             return trade_order
 
         return {}
-
 
     # ============ definition of tasks ================
     def _start(self):

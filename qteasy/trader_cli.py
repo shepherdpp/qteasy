@@ -910,7 +910,6 @@ class TraderShell(Cmd):
             if not self.trader.is_market_open:
                 print(f'Market is not open, order might not be executed immediately')
 
-
     def do_positions(self, arg):
         """usage: positions [-h]
 
@@ -1849,8 +1848,6 @@ class TraderShell(Cmd):
                         # check os type of current system, and then clear screen
                         os.system('cls' if os.name == 'nt' else 'clear')
                     # check if data source is connected here, if not, reconnect before entering interactive mode
-                    self.trader.datasource.reconnect()
-                    self.trader.datasource.reconnect()
                     self.cmdloop()
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')

@@ -4,20 +4,20 @@ ValueDisplay {
 }
 
 InfoPanel {
-    content-align: center middle;
+    content-align: right middle;
     height: 5;
 }
 
 HoldingTable {
     width: 65%;
-    height: 10;
+    height: 15;
     margin: 1;
     padding: 1;
 }
 
 StrategyTree {
     width: 35%;
-    height: 10;
+    height: 15;
     margin: 1;
     padding: 1;
 }
