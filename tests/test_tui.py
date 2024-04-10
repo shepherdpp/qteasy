@@ -11,7 +11,7 @@
 import unittest
 import time
 
-from qteasy.tui import TraderApp
+from qteasy.trader_tui import TraderApp
 
 
 class TestTUI(unittest.TestCase):

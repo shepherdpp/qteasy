@@ -1,6 +1,6 @@
 # coding=utf-8
 # ======================================
-# File:     visual.py
+# File:     trader_tui.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-04-08
@@ -124,4 +124,5 @@ class TraderApp(App):
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark = not self.dark
+
 
