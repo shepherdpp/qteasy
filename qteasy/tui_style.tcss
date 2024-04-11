@@ -11,7 +11,8 @@ ValueDisplay {
     height: 1fr;
     row-span: 1;
     column-span: 1;
-    min-height: 5;
+    min-height: 7;
+    padding: 0 2;
 }
 
 EarningDisplay {
@@ -19,13 +20,14 @@ EarningDisplay {
     height: 1fr;
     row-span: 1;
     column-span: 1;
-    min-height: 5;
+    min-height: 7;
+    padding: 0 2;
 }
 
 InfoPanel {
     border: round $accent;
     height: 1fr;
-    min-height: 5;
+    min-height: 7;
     row-span: 1;
     column-span: 1;
 }
@@ -49,7 +51,8 @@ SysLog {
     row-span: 1;
     column-span: 3;
     height: 1fr;
-    min-height: 5;
+    min-height: 7;
+    max-height: 20;
 }
 
 ControlPanel {

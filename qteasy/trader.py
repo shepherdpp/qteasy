@@ -161,6 +161,9 @@ class Trader(object):
         self.time_zone = config['time_zone']
         self.init_datetime = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
 
+        self.next_task = ''
+        self.count_down_to_next_task = 0
+
         self.is_trade_day = False
         self.is_market_open = False
         self._status = 'stopped'
@@ -1692,9 +1695,12 @@ class Trader(object):
                     count_down_to_next_task = count_down_sec
                     next_task = task
         if not task_added:
-            self.send_message(f'Next task:({next_task[1]}) in '
-                              f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
-                              new_line=False)
+            self.next_task = next_task
+            self.count_down_to_next_task = count_down_to_next_task
+
+            # self.send_message(f'Next task:({next_task[1]}) in '
+            #                   f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
+            #                   new_line=False)
 
     def _initialize_schedule(self, current_time=None):
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：

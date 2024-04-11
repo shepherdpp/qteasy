@@ -11,10 +11,13 @@
 
 import time
 
+from threading import Thread
+
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, VerticalScroll, Grid
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
 from textual.widgets import TabPane
+
+from .utilfuncs import sec_to_duration
 
 
 holding_columns = ("symbol", "qty", "available", "cost", "name", "price", "value", "profit", "profit_ratio", "last")
@@ -103,25 +106,49 @@ class TraderApp(App):
         this event loop should be running in a separate thread.
 
         """
+        Thread(target=self.trader.run).start()
+        Thread(target=self.trader.broker.run).start()
+
+        system_log = self.query_one(SysLog)
+        info = self.query_one(InfoPanel)
+
+        self.status = 'running'
+
+        system_log.write(f"System started, status: {self.status}")
+
         while True:
+
+            # update current date and time
+            current_time = self.trader.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
+
+            next_task = self.trader.next_task
+            count_down = sec_to_duration(self.trader.count_down_to_next_task, estimation=True)
+
+            system_log.border_title = f"System Log - Next Task: {next_task} in {count_down}"
+
+            # updated status
+            trader_status = self.trader.status
+            info.border_title = f"Information: {current_time}"
+            info.update(f'Account: {self.trader.account_id}\n'
+                        f'Status: {trader_status}\n'
+                        f'UI Status: {self.status}')
+
             # check the message queue of the trader
-            msg = self.trader.message_queue.get()
-            if msg:
-                # update the UI
-                system_log = self.query_one(SysLog)
+            if not self.trader.message_queue.empty():
+                msg = self.trader.message_queue.get()
                 system_log.write(msg)
 
             # check the message queue of the broker
-            msg = self.trader.broker.broker_messages.get()
-            if msg:
-                # update the UI
-                system_log = self.query_one(SysLog)
+            if not self.trader.broker.broker_messages.empty():
+                msg = self.trader.broker.broker_messages.get()
                 system_log.write(msg)
 
             if self.status == 'stopped':
                 break
 
             time.sleep(0.1)
+
+        system_log.write(f"System stopped, status: {self.status}")
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -170,8 +197,7 @@ class TraderApp(App):
 
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
-        system_log.write("System started.")
-        system_log.write("System log initialized. this is a [bold red]new log.[/bold red]")
+        system_log.write(f"System started, status: {self.status}")
 
         info = self.query_one(InfoPanel)
         info.border_title = "Information"
@@ -180,23 +206,22 @@ class TraderApp(App):
         info.update(f'Account: {account}\nStatus: {trader_status}')
 
         # start the trader, broker and the trader event loop all in separate threads
-        from threading import Thread
         Thread(target=self.trader_event_loop).start()
-        Thread(target=self.trader.run).start()
-        Thread(target=self.trader.broker.run).start()
+        # self.run_worker(self.trader_event_loop())
 
-        self.status = 'running'
+        return
 
     def _on_exit_app(self) -> None:
         """Actions to perform before exiting the app.
         confirms the exit action.
         """
         # stop the trader, broker and the trader event loop
-        self.status = 'stopped'
-        time.sleep(0.1)
         self.trader.status = 'stopped'
         time.sleep(0.1)
         self.trader.broker.status = 'stopped'
+        time.sleep(0.1)
+
+        self.status = 'stopped'
         time.sleep(0.1)
 
     def action_toggle_dark(self) -> None:
