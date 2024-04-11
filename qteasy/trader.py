@@ -12,7 +12,6 @@
 # ======================================
 
 import os
-import shutil
 import sys
 import time
 import logging
@@ -20,7 +19,6 @@ from queue import Queue
 
 import numpy as np
 import pandas as pd
-import rich
 
 import qteasy
 from qteasy import ConfigDict, DataSource, Operator
@@ -32,8 +30,8 @@ from qteasy.trade_recording import get_or_create_position, new_account, update_p
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
 from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order
-from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, sec_to_duration, str_to_list
-from qteasy.utilfuncs import get_current_tz_datetime
+from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
+from qteasy.utilfuncs import get_current_timezone_datetime
 
 UNIT_TO_TABLE = {
     'h':     'stock_hourly',
@@ -256,8 +254,15 @@ class Trader(object):
         return positions.loc[positions['qty'] != 0]
 
     @property
-    def account_position_info(self):
-        """ 账户当前的持仓，一个DataFrame，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值 """
+    def account_position_info(self) -> pd.DataFrame:
+        """ 账户当前的持仓，一个DataFrame，当前持有的股票仓位symbol，名称，持有数量、可用数量，以及当前价格、成本和市值
+
+        Returns
+        -------
+        positions: DataFrame, columns=['symbol', 'name', 'qty', 'available_qty', 'cost',
+                                       'current_price', 'market_value', 'profit', 'profit_ratio']
+            账户当前的持仓，一个DataFrame
+        """
         positions = self.account_positions
 
         # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
@@ -370,7 +375,7 @@ class Trader(object):
     def get_current_tz_datetime(self):
         """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
 
-        tz_time = get_current_tz_datetime(self.time_zone)
+        tz_time = get_current_timezone_datetime(self.time_zone)
         # if tz_time is very close to local time, then set time_zone to local and return local time
         if abs(tz_time - pd.to_datetime('today')) < pd.Timedelta(seconds=1):
             self.time_zone = 'local'
@@ -393,8 +398,19 @@ class Trader(object):
         _update_config_kwargs(self._config, new_kwarg, raise_if_key_not_existed=True)
         return self._config[key]
 
-    def show_schedule(self):
-        """ 显示当前的任务日程 """
+    def get_schedule_string(self, rich_form=True) -> str:
+        """ 返回当前的任务日程字符串
+
+        Parameters
+        ----------
+        rich_form: bool, default True
+            是否返回适合rich.print打印的字符串
+
+        Returns
+        -------
+        schedule_string: str
+            任务日程字符串
+        """
         schedule = pd.DataFrame(
                 self.task_daily_schedule,
                 columns=['datetime', 'task', 'parameters'],
@@ -402,9 +418,11 @@ class Trader(object):
         schedule.set_index(keys='datetime', inplace=True)
 
         schedule_string = schedule.to_string()
-        schedule_string = schedule_string.replace('[', '<')
-        schedule_string = schedule_string.replace(']', '>')
-        rich.print(schedule_string)
+        if rich_form:
+            schedule_string = schedule_string.replace('[', '<')
+            schedule_string = schedule_string.replace(']', '>')
+
+        return schedule_string
 
     def register_broker(self, debug=False, **kwargs):
         """ 注册broker，以便实现登录等处理
@@ -523,8 +541,8 @@ class Trader(object):
                 traceback.print_exc()
         return
 
-    def info(self, verbose=False, detail=False, system=False, width=80, rich_print: bool = True) -> str:
-        """ 返回账户的概览信息，包括账户基本信息，持有现金和持仓信息
+    def info(self, verbose=False, detail=False, system=False, width=80, rich_format: bool = True) -> str:
+        """ 返回账户的概览信息，包括账户基本信息，持有现金和持仓信，所有信息打包成一个dict返回，供打印或者显示
 
         Parameters:
         -----------
@@ -540,7 +558,7 @@ class Trader(object):
             是否生成适合rich.print打印的信息
         Returns:
         --------
-        trader_info: str
+        info_str: str
             账户的概览信息
         """
 
@@ -550,7 +568,6 @@ class Trader(object):
             import warnings
             warnings.warn('verbose argument is deprecated, use detail instead', DeprecationWarning)
 
-        semi_width = int(width * 0.75)
         position_info = self.account_position_info
         total_market_value = position_info['market_value'].sum()
         own_cash = self.account_cash[0]
@@ -564,100 +581,70 @@ class Trader(object):
         total_profit_ratio = total_profit / total_market_value
 
         trader_info = ''
+        trader_info_dict = {}
 
         if system:
             # System Info
-            rich.print(f'{" System Info ":=^{width}}')
-            rich.print(f'{"python":<{semi_width - 20}}{sys.version}')
-            rich.print(f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}')
+            trader_info_dict['python'] = sys.version
+            trader_info_dict['qteasy'] = qteasy.__version__
             import tushare
-            rich.print(f'{"tushare":<{semi_width - 20}}{tushare.__version__}')
+            trader_info_dict['tushare'] = tushare.__version__
             try:
                 import talib
-                rich.print(f'{"ta-lib":<{semi_width - 20}}{talib.__version__}')
+                trader_info_dict['ta-lib'] = talib.__version__
             except ImportError:
-                rich.print(f'{"ta-lib":<{semi_width - 20}}not installed')
-            rich.print(f'{"Local DataSource":<{semi_width - 20}}{self.datasource}')
-            rich.print(f'{"System log file path":<{semi_width - 20}}'
-                       f'{self.get_config("sys_log_file_path")["sys_log_file_path"]}')
-            rich.print(f'{"Trade log file path":<{semi_width - 20}}'
-                       f'{self.get_config("trade_log_file_path")["trade_log_file_path"]}')
+                trader_info_dict['ta-lib'] = 'not installed'
+            trader_info_dict['Local DataSource'] = self.datasource
+            trader_info_dict['System log file path'] = self.get_config("sys_log_file_path")["sys_log_file_path"]
+            trader_info_dict['Trade log file path'] = self.get_config("trade_log_file_path")["trade_log_file_path"]
+
         if detail:
             # Account information
-            rich.print(f'{" Account Overview ":=^{width}}')
-            rich.print(f'{"Account ID":<{semi_width - 20}}{self.account_id}')
-            rich.print(f'{"User Name":<{semi_width - 20}}{self.account["user_name"]}')
-            rich.print(f'{"Created on":<{semi_width - 20}}{self.account["created_time"]}')
-            rich.print(f'{"Started on":<{semi_width - 20}}{self.init_datetime}')
-            rich.print(f'{"Time zone":<{semi_width - 20}}{self.get_config("time_zone")["time_zone"]}')
+            trader_info_dict['Account ID'] = self.account_id
+            trader_info_dict['User Name'] = self.account["user_name"]
+            trader_info_dict['Created on'] = self.account["created_time"]
+            trader_info_dict['Started on'] = self.init_datetime
+            trader_info_dict['Time zone'] = self.get_config("time_zone")["time_zone"]
+
             # Status and Settings
-            rich.print(f'{" Status and Settings ":=^{width}}')
-            rich.print(f'{"Trader Stats":<{semi_width - 20}}{self.status}')
-            rich.print(f'{"Broker Status":<{semi_width - 20}}{self.broker.broker_name} / {self.broker.status}')
-            rich.print(f'{"Live price update freq":<{semi_width - 20}}'
-                       f'{self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]}')
-            rich.print(f'{"Strategy":<{semi_width - 20}}{self.operator.strategies}')
-            rich.print(f'{"Strategy run frequency":<{semi_width - 20}}{self.operator.op_data_freq}')
-            rich.print(f'{"Trade batch size(buy/sell)":<{semi_width - 20}}'
-                       f'{self.get_config("trade_batch_size")["trade_batch_size"]} '
-                       f'/ {self.get_config("sell_batch_size")["sell_batch_size"]}')
-            rich.print(f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}'
-                       f'{self.get_config("cash_delivery_period")["cash_delivery_period"]} day / '
-                       f'{self.get_config("stock_delivery_period")["stock_delivery_period"]} day')
-            buy_fix = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
-            sell_fix = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
-            buy_rate = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
-            sell_rate = float(self.get_config('cost_rate_sell')['cost_rate_sell'])
-            buy_min = float(self.get_config('cost_min_buy')['cost_min_buy'])
-            sell_min = float(self.get_config('cost_min_sell')['cost_min_sell'])
-            if (buy_fix > 0) or (sell_fix > 0):
-                rich.print(f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}')
-            if (buy_rate > 0) or (sell_rate > 0):
-                rich.print(f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}')
-            if (buy_min > 0) or (sell_min > 0):
-                rich.print(f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}')
-            rich.print(f'{"Market time (open/close)":<{semi_width - 20}}'
-                       f'{self.get_config("market_open_time_am")["market_open_time_am"]} / '
-                       f'{self.get_config("market_close_time_pm")["market_close_time_pm"]}')
+            trader_info_dict['Trader Stats'] = self.status
+            trader_info_dict['Broker Name'] = self.broker.broker_name
+            trader_info_dict['Broker Status'] = self.broker.status
+            trader_info_dict['Live price update freq'] = self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]
+            trader_info_dict['Strategy'] = self.operator.strategies
+            trader_info_dict['Strategy run frequency'] = self.operator.op_data_freq
+            trader_info_dict['trade batch size'] = self.get_config("trade_batch_size")["trade_batch_size"]
+            trader_info_dict['sell batch size'] = self.get_config("sell_batch_size")["sell_batch_size"]
+            trader_info_dict['cash delivery period'] = self.get_config("cash_delivery_period")["cash_delivery_period"]
+            trader_info_dict['stock delivery period'] = self.get_config("stock_delivery_period")["stock_delivery_period"]
+            trader_info_dict['buy_fix'] = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
+            trader_info_dict['sell_fix'] = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
+            trader_info_dict['buy_rate'] = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
+            trader_info_dict['sell_rate'] = float(self.get_config('cost_rate_sell')['cost_rate_sell'])
+            trader_info_dict['buy_min'] = float(self.get_config('cost_min_buy')['cost_min_buy'])
+            trader_info_dict['sell_min'] = float(self.get_config('cost_min_sell')['cost_min_sell'])
+            trader_info_dict['market_open_am'] = self.get_config("market_open_time_am")["market_open_time_am"]
+            trader_info_dict['market_close_pm'] = self.get_config("market_close_time_pm")["market_close_time_pm"]
+
         # Investment Return
-        print(f'{" Returns ":=^{semi_width}}')
-        rich.print(f'{"Benchmark":<{semi_width - 20}}¥ '
-                   f'{self.get_config("benchmark_asset")["benchmark_asset"]}')
-        rich.print(f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}')
-        if total_value >= total_investment:
-            rich.print(f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]')
-            rich.print(f'{"Total Return of Investment":<{semi_width - 20}}'
-                       f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n'
-                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]')
-        else:
-            rich.print(f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]')
-            rich.print(f'{"Total Return of Investment":<{semi_width - 20}}'
-                       f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n'
-                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]')
-        print(f'{" Cash ":=^{semi_width}}')
-        rich.print(f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} ')
-        rich.print(f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} ')
-        rich.print(f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}')
-        print(f'{" Stock Value ":=^{semi_width}}')
-        rich.print(f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}')
-        if total_profit >= 0:
-            rich.print(f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]')
-            rich.print(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]')
-            rich.print(f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]')
-        else:
-            rich.print(f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold green]')
-            rich.print(f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]')
-            rich.print(f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold green]')
-        asset_in_pool = len(self.asset_pool)
-        asset_pool_string = adjust_string_length(
-                s=' '.join(self.asset_pool),
-                n=width - 2,
-        )
-        if detail:
-            print(f'{" Investment ":=^{width}}')
-            rich.print(f'Current Investment Type:        {self.asset_type}')
-            rich.print(f'Current Investment Pool:        {asset_in_pool} stocks, Use "pool" command to view details.\n'
-                       f'=={asset_pool_string}\n')
+        trader_info_dict['Benchmark'] = self.get_config("benchmark_asset")["benchmark_asset"]
+        trader_info_dict['Total Investment'] = total_investment
+        trader_info_dict['Total Value'] = total_value
+        trader_info_dict['Total ROI'] = total_return_of_investment
+        trader_info_dict['Total ROI Rate'] = total_roi_rate
+
+        # Cash and Stock Info
+        trader_info_dict['Cash Percent'] = own_cash / total_value
+        trader_info_dict['Total Cash'] = own_cash
+        trader_info_dict['Available Cash'] = available_cash
+
+        trader_info_dict['Stock Percent'] = position_level
+        trader_info_dict['Total Stock Value'] = total_market_value
+        trader_info_dict['Total Stock Profit'] = total_profit
+        trader_info_dict['Stock Profit Ratio'] = total_profit_ratio
+        trader_info_dict['Asset Pool'] = self.asset_pool
+        trader_info_dict['Asset Type'] = self.asset_type
+        trader_info_dict['Asset in Pool'] = len(self.asset_pool)
 
         return trader_info
 
@@ -726,9 +713,10 @@ class Trader(object):
             logger_live.info(message)
 
         if self.debug and normal_message:
-            # 如果在debug模式下同时打印非覆盖型信息，确保interactive模式下也能看到debug信息
-            text_width = int(shutil.get_terminal_size().columns)
-            print(f'{message: <{text_width - 2}}')
+            # 如果在debug模式下同时打印非覆盖型信息，确保interactive模式下也能看到debug信息  # 这是UI的任务，不是trader的任务
+            # text_width = int(shutil.get_terminal_size().columns)
+            # print(f'{message: <{text_width - 2}}')
+            pass
 
     def add_task(self, task, kwargs=None):
         """ 添加任务到任务队列
@@ -814,16 +802,23 @@ class Trader(object):
         order_result_details['execution_time'] = pd.to_datetime(order_result_details['execution_time'])
         return order_result_details
 
-    def asset_pool_detail(self):
-        """ 显示asset_pool的详细信息"""
+    def asset_pool_detail(self) -> pd.DataFrame:
+        """ 返回asset_pool的详细信息，如果没有股票基本信息，则返回空DataFrame
+
+        Returns
+        -------
+        asset_pool_detail: DataFrame
+            asset_pool的详细信息
+        """
         # get all symbols from asset pool, display their master info
         asset_pool = self.asset_pool
         stock_basic = self.datasource.read_table_data(table='stock_basic')
         if stock_basic.empty:
-            print(f'No stock basic data found in the datasource, acquire data with '
-                  f'"qt.refill_data_source(tables="stock_basic")"')
-            return
-        print(stock_basic.reindex(index=asset_pool))
+            # print(f'No stock basic data found in the datasource, acquire data with '
+            #       f'"qt.refill_data_source(tables="stock_basic")"')
+            # 打印是UI的任务，不是trader的任务
+            return pd.DataFrame()
+        return stock_basic.reindex(index=asset_pool)
 
     def new_sys_logger(self) -> logging.Logger:
         """ 返回一个系统logger
@@ -1039,12 +1034,12 @@ class Trader(object):
     # ============ definition of tasks ================
     def _start(self):
         """ 启动交易系统 """
-        self.send_message('starting Trader')
+        self.send_message('Starting Trader...')
         self.status = 'sleeping'
 
     def _stop(self):
         """ 停止交易系统 """
-        self.send_message('stopping Trader, the broker will be stopped as well...')
+        self.send_message('Stopping Trader, the broker will be stopped as well...')
         self._broker.status = 'stopped'
         self.status = 'stopped'
 
@@ -1282,7 +1277,7 @@ class Trader(object):
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
             if self.debug:
                 import traceback
-                traceback.print_exc()
+                self.send_message(traceback.format_exc())  # print_exc是UI的任务，不是trader的任务
             return
         # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）
         if result_id is not None:
@@ -1304,7 +1299,6 @@ class Trader(object):
             # 读取交易处理以后的账户信息和持仓信息
             order_id = result['order_id']
             order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
-
             # 读取持仓信息
             pos_id = order_detail['pos_id']
             position = get_position_by_id(pos_id, data_source=self._datasource)
@@ -1419,7 +1413,6 @@ class Trader(object):
                 pos_type = pos['position']
                 prev_qty = res['prev_qty']
                 updated_qty = res['updated_qty']
-                print(f'got result {res}')
                 color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
 
                 name = get_symbol_names(self.datasource, symbols=symbol)
@@ -1805,7 +1798,7 @@ class Trader(object):
                 data_source=self.datasource
         )
         if amount < -available_cash:
-            print(f'Not enough cash to decrease, available cash: {available_cash}, change amount: {amount}')
+            self.send_message(f'Not enough cash to decrease, available cash: {available_cash}, change amount: {amount}')
             return
         amount_change = {
             'cash_amount_change':      amount,
@@ -1879,7 +1872,7 @@ class Trader(object):
                     data_source=self.datasource,
             )
             if self.debug:
-                print('Position to be modified does not exist, new position is created!')
+                self.send_message('Position to be modified does not exist, new position is created!')
         elif len(position_ids) == 1:
             # found one position, use it, if side is not consistent, create a new one on the other side
             position_id = position_ids[0]
@@ -1891,8 +1884,8 @@ class Trader(object):
                 side = position['position']
             if side != position['position']:
                 if position['qty'] != 0:
-                    print(f'Can not modify position {symbol}@ {side} while {symbol}@ {position["position"]}'
-                          f' still has {position["qty"]} shares, reduce it to 0 first!')
+                    self.send_message(f'Can not modify position {symbol}@ {side} while {symbol}@ {position["position"]}'
+                                      f' still has {position["qty"]} shares, reduce it to 0 first!')
                     return
                 else:
                     position_id = get_or_create_position(
@@ -1930,7 +1923,8 @@ class Trader(object):
                               f'from {position["qty"]} to {position["qty"] + quantity}')
         # 如果减少持仓，则可用持仓数量必须足够，否则退出
         if quantity < 0 and position['available_qty'] < -quantity:
-            print(f'Not enough position to decrease, available: {position["available_qty"]}, skipping operation')
+            self.send_message(f'Not enough position to decrease, '
+                              f'available: {position["available_qty"]}, skipping operation')
             return
         prev_cost = position['cost']
         current_total_cost = prev_cost * position['qty']
@@ -1982,10 +1976,10 @@ class Trader(object):
         try:
             real_time_data = stock_live_kline_price(symbols=self.asset_pool)
         except Exception as e:
+            self.send_message(f'Error in acquiring live prices: {e}')
             if self.debug:
                 import traceback
-                self.send_message(f'Error in acquiring live prices: {e}')
-                traceback.print_exc()
+                self.send_message(traceback.format_exc())
             return None
         if real_time_data.empty:
             # empty data downloaded

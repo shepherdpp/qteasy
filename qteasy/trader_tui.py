@@ -21,6 +21,7 @@ from .utilfuncs import sec_to_duration
 
 
 holding_columns = ("symbol", "qty", "available", "cost", "name", "price", "value", "profit", "profit_ratio", "last")
+order_columns = ("symbol", "qty", "price", "type", "status", "time")
 
 
 class ValueDisplay(Digits):
@@ -138,6 +139,12 @@ class TraderApp(App):
                 msg = self.trader.message_queue.get()
                 system_log.write(msg)
 
+                if any(words in msg for words in ['RAN STRATEGY', 'RESULT']):
+                    # if ran strategy or got result from broker, refresh UI
+                    self.refresh_info_panel()
+                    self.refresh_order()
+                    self.refresh_holdings()
+
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
                 msg = self.trader.broker.broker_messages.get()
@@ -150,12 +157,43 @@ class TraderApp(App):
 
         system_log.write(f"System stopped, status: {self.status}")
 
+    def refresh_holdings(self):
+        """Refresh the holdings table."""
+        # get the holdings from the trader
+        holdings = self.query_one(HoldingTable)
+        holdings.add_columns(*holding_columns)
+        pos = self.trader.account_position_info
+        holdings.clear()
+        if not pos.empty:
+            # import numpy as np
+            # pos.replace(np.nan, 0, inplace=True)
+            list_tuples = list(pos.itertuples(name=None))
+            holdings.add_row(*list_tuples[0])
+
+    def refresh_order(self):
+        """Refresh the order table."""
+        orders = self.query_one(OrderTable)
+        orders.add_columns(*order_columns)
+        orders.clear()
+        order_list = self.trader.history_orders(with_trade_results=True)
+        if not order_list.empty:
+            list_tuples = list(order_list.itertuples(name=None))
+            orders.add_row(*list_tuples[0])
+
+    def refresh_info_panel(self):
+        """Refresh the information panel"""
+        info = self.query_one(InfoPanel)
+
+        account = self.trader.account_id
+        trader_status = self.trader.status
+        info.update(f'Account: {account}\nStatus: {trader_status}')
+
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header()
         yield Footer()
-        yield ValueDisplay("123456.78", id='cash')
-        yield EarningDisplay("456.78", id='earning')
+        yield ValueDisplay(id='cash')
+        yield EarningDisplay(id='earning')
         yield InfoPanel(id='info', classes='box')
         yield Tables(id='tables')
         yield StrategyTree(label='strategies')
@@ -176,16 +214,6 @@ class TraderApp(App):
         tables = self.query_one(Tables)
         tables.border_title = "Tables"
 
-        # get the holdings from the trader
-        holdings = self.query_one(HoldingTable)
-        holdings.add_columns(*holding_columns)
-        pos = self.trader.account_position_info
-        if not pos.empty:
-            import numpy as np
-            pos.replace(np.nan, 0, inplace=True)
-            list_tuples = list(pos.itertuples(name=None))
-            holdings.add_row(*list_tuples[0])
-
         # get the strategies from the trader
         tree = self.query_one(StrategyTree)
         tree.border_title = "Strategies"
@@ -195,15 +223,15 @@ class TraderApp(App):
         close.add_leaf("MACD")
         close.add_leaf("Custom")
 
+        # refresh the holdings table
+        self.refresh_holdings()
+
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
         system_log.write(f"System started, status: {self.status}")
 
         info = self.query_one(InfoPanel)
         info.border_title = "Information"
-        account = self.trader.account_id
-        trader_status = self.trader.status
-        info.update(f'Account: {account}\nStatus: {trader_status}')
 
         # start the trader, broker and the trader event loop all in separate threads
         Thread(target=self.trader_event_loop).start()

@@ -781,7 +781,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         sys.stdout.flush()
 
 
-def get_current_tz_datetime(self, time_zone='local'):
+def get_current_timezone_datetime(time_zone='local'):
     """ 获取指定时区的当前时间，同时确保返回的时间是tz_naive的
 
     如果time_zone为'local', 获取当前时区的当前时间。
@@ -796,7 +796,7 @@ def get_current_tz_datetime(self, time_zone='local'):
         return pd.to_datetime('today')
     else:
         # create utc time and convert to time_zone time and remove time_zone information
-        dt = pd.to_datetime('now', utc=True).tz_convert(self.time_zone)
+        dt = pd.to_datetime('now', utc=True).tz_convert(time_zone)
         return pd.to_datetime(dt.tz_localize(None))
 
 

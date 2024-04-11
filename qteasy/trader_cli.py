@@ -28,6 +28,229 @@ from qteasy.trading_util import get_symbol_names
 from qteasy.utilfuncs import adjust_string_length
 
 
+def pack_system_info(trader_info, width=80):
+    """ 打包账户信息字符串, 用于在shell中格式化显示trader_info中的系统信息
+
+    Parameters
+    ----------
+    trader_info: dict
+        包含账户信息的字典
+    width: int
+        字符串的宽度
+
+    Returns
+    -------
+    str
+        包含账户信息的字符串
+    """
+    semi_width = int(width * 0.75)
+
+    info_str = ''
+
+    # System Info
+    info_str += f'{" System Info ":=^{width}}'
+    info_str += f'{"python":<{semi_width - 20}}{sys.version}'
+    import qteasy
+    info_str += f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}'
+    import tushare
+    info_str += f'{"tushare":<{semi_width - 20}}{tushare.__version__}'
+    try:
+        import talib
+        info_str += f'{"ta-lib":<{semi_width - 20}}{talib.__version__}'
+    except ImportError:
+        info_str += f'{"ta-lib":<{semi_width - 20}}not installed'
+    info_str += f'{"Local DataSource":<{semi_width - 20}}{trader_info["Local DataSource"]}'
+    info_str += f'{"System log file path":<{semi_width - 20}}{trader_info["System log file path"]}'
+    info_str += f'{"Trade log file path":<{semi_width - 20}}{trader_info["Trade log file path"]}'
+
+    return info_str
+
+
+def pack_account_info(trader_info, width=80):
+    """ 打包账户信息字符串，用于在shell中格式化显示trader_info中的账户信息
+
+    Parameters
+    ----------
+    trader_info: dict
+        包含账户信息的字典
+    width: int
+        字符串的宽度
+
+    Returns
+    -------
+    str
+        包含账户信息的字符串
+    """
+
+    semi_width = int(width * 0.75)
+
+    info_str = ''
+
+    # Account information
+    info_str += f'{" Account Overview ":=^{width}}'
+    info_str += f'{"Account ID":<{semi_width - 20}}{trader_info["Account ID"]}'
+    info_str += f'{"User Name":<{semi_width - 20}}{trader_info["User Name"]}'
+    info_str += f'{"Created on":<{semi_width - 20}}{trader_info["created_time"]}'
+    info_str += f'{"Started on":<{semi_width - 20}}{trader_info["Started on"]}'
+    info_str += f'{"Time zone":<{semi_width - 20}}{trader_info["Time zone"]}'
+
+    return info_str
+
+
+def pack_status_info(trader_info, width=80):
+    """ 打包账户状态信息字符串， 用于在Shell中格式化显示trader的状态信息
+
+    Parameters
+    ----------
+    trader_info: dict
+        包含账户信息的字典
+    width: int
+        字符串的宽度
+
+    Returns
+    -------
+    str
+        包含账户信息的字符串
+    """
+    semi_width = int(width * 0.75)
+
+    info_str = ''
+
+    # Status and Settings
+    info_str += f'{" Status and Settings ":=^{width}}'
+    info_str += f'{"Trader Stats":<{semi_width - 20}}{trader_info["Trader Stats"]}'
+    info_str += f'{"Broker Status":<{semi_width - 20}}{trader_info["Broker Name"]} / {trader_info["Broker Status"]}'
+    info_str += f'{"Live price update freq":<{semi_width - 20}}' \
+                   f'{trader_info["Live price update freq"]}'
+    info_str += f'{"Strategy":<{semi_width - 20}}{trader_info["Strategy"]}'
+    info_str += f'{"Strategy run frequency":<{semi_width - 20}}{trader_info["Strategy run frequency"]}'
+    info_str += f'{"Trade batch size(buy/sell)":<{semi_width - 20}}' \
+                   f'{trader_info["trade batch size"]} ' \
+                   f'/ {trader_info["sell_batch_size"]}'
+    info_str += f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}' \
+                   f'{trader_info["trade delivery period"]} day / ' \
+                   f'{trader_info["stock delivery period"]} day'
+
+    buy_fix = trader_info["buy_fix"]
+    sell_fix = trader_info["sell_fix"]
+    buy_rate = trader_info["buy_rate"]
+    sell_rate = trader_info["sell_rate"]
+    buy_min = trader_info["buy_min"]
+    sell_min = trader_info["sell_min"]
+
+    if (buy_fix > 0) or (sell_fix > 0):
+        trader_info += f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}' \
+                       f'¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}'
+    if (buy_rate > 0) or (sell_rate > 0):
+        trader_info += f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}'
+    if (buy_min > 0) or (sell_min > 0):
+        trader_info += f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}'
+    info_str += f'{"Market time (open/close)":<{semi_width - 20}}' \
+                   f'{trader_info["market_open_am"]} / ' \
+                   f'{trader_info["market_close_pm"]}'
+
+    return info_str
+
+
+def pack_investment_info(trader_info, width=80):
+    """ 打包账户投资信息字符串, 用于在shell中格式化显示trader_info中的投资信息
+
+    Parameters
+    ----------
+    trader_info: dict
+        包含账户信息的字典
+    width: int
+        字符串的宽度
+
+    Returns
+    -------
+    str
+        包含账户信息的字符串
+    """
+    semi_width = int(width * 0.75)
+
+    total_investment = trader_info['Total Investment']
+    total_value = trader_info['Total Value']
+    total_return_of_investment = trader_info['Total Return of Investment']
+    total_roi_rate = trader_info['Total ROI Rate']
+    own_cash = trader_info['Cash']
+    available_cash = trader_info['Available Cash']
+    total_market_value = trader_info['Total Stock Value']
+    position_level = trader_info['Stock Percent']
+    total_profit = trader_info['Total Stock Profit']
+    total_profit_ratio = trader_info['Total Profit Ratio']
+
+    info_str = ''
+
+    # Investment Return
+    info_str += f'{" Returns ":=^{semi_width}}'
+    info_str += f'{"Benchmark":<{semi_width - 20}}¥ ' \
+                   f'{trader_info["Benchmark"]}'
+    info_str += f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}'
+    if total_value >= total_investment:
+        info_str += f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]'
+        info_str += f'{"Total Return of Investment":<{semi_width - 20}}' \
+                       f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n' \
+                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]'
+    else:
+        info_str += f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]'
+        info_str += f'{"Total Return of Investment":<{semi_width - 20}}' \
+                       f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n' \
+                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]'
+    info_str += f'{" Cash ":=^{semi_width}}'
+    info_str += f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} '
+    info_str += f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} '
+    info_str += f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}'
+    info_str += f'{" Stock Value ":=^{semi_width}}'
+    info_str += f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}'
+    if total_profit >= 0:
+        info_str += f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]'
+        info_str += f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]'
+        info_str += f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]'
+    else:
+        info_str += f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold ' \
+                       f'green]'
+        info_str += f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]'
+        info_str += f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold ' \
+                       f'green]'
+
+    return info_str
+
+
+def pack_pool_info(trader_info, width=80):
+    """ 打包资产池信息字符串, 用于在shell中格式化显示trader_info中的投资信息
+
+    Parameters
+    ----------
+    trader_info: dict
+        包含账户信息的字典
+    width: int
+        字符串的宽度
+
+    Returns
+    -------
+    str
+        包含账户信息的字符串
+    """
+
+    asset_pool = trader_info['Asset Pool']
+    asset_in_pool = trader_info['Asset in Pool']
+
+    info_str = ''
+
+    asset_pool_string = adjust_string_length(
+            s=' '.join(asset_pool),
+            n=width - 2,
+    )
+
+    info_str += f'{" Investment ":=^{width}}'
+    info_str += f'Current Investment Type:        {trader_info["Asset Type"]}'
+    info_str += f'Current Investment Pool:        {asset_in_pool} stocks, ' \
+                   f'Use "pool" command to view details.\n=={asset_pool_string}\n'
+
+    return info_str
+
+
 class TraderShell(Cmd):
     """ 基于Cmd的交互式shell，用于实盘交易模式与用户交互
 
@@ -1064,7 +1287,20 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        self.trader.info(detail=args.detail, system=args.system)
+        trader_info = self.trader.info(detail=args.detail, system=args.system)
+        if not trader_info:
+            return False
+
+        screen_width = shutil.get_terminal_size().columns
+
+        if args.system:
+            rich.print(pack_system_info(trader_info, width=screen_width))
+        if args.detail:
+            rich.print(pack_account_info(trader_info, width=screen_width))
+            rich.print(pack_account_info(trader_info, width=screen_width))
+        rich.print(pack_investment_info(trader_info, width=screen_width))
+        if args.detail:
+            rich.print(pack_pool_info(trader_info, width=screen_width))
 
         if args.detail:
             return self.do_positions(arg='')
@@ -1675,7 +1911,7 @@ class TraderShell(Cmd):
             return False
 
         print(f'Execution Schedule:')
-        self.trader.show_schedule()
+        self.trader.get_schedule_string()
 
     def do_run(self, arg):
         """usage: run [STRATEGY [STRATEGY ...]] [-h]
@@ -1798,6 +2034,9 @@ class TraderShell(Cmd):
                         text_width = int(shutil.get_terminal_size().columns)
                         # adjust message length
                         message = self._trader.message_queue.get()
+                        # TODO: there's no more _R message, _R messages should be created by CLI
+                        #  when no trader messages are popped out, then the messages are generated
+                        #  by CLI to show countdown to next task read from the trader
                         if message[-2:] == '_R':
                             # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
                             next_normal_message = None
