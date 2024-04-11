@@ -541,7 +541,7 @@ class Trader(object):
                 traceback.print_exc()
         return
 
-    def info(self, verbose=False, detail=False, system=False, width=80, rich_format: bool = True) -> str:
+    def info(self, verbose=False, detail=False, system=False) -> dict:
         """ 返回账户的概览信息，包括账户基本信息，持有现金和持仓信，所有信息打包成一个dict返回，供打印或者显示
 
         Parameters:
@@ -551,14 +551,11 @@ class Trader(object):
         detail: bool, default False
             是否生成详细信息(账户持仓、账户现金等)，如否，则只打印账户持仓等基本信息
         system: bool, default False
-            是否生成系统信息
-        width: int, default 80
-            生成信息的宽度
-        rich_print: bool, default True
-            是否生成适合rich.print打印的信息
+            是否生成系统信息，如否，则只生成账户信息
+
         Returns:
         --------
-        info_str: str
+        info_str: dict
             账户的概览信息
         """
 
@@ -580,7 +577,6 @@ class Trader(object):
         position_level = total_market_value / total_value
         total_profit_ratio = total_profit / total_market_value
 
-        trader_info = ''
         trader_info_dict = {}
 
         if system:
@@ -646,7 +642,7 @@ class Trader(object):
         trader_info_dict['Asset Type'] = self.asset_type
         trader_info_dict['Asset in Pool'] = len(self.asset_pool)
 
-        return trader_info
+        return trader_info_dict
 
     def trade_results(self, status='filled'):
         """ 返回账户的交易结果

@@ -14,6 +14,7 @@ import time
 from threading import Thread
 
 from textual.app import App, ComposeResult
+from textual.containers import Horizontal
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
 from textual.widgets import TabPane
 
@@ -21,17 +22,7 @@ from .utilfuncs import sec_to_duration
 
 
 holding_columns = ("symbol", "qty", "available", "cost", "name", "price", "value", "profit", "profit_ratio", "last")
-order_columns = ("symbol", "qty", "price", "type", "status", "time")
-
-
-class ValueDisplay(Digits):
-    """ A widget to display the total value."""
-    pass
-
-
-class EarningDisplay(Digits):
-    """ A widget to display the value of a earnings."""
-    pass
+order_columns = ("symbol", "position", "qty", "price", "type", "status", "time", "8", "9", "10", "11", "12", "13", "14", "15")
 
 
 class SysLog(RichLog):
@@ -65,9 +56,24 @@ class Tables(TabbedContent):
                 yield OrderTable(id='orders')
 
 
-class InfoPanel(Static):
+class InfoPanel(TabbedContent):
     """A widget to display information."""
-    pass
+
+    def compose(self) -> ComposeResult:
+        with TabbedContent():
+            with TabPane("Info"):
+                yield Static(id='info', name='info')
+            with TabPane("Strategy"):
+                yield StrategyTree(id='strategy', label='Information')
+
+
+class DisplayPanel(Horizontal):
+    """A widget to display the key information."""
+
+    def compose(self) -> ComposeResult:
+        yield Digits(id='total_value', name='Value', value='0.00')
+        yield Digits(id='earning', name='Earning', value='0.00')
+        yield Digits(id='cash', name='Cash', value='0.00')
 
 
 class ControlPanel(Static):
@@ -111,7 +117,8 @@ class TraderApp(App):
         Thread(target=self.trader.broker.run).start()
 
         system_log = self.query_one(SysLog)
-        info = self.query_one(InfoPanel)
+        info = self.query_one('#info')
+        display = self.query_one(DisplayPanel)
 
         self.status = 'running'
 
@@ -126,13 +133,7 @@ class TraderApp(App):
             count_down = sec_to_duration(self.trader.count_down_to_next_task, estimation=True)
 
             system_log.border_title = f"System Log - Next Task: {next_task} in {count_down}"
-
-            # updated status
-            trader_status = self.trader.status
-            info.border_title = f"Information: {current_time}"
-            info.update(f'Account: {self.trader.account_id}\n'
-                        f'Status: {trader_status}\n'
-                        f'UI Status: {self.status}')
+            display.border_title = f"{self.status}: {current_time}"
 
             # check the message queue of the trader
             if not self.trader.message_queue.empty():
@@ -141,9 +142,12 @@ class TraderApp(App):
 
                 if any(words in msg for words in ['RAN STRATEGY', 'RESULT']):
                     # if ran strategy or got result from broker, refresh UI
-                    self.refresh_info_panel()
                     self.refresh_order()
                     self.refresh_holdings()
+
+                    trader_info = self.trader.info(detail=True)
+                    self.refresh_values(trader_info)
+                    self.refresh_info_panel(trader_info)
 
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
@@ -180,58 +184,91 @@ class TraderApp(App):
             list_tuples = list(order_list.itertuples(name=None))
             orders.add_row(*list_tuples[0])
 
-    def refresh_info_panel(self):
+    def refresh_info_panel(self, trader_info):
         """Refresh the information panel"""
-        info = self.query_one(InfoPanel)
+        info = self.query_one('#info')
 
-        account = self.trader.account_id
+        account = trader_info['Account ID']
+        user_name = trader_info['User Name']
+        created_on = trader_info['Created on']
+        started_on = trader_info['Started on']
+
+        total_investment = trader_info['Total Investment']
+        total_stock_value = trader_info['Total Stock Value']
+
         trader_status = self.trader.status
-        info.update(f'Account: {account}\nStatus: {trader_status}')
+        info.update(f'Account:          {account}\n'
+                    f'Username:         {user_name}\n'
+                    f'Created On:       {created_on}\n'
+                    f'Started On:       {started_on}\n'
+                    f'Status:           {trader_status}\n'
+                    f'Total Investment: {total_investment:.2f}\n'
+                    f'Total Stock Value:{total_stock_value:.2f}')
 
-    def compose(self) -> ComposeResult:
-        """Create child widgets for the app."""
-        yield Header()
-        yield Footer()
-        yield ValueDisplay(id='cash')
-        yield EarningDisplay(id='earning')
-        yield InfoPanel(id='info', classes='box')
-        yield Tables(id='tables')
-        yield StrategyTree(label='strategies')
-        yield SysLog(id='log')
-        yield ControlPanel(id='control')
+    def refresh_values(self, trader_info):
+        """Refresh the total value, earning and cash."""
 
-    def on_mount(self) -> None:
-        """Actions to perform after mounting the app."""
-        # initialize widgets
-        total_value = self.query_one(ValueDisplay)
-        total_value.update("0.00")
-        total_value.border_title = "Total Value"
+        total_value = trader_info['Total Value']
+        total_return_of_investment = trader_info['Total ROI']
+        total_roi_rate = trader_info['Total ROI Rate']
+        own_cash = trader_info['Total Cash']
+        total_market_value = trader_info['Total Stock Value']
 
-        earning = self.query_one(EarningDisplay)
-        earning.update("0.00")
-        earning.border_title = "Earning"
+        value = self.query_one('#total_value')
+        value.border_title = "Total Value / Market Value"
+        value.update(f"{total_value:.2f} / {total_market_value:.2%}")
 
-        tables = self.query_one(Tables)
-        tables.border_title = "Tables"
+        earning = self.query_one('#earning')
+        earning.border_title = "Total Return"
+        earning.update(f"{total_return_of_investment:.2f} / {total_roi_rate:.2%}")
 
-        # get the strategies from the trader
+        cash = self.query_one('#cash')
+        cash.border_title = "Own Cash"
+        cash.update(f"{own_cash:.2f}")
+
+    def refresh_tree(self):
+        """Refresh the tree."""
         tree = self.query_one(StrategyTree)
-        tree.border_title = "Strategies"
+        tree.clear()
         tree.root.expand()
         close = tree.root.add("Timing: close", expand=True)
         close.add_leaf("DMA")
         close.add_leaf("MACD")
         close.add_leaf("Custom")
 
-        # refresh the holdings table
+    def compose(self) -> ComposeResult:
+        """Create child widgets for the app."""
+        yield Header()
+        yield Footer()
+        yield DisplayPanel(id='display')
+        yield Tables(id='tables')
+        yield InfoPanel(id='info_panel')
+        yield SysLog(id='log')
+        yield ControlPanel(id='control')
+
+    def on_mount(self) -> None:
+        """Actions to perform after mounting the app."""
+
+        # updated status
+        trader_info = self.trader.info(detail=True)
+        self.refresh_values(trader_info)
+        self.refresh_info_panel(trader_info)
+
+        # initialize widgets
+        tables = self.query_one(Tables)
+        tables.border_title = "Tables"
+
+        # get the strategies from the trader
+        info = self.query_one(InfoPanel)
+        info.border_title = "Information"
+
+        # refresh the holdings table and order tables
         self.refresh_holdings()
+        self.refresh_order()
 
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
         system_log.write(f"System started, status: {self.status}")
-
-        info = self.query_one(InfoPanel)
-        info.border_title = "Information"
 
         # start the trader, broker and the trader event loop all in separate threads
         Thread(target=self.trader_event_loop).start()

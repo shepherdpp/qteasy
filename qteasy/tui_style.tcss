@@ -1,35 +1,24 @@
 Screen {
     layout: grid;
     grid-size: 3 3;
-    grid-rows: 1fr 3fr 2fr ;
+    grid-rows: 7 3fr 1fr ;
     grid-columns: 1fr;
-    grid-gutter: 1;
+    grid-gutter: 0;
 }
 
-ValueDisplay {
+DisplayPanel {
     border: round $accent;
+    border-title-align: center;
     height: 1fr;
     row-span: 1;
-    column-span: 1;
+    column-span: 3;
     min-height: 7;
     padding: 0 2;
 }
 
-EarningDisplay {
+Digits {
     border: round $accent;
     height: 1fr;
-    row-span: 1;
-    column-span: 1;
-    min-height: 7;
-    padding: 0 2;
-}
-
-InfoPanel {
-    border: round $accent;
-    height: 1fr;
-    min-height: 7;
-    row-span: 1;
-    column-span: 1;
 }
 
 Tables {
@@ -39,11 +28,11 @@ Tables {
     height: 1fr;
 }
 
-StrategyTree {
+InfoPanel {
     border: round $accent;
+    height: 1fr;
     row-span: 1;
     column-span: 1;
-    height: 1fr;
 }
 
 SysLog {
