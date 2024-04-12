@@ -506,7 +506,7 @@ class Trader(object):
                 current_time = current_date_time.time()
                 current_date = current_date_time.date()
                 if self.status != 'paused':
-                    self._add_task_from_agenda(current_time)
+                    self._add_task_from_schedule(current_time)
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
                 # TODO: move these operations to a task "change_date"
                 if current_date != pre_date:
@@ -1596,6 +1596,8 @@ class Trader(object):
                 self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}')
             t.start()
         else:
+            if self.debug:
+                self.send_message(f'running task: {task} with args: {args}')
             if args:
                 task_func(*args)
             else:
@@ -1635,7 +1637,7 @@ class Trader(object):
             self.send_message(f'putting task {task} into task queue')
         self.task_queue.put(task)
 
-    def _add_task_from_agenda(self, current_time=None):
+    def _add_task_from_schedule(self, current_time=None):
         """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务
 
         Parameters
@@ -1645,7 +1647,6 @@ class Trader(object):
             如果current_time为None，则使用当前系统时间，给出current_time的目的是为了方便测试
         """
         if current_time is None:
-            # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         task_added = False  # 是否添加了任务
         next_task = 'None'
@@ -1708,7 +1709,7 @@ class Trader(object):
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         if self.debug:
-            self.send_message('initializing agenda...\r')
+            self.send_message('initializing agenda...')
         # 如果不是交易日，直接返回
         if not self.is_trade_day:
             if self.debug:
@@ -1723,6 +1724,8 @@ class Trader(object):
                 self.operator,
                 self._config
         )
+        if self.debug:
+            self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}')
         # 根据当前时间删除过期的任务
         moa = pd.to_datetime(self._config['market_open_time_am']).time()
         mca = pd.to_datetime(self._config['market_close_time_am']).time()
@@ -1749,7 +1752,7 @@ class Trader(object):
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
                                                      'open_market',
-                                                     'sleep'])]
+                                                     'close_market'])]
         elif moc < current_time < mcc:
             # market afternoon open, remove all task before current time except pre_open, open_market, sleep, and wakeup
             if self.debug:
@@ -1759,8 +1762,7 @@ class Trader(object):
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
                                                      'open_market',
-                                                     'sleep',
-                                                     'wakeup'])]
+                                                     'close_market'])]
         elif mcc < current_time:
             # after market close, remove all task before current time except pre_open and post_close
             if self.debug:
@@ -1771,6 +1773,9 @@ class Trader(object):
                                                      'post_close'])]
         else:
             raise ValueError(f'Invalid current time: {current_time}')
+
+        if self.debug:
+            self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}')
 
     def manual_change_cash(self, amount):
         """ 手动修改现金，根据amount的正负号，增加或减少现金
@@ -1993,14 +1998,14 @@ class Trader(object):
         'stopped':  ['start'],
         'running':  ['stop', 'sleep', 'pause', 'run_strategy', 'process_result', 'pre_open',
                      'open_market', 'close_market', 'acquire_live_price'],
-        'sleeping': ['wakeup', 'stop', 'pause', 'pre_open',
+        'sleeping': ['wakeup', 'stop', 'pause', 'pre_open', 'close_market',
                      'process_result',  # 如果交易结果已经产生，哪怕处理时Trader已经处于sleeping状态，也应该处理完所有结果
                      'open_market', 'post_close', 'refill'],
         'paused':   ['resume', 'stop'],
     }
 
 
-def start_trader(
+def start_trader_ui(
         operator: Operator,
         account_id: int = None,
         user_name: str = None,
