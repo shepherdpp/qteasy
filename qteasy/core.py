@@ -2057,9 +2057,9 @@ def run(operator, **kwargs):
 
     if run_mode == 0 or run_mode == 'live':
         # 进入实时信号生成模式:
-        from qteasy.trader import start_trader
+        from qteasy.trader import start_trader_ui
         from qteasy import QT_DATA_SOURCE
-        start_trader(
+        start_trader_ui(
                 operator=operator,
                 account_id=config['live_trade_account_id'],
                 user_name=config['live_trade_account'],

@@ -17,8 +17,11 @@ DisplayPanel {
 }
 
 Digits {
-    border: round $accent;
+    border: round $success;
+    border-title-align: center;
     height: 1fr;
+    align: center middle;
+    text-align: center;
 }
 
 Tables {
@@ -42,15 +45,4 @@ SysLog {
     height: 1fr;
     min-height: 7;
     max-height: 20;
-}
-
-ControlPanel {
-    dock: bottom;
-    layout: horizontal;
-    background: $boost;
-}
-
-Button {
-    align: center middle;
-    width: 16;
 }
