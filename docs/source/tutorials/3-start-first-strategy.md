@@ -1,4 +1,4 @@
-# 创建第一个交易策略并评价回测结果
+# 回测您的第一个交易策略
 
 `qteasy`是一个完全本地化部署和运行的量化交易分析工具包，[Github地址在这里](https://github.com/shepherdpp/qteasy)，具备以下功能：
 
