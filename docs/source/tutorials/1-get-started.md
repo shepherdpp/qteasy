@@ -62,7 +62,7 @@ pip install qteasy
 如果需要使用数据库作为本地数据源，参照以下方法安装`MySQL`数据库，如果使用文件作为本地数据源，可以跳过这一步。
 
 在`MySQL`的[官网](https://dev.mysql.com/downloads/mysql/)可以直接找到社区开源版本下载:
-网站提供了dmg和tar等多种不同的安装方式，而且还有针对M1芯片的版本可选：
+网站提供了dmg和tar等多种不同的安装方式，而且还有针对Apple M1芯片的版本可选：
 
 ![png](img/mysql.png)
 
