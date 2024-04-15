@@ -8,6 +8,7 @@
 - [python3.11环境下安装qteasy失败](在较高版本python环境中安装qteasy)
 - [连接数据库失败](在qteasy.cfg中添加配置信息后，为何仍然提示数据库连接失败)
 - [系统提示建议安装sqlalchemy](从数据库中读取数据时，为什么会出现提示建议安装\`sqlalchemy\`\？)
+- [从tushare下载数据受频率限制失败](从tushare下载数据时提示下载频率过高而失败)
 
 ---
 
@@ -190,3 +191,49 @@ pd.__version__
 这是因为`qteasy`使用`pymysql`作为数据库连接API，但`pandas`从1.1版本以后，逐步开始将`pymysql`的支持去掉了，尽管经过测试，在`pandas`的1.5版本下`qteasy`仍然能够正确读取数据，但是会收到警告信息。
 
 以上问题已经进入了我的修改清单，在接下来的小升级中，会去掉对`pandas`的sql API依赖，直接使用`pymysql`读取数据库，这样就不会出现这条警告信息了。如果您不希望看到这条警告信息，也可以降级`pandas`的版本到`1.1.0`。`qteasy`在开发初期一致固定使用较低版本的`pandas`，绝大部分的稳定性测试基于`pandas`的1.1版本，如果使用1.1版本的`pandas`就不会出现这个提示信息，其他所有功能也都正常。
+
+---
+
+## 从tushare下载数据时提示下载频率过高而失败
+
+某些tushare数据存在每分钟读取频率限制，如果积分不够，下载频率是会被限制的，从而导致某些数据下载不完整，例如下面的情况：
+
+运行脚本： 
+
+```python
+>>> qt.refill_data_source(tables='events', start_date='20230101', end_date='20240403',reversed_par_seq=True)
+```
+
+出现下列报错：
+    
+```text
+[##############--------------------------]6000/16923-35.5% <fund_share:016407.OF>37107wrtn/about 19 minleftC:\ProgramData\anaconda3\envs\qteasy-env-p311\Lib\site-packages\qteasy*database.py:5134*: UserWarning:
+抱歉，您每分钟最多访问该接口600次，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。:
+download process interrupted at [fund_share]:<F180003.OF>-<016408.OF>
+37107 rows downloaded, will proceed with next table!
+warnings.warn(msg)
+[#######################-----------------]10000/16923-59.1% <fund_manager:012277.OF>1264483wrtn/about 15 minleftC:\ProgramData\anaconda3\envs\qteasy-env-p311\Lib\site-packages\qteasy\database.py:5134: UserWarning:
+抱歉，您每分钟最多访问该接口500次，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。:
+download process interrupted at [fund_manager]:<F180003.OF>-<012278.OF>
+1264483 rows downloaded, will proceed with next table!
+warnings.warn(msg)
+```
+
+为此，qteasy设计了专门的重试机制来规避或缓解这个问题。
+
+您可以尝试修改qteasy的下面几个配置，调整下载数据时的重试次数和延时设置，这几个配置参数是专门为了应对tushare的读取频率限制设置的：
+
+QT_CONFIG.hist_dnld_retry_cnt - 下载数据时失败重试的次数，默认为7次
+QT_CONFIG.hist_dnld_retry_wait - 第一次下载失败时的等待时长，单位为秒，默认为1秒
+QT_CONFIG.hist_dnld_backoff - 等待后仍然失败时等待时间的倍增乘数，默认为2倍
+
+qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间会逐渐延长间隔。比如，第一次下载不成功时，会暂停一秒重试，如果重试仍然有问题，会等待2秒重试，下一次等待4秒、再等待8秒。。。依此类推，一直到重试次数用光，这时才会raise。
+
+正常来讲，重试7次后的延时会倍增到32秒，加上前面延时的长度，已经超过1分钟了，正常是不会触发频率错误的，但如果网速过快，或者同时启用的线程太多，可能会有上面的问题。
+
+这时可以尝试将重试次数改成10次或更多（这样会显著延长下载时间），或者增加等待初始时长：
+
+```python
+>>> qt.configure(hist_dnld_retry_cnt=10, hist_dnld_retry_wait=2.)
+>>> qt.refill_data_source(tables='events', start_date='20230101', end_date='20240403',reversed_par_seq=True)
+```
