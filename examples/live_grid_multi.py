@@ -70,8 +70,8 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
     alpha = MultiGridTrade(
-            pars={'000651.SZ': (0.3, 500, 40.2),
-                  '600036.SH': (0.3, 600, 32.3),
+            pars={'000651.SZ': (0.3, 500, 38.2),
+                  '600036.SH': (0.3, 600, 32.1),
                   '601398.SH': (0.1, 1000, 5.3)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
             par_count=3,
             par_types=['float', 'int', 'float'],
