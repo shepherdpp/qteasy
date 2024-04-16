@@ -284,8 +284,8 @@ class TraderApp(App):
                 f'[b]Started On:[/b]         {started_on}\n'
                 f'[b]Status:[/b]             {trader_status}\n'
                 f'[b]Broker:[/b]             {broker_name}\n'
-                f'[b]Broker Status:[/b]      {broker_status}'
-                f'[b]Asset Pool({asset_pool_size}):[/b]         {broker_status}'
+                f'[b]Broker Status:[/b]      {broker_status}\n'
+                f'[b]Asset Pool({asset_pool_size}):[/b]\n{asset_pool}'
         )
 
     @work(exclusive=True, thread=True)
