@@ -31,6 +31,18 @@ Tables {
     height: 1fr;
 }
 
+#holdings {
+    height: 1fr;
+}
+
+#orders {
+    height: 1fr;
+}
+
+#watches {
+    height: 1fr;
+}
+
 InfoPanel {
     border: round $accent;
     height: 1fr;

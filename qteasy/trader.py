@@ -170,6 +170,12 @@ class Trader(object):
         self.live_price_channel = self._config['live_price_acquire_channel']
         self.live_price_freq = self._config['live_price_acquire_freq']
         self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
+        self.watched_price_refresh_interval = self._config['live_price_acquire_freq']
+        self.watched_prices = None  # 用于存储被监视的股票的最新价格，用于监视价格变动
+        benchmark_list = self._config['benchmark_asset']
+        if isinstance(benchmark_list, str):
+            benchmark_list = str_to_list(benchmark_list)
+        self.watch_list = benchmark_list + self._asset_pool
 
         self.live_sys_logger = None
 
@@ -1993,6 +1999,30 @@ class Trader(object):
         if self.debug:
             self.send_message(f'acquired live price data, live prices updated!')
         return
+
+    def update_watched_prices(self) -> pd.DataFrame:
+        """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
+        同时更新self.watched_prices
+        """
+        if self.watch_list:
+            from qteasy.emfuncs import stock_live_kline_price
+            symbols = self.watch_list
+            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
+            if not live_prices.empty:
+                live_prices.close = live_prices.close.astype(float)
+                live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
+                live_prices.set_index('symbol', inplace=True)
+
+                if self.debug:
+                    self.send_message('live prices acquired to update watched prices!')
+            else:
+
+                if self.debug:
+                    self.send_message('Failed to acquire live prices to update watch price string!')
+
+            self.watched_prices = live_prices
+
+        return self.watched_prices
 
     TASK_WHITELIST = {
         'stopped':  ['start'],

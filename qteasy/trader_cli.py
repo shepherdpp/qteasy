@@ -586,8 +586,8 @@ class TraderShell(Cmd):
         self._trader = trader
         self._timezone = trader.time_zone
         self._status = None
-        self._watch_list = ['000001.SH']  # default watched price is SH index
-        self._watched_prices = ' == Realtime prices can be displayed here. ' \
+        self._watch_list = self.trader.watch_list  # set default watch list
+        self._watched_price_string = ' == Realtime prices can be displayed here. ' \
                                'Use "watch" command to add stocks to watch list. =='  # watched prices string
 
         self.argparsers = {}
@@ -606,43 +606,32 @@ class TraderShell(Cmd):
     def watch_list(self):
         return self._watch_list
 
-    def update_watched_prices(self):
+    def format_watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
-        if self._watch_list:
-            from qteasy.emfuncs import stock_live_kline_price
-            symbols = self._watch_list
-            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
-            if not live_prices.empty:
-                live_prices.close = live_prices.close.astype(float)
-                live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
-                live_prices.set_index('symbol', inplace=True)
+        watched_prices = self.trader.update_watched_prices()
+        symbols = self._watch_list
+        watched_price_string = ''
 
-                if self.trader.debug:
-                    self.trader.send_message('live prices acquired to update watched prices!')
-            else:
-
-                if self.trader.debug:
-                    self.trader.send_message('Failed to acquire live prices to update watch price string!')
-            watched_prices = ''
+        if not watched_prices.empty:
             for symbol in symbols:
-                if symbol in live_prices.index:
-                    change = live_prices.loc[symbol, 'change']
-                    watched_prices_seg = f' ={symbol[:-3]}{live_prices.loc[symbol, "name"]}/' \
-                                         f'{live_prices.loc[symbol, "close"]:.2f}/' \
-                                         f'{live_prices.loc[symbol, "change"]:+.2%}'
+                if symbol in watched_prices.index:
+                    change = watched_prices.loc[symbol, 'change']
+                    watched_prices_seg = f' ={symbol[:-3]}{watched_prices.loc[symbol, "name"]}/' \
+                                         f'{watched_prices.loc[symbol, "close"]:.2f}/' \
+                                         f'{watched_prices.loc[symbol, "change"]:+.2%}'
                     if change > 0:
-                        watched_prices += ('[bold red]' + watched_prices_seg + '[/bold red]')
+                        watched_price_string += ('[bold red]' + watched_prices_seg + '[/bold red]')
                     elif change < 0:
-                        watched_prices += ('[bold green]' + watched_prices_seg + '[/bold green]')
+                        watched_price_string += ('[bold green]' + watched_prices_seg + '[/bold green]')
                     else:
-                        watched_prices += watched_prices_seg
+                        watched_price_string += watched_prices_seg
 
                 else:
-                    watched_prices += f' ={symbol[:-3]}/--/---'
-            self._watched_prices = watched_prices
+                    watched_price_string += f' ={symbol[:-3]}/--/---'
+            self._watched_price_string = watched_price_string
         else:
-            self._watched_prices = ' == Realtime prices can be displayed here. ' \
+            self._watched_price_string = ' == Realtime prices can be displayed here. ' \
                                    'Use "watch" command to add stocks to watch list. =='
         return
 
@@ -2049,7 +2038,7 @@ class TraderShell(Cmd):
                                     break
                                 message = next_message
 
-                            message = message[:-2] + ' ' + self._watched_prices
+                            message = message[:-2] + ' ' + self._watched_price_string
                             message = adjust_string_length(message,
                                                            text_width - 2,
                                                            hans_aware=True,

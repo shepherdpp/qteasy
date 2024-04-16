@@ -27,6 +27,7 @@ holding_columns = ("symbol", "qty", "available", "cost", "name",
                    "price", "total cost", "value", "profit", "profit_ratio")
 order_columns = ("ID", "symbol", "position", "side", "type", "qty", "price", "submitted time",
                  "result", "status", "cost", "filled qty", "canceled qty", "execution time", "delivery")
+watch_columns = ("symbol", "name", "pre_close", "open", "close", "high", "low", "volume", "amount", "change")
 
 
 class SysLog(RichLog):
@@ -48,6 +49,10 @@ class OrderTable(DataTable):
     """A widget to display current holdings."""
     pass
 
+class WatchTable(DataTable):
+    """A widget to display current holdings."""
+    pass
+
 
 class Tables(TabbedContent):
     """A widget to display tables."""
@@ -58,6 +63,8 @@ class Tables(TabbedContent):
                 yield HoldingTable(id='holdings')
             with TabPane("Orders"):
                 yield OrderTable(id='orders')
+            with TabPane("Watches"):
+                yield WatchTable(id='watches')
 
 
 class InfoPanel(TabbedContent):
@@ -133,9 +140,15 @@ class TraderApp(App):
 
         system_log.write(f"System started, status: {self.status}")
 
+        trader_info = self.trader.info(detail=True)
+        self.refresh_values(trader_info)
+        self.refresh_info_panels(trader_info)
+        self.refresh_tree()
+
         cum_time_counter = 0
 
         while True:
+            time.sleep(0.1)
 
             if self.status == 'stopped':
                 break
@@ -158,11 +171,15 @@ class TraderApp(App):
                     # if ran strategy or got result from broker, refresh UI
                     self.refresh_order()
                     self.refresh_holdings()
+                    self.refresh_watches()
 
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
                 msg = self.trader.broker.broker_messages.get()
                 system_log.write(msg)
+
+            if self.trader.status != 'running':
+                continue
 
             cum_time_counter += 1
             if cum_time_counter % 100 == 0:
@@ -172,7 +189,6 @@ class TraderApp(App):
                 self.refresh_info_panels(trader_info)
                 self.refresh_tree()
                 cum_time_counter = 0
-            time.sleep(0.1)
 
         system_log.write(f"System stopped, status: {self.status}")
 
@@ -184,8 +200,8 @@ class TraderApp(App):
         holdings.clear()
         pos = self.trader.account_position_info
         if not pos.empty:
-            import numpy as np
-            pos.replace(np.nan, 0, inplace=True)
+            # import numpy as np
+            # pos.replace(np.nan, 0, inplace=True)
             list_tuples = list(pos.itertuples(name=None))
             holdings.add_rows(list_tuples)
 
@@ -202,6 +218,15 @@ class TraderApp(App):
             list_tuples = list(order_list.itertuples(name=None))
             orders.add_rows(list_tuples)
 
+    def refresh_watches(self):
+        """Refresh the watch list."""
+        watched_prices = self.trader.update_watched_prices()
+        watches = self.query_one('#watches')
+        watches.clear()
+        if not watched_prices.empty:
+            list_tuples = list(watched_prices.itertuples(name=None))
+            watches.add_rows(list_tuples)
+
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
         """Refresh the information panel"""
@@ -214,6 +239,8 @@ class TraderApp(App):
         started_on = trader_info['Started on']
         broker_name = trader_info['Broker Name']
         broker_status = trader_info['Broker Status']
+        asset_pool = trader_info['Asset Pool']
+        asset_pool_size = trader_info['Asset in Pool']
 
         total_investment = trader_info['Total Investment']
         total_value = trader_info['Total Value']
@@ -258,6 +285,7 @@ class TraderApp(App):
                 f'[b]Status:[/b]             {trader_status}\n'
                 f'[b]Broker:[/b]             {broker_name}\n'
                 f'[b]Broker Status:[/b]      {broker_status}'
+                f'[b]Asset Pool({asset_pool_size}):[/b]         {broker_status}'
         )
 
     @work(exclusive=True, thread=True)
@@ -271,7 +299,7 @@ class TraderApp(App):
         total_market_value = trader_info['Total Stock Value']
 
         value = self.query_one('#total_value')
-        value.border_title = "Total Value / Market Value"
+        value.border_title = "Total Value"
         value.update(f"{total_value:.2f}")
 
         earning = self.query_one('#earning')
@@ -347,6 +375,9 @@ class TraderApp(App):
         orders = self.query_one(OrderTable)
         orders.add_columns(*order_columns)
         self.refresh_order()
+        watches = self.query_one('#watches')
+        watches.add_columns(*watch_columns)
+        self.refresh_watches()
 
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
