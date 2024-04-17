@@ -213,6 +213,7 @@ class TraderApp(App):
                 trader_info = self.trader.info(detail=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
+                self.refresh_tree()
                 self.refresh_holdings()
                 self.refresh_watches()
                 cum_time_counter = 0
