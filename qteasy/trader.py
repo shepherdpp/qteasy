@@ -43,6 +43,8 @@ UNIT_TO_TABLE = {
 }
 
 
+# TODO: all formatted texts should be formatted with rich.Text, not [bold red]...[/bold red]
+
 class Trader(object):
     """ Trader是交易系统的核心，它负责调度交易任务，根据交易日历和策略规则生成交易订单并提交给Broker
 

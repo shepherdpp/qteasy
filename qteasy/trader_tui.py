@@ -18,16 +18,10 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
 from textual.widgets import TabPane
-from textual.worker import Worker
+
+from rich.text import Text
 
 from .utilfuncs import sec_to_duration
-
-
-holding_columns = ("symbol", "qty", "available", "cost", "name",
-                   "price", "total cost", "value", "profit", "profit_ratio")
-order_columns = ("ID", "symbol", "position", "side", "type", "qty", "price", "submitted time",
-                 "result", "status", "cost", "filled qty", "canceled qty", "execution time", "delivery")
-watch_columns = ("symbol", "name", "pre_close", "open", "close", "high", "low", "volume", "amount", "change")
 
 
 class SysLog(RichLog):
@@ -42,16 +36,33 @@ class StrategyTree(Tree):
 
 class HoldingTable(DataTable):
     """A widget to display current holdings."""
-    pass
+
+    df_columns = ("name", "qty", "available_qty", "current_price", "cost",
+                  "total_cost", "market_value", "profit", "profit_ratio")
+    headers = ("Symbol",
+               "Name", "Qty", "Available", "Price", "Cost",
+               "Total Cost", "Value", "Profit", "Profit Ratio")
 
 
 class OrderTable(DataTable):
     """A widget to display current holdings."""
-    pass
+
+    df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
+                  "submitted time", "status", "price_filled", "filled_qty", "canceled_qty", "transaction_fee",
+                  "execution_time",  "delivery_status")
+    headers = ("ID",
+               "Symbol", "Position", "Side", "Type", "Qty", "Quote",
+               "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
+               "Execution Time", "Delivery")
+
 
 class WatchTable(DataTable):
     """A widget to display current holdings."""
-    pass
+    df_columns = ("name", "close", "pre_close", "open", "high",
+                  "low", "vol", "amount", "change")
+    headers = ("Symbol",
+               "Name", "Price", "Last Close", "Open", "High",
+               "Low", "Volume", "Amount", "Change")
 
 
 class Tables(TabbedContent):
@@ -60,11 +71,26 @@ class Tables(TabbedContent):
     def compose(self) -> ComposeResult:
         with TabbedContent():
             with TabPane("Holdings"):
-                yield HoldingTable(id='holdings')
+                yield HoldingTable(
+                        id='holdings',
+                        fixed_columns=1,
+                        zebra_stripes=True,
+                        cursor_type='row',
+                )
             with TabPane("Orders"):
-                yield OrderTable(id='orders')
+                yield OrderTable(
+                        id='orders',
+                        fixed_columns=4,
+                        zebra_stripes=True,
+                        cursor_type='row',
+                )
             with TabPane("Watches"):
-                yield WatchTable(id='watches')
+                yield WatchTable(
+                        id='watches',
+                        fixed_columns=3,
+                        zebra_stripes=True,
+                        cursor_type='none',
+                )
 
 
 class InfoPanel(TabbedContent):
@@ -178,16 +204,17 @@ class TraderApp(App):
                 msg = self.trader.broker.broker_messages.get()
                 system_log.write(msg)
 
-            if self.trader.status != 'running':
+            if self.trader.status not in ['running', 'paused']:
                 continue
 
             cum_time_counter += 1
-            if cum_time_counter % 100 == 0:
+            if cum_time_counter % 50 == 0:
                 # refresh the tree every 10 seconds
                 trader_info = self.trader.info(detail=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
-                self.refresh_tree()
+                self.refresh_holdings()
+                self.refresh_watches()
                 cum_time_counter = 0
 
         system_log.write(f"System stopped, status: {self.status}")
@@ -199,14 +226,33 @@ class TraderApp(App):
         holdings = self.query_one(HoldingTable)
         holdings.clear()
         pos = self.trader.account_position_info
-        if not pos.empty:
-            # import numpy as np
-            # pos.replace(np.nan, 0, inplace=True)
-            list_tuples = list(pos.itertuples(name=None))
-            holdings.add_rows(list_tuples)
+        if pos.empty:
+            return
+        pos = pos.reindex(columns=holdings.df_columns)
+        list_tuples = list(pos.itertuples(name=None))
 
-        # sys_log = self.query_one(SysLog)
-        # sys_log.write(f"Refreshed holdings table: {pos}")
+        for row in list_tuples:
+            row = list(row)
+            earning_rate = row[9]
+            row[2] = f'{row[2]:.2f}'
+            row[3] = f'{row[3]:.2f}'
+            row[4] = f'{row[4]:.2f}'
+            row[5] = f'{row[5]:.2f}'
+            row[6] = f'{row[6]:.2f}'
+            row[7] = f'{row[7]:.2f}'
+            row[8] = f'{row[8]:.2f}'
+            row[9] = f"{earning_rate:.2%}"
+
+            if earning_rate > 0:
+                row_color = 'red'
+            elif earning_rate < 0:
+                row_color = 'green'
+            else:
+                row_color = ''
+            styled_row = [
+                Text(str(cell), style=f"bold {row_color}") for cell in row
+            ]
+            holdings.add_row(*styled_row)
 
     @work(exclusive=True, thread=True)
     def refresh_order(self):
@@ -214,18 +260,53 @@ class TraderApp(App):
         orders = self.query_one(OrderTable)
         orders.clear()
         order_list = self.trader.history_orders(with_trade_results=True)
-        if not order_list.empty:
-            list_tuples = list(order_list.itertuples(name=None))
-            orders.add_rows(list_tuples)
+        if order_list.empty:
+            return
+        order_list = order_list.reindex(columns=orders.df_columns)
+        list_tuples = list(order_list.itertuples(name=None, index=False))
+        for row in list_tuples:
+            row = list(row)
+            if row[7] == 'cancelled':
+                row_color = 'yellow'
+            elif row[2] == 'sell':
+                row_color = 'green'
+            elif row[2] == 'buy':
+                row_color = 'red'
+            else:
+                row_color = 'yellow'
+
+            styled_row = row[:4]
+            styled_row += [
+                Text(str(cell), style=f"bold {row_color}") for cell in row[4:]
+            ]
+            orders.add_row(*styled_row)
 
     def refresh_watches(self):
         """Refresh the watch list."""
-        watched_prices = self.trader.update_watched_prices()
         watches = self.query_one('#watches')
+        watched_prices = self.trader.update_watched_prices()
+        watched_prices = watched_prices.reindex(columns=watches.df_columns)
         watches.clear()
-        if not watched_prices.empty:
-            list_tuples = list(watched_prices.itertuples(name=None))
-            watches.add_rows(list_tuples)
+        if watched_prices.empty:
+            return
+        # watched_prices.fillna(0, inplace=True)
+        list_tuples = list(watched_prices.itertuples(name=None))
+        for row in list_tuples:
+            row = list(row)
+            change = row[9]
+            row[9] = f"{change:.2%}"
+            if change > 0:
+                row_color = 'red'
+            elif change < 0:
+                row_color = 'green'
+            else:
+                row_color = ''
+
+            styled_row = row[:2]
+            styled_row += [
+                Text(str(cell), style=f"bold {row_color}") for cell in row[2:]
+            ]
+            watches.add_row(*styled_row)
 
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
@@ -370,13 +451,13 @@ class TraderApp(App):
 
         # refresh the holdings table and order tables
         holdings = self.query_one(HoldingTable)
-        holdings.add_columns(*holding_columns)
+        holdings.add_columns(*holdings.headers)
         self.refresh_holdings()
         orders = self.query_one(OrderTable)
-        orders.add_columns(*order_columns)
+        orders.add_columns(*orders.headers)
         self.refresh_order()
         watches = self.query_one('#watches')
-        watches.add_columns(*watch_columns)
+        watches.add_columns(*watches.headers)
         self.refresh_watches()
 
         system_log = self.query_one(SysLog)
