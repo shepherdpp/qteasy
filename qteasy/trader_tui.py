@@ -263,14 +263,16 @@ class TraderApp(App):
         if order_list.empty:
             return
         order_list = order_list.reindex(columns=orders.df_columns)
-        list_tuples = list(order_list.itertuples(name=None, index=False))
+        list_tuples = list(order_list.itertuples(name=None))
         for row in list_tuples:
             row = list(row)
-            if row[7] == 'cancelled':
+            row[5] = f'{row[5]:.2f}'
+            
+            if row[8] == 'cancelled':
                 row_color = 'yellow'
-            elif row[2] == 'sell':
+            elif row[3] == 'sell':
                 row_color = 'green'
-            elif row[2] == 'buy':
+            elif row[3] == 'buy':
                 row_color = 'red'
             else:
                 row_color = 'yellow'
