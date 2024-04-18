@@ -290,11 +290,9 @@ def retry(exception_to_check, tries=None, delay=None, backoff=None, mute=False, 
         def f_retry(*args, **kwargs):
             mtries, mdelay = tries, delay
             while mtries > 1:
-                print(f'In retry, mtries is {mtries}, mdelay is {mdelay}')
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    # TODO: define the error to escape retry: no permission, no such file, etc.
                     exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError,]
                     error_str = str(e)
                     if ('没有访问该接口的权限' in error_str) or ('api init error' in error_str):
