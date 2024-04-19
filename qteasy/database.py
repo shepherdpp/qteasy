@@ -4798,8 +4798,10 @@ class DataSource:
         return df_by_index
 
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
-                            end_date=None, symbols=None, merge_type='update', reversed_par_seq=False, parallel=True,
-                            process_count=None, chunk_size=100, refresh_trade_calendar=False, log=False) -> None:
+                            end_date=None, list_arg_filter=None, symbols=None, merge_type='update',
+                            reversed_par_seq=False, parallel=True, process_count=None, chunk_size=100,
+                            download_batch_size=0, download_batch_interval=0, refresh_trade_calendar=False,
+                            log=False) -> None:
         """ 批量下载历史数据并保存到本地数据仓库
 
         Parameters
@@ -4831,6 +4833,16 @@ class DataSource:
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
         end_date: str YYYYMMDD
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+        list_arg_filter: str or list of str, default: None  **注意，不是所有情况下filter_arg参数都有效**
+            限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+            参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
+            如果filter_arg为None，则下载所有数据。
+            例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+            - 'SZSE'
+                仅下载深圳交易所的股票数据
+            - ['SSE', 'SZSE']
+            - 'SSE, SZSE'
+                上面两种写法等效，下载上海和深圳交易所的股票数据
         symbols: str or list of str
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
@@ -4859,8 +4871,16 @@ class DataSource:
         chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
             再批量保存到本地，chunk_size即批量，默认值100
-        refresh_trade_calendar: Bool, Default True
-            是否刷新交易日历，默认True
+        download_batch_size: int, default 0
+            为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
+            该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效
+            如果为0，则不暂停，一次性下载所有数据
+        download_batch_interval: int, default 0
+            为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
+            该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效
+            如果<=0，则不暂停，立即开始下一批数据下载
+        refresh_trade_calendar: Bool, Default False
+            是否强制刷新交易日历，如果为True，将下载最新的交易日历数据，如果为False，仅在交易日历数据不足时下载
         log: Bool, Default False
             是否记录数据下载日志
 
@@ -4871,7 +4891,7 @@ class DataSource:
         """
 
         from .tsfuncs import acquire_data
-        # 1 参数合法性检查
+        # 1 参数合法性检查 TODO: 参数检查在core.py中完成，这里只需要调用即可
         if (tables is None) and (dtypes is None):
             raise KeyError(f'tables and dtypes can not both be None.')
         if tables is None:
@@ -4891,6 +4911,15 @@ class DataSource:
         if isinstance(dtypes, str):
             dtypes = str_to_list(dtypes)
 
+        if chunk_size <= 0:
+            chunk_size = 100
+
+        if download_batch_size <= 0:
+            download_batch_size = 999999999999  # 一个很大的数，保证不会暂停下载
+
+        if download_batch_interval <= 0:
+            download_batch_interval = 0
+
         code_start = None
         code_end = None
         if symbols is not None:
@@ -4902,6 +4931,12 @@ class DataSource:
                     symbols = None
                 else:
                     symbols = str_to_list(symbols, ',')
+
+        if list_arg_filter is not None:
+            if not isinstance(list_arg_filter, (str, list)):
+                raise TypeError(f'list_arg_filter should be a string or list, got {type(list_arg_filter)} instead.')
+            if isinstance(list_arg_filter, str):
+                list_arg_filter = str_to_list(list_arg_filter, ',')
 
         # 2 生成需要处理的数据表清单 tables
         table_master = get_table_master()
@@ -4954,7 +4989,8 @@ class DataSource:
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
-            # 为了避免parallel读取失败，需要确保tables_to_refill中包含trade_calendar表：
+
+            # 检查trade_calendar中是否有足够的数据，如果没有，需要包含trade_calendar表：
             if 'trade_calendar' not in tables_to_refill:
                 if refresh_trade_calendar:
                     tables_to_refill.add('trade_calendar')
@@ -4999,6 +5035,7 @@ class DataSource:
             additional_args = {}
             chunked_additional_args = []
             start_end_chunk_multiplier = 1
+            # 生成start和end参数，如果需要的话
             if allow_start_end:
                 additional_args = {'start': start, 'end': end}
             if start_end_chunk_size > 0:
@@ -5018,7 +5055,7 @@ class DataSource:
                 chunked_additional_args = [{'start': s, 'end': e} for s, e in
                                            zip(start_end_chunk_lbounds, start_end_chunk_rbounds)]
                 start_end_chunk_multiplier = len(chunked_additional_args)
-
+            # 生成其他参数，根据不同的fill_type生成不同的参数序列
             if fill_type in ['datetime', 'trade_date']:
                 # 根据start_date和end_date生成数据获取区间
                 additional_args = {}  # 使用日期作为关键参数，不再需要additional_args
@@ -5031,7 +5068,8 @@ class DataSource:
                         arg_coverage = (date for date in arg_coverage if is_market_trade_day(date))
                 arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
             elif fill_type == 'list':
-                arg_coverage = str_to_list(cur_table_info.arg_rng)
+                # 如果参数是一个列表，直接使用这个列表作为参数序列，除非给出了list_arg_filter
+                arg_coverage = str_to_list(cur_table_info.arg_rng) if list_arg_filter is None else list_arg_filter
             elif fill_type == 'table_index':
                 suffix = str_to_list(cur_table_info.arg_allowed_code_suffix)
                 source_table = self.read_table_data(cur_table_info.arg_rng)
@@ -5093,13 +5131,13 @@ class DataSource:
                             time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
                             progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
-                                                           f'{total_written}wrtn/{time_remain}left')
+                                                           f'{total_written}wrtn/{time_remain} left')
 
                         total_written += self.update_table_data(table, dnld_data)
                 else:
-                    progress_bar(0, total, f'<{table}>: estimating time left...')
+                    progress_bar(0, total, f'<{table}:{all_kwargs}> estimating time left...')
                     for kwargs in all_kwargs:
-                        df = self.fetch_history_table_data(table, **kwargs)
+                        df = self.fetch_history_table_data(table, channel='tushare', **kwargs)
                         completed += 1
                         if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
@@ -5114,8 +5152,14 @@ class DataSource:
                                 estimation=True,
                                 short_form=False
                         )
-                        progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
-                                                       f'{total_written}wrtn/{time_remain}left')
+                        if (download_batch_interval != 0) and (completed % download_batch_size == 0):
+                            progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
+                                                           f'{total_written}wrtn/Pausing for '
+                                                           f'{download_batch_interval} sec...')
+                            time.sleep(download_batch_interval)
+                        else:
+                            progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
+                                                           f'{total_written}wrtn/{time_remain} left')
                     total_written += self.update_table_data(table, dnld_data)
                 strftime_elapsed = sec_to_duration(
                         time_elapsed,
@@ -5134,8 +5178,6 @@ class DataSource:
                               f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n' \
                               f'{total_written} rows downloaded, will proceed with next table!'
                 warnings.warn(msg)
-                # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
-                #                                f'{total_written} written in {sec_to_duration(time_elapsed)}\n')
 
     def get_all_basic_table_data(self, refresh_cache=False, raise_error=True):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
