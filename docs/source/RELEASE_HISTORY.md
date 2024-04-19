@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.1.11 (2024-04-20)
+- Improved error messages raised by qt when wrong values are set to configuration keys, providing better guidance for users
+- Improved function refill_data_source, with better progress bar and information display
+
 ## 1.1.10 (2024-04-19)
 - Fixed a bug that causes not taking effect the configuration that are related to automatic retries in data acquiring from tushare
 
