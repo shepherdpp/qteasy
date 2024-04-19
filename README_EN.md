@@ -83,9 +83,9 @@
 - View trade process at any time, check profit and loss
 - Manually control trade process, adjust trade parameters, and manually place orders
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_1.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_2.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_light_theme.png)
 
 
 ## QTEASY Documentations

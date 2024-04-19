@@ -82,9 +82,9 @@
 - 随时查看交易过程，检查盈亏情况
 - 手动控制交易进程、调整交易参数，手动下单
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_2.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_1.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_2.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_light_theme.png) 
 
 ## 安装
 
