@@ -265,7 +265,7 @@ def next_main_freq(freq, direction='up'):
             return target_freq
 
 
-def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=None):
+def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
     Parameters
@@ -293,7 +293,6 @@ def retry(exception_to_check, tries=3, delay=1, backoff=2., mute=False, logger=N
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    # TODO: define the error to escape retry: no permission, no such file, etc.
                     exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError,]
                     error_str = str(e)
                     if ('没有访问该接口的权限' in error_str) or ('api init error' in error_str):

@@ -2236,7 +2236,9 @@ class TestDataSource(unittest.TestCase):
                 print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
                       f'{res}\n')
                 if res is None:
-                    import pdb; pdb.set_trace()
+                    ids = ds.read_sys_table_data('sys_op_trade_orders').index.tolist()
+                    raise ValueError(f'here last_id is wrong if order ids are not continuous. now the ids are '
+                                     f'{ids}, the last id should be {ids[-1]}, but actually {last_id} is return')
                 self.assertIsNotNone(res)
                 self.assertEqual(test_shuffled_signal_data['pos_id'], res['pos_id'])
                 self.assertEqual(test_shuffled_signal_data['order_type'], res['order_type'])

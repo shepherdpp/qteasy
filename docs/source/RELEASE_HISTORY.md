@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.1.10 (2024-04-19)
+- Fixed a bug that causes not taking effect the configuration that are related to automatic retries in data acquiring from tushare
+
 ## 1.1.9 (2024-04-09)
 - Fixed a bug that might cause error extracting minute level data from local data source
 - Improved compatibilities

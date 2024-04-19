@@ -253,7 +253,7 @@ def _valid_qt_kwargs():
 
         'hist_dnld_delay':
             {'Default':   0.,
-             'Validator': lambda value: isinstance(value, float) and value >= 0,
+             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
              'level':     4,
              'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒'},
 
