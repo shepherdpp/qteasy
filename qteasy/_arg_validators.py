@@ -65,7 +65,7 @@ def _valid_qt_kwargs():
             {'Default':   1,  # 运行模式
              'Validator': lambda value: value in (0, 1, 2, 3),
              'level':     0,
-             'text':      'qteasy 的运行模式: \n'
+             'text':      'qteasy 的运行模式，取值范围: \n'
                           '0: 实盘运行模式\n'
                           '1: 回测-评价模式\n'
                           '2: 策略优化模式\n'
@@ -87,31 +87,34 @@ def _valid_qt_kwargs():
                           'Australia/Melbourne\n'
                           'Pacific/Auckland\n'
                           'Pacific/Chatham\n'
-                          'etc.\n'},
+                          '...'},
 
         'asset_pool':
             {'Default':   '000300.SH',  #
              'Validator': lambda value: isinstance(value, (str, list))
                                         and _validate_asset_pool(value),
              'level':     0,
-             'text':      '可用投资产品池，投资组合基于池中的产品创建'},
+             'text':      '可用投资产品池，投资组合基于池中的产品创建，可以输入一个包含资产代码的列表，'
+                          '或者逗号分隔字符串，例如下面两种输入等价:\n'
+                          '["000001.SZ", "000002.SZ", "000003.SZ"]\n'
+                          '"000001.SZ, 000002.SZ, 000003.SZ"'},
 
         'asset_type':
             {'Default':   'IDX',  #
              'Validator': lambda value: isinstance(value, str)
                                         and _validate_asset_type(value),
              'level':     0,
-             'text':      '投资产品的资产类型，包括：\n'
+             'text':      '投资产品的资产类型，取值范围：\n'
                           'IDX  : 指数\n'
                           'E    : 股票\n'
                           'FT   : 期货\n'
-                          'FD   : 基金\n'},
+                          'FD   : 基金'},
 
         'live_trade_account_id':
             {'Default':   None,  # 指定account_id后，实盘交易时会直接使用该账户，除非账户不存在
              'Validator': lambda value: isinstance(value, int) or value is None,
              'level':     0,
-             'text':      '实盘交易账户ID，用于实盘交易，如果指定了该参数，则会直接\n'
+             'text':      '实盘交易账户ID，一个整数。用于实盘交易，如果指定了该参数，则会直接\n'
                           '使用该账户，除非账户不存在'},
 
         'live_trade_account':
@@ -132,7 +135,7 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, (int, float))
                                         and value > 0,
              'level':     1,
-             'text':      '实盘交易账户的初始资金，浮点数，例如：\n'
+             'text':      '实盘交易账户的初始资金，大于0的浮点数或整数：\n'
                           '1000000.0 : 初始资金为100万\n'
                           '1000000   : 初始资金为100万\n'},
 
@@ -173,19 +176,19 @@ def _valid_qt_kwargs():
              'text':      '实盘交易时获取实时价格的方式：\n'
                           'eastmoney - 通过东方财富网获取实时价格\n'
                           'tushare  - 通过tushare获取实时价格(需要自行开通权限)\n'
-                          'akshare  - Not Implemented: 从akshare获取实时价格\n'},
+                          'akshare  - Not Implemented: 从akshare获取实时价格'},
 
         'live_price_acquire_freq':
             {'Default':   '15MIN',
              'Validator': lambda value: isinstance(value, str) and value.upper() in
                                         ['H', '30MIN', '15MIN', '5MIN', '1MIN', 'TICK'],
              'level':     2,
-             'text':      '实盘交易时获取实时价格的频率：\n'
+             'text':      '实盘交易时获取实时价格的频率，取值范围：\n'
                           'H      - 每1小时获取一次数据\n'
                           '30MIN  - 每30分钟获取一次数据\n'
                           '15MIN  - 每15分钟获取一次数据\n'
                           '5MIN   - 每5分钟获取一次数据\n'
-                          '1MIN   - 每1分钟获取一次数据\n'},
+                          '1MIN   - 每1分钟获取一次数据'},
 
         'watched_price_refresh_interval':
             {'Default':   5,
@@ -196,21 +199,19 @@ def _valid_qt_kwargs():
 
         'trade_batch_size':
             {'Default':   0.0,
-             'Validator': lambda value: isinstance(value, (int, float))
-                                        and value >= 0,
+             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
              'level':     0,
-             'text':      '投资产品的最小申购批量大小，浮点数，例如：\n'
+             'text':      '投资产品的最小申购批量大小，大于等于0的浮点数，例如：\n'
                           '0. : 可以购买任意份额的投资产品，包括小数份额\n'
                           '1. : 只能购买整数份额的投资产品\n'
                           '100: 可以购买100的整数倍份额投资产品\n'
-                          'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数\n'},
+                          'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
 
         'sell_batch_size':
             {'Default':   0.0,
-             'Validator': lambda value: isinstance(value, (int, float))
-                                        and value >= 0,
+             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
              'level':     0,
-             'text':      '投资产品的最小卖出或赎回批量大小，浮点数，例如：\n'
+             'text':      '投资产品的最小卖出或赎回批量大小，大于等于0的浮点数，例如：\n'
                           '0. : 可以购买任意份额的投资产品，包括小数份额\n'
                           '1. : 只能购买整数份额的投资产品\n'
                           '100: 可以购买100的整数倍份额投资产品\n'
@@ -220,7 +221,7 @@ def _valid_qt_kwargs():
             {'Default':   2,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
              'level':     2,
-             'text':      '现金的小数位数，例如：\n'
+             'text':      '现金的小数位数，大于等于0的整数，例如：\n'
                           '0: 现金只能为整数\n'
                           '2: 保留小数点后两位数字\n'},
 
@@ -228,16 +229,15 @@ def _valid_qt_kwargs():
             {'Default':   2,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
              'level':     2,
-             'text':      '投资产品的份额的小数位数，例如：\n'
+             'text':      '投资产品的份额的小数位数，大于等于0的整数，例如：\n'
                           '0: 份额只能为整数\n'
                           '2: 保留小数点后两位数字\n'},
 
         'riskfree_ir':
             {'Default':   0.0035,
-             'Validator': lambda value: isinstance(value, float)
-                                        and 0 <= value < 1,
+             'Validator': lambda value: isinstance(value, float) and 0 <= value < 1,
              'level':     1,
-             'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
+             'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值，取值范围[0, 1)'},
 
         'parallel':
             {'Default':   True,
@@ -249,20 +249,20 @@ def _valid_qt_kwargs():
             {'Default':   16,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
              'level':     4,
-             'text':      '下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程'},
+             'text':      '下载历史数据时启用的线程数量，大于等于0的整数，为0或1时采用单线程下载，大于1时启用多线程'},
 
         'hist_dnld_delay':
             {'Default':   0.,
              'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
              'level':     4,
-             'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒'},
+             'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒，取值范围为[0, inf)'},
 
         'hist_dnld_delay_evy':
             {'Default':   0,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
              'level':     4,
              'text':      '为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。\n'
-                          '此参数为两次延迟之间的数据下载量'},
+                          '此参数为两次延迟之间的数据下载量，取值范围为大于等于0的整数'},
 
         'hist_dnld_prog_bar':
             {'Default':   False,
@@ -272,31 +272,27 @@ def _valid_qt_kwargs():
 
         'hist_dnld_retry_cnt':
             {'Default':   7,
-             'Validator': lambda value: isinstance(value, int) and
-                                        0 < value <= 10,
+             'Validator': lambda value: isinstance(value, int) and 0 < value <= 10,
              'level':     4,
-             'text':      '下载历史数据失败时的自动重试次数'},
+             'text':      '下载历史数据失败时的自动重试次数，取值范围为(0, 10]且必须为整数'},
 
         'hist_dnld_retry_wait':
             {'Default':   1.,
-             'Validator': lambda value: isinstance(value, (int, float)) and
-                                        0.1 <= value <= 5.0,
+             'Validator': lambda value: isinstance(value, (int, float)) and 0.1 <= value <= 5.0,
              'level':     4,
-             'text':      '下载历史数据失败时的自动重试前的延迟时间，单位为秒'},
+             'text':      '下载历史数据失败时的自动重试前的延迟时间，单位为秒，取值范围为[0.1, 5.0]'},
 
         'hist_dnld_backoff':
             {'Default':   2.,
-             'Validator': lambda value: isinstance(value, (int, float)) and
-                                        1.0 <= value <= 3.0,
+             'Validator': lambda value: isinstance(value, (int, float)) and 1.0 <= value <= 3.0,
              'level':     4,
              'text':      '下载历史数据失败时的自动重试的延迟时间倍增乘数\n'
                           '例如，设置hist_dnld_backoff = 2时，每次重试失败\n'
-                          '后延迟时间会变为前一次的2倍'},
+                          '后延迟时间会变为前一次的2倍，取值范围为[1.0, 3.0]'},
 
         'auto_dnld_hist_tables':
             {'Default':   [],
-             'Validator': lambda value: isinstance(value, list) and
-                                        all(isinstance(item, str) for item in value),
+             'Validator': lambda value: isinstance(value, list) and all(isinstance(item, str) for item in value),
              'level':     4,
              'text':      '在实盘运行时自动下载的历史数据表名列表，例如：\n'
                           '["stock_daily", "index_weekly", "stock_monthly"]\n'
@@ -311,11 +307,12 @@ def _valid_qt_kwargs():
 
         'local_data_source':
             {'Default':   'file',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['file',
-                                                                                     'database',
-                                                                                     'db'],
+             'Validator': lambda value: isinstance(value, str)
+                                        and value.lower() in ['file',
+                                                              'database',
+                                                              'db'],
              'level':     1,
-             'text':      '确定本地历史数据存储方式：\n'
+             'text':      '确定本地历史数据存储方式，取值范围如下：\n'
                           'file     - 历史数据以本地文件的形式存储，\n'
                           '           文件格式在"local_data_file_type"属性中指定，包括csv/hdf等多种选项\n'
                           'database - 历史数据存储在一个mysql数据库中\n'
@@ -324,12 +321,13 @@ def _valid_qt_kwargs():
 
         'local_data_file_type':
             {'Default':   'csv',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['csv',
-                                                                                     'hdf',
-                                                                                     'feather',
-                                                                                     'fth'],
+             'Validator': lambda value: isinstance(value, str)
+                                        and value.lower() in ['csv',
+                                                              'hdf',
+                                                              'feather',
+                                                              'fth'],
              'level':     4,
-             'text':      '确定本地历史数据文件的存储格式：\n'
+             'text':      '确定本地历史数据文件的存储格式，取值范围如下：\n'
                           'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
                           'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
                           'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
@@ -359,33 +357,31 @@ def _valid_qt_kwargs():
                                         (all(char not in value for
                                              char in '+-/?<>{}[]()|\\!@#$%^&*=~`')),
              'level':     4,
-             'text':      '用于存储历史数据的数据库名，默认值为"qt_db"'},
+             'text':      '用于存储历史数据的数据库名，默认值为"qt_db"，数据库名称不能包含特殊字符'},
 
         'local_db_user':
             {'Default':   '',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      '访问数据库的用户名，该用户需具备足够的操作权限\n'
-                          '建议通过配置文件配置数据库用户名和密码'},
+             'text':      '访问数据库的用户名，该用户需具备足够的操作权限。建议通过配置文件配置数据库用户名和密码'},
 
         'local_db_password':
             {'Default':   '',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      '数据库的访问密码\n\n'
-                          '建议通过配置文件配置数据库用户名和密码'},
+             'text':      '数据库的访问密码。建议通过配置文件配置数据库用户名和密码'},
 
         'sys_log_file_path':
             {'Default':   'syslog/',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      '系统运行日志及错误日志的存储路径\n'},
+             'text':      '系统运行日志及错误日志的存储路径'},
 
         'trade_log_file_path':
             {'Default':   'tradelog/',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      '明细交易日志的存储路径\n'},
+             'text':      '明细交易日志的存储路径'},
 
         'trade_log':
             {'Default':   True,
@@ -408,11 +404,11 @@ def _valid_qt_kwargs():
             {'Default':   'IDX',
              'Validator': lambda value: _validate_asset_type(value),
              'level':     1,
-             'text':      '基准收益的资产类型，包括：\n'
+             'text':      '基准收益的资产类型，取值范围如下：\n'
                           'IDX  : 指数\n'
                           'E    : 股票\n'
                           'FT   : 期货\n'
-                          'FD   : 基金\n'},
+                          'FD   : 基金'},
 
         'benchmark_dtype':
             {'Default':   'close',
@@ -460,7 +456,7 @@ def _valid_qt_kwargs():
                                         and value >= 0,
              'level':     2,
              'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化\n'
-                          '默认值为10元'},
+                          '默认值为10元，取值范围为[0, inf)'},
 
         'cost_fixed_sell':
             {'Default':   0.,
@@ -468,7 +464,7 @@ def _valid_qt_kwargs():
                                         and value >= 0,
              'level':     2,
              'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化\n'
-                          '默认值为0'},
+                          '默认值为0，取值范围为[0, inf)'},
 
         'cost_rate_buy':
             {'Default':   0.0003,
@@ -476,7 +472,7 @@ def _valid_qt_kwargs():
                                         and 0 <= value < 1,
              'level':     1,
              'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算\n'
-                          '默认值为万分之三'},
+                          '默认值为万分之，取值范围为[0, 1)'},
 
         'cost_rate_sell':
             {'Default':   0.0001,
@@ -484,7 +480,7 @@ def _valid_qt_kwargs():
                                         and 0 <= value < 1,
              'level':     1,
              'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算\n'
-                          '默认值为万分之一'},
+                          '默认值为万分之一，取值范围为[0, 1)'},
 
         'cost_min_buy':
             {'Default':   5.0,
@@ -492,21 +488,21 @@ def _valid_qt_kwargs():
                                         and value >= 0,
              'level':     2,
              'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额\n'
-                          '默认值为5元'},
+                          '默认值为5元，取值范围为[0, inf)'},
 
         'cost_min_sell':
             {'Default':   5.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     2,
-             'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额'},
+             'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额，取值范围为[0, inf)'},
 
         'cost_slippage':
             {'Default':   0.0,
              'Validator': lambda value: isinstance(value, float)
                                         and 0 <= value < 1,
              'level':     2,
-             'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
+             'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本，取值范围为[0, 1)'},
 
         'invest_start':
             {'Default':   '20160405',
@@ -554,7 +550,7 @@ def _valid_qt_kwargs():
              'level':     4,
              'text':      '是否允许卖空交易，：\n'
                           '- False - 默认值，不允许卖空操作，卖出数量最多仅为当前可用持仓数量\n'
-                          '- True -  允许卖空，卖出数量大于持仓量时，即持有空头仓位\n'},
+                          '- True -  允许卖空，卖出数量大于持仓量时，即持有空头仓位'},
 
         'long_position_limit':
             {'Default':   1.,
@@ -564,7 +560,7 @@ def _valid_qt_kwargs():
                           '总资产（包括现金和持有股票的总额）的多少百分比用于持有多头仓位，\n'
                           '默认值1.0，即100%\n'
                           '如果设置值大于1，则表示允许超过持有现金建仓，这种情况会产生负现金\n'
-                          '余额，表示产生了借贷\n'},
+                          '余额，表示产生了借贷'},
 
         'short_position_limit':
             {'Default':   -1.,
@@ -583,11 +579,11 @@ def _valid_qt_kwargs():
              'text':      '回测时的复权价格处理方法：\n'
                           '股票分红除权的处理，正常来说，应该在股票分红除权时计算分红和派息对持仓\n'
                           '数量和现金的影响，但是目前这种处理方法比较复杂，暂时先采用比较简单的方\n'
-                          '法，即直接采用复权价格进行回测，目前处理方法有两种'
+                          '法，即直接采用复权价格进行回测，取值范围如下：'
                           '- none/n - 默认值，不使用复权价格，但也不处理派息，这只是临时处理，因\n'
                           '           为长期回测不考虑除权派息将会导致回测结果与实际相差巨大\n'
                           '- back/b - 使用后复权价格回测，可以弥补不考虑分红派股的不足\n'
-                          '- adj    - 使用前复权价格回测。\n'},
+                          '- adj    - 使用前复权价格回测。'},
 
         'maximize_cash_usage':
             {'Default':   True,
@@ -605,7 +601,7 @@ def _valid_qt_kwargs():
              'Validator': lambda value: value.lower() in ['aggressive', 'lazy'],
              'level':     3,
              'text':      '回测信号模式为PT（position target）时，控制检查实际持仓比例并自动生成交易\n'
-                          '信号的时机，默认normal\n'
+                          '信号的时机，默认normal，取值范围如下：\n'
                           '- aggressive: 在整个策略运行时间点上都会产生交易信号，不论此时PT信号是否发\n'
                           '              生变化，实时监控实际持仓与计划持仓之间的差异，只要二者发生偏\n'
                           '              离，就产生信号\n'
@@ -614,23 +610,21 @@ def _valid_qt_kwargs():
 
         'PT_buy_threshold':
             {'Default':   0.,
-             'Validator': lambda value: isinstance(value, (float, int))
-                                        and (0 <= value < 1),
+             'Validator': lambda value: isinstance(value, (float, int)) and (0 <= value < 1),
              'level':     3,
              'text':      '回测信号模式为PT（position target）时，触发买入信号的仓位差异阈值\n'
                           '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发买入信号\n'
                           '例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓<=25%时，才会产生\n'
-                          '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了'},
+                          '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了。取值范围为[0, 1)'},
 
         'PT_sell_threshold':
             {'Default':   0.,
-             'Validator': lambda value: isinstance(value, (float, int))
-                                        and (0 <= value < 1),
+             'Validator': lambda value: isinstance(value, (float, int)) and (0 <= value < 1),
              'level':     3,
              'text':      '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
                           '在这种模式下，当持有的投资产品的仓位比目标仓位高，且差额超过阈值时，触发卖出信号\n'
                           '例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓>=35%时，才会产生\n'
-                          '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了'},
+                          '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了。取值范围为[0, 1)'},
 
         'price_priority_OHLC':
             {'Default':   'OHLC',
@@ -650,8 +644,7 @@ def _valid_qt_kwargs():
                                         and (value in ['normal', 'reverse']),
              'level':     3,
              'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为实时报价时，回测程序处理\n'
-                          '不同的价格信号的优先级。\n'
-                          '输入包括"normal" 以及 "reverse"两种，分别表示：\n'
+                          '不同的价格信号的优先级。取值范围如下：\n'
                           '- "normal"：  优先处理更接近成交价的报价，如卖1/买1等\n'
                           '- "reverse"： 优先处理更远离成交价的报价，如卖5/买5等'},
 
@@ -707,21 +700,21 @@ def _valid_qt_kwargs():
                                         and value in range(5),
              'level':     3,
              'text':      '策略信号的开盘/收盘运行时间偏移量，单位为分钟，当策略信号运行时机为开盘/收盘，需要提前/推迟\n'
-                          '一个偏移量运行，避免无法交易。'},
+                          '一个偏移量运行，避免无法交易。取值范围为[1, 5]'},
 
         'opti_start':
             {'Default':   '20160405',
              'Validator': lambda value: isinstance(value, str)
                                         and _is_datelike(value),
              'level':     0,
-             'text':      '优化模式下的策略优化区间开始日期'},
+             'text':      '优化模式下的策略优化区间开始日期，输入为"YYYYMMDD"或其他类似日期格式的字符串'},
 
         'opti_end':
             {'Default':   '20191231',
              'Validator': lambda value: isinstance(value, str)
                                         and _is_datelike(value),
              'level':     0,
-             'text':      '优化模式下的策略优化区间结束日期'},
+             'text':      '优化模式下的策略优化区间结束日期，输入为"YYYYMMDD"或其他类似日期格式的字符串'},
 
         'opti_cash_amounts':
             {'Default':   [100000.0],
@@ -730,7 +723,8 @@ def _valid_qt_kwargs():
                                                 for item in value)
                                         and all(item > 1 for item in value),
              'level':     1,
-             'text':      '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+             'text':      '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入\n'
+                          '输入的数字的个数必须与cash_dates中的日期数量相'},
 
         'opti_cash_dates':
             {'Default':   None,
@@ -744,14 +738,14 @@ def _valid_qt_kwargs():
                           '参数输入类型为str时，格式为"YYYYMMDD"\n'
                           '如果需要模拟现金多次定投投入，或者多次分散投入，则可以输入list类型或str类型\n'
                           '以下两种输入方式等效：\n'
-                          '"20100104,20100202,20100304"'
+                          '"20100104,20100202,20100304" == '
                           '["20100104", "20100202", "20100304"]'},
 
         'opti_type':
             {'Default':   'single',
              'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
              'level':     3,
-             'text':      '优化类型。指优化数据的利用方式:\n'
+             'text':      '优化类型。指优化数据的利用方，取值范围如下:\n'
                           '"single"   - 在每一回合的优化测试中，在优化区间上进行覆盖整个区间的单次回测并评价\n'
                           '             回测结果\n'
                           '"multiple" - 在每一回合的优化测试中，将优化区间的数据划分为多个子区间，在这些子\n'
@@ -776,8 +770,7 @@ def _valid_qt_kwargs():
                                         and _is_datelike(value),
              'level':     0,
              'text':      '优化模式下的策略测试区间开始日期'
-                          '格式为"YYYYMMDD"'
-                          '字符串类型输入'},
+                          '格式为"YYYYMMDD"，字符串类型输入'},
 
         'test_end':
             {'Default':   '20210201',
@@ -785,8 +778,7 @@ def _valid_qt_kwargs():
                                         and _is_datelike(value),
              'level':     0,
              'text':      '优化模式下的策略测试区间结束日期\n'
-                          '格式为"YYYYMMDD"'
-                          '字符串类型输入'},
+                          '格式为"YYYYMMDD"，字符串类型输入'},
 
         'test_cash_amounts':
             {'Default':   [100000.0],
@@ -819,7 +811,7 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, str) and
                                         value in ['single', 'multiple', 'montecarlo'],
              'level':     3,
-             'text':      '测试类型。指测试数据的利用方式:\n'
+             'text':      '测试类型。指测试数据的利用方式，取值范围如下:\n'
                           '"single"     - 在每一回合的优化测试中，在测试区间上进行覆盖整个区间的单次回测\n'
                           '               并评价回测结果\n'
                           '"multiple"   - 在每一回合的优化测试中，将测试区间的数据划分为多个子区间，在这\n'
@@ -834,7 +826,7 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, str),
              'level':     2,
              'text':      '对优化后的策略参数进行测试评价的评价指标。\n'
-                          '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出，包含以下类型中的一种或多种\n'
+                          '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出，取值范围如下：\n'
                           '"years"       - total year\n'
                           '"fv"          - final values\n'
                           '"return"      - total return rate\n'
@@ -849,7 +841,7 @@ def _valid_qt_kwargs():
             {'Default':   'histo',
              'Validator': lambda value: _validate_indicator_plot_type(value),
              'level':     2,
-             'text':      '优化或测试结果评价指标的可视化图表类型:\n'
+             'text':      '优化或测试结果评价指标的可视化图表类型，取值范围如下:\n'
                           '0  - errorbar 类型\n'
                           '1  - scatter 类型\n'
                           '2  - histo 类型\n'
@@ -860,21 +852,21 @@ def _valid_qt_kwargs():
             {'Default':   3,
              'Validator': lambda value: isinstance(value, int) and value >= 1,
              'level':     3,
-             'text':      '仅当测试类型为"multiple"时有效。将测试区间切分为子区间的数量'},
+             'text':      '仅当测试类型为"multiple"时有效。将测试区间切分为子区间的数量，输入值为大于等于1的整数'},
 
         'test_sub_prd_length':
             {'Default':   0.75,
              'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
              'level':     3,
              'text':      '仅当测试类型为"multiple"时有效。每一个测试子区间长度占整个测试区间长度的比例\n'
-                          '例如，当测试区间长度为4年时，本参数0.75代表每个测试子区间长度为3年'},
+                          '例如，当测试区间长度为4年时，本参数0.75代表每个测试子区间长度为3年，取值范围[0, 1]'},
 
         'test_cycle_count':
             {'Default':   100,
              'Validator': lambda value: isinstance(value, int) and value >= 1,
              'level':     3,
              'text':      '仅当测试类型为"montecarlo"时有效。生成的模拟测试数据的数量。\n'
-                          '默认情况下生成100组模拟价格数据，并进行100次策略回测并评价其统计结果'},
+                          '默认情况下生成100组模拟价格数据，并进行100次策略回测并评价其统计结果，输入值为大于等于1的整数'},
 
         'optimize_target':
             {'Default':   'final_value',
@@ -894,32 +886,32 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, int)
                                         and value <= 3,
              'level':     1,
-             'text':      '策略优化算法，可选值如下:\n'
+             'text':      '策略优化算法，取值范围如下:\n'
                           '0 - 网格法，按照一定间隔对整个向量空间进行网格搜索\n'
                           '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略\n'
                           '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子\n'
                           '    空间，缩小步长进一步搜索\n'
                           '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）\n'
-                          '4 - ML方法，基于机器学习的最佳策略搜索算法（尚未完成）\n'},
+                          '4 - ML方法，基于机器学习的最佳策略搜索算法（To be Implemented）'},
 
         'opti_grid_size':
             {'Default':   1,
              'Validator': lambda value: _num_or_seq_of_num(value) and value > 0,
              'level':     3,
-             'text':      '使用穷举法搜索最佳策略时有用，搜索步长'},
+             'text':      '使用穷举法搜索最佳策略时有用，搜索步长，取值范围为大于0的整数或list'},
 
         'opti_sample_count':
             {'Default':   256,
              'Validator': lambda value: isinstance(value, int) and value > 0,
              'level':     3,
-             'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
+             'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量，取值范围为大于0的整数'},
 
         'opti_r_sample_count':
             {'Default':   16,
              'Validator': lambda value: _num_or_seq_of_num(value)
                                         and value >= 0,
              'level':     3,
-             'text':      '在使用递进步长法搜索最佳策略时有用，每一轮随机取样的数量'},
+             'text':      '在使用递进步长法搜索最佳策略时有用，每一轮随机取样的数量，取值范围为大于等于0的整数'},
 
         'opti_reduce_ratio':
             {'Default':   0.1,
@@ -927,35 +919,37 @@ def _valid_qt_kwargs():
                                         and 0 < value < 1,
              'level':     3,
              'text':      '在使用递进步长法搜索最佳策略时有用，\n'
-                          '每一轮随机取样后择优留用的比例，同样也是子空间缩小的比例\n'},
+                          '每一轮随机取样后择优留用的比例，同样也是子空间缩小的比例，取值范围为(0, 1)'},
 
         'opti_max_rounds':
             {'Default':   5,
              'Validator': lambda value: isinstance(value, int)
                                         and value > 1,
              'level':     3,
-             'text':      '在使用递进步长法搜索最佳策略时有用，多轮搜索的最大轮数，轮数大于该值时停止搜索'},
+             'text':      '在使用递进步长法搜索最佳策略时有用，多轮搜索的最大轮数，轮数大于该值时停止搜索，'
+                          '取值范围为大于1的整数'},
 
         'opti_min_volume':
             {'Default':   1000,
              'Validator': lambda value: isinstance(value, (float, int))
                                         and value > 0,
              'level':     3,
-             'text':      '在使用递进步长法搜索最佳策略时有用，空间最小体积，当空间volume低于该值时停止搜索'},
+             'text':      '在使用递进步长法搜索最佳策略时有用，空间最小体积，当空间volume低于该值时停止搜索，'
+                          '取值范围为大于0的数'},
 
         'opti_population':
             {'Default':   1000.0,
              'Validator': lambda value: isinstance(value, float)
                                         and value >= 0,
              'level':     3,
-             'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量'},
+             'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量，取值范围为大于等于0的整数'},
 
         'opti_output_count':
             {'Default':   30,
              'Validator': lambda value: isinstance(value, int)
                                         and value > 0,
              'level':     3,
-             'text':      '策略参数优化后输出的最优参数数量'},
+             'text':      '策略参数优化后输出的最优参数数量，取值范围为大于0的整数'},
 
     }
     _validate_vkwargs_dict(vkwargs)

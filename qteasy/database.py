@@ -5077,6 +5077,7 @@ class DataSource:
                         api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
                         futures = {proc_pool.submit(acquire_data, api_name, **kw): kw
                                    for kw in all_kwargs}
+                        progress_bar(0, total, f'<{table}>: estimating time left...')
                         for f in as_completed(futures):
                             df = f.result()
                             cur_kwargs = futures[f]
@@ -5096,6 +5097,7 @@ class DataSource:
 
                         total_written += self.update_table_data(table, dnld_data)
                 else:
+                    progress_bar(0, total, f'<{table}>: estimating time left...')
                     for kwargs in all_kwargs:
                         df = self.fetch_history_table_data(table, **kwargs)
                         completed += 1
