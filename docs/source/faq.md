@@ -237,3 +237,22 @@ qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间
 >>> qt.configure(hist_dnld_retry_cnt=10, hist_dnld_retry_wait=2.)
 >>> qt.refill_data_source(tables='events', start_date='20230101', end_date='20240403',reversed_par_seq=True)
 ```
+
+---
+
+## 从`tushare`分批下载数据
+
+某些时候我们需要分批下载数据，在每批次之间暂停一定时间，例如tushare的某些数据表设置了频率限制，限定每分钟最多下载的次数，如果超过这个次数，会导致下载失败。
+这时，我们可以通过下面两个配置参数来实现这样的分批下载和停顿：
+
+- **`QT_CONFIG.hist_dnld_delay`**: 默认值为0，如果设置为一个大于0的整数，表示分批下载时每批的下载数量
+- **`QT_CONFIG.hist_dnld_delay_evy`**': 默认值为0，如果设置为一个大于0的整数，表示两个下载批次之间等待的秒数
+以下配置可以使得每下载600组数据就等待一分钟：
+
+```python
+>>> qt.configure(hist_dnld_delay=60, hist_dnld_delay_evy=600)
+>>> qt.configure(hist_dnld_retry_cnt=3)  # 同时减少重试的次数以缩短报错前等待的时间，这个配置并不是必要的
+```
+按照上述方法设置后，每次下载数据时，即使使用并行下载的方式，`qteasy`也不会将所有任务同时提交给进程池，而是分批提交，等待一段时间后，再次提交下一批。
+
+上述功能是在`qteasy`的`v1.1.11`版本中新增的，如果您的`qteasy`版本较低，请升级至最新版本。

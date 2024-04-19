@@ -1,7 +1,7 @@
 # RELEASE HISTORY
 
 ## 1.1.11 (2024-04-20)
-- Improved function refill_data_source, allowed data being downloaded in batches that are adjust-able in size and intervals in between
+- Improved function `refill_data_source`, allowed data being downloaded in batches that are adjust-able in size and intervals in between
 - Improved error messages raised by qt when wrong values are set to configuration keys, providing better guidance for users
 
 ## 1.1.10 (2024-04-19)
@@ -12,19 +12,19 @@
 - Improved compatibilities
 
 ## 1.1.8 (2024-04-05)
-- Improved compatibility for higher versions of python from 3.9 up to 3.12
-- Improved compatibility for higher versions of pandas (v2.2.1), numpy (1.26.4), and numba (v0.59.1)
+- Improved compatibility for higher versions of `python` from 3.9 up to 3.12
+- Improved compatibility for higher versions of `pandas` (v2.2.1), `numpy` (1.26.4), and `numba` (v0.59.1)
 - Fixed a bug that will cause failure of strategy optimizations in python 3.10 and above
 - Corrected and improved a few error messages
 
 ## 1.1.7 (2024-04-03)
-- Now qteasy can be installed in higher versions of python from 3.9 up to 3.12
+- Now qteasy can be installed in higher versions of `python` from 3.9 up to 3.12
 
 ## 1.1.4 (2024-03-30)
-- Updated version restrictions on dependencies, to solve the version conflicts between numba and numpy.
+- Updated version restrictions on dependencies, to solve the version conflicts between `numba` and `numpy`.
 - Slightly improved warning information when loading qteasy for the first time.
-- Fixed a few bugs that will cause compatibility issue with pandas > 2.0
-- Added performance warnings for strategy optimization method 2 when some numpy and numba versions will cause performance degrade in multiprocessing
+- Fixed a few bugs that will cause compatibility issue with `pandas` > 2.0
+- Added performance warnings for strategy optimization method 2 when some `numpy` and `numba` versions will cause performance degrade in multiprocessing
 
 ## 1.1.3 (2024-03-25)
 - now trade_log, trade_records, full_histories are added to the results returned from backtest run, and can be accessed by `res['trade_log']`, `res['trade_records']`, and `res['full_histories']`
