@@ -1,7 +1,7 @@
 # RELEASE HISTORY
 
 ## 1.1.11 (2024-04-20)
-- Improved function refill_data_source, allowed data being downloaded in batches adjustable in size and intervals in between
+- Improved function refill_data_source, allowed data being downloaded in batches that are adjust-able in size and intervals in between
 - Improved error messages raised by qt when wrong values are set to configuration keys, providing better guidance for users
 
 ## 1.1.10 (2024-04-19)

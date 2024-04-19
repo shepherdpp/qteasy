@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 import warnings
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import as_completed, ThreadPoolExecutor
 from functools import lru_cache
 
 from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
@@ -5109,12 +5109,23 @@ class DataSource:
             try:
                 # 清单中的第一张表不使用parallel下载
                 if parallel and table_count != 1:
-                    with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
-                        # 这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
-                        #  通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
+                    with ThreadPoolExecutor(max_workers=process_count) as worker:
+                        '''
+                        这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
+                        通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
+                        '''
                         api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
-                        futures = {proc_pool.submit(acquire_data, api_name, **kw): kw
-                                   for kw in all_kwargs}
+                        futures = {}
+                        submitted = 0
+                        for kw in all_kwargs:
+                            futures.update({worker.submit(acquire_data, api_name, **kw): kw})
+                            submitted += 1
+                            if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
+                                progress_bar(submitted, total, f'<{table}>: Submitting tasks, '
+                                                               f'Pausing for {download_batch_interval} sec...')
+                                time.sleep(download_batch_interval)
+                        # futures = {worker.submit(acquire_data, api_name, **kw): kw
+                        #            for kw in all_kwargs}
                         progress_bar(0, total, f'<{table}>: estimating time left...')
                         for f in as_completed(futures):
                             df = f.result()
