@@ -255,14 +255,15 @@ def _valid_qt_kwargs():
             {'Default':   0.,
              'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
              'level':     4,
-             'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒，取值范围为[0, inf)'},
+             'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒，'
+                          '取值范围为[0, inf)，值为0时不延迟'},
 
         'hist_dnld_delay_evy':
             {'Default':   0,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
              'level':     4,
              'text':      '为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。\n'
-                          '此参数为两次延迟之间的数据下载量，取值范围为大于等于0的整数'},
+                          '此参数为两次延迟之间的数据下载量，取值范围为大于等于0的整数，取值0时不延迟'},
 
         'hist_dnld_prog_bar':
             {'Default':   False,

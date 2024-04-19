@@ -11,11 +11,13 @@
 import argparse
 import numpy as np
 import pandas as pd
-import sys
-import re
 import qteasy
+import re
+import shutil
+import sys
 import time
 import warnings
+
 from numba import njit
 from functools import wraps, lru_cache
 
@@ -766,11 +768,14 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
     comments: str, optional
         需要显示在进度条中的文字信息
     """
+    column_width, _ = shutil.get_terminal_size()
+
     if total > 0:
         if prog > total:
             prog = total
         progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
                        f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+        progress_str = adjust_string_length(progress_str, column_width)
         sys.stdout.write(progress_str)
         sys.stdout.flush()
 

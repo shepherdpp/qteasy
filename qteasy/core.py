@@ -652,8 +652,17 @@ def refill_data_source(data_source=None, **kwargs):
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
         end_date: DateTime Like, default: None
             限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-        code_range: str or list of str, default: None
-            **注意，不是所有情况下code_range参数都有效
+        list_arg_filter: str or list of str, default: None  **注意，不是所有情况下该参数都有效**
+            限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+            参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
+            如果filter_arg为None，则下载所有数据。
+            例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+            - 'SZSE'
+                仅下载深圳交易所的股票数据
+            - ['SSE', 'SZSE']
+            - 'SSE, SZSE'
+                上面两种写法等效，下载上海和深圳交易所的股票数据
+        symbols: str or list of str, default: None  **注意，不是所有情况下该参数都有效**
             限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
             可以多种形式确定范围，以下输入均为合法输入：
             - '000001'
@@ -693,7 +702,18 @@ def refill_data_source(data_source=None, **kwargs):
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
     print(f'Filling data source {data_source} ...')
-    data_source.refill_local_source(**kwargs)
+    hist_dnld_delay = None
+    hist_dnld_delay_evy = None
+    if 'download_batch_size' not in kwargs:
+        hist_dnld_delay = QT_CONFIG.hist_dnld_delay
+    if 'download_batch_interval' not in kwargs:
+        hist_dnld_delay_evy = QT_CONFIG.hist_dnld_delay_evy
+
+    data_source.refill_local_source(
+            download_batch_size=hist_dnld_delay_evy,
+            download_batch_interval=hist_dnld_delay,
+            **kwargs,
+    )
 
 
 def get_history_data(htypes,
