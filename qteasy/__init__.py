@@ -37,15 +37,16 @@ from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
 
 
-__version__ = '1.1.11'
+# qteasy版本信息
+__version__ = '1.2.0'
 version_info = Namespace(
         major=1,
-        minor=1,
-        patch=11,
-        short=(1, 1),
-        full=(1, 1, 11),
-        string='1.1.11',
-        tuple=('1', '1', '11'),
+        minor=2,
+        patch=0,
+        short=(1, 2),
+        full=(1, 2, 0),
+        string='1.2.0',
+        tuple=('1', '2', '0'),
         releaselevel='beta',
 )
 
