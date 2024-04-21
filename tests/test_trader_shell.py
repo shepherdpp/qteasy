@@ -14,7 +14,8 @@ import time
 import pandas as pd
 
 from qteasy import DataSource, Operator
-from qteasy.trader import Trader, TraderShell
+from qteasy.trader import Trader
+from qteasy.trader_cli import TraderShell
 from qteasy.trading_util import process_account_delivery, process_trade_result, submit_order, update_position
 from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account

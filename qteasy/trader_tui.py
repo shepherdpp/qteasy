@@ -48,7 +48,7 @@ class OrderTable(DataTable):
     """A widget to display current holdings."""
 
     df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
-                  "submitted time", "status", "price_filled", "filled_qty", "canceled_qty", "transaction_fee",
+                  "submitted_time", "status", "price_filled", "filled_qty", "canceled_qty", "transaction_fee",
                   "execution_time",  "delivery_status")
     headers = ("ID",
                "Symbol", "Position", "Side", "Type", "Qty", "Quote",

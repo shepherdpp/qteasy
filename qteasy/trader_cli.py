@@ -12,20 +12,22 @@
 # ======================================
 
 
+import argparse
+import rich
 import shlex
 import shutil
 import sys
 import time
-import argparse
-from cmd import Cmd
-from threading import Timer
 
 import numpy as np
 import pandas as pd
-import rich
+
+from cmd import Cmd
+from threading import Timer
+from rich.text import Text
 
 from qteasy.trading_util import get_symbol_names
-from qteasy.utilfuncs import adjust_string_length
+from qteasy.utilfuncs import adjust_string_length, sec_to_duration
 
 
 def pack_system_info(trader_info, width=80):
@@ -90,7 +92,7 @@ def pack_account_info(trader_info, width=80):
     info_str += f'{" Account Overview ":=^{width}}'
     info_str += f'{"Account ID":<{semi_width - 20}}{trader_info["Account ID"]}'
     info_str += f'{"User Name":<{semi_width - 20}}{trader_info["User Name"]}'
-    info_str += f'{"Created on":<{semi_width - 20}}{trader_info["created_time"]}'
+    info_str += f'{"Created on":<{semi_width - 20}}{trader_info["Created on"]}'
     info_str += f'{"Started on":<{semi_width - 20}}{trader_info["Started on"]}'
     info_str += f'{"Time zone":<{semi_width - 20}}{trader_info["Time zone"]}'
 
@@ -171,14 +173,14 @@ def pack_investment_info(trader_info, width=80):
 
     total_investment = trader_info['Total Investment']
     total_value = trader_info['Total Value']
-    total_return_of_investment = trader_info['Total Return of Investment']
+    total_return_of_investment = trader_info['Total ROI']
     total_roi_rate = trader_info['Total ROI Rate']
-    own_cash = trader_info['Cash']
+    own_cash = trader_info['Total Cash']
     available_cash = trader_info['Available Cash']
     total_market_value = trader_info['Total Stock Value']
     position_level = trader_info['Stock Percent']
     total_profit = trader_info['Total Stock Profit']
-    total_profit_ratio = trader_info['Total Profit Ratio']
+    total_profit_ratio = trader_info['Stock Profit Ratio']
 
     info_str = ''
 
@@ -1050,7 +1052,7 @@ class TraderShell(Cmd):
                 symbol=symbol,
                 qty=qty,
                 price=price,
-                side=position,
+                position=position,
                 direction='buy',
         )
         if trade_order:
@@ -1108,7 +1110,7 @@ class TraderShell(Cmd):
                 symbol=symbol,
                 qty=qty,
                 price=price,
-                side=position,
+                position=position,
                 direction='sell',
         )
 
@@ -1741,7 +1743,7 @@ class TraderShell(Cmd):
                     symbol=symbol,
                     quantity=qty,
                     price=price,
-                    side=side,
+                    position=side,
             )
 
         if cash_amount != 0:
@@ -2019,51 +2021,71 @@ class TraderShell(Cmd):
                     # check trader message queue and display messages
                     watched_price_refresh_interval = self.trader.get_config(
                             'watched_price_refresh_interval')['watched_price_refresh_interval']
+                    # adjust message length to terminal width
+                    text_width = int(shutil.get_terminal_size().columns)
                     if not self._trader.message_queue.empty():
-                        text_width = int(shutil.get_terminal_size().columns)
-                        # adjust message length
                         message = self._trader.message_queue.get()
                         # TODO: there's no more _R message, _R messages should be created by CLI
                         #  when no trader messages are popped out, then the messages are generated
                         #  by CLI to show countdown to next task read from the trader
-                        if message[-2:] == '_R':
-                            # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
-                            next_normal_message = None
-                            while True:
-                                if self._trader.message_queue.empty():
-                                    break
-                                next_message = self._trader.message_queue.get()
-                                if message[-2:] != '_R':
-                                    next_normal_message = next_message
-                                    break
-                                message = next_message
-
-                            message = message[:-2] + ' ' + self._watched_price_string
-                            message = adjust_string_length(message,
-                                                           text_width - 2,
-                                                           hans_aware=True,
-                                                           format_tags=True)
-                            message = f'{message: <{text_width - 2}}'
-                            rich.print(message, end='\r')
-                            if next_normal_message:
-                                rich.print(message)
+                        # if message[-2:] == '_R':
+                        #     # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
+                        #     next_normal_message = None
+                        #     while True:
+                        #         if self._trader.message_queue.empty():
+                        #             break
+                        #         next_message = self._trader.message_queue.get()
+                        #         if message[-2:] != '_R':
+                        #             next_normal_message = next_message
+                        #             break
+                        #         message = next_message
+                        #
+                        #     message = message[:-2] + ' ' + self._watched_price_string
+                        #     message = adjust_string_length(message,
+                        #                                    text_width - 2,
+                        #                                    hans_aware=True,
+                        #                                    format_tags=True)
+                        #     message = f'{message: <{text_width - 2}}'
+                        #     rich.print(message, end='\r')
+                        #     if next_normal_message:
+                        #         rich.print(message)
+                        # else:
+                        #     # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
+                        #     if prev_message[-2:] == '_R':
+                        #         print('\n', end='')
+                        #     message = adjust_string_length(message,
+                        #                                    text_width - 2,
+                        #                                    hans_aware=True,
+                        #                                    format_tags=True)
+                        #     rich.print(message)
+                        # prev_message = message
+                        message = adjust_string_length(message,
+                                                       text_width - 2)
+                        rich.print(message)
+                    else:
+                        # 如果没有消息，显示倒计时信息
+                        next_task = self.trader.next_task
+                        count_down = self.trader.count_down_to_next_task
+                        count_down_string = sec_to_duration(count_down, estimation=True)
+                        message = ''
+                        message = self.trader.add_message_prefix(message)
+                        message += f'Next task: {next_task}'
+                        message = Text(message)
+                        if count_down > 60:
+                            message.append(f' in {count_down_string}', style='bold green')
                         else:
-                            # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
-                            if prev_message[-2:] == '_R':
-                                print('\n', end='')
-                            message = adjust_string_length(message,
-                                                           text_width - 2,
-                                                           hans_aware=True,
-                                                           format_tags=True)
-                            rich.print(message)
-                        prev_message = message
+                            message.append(f' in {count_down_string}', style='bold red')
+                        message.truncate(text_width - 2)
+                        # 倒计时信息覆盖原有信息
+                        rich.print(message, end='\r')
+
                     # check if live price refresh timer is up, if yes, refresh live prices
                     live_price_refresh_timer += 0.05
                     if live_price_refresh_timer > watched_price_refresh_interval:
                         # 在一个新的进程中读取实时价格, 收盘后不获取
                         if self.trader.is_market_open:
                             from threading import Thread
-                            t = Thread(target=self.update_watched_prices, daemon=True)
+                            t = Thread(target=self.trader.update_watched_prices, daemon=True)
                             t.start()
                             if self.trader.debug:
                                 self.trader.send_message(f'Acquiring watched prices in a new thread<{t.name}>')

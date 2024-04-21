@@ -9,17 +9,18 @@
 # ======================================
 
 import argparse
-import numpy as np
-import pandas as pd
-import qteasy
 import re
 import shutil
 import sys
 import time
 import warnings
+import numpy as np
+import pandas as pd
 
 from numba import njit
 from functools import wraps, lru_cache
+
+import qteasy
 
 TIME_FREQ_LEVELS = {
     'Y':      10,
@@ -1905,7 +1906,7 @@ def reindent(s, num_spaces=4):
     return s
 
 
-def truncate_string(s, n, padder='.'):  # to be deprecated
+def truncate_string(s, n, padder='.') -> str:  # to be deprecated
     """ to be deprecated, 调整字符串为指定长度，为了保证兼容性，暂时保留此函数
     以后使用adjust_string_length代替
 
@@ -1935,7 +1936,7 @@ def truncate_string(s, n, padder='.'):  # to be deprecated
     return adjust_string_length(s, n, ellipsis=padder)
 
 
-def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False):
+def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False) -> str:
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 

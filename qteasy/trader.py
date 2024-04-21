@@ -11,14 +11,16 @@
 # trading orders and submit to class Broker
 # ======================================
 
+import logging
 import os
 import sys
 import time
-import logging
-from queue import Queue
 
 import numpy as np
 import pandas as pd
+
+from queue import Queue
+from rich.text import Text
 
 import qteasy
 from qteasy import ConfigDict, DataSource, Operator
@@ -42,8 +44,6 @@ UNIT_TO_TABLE = {
     'min':   'stock_1min',
 }
 
-
-# TODO: all formatted texts should be formatted with rich.Text, not [bold red]...[/bold red]
 
 class Trader(object):
     """ Trader是交易系统的核心，它负责调度交易任务，根据交易日历和策略规则生成交易订单并提交给Broker
@@ -594,8 +594,8 @@ class Trader(object):
             import tushare
             trader_info_dict['tushare'] = tushare.__version__
             try:
-                import talib
-                trader_info_dict['ta-lib'] = talib.__version__
+                from talib import __version__
+                trader_info_dict['ta-lib'] = __version__
             except ImportError:
                 trader_info_dict['ta-lib'] = 'not installed'
             trader_info_dict['Local DataSource'] = self.datasource
@@ -675,25 +675,43 @@ class Trader(object):
         order_ids = trade_orders.index.values
         return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
 
-    def send_message(self, message: str, new_line=True):
+    def send_message(self, message: (str, Text)) -> None:
         """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
 
         根据当前状态和消息类型，在添加到消息队列的同时，执行不同的操作：
-        - 如果是覆盖型信息，在信息文字后添加_R，表示不换行，覆盖型信息不记入log文件，其他信息全部记入log文件
+        - 在消息前添加时间、状态等信息
         - 如果是debug状态，添加<DEBUG>标签在信息头部
 
         Parameters
         ----------
-        message: str
+        message: str, Text
             消息内容
-        new_line: bool, default True
-            是否在消息后添加换行符
         """
 
         if self.live_sys_logger is None:
             logger_live = self.new_sys_logger()
         else:
             logger_live = self.live_sys_logger
+
+        message = self.add_message_prefix(message)
+
+        # 处理消息，发送消息且写入log文件
+        self.message_queue.put(message)
+        logger_live.info(message)
+
+    def add_message_prefix(self, message: str) -> str:
+        ''' 在消息前添加时间、状态等信息
+
+        Parameters
+        ----------
+        message: str
+            消息内容
+
+        Returns
+        -------
+        message: str
+            添加了时间、状态等信息的消息
+        '''
 
         time_string = self.get_current_tz_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
         if self.time_zone != 'local':
@@ -702,25 +720,12 @@ class Trader(object):
             tz = ''
 
         # 在message前添加时间、状态等信息
-        normal_message = True
         message = f'<{time_string}{tz}>{self.status}: {message}'
-        if not new_line:
-            message += '_R'
-            normal_message = False
+
         if self.debug:
             message = f'<DEBUG>{message}'
 
-        # 处理消息，区分不同情况，需要打印、发送消息且写入log文件
-        self.message_queue.put(message)
-        if normal_message:
-            # 如果不是覆盖型信息，同时写入log文件
-            logger_live.info(message)
-
-        if self.debug and normal_message:
-            # 如果在debug模式下同时打印非覆盖型信息，确保interactive模式下也能看到debug信息  # 这是UI的任务，不是trader的任务
-            # text_width = int(shutil.get_terminal_size().columns)
-            # print(f'{message: <{text_width - 2}}')
-            pass
+        return message
 
     def add_task(self, task, kwargs=None):
         """ 添加任务到任务队列
@@ -1049,7 +1054,8 @@ class Trader(object):
 
     def _sleep(self):
         """ 休眠交易系统 """
-        self.send_message('[bold red]Putting Trader to sleep[/bold red]')
+        msg = Text('Putting Trader to sleep', style='bold red')
+        self.send_message(message=msg)
         self.status = 'sleeping'
         self.broker.status = 'paused'
 
@@ -1057,17 +1063,20 @@ class Trader(object):
         """ 唤醒交易系统 """
         self.status = 'running'
         self.broker.status = 'running'
-        self.send_message('[bold red]Trader is awake, broker is running[/bold red]')
+        msg = Text('Trader is awake, broker is running', style='bold red')
+        self.send_message(message=msg)
 
     def _pause(self):
         """ 暂停交易系统 """
         self.status = 'paused'
-        self.send_message('[bold red]Trader is Paused, broker is still running[/bold red]')
+        msg = Text('Trader is Paused, broker is still running', style='bold red')
+        self.send_message(message=msg)
 
     def _resume(self):
         """ 恢复交易系统 """
         self.status = self.prev_status
-        self.send_message(f'[bold red]Trader is resumed to previous status({self.status})[/bold red]')
+        msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
+        self.send_message(message=msg)
 
     def _run_strategy(self, strategy_ids=None):
         """ 运行交易策略
@@ -1237,13 +1246,13 @@ class Trader(object):
                 order_id = trade_order['order_id']
                 self._broker.order_queue.put(trade_order)
                 # format the message depending on buy/sell orders
+                msg = Text(f'<NEW ORDER {order_id}>: <{name} - {sym}> ', style='bold')
                 if d == 'buy':  # red for buy
-                    self.send_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold red]{d}-{pos} '
-                                      f'{qty} shares @ {price}[/bold red]')
+                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold red')
                 else:  # green for sell
-                    self.send_message(f'<NEW ORDER {order_id}>: <{name} - {sym}> [bold green]{d}-{pos} '
-                                      f'{qty} shares @ {price}[/bold green]')
+                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold green')
                 # 记录已提交的交易数量
+                self.send_message(msg)
                 submitted_qty += 1
 
         self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
