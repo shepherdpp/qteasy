@@ -11,17 +11,18 @@
 import unittest
 import time
 
+import qteasy.trader
 from qteasy.trader_tui import TraderApp
 
 
 class TestTUI(unittest.TestCase):
     def test_action_toggle_dark(self):
+        trader = qteasy.trader.Trader()
         app = TraderApp()
         app.action_toggle_dark()
         self.assertEqual(app.dark, False)
         app.action_toggle_dark()
         self.assertEqual(app.dark, True)
-        # app.run()
 
 
 if __name__ == '__main__':

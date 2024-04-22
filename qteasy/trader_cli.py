@@ -915,7 +915,10 @@ class TraderShell(Cmd):
         if not args:
             return False
 
-        return self.trader.asset_pool_detail()
+        pools = self.trader.asset_pool_detail()
+        rich.print(pools)
+
+        return
 
     def do_watch(self, arguments):
         """usage: watch [SYMBOL [SYMBOL ...]] [-h] [--position] [--remove [REMOVE [REMOVE ...]]] [--clear]
@@ -1054,6 +1057,7 @@ class TraderShell(Cmd):
                 price=price,
                 position=position,
                 direction='buy',
+                order_type='market',
         )
         if trade_order:
             self.trader.broker.order_queue.put(trade_order)
@@ -1112,6 +1116,7 @@ class TraderShell(Cmd):
                 price=price,
                 position=position,
                 direction='sell',
+                order_type='market',
         )
 
         if trade_order:
@@ -1743,7 +1748,7 @@ class TraderShell(Cmd):
                     symbol=symbol,
                     quantity=qty,
                     price=price,
-                    position=side,
+                    side=side,
             )
 
         if cash_amount != 0:
