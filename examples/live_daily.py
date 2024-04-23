@@ -5,10 +5,11 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2023-12-11
 # Desc:
+#   Desc:
 #   live_rolling:
-#   一个用于ETF基金的多市场轮动
-# 交易策略略，同时监控多只ETF基
-# 金，轮动持有20日涨幅最大的两只。
+#   每日选股交易策略，从银行、汽车、酒店等行业股
+# 票中，每天选出价格高于20日前，且市盈率PE介于
+# 1.0～60之间的，持有到下一天。
 # ======================================
 
 import os
@@ -69,6 +70,7 @@ if __name__ == '__main__':
             live_trade_debug_mode=args.debug,
             live_trade_broker_type='random',
             live_trade_broker_params=None,
+            live_trade_ui_type='tui' if args.ui else 'cli',
             watched_price_refresh_interval=10,
     )
     datasource = qt.QT_DATA_SOURCE

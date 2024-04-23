@@ -1181,15 +1181,15 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     -------
     trade_results: pd.DataFrame, columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                         'canceled_qty', 'delivery_amount', 'delivery_status']
-    交易结果:
-    order_id: int 交易信号的id
-    filled_qty: int 成交数量
-    price: float 成交价格
-    transaction_fee: float 交易费用
-    execution_time: datetime.datetime 成交时间
-    canceled_qty: int 撤单数量
-    delivery_amount: float 交割金额
-    delivery_status: str 交割状态
+    交易结果, 包含以下列:
+        - order_id: int 交易信号的id
+        - filled_qty: int 成交数量
+        - price: float 成交价格
+        - transaction_fee: float 交易费用
+        - execution_time: datetime.datetime 成交时间
+        - canceled_qty: int 撤单数量
+        - delivery_amount: float 交割金额
+        - delivery_status: str 交割状态
     """
     if not isinstance(order_id, (int, np.int64, np.ndarray, list, )):
         raise TypeError(f'order_id must be an integer, a list of integers or a numpy array of integers, '

@@ -70,9 +70,9 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
     alpha = MultiGridTrade(
-            pars={'000651.SZ': (0.3, 500, 40.2),
-                  '600036.SH': (0.3, 600, 32.3),
-                  '601398.SH': (0.1, 1000, 5.3)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
+            pars={'000651.SZ': (0.3, 500, 0),
+                  '600036.SH': (0.3, 600, 0),
+                  '601398.SH': (0.1, 1000, 0)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
             par_count=3,
             par_types=['float', 'int', 'float'],
             par_range=[(0.1, 2), (100, 3000), (0, 400)],
@@ -99,6 +99,7 @@ if __name__ == '__main__':
             live_trade_account=args.new_account,
             live_trade_debug_mode=args.debug,
             live_trade_broker_type='simulator',
+            live_trade_ui_type='tui' if args.ui else 'cli',
             watched_price_refresh_interval=30,
     )
     datasource = qt.QT_DATA_SOURCE

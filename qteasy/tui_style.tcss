@@ -1,0 +1,60 @@
+Screen {
+    layout: grid;
+    grid-size: 3 3;
+    grid-rows: 7 3fr 1fr ;
+    grid-columns: 1fr;
+    grid-gutter: 0;
+}
+
+DisplayPanel {
+    border: round $accent;
+    border-title-align: center;
+    height: 1fr;
+    row-span: 1;
+    column-span: 3;
+    min-height: 7;
+    padding: 0 2;
+}
+
+Digits {
+    border: round $success;
+    border-title-align: center;
+    height: 1fr;
+    align: center middle;
+    text-align: center;
+}
+
+Tables {
+    border: round $accent;
+    row-span: 1;
+    column-span: 2;
+    height: 1fr;
+}
+
+#holdings {
+    height: 1fr;
+}
+
+#orders {
+    height: 1fr;
+}
+
+#watches {
+    height: 1fr;
+}
+
+InfoPanel {
+    border: round $accent;
+    height: 1fr;
+    row-span: 1;
+    column-span: 1;
+}
+
+SysLog {
+    border: round $accent;
+    row-span: 1;
+    column-span: 3;
+    height: 1fr;
+    min-height: 7;
+    max-height: 20;
+}

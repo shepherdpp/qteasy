@@ -19,7 +19,7 @@ import numpy as np
 import time
 
 from qteasy import QT_CONFIG
-from .utilfuncs import get_current_tz_datetime
+from .utilfuncs import get_current_timezone_datetime
 
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
@@ -123,7 +123,7 @@ class Broker(object):
         self.is_registered = False
 
         self.time_zone = 'local'
-        self.init_time = get_current_tz_datetime(self.time_zone).strftime('%Y-%m-%d %H:%M:%S')
+        self.init_time = get_current_timezone_datetime(self.time_zone).strftime('%Y-%m-%d %H:%M:%S')
 
         self.order_queue = Queue()
         self.result_queue = Queue()
@@ -341,7 +341,7 @@ class Broker(object):
             else:
                 raise ValueError(f'Unknown result_type: {result_type}, should be one of ["filled", "canceled"]')
 
-            current_datetime = get_current_tz_datetime(self.time_zone)
+            current_datetime = get_current_timezone_datetime(self.time_zone)
             raw_trade_result = {
                 'order_id':        order['order_id'],
                 'filled_qty':      filled_qty,

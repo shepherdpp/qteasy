@@ -758,7 +758,7 @@ class TestTrader(unittest.TestCase):
 
         # 1, use trader._check_trade_day(sim_date) to simulate a trade day or non-trade day
         # 2, use trader._initialize_schedule(sim_time) to generate task agenda at a simulated time
-        # 3, use trader._add_task_from_agenda(sim_time) to add task from agenda at a simulated time
+        # 3, use trader._add_task_from_schedule(sim_time) to add task from agenda at a simulated time
 
         import datetime as dt
 
@@ -776,7 +776,7 @@ class TestTrader(unittest.TestCase):
         sim_time = dt.time(0, 0, 0)  # midnight
         ts._check_trade_day(sim_date)
         ts._initialize_schedule(sim_time)
-        ts._add_task_from_agenda(sim_time)
+        ts._add_task_from_schedule(sim_time)
 
         print('\n========generated task agenda in a non-trade day========\n')
         print(f'trader status: {ts.status}')
@@ -931,7 +931,7 @@ class TestTrader(unittest.TestCase):
         for sim_time in test_sim_times:
             print(f'\n=========simulating time: {sim_time}=========\n')
             print(f'\n=========current task agenda: {ts.task_daily_schedule[0]}=========\n')
-            ts._add_task_from_agenda(sim_time)
+            ts._add_task_from_schedule(sim_time)
             # waite 1 second for orders to be generated
             time.sleep(2)
             print(f'current trader status: {ts.status}')

@@ -9,17 +9,18 @@
 # ======================================
 
 import argparse
-import numpy as np
-import pandas as pd
-import qteasy
 import re
 import shutil
 import sys
 import time
 import warnings
+import numpy as np
+import pandas as pd
 
 from numba import njit
 from functools import wraps, lru_cache
+
+import qteasy
 
 TIME_FREQ_LEVELS = {
     'Y':      10,
@@ -98,6 +99,7 @@ def get_qt_argparser():
     parser.add_argument('-r', '--restart', action='store_true', default=False,
                         help='if set, remove all record and restart account')
     parser.add_argument('-d', '--debug', action='store_true', help='if set, start trader in debug mode')
+    parser.add_argument('-u', '--ui', action='store_true', default=False, help='if True, start trader in terminal ui')
 
     return parser
 
@@ -780,7 +782,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         sys.stdout.flush()
 
 
-def get_current_tz_datetime(self, time_zone='local'):
+def get_current_timezone_datetime(time_zone='local'):
     """ 获取指定时区的当前时间，同时确保返回的时间是tz_naive的
 
     如果time_zone为'local', 获取当前时区的当前时间。
@@ -795,7 +797,7 @@ def get_current_tz_datetime(self, time_zone='local'):
         return pd.to_datetime('today')
     else:
         # create utc time and convert to time_zone time and remove time_zone information
-        dt = pd.to_datetime('now', utc=True).tz_convert(self.time_zone)
+        dt = pd.to_datetime('now', utc=True).tz_convert(time_zone)
         return pd.to_datetime(dt.tz_localize(None))
 
 
@@ -1904,7 +1906,7 @@ def reindent(s, num_spaces=4):
     return s
 
 
-def truncate_string(s, n, padder='.'):  # to be deprecated
+def truncate_string(s, n, padder='.') -> str:  # to be deprecated
     """ to be deprecated, 调整字符串为指定长度，为了保证兼容性，暂时保留此函数
     以后使用adjust_string_length代替
 
@@ -1934,7 +1936,7 @@ def truncate_string(s, n, padder='.'):  # to be deprecated
     return adjust_string_length(s, n, ellipsis=padder)
 
 
-def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False):
+def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False) -> str:
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 

@@ -169,6 +169,14 @@ def _valid_qt_kwargs():
                           "如果使用 'simulator' broker，且设置此参数为None，则会使用config中的\n"
                           "backtest参数"},
 
+        'live_trade_ui_type':
+            {'Default':   'cli',
+             'Validator': lambda value: isinstance(value, str) and value.lower() in ['tui', 'cli'],
+             'level':     1,
+             'text':      '实盘交易时的用户界面风格，可以设置为文本界面或图形界面\n'
+                          '默认使用文本界面'},
+
+
         'live_price_acquire_channel':
             {'Default':   'eastmoney',
              'Validator': lambda value: isinstance(value, str) and value.lower() in ['eastmoney', 'tushare', 'akshare'],

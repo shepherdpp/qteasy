@@ -18,7 +18,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qteasy"
-version = "1.1.11"
+version = "1.2.0"
 authors = [
   {name="jackie PENG", email="jackie.pengzhao@gmail.com" },
 ]
@@ -37,6 +37,7 @@ dependencies = [
     "tushare>=1.2.89",
     "mplfinance",
     "rich>=10.0.0",
+    "textual",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

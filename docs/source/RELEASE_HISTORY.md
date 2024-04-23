@@ -1,5 +1,12 @@
 # RELEASE HISTORY
 
+## 1.2.0 (2024-04-25)
+- New feature added: Now qteasy has a new Terminal UI for live trading, thus users can choose from one of the two UIs for live trading: the Trader Shell or the TUI
+  - A new configure key `qt.config['live_trade_ui_type']` is added to allow users to choose between the two UIs for live trading
+  - The new TUI has built in light mode and dark mode themes, and is more user-friendly for users who are not familiar with command line interfaces
+  - The new TUI displays live status of the account, on hand stocks, historical order, and live operation logs
+  - Use Ctrl=P and Ctrl+R to pause and resume the live trading process
+
 ## 1.1.11 (2024-04-20)
 - Improved function `refill_data_source`, allowed data being downloaded in batches that are adjust-able in size and intervals in between
 - Improved error messages raised by qt when wrong values are set to configuration keys, providing better guidance for users
