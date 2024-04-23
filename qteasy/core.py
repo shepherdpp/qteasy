@@ -1445,6 +1445,18 @@ def reset_config(config=None):
     configure(config, reset=True)
 
 
+def live_trade_accounts() -> pd.DataFrame:
+    """ 获取当前所有实盘交易账户的详细信息
+
+    Returns
+    -------
+    all_accounts: pd.DataFrame
+        包含所有实盘交易账户信息的DataFrame
+    """
+    from qteasy.trade_recording import get_all_accounts
+    return get_all_accounts(qteasy.QT_DATA_SOURCE)
+
+
 # TODO: Bug检查：
 #   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
 #   strategy_run_freq='m',

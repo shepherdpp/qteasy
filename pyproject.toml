@@ -70,3 +70,6 @@ Issues = "https://github.com/shepherdpp/qteasy/issues"
 talib = ["ta-lib"]
 database = ["pymysql >= 1.0.0"]
 feather = ["pyarrow >= 3"]
+
+[options.package_data]
+qteasy = "*.tcss"

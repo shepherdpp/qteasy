@@ -173,8 +173,9 @@ def _valid_qt_kwargs():
             {'Default':   'cli',
              'Validator': lambda value: isinstance(value, str) and value.lower() in ['tui', 'cli'],
              'level':     1,
-             'text':      '实盘交易时的用户界面风格，可以设置为文本界面或图形界面\n'
-                          '默认使用文本界面'},
+             'text':      '实盘交易时的用户界面类型，取值范围如下，默认值CLI\n'
+                          '- tui : 一个基于Terminal的图形化用户界面\n'
+                          '- cli : 一个基于命令行交互的Shell用户界面'},
 
 
         'live_price_acquire_channel':

@@ -4314,6 +4314,8 @@ class DataSource:
             当不给出record_id时，读取的数据为DataFrame，包括数据表的结构化信息以及数据表中的记录
         None:
             当输入的id或筛选条件没有匹配项时
+
+        TODO: 重构代码，修改返回类型，确保函数只有一种返回类型
         """
 
         # 检查record_id是否合法
