@@ -25,7 +25,7 @@ from .core import run, set_config, get_configurations, get_config
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source
 from .core import get_history_data, filter_stock_codes, filter_stocks
-from .core import reconnect_ds, get_table_info, get_table_overview
+from .core import reconnect_ds, get_table_info, get_table_overview, live_trade_accounts
 from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
 from .qt_operator import Operator
@@ -38,15 +38,15 @@ from ._arg_validators import QT_CONFIG, ConfigDict
 
 
 # qteasy版本信息
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 version_info = Namespace(
         major=1,
         minor=2,
-        patch=0,
+        patch=1,
         short=(1, 2),
-        full=(1, 2, 0),
-        string='1.2.0',
-        tuple=('1', '2', '0'),
+        full=(1, 2, 1),
+        string='1.2.1',
+        tuple=('1', '2', '1'),
         releaselevel='beta',
 )
 
@@ -203,6 +203,6 @@ __all__ = [
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
     'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
     'utilfuncs',
-    'QT_CONFIG', 'ConfigDict', '__version__',
-    'logger_core'
+    'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
+    'logger_core', 'live_trade_accounts',
 ]

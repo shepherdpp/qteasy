@@ -50,20 +50,20 @@ def pack_system_info(trader_info, width=80):
     info_str = ''
 
     # System Info
-    info_str += f'{" System Info ":=^{width}}'
-    info_str += f'{"python":<{semi_width - 20}}{sys.version}'
+    info_str += f'{" System Info ":=^{width}}\n'
+    info_str += f'{"python":<{semi_width - 20}}{sys.version}\n'
     import qteasy
-    info_str += f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}'
+    info_str += f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}\n'
     import tushare
-    info_str += f'{"tushare":<{semi_width - 20}}{tushare.__version__}'
+    info_str += f'{"tushare":<{semi_width - 20}}{tushare.__version__}\n'
     try:
         import talib
-        info_str += f'{"ta-lib":<{semi_width - 20}}{talib.__version__}'
+        info_str += f'{"ta-lib":<{semi_width - 20}}{talib.__version__}\n'
     except ImportError:
-        info_str += f'{"ta-lib":<{semi_width - 20}}not installed'
-    info_str += f'{"Local DataSource":<{semi_width - 20}}{trader_info["Local DataSource"]}'
-    info_str += f'{"System log file path":<{semi_width - 20}}{trader_info["System log file path"]}'
-    info_str += f'{"Trade log file path":<{semi_width - 20}}{trader_info["Trade log file path"]}'
+        info_str += f'{"ta-lib":<{semi_width - 20}}not installed\n'
+    info_str += f'{"Local DataSource":<{semi_width - 20}}{trader_info["Local DataSource"]}\n'
+    info_str += f'{"System log file path":<{semi_width - 20}}{trader_info["System log file path"]}\n'
+    info_str += f'{"Trade log file path":<{semi_width - 20}}{trader_info["Trade log file path"]}\n'
 
     return info_str
 
@@ -89,12 +89,12 @@ def pack_account_info(trader_info, width=80):
     info_str = ''
 
     # Account information
-    info_str += f'{" Account Overview ":=^{width}}'
-    info_str += f'{"Account ID":<{semi_width - 20}}{trader_info["Account ID"]}'
-    info_str += f'{"User Name":<{semi_width - 20}}{trader_info["User Name"]}'
-    info_str += f'{"Created on":<{semi_width - 20}}{trader_info["Created on"]}'
-    info_str += f'{"Started on":<{semi_width - 20}}{trader_info["Started on"]}'
-    info_str += f'{"Time zone":<{semi_width - 20}}{trader_info["Time zone"]}'
+    info_str += f'{" Account Overview ":=^{width}}\n'
+    info_str += f'{"Account ID":<{semi_width - 20}}{trader_info["Account ID"]}\n'
+    info_str += f'{"User Name":<{semi_width - 20}}{trader_info["User Name"]}\n'
+    info_str += f'{"Created on":<{semi_width - 20}}{trader_info["Created on"]}\n'
+    info_str += f'{"Started on":<{semi_width - 20}}{trader_info["Started on"]}\n'
+    info_str += f'{"Time zone":<{semi_width - 20}}{trader_info["Time zone"]}\n'
 
     return info_str
 
@@ -119,19 +119,19 @@ def pack_status_info(trader_info, width=80):
     info_str = ''
 
     # Status and Settings
-    info_str += f'{" Status and Settings ":=^{width}}'
-    info_str += f'{"Trader Stats":<{semi_width - 20}}{trader_info["Trader Stats"]}'
-    info_str += f'{"Broker Status":<{semi_width - 20}}{trader_info["Broker Name"]} / {trader_info["Broker Status"]}'
+    info_str += f'{" Status and Settings ":=^{width}}\n'
+    info_str += f'{"Trader Stats":<{semi_width - 20}}{trader_info["Trader Stats"]}\n'
+    info_str += f'{"Broker Status":<{semi_width - 20}}{trader_info["Broker Name"]} / {trader_info["Broker Status"]}\n'
     info_str += f'{"Live price update freq":<{semi_width - 20}}' \
-                   f'{trader_info["Live price update freq"]}'
-    info_str += f'{"Strategy":<{semi_width - 20}}{trader_info["Strategy"]}'
-    info_str += f'{"Strategy run frequency":<{semi_width - 20}}{trader_info["Strategy run frequency"]}'
+                   f'{trader_info["Live price update freq"]}\n'
+    info_str += f'{"Strategy":<{semi_width - 20}}{trader_info["Strategy"]}\n'
+    info_str += f'{"Strategy run frequency":<{semi_width - 20}}{trader_info["Strategy run frequency"]}\n'
     info_str += f'{"Trade batch size(buy/sell)":<{semi_width - 20}}' \
                    f'{trader_info["trade batch size"]} ' \
-                   f'/ {trader_info["sell_batch_size"]}'
+                   f'/ {trader_info["sell_batch_size"]}\n'
     info_str += f'{"Delivery Rule (cash/asset)":<{semi_width - 20}}' \
                    f'{trader_info["trade delivery period"]} day / ' \
-                   f'{trader_info["stock delivery period"]} day'
+                   f'{trader_info["stock delivery period"]} day\n'
 
     buy_fix = trader_info["buy_fix"]
     sell_fix = trader_info["sell_fix"]
@@ -142,14 +142,14 @@ def pack_status_info(trader_info, width=80):
 
     if (buy_fix > 0) or (sell_fix > 0):
         trader_info += f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}' \
-                       f'¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}'
+                       f'¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}\n'
     if (buy_rate > 0) or (sell_rate > 0):
-        trader_info += f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}'
+        trader_info += f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}\n'
     if (buy_min > 0) or (sell_min > 0):
-        trader_info += f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}'
+        trader_info += f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}\n'
     info_str += f'{"Market time (open/close)":<{semi_width - 20}}' \
                    f'{trader_info["market_open_am"]} / ' \
-                   f'{trader_info["market_close_pm"]}'
+                   f'{trader_info["market_close_pm"]}\n'
 
     return info_str
 
@@ -185,36 +185,36 @@ def pack_investment_info(trader_info, width=80):
     info_str = ''
 
     # Investment Return
-    info_str += f'{" Returns ":=^{semi_width}}'
+    info_str += f'{" Returns ":=^{semi_width}}\n'
     info_str += f'{"Benchmark":<{semi_width - 20}}¥ ' \
-                   f'{trader_info["Benchmark"]}'
-    info_str += f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}'
+                   f'{trader_info["Benchmark"]}\n'
+    info_str += f'{"Total Investment":<{semi_width - 20}}¥ {total_investment:,.2f}\n'
     if total_value >= total_investment:
-        info_str += f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]'
+        info_str += f'{"Total Value":<{semi_width - 20}}¥[bold red] {total_value:,.2f}[/bold red]\n'
         info_str += f'{"Total Return of Investment":<{semi_width - 20}}' \
                        f'¥[bold red] {total_return_of_investment:,.2f}[/bold red]\n' \
-                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]'
+                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold red]{total_roi_rate:.2%}[/bold red]\n'
     else:
-        info_str += f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]'
+        info_str += f'{"Total Value":<{semi_width - 20}}¥[bold green] {total_value:,.2f}[/bold green]\n'
         info_str += f'{"Total Return of Investment":<{semi_width - 20}}' \
                        f'¥[bold green] {total_return_of_investment:,.2f}[/bold green]\n' \
-                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]'
-    info_str += f'{" Cash ":=^{semi_width}}'
-    info_str += f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} '
-    info_str += f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} '
-    info_str += f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}'
-    info_str += f'{" Stock Value ":=^{semi_width}}'
-    info_str += f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}'
+                       f'{"Total ROI Rate":<{semi_width - 20}}  [bold green]{total_roi_rate:.2%}[/bold green]\n'
+    info_str += f'{" Cash ":=^{semi_width}}\n'
+    info_str += f'{"Cash Percent":<{semi_width - 20}}  {own_cash / total_value:.2%} \n'
+    info_str += f'{"Total Cash":<{semi_width - 20}}¥ {own_cash:,.2f} \n'
+    info_str += f'{"Available Cash":<{semi_width - 20}}¥ {available_cash:,.2f}\n'
+    info_str += f'{" Stock Value ":=^{semi_width}}\n'
+    info_str += f'{"Stock Percent":<{semi_width - 20}}  {position_level:.2%}\n'
     if total_profit >= 0:
-        info_str += f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]'
-        info_str += f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]'
-        info_str += f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]'
+        info_str += f'{"Total Stock Value":<{semi_width - 20}}¥[bold red] {total_market_value:,.2f}[/bold red]\n'
+        info_str += f'{"Total Stock Profit":<{semi_width - 20}}¥[bold red] {total_profit:,.2f}[/bold red]\n'
+        info_str += f'{"Stock Profit Ratio":<{semi_width - 20}}  [bold red]{total_profit_ratio:.2%}[/bold red]\n'
     else:
         info_str += f'{"Total Stock Value":<{semi_width - 20}}¥[bold green] {total_market_value:,.2f}[/bold ' \
-                       f'green]'
-        info_str += f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]'
+                       f'green]\n'
+        info_str += f'{"Total Stock Profit":<{semi_width - 20}}¥[bold green] {total_profit:,.2f}[/bold green]\n'
         info_str += f'{"Total Profit Ratio":<{semi_width - 20}}  [bold green]{total_profit_ratio:.2%}[/bold ' \
-                       f'green]'
+                       f'green]\n'
 
     return info_str
 
@@ -245,8 +245,8 @@ def pack_pool_info(trader_info, width=80):
             n=width - 2,
     )
 
-    info_str += f'{" Investment ":=^{width}}'
-    info_str += f'Current Investment Type:        {trader_info["Asset Type"]}'
+    info_str += f'{" Investment ":=^{width}}\n'
+    info_str += f'Current Investment Type:        {trader_info["Asset Type"]}\n'
     info_str += f'Current Investment Pool:        {asset_in_pool} stocks, ' \
                    f'Use "pool" command to view details.\n=={asset_pool_string}\n'
 

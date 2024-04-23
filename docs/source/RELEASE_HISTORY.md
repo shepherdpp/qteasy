@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.2.1 (2024-04-25)
+- Corrected a build mistake in version 1.2.0, which caused style files not being included in the package
+- Added new qt level function: `live_trade_accounts()` to get detailed information of all accounts for live trading
+- Corrected a mistake in trader CLI of wrong formatting of trade info
+- Improved help information for live trade related configurations
+
 ## 1.2.0 (2024-04-25)
 - New feature added: Now qteasy has a new Terminal UI for live trading, thus users can choose from one of the two UIs for live trading: the Trader Shell or the TUI
   - A new configure key `qt.config['live_trade_ui_type']` is added to allow users to choose between the two UIs for live trading

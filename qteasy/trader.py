@@ -614,13 +614,15 @@ class Trader(object):
             trader_info_dict['Trader Stats'] = self.status
             trader_info_dict['Broker Name'] = self.broker.broker_name
             trader_info_dict['Broker Status'] = self.broker.status
-            trader_info_dict['Live price update freq'] = self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]
+            trader_info_dict['Live price update freq'] = \
+                self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]
             trader_info_dict['Strategy'] = self.operator.strategies
             trader_info_dict['Strategy run frequency'] = self.operator.op_data_freq
             trader_info_dict['trade batch size'] = self.get_config("trade_batch_size")["trade_batch_size"]
             trader_info_dict['sell batch size'] = self.get_config("sell_batch_size")["sell_batch_size"]
             trader_info_dict['cash delivery period'] = self.get_config("cash_delivery_period")["cash_delivery_period"]
-            trader_info_dict['stock delivery period'] = self.get_config("stock_delivery_period")["stock_delivery_period"]
+            trader_info_dict['stock delivery period'] = \
+                self.get_config("stock_delivery_period")["stock_delivery_period"]
             trader_info_dict['buy_fix'] = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
             trader_info_dict['sell_fix'] = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
             trader_info_dict['buy_rate'] = float(self.get_config('cost_rate_buy')['cost_rate_buy'])

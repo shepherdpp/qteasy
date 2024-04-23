@@ -24,7 +24,7 @@ TIMEZONE = 'Asia/Shanghai'
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
 #  避免交易信号从不同的数据源中获取，导致交易信号的不一致性 ?? 这是不是最好的做法？？
 # 9 foundational functions for account and position management
-def new_account(user_name, cash_amount, data_source=None, **account_data):
+def new_account(user_name, cash_amount, data_source=None, **account_data) -> int:
     """ 创建一个新的账户
 
     Parameters
@@ -63,10 +63,35 @@ def new_account(user_name, cash_amount, data_source=None, **account_data):
             },
             **account_data,
     )
-    return account_id
+    return int(account_id)
 
 
-def get_account(account_id, user_name=None, data_source=None):
+def get_all_accounts(data_source=None) -> pd.DataFrame:
+    """ 获取所有的账户
+
+    Parameters
+    ----------
+    data_source: str, optional
+        数据源的名称, 默认为None, 表示使用默认的数据源
+
+    Returns
+    -------
+    accounts: pandas.DataFrame
+        所有账户的信息
+    """
+
+    import qteasy as qt
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, qt.DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+
+    accounts = data_source.read_sys_table_data('sys_op_live_accounts')
+
+    return accounts
+
+
+def get_account(account_id, user_name=None, data_source=None) -> dict:
     """ 根据account_id, 或者user_name获取账户的信息
 
     Parameters
@@ -80,7 +105,7 @@ def get_account(account_id, user_name=None, data_source=None):
 
     Returns
     -------
-    dict: 账户的信息
+    dict: ID为account_id的账户的信息
 
     Raises
     ------
@@ -104,7 +129,7 @@ def get_account(account_id, user_name=None, data_source=None):
         return account
 
 
-def update_account(account_id, data_source=None, **account_data):
+def update_account(account_id, data_source=None, **account_data) -> None:
     """ 更新账户信息
 
     通用接口，用于更新账户的所有信息，除了账户的持仓和可用资金
@@ -133,7 +158,7 @@ def update_account(account_id, data_source=None, **account_data):
     data_source.update_sys_table_data('sys_op_live_accounts', record_id=account_id, **account_data)
 
 
-def update_account_balance(account_id, data_source=None, **cash_change):
+def update_account_balance(account_id, data_source=None, **cash_change) -> None:
     """ 更新账户的资金总额和可用资金, 为了避免误操作，仅允许修改现金总额、可用现金和总投资额，其他字段不可修改
 
     Parameters
