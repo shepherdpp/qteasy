@@ -522,6 +522,7 @@ qt.configure(
         sell_batch_size=1,  # 卖出数量为1股的整数倍
         live_trade_account_id=1,  # 实盘交易账户ID
         live_trade_account='user name',  # 实盘交易用户名
+        live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
 )
 
 qt.run(op)

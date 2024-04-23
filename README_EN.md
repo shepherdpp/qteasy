@@ -536,6 +536,7 @@ qt.configure(
         sell_batch_size=1,  # sell batch size is 1
         live_trade_account_id=1,  # live trade account ID
         live_trade_account='user name',  # live trade account user name
+        live_trade_ui_type='tui',  # to use TUI to monitor live trade, if not set, use CLI shell
 )
 
 qt.run(op)
