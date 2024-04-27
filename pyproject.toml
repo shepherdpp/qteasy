@@ -31,7 +31,7 @@ license = {file = "LICENSE"}
 requires-python = ">=3.6, <3.13"
 keywords = ["quantitative investment", "quantitative trading", "stock", "finance", "investment"]
 dependencies = [
-    "pandas>=1.4.0",
+    "pandas>=1.1.0",
     "numpy>=1.18.1",
     "numba>=0.47.0",
     "tushare>=1.2.89",
@@ -70,6 +70,11 @@ Issues = "https://github.com/shepherdpp/qteasy/issues"
 talib = ["ta-lib"]
 database = ["pymysql >= 1.0.0"]
 feather = ["pyarrow >= 3"]
+dev = [
+    "ta-lib",
+    "pymysql >= 1.0.0",
+    "pyarrow >= 3",
+]
 
 [options.package_data]
 qteasy = "*.tcss"
