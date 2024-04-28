@@ -42,11 +42,11 @@ __version__ = '1.2.1'
 version_info = Namespace(
         major=1,
         minor=2,
-        patch=1,
+        patch=2,
         short=(1, 2),
-        full=(1, 2, 1),
-        string='1.2.1',
-        tuple=('1', '2', '1'),
+        full=(1, 2, 2),
+        string='1.2.2',
+        tuple=('1', '2', '2'),
         releaselevel='beta',
 )
 

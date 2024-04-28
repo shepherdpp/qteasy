@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.2.2 (2024-04-29)
+- Fixed a bug that causes abnormally low speed in some cases if TA-LIB is not installed
+- fixed a bug that causes escaped failure in some cases when strategy is based on RuleIterator
+
 ## 1.2.1 (2024-04-25)
 - Corrected a build mistake in version 1.2.0, which caused style files not being included in the package
 - Added new qt level function: `live_trade_accounts()` to get detailed information of all accounts for live trading
