@@ -2,7 +2,8 @@
 
 ## 1.2.2 (2024-04-29)
 - Fixed a bug that causes abnormally low speed in some cases if TA-LIB is not installed
-- fixed a bug that causes escaped failure in some cases when strategy is based on RuleIterator
+- Fixed a bug that causes escaped failure in some cases when strategy is based on RuleIterator
+- Now it is possible to view all live accounts with `qt.live_trade_accounts()`
 
 ## 1.2.1 (2024-04-25)
 - Corrected a build mistake in version 1.2.0, which caused style files not being included in the package
