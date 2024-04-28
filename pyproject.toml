@@ -38,6 +38,7 @@ dependencies = [
     "mplfinance",
     "rich>=10.0.0",
     "textual",
+    "taichi",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
