@@ -42,11 +42,11 @@ __version__ = '1.2.1'
 version_info = Namespace(
         major=1,
         minor=2,
-        patch=1,
+        patch=2,
         short=(1, 2),
-        full=(1, 2, 1),
-        string='1.2.1',
-        tuple=('1', '2', '1'),
+        full=(1, 2, 2),
+        string='1.2.2',
+        tuple=('1', '2', '2'),
         releaselevel='beta',
 )
 
@@ -186,6 +186,7 @@ py_ver_minor = py_version.minor
 # elif py_ver_major == 3 and py_ver_minor == 7:
 #     warnings.warn(f'A few features of qteasy are planned to be deprecated in Python 3.7, '
 #                   f'please updated to python 3.8 or later for qteasy!', DeprecationWarning)
+
 
 __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config',

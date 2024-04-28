@@ -11,7 +11,7 @@
 import numpy as np
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-from .tafuncs import sma, ema, trix, bbands
+from .tafuncs import sma, ema, trix, bbands, sma_no_ta, ema_no_ta
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
@@ -38,7 +38,7 @@ def built_in_list(stg_id=None):
     >>> import qteasy as qt
     >>> qt.built_in_list()
     {
-     'crossline': qteasy.built_in.Crossline,
+     'crossline': qteasy.built_in.CROSSLINE,
      'macd': qteasy.built_in.MACD,
      'dma': qteasy.built_in.DMA,
      'trix': qteasy.built_in.TRIX,
@@ -159,7 +159,7 @@ def get_built_in_strategy(stg_id):
 
 # All following strategies can be used to create strategies by referring to its strategy ID
 # Basic technical analysis based Timing strategies
-class Crossline(RuleIterator):
+class CROSSLINE(RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
     策略参数：
@@ -3672,76 +3672,76 @@ class SelectingNDayVolatility(FactorSorter):
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':     Crossline,  # TODO: TA-Lib free
-                       'macd':          MACD,  # TODO: TA-Lib free
-                       'dma':           DMA,  # TODO: TA-Lib free
-                       'trix':          TRIX,  # TODO: TA-Lib free
-                       'cdl':           CDL,
-                       'bband':         BBand,
-                       's-bband':       SoftBBand,
-                       'sarext':        SAREXT,
-                       'ssma':          SCRSSMA,
-                       'sdema':         SCRSDEMA,
-                       'sema':          SCRSEMA,
-                       'sht':           SCRSHT,
-                       'skama':         SCRSKAMA,
-                       'smama':         SCRSMAMA,
-                       'st3':           SCRST3,
-                       'stema':         SCRSTEMA,
-                       'strima':        SCRSTRIMA,
-                       'swma':          SCRSWMA,
-                       'dsma':          DCRSSMA,
-                       'ddema':         DCRSDEMA,
-                       'dema':          DCRSEMA,
-                       'dkama':         DCRSKAMA,
-                       'dmama':         DCRSMAMA,
-                       'dt3':           DCRST3,
-                       'dtema':         DCRSTEMA,
-                       'dtrima':        DCRSTRIMA,
-                       'dwma':          DCRSWMA,
-                       'slsma':         SLPSMA,
-                       'sldema':        SLPDEMA,
-                       'slema':         SLPEMA,
-                       'slht':          SLPHT,
-                       'slkama':        SLPKAMA,
-                       'slmama':        SLPMAMA,
-                       'slt3':          SLPT3,
-                       'sltema':        SLPTEMA,
-                       'sltrima':       SLPTRIMA,
-                       'slwma':         SLPWMA,
-                       'adx':           ADX,
-                       'apo':           APO,
-                       'aroon':         AROON,
-                       'aroonosc':      AROONOSC,
-                       'cci':           CCI,
-                       'cmo':           CMO,
-                       'macdext':       MACDEXT,
-                       'mfi':           MFI,
-                       'di':            DI,
-                       'dm':            DM,
-                       'mom':           MOM,
-                       'ppo':           PPO,
-                       'rsi':           RSI,
-                       'stoch':         STOCH,
-                       'stochf':        STOCHF,
-                       'stochrsi':      STOCHRSI,
-                       'ultosc':        ULTOSC,
-                       'willr':         WILLR,
-                       'signal_none':   SignalNone,
-                       'sellrate':      SellRate,
-                       'buyrate':       BuyRate,
-                       'long':          TimingLong,
-                       'short':         TimingShort,
-                       'zero':          TimingZero,
-                       'all':           SelectingAll,
-                       'select_none':   SelectingNone,
-                       'random':        SelectingRandom,
-                       'finance':       SelectingAvgIndicator,
-                       'ndaylast':      SelectingNDayLast,
-                       'ndayavg':       SelectingNDayAvg,
-                       'ndayrate':      SelectingNDayRateChange,
-                       'ndaychg':       SelectingNDayChange,
-                       'ndayvol':       SelectingNDayVolatility
+BUILT_IN_STRATEGIES = {'crossline':         CROSSLINE,
+                       'macd':              MACD,
+                       'dma':               DMA,
+                       'trix':              TRIX,
+                       'cdl':               CDL,
+                       'bband':             BBand,
+                       's-bband':           SoftBBand,
+                       'sarext':            SAREXT,
+                       'ssma':              SCRSSMA,
+                       'sdema':             SCRSDEMA,
+                       'sema':              SCRSEMA,
+                       'sht':               SCRSHT,
+                       'skama':             SCRSKAMA,
+                       'smama':             SCRSMAMA,
+                       'st3':               SCRST3,
+                       'stema':             SCRSTEMA,
+                       'strima':            SCRSTRIMA,
+                       'swma':              SCRSWMA,
+                       'dsma':              DCRSSMA,
+                       'ddema':             DCRSDEMA,
+                       'dema':              DCRSEMA,
+                       'dkama':             DCRSKAMA,
+                       'dmama':             DCRSMAMA,
+                       'dt3':               DCRST3,
+                       'dtema':             DCRSTEMA,
+                       'dtrima':            DCRSTRIMA,
+                       'dwma':              DCRSWMA,
+                       'slsma':             SLPSMA,
+                       'sldema':            SLPDEMA,
+                       'slema':             SLPEMA,
+                       'slht':              SLPHT,
+                       'slkama':            SLPKAMA,
+                       'slmama':            SLPMAMA,
+                       'slt3':              SLPT3,
+                       'sltema':            SLPTEMA,
+                       'sltrima':           SLPTRIMA,
+                       'slwma':             SLPWMA,
+                       'adx':               ADX,
+                       'apo':               APO,
+                       'aroon':             AROON,
+                       'aroonosc':          AROONOSC,
+                       'cci':               CCI,
+                       'cmo':               CMO,
+                       'macdext':           MACDEXT,
+                       'mfi':               MFI,
+                       'di':                DI,
+                       'dm':                DM,
+                       'mom':               MOM,
+                       'ppo':               PPO,
+                       'rsi':               RSI,
+                       'stoch':             STOCH,
+                       'stochf':            STOCHF,
+                       'stochrsi':          STOCHRSI,
+                       'ultosc':            ULTOSC,
+                       'willr':             WILLR,
+                       'signal_none':       SignalNone,
+                       'sellrate':          SellRate,
+                       'buyrate':           BuyRate,
+                       'long':              TimingLong,
+                       'short':             TimingShort,
+                       'zero':              TimingZero,
+                       'all':               SelectingAll,
+                       'select_none':       SelectingNone,
+                       'random':            SelectingRandom,
+                       'finance':           SelectingAvgIndicator,
+                       'ndaylast':          SelectingNDayLast,
+                       'ndayavg':           SelectingNDayAvg,
+                       'ndayrate':          SelectingNDayRateChange,
+                       'ndaychg':           SelectingNDayChange,
+                       'ndayvol':           SelectingNDayVolatility
                        }
 
 

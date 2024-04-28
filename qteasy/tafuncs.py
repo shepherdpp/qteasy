@@ -8,11 +8,15 @@
 #   Interfaces to ta-lib functions.
 # ======================================
 
+
+# 尝试导入ta-lib，如果导入失败，打印warning信息，设置flag: TA_LIB_AVAILABLE = False
 import numpy as np
+import warnings
+
 try:
     # noinspection PyUnresolvedReferences
-    from talib import BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
-        T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
+    from talib import SMA, BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
+        T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, MACD, DEMA, \
         MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
         STOCHF, STOCHRSI, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
         WCLPRICE, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDMODE, CDL2CROWS, CDL3BLACKCROWS, \
@@ -26,13 +30,16 @@ try:
         CDLSEPARATINGLINES, CDLSHOOTINGSTAR, CDLSHORTLINE, CDLSPINNINGTOP, CDLSTALLEDPATTERN, CDLSTICKSANDWICH, \
         CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
         BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
-        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
-        MINMAX, MINMAXINDEX, MULT, SUB, SUM
+        ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, \
+        MININDEX, \
+        MINMAX, MINMAXINDEX, MULT, SUB, SUM, EMA, TRIX, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR
+
+    TA_LIB_AVAILABLE = True
 except ImportError as e:
-    import warnings
     warnings.warn(f'TA-lib should be installed to use all TA functions, visit '
                   f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information',
                   ImportWarning)
+    TA_LIB_AVAILABLE = False
     pass
 
 
@@ -93,11 +100,32 @@ def dema(close, period: int = 30):
     Return
     ------
     """
-    try:
-        from talib import DEMA
+    if TA_LIB_AVAILABLE:
         return DEMA(close, period)
-    except ImportError:
-        return 2 * ema(close, period) - ema(ema(close, period), period)
+    else:
+        return dema_no_ta(close, period)
+
+
+def dema_no_ta(close, period: int = 30):
+    """Double Exponential Moving Average 双重指数平滑移动平均
+
+        The DEMA uses two exponential moving averages (EMAs) to eliminate lag,
+        as some traders view lag as a problem. The DEMA is used in a similar way
+        to traditional moving averages (MA). The average helps confirm up-trends
+        when the price is above the average, and helps confirm downtrends when
+        the price is below the average.
+
+        formula used for calculating DEMA is like following:
+
+        DEMA=2×EMA_N − EMA of EMA_N
+
+    close: float,收盘价
+    period:
+
+    Return
+    ------
+    """
+    return 2 * ema_no_ta(close, period) - ema_no_ta(ema_no_ta(close, period), period)
 
 
 def ema(close, span: int = 30):
@@ -122,22 +150,47 @@ def ema(close, span: int = 30):
     ------
     1-D ndarray; 输入数据的指数平滑移动平均值
     """
-    try:
-        from talib import EMA
+    if TA_LIB_AVAILABLE:
         return EMA(close, span)
-    except ImportError:
-        alpha = 2 / (span + 1.0)
-        alpha_rev = 1 - alpha
-        n = close.shape[0]
-        pows = alpha_rev ** (np.arange(n + 1))
-        scale_arr = 1 / pows[:-1]
-        offset = close[0] * pows[1:]
-        pw0 = alpha * alpha_rev ** (n - 1)
-        mult = close * pw0 * scale_arr
-        cumsums = mult.cumsum()
-        out = offset + cumsums * scale_arr[::-1]
+    else:
+        return ema_no_ta(close, span)
 
-        return out
+
+def ema_no_ta(close, span: int = 30):
+    """Exponential Moving Average指数移动平均值 不依赖ta-lib版本，计算结果与ta-lib版本接近但不完全一致
+
+        The EMA is a type of weighted moving average (WMA) that gives
+        more weighting or importance to recent price data. Like the
+        simple moving average, the exponential moving average is used
+        to see price trends over time, and watching several EMAs at
+        the same time is easy to do with moving average ribbons.
+
+        EMA is calculated with following formula:
+
+        EMA=Price(t)×k+EMA(y)×(1−k)
+
+    Parameters
+    ----------
+    close: float,收盘价 1-D ndarray, 输入数据，一维矩阵
+    span: int, optional, 1 < span, 跨度
+
+    Return
+    ------
+    1-D ndarray; 输入数据的指数平滑移动平均值
+    """
+    alpha = 2 / (span + 1.0)
+    alpha_rev = 1 - alpha
+    n = close.shape[0]
+    pows = alpha_rev ** (np.arange(n + 1))
+    scale_arr = 1 / pows[:-1]
+    offset = close[0] * pows[1:]
+    pw0 = alpha * alpha_rev ** (n - 1)
+    mult = close * pw0 * scale_arr
+    cumsums = mult.cumsum()
+    out = offset + cumsums * scale_arr[::-1]
+    # out[:span - 1] = np.nan
+
+    return out
 
 
 def ht(close):
@@ -358,16 +411,32 @@ def sma(close, timeperiod=30):
     Return
     ------
     """
-    try:
-        from talib import SMA
+    if TA_LIB_AVAILABLE:
         return SMA(close, timeperiod)
-    except ImportError:
-        a = close.cumsum()
-        ar = np.roll(a, timeperiod)
-        ar[:timeperiod - 1] = np.nan
-        ar[timeperiod - 1] = 0
+    else:
+        return sma_no_ta(close, timeperiod)
 
-        return (a - ar) / timeperiod
+
+def sma_no_ta(close, timeperiod=30):
+    """Simple Moving Average 简单移动平均的不依赖ta-lib版本，计算结果与ta-lib版本一致
+
+    For a simple moving average, the formula is the sum of the data
+    points over a given period divided by the number of periods.
+
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
+    """
+    if len(close) < timeperiod:
+        return np.nan
+    a = close.cumsum()
+    ar = np.roll(a, timeperiod)
+    ar[:timeperiod - 1] = np.nan
+    ar[timeperiod - 1] = 0
+
+    return (a - ar) / timeperiod
 
 
 def t3(close, timeperiod=5, vfactor=0):
@@ -826,14 +895,62 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
         macdsignal,
         macdhist
     """
-    try:
-        from talib import MACD
+    if TA_LIB_AVAILABLE:
         return MACD(close, fastperiod, slowperiod, signalperiod)
-    except ImportError:
-        macdhist = ema(close, fastperiod) - ema(close, slowperiod)
-        macdsignal = ema(macdhist, signalperiod)
-        macd = 2 * (macdhist - macdsignal)
-        return macd, macdsignal, macdhist
+    else:
+        return macd_no_ta(close, fastperiod, slowperiod, signalperiod)
+
+
+def macd_no_ta(close, fastperiod=12, slowperiod=26, signalperiod=9):
+    """Moving Average Convergence/Divergence:
+
+    The Moving Average Convergence/Divergence indicator is a momentum oscillator
+    primarily used to trade trends. Although it is an oscillator, it is not
+    typically used to identify over bought or oversold conditions. It appears on
+    the chart as two config_lines which oscillate without boundaries. The crossover of
+    the two config_lines give trading signals similar to a two moving average system.
+
+    - MACD crossing above zero is considered bullish, while crossing below zero
+    is bearish. Secondly, when MACD turns up from below zero it is considered
+    bullish. When it turns down from above zero it is considered bearish.
+
+    - When the MACD line crosses from below to above the signal line, the indicator
+    is considered bullish. The further below the zero line the stronger the signal.
+
+    - When the MACD line crosses from above to below the signal line, the indicator
+    is considered bearish. The further above the zero line the stronger the signal.
+
+    - During trading ranges the MACD will whipsaw, with the fast line crossing back
+    and forth across the signal line. Users of the MACD generally avoid trading in
+    this situation or close positions to reduce volatility within the portfolio.
+
+    - Divergence between the MACD and the price action is a stronger signal when it
+    confirms the crossover signals.
+
+    Calculation
+    An approximated MACD can be calculated by subtracting the value of a 26 period
+    Exponential Moving Average (EMA) from a 12 period EMA. The shorter EMA is
+    constantly converging toward, and diverging away from, the longer EMA. This
+    causes MACD to oscillate around the zero level. A signal line is created with
+    a 9 period EMA of the MACD line.
+
+    Parameters
+    ----------
+        close: float,收盘价
+        fastperiod:
+        slowperiod:
+        signalperiod:
+
+    Return
+    ------
+        macd,
+        macdsignal,
+        macdhist
+    """
+    macdhist = ema_no_ta(close, fastperiod) - ema_no_ta(close, slowperiod)
+    macdsignal = ema_no_ta(macdhist, signalperiod)
+    macd = 2 * (macdhist - macdsignal)
+    return macd, macdsignal, macdhist
 
 
 def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, signalperiod=9, signalmatype=0):
@@ -874,11 +991,7 @@ def macdfix(close, signalperiod=9):
         macdsignal,
         macdhist
     """
-    try:
-        from talib import MACDFIX
-        return MACDFIX(close, signalperiod)
-    except ImportError:
-        return macd(12, 26, signalperiod=signalperiod)
+    return macd(close, 12, 26, signalperiod=signalperiod)
 
 
 def mfi(high, low, close, volume, timeperiod=14):
@@ -1413,13 +1526,27 @@ def trix(close, timeperiod=30):
     Return
     ------
     """
-    try:
-        from talib import TRIX
+    if TA_LIB_AVAILABLE:
         return TRIX(close, timeperiod)
-    except ImportError:
-        tri_ema = ema(ema(ema(close, timeperiod), timeperiod), timeperiod)
-        res = tri_ema / np.roll(tri_ema, 1) - 1
-        return res
+    else:
+        return trix_no_ta(close, timeperiod)
+
+
+def trix_no_ta(close, timeperiod=30):
+    """1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
+    TRIX 的不依赖ta-lib版本，计算结果与 ta-lib 版本近似但不完全一致
+
+    close: float, 1-d array of float
+        收盘价
+    timeperiod: int
+        ema span
+
+    Return
+    ------
+    """
+    tri_ema = ema_no_ta(ema_no_ta(ema_no_ta(close, timeperiod), timeperiod), timeperiod)
+    res = tri_ema / np.roll(tri_ema, 1) - 1
+    return res
 
 
 def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):
@@ -1935,7 +2062,8 @@ def ht_dcphase(close):
     Compute Dominant Cycle Phase
     Compute the Sine of the Dominant Cycle Phase
     Advance the Sine by 45 degrees to compute the HT Lead Sine
-    Return the Lead Sine of the Dominant Cycle Phase at the current bar of the Hilbert Transform Period measured at that bar
+    Return the Lead Sine of the Dominant Cycle Phase at the current bar of the Hilbert Transform Period measured at
+    that bar
 
     close: float,收盘价
 
@@ -2982,7 +3110,8 @@ def cdlhomingpigeon(opn, high, low, close):
 def cdlidentical3crows(opn, high, low, close):
     """Identical Three Crows:
 
-    The Identical Three Crows is a three-line bearish reversal candlestick pattern. Every candle appears as a long line having a black body.
+    The Identical Three Crows is a three-line bearish reversal candlestick pattern. Every candle appears as a long
+    line having a black body.
 
     Forecast: bearish reversal
     Trend prior to the pattern: uptrend
@@ -3280,7 +3409,9 @@ def cdlmathold(opn, high, low, close):
 def cdlmorningdojistar(opn, high, low, close):
     """Morning Doji Star:
 
-    The Morning Doji Star is a bullish reversal pattern, being very similar to the Morning Star. The only difference is that the Morning Doji Star needs to have a doji candle (except the Four-Price Doji) on the second line. The doji candle (second line) should not be preceded by or followed by a price gap.
+    The Morning Doji Star is a bullish reversal pattern, being very similar to the Morning Star. The only difference
+    is that the Morning Doji Star needs to have a doji candle (except the Four-Price Doji) on the second line. The
+    doji candle (second line) should not be preceded by or followed by a price gap.
 
     Forecast: bullish reversal
     Trend prior to the pattern: downtrend

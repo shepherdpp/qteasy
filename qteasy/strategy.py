@@ -1811,13 +1811,10 @@ class RuleIterator(BaseStrategy):
         else:
             ref_nonan = ref_seg[~np.isnan(ref_seg[:, 0])]
 
-        try:
-            return self.realize(h=hist_nonan,
-                                r=ref_nonan,
-                                t=trade_data,
-                                pars=params)
-        except Exception:
-            return np.nan
+        return self.realize(h=hist_nonan,
+                            r=ref_nonan,
+                            t=trade_data,
+                            pars=params)
 
     @abstractmethod
     def realize(self,

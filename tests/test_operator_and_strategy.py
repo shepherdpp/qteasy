@@ -2283,16 +2283,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # test human_blender function:
         print('\ntest human_blender function')
-        strategy_ids = ['MACD', 'DMA', 'Crossline', 'TRIX', 'KDJ']
+        strategy_ids = ['MACD', 'DMA', 'CROSSLINE', 'TRIX', 'KDJ']
         blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
         res = human_blender(blender_exp, strategy_ids)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        self.assertEqual(res, 'avgpos_3_0.5(MACD, DMA, Crossline, TRIX, KDJ)')
+        self.assertEqual(res, 'avgpos_3_0.5(MACD, DMA, CROSSLINE, TRIX, KDJ)')
 
         blender_exp = 'max(s0, s1, s2)+s3*s4'
         res = human_blender(blender_exp, strategy_ids)
         print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        self.assertEqual(res, 'max(MACD, DMA, Crossline) + TRIX * KDJ')
+        self.assertEqual(res, 'max(MACD, DMA, CROSSLINE) + TRIX * KDJ')
 
         blender_exp = 'max(s0, s1/s0)+s1and0.5*s4'
         res = human_blender(blender_exp, strategy_ids)
@@ -2361,7 +2361,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
 
     def test_stg_attribute_get_and_set(self):
-        self.stg = qt.built_in.Crossline()
+        self.stg = qt.built_in.CROSSLINE()
         self.stg_type = 'RULE-ITER'
         self.stg_name = "CROSSLINE"
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \

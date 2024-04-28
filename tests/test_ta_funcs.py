@@ -11,8 +11,8 @@
 import unittest
 import numpy as np
 
-from qteasy.tafuncs import bbands, dema, ema, ht, kama, ma, mama, mavp, mid_point
-from qteasy.tafuncs import mid_price, sar, sarext, sma, t3, tema, trima, wma, adx, adxr
+from qteasy.tafuncs import bbands, dema, ema, ht, kama, ma, mama, mavp, mid_point, sma_no_ta, ema_no_ta
+from qteasy.tafuncs import mid_price, sar, sarext, sma, t3, tema, trima, wma, adx, adxr, trix_no_ta
 from qteasy.tafuncs import apo, bop, cci, cmo, dx, macd, macdext, aroon, aroonosc
 from qteasy.tafuncs import macdfix, mfi, minus_di, minus_dm, mom, plus_di, plus_dm
 from qteasy.tafuncs import ppo, roc, rocp, rocr, rocr100, rsi, stoch, stochf, stochrsi
@@ -93,6 +93,14 @@ class TestTAFuncs(unittest.TestCase):
         res = ema(self.close, span=5)
         print(f'result is\n{res}')
 
+    def test_ema_and_ema_no_ta(self):
+        """ 测试ema和ema_no_ta的结果是否一致 """
+        res = ema(self.close, span=5)
+        res_no_ta = ema_no_ta(self.close, span=5)
+        print(f'result is\n{res}\n'
+              f'result_no_ta is\n{res_no_ta}')
+        self.assertTrue(np.allclose(res, res_no_ta, equal_nan=True, atol=0.02))
+
     def test_ht(self):
         print(f'test TA function: ht\n'
               f'======================')
@@ -153,6 +161,14 @@ class TestTAFuncs(unittest.TestCase):
               f'======================')
         res = sma(self.close)
         print(f'result is \n{res}')
+
+    def test_sma_and_sma_no_ta(self):
+        """ 测试sma和sma_no_ta的结果是否一致 """
+        res = sma(self.close)
+        res_no_ta = sma_no_ta(self.close)
+        print(f'result is \n{res}'
+              f'result_no_ta is \n{res_no_ta}')
+        self.assertTrue(np.allclose(res, res_no_ta, equal_nan=True))
 
     def test_t3(self):
         print(f'test TA function: t3\n'
@@ -345,6 +361,14 @@ class TestTAFuncs(unittest.TestCase):
               f'=======================')
         res = trix(self.close, timeperiod=5)
         print(f'result is \n{res}')
+
+    def test_trix_vs_trix_no_ta(self):
+        """ 测试trix和trix_no_ta的结果是否一致 """
+        res = trix(self.close, timeperiod=5)
+        res_no_ta = trix_no_ta(self.close, timeperiod=5)
+        print(f'result is \n{res}\n'
+              f'result_no_ta is \n{res_no_ta}')
+        self.assertTrue(np.allclose(res, res_no_ta, equal_nan=True, atol=0.02))
 
     def test_ultosc(self):
         print(f'test TA function: ultosc\n'

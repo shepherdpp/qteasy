@@ -93,13 +93,17 @@ $ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple qteasy --upgrade
 
 ### Mac OS
 
+首先安装homebrew，然后通过homebrew安装C语言TA-LIB包：
+
 ```bash
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 $ brew install ta-lib
 ```
 
 如果使用Apple Silicon芯片，可以使用：
 
 ```bash
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 $ arch -arm64 brew install ta-lib
 ```
 
@@ -113,6 +117,16 @@ $ cd ta-lib/
 $ ./configure --prefix=/usr
 $ make
 $ sudo make install
+```
+C语言TA-LIB包安装完成后，即可以通过pip安装python的TA-Lib包：
+
+```bash
+$ pip install ta-lib
+```
+如果需要在arm64架构的Mac上安装TA-Lib，可以使用下面的命令：
+
+```bash
+$ arch -arm64 python -m pip install --no-cache-dir ta-lib
 ```
 
 更完整的TA-Lib的安装方法请参考[这里](https://pypi.org/prject/TA-Lib/)
