@@ -10,13 +10,14 @@
 # ======================================
 
 import os
-import pandas as pd
+
 import numpy as np
-from numba import njit  # try taichi, which might be even faster
+import pandas as pd
+import taichi as ti
 
 import qteasy
+from .finance import CashPlan, get_cost_pamams, get_purchase_result, get_selling_result
 from .history import HistoryPanel
-from .finance import CashPlan, get_selling_result, get_purchase_result, get_cost_pamams
 from .qt_operator import Operator
 
 
