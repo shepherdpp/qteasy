@@ -187,6 +187,7 @@ py_ver_minor = py_version.minor
 #     warnings.warn(f'A few features of qteasy are planned to be deprecated in Python 3.7, '
 #                   f'please updated to python 3.8 or later for qteasy!', DeprecationWarning)
 
+
 __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',

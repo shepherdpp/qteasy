@@ -8,10 +8,12 @@
 #   Interfaces to ta-lib functions.
 # ======================================
 
+
+# 尝试导入ta-lib，如果导入失败，打印warning信息，设置flag: TA_LIB_AVAILABLE = False
 import numpy as np
 try:
     # noinspection PyUnresolvedReferences
-    from talib import BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
+    from talib import SMA, BBANDS, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \
         T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACDEXT, AROON, AROONOSC, \
         MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
         STOCHF, STOCHRSI, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
@@ -27,12 +29,15 @@ try:
         CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
         BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
         ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
-        MINMAX, MINMAXINDEX, MULT, SUB, SUM
+        MINMAX, MINMAXINDEX, MULT, SUB, SUM, EMA, DEMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR
+
+    TA_LIB_AVAILABLE = True
 except ImportError as e:
     import warnings
     warnings.warn(f'TA-lib should be installed to use all TA functions, visit '
                   f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information',
                   ImportWarning)
+    TA_LIB_AVAILABLE = False
     pass
 
 
@@ -122,22 +127,47 @@ def ema(close, span: int = 30):
     ------
     1-D ndarray; 输入数据的指数平滑移动平均值
     """
-    try:
-        from talib import EMA
+    if TA_LIB_AVAILABLE:
         return EMA(close, span)
-    except ImportError:
-        alpha = 2 / (span + 1.0)
-        alpha_rev = 1 - alpha
-        n = close.shape[0]
-        pows = alpha_rev ** (np.arange(n + 1))
-        scale_arr = 1 / pows[:-1]
-        offset = close[0] * pows[1:]
-        pw0 = alpha * alpha_rev ** (n - 1)
-        mult = close * pw0 * scale_arr
-        cumsums = mult.cumsum()
-        out = offset + cumsums * scale_arr[::-1]
+    else:
+        return ema_no_ta(close, span)
 
-        return out
+
+def ema_no_ta(close, span: int = 30):
+    """Exponential Moving Average指数移动平均值 不依赖ta-lib版本，计算结果与ta-lib版本接近但不完全一致
+
+        The EMA is a type of weighted moving average (WMA) that gives
+        more weighting or importance to recent price data. Like the
+        simple moving average, the exponential moving average is used
+        to see price trends over time, and watching several EMAs at
+        the same time is easy to do with moving average ribbons.
+
+        EMA is calculated with following formula:
+
+        EMA=Price(t)×k+EMA(y)×(1−k)
+
+    Parameters
+    ----------
+    close: float,收盘价 1-D ndarray, 输入数据，一维矩阵
+    span: int, optional, 1 < span, 跨度
+
+    Return
+    ------
+    1-D ndarray; 输入数据的指数平滑移动平均值
+    """
+    alpha = 2 / (span + 1.0)
+    alpha_rev = 1 - alpha
+    n = close.shape[0]
+    pows = alpha_rev ** (np.arange(n + 1))
+    scale_arr = 1 / pows[:-1]
+    offset = close[0] * pows[1:]
+    pw0 = alpha * alpha_rev ** (n - 1)
+    mult = close * pw0 * scale_arr
+    cumsums = mult.cumsum()
+    out = offset + cumsums * scale_arr[::-1]
+    out[:span - 1] = np.nan
+
+    return out
 
 
 def ht(close):
@@ -358,16 +388,30 @@ def sma(close, timeperiod=30):
     Return
     ------
     """
-    try:
-        from talib import SMA
+    if TA_LIB_AVAILABLE:
         return SMA(close, timeperiod)
-    except ImportError:
-        a = close.cumsum()
-        ar = np.roll(a, timeperiod)
-        ar[:timeperiod - 1] = np.nan
-        ar[timeperiod - 1] = 0
+    else:
+        return sma_no_ta(close, timeperiod)
 
-        return (a - ar) / timeperiod
+
+def sma_no_ta(close, timeperiod=30):
+    """Simple Moving Average 简单移动平均的不依赖ta-lib版本，计算结果与ta-lib版本一致
+
+    For a simple moving average, the formula is the sum of the data
+    points over a given period divided by the number of periods.
+
+    close: float,收盘价
+    timeperiod:
+
+    Return
+    ------
+    """
+    a = close.cumsum()
+    ar = np.roll(a, timeperiod)
+    ar[:timeperiod - 1] = np.nan
+    ar[timeperiod - 1] = 0
+
+    return (a - ar) / timeperiod
 
 
 def t3(close, timeperiod=5, vfactor=0):

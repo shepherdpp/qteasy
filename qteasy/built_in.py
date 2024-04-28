@@ -11,7 +11,7 @@
 import numpy as np
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-from .tafuncs import sma, ema, trix, bbands
+from .tafuncs import sma, ema, trix, bbands, sma_no_ta, ema_no_ta
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
@@ -38,7 +38,7 @@ def built_in_list(stg_id=None):
     >>> import qteasy as qt
     >>> qt.built_in_list()
     {
-     'crossline': qteasy.built_in.Crossline,
+     'crossline': qteasy.built_in.CROSSLINE,
      'macd': qteasy.built_in.MACD,
      'dma': qteasy.built_in.DMA,
      'trix': qteasy.built_in.TRIX,
@@ -159,7 +159,7 @@ def get_built_in_strategy(stg_id):
 
 # All following strategies can be used to create strategies by referring to its strategy ID
 # Basic technical analysis based Timing strategies
-class Crossline(RuleIterator):
+class CROSSLINE(RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
     策略参数：
@@ -201,6 +201,59 @@ class Crossline(RuleIterator):
         h = h.T
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
+        m = m * l
+        if diff < -m:
+            return 1
+        elif diff > m:
+            return -1
+        else:
+            return 0
+
+
+class CrosslineNoTA(RuleIterator):
+    """crossline择时策略类的NO TA-LIB版本，利用长短均线的交叉确定多空状态
+    与CROSSLINE策略相同，但是使用无需ta-lib的sma函数
+
+    策略参数：
+        s: int, 短均线计算日期；
+        l: int, 长均线计算日期；
+        m: float, 均线边界宽度（百分比）；
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        1，当短均线位于长均线上方，且距离大于l*m%时，设置仓位目标为1
+        2，当短均线位于长均线下方，且距离大于l*m%时，设置仓位目标为-1
+        3，当长短均线之间的距离不大于l*m%时，设置仓位目标为0
+
+    策略属性缺省值：
+    默认参数：(35, 120, 0.02)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (0, 1)]
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars: tuple = (35, 120, 0.02)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['int', 'int', 'float'],
+                         par_range=[(10, 250), (10, 250), (0, 0.1)],
+                         name='CROSSLINE-NO-TA',
+                         description='Moving average crossline strategy with no ta-lib needed, '
+                                     'determine long/short position according '
+                                     'to the cross point of long and short term moving average prices ',
+                         strategy_data_types='close')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            s, l, m = self.pars
+        else:
+            s, l, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+        # 计算长短均线之间的距离
+        diff = (sma_no_ta(h[0], l) - sma_no_ta(h[0], s))[-1]
         m = m * l
         if diff < -m:
             return 1
@@ -1830,6 +1883,56 @@ class MACD(RuleIterator):
         return cat
 
 
+class MACD_NO_TA(RuleIterator):
+    """MACD择时策略类的不依赖TA-LIB版本，运用MACD均线策略，生成目标仓位百分比
+    生成的结果与TA-LIB依赖的MACD近似但不完全相同
+
+    策略参数：
+        s: int, 短周期指数平滑均线计算日期；
+        l: int, 长周期指数平滑均线计算日期；
+        m: int, MACD中间值DEA的计算周期；
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        计算MACD值：
+        1，当MACD值大于0时，设置仓位目标为1
+        2，当MACD值小于0时，设置仓位目标为0
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (5, 250)]
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars: tuple = (12, 26, 9)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['int', 'int', 'int'],
+                         par_range=[(10, 250), (10, 250), (5, 250)],
+                         name='MACD',
+                         description='MACD strategy, determine long/short position according to differences of '
+                                     'exponential weighted moving average prices',
+                         strategy_data_types='close')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            s, l, m = self.pars
+        else:
+            s, l, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+
+        # 计算指数的指数移动平均价格
+        diff = ema_no_ta(h[0], s) - ema_no_ta(h[0], l)
+        dea = ema_no_ta(diff, m)
+        _macd = 2 * (diff - dea)
+        cat = 1 if _macd[-1] > 0 else 0
+        return cat
+
+
 class TRIX(RuleIterator):
     """TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断
 
@@ -3185,6 +3288,55 @@ class DMA(RuleIterator):
         return cat
 
 
+class DMA_NO_TA(RuleIterator):
+    """ DMA择时策略的不依赖TA-LIB版本，输出与DMA策略相同的交易信号
+
+    策略参数：
+        s, int, 短均线周期
+        l, int, 长均线周期
+        d, int, DMA周期
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        在下面情况下产生买入信号：
+        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1
+        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0
+        3， DMA与股价发生背离时的交叉信号，可信度较高
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (8, 250)]
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars=(12, 26, 9)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['int', 'int', 'int'],
+                         par_range=[(10, 250), (10, 250), (5, 250)],
+                         name='DMA_No_TA',
+                         description='Quick DMA strategy independent to TA-LIB, determine long/short position '
+                                     'according to differences of moving average prices with simple timing strategy',
+                         strategy_data_types='close')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            s, l, d = self.pars
+        else:
+            s, l, d = pars
+
+        h = h.T
+        dma = sma_no_ta(h[0], s) - sma_no_ta(h[0], l)
+        ama = dma.copy()
+        ama[~np.isnan(dma)] = sma_no_ta(dma[~np.isnan(dma)], d)
+
+        cat = 1 if dma[-1] > ama[-1] else 0
+        return cat
+
+
 # Built-in GeneralStg strategies:
 
 class SelectingAll(GeneralStg):
@@ -3672,76 +3824,79 @@ class SelectingNDayVolatility(FactorSorter):
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':     Crossline,  # TODO: TA-Lib free
-                       'macd':          MACD,  # TODO: TA-Lib free
-                       'dma':           DMA,  # TODO: TA-Lib free
-                       'trix':          TRIX,  # TODO: TA-Lib free
-                       'cdl':           CDL,
-                       'bband':         BBand,
-                       's-bband':       SoftBBand,
-                       'sarext':        SAREXT,
-                       'ssma':          SCRSSMA,
-                       'sdema':         SCRSDEMA,
-                       'sema':          SCRSEMA,
-                       'sht':           SCRSHT,
-                       'skama':         SCRSKAMA,
-                       'smama':         SCRSMAMA,
-                       'st3':           SCRST3,
-                       'stema':         SCRSTEMA,
-                       'strima':        SCRSTRIMA,
-                       'swma':          SCRSWMA,
-                       'dsma':          DCRSSMA,
-                       'ddema':         DCRSDEMA,
-                       'dema':          DCRSEMA,
-                       'dkama':         DCRSKAMA,
-                       'dmama':         DCRSMAMA,
-                       'dt3':           DCRST3,
-                       'dtema':         DCRSTEMA,
-                       'dtrima':        DCRSTRIMA,
-                       'dwma':          DCRSWMA,
-                       'slsma':         SLPSMA,
-                       'sldema':        SLPDEMA,
-                       'slema':         SLPEMA,
-                       'slht':          SLPHT,
-                       'slkama':        SLPKAMA,
-                       'slmama':        SLPMAMA,
-                       'slt3':          SLPT3,
-                       'sltema':        SLPTEMA,
-                       'sltrima':       SLPTRIMA,
-                       'slwma':         SLPWMA,
-                       'adx':           ADX,
-                       'apo':           APO,
-                       'aroon':         AROON,
-                       'aroonosc':      AROONOSC,
-                       'cci':           CCI,
-                       'cmo':           CMO,
-                       'macdext':       MACDEXT,
-                       'mfi':           MFI,
-                       'di':            DI,
-                       'dm':            DM,
-                       'mom':           MOM,
-                       'ppo':           PPO,
-                       'rsi':           RSI,
-                       'stoch':         STOCH,
-                       'stochf':        STOCHF,
-                       'stochrsi':      STOCHRSI,
-                       'ultosc':        ULTOSC,
-                       'willr':         WILLR,
-                       'signal_none':   SignalNone,
-                       'sellrate':      SellRate,
-                       'buyrate':       BuyRate,
-                       'long':          TimingLong,
-                       'short':         TimingShort,
-                       'zero':          TimingZero,
-                       'all':           SelectingAll,
-                       'select_none':   SelectingNone,
-                       'random':        SelectingRandom,
-                       'finance':       SelectingAvgIndicator,
-                       'ndaylast':      SelectingNDayLast,
-                       'ndayavg':       SelectingNDayAvg,
-                       'ndayrate':      SelectingNDayRateChange,
-                       'ndaychg':       SelectingNDayChange,
-                       'ndayvol':       SelectingNDayVolatility
+BUILT_IN_STRATEGIES = {'crossline':         CROSSLINE,
+                       'crossline-no-ta':   CrosslineNoTA,
+                       'macd':              MACD,
+                       'macd-no-ta':        MACD_NO_TA,
+                       'dma':               DMA,
+                       'dma-no-ta':         DMA_NO_TA,
+                       'trix':              TRIX,  # TODO: TA-Lib free
+                       'cdl':               CDL,
+                       'bband':             BBand,
+                       's-bband':           SoftBBand,
+                       'sarext':            SAREXT,
+                       'ssma':              SCRSSMA,
+                       'sdema':             SCRSDEMA,
+                       'sema':              SCRSEMA,
+                       'sht':               SCRSHT,
+                       'skama':             SCRSKAMA,
+                       'smama':             SCRSMAMA,
+                       'st3':               SCRST3,
+                       'stema':             SCRSTEMA,
+                       'strima':            SCRSTRIMA,
+                       'swma':              SCRSWMA,
+                       'dsma':              DCRSSMA,
+                       'ddema':             DCRSDEMA,
+                       'dema':              DCRSEMA,
+                       'dkama':             DCRSKAMA,
+                       'dmama':             DCRSMAMA,
+                       'dt3':               DCRST3,
+                       'dtema':             DCRSTEMA,
+                       'dtrima':            DCRSTRIMA,
+                       'dwma':              DCRSWMA,
+                       'slsma':             SLPSMA,
+                       'sldema':            SLPDEMA,
+                       'slema':             SLPEMA,
+                       'slht':              SLPHT,
+                       'slkama':            SLPKAMA,
+                       'slmama':            SLPMAMA,
+                       'slt3':              SLPT3,
+                       'sltema':            SLPTEMA,
+                       'sltrima':           SLPTRIMA,
+                       'slwma':             SLPWMA,
+                       'adx':               ADX,
+                       'apo':               APO,
+                       'aroon':             AROON,
+                       'aroonosc':          AROONOSC,
+                       'cci':               CCI,
+                       'cmo':               CMO,
+                       'macdext':           MACDEXT,
+                       'mfi':               MFI,
+                       'di':                DI,
+                       'dm':                DM,
+                       'mom':               MOM,
+                       'ppo':               PPO,
+                       'rsi':               RSI,
+                       'stoch':             STOCH,
+                       'stochf':            STOCHF,
+                       'stochrsi':          STOCHRSI,
+                       'ultosc':            ULTOSC,
+                       'willr':             WILLR,
+                       'signal_none':       SignalNone,
+                       'sellrate':          SellRate,
+                       'buyrate':           BuyRate,
+                       'long':              TimingLong,
+                       'short':             TimingShort,
+                       'zero':              TimingZero,
+                       'all':               SelectingAll,
+                       'select_none':       SelectingNone,
+                       'random':            SelectingRandom,
+                       'finance':           SelectingAvgIndicator,
+                       'ndaylast':          SelectingNDayLast,
+                       'ndayavg':           SelectingNDayAvg,
+                       'ndayrate':          SelectingNDayRateChange,
+                       'ndaychg':           SelectingNDayChange,
+                       'ndayvol':           SelectingNDayVolatility
                        }
 
 
