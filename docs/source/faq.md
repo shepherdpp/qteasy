@@ -129,7 +129,7 @@ $ pip install ta-lib
 $ arch -arm64 python -m pip install --no-cache-dir ta-lib
 ```
 
-更完整的TA-Lib的安装方法请参考[这里](https://pypi.org/prject/TA-Lib/)
+如果您使用Arm64架构的电脑，但是安装ta-lib后出现导入错误`ImportError:`，可能是因为环境的问题，请参考[这篇文章](https://blog.csdn.net/Shepherdppz/article/details/138253619)解决您的问题。
 
 ---
 
