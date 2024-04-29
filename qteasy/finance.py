@@ -11,9 +11,11 @@
 
 import numpy as np
 import pandas as pd
-from numba import njit
+import taichi as ti
 
 from .utilfuncs import ALL_COST_PARAMETERS
+
+ti.init(arch=ti.cpu)
 
 
 def validate_cost_dict(cost: dict) -> None:
@@ -158,7 +160,7 @@ def get_cost_pamams(c: dict) -> np.ndarray:
                      c['slipage']])
 
 
-@njit
+@ti.func
 def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying: bool = True,
                    fixed_fees: bool = False) -> np.ndarray:
     """直接调用对象，计算交易费率或交易费用
@@ -233,7 +235,7 @@ def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying:
                 return np.fmax(cost_params[3], min_rate) + cost_params[6] * trade_values
 
 
-@njit
+@ti.func
 def get_selling_result(prices: np.ndarray,
                        a_to_sell: np.ndarray,
                        moq,
@@ -279,7 +281,7 @@ def get_selling_result(prices: np.ndarray,
     return a_sold, cash_gained, fees
 
 
-@njit
+@ti.func
 def get_purchase_result(prices: np.ndarray,
                         cash_to_spend: np.ndarray,
                         moq,

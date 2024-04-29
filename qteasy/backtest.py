@@ -20,8 +20,9 @@ from .finance import CashPlan, get_cost_pamams, get_purchase_result, get_selling
 from .history import HistoryPanel
 from .qt_operator import Operator
 
+ti.init(arch=ti.cpu)
 
-@njit(nogil=False, cache=True)
+@ti.func
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -671,7 +672,7 @@ def apply_loop(operator: Operator,
     return loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices
 
 
-@njit(nogil=True, cache=True)
+@ti.kernal
 def apply_loop_core(share_count: int,
                     looped_dates: np.ndarray,
                     inflation_factors: np.ndarray,
