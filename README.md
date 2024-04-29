@@ -65,7 +65,7 @@
 - 检索、处理、调用本地数据
 - 本地金融数据可视化
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
+![png](docs/source/img/output_5_2.png)
 
 ### **创建交易策略**
 
@@ -73,7 +73,7 @@
 - 快速创建自定义交易策略，灵活设置可调参数
 - 交易策略的回测、优化、评价，可视化输出回测结果
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
+![png](docs/source/img/output_14_3.png)
 
 ### **实盘交易模拟**
 - 读取实时市场数据，实盘运行交易策略
@@ -82,9 +82,9 @@
 - 随时查看交易过程，检查盈亏情况
 - 手动控制交易进程、调整交易参数，手动下单
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_1.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_2.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_light_theme.png) 
+![png](docs/source/examples/img/trader_app_1.png)  
+![png](docs/source/examples/img/trader_app_2.png)  
+![png](docs/source/examples/img/trader_app_light_theme.png) 
 
 ## 安装
 
@@ -132,7 +132,7 @@ $ pip install qteasy
 
 ```python
 import qteasy as qt
-print(qt.__version__)
+qt.__version__
 ```
 
 ### 配置本地数据源
@@ -228,7 +228,7 @@ import qteasy as qt
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
+![png](docs/source/img/output_5_2.png)
     
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持功能如下：
@@ -254,15 +254,15 @@ qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_1.png)
+![png](docs/source/img/output_3_1.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_7_2.png)
+![png](docs/source/img/output_7_2.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_8_3.png)
+![png](docs/source/img/output_8_3.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_4.png)
+![png](docs/source/img/output_3_4.png)
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_5.png)
+![png](docs/source/img/output_3_5.png)
     
 
 生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持
@@ -278,7 +278,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 - 在K线图上双击鼠标，可以切换不同的均线类型
 - 在K线图的指标区域双击，可以切换不同的指标类型：MACD，RSI，DEMA
 
-![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/qt_dev/img/output_dyna_plot.gif)
+![gif](docs/source/img/output_dyna_plot.gif)
 
 关于`DataSource`对象的更多详细介绍，请参见[qteasy文档](https://qteasy.readthedocs.io)
 
@@ -412,7 +412,7 @@ Max drawdown:                    11.92%
 
 ===========END OF REPORT=============
 ```
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
+![png](docs/source/img/output_21_1.png)
 
 ### 交易策略的参数调优
 
@@ -461,7 +461,7 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 ===========END OF REPORT=============
 ```
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_24_1.png)   
+![png](docs/source/img/output_24_1.png)   
 将优化后的参数应用到策略中，并再次回测，可以看到结果明显提升：
 
 ```python
@@ -481,14 +481,14 @@ res = op.run(
 ```
 结果如下：
 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_26_1.png)   
+![png](docs/source/img/output_26_1.png)   
 
 
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
 
 ### 部署并开始交易策略的实盘运行
 
-`qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
+在配置好Operator对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
 
 在`Operator`中设置好交易策略，并配置好交易参数后，可以直接启动实盘交易：
 
@@ -527,15 +527,15 @@ qt.configure(
 
 qt.run(op)
 ```
-qteasy的实盘运行程序实际上是一个定时任务触发器，它能定时触发运行交易策略，提交策略到模拟交易Broker，并读取实时价格，模拟成交并自动记录交易过程。
+`qteasy`的实盘运行程序实际上是一个定时任务触发器，它能定时触发运行交易策略，提交策略到模拟交易Broker，并读取实时价格，模拟成交并自动记录交易过程。
 
-为了对策略运行过程进行监控，同时与qteasy进行互动，qteasy提供了两种不同的交互界面：
+为了对策略运行过程进行监控，同时与`qteasy`进行互动，`qteasy`提供了两种不同的交互界面：
 
 - **`TraderShell`** 交互式命令行界面，可以在命令行中输入命令，查看交易日志、查看持仓、查看账户资金变化等信息：
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
+![png](docs/source/img/output_27_1.png)  
+![png](docs/source/img/output_27_3.png) 
 - **`TraderApp`** (v1.2.0新增) 交互式图形界面，可以在图形界面中查看交易日志、查看持仓、查看账户资金变化等信息
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_light_theme.png) 
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_2.png) 
+![png](docs/source/examples/img/trader_app_light_theme.png) 
+![png](docs/source/examples/img/trader_app_2.png) 
 
 上面两种方式都可以在实盘运行时使用，根据qteasy的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)

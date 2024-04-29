@@ -136,8 +136,7 @@ qt.get_history_data(htypes='open, high, low, close',
 ```python
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
-
-<img style="width: 900px;" src="img/output_5_2.png">
+![png](img/output_5_2.png)
     
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持功能如下：
@@ -387,7 +386,7 @@ res = op.run(
 
 ## 部署并开始交易策略的实盘运行
 
-`qteasy`提供了在命令行环境中运行的一个简单实盘交易程序，在配置好Operator对象并设置好策略后，自动定期运行、下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
+在配置好Operator对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
 
 在`Operator`中设置好交易策略，并配置好交易参数后，可以直接启动实盘交易：
 
@@ -421,42 +420,20 @@ qt.configure(
         sell_batch_size=1,  # 卖出数量为1股的整数倍
         live_trade_account_id=1,  # 实盘交易账户ID
         live_trade_account='user name',  # 实盘交易用户名
+        live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
 )
 
 qt.run(op)
 ```
-此时`qteasy`会启动一个`Trader Shell`命令行界面，同时交易策略会自动定时运行，运行的参数随`QT_CONFIG`而定。启动TraderShell后，所有交易相关的重要信息都会显示在console中：
+`qteasy`的实盘运行程序实际上是一个定时任务触发器，它能定时触发运行交易策略，提交策略到模拟交易Broker，并读取实时价格，模拟成交并自动记录交易过程。
 
-![png](img/output_27_1.png)   
+为了对策略运行过程进行监控，同时与`qteasy`进行互动，`qteasy`提供了两种不同的交互界面：
 
-此时控制台上会显示当前交易执行状态：
-- 当前日期、时间、运行状态
-- 产生的交易信号和交易订单
-- 交易订单的成交情况
-- 账户资金变动情况
-- 账户持仓变动情况
-- 开盘和收盘时间预告等
+- **`TraderShell`** 交互式命令行界面，可以在命令行中输入命令，查看交易日志、查看持仓、查看账户资金变化等信息：
+![png](img/output_27_1.png)  
+![png](img/output_27_3.png) 
+- **`TraderApp`** (v1.2.0新增) 交互式图形界面，可以在图形界面中查看交易日志、查看持仓、查看账户资金变化等信息
+![png](examples/img/trader_app_light_theme.png) 
+![png](examples/img/trader_app_2.png) 
 
-在`TraderShell`运行过程中可以随时按`Ctrl+C`进入Shell选单：
-```
-Current mode interrupted, Input 1 or 2 or 3 for below options: 
-[1], Enter command mode; 
-[2], Enter dashboard mode. 
-[3], Exit and stop the trader; 
-please input your choice: 
-```
-
-此时按1可以进入Interactive模式（交互模式）。在交互模式下，用户可以在(QTEASY)命令行提示符后输入
-命令来控制交易策略的运行：
-
-![png](img/output_28_1.png)   
-
-在命令行模式下可以与`TraderShell`实现交互，操作当前账户，查询交易历史、修改状态等：
-
-- `pause` / `resume`: 暂停/重新启动交易策略
-- `change`: 修改当前持仓和现金余额
-- `positions`: 查看当前持仓
-- `orders`: 查看当前订单
-- `history`: 查看历史交易记录
-- `exit`: 退出TraderShell
-- ... 更多`TraderShell`命令参见`QTEASY`文档
+上面两种方式都可以在实盘运行时使用，根据qteasy的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
