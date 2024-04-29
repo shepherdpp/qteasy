@@ -1074,6 +1074,10 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
     CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
     AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
+    from qteasy import QT_CONFIG
+    CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
+    AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
+
     # 读取交易订单的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
     filled_qty = np.round(
