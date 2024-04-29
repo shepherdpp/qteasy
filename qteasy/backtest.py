@@ -15,8 +15,6 @@ import numpy as np
 from numba import njit  # try taichi, which might be even faster
 
 import qteasy
-from qteasy.history import HistoryPanel
-from qteasy.qt_operator import Operator
 
 from qteasy.finance import (
     CashPlan,
@@ -24,6 +22,10 @@ from qteasy.finance import (
     get_purchase_result,
     get_cost_pamams,
 )
+
+from .history import HistoryPanel
+from .qt_operator import Operator
+from .trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals
 
 
 @njit(nogil=True, cache=True)
@@ -104,15 +106,6 @@ def _loop_step(signal_type: int,
         fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
 
-    # 0, 当本期交易信号全为0，且信号类型为1或2时，退出计算，因为此时
-    # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
-    # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
-    # 出计算
-    # if np.all(op == 0) and (signal_type > 0):
-    #     # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
-    #     # 因为正好op全为0，因此返回op即可
-    #     return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
-
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
     total_value = own_cash + pre_values.sum()
@@ -120,62 +113,34 @@ def _loop_step(signal_type: int,
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:
         # signal_type 为PT，比较当前持仓与计划持仓的差额，再生成买卖数量
-        ptbt = pt_buy_threshold
-        ptst = -pt_sell_threshold
-        # 计算当前持仓与目标持仓之间的差额
-        pre_position = pre_values / total_value
-        position_diff = op - pre_position
-        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
-        amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
-                                   position_diff / pre_position * own_amounts,
-                                   0.)
-        # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
-                                 position_diff * total_value,
-                                 0.)
-        # 当允许买空卖空时，允许开启空头头寸：
-        if allow_sell_short:
-
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
-            cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
-                                      position_diff * total_value,
-                                      0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 仓位差 * 当前持有空头份额
-            amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
-                                        position_diff / pre_position * own_amounts,
-                                        0.)
+        cash_to_spent, amounts_to_sell = _parse_pt_signals(
+            signals=op,
+            prices=prices,
+            own_amounts=own_amounts,
+            own_cash=own_cash,
+            pt_buy_threshold=pt_buy_threshold,
+            pt_sell_threshold=pt_sell_threshold,
+            allow_sell_short=allow_sell_short,
+        )
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
-        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
-        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0.)
-        # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * total_value, 0.)
-
-        # 当允许买空卖空时，允许开启空头头寸：
-        if allow_sell_short:
-
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 交易信号 * 当前总资产
-            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op * own_amounts, 0.)
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+            signals=op,
+            prices=prices,
+            own_amounts=own_amounts,
+            own_cash=own_cash,
+            allow_sell_short=allow_sell_short,
+        )
 
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
-        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，卖出多仓：卖出数量 = 信号数量，此时持仓份额需大于零
-        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0.)
-        # 当持有份额不小于0时，买入多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
-        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0.)
-
-        # 当允许买空卖空时，允许开启空头头寸：
-        if allow_sell_short:
-            # 当持有份额小于等于零且交易信号为负，买入空仓：买入空头金额 = 信号数量 * 资产价格
-            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * prices, 0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，卖出空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), -op, 0.)
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+            signals=op,
+            prices=prices,
+            own_amounts=own_amounts,
+            allow_sell_short=allow_sell_short,
+        )
 
     else:
         raise ValueError('Invalid signal_type')
