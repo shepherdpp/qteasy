@@ -15,7 +15,7 @@ import os
 import pandas as pd
 import numpy as np
 
-from qteasy import logger_core as logger, Operator, QT_CONFIG
+from numba import njit
 
 from qteasy.utilfuncs import str_to_list
 
@@ -28,8 +28,6 @@ from qteasy.trade_recording import query_trade_orders, get_account_positions
 # TODO: read TIMEZONE from qt config arguments
 TIMEZONE = 'Asia/Shanghai'
 # TIMEZONE = 'UTC'
-CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
-AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
 def create_daily_task_schedule(operator, config=None):
@@ -51,8 +49,6 @@ def create_daily_task_schedule(operator, config=None):
         每日任务日程, 每项任务是一个tuple, 包含任务的执行时间, 任务的名称, 以及任务的参数列表(optional)
     """
     # 检查输入数据的类型是否正确
-    if not isinstance(operator, Operator):
-        raise TypeError(f'operator must be an Operator object, got {type(operator)} instead.')
     if not isinstance(config, dict):
         raise TypeError(f'config must be a dict object, got {type(config)} instead.')
 
@@ -320,6 +316,7 @@ def parse_trade_signal(signals,
 #  4. 空头卖出信号：负数amounts_to_sell
 #  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
 #  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
+@njit
 def _parse_pt_signals(signals,
                       prices,
                       own_amounts,
@@ -385,6 +382,7 @@ def _parse_pt_signals(signals,
     return cash_to_spend, amounts_to_sell
 
 
+@njit
 def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     """ 解析PS类型的交易信号
 
@@ -428,6 +426,7 @@ def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
+@njit
 def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     """ 解析VS类型的交易信号
 
@@ -531,6 +530,10 @@ def _signal_to_order_elements(shares,
     quantities = []  # 交易数量
     quoted_prices = []  # 交易报价
     remarks = []  # 生成交易信号的说明，用于为trader提供提示
+
+    from qteasy import QT_CONFIG
+    CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
+    AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
     for i, sym in enumerate(shares):
         # 计算多头买入的数量
@@ -679,6 +682,8 @@ def submit_order(order_id, data_source):
     position_id = trade_order['pos_id']
     position = get_position_by_id(position_id, data_source=data_source)
     pos_type = position['position']
+
+    from qteasy import logger_core as logger
     if pos_type == 'short':
         # TODO: position为short时做法不同，需要进一步调整
         raise NotImplementedError('short position orders submission is not realized')
@@ -727,6 +732,9 @@ def cancel_order(order_id, data_source=None, config=None) -> int:
     int, 如果成功生成取消结果，则返回交易订单的id，如果交易订单已经没有剩余数量可以取消，则返回-1
     """
     # TODO: further test this function
+    from qteasy import QT_CONFIG
+    CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
+    AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
     order_details = read_trade_order_detail(order_id=order_id, data_source=data_source)
     order_status = order_details['status']
@@ -1046,6 +1054,10 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
         raise AttributeError(f'order {order_id} is noy submitted yet')
     if order_detail['status'] in ['filled', 'canceled']:
         raise AttributeError(f'order {order_id} has already been filled or canceled')
+
+    from qteasy import QT_CONFIG
+    CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
+    AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
     # 读取交易订单的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
