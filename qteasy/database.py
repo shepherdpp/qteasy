@@ -5148,7 +5148,7 @@ class DataSource:
 
                         total_written += self.update_table_data(table, dnld_data)
                 else:
-                    progress_bar(0, total, f'<{table}:{all_kwargs}> estimating time left...')
+                    progress_bar(0, total, f'<{table}> estimating time left...')
                     for kwargs in all_kwargs:
                         df = self.fetch_history_table_data(table, channel='tushare', **kwargs)
                         completed += 1
@@ -5165,6 +5165,7 @@ class DataSource:
                                 estimation=True,
                                 short_form=False
                         )
+
                         if (download_batch_interval != 0) and (completed % download_batch_size == 0):
                             progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
                                                            f'{total_written}wrtn/Pausing for '
