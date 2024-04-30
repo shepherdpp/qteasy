@@ -695,6 +695,10 @@ def refill_data_source(data_source=None, **kwargs):
     -------
     None
 
+    Examples
+    --------
+    >>> refill_data_source(tables='stock_basic')
+
     """
     from .database import DataSource
     if data_source is None:

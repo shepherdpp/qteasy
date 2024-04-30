@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.2.3 (2024-04-30)
+- Corrected a mistake in version 1.2,2: '1.2.1' will be displayed when running `qteasy.__version__`
+- Fixed a bad information displayed with progress bar while downloading data from tushare with refill datasource
+
 ## 1.2.2 (2024-04-29)
 - Fixed a bug that causes abnormally low speed in some cases if TA-LIB is not installed
 - Fixed a bug that causes escaped failure in some cases when strategy is based on RuleIterator
