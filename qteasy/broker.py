@@ -96,7 +96,7 @@ class Broker(object):
     """
     __metaclass__ = ABCMeta
 
-    # TODO: for v1.1:
+    # TODO: for v1.2:
     #  重构Broker类，使Broker基类提供通用的接口，如log_in, log_out, run, transaction等
     #  并将具体的交易所实现放在子类中，如SimulatorBroker, SimpleBroker等
     #  重构后的Broker类应该是一个抽象类，不能直接实例化，只能通过子类实例化
@@ -362,7 +362,6 @@ class Broker(object):
 
         # 全部订单处理完毕或发生错误后结束
         return
-
 
     @abstractmethod
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
