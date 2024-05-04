@@ -73,26 +73,30 @@ class Broker(object):
 
     Attributes:
     -----------
-    order_queue: Queue
-        交易订单队列，每个交易订单都是一个list，包含多个交易订单
-    result_queue: Queue
-        交易结果队列，每个交易结果都是一个list，包含多个交易结果
-    status: str
-        Broker的状态，可以是 'init', 'running', 'stopped', 'paused'
-        - init: Broker刚刚创建，还没有开始运行
-        - running: Broker正在运行, 接受交易订单并返回交易结果
-        - stopped: Broker已经停止运行, 停止所有操作，未完成的订单将被丢弃，并退出主循环
-        - paused: Broker暂停运行，未完成的订单将被暂停，可以接受交易订单，但不会返回交易结果
+    broker_name: str
+        交易所的名称
 
     Methods:
     --------
     register(debug=False, **kwargs):
-        交易所的初始化程序，可以
-    run()
-        Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
-    transaction(symbol, order_qty, order_price, direction, position='long', order_type='market'): abstract method
-        一个Generator方法。交易所处理交易订单并获取交易结果, 在子类中必须实现这个方法
-        这个方法在接受交易订单后，会以generator形式返回订单的处理结果，直至订单处理完毕或出现错误
+        交易所的初始化程序，用于模拟交易所对象与交易所建立连接，登录账号，获取token，读取并同步最新信息等任务
+    log_out_broker():
+        交易所的关闭程序，用于模拟交易所对象与交易所断开连接，退出账号，清除token等任务
+    check_status():
+        检查交易所的状态，如果状态为'running'，则返回True，否则返回False
+    submit_order(order):
+        向交易所发出指令，提交交易订单，等待交易所返回交易结果
+    check_order(order_id):
+        查询交易订单的状态，返回交易订单的执行状态
+    cancel_order(order_id):
+        取消交易订单，发出指令取消已经提交的交易订单
+    check_balance():
+        查询账户余额，返回账户余额信息，包括现金、可用现金、保证金、可用保证金等
+    check_positions():
+        查询账户持仓，返回账户持仓信息，包括股票持仓、期货持仓等
+    check_orders():
+        查询账户交易订单，返回账户交易订单信息，包括未成交订单、已成交订单等
+
     """
     __metaclass__ = ABCMeta
 
@@ -686,6 +690,17 @@ class SimulatorBroker(Broker):
             yield order_result
 
             total_filled += qty
+
+
+class BacktestBroker(Broker):
+    """ BacktestBroker is a broker for backtesting trading strategies"""
+
+    def __init__(self, data_source=None):
+        super(BacktestBroker, self).__init__(data_source=data_source)
+        self.broker_name = 'BacktestBroker'
+
+    def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
+        pass
 
 
 class NotImplementedBroker(Broker):
