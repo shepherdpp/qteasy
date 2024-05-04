@@ -85,15 +85,17 @@ class BaseStrategy:
             par_types: [[str], str] = None,
             par_range: [list, tuple] = None,
             strategy_run_freq: str = 'd',
-            sample_freq: str = None,  # to be deprecated
             strategy_run_timing: str = 'close',
-            bt_price_type: str = None,  # to be deprecated
             strategy_data_types: [str, [str]] = 'close',
+            strategy_data_freqs: [str, [str]] = 'd',
+            strategy_data_window_lengths: [int, [int]] = 270,
+            sample_freq: str = None,  # to be deprecated
+            window_length: int = 270,  # to be deprecated
+            bt_price_type: str = None,  # to be deprecated
             data_types: [str, [str]] = None,  # to be deprecated
-            use_latest_data_cycle: bool = True,
-            reference_data_types: [str, [str]] = '',
-            data_freq: str = 'd',
-            window_length: int = 270,
+            use_latest_data_cycle: bool = True,  # to be deprecated
+            reference_data_types: [str, [str]] = '',  # to be deprecated, reference data and data are defined in one
+            data_freq: str = 'd',  # to be deprecated, now different freqs can be defined for different data types
     ):
 
         """ 初始化策略
@@ -141,8 +143,6 @@ class BaseStrategy:
             策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
         strategy_run_freq: str {'d', 'w', 'm', 'q', 'y'}
             策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-        sample_freq: str, deprecated
-            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
         strategy_run_timing: datetime-like or str
             策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
             例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
@@ -152,12 +152,26 @@ class BaseStrategy:
             ['09:30:00', '10:30:00',
              '11:30:00', '13:00:00',
              '14:00:00', '15:00:00',]
-        bt_price_type: str, deprecated
-            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
         strategy_data_types: str or list of str
             策略使用的数据类型，例如close, open, high, low等
+        strategy_data_freqs: str or list of str
+            策略使用的数据频率，例如d, w, 5min等
+        strategy_data_window_lengths: int or list of int
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
+
+        以下参数已经废弃，不再使用，但是为了兼容之前的代码，仍然保留
+        sample_freq: str, deprecated
+            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
+            已经废弃，使用strategy_run_freq代替
+        window_length: int, deprecated
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
+            已经废弃，使用strategy_data_window_lengths代替
+        bt_price_type: str, deprecated
+            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
+            已经废弃，使用strategy_run_timing代替
         data_types: str or list of str, deprecated
             策略使用的数据类型，例如close, open, high, low等
+            已经废弃，使用strategy_data_types代替
         use_latest_data_cycle: bool, default True
             是否使用最新的数据周期生成交易信号，默认True
             如果为True: 默认值
@@ -168,12 +182,12 @@ class BaseStrategy:
             如果为False：
                 在回测或实盘运行时都仅使用当前已经获得的上一周期的已知数据生成交易信号，在运行频率较低时，可能会导致
                     交易信号的滞后，但是可以避免未来函数的出现。
-        reference_data_types: str or list of str
+        reference_data_types: str or list of str, deprecated
             策略使用的参考数据类型，例如close, open, high, low等
-        data_freq: str {'d', 'w', 'm', 'q', 'y'}
+            已经废弃，通过reference_data_types定义的数据类型会被合并到strategy_data_types中
+        data_freq: str {'d', 'w', 'm', 'q', 'y'}, deprecated
             策略使用的数据频率，可以是日频、周频、月频、季频或年频
-        window_length: int
-            策略使用的数据窗口长度，即策略使用的历史数据的长度
+            已经废弃，使用strategy_data_freqs代替
 
         Returns
         -------
@@ -232,7 +246,6 @@ class BaseStrategy:
         if par_count is None:
             par_count = implied_par_count
         else:
-            # TODO: 按照当前的代码，par_count一但设置后就无法修改，这点是否合理？
             if not isinstance(par_count, int):
                 raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
             if par_count < 0:
@@ -317,7 +330,7 @@ class BaseStrategy:
                            reference_data_types=reference_data_types,
                            use_latest_data_cycle=use_latest_data_cycle)
         logger_core.info(
-            f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
+            f'Strategy created. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
             f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
             f'reference_data_types={reference_data_types}')
 
@@ -423,7 +436,6 @@ class BaseStrategy:
     @property
     def pars(self):
         """策略参数，元组
-        :return:
         """
         return self._pars
 
@@ -534,7 +546,7 @@ class BaseStrategy:
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
-    def bt_price_types(self):
+    def bt_price_types(self):  # to be deprecated
         """ 策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
         warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
         return self._strategy_run_timing
@@ -546,7 +558,7 @@ class BaseStrategy:
         self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
-    def ref_types(self):
+    def ref_types(self):  # to be deprecated
         """ 返回策略的参考数据类型，如果不需要参考数据，返回空列表
 
         :return:
@@ -554,12 +566,12 @@ class BaseStrategy:
         return self._reference_data_types
 
     @ref_types.setter
-    def ref_types(self, ref_types):
+    def ref_types(self, ref_types):  # to be deprecated
         """ 设置策略的参考数据类型"""
         self.set_hist_pars(reference_data_types=ref_types)
 
     @property
-    def reference_data_types(self):
+    def reference_data_types(self):  # to be deprecated
         """ ref_types的别名
 
         Returns
