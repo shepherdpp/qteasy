@@ -432,7 +432,7 @@ class Operator:
         return [stg.opt_tag for stg in self.strategies]
 
     @property
-    def max_window_length(self):
+    def max_window_length(self):  # to be deprecated
         """ 计算并返回operator对象所有子策略中最长的策略形成期。在准备回测或优化历史数据时，以此确保有足够的历史数据供策略形成
 
         Returns
@@ -445,7 +445,7 @@ class Operator:
             return max(stg.window_length for stg in self.strategies)
 
     @property
-    def bt_price_type_count(self):
+    def bt_price_type_count(self):  # to be deprecated
         """ 计算operator对象中所有子策略的不同回测价格类型的数量
         to be deprecated
 
@@ -895,7 +895,7 @@ class Operator:
             self._stg_blender_strings = {}
         return
 
-    def get_strategies_by_price_type(self, price_type=None):
+    def get_strategies_by_price_type(self, price_type=None):  # to be deprecated
         """返回operator对象中的strategy对象, 按price_type筛选
 
         Parameters
@@ -930,7 +930,7 @@ class Operator:
         else:
             return [stg for stg in self.strategies if stg.strategy_run_timing == timing]
 
-    def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):
+    def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):  # to be deprecated
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，按price_type筛选
 
         Parameters
@@ -983,7 +983,7 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
-    def get_op_ref_data_by_price_type(self, price_type=None, get_rolling_window=True):
+    def get_op_ref_data_by_price_type(self, price_type=None, get_rolling_window=True):  # to be deprecated
         """ 返回Operator对象中每个strategy对应的交易信号参考数据，按price_type筛选
 
         Parameters
@@ -1036,7 +1036,7 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_run_timing(timing=timing)
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
-    def get_op_sample_indices_by_price_type(self, price_type=None):
+    def get_op_sample_indices_by_price_type(self, price_type=None):  # to be deprecated
         """ 返回Operator对象中每个strategy对应的交易信号采样点序列，按price_type筛选
 
         Parameters
@@ -1088,7 +1088,7 @@ class Operator:
             combined_indices = np.union1d(combined_indices, item)
         return combined_indices
 
-    def get_strategy_count_by_price_type(self, price_type=None):
+    def get_strategy_count_by_price_type(self, price_type=None):  # to be deprecated
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
         warnings.warn('get_strategy_count_by_price_type is deprecated, '
@@ -1100,7 +1100,7 @@ class Operator:
         如果给出timing时，返回使用该timing的交易策略数量"""
         return len(self.get_strategies_by_run_timing(timing))
 
-    def get_strategy_names_by_price_type(self, price_type=None):
+    def get_strategy_names_by_price_type(self, price_type=None):  # to be deprecated
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
         注意，strategy name并没有实际的作用，未来将被去掉
         在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
