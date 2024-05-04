@@ -243,67 +243,6 @@ def _loop_step(signal_type: int,
     return cash_gained, cash_spent, amount_purchased, amount_sold, fee
 
 
-def _get_complete_hist(looped_value: pd.DataFrame,
-                       h_list: HistoryPanel,
-                       benchmark_list: pd.DataFrame,
-                       with_price: bool = False) -> pd.DataFrame:
-    """完成历史交易回测后，填充完整的历史资产总价值清单，
-        同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为Config.benchmark_asset
-
-    Parameters
-    ----------
-    looped_value: pd.DataFrame
-        完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
-    h_list: pd.DataFrame
-        完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
-    benchmark_list: pd.DataFrame
-        参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
-    with_price: boolean, default False
-        True时在返回的清单中包含历史价格，否则仅返回资产总价值
-
-    Returns
-    -------
-    looped_value: pd.DataFrame:
-    重新填充的完整历史交易日资产总价值清单，包含以下列：
-    - [share-x]:        多列，每种投资产品的持有份额数量
-    - cash:             期末现金金额
-    - fee:              当期交易费用（交易成本）
-    - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
-    """
-    # 获取价格清单中的投资产品列表
-    shares = h_list.shares  # 获取资产清单
-    try:
-        start_date = looped_value.index[0]  # 开始日期
-    except:
-        raise IndexError('index 0 is out of bounds for axis 0 with size 0')
-    looped_history = h_list.segment(start_date)  # 回测历史数据区间 = [开始日期:]
-    # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
-    # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
-    hdates = looped_history.hdates
-    purchased_shares = looped_value[shares].reindex(hdates, method='ffill').fillna(0)
-    cashes = looped_value['cash'].reindex(hdates, method='ffill').fillna(0)
-    fees = looped_value['fee'].reindex(hdates).fillna(0)
-    looped_value = looped_value.reindex(hdates)
-    # 这里采用了一种看上去貌似比较奇怪的处理方式：
-    # 先为cashes、purchased_shares两个变量赋值，
-    # 然后再将上述两个变量赋值给looped_values的列中
-    # 这样看上去好像多此一举，为什么不能直接赋值，然而
-    # 经过测试，如果直接用下面的代码直接赋值，将无法起到
-    # 填充值的作用：
-    # looped_value.cash = looped_value.cash.reindex(dates, method='ffill')
-    looped_value[shares] = purchased_shares
-    looped_value.cash = cashes
-    looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
-    looped_value['reference'] = benchmark_list.reindex(hdates).fillna(0)
-    # 重新计算整个清单中的资产总价值，生成pandas.Series对象，如果looped_history历史价格中包含多种价格，使用最后一种
-    decisive_prices = looped_history[-1].squeeze(axis=2).T
-    looped_value['value'] = (decisive_prices * looped_value[shares]).sum(axis=1) + looped_value['cash']
-    if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
-        share_price_column_names = [name + '_p' for name in shares]
-        looped_value[share_price_column_names] = looped_history[shares]
-    return looped_value
-
-
 def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame:
     """将完成的交易信号清单与现金投资计划合并：
 
@@ -770,7 +709,7 @@ def apply_loop_core(share_count: int,
     cashes = np.empty(shape=(signal_count,))  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = np.empty(shape=(signal_count,))  # 交易费用，记录每个操作时点产生的交易费用
     values = np.empty(shape=(signal_count,))  # 资产总价值，记录每个操作时点的资产和现金价值总和
-    amounts_matrix = np.empty(shape=(signal_count, share_count))
+    amounts_matrix = np.empty(shape=(signal_count, share_count))  # 持有资产数量，记录每个操作时点持有资产的数量
     total_value = 0
     prev_date = 0
     investment_count = 0  # 用于正确读取每笔投资金额的计数器
@@ -919,7 +858,7 @@ def process_loop_results(operator,
     # 生成trade_log，index为MultiIndex，因为每天的交易可能有多种价格
     if trade_log:
         from .core import get_basic_info
-        # create complete trading log
+        # create complete operation log
         logger_core.info(f'generating complete trading log ...')
         op_log_index = pd.MultiIndex.from_product(
                 [looped_dates,
@@ -981,3 +920,63 @@ def process_loop_results(operator,
         op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(record_file_path_name, encoding='utf-8')
 
     return value_history
+
+
+def _get_complete_hist(looped_value: pd.DataFrame,
+                       h_list: HistoryPanel,
+                       benchmark_list: pd.DataFrame,
+                       with_price: bool = False) -> pd.DataFrame:
+    """完成历史交易回测后，填充完整的历史资产总价值清单，
+        同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为Config.benchmark_asset
+
+    Parameters
+    ----------
+    looped_value: pd.DataFrame
+        完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
+    h_list: pd.DataFrame
+        完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
+    benchmark_list: pd.DataFrame
+        参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
+    with_price: boolean, default False
+        True时在返回的清单中包含历史价格，否则仅返回资产总价值
+
+    Returns
+    -------
+    looped_value: pd.DataFrame:
+    重新填充的完整历史交易日资产总价值清单，包含以下列：
+    - [share-x]:        多列，每种投资产品的持有份额数量
+    - cash:             期末现金金额
+    - fee:              当期交易费用（交易成本）
+    - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
+    """
+    # 获取价格清单中的投资产品列表
+    shares = h_list.shares  # 获取资产清单
+    try:
+        start_date = looped_value.index[0]  # 开始日期
+    except:
+        raise IndexError('index 0 is out of bounds for axis 0 with size 0')
+    looped_history = h_list.segment(start_date)  # 回测历史数据区间 = [开始日期:]
+    # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
+    # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
+    hdates = looped_history.hdates
+    purchased_shares = looped_value[shares].reindex(hdates, method='ffill').fillna(0)
+    cashes = looped_value['cash'].reindex(hdates, method='ffill').fillna(0)
+    looped_value = looped_value.reindex(hdates)
+    # 这里采用了一种看上去貌似比较奇怪的处理方式：
+    # 先为cashes、purchased_shares两个变量赋值，
+    # 然后再将上述两个变量赋值给looped_values的列中
+    # 这样看上去好像多此一举，为什么不能直接赋值，然而
+    # 经过测试，如果直接用下面的代码直接赋值，将无法起到
+    # 填充值的作用：
+    # looped_value.cash = looped_value.cash.reindex(dates, method='ffill')
+    looped_value[shares] = purchased_shares
+    looped_value.cash = cashes
+    looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
+    looped_value['reference'] = benchmark_list.reindex(hdates).fillna(0)
+    # 重新计算整个清单中的资产总价值，生成pandas.Series对象，如果looped_history历史价格中包含多种价格，使用最后一种
+    decisive_prices = looped_history[-1].squeeze(axis=2).T
+    looped_value['value'] = (decisive_prices * looped_value[shares]).sum(axis=1) + looped_value['cash']
+    if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
+        share_price_column_names = [name + '_p' for name in shares]
+        looped_value[share_price_column_names] = looped_history[shares]
+    return looped_value

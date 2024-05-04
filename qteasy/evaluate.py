@@ -46,7 +46,7 @@ def performance_statistics(performances: list, stats='mean'):
                     {'fv':     18000,
                      'rtn':    0.10,
                      'beta':   0.002},
-                     {'fv':     35070,
+                    {'fv':     35070,
                      'rtn':    0.245,
                      'beta':   0.013}]
     上面的performances中含有三组参数的评价指标，每组评价指标中都有fv、rtn、beta三种指标的评分
@@ -77,11 +77,6 @@ def performance_statistics(performances: list, stats='mean'):
 
     res = dict()
 
-    # try:
-    #     res['par'] = performances[0]['par']
-    # except:
-    #     print(f'\nERROR RAISED! \n'
-    #           f'in performance statistics: performances[0]:\n{performances[0]}')
     res['loop_start'] = performances[0]['loop_start']
     res['loop_end'] = performances[-1]['loop_end']
     # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法

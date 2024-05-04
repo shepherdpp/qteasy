@@ -2196,6 +2196,14 @@ def run(operator, **kwargs):
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
+        # TODO: run mode 1 生成一个backtest_result对象，通过这个对象，用户可以进行更多操作：
+        #  res = qt.run(op, mode=1)  示例操作如下：
+        #  res.print_report()  打印出回测报告
+        #  res.evaluate()  评价回测结果
+        #  res.plot()  画出回测结果图表
+        #  res.save()  保存回测结果到文件
+        #  res.export()  导出回测结果到Excel
+        #  ... 更多操作，可以添加更多的方法到backtest_result对象中
         (hist_op,
          hist_ref,
          back_trade_prices,
@@ -2235,6 +2243,14 @@ def run(operator, **kwargs):
 
     elif run_mode == 2 or run_mode == 'optimization':
         # 进入优化模式，使用真实历史数据或模拟历史数据反复测试策略，寻找并测试最佳参数
+        # TODO: run mode 2 生成一个optimize_result对象，通过这个对象，用户可以进行更多操作：
+        #  res = qt.run(op, mode=2)  示例操作如下：
+        #  res.print_report()  打印出回测报告
+        #  res.evaluate()  评价回测结果
+        #  res.plot()  画出回测结果图表
+        #  res.save()  保存回测结果到文件
+        #  res.export()  导出回测结果到Excel
+        #  ... 更多操作，可以添加更多的方法到optimize_result对象中
 
         # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
         assert operator.opt_space_par[0] != [], \
