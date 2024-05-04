@@ -34,6 +34,9 @@ class TestFreq(unittest.TestCase):
         freq = self.freq
         self.assertIsInstance(freq, DataFreq)
 
+        freq = DataFreq(major='D')
+        self.assertIsInstance(freq, DataFreq)
+
     def test_properties(self):
         freq = self.freq
         self.assertEqual(freq.freq_str, 'D')
@@ -51,7 +54,7 @@ class TestFreq(unittest.TestCase):
         self.assertEqual(freq.freq_str, '3W-Fri')
         self.assertEqual(freq.multiple, 3)
         self.assertEqual(freq.major, 'W')
-        self.assertEqual(freq.minor, 'Fri')
+        self.assertEqual(freq.minor, 'FRI')
 
         freq = DataFreq('15min')
         self.assertEqual(freq.freq_str, '15min')
@@ -70,6 +73,18 @@ class TestFreq(unittest.TestCase):
         self.assertEqual(freq.multiple, 15)
         self.assertEqual(freq.major, 'MIN')
         self.assertEqual(freq.minor, None)
+
+    def test_generate_freq_str(self):
+        freq = self.freq
+        self.assertEqual(freq.generate_freq_str(1, 'D', None), 'D')
+        self.assertEqual(freq.generate_freq_str(3, 'D', None), '3D')
+        self.assertEqual(freq.generate_freq_str(3, 'W', 'Fri'), '3W-FRI')
+        self.assertEqual(freq.generate_freq_str(15, 'MIN', None), '15MIN')
+        self.assertEqual(freq.generate_freq_str(15, 'H', None), '15H')
+        self.assertEqual(freq.generate_freq_str(15, 'T', None), '15MIN')
+        self.assertEqual(freq.generate_freq_str(2, 'M', '1'), '2M-1')
+        self.assertEqual(freq.generate_freq_str(1, 'M', '15'), 'M-15')
+
 
 if __name__ == '__main__':
     unittest.main()

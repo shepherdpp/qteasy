@@ -42,19 +42,19 @@ class DataFreq():
         '21ST', '22ND', '23RD', '24TH', '25TH', '26TH', '27TH', '28TH', '29TH', '30TH', '31ST',
     ]
 
-    def __init__(self, freq_str=None, multiple=1, major_freq=None, minor_freq=None):
+    def __init__(self, freq_str=None, *, multiple=1, major=None, minor=None):
         """
 
         Parameters:
         -----------
         freq_str: str
             一个字符串，表示数据的频率，包括主频率和次频率以及频率乘数等信息。如果给出了freq_str，
-            则不需要给出multiple, major_freq, minor_freq，这些参数如果给出了，将会被忽略。
+            则不需要给出multiple, major, minor，这些参数如果给出了，将会被忽略。
         multiple: int, optional, default:  1
             主频率和次频率之间的倍数关系，默认为None。
-        major_freq: int, optional
+        major: int, optional
             主频率，默认为None。
-        minor_freq: int, optional
+        minor: int, optional
             次频率，默认为None。
         """
 
@@ -62,14 +62,14 @@ class DataFreq():
             if not isinstance(freq_str, str):
                 raise TypeError('freq_str should be a string.')
             self._freq_str = freq_str
-            self._multiple, self._major_freq, self._minor_freq = self.parse_freq_str(freq_str)
+            self._multiple, self._major, self._minor = self.parse_freq_str(freq_str)
         else:
-            if major_freq is None:
-                raise ValueError('Both major_freq and minor_freq should be given.')
+            if major is None:
+                raise ValueError('Both major and minor should be given.')
             self._multiple = int(multiple)
-            self._major_freq = major_freq
-            self._minor_freq = minor_freq
-            self._freq_str = self.generate_freq_str(multiple, major_freq, minor_freq)
+            self._major = major
+            self._minor = minor
+            self._freq_str = self.generate_freq_str(multiple, major, minor)
 
     @property
     def freq_str(self):
@@ -81,16 +81,16 @@ class DataFreq():
 
     @property
     def major(self):
-        return self._major_freq
+        return self._major
 
     @property
     def freq(self):
         # alias of major
-        return self._major_freq
+        return self._major
 
     @property
     def minor(self):
-        return self._minor_freq
+        return self._minor
 
     def parse_freq_str(self, freq_str):
         """解析频率字符串。
@@ -104,9 +104,9 @@ class DataFreq():
         --------
         multiple: int
             主频率和次频率之间的倍数关系。
-        major_freq: int
+        major: int
             主频率。
-        minor_freq: int
+        minor: int
             次频率。
         """
         # check if the freq_str is valid
@@ -127,6 +127,9 @@ class DataFreq():
         # major and minor parts are separated by '-'
         major_minor = freq_str_without_multiple.split('-')
         major_str = major_minor[0]
+
+        if major_str == 'T':
+            major_str = 'MIN'
 
         if major_str.upper() not in self.available_major_freq:
             raise ValueError(f'Invalid major frequency: {major_str}.')
@@ -150,21 +153,54 @@ class DataFreq():
         else:
             return multiple, major_str, None
 
-    def generate_freq_str(self, multiple, major_freq, minor_freq):
+    def generate_freq_str(self, multiple, major, minor):
         """生成频率字符串。
 
         Parameters:
         -----------
         multiple: int
-            主频率和次频率之间的倍数关系。
-        major_freq: int
+            主频率的倍数，如3D表示3天。
+        major: int
             主频率。
-        minor_freq: int
-            次频率。
+        minor: int
+            次频率，如3W-Fri表示3周的周五。
 
         Returns:
         --------
         freq_str: str
             一个字符串，表示数据的频率，包括主频率和次频率以及频率乘数等信息。
         """
-        raise NotImplementedError
+        if not isinstance(multiple, int):
+            raise TypeError('multiple should be an integer.')
+        if not isinstance(major, str):
+            raise TypeError('major should be a string.')
+        if not isinstance(minor, str) and minor is not None:
+            raise TypeError('minor should be a string.')
+
+        major = major.upper()
+        if major == 'T':
+            major = 'MIN'
+
+        if major not in self.available_major_freq:
+            raise ValueError(f'Invalid major frequency: {major}.')
+
+        if minor:
+            minor = minor.upper()
+            if major == 'W':
+                if minor not in self.available_minor_freq_for_week:
+                    raise ValueError(f'Invalid minor frequency for week: {minor}.')
+            elif major == 'M':
+                if minor not in self.available_minor_freq_for_month:
+                    raise ValueError(f'Invalid minor frequency for month: {minor}.')
+            else:
+                raise ValueError(f'Invalid minor frequency for major frequency: {major}.')
+
+            if multiple == 1:
+                return f'{major}-{minor}'
+
+            return f'{multiple}{major}-{minor}'
+
+        if multiple == 1:
+            return major
+
+        return f'{multiple}{major}'
