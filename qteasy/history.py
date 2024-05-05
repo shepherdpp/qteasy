@@ -268,14 +268,17 @@ class HistoryPanel():
     @hdates.setter
     def hdates(self, input_hdates: list):
         if not self.is_empty:
-            assert isinstance(input_hdates, list), f'TypeError, input_hdates should be '
-            assert len(input_hdates) == self.row_count, \
-                f'ValueError, the number of input shares ({len(input_hdates)}) does not match level ' \
-                f'count ({self.row_count})'
+            if not isinstance(input_hdates, list):
+                error = f'input_hdates should be a list, got {type(input_hdates)} instead'
+                raise TypeError(error)
+            if not len(input_hdates) == self.row_count:
+                error = f'the number of input shares ({len(input_hdates)}) does not match level count ({self.row_count})'
+                raise ValueError(error)
             try:
                 new_hdates = [pd.to_datetime(date) for date in input_hdates]
-            except:
-                raise ValueError('one or more item in hdate list can not be converted to Timestamp')
+            except Exception as e:
+                error = f'{e} one or more item in hdate list can not be converted to Timestamp'
+                raise ValueError(error)
             self._rows = labels_to_dict(new_hdates, self.hdates)
 
     @property
@@ -339,7 +342,12 @@ class HistoryPanel():
         return self._l_count, self._r_count, self._c_count
 
     def __len__(self):
-        """获取HistoryPanel的历史数据长度"""
+        """获取HistoryPanel的历史数据长度
+
+        Examples
+        --------
+
+        """
         return self._r_count
 
     def __getitem__(self, keys=None):
@@ -368,6 +376,107 @@ class HistoryPanel():
         -------
         out : ndarray
             self.value的一个切片
+
+        Examples
+        --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp
+                share 0, label: 000001
+                    open  high  low  close  volume
+        2015-01-05    10    20   30     40      50
+        2015-01-06    10    20   30     40      50
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+        2015-01-10    10    20   30     40      50
+        2015-01-11    10    20   30     40      50
+        2015-01-12    10    20   30     40      50
+        2015-01-13    10    20   30     40      50
+        2015-01-14    10    20   30     40      50
+
+        share 1, label: 000002
+                    open  high  low  close  volume
+        2015-01-05    10    20   30     40      50
+        2015-01-06    10    20   30     40      50
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+        2015-01-10    10    20   30     40      50
+        2015-01-11    10    20   30     40      50
+        2015-01-12    10    20   30     40      50
+        2015-01-13    10    20   30     40      50
+        2015-01-14    10    20   30     40      50
+
+        share 2, label: 000003
+                    open  high  low  close  volume
+        2015-01-05    10    20   30     40      50
+        2015-01-06    10    20   30     40      50
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+        2015-01-10    10    20   30     40      50
+        2015-01-11    10    20   30     40      50
+        2015-01-12    10    20   30     40      50
+        2015-01-13    10    20   30     40      50
+        2015-01-14    10    20   30     40      50
+        >>> hp['close']
+        array([[[40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40]],
+
+               [[40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40]],
+
+               [[40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40],
+                [40]]])
+        >>> hp['close, open, low', '000001:000002']
+        array([[[40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30]],
+
+               [[40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30],
+                [40, 10, 30]]])
         """
         if self.is_empty:
             return None
@@ -480,6 +589,13 @@ class HistoryPanel():
         -------
         out : HistoryPanel
             一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据
+
+        Examples
+        --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
         """
         hdates = np.array(self.hdates)
         if start_date is None:
@@ -508,6 +624,13 @@ class HistoryPanel():
         -------
         out : HistoryPanel
             一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据
+
+        Examples
+        --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
         """
         hdates = np.array(self.hdates)
         new_dates = list(hdates[start_index:end_index])
@@ -529,6 +652,13 @@ class HistoryPanel():
         -------
         out : HistoryPanel
             一个HistoryPanel，包含shares和htypes中指定的股票和数据类型的数据
+
+        Examples
+        --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
         """
         if self.is_empty:
             return self
@@ -557,24 +687,24 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[100, 100, 100, 100, 100]*100]*3]),
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
-        ...                          rows=pd.date_range('2015-01-05', periods=100),
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
         >>> hp.info()
         <class 'qteasy.history.HistoryPanel'>
-        History Panel at 0x7f8b0c0b0f10
-        Datetime Range: 100 entries, 2015-01-05 00:00:00 to 2015-04-24 00:00:00
+        History Panel at 0x12215a850
+        Datetime Range: 10 entries, 2015-01-05 00:00:00 to 2015-01-14 00:00:00
         Historical Data Types (total 5 data types):
         ['open', 'high', 'low', 'close', 'volume']
         Shares (total 3 shares):
         ['000001', '000002', '000003']
         non-null values for each share and data type:
-                open   high    low  close volume
-        000001   100    100    100    100    100
-        000002   100    100    100    100    100
-        000003   100    100    100    100    100
-        memory usage: 12136 bytes
+                open  high  low  close  volume
+        000001    10    10   10     10      10
+        000002    10    10   10     10      10
+        000003    10    10   10     10      10
+        memory usage: 1344 bytes
         """
         import sys
         print(f'\n{type(self)}')
@@ -606,7 +736,22 @@ class HistoryPanel():
         return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
 
     def len(self):
-        """ 返回HistoryPanel对象的长度，即日期个数"""
+        """ 返回HistoryPanel对象的长度，即日期个数
+
+        Returns
+        -------
+        int
+            日期个数
+
+        Examples
+        --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp.len()
+        10
+        """
         return self.row_count
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
@@ -624,6 +769,16 @@ class HistoryPanel():
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                          levels=['000001', '000002', '000003'],
+        ...                          rows=pd.date_range('2015-01-05', periods=10),
+        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp.re_label(shares=['000100', '000200', '000300'], htypes=['open', 'high', 'low', 'close', 'volume'],
+        ...              hdates=pd.date_range('2015-01-05', periods=10))
+
         """
         if not self.is_empty:
             if shares is not None:
