@@ -596,6 +596,27 @@ class HistoryPanel():
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp.segment('2015-01-07', '2015-01-10')
+        share 0, label: 000100
+                    open  high  low  close  volume
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+        2015-01-10    10    20   30     40      50
+
+        share 1, label: 000200
+                    open  high  low  close  volume
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+        2015-01-10    10    20   30     40      50
+
+        share 2, label: 000300
+                    open  high  low  close  volume
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+        2015-01-10    10    20   30     40      50
         """
         hdates = np.array(self.hdates)
         if start_date is None:
@@ -631,6 +652,24 @@ class HistoryPanel():
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp.isegment(2, 5)
+        share 0, label: 000100
+                    open  high  low  close  volume
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+
+        share 1, label: 000200
+                    open  high  low  close  volume
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
+
+        share 2, label: 000300
+                    open  high  low  close  volume
+        2015-01-07    10    20   30     40      50
+        2015-01-08    10    20   30     40      50
+        2015-01-09    10    20   30     40      50
         """
         hdates = np.array(self.hdates)
         new_dates = list(hdates[start_index:end_index])
@@ -754,7 +793,7 @@ class HistoryPanel():
         """
         return self.row_count
 
-    def re_label(self, shares: str = None, htypes: str = None, hdates=None):
+    def re_label(self, shares: (str, list) = None, htypes: (str, list) = None, hdates: (str, list) = None) -> None:
         """ 给HistoryPanel对象的层、行、列标签重新赋值
 
         Parameters
@@ -776,9 +815,46 @@ class HistoryPanel():
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
-        >>> hp.re_label(shares=['000100', '000200', '000300'], htypes=['open', 'high', 'low', 'close', 'volume'],
-        ...              hdates=pd.date_range('2015-01-05', periods=10))
+        >>> hp.re_label(shares=['000100', '000200', '000300'], htypes=['typeA', 'typeB', 'typeC', 'typeD', 'typeE'])
+        >>> hp
+        share 0, label: 000100
+                    typeA  typeB  typeC  typeD  typeE
+        2015-01-05     10     20     30     40     50
+        2015-01-06     10     20     30     40     50
+        2015-01-07     10     20     30     40     50
+        2015-01-08     10     20     30     40     50
+        2015-01-09     10     20     30     40     50
+        2015-01-10     10     20     30     40     50
+        2015-01-11     10     20     30     40     50
+        2015-01-12     10     20     30     40     50
+        2015-01-13     10     20     30     40     50
+        2015-01-14     10     20     30     40     50
 
+        share 1, label: 000200
+                    typeA  typeB  typeC  typeD  typeE
+        2015-01-05     10     20     30     40     50
+        2015-01-06     10     20     30     40     50
+        2015-01-07     10     20     30     40     50
+        2015-01-08     10     20     30     40     50
+        2015-01-09     10     20     30     40     50
+        2015-01-10     10     20     30     40     50
+        2015-01-11     10     20     30     40     50
+        2015-01-12     10     20     30     40     50
+        2015-01-13     10     20     30     40     50
+        2015-01-14     10     20     30     40     50
+
+        share 2, label: 000300
+                    typeA  typeB  typeC  typeD  typeE
+        2015-01-05     10     20     30     40     50
+        2015-01-06     10     20     30     40     50
+        2015-01-07     10     20     30     40     50
+        2015-01-08     10     20     30     40     50
+        2015-01-09     10     20     30     40     50
+        2015-01-10     10     20     30     40     50
+        2015-01-11     10     20     30     40     50
+        2015-01-12     10     20     30     40     50
+        2015-01-13     10     20     30     40     50
+        2015-01-14     10     20     30     40     50
         """
         if not self.is_empty:
             if shares is not None:
@@ -788,7 +864,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float]):
+    def fillna(self, with_val: [int, float]) -> qteasy.HistoryPanel:
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -804,7 +880,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float]):
+    def fillinf(self, with_val: [int, float]) -> qteasy.HistoryPanel:
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
@@ -880,7 +956,7 @@ class HistoryPanel():
              same_shares: bool = False,
              same_htypes: bool = False,
              same_hdates: bool = False,
-             fill_value: float = np.nan):
+             fill_value: float = np.nan) -> qteasy.HistoryPanel:
         """ 将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
 
         新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列
@@ -904,12 +980,20 @@ class HistoryPanel():
         -------
         HistoryPanel, 一个新的History Panel对象
 
-
         Examples
         --------
-        如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
-
-        hp1:
+        # 如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
+        >>> hp1 = qteasy.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
+        ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
+        ...                           levels=['000200', '000300'],
+        ...                           rows=pd.date_range('2020-01-01', periods=5),
+        ...                           columns=['close', 'open', 'high'])
+        >>> hp2 = qteasy.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
+        ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
+        ...                           levels=['000400', '000500'],
+        ...                           rows=pd.date_range('2020-01-01', periods=5),
+        ...                           columns=['close', 'open', 'high'])
+        >>> hp1
         share 0, label: 000200
                     close  open  high
         2020-01-01      8     9     9
@@ -917,7 +1001,6 @@ class HistoryPanel():
         2020-01-03      4     8     4
         2020-01-04      1     0     7
         2020-01-05      8     7     9
-
         share 1, label: 000300
                     close  open  high
         2020-01-01      2     3     3
@@ -925,17 +1008,15 @@ class HistoryPanel():
         2020-01-03      2     8     7
         2020-01-04      3     3     4
         2020-01-05      8     8     7
-
-        hp2:
-        share 0, label: 000200
+        >>> hp2
+        share 0, label: 000400
                     close  open  high
         2020-01-01      8     9     9
         2020-01-02      7     5     5
         2020-01-03      4     8     4
         2020-01-04      1     0     7
         2020-01-05      8     7     9
-
-        share 1, label: 000300
+        share 1, label: 000500
                     close  open  high
         2020-01-01      2     3     3
         2020-01-02      5     4     6
@@ -943,8 +1024,8 @@ class HistoryPanel():
         2020-01-04      3     3     4
         2020-01-05      8     8     7
 
-
-        连接时可以指定两个HistoryPanel之间共享的标签类型，如
+        >>> hp1.join(hp2)
+        share 0, label: 000200
         """
 
         assert isinstance(other, HistoryPanel), \
