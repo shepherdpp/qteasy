@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.2.4 (2024-05-05)
+- Fixed bugs in built-in strategies: `MACDEXT`, `WILLR`, `AROONOSC`, and `SLPHT`
+- Updated test cases for built-in strategies
+
 ## 1.2.3 (2024-04-30)
 - Corrected a mistake in version 1.2,2: '1.2.1' will be displayed when running `qteasy.__version__`
 - Fixed a bad information displayed with progress bar while downloading data from tushare with refill datasource

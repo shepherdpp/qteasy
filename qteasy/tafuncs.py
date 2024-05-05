@@ -31,8 +31,8 @@ try:
         CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
         BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
         ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, \
-        MININDEX, \
-        MINMAX, MINMAXINDEX, MULT, SUB, SUM, EMA, TRIX, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR
+        MININDEX, MINMAX, MINMAXINDEX, MULT, SUB, SUM, EMA, TRIX, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, \
+        MIDPRICE, SAR
 
     TA_LIB_AVAILABLE = True
 except ImportError as e:
@@ -412,6 +412,8 @@ def sma(close, timeperiod=30):
     ------
     """
     if TA_LIB_AVAILABLE:
+        if timeperiod == 1:
+            raise ValueError('For SMA, timeperiod must be greater than 1')
         return SMA(close, timeperiod)
     else:
         return sma_no_ta(close, timeperiod)

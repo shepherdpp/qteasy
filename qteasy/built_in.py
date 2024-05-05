@@ -1416,9 +1416,9 @@ class SLPHT(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n = self.pars
+            n, = self.pars
         else:
-            n = pars
+            n, = pars
         h = h.T
         curve = ht(h[0])
         slope = curve[-1] - curve[-n]
@@ -2082,7 +2082,7 @@ class AROONOSC(RuleIterator):
         else:
             p, = pars
         h = h.T
-        res = aroonosc(h[0], p)[-1]
+        res = aroonosc(h[0], h[1], p)[-1]
 
         if res > 0:
             cat = 0.5
@@ -2252,9 +2252,8 @@ class MACDEXT(RuleIterator):
         else:
             fp, ft, sp, st, p, t = pars
         h = h.T
-        m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
-
-        if m > 0:
+        m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)
+        if m[-1] > 0:
             cat = 1
         else:
             cat = -1
@@ -2822,7 +2821,7 @@ class WILLR(RuleIterator):
         else:
             p, u, l = pars
         h = h.T
-        res = willr(h[0], h[1], h[2], p)
+        res = willr(h[0], h[1], h[2], p)[-1]
         if res > -l:
             sig = -0.3
         elif res < -u:
