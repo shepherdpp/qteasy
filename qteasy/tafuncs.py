@@ -412,6 +412,8 @@ def sma(close, timeperiod=30):
     ------
     """
     if TA_LIB_AVAILABLE:
+        if timeperiod == 1:
+            raise ValueError('For SMA, timeperiod must be greater than 1')
         return SMA(close, timeperiod)
     else:
         return sma_no_ta(close, timeperiod)

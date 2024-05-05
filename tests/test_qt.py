@@ -40,7 +40,7 @@ class TestLSStrategy(RuleIterator):
                          description='test long/short strategy',
                          par_count=2,
                          par_types='discr, conti',
-                         par_range=([1, 20], [2, 20]),
+                         par_range=([2, 20], [2, 20]),
                          strategy_data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
@@ -56,7 +56,7 @@ class TestLSStrategy(RuleIterator):
         ma = sma(avg, n)
         if r is not None:
             # 处理参考数据生成信号并返回
-            ref_price = r[-1, 0]  # 当天的参考数据，r[-1
+            ref_price = r[-1, 0]  # 当天的参考数据，r[-1]
             if ma[-1] < ref_price:
                 return 0
             else:
@@ -966,7 +966,7 @@ class TestQT(unittest.TestCase):
                     '000300': (20, 6)}
         par_stg2 = ()
         for op in [op_batch, op_stepwise]:
-            op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([1, 20], [2, 100]))
+            op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([2, 20], [2, 100]))
             op.set_parameter(1, pars=par_stg2, opt_tag=1)
 
         qt.configure(
