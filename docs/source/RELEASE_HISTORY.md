@@ -1,6 +1,6 @@
 # RELEASE HISTORY
 
-## 1.2.6 (2024-05-06)
+## 1.2.5 (2024-05-06)
 - Fixed a bug in HistoryPanel that causes recursive importing
 
 ## 1.2.4 (2024-05-05)
