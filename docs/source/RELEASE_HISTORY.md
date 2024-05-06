@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.2.6 (2024-05-06)
+- Fixed a bug in HistoryPanel
+
 ## 1.2.4 (2024-05-05)
 - Fixed bugs in built-in strategies: `MACDEXT`, `WILLR`, `AROONOSC`, and `SLPHT`
 - Updated test cases for built-in strategies
