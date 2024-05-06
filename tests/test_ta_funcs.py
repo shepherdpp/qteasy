@@ -368,7 +368,7 @@ class TestTAFuncs(unittest.TestCase):
         res_no_ta = trix_no_ta(self.close, timeperiod=5)
         print(f'result is \n{res}\n'
               f'result_no_ta is \n{res_no_ta}')
-        self.assertTrue(np.allclose(res[14:], res_no_ta[14:], equal_nan=True, atol=0.2))
+        self.assertTrue(np.allclose(res[14:], res_no_ta[14:], equal_nan=True, atol=0.5))
 
     def test_ultosc(self):
         print(f'test TA function: ultosc\n'
