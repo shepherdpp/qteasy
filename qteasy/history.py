@@ -864,7 +864,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float]) -> qteasy.HistoryPanel:
+    def fillna(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -880,7 +880,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float]) -> qteasy.HistoryPanel:
+    def fillinf(self, with_val: [int, float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
@@ -956,7 +956,7 @@ class HistoryPanel():
              same_shares: bool = False,
              same_htypes: bool = False,
              same_hdates: bool = False,
-             fill_value: float = np.nan) -> qteasy.HistoryPanel:
+             fill_value: float = np.nan):
         """ 将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
 
         新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列
