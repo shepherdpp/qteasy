@@ -1,6 +1,9 @@
 # RELEASE HISTORY
 
-## 1.2.6 (2024-05-06)
+## 1.2.6 (2024-05-07)
+- Fixed a bug in data source that causes failure of getting the last record id from system tables in some cases
+
+## 1.2.5 (2024-05-06)
 - Fixed a bug in HistoryPanel that causes recursive importing
 
 ## 1.2.4 (2024-05-05)

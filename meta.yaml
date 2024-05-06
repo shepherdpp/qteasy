@@ -1,9 +1,9 @@
 package:
   name: "qteasy"
-  version: "1.2.5"
+  version: "1.2.6"
 
 source:
-  git_rev: v1.2.5
+  git_rev: v1.2.6
   git_url: https://github.com/shepherdpp/qteasy
 
 requirements:
@@ -24,6 +24,7 @@ requirements:
 
 about:
   home: https://github.com/shepherdpp/qteasy
+  documentation: https://qteasy.readthedocs.io/zh/latest/
   license: BSD 3-Clause
   license_familY: BSD
   license_file: LICENSE
