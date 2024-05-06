@@ -1391,11 +1391,11 @@ class Operator:
         if isinstance(run_timing, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
             if run_timing not in self.strategy_timings:
-                warnings.warn(
-                        f'\n'
-                        f'Given run timing \'{run_timing}\' is not valid in current Operator, \n'
-                        f'no blender will be created! current valid run timings are as following:\n'
-                        f'{self.strategy_timings}')
+                msg = f'\n' \
+                      f'Given run timing \'{run_timing}\' is not valid in current Operator, \n' \
+                      f'no blender will be created! current valid run timings are: \n' \
+                      f'{self.strategy_timings}'
+                warnings.warn(msg)
                 return
             if isinstance(blender, str):
                 try:
