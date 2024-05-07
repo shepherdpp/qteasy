@@ -4242,14 +4242,12 @@ class DataSource:
 
         ensure_sys_table(table)
         # 如果是文件系统，在可行的情况下，直接从文件系统中获取最后一个id，否则读取文件数据后获取id
-        if self.source_type == 'file':
+        if self.source_type in ['file']:
             df = self.read_sys_table_data(table)
             if df is None:
                 return 0
-            # if df.empty:
-            #     return 0
-            return df.index.max()
-        # 如果是数据库系统，直接获取最后一个id
+            return int(df.index.max())
+        # 如果是数据库系统，直接获取最后一个id, 这种做法某些情况下有问，使用下面的方法无法获取最后一个id
         elif self.source_type == 'db':
             if not self.db_table_exists(table):
                 columns, dtypes, prime_keys, pk_dtypes = get_built_in_table_schema(table)
@@ -4269,18 +4267,14 @@ class DataSource:
                     db=self.db_name,
             )
             cursor = con.cursor()
-            db_name = self.db_name
-            sql = f"SELECT AUTO_INCREMENT\n" \
-                  f"FROM information_schema.TABLES\n" \
-                  f"WHERE `TABLE_SCHEMA` = %s\n" \
-                  f"AND `TABLE_NAME` = %s;"
-
+            columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table, with_primary_keys=True)
+            primary_key = primary_keys[0]
+            sql = f"SELECT * FROM `{table}` ORDER BY `{primary_key}` DESC LIMIT 1;"
             try:
-                cursor.execute(sql, (db_name, table))
+                cursor.execute(sql)
                 con.commit()
                 res = cursor.fetchall()
-                # return last id if
-                return res[0][0] - 1 if res[0][0] is not None else 1
+                return res[0][0] if len(res) > 0 else 0
             except Exception as e:
                 raise RuntimeError(
                     f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')

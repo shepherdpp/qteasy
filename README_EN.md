@@ -46,7 +46,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.2.5`
+- Latest Version: `1.2.6`
 - License: BSD 3-Clause License
 
 `qteasy` is a quantitative trading utility package for quantitative traders, with the following features:

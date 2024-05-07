@@ -2235,10 +2235,6 @@ class TestDataSource(unittest.TestCase):
                 res = ds.read_sys_table_data('sys_op_trade_orders', record_id=last_id)
                 print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
                       f'{res}\n')
-                if res is None:
-                    ids = ds.read_sys_table_data('sys_op_trade_orders').index.tolist()
-                    raise ValueError(f'here last_id is wrong if order ids are not continuous. now the ids are '
-                                     f'{ids}, the last id should be {ids[-1]}, but actually {last_id} is return')
                 self.assertIsNotNone(res)
                 self.assertEqual(test_shuffled_signal_data['pos_id'], res['pos_id'])
                 self.assertEqual(test_shuffled_signal_data['order_type'], res['order_type'])
@@ -2372,6 +2368,54 @@ class TestDataSource(unittest.TestCase):
         )
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
+
+    def test_get_sys_teble_last_id(self):
+        """ test datasource function get_sys_table_last_id()"""
+        # remove all data in sys_op_trade_orders
+        for ds in [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]:
+            if ds.table_data_exists('sys_op_trade_orders'):
+                ds.drop_table_data('sys_op_trade_orders')
+            res = ds.get_sys_table_last_id('sys_op_trade_orders')
+            print(f'last id from {ds} when table is empty: {res}')
+            self.assertIsInstance(res, int)
+            self.assertEqual(res, 0)
+
+            # insert one piece of data and then last id should be 1
+            ds.insert_sys_table_data('sys_op_trade_orders', **{
+                'pos_id': 1,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 100,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            })
+            res = ds.get_sys_table_last_id('sys_op_trade_orders')
+            print(f'last id from {ds} after written 1 data: {res}')
+            self.assertIsInstance(res, int)
+            self.assertEqual(res, 1)
+
+            # insert another piece of data and then last id should be 2
+            ds.insert_sys_table_data('sys_op_trade_orders', **{
+                'pos_id': 2,
+                'direction': 'buy',
+                'order_type': 'limit',
+                'qty': 200,
+                'price': 10.0,
+                'submitted_time': pd.to_datetime('20230220'),
+                'status': 'submitted',
+            })
+            res = ds.get_sys_table_last_id('sys_op_trade_orders')
+            print(f'last id from {ds} after written 2 data: {res}')
+            self.assertIsInstance(res, int)
+            self.assertEqual(res, 2)
+
+            # delete data where order_id = 1 then last id should be 2
+            ds.delete_sys_table_data('sys_op_trade_orders', record_ids=[1])
+            res = ds.get_sys_table_last_id('sys_op_trade_orders')
+            print(f'last id from {ds} after removed 1 data: {res}')
+            self.assertIsInstance(res, int)
+            self.assertEqual(res, 2)
 
 
 if __name__ == '__main__':
