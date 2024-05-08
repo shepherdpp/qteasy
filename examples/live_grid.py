@@ -11,7 +11,9 @@
 
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../'))
+
 import numpy as np
 import qteasy as qt
 
@@ -19,7 +21,7 @@ import qteasy as qt
 class GridTrade(qt.RuleIterator):
     """网格交易策略"""
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self, h, **kwargs):
 
         # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
         grid_size, trade_batch, base_grid = self.pars
@@ -58,6 +60,7 @@ class GridTrade(qt.RuleIterator):
 if __name__ == '__main__':
     from qteasy import Operator
     from qteasy.utilfuncs import get_qt_argparser
+
     parser = get_qt_argparser()
     args = parser.parse_args()
 
@@ -71,7 +74,7 @@ if __name__ == '__main__':
                       strategy_run_freq='5min',
                       data_freq='5min',
                       window_length=20,
-                     )
+                      )
 
     op = Operator(alpha, signal_type='VS', op_type='step')
 
