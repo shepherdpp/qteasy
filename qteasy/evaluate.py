@@ -154,9 +154,9 @@ def evaluate(looped_values: pd.DataFrame,
     - total_fee          总交易费用
     - rtn:               回测的总回报率
     - annual_rtn:        回测的年均回报率
-    - mdd:               最大回测
-    - peak_date:         最大回测峰值日期
-    - valley_date:       最大回测谷值日期
+    - mdd:               最大回撤（从前期最高点开始计算最大跌幅）
+    - peak_date:         最大回撤峰值日期（前期高点日期）
+    - valley_date:       最大回撤谷值日期（最大跌幅日期）
     - volatility:        回测区间波动率（最后一日波动率）
     - ref_rtn:           benchmark参照指标的回报率
     - ref_annual_rtn:    benchmark参照指标的年均回报率
