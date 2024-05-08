@@ -131,7 +131,7 @@ def evaluate(looped_values: pd.DataFrame,
              hist_benchmark: pd.DataFrame,
              benchmark_data: str,
              cash_plan,
-             indicators: str = 'final_value')->dict:
+             indicators: str = 'final_value') -> dict:
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
         返回一个dict，包含所有需要的indicators
 
@@ -184,6 +184,17 @@ def evaluate(looped_values: pd.DataFrame,
     -------
     performance_dict: dict: 一个字典，每个指标的各种值
     """
+    # validate input
+
+    if not isinstance(hist_benchmark, pd.DataFrame):
+        raise TypeError(f'reference value should be pandas DataFrame, got {type(hist_benchmark)} instead!')
+    if not isinstance(looped_values, pd.DataFrame):
+        raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_values)} instead')
+    if benchmark_data not in hist_benchmark.columns:
+        raise KeyError(f'reference data type \'{benchmark_data}\' can not be found in reference data')
+    if not isinstance(cash_plan, qteasy.CashPlan):
+        raise TypeError(f'Cash plan is not valid, got {type(cash_plan)} instead')
+
     indicator_list = str_to_list(indicators)
     performance_dict = dict()
     # 评价回测结果——计算回测终值，这是默认输出结果
@@ -244,7 +255,6 @@ def evaluate(looped_values: pd.DataFrame,
         return performance_dict
 
 
-# TODO: move all variable validations from evaluation sub functions to evaluate() function -> 2020/11/11
 def _get_yearly_span(value_df: pd.DataFrame) -> float:
     """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
 
@@ -273,25 +283,25 @@ def _get_yearly_span(value_df: pd.DataFrame) -> float:
     return total_year
 
 
-def eval_benchmark(looped_value, reference_value, reference_data):
+def eval_benchmark(looped_values, hist_benchmark, benchmark_data):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
 
     Parameters
     ----------
-    looped_value: pd.DataFrame
-    reference_value: pd.DataFrame
-    reference_data: str
+    looped_values: pd.DataFrame
+    hist_benchmark: pd.DataFrame
+    benchmark_data: str
 
     Returns
     -------
     tuple: (total_rtn, annual_rtn)
     """
-    total_year = _get_yearly_span(looped_value)
+    total_year = _get_yearly_span(looped_values)
     try:
-        rtn_data = reference_value[reference_data]
-        rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
+        rtn_data = hist_benchmark[benchmark_data]
+        rtn = (rtn_data[looped_values.index[-1]] / rtn_data[looped_values.index[0]])
         return rtn - 1, rtn ** (1 / total_year) - 1.
-    except:
+    except Exception:
         pass
         return 0., 0.
 
@@ -374,12 +384,7 @@ def eval_beta(looped_value, reference_value, reference_data):
     -------
     beta: float
     """
-    if not isinstance(reference_value, pd.DataFrame):
-        raise TypeError(f'reference value should be pandas DataFrame, got {type(reference_value)} instead!')
-    if not isinstance(looped_value, pd.DataFrame):
-        raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
-    if reference_data not in reference_value.columns:
-        raise KeyError(f'reference data type \'{reference_data}\' can not be found in reference data')
+
     # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
@@ -442,8 +447,6 @@ def eval_volatility(looped_value, logarithm: bool = True):
     -------
     volatility: float
     """
-    assert isinstance(looped_value, pd.DataFrame), \
-        f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if looped_value.empty:
         return -np.inf
     if logarithm:
@@ -530,8 +533,6 @@ def eval_max_drawdown(looped_value):
     recover_date: 回撤恢复日期
     dd_df:   完整的DataFrame，包含最大的五个回撤区间的全部信息
     """
-    assert isinstance(looped_value, pd.DataFrame), \
-        f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if looped_value.empty:
         return -np.inf
     cummax = looped_value['value'].cummax()
@@ -585,8 +586,6 @@ def eval_fv(looped_val):
     perf: float，应用该评价方法对回测模拟结果的评价分数
 
     """
-    if not isinstance(looped_val, pd.DataFrame):
-        raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_val)} instead')
     if looped_val.empty:
         return -np.inf
     if 'value' not in looped_val:
@@ -624,10 +623,6 @@ def eval_return(looped_val, cash_plan):
     kurtosis: float，应用该评价方法对回测模拟结果的评价分数
     looped_val: pd.DataFrame，回测器生成输出的交易模拟记录
     """
-    assert isinstance(looped_val, pd.DataFrame), \
-        f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
-    assert isinstance(cash_plan, qteasy.CashPlan), \
-        f'TypeError, cash plan type not valid, got {type(cash_plan)} instead'
     if looped_val.empty:
         return -np.inf, -np.inf, np.nan, np.nan, pd.DataFrame()
     invest_plan = cash_plan.plan
