@@ -786,8 +786,6 @@ def get_history_data(htypes,
         如果返回DataFrame对象，设置dataframe的分组策略
         - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
         - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
-    flatten: bool, 默认False # TODO: new in next version
-        是否返回平坦的数据，即数据的列名为htype的组合
     **kwargs:
         用于生成trade_time_index的参数，包括：
         drop_nan: bool
@@ -829,27 +827,27 @@ def get_history_data(htypes,
             'D' -> 'B'
             'W' -> 'W-FRI'
             'M' -> 'BM'
-        trade_time_only: bool, 默认True
+        trade_time_only: bool, default True
             为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
-        include_start:
+        include_start: bool, default True
             日期时间序列是否包含开始日期/时间
-        include_end:
+        include_end: bool, default True
             日期时间序列是否包含结束日期/时间
-        start_am:
+        start_am:, str
             早晨交易时段的开始时间
-        end_am:
+        end_am:, str
             早晨交易时段的结束时间
-        include_start_am:
+        include_start_am: bool
             早晨交易时段是否包括开始时间
-        include_end_am:
+        include_end_am: bool
             早晨交易时段是否包括结束时间
-        start_pm:
+        start_pm: str
             下午交易时段的开始时间
-        end_pm:
+        end_pm: str
             下午交易时段的结束时间
-        include_start_pm
+        include_start_pm: bool
             下午交易时段是否包含开始时间
-        include_end_pm
+        include_end_pm: bool
             下午交易时段是否包含结束时间
 
     Returns
@@ -880,7 +878,7 @@ def get_history_data(htypes,
     2020-01-10  16.79  16.81  16.52  16.69   585548.45
     }
 
-    # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格数
+    >>> # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格数
     >>> qt.get_history_data(htypes='close', shares='000300.SH', start='20191225', end='20200105')
     {'000300.SH':
                   close
@@ -905,7 +903,7 @@ def get_history_data(htypes,
     2020-01-03     1.127      3.588
     }
 
-    # 不光价格数据，其他类型的数据也可以同时获取：
+    >>> # 不光价格数据，其他类型的数据也可以同时获取：
     >>> qt.get_history_data(htypes='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
     {'000001.SZ':
                 close       pe      pb
@@ -939,7 +937,7 @@ def get_history_data(htypes,
     2020-01-03  3083.79  14.22  1.42  4.127933e+13  NaN
     }
 
-    # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
+    >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
     >>> qt.get_history_data(htypes='open, high, low, close', shares='000001.SZ', start='20191229', end='20200106', freq='H', adj='b', asset_type='E')
      {'000001.SZ':
                                 open        high         low       close
@@ -961,7 +959,7 @@ def get_history_data(htypes,
     2020-01-03 15:00:00  1884.25694  1884.25694  1872.24835  1875.52342
     }
 
-    # 可以设置b_days_only参数来将价格填充到非交易日，形成完整的日期序列
+    >>> # 可以设置b_days_only参数来将价格填充到非交易日，形成完整的日期序列
     >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
     {'000001.SZ':
                   open   high    low  close         vol
@@ -979,7 +977,7 @@ def get_history_data(htypes,
      2020-01-05  16.94  17.31  16.92  17.18  1116194.81
      }
 
-    # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
+    >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
     >>> qt.get_history_data(htypes='wt-000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
                 wt-000300.SH
