@@ -501,7 +501,7 @@ def get_table_info(table_name, data_source=None, verbose=True):
     return data_source.get_table_info(table=table_name, verbose=verbose)
 
 
-def get_table_overview(data_source=None, tables=None, include_sys_tables=False):
+def get_table_overview(data_source=None, tables=None, include_sys_tables=False) -> None:
     """ 显示默认数据源或指定数据源的数据总览
 
     Parameters
@@ -527,10 +527,11 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False):
         data_source = qteasy.QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
-    return data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
+
+    data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
 
 
-def get_data_overview(data_source=None, tables=None, include_sys_tables=False):
+def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -> None:
     """ 显示数据源的数据总览，等同于get_table_overview()
 
     获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等
@@ -616,7 +617,7 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False):
     return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
-def refill_data_source(data_source=None, **kwargs):
+def refill_data_source(data_source=None, **kwargs) -> None:
     """ 填充数据数据源
 
     Parameters

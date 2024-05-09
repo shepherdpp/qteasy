@@ -2580,7 +2580,7 @@ class DataSource:
         """
         raise NotImplementedError
 
-    def overview(self, tables=None, print_out=True, include_sys_tables=False):
+    def overview(self, tables=None, print_out=True, include_sys_tables=False) -> pd.DataFrame:
         """ 以表格形式列出所有数据表的当前数据状态
 
         Parameters

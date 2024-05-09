@@ -119,7 +119,12 @@ What Can You Do with ``QTEASY`` ?
    :maxdepth: 1
    :glob:
 
-   api/*
+   api/api_reference.rst
+   api/history_data.rst
+   api/history_data_types.rst
+   api/built_in_strategies.rst
+   api/Strategies.rst
+   api/use_qteasy.rst
 
 
 .. toctree::
