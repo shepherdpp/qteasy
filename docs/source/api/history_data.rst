@@ -5,27 +5,32 @@
 
 所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。
 
-查找支持历史数据:
+查找支持历史数据
+----------------------
 
 .. autofunction:: qteasy.find_history_data
 
 下载历史数据
+----------------------
 
 .. autofunction:: qteasy.refill_data_source
 
 历史数据下载到本地之后，可以检查、管理、调用这些数据。
 
-检查本地数据:
+检查本地数据
+--------------------------------
 
 .. autofunction:: qteasy.get_table_info
 
-获取已经下载的本地数据总览:
+获取已经下载的本地数据总览
+--------------------------------------------------
 
 .. autofunction:: qteasy.get_table_overview
 
 .. autofunction:: qteasy.get_data_overview
 
-下载数据基础数据:
+使用下载的数据——基础数据
+---------------------------------------------------
 
 .. autofunction:: qteasy.get_basic_info
 
@@ -34,4 +39,9 @@
 .. autofunction:: qteasy.filter_stock_codes
 
 .. autofunction:: qteasy.filter_stocks
+
+使用下载的数据——获取价格或技术指标
+----------------------------------------------------
+
+.. autofunction:: qteasy.get_history_data
 

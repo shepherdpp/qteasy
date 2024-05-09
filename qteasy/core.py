@@ -177,7 +177,7 @@ def filter_stock_codes(date: str = 'today', **kwargs) -> list:
 
     See Also
     --------
-    filter_stock()
+    filter_stocks()
     """
     share_basics = filter_stocks(date=date, **kwargs)
     return share_basics.index.to_list()
@@ -466,15 +466,12 @@ def get_table_info(table_name, data_source=None, verbose=True):
     Examples
     --------
     >>> get_table_info('STOCK_BASIC')
-
-    Out:
     <stock_basic>, 1.5MB/5K records on disc
     primary keys:
     -----------------------------------
     1:  ts_code:
         <unknown> entries
         starts: 000001.SZ, end: 873527.BJ
-
     columns of table:
     ------------------------------------
             columns       dtypes remarks
@@ -552,9 +549,6 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
     Examples
     --------
     >>> get_data_overview()  # 获取当前默认数据源的数据总览
-
-    Out:
-
     Analyzing local data source tables... depending on size of tables, it may take a few minutes
     [########################################]62/62-100.0%  Analyzing completed!
     db:mysql://localhost@3306/ts_db
@@ -743,8 +737,7 @@ def get_history_data(htypes,
         如以下两种输入方式皆合法且等效：
          - str:     'open, high, low, close'
          - list:    ['open', 'high', 'low', 'close']
-        特殊htypes的处理：
-        以下特殊htypes将被特殊处理"
+        特殊htypes的处理，以下特殊htypes将被特殊处理，返回特定的数，详见示例
          - wt-000300.SH:
             指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
             获取的数据的htypes同样为wt-000300.SH型
@@ -884,6 +877,7 @@ def get_history_data(htypes,
      2020-01-10  16.79  16.81  16.52  16.69   585548.45
      }
      # data can be extracted in different frequency, and also adjusted
+
      >>> qt.get_history_data(htypes='open, high, low, close', shares='000001.SZ', start='20191229', end='20200106', freq='H', adj='b', asset_type='E')
      {'000001.SZ':
                                 open        high         low       close
@@ -905,6 +899,7 @@ def get_history_data(htypes,
      2020-01-03 15:00:00  1884.25694  1884.25694  1872.24835  1875.52342
      }
      # if you want data to be filled also in non-trading days
+
      >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
     {'000001.SZ':
                   open   high    low  close         vol
@@ -920,6 +915,14 @@ def get_history_data(htypes,
      2020-01-03  16.94  17.31  16.92  17.18  1116194.81
      2020-01-04  16.94  17.31  16.92  17.18  1116194.81
      2020-01-05  16.94  17.31  16.92  17.18  1116194.81}
+
+     >>> qt.get_history_data(htypes='wt-000300.SH', shares='000001.SZ', start='20191225', end='20200105')
+     {'000001.SZ':             wt-000300.SH
+    2020-01-02        1.1714
+    2020-01-03        1.1714}
+
+    >>> qt.get_history_data(htypes='close-000300.SH', start='20191225', end='20200105')
+
     """
 
     if htypes is None:
