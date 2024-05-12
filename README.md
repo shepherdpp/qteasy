@@ -1,3 +1,5 @@
+![png](docs/source/img/qteasy_logo_horizontal.png)
+
 # `qteasy` -- 一个本地化、灵活易用的高效量化投资工具包
 
 ![PyPI](https://img.shields.io/pypi/v/qteasy)

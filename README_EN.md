@@ -1,3 +1,5 @@
+![png](docs/source/img/qteasy_logo_horizontal.png)
+
 # qteasy -- a python-based fast quantitative investment utility module
 
 ![PyPI](https://img.shields.io/pypi/v/qteasy)
