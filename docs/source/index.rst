@@ -67,13 +67,13 @@ What Can You Do with ``QTEASY`` ?
 - 随时查看交易过程，检查盈亏情况
 - 手动控制交易进程、调整交易参数，手动下单
 
-.. image:: img/output_27_1.png
+.. image:: examples/img/trader_app_1.png
     :width: 900px
     :align: center
-.. image:: img/output_27_2.png
+.. image:: examples/img/trader_app_1.png
     :width: 900px
     :align: center
-.. image:: img/output_27_3.png
+.. image:: examples/img/trader_app_light_theme.png
     :width: 900px
     :align: center
 
