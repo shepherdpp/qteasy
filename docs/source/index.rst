@@ -70,9 +70,11 @@ What Can You Do with ``QTEASY`` ?
 .. image:: examples/img/trader_app_1.png
     :width: 900px
     :align: center
+
 .. image:: examples/img/trader_app_1.png
     :width: 900px
     :align: center
+
 .. image:: examples/img/trader_app_light_theme.png
     :width: 900px
     :align: center
