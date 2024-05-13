@@ -47,3 +47,9 @@ language = 'zh'
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+# html_logo = "qteasy_logo_horizontal.png"
+html_logo = "QTEASY_facebook_cover.png"
+html_theme_options = {
+    'logo_only': True,
+    'display_version': False,
+}

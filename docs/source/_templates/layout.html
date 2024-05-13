@@ -2,3 +2,16 @@
 {% block extrahead %}
     <link href="{{ pathto("_static/style.css", True) }}" rel="stylesheet" type="text/css">
 {% endblock %}
+
+{% block footer %} {{ super() }}
+  <style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search, .wy-nav-top {
+      background: #ca3f3f;
+    }
+    /* Sidebar */
+    .wy-nav-side {
+      background: #3d3d3d;
+    }
+  </style>
+{% endblock %}
