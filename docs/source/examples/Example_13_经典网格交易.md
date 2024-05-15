@@ -140,12 +140,3 @@ print()
     
 ![png](img/output_13_1.png)
     
-
-
-    
-
-
-
-```python
-
-```

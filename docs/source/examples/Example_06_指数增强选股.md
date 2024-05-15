@@ -169,19 +169,7 @@ print()
         recovered on:         Not recovered!
     
     ===========END OF REPORT=============
-    
-
-
 
     
 ![png](img/output_4_1_3.png)
     
-
-
-    
-
-
-
-```python
-
-```
