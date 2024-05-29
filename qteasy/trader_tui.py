@@ -13,11 +13,12 @@ import time
 
 from threading import Thread
 
-from textual import work
+from textual import work, on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Grid, Horizontal
+from textual.screen import ModalScreen, Screen
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
-from textual.widgets import TabPane
+from textual.widgets import TabPane, Label, Input
 
 from rich.text import Text
 
@@ -126,6 +127,51 @@ class ControlPanel(Static):
         yield Button("Exit", id='exit', name="exit")
 
 
+class InputScreen(Screen[str]):
+    """Screen that prints a prompt and takes input from user"""
+
+    def __init__(self, question: str) -> None:
+        self.question = question
+        self.input_string = ''
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        yield Label(self.question, id='prompt')
+        yield Input(id="input")
+        yield Button("OK", id="ok", variant="success")
+        yield Button("Cancel", id="cancel")
+
+    @on(Input.Changed, "#input")
+    def handle_input(self, event: Input.Changed) -> None:
+        self.input_string = event.text
+
+    @on(Button.Pressed, "#ok")
+    def handle_ok(self) -> None:
+        self.dismiss(self.input_string)
+
+    @on(Button.Pressed, "#cancel")
+    def handle_cancel(self) -> None:
+        self.dismiss('')
+
+
+class QuitScreen(ModalScreen):
+    """Screen with a dialog to quit."""
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Label("Are you sure you want to quit?", id="question"),
+            Button("Quit", variant="error", id="quit"),
+            Button("Cancel", variant="primary", id="cancel"),
+            id="dialog",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "quit":
+            self.dismiss(True)
+        else:
+            self.dismiss(False)
+
+
 class TraderApp(App):
     """A Textual app to manage stopwatches."""
 
@@ -134,6 +180,8 @@ class TraderApp(App):
         ("d", "toggle_dark", "Toggle dark mode"),
         ("ctrl+p", "pause_trader", "Pause the trader"),
         ("ctrl+r", "resume_trader", "Resume the trader"),
+        ("ctrl+q", "request_quit", "Quit the app"),
+        ("ctrl+i", "get_input", "get input from a dialog"),
     ]
 
     def __init__(self, trader, *args, **kwargs):
@@ -145,9 +193,9 @@ class TraderApp(App):
             A trader object to manage the trades.
         """
         super().__init__(*args, **kwargs)
-        self.dark = True
+        self.dark:bool = True
         self.trader = trader
-        self.status = 'init'
+        self.status:str = 'init';
 
     def trader_event_loop(self):
         """ Event loop for the trader. continually check message queue of trader and broker,
@@ -378,9 +426,9 @@ class TraderApp(App):
 
         total_value = trader_info['Total Value']
         total_return_of_investment = trader_info['Total ROI']
-        total_roi_rate = trader_info['Total ROI Rate']
+        # total_roi_rate = trader_info['Total ROI Rate']
         own_cash = trader_info['Total Cash']
-        total_market_value = trader_info['Total Stock Value']
+        # total_market_value = trader_info['Total Stock Value']
 
         value = self.query_one('#total_value')
         value.border_title = "Total Value"
@@ -388,7 +436,7 @@ class TraderApp(App):
 
         earning = self.query_one('#earning')
         earning.border_title = "Total Return"
-        earning.update(f"{total_return_of_investment:.2f} / {total_roi_rate:.2%}")
+        earning.update(f"{total_return_of_investment:.2f}")
 
         # set text colors of value and earning based on the value
         if total_return_of_investment > 0:
@@ -499,3 +547,11 @@ class TraderApp(App):
         syslog = self.query_one(SysLog)
         syslog.write(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
+
+    def action_request_quit(self) -> None:
+        """Action to display the quit dialog."""
+        self.push_screen(QuitScreen())
+
+    def action_get_input(self) -> None:
+        """Action to get input from a dialog."""
+        self.push_screen(InputScreen("Please input something:"))
