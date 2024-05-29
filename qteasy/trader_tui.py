@@ -561,6 +561,12 @@ class TraderApp(App):
         """Action to get input from a dialog."""
         def on_input(input_string):
             # received input string: input_string, add it to the watch list
-            pass
+            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
+            symbols = str_to_list(input_string)
+            log = self.query_one(SysLog)
+            for symbol in symbols:
+                if is_complete_cn_stock_symbol_like(symbol):
+                    self.trader.watch_list.append(symbol)
+                    log.write(f"Added {symbol} to watch list.")
 
-        self.push_screen(InputScreen("Please input something:"), on_input)
+        self.push_screen(InputScreen("Input symbols to add to watch list"), on_input)

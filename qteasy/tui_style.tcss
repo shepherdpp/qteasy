@@ -100,7 +100,7 @@ InputScreen {
     background: $surface;
 }
 
-#input {
+#input_box {
     column-span: 2;
     content-align: center middle;
 }
