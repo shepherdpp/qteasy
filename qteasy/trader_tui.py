@@ -127,7 +127,7 @@ class ControlPanel(Static):
         yield Button("Exit", id='exit', name="exit")
 
 
-class InputScreen(Screen[str]):
+class InputScreen(ModalScreen):
     """Screen that prints a prompt and takes input from user"""
 
     def __init__(self, question: str) -> None:
@@ -136,14 +136,20 @@ class InputScreen(Screen[str]):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield Label(self.question, id='prompt')
-        yield Input(id="input")
-        yield Button("OK", id="ok", variant="success")
-        yield Button("Cancel", id="cancel")
+        yield Grid(
+            Input(placeholder=self.question, id="input_box", value=''),
+            Button("OK", id="ok", variant="success"),
+            Button("Cancel", id="cancel"),
+            id="input_dialog",
+        )
 
-    @on(Input.Changed, "#input")
-    def handle_input(self, event: Input.Changed) -> None:
-        self.input_string = event.text
+    @on(Input.Changed, "#input_box")
+    def handle_input_changed(self, event: Input.Changed) -> None:
+        self.input_string = event.value
+
+    @on(Input.Submitted, "#input_box")
+    def handle_input(self, event: Input.Submitted) -> None:
+        self.dismiss(event.value)
 
     @on(Button.Pressed, "#ok")
     def handle_ok(self) -> None:
@@ -167,9 +173,9 @@ class QuitScreen(ModalScreen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "quit":
-            self.dismiss(True)
+            self.app.exit()
         else:
-            self.dismiss(False)
+            self.app.pop_screen()
 
 
 class TraderApp(App):
@@ -177,11 +183,11 @@ class TraderApp(App):
 
     CSS_PATH = "tui_style.tcss"
     BINDINGS = [
-        ("d", "toggle_dark", "Toggle dark mode"),
-        ("ctrl+p", "pause_trader", "Pause the trader"),
-        ("ctrl+r", "resume_trader", "Resume the trader"),
-        ("ctrl+q", "request_quit", "Quit the app"),
-        ("ctrl+i", "get_input", "get input from a dialog"),
+        ("d", "toggle_dark", "Dark mode"),
+        ("ctrl+p", "pause_trader", "Pause"),
+        ("ctrl+r", "resume_trader", "Resume"),
+        ("ctrl+q", "request_quit", "Quit app"),
+        ("ctrl+g", "get_input", "Get Input"),
     ]
 
     def __init__(self, trader, *args, **kwargs):
@@ -521,7 +527,6 @@ class TraderApp(App):
 
     def _on_exit_app(self) -> None:
         """Actions to perform before exiting the app.
-        confirms the exit action.
         """
         # stop the trader, broker and the trader event loop
         self.trader.status = 'stopped'
@@ -554,4 +559,8 @@ class TraderApp(App):
 
     def action_get_input(self) -> None:
         """Action to get input from a dialog."""
-        self.push_screen(InputScreen("Please input something:"))
+        def on_input(input_string):
+            # received input string: input_string, add it to the watch list
+            pass
+
+        self.push_screen(InputScreen("Please input something:"), on_input)
