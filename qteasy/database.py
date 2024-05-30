@@ -4112,7 +4112,7 @@ class DataSource:
         else:
             return f'{size}', f'{rows}'
 
-    def get_table_info(self, table, verbose=True, print_info=True, human=True):
+    def get_table_info(self, table, verbose=True, print_info=True, human=True) -> tuple:
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
@@ -4993,9 +4993,11 @@ class DataSource:
                 else:
                     # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
                     latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
-                    if latest_calendar_date == 'N/A':
-                        tables_to_refill.add('trade_calendar')
-                    elif pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+                    try:
+                        latest_calendar_date = pd.to_datetime(latest_calendar_date)
+                        if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+                            tables_to_refill.add('trade_calendar')
+                    except:
                         tables_to_refill.add('trade_calendar')
 
         # 开始逐个下载清单中的表数据
