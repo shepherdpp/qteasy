@@ -173,9 +173,9 @@ class QuitScreen(ModalScreen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "quit":
-            self.app.exit()
+            self.dismiss(True)
         else:
-            self.app.pop_screen()
+            self.dismiss(False)
 
 
 class TraderApp(App):
@@ -201,7 +201,8 @@ class TraderApp(App):
         super().__init__(*args, **kwargs)
         self.dark:bool = True
         self.trader = trader
-        self.status:str = 'init';
+        self.status:str = 'init'
+        self.refresh_ui = True
 
     def trader_event_loop(self):
         """ Event loop for the trader. continually check message queue of trader and broker,
@@ -277,6 +278,8 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_holdings(self):
         """Refresh the holdings table."""
+        if not self.refresh_ui:
+            return
         # get the holdings from the trader
         holdings = self.query_one(HoldingTable)
         holdings.clear()
@@ -312,6 +315,8 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_order(self):
         """Refresh the order table."""
+        if not self.refresh_ui:
+            return
         orders = self.query_one(OrderTable)
         orders.clear()
         order_list = self.trader.history_orders(with_trade_results=True)
@@ -340,6 +345,8 @@ class TraderApp(App):
 
     def refresh_watches(self):
         """Refresh the watch list."""
+        if not self.refresh_ui:
+            return
         watches = self.query_one('#watches')
         watched_prices = self.trader.update_watched_prices()
         watched_prices = watched_prices.reindex(columns=watches.df_columns)
@@ -368,6 +375,10 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
         """Refresh the information panel"""
+
+        if not self.refresh_ui:
+            return
+
         info = self.query_one('#info')
         system = self.query_one('#system')
 
@@ -429,6 +440,8 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_values(self, trader_info):
         """Refresh the total value, earning and cash."""
+        if not self.refresh_ui:
+            return
 
         total_value = trader_info['Total Value']
         total_return_of_investment = trader_info['Total ROI']
@@ -464,6 +477,8 @@ class TraderApp(App):
         2. Strategy: strategies
         3. Properties: strategy properties
         """
+        if not self.refresh_ui:
+            return
         tree = self.query_one(StrategyTree)
         tree.clear()
 
@@ -555,7 +570,13 @@ class TraderApp(App):
 
     def action_request_quit(self) -> None:
         """Action to display the quit dialog."""
-        self.push_screen(QuitScreen())
+        def confirm_exit(confirmed:bool) -> None:
+            if confirmed:
+                self.exit()
+            self.refresh_ui = True
+
+        self.refresh_ui = False
+        self.push_screen(QuitScreen(), confirm_exit)
 
     def action_get_input(self) -> None:
         """Action to get input from a dialog."""
@@ -569,4 +590,9 @@ class TraderApp(App):
                     self.trader.watch_list.append(symbol)
                     log.write(f"Added {symbol} to watch list.")
 
+            self.refresh_ui = True
+
+        self.refresh_ui = False
         self.push_screen(InputScreen("Input symbols to add to watch list"), on_input)
+
+
