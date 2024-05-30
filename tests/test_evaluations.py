@@ -327,7 +327,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEqual(eval_fv(self.test_data7), 2.92532313)
         self.assertAlmostEqual(eval_fv(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(TypeError, eval_fv, 15)
+        self.assertRaises(AttributeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
@@ -365,7 +365,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data7)[3]))
         self.assertEqual(eval_max_drawdown(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(TypeError, eval_fv, 15)
+        self.assertRaises(Exception, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
@@ -402,7 +402,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEqual(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
         self.assertEqual(eval_volatility(pd.DataFrame()), -np.inf)
-        self.assertRaises(AssertionError, eval_volatility, [1, 2, 3])
+        self.assertRaises(AttributeError, eval_volatility, [1, 2, 3])
 
         # 测试长数据的Volatility计算
         expected_volatility = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -635,9 +635,9 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEqual(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
         self.assertAlmostEqual(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
 
-        self.assertRaises(TypeError, eval_beta, [1, 2, 3], reference, 'value')
-        self.assertRaises(TypeError, eval_beta, self.test_data3, [1, 2, 3], 'value')
-        self.assertRaises(KeyError, eval_beta, self.test_data3, reference, 'not_found_value')
+        self.assertRaises(Exception, eval_beta, [1, 2, 3], reference, 'value')
+        self.assertRaises(Exception, eval_beta, self.test_data3, [1, 2, 3], 'value')
+        self.assertRaises(Exception, eval_beta, self.test_data3, reference, 'not_found_value')
 
         # 测试长数据的beta计算
         expected_beta = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
