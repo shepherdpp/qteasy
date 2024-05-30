@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.2.7 (2024-05-30)
+- Fixed a bug in database that may cause data refill failure when trade calendar is not available in some cases
+
 ## 1.2.6 (2024-05-07)
 - Fixed a bug in data source that causes failure of getting the last record id from system tables in some cases
 
