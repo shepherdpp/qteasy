@@ -70,7 +70,7 @@ if __name__ == '__main__':
             live_trade_debug_mode=args.debug,
             live_trade_broker_type='random',
             live_trade_broker_params=None,
-            live_trade_ui_type='tui' if args.ui else 'cli',
+            live_trade_ui_type=args.ui,
             watched_price_refresh_interval=10,
     )
     datasource = qt.QT_DATA_SOURCE
