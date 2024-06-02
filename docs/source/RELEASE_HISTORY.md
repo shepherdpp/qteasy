@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.2.8 (2024-06-02)
+- Changed argument "-u" in qt_argparser, now either "tui" or "cli" should be specified to choose ui type
+
 ## 1.2.7 (2024-05-30)
 - Fixed a bug in database that may cause data refill failure when trade calendar is not available in some cases
 
