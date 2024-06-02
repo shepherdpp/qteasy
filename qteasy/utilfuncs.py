@@ -80,7 +80,7 @@ AVAILABLE_OP_TYPES = ['batch', 'stepwise', 'step', 'st', 's', 'b']
 
 
 def get_qt_argparser():
-    """ 获取QT的命令行参数解析器
+    """ 获取QT的命令行参数解析器, 用于解析命令行参数
 
     生成的解析器包含以下参数：
     -a, --account: int, default None
@@ -91,6 +91,8 @@ def get_qt_argparser():
         用于指定是否清除所有账户数据并重新开始
     -d, --debug: bool, default False
         用于指定是否以debug模式启动交易程序
+    -u, --ui: str, default 'cli', choices=('cli', 'tui')
+        用于指定交易程序的UI类型, 默认为cli
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--account', type=int, help='start trader with the given account id')
@@ -99,7 +101,8 @@ def get_qt_argparser():
     parser.add_argument('-r', '--restart', action='store_true', default=False,
                         help='if set, remove all record and restart account')
     parser.add_argument('-d', '--debug', action='store_true', help='if set, start trader in debug mode')
-    parser.add_argument('-u', '--ui', action='store_true', default=False, help='if True, start trader in terminal ui')
+    parser.add_argument('-u', '--ui', default='cli', choices=('cli', 'tui'),
+                        help='type of ui to run trader, default to cli')
 
     return parser
 
