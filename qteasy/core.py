@@ -2147,7 +2147,7 @@ def run(operator, **kwargs):
         start_trader_ui(
                 operator=operator,
                 account_id=config['live_trade_account_id'],
-                user_name=config['live_trade_account'],
+                user_name=config['live_trade_account_name'],
                 init_cash=config['live_trade_init_cash'],
                 init_holdings=config['live_trade_init_holdings'],
                 config=config,

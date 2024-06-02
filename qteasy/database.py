@@ -3124,7 +3124,11 @@ class DataSource:
         pd_version = pd.__version__
         if pd_version >= '2.0':
             df.replace(np.nan, None, inplace=True)
-        # df.replace(np.nan, None, inplace=True)  # fill Nan with None in pandas<2.0 will only fill previous value
+            # TODO, 在某些情况下将数据写入数据库时仍然会发生'nan can't be written to mysql'的错误
+            #  这个问题需要进一步解，复现代码如下：
+            #  op=qt.Operator('dma')
+            #  op.run(mode=0, live_trade_account_id=1, asset_type='IDX')
+
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO "
         sql += f"`{db_table}` ("
