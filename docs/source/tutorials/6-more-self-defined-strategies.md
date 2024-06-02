@@ -19,7 +19,7 @@
 - **设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)
 - **学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)
 - **学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)
-- - **了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-strategy.md)
+- **了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-strategy.md)
 
 在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。
 
