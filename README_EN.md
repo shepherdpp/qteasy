@@ -540,7 +540,9 @@ qt.configure(
 ```
 `Qteasy` provides a simple live trading program that runs in command line environment. After configuring the `Operator` object and setting the strategy, it runs automatically, downloads real-time data, generates trading instructions according to the strategy results, simulate the trading process and record the trading results.
 
-If no account is specified when starting live trading, the system will automatically create a new account with a new account ID and account name as "user name". If you want to use an existing account, you can specify the account ID and account name when starting.
+You can specify the account name to use in live trade with qt config variable `live_trade_account_name`, and the system will automatically create a new account and assign an account ID; if you want to use an existing account, you can specify the account ID with `live_trade_account_id`.
+
+```python
 
 Start live trading with the following code:
 
