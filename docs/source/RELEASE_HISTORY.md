@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.2.8 (2024-06-02)
+- Changed argument "-u" in qt_argparser, now either "tui" or "cli" should be specified to choose ui type
+- qt parameter "live_trade_account" is now renamed to "live_trade_account_name", and more help info is provided to guide users to set up live trade accounts in live trade mode
+- Fixed a bug in qt.candle() that will fail to create candle charts when TA-lib is not installed
+
 ## 1.2.7 (2024-05-30)
 - Fixed a bug in database that may cause data refill failure when trade calendar is not available in some cases
 

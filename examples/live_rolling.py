@@ -56,10 +56,10 @@ if __name__ == '__main__':
             trade_batch_size=0.1,  # 基金交易允许0.1份
             sell_batch_size=0.1,  # 基金交易允许0.1份
             live_trade_account_id=args.account,
-            live_trade_account=args.new_account,
+            live_trade_account_name=args.new_account,
             live_trade_debug_mode=args.debug,
             live_trade_broker_type='simulator',
-            live_trade_ui_type='tui' if args.ui else 'cli',
+            live_trade_ui_type=args.ui,
             live_trade_broker_params=None,
     )
     datasource = qt.QT_DATA_SOURCE

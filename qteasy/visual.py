@@ -20,7 +20,7 @@ import numpy as np
 import qteasy
 from qteasy.history import get_history_panel
 from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
-from .tafuncs import macd, dema, rsi, bbands, ma
+from .tafuncs import macd, dema, rsi, bbands, sma
 
 from pandas.plotting import register_matplotlib_converters
 
@@ -806,7 +806,7 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     close = data.close.iloc[np.where(~np.isnan(data.close))]
 
     for value in mav:  # 需要处理数据中的nan值，否则会输出全nan值
-        data['MA' + str(value)] = ma(close, timeperiod=value)  # 以后还可以加上不同的ma_type
+        data['MA' + str(value)] = sma(close, timeperiod=value)  # 以后还可以加上不同的ma_type
     data['change'] = np.round(close - close.shift(1), 3)
     data['pct_change'] = np.round(data['change'] / close * 100, 2)
     data['value'] = np.round(data['close'] * data['volume'] / 1000000, 2)
@@ -818,8 +818,14 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     # 添加不同的indicator
     data['dema'] = dema(close, *dema_par)
     data['macd-m'], data['macd-s'], data['macd-h'] = macd(close, *macd_par)
-    data['rsi'] = rsi(close, *rsi_par)
-    data['bb-u'], data['bb-m'], data['bb-l'] = bbands(close, *bb_par)
+    try:
+        data['rsi'] = rsi(close, *rsi_par)
+        data['bb-u'], data['bb-m'], data['bb-l'] = bbands(close, *bb_par)
+    except Exception as e:
+        import warnings
+        warnings.warn(f'Failed to calculate indicators RSI and BBANDS, TA-lib is needed, please install TA-lib!. {e}')
+        data['rsi'] = np.nan
+        data['bb-u'] = np.nan
 
     parameter_string = f'{mav}/{bb_par}/{macd_par}/{rsi_par}/{dema_par}'
 

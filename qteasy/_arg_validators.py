@@ -117,7 +117,7 @@ def _valid_qt_kwargs():
              'text':      '实盘交易账户ID，一个整数。用于实盘交易，如果指定了该参数，则会直接\n'
                           '使用该账户，除非账户不存在'},
 
-        'live_trade_account':
+        'live_trade_account_name':
             {'Default':   None,  # 指定account后，会查找该账户对应的account_id并使用该账户，除非账户不存在
              'Validator': lambda value: isinstance(value, str) or value is None,
              'level':     0,

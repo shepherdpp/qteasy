@@ -48,7 +48,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.2.7`
+- Latest Version: `1.2.8`
 - License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
@@ -348,7 +348,7 @@ qt.built_ins('dma')
 
 ### 回测并评价交易策略的性能表现
 queasy可以使用历史数据回测策略表现并输出图表如下：
-![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
+![png](docs/source/img/output_14_3.png)
 
 使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
 
@@ -490,9 +490,9 @@ res = op.run(
 
 ### 部署并开始交易策略的实盘运行
 
-在配置好Operator对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
+在配置好`Operator`对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
 
-在`Operator`中设置好交易策略，并配置好交易参数后，可以直接启动实盘交易：
+`Qteasy`的实盘一旦启动，就会在terminal中启动一个单独的线程在后台运行，运行的时机也是跟真实的股票市场一致的，股票市场收市的时候不运行，交易日早上9点15分唤醒系统开始拉取实时股价，9点半开始运行交易策略，交易策略的运行时机和运行频率在策略的属性中设置。如果策略运行的结果产生交易信号，则根据交易信号模拟挂单，挂单成交后修改响应账户资金和股票持仓，交易费用按照设置中的费率扣除。如果资金不足或持仓不足会导致交易失败，当天买入的股票同真实市场一样T+1交割，第二个交易日开始前交割完毕。
 
 ```python
 import qteasy as qt
@@ -522,14 +522,25 @@ qt.configure(
         asset_pool=asset_pool,  # 交易股票池为所有银行股和家用电器股
         trade_batch_size=100,  # 交易批量为100股的整数倍
         sell_batch_size=1,  # 卖出数量为1股的整数倍
-        live_trade_account_id=1,  # 实盘交易账户ID
-        live_trade_account='user name',  # 实盘交易用户名
+)
+```
+完成上述设置后，使用下面的代码运行交易策略。
+
+`Qteasy`的实盘运行有一个“账户”的概念，就跟您在股票交易市场开户一样，一个账户可以有自己的持有资金，股票持仓，单独计算盈亏。运行过程中您可以随时终止程序，这时所有的交易记录都会保存下来，下次重新启动时，只要引用上一次运行使用的账户ID（account ID）就可以从上次中断的地方继续运行了，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行。
+
+在启动实盘时如果不指定账户，系统会自动创建一个新的账户，账户ID自动新增，账户名为“user name”，如果想要使用已有的账户，可以在启动时指定账户ID和账户名。
+
+```python
+qt.run(
+        op,
+        live_trade_account_id=None,  # 不指定实盘交易账户，给出账户名称并创建一个新的账户
+        live_trade_account_name='new_account'
+        # 如果想要使用已有的账户，应该指定账户ID同时不给出account_name：
+        # live_trade_account_id=1
+        # live_trade_account_name=None
         live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
 )
-
-qt.run(op)
 ```
-`qteasy`的实盘运行程序实际上是一个定时任务触发器，它能定时触发运行交易策略，提交策略到模拟交易Broker，并读取实时价格，模拟成交并自动记录交易过程。
 
 为了对策略运行过程进行监控，同时与`qteasy`进行互动，`qteasy`提供了两种不同的交互界面：
 

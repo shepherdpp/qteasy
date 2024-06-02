@@ -2088,7 +2088,9 @@ def start_trader_ui(
     # if account_id is None then create a new account
     if (account_id is None) or (account_id < 0):
         if (user_name is None) or (user_name == ''):
-            raise ValueError('if account_id is None, user_name must be given.')
+            msg = 'if account_id is None, account_name must be given. set account_name with qt parameter:\n' \
+                  'live_trade_account_name="your_account_name"'
+            raise ValueError(msg)
         account_id = new_account(
                 user_name=user_name,
                 cash_amount=init_cash,
