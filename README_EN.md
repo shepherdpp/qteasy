@@ -547,9 +547,11 @@ Start live trading with the following code:
 ```python
 qt.run(
         op,
-        live_trade_account_id=None,  # Set to None to create a new account
-        # If you want to use an existing account, you can specify the account ID or account name
-        # use live_trade_account_id=1 or live_trade_account_id='user name'
+        live_trade_account_id=None,  # Set account_id to None, and provide an account_name to create a new account
+        live_trade_account_name='new_account'
+        # to start with existing account, omit account_name and provide account_id:
+        # live_trade_account_id=1
+        # live_trade_account_name=None
         live_trade_ui_type='tui',  # Choose TUI interface to monitor live trading, default to CLI interface
 )
 ```

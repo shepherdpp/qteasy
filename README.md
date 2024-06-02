@@ -533,8 +533,11 @@ qt.configure(
 ```python
 qt.run(
         op,
-        live_trade_account_id=None,  # 不指定实盘交易账户，创建一个新的账户
-        # 如果想要使用已有的账户，可以指定账户：live_trade_account_id=1 或者 live_trade_account_id='user name'
+        live_trade_account_id=None,  # 不指定实盘交易账户，给出账户名称并创建一个新的账户
+        live_trade_account_name='new_account'
+        # 如果想要使用已有的账户，应该指定账户ID同时不给出account_name：
+        # live_trade_account_id=1
+        # live_trade_account_name=None
         live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
 )
 ```
