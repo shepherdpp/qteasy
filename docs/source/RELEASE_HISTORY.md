@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.2.9 (2024-06-03)
+- Added more help information and docstrings for user to initialize live trades
+
 ## 1.2.8 (2024-06-02)
 - Changed argument "-u" in qt_argparser, now either "tui" or "cli" should be specified to choose ui type
 - qt parameter "live_trade_account" is now renamed to "live_trade_account_name", and more help info is provided to guide users to set up live trade accounts in live trade mode
