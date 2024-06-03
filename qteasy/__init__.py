@@ -21,7 +21,7 @@ from logging.handlers import TimedRotatingFileHandler
 from argparse import Namespace
 
 from .utilfuncs import is_float_like, is_integer_like
-from .core import run, set_config, get_configurations, get_config
+from .core import run, set_config, get_configurations, get_config, view_config_files
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source
 from .core import get_history_data, filter_stock_codes, filter_stocks
@@ -189,7 +189,7 @@ py_ver_minor = py_version.minor
 
 
 __all__ = [
-    'run', 'set_config', 'get_configurations', 'get_config',
+    'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
     'get_history_data', 'filter_stock_codes', 'filter_stocks',

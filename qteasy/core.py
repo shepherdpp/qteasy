@@ -1436,14 +1436,14 @@ def save_config(config=None, file_name=None, overwrite=True, initial_config=Fals
             return ""
 
 
-def load_config(config=None, file_name=None) -> dict:
+def load_config(*, config=None, file_name=None) -> dict:
     """ 从文件file_name中读取相应的config参数，写入到config中，如果config为
         None，则保存参数到QT_CONFIG中
 
     Parameters
     ----------
     config: ConfigDict 对象
-        一个config对象，默认None，如果为None，则保存QT_CONFIG
+        一个config对象，默认None，如果不为None且为一个ConfigDict对象，则将读取的配置参数写入到config中
     file_name: str
         文件名，默认None，如果为None，文件名为saved_config.cfg
 
@@ -1451,15 +1451,15 @@ def load_config(config=None, file_name=None) -> dict:
     -------
     config: dict
         读取的配置参数
+
+    Raises
+    ------
+    FileNotFoundError
+        如果给定文件不存在，则报错。如果没有给定文件名，则当config/saved_config.cfg不存在时，报错
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
     import pickle
-
-    if config is None:
-        config = QT_CONFIG
-    if not isinstance(config, ConfigDict):
-        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
 
     file_name = _check_config_file_name(file_name=file_name, allow_default_name=False)
 
@@ -1473,14 +1473,18 @@ def load_config(config=None, file_name=None) -> dict:
         logger_core.warning(msg)
         saved_config = {}
 
-    configure(config=config,
-              only_built_in_keys=False,
-              **saved_config)
+    if config is not None:
+        if not isinstance(config, ConfigDict):
+            msg = f'config should be a ConfigDict, got {type(config)} instead.'
+            raise TypeError(msg)
+        configure(config=config,
+                  only_built_in_keys=False,
+                  **saved_config)
 
     return saved_config
 
 
-def view_config_files(details=False):
+def view_config_files(details=False) -> None:
     """ 查看已经保存的配置文件，并显示其主要内容
 
     Parameters
@@ -1497,8 +1501,33 @@ def view_config_files(details=False):
     该函数只显示config文件夹下的配置文件，不显示qteasy.cfg中的配置
     """
 
-    # TODO: Implement this function and add unittests
-    raise NotImplementedError
+    # TODO: add unittests
+    # 1. list all files in config folder
+    # 2. read each file and display its content if details is True
+    # 3. display only file names if details is False
+
+    from qteasy import QT_ROOT_PATH
+    import pickle
+
+    config_path = os.path.join(QT_ROOT_PATH, '../config/')
+
+    files = os.listdir(config_path)
+    files = [f for f in files if f.endswith('.cfg')]
+
+    if len(files) == 0:
+        print('No config files found in config folder.')
+
+    if details:
+        for file in files:
+            with open(os.path.join(config_path, file), 'rb') as f:
+                config = pickle.load(f)
+            print(f'File: {file}')
+            print(config)
+
+    else:
+        print('Config files found in config folder:')
+        for file in files:
+            print(file)
 
 
 def reset_config(config=None):
