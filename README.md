@@ -96,7 +96,7 @@ $ pip install qteasy
 
 ## 文档
 
-关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io)：
+关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)：
 
 
 ### python 版本

@@ -5,9 +5,9 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-11
 # Desc:
-#   QTEASY:
-#   A fast and easy-to-use quant-investment
-#   strategy research tool kit.
+# QTEASY:
+#  A fast and easy-to-use quant-investment
+#  strategy research tool kit.
 # ======================================
 
 import os

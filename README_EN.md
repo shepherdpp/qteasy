@@ -92,7 +92,7 @@
 
 ## QTEASY Documentations
 
-You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io):
+You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io/zh/latest/):
 
 
 ## Installation and dependencies
