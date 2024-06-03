@@ -1103,7 +1103,7 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
+def configure(config=None, reset=False, only_built_in_keys=True, **kwargs) -> None:
     """ 配置qteasy的运行参数QT_CONFIG
 
     Parameters
@@ -1137,20 +1137,20 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
 
     """
     if config is None:
-        set_config = QT_CONFIG
+        set_cfg = QT_CONFIG
     else:
         assert isinstance(config, ConfigDict), TypeError(f'config should be a ConfigDict, got {type(config)}')
-        set_config = config
+        set_cfg = config
     if not reset:
-        _update_config_kwargs(set_config, kwargs, raise_if_key_not_existed=only_built_in_keys)
+        _update_config_kwargs(set_cfg, kwargs, raise_if_key_not_existed=only_built_in_keys)
     else:
         from qteasy._arg_validators import _valid_qt_kwargs
         default_kwargs = {k: v['Default'] for k, v in zip(_valid_qt_kwargs().keys(),
                                                           _valid_qt_kwargs().values())}
-        _update_config_kwargs(set_config, default_kwargs, raise_if_key_not_existed=True)
+        _update_config_kwargs(set_cfg, default_kwargs, raise_if_key_not_existed=True)
 
 
-def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs):
+def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs) -> None:
     """ 配置qteasy的运行参数QT_CONFIG，等同于configure()
 
     Parameters
@@ -1176,7 +1176,7 @@ def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs):
     return configure(config=config, reset=reset, only_built_in_keys=only_built_in_keys, **kwargs)
 
 
-def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False):
+def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False) -> None:
     """ 显示qt当前的配置变量，
 
     Parameters
@@ -1384,7 +1384,7 @@ def _check_config_file_name(file_name, allow_default_name=False):
     return file_name
 
 
-def save_config(config=None, file_name=None, overwrite=True, initial_config=False):
+def save_config(config=None, file_name=None, overwrite=True, initial_config=False) -> str:
     """ 将config保存为一个文件
     尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
 
@@ -1398,10 +1398,13 @@ def save_config(config=None, file_name=None, overwrite=True, initial_config=Fals
         默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
     initial_config: bool, Default: False ** FUNCTIONALITY NOT IMPLEMENTED **
         保存环境变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部分环境变量了，则覆盖相关环境变量
+        TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
+         由于目前使用pickle写入对象为二进制文件，而qteasy.cfg是文本文件，所以需要实现一个新的写入方式
 
     Returns
     -------
-    None
+    file_name: str
+        保存的文件名
     """
 
     from qteasy import logger_core
@@ -1427,11 +1430,13 @@ def save_config(config=None, file_name=None, overwrite=True, initial_config=Fals
         try:
             pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
             logger_core.info(f'config file content written to: {f.name}')
+            return f.name
         except Exception as e:
             logger_core.warning(f'{e}, error during writing config to local file.')
+            return ""
 
 
-def load_config(config=None, file_name=None):
+def load_config(config=None, file_name=None) -> dict:
     """ 从文件file_name中读取相应的config参数，写入到config中，如果config为
         None，则保存参数到QT_CONFIG中
 
@@ -1444,7 +1449,8 @@ def load_config(config=None, file_name=None):
 
     Returns
     -------
-    None
+    config: dict
+        读取的配置参数
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
@@ -1463,12 +1469,15 @@ def load_config(config=None, file_name=None):
             saved_config = pickle.load(f)
             logger_core.info(f'read configuration file: {f.name}')
     except FileNotFoundError as e:
-        logger_core.warning(f'{e}\nError during loading configuration {file_name}! nothing will be read.')
+        msg = f'{e}\nConfiguration file {file_name} not found! nothing will be read.'
+        logger_core.warning(msg)
         saved_config = {}
 
     configure(config=config,
               only_built_in_keys=False,
               **saved_config)
+
+    return saved_config
 
 
 def view_config_files(details=False):
@@ -2144,6 +2153,11 @@ def run(operator, **kwargs):
         # 进入实时信号生成模式:
         from qteasy.trader import start_trader_ui
         from qteasy import QT_DATA_SOURCE
+        # 实盘运行模式📄支持asset_type = 'E'的情况，因此需要检查并排除其他情况
+        if config['asset_type'] != 'E':
+            msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
+                  f'please set asset_type="E" with: qt.configure(asset_type="E")'
+            raise ValueError(msg)
         start_trader_ui(
                 operator=operator,
                 account_id=config['live_trade_account_id'],
