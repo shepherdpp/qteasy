@@ -114,15 +114,18 @@ def _valid_qt_kwargs():
             {'Default':   None,  # 指定account_id后，实盘交易时会直接使用该账户，除非账户不存在
              'Validator': lambda value: isinstance(value, int) or value is None,
              'level':     0,
-             'text':      '实盘交易账户ID，一个整数。用于实盘交易，如果指定了该参数，则会直接\n'
-                          '使用该账户，除非账户不存在'},
+             'text':      '实盘交易账户ID，用于实盘交易，如果指定了该参数，则会直接\n'
+                          '使用该账户执行实盘交易，如果账户ID不存在，则会报错; \n'
+                          '如果不给出account_id，则必须给出live_trade_account_name\n'
+                          '以创建一个新的账户ID'},
 
         'live_trade_account_name':
             {'Default':   None,  # 指定account后，会查找该账户对应的account_id并使用该账户，除非账户不存在
              'Validator': lambda value: isinstance(value, str) or value is None,
              'level':     0,
-             'text':      '实盘交易账户名称，用于实盘交易，如果指定了该参数，则会查找该\n'
-                          '账户对应的account_id并使用该账户，除非账户不存在'},
+             'text':      '用于实盘交易的账户名称，如果live_trade_account为None，则\n'
+                          '必须创建新的账户ID，此时本参数必须给出，并设定account_name为\n'
+                          '本参数的值'},
 
         'live_trade_debug_mode':
             {'Default':   False,

@@ -80,12 +80,15 @@ qteasy的所有配置变量
      - 0
      - ``None``
      - | 实盘交易账户ID，用于实盘交易，如果指定了该参数，则会直接
-       | 使用该账户，除非账户不存在
-   * - ``live_trade_account``
+       | 使用该账户执行实盘交易，如果账户ID不存在，则会报错
+       | 如果不给出account_id，则必须给出live_trade_account_name
+       | 以创建一个新的账户ID
+   * - ``live_trade_account_name``
      - 0
      - ``None``
-     - | 实盘交易账户名称，用于实盘交易，如果指定了该参数，则会查找该
-       | 账户对应的account_id并使用该账户，除非账户不存在
+     - | 用于实盘交易的账户名称，如果live_trade_account为None，则
+       | 必须创建新的账户ID，此时本参数必须给出，并设定account_name为
+       | 本参数的值
    * - ``live_trade_debug_mode``
      - 1
      - ``False``
