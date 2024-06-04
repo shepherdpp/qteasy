@@ -1379,8 +1379,9 @@ def _check_config_file_name(file_name, allow_default_name=False):
     if not re.match(r'[a-zA-Z_]\w+\.cfg$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
     if (file_name == 'qteasy.cfg') and (not allow_default_name):
-        # TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
-        raise NotImplementedError(f'functionality not implemented yet, please use another file name.')
+        # TODO: 实现配置变量写入qteasy.cfg初始配置文件的功能
+        raise NotImplementedError(f'"qteasy.cfg" is not an allowed file name, functionality not '
+                                  f'implemented yet, please use another file name.')
     return file_name
 
 
@@ -1391,14 +1392,14 @@ def save_config(*, config=None, file_name=None, overwrite=True, initial_config=F
     Parameters
     ----------
     config: ConfigDict or dict, Default: None
-        一个config对象或者包含配置环境变量的dict，如果为None，则保存qt.QT_CONFIG
+        一个config对象或者包含配配置变量的dict，如果为None，则保存qt.QT_CONFIG
     file_name: str, Default: None
         文件名，如果为None，文件名为"saved_config.cfg"
     overwrite: bool, Default: True
         默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
     initial_config: bool, Default: False ** FUNCTIONALITY NOT IMPLEMENTED **
-        保存环境变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部分环境变量了，则覆盖相关环境变量
-        TODO: 实现将环境变量写入qteasy.cfg初始配置文件的功能
+        保配置变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部配置变量了，则覆盖相配置变量
+        TODO: 实现将配置变量写入qteasy.cfg初始配置文件的功能
          由于目前使用pickle写入对象为二进制文件，而qteasy.cfg是文本文件，所以需要实现一个新的写入方式
 
     Returns
@@ -1974,20 +1975,20 @@ def check_and_prepare_optimize_data(operator, config, datasource=None):
 
 # noinspection PyTypeChecker
 def run(operator, **kwargs):
-    """开始运行，qteasy模块的主要入口函数
+    """ `qteasy`模块的主要入口函数
 
-    接受operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
-    根据QT_CONFIG环境变量中的设置和运行模式（mode）进行不同的操作：
-    mode == 0:
-        进入实时信号生成模式：实盘运行模式是一个无限循环：
-        根据Config以及Operator中策略的设置定时启动相应的交易策略，读取最新的实时数据，生成交易信号，并将交易信号解析为
-        交易指令，发送到交易所Broker对象执行。
-        所有的交易结果和实时持仓都会被记录到数据库中，如果数据库中已经有了相应的记录，新的实盘运行结果可以在已经有的记录上
-        继续运行，或者用户也可以选择新建一个实盘账户，重新开始运行。
+    接受`operator`执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
+    根据QT_CONFIG配置变量中的设置和运行模式（mode）进行不同的操作：
 
-        实盘运行的过程会显示在屏幕上，用户可以在实盘运行过程中隋时进入交互模式，查看实盘运行的状态，或者修改运行参数。
+    mode == 0, live trade mode, 实盘交易模式：
+        一旦启动此模式，就会在terminal中启动一个单独的线程在后台运行，运行的时机也是跟真实的股票市场一致的，股票市场收市的时
+        候不运行，交易日早上9点15分唤醒系统开始拉取实时股价，9点半开始运行交易策略，交易策略的运行时机和运行频率在策略的属性中
+        设置。如果策略运行的结果产生交易信号，则根据交易信号模拟挂单，挂单成交后修改响应账户资金和股票持仓，交易费用按照设置中
+        的费率扣除。如果资金不足或持仓不足会导致交易失败，当天买入的股票同真实市场一样T+1交割，第二个交易日开始前交割完毕。
 
-        用户需要在Terminal中以命令行的方式运行qteasy的实盘模式，通过tradershell查看运行过程并进行交互。
+        `Qteasy`的实盘运行有一个“账户”的概念，就跟您在股票交易市场开户一样，一个账户可以有自己的持有资金，股票持仓，单独
+        计算盈亏。运行过程中您可以随时终止程序，这时所有的交易记录都会保存下来，下次重新启动时，只要引用上一次运行使用的
+        账户ID（account ID）就可以从上次中断的地方继续运行了，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行。
 
     mode == 1, backtest mode, 回测模式，根据历史数据生成交易信号，执行交易：
         根据Config规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
