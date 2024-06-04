@@ -1384,7 +1384,7 @@ def _check_config_file_name(file_name, allow_default_name=False):
     return file_name
 
 
-def save_config(config=None, file_name=None, overwrite=True, initial_config=False) -> str:
+def save_config(*, config=None, file_name=None, overwrite=True, initial_config=False) -> str:
     """ 将config保存为一个文件
     尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()
 
