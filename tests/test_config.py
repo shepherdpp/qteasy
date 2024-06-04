@@ -28,13 +28,26 @@ class TestConfig(unittest.TestCase):
         conf = {'mode':                2,
                 'invest_cash_amounts': [200000]}
         qt.configure(**conf)
-        qt.save_config(QT_CONFIG, 'saved3.cfg')
-        qt.load_config(QT_CONFIG, 'saved3.cfg')
+        qt.save_config(config=QT_CONFIG, file_name='saved3.cfg')
+        qt.load_config(config=QT_CONFIG, file_name='saved3.cfg')
         print(QT_CONFIG)
         self.assertEqual(QT_CONFIG.mode, 2)
+        self.assertEqual(QT_CONFIG.invest_cash_amounts, [200000])
         qt.reset_config()
         print(QT_CONFIG)
         self.assertEqual(QT_CONFIG.mode, 1)
+        self.assertEqual(QT_CONFIG.invest_cash_amounts, [100000])
+
+        # save and load config but don't overwrite QT_CONFIG
+        conf = {'mode':                0,
+                'invest_cash_amounts': [50000]}
+        qt.save_config(config=conf, file_name='saved4.cfg')
+        loaded_config = qt.load_config(file_name='saved4.cfg')
+        print(loaded_config)
+        self.assertEqual(loaded_config['mode'], 0)
+        self.assertEqual(loaded_config['invest_cash_amounts'], [50000])
+        self.assertEqual(QT_CONFIG.mode, 1)
+        self.assertEqual(QT_CONFIG.invest_cash_amounts, [100000])
 
     def test_config(self):
         """测试设置不同的配置值，包括测试不合法的配置值以及不存在的配置值"""

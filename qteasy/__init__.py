@@ -5,9 +5,9 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-11
 # Desc:
-#   QTEASY:
-#   A fast and easy-to-use quant-investment
-#   strategy research tool kit.
+# QTEASY:
+#  A fast and easy-to-use quant-investment
+#  strategy research tool kit.
 # ======================================
 
 import os
@@ -21,7 +21,7 @@ from logging.handlers import TimedRotatingFileHandler
 from argparse import Namespace
 
 from .utilfuncs import is_float_like, is_integer_like
-from .core import run, set_config, get_configurations, get_config
+from .core import run, set_config, get_configurations, get_config, view_config_files
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source
 from .core import get_history_data, filter_stock_codes, filter_stocks
@@ -38,15 +38,15 @@ from ._arg_validators import QT_CONFIG, ConfigDict
 
 
 # qteasy版本信息
-__version__ = '1.2.8'
+__version__ = '1.2.9'
 version_info = Namespace(
         major=1,
         minor=2,
-        patch=8,
+        patch=9,
         short=(1, 2),
-        full=(1, 2, 8),
-        string='1.2.8',
-        tuple=('1', '2', '8'),
+        full=(1, 2, 9),
+        string='1.2.9',
+        tuple=('1', '2', '9'),
         releaselevel='beta',
 )
 
@@ -189,7 +189,7 @@ py_ver_minor = py_version.minor
 
 
 __all__ = [
-    'run', 'set_config', 'get_configurations', 'get_config',
+    'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
     'get_history_data', 'filter_stock_codes', 'filter_stocks',

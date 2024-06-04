@@ -67,28 +67,6 @@ UserWarning: trade calendar is not loaded, some utility functions may not work p
 ```
 qteasy提供了一个函数get_table_overview()来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。
 
-> ### 常见问题提示
-> 
-> 有时候，在使用数据库作为数据源，并从数据库中读取数据时，您可能会看到以下提示信息：
-> ```text
-> UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-> ```
-> 
-> 总的来说，这是一条`UserWarning`。其实应该并没有错误发生，数据读取应该是成功的。出现这条警告信息的原因跟您安装的`pandas`的版本有关。您不需要安装`sqlalchemy`，`qteasy`已经移除了对`sqlalchemy`的依赖.
-> 为了确认为何会出现这条警告，请检查一下您的`pandas`版本.
-> 
-> ```python
-> import pandas as pd
-> pd.__version__
-> ```
-> 
-> 如果您使用的`pandas`版本为1.1以上，有可能会出现这条`UserWarning`，但一般来说应该不会影响使用：
-> 这是因为`qteasy`使用`pymysql`作为数据库连接API，但`pandas`从1.1版本以后，逐步开始将`pymysql`的支持去掉了，尽管经过测试，在`pandas`的1.5版本下`qteasy`仍然能够正确读取数据，但是会收到警告信息。
-> 
-> 以上问题已经进入了我的修改清单，在接下来的小升级中，会去掉对`pandas`的sql API依赖，直接使用`pymysql`读取数据库，这样就不会出现这条警告信息了。如果您不希望看到这条警告信息，也可以降级`pandas`的版本到`1.1.0`。`qteasy`在开发初期一致固定使用较低版本的`pandas`，绝大部分的稳定性测试基于`pandas`的1.1版本，如果使用1.1版本的`pandas`就不会出现这个提示信息，其他所有功能也都正常。
-> 
-> 
-
 ```python
 import qteasy as qt
 qt.get_table_overivew()
@@ -180,7 +158,7 @@ list_date    1991-04-03
 - **fund_basic**: 基金基础数据
 - **future_basic**: 期货基础数据
 
-除了查找股票或证券的基本信息以外，我们还能用qt.filter_stock()函数来筛选股票：
+除了查找股票或证券的基本信息以外，我们还能用`qt.filter_stock()`函数来筛选股票：
 ```python
 qt.filter_stocks(date='20240212', industry='银行', area='上海')
 ```
@@ -197,14 +175,14 @@ qt_code
 
 金融数据中最重要的数据类型非量价数据莫属。接下来，我们就来下载历史价格数据。
 
-qteasy的历史数据全都是以K线数据的形式存储在数据表中的，目前支持的K线数据包括：
+`qteasy`的历史数据全都是以K线数据的形式存储在数据表中的，目前支持的K线数据包括：
 
 - 分钟K线 - 1分钟/5分钟/15分钟/30分钟/60分钟K线
 - 日K线
 - 周K线
 - 月K线
 
-我们同样使用qt.refill_data_source()函数下载股票数据。最常用的股票日K线数据保存在stock_daily表中。不过由于数据量较大，我们最好在下载数据时限定数据的范围，通过start_date/end_date参数，指定下载数据的起始日期，分批下载历史数据，否则，下载的过程将会非常漫长：
+我们同样使用`qt.refill_data_source()`函数下载股票数据。最常用的股票日K线数据保存在`stock_daily`表中。不过由于数据量较大，我们最好在下载数据时限定数据的范围，通过`start_date`/`end_date`参数，指定下载数据的起始日期，分批下载历史数据，否则，下载的过程将会非常漫长：
 
 ```python
 qt.refill_data_source(tables='stock_daily', start_date='20230101', end_date='20231231')
@@ -255,7 +233,7 @@ qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', st
 ### 生成K线图
 使用量价数据，更加方便易读的方法是将数据显示为K线图。
 
-qteasy提供了qt.candle()函数，用于显示专业K线图，只要数据下载到本地后，就可以立即显示K线图：
+`qteasy`提供了`qt.candle()`函数，用于显示专业K线图，只要数据下载到本地后，就可以立即显示K线图：
 
 ```python
 qt.candle('600004.SH', start='20230101', end='20230301')
@@ -460,6 +438,6 @@ python -m refill_data --tables stock_daily --start_date 20230101 --end_date 2023
 
 至此，我们已经初步了解了`qteasy`中对数据的管理方式，了解了数据下载的方法。下载了基本数据以及一些量价数据。我们学会了如何提取数据、如何显示K线图。最后，我们还学会了查询数据的方法，如果需要某种数据，知道如何查询，如何下载和调用这些数据。
 
-在下一篇教程中，我们将进一步加深对qteasy的了解，我们将学会如何创建交易策略，如何运行并回测交易策略。
+在下一篇教程中，我们将进一步加深对`qteasy`的了解，我们将学会如何创建交易策略，如何运行并回测交易策略。
 
-关于qteasy的更多介绍，请参见[qteasy文档](https://qteasy.readthedocs.io)
+关于`qteasy`的更多介绍，请参见[qteasy文档](https://qteasy.readthedocs.io)

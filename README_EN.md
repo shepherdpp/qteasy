@@ -48,7 +48,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.2.8`
+- Latest Version: `1.2.9`
 - License: BSD 3-Clause License
 
 `qteasy` is a quantitative trading utility package for quantitative traders, with the following features:
@@ -92,7 +92,7 @@
 
 ## QTEASY Documentations
 
-You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io):
+You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io/zh/latest/):
 
 
 ## Installation and dependencies
