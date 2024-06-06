@@ -59,11 +59,55 @@ class OrderTable(DataTable):
 
 class WatchTable(DataTable):
     """A widget to display current holdings."""
+
+    BINDINGS = [
+        ("ctrl+a", "add_symbol", "add symbol"),
+        ("ctrl+r", "remove_symbol", "remove symbol"),
+        ("del", "delete_symbol", "delete symbol"),
+    ]
+
     df_columns = ("name", "close", "pre_close", "open", "high",
                   "low", "vol", "amount", "change")
     headers = ("Symbol",
                "Name", "Price", "Last Close", "Open", "High",
                "Low", "Volume", "Amount", "Change")
+
+    def action_add_symbol(self) -> None:
+        """Action to add a symbol to watch list from a dialog."""
+        def on_input(input_string):
+            # received input string: input_string, add it to the watch list
+            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
+            symbols = str_to_list(input_string)
+            log = self.app.query_one(SysLog)
+            for symbol in symbols:
+                if is_complete_cn_stock_symbol_like(symbol):
+                    self.app.trader.watch_list.append(symbol)
+                    log.write(f"Added {symbol} to watch list.")
+
+            self.app.refresh_ui = True
+            self.app.refresh_watches()
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen("Input symbols to add to watch list"), on_input)
+
+    def action_remove_symbol(self) -> None:
+        """Action to remove selected symbol, if no symbol selected, don't do anything."""
+        watch_list = self.app.trader.watch_list
+        coord = self.cursor_coordinate
+        log = self.app.query_one(SysLog)
+        sel_row = coord[0]
+        symbol = watch_list[sel_row]
+
+        if not coord:
+            return
+
+        if symbol not in watch_list:
+            return
+
+        watch_list.remove(symbol)
+        log.write(f"Deleted symbol {symbol} from watch list({watch_list})")
+        self.app.refresh_ui = True
+        self.app.refresh_watches()
 
 
 class Tables(TabbedContent):
@@ -90,7 +134,7 @@ class Tables(TabbedContent):
                         id='watches',
                         fixed_columns=3,
                         zebra_stripes=True,
-                        cursor_type='none',
+                        cursor_type='row',
                 )
 
 
@@ -187,7 +231,6 @@ class TraderApp(App):
         ("ctrl+p", "pause_trader", "Pause"),
         ("ctrl+r", "resume_trader", "Resume"),
         ("ctrl+q", "request_quit", "Quit app"),
-        ("ctrl+g", "get_input", "Get Input"),
     ]
 
     def __init__(self, trader, *args, **kwargs):
@@ -577,22 +620,3 @@ class TraderApp(App):
 
         self.refresh_ui = False
         self.push_screen(QuitScreen(), confirm_exit)
-
-    def action_get_input(self) -> None:
-        """Action to get input from a dialog."""
-        def on_input(input_string):
-            # received input string: input_string, add it to the watch list
-            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
-            symbols = str_to_list(input_string)
-            log = self.query_one(SysLog)
-            for symbol in symbols:
-                if is_complete_cn_stock_symbol_like(symbol):
-                    self.trader.watch_list.append(symbol)
-                    log.write(f"Added {symbol} to watch list.")
-
-            self.refresh_ui = True
-
-        self.refresh_ui = False
-        self.push_screen(InputScreen("Input symbols to add to watch list"), on_input)
-
-
