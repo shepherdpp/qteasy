@@ -62,8 +62,7 @@ class WatchTable(DataTable):
 
     BINDINGS = [
         ("ctrl+a", "add_symbol", "add symbol"),
-        ("ctrl+r", "remove_symbol", "remove symbol"),
-        ("del", "delete_symbol", "delete symbol"),
+        ("delete", "remove_symbol", "remove symbol"),
     ]
 
     df_columns = ("name", "close", "pre_close", "open", "high",
@@ -78,11 +77,11 @@ class WatchTable(DataTable):
             # received input string: input_string, add it to the watch list
             from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
             symbols = str_to_list(input_string)
-            log = self.app.query_one(SysLog)
+            # log = self.app.query_one(SysLog)
             for symbol in symbols:
                 if is_complete_cn_stock_symbol_like(symbol):
                     self.app.trader.watch_list.append(symbol)
-                    log.write(f"Added {symbol} to watch list.")
+                    # log.write(f"Added {symbol} to watch list {self.app.trader.watch_list}.")
 
             self.app.refresh_ui = True
             self.app.refresh_watches()
@@ -93,19 +92,18 @@ class WatchTable(DataTable):
     def action_remove_symbol(self) -> None:
         """Action to remove selected symbol, if no symbol selected, don't do anything."""
         watch_list = self.app.trader.watch_list
-        coord = self.cursor_coordinate
-        log = self.app.query_one(SysLog)
-        sel_row = coord[0]
-        symbol = watch_list[sel_row]
+        # log = self.app.query_one(SysLog)
+        # sel_row = self.cursor_row
+        symbol = self.get_row_at(self.cursor_row)[0]
 
-        if not coord:
+        # log.write(f'[debug]: selected row: {sel_row}, symbol: {self.get_row_at(sel_row)[0]}')
+
+        try:
+            watch_list.remove(symbol)
+            # log.write(f"[debug]: Deleted symbol {symbol} from watch list({watch_list})")
+        except ValueError:
             return
 
-        if symbol not in watch_list:
-            return
-
-        watch_list.remove(symbol)
-        log.write(f"Deleted symbol {symbol} from watch list({watch_list})")
         self.app.refresh_ui = True
         self.app.refresh_watches()
 
