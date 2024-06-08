@@ -48,7 +48,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.2.10`
+- Latest Version: `1.2.11`
 - License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
@@ -290,7 +290,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 `qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略。
 
-`queasy`提供了两种方式创建交易策略，详细的说明请参见使用教程：
+`qteasy`提供了两种方式创建交易策略，详细的说明请参见使用教程：
 
 - **使用内置交易策略组合**
 - **通过策略类自行创建策略**
@@ -312,7 +312,7 @@ op.info()
 
 `DMA`是一个内置的均线择时策略，它通过计算股票每日收盘价的快、慢两根移动均线的差值`DMA`与其移动平均值`AMA`之间的交叉情况来确定多空或买卖点。：
 
-使用qt.built_ins()函数可以查看DMA策略的详情，例如：
+使用`qt.built_ins()`函数可以查看DMA策略的详情，例如：
 ```python
 import qteasy as qt
 qt.built_ins('dma')
@@ -347,7 +347,7 @@ qt.built_ins('dma')
 
 
 ### 回测并评价交易策略的性能表现
-queasy可以使用历史数据回测策略表现并输出图表如下：
+`qteasy`可以使用历史数据回测策略表现并输出图表如下：
 ![png](docs/source/img/output_14_3.png)
 
 使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run()`。
@@ -551,4 +551,4 @@ qt.run(
 ![png](docs/source/examples/img/trader_app_light_theme.png) 
 ![png](docs/source/examples/img/trader_app_2.png) 
 
-上面两种方式都可以在实盘运行时使用，根据qteasy的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
+上面两种方式都可以在实盘运行时使用，根据`qteasy`的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
