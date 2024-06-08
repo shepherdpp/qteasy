@@ -93,8 +93,11 @@ class WatchTable(DataTable):
         """Action to remove selected symbol, if no symbol selected, don't do anything."""
         watch_list = self.app.trader.watch_list
         # log = self.app.query_one(SysLog)
-        # sel_row = self.cursor_row
-        symbol = self.get_row_at(self.cursor_row)[0]
+        sel_row = self.cursor_row
+        if not sel_row:
+            return 
+
+        symbol = self.get_row_at(sel_row)[0]
 
         # log.write(f'[debug]: selected row: {sel_row}, symbol: {self.get_row_at(sel_row)[0]}')
 
