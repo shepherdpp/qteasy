@@ -1657,14 +1657,14 @@ TABLE_SCHEMA = {
 
     # TODO: for v1.1:
     #  在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
-    'sys_op_live_accounts':  # 交易账户表
+    'sys_op_live_accounts':  # 实盘交易账户表
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash', 'total_invest'],
          'dtypes':     ['int', 'varchar(20)', 'datetime', 'double', 'double', 'double'],
          'remarks':    ['运行账号ID', '用户名', '创建时间', '现金总额', '可用现金总额', '总投资额'],
          'prime_keys': [0],
          },
 
-    'sys_op_positions':  # 持仓表
+    'sys_op_positions':  # 实盘持仓表
         {'columns':    ['pos_id', 'account_id', 'symbol', 'position', 'qty', 'available_qty', 'cost'],
          'dtypes':     ['int', 'int', 'varchar(20)', 'varchar(5)', 'double', 'double', 'double'],
          'remarks':    ['持仓ID', '运行账号ID', '资产代码', '持仓类型(多long/空short)', '持仓数量', '可用数量',
@@ -1672,7 +1672,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0],
          },
 
-    'sys_op_trade_orders':  # 交易订单表
+    'sys_op_trade_orders':  # 实盘交易订单表
         {'columns':    ['order_id', 'pos_id', 'direction', 'order_type', 'qty', 'price',
                         'submitted_time', 'status'],
          'dtypes':     ['int', 'int', 'varchar(10)', 'varchar(8)', 'double', 'double',
@@ -1683,7 +1683,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'sys_op_trade_results':  # 交易结果表
+    'sys_op_trade_results':  # 实盘交易结果表
         {'columns':    ['result_id', 'order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                         'canceled_qty', 'delivery_amount', 'delivery_status'],
          'dtypes':     ['int', 'int', 'double', 'double', 'double', 'datetime',
@@ -1693,14 +1693,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0],
          },
 
-    'trade_calendar':
+    'trade_calendar':  # 交易日历表
         {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
          'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
          'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
          'prime_keys': [0, 1]
          },
 
-    'stock_basic':
+    'stock_basic':  # 股票基本信息表
         {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname',
                         'enname', 'cnspell', 'market', 'exchange', 'curr_type', 'list_status',
                         'list_date', 'delist_date', 'is_hs'],
@@ -1713,14 +1713,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'name_changes':
+    'name_changes':  # 股票名称变更表
         {'columns':    ['ts_code', 'start_date', 'name', 'end_date', 'ann_date', 'change_reason'],
          'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'date', 'date', 'varchar(10)'],
          'remarks':    ['证券代码', '开始日期', '证券名称', '结束日期', '公告日期', '变更原因'],
          'prime_keys': [0, 1]
          },
 
-    'stock_company':
+    'stock_company':  # 上市公司基本信息表
         {'columns':    ['ts_code', 'exchange', 'chairman', 'manager', 'secretary',
                         'reg_capital', 'setup_date', 'province', 'city', 'introduction',
                         'website', 'email', 'office', 'employees', 'main_business', 'business_scope'],
@@ -1733,7 +1733,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'stk_managers':
+    'stk_managers':  # 上市公司管理层表
         {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'lev',
                         'title', 'edu', 'national', 'birthday', 'begin_date',
                         'end_date', 'resume'],
@@ -1746,7 +1746,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1, 2]
          },
 
-    'new_share':
+    'new_share':  # IPO新股列表
         {'columns':    ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
                         'amount', 'market_amount', 'price', 'pe', 'limit_amount',
                         'funds', 'ballot'],
@@ -1759,7 +1759,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'index_basic':
+    'index_basic':  # 指数基本信息表
         {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher',
                         'index_type', 'category', 'base_date', 'base_point', 'list_date', 'weight_rule',
                         'desc', 'exp_date'],
@@ -1772,7 +1772,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'fund_basic':
+    'fund_basic':  # 基金基本信息表
         {'columns':    ['ts_code', 'name', 'management', 'custodian', 'fund_type', 'found_date',
                         'due_date', 'list_date', 'issue_date', 'delist_date', 'issue_amount', 'm_fee',
                         'c_fee', 'duration_year', 'p_value', 'min_amount', 'exp_return', 'benchmark',
@@ -1789,7 +1789,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'future_basic':
+    'future_basic':  # 期货基本信息表
         {'columns':    ['ts_code', 'symbol', 'exchange', 'name', 'fut_code', 'multiplier', 'trade_unit',
                         'per_unit', 'quote_unit', 'quote_unit_desc', 'd_mode_desc', 'list_date',
                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
@@ -1802,7 +1802,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'opt_basic':
+    'opt_basic':  # 期权基本信息表
         {'columns':    ['ts_code', 'exchange', 'name', 'per_unit', 'opt_code', 'opt_type', 'call_put',
                         'exercise_type', 'exercise_price', 's_month', 'maturity_date', 'list_price',
                         'list_date', 'delist_date', 'last_edate', 'last_ddate', 'quote_unit',
@@ -1816,7 +1816,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'bars':
+    'bars':  # 日线行情表
         {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'change',
                         'pct_chg', 'vol', 'amount'],
          'dtypes':     ['varchar(20)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
@@ -1826,7 +1826,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'min_bars':
+    'min_bars':  # 分钟K线行情表
         {'columns':    ['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
          'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'double',
                         'double'],
@@ -1835,14 +1835,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'adj_factors':
+    'adj_factors':  # 复权因子表
         {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
          'dtypes':     ['varchar(9)', 'date', 'double'],
          'remarks':    ['证券代码', '交易日期', '复权因子'],
          'prime_keys': [0, 1]
          },
 
-    'fund_nav':
+    'fund_nav':  # 基金净值表
         {'columns':    ['ts_code', 'nav_date', 'ann_date', 'unit_nav', 'accum_nav', 'accum_div',
                         'net_asset', 'total_netasset', 'adj_nav', 'update_flag'],
          'dtypes':     ['varchar(24)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
@@ -1852,14 +1852,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'fund_share':
+    'fund_share':  # 基金份额表
         {'columns':    ['ts_code', 'trade_date', 'fd_share'],
          'dtypes':     ['varchar(20)', 'date', 'float'],
          'remarks':    ['证券代码', '变动日期，格式YYYYMMDD', '基金份额(万)'],
          'prime_keys': [0, 1]
          },
 
-    'fund_manager':
+    'fund_manager':  # 基金经理表
         {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'birth_year', 'edu', 'nationality',
                         'begin_date', 'end_date', 'resume'],
          'dtypes':     ['varchar(20)', 'date', 'varchar(20)', 'varchar(2)', 'varchar(12)',
@@ -1869,7 +1869,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'future_daily':
+    'future_daily':  # 期货日线行情表
         {'columns':    ['ts_code', 'trade_date', 'pre_close', 'pre_settle', 'open', 'high', 'low',
                         'close', 'settle', 'change1', 'change2', 'vol', 'amount', 'oi', 'oi_chg',
                         'delv_settle'],
@@ -1881,7 +1881,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'future_mins':
+    'future_mins':  # 期货分钟K线行情表
         {'columns':    ['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount', 'oi'],
          'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'double',
                         'double', 'double'],
@@ -1890,7 +1890,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'options_daily':
+    'options_daily':  # 期权日线行情表
         {'columns':    ['ts_code', 'trade_date', 'exchange', 'pre_settle', 'pre_close', 'open', 'high',
                         'low', 'close', 'settle', 'vol', 'amount', 'oi'],
          'dtypes':     ['varchar(20)', 'date', 'varchar(8)', 'float', 'float', 'float', 'float',
@@ -1900,7 +1900,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'stock_indicator':
+    'stock_indicator':  # 股票技术指标表
         {'columns':    ['ts_code', 'trade_date', 'close', 'turnover_rate', 'turnover_rate_f',
                         'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm', 'dv_ratio', 'dv_ttm',
                         'total_share', 'float_share', 'free_share', 'total_mv', 'circ_mv'],
@@ -1915,7 +1915,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'stock_indicator2':
+    'stock_indicator2':  # 股票技术指标备用表
         {'columns':    ['ts_code', 'trade_date', 'vol_ratio', 'turn_over', 'swing',
                         'selling', 'buying', 'total_share', 'float_share', 'pe',
                         'float_mv', 'total_mv', 'avg_price', 'strength', 'activity', 'avg_turnover',
@@ -1930,7 +1930,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'index_indicator':
+    'index_indicator':  # 指数关键指标表
         {'columns':    ['ts_code', 'trade_date', 'total_mv', 'float_mv', 'total_share', 'float_share',
                         'free_share', 'turnover_rate', 'turnover_rate_f', 'pe', 'pe_ttm', 'pb'],
          'dtypes':     ['varchar(9)', 'date', 'double', 'double', 'double', 'double', 'double', 'float',
@@ -1941,14 +1941,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'index_weight':
+    'index_weight':  # 指数成分表
         {'columns':    ['index_code', 'trade_date', 'con_code', 'weight'],
          'dtypes':     ['varchar(24)', 'date', 'varchar(20)', 'float'],
          'remarks':    ['指数代码', '交易日期', '成分代码', '权重(%)'],
          'prime_keys': [0, 1, 2]
          },
 
-    'income':
+    'income':  # 上市公司利润表
         {'columns':    ['ts_code', 'end_date', 'ann_date', 'f_ann_date', 'report_type', 'comp_type',
                         'end_type', 'basic_eps', 'diluted_eps', 'total_revenue', 'revenue',
                         'int_income', 'prem_earned', 'comm_income', 'n_commis_income', 'n_oth_income',
@@ -2009,7 +2009,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'balance':
+    'balance':  # 上市公司资产负债表
         {'columns':    ['ts_code', 'end_date', 'ann_date', 'f_ann_date', 'report_type', 'comp_type',
                         'end_type', 'total_share', 'cap_rese', 'undistr_porfit', 'surplus_rese',
                         'special_rese', 'money_cap', 'trad_asset', 'notes_receiv', 'accounts_receiv',
@@ -2106,7 +2106,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'cashflow':
+    'cashflow':  # 上市公司现金流量表
         {'columns':    ['ts_code', 'end_date', 'ann_date', 'f_ann_date', 'comp_type', 'report_type',
                         'end_type', 'net_profit', 'finan_exp', 'c_fr_sale_sg', 'recp_tax_rends',
                         'n_depos_incr_fi', 'n_incr_loans_cb', 'n_inc_borr_oth_fi',
@@ -2185,7 +2185,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'financial':
+    'financial':  # 上市公司财务指标数据
         {'columns':    ['ts_code', 'end_date', 'ann_date', 'eps', 'dt_eps', 'total_revenue_ps',
                         'revenue_ps', 'capital_rese_ps', 'surplus_rese_ps', 'undist_profit_ps',
                         'extra_item', 'profit_dedt', 'gross_margin', 'current_ratio', 'quick_ratio',
@@ -2299,7 +2299,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'forecast':
+    'forecast':  # 业绩预告
         {'columns':    ['ts_code', 'end_date', 'ann_date', 'type', 'p_change_min', 'p_change_max',
                         'net_profit_min', 'net_profit_max', 'last_parent_net', 'first_ann_date',
                         'summary', 'change_reason'],
@@ -2312,7 +2312,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1, 2]
          },
 
-    'express':
+    'express':  # 业绩快报
         {'columns':    ['ts_code', 'end_date', 'ann_date', 'revenue', 'operate_profit', 'total_profit',
                         'n_income', 'total_assets', 'total_hldr_eqy_exc_min_int', 'diluted_eps',
                         'diluted_roe', 'yoy_net_profit', 'bps', 'yoy_sales', 'yoy_op', 'yoy_tp',
@@ -2336,14 +2336,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'shibor':
+    'shibor':  # 上海银行间同业拆放利率
         {'columns':    ['date', 'on', '1w', '2w', '1m', '3m', '6m', '9m', '1y'],
          'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
          'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '3个月', '6个月', '9个月', '1年'],
          'prime_keys': [0]
          },
 
-    'libor':
+    'libor':  # 伦敦银行间同业拆借利率
         {'columns':    ['date', 'curr_type', 'on', '1w', '1m', '2m', '3m', '6m', '12m'],
          'dtypes':     ['date', 'varchar(9)', 'float', 'float', 'float', 'float', 'float', 'float',
                         'float'],
@@ -2351,7 +2351,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'hibor':
+    'hibor':  # 香港银行间同业拆借利率
         {'columns':    ['date', 'on', '1w', '2w', '1m', '2m', '3m', '6m', '12m'],
          'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
          'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '2个月', '3个月', '6个月', '12个月'],
@@ -2479,11 +2479,11 @@ class DataSource:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
             self.source_type = 'db'
-            con = pymysql.connect(host=host,
-                                  port=port,
-                                  user=user,
-                                  password=password)
             try:
+                con = pymysql.connect(host=host,
+                                      port=port,
+                                      user=user,
+                                      password=password)
                 # 检查db是否存在，当db不存在时创建新的db
                 cursor = con.cursor()
                 sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
@@ -2502,16 +2502,18 @@ class DataSource:
                 self.__user__ = user
                 self.__password__ = password
 
+                con.close()
+
             except Exception as e:
-                msg = f'Failed creating database connection, {str(e)}' \
+                msg = f'Mysql connection failed: {str(e)}' \
                       f'Can not set data source type to "db", ' \
-                      f'will fall back to default type'
+                      f'will fall back to csv file'
 
                 warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
             finally:
-                con.close()
+                pass
 
         if source_type.lower() == 'file':
             # set up file type and file location
@@ -2534,18 +2536,18 @@ class DataSource:
                 try:
                     import pyarrow
                 except ImportError:
-                    msg = f'Missing optional dependency \'pyarrow\' for datasource file type ' \
-                          f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow'
-                    raise ImportError(msg)
+                    err = ImportError(f'Missing optional dependency \'pyarrow\' for datasource file type '
+                                      f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow')
+                    raise err
                 file_type = 'fth'
             from qteasy import QT_ROOT_PATH
             self.file_path = path.join(QT_ROOT_PATH, file_loc)
             try:
                 os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
             except Exception:
-                msg = f'Failed creating data directory \'{file_loc}\' in qt root path, ' \
-                        f'please check your input.'
-                raise SystemError(msg)
+                err = SystemError(f'Failed creating data directory \'{file_loc}\' in qt root path, '
+                                  f'please check your input.')
+                raise err
             self.source_type = 'file'
             self.file_type = file_type
             self.file_loc = file_loc
@@ -2605,7 +2607,8 @@ class DataSource:
             if isinstance(tables, str):
                 tables = str_to_list(tables)
             if not isinstance(tables, list):
-                raise TypeError(f'tables should be a list of str, got {type(tables)} instead!')
+                err = TypeError(f'tables should be a list of str, got {type(tables)} instead!')
+                raise err
             all_table_names = [table_name for table_name in all_table_names if table_name in tables]
 
         all_info = []
@@ -2645,9 +2648,11 @@ class DataSource:
     def get_file_path_name(self, file_name):
         """获取完整文件路径名"""
         if self.source_type == 'db':
-            raise RuntimeError('can not check file system while source type is "db"')
+            err = RuntimeError('can not check file system while source type is "db"')
+            raise err
         if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+            err = TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+            raise err
         file_name = file_name + '.' + self.file_type
         file_path_name = path.join(self.file_path, file_name)
         return file_path_name
@@ -2685,7 +2690,8 @@ class DataSource:
         elif self.file_type == 'hdf':
             df.to_hdf(file_path_name, key='df')
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.file_type}')
+            err = TypeError(f'Invalid file type: {self.file_type}')
+            raise err
         return len(df)
 
     def read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
@@ -2734,7 +2740,8 @@ class DataSource:
             try:
                 df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
             except Exception as e:
-                raise RuntimeError(f'{e}, file reading error encountered.')
+                err = RuntimeError(f'{e}, file reading error encountered.')
+                raise err
             df_picker = (chunk for chunk in df_reader)
             if (share_like_pk is not None) and (date_like_pk is not None):
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
@@ -2756,13 +2763,16 @@ class DataSource:
                 df = pd.read_hdf(file_path_name, 'df')
             except ValueError as e:
                 if 'pickle protocol: 5' in e.__str__():  # check when the file is written in a higher pickle protocol
-                    msg = f'File {file_name} is written in a higher version of python which uses pickle protocol 5, ' \
-                            f'to avoid this error, install pickle5 package and re-save the file.'
-                    raise EnvironmentError(msg)
+                    err = EnvironmentError(f'File {file_name} is written in a higher version of python which uses '
+                                           f'pickle protocol 5, to avoid this error, install pickle5 package and '
+                                           f're-save the file.')
+                    raise err
                 else:
-                    raise RuntimeError(f'{e}, file reading error encountered.')
+                    err = RuntimeError(f'{e}, file reading error encountered.')
+                    raise err
             except Exception as e:
-                raise RuntimeError(f'{e}, file reading error encountered.')
+                err = RuntimeError(f'{e}, file reading error encountered.')
+                raise err
 
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'fth':
@@ -2770,9 +2780,11 @@ class DataSource:
             try:
                 df = pd.read_feather(file_path_name)
             except Exception as e:
-                raise RuntimeError(f'{e}, file reading error encountered.')
+                err = RuntimeError(f'{e}, file reading error encountered.')
+                raise err
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.file_type}')
+            err = TypeError(f'Invalid file type: {self.file_type}')
+            raise err
 
         try:
             # 如果self.file_type 为 hdf/fth，那么需要筛选数据
@@ -2788,7 +2800,7 @@ class DataSource:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            raise RuntimeError(f'{e}')
+            raise e
 
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
@@ -2812,8 +2824,8 @@ class DataSource:
         """
         # check that all record_ids are integers
         if not all(isinstance(record_id, int) for record_id in record_ids):
-            msg = f'All record_ids must be integers, got {record_ids} instead!'
-            raise TypeError(msg)
+            err = TypeError(f'All record_ids must be integers, got {record_ids} instead!')
+            raise err
         # read all data from file into a dataframe
         primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
         df = self.read_file(file_name, primary_key, pk_dtypes=['int'])

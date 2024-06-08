@@ -48,7 +48,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.2.10`
+- Latest Version: `1.2.11`
 - License: BSD 3-Clause License
 
 `qteasy` is a quantitative trading utility package for quantitative traders, with the following features:
@@ -92,7 +92,7 @@
 
 ## QTEASY Documentations
 
-You can find more about qteasy in the `QTEASY` [documents](https://qteasy.readthedocs.io/zh/latest/):
+You can find more about `qteasy` in the `QTEASY` [documents](https://qteasy.readthedocs.io/zh/latest/):
 
 
 ## Installation and dependencies
@@ -437,7 +437,7 @@ The backtest result is also visualized in a chart as well:
 
 The performance of a strategy highly depends on its adjustable parameters, and often varies a lot with different parameters. `qteasy` provides a series of optimization algorithms to help search for the best parameters of a strategy.
 
-To run qteasy in optimization mode, set optimization tag of the strategy: `opt_tag=1`, and set environment variable `mode=2`:
+To run `qteasy` in optimization mode, set optimization tag of the strategy: `opt_tag=1`, and set environment variable `mode=2`:
 
 
 ```python
@@ -506,7 +506,7 @@ For more detailed info about the optimization result, please refer to the tutori
 
 After configuring the `Operator` object and setting the strategy, it can be deployed in live trading mode with `qteasy`, creating a live trading environment.
 
-Once started, qteasy will run in the background in a separate thread, and the running time is consistent with the real stock market. The system will wake up at 9:15 am to pull real-time stock prices, and start running trading strategies at 9:30 am. The running time and frequency of the trading strategy can be set in the strategy properties. If the strategy generates trading signals, simulate placing orders according to the trading signals, modify the corresponding account funds and stock holdings after the order is executed, and deduct the trading costs according to the set rate. If the funds are insufficient or the positions are insufficient, the transaction will fail. Stocks purchased on the same day will be settled on the next trading day, just like the real market.
+Once started, `qteasy` will run in the background in a separate thread, and the running time is consistent with the real stock market. The system will wake up at 9:15 am to pull real-time stock prices, and start running trading strategies at 9:30 am. The running time and frequency of the trading strategy can be set in the strategy properties. If the strategy generates trading signals, simulate placing orders according to the trading signals, modify the corresponding account funds and stock holdings after the order is executed, and deduct the trading costs according to the set rate. If the funds are insufficient or the positions are insufficient, the transaction will fail. Stocks purchased on the same day will be settled on the next trading day, just like the real market.
 
 ```python
 import qteasy as qt
@@ -558,7 +558,7 @@ qt.run(
 )
 ```
 
-To monitor the running process of the strategy and interact with qteasy, qteasy provides two different interactive interfaces:
+To monitor the running process of the strategy and interact with `qteasy`, `qteasy` provides two different interactive interfaces:
 
 - **`TraderShell`** An interactive command line interface, you can enter commands in the command line to view trading logs, view holdings, view account fund changes, etc.：
 ![png](docs/source/img/output_27_1.png)  
