@@ -48,6 +48,12 @@ class HoldingTable(DataTable):
 class OrderTable(DataTable):
     """A widget to display current holdings."""
 
+    BINDINGS = [
+        ("ctrl+b", "manual_buy", "manual buy"),
+        ("ctrl+s", "manual_sell", "manual sell"),
+        ("ctrl+f", "filter", "filter order"),
+    ]
+
     df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
                   "submitted_time", "status", "price_filled", "filled_qty", "canceled_qty", "transaction_fee",
                   "execution_time",  "delivery_status")
@@ -55,6 +61,63 @@ class OrderTable(DataTable):
                "Symbol", "Position", "Side", "Type", "Qty", "Quote",
                "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
                "Execution Time", "Delivery")
+
+    def action_manual_buy(self) -> None:
+        """Action to manually buy a stock."""
+        def on_input(input_string):
+            # received input string: input_string, add it to the watch list
+            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
+            symbols = str_to_list(input_string)
+            log = self.app.query_one(SysLog)
+            for symbol in symbols:
+                if is_complete_cn_stock_symbol_like(symbol):
+                    self.app.trader.manual_buy(symbol)
+                    log.write(f"Manually bought {symbol}.")
+
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen("Input symbols to buy"), on_input)
+
+    def action_manual_sell(self) -> None:
+        """Action to manually sell a stock."""
+        def on_input(input_string):
+            # received input string: input_string, add it to the watch list
+            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
+            symbols = str_to_list(input_string)
+            log = self.app.query_one(SysLog)
+            for symbol in symbols:
+                if is_complete_cn_stock_symbol_like(symbol):
+                    self.app.trader.manual_sell(symbol)
+                    log.write(f"Manually sold {symbol}.")
+
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen("Input symbols to sell"), on_input)
+
+    def action_filter(self) -> None:
+        """Action to filter the orders.
+
+        Select one order and 
+        """
+        def on_input(input_string):
+            # received input string: input_string, add it to the watch list
+            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
+            symbols = str_to_list(input_string)
+            log = self.app.query_one(SysLog)
+            for symbol in symbols:
+                if is_complete_cn_stock_symbol_like(symbol):
+                    self.app.trader.filter_orders(symbol)
+                    log.write(f"Filtered orders with symbol {symbol}.")
+
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen("Input symbols to filter"), on_input)
 
 
 class WatchTable(DataTable):
