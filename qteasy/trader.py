@@ -129,16 +129,20 @@ class Trader(object):
         debug: bool, default False
             是否打印debug信息
         """
+        err = None
         if not isinstance(account_id, int):
-            raise TypeError(f'account_id must be int, got {type(account_id)} instead')
+            err = TypeError(f'account_id must be int, got {type(account_id)} instead')
         if not isinstance(operator, Operator):
-            raise TypeError(f'operator must be Operator, got {type(operator)} instead')
+            err = TypeError(f'operator must be Operator, got {type(operator)} instead')
         if not isinstance(broker, Broker):
-            raise TypeError(f'broker must be Broker, got {type(broker)} instead')
+            err = TypeError(f'broker must be Broker, got {type(broker)} instead')
         if not isinstance(config, dict):
-            raise TypeError(f'config must be dict, got {type(config)} instead')
+            err = TypeError(f'config must be dict, got {type(config)} instead')
         if not isinstance(datasource, DataSource):
-            raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
+            err = TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
+
+        if err:
+            raise err
 
         self.account_id = account_id
         self._broker = broker
@@ -740,9 +744,11 @@ class Trader(object):
             任务参数
         """
         if not isinstance(task, str):
-            raise TypeError('task should be a str')
+            err = TypeError('task should be a str')
+            raise err
         if kwargs and (not isinstance(kwargs, dict)):
-            raise TypeError('kwargs should be a dict')
+            err = TypeError('kwargs should be a dict')
+            raise err
 
         if kwargs:
             task = (task, kwargs)
@@ -2084,15 +2090,15 @@ def start_trader_ui(
     None
     """
     if not isinstance(operator, Operator):
-        raise ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
+        err = ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
+        raise err
     # if account_id is None then create a new account
     if (account_id is None) or (account_id < 0):
         if (user_name is None) or (user_name == ''):
-            msg = 'Account_id is not given, set account_id to run live trade with an existing account. set:\n' \
-                  'live_trade_account_id = <account_id>. \n' \
-                  'If you want to create a new account, leave account_id as None and provide an account_name. set:\n' \
-                  'live_trade_account_name="your_account_name"'
-            raise ValueError(msg)
+            err = ValueError(f'Account_id is not given, Choose a valid account or create a new one:\n'
+                             f'- to choose an account, set: live_trade_account_id=<ID>\n'
+                             f'- to create a new account, set: live_trade_account_name="your_account_name"')
+            raise err
         account_id = new_account(
                 user_name=user_name,
                 cash_amount=init_cash,
@@ -2101,14 +2107,18 @@ def start_trader_ui(
     try:
         _ = get_account(account_id, data_source=datasource)
     except Exception as e:
-        raise ValueError(f'{e}\naccount {account_id} does not exist. choose a valid account or create a new one.')
+        err = ValueError(f'{e}\nFailed to use account({account_id}), Choose a valid account or create a new one:\n'
+                         f'- to choose an account, set: live_trade_account_id=<ID>\n'
+                         f'- to create a new account, set: live_trade_account_name="your_account_name"')
+        raise err
 
     # now we know that account_id is valid
 
     # if init_holdings is not None then add holdings to account
     if init_holdings is not None:
         if not isinstance(init_holdings, dict):
-            raise ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+            err = ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+            raise err
         for symbol, amount in init_holdings.items():
             pos_id = get_or_create_position(
                     account_id=account_id,
@@ -2172,7 +2182,8 @@ def start_trader_ui(
         from .trader_tui import TraderApp
         TraderApp(trader).run()
     else:
-        raise TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
+        err= TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
+        raise err
 
 
 def refill_missing_datasource_data(operator, trader, config, datasource) -> None:

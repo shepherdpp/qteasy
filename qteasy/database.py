@@ -2505,9 +2505,8 @@ class DataSource:
                 con.close()
 
             except Exception as e:
-                msg = f'Mysql connection failed: {str(e)}' \
-                      f'Can not set data source type to "db", ' \
-                      f'will fall back to csv file'
+                msg = f'Mysql connection failed: {str(e)}\n' \
+                      f'Can not set data source type to "db", will fall back to csv file'
 
                 warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
