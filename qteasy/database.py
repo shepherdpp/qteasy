@@ -2479,11 +2479,11 @@ class DataSource:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
             self.source_type = 'db'
-            con = pymysql.connect(host=host,
-                                  port=port,
-                                  user=user,
-                                  password=password)
             try:
+                con = pymysql.connect(host=host,
+                                      port=port,
+                                      user=user,
+                                      password=password)
                 # 检查db是否存在，当db不存在时创建新的db
                 cursor = con.cursor()
                 sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
@@ -2502,16 +2502,18 @@ class DataSource:
                 self.__user__ = user
                 self.__password__ = password
 
+                con.close()
+
             except Exception as e:
-                msg = f'Failed creating database connection, {str(e)}' \
+                msg = f'Mysql connection failed: {str(e)}' \
                       f'Can not set data source type to "db", ' \
-                      f'will fall back to default type'
+                      f'will fall back to csv file'
 
                 warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
             finally:
-                con.close()
+                pass
 
         if source_type.lower() == 'file':
             # set up file type and file location
@@ -2534,18 +2536,18 @@ class DataSource:
                 try:
                     import pyarrow
                 except ImportError:
-                    msg = f'Missing optional dependency \'pyarrow\' for datasource file type ' \
-                          f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow'
-                    raise ImportError(msg)
+                    err = ImportError(f'Missing optional dependency \'pyarrow\' for datasource file type '
+                                      f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow')
+                    raise err
                 file_type = 'fth'
             from qteasy import QT_ROOT_PATH
             self.file_path = path.join(QT_ROOT_PATH, file_loc)
             try:
                 os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
             except Exception:
-                msg = f'Failed creating data directory \'{file_loc}\' in qt root path, ' \
-                        f'please check your input.'
-                raise SystemError(msg)
+                err = SystemError(f'Failed creating data directory \'{file_loc}\' in qt root path, '
+                                  f'please check your input.')
+                raise err
             self.source_type = 'file'
             self.file_type = file_type
             self.file_loc = file_loc
@@ -2605,7 +2607,8 @@ class DataSource:
             if isinstance(tables, str):
                 tables = str_to_list(tables)
             if not isinstance(tables, list):
-                raise TypeError(f'tables should be a list of str, got {type(tables)} instead!')
+                err = TypeError(f'tables should be a list of str, got {type(tables)} instead!')
+                raise err
             all_table_names = [table_name for table_name in all_table_names if table_name in tables]
 
         all_info = []
@@ -2645,9 +2648,11 @@ class DataSource:
     def get_file_path_name(self, file_name):
         """获取完整文件路径名"""
         if self.source_type == 'db':
-            raise RuntimeError('can not check file system while source type is "db"')
+            err = RuntimeError('can not check file system while source type is "db"')
+            raise err
         if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+            err = TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+            raise err
         file_name = file_name + '.' + self.file_type
         file_path_name = path.join(self.file_path, file_name)
         return file_path_name
@@ -2685,7 +2690,8 @@ class DataSource:
         elif self.file_type == 'hdf':
             df.to_hdf(file_path_name, key='df')
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.file_type}')
+            err = TypeError(f'Invalid file type: {self.file_type}')
+            raise err
         return len(df)
 
     def read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
@@ -2734,7 +2740,8 @@ class DataSource:
             try:
                 df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
             except Exception as e:
-                raise RuntimeError(f'{e}, file reading error encountered.')
+                err = RuntimeError(f'{e}, file reading error encountered.')
+                raise err
             df_picker = (chunk for chunk in df_reader)
             if (share_like_pk is not None) and (date_like_pk is not None):
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
@@ -2756,13 +2763,16 @@ class DataSource:
                 df = pd.read_hdf(file_path_name, 'df')
             except ValueError as e:
                 if 'pickle protocol: 5' in e.__str__():  # check when the file is written in a higher pickle protocol
-                    msg = f'File {file_name} is written in a higher version of python which uses pickle protocol 5, ' \
-                            f'to avoid this error, install pickle5 package and re-save the file.'
-                    raise EnvironmentError(msg)
+                    err = EnvironmentError(f'File {file_name} is written in a higher version of python which uses '
+                                           f'pickle protocol 5, to avoid this error, install pickle5 package and '
+                                           f're-save the file.')
+                    raise err
                 else:
-                    raise RuntimeError(f'{e}, file reading error encountered.')
+                    err = RuntimeError(f'{e}, file reading error encountered.')
+                    raise err
             except Exception as e:
-                raise RuntimeError(f'{e}, file reading error encountered.')
+                err = RuntimeError(f'{e}, file reading error encountered.')
+                raise err
 
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'fth':
@@ -2770,9 +2780,11 @@ class DataSource:
             try:
                 df = pd.read_feather(file_path_name)
             except Exception as e:
-                raise RuntimeError(f'{e}, file reading error encountered.')
+                err = RuntimeError(f'{e}, file reading error encountered.')
+                raise err
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.file_type}')
+            err = TypeError(f'Invalid file type: {self.file_type}')
+            raise err
 
         try:
             # 如果self.file_type 为 hdf/fth，那么需要筛选数据
@@ -2788,7 +2800,7 @@ class DataSource:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            raise RuntimeError(f'{e}')
+            raise e
 
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
@@ -2812,8 +2824,8 @@ class DataSource:
         """
         # check that all record_ids are integers
         if not all(isinstance(record_id, int) for record_id in record_ids):
-            msg = f'All record_ids must be integers, got {record_ids} instead!'
-            raise TypeError(msg)
+            err = TypeError(f'All record_ids must be integers, got {record_ids} instead!')
+            raise err
         # read all data from file into a dataframe
         primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
         df = self.read_file(file_name, primary_key, pk_dtypes=['int'])
