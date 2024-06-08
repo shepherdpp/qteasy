@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.2.10 (2024-06-07)
+- Now symbols can be added to or removed from the watch list in the live trader TUI, with two added short cuts: ctrl+a to add and ctrl+r to remove
+- Dialogs are now added to the live trader TUI to accept user inputs for adding symbols to the watch list, as well confirming to quit the App
+- Slightly adjusted the appearance of live trader TUI
+
 ## 1.2.9 (2024-06-03)
 - Added more help information and docstrings for user to initialize live trades
 

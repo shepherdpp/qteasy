@@ -13,11 +13,12 @@ import time
 
 from threading import Thread
 
-from textual import work
+from textual import work, on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Grid, Horizontal
+from textual.screen import ModalScreen, Screen
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
-from textual.widgets import TabPane
+from textual.widgets import TabPane, Label, Input
 
 from rich.text import Text
 
@@ -58,11 +59,53 @@ class OrderTable(DataTable):
 
 class WatchTable(DataTable):
     """A widget to display current holdings."""
+
+    BINDINGS = [
+        ("ctrl+a", "add_symbol", "add symbol"),
+        ("delete", "remove_symbol", "remove symbol"),
+    ]
+
     df_columns = ("name", "close", "pre_close", "open", "high",
                   "low", "vol", "amount", "change")
     headers = ("Symbol",
                "Name", "Price", "Last Close", "Open", "High",
                "Low", "Volume", "Amount", "Change")
+
+    def action_add_symbol(self) -> None:
+        """Action to add a symbol to watch list from a dialog."""
+        def on_input(input_string):
+            # received input string: input_string, add it to the watch list
+            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
+            symbols = str_to_list(input_string)
+            # log = self.app.query_one(SysLog)
+            for symbol in symbols:
+                if is_complete_cn_stock_symbol_like(symbol):
+                    self.app.trader.watch_list.append(symbol)
+                    # log.write(f"Added {symbol} to watch list {self.app.trader.watch_list}.")
+
+            self.app.refresh_ui = True
+            self.app.refresh_watches()
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen("Input symbols to add to watch list"), on_input)
+
+    def action_remove_symbol(self) -> None:
+        """Action to remove selected symbol, if no symbol selected, don't do anything."""
+        watch_list = self.app.trader.watch_list
+        # log = self.app.query_one(SysLog)
+        # sel_row = self.cursor_row
+        symbol = self.get_row_at(self.cursor_row)[0]
+
+        # log.write(f'[debug]: selected row: {sel_row}, symbol: {self.get_row_at(sel_row)[0]}')
+
+        try:
+            watch_list.remove(symbol)
+            # log.write(f"[debug]: Deleted symbol {symbol} from watch list({watch_list})")
+        except ValueError:
+            return
+
+        self.app.refresh_ui = True
+        self.app.refresh_watches()
 
 
 class Tables(TabbedContent):
@@ -89,7 +132,7 @@ class Tables(TabbedContent):
                         id='watches',
                         fixed_columns=3,
                         zebra_stripes=True,
-                        cursor_type='none',
+                        cursor_type='row',
                 )
 
 
@@ -126,14 +169,66 @@ class ControlPanel(Static):
         yield Button("Exit", id='exit', name="exit")
 
 
+class InputScreen(ModalScreen):
+    """Screen that prints a prompt and takes input from user"""
+
+    def __init__(self, question: str) -> None:
+        self.question = question
+        self.input_string = ''
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Input(placeholder=self.question, id="input_box", value=''),
+            Button("OK", id="ok", variant="success"),
+            Button("Cancel", id="cancel"),
+            id="input_dialog",
+        )
+
+    @on(Input.Changed, "#input_box")
+    def handle_input_changed(self, event: Input.Changed) -> None:
+        self.input_string = event.value
+
+    @on(Input.Submitted, "#input_box")
+    def handle_input(self, event: Input.Submitted) -> None:
+        self.dismiss(event.value)
+
+    @on(Button.Pressed, "#ok")
+    def handle_ok(self) -> None:
+        self.dismiss(self.input_string)
+
+    @on(Button.Pressed, "#cancel")
+    def handle_cancel(self) -> None:
+        self.dismiss('')
+
+
+class QuitScreen(ModalScreen):
+    """Screen with a dialog to quit."""
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Label("Are you sure you want to quit?", id="question"),
+            Button("Quit", variant="error", id="quit"),
+            Button("Cancel", variant="primary", id="cancel"),
+            id="dialog",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "quit":
+            self.dismiss(True)
+        else:
+            self.dismiss(False)
+
+
 class TraderApp(App):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "tui_style.tcss"
     BINDINGS = [
-        ("d", "toggle_dark", "Toggle dark mode"),
-        ("ctrl+p", "pause_trader", "Pause the trader"),
-        ("ctrl+r", "resume_trader", "Resume the trader"),
+        ("d", "toggle_dark", "Dark mode"),
+        ("ctrl+p", "pause_trader", "Pause"),
+        ("ctrl+r", "resume_trader", "Resume"),
+        ("ctrl+q", "request_quit", "Quit app"),
     ]
 
     def __init__(self, trader, *args, **kwargs):
@@ -145,9 +240,10 @@ class TraderApp(App):
             A trader object to manage the trades.
         """
         super().__init__(*args, **kwargs)
-        self.dark = True
+        self.dark:bool = True
         self.trader = trader
-        self.status = 'init'
+        self.status:str = 'init'
+        self.refresh_ui = True
 
     def trader_event_loop(self):
         """ Event loop for the trader. continually check message queue of trader and broker,
@@ -223,6 +319,8 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_holdings(self):
         """Refresh the holdings table."""
+        if not self.refresh_ui:
+            return
         # get the holdings from the trader
         holdings = self.query_one(HoldingTable)
         holdings.clear()
@@ -258,6 +356,8 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_order(self):
         """Refresh the order table."""
+        if not self.refresh_ui:
+            return
         orders = self.query_one(OrderTable)
         orders.clear()
         order_list = self.trader.history_orders(with_trade_results=True)
@@ -286,6 +386,8 @@ class TraderApp(App):
 
     def refresh_watches(self):
         """Refresh the watch list."""
+        if not self.refresh_ui:
+            return
         watches = self.query_one('#watches')
         watched_prices = self.trader.update_watched_prices()
         watched_prices = watched_prices.reindex(columns=watches.df_columns)
@@ -314,6 +416,10 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
         """Refresh the information panel"""
+
+        if not self.refresh_ui:
+            return
+
         info = self.query_one('#info')
         system = self.query_one('#system')
 
@@ -375,12 +481,14 @@ class TraderApp(App):
     @work(exclusive=True, thread=True)
     def refresh_values(self, trader_info):
         """Refresh the total value, earning and cash."""
+        if not self.refresh_ui:
+            return
 
         total_value = trader_info['Total Value']
         total_return_of_investment = trader_info['Total ROI']
-        total_roi_rate = trader_info['Total ROI Rate']
+        # total_roi_rate = trader_info['Total ROI Rate']
         own_cash = trader_info['Total Cash']
-        total_market_value = trader_info['Total Stock Value']
+        # total_market_value = trader_info['Total Stock Value']
 
         value = self.query_one('#total_value')
         value.border_title = "Total Value"
@@ -388,7 +496,7 @@ class TraderApp(App):
 
         earning = self.query_one('#earning')
         earning.border_title = "Total Return"
-        earning.update(f"{total_return_of_investment:.2f} / {total_roi_rate:.2%}")
+        earning.update(f"{total_return_of_investment:.2f}")
 
         # set text colors of value and earning based on the value
         if total_return_of_investment > 0:
@@ -410,6 +518,8 @@ class TraderApp(App):
         2. Strategy: strategies
         3. Properties: strategy properties
         """
+        if not self.refresh_ui:
+            return
         tree = self.query_one(StrategyTree)
         tree.clear()
 
@@ -473,7 +583,6 @@ class TraderApp(App):
 
     def _on_exit_app(self) -> None:
         """Actions to perform before exiting the app.
-        confirms the exit action.
         """
         # stop the trader, broker and the trader event loop
         self.trader.status = 'stopped'
@@ -499,3 +608,13 @@ class TraderApp(App):
         syslog = self.query_one(SysLog)
         syslog.write(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
+
+    def action_request_quit(self) -> None:
+        """Action to display the quit dialog."""
+        def confirm_exit(confirmed:bool) -> None:
+            if confirmed:
+                self.exit()
+            self.refresh_ui = True
+
+        self.refresh_ui = False
+        self.push_screen(QuitScreen(), confirm_exit)
