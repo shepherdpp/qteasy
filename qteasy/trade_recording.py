@@ -946,7 +946,7 @@ def query_trade_orders(account_id,
     if all(r is None for r in res):
         return pd.DataFrame(columns=['pos_id', 'direction', 'order_type', 'qty', 'price', 'submitted_time', 'status'])
 
-    return pd.concat(res)
+    return pd.concat(res).sort_index()
 
 
 # 2 2nd level functions for trade signal TODO: (maybe) move to trading_util.py
