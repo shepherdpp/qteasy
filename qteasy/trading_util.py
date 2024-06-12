@@ -706,7 +706,7 @@ def submit_order(order_id, data_source=None):
     return order_id
 
 
-def cancel_order(order_id, data_source=None, config=None):
+def cancel_order(order_id, data_source=None, config=None) -> int:
     """ 取消交易订单
 
     对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为 'canceled'
@@ -724,7 +724,7 @@ def cancel_order(order_id, data_source=None, config=None):
 
     Returns
     -------
-    int, 交易订单的id
+    int, 如果成功生成取消结果，则返回交易订单的id，如果交易订单已经没有剩余数量可以取消，则返回-1
     """
     # TODO: further test this function
 
@@ -734,7 +734,7 @@ def cancel_order(order_id, data_source=None, config=None):
         raise RuntimeError(f'order status wrong: {order_status} cannot be canceled')
 
     order_results = read_trade_results_by_order_id(order_id=order_id, data_source=data_source)
-    if not order_results.empty:
+    if not order_results.empty:  # 如果有交易结果，计算已经成交的数量和已经取消的数量
         total_filled_qty = np.round(
                 order_results['filled_qty'].sum(),
                 AMOUNT_DECIMAL_PLACES,
@@ -743,7 +743,7 @@ def cancel_order(order_id, data_source=None, config=None):
                 order_results['canceled_qty'].sum(),
                 AMOUNT_DECIMAL_PLACES,
         )
-    else:
+    else:  # 如果没有交易结果，已经成交的数量和已经取消的数量都为0
         total_filled_qty = 0.
         already_canceled_qty = 0.
     if already_canceled_qty > 0:
@@ -757,8 +757,9 @@ def cancel_order(order_id, data_source=None, config=None):
     )
 
     if remaining_qty <= 0:
-        raise RuntimeError(f'order status wrong: remaining qty should be larger than 0'
-                           f'when order is partially filled, got {remaining_qty}')
+        # in this case there will be nothing to be canceled
+        return -1
+
     result_of_cancel = {
         'order_id':        order_id,
         'filled_qty':      0.,
@@ -773,6 +774,8 @@ def cancel_order(order_id, data_source=None, config=None):
             data_source=data_source,
             config=config
     )
+
+    return order_id
 
 
 def process_account_delivery(account_id, data_source=None, config=None) -> list:
@@ -835,6 +838,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     """ 处理交易结果的交割，给出交易结果ID，根据结交割周期修改可用现金/可用持仓，并修改结果的delivery_status为'DL'
 
     注意，如果delivery_status已经为DL，则不交割，直接返回
+    如果结果的交割期尚未达到，则不执行交割，直接返回
     如果result_id对应的account_id与参数account_id不符合，也不执行交割，直接返回
 
     Parameters
@@ -889,7 +893,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     else:
         raise ValueError(f'Invalid direction: {trade_direction}')
 
-    # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
+    # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则不予交割
     execution_date = pd.to_datetime(result['execution_time']).date()
     current_date = pd.to_datetime('today').date()
     day_diff = (current_date - execution_date).days
@@ -1075,10 +1079,15 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
     #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
 
-    # TODO: 买入或卖出的交易结果应该只更新qty/cash
+    # TODO: 最佳的做法是：买入或卖出的交易结果应该只更新qty/cash
     #  而available_qty/available_cash统一应该留到订单交易后交割时更新
-    #  （在交易后立即更新，但允许部分交割，只有完全交割后才修改状态）
-    #  这一条需要讨论，不一定合理
+    #  但是在实际进行实盘交易时，上面的做法要求每次执行完订单后都进行一次交割，
+    #  因为只有这样，才能将卖出交易后获取的现金交割到账户的available_cash中，
+    #  否则，会导致available_cash不能得到及时更新，从而导致后续的交易失败
+    #  在目前的实现中，交割操作是在每天早上9:15分进行的，这样就会导致available_cash
+    #  不能及时更新。
+    #  现在采用这样的做法，在每次处理完交易信号后，立即进行该交易信号的交割，如果
+    #  交易信号不符合交割条件，则不进行交割，但是这样会导致交割操作过于频繁，不够高效
 
     # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
     if order_detail['direction'] == 'buy':
@@ -1124,6 +1133,15 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         )
     # 更新交易订单的状态
     update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
+
+    # 执行本次交易结果的交割
+    deliver_trade_result(
+            result_id=result_id,
+            account_id=order_detail['account_id'],
+            result=raw_trade_result,
+            stock_delivery_period=config['stock_delivery_period'],
+            cash_delivery_period=config['cash_delivery_period'],
+    )
 
     return result_id
 

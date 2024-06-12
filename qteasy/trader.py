@@ -1484,29 +1484,30 @@ class Trader(object):
                 cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
                 self.send_message(f'canceled unprocessed order: {order_id}')
                 order_queue.task_done()
-        # 检查今日成交订单，确认是否有"部分成交"以及"未成交"的订单，如果有，生成取消订单，取消尚未成交的部分
+        # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         partially_filled_orders = query_trade_orders(
                 account_id=self.account_id,
                 status='partial-filled',
                 data_source=self._datasource,
         )
+        self.send_message(f'partially filled orders found({len(partially_filled_orders)} in total), '
+                          f'they are to be canceled')
+        for order_id in partially_filled_orders.index:
+            # 对于所有没有完全成交的订单，生成取消订单，取消剩余的部分
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
+
+        # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
         unfilled_orders = query_trade_orders(
                 account_id=self.account_id,
                 status='submitted',
                 data_source=self._datasource,
         )
-        orders_to_be_canceled = pd.concat([partially_filled_orders, unfilled_orders])
-        if self.debug:
-            self.send_message(f'partially filled orders found, they are to be canceled: \n{orders_to_be_canceled}')
-        for order_id in orders_to_be_canceled.index:
-            # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
-            # TODO: here "submitted" orders can not be canceled, need to be fixed
+        self.send_message(f'Unfilled orders found ({len(unfilled_orders)} in total), they are to be canceled')
+        for order_id in unfilled_orders.index:
+            # 对于所有未成交的订单，生成取消订单
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled unfilled orders')
-
-        # 检查今日成交结果，完成交易结果的交割
-
-        self.send_message('processed trade delivery')
+            self.send_message(f'canceled unfilled order({order_id})')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
