@@ -31,7 +31,7 @@ from qteasy.trade_recording import get_account_cash_availabilities, query_trade_
 from qteasy.trade_recording import get_or_create_position, new_account, update_position
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
-from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order
+from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -1294,6 +1294,16 @@ class Trader(object):
         # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
         try:
             result_id = process_trade_result(result, data_source=self._datasource)
+
+            # 执行本次交易结果的交割，如果不符合交割条件，则不会执行交割
+            deliver_trade_result(
+                    result_id=result_id,
+                    account_id=self.account_id,
+                    stock_delivery_period=self._config['stock_delivery_period'],
+                    cash_delivery_period=self._config['cash_delivery_period'],
+                    data_source=self._datasource,
+            )
+
         except Exception as e:
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
             if self.debug:
@@ -1377,10 +1387,10 @@ class Trader(object):
         operator = self._operator
 
         datasource.reconnect()
-        datasource.reconnect()
 
         datasource.get_all_basic_table_data(
                 refresh_cache=True,
+                raise_error=False,
         )
         self.send_message(f'data source reconnected...')
 

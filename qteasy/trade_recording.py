@@ -472,49 +472,52 @@ def update_position(position_id, data_source=None, **position_data):
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     if not isinstance(position_id, (int, np.int64)):
-        raise TypeError(f'position_id must be an int, got {type(position_id)} instead')
+        err = TypeError(f'position_id must be an int, got {type(position_id)} instead')
+        raise err
 
     # 从数据库中读取持仓数据，修改后再写入数据库
     position = data_source.read_sys_table_data('sys_op_positions', record_id=position_id)
     if position is None:
-        raise RuntimeError(f'position_id {position_id} not found!')
+        err = RuntimeError(f'position_id {position_id} not found!')
+        raise err
 
     qty_change = position_data.get('qty_change', 0.0)
     if not isinstance(qty_change, (int, float, np.int64, np.float64)):
-        raise TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
+        err = TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
+        raise err
     qty = position['qty'] + qty_change
 
     available_qty_change = position_data.get('available_qty_change', 0.0)
     if not isinstance(available_qty_change, (int, float, np.int64, np.float64)):
-        raise TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
+        err = TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
+        raise err
     available_qty = position['available_qty'] + available_qty_change
 
     prev_cost = position['cost']
     cost = position_data.get('cost', prev_cost)
     if cost is not None:
         if not isinstance(cost, (int, float, np.int64, np.float64)):
-            raise TypeError(f'cost must be a int or float, got {type(cost)} instead')
+            err = TypeError(f'cost must be a int or float, got {type(cost)} instead')
+            raise err
 
     # 如果可用数量超过持仓数量，则报错
     if available_qty > qty:
-        raise RuntimeError(f'available_qty ({position["available_qty"]}) cannot be greater than '
-                           f'qty ({position["qty"]})')
+        err = RuntimeError(f'available_qty ({position["available_qty"]}+{available_qty_change}={available_qty})'
+                           f' cannot be greater than qty ({position["qty"]}+{qty_change}={qty})')
+        raise err
     # 如果可用数量小于0，则报错
     if available_qty < 0:
-        raise RuntimeError(f'available_qty ({position["available_qty"]}) cannot be less than 0!')
+        err = RuntimeError(f'available_qty ({position["available_qty"]}+{available_qty_change}={available_qty})'
+                           f' cannot be less than 0!')
+        raise err
     # 如果持仓数量小于0，则报错
     if qty < 0:
-        raise RuntimeError(f'qty ({position["qty"]}) cannot be less than 0!')
-
-    # debug
-    # print(f'{pd.to_datetime("now")}[DEBUG]: update position for id: '
-    #       f'{position_id} / {position["symbol"]} / {position["position"]}\n'
-    #       f'qty: {position["qty"]} -> {qty}, \n'
-    #       f'available_qty: {position["available_qty"]} -> {available_qty} \n'
-    #       f'cost: {position["cost"]} -> {cost}')
+        err = RuntimeError(f'qty ({position["qty"]}+{qty_change}={qty}) cannot be less than 0!')
+        raise err
 
     data_source.update_sys_table_data(
             'sys_op_positions',
@@ -551,7 +554,8 @@ def get_account_positions(account_id, data_source=None):
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     positions = data_source.read_sys_table_data(
             'sys_op_positions',
@@ -653,12 +657,15 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
             continue
     # 如果列表长度与shares长度不相等，则报错
     if len(own_amounts) != len(shares):
-        raise RuntimeError(f'own_amounts length ({len(own_amounts)}) is not equal to shares length ({len(shares)})')
+        err = RuntimeError(f'own_amounts length ({len(own_amounts)}) is not equal to shares length ({len(shares)})')
+        raise err
     if len(available_amounts) != len(shares):
-        raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
+        err = RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
+        raise err
     if len(costs) != len(shares):
-        raise RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
+        err = RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
+        raise err
     # 将列表转换为ndarray并返回
     result = (
         shares,
