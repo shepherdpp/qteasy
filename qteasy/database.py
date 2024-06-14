@@ -4300,7 +4300,7 @@ class DataSource:
             pass
         pass
 
-    def read_sys_table_data(self, table, record_id=None, **kwargs):
+    def read_sys_table_data(self, table, **kwargs) -> pd.DataFrame:
         """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
 
         每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列，
@@ -4310,26 +4310,14 @@ class DataSource:
         ----------
         table: str
             需要读取的数据表名称
-        record_id: int, Default: None
-            如果给出id，只返回id行记录
         kwargs: dict
             筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
 
         Returns
         -------
-        data: dict
-            当给出record_id时，读取的数据为dict，包括数据表的结构化信息以及数据表中的记录
         pd.DataFrame:
             当不给出record_id时，读取的数据为DataFrame，包括数据表的结构化信息以及数据表中的记录
-        None:
-            当输入的id或筛选条件没有匹配项时
-
-        TODO: 重构代码，修改返回类型，确保函数只有一种返回类型
         """
-
-        # 检查record_id是否合法
-        if record_id is not None and record_id <= 0:
-            return None
 
         ensure_sys_table(table)
 
@@ -4338,31 +4326,53 @@ class DataSource:
         if any(k not in columns for k in kwargs):
             raise KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
 
-        id_column = p_keys[0] if (len(p_keys) == 1) and (record_id is not None) else None
-        id_values = [record_id] if record_id else None
-
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
-            res_df = self.read_database(table, share_like_pk=id_column, shares=id_values)
+            res_df = self.read_database(table)
             if res_df.empty:
-                return None
+                return {}
             set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
-            res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=id_column, shares=id_values)
+            res_df = self.read_file(table, p_keys, pk_dtypes)
         else:  # for other unexpected cases
             res_df = pd.DataFrame()
-
-        if res_df.empty:
-            return None
 
         # 筛选数据
         for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
 
-        if record_id is not None:
-            return res_df.loc[record_id].to_dict()
-        else:
-            return res_df if not res_df.empty else None
+        return res_df
+
+    def read_sys_table_record(self, table, record_id: int, **kwargs) -> dict:
+        """ 读取系统操作表的数据，根据指定的id读取数据，返回一个dict
+
+        本函数调用read_sys_table_data()读取整个数据表，并返回record_id行的数据
+        返回的dict包含所有字段的值，key为字段名，value为字段值
+
+        Parameters
+        ----------
+        table: str
+            需要读取的数据表名称
+        record_id: int
+            需要读取的数据的id
+        kwargs: dict
+            筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
+
+        Returns
+        -------
+        data: dict
+            读取的数据，包括数据表的结构化信息以及数据表中的记录
+        """
+
+        # 检查record_id是否合法
+        if record_id is not None and record_id <= 0:
+            err = ValueError(f'record_id must be a positive integer, got {record_id}')
+            raise err
+
+        data = self.read_sys_table_data(table, **kwargs)
+        if data.empty:
+            return {}
+        return data.loc[record_id].to_dict()
 
     def update_sys_table_data(self, table:str, record_id:int, **data) -> int:
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
@@ -4410,7 +4420,7 @@ class DataSource:
         """
 
         # 将data构造为一个df，然后调用self.update_table_data()
-        table_data = self.read_sys_table_data(table, record_id=record_id)
+        table_data = self.read_sys_table_record(table, record_id=record_id)
         if table_data is None:
             raise KeyError(f'record_id({record_id}) not found in table {table}')
 

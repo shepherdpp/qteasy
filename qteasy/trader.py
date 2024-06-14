@@ -197,7 +197,8 @@ class Trader(object):
     @status.setter
     def status(self, value):
         if value not in ['running', 'sleeping', 'paused', 'stopped']:
-            raise ValueError(f'invalid status: {value}')
+            err = ValueError(f'invalid status: {value}')
+            raise err
         self._prev_status = self._status
         self._status = value
 
@@ -1279,6 +1280,7 @@ class Trader(object):
 
         from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail, get_position_by_id
         from qteasy.trade_recording import get_account
+
         # 读取交易处理以前的账户信息和持仓信息
         order_id = result['order_id']
         order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
@@ -1570,7 +1572,8 @@ class Trader(object):
         elif freq == 'M':
             start_date = end_date - pd.Timedelta(days=30)
         else:
-            raise ValueError(f'invalid freq: {freq}')
+            err = ValueError(f'invalid freq: {freq}')
+            raise err
         self._datasource.refill_local_source(
                 tables=tables,
                 start_date=start_date,
@@ -1614,10 +1617,12 @@ class Trader(object):
         if task is None:
             return
         if not isinstance(task, str):
-            raise ValueError(f'task must be a string, got {type(task)} instead.')
+            err = ValueError(f'task must be a string, got {type(task)} instead.')
+            raise err
 
         if task not in available_tasks.keys():
-            raise ValueError(f'Invalid task name: {task}')
+            err = ValueError(f'Invalid task name: {task}')
+            raise err
 
         task_func = available_tasks[task]
 
@@ -1706,7 +1711,8 @@ class Trader(object):
                 elif len(task_tuple) == 2:
                     task = task[1]
                 else:
-                    raise ValueError(f'Invalid task tuple: No task found in {task_tuple}')
+                    err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
+                    raise err
 
                 if self.debug:
                     self.send_message(f'current time {current_time} >= task time {task_time}, '
@@ -1808,7 +1814,8 @@ class Trader(object):
                                         (task[1] in ['pre_open',
                                                      'post_close'])]
         else:
-            raise ValueError(f'Invalid current time: {current_time}')
+            err = ValueError(f'Invalid current time: {current_time}')
+            raise err
 
         if self.debug:
             self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}')
