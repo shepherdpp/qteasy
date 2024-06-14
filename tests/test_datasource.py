@@ -2232,7 +2232,7 @@ class TestDataSource(unittest.TestCase):
                 print(f'write and read shuffled data')
                 ds.insert_sys_table_data('sys_op_trade_orders', **test_shuffled_signal_data)
                 last_id = ds.get_sys_table_last_id('sys_op_trade_orders')
-                res = ds.read_sys_table_data('sys_op_trade_orders', record_id=last_id)
+                res = ds.read_sys_table_record('sys_op_trade_orders', record_id=last_id)
                 print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
                       f'{res}\n')
                 self.assertIsNotNone(res)
@@ -2245,11 +2245,11 @@ class TestDataSource(unittest.TestCase):
 
                 # 测试传入无效的id时是否引发KeyError异常
                 print(f'test passing invalid id to read_sys_table_data')
-                res = ds.read_sys_table_data(table, record_id=-1)
+                res = ds.read_sys_table_record(table, record_id=-1)
                 self.assertIsNone(res)
-                res = ds.read_sys_table_data(table, record_id=0)
+                res = ds.read_sys_table_record(table, record_id=0)
                 self.assertIsNone(res)
-                res = ds.read_sys_table_data(table, record_id=999)
+                res = ds.read_sys_table_record(table, record_id=999)
                 self.assertIsNone(res)
 
                 # 测试传入无效的表名时是否引发KeyError异常
@@ -2298,7 +2298,7 @@ class TestDataSource(unittest.TestCase):
                 for data in datas:
                     ds.insert_sys_table_data(table, **data)
                 id_to_read = int(np.random.randint(5, size=(1,)))
-                res = ds.read_sys_table_data(table, id_to_read + 1)
+                res = ds.read_sys_table_record(table, record_id=id_to_read + 1)
                 print(f'\nreading data with "id = {id_to_read}"...\n'
                       f'following data are read from table {table}\n'
                       f'{res}\n')
@@ -2313,7 +2313,7 @@ class TestDataSource(unittest.TestCase):
                         self.assertEqual(origin, read)
 
                 # 测试传入无效的id时是否返回None
-                res = ds.read_sys_table_data(table, 100)
+                res = ds.read_sys_table_record(table, record_id=100)
                 self.assertIsNone(res)
 
                 # 测试传入kwargs筛选数据，验证是否读取正确
@@ -2337,9 +2337,9 @@ class TestDataSource(unittest.TestCase):
 
                 # 测试update_sys_table_data后数据是否正确地更新
                 print(f'\nupdating {table}@(id = {id_to_read}) with kwargs: {kwu}...\n')
-                before = ds.read_sys_table_data(table, record_id=id_to_read + 1)
+                before = ds.read_sys_table_record(table, record_id=id_to_read + 1)
                 ds.update_sys_table_data(table, record_id=id_to_read + 1, **kwu)
-                after = ds.read_sys_table_data(table, record_id=id_to_read + 1)
+                after = ds.read_sys_table_record(table, record_id=id_to_read + 1)
                 print(f'before update:\n{before}\nafter update:\n{after}')
                 for bk_v, ak_v in zip(before.items(), after.items()):
                     if bk_v[0] in kwu.keys():
@@ -2352,7 +2352,6 @@ class TestDataSource(unittest.TestCase):
 
                 res = ds.read_sys_table_data(
                         table='sys_op_positions',
-                        record_id=None,
                         account_id=1,
                         symbol='000001.SZ',
                         position='long',

@@ -4324,7 +4324,8 @@ class DataSource:
         # 检查kwargs中是否有不可用的字段
         columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
         if any(k not in columns for k in kwargs):
-            raise KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
+            err = KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
+            raise err
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
@@ -4343,7 +4344,7 @@ class DataSource:
 
         return res_df
 
-    def read_sys_table_record(self, table, record_id: int, **kwargs) -> dict:
+    def read_sys_table_record(self, table, *, record_id: int, **kwargs) -> dict:
         """ 读取系统操作表的数据，根据指定的id读取数据，返回一个dict
 
         本函数调用read_sys_table_data()读取整个数据表，并返回record_id行的数据

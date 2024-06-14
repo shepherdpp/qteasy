@@ -372,7 +372,6 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
     try:
         position = data_source.read_sys_table_data(
                 table='sys_op_positions',
-                record_id=None,
                 **position_filter,
         )
     except Exception as e:
@@ -423,7 +422,6 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
     # print(f'[DEBUG]account_id: {account_id}, symbol: {symbol}, position_type: {position_type}')
     position = data_source.read_sys_table_data(
             table='sys_op_positions',
-            record_id=None,
             **{
                 'account_id': account_id,
                 'symbol': symbol,
@@ -480,7 +478,7 @@ def update_position(position_id, data_source=None, **position_data):
         raise err
 
     # 从数据库中读取持仓数据，修改后再写入数据库
-    position = data_source.read_sys_table_data('sys_op_positions', record_id=position_id)
+    position = data_source.read_sys_table_record('sys_op_positions', record_id=position_id)
     if position is None:
         err = RuntimeError(f'position_id {position_id} not found!')
         raise err
@@ -801,7 +799,7 @@ def read_trade_order(order_id, data_source=None):
         err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
         raise err
 
-    return data_source.read_sys_table_data('sys_op_trade_orders', record_id=order_id)
+    return data_source.read_sys_table_record('sys_op_trade_orders', record_id=order_id)
 
 
 def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_if_status_wrong=False):
@@ -859,7 +857,7 @@ def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_
     if err is not None:
         raise err
 
-    trade_signal = data_source.read_sys_table_data('sys_op_trade_orders', record_id=order_id)
+    trade_signal = data_source.read_sys_table_record('sys_op_trade_orders', record_id=order_id)
 
     # 如果trade_signal读取失败，则报错
     if trade_signal is None:
@@ -1237,7 +1235,7 @@ def read_trade_result_by_id(result_id, data_source=None):
         err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
         raise err
 
-    trade_result = data_source.read_sys_table_data('sys_op_trade_results', result_id)
+    trade_result = data_source.read_sys_table_record('sys_op_trade_results', record_id=result_id)
     return trade_result
 
 
