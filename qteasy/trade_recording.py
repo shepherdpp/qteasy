@@ -428,7 +428,7 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
                 'position': position_type,
             },
     )
-    if position is None:
+    if position.empty:
         return data_source.insert_sys_table_data(
                 table='sys_op_positions',
                 **{

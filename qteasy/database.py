@@ -4259,7 +4259,7 @@ class DataSource:
         # 如果是文件系统，在可行的情况下，直接从文件系统中获取最后一个id，否则读取文件数据后获取id
         if self.source_type in ['file']:
             df = self.read_sys_table_data(table)
-            if df is None:
+            if df.empty:
                 return 0
             return int(df.index.max())
         # 如果是数据库系统，直接获取最后一个id, 这种做法某些情况下有问，使用下面的方法无法获取最后一个id
@@ -4331,7 +4331,7 @@ class DataSource:
         if self.source_type == 'db':
             res_df = self.read_database(table)
             if res_df.empty:
-                return {}
+                return res_df
             set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
             res_df = self.read_file(table, p_keys, pk_dtypes)
