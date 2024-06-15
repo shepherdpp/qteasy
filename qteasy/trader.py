@@ -542,8 +542,8 @@ class Trader(object):
                 time.sleep(sleep_interval)
             else:
                 # process trader when trader is normally stopped
-                self.send_message(f'Trader is stopped.\n'
-                                  f'{"=" * 20}\n')
+                self.send_message(f'Trader is stopped.')
+                self.run_task('stop')
         except KeyboardInterrupt:
             self.send_message('KeyboardInterrupt, stopping trader...')
             self.run_task('stop')
@@ -707,7 +707,7 @@ class Trader(object):
         logger_live.info(message)
 
     def add_message_prefix(self, message: str) -> str:
-        ''' 在消息前添加时间、状态等信息
+        """ 在消息前添加时间、状态等信息
 
         Parameters
         ----------
@@ -718,7 +718,7 @@ class Trader(object):
         -------
         message: str
             添加了时间、状态等信息的消息
-        '''
+        """
 
         time_string = self.get_current_tz_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
         if self.time_zone != 'local':
@@ -1051,13 +1051,14 @@ class Trader(object):
 
     # ============ definition of tasks ================
     def _start(self):
-        """ 启动交易系统 """
+        """ 启动交易系统，将交易系统的状态设置为sleeping """
         self.send_message('Starting Trader...')
         self.status = 'sleeping'
 
     def _stop(self):
         """ 停止交易系统 """
-        self.send_message('Stopping Trader, the broker will be stopped as well...')
+        self.send_message('Stopping Trader, all unprocessed orders will be cancelled...')
+        self.run_task('')
         self._broker.status = 'stopped'
         self.status = 'stopped'
 
@@ -1091,9 +1092,9 @@ class Trader(object):
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
-        2，根据strtegy_id设定operator的运行模式，生成交易信号
+        2，根据strategy_id设定operator的运行模式，生成交易信号
         3，解析信号为交易订单，并将交易订单发送到交易所的订单队列
-        4，将交易订单的ID保存到数据库，更新账户和持仓信息
+        4，将交易订单的ID保存到数据库，更新本地账户和持仓信息
         5，生成交易订单状态信息推送到信息队列
 
         Parameters
@@ -1267,12 +1268,68 @@ class Trader(object):
         self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
         return submitted_qty
 
+    def _buy_order(self, symbol: str, position: str, qty: int, price: float) -> dict:
+        """ 买入订单，调用Broker的API提交买入订单到Broker的订单队列
+
+        Parameters
+        ----------
+        symbol: str
+            交易标的代码
+        position: str
+            交易标的的持仓方向，long/short
+        qty: int
+            订单数量
+        price: float
+            订单价格
+
+        Returns
+        -------
+        trade_order: dict
+            订单信息
+        """
+        pass
+
+    def _sell_order(self, symbol: str, position: str, qty: int, price: float) -> dict:
+        """ 卖出订单: 调用Broker的API提交卖出订单到Broker的订单队列
+
+        Parameters
+        ----------
+        symbol: str
+            交易标的代码
+        position: str
+            交易标的的持仓方向，long/short
+        qty: int
+            订单数量
+        price: float
+            订单价格
+
+        Returns
+        -------
+        trade_order: dict
+            订单信息
+        """
+        pass
+
+    def _cancel_order(self, order_id: str) -> dict:
+        """ 取消订单: 调用Broker的API取消订单
+
+        Parameters
+        ----------
+        order_id: str
+            订单ID
+
+        Returns
+        -------
+        trade_order: dict
+            订单信息
+        """
+        pass
+
     def _process_result(self, result):
         """ 从result_queue中读取并处理交易结果
 
         1，处理交易结果，更新账户和持仓信息
-        2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
-        4，生成交易结果信息推送到信息队列
+        2，生成交易结果信息推送到信息队列
         """
 
         if self.debug:
@@ -1375,6 +1432,21 @@ class Trader(object):
                 self.send_message(f'<RESULT>: account cash changed: '
                                   f'cash: ¥{pre_cash_amount:,.2f}->¥{post_cash_amount:,.2f}'
                                   f'available: ¥{pre_available_cash:,.2f}->¥{post_available_cash:,.2f}')
+
+    def _process_delivery(self, result_id):
+        """ 处理已知交割结果, 更新本地账户和持仓信息"""
+
+    def _sync_positoins(self):
+        """ 同步持仓信息，更新本地持仓信息 """
+        pass
+
+    def _sync_account(self):
+        """ 同步账户信息，更新本地账户和持仓信息 """
+        pass
+
+    def _sync_results(self):
+        """ 同步交易结果，更新本地交易结果和订单信息 """
+        pass
 
     def _pre_open(self):
         """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
@@ -1486,8 +1558,8 @@ class Trader(object):
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
         order_queue = self.broker.order_queue
         # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
-        #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
-        #   result_queue中的结果全部处理完毕，或者超过一定时间
+        #   此处应该检查broker的result_queue，如果有结果，则将result_queue中的结果
+        #   全部处理完毕，然后再取消order_queue中的订单
         if not order_queue.empty():
             self.send_message('unprocessed orders found, these orders will be canceled')
             while not order_queue.empty():
@@ -1602,8 +1674,14 @@ class Trader(object):
             'close_market':       self._market_close,
             'post_close':         self._post_close,
             'run_strategy':       self._run_strategy,
+            'buy_order':          self._buy_order,
+            'sell_order':         self._sell_order,
+            'cancel_order':       self._cancel_order,
             'process_result':     self._process_result,
+            'process_delivery':   self._process_delivery,
             'acquire_live_price': self._update_live_price,
+            'sync_positions':     self._sync_positions,
+            'sync_account':       self._sync_account,
             'change_date':        self._change_date,
             'start':              self._start,
             'stop':               self._stop,
