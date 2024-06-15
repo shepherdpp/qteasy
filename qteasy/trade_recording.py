@@ -124,9 +124,9 @@ def get_account(account_id, user_name=None, data_source=None) -> dict:
         return account
     else:
         account = data_source.read_sys_table_data('sys_op_live_accounts', user_name=user_name)
-        if account is None:
+        if account.empty:
             raise KeyError(f'Account (user_name={user_name}) not found!')
-        return account
+        return account.to_dict(orient='records')[0]
 
 
 def update_account(account_id, data_source=None, **account_data) -> None:
@@ -187,7 +187,7 @@ def update_account_balance(account_id, data_source=None, **cash_change) -> None:
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     account_data = data_source.read_sys_table_record('sys_op_live_accounts', record_id=account_id)
-    if account_data is None:
+    if account_data == {}:
         raise RuntimeError(f'Account not found! account id: {account_id}')
 
     cash_amount_change = cash_change.get('cash_amount_change', 0.0)

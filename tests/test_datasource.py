@@ -2220,7 +2220,7 @@ class TestDataSource(unittest.TestCase):
                 res = ds.read_sys_table_record(table, record_id=1)
                 print(f'following data are read from table {table}\n'
                       f'{res}\n')
-                self.assertIsNotNone(res)
+                self.assertNotEqual(res, {})
                 for origin, read in zip(data.values(), res.values()):
                     print(f'origin: {origin}->{type(origin)}, read: {read}->{type(read)}')
                     if isinstance(origin, pd.Timestamp):
@@ -2235,7 +2235,7 @@ class TestDataSource(unittest.TestCase):
                 res = ds.read_sys_table_record('sys_op_trade_orders', record_id=last_id)
                 print(f'following data are read from table "sys_table_trade_signal" with id = {last_id}\n'
                       f'{res}\n')
-                self.assertIsNotNone(res)
+                self.assertNotEqual(res, {})
                 self.assertEqual(test_shuffled_signal_data['pos_id'], res['pos_id'])
                 self.assertEqual(test_shuffled_signal_data['order_type'], res['order_type'])
                 self.assertEqual(test_shuffled_signal_data['status'], res['status'])

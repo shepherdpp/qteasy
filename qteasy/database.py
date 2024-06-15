@@ -4429,7 +4429,7 @@ class DataSource:
 
         # 将data构造为一个df，然后调用self.update_table_data()
         table_data = self.read_sys_table_record(table, record_id=record_id)
-        if table_data is None:
+        if table_data == {}:
             raise KeyError(f'record_id({record_id}) not found in table {table}')
 
         # 当data中有不可用的字段时，会抛出异常
