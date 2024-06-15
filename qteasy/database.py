@@ -2505,9 +2505,8 @@ class DataSource:
                 con.close()
 
             except Exception as e:
-                msg = f'Mysql connection failed: {str(e)}' \
-                      f'Can not set data source type to "db", ' \
-                      f'will fall back to csv file'
+                msg = f'Mysql connection failed: {str(e)}\n' \
+                      f'Can not set data source type to "db", will fall back to csv file'
 
                 warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
@@ -2684,7 +2683,7 @@ class DataSource:
         """
         file_path_name = self.get_file_path_name(file_name)
         if self.file_type == 'csv':
-            df.to_csv(file_path_name)
+            df.to_csv(file_path_name, encoding='utf-8')
         elif self.file_type == 'fth':
             df.reset_index().to_feather(file_path_name)
         elif self.file_type == 'hdf':
@@ -2924,10 +2923,10 @@ class DataSource:
             raise RuntimeError(f'{e}, unknown error encountered.')
 
     def get_file_rows(self, file_name):
-        """获取csv、hdf、fether文件中数据的行数"""
+        """获取csv、hdf、feather文件中数据的行数"""
         file_path_name = self.get_file_path_name(file_name)
         if self.file_type == 'csv':
-            with open(file_path_name, 'r') as fp:
+            with open(file_path_name, 'r', encoding='utf-8') as fp:
                 line_count = None
                 for line_count, line in enumerate(fp):
                     pass
@@ -3705,7 +3704,7 @@ class DataSource:
         df = self.read_table_data(table=table, shares=shares, start=start, end=end)
         # 将数据写入文件
         try:
-            df.to_csv(file_path_name)
+            df.to_csv(file_path_name, encoding='utf-8')
         except Exception as e:
             raise RuntimeError(f'{e}, Failed to export table {table} to file {file_path_name}!')
 
@@ -3981,9 +3980,10 @@ class DataSource:
         # 否则判断df基本与table匹配，根据Constraints，添加缺少的列(通常为NULL列)
         missing_columns = [col for col in table_columns if col not in dnld_columns]
         if len(missing_columns) >= (len(table_columns) * 0.25):
-            raise ValueError(f'there are too many missing columns in downloaded df, can not merge to local table:'
+            err = ValueError(f'there are too many missing columns in downloaded df, can not merge to local table:'
                              f'table_columns:\n{[table_columns]}\n'
                              f'downloaded:\n{[dnld_columns]}')
+            raise err
         else:
             pass  # 在后面调整列顺序时会同时添加缺的列并调整顺序
         # 删除数据中过多的列，不允许出现缺少列
@@ -4260,7 +4260,7 @@ class DataSource:
         # 如果是文件系统，在可行的情况下，直接从文件系统中获取最后一个id，否则读取文件数据后获取id
         if self.source_type in ['file']:
             df = self.read_sys_table_data(table)
-            if df is None:
+            if df.empty:
                 return 0
             return int(df.index.max())
         # 如果是数据库系统，直接获取最后一个id, 这种做法某些情况下有问，使用下面的方法无法获取最后一个id
@@ -4301,7 +4301,7 @@ class DataSource:
             pass
         pass
 
-    def read_sys_table_data(self, table, record_id=None, **kwargs):
+    def read_sys_table_data(self, table, **kwargs) -> pd.DataFrame:
         """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
 
         每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列，
@@ -4311,59 +4311,76 @@ class DataSource:
         ----------
         table: str
             需要读取的数据表名称
-        record_id: int, Default: None
-            如果给出id，只返回id行记录
         kwargs: dict
             筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
 
         Returns
         -------
-        data: dict
-            当给出record_id时，读取的数据为dict，包括数据表的结构化信息以及数据表中的记录
         pd.DataFrame:
             当不给出record_id时，读取的数据为DataFrame，包括数据表的结构化信息以及数据表中的记录
-        None:
-            当输入的id或筛选条件没有匹配项时
-
-        TODO: 重构代码，修改返回类型，确保函数只有一种返回类型
         """
-
-        # 检查record_id是否合法
-        if record_id is not None and record_id <= 0:
-            return None
 
         ensure_sys_table(table)
 
         # 检查kwargs中是否有不可用的字段
         columns, dtypes, p_keys, pk_dtypes = get_built_in_table_schema(table)
         if any(k not in columns for k in kwargs):
-            raise KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
-
-        id_column = p_keys[0] if (len(p_keys) == 1) and (record_id is not None) else None
-        id_values = [record_id] if record_id else None
+            err = KeyError(f'kwargs not valid: {[k for k in kwargs if k not in columns]}')
+            raise err
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
-            res_df = self.read_database(table, share_like_pk=id_column, shares=id_values)
+            res_df = self.read_database(table)
             if res_df.empty:
-                return None
+                return res_df
             set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
-            res_df = self.read_file(table, p_keys, pk_dtypes, share_like_pk=id_column, shares=id_values)
+            res_df = self.read_file(table, p_keys, pk_dtypes)
         else:  # for other unexpected cases
-            res_df = pd.DataFrame()
+            return pd.DataFrame()
 
         if res_df.empty:
-            return None
+            return res_df
 
         # 筛选数据
         for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
 
-        if record_id is not None:
-            return res_df.loc[record_id].to_dict()
-        else:
-            return res_df if not res_df.empty else None
+        return res_df
+
+    def read_sys_table_record(self, table, *, record_id: int, **kwargs) -> dict:
+        """ 读取系统操作表的数据，根据指定的id读取数据，返回一个dict
+
+        本函数调用read_sys_table_data()读取整个数据表，并返回record_id行的数据
+        返回的dict包含所有字段的值，key为字段名，value为字段值
+
+        Parameters
+        ----------
+        table: str
+            需要读取的数据表名称
+        record_id: int
+            需要读取的数据的id
+        kwargs: dict
+            筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
+
+        Returns
+        -------
+        data: dict
+            读取的数据，包括数据表的结构化信息以及数据表中的记录
+        """
+
+        # 检查record_id是否合法
+        if record_id is not None and record_id <= 0:
+            return {}
+
+        data = self.read_sys_table_data(table, **kwargs)
+        if data.empty:
+            return {}
+
+        if record_id > len(data):
+            return {}
+
+        return data.loc[record_id].to_dict()
 
     def update_sys_table_data(self, table:str, record_id:int, **data) -> int:
         """ 更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。
@@ -4411,8 +4428,8 @@ class DataSource:
         """
 
         # 将data构造为一个df，然后调用self.update_table_data()
-        table_data = self.read_sys_table_data(table, record_id=record_id)
-        if table_data is None:
+        table_data = self.read_sys_table_record(table, record_id=record_id)
+        if table_data == {}:
             raise KeyError(f'record_id({record_id}) not found in table {table}')
 
         # 当data中有不可用的字段时，会抛出异常
@@ -4652,7 +4669,7 @@ class DataSource:
         if (start is not None) or (end is not None):
             # 如果指定了start或end，则忽略row_count参数, 但是如果row_count为None，则默认为-1, 读取所有数据
             row_count = 0 if row_count is not None else -1
-        # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
+        # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的键为表名，值为读取的DataFrame
         for tbl, columns in tables_to_read.items():
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:

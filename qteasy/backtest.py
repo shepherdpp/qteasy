@@ -946,7 +946,7 @@ def process_loop_results(operator,
                                      index=['add. invest', 'own cash', 'available cash', 'value'],
                                      columns=op_sum_index).T
         log_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_log.csv')
-        op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name)
+        op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name, encoding='utf-8')
 
         # 生成 trade log 摘要表 (a more concise and human-readable format of trading log
         # create share trading logs:
@@ -978,6 +978,6 @@ def process_loop_results(operator,
         # TODO: 可以增加一个config属性来控制交易摘要表的生成规则：
         #  如果how == 'left' 保留无交易日期的记录
         #  如果how == 'right', 不显示无交易日期的记录
-        op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(record_file_path_name)
+        op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(record_file_path_name, encoding='utf-8')
 
     return value_history

@@ -118,15 +118,15 @@ def get_account(account_id, user_name=None, data_source=None) -> dict:
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
     if user_name is None:
-        account = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
-        if account is None:
+        account = data_source.read_sys_table_record('sys_op_live_accounts', record_id=account_id)
+        if account == {}:
             raise KeyError(f'Account (id={account_id}) not found!')
         return account
     else:
         account = data_source.read_sys_table_data('sys_op_live_accounts', user_name=user_name)
-        if account is None:
+        if account.empty:
             raise KeyError(f'Account (user_name={user_name}) not found!')
-        return account
+        return account.to_dict(orient='records')[0]
 
 
 def update_account(account_id, data_source=None, **account_data) -> None:
@@ -186,8 +186,8 @@ def update_account_balance(account_id, data_source=None, **cash_change) -> None:
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    account_data = data_source.read_sys_table_data('sys_op_live_accounts', record_id=account_id)
-    if account_data is None:
+    account_data = data_source.read_sys_table_record('sys_op_live_accounts', record_id=account_id)
+    if account_data == {}:
         raise RuntimeError(f'Account not found! account id: {account_id}')
 
     cash_amount_change = cash_change.get('cash_amount_change', 0.0)
@@ -331,8 +331,8 @@ def get_position_by_id(pos_id, data_source=None):
     if not isinstance(data_source, qt.DataSource):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
-    position = data_source.read_sys_table_data('sys_op_positions', record_id=pos_id)
-    if position is None:
+    position = data_source.read_sys_table_record('sys_op_positions', record_id=pos_id)
+    if position == {}:
         raise RuntimeError('Position not found!')
     return position
 
@@ -372,7 +372,6 @@ def get_position_ids(account_id, symbol=None, position_type=None, data_source=No
     try:
         position = data_source.read_sys_table_data(
                 table='sys_op_positions',
-                record_id=None,
                 **position_filter,
         )
     except Exception as e:
@@ -423,14 +422,13 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
     # print(f'[DEBUG]account_id: {account_id}, symbol: {symbol}, position_type: {position_type}')
     position = data_source.read_sys_table_data(
             table='sys_op_positions',
-            record_id=None,
             **{
                 'account_id': account_id,
                 'symbol': symbol,
                 'position': position_type,
             },
     )
-    if position is None:
+    if position.empty:
         return data_source.insert_sys_table_data(
                 table='sys_op_positions',
                 **{
@@ -472,49 +470,52 @@ def update_position(position_id, data_source=None, **position_data):
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     if not isinstance(position_id, (int, np.int64)):
-        raise TypeError(f'position_id must be an int, got {type(position_id)} instead')
+        err = TypeError(f'position_id must be an int, got {type(position_id)} instead')
+        raise err
 
     # 从数据库中读取持仓数据，修改后再写入数据库
-    position = data_source.read_sys_table_data('sys_op_positions', record_id=position_id)
-    if position is None:
-        raise RuntimeError(f'position_id {position_id} not found!')
+    position = data_source.read_sys_table_record('sys_op_positions', record_id=position_id)
+    if position == {}:
+        err = RuntimeError(f'position_id {position_id} not found!')
+        raise err
 
     qty_change = position_data.get('qty_change', 0.0)
     if not isinstance(qty_change, (int, float, np.int64, np.float64)):
-        raise TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
+        err = TypeError(f'qty_change must be a int or float, got {type(qty_change)} instead')
+        raise err
     qty = position['qty'] + qty_change
 
     available_qty_change = position_data.get('available_qty_change', 0.0)
     if not isinstance(available_qty_change, (int, float, np.int64, np.float64)):
-        raise TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
+        err = TypeError(f'available_qty_change must be a int or float, got {type(available_qty_change)} instead')
+        raise err
     available_qty = position['available_qty'] + available_qty_change
 
     prev_cost = position['cost']
     cost = position_data.get('cost', prev_cost)
     if cost is not None:
         if not isinstance(cost, (int, float, np.int64, np.float64)):
-            raise TypeError(f'cost must be a int or float, got {type(cost)} instead')
+            err = TypeError(f'cost must be a int or float, got {type(cost)} instead')
+            raise err
 
     # 如果可用数量超过持仓数量，则报错
     if available_qty > qty:
-        raise RuntimeError(f'available_qty ({position["available_qty"]}) cannot be greater than '
-                           f'qty ({position["qty"]})')
+        err = RuntimeError(f'available_qty ({position["available_qty"]}+{available_qty_change}={available_qty})'
+                           f' cannot be greater than qty ({position["qty"]}+{qty_change}={qty})')
+        raise err
     # 如果可用数量小于0，则报错
     if available_qty < 0:
-        raise RuntimeError(f'available_qty ({position["available_qty"]}) cannot be less than 0!')
+        err = RuntimeError(f'available_qty ({position["available_qty"]}+{available_qty_change}={available_qty})'
+                           f' cannot be less than 0!')
+        raise err
     # 如果持仓数量小于0，则报错
     if qty < 0:
-        raise RuntimeError(f'qty ({position["qty"]}) cannot be less than 0!')
-
-    # debug
-    # print(f'{pd.to_datetime("now")}[DEBUG]: update position for id: '
-    #       f'{position_id} / {position["symbol"]} / {position["position"]}\n'
-    #       f'qty: {position["qty"]} -> {qty}, \n'
-    #       f'available_qty: {position["available_qty"]} -> {available_qty} \n'
-    #       f'cost: {position["cost"]} -> {cost}')
+        err = RuntimeError(f'qty ({position["qty"]}+{qty_change}={qty}) cannot be less than 0!')
+        raise err
 
     data_source.update_sys_table_data(
             'sys_op_positions',
@@ -551,11 +552,11 @@ def get_account_positions(account_id, data_source=None):
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     positions = data_source.read_sys_table_data(
             'sys_op_positions',
-            record_id=None,
             **{'account_id': account_id},
     )
     if positions is None:
@@ -622,7 +623,8 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
         from qteasy.utilfuncs import str_to_list
         shares = str_to_list(shares)
     if not isinstance(shares, (list, tuple, np.ndarray)):
-        raise TypeError(f'shares must be a list, tuple or ndarray, got {type(shares)} instead')
+        err = TypeError(f'shares must be a list, tuple or ndarray, got {type(shares)} instead')
+        raise err
 
     own_amounts = []
     available_amounts = []
@@ -637,7 +639,8 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
             continue
         # 如果同时存在多头和空头持仓，则报错
         if len(position) > 1:
-            raise RuntimeError(f'position for {share} has more than one position!')
+            err = RuntimeError(f'position for {share} has more than one position!')
+            raise err
         position = position.iloc[0]
         # 如果存在多头持仓，则将多头持仓的数量和可用数量放入列表
         if position['position'] == 'long':
@@ -653,12 +656,15 @@ def get_account_position_availabilities(account_id, shares=None, data_source=Non
             continue
     # 如果列表长度与shares长度不相等，则报错
     if len(own_amounts) != len(shares):
-        raise RuntimeError(f'own_amounts length ({len(own_amounts)}) is not equal to shares length ({len(shares)})')
+        err = RuntimeError(f'own_amounts length ({len(own_amounts)}) is not equal to shares length ({len(shares)})')
+        raise err
     if len(available_amounts) != len(shares):
-        raise RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
+        err = RuntimeError(f'available_amounts length ({len(available_amounts)}) is not equal to '
                            f'shares length ({len(shares)})')
+        raise err
     if len(costs) != len(shares):
-        raise RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
+        err = RuntimeError(f'costs length ({len(costs)}) is not equal to shares length ({len(shares)})')
+        raise err
     # 将列表转换为ndarray并返回
     result = (
         shares,
@@ -736,31 +742,37 @@ def record_trade_order(order, data_source=None):
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
+
+    err = None
+
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     # 检查交易信号的格式和数据合法性
     if not isinstance(order, dict):
-        raise TypeError(f'signal must be a dict, got {type(order)} instead')
+        err = TypeError(f'signal must be a dict, got {type(order)} instead')
     if not isinstance(order['pos_id'], (int, np.int64)):
-        raise TypeError(f'signal["pos_id"] must be an int, got {type(order["pos_id"])} instead')
+        err = TypeError(f'signal["pos_id"] must be an int, got {type(order["pos_id"])} instead')
     if not isinstance(order['direction'], str):
-        raise TypeError(f'signal["direction"] must be a str, got {type(order["direction"])} instead')
+        err = TypeError(f'signal["direction"] must be a str, got {type(order["direction"])} instead')
     if not isinstance(order['order_type'], str):
-        raise TypeError(f'signal["order_type"] must be a str, got {type(order["order_type"])} instead')
+        err = TypeError(f'signal["order_type"] must be a str, got {type(order["order_type"])} instead')
     if not isinstance(order['qty'], (float, int, np.float64, np.int64)):
-        raise TypeError(f'signal["qty"] must be a float, got {type(order["qty"])} instead')
+        err = TypeError(f'signal["qty"] must be a float, got {type(order["qty"])} instead')
     if not isinstance(order['price'], (float, int, np.float64, np.int64)):
-        raise TypeError(f'signal["price"] must be a float, got {type(order["price"])} instead')
+        err = TypeError(f'signal["price"] must be a float, got {type(order["price"])} instead')
     if order['qty'] <= 0:
-        raise RuntimeError(f'signal["qty"] ({order["qty"]}) must be greater than 0!')
+        err = RuntimeError(f'signal["qty"] ({order["qty"]}) must be greater than 0!')
     if order['price'] <= 0:
-        raise RuntimeError(f'signal["price"] ({order["price"]}) must be greater than 0!')
+        err = RuntimeError(f'signal["price"] ({order["price"]}) must be greater than 0!')
+
+    if err is not None:
+        raise err
 
     return data_source.insert_sys_table_data('sys_op_trade_orders', **order)
 
 
-def read_trade_order(order_id, data_source=None):
+def read_trade_order(order_id, data_source=None) -> dict:
     """ 根据order_id从数据库中读取交易信号
 
     Parameters
@@ -776,15 +788,17 @@ def read_trade_order(order_id, data_source=None):
         交易信号
     """
     if not isinstance(order_id, (int, np.int64)):
-        raise TypeError(f'order_id must be an int, got {type(order_id)} instead')
+        err = TypeError(f'order_id must be an int, got {type(order_id)} instead')
+        raise err
 
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
-    return data_source.read_sys_table_data('sys_op_trade_orders', record_id=order_id)
+    return data_source.read_sys_table_record('sys_op_trade_orders', record_id=order_id)
 
 
 def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_if_status_wrong=False):
@@ -830,19 +844,24 @@ def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
+    err = None
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
     if status is not None:
         if not isinstance(status, str):
-            raise TypeError(f'status must be a str, got {type(status)} instead')
+            err = TypeError(f'status must be a str, got {type(status)} instead')
         if status not in ['created', 'submitted', 'canceled', 'partial-filled', 'filled']:
-            raise RuntimeError(f'status ({status}) not in [created, submitted, canceled, partial-filled, filled]!')
+            err = RuntimeError(f'status ({status}) not in [created, submitted, canceled, partial-filled, filled]!')
 
-    trade_signal = data_source.read_sys_table_data('sys_op_trade_orders', record_id=order_id)
+    if err is not None:
+        raise err
+
+    trade_signal = data_source.read_sys_table_record('sys_op_trade_orders', record_id=order_id)
 
     # 如果trade_signal读取失败，则报错
     if trade_signal is None:
-        raise RuntimeError(f'Trade signal (order_id = {order_id}) not found!')
+        err = RuntimeError(f'Trade signal (order_id = {order_id}) not found!')
+        raise err
 
     # 如果trade_signal的状态为 'created'，则可以更新为 'submitted'
     if trade_signal['status'] == 'created' and status == 'submitted':
@@ -875,7 +894,8 @@ def update_trade_order(order_id, data_source=None, status=None, qty=None, raise_
         )
 
     if raise_if_status_wrong:
-        raise RuntimeError(f'Wrong status update: {trade_signal["status"]} -> {status}')
+        err = RuntimeError(f'Wrong status update: {trade_signal["status"]} -> {status}')
+        raise err
 
     return
 
@@ -919,7 +939,8 @@ def query_trade_orders(account_id,
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     # 从数据库中读取position的id
     pos_ids = get_position_ids(account_id, symbol, position, data_source=data_source)
@@ -946,7 +967,7 @@ def query_trade_orders(account_id,
     if all(r is None for r in res):
         return pd.DataFrame(columns=['pos_id', 'direction', 'order_type', 'qty', 'price', 'submitted_time', 'status'])
 
-    return pd.concat(res)
+    return pd.concat(res).sort_index()
 
 
 # 2 2nd level functions for trade signal TODO: (maybe) move to trading_util.py
@@ -982,15 +1003,17 @@ def read_trade_order_detail(order_id, data_source=None):
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     trade_signal_detail = read_trade_order(order_id, data_source=data_source)
-    if trade_signal_detail is None:
+    if trade_signal_detail == {}:
         return None
     pos_id = trade_signal_detail['pos_id']
     position = get_position_by_id(pos_id, data_source=data_source)
     if position is None:
-        raise RuntimeError(f'Position (position_id = {pos_id}) not found!')
+        err = RuntimeError(f'Position (position_id = {pos_id}) not found!')
+        raise err
     # 从关联表中读取symbol和position的信，添加到trade_signal_detail中
     trade_signal_detail['account_id'] = position['account_id']
     trade_signal_detail['symbol'] = position['symbol']
@@ -1031,7 +1054,8 @@ def save_parsed_trade_orders(account_id, symbols, positions, directions, quantit
             len(symbols) != len(directions) or \
             len(symbols) != len(quantities) or \
             len(symbols) != len(prices):
-        raise ValueError('Length of symbols, positions, directions, quantities and prices must be the same')
+        err = ValueError('Length of symbols, positions, directions, quantities and prices must be the same')
+        raise err
 
     order_ids = []
     # 逐个处理所有的交易信号要素
@@ -1072,54 +1096,70 @@ def write_trade_result(trade_result, data_source=None):
     """
 
     if not isinstance(trade_result, dict):
-        raise TypeError('trade_results must be a dict')
+        err = TypeError('trade_results must be a dict')
+        raise err
 
     if not isinstance(trade_result['order_id'], (int, np.int64)):
-        raise TypeError(f'order_id of trade_result must be an int, got {type(trade_result["order_id"])} instead')
+        err = TypeError(f'order_id of trade_result must be an int, got {type(trade_result["order_id"])} instead')
+        raise err
     if not isinstance(trade_result['filled_qty'], (int, float, np.int64, np.float64)):
-        raise TypeError(f'filled_qty of trade_result must be a number, got {type(trade_result["filled_qty"])} instead')
+        err = TypeError(f'filled_qty of trade_result must be a number, got {type(trade_result["filled_qty"])} instead')
+        raise err
     if not isinstance(trade_result['price'], (int, float, np.int64, np.float64)):
-        raise TypeError(f'price of trade_result must be a number, got {type(trade_result["price"])} instead')
+        err = TypeError(f'price of trade_result must be a number, got {type(trade_result["price"])} instead')
+        raise err
     if not isinstance(trade_result['transaction_fee'], (int, float, np.int64, np.float64)):
-        raise TypeError(f'transaction_fee of trade_result must be a number, got '
+        err = TypeError(f'transaction_fee of trade_result must be a number, got '
                         f'{type(trade_result["transaction_fee"])} instead')
+        raise err
     if isinstance(trade_result['execution_time'], str):
         try:
             execution_time = pd.to_datetime(trade_result['execution_time']).strftime('%Y-%m-%d %H:%M:%S')
             trade_result['execution_time'] = execution_time
         except Exception as e:
-            raise RuntimeError(f'{e}, Invalid execution_time {trade_result["execution_time"]}, '
+            err = RuntimeError(f'{e}, Invalid execution_time {trade_result["execution_time"]}, '
                                f'can not be converted to datetime format')
+            raise err
     if not isinstance(trade_result['canceled_qty'], (int, float, np.int64, np.float64)):
-        raise TypeError(f'canceled_qty of trade_result must be a number, got '
+        err = TypeError(f'canceled_qty of trade_result must be a number, got '
                         f'{type(trade_result["canceled_qty"])} instead')
+        raise err
     if not isinstance(trade_result['delivery_status'], str):
-        raise TypeError(f'delivery_status of trade_result must be a str, '
+        err = TypeError(f'delivery_status of trade_result must be a str, '
                         f'got {type(trade_result["delivery_status"])} instead')
+        raise err
     if not isinstance(trade_result['delivery_amount'], (int, float, np.int64, np.float64)):
-        raise TypeError(f'delivery_amount of trade_result must be a number, got '
+        err = TypeError(f'delivery_amount of trade_result must be a number, got '
                         f'{type(trade_result["delivery_amount"])} instead')
+        raise err
     if trade_result['order_id'] <= 0:
-        raise ValueError('order_id can not be less than or equal to 0')
+        err = ValueError('order_id can not be less than or equal to 0')
+        raise err
     if trade_result['filled_qty'] < 0:
-        raise ValueError('filled_qty can not be less than 0')
+        err = ValueError('filled_qty can not be less than 0')
+        raise err
     if trade_result['price'] < 0:
-        raise ValueError('price can not be less than 0')
+        err = ValueError('price can not be less than 0')
+        raise err
     if trade_result['transaction_fee'] < 0:
-        raise ValueError('transaction_fee can not be less than 0')
+        err = ValueError('transaction_fee can not be less than 0')
+        raise err
     if trade_result['canceled_qty'] < 0:
-        raise ValueError('canceled_qty can not be less than 0')
+        err = ValueError('canceled_qty can not be less than 0')
+        raise err
     if trade_result['delivery_amount'] < 0:
         # raise ValueError('delivery_amount can not be less than 0')
         pass
     if trade_result['delivery_status'] not in ['ND', 'DL']:
-        raise ValueError(f'delivery_status can only be ND or DL, got {trade_result["delivery_status"]} instead')
+        err = ValueError(f'delivery_status can only be ND or DL, got {trade_result["delivery_status"]} instead')
+        raise err
 
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     result_id = data_source.insert_sys_table_data('sys_op_trade_results', **trade_result)
     return result_id
@@ -1138,17 +1178,21 @@ def update_trade_result(result_id, delivery_status, data_source=None):
         数据源的名称, 默认为None, 表示使用默认的数据源
     """
     if not isinstance(result_id, (int, np.int64)):
-        raise TypeError('result_id must be an int')
+        err = TypeError('result_id must be an int')
+        raise err
     if not isinstance(delivery_status, str):
-        raise TypeError('delivery_status must be a str')
+        err = TypeError('delivery_status must be a str')
+        raise err
     if delivery_status not in ['ND', 'DL']:
-        raise ValueError(f'delivery_status can only be ND or DL, got {delivery_status} instead')
+        err = ValueError(f'delivery_status can only be ND or DL, got {delivery_status} instead')
+        raise err
 
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     data_source.update_sys_table_data(
             'sys_op_trade_results',
@@ -1180,15 +1224,17 @@ def read_trade_result_by_id(result_id, data_source=None):
         'delivery_status': str}  # 交易结果的交割状态
     """
     if not isinstance(result_id, (int, np.int64)):
-        raise TypeError('result_id must be an int')
+        err = TypeError('result_id must be an int')
+        raise err
 
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
-    trade_result = data_source.read_sys_table_data('sys_op_trade_results', result_id)
+    trade_result = data_source.read_sys_table_record('sys_op_trade_results', record_id=result_id)
     return trade_result
 
 
@@ -1217,19 +1263,22 @@ def read_trade_results_by_order_id(order_id, data_source=None):
         - delivery_status: str 交割状态
     """
     if not isinstance(order_id, (int, np.int64, np.ndarray, list, )):
-        raise TypeError(f'order_id must be an integer, a list of integers or a numpy array of integers, '
+        err = TypeError(f'order_id must be an integer, a list of integers or a numpy array of integers, '
                         f'got {type(order_id)} instead')
+        raise err
     if isinstance(order_id, np.ndarray):
         order_id = order_id.tolist()
     if isinstance(order_id, list):
         if not all([isinstance(i, (int, np.int64)) for i in order_id]):
-            raise TypeError('order_id must be an int or a list of int')
+            err = TypeError('order_id must be an int or a list of int')
+            raise err
 
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     if isinstance(order_id, (int, np.int64)):
         trade_results = data_source.read_sys_table_data(
@@ -1240,7 +1289,7 @@ def read_trade_results_by_order_id(order_id, data_source=None):
         trade_results = data_source.read_sys_table_data(
             'sys_op_trade_results',
         )
-    if trade_results is None:
+    if trade_results.empty:
         return pd.DataFrame(columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                                      'canceled_qty', 'delivery_amount', 'delivery_status'])
     if isinstance(order_id, list):
@@ -1265,15 +1314,18 @@ def read_trade_results_by_delivery_status(delivery_status, data_source=None):
         交易结果
     """
     if not isinstance(delivery_status, str):
-        raise TypeError('delivery_status must be a str')
+        err = TypeError('delivery_status must be a str')
+        raise err
     if not delivery_status in ['ND', 'DL']:
-        raise ValueError(f'delivery_status can only be ND or DL, got {delivery_status} instead')
+        err = ValueError(f'delivery_status can only be ND or DL, got {delivery_status} instead')
+        raise err
 
     import qteasy as qt
     if data_source is None:
         data_source = qt.QT_DATA_SOURCE
     if not isinstance(data_source, qt.DataSource):
-        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+        raise err
 
     trade_results = data_source.read_sys_table_data(
             'sys_op_trade_results',

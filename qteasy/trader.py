@@ -31,7 +31,7 @@ from qteasy.trade_recording import get_account_cash_availabilities, query_trade_
 from qteasy.trade_recording import get_or_create_position, new_account, update_position
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
-from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order
+from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -129,16 +129,20 @@ class Trader(object):
         debug: bool, default False
             是否打印debug信息
         """
+        err = None
         if not isinstance(account_id, int):
-            raise TypeError(f'account_id must be int, got {type(account_id)} instead')
+            err = TypeError(f'account_id must be int, got {type(account_id)} instead')
         if not isinstance(operator, Operator):
-            raise TypeError(f'operator must be Operator, got {type(operator)} instead')
+            err = TypeError(f'operator must be Operator, got {type(operator)} instead')
         if not isinstance(broker, Broker):
-            raise TypeError(f'broker must be Broker, got {type(broker)} instead')
+            err = TypeError(f'broker must be Broker, got {type(broker)} instead')
         if not isinstance(config, dict):
-            raise TypeError(f'config must be dict, got {type(config)} instead')
+            err = TypeError(f'config must be dict, got {type(config)} instead')
         if not isinstance(datasource, DataSource):
-            raise TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
+            err = TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
+
+        if err:
+            raise err
 
         self.account_id = account_id
         self._broker = broker
@@ -193,7 +197,8 @@ class Trader(object):
     @status.setter
     def status(self, value):
         if value not in ['running', 'sleeping', 'paused', 'stopped']:
-            raise ValueError(f'invalid status: {value}')
+            err = ValueError(f'invalid status: {value}')
+            raise err
         self._prev_status = self._status
         self._status = value
 
@@ -740,9 +745,11 @@ class Trader(object):
             任务参数
         """
         if not isinstance(task, str):
-            raise TypeError('task should be a str')
+            err = TypeError('task should be a str')
+            raise err
         if kwargs and (not isinstance(kwargs, dict)):
-            raise TypeError('kwargs should be a dict')
+            err = TypeError('kwargs should be a dict')
+            raise err
 
         if kwargs:
             task = (task, kwargs)
@@ -1273,6 +1280,7 @@ class Trader(object):
 
         from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail, get_position_by_id
         from qteasy.trade_recording import get_account
+
         # 读取交易处理以前的账户信息和持仓信息
         order_id = result['order_id']
         order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
@@ -1288,6 +1296,16 @@ class Trader(object):
         # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
         try:
             result_id = process_trade_result(result, data_source=self._datasource)
+
+            # 执行本次交易结果的交割，如果不符合交割条件，则不会执行交割
+            deliver_trade_result(
+                    result_id=result_id,
+                    account_id=self.account_id,
+                    stock_delivery_period=self._config['stock_delivery_period'],
+                    cash_delivery_period=self._config['cash_delivery_period'],
+                    data_source=self._datasource,
+            )
+
         except Exception as e:
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
             if self.debug:
@@ -1371,10 +1389,10 @@ class Trader(object):
         operator = self._operator
 
         datasource.reconnect()
-        datasource.reconnect()
 
         datasource.get_all_basic_table_data(
                 refresh_cache=True,
+                raise_error=False,
         )
         self.send_message(f'data source reconnected...')
 
@@ -1478,29 +1496,30 @@ class Trader(object):
                 cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
                 self.send_message(f'canceled unprocessed order: {order_id}')
                 order_queue.task_done()
-        # 检查今日成交订单，确认是否有"部分成交"以及"未成交"的订单，如果有，生成取消订单，取消尚未成交的部分
+        # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         partially_filled_orders = query_trade_orders(
                 account_id=self.account_id,
                 status='partial-filled',
                 data_source=self._datasource,
         )
+        self.send_message(f'partially filled orders found({len(partially_filled_orders)} in total), '
+                          f'they are to be canceled')
+        for order_id in partially_filled_orders.index:
+            # 对于所有没有完全成交的订单，生成取消订单，取消剩余的部分
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
+
+        # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
         unfilled_orders = query_trade_orders(
                 account_id=self.account_id,
                 status='submitted',
                 data_source=self._datasource,
         )
-        orders_to_be_canceled = pd.concat([partially_filled_orders, unfilled_orders])
-        if self.debug:
-            self.send_message(f'partially filled orders found, they are to be canceled: \n{orders_to_be_canceled}')
-        for order_id in orders_to_be_canceled.index:
-            # 部分成交订单不为空，需要生成一条新的交易记录，用于取消订单中的未成交部分，并记录订单结果
-            # TODO: here "submitted" orders can not be canceled, need to be fixed
+        self.send_message(f'Unfilled orders found ({len(unfilled_orders)} in total), they are to be canceled')
+        for order_id in unfilled_orders.index:
+            # 对于所有未成交的订单，生成取消订单
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled unfilled orders')
-
-        # 检查今日成交结果，完成交易结果的交割
-
-        self.send_message('processed trade delivery')
+            self.send_message(f'canceled unfilled order({order_id})')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -1553,7 +1572,8 @@ class Trader(object):
         elif freq == 'M':
             start_date = end_date - pd.Timedelta(days=30)
         else:
-            raise ValueError(f'invalid freq: {freq}')
+            err = ValueError(f'invalid freq: {freq}')
+            raise err
         self._datasource.refill_local_source(
                 tables=tables,
                 start_date=start_date,
@@ -1597,10 +1617,12 @@ class Trader(object):
         if task is None:
             return
         if not isinstance(task, str):
-            raise ValueError(f'task must be a string, got {type(task)} instead.')
+            err = ValueError(f'task must be a string, got {type(task)} instead.')
+            raise err
 
         if task not in available_tasks.keys():
-            raise ValueError(f'Invalid task name: {task}')
+            err = ValueError(f'Invalid task name: {task}')
+            raise err
 
         task_func = available_tasks[task]
 
@@ -1689,7 +1711,8 @@ class Trader(object):
                 elif len(task_tuple) == 2:
                     task = task[1]
                 else:
-                    raise ValueError(f'Invalid task tuple: No task found in {task_tuple}')
+                    err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
+                    raise err
 
                 if self.debug:
                     self.send_message(f'current time {current_time} >= task time {task_time}, '
@@ -1791,7 +1814,8 @@ class Trader(object):
                                         (task[1] in ['pre_open',
                                                      'post_close'])]
         else:
-            raise ValueError(f'Invalid current time: {current_time}')
+            err = ValueError(f'Invalid current time: {current_time}')
+            raise err
 
         if self.debug:
             self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}')
@@ -2084,15 +2108,15 @@ def start_trader_ui(
     None
     """
     if not isinstance(operator, Operator):
-        raise ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
+        err = ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
+        raise err
     # if account_id is None then create a new account
     if (account_id is None) or (account_id < 0):
         if (user_name is None) or (user_name == ''):
-            msg = 'Account_id is not given, set account_id to run live trade with an existing account. set:\n' \
-                  'live_trade_account_id = <account_id>. \n' \
-                  'If you want to create a new account, leave account_id as None and provide an account_name. set:\n' \
-                  'live_trade_account_name="your_account_name"'
-            raise ValueError(msg)
+            err = ValueError(f'Account_id is not given, Choose a valid account or create a new one:\n'
+                             f'- to choose an account, set: live_trade_account_id=<ID>\n'
+                             f'- to create a new account, set: live_trade_account_name="your_account_name"')
+            raise err
         account_id = new_account(
                 user_name=user_name,
                 cash_amount=init_cash,
@@ -2101,14 +2125,18 @@ def start_trader_ui(
     try:
         _ = get_account(account_id, data_source=datasource)
     except Exception as e:
-        raise ValueError(f'{e}\naccount {account_id} does not exist. choose a valid account or create a new one.')
+        err = ValueError(f'{e}\nFailed to use account({account_id}), Choose a valid account or create a new one:\n'
+                         f'- to choose an account, set: live_trade_account_id=<ID>\n'
+                         f'- to create a new account, set: live_trade_account_name="your_account_name"')
+        raise err
 
     # now we know that account_id is valid
 
     # if init_holdings is not None then add holdings to account
     if init_holdings is not None:
         if not isinstance(init_holdings, dict):
-            raise ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+            err = ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+            raise err
         for symbol, amount in init_holdings.items():
             pos_id = get_or_create_position(
                     account_id=account_id,
@@ -2172,7 +2200,8 @@ def start_trader_ui(
         from .trader_tui import TraderApp
         TraderApp(trader).run()
     else:
-        raise TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
+        err= TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
+        raise err
 
 
 def refill_missing_datasource_data(operator, trader, config, datasource) -> None:

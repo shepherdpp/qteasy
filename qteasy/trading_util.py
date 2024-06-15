@@ -706,7 +706,7 @@ def submit_order(order_id, data_source=None):
     return order_id
 
 
-def cancel_order(order_id, data_source=None, config=None):
+def cancel_order(order_id, data_source=None, config=None) -> int:
     """ 取消交易订单
 
     对于已经提交但尚未执行或者partially_fill的订单，可以取消订单，将订单的状态设置为 'canceled'
@@ -724,7 +724,7 @@ def cancel_order(order_id, data_source=None, config=None):
 
     Returns
     -------
-    int, 交易订单的id
+    int, 如果成功生成取消结果，则返回交易订单的id，如果交易订单已经没有剩余数量可以取消，则返回-1
     """
     # TODO: further test this function
 
@@ -734,7 +734,7 @@ def cancel_order(order_id, data_source=None, config=None):
         raise RuntimeError(f'order status wrong: {order_status} cannot be canceled')
 
     order_results = read_trade_results_by_order_id(order_id=order_id, data_source=data_source)
-    if not order_results.empty:
+    if not order_results.empty:  # 如果有交易结果，计算已经成交的数量和已经取消的数量
         total_filled_qty = np.round(
                 order_results['filled_qty'].sum(),
                 AMOUNT_DECIMAL_PLACES,
@@ -743,7 +743,7 @@ def cancel_order(order_id, data_source=None, config=None):
                 order_results['canceled_qty'].sum(),
                 AMOUNT_DECIMAL_PLACES,
         )
-    else:
+    else:  # 如果没有交易结果，已经成交的数量和已经取消的数量都为0
         total_filled_qty = 0.
         already_canceled_qty = 0.
     if already_canceled_qty > 0:
@@ -757,8 +757,9 @@ def cancel_order(order_id, data_source=None, config=None):
     )
 
     if remaining_qty <= 0:
-        raise RuntimeError(f'order status wrong: remaining qty should be larger than 0'
-                           f'when order is partially filled, got {remaining_qty}')
+        # in this case there will be nothing to be canceled
+        return -1
+
     result_of_cancel = {
         'order_id':        order_id,
         'filled_qty':      0.,
@@ -773,6 +774,8 @@ def cancel_order(order_id, data_source=None, config=None):
             data_source=data_source,
             config=config
     )
+
+    return order_id
 
 
 def process_account_delivery(account_id, data_source=None, config=None) -> list:
@@ -835,6 +838,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     """ 处理交易结果的交割，给出交易结果ID，根据结交割周期修改可用现金/可用持仓，并修改结果的delivery_status为'DL'
 
     注意，如果delivery_status已经为DL，则不交割，直接返回
+    如果结果的交割期尚未达到，则不执行交割，直接返回
     如果result_id对应的account_id与参数account_id不符合，也不执行交割，直接返回
 
     Parameters
@@ -869,7 +873,8 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     if result is None:
         result = read_trade_result_by_id(result_id=result_id, data_source=data_source)
     if not isinstance(result, dict):
-        raise RuntimeError(f'Wrong trade result, expect a dict, got {type(result)} instead')
+        err = RuntimeError(f'Wrong trade result, expect a dict, got {type(result)} instead')
+        raise err
     if result['delivery_status'] != 'ND':
         # 如果交易结果已经交割过了，则不再交割
         return {}
@@ -887,9 +892,10 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     elif trade_direction == 'sell':
         delivery_period = cash_delivery_period
     else:
-        raise ValueError(f'Invalid direction: {trade_direction}')
+        err = ValueError(f'Invalid direction: {trade_direction}')
+        raise err
 
-    # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则跳过
+    # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则不予交割
     execution_date = pd.to_datetime(result['execution_time']).date()
     current_date = pd.to_datetime('today').date()
     day_diff = (current_date - execution_date).days
@@ -938,7 +944,8 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
         account = get_account(account_id, data_source=data_source)
         delivery_result['updated_amount'] = account['available_cash']
     else:
-        raise RuntimeError(f'Wrong trade direction! {trade_direction}')
+        err = RuntimeError(f'Wrong trade direction! {trade_direction}')
+        raise err
 
     update_trade_result(
             result_id=result_id,
@@ -970,7 +977,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     result_id: int
         交易结果的ID
     """
-    # TODO: 一个函数只做一件事情，我感觉这个函数太长了
+    # TODO: 一个函数只做一件事情，我感觉这个函数太长了，需要拆分成多个子函数
 
     if not isinstance(raw_trade_result, dict):
         raise TypeError(f'raw_trade_result must be a dict, got {type(raw_trade_result)} instead')
@@ -995,7 +1002,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     filled_qty = np.round(
             trade_results['filled_qty'].sum(),
             AMOUNT_DECIMAL_PLACES
-    ) if trade_results is not None else 0
+    ) if not trade_results.empty else 0
     remaining_qty = np.round(
             order_detail['qty'] - filled_qty,
             AMOUNT_DECIMAL_PLACES,
@@ -1005,14 +1012,16 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # 如果交易结果中的cancel_qty大于0，则将交易订单的状态设置为 'canceled'，同时确认 canceled_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
-            raise RuntimeError(f'canceled_qty {raw_trade_result["canceled_qty"]} '
+            err = RuntimeError(f'canceled_qty {raw_trade_result["canceled_qty"]} '
                                f'does not match remaining_qty {remaining_qty}')
+            raise err
         order_detail['status'] = 'canceled'
     # 如果交易结果中的canceled_qty等于0，则检查filled_qty的数量是大于remaining_qty，如果大于，则抛出异常
     else:
         if raw_trade_result['filled_qty'] > remaining_qty:
-            raise RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
+            err = RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
                                f'is greater than remaining_qty {remaining_qty}')
+            raise err
 
         # 如果filled_qty等于remaining_qty，则将交易订单的状态设置为 'filled'
         elif raw_trade_result['filled_qty'] == remaining_qty:
@@ -1037,7 +1046,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                 CASH_DECIMAL_PLACES,
         )
     else:  # for any other unexpected direction
-        raise ValueError(f'Invalid direction: {order_detail["direction"]}')
+        err = ValueError(f'Invalid direction: {order_detail["direction"]}')
+        raise err
 
     position_info = get_position_by_id(order_detail['pos_id'], data_source=data_source)
     owned_qty = position_info['qty']
@@ -1050,12 +1060,14 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
 
     # 如果position_change小于available_position_amount，则抛出异常
     if available_qty + position_change < 0:
-        raise RuntimeError(f'position_change {position_change} is greater than '
+        err = RuntimeError(f'position_change {position_change} is greater than '
                            f'available position amount {available_qty}')
+        raise err
     # 如果cash_change小于available_cash，则抛出异常
     if available_cash + cash_change < 0:
-        raise RuntimeError(f'cash_change {cash_change} is greater than '
+        err = RuntimeError(f'cash_change {cash_change} is greater than '
                            f'available cash {available_cash}')
+        raise err
 
     # 计算并生成交易结果的交割数量和交割状态，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
     if order_detail['direction'] == 'buy':
@@ -1063,7 +1075,8 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     elif order_detail['direction'] == 'sell':
         raw_trade_result['delivery_amount'] = cash_change
     else:
-        raise ValueError(f'direction must be buy or sell, got {order_detail["direction"]} instead')
+        err = ValueError(f'direction must be buy or sell, got {order_detail["direction"]} instead')
+        raise err
     raw_trade_result['delivery_status'] = 'ND'
 
     # 至此，如果前面所有步骤都没有发生错误，则交易结果有效，生成交易结果的execution_time字段，正式保存交易结果
@@ -1075,10 +1088,16 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
     #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
 
-    # TODO: 买入或卖出的交易结果应该只更新qty/cash
+    # TODO: 最佳的做法是：买入或卖出的交易结果应该只更新qty/cash
     #  而available_qty/available_cash统一应该留到订单交易后交割时更新
-    #  （在交易后立即更新，但允许部分交割，只有完全交割后才修改状态）
-    #  这一条需要讨论，不一定合理
+    #  但是在实际进行实盘交易时，上面的做法要求每次执行完订单后都进行一次交割，
+    #  因为只有这样，才能将卖出交易后获取的现金交割到账户的available_cash中，
+    #  否则，会导致available_cash不能得到及时更新，从而导致后续的交易失败
+    #  在目前的实现中，交割操作是在每天早上9:15分进行的，这样就会导致available_cash
+    #  不能及时更新。
+    #  现在采用这样的做法，在每次处理完交易信号后，立即进行该交易信号的交割，如果
+    #  交易信号不符合交割条件，则不进行交割，但是这样会导致交割操作过于频繁，不够高效
+    #  需要注意的是，交割操作不应该在process_trade_result内部完成，而应该由调用者完成
 
     # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
     if order_detail['direction'] == 'buy':

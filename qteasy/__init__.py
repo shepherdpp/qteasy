@@ -38,15 +38,15 @@ from ._arg_validators import QT_CONFIG, ConfigDict
 
 
 # qteasy版本信息
-__version__ = '1.2.11'
+__version__ = '1.2.12'
 version_info = Namespace(
         major=1,
         minor=2,
-        patch=11,
+        patch=12,
         short=(1, 2),
-        full=(1, 2, 11),
-        string='1.2.11',
-        tuple=('1', '2', '11'),
+        full=(1, 2, 12),
+        string='1.2.12',
+        tuple=('1', '2', '12'),
         releaselevel='beta',
 )
 
