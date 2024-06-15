@@ -840,10 +840,14 @@ class TraderShell(Cmd):
         args = self.parse_args('bye', arg)
         if not args:
             return False
-        print(f'canceling all unfinished orders')
-        self.trader.add_task('post_close')
+        print(f'Canceling all unfinished orders ...')
+        self.trader.run_task('post_close')
+        print(f'Processing all deliveries ...')
+        self.trader.run_task('process_delivery')
         print(f'stopping trader...')
-        self.trader.add_task('stop')
+        self.trader.run_task('stop')
+        while self.trader.status != 'stopped':
+            time.sleep(0.1)
         self._status = 'stopped'
         return True
 

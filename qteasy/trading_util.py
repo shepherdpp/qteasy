@@ -812,7 +812,7 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
 
     undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
     if undelivered_results is None:
-        return
+        return []
 
     delivery_result = []
     # 循环处理每一条未交割的交易结果：
@@ -843,7 +843,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
 
     Parameters
     ----------
-    result_id: int
+    result_id: int or Any
         结果ID，需要交割的交易结果
     account_id: int
         账户ID，如果result所属的account与account_id不匹配则不执行交割
@@ -1087,17 +1087,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     # 更新账户的持仓和现金余额和订单状态
     # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
     #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
-
-    # TODO: 最佳的做法是：买入或卖出的交易结果应该只更新qty/cash
-    #  而available_qty/available_cash统一应该留到订单交易后交割时更新
-    #  但是在实际进行实盘交易时，上面的做法要求每次执行完订单后都进行一次交割，
-    #  因为只有这样，才能将卖出交易后获取的现金交割到账户的available_cash中，
-    #  否则，会导致available_cash不能得到及时更新，从而导致后续的交易失败
-    #  在目前的实现中，交割操作是在每天早上9:15分进行的，这样就会导致available_cash
-    #  不能及时更新。
-    #  现在采用这样的做法，在每次处理完交易信号后，立即进行该交易信号的交割，如果
-    #  交易信号不符合交割条件，则不进行交割，但是这样会导致交割操作过于频繁，不够高效
-    #  需要注意的是，交割操作不应该在process_trade_result内部完成，而应该由调用者完成
 
     # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
     if order_detail['direction'] == 'buy':

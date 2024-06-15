@@ -587,14 +587,17 @@ class TraderApp(App):
     def _on_exit_app(self) -> None:
         """Actions to perform before exiting the app.
         """
-        # stop the trader, broker and the trader event loop
-        self.trader.status = 'stopped'
-        time.sleep(0.1)
-        self.trader.broker.status = 'stopped'
-        time.sleep(0.1)
+        syslog = self.query_one(SysLog)
+        syslog.write(f"Canceling all unfinished orders...")
+        self.trader.run_task('post_close')
+        syslog.write(f'Processing all deliveries ...')
+        self.trader.run_task('process_delivery')
+        syslog.write(f'Stopping trader...')
+        self.trader.run_task('stop')
 
-        self.status = 'stopped'
-        time.sleep(0.1)
+        while self.trader.status != 'stopped':
+            time.sleep(0.1)
+        self._status = 'stopped'
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

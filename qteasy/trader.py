@@ -1056,9 +1056,14 @@ class Trader(object):
         self.status = 'sleeping'
 
     def _stop(self):
-        """ 停止交易系统 """
+        """ 停止交易系统, 由于任务队列中的任务可能未完成，所以需要同时完成下面工作：
+
+        1，取消所有未完成的订单
+        2，处理当天的交割
+        3，将交易系统和broker的状态设置为stopped
+
+        """
         self.send_message('Stopping Trader, all unprocessed orders will be cancelled...')
-        self.run_task('')
         self._broker.status = 'stopped'
         self.status = 'stopped'
 
@@ -1433,49 +1438,8 @@ class Trader(object):
                                   f'cash: ¥{pre_cash_amount:,.2f}->¥{post_cash_amount:,.2f}'
                                   f'available: ¥{pre_available_cash:,.2f}->¥{post_available_cash:,.2f}')
 
-    def _process_delivery(self, result_id):
-        """ 处理已知交割结果, 更新本地账户和持仓信息"""
-
-    def _sync_positoins(self):
-        """ 同步持仓信息，更新本地持仓信息 """
-        pass
-
-    def _sync_account(self):
-        """ 同步账户信息，更新本地账户和持仓信息 """
-        pass
-
-    def _sync_results(self):
-        """ 同步交易结果，更新本地交易结果和订单信息 """
-        pass
-
-    def _pre_open(self):
-        """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
-
-        - 确保data_source重新连接,
-        - 扫描数据源，下载缺失的数据
-        - 处理订单的交割
-        - 获取当日实时价格
-        """
-        datasource = self._datasource
-        config = self._config
-        operator = self._operator
-
-        datasource.reconnect()
-
-        datasource.get_all_basic_table_data(
-                refresh_cache=True,
-                raise_error=False,
-        )
-        self.send_message(f'data source reconnected...')
-
-        # 扫描数据源，下载缺失的日频或以上数据
-
-        refill_missing_datasource_data(
-                operator=operator,
-                trader=self,
-                config=config,
-                datasource=datasource,
-        )
+    def _process_deliveries(self):
+        """ 处理账户全部成交订单的交割, 更新本地账户和持仓信息"""
 
         # 检查账户中的成交结果，完成全部交易结果的交割
         delivery_result = process_account_delivery(
@@ -1537,6 +1501,50 @@ class Trader(object):
                 self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                                   f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
 
+    def _sync_positions(self):
+        """ 同步持仓信息，更新本地持仓信息 """
+        pass
+
+    def _sync_account(self):
+        """ 同步账户信息，更新本地账户和持仓信息 """
+        pass
+
+    def _sync_results(self):
+        """ 同步交易结果，更新本地交易结果和订单信息 """
+        pass
+
+    def _pre_open(self):
+        """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
+
+        - 确保data_source重新连接,
+        - 扫描数据源，下载缺失的数据
+        - 处理订单的交割
+        - 获取当日实时价格
+        """
+        datasource = self._datasource
+        config = self._config
+        operator = self._operator
+
+        datasource.reconnect()
+
+        datasource.get_all_basic_table_data(
+                refresh_cache=True,
+                raise_error=False,
+        )
+        self.send_message(f'data source reconnected...')
+
+        # 扫描数据源，下载缺失的日频或以上数据
+
+        refill_missing_datasource_data(
+                operator=operator,
+                trader=self,
+                config=config,
+                datasource=datasource,
+        )
+
+        # 检查账户中的成交结果，完成全部交易结果的交割
+        self._process_deliveries()
+
         # 获取当日实时价格
         self._update_live_price()
 
@@ -1555,43 +1563,17 @@ class Trader(object):
                 self.send_message('market is still open, post_close can not be executed during open time!')
             return
 
-        # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
-        order_queue = self.broker.order_queue
-        # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
-        #   此处应该检查broker的result_queue，如果有结果，则将result_queue中的结果
-        #   全部处理完毕，然后再取消order_queue中的订单
-        if not order_queue.empty():
-            self.send_message('unprocessed orders found, these orders will be canceled')
-            while not order_queue.empty():
-                order = order_queue.get()
-                order_id = order['order_id']
-                cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
-                self.send_message(f'canceled unprocessed order: {order_id}')
-                order_queue.task_done()
+        # 检查result_queue中是否有结果，如果有，处理交易结果
+        self._process_all_results()
+
+        # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号('created')，生成取消订单
+        self._cancel_created_orders()
+
         # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
-        partially_filled_orders = query_trade_orders(
-                account_id=self.account_id,
-                status='partial-filled',
-                data_source=self._datasource,
-        )
-        self.send_message(f'partially filled orders found({len(partially_filled_orders)} in total), '
-                          f'they are to be canceled')
-        for order_id in partially_filled_orders.index:
-            # 对于所有没有完全成交的订单，生成取消订单，取消剩余的部分
-            cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
+        self._cancel_partial_filled_orders()
 
         # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
-        unfilled_orders = query_trade_orders(
-                account_id=self.account_id,
-                status='submitted',
-                data_source=self._datasource,
-        )
-        self.send_message(f'Unfilled orders found ({len(unfilled_orders)} in total), they are to be canceled')
-        for order_id in unfilled_orders.index:
-            # 对于所有未成交的订单，生成取消订单
-            cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled unfilled order({order_id})')
+        self._cancel_submitted_orders()
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -1678,7 +1660,7 @@ class Trader(object):
             'sell_order':         self._sell_order,
             'cancel_order':       self._cancel_order,
             'process_result':     self._process_result,
-            'process_delivery':   self._process_delivery,
+            'process_delivery':   self._process_deliveries,
             'acquire_live_price': self._update_live_price,
             'sync_positions':     self._sync_positions,
             'sync_account':       self._sync_account,
@@ -2138,6 +2120,54 @@ class Trader(object):
             self.watched_prices = live_prices
 
         return self.watched_prices
+
+    def _process_all_results(self):
+        """ 处理所有已经产生的交易结果 """
+        result_queue = self.broker.result_queue
+        while not result_queue.empty():
+            result = result_queue.get()
+            self._process_result(result)
+            self.send_message(f'Processed filled order result: {result}')
+            result_queue.task_done()
+
+    def _cancel_partial_filled_orders(self):
+        """ 取消所有已经提交但尚未完全成交的订单，取消尚未完全成交的部分 """
+        # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
+        partially_filled_orders = query_trade_orders(
+                account_id=self.account_id,
+                status='partial-filled',
+                data_source=self._datasource,
+        )
+        self.send_message(f'partially filled orders found({len(partially_filled_orders)} in total), '
+                          f'they are to be canceled')
+        for order_id in partially_filled_orders.index:
+            # 对于所有没有完全成交的订单，生成取消订单，取消剩余的部分
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
+
+    def _cancel_submitted_orders(self):
+        """ 取消所有已经提交但尚未成交的订单 """
+        # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
+        unfilled_orders = query_trade_orders(
+                account_id=self.account_id,
+                status='submitted',
+                data_source=self._datasource,
+        )
+        self.send_message(f'Unfilled orders found ({len(unfilled_orders)} in total), they are to be canceled')
+        for order_id in unfilled_orders.index:
+            # 对于所有未成交的订单，生成取消订单
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.send_message(f'canceled unfilled order({order_id})')
+
+    def _cancel_created_orders(self):
+        """ 取消所有已经创建但尚未被Broker完成提交的订单 """
+        order_queue = self.broker.order_queue
+        while not order_queue.empty():
+            order = order_queue.get()
+            order_id = order['order_id']
+            cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
+            self.send_message(f'canceled un-submitted order: {order_id}')
+            order_queue.task_done()
 
     TASK_WHITELIST = {
         'stopped':  ['start'],
