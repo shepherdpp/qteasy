@@ -1,8 +1,9 @@
 # RELEASE HISTORY
 
 ## 1.2.12 (2024-06-12)
-- Fixed a bug, now cash gained by selling stocks can now be delivered immediately to available cash amount.
+- Fixed a bug, now cash gained by selling stocks can be delivered immediately to update available cash amount.
 - Fixed a bug, now unfilled orders can be correctly canceled after each trading day
+- Fixed a bug that might lead to failure of getting table information in Windows environment
 
 ## 1.2.11 (2024-06-09)
 - Fall back to default data source type if mysql connection fails
