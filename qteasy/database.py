@@ -2683,7 +2683,7 @@ class DataSource:
         """
         file_path_name = self.get_file_path_name(file_name)
         if self.file_type == 'csv':
-            df.to_csv(file_path_name)
+            df.to_csv(file_path_name, encoding='utf-8')
         elif self.file_type == 'fth':
             df.reset_index().to_feather(file_path_name)
         elif self.file_type == 'hdf':
@@ -2923,10 +2923,10 @@ class DataSource:
             raise RuntimeError(f'{e}, unknown error encountered.')
 
     def get_file_rows(self, file_name):
-        """获取csv、hdf、fether文件中数据的行数"""
+        """获取csv、hdf、feather文件中数据的行数"""
         file_path_name = self.get_file_path_name(file_name)
         if self.file_type == 'csv':
-            with open(file_path_name, 'r') as fp:
+            with open(file_path_name, 'r', encoding='utf-8') as fp:
                 line_count = None
                 for line_count, line in enumerate(fp):
                     pass
@@ -3704,7 +3704,7 @@ class DataSource:
         df = self.read_table_data(table=table, shares=shares, start=start, end=end)
         # 将数据写入文件
         try:
-            df.to_csv(file_path_name)
+            df.to_csv(file_path_name, encoding='utf-8')
         except Exception as e:
             raise RuntimeError(f'{e}, Failed to export table {table} to file {file_path_name}!')
 
