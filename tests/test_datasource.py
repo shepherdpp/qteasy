@@ -2217,7 +2217,7 @@ class TestDataSource(unittest.TestCase):
                 print(f'\n----------------------'
                       f'\ninserting into table {table}@{ds} with following data\n{data}')
                 ds.insert_sys_table_data(table, **data)
-                res = ds.read_sys_table_data(table, 1)
+                res = ds.read_sys_table_record(table, record_id=1)
                 print(f'following data are read from table {table}\n'
                       f'{res}\n')
                 self.assertIsNotNone(res)
@@ -2246,11 +2246,11 @@ class TestDataSource(unittest.TestCase):
                 # 测试传入无效的id时是否引发KeyError异常
                 print(f'test passing invalid id to read_sys_table_data')
                 res = ds.read_sys_table_record(table, record_id=-1)
-                self.assertIsNone(res)
+                self.assertEqual(res, {})
                 res = ds.read_sys_table_record(table, record_id=0)
-                self.assertIsNone(res)
+                self.assertEqual(res, {})
                 res = ds.read_sys_table_record(table, record_id=999)
-                self.assertIsNone(res)
+                self.assertEqual(res, {})
 
                 # 测试传入无效的表名时是否引发KeyError异常
                 with self.assertRaises(KeyError):
@@ -2314,7 +2314,7 @@ class TestDataSource(unittest.TestCase):
 
                 # 测试传入无效的id时是否返回None
                 res = ds.read_sys_table_record(table, record_id=100)
-                self.assertIsNone(res)
+                self.assertEqual(res, {})
 
                 # 测试传入kwargs筛选数据，验证是否读取正确
                 print(f'\nreading data with kwargs: {kw}...\n')
@@ -2329,7 +2329,7 @@ class TestDataSource(unittest.TestCase):
                 # 测试传入不存在的kwargs时是否返回None
                 print(f'\nreading data with not existed kwargs: {kwn}...\n')
                 res = ds.read_sys_table_data(table, **kwn)
-                self.assertIsNone(res)
+                self.assertTrue(res.empty)
 
                 # 测试传入无效的kwargs是否返回None
                 with self.assertRaises(KeyError):

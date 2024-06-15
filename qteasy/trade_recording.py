@@ -119,7 +119,7 @@ def get_account(account_id, user_name=None, data_source=None) -> dict:
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
     if user_name is None:
         account = data_source.read_sys_table_record('sys_op_live_accounts', record_id=account_id)
-        if account is None:
+        if account == {}:
             raise KeyError(f'Account (id={account_id}) not found!')
         return account
     else:
@@ -332,7 +332,7 @@ def get_position_by_id(pos_id, data_source=None):
         raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
 
     position = data_source.read_sys_table_record('sys_op_positions', record_id=pos_id)
-    if position is None:
+    if position == {}:
         raise RuntimeError('Position not found!')
     return position
 
@@ -479,7 +479,7 @@ def update_position(position_id, data_source=None, **position_data):
 
     # 从数据库中读取持仓数据，修改后再写入数据库
     position = data_source.read_sys_table_record('sys_op_positions', record_id=position_id)
-    if position is None:
+    if position == {}:
         err = RuntimeError(f'position_id {position_id} not found!')
         raise err
 
@@ -557,7 +557,6 @@ def get_account_positions(account_id, data_source=None):
 
     positions = data_source.read_sys_table_data(
             'sys_op_positions',
-            record_id=None,
             **{'account_id': account_id},
     )
     if positions is None:
@@ -773,7 +772,7 @@ def record_trade_order(order, data_source=None):
     return data_source.insert_sys_table_data('sys_op_trade_orders', **order)
 
 
-def read_trade_order(order_id, data_source=None):
+def read_trade_order(order_id, data_source=None) -> dict:
     """ 根据order_id从数据库中读取交易信号
 
     Parameters
@@ -1008,7 +1007,7 @@ def read_trade_order_detail(order_id, data_source=None):
         raise err
 
     trade_signal_detail = read_trade_order(order_id, data_source=data_source)
-    if trade_signal_detail is None:
+    if trade_signal_detail == {}:
         return None
     pos_id = trade_signal_detail['pos_id']
     position = get_position_by_id(pos_id, data_source=data_source)
@@ -1290,7 +1289,7 @@ def read_trade_results_by_order_id(order_id, data_source=None):
         trade_results = data_source.read_sys_table_data(
             'sys_op_trade_results',
         )
-    if trade_results is None:
+    if trade_results.empty:
         return pd.DataFrame(columns=['order_id', 'filled_qty', 'price', 'transaction_fee', 'execution_time',
                                      'canceled_qty', 'delivery_amount', 'delivery_status'])
     if isinstance(order_id, list):

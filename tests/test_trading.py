@@ -523,7 +523,7 @@ class TestTradeRecording(unittest.TestCase):
         with self.assertRaises(TypeError):
             read_trade_order(1.0, data_source=self.test_ds)
             read_trade_order('test', data_source=self.test_ds)
-        self.assertIsNone(read_trade_order(-1, data_source=self.test_ds))
+        self.assertEqual(read_trade_order(-1, data_source=self.test_ds), {})
 
         # test update signal
         update_trade_order(1, data_source=self.test_ds, status='submitted')

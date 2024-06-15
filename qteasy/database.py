@@ -3980,9 +3980,10 @@ class DataSource:
         # 否则判断df基本与table匹配，根据Constraints，添加缺少的列(通常为NULL列)
         missing_columns = [col for col in table_columns if col not in dnld_columns]
         if len(missing_columns) >= (len(table_columns) * 0.25):
-            raise ValueError(f'there are too many missing columns in downloaded df, can not merge to local table:'
+            err = ValueError(f'there are too many missing columns in downloaded df, can not merge to local table:'
                              f'table_columns:\n{[table_columns]}\n'
                              f'downloaded:\n{[dnld_columns]}')
+            raise err
         else:
             pass  # 在后面调整列顺序时会同时添加缺的列并调整顺序
         # 删除数据中过多的列，不允许出现缺少列
@@ -4336,7 +4337,10 @@ class DataSource:
         elif self.source_type == 'file':
             res_df = self.read_file(table, p_keys, pk_dtypes)
         else:  # for other unexpected cases
-            res_df = pd.DataFrame()
+            return pd.DataFrame()
+
+        if res_df.empty:
+            return res_df
 
         # 筛选数据
         for k, v in kwargs.items():
@@ -4367,12 +4371,15 @@ class DataSource:
 
         # 检查record_id是否合法
         if record_id is not None and record_id <= 0:
-            err = ValueError(f'record_id must be a positive integer, got {record_id}')
-            raise err
+            return {}
 
         data = self.read_sys_table_data(table, **kwargs)
         if data.empty:
             return {}
+
+        if record_id > len(data):
+            return {}
+
         return data.loc[record_id].to_dict()
 
     def update_sys_table_data(self, table:str, record_id:int, **data) -> int:
@@ -4662,7 +4669,7 @@ class DataSource:
         if (start is not None) or (end is not None):
             # 如果指定了start或end，则忽略row_count参数, 但是如果row_count为None，则默认为-1, 读取所有数据
             row_count = 0 if row_count is not None else -1
-        # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
+        # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的键为表名，值为读取的DataFrame
         for tbl, columns in tables_to_read.items():
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
