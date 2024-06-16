@@ -28,10 +28,11 @@ from qteasy.broker import Broker
 from qteasy.core import check_and_prepare_live_trade_data
 from qteasy.trade_recording import get_account, get_account_position_availabilities, get_account_position_details
 from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
-from qteasy.trade_recording import get_or_create_position, new_account, update_position
+from qteasy.trade_recording import get_or_create_position, new_account, update_position, update_trade_order
+from qteasy.trade_recording import read_trade_order
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
-from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
+from qteasy.trading_util import parse_trade_signal, process_trade_result, order_presubmit_check, deliver_trade_result
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -385,6 +386,12 @@ class Trader(object):
         return os.path.exists(self.sys_log_file_path_name)
 
     # ================== methods ==================
+    """
+     - 所有的methods都可以由trader外部调用，但是不是用于trader正常运行的任务
+     - 所有的methods都可以被task_runner调用
+     - 所有的methods不处理任何跟UI以及交互相关的事务
+     - 所有的methods都不产生消息，只返回结果
+    """
     def get_current_tz_datetime(self):
         """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
 
@@ -741,7 +748,7 @@ class Trader(object):
         ----------
         task: str
             任务名称
-        **kwargs: dict
+        kwargs: dict
             任务参数
         """
         if not isinstance(task, str):
@@ -1242,7 +1249,15 @@ class Trader(object):
         pass
 
     def submit_trade_order(self, symbol: str, position: str, direction: str, order_type: str, qty: int, price: float) -> dict:
-        """ 提交订单
+        """ 提交交易订单：
+
+        - 创建完整订单信息，记录到本地订单数据，必要时创建持仓信息
+        - 检查订单是否符合提交条件，如果符合，修改订单状态为"submitted"
+        - 如果订单不符合提交条件，提交取消订单，将订单状态改为"cancelled"
+
+        TODO: 目前这几个功能的实现太过复杂且导致大量频繁磁盘读取
+         完全可以采用更简单直接的实现方式，在内存中完成判断
+         需要优化
 
         Parameters
         ----------
@@ -1262,7 +1277,7 @@ class Trader(object):
         Returns
         -------
         trade_order: dict
-            订单信息
+            已经提交的订单信息
         """
         if order_type is None:
             order_type = 'market'
@@ -1276,7 +1291,7 @@ class Trader(object):
         trade_order = {
             'pos_id':         pos_id,
             'direction':      direction,
-            'order_type':     order_type,  # TODO: order type is to be properly defined
+            'order_type':     order_type,
             'qty':            qty,
             'price':          price,
             'submitted_time': None,
@@ -1284,15 +1299,29 @@ class Trader(object):
         }
 
         order_id = record_trade_order(trade_order, data_source=self._datasource)
-        # 提交交易订单
-        if submit_order(order_id=order_id, data_source=self._datasource) is not None:
-            trade_order['order_id'] = order_id
+        trade_order['order_id'] = order_id
+        # 检查交易订单，确认是否符合提交条件，如果符合条件，更新订单状态
+        if order_presubmit_check(order_id=order_id, data_source=self._datasource) is not None:
+            update_trade_order(order_id=order_id, data_source=self._datasource, status='submitted')
+        else:
+            # 如果订单不符合提交条件，取消本地订单，将订单状态改为"cancelled"
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            update_trade_order(order_id=order_id, data_source=self._datasource, status='cancelled')
 
-            return trade_order
+        # 再次读取订单信息，返回订单信息
+        trade_order = read_trade_order(order_id=order_id, data_source=self._datasource)
 
-        return {}
+        return trade_order
 
     # ============ definition of tasks ================
+    """
+    任务定义：
+    - 所有task都可以被添加到任务队列，并由交易系统定期执行
+    - 任务可以可以由trader添加，也可以由用户外部添加
+    - 任务可以同步执行，也可以异步执行
+    - 任务的执行结果会以message的形式发送到消息队列
+    - 只有任务才能操作交易系统变量，并且访问/操作交易系统的各个队列
+    """
     def _start(self):
         """ 启动交易系统，将交易系统的状态设置为sleeping """
         self.send_message('Starting Trader...')
@@ -1491,33 +1520,46 @@ class Trader(object):
             if qty <= 0.001:
                 continue
 
-            trade_order = self.submit_trade_order(
-                    symbol=sym,
-                    position=pos,
-                    direction=d,
-                    order_type='market',
-                    qty=qty,
-                    price=price,
-            )
-
-            if trade_order:
-                order_id = trade_order['order_id']
-                self._broker.order_queue.put(trade_order)
-                # format the message depending on buy/sell orders
-                msg = Text(f'<NEW ORDER {order_id}>: <{name} - {sym}> ', style='bold')
-                if d == 'buy':  # red for buy
-                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold red')
-                else:  # green for sell
-                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold green')
-                # 记录已提交的交易数量
-                self.send_message(msg)
-                submitted_qty += 1
+            if d == 'buy':
+                self.add_task(
+                    'buy_order',
+                    dict(
+                        symbol=sym,
+                        position=pos,
+                        qty=qty,
+                        price=price,
+                    )
+                )
+            else:
+                self.add_task(
+                    'sell_order',
+                    dict(
+                        symbol=sym,
+                        position=pos,
+                        qty=qty,
+                        price=price,
+                    )
+                )
+            submitted_qty += 1
 
         self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
         return submitted_qty
 
     def _buy_order(self, symbol: str, position: str, qty: int, price: float) -> dict:
-        """ 买入订单，调用Broker的API提交买入订单到Broker的订单队列
+        """ 提交买入订单委托到Broker：
+
+        TODO: 采用新的Trader/Broker架构后，理想的操作方式：
+         1, 根据输入的参数生成交易订单dict
+         2, 检查本地交易记录，确认是否符合提交条件（有足够的可用现金或可用资产）
+         3, 如果符合条件，将订单提交给Broker，在本地记录订单和持仓信息，修改订单状态为"submitted"
+         4, 如果订单不符合提交条件，根据Trader的设置，采取下面两种操作之一：
+            - 放弃提交订单，并进行记录
+            - 仍然提交订单，由Broker处理，在本地记录订单和持仓信息，修改订单状态为"submitted"，此时可能会交易失败
+         但是，由于目前的Trader/Broker架构还没有完全实现，所以暂时采用下面变通的方法处理：
+         1, 生成交易订单dict，生成本地订单和持仓信息，订单状态为"created"（在self.submit_trade_order中）
+         2, 检查订单是否符合提交条件，如果符合，修改订单状态为"submitted"（在self.submit_trade_order中）
+         3, 如果订单不符合提交条件，提交取消订单，将订单状态改为"cancelled"（在self.submit_trade_order中）
+         4, 将订单提交到Broker的订单队列
 
         Parameters
         ----------
@@ -1535,10 +1577,34 @@ class Trader(object):
         trade_order: dict
             订单信息
         """
-        pass
+
+        trade_order = self.submit_trade_order(
+                symbol=symbol,
+                qty=qty,
+                price=price,
+                position=position,
+                direction='buy',
+                order_type='market',
+        )
+        status = trade_order['status']
+        if status != 'submitted':
+            return {}
+
+        order_id = trade_order['order_id']
+        name = get_symbol_names(self._datasource, symbols=symbol)[0]
+        self._broker.order_queue.put(trade_order)
+        # format the message depending on buy/sell orders
+        msg = Text(f'<NEW ORDER {order_id}>: <{name} - {symbol}> ', style='bold')
+        msg.append(f'buy-{position} {qty} shares @ {price}', style='bold red')
+        # 记录已提交的交易数量
+        self.send_message(msg)
+
+        return trade_order
 
     def _sell_order(self, symbol: str, position: str, qty: int, price: float) -> dict:
-        """ 卖出订单: 调用Broker的API提交卖出订单到Broker的订单队列
+        """ 提交卖出订单委托到Broker：
+
+        临时解决方案，参见_buy_order的解释
 
         Parameters
         ----------
@@ -1556,7 +1622,31 @@ class Trader(object):
         trade_order: dict
             订单信息
         """
-        pass
+
+        trade_order = self.submit_trade_order(
+                symbol=symbol,
+                qty=qty,
+                price=price,
+                position=position,
+                direction='buy',
+                order_type='market',
+        )
+        status = trade_order['status']
+        if status != 'submitted':
+            msg = Text(f'Order {trade_order["order_id"]} is not submitted, status: {status}', style='bold red')
+            self.send_message(msg)
+            return {}
+
+        order_id = trade_order['order_id']
+        name = get_symbol_names(self._datasource, symbols=symbol)[0]
+        self._broker.order_queue.put(trade_order)
+        # format the message depending on buy/sell orders
+        msg = Text(f'<NEW ORDER {order_id}>: <{name} - {symbol}> ', style='bold')
+        msg.append(f'sell-{position} {qty} shares @ {price}', style='bold green')
+        # 记录已提交的交易数量
+        self.send_message(msg)
+
+        return trade_order
 
     def _cancel_order(self, order_id: str) -> dict:
         """ 取消订单: 调用Broker的API取消订单
@@ -1744,18 +1834,6 @@ class Trader(object):
                 self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                                   f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
 
-    def _sync_positions(self):
-        """ 同步持仓信息，更新本地持仓信息 """
-        pass
-
-    def _sync_account(self):
-        """ 同步账户信息，更新本地账户和持仓信息 """
-        pass
-
-    def _sync_results(self):
-        """ 同步交易结果，更新本地交易结果和订单信息 """
-        pass
-
     def _pre_open(self):
         """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
 
@@ -1824,7 +1902,7 @@ class Trader(object):
         - 处理前一日交易的交割
         - 处理前一日获取的实时数据、并准备下一日的实时数据
         - 检查下一日是否是交易日，并更新相关的运行参数
-        - 重新生成agenda
+        - 重新生成schedule
         - 生成消息发送到消息队列
         """
         raise NotImplementedError
@@ -1879,6 +1957,28 @@ class Trader(object):
         )
 
     # ================ task operations =================
+
+    available_tasks = {
+        'pre_open':           _pre_open,
+        'open_market':        _market_open,
+        'close_market':       _market_close,
+        'post_close':         _post_close,
+        'run_strategy':       _run_strategy,
+        'buy_order':          _buy_order,
+        'sell_order':         _sell_order,
+        'cancel_order':       _cancel_order,
+        'process_result':     _process_result,
+        'process_delivery':   _process_deliveries,
+        'change_date':        _change_date,
+        'start':              _start,
+        'stop':               _stop,
+        'sleep':              _sleep,
+        'wakeup':             _wakeup,
+        'pause':              _pause,
+        'resume':             _resume,
+        'refill':             _refill,
+    }
+
     def run_task(self, task, *args, run_in_main_thread=False):
         """ 运行任务
 
@@ -1893,41 +1993,17 @@ class Trader(object):
             如果设置为False，少数new_thread_tasks中的任务可以在新进程中运行
         """
 
-        available_tasks = {
-            'pre_open':           self._pre_open,
-            'open_market':        self._market_open,
-            'close_market':       self._market_close,
-            'post_close':         self._post_close,
-            'run_strategy':       self._run_strategy,
-            'buy_order':          self._buy_order,
-            'sell_order':         self._sell_order,
-            'cancel_order':       self._cancel_order,
-            'process_result':     self._process_result,
-            'process_delivery':   self._process_deliveries,
-            'acquire_live_price': self._update_live_price,
-            'sync_positions':     self._sync_positions,
-            'sync_account':       self._sync_account,
-            'change_date':        self._change_date,
-            'start':              self._start,
-            'stop':               self._stop,
-            'sleep':              self._sleep,
-            'wakeup':             self._wakeup,
-            'pause':              self._pause,
-            'resume':             self._resume,
-            'refill':             self._refill,
-        }
-
         if task is None:
             return
         if not isinstance(task, str):
             err = ValueError(f'task must be a string, got {type(task)} instead.')
             raise err
 
-        if task not in available_tasks.keys():
+        if task not in self.available_tasks.keys():
             err = ValueError(f'Invalid task name: {task}')
             raise err
 
-        task_func = available_tasks[task]
+        task_func = self.available_tasks[task]
 
         new_thread_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
         if (not run_in_main_thread) and (task in new_thread_tasks):
@@ -1946,6 +2022,18 @@ class Trader(object):
                 task_func(*args)
             else:
                 task_func()
+
+    def run_async_task(self, task, *args):
+        """ 运行异步任务
+
+        Parameters
+        ----------
+        task: str
+            任务名称
+        *args: tuple
+            任务参数
+        """
+        self.run_task(task, *args, run_in_main_thread=False)
 
     # =============== internal methods =================
 

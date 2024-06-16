@@ -19,7 +19,7 @@ import numpy as np
 
 from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
-from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_account_delivery
+from qteasy.trading_util import order_presubmit_check, process_trade_result, cancel_order, process_account_delivery
 from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
@@ -103,7 +103,7 @@ class TestTrader(unittest.TestCase):
         )
         # submit orders
         for order_id in order_ids:
-            submit_order(order_id, test_ds)
+            order_presubmit_check(order_id, test_ds)
         time.sleep(self.stoppage)
         parsed_signals_batch = (
             ['000001.SZ', '000004.SZ', '000005.SZ', '000007.SZ', ],
@@ -124,7 +124,7 @@ class TestTrader(unittest.TestCase):
         )
         # submit orders
         for order_id in order_ids:
-            submit_order(order_id, test_ds)
+            order_presubmit_check(order_id, test_ds)
 
         # 添加交易订单执行结果
         delivery_config = {

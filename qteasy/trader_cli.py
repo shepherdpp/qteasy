@@ -1042,7 +1042,6 @@ class TraderShell(Cmd):
         to buy short 100 shares of 000651 at price 30.0
         (QTEASY) buy 100 000651.SH -p 30.0 -s short
         """
-        # TODO: CALL trader API to submit buy order
         args = self.parse_args('buy', arg)
         if not args:
             return False
@@ -1055,23 +1054,15 @@ class TraderShell(Cmd):
         price = args.price
         position = args.side
 
-        trade_order = self.trader.submit_trade_order(
-                symbol=symbol,
-                qty=qty,
-                price=price,
-                position=position,
-                direction='buy',
-                order_type='market',
+        self.trader.add_task(
+                'buy_order',
+                dict(
+                        symbol=symbol,
+                        qty=qty,
+                        price=price,
+                        position=position,
+                ),
         )
-        if trade_order:
-            self.trader.broker.order_queue.put(trade_order)
-            order_id = trade_order['order_id']
-            print(f'Order <{order_id}> has been submitted to broker: '
-                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
-                  f'at price {trade_order["price"]:.2f}')
-
-        if not self.trader.is_market_open:
-            print(f'Market is not open, order might not be executed immediately')
 
     def do_sell(self, arg):
         """usage: sell AMOUNT SYMBOL [-h] [--price PRICE] [--side {long,short}] [--force]
@@ -1101,7 +1092,6 @@ class TraderShell(Cmd):
         to sell short 100 shares of 000651 at price 30.0
         (QTEASY) sell 100 000651.SH -p 30.0 -s short
         """
-        # TODO: CALL trader API to submit sell order
         args = self.parse_args('sell', arg)
         if not args:
             return False
@@ -1114,24 +1104,15 @@ class TraderShell(Cmd):
         price = args.price
         position = args.side
 
-        trade_order = self.trader.submit_trade_order(
-                symbol=symbol,
-                qty=qty,
-                price=price,
-                position=position,
-                direction='sell',
-                order_type='market',
+        self.trader.add_task(
+                'sell_order',
+                dict(
+                        symbol=symbol,
+                        qty=qty,
+                        price=price,
+                        position=position,
+                ),
         )
-
-        if trade_order:
-            self.trader.broker.order_queue.put(trade_order)
-            order_id = trade_order['order_id']
-            print(f'Order <{order_id}> has been submitted to broker: '
-                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
-                  f'at price {trade_order["price"]:.2f}')
-
-            if not self.trader.is_market_open:
-                print(f'Market is not open, order might not be executed immediately')
 
     def do_positions(self, arg):
         """usage: positions [-h]

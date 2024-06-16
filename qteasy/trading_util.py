@@ -645,14 +645,11 @@ def output_trade_order():
     pass
 
 
-def submit_order(order_id, data_source=None):
-    """ 将交易订单提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
+def order_presubmit_check(order_id, data_source=None):
+    """ 给定交易订单ID，进行订单提交前检查：
 
-    只有刚刚创建的交易订单（status == 'created'）才能提交，否则不需要再次提交
-    在提交交易订单以前，对于买入订单，会检查账户的现金是否足够，如果不足，则会按比例调整交易订单的委托数量
-    对于卖出订单，会检查账户的持仓是否足够，如果不足，则会按比例调整交易订单的委托数量
-    交易订单提交后，会将交易订单的状态设置为submitted，同时将交易订单保存到数据库中
-    - 只有使用submit_order才能将信号保存到数据库中，同时调整相应的账户和持仓信息
+    - 检查订单的状态是否为"created"
+    - 检查账户的现金或持仓是否足够执行交易订单
 
     Parameters
     ----------
@@ -663,8 +660,8 @@ def submit_order(order_id, data_source=None):
 
     Returns
     -------
-    int, 交易订单的id
-    None, 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
+    int: 订单满足提交条件，返回交易订单的id
+    None: 订单不满足提交条件，返回None
     """
 
     # 读取交易订单
@@ -690,6 +687,7 @@ def submit_order(order_id, data_source=None):
             logger.warning(f'Available cash {account["available_cash"]} is not enough for trade order: \n'
                            f'{trade_order}'
                            f'trade order might not be executed!')
+            return None
 
     # 如果交易方向为sell，则需要检查账户的持仓是否足够
     elif trade_order['direction'] == 'sell':
@@ -698,10 +696,7 @@ def submit_order(order_id, data_source=None):
             logger.warning(f'Available quantity {position["available_qty"]} is not enough for trade order: \n'
                            f'{trade_order}'
                            f'trade order might not be executed!')
-
-    # 将signal的status改为"submitted"，并将trade_signal写入数据库
-    order_id = update_trade_order(order_id=order_id, data_source=data_source, status='submitted')
-    # 检查交易订单
+            return None
 
     return order_id
 
