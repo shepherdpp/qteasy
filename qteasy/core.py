@@ -1569,6 +1569,43 @@ def live_trade_accounts() -> pd.DataFrame:
     return get_all_accounts(qteasy.QT_DATA_SOURCE)
 
 
+def change_live_trade_account(account_id=None, account=None, debug_mode=None, init_cash=None):
+    """ 更改当前的实盘交易账户
+
+    Parameters
+    ----------
+    account_id: str
+        实盘交易账户的ID
+    account: str
+        实盘交易账户的名称
+    debug_mode: bool
+        是否开启调试模式
+    init_cash: float
+        初始资金
+
+    Returns
+    -------
+    None
+    """
+    pass
+
+
+def delete_live_trade_account(account_id:int):
+    """ 删除一个实盘交易账户
+
+    Parameters
+    ----------
+    account_id: str
+        实盘交易账户的ID
+
+    Returns
+    -------
+    None
+    """
+    from qteasy.trade_recording import delete_account
+    delete_account(account_id, qteasy.QT_DATA_SOURCE)
+
+
 # TODO: Bug检查：
 #   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
 #   strategy_run_freq='m',

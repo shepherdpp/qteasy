@@ -1042,7 +1042,7 @@ class TraderShell(Cmd):
         to buy short 100 shares of 000651 at price 30.0
         (QTEASY) buy 100 000651.SH -p 30.0 -s short
         """
-
+        # TODO: CALL trader API to submit buy order
         args = self.parse_args('buy', arg)
         if not args:
             return False
@@ -1101,7 +1101,7 @@ class TraderShell(Cmd):
         to sell short 100 shares of 000651 at price 30.0
         (QTEASY) sell 100 000651.SH -p 30.0 -s short
         """
-
+        # TODO: CALL trader API to submit sell order
         args = self.parse_args('sell', arg)
         if not args:
             return False
@@ -1830,7 +1830,7 @@ class TraderShell(Cmd):
         to set blender of strategies:
         (QTEASY): strategies --blender <blender> (not implemented yet)
         """
-
+        # TODO: CALL trader API
         args = self.parse_args('strategies', arg)
         if not args:
             return False
@@ -1905,7 +1905,7 @@ class TraderShell(Cmd):
         to display current strategy task schedule:
         (QTEASY): schedule
         """
-
+        # TODO: CALL trader API
         args = self.parse_args('schedule', arg)
         if not args:
             return False

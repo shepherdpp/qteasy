@@ -998,6 +998,249 @@ class Trader(object):
 
         return lines
 
+    def manual_change_cash(self, amount):
+        """ 手动修改现金，根据amount的正负号，增加或减少现金
+
+        修改后持有现金/可用现金/总投资金额都会发生变化
+        如果amount为负，且绝对值大于可用现金时，忽略该操作
+
+        Parameters
+        ----------
+        amount: float
+            现金
+
+        Returns
+        -------
+        None
+        """
+        from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
+
+        cash_amount, available_cash, total_invest = get_account_cash_availabilities(
+                account_id=self.account_id,
+                data_source=self.datasource
+        )
+        if amount < -available_cash:
+            self.send_message(f'Not enough cash to decrease, available cash: {available_cash}, change amount: {amount}')
+            return
+        amount_change = {
+            'cash_amount_change':      amount,
+            'available_cash_change':   amount,
+            'total_investment_change': amount,
+        }
+        update_account_balance(
+                account_id=self.account_id,
+                data_source=self.datasource,
+                **amount_change
+        )
+        cash_amount, available_cash, total_invest = get_account_cash_availabilities(
+                account_id=self.account_id,
+                data_source=self.datasource
+        )
+        # 在trade_log中记录现金变动
+        log_content = {
+            'cash_change':           amount,
+            'cash':                  cash_amount,
+            'available_cash_change': amount,
+            'available_cash':        available_cash,
+            'reason':                'manual_change'
+        }
+        self.write_log_file(**log_content)
+        # 发送消息通知现金变动并记录system log
+        self.send_message(f'Cash amount changed to {self.account_cash}')
+
+        return
+
+    def manual_change_position(self, symbol, quantity, price, side=None):
+        """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
+
+        修改后持仓的数量 = 原持仓数量 + quantity
+        如果找不到指定标的和方向的仓位，则创建一个新的仓位
+        如果不指定方向，则查找当前持有的非零仓位，使用持有仓位的方向，如果没有持有非零仓位，则默认为'long'方向
+        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作，并打印提示
+        如果quantity为负且绝对值大于可用数量，则忽略该操作，并打印提示
+
+        Parameters
+        ----------
+        symbol: str
+            交易标的代码
+        quantity: float
+            交易数量，正数表示买入，负数表示卖出
+        price: float
+            交易价格，用来计算新的持仓成本
+        side: str, optional
+            交易方向，'long' 表示买入，'short' 表示卖出, None表示取已有的不为0的仓位
+
+        Returns
+        -------
+        None
+        """
+
+        from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position, get_position_ids
+
+        position_ids = get_position_ids(
+                account_id=self.account_id,
+                symbol=symbol,
+                data_source=self.datasource,
+        )
+        position_id = None
+        if len(position_ids) == 0:
+            # no position found, create a new one
+            if side is None:
+                side = 'long'
+            position_id = get_or_create_position(
+                    account_id=self.account_id,
+                    symbol=symbol,
+                    position_type=side,
+                    data_source=self.datasource,
+            )
+            if self.debug:
+                self.send_message('Position to be modified does not exist, new position is created!')
+        elif len(position_ids) == 1:
+            # found one position, use it, if side is not consistent, create a new one on the other side
+            position_id = position_ids[0]
+            position = get_position_by_id(
+                    pos_id=position_id,
+                    data_source=self.datasource,
+            )
+            if side is None:
+                side = position['position']
+            if side != position['position']:
+                if position['qty'] != 0:
+                    self.send_message(f'Can not modify position {symbol}@ {side} while {symbol}@ {position["position"]}'
+                                      f' still has {position["qty"]} shares, reduce it to 0 first!')
+                    return
+                else:
+                    position_id = get_or_create_position(
+                            account_id=self.account_id,
+                            symbol=symbol,
+                            position_type=side,
+                            data_source=self.datasource,
+                    )
+        else:  # len(position_ids) > 1
+            # more than one position found, find the one with none-zero side
+            for pos_id in position_ids:
+                position = get_position_by_id(
+                        pos_id=pos_id,
+                        data_source=self.datasource,
+                )
+                if position['qty'] != 0:
+                    position_id = pos_id
+                    break
+            # in case both sides are zero, use the "side" one, unless "side" is "none-zero"
+            if position_id is None:
+                if side is None:
+                    side = 'long'
+                position_id = get_or_create_position(
+                        account_id=self.account_id,
+                        symbol=symbol,
+                        position_type=side,
+                        data_source=self.datasource,
+                )
+        position = get_position_by_id(
+                pos_id=position_id,
+                data_source=self.datasource,
+        )
+        if self.debug:
+            self.send_message(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
+                              f'from {position["qty"]} to {position["qty"] + quantity}')
+        # 如果减少持仓，则可用持仓数量必须足够，否则退出
+        if quantity < 0 and position['available_qty'] < -quantity:
+            self.send_message(f'Not enough position to decrease, '
+                              f'available: {position["available_qty"]}, skipping operation')
+            return
+        prev_cost = position['cost']
+        current_total_cost = prev_cost * position['qty']
+        additional_cost = np.round(price * float(quantity), 2)
+        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
+        if np.isnan(new_average_cost):
+            new_average_cost = 0
+        position_data = {
+            'qty_change':           quantity,
+            'available_qty_change': quantity,
+            'cost':                 new_average_cost,
+        }
+        update_position(
+                position_id=position_id,
+                data_source=self.datasource,
+                **position_data
+        )
+        # 在trade_log中记录持仓变动
+        position = get_position_by_id(
+                pos_id=position_id,
+                data_source=self.datasource,
+        )
+        name = get_symbol_names(self.datasource, symbols=symbol)[0]
+        log_content = {
+            'reason':               'manual',
+            'position_id':          position_id,
+            'symbol':               position['symbol'],
+            'position_type':        position['position'],  # 'long' or 'short'
+            'name':                 name,
+            'qty_change':           quantity,
+            'qty':                  position["qty"],
+            'available_qty_change': quantity,
+            'available_qty':        position["available_qty"],
+            'cost_change':          position['cost'] - prev_cost,
+            'holding_cost':         position['cost'],
+        }
+        self.write_log_file(**log_content)
+        # 发送消息通知持仓变动并记录system log
+        self.send_message(f'Position {position["symbol"]}/{position["position"]} '
+                          f'changed to {position["qty"] + quantity}')
+
+        return
+
+    def update_watched_prices(self) -> pd.DataFrame:
+        """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
+        同时更新self.watched_prices
+        """
+        if self.watch_list:
+            from qteasy.emfuncs import stock_live_kline_price
+            symbols = self.watch_list
+            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
+            if not live_prices.empty:
+                live_prices.close = live_prices.close.astype(float)
+                live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
+                live_prices.set_index('symbol', inplace=True)
+
+                if self.debug:
+                    self.send_message('live prices acquired to update watched prices!')
+            else:
+
+                if self.debug:
+                    self.send_message('Failed to acquire live prices to update watch price string!')
+
+            self.watched_prices = live_prices
+
+        return self.watched_prices
+
+    def get_strategy_info(self, strategy_id: str) -> dict:
+        """ 获取指定策略的信息
+
+        Parameters
+        ----------
+        strategy_id: str
+            策略ID
+
+        Returns
+        -------
+        strategy_info: dict
+            策略信息
+        """
+        pass
+
+    def set_strategy_parameters(self, strategy_id: str, **kwargs) -> None:
+        """ 设置策略参数
+
+        Parameters
+        ----------
+        strategy_id: str
+            策略ID
+        **kwargs: dict
+            策略参数
+        """
+        pass
+
     def submit_trade_order(self, symbol: str, position: str, direction: str, order_type: str, qty: int, price: float) -> dict:
         """ 提交订单
 
@@ -1880,198 +2123,6 @@ class Trader(object):
         if self.debug:
             self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}')
 
-    def manual_change_cash(self, amount):
-        """ 手动修改现金，根据amount的正负号，增加或减少现金
-
-        修改后持有现金/可用现金/总投资金额都会发生变化
-        如果amount为负，且绝对值大于可用现金时，忽略该操作
-
-        Parameters
-        ----------
-        amount: float
-            现金
-
-        Returns
-        -------
-        None
-        """
-        from qteasy.trade_recording import update_account_balance, get_account_cash_availabilities
-
-        cash_amount, available_cash, total_invest = get_account_cash_availabilities(
-                account_id=self.account_id,
-                data_source=self.datasource
-        )
-        if amount < -available_cash:
-            self.send_message(f'Not enough cash to decrease, available cash: {available_cash}, change amount: {amount}')
-            return
-        amount_change = {
-            'cash_amount_change':      amount,
-            'available_cash_change':   amount,
-            'total_investment_change': amount,
-        }
-        update_account_balance(
-                account_id=self.account_id,
-                data_source=self.datasource,
-                **amount_change
-        )
-        cash_amount, available_cash, total_invest = get_account_cash_availabilities(
-                account_id=self.account_id,
-                data_source=self.datasource
-        )
-        # 在trade_log中记录现金变动
-        log_content = {
-            'cash_change':           amount,
-            'cash':                  cash_amount,
-            'available_cash_change': amount,
-            'available_cash':        available_cash,
-            'reason':                'manual_change'
-        }
-        self.write_log_file(**log_content)
-        # 发送消息通知现金变动并记录system log
-        self.send_message(f'Cash amount changed to {self.account_cash}')
-
-        return
-
-    def manual_change_position(self, symbol, quantity, price, side=None):
-        """ 手动修改仓位，查找指定标的和方向的仓位，增加或减少其持仓数量，同时根据新的持仓数量和价格计算新的持仓成本
-
-        修改后持仓的数量 = 原持仓数量 + quantity
-        如果找不到指定标的和方向的仓位，则创建一个新的仓位
-        如果不指定方向，则查找当前持有的非零仓位，使用持有仓位的方向，如果没有持有非零仓位，则默认为'long'方向
-        如果已经持有的非零仓位和指定的方向不一致，则忽略该操作，并打印提示
-        如果quantity为负且绝对值大于可用数量，则忽略该操作，并打印提示
-
-        Parameters
-        ----------
-        symbol: str
-            交易标的代码
-        quantity: float
-            交易数量，正数表示买入，负数表示卖出
-        price: float
-            交易价格，用来计算新的持仓成本
-        side: str, optional
-            交易方向，'long' 表示买入，'short' 表示卖出, None表示取已有的不为0的仓位
-
-        Returns
-        -------
-        None
-        """
-
-        from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position, get_position_ids
-
-        position_ids = get_position_ids(
-                account_id=self.account_id,
-                symbol=symbol,
-                data_source=self.datasource,
-        )
-        position_id = None
-        if len(position_ids) == 0:
-            # no position found, create a new one
-            if side is None:
-                side = 'long'
-            position_id = get_or_create_position(
-                    account_id=self.account_id,
-                    symbol=symbol,
-                    position_type=side,
-                    data_source=self.datasource,
-            )
-            if self.debug:
-                self.send_message('Position to be modified does not exist, new position is created!')
-        elif len(position_ids) == 1:
-            # found one position, use it, if side is not consistent, create a new one on the other side
-            position_id = position_ids[0]
-            position = get_position_by_id(
-                    pos_id=position_id,
-                    data_source=self.datasource,
-            )
-            if side is None:
-                side = position['position']
-            if side != position['position']:
-                if position['qty'] != 0:
-                    self.send_message(f'Can not modify position {symbol}@ {side} while {symbol}@ {position["position"]}'
-                                      f' still has {position["qty"]} shares, reduce it to 0 first!')
-                    return
-                else:
-                    position_id = get_or_create_position(
-                            account_id=self.account_id,
-                            symbol=symbol,
-                            position_type=side,
-                            data_source=self.datasource,
-                    )
-        else:  # len(position_ids) > 1
-            # more than one position found, find the one with none-zero side
-            for pos_id in position_ids:
-                position = get_position_by_id(
-                        pos_id=pos_id,
-                        data_source=self.datasource,
-                )
-                if position['qty'] != 0:
-                    position_id = pos_id
-                    break
-            # in case both sides are zero, use the "side" one, unless "side" is "none-zero"
-            if position_id is None:
-                if side is None:
-                    side = 'long'
-                position_id = get_or_create_position(
-                        account_id=self.account_id,
-                        symbol=symbol,
-                        position_type=side,
-                        data_source=self.datasource,
-                )
-        position = get_position_by_id(
-                pos_id=position_id,
-                data_source=self.datasource,
-        )
-        if self.debug:
-            self.send_message(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
-                              f'from {position["qty"]} to {position["qty"] + quantity}')
-        # 如果减少持仓，则可用持仓数量必须足够，否则退出
-        if quantity < 0 and position['available_qty'] < -quantity:
-            self.send_message(f'Not enough position to decrease, '
-                              f'available: {position["available_qty"]}, skipping operation')
-            return
-        prev_cost = position['cost']
-        current_total_cost = prev_cost * position['qty']
-        additional_cost = np.round(price * float(quantity), 2)
-        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
-        if np.isnan(new_average_cost):
-            new_average_cost = 0
-        position_data = {
-            'qty_change':           quantity,
-            'available_qty_change': quantity,
-            'cost':                 new_average_cost,
-        }
-        update_position(
-                position_id=position_id,
-                data_source=self.datasource,
-                **position_data
-        )
-        # 在trade_log中记录持仓变动
-        position = get_position_by_id(
-                pos_id=position_id,
-                data_source=self.datasource,
-        )
-        name = get_symbol_names(self.datasource, symbols=symbol)[0]
-        log_content = {
-            'reason':               'manual',
-            'position_id':          position_id,
-            'symbol':               position['symbol'],
-            'position_type':        position['position'],  # 'long' or 'short'
-            'name':                 name,
-            'qty_change':           quantity,
-            'qty':                  position["qty"],
-            'available_qty_change': quantity,
-            'available_qty':        position["available_qty"],
-            'cost_change':          position['cost'] - prev_cost,
-            'holding_cost':         position['cost'],
-        }
-        self.write_log_file(**log_content)
-        # 发送消息通知持仓变动并记录system log
-        self.send_message(f'Position {position["symbol"]}/{position["position"]} '
-                          f'changed to {position["qty"] + quantity}')
-
-        return
-
     def _update_live_price(self):
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
         if self.debug:
@@ -2096,30 +2147,6 @@ class Trader(object):
         if self.debug:
             self.send_message(f'acquired live price data, live prices updated!')
         return
-
-    def update_watched_prices(self) -> pd.DataFrame:
-        """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
-        同时更新self.watched_prices
-        """
-        if self.watch_list:
-            from qteasy.emfuncs import stock_live_kline_price
-            symbols = self.watch_list
-            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
-            if not live_prices.empty:
-                live_prices.close = live_prices.close.astype(float)
-                live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
-                live_prices.set_index('symbol', inplace=True)
-
-                if self.debug:
-                    self.send_message('live prices acquired to update watched prices!')
-            else:
-
-                if self.debug:
-                    self.send_message('Failed to acquire live prices to update watch price string!')
-
-            self.watched_prices = live_prices
-
-        return self.watched_prices
 
     def _process_all_results(self):
         """ 处理所有已经产生的交易结果 """
