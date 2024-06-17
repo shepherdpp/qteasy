@@ -130,23 +130,25 @@ class WatchTable(DataTable):
         # price is the 4th column of the selected row
         price = self.get_row_at(sel_row)[3]
         position = 'long'
-        # qty is input by user in a dialog
 
         def on_input(input_string):
+            # qty is input by user in a dialog
             qty = float(input_string)
+            if qty <= 0:
+                return
+            self.trader.add_task(
+                    'buy_order',
+                    dict(
+                            symbol=symbol,
+                            qty=qty,
+                            price=price,
+                            position=position,
+                    ),
+            )
+            self.app.refresh_ui = True
 
         self.app.refresh_ui = False
         self.app.push_screen(InputScreen(f"Input quantity to buy {position} {symbol}"), on_input)
-
-        self.trader.add_task(
-                'buy_order',
-                dict(
-                        symbol=symbol,
-                        qty=qty,
-                        price=price,
-                        position=position,
-                ),
-        )
 
     def action_manual_sell(self) -> None:
         """Action to manually sell a stock."""
@@ -160,17 +162,25 @@ class WatchTable(DataTable):
         # price is the 4th column of the selected row
         price = self.get_row_at(sel_row)[3]
         position = 'long'
-        # qty is input by user in a dialog
 
-        self.trader.add_task(
-                'sell_order',
-                dict(
-                        symbol=symbol,
-                        qty=qty,
-                        price=price,
-                        position=position,
-                ),
-        )
+        def on_input(input_string):
+            # qty is input by user in a dialog
+            qty = float(input_string)
+            if qty <= 0:
+                return
+            self.trader.add_task(
+                    'sell_order',
+                    dict(
+                            symbol=symbol,
+                            qty=qty,
+                            price=price,
+                            position=position,
+                    ),
+            )
+            self.app.refresh_ui = True
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen(f"Input quantity to sell {position} {symbol}"), on_input)
 
 
 class Tables(TabbedContent):
