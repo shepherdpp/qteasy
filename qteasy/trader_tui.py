@@ -49,8 +49,6 @@ class OrderTable(DataTable):
     """A widget to display current holdings."""
 
     BINDINGS = [
-        ("ctrl+b", "manual_buy", "manual buy"),
-        ("ctrl+s", "manual_sell", "manual sell"),
         ("ctrl+f", "filter", "filter order"),
     ]
 
@@ -61,14 +59,6 @@ class OrderTable(DataTable):
                "Symbol", "Position", "Side", "Type", "Qty", "Quote",
                "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
                "Execution Time", "Delivery")
-
-    def action_manual_buy(self) -> None:
-        """Action to manually buy a stock."""
-        pass
-
-    def action_manual_sell(self) -> None:
-        """Action to manually sell a stock."""
-        pass
 
     def action_filter(self) -> None:
         """Action to filter the orders.
@@ -84,6 +74,8 @@ class WatchTable(DataTable):
     BINDINGS = [
         ("ctrl+a", "add_symbol", "add symbol"),
         ("delete", "remove_symbol", "remove symbol"),
+        ("ctrl+b", "manual_buy", "manual buy"),
+        ("ctrl+s", "manual_sell", "manual sell"),
     ]
 
     df_columns = ("name", "close", "pre_close", "open", "high",
@@ -126,6 +118,59 @@ class WatchTable(DataTable):
 
         self.app.refresh_ui = True
         self.app.refresh_watches()
+
+    def action_manual_buy(self) -> None:
+        """Action to manually buy a stock."""
+
+        sel_row = self.cursor_row
+        if not sel_row:
+            return
+        # symbol is the first column of the selected row
+        symbol = self.get_row_at(sel_row)[0]
+        # price is the 4th column of the selected row
+        price = self.get_row_at(sel_row)[3]
+        position = 'long'
+        # qty is input by user in a dialog
+
+        def on_input(input_string):
+            qty = float(input_string)
+
+        self.app.refresh_ui = False
+        self.app.push_screen(InputScreen(f"Input quantity to buy {position} {symbol}"), on_input)
+
+        self.trader.add_task(
+                'buy_order',
+                dict(
+                        symbol=symbol,
+                        qty=qty,
+                        price=price,
+                        position=position,
+                ),
+        )
+
+    def action_manual_sell(self) -> None:
+        """Action to manually sell a stock."""
+
+        sel_row = self.cursor_row
+        if not sel_row:
+            return
+
+        # symbol is the first column of the selected row
+        symbol = self.get_row_at(sel_row)[0]
+        # price is the 4th column of the selected row
+        price = self.get_row_at(sel_row)[3]
+        position = 'long'
+        # qty is input by user in a dialog
+
+        self.trader.add_task(
+                'sell_order',
+                dict(
+                        symbol=symbol,
+                        qty=qty,
+                        price=price,
+                        position=position,
+                ),
+        )
 
 
 class Tables(TabbedContent):
