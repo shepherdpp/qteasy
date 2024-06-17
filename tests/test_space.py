@@ -118,6 +118,15 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.count, 27)
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
 
+        print('test a zero dimensional space')
+        s = Space([])
+        self.assertEqual(s.types, None)
+        self.assertEqual(s.dim, 0)
+        self.assertEqual(s.size, ())
+        self.assertEqual(s.shape, ())
+        self.assertEqual(s.count, 1)
+        self.assertEqual(s.boes, None)
+
     def test_extract(self):
         """
 
