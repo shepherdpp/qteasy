@@ -25,7 +25,7 @@ class Space:
     数值轴的定义方式为上下界定义，枚举轴的定义方式为枚举定义，数值轴的取值范围为上下界之间的合法数值，而枚举轴的取值为枚举
     列表中的值
 
-    Attributes
+    Properties
     ----------
     dim: int
         参数空间的维度，即轴的数量
@@ -395,7 +395,7 @@ class Axis:
         a: 从一个enum轴中随机取出四个值：
             Axis(['a', 'b', 'c']).extract(count=4) -> ['b', 'a', 'c', 'a']
 
-    Attributes
+    Properties
     ----------
     count: int
         输出数轴中元素的个数，若数轴为连续型，输出为inf
@@ -711,7 +711,7 @@ class ResultPool:
     新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右, 即使在结果池很小，总数据量很大的情况下，
     循环排序的速度也慢于单次排序修剪
 
-    Attributes
+    Properties
     ----------
     items: list, ReadOnly
         所有池中参数
