@@ -64,60 +64,18 @@ class OrderTable(DataTable):
 
     def action_manual_buy(self) -> None:
         """Action to manually buy a stock."""
-        def on_input(input_string):
-            # received input string: input_string, add it to the watch list
-            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
-            symbols = str_to_list(input_string)
-            log = self.app.query_one(SysLog)
-            for symbol in symbols:
-                if is_complete_cn_stock_symbol_like(symbol):
-                    self.app.trader.manual_buy(symbol)
-                    log.write(f"Manually bought {symbol}.")
-
-            self.app.refresh_ui = True
-            self.app.refresh_order()
-
-        self.app.refresh_ui = False
-        self.app.push_screen(InputScreen("Input symbols to buy"), on_input)
+        pass
 
     def action_manual_sell(self) -> None:
         """Action to manually sell a stock."""
-        def on_input(input_string):
-            # received input string: input_string, add it to the watch list
-            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
-            symbols = str_to_list(input_string)
-            log = self.app.query_one(SysLog)
-            for symbol in symbols:
-                if is_complete_cn_stock_symbol_like(symbol):
-                    self.app.trader.manual_sell(symbol)
-                    log.write(f"Manually sold {symbol}.")
-
-            self.app.refresh_ui = True
-            self.app.refresh_order()
-
-        self.app.refresh_ui = False
-        self.app.push_screen(InputScreen("Input symbols to sell"), on_input)
+        pass
 
     def action_filter(self) -> None:
         """Action to filter the orders.
 
-        Select one order and 
+        Select one order and a
         """
-        def on_input(input_string):
-            # received input string: input_string, add it to the watch list
-            from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
-            symbols = str_to_list(input_string)
-            log = self.app.query_one(SysLog)
-            for symbol in symbols:
-                if is_complete_cn_stock_symbol_like(symbol):
-                    self.app.trader.filter_orders(symbol)
-                    log.write(f"Filtered orders with symbol {symbol}.")
-
-            self.app.refresh_ui = True
-            self.app.refresh_order()
-
-        self.app.refresh_ui = False
-        self.app.push_screen(InputScreen("Input symbols to filter"), on_input)
+        pass
 
 
 class WatchTable(DataTable):
@@ -137,14 +95,11 @@ class WatchTable(DataTable):
     def action_add_symbol(self) -> None:
         """Action to add a symbol to watch list from a dialog."""
         def on_input(input_string):
-            # received input string: input_string, add it to the watch list
             from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
             symbols = str_to_list(input_string)
-            # log = self.app.query_one(SysLog)
             for symbol in symbols:
                 if is_complete_cn_stock_symbol_like(symbol):
                     self.app.trader.watch_list.append(symbol)
-                    # log.write(f"Added {symbol} to watch list {self.app.trader.watch_list}.")
 
             self.app.refresh_ui = True
             self.app.refresh_watches()
@@ -154,19 +109,18 @@ class WatchTable(DataTable):
 
     def action_remove_symbol(self) -> None:
         """Action to remove selected symbol, if no symbol selected, don't do anything."""
+
+        self.app.refresh_ui = False
+
         watch_list = self.app.trader.watch_list
-        # log = self.app.query_one(SysLog)
         sel_row = self.cursor_row
         if not sel_row:
             return 
 
         symbol = self.get_row_at(sel_row)[0]
 
-        # log.write(f'[debug]: selected row: {sel_row}, symbol: {self.get_row_at(sel_row)[0]}')
-
         try:
             watch_list.remove(symbol)
-            # log.write(f"[debug]: Deleted symbol {symbol} from watch list({watch_list})")
         except ValueError:
             return
 
