@@ -16,9 +16,9 @@ import pandas as pd
 from qteasy import DataSource, Operator
 from qteasy.trader import Trader
 from qteasy.trader_cli import TraderShell
-from qteasy.trading_util import process_account_delivery, process_trade_result, order_presubmit_check, update_position
+from qteasy.trading_util import process_account_delivery, process_trade_result, update_position
 from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
-from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account
+from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account, update_trade_order
 from qteasy.broker import SimulatorBroker
 
 
@@ -485,7 +485,7 @@ class TestTraderShell(unittest.TestCase):
         )
         # submit orders
         for order_id in order_ids:
-            order_presubmit_check(order_id, test_ds)
+            update_trade_order(order_id, test_ds, status='submitted')
 
         parsed_signals_batch = (
             ['000001.SZ', '000004.SZ', '000005.SZ', '000007.SZ', ],
@@ -506,7 +506,7 @@ class TestTraderShell(unittest.TestCase):
         )
         # submit orders
         for order_id in order_ids:
-            order_presubmit_check(order_id, test_ds)
+            update_trade_order(order_id, test_ds, status='submitted')
 
         # 添加交易订单执行结果
         delivery_config = {
@@ -644,7 +644,7 @@ class TestTraderShell(unittest.TestCase):
         )
         # submit orders
         for order_id in order_ids:
-            order_presubmit_check(order_id, tss.trader.datasource)
+            update_trade_order(order_id, tss.trader.datasource, status='submitted')
 
         # create order results
         delivery_config = {

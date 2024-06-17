@@ -645,11 +645,14 @@ def output_trade_order():
     pass
 
 
-def order_presubmit_check(order_id, data_source=None):
-    """ 给定交易订单ID，进行订单提交前检查：
+def order_availability_check(order_id, data_source=None) -> bool:
+    """ 给定交易订单ID，使用本地交易记录数据进行订单提交前检查：
 
     - 检查订单的状态是否为"created"
     - 检查账户的现金或持仓是否足够执行交易订单
+
+    TODO：在新的架构下，这个检查并不需要在Trader中进行，而是提交到Broker中由Broker进行
+     如果Broker是本地模拟交易Broker，则需要使用本地交易数据进行检查
 
     Parameters
     ----------
@@ -660,8 +663,7 @@ def order_presubmit_check(order_id, data_source=None):
 
     Returns
     -------
-    int: 订单满足提交条件，返回交易订单的id
-    None: 订单不满足提交条件，返回None
+    bool, 如果交易订单可以提交，则返回True，否则返回False
     """
 
     # 读取交易订单
@@ -669,7 +671,7 @@ def order_presubmit_check(order_id, data_source=None):
 
     # 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
     if trade_order['status'] != 'created':
-        return None
+        return False
 
     # 实际上在parse_trade_signal的时候就已经检查过总买入数量与可用现金之间的关系了，这里不再检察
     # 如果交易方向为buy，则需要检查账户的现金是否足够
@@ -687,7 +689,7 @@ def order_presubmit_check(order_id, data_source=None):
             logger.warning(f'Available cash {account["available_cash"]} is not enough for trade order: \n'
                            f'{trade_order}'
                            f'trade order might not be executed!')
-            return None
+            return False
 
     # 如果交易方向为sell，则需要检查账户的持仓是否足够
     elif trade_order['direction'] == 'sell':
@@ -696,9 +698,9 @@ def order_presubmit_check(order_id, data_source=None):
             logger.warning(f'Available quantity {position["available_qty"]} is not enough for trade order: \n'
                            f'{trade_order}'
                            f'trade order might not be executed!')
-            return None
+            return False
 
-    return order_id
+    return True
 
 
 def cancel_order(order_id, data_source=None, config=None) -> int:

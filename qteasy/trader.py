@@ -32,7 +32,7 @@ from qteasy.trade_recording import get_or_create_position, new_account, update_p
 from qteasy.trade_recording import read_trade_order
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
-from qteasy.trading_util import parse_trade_signal, process_trade_result, order_presubmit_check, deliver_trade_result
+from qteasy.trading_util import parse_trade_signal, process_trade_result, order_availability_check, deliver_trade_result
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -1248,71 +1248,6 @@ class Trader(object):
         """
         pass
 
-    def submit_trade_order(self, symbol: str, position: str, direction: str, order_type: str, qty: int, price: float) -> dict:
-        """ 提交交易订单：
-
-        - 创建完整订单信息，记录到本地订单数据，必要时创建持仓信息
-        - 检查订单是否符合提交条件，如果符合，修改订单状态为"submitted"
-        - 如果订单不符合提交条件，提交取消订单，将订单状态改为"cancelled"
-
-        TODO: 目前这几个功能的实现太过复杂且导致大量频繁磁盘读取
-         完全可以采用更简单直接的实现方式，在内存中完成判断
-         需要优化
-
-        Parameters
-        ----------
-        symbol: str
-            交易标的代码
-        position: str
-            交易标的的持仓方向，long/short
-        direction: str
-            交易方向，buy/sell
-        order_type: str
-            订单类型，market/limit
-        qty: int
-            订单数量
-        price: float
-            订单价格
-
-        Returns
-        -------
-        trade_order: dict
-            已经提交的订单信息
-        """
-        if order_type is None:
-            order_type = 'market'
-
-        pos_id = get_or_create_position(account_id=self.account_id,
-                                        symbol=symbol,
-                                        position_type=position,
-                                        data_source=self._datasource)
-
-        # 生成交易订单dict
-        trade_order = {
-            'pos_id':         pos_id,
-            'direction':      direction,
-            'order_type':     order_type,
-            'qty':            qty,
-            'price':          price,
-            'submitted_time': None,
-            'status':         'created',
-        }
-
-        order_id = record_trade_order(trade_order, data_source=self._datasource)
-        trade_order['order_id'] = order_id
-        # 检查交易订单，确认是否符合提交条件，如果符合条件，更新订单状态
-        if order_presubmit_check(order_id=order_id, data_source=self._datasource) is not None:
-            update_trade_order(order_id=order_id, data_source=self._datasource, status='submitted')
-        else:
-            # 如果订单不符合提交条件，取消本地订单，将订单状态改为"cancelled"
-            cancel_order(order_id=order_id, data_source=self._datasource)
-            update_trade_order(order_id=order_id, data_source=self._datasource, status='cancelled')
-
-        # 再次读取订单信息，返回订单信息
-        trade_order = read_trade_order(order_id=order_id, data_source=self._datasource)
-
-        return trade_order
-
     # ============ definition of tasks ================
     """
     任务定义：
@@ -1549,12 +1484,9 @@ class Trader(object):
         """ 提交买入订单委托到Broker：
 
         TODO: 采用新的Trader/Broker架构后，理想的操作方式：
-         1, 根据输入的参数生成交易订单dict
-         2, 检查本地交易记录，确认是否符合提交条件（有足够的可用现金或可用资产）
-         3, 如果符合条件，将订单提交给Broker，在本地记录订单和持仓信息，修改订单状态为"submitted"
-         4, 如果订单不符合提交条件，根据Trader的设置，采取下面两种操作之一：
-            - 放弃提交订单，并进行记录
-            - 仍然提交订单，由Broker处理，在本地记录订单和持仓信息，修改订单状态为"submitted"，此时可能会交易失败
+         1, 根据输入的参数生成交易订单dict，在本地记录订单信息，生成本地订单和持仓信息，订单状态为"created"
+         2, 将订单提交给Broker，如果提交成功，设置订单状态为"submitted"，如果提交不成功，设置订单状态为"cancelled"
+         3, 返回订单信息
          但是，由于目前的Trader/Broker架构还没有完全实现，所以暂时采用下面变通的方法处理：
          1, 生成交易订单dict，生成本地订单和持仓信息，订单状态为"created"（在self.submit_trade_order中）
          2, 检查订单是否符合提交条件，如果符合，修改订单状态为"submitted"（在self.submit_trade_order中）
@@ -1578,7 +1510,7 @@ class Trader(object):
             订单信息
         """
 
-        trade_order = self.submit_trade_order(
+        trade_order = self._submit_trade_order(
                 symbol=symbol,
                 qty=qty,
                 price=price,
@@ -1586,15 +1518,11 @@ class Trader(object):
                 direction='buy',
                 order_type='market',
         )
-        status = trade_order['status']
-        if status != 'submitted':
-            return {}
 
         order_id = trade_order['order_id']
         name = get_symbol_names(self._datasource, symbols=symbol)[0]
-        self._broker.order_queue.put(trade_order)
         # format the message depending on buy/sell orders
-        msg = Text(f'<NEW ORDER {order_id}>: <{name} - {symbol}> ', style='bold')
+        msg = Text(f'<SUBMITTED ORDER {order_id}>: <{name} - {symbol}> ', style='bold')
         msg.append(f'buy-{position} {qty} shares @ {price}', style='bold red')
         # 记录已提交的交易数量
         self.send_message(msg)
@@ -1623,7 +1551,7 @@ class Trader(object):
             订单信息
         """
 
-        trade_order = self.submit_trade_order(
+        trade_order = self._submit_trade_order(
                 symbol=symbol,
                 qty=qty,
                 price=price,
@@ -1631,17 +1559,11 @@ class Trader(object):
                 direction='buy',
                 order_type='market',
         )
-        status = trade_order['status']
-        if status != 'submitted':
-            msg = Text(f'Order {trade_order["order_id"]} is not submitted, status: {status}', style='bold red')
-            self.send_message(msg)
-            return {}
 
         order_id = trade_order['order_id']
         name = get_symbol_names(self._datasource, symbols=symbol)[0]
-        self._broker.order_queue.put(trade_order)
         # format the message depending on buy/sell orders
-        msg = Text(f'<NEW ORDER {order_id}>: <{name} - {symbol}> ', style='bold')
+        msg = Text(f'<SUBMITTED ORDER {order_id}>: <{name} - {symbol}> ', style='bold')
         msg.append(f'sell-{position} {qty} shares @ {price}', style='bold green')
         # 记录已提交的交易数量
         self.send_message(msg)
@@ -2283,6 +2205,63 @@ class Trader(object):
             cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
             self.send_message(f'canceled un-submitted order: {order_id}')
             order_queue.task_done()
+
+    def _submit_trade_order(self, symbol: str, position: str, direction: str, order_type: str, qty: int, price: float) -> dict:
+        """ 提交交易订单：
+
+        - 创建完整订单信息，记录到本地订单数据，必要时创建持仓信息，并记录到本地持仓数据
+        - 将订单放入Broker订单队列，如果成功，则修改订单状态为submitted
+
+        Parameters
+        ----------
+        symbol: str
+            交易标的代码
+        position: str
+            交易标的的持仓方向，long/short
+        direction: str
+            交易方向，buy/sell
+        order_type: str
+            订单类型，market/limit
+        qty: int
+            订单数量
+        price: float
+            订单价格
+
+        Returns
+        -------
+        trade_order: dict
+            已经提交的订单信息
+        """
+        if order_type is None:
+            order_type = 'market'
+
+        pos_id = get_or_create_position(account_id=self.account_id,
+                                        symbol=symbol,
+                                        position_type=position,
+                                        data_source=self._datasource)
+
+        # 生成交易订单dict
+        trade_order = {
+            'pos_id':         pos_id,
+            'direction':      direction,
+            'order_type':     order_type,
+            'qty':            qty,
+            'price':          price,
+            'submitted_time': None,
+            'status':         'created',
+        }
+
+        order_id = record_trade_order(trade_order, data_source=self._datasource)
+        trade_order['order_id'] = order_id
+
+        # 将交易订单放入Broker订单队列，如果成功，则修改订单状态为submitted（在当前架构下，一定成功）
+        self._broker.order_queue.put(trade_order)
+        trade_order['status'] = 'submitted'
+        trade_order['submitted_time'] = self.get_current_tz_datetime()
+        # TODO: 在新架构下，记录broker返回的订单ID，以便后续查询订单状态
+        #  如果提交不成功，修改订单状态为rejected，并记录到log文件
+
+        return trade_order
 
     TASK_WHITELIST = {
         'stopped':  ['start'],

@@ -19,7 +19,7 @@ import numpy as np
 from qteasy.database import DataSource
 
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
-from qteasy.trading_util import parse_trade_signal, order_presubmit_check, get_last_trade_result_summary, get_symbol_names
+from qteasy.trading_util import parse_trade_signal, get_last_trade_result_summary, get_symbol_names
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
@@ -837,7 +837,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertIsInstance(signals, pd.DataFrame)
         self.assertTrue(signals.empty)
 
-    # test 2nd foundational functions: save_parsed_signals / order_presubmit_check / output_trade_order
+    # test 2nd foundational functions: save_parsed_signals / order_availability_check / output_trade_order
     def test_save_parsed_orders(self):
         """ test save_parsed_signals function """
         # remove all data in test datasource
@@ -991,7 +991,7 @@ class TestTradeRecording(unittest.TestCase):
         # check position detail
 
     def test_submit_orders(self):
-        """ test order_presubmit_check function """
+        """ test order_availability_check function """
         # remove all data in test datasource
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
             self.test_ds.drop_table_data('sys_op_live_accounts')
@@ -1055,7 +1055,7 @@ class TestTradeRecording(unittest.TestCase):
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
         # submit first batch of signals one by one
-        order_presubmit_check(1, data_source=self.test_ds)
+        update_trade_order(1, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1069,7 +1069,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(2, data_source=self.test_ds)
+        update_trade_order(2, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1083,7 +1083,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(3, data_source=self.test_ds)
+        update_trade_order(3, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1097,7 +1097,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(4, data_source=self.test_ds)
+        update_trade_order(4, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1111,7 +1111,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(5, data_source=self.test_ds)
+        update_trade_order(5, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 5, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1155,7 +1155,7 @@ class TestTradeRecording(unittest.TestCase):
         print(f'before submission, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}')
         # submit second batch of signals one by one
-        order_presubmit_check(6, data_source=self.test_ds)
+        update_trade_order(6, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 6, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1171,7 +1171,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(7, data_source=self.test_ds)  # 此时需要卖出700股，但只有100股可用，按新规仅warning
+        update_trade_order(7, data_source=self.test_ds)  # 此时需要卖出700股，但只有100股可用，按新规仅warnin, status='submittedg
         print(f'after submitting order 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1187,7 +1187,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(8, data_source=self.test_ds)  # 此时需要卖出800股，但已经没有可用股份，按新规则仅warning
+        update_trade_order(8, data_source=self.test_ds)  # 此时需要卖出800股，但已经没有可用股份，按新规则仅warnin, status='submittedg
         print(f'after submitting order 8, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1203,7 +1203,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(9, data_source=self.test_ds)  # 此时需要买入900股，但可用现金仅够买入200股，新规则仅warning
+        update_trade_order(9, data_source=self.test_ds)  # 此时需要买入900股，但可用现金仅够买入200股，新规则仅warnin, status='submittedg
         print(f'after submitting order 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1219,7 +1219,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertTrue(np.allclose(qty, [100, 200, 300, 400, 500]))
         self.assertTrue(np.allclose(aqty, [100, 200, 300, 400, 500]))
 
-        order_presubmit_check(10, data_source=self.test_ds)  # 此时已经没有可用现金
+        update_trade_order(10, data_source=self.test_ds)  # 此时已经没有可用现, status='submitted金
         print(f'after submitting order 10, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1752,27 +1752,27 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertEqual(order_ids, [1, 2, 3, 4, 5])
         # 逐个提交交易信号并打印相关余额的变化
-        order_presubmit_check(1, data_source=self.test_ds)
+        update_trade_order(1, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
-        order_presubmit_check(2, data_source=self.test_ds)
+        update_trade_order(2, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
-        order_presubmit_check(3, data_source=self.test_ds)
+        update_trade_order(3, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
-        order_presubmit_check(4, data_source=self.test_ds)
+        update_trade_order(4, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
               f'{get_account_cash_availabilities(1, data_source=self.test_ds)}')
-        order_presubmit_check(5, data_source=self.test_ds)
+        update_trade_order(5, data_source=self.test_ds, status='submitted')
         print(f'after submitting order 5, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2062,11 +2062,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 data_source=self.test_ds,
         )
         self.assertEqual(order_ids, [6, 7, 8, 9, 10])
-        # 逐个提交交易信号并打印相关余额的变化, 重复提交信号不会成功，只会返回None
-        self.assertIsNone(order_presubmit_check(1, data_source=self.test_ds))
-        self.assertEqual(order_presubmit_check(6, data_source=self.test_ds), 6)
-        self.assertEqual(order_presubmit_check(7, data_source=self.test_ds), 7)
-        self.assertEqual(order_presubmit_check(9, data_source=self.test_ds), 9)
+        # 逐个提交交易信号并打印相关余额的变化
+        update_trade_order(6, data_source=self.test_ds, status='submitted')
+        update_trade_order(7, data_source=self.test_ds, status='submitted')
+        update_trade_order(9, data_source=self.test_ds, status='submitted')
 
         # signal 7 is filled with 100 shares sold at 90.0, with transaction fee 5.5
         raw_trade_result = {
