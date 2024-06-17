@@ -19,6 +19,7 @@ import numpy as np
 
 from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
+from qteasy.trade_recording import update_trade_order
 from qteasy.trading_util import order_presubmit_check, process_trade_result, cancel_order, process_account_delivery
 from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
@@ -124,7 +125,8 @@ class TestTrader(unittest.TestCase):
         )
         # submit orders
         for order_id in order_ids:
-            order_presubmit_check(order_id, test_ds)
+            if not order_presubmit_check(order_id, test_ds) is None:
+                update_trade_order(order_id=order_id, data_source=test_ds, status='submitted')
 
         # 添加交易订单执行结果
         delivery_config = {
