@@ -9,7 +9,7 @@
 # ======================================
 
 import numpy as np
-from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
+from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
 from .tafuncs import sma, ema, trix, bbands, sma_no_ta, ema_no_ta
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
@@ -19,35 +19,124 @@ from .tafuncs import stochrsi, ultosc, willr, ad, dema, apo, cdldoji, atr
 
 
 # Built-in Rolling timing strategies:
-def built_in_list(stg_id=None):
-    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息并返回该策略
+def built_in_list(stg_id=None) -> list:
+    """  获取内置交易策略ID的列表,可以通过stg_id进行模糊匹配
 
     Parameters
     ----------
     stg_id: str, optional
-        策略ID，如果给出ID且该策略存在，则显示该策略的docstring
+        策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
+        支持模糊匹配，例如'cross'可以匹配到'crossline'
 
     Returns
     -------
-    dict: 如果stg_id为None，则返回所有内置策略的字典
-    stg_func: 如果stg_id不为None，则返回该策略的函数对象
-    None: 如果stg_id不为None，但该策略不存在，则返回None
+    stg_ids: list,
+        所有符合筛选条件的内置策略的ID列表
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.built_in_list()
+    ['crossline',
+     'macd',
+     'dma',
+     'trix',
+     ...
+     'ndaychg',
+     'ndayvol',]
+    >>> qt.built_in_list('cross')
+    ['crossline']
+    """
+
+    return list(built_ins(stg_id).keys())
+
+
+def built_ins(stg_id=None) -> dict:
+    """ 获取或筛选内置的交易策略,可以通过stg_id进行模糊匹配，返回的是策略的字典
+
+    Parameters
+    ----------
+    stg_id: str, optional
+        策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
+        支持模糊匹配，例如'cross'可以匹配到'crossline'
+
+    Returns
+    -------
+    strategies: dict,
+        所有被筛选的内置策略的字典
 
     Examples
     --------
     >>> import qteasy as qt
     >>> qt.built_in_list()
     {
-     'crossline': qteasy.built_in.CROSSLINE,
-     'macd': qteasy.built_in.MACD,
-     'dma': qteasy.built_in.DMA,
-     'trix': qteasy.built_in.TRIX,
-     ...
-      'ndaychg': qteasy.built_in.SelectingNDayChange,
-     'ndayvol': qteasy.built_in.SelectingNDayVolatility
+        'crossline': qteasy.built_in.CROSSLINE,
+        'macd': qteasy.built_in.MACD,
+        'dma': qteasy.built_in.DMA,
+        'trix': qteasy.built_in.TRIX,
+        ...
+        'ndaychg': qteasy.built_in.SelectingNDayChange,
+        'ndayvol': qteasy.built_in.SelectingNDayVolatility
+    }
+    >>> qt.built_in_list('cross')
+    {
+        'crossline': qteasy.built_in.CROSSLINE,
     }
 
-    >>> stg = built_in_list('macd')
+    """
+    if stg_id is None:
+        return BUILT_IN_STRATEGIES
+    if isinstance(stg_id, str):
+        stg_id = stg_id.lower()
+    else:
+        raise TypeError('stg_id must be a string')
+
+    if stg_id in BUILT_IN_STRATEGIES:
+        return {stg_id: BUILT_IN_STRATEGIES[stg_id]}
+
+    stg_ids = _make_a_guess_by_id(stg_id, 0.75)
+
+    strategy_dict = {stg: BUILT_IN_STRATEGIES[stg] for stg in stg_ids}
+
+    return strategy_dict
+
+
+def built_in_strategies(stg_id=None) -> list:
+    """  获取内置交易策略对象的列表,可以通过stg_id进行模糊匹配
+
+    Parameters
+    ----------
+    stg_id: str, optional
+        策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
+        支持模糊匹配，例如'cross'可以匹配到'crossline'
+
+    Returns
+    -------
+    strategies: list,
+        所有被筛选的内置策略对象的列表
+
+    See Also
+    --------
+    built_in_list()
+    """
+    return list(built_ins(stg_id).values())
+
+
+def built_in_doc(stg_id) -> str:
+    """ 获取内置策略的文档，stg_id必须正确给出且存在
+
+    Parameters
+    ----------
+    stg_id: str
+        策略ID
+
+    Returns
+    -------
+    str: 返回策略的文档字符串
+
+    Examples
+    --------
+    >>> built_in_doc('macd')
     MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
     --------------------
     策略参数：
@@ -67,66 +156,15 @@ def built_in_list(stg_id=None):
     窗口长度：270
     参数范围：[(10, 250), (10, 250), (5, 250)]
     策略不支持参考数据，不支持交易数据
-
-    >>> stg
-    RULE-ITER(MACD)
     """
-    if stg_id is None:
-        return BUILT_IN_STRATEGIES
-    if isinstance(stg_id, str):
-        stg_id = stg_id.lower()
-    stg_func = BUILT_IN_STRATEGIES.get(stg_id, None)
-    if stg_func is None:
-        print(f'Strategy Not found! Stg stg_id: ({stg_id})')
-        return None
-
-    print(stg_func.__doc__)
-    return stg_func
+    stg = get_built_in_strategy(stg_id)
+    if stg is None:
+        guess = _make_a_guess_by_id(stg_id)
+        return f'No built-in strategy found for {stg_id}, maybe you mean {guess}?'
+    return stg.__doc__
 
 
-def built_ins(stg_id=None):
-    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息, 等同于 built_in_list()
-
-    Parameters
-    ----------
-    stg_id: str, optional
-        策略ID，如果给出ID且该策略存在，则显示该策略的docstring
-
-    Returns
-    -------
-    dict: 如果stg_id为None，则返回所有内置策略的字典
-    stg_func: 如果stg_id不为None，则返回该策略的函数对象
-    None: 如果stg_id不为None，但该策略不存在，则返回None
-
-    See Also
-    --------
-    built_in_list()
-    """
-    return built_in_list(stg_id)
-
-
-def built_in_strategies(stg_id=None):
-    """ 获取内置的交易策略列表, 如果给出stg_id，则显示该策略的详细信息, 等同于 built_in_list()
-
-    Parameters
-    ----------
-    stg_id: str, optional
-        策略ID，如果给出ID且该策略存在，则显示该策略的docstring
-
-    Returns
-    -------
-    dict: 如果stg_id为None，则返回所有内置策略的字典
-    stg_func: 如果stg_id不为None，则返回该策略的函数对象
-    None: 如果stg_id不为None，但该策略不存在，则返回None
-
-    See Also
-    --------
-    built_in_list()
-    """
-    return built_in_list(stg_id)
-
-
-def get_built_in_strategy(stg_id):
+def get_built_in_strategy(stg_id) -> BaseStrategy:
     """ 使用ID获取交易策略
 
     Parameters
@@ -146,15 +184,39 @@ def get_built_in_strategy(stg_id):
     Examples
     --------
     >>> get_built_in_strategy('macd')
-    MACD strategy
+    <class 'qteasy.built_in.MACD'>
     """
     if not isinstance(stg_id, str):
-        raise TypeError(f'stg_id should be a string, got {type(stg_id)} instead')
-    stg_id = stg_id.lower()
-    if stg_id not in BUILT_IN_STRATEGIES.keys():
-        raise ValueError(f'stg_id ({stg_id}) is not valid, please check your input')
+        raise TypeError(f'strategy id must be a string, but got {type(stg_id)}')
 
-    return BUILT_IN_STRATEGIES[stg_id]()
+    stg_id = stg_id.lower()
+    if stg_id in BUILT_IN_STRATEGIES:
+        return BUILT_IN_STRATEGIES[stg_id]
+
+    guess = _make_a_guess_by_id(stg_id)
+    raise ValueError(f'No built-in strategy found for {stg_id}, maybe you mean {guess}?')
+
+
+def _make_a_guess_by_id(stg_id, accept_leval: float = None) -> list:
+    """ 通过ID猜测内置策略
+
+    Parameters
+    ----------
+    stg_id: str
+        策略ID
+    accept_leval: float, optional
+        接受的匹配度，0~1之间，越大则排除的策略越多，如果为None，则只返回匹配值最大的策略ID列表
+
+    Returns
+    -------
+    list: 返回接受的策略ID列表
+    """
+    all_ids = list(BUILT_IN_STRATEGIES.keys())
+    from .utilfuncs import _partial_lev_ratio
+    match_points = [_partial_lev_ratio(stg, stg_id) for stg in all_ids]
+    if accept_leval is not None:
+        return [all_ids[i] for i in range(len(all_ids)) if match_points[i] >= accept_leval]
+    return [match_points.index(max(match_points))]
 
 
 # All following strategies can be used to create strategies by referring to its strategy ID

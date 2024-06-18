@@ -30,7 +30,7 @@ from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
 from .qt_operator import Operator
 from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from .built_in import built_ins, built_in_list, built_in_strategies, get_built_in_strategy
+from .built_in import built_ins, built_in_list, built_in_strategies, get_built_in_strategy, built_in_doc
 from .visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
