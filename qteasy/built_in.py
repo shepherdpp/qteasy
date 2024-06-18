@@ -158,9 +158,6 @@ def built_in_doc(stg_id) -> str:
     策略不支持参考数据，不支持交易数据
     """
     stg = get_built_in_strategy(stg_id)
-    if stg is None:
-        guess = _make_a_guess_by_id(stg_id)
-        return f'No built-in strategy found for {stg_id}, maybe you mean {guess}?'
     return stg.__doc__
 
 
@@ -216,7 +213,7 @@ def _make_a_guess_by_id(stg_id, accept_leval: float = None) -> list:
     match_points = [_partial_lev_ratio(stg, stg_id) for stg in all_ids]
     if accept_leval is not None:
         return [all_ids[i] for i in range(len(all_ids)) if match_points[i] >= accept_leval]
-    return [match_points.index(max(match_points))]
+    return all_ids[match_points.index(max(match_points))]
 
 
 # All following strategies can be used to create strategies by referring to its strategy ID
