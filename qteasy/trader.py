@@ -1880,27 +1880,6 @@ class Trader(object):
 
     # ================ task operations =================
 
-    available_tasks = {
-        'pre_open':           _pre_open,
-        'open_market':        _market_open,
-        'close_market':       _market_close,
-        'post_close':         _post_close,
-        'run_strategy':       _run_strategy,
-        'buy_order':          _buy_order,
-        'sell_order':         _sell_order,
-        'cancel_order':       _cancel_order,
-        'process_result':     _process_result,
-        'process_delivery':   _process_deliveries,
-        'change_date':        _change_date,
-        'start':              _start,
-        'stop':               _stop,
-        'sleep':              _sleep,
-        'wakeup':             _wakeup,
-        'pause':              _pause,
-        'resume':             _resume,
-        'refill':             _refill,
-    }
-
     def run_task(self, task, *args, run_in_main_thread=False):
         """ 运行任务
 
@@ -1915,20 +1894,42 @@ class Trader(object):
             如果设置为False，少数new_thread_tasks中的任务可以在新进程中运行
         """
 
+        available_tasks = {
+            'pre_open':           self._pre_open,
+            'open_market':        self._market_open,
+            'close_market':       self._market_close,
+            'post_close':         self._post_close,
+            'run_strategy':       self._run_strategy,
+            'buy_order':          self._buy_order,
+            'sell_order':         self._sell_order,
+            'cancel_order':       self._cancel_order,
+            'process_result':     self._process_result,
+            'process_delivery':   self._process_deliveries,
+            'change_date':        self._change_date,
+            'start':              self._start,
+            'stop':               self._stop,
+            'sleep':              self._sleep,
+            'wakeup':             self._wakeup,
+            'pause':              self._pause,
+            'resume':             self._resume,
+            'refill':             self._refill,
+            'acquire_live_price': self._update_live_price,
+        }
+
         if task is None:
             return
         if not isinstance(task, str):
             err = ValueError(f'task must be a string, got {type(task)} instead.')
             raise err
 
-        if task not in self.available_tasks.keys():
+        if task not in available_tasks.keys():
             err = ValueError(f'Invalid task name: {task}')
             raise err
 
-        task_func = self.available_tasks[task]
+        task_func = available_tasks[task]
 
-        new_thread_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
-        if (not run_in_main_thread) and (task in new_thread_tasks):
+        async_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
+        if (not run_in_main_thread) and (task in async_tasks):
             from threading import Thread
             if args:
                 t = Thread(target=task_func, args=args, daemon=True)

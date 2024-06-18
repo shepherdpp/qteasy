@@ -133,7 +133,10 @@ class WatchTable(DataTable):
 
         def on_input(input_string):
             # qty is input by user in a dialog
-            qty = float(input_string)
+            try:
+                qty = float(input_string)
+            except Exception as e:
+                return
             if qty <= 0:
                 return
             self.trader.add_task(
@@ -165,11 +168,14 @@ class WatchTable(DataTable):
 
         def on_input(input_string):
             # qty is input by user in a dialog
-            qty = float(input_string)
+            try:
+                qty = float(input_string)
+            except Exception as e:
+                return
             if qty <= 0:
                 return
             self.trader.add_task(
-                    'sell_order',
+                    'buy_order',
                     dict(
                             symbol=symbol,
                             qty=qty,
