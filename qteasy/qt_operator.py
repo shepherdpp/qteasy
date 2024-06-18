@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+import qteasy
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
@@ -822,12 +823,8 @@ class Operator:
         # TODO: 添加策略时如果有错误，应该删除刚刚添加的strategy
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
-            stg = stg.lower()
-            if stg not in BUILT_IN_STRATEGIES:
-                raise KeyError(f'built-in strategy \'{stg}\' not found! Use "qteasy.built_ins()" to get '
-                               f'list of all built-in strategies or detail info')
-            stg_id = stg
-            strategy = BUILT_IN_STRATEGIES[stg]()
+            stg_id = stg.lower()
+            strategy = qteasy.get_built_in_strategy(stg)
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, BaseStrategy):
             if stg in available_built_in_strategies:
@@ -836,6 +833,13 @@ class Operator:
             else:
                 stg_id = 'custom'
             strategy = stg
+        elif isinstance(stg, type):
+            if stg in available_built_in_strategies:
+                stg_id_index = list(available_built_in_strategies).index(stg)
+                stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
+            else:
+                stg_id = 'custom'
+            strategy = stg()
         else:
             raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
         stg_id = self._next_stg_id(stg_id)
