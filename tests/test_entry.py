@@ -95,7 +95,7 @@ class TestEntry(unittest.TestCase):
 
         print(f'qteasy get built-in strategy: {qt.get_built_in_strategy}')
         res = qt.get_built_in_strategy('macd')
-        self.assertIsInstance(res(), qt.BaseStrategy)
+        self.assertIsInstance(res, qt.BaseStrategy)
 
         with self.assertRaises(ValueError):
             qt.get_built_in_strategy('macde')

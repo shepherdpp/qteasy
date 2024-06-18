@@ -188,7 +188,7 @@ def get_built_in_strategy(stg_id) -> BaseStrategy:
 
     stg_id = stg_id.lower()
     if stg_id in BUILT_IN_STRATEGIES:
-        return BUILT_IN_STRATEGIES[stg_id]
+        return BUILT_IN_STRATEGIES[stg_id]()
 
     guess = _make_a_guess_by_id(stg_id)
     raise ValueError(f'No built-in strategy found for {stg_id}, maybe you mean {guess}?')
