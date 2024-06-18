@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.2.13 (2024-06-19)
+- Changed function qt.built_ins(), now it always return a dict of id and type of built-in strategies, and if incorrect strategy id is given as argument, it returns all fuzzy matched strategy ids
+- Changed function qt.built_in_list() and qt.built_in_strategies(), now they return list of strategy ids and strategy types, respectively; and return fuzzy matched strategy ids for incorrect strategy id given as argument
+- Added new function qt.built_in_doc(), to return the docstring of a built-in strategy
+
 ## 1.2.12 (2024-06-12)
 - Fixed a bug, now cash gained by selling stocks can be delivered immediately to update available cash amount.
 - Fixed a bug, now unfilled orders can be correctly canceled after each trading day

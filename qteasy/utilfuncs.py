@@ -1666,7 +1666,7 @@ def _wildcard_match(mode, wordlist):
     return res
 
 
-@njit
+@njit()
 def ffill_3d_data(arr, init_val=0.):
     """ 给定一个三维np数组，如果数组中有nan值时，使用axis=1的前一个非Nan值填充Nan
 

@@ -432,10 +432,10 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=False,
                visual=False)
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
@@ -445,10 +445,10 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in Montecarlo with multiple sub-idx_range optimization')
@@ -458,10 +458,10 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in Montecarlo with multiple sub-idx_range testing')
@@ -471,10 +471,10 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='multiple',
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
 
@@ -488,12 +488,12 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20140601',
-               opti_cash_dates='20060407',
+               opti_cash_dates='20120407',
                test_start='20120604',
-               test_end='20201130',
-               test_cash_dates='20140604',
+               test_end='20181130',
+               test_cash_dates='20120604',
                test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
                # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
                indicator_plot_type='violin',
@@ -510,10 +510,10 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=False,
                visual=False)
         print(f'strategy optimization in grid search algorithm with parallel ON')
@@ -523,10 +523,10 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
@@ -536,10 +536,10 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
@@ -549,10 +549,10 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='multiple',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
 
@@ -565,10 +565,10 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=False,
                visual=True,
                indicator_plot_type=0)
@@ -579,10 +579,10 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True,
                indicator_plot_type=1)
@@ -593,10 +593,10 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True,
                indicator_plot_type=2)
@@ -607,10 +607,10 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='multiple',
                opti_grid_size=128,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True,
                indicator_plot_type=3)
@@ -626,10 +626,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=10,
                opti_min_volume=5E7,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=False,
                visual=False)
         print(f'strategy optimization in incremental algorithm with parallel ON')
@@ -641,10 +641,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
@@ -658,10 +658,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in incremental with multiple sub-idx_range testing')
@@ -675,10 +675,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
 
@@ -693,10 +693,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True)
         print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
@@ -710,10 +710,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True)
 
@@ -727,10 +727,10 @@ class TestQT(unittest.TestCase):
                test_type='montecarlo',
                opti_output_count=20,
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
         print(f'strategy optimization in incremental with with predictive montecarlo test')
@@ -744,10 +744,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=False)
 
@@ -761,10 +761,10 @@ class TestQT(unittest.TestCase):
                test_type='montecarlo',
                opti_output_count=20,
                opti_sample_count=200,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True)
         print(f'strategy optimization in incremental with with predictive montecarlo test')
@@ -778,10 +778,10 @@ class TestQT(unittest.TestCase):
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20060404',
+               opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
-               test_end='20201130',
+               test_end='20181130',
                parallel=True,
                visual=True)
 

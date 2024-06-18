@@ -1,30 +1,48 @@
 内置交易策略
 ===================
 
+qteasy提供超过70种内置交易策略，所有的交易策略都可以直接使用，通过修改这些交易策略的参数，可以很容易地实现不同的个性化效果。
+
+qteasy所有的内置交易策略都有完整的说明文档，提供了交易策略的详细说明，参数说明，以及默认参数值。每一个qteasy内置交易策略都有一个ID，通过这个唯一的ID
+用户可以容易地获取这个交易策略，查看说明文档，或者直接在创建Operator对象时使用这个交易策略。
+
 获取内置交易策略
 -----------------------
 
+查看所有的内置交易策略，或者根据ID筛选部分交易策略。使用下面的函数：
+
+下面的函数接受相同的参数stg_id，但是返回不同类型的数据，如果stg_id为None，则返回所有的内置交易策略，否则返回指定ID的交易策略。
+如果用户输入的stg_id不存在，qteasy会根据用户输入的stg_id返回id与其最接近的交易策略。
+
+下面的函数返回一个字典，字典的key是交易策略的ID，value是交易策略的说明文档。
+
 .. autofunction:: qteasy.built_ins
+
+下面的函数返回一个列表，列表的元素是交易策略的ID或者交易策略的名称。
 
 .. autofunction:: qteasy.built_in_list
 
 .. autofunction:: qteasy.built_in_strategies
 
+如果要获取一个内置交易策略对象，需要使用下面的函数，根据用户输入的ID返回内置策略对象，
+如果用户输入ID有误，函数会报错并给用户提供一个建议的ID：
+
+.. autofunction:: qteasy.get_built_in_strategy
+
+如果要查看内置交易策略的说明文档，需要使用下面的函数，根据用户输入的ID返回内置策略对象，
+如果用户输入ID有误，函数会报错并给用户提供一个建议的ID：
+
+.. autofunction:: qteasy.built_in_doc
+
 所有内置交易策略
 -----------------------
 
-下面是所有的内置交易策略
+下面是所有的内置交易策略的说明文档，用户可以根据自己的需求选择合适的交易策略。
 
 简单选股策略
 ------------
 
 根据历史数据选股
-
-.. autofunction:: qteasy.built_in.SelectingAll
-
-.. autofunction:: qteasy.built_in.SelectingNone
-
-.. autofunction:: qteasy.built_in.SelectingRandom
 
 .. autofunction:: qteasy.built_in.SelectingAvgIndicator
 
@@ -43,6 +61,12 @@
 .. autofunction:: qteasy.built_in.SellRate
 
 .. autofunction:: qteasy.built_in.BuyRate
+
+.. autofunction:: qteasy.built_in.SelectingAll
+
+.. autofunction:: qteasy.built_in.SelectingNone
+
+.. autofunction:: qteasy.built_in.SelectingRandom
 
 简单择时策略
 ------------
@@ -64,7 +88,7 @@
 
 .. autofunction:: qteasy.built_in.TRIX
 
-.. autofunction:: qteasy.built_in.Crossline
+.. autofunction:: qteasy.built_in.CROSSLINE
 
 .. autofunction:: qteasy.built_in.CDL
 
