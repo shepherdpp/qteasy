@@ -209,14 +209,16 @@ def get_built_in_strategy(stg_id) -> BaseStrategy:
     RULE-ITER(MACD)
     """
     if not isinstance(stg_id, str):
-        raise TypeError(f'strategy id must be a string, but got {type(stg_id)}')
+        err = TypeError(f'strategy id must be a string, but got {type(stg_id)}')
+        raise err
 
     stg_id = stg_id.lower()
     if stg_id in BUILT_IN_STRATEGIES:
         return BUILT_IN_STRATEGIES[stg_id]()
 
     guess = _make_a_guess_by_id(stg_id)
-    raise ValueError(f'No built-in strategy found for {stg_id}, maybe you mean {guess}?')
+    err = ValueError(f'No built-in strategy found for \'{stg_id}\', Did you mean: \'{guess}\'?')
+    raise err
 
 
 def _make_a_guess_by_id(stg_id, accept_leval: float = None) -> list:
@@ -598,7 +600,8 @@ class SCRSHT(RuleIterator):
         try:  # if ta-lib is installed
             from .tafuncs import ht
         except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
-            raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
+            err = NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
+            raise err
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],

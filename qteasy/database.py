@@ -2527,9 +2527,9 @@ class DataSource:
                 try:
                     import tables
                 except ImportError:
-                    msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
-                          f'\'hdf\'. Please install pytables: $ conda install pytables'
-                    raise ImportError(msg)
+                    err = ImportError(f'Missing optional dependency \'pytables\' for datasource file type '
+                                      f'\'hdf\'. Please install pytables: $ conda install pytables')
+                    raise err
                 file_type = 'hdf'
             if file_type in ['feather', 'fth']:
                 try:
@@ -4526,8 +4526,9 @@ class DataSource:
         data_columns = [col for col in columns if col not in primary_keys]
         # 检查data的key是否与data_column完全一致，如果不一致，则抛出异常
         if any(k not in data_columns for k in data.keys()) or any(k not in data.keys() for k in data_columns):
-            raise KeyError(f'Input data keys must be the same as the table data columns, '
+            err = KeyError(f'Input data keys must be the same as the table data columns, '
                            f'got {list(data.keys())} vs {data_columns}')
+            raise err
         df = pd.DataFrame(data, index=[record_id], columns=data.keys())
         df = df.reindex(columns=columns)
         df.index.name = primary_keys[0]
@@ -4569,9 +4570,11 @@ class DataSource:
 
         # 检查record_ids是否合法
         if not isinstance(record_ids, (list, tuple)):
-            raise TypeError(f'record_ids should be a list or tuple, got {type(record_ids)} instead')
+            err = TypeError(f'record_ids should be a list or tuple, got {type(record_ids)} instead')
+            raise err
         if not all(isinstance(rid, int) for rid in record_ids):
-            raise TypeError(f'all record_ids should be int, got {[type(rid) for rid in record_ids]} instead')
+            err = TypeError(f'all record_ids should be int, got {[type(rid) for rid in record_ids]} instead')
+            raise err
 
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table, with_primary_keys=True)
         primary_key = primary_keys[0]
@@ -4581,7 +4584,8 @@ class DataSource:
         elif self.source_type == 'file':
             res = self.delete_file_records(table, primary_key=primary_key, record_ids=record_ids)
         else:
-            raise RuntimeError(f'invalid source type: {self.source_type}')
+            err = RuntimeError(f'invalid source type: {self.source_type}')
+            raise err
 
         return res
 
@@ -4716,7 +4720,7 @@ class DataSource:
                           f'{conflict_cols}', DataConflictWarning)
         # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
         if all(df.empty for df in df_by_htypes.values()):
-            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type} with parameters:\n'
+            err = RuntimeError(f'Empty data extracted from DataSource {self.connection_type} with parameters:\n'
                                f'shares: {shares}\n'
                                f'htypes: {htypes}\n'
                                f'start/end/freq: {start}/{end}/"{freq}"\n'
@@ -4726,6 +4730,7 @@ class DataSource:
                                f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
                                f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
                                f'**kwargs)')
+            raise err
         # 如果需要复权数据，计算复权价格
         adj_factors = {}
         if adj.lower() not in ['none', 'n']:
@@ -4739,8 +4744,9 @@ class DataSource:
                 adj_factors[tbl] = adj_df
             # 如果adj table不为空但无法读取adj因子，则报错
             if adj_tables_to_read and (not adj_factors):
-                raise ValueError(f'Failed reading price adjust factor data. call "qt.get_table_info()" to '
+                err = ValueError(f'Failed reading price adjust factor data. call "qt.get_table_info()" to '
                                  f'check local source data availability')
+                raise err
 
         if adj_factors:
             # 根据复权因子更新所有可复权数据
@@ -5267,24 +5273,29 @@ class DataSource:
         """
         df_s = self.read_table_data('stock_basic')
         if df_s.empty and raise_error:
-            raise ValueError('stock_basic table is empty, please refill data source with '
+            err = ValueError('stock_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="stock_basic")"')
+            raise err
         df_i = self.read_table_data('index_basic')
         if df_i.empty and raise_error:
-            raise ValueError('index_basic table is empty, please refill data source with '
+            err = ValueError('index_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="index_basic")"')
+            raise err
         df_f = self.read_table_data('fund_basic')
         if df_f.empty and raise_error:
-            raise ValueError('fund_basic table is empty, please refill data source with '
+            err = ValueError('fund_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="fund_basic")"')
+            raise err
         df_ft = self.read_table_data('future_basic')
         if df_ft.empty and raise_error:
-            raise ValueError('future_basic table is empty, please refill data source with '
+            err = ValueError('future_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="future_basic")"')
+            raise err
         df_o = self.read_table_data('opt_basic')
         if df_o.empty and raise_error:
-            raise ValueError('opt_basic table is empty, please refill data source with '
+            err = ValueError('opt_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="opt_basic")"')
+            raise err
         return df_s, df_i, df_f, df_ft, df_o
 
     def reconnect(self):
@@ -5336,17 +5347,18 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     None
     """
     if not isinstance(df, pd.DataFrame):
-        msg = f'df should be a pandas DataFrame, got {type(df)} instead'
-        raise TypeError(msg)
+        err = TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+        raise err
     if df.empty:
         return df
     if not isinstance(primary_key, list):
-        msg = f'primary key should be a list, got {type(primary_key)} instead'
-        raise TypeError(msg)
+        err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        raise err
     all_columns = df.columns
     if not all(item in all_columns for item in primary_key):
-        msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
-        raise KeyError(msg)
+        err = KeyError(f'primary key contains invalid value: '
+                       f'{[item for item in primary_key if item not in all_columns]}')
+        raise err
 
     # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     set_datetime_format_frame(df, primary_key, pk_dtypes)
