@@ -2372,21 +2372,26 @@ def get_history_panel(
     # if isinstance(freq, list):
     #     freq = ','.join(freq)
     if not isinstance(freq, str):
-        raise TypeError(f'freq should be a string, got {type(freq)} instead')
+        err = TypeError(f'freq should be a string, got {type(freq)} instead')
+        raise err
     if freq.upper() not in TIME_FREQ_STRINGS:
-        raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+        err = KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+        raise err
     freq = freq.lower()
 
     if asset_type is None:
         asset_type = 'any'
     if not isinstance(asset_type, (str, list)):
-        raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+        err = TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+        raise err
     if isinstance(asset_type, str):
         asset_type = str_to_list(asset_type)
     if not all(isinstance(item, str) for item in asset_type):
-        raise KeyError(f'not all items in asset type are strings')
+        err = KeyError(f'not all items in asset type are strings')
+        raise err
     if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
-        raise KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+        err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+        raise err
     if any(item.upper() == 'ANY' for item in asset_type):
         asset_type = AVAILABLE_ASSET_TYPES
     asset_type = [item.upper() for item in asset_type]
@@ -2394,10 +2399,12 @@ def get_history_panel(
     if adj is None:
         adj = 'none'
     if not isinstance(adj, str):
-        raise TypeError(f'adj type should be a string, got {type(adj)} instead')
+        err = TypeError(f'adj type should be a string, got {type(adj)} instead')
+        raise err
     if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-        raise KeyError(f"invalid adj type ({adj}), which should be anyone of "
+        err = KeyError(f"invalid adj type ({adj}), which should be anyone of "
                        f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
+        raise err
     adj = adj.lower()
 
     if data_source is None:
@@ -2405,7 +2412,8 @@ def get_history_panel(
         ds = QT_DATA_SOURCE
     else:
         if not isinstance(data_source, qteasy.DataSource):
-            raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
+            err = TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
+            raise err
         ds = data_source
 
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据

@@ -1394,7 +1394,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     if asset_types is None:

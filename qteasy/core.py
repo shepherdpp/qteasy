@@ -779,8 +779,8 @@ def get_history_data(htypes,
          - none / n: 不复权(默认值)
          - back / b: 后复权
          - forward / fw / f: 前复权
-    as_data_frame: bool, Default: False
-        是否返回DataFrame对象，True时返回HistoryPanel对象
+    as_data_frame: bool, Default: True
+        True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典
     group_by: str, 默认'shares'
         如果返回DataFrame对象，设置dataframe的分组策略
         - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
@@ -862,7 +862,7 @@ def get_history_data(htypes,
     # 给出历史数据类型和证券代码，起止时间，可以获取该时间段内该股票的历史数据
     >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200110')
     {'000001.SZ':
-                  open   high    low  close         vol
+                 open   high    low  close         vol
     2019-12-25  16.45  16.56  16.24  16.30   414917.98
     2019-12-26  16.34  16.48  16.32  16.47   372033.86
     2019-12-27  16.53  16.93  16.43  16.63  1042574.72
@@ -876,8 +876,7 @@ def get_history_data(htypes,
     2020-01-09  16.81  16.93  16.53  16.79  1031636.65
     2020-01-10  16.79  16.81  16.52  16.69   585548.45
     }
-
-    >>> # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格数
+    >>> # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格
     >>> qt.get_history_data(htypes='close', shares='000300.SH', start='20191225', end='20200105')
     {'000300.SH':
                   close
@@ -889,7 +888,7 @@ def get_history_data(htypes,
     2020-01-02  4152.24
     2020-01-03  4144.96
     }
-    # 以及基金的净值数据
+    >>> # 以及基金的净值数据
     >>> qt.get_history_data(htypes='unit_nav, accum_nav', shares='000001.OF', start='20191225', end='20200105')
     {'000001.OF':
                 unit_nav  accum_nav
@@ -901,7 +900,6 @@ def get_history_data(htypes,
     2020-01-02     1.123      3.584
     2020-01-03     1.127      3.588
     }
-
     >>> # 不光价格数据，其他类型的数据也可以同时获取：
     >>> qt.get_history_data(htypes='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
     {'000001.SZ':
@@ -914,7 +912,7 @@ def get_history_data(htypes,
     2020-01-02  16.87  13.1911  1.2210
     2020-01-03  17.18  13.4335  1.2434
     }
-    # 可以同时混合获取多只股票、指数、多种数据类型的数据，如果某些数据类型缺失，会用NaN填充，注意000001.SZ是股票平安银行，000001.SH是上证指数
+    >>> # 可以同时混合获取多只股票、指数、多种数据类型的数据，如果某些数据类型缺失，会用NaN填充，注意000001.SZ是股票平安银行，000001.SH是上证指数
     >>> qt.get_history_data(htypes='close, pe, pb, total_mv, eps', shares='000001.SZ, 000001.SH', start='20191225', end='20200105')
     {'000001.SZ':
                 close       pe      pb      total_mv   eps
@@ -935,11 +933,10 @@ def get_history_data(htypes,
     2020-01-02  3085.20  14.22  1.42  4.128453e+13  NaN
     2020-01-03  3083.79  14.22  1.42  4.127933e+13  NaN
     }
-
     >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
     >>> qt.get_history_data(htypes='open, high, low, close', shares='000001.SZ', start='20191229', end='20200106', freq='H', adj='b', asset_type='E')
      {'000001.SZ':
-                                open        high         low       close
+                               open        high         low       close
     2019-12-30 10:00:00  1796.92174  1796.92174  1796.92174  1796.92174
     2019-12-30 11:00:00  1790.37160  1800.19681  1758.71259  1786.00484
     2019-12-30 14:00:00  1811.11371  1813.29709  1795.83005  1806.74695
@@ -957,7 +954,6 @@ def get_history_data(htypes,
     2020-01-03 14:00:00  1863.51483  1889.71539  1863.51483  1884.25694
     2020-01-03 15:00:00  1884.25694  1884.25694  1872.24835  1875.52342
     }
-
     >>> # 可以设置b_days_only参数来将价格填充到非交易日，形成完整的日期序列
     >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
     {'000001.SZ':
@@ -975,7 +971,6 @@ def get_history_data(htypes,
      2020-01-04  16.94  17.31  16.92  17.18  1116194.81
      2020-01-05  16.94  17.31  16.92  17.18  1116194.81
      }
-
     >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
     >>> qt.get_history_data(htypes='wt-000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
