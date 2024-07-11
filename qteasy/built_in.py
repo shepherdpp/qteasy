@@ -2980,6 +2980,7 @@ class OBV(RuleIterator):
                          strategy_data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
+        raise NotImplementedError
         h = h.T
         res = ad(h[0], h[1])
         if res > 0:
