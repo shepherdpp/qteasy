@@ -772,7 +772,7 @@ class Operator:
         assert isinstance(strategies, list), f'TypeError, the strategies ' \
                                              f'should be a list of string, got {type(strategies)} instead'
         for stg in strategies:
-            if not isinstance(stg, (str, BaseStrategy)):
+            if not isinstance(stg, (str, BaseStrategy, type)):
                 warnings.warn(f'WrongType! some of the items in strategies '
                               f'can not be added - got {stg}', RuntimeWarning)
             self.add_strategy(stg)

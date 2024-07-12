@@ -124,7 +124,7 @@ except Exception as e:
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
 configure(only_built_in_keys=False, **qt_local_configs)
-import pdb; pdb.set_trace()
+
 # 连接默认的本地数据源
 QT_DATA_SOURCE = DataSource(
         source_type=QT_CONFIG['local_data_source'],

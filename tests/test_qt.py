@@ -785,7 +785,7 @@ class TestQT(unittest.TestCase):
                parallel=True,
                visual=True)
 
-    def test_built_in_timing(self):
+    def test_built_ins(self):
         """测试内置的择时策略"""
         # 使用以下参数测试所有qt.built_in中的交易策略
         #   mode=1,
@@ -795,11 +795,15 @@ class TestQT(unittest.TestCase):
         #   trade_log=False,
         #   visual=False,
         # 其他均为默认参数
-        print(f'testing built-in strategies')
-        for strategy in qt.built_in_strategies():
-            print(f'testing strategy {strategy}')
+        all_built_ins = qt.built_in_strategies()
+        tested_count = 0
+        total_count = len(all_built_ins)
+        key_results = []
+        print(f'testing all built-in strategies')
+        from qteasy.utilfuncs import progress_bar
+        for strategy in all_built_ins:
             op = qt.Operator(strategies=[strategy])
-            qt.run(
+            res = qt.run(
                     op,
                     mode=1,
                     asset_pool='000300.SH, 399006.SZ',
@@ -807,7 +811,33 @@ class TestQT(unittest.TestCase):
                     invest_end='20211231',
                     trade_log=False,
                     visual=False,
+                    report=False,
             )
+            tested_count += 1
+            progress_bar(tested_count, total_count, f'testing: {strategy}')
+
+            key_results.append(
+                    [strategy,
+                     res['loop_run_time'],
+                     res['op_run_time'],
+                     res['total_invest'],
+                     res['final_value'],
+                     res['rtn'],
+                     res['mdd'],
+                     ]
+            )
+
+        result = pd.DataFrame(key_results,
+                              columns=['strategy',
+                                       'loop_time',
+                                       'op_time',
+                                       'invest',
+                                       'final_value',
+                                       'return',
+                                       'mdd']
+                              )
+        print(f'\n\n{"test results":=^80}')
+        print(result.to_string())
 
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
