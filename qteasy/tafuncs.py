@@ -1706,8 +1706,8 @@ def ad(high, low, close, volume):
 
     high: float, 最高价
     low: float, 最低价
-    close: float,收盘价
-    volume:
+    close: float, 收盘价
+    volume: float, 交易量
 
     Return
     ------

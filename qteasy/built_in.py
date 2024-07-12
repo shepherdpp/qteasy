@@ -11,7 +11,7 @@
 import numpy as np
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-from .tafuncs import sma, ema, trix, bbands, sma_no_ta, ema_no_ta
+from .tafuncs import sma, ema, trix, bbands, adosc, obv
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
@@ -209,14 +209,16 @@ def get_built_in_strategy(stg_id) -> BaseStrategy:
     RULE-ITER(MACD)
     """
     if not isinstance(stg_id, str):
-        raise TypeError(f'strategy id must be a string, but got {type(stg_id)}')
+        err = TypeError(f'strategy id must be a string, but got {type(stg_id)}')
+        raise err
 
     stg_id = stg_id.lower()
     if stg_id in BUILT_IN_STRATEGIES:
         return BUILT_IN_STRATEGIES[stg_id]()
 
     guess = _make_a_guess_by_id(stg_id)
-    raise ValueError(f'No built-in strategy found for {stg_id}, maybe you mean {guess}?')
+    err = ValueError(f'No built-in strategy found for \'{stg_id}\', Did you mean: \'{guess}\'?')
+    raise err
 
 
 def _make_a_guess_by_id(stg_id, accept_leval: float = None) -> list:
@@ -598,7 +600,8 @@ class SCRSHT(RuleIterator):
         try:  # if ta-lib is installed
             from .tafuncs import ht
         except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
-            raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
+            err = NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
+            raise err
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -2868,16 +2871,19 @@ class WILLR(RuleIterator):
 
 class AD(RuleIterator):
     """ AD 交易策略:
-    WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号
+    本策略使用AD线 (Accumulate Distribution Line)来生成交易信号，它基于交易量和交易价格来判断
+    一只股票的资金累计流入或者流出的趋势，并通过此种趋势判断市场的上升/下降。
 
     策略参数:
         无策略参数
     信号类型:
         PS型: 百分比买卖交易信号
     信号规则:
-        计算``AD``指标，并根据指标的大小生成交易信号:\n
-        1, 当``WILLR > -l``时，产生逐步卖出信号，每周期卖出持有份额的30%\n
-        2, 当``WILLR < -u``时，产生逐步买入信号，每周期买入总投资额的10%
+        计算 ``AD`` 指标，根据AD信号的变化情况（上升/持平/下降）生成交易信号:\n
+        AD线的变化趋势通过比较今天/昨天两个AD值的大小来确定：
+        1, 当 ``AD(last) > AD(latest)`` 时，下降趋势，产生逐步卖出信号，每周期卖出持有份额的30%\n
+        2, 当 ``AD(last) < AD(latest)`` 时，上升趋势，产生逐步买入信号，每周期买入总投资额的10%\n
+        3, 当 ``AD(last) = AD(latest)`` 时，持平趋势，不产生任何交易信号
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
@@ -2899,18 +2905,39 @@ class AD(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         h = h.T
-        res = ad(h[0], h[1], h[2], h[3])
-        if res > 0:
+        ad_val = ad(h[0], h[1], h[2], h[3])
+        ad_last, ad_latest = ad_val[-2], ad_val[-1]
+        if ad_last > ad_latest:
             sig = -0.3
-        elif res < 0:
+        elif ad_last < ad_latest:
             sig = 0.1
-        else:
-            sig = 0
+        else:  # ad_last == ad_latest
+            sig = 0.0
         return sig
 
 
 class ADOSC(RuleIterator):
-    """
+    """ AD Oscillator 交易策略:
+    本策略使用ADOSC (Accumulate Distribution 振荡器)来生成交易信号，AD振荡器通过计算AD线的MACD
+    线判断股票价格的多空走向。
+
+    策略参数:
+        ``f``: int, 快均线周期
+        ``s``: int, 慢均线周期
+    信号类型:
+        PS型: 百分比买卖交易信号
+    信号规则:
+        计算 ``ADOSC`` 指标，并根据指标的大小生成交易信号:\n
+        1, 当 ``AD > 0`` 时，产生逐步卖出信号，每周期卖出持有份额的30%\n
+        2, 当 ``AD < 0`` 时，产生逐步买入信号，每周期买入总投资额的10%\n
+        3, 当 ``AD = 0`` 时，不产生任何交易信号
+    策略属性缺省值:
+        默认参数: ``(3, 10)``\n
+        数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
+        采样频率: 天\n
+        窗口长度: ``100``\n
+        参数范围: ``[(2, 10), (10, 99)]``
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(3, 10)):
@@ -2929,7 +2956,7 @@ class ADOSC(RuleIterator):
         else:
             f, s = pars
         h = h.T
-        res = ad(h[0], h[1], h[2], h[3], f, s)
+        res = adosc(h[0], h[1], h[2], h[3], f, s)[-1]
         if res > 0:
             sig = -0.3
         elif res < 0:
@@ -2940,7 +2967,27 @@ class ADOSC(RuleIterator):
 
 
 class OBV(RuleIterator):
-    """
+    """AD 交易策略:
+    本策略使用AD线 (Accumulate Distribution Line)来生成交易信号，它基于交易量和交易价格来判断
+    一只股票的资金累计流入或者流出的趋势，并通过此种趋势判断市场的上升/下降。
+
+    策略参数:
+        无策略参数
+    信号类型:
+        PS型: 百分比买卖交易信号
+    信号规则:
+        计算 ``AD`` 指标，根据AD信号的变化情况（上升/持平/下降）生成交易信号:\n
+        AD线的变化趋势通过比较今天/昨天两个AD值的大小来确定：
+        1, 当 ``AD(last) > AD(latest)`` 时，下降趋势，产生逐步卖出信号，每周期卖出持有份额的30%\n
+        2, 当 ``AD(last) < AD(latest)`` 时，上升趋势，产生逐步买入信号，每周期买入总投资额的10%\n
+        3, 当 ``AD(last) = AD(latest)`` 时，持平趋势，不产生任何交易信号
+    策略属性缺省值:
+        默认参数: ``()``\n
+        数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
+        采样频率: 天\n
+        窗口长度: ``100``\n
+        参数范围: ``[]``
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=()):
@@ -2948,14 +2995,15 @@ class OBV(RuleIterator):
                          par_count=0,
                          par_types=[],
                          par_range=[],
-                         name='AD',
-                         description='Accumulation Distribution Line Strategy',
+                         name='OBV',
+                         description='On-Balance Volume Strategy',
                          window_length=100,
                          strategy_data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
+        raise NotImplementedError
         h = h.T
-        res = ad(h[0], h[1])
+        res = obv(h[0], h[1])
         if res > 0:
             sig = -0.3
         elif res < 0:
@@ -3758,6 +3806,8 @@ BUILT_IN_STRATEGIES = {'crossline':         CROSSLINE,
                        'stochrsi':          STOCHRSI,
                        'ultosc':            ULTOSC,
                        'willr':             WILLR,
+                       'ad':                AD,
+                       'adosc':             ADOSC,
                        'signal_none':       SignalNone,
                        'sellrate':          SellRate,
                        'buyrate':           BuyRate,

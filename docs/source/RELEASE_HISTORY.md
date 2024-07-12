@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.2.14 (2024-07-12)
+- Updated Built-in Strategy AD and ADOSC, corrected mistakes, added docstring and optimized realization
+
 ## 1.2.13 (2024-06-19)
 - Changed function qt.built_ins(), now it always return a dict of id and type of built-in strategies, and if incorrect strategy id is given as argument, it returns all fuzzy matched strategy ids
 - Changed function qt.built_in_list() and qt.built_in_strategies(), now they return list of strategy ids and strategy types, respectively; and return fuzzy matched strategy ids for incorrect strategy id given as argument

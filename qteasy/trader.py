@@ -2114,8 +2114,9 @@ def start_trader_ui(
     if (account_id is None) or (account_id < 0):
         if (user_name is None) or (user_name == ''):
             err = ValueError(f'Account_id is not given, Choose a valid account or create a new one:\n'
-                             f'- to choose an account, set: live_trade_account_id=<ID>\n'
-                             f'- to create a new account, set: live_trade_account_name="your_account_name"')
+                             f'- to view all existing accounts, call: \'qt.live_trade_accounts()\''
+                             f'- to choose an existed account, set: \'live_trade_account_id=<ID>\'\n'
+                             f'- to create a new account, set: \'live_trade_account_name="your_account_name"\'')
             raise err
         account_id = new_account(
                 user_name=user_name,
