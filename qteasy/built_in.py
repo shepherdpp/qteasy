@@ -2968,8 +2968,8 @@ class ADOSC(RuleIterator):
 
 class OBV(RuleIterator):
     """OBV 交易策略 尚未实现:
-    本策略使用AD线 (Accumulate Distribution Line)来生成交易信号，它基于交易量和交易价格来判断
-    一只股票的资金累计流入或者流出的趋势，并通过此种趋势判断市场的上升/下降。
+    本策略使用OBV(On-Board Values)来生成交易信号，它基于交易量和交易价格来确认股票的变化
+    趋势（通过均线判断趋势），当OBV信号确认价格上升趋势时，产生建仓信号，当OBV信号与价格趋势。
 
     策略参数:
         无策略参数

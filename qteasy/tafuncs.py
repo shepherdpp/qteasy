@@ -1785,8 +1785,8 @@ def obv(close, volume):
     - If today's closing price equals yesterday's closing price, then:
     Current OBV = Previous OBV
 
-    close: float,收盘价
-    volume:
+    close: float, 收盘价
+    volume: float, 交易量
 
     Return
     ------
