@@ -2972,21 +2972,23 @@ class OBV(RuleIterator):
     趋势（通过均线判断趋势），当OBV信号确认价格上升趋势时，产生建仓信号，当OBV信号与价格趋势。
 
     策略参数:
-        无策略参数
+        n: int, OBV和收盘价的移动平均线计算周期
     信号类型:
         PS型: 百分比买卖交易信号
     信号规则:
-        计算 ``AD`` 指标，根据AD信号的变化情况（上升/持平/下降）生成交易信号:\n
-        AD线的变化趋势通过比较今天/昨天两个AD值的大小来确定：\n
-        1, 当 ``AD(last) > AD(latest)`` 时，下降趋势，产生逐步卖出信号，每周期卖出持有份额的30%\n
-        2, 当 ``AD(last) < AD(latest)`` 时，上升趋势，产生逐步买入信号，每周期买入总投资额的10%\n
-        3, 当 ``AD(last) = AD(latest)`` 时，持平趋势，不产生任何交易信号
+        计算 ``OBV`` 指标，并计算OBV指标的N日（N为可调参数）移动平均线，同时计算收盘价的\n
+        N日移动均线，并根据移动均线昨日/今日的关系判断上升/下降趋势:\n
+        当昨日均线高于今日时，判断为下降趋势，当昨日均线低于今日时，判断为上升趋势。\n
+        策略再根据两条均线的上升/下降趋势的确认/背离产生买入/卖出信号：\n
+        1, 当 收盘价趋势上升，且OBV趋势上升时，上升趋势得到确认，买入100%份额\n
+        2, 当 收盘价趋势上升，但OBV趋势下降时，上升趋势背离，卖出持有股份的50%\n
+        3, 当 收盘价趋势下降，且OBV趋势下降时，下降趋势得到确认，卖出全部持有股份。
     策略属性缺省值:
-        默认参数: ``()``\n
-        数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
+        默认参数: ``(15, )``\n
+        数据类型: ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
         采样频率: 天\n
         窗口长度: ``100``\n
-        参数范围: ``[]``
+        参数范围: ``[(5, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
@@ -3001,13 +3003,19 @@ class OBV(RuleIterator):
                          strategy_data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
-        raise NotImplementedError
+        n, = self.pars
         h = h.T
-        res = obv(h[0], h[1])
-        if res > 0:
-            sig = -0.3
-        elif res < 0:
-            sig = 0.1
+        close, volume = h[0], h[1]
+        obv_ma = sma(obv(close, volume), n)
+        close_ma = sma(close, n)
+        obv_trend_up = obv_ma[-1] <= obv_ma[-2]
+        close_trend_up = close_ma[-1] <= close_ma[-2]
+        if obv_trend_up and close_trend_up:
+            sig = 1.
+        elif obv_trend_up and not close_trend_up:
+            sig = -0.5
+        elif not obv_trend_up and not close_trend_up:
+            sig = -1
         else:
             sig = 0
         return sig
