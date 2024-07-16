@@ -3021,6 +3021,63 @@ class OBV(RuleIterator):
         return sig
 
 
+# Volatility Based Indicator Strategies:
+
+
+class ATR(RuleIterator):
+    """
+    """
+
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='OBV',
+                         description='On-Balance Volume Strategy',
+                         window_length=100,
+                         strategy_data_types='close, volume')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        raise NotImplementedError
+
+
+class NATR(RuleIterator):
+    """
+    """
+
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='OBV',
+                         description='On-Balance Volume Strategy',
+                         window_length=100,
+                         strategy_data_types='close, volume')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        raise NotImplementedError
+
+
+class TRANGE(RuleIterator):
+    """
+    """
+
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='OBV',
+                         description='On-Balance Volume Strategy',
+                         window_length=100,
+                         strategy_data_types='close, volume')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        raise NotImplementedError
+
+
 # Built-in Simple timing strategies:
 
 class SignalNone(RuleIterator):
@@ -3055,7 +3112,8 @@ class SignalNone(RuleIterator):
 
 class SellRate(RuleIterator):
     """ 变化率卖出信号策略:
-        当价格的变化率超过阈值时，产生卖出信号
+        当价格的变化率超过阈值时，产生卖出信号。
+        本策略不产生买入信号。
 
     策略参数:
         ``day``, ``int``, 涨跌幅计算周期\n
@@ -3103,7 +3161,8 @@ class SellRate(RuleIterator):
 
 class BuyRate(RuleIterator):
     """ 变化率买入信号策略:
-        当价格的变化率超过阈值时，产生买入信号
+        当价格的变化率超过阈值时，产生买入信号。
+        本策略不产生卖出信号。
 
     策略参数:
         ``day``, ``int``, 涨跌幅计算周期\n
@@ -3153,7 +3212,7 @@ class TimingLong(GeneralStg):
     """ 简单择时策略，整个历史周期上固定保持多头全仓状态
 
     策略参数:
-        ``none``
+        无策略参数
     信号类型:
         PT型: 百分比持仓比例信号
     信号规则:
