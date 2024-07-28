@@ -3083,7 +3083,7 @@ class ATR(RuleIterator):
 
 
 class NATR(RuleIterator):
-    """
+    """ Not Implemented Yet
     """
 
     def __init__(self, pars=()):
@@ -3101,7 +3101,7 @@ class NATR(RuleIterator):
 
 
 class TRANGE(RuleIterator):
-    """
+    """ Not Implemented Yet
     """
 
     def __init__(self, pars=()):
