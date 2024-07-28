@@ -11,7 +11,7 @@
 import numpy as np
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-from .tafuncs import sma, ema, trix, bbands, adosc, obv
+from .tafuncs import sma, ema, trix, bbands, adosc, obv, atr
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
 from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
@@ -2967,8 +2967,8 @@ class ADOSC(RuleIterator):
 
 
 class OBV(RuleIterator):
-    """OBV 交易策略 尚未实现:
-    本策略使用OBV(On-Board Values)来生成交易信号，它基于交易量和交易价格来确认股票的变化
+    """OBV 交易策略:
+    本策略使用OBV(On-Board Values)来生成交易信号，它基于交易量和交易价格来确认股票的变化\n
     趋势（通过均线判断趋势），当OBV信号确认价格上升趋势时，产生建仓信号，当OBV信号与价格趋势。
 
     策略参数:
@@ -2985,11 +2985,105 @@ class OBV(RuleIterator):
         3, 当 收盘价趋势下降，且OBV趋势下降时，下降趋势得到确认，卖出全部持有股份。
     策略属性缺省值:
         默认参数: ``(15, )``\n
-        数据类型: ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
+        数据类型: ``close``, ``volume`` 收盘价, 成交量，多数据输入\n
         采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(5, 100)]``
     策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars=(15, )):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_range=[(5, 100)],
+                         name='OBV',
+                         description='On-Balance Volume Strategy',
+                         window_length=100,
+                         strategy_data_types='close, volume')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        n, = self.pars
+        h = h.T
+        close, volume = h[0], h[1]
+        obv_ma = sma(obv(close, volume), n)
+        close_ma = sma(close, n)
+        obv_trend_up = obv_ma[-1] <= obv_ma[-2]
+        obv_trend_down = obv_ma[-1] >= obv_ma[-2]
+        close_trend_up = close_ma[-1] <= close_ma[-2]
+        close_trend_down = close_ma[-1] >= close_ma[-2]
+        if obv_trend_up and close_trend_up:
+            sig = 1.
+        elif obv_trend_up and close_trend_down:
+            sig = -0.5
+        elif obv_trend_down and close_trend_down:
+            sig = -1
+        else:
+            sig = 0
+        return sig
+
+
+# Volatility Based Indicator Strategies:
+
+
+class ATR(RuleIterator):
+    """ ATR 交易策略:
+
+    ATR交易策略使用ATR指标来生成交易信号，ATR指标度量股票价格的波动性，通过波动性来判断股票的\n
+    风险和波动性，从而生成交易信号。
+
+    策略参数:
+        n: int, ATR的计算周期
+    信号类型:
+        PS型: 百分比买卖交易信号
+    信号规则:
+        计算 ``ATR`` 指标，并计算价格的N日（N为可调参数）移动平均线和ATR指标，并\n
+        根据ATR以及移动均线昨日/今日的关系判断上升/下降趋势:\n
+        当昨日均线高于今日时，判断为下降趋势，当昨日均线低于今日时，判断为上升趋势。\n
+        策略再根据ATR的值来判断上升下降趋势的确认与否：\n
+        1, 当 收盘价趋势上升，且ATR趋势上升时，上升趋势得到确认，买入100%份额\n
+        2, 当 收盘价趋势下降，且ATR趋势下降时，下降趋势得到确认，卖出全部持有股份\n
+        3, 当出现其他情况时，不产生任何交易信号
+    策略属性缺省值:
+        默认参数: ``(15, )``\n
+        数据类型: ``high``, ``low``, ``close``, 最高价，最低价，收盘价，多数据输入\n
+        采样频率: 天\n
+        窗口长度: ``100``\n
+        参数范围: ``[(5, 100)]``
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars=(15, )):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_range=[],
+                         name='ATR',
+                         description='Average True Range Strategy',
+                         window_length=100,
+                         strategy_data_types='high, low, close')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        n, = self.pars
+        h = h.T
+        high, low, close = h[0], h[1], h[2]
+        atr_value = atr(high, low, close, n)
+        close_ma = sma(close, n)
+        atr_trend_up = atr_value[-1] <= atr_value[-2]
+        atr_trend_down = atr_value[-1] >= atr_value[-2]
+        close_trend_up = close_ma[-1] <= close_ma[-2]
+        close_trend_down = close_ma[-1] >= close_ma[-2]
+        if atr_trend_up and close_trend_up:
+            sig = 1.
+        elif atr_trend_down and close_trend_down:
+            sig = -1
+        else:
+            sig = 0
+        return sig
+
+
+class NATR(RuleIterator):
+    """ Not Implemented Yet
     """
 
     def __init__(self, pars=()):
@@ -3003,22 +3097,25 @@ class OBV(RuleIterator):
                          strategy_data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
-        n, = self.pars
-        h = h.T
-        close, volume = h[0], h[1]
-        obv_ma = sma(obv(close, volume), n)
-        close_ma = sma(close, n)
-        obv_trend_up = obv_ma[-1] <= obv_ma[-2]
-        close_trend_up = close_ma[-1] <= close_ma[-2]
-        if obv_trend_up and close_trend_up:
-            sig = 1.
-        elif obv_trend_up and not close_trend_up:
-            sig = -0.5
-        elif not obv_trend_up and not close_trend_up:
-            sig = -1
-        else:
-            sig = 0
-        return sig
+        raise NotImplementedError
+
+
+class TRANGE(RuleIterator):
+    """ Not Implemented Yet
+    """
+
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='OBV',
+                         description='On-Balance Volume Strategy',
+                         window_length=100,
+                         strategy_data_types='close, volume')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        raise NotImplementedError
 
 
 # Built-in Simple timing strategies:
@@ -3055,7 +3152,8 @@ class SignalNone(RuleIterator):
 
 class SellRate(RuleIterator):
     """ 变化率卖出信号策略:
-        当价格的变化率超过阈值时，产生卖出信号
+        当价格的变化率超过阈值时，产生卖出信号。
+        本策略不产生买入信号。
 
     策略参数:
         ``day``, ``int``, 涨跌幅计算周期\n
@@ -3103,7 +3201,8 @@ class SellRate(RuleIterator):
 
 class BuyRate(RuleIterator):
     """ 变化率买入信号策略:
-        当价格的变化率超过阈值时，产生买入信号
+        当价格的变化率超过阈值时，产生买入信号。
+        本策略不产生卖出信号。
 
     策略参数:
         ``day``, ``int``, 涨跌幅计算周期\n
@@ -3153,7 +3252,7 @@ class TimingLong(GeneralStg):
     """ 简单择时策略，整个历史周期上固定保持多头全仓状态
 
     策略参数:
-        ``none``
+        无策略参数
     信号类型:
         PT型: 百分比持仓比例信号
     信号规则:
@@ -3816,6 +3915,7 @@ BUILT_IN_STRATEGIES = {'crossline':         CROSSLINE,
                        'willr':             WILLR,
                        'ad':                AD,
                        'adosc':             ADOSC,
+                       'obv':               OBV,
                        'signal_none':       SignalNone,
                        'sellrate':          SellRate,
                        'buyrate':           BuyRate,

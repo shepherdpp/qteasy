@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.2.15 (2024-07-28)
+- Added new built-in strategies: `ATR` and `OBV`, with docstrings
+
 ## 1.2.14 (2024-07-12)
 - Updated Built-in Strategy AD and ADOSC, corrected mistakes, added docstring and optimized realization
 

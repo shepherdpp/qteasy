@@ -15,7 +15,7 @@ project = 'qteasy'
 copyright = '2023, Jackie PENG'
 author = 'Jackie PENG'
 release = '1.2'
-version = '1.2.14'
+version = '1.2.15'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
