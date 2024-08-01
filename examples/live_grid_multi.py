@@ -70,9 +70,9 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
     alpha = MultiGridTrade(
-            pars={'000651.SZ': (0.3, 500, 40.3),
-                  '600036.SH': (0.3, 600, 32.8),
-                  '601398.SH': (0.1, 1000, 5.4)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
+            pars={'000651.SZ': (0.3, 500, 0),
+                  '600036.SH': (0.3, 600, 0),
+                  '601398.SH': (0.1, 1000, 0)},  # 当基准网格为0时，代表首次运行，此时买入20000股，并设置当前价为基准网格
             par_count=3,
             par_types=['float', 'int', 'float'],
             par_range=[(0.1, 2), (100, 3000), (0, 400)],
@@ -83,6 +83,12 @@ if __name__ == '__main__':
             data_freq='5min',
             window_length=10,
     )
+    datasource = qt.QT_DATA_SOURCE
+
+    if args.restart:
+        # clean up all trade data in current account
+        from qteasy.trade_recording import delete_account
+        delete_account(account_id=args.account, data_source=datasource, keep_account_id=True)
 
     op = Operator(alpha, signal_type='VS', op_type='step')
     qt.configure(
@@ -102,12 +108,5 @@ if __name__ == '__main__':
             live_trade_ui_type=args.ui,
             watched_price_refresh_interval=30,
     )
-    datasource = qt.QT_DATA_SOURCE
-
-    if args.restart:
-        # clean up all account data in datasource
-        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
-            if datasource.table_data_exists(table):
-                datasource.drop_table_data(table)
 
     op.run()
