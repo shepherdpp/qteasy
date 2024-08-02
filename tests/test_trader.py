@@ -139,7 +139,7 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
 
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -149,7 +149,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -159,7 +159,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -169,7 +169,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -179,7 +179,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -189,7 +189,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -199,7 +199,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -209,7 +209,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -219,7 +219,7 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         # order 8 is canceled
         cancel_order(8, test_ds, delivery_config)

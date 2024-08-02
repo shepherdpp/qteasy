@@ -520,7 +520,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -530,7 +530,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -540,7 +540,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -550,7 +550,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -560,7 +560,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -570,7 +570,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -580,7 +580,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -590,7 +590,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
@@ -600,7 +600,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
+        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
         process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
         # order 8 is canceled
         time.sleep(self.stoppage)
@@ -659,7 +659,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_result(raw_trade_result, tss.trader.datasource)
         process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 2 is filled
@@ -670,7 +670,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_result(raw_trade_result, tss.trader.datasource)
         process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 3 is partially-filled
@@ -681,7 +681,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_result(raw_trade_result, tss.trader.datasource)
         process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 4 is partially-filled
@@ -692,7 +692,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_result(raw_trade_result, tss.trader.datasource)
         process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
         time.sleep(self.stoppage)
         # order 5 is canceled
@@ -703,7 +703,7 @@ class TestTraderShell(unittest.TestCase):
             'transaction_fee': 0.0,
             'canceled_qty':    500.0,
         }
-        process_trade_result(raw_trade_result, tss.trader.datasource, delivery_config)
+        process_trade_result(raw_trade_result, tss.trader.datasource)
         time.sleep(self.stoppage)
 
         print('testing orders command that runs normally and returns None')

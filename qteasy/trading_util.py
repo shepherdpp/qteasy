@@ -669,7 +669,7 @@ def submit_order(order_id, data_source=None):
 
     # 读取交易订单
     trade_order = read_trade_order(order_id, data_source=data_source)
-
+    print(f'[debug]: get order data with order_id ({order_id}): \n{trade_order}')
     # 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
     if trade_order['status'] != 'created':
         return None
@@ -771,8 +771,7 @@ def cancel_order(order_id, data_source=None, config=None) -> int:
     }
     process_trade_result(
             raw_trade_result=result_of_cancel,
-            data_source=data_source,
-            config=config
+            data_source=data_source
     )
 
     return order_id
@@ -791,8 +790,6 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
         账户的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
-    config: dict, optional
-        配置参数, 默认为None, 表示使用默认的配置参数
 
     Returns
     -------
@@ -810,16 +807,17 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
     if not isinstance(config, dict):
         raise TypeError('config must be a dict')
 
+    delivery_result = []
+
     undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
     if undelivered_results is None:
-        return
+        return delivery_result
 
-    delivery_result = []
     # 循环处理每一条未交割的交易结果：
     for result_id, result in undelivered_results.iterrows():
 
         res = deliver_trade_result(
-                result_id=result_id,
+                result_id=int(result_id),
                 account_id=account_id,
                 result=result.to_dict(),
                 stock_delivery_period=config['stock_delivery_period'],
@@ -844,7 +842,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     Parameters
     ----------
     result_id: int
-        结果ID，需要交割的交易结果
+        结果ID，需要交割的交易结果的ID
     account_id: int
         账户ID，如果result所属的account与account_id不匹配则不执行交割
     result: dict, default None
@@ -884,6 +882,9 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
         return {}
     order_id = result['order_id']
     order_detail = read_trade_order_detail(order_id=order_id, data_source=data_source)
+    if order_detail is None:
+        err = RuntimeError(f'Cannot find order detail for order_id: {order_id}')
+        raise err
 
     # 初始化交割结果字典
     delivery_result = {'order_id': order_id,

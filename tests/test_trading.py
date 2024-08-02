@@ -1551,8 +1551,8 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(positions.index.to_list(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         self.assertEqual(orders.index.to_list(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         self.assertEqual(results.index.to_list(), [1, 2, 3, 4])
-        # delete account 2
-        delete_account(2, data_source=self.test_ds)
+        # delete account 2 while keeping account_id
+        delete_account(2, data_source=self.test_ds, keep_account_id=True)
         # read all data from tables and print to check
         print(f'after deleting:')
         accounts = self.test_ds.read_sys_table_data('sys_op_live_accounts')
@@ -1560,7 +1560,7 @@ class TestTradeRecording(unittest.TestCase):
         orders = self.test_ds.read_sys_table_data('sys_op_trade_orders')
         results = self.test_ds.read_sys_table_data('sys_op_trade_results')
         print(f'accounts: \n{accounts}\npositions: \n{positions}\norders: \n{orders}\nresults: \n{results}')
-        self.assertEqual(accounts.index.to_list(), [1])
+        self.assertEqual(accounts.index.to_list(), [1, 2])
         self.assertEqual(positions.index.to_list(), [1, 2, 3, 4, 5])
         self.assertEqual(orders.index.to_list(), [1, 2, 3, 4, 5])
         self.assertEqual(results.index.to_list(), [1, 2])
@@ -1817,7 +1817,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 1, trade signal: \n'
               f'{read_trade_order_detail(1, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1872,7 +1872,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 2, trade signal: \n'
               f'{read_trade_order_detail(2, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1933,7 +1933,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 3, trade signal: \n'
               f'{read_trade_order_detail(3, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1994,7 +1994,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 4, trade signal: \n'
               f'{read_trade_order_detail(4, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2080,7 +2080,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 7, trade signal: \n'
               f'{read_trade_order_detail(7, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2142,7 +2142,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 9, trade signal: \n'
               f'{read_trade_order_detail(9, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2200,7 +2200,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
