@@ -35,6 +35,7 @@ from .visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
+from .trade_recording import delete_account
 
 
 # qteasy版本信息
@@ -205,5 +206,5 @@ __all__ = [
     'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
     'utilfuncs',
     'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
-    'logger_core', 'live_trade_accounts',
+    'logger_core', 'live_trade_accounts', 'delete_account',
 ]
