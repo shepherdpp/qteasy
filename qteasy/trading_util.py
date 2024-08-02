@@ -1190,7 +1190,7 @@ def calculate_cost_change(prev_qty, prev_unit_cost, qty_change, price, transacti
     else:
         additional_cost = qty_change * price + transaction_fee
         new_cost = (prev_cost + additional_cost) / (prev_qty + qty_change)
-    return new_cost - prev_cost, new_cost
+    return new_cost - prev_unit_cost, new_cost
 
 
 def get_last_trade_result_summary(account_id, shares=None, data_source=None):

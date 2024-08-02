@@ -471,6 +471,26 @@ class TestTrader(unittest.TestCase):
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
 
+    def test_log_trade_result(self):
+        """ test higher level function log_trade_result """
+        raise NotImplementedError
+
+    def test_log_cash_delivery(self):
+        """ test higher level function log_cash_delivery """
+        raise NotImplementedError
+
+    def test_log_qty_delivery(self):
+        """ test higher level function log_qty_delivery """
+        raise NotImplementedError
+
+    def test_log_manual_cash_change(self):
+        """ test higher level function log_manual_cash_change """
+        raise NotImplementedError
+
+    def test_log_manual_qty_change(self):
+        """ test higher level function log_manual_qty_change """
+        raise NotImplementedError
+
     def test_trader_status(self):
         """Test class Trader"""
         ts = self.ts
