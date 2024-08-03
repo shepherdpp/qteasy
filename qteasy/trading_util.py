@@ -645,7 +645,7 @@ def output_trade_order():
     pass
 
 
-def submit_order(order_id, data_source=None):
+def submit_order(order_id, data_source):
     """ 将交易订单提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
 
     只有刚刚创建的交易订单（status == 'created'）才能提交，否则不需要再次提交
@@ -658,8 +658,8 @@ def submit_order(order_id, data_source=None):
     ----------
     order_id: int
         交易订单的id
-    data_source: str, optional
-        数据源的名称, 默认为None, 表示使用默认的数据源
+    data_source: Any
+        数据源的名称
 
     Returns
     -------
@@ -669,7 +669,6 @@ def submit_order(order_id, data_source=None):
 
     # 读取交易订单
     trade_order = read_trade_order(order_id, data_source=data_source)
-    print(f'[debug]: get order data with order_id ({order_id}): \n{trade_order}')
     # 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
     if trade_order['status'] != 'created':
         return None

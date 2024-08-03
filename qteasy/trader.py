@@ -998,7 +998,8 @@ class Trader(object):
 
         return lines
 
-    def submit_trade_order(self, symbol: str, position: str, direction: str, order_type: str, qty: int, price: float) -> dict:
+    def submit_trade_order(self, symbol: str, position: str, direction: str,
+                           order_type: str, qty: int, price: float) -> dict:
         """ 提交订单
 
         Parameters

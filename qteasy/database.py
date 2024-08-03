@@ -4377,7 +4377,7 @@ class DataSource:
         if data.empty:
             return {}
 
-        if record_id > len(data):
+        if record_id not in data.index:
             return {}
 
         return data.loc[record_id].to_dict()
