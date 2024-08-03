@@ -1,5 +1,16 @@
 # RELEASE HISTORY
 
+## 1.2.16 (2024-08-02)
+- New Feature: Runing example strategy files with parameter -r can now remove orders only for designated account, instead of all accounts
+- Optimized live trade log:
+  - Now delivery records for selling stocks are also displayed in a new line
+  - Fixed a bug that may cause wrong stock or cash change in trade logs
+  - Fixed a bug that causes buying orders not being delivered properly
+- Fixed a bug that sometimes empty data will be extracted even with valid data id from system datasource tables
+- Fixed a few bugs that will lead to error in CLI command `CHANGE`:
+  - Prevented from acquiring latest price when only cash is to be changed
+  - Ensured symbol be given when changing quantity of a stock
+
 ## 1.2.15 (2024-07-28)
 - Added new built-in strategies: `ATR` and `OBV`, with docstrings
 
