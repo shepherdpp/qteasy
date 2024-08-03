@@ -858,6 +858,9 @@ class TestTraderShell(unittest.TestCase):
         self.assertFalse(tss.do_change('wrong_argument'))
         self.assertFalse(tss.do_change('000001 -w wrong_optional_argument'))
         self.assertFalse(tss.do_change('000001 -t wrong_optional_argument'))
+        self.assertFalse(tss.do_change('-a 100'))  # no symbol given
+        self.assertFalse(tss.do_change('-p 100'))  # only price is given
+        self.assertFalse(tss.do_change('-a 100 -p 100'))  # no symbol given
         self.assertFalse(tss.do_change('000100 -a 100'))  # symbol not in pool
         self.assertFalse(tss.do_change('000001 -a -100'))  # negative quantity
         self.assertFalse(tss.do_change('000001 -a not_a_number'))
