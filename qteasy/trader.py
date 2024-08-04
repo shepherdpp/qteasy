@@ -32,6 +32,7 @@ from qteasy.trade_recording import get_or_create_position, new_account, update_p
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
 from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
+from qteasy.trading_util import calculate_cost_change
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -1234,35 +1235,89 @@ class Trader(object):
         self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                           f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
 
-    def log_manual_cash_change(self, cash_change) -> None:
+    def log_manual_cash_change(self, cash_change_detail) -> None:
         """ 当手动调整现金时，生成详细的trade_log和system_log
         并将trade_log和system_log记录到相应的文件或消息队列中
 
         Parameters
         ---------
-        cash_change: float
-            现金变动量
+        cash_change_detail: dict
+            现金变动详情，包含：
+            {
+                'cash_change': float, 持有现金变动量
+                'cash': float, 变动后持有现金总额
+                'available_cash_change': float, 可用现金变动量
+                'available_cash': float, 变动后可用现金总额
+            }
 
         Returns
         -------
         None
         """
-        raise NotImplementedError
+        if not isinstance(cash_change_detail, dict):
+            raise TypeError(f'cash_change_detail should be a dict, got {type(cash_change_detail)} instead.')
+        # 补充金额变动的额外信息
+        cash_change_detail['reason'] = 'manual_change'
+        self.write_log_file(**cash_change_detail)
+        # 发送消息通知现金变动并记录system log
+        cash, available, investment = self.account_cash
+        self.send_message(f'Cash changed, now cash: {cash:.2f}, '
+                          f'available: {available:.2f}, '
+                          f'total invest: {investment:.2f}')
 
-    def log_manual_qty_change(self, qty_change) -> None:
+    def log_manual_qty_change(self, qty_change_detail) -> None:
         """ 当手动调整持仓时，生成详细的trade_log和system_log
         并将trade_log和system_log记录到相应的文件或消息队列中
 
         Parameters
         ---------
-        qty_change: float
-            持仓变动量
+        qty_change_detail: dict
+            持仓变动详情，包含：
+            {
+                'pos_id': int, 发生变动的持仓ID
+                'qty_change': float, 发生的持仓数量变动
+                'available_qty_change': float, 发生的可用持仓变动量
+                'cost_change': float, 发生的持仓成本变动量
+            }
 
         Returns
         -------
         None
         """
-        raise NotImplementedError
+
+        pos_id = qty_change_detail['pos_id']
+        qty_change = qty_change_detail['qty_change']
+        available_change = qty_change_detail['available_qty_change']
+        cost_change = qty_change_detail['cost_change']
+        # 在trade_log中记录持仓变动
+        position = get_position_by_id(
+                pos_id=pos_id,
+                data_source=self.datasource,
+        )
+        symbol = position['symbol']
+        qty = position['qty']
+        available = position['available_qty']
+        cost = position['cost']
+        name = get_symbol_names(self.datasource, symbols=symbol)[0]
+        log_content = {
+            'reason':               'manual',
+            'position_id':          pos_id,
+            'symbol':               symbol,
+            'position_type':        position['position'],  # 'long' or 'short'
+            'name':                 name,
+            'qty_change':           qty_change,
+            'qty':                  qty,
+            'available_qty_change': available_change,
+            'available_qty':        available,
+            'cost_change':          cost_change,
+            'holding_cost':         cost,
+        }
+        self.write_log_file(**log_content)
+        # 发送消息通知持仓变动并记录system log
+        self.send_message(f'Changed position {symbol}/{position["position"]}: '
+                          f'qty: {qty - qty_change} -> {qty} '
+                          f'available: {available - available_change} -> {available} '
+                          f'cost: {cost - cost_change:.2f} -> {cost:.2f}')
 
     # ============ definition of tasks ================
     def _start(self):
@@ -1972,16 +2027,13 @@ class Trader(object):
                 data_source=self.datasource
         )
         # 在trade_log中记录现金变动
-        log_content = {
+        cash_change_detail = {
             'cash_change':           amount,
             'cash':                  cash_amount,
             'available_cash_change': amount,
             'available_cash':        available_cash,
-            'reason':                'manual_change'
         }
-        self.write_log_file(**log_content)
-        # 发送消息通知现金变动并记录system log
-        self.send_message(f'Cash amount changed to {self.account_cash}')
+        self.log_manual_cash_change(cash_change_detail)
 
         return
 
@@ -2083,12 +2135,16 @@ class Trader(object):
             self.send_message(f'Not enough position to decrease, '
                               f'available: {position["available_qty"]}, skipping operation')
             return
-        prev_cost = position['cost']
-        current_total_cost = prev_cost * position['qty']
-        additional_cost = np.round(price * float(quantity), 2)
-        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
-        if np.isnan(new_average_cost):
-            new_average_cost = 0
+
+        # 计算持仓变动后的持仓成本
+        cost_change, new_average_cost = calculate_cost_change(
+                prev_qty=position['qty'],
+                prev_unit_cost=position['cost'],
+                qty_change=quantity,
+                price=price,
+                transaction_fee=0.0,
+        )
+
         position_data = {
             'qty_change':           quantity,
             'available_qty_change': quantity,
@@ -2099,29 +2155,14 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        # 在trade_log中记录持仓变动
-        position = get_position_by_id(
-                pos_id=position_id,
-                data_source=self.datasource,
-        )
-        name = get_symbol_names(self.datasource, symbols=symbol)[0]
-        log_content = {
-            'reason':               'manual',
-            'position_id':          position_id,
-            'symbol':               position['symbol'],
-            'position_type':        position['position'],  # 'long' or 'short'
-            'name':                 name,
-            'qty_change':           quantity,
-            'qty':                  position["qty"],
+        position_change_detail = {
+            'pos_id': position_id,
+            'qty_change': quantity,
             'available_qty_change': quantity,
-            'available_qty':        position["available_qty"],
-            'cost_change':          position['cost'] - prev_cost,
-            'holding_cost':         position['cost'],
+            'cost_change': cost_change,
         }
-        self.write_log_file(**log_content)
-        # 发送消息通知持仓变动并记录system log
-        self.send_message(f'Position {position["symbol"]}/{position["position"]} '
-                          f'changed to {position["qty"] + quantity}')
+        # 在trade_log中记录持仓变动
+        self.log_manual_qty_change(position_change_detail)
 
         return
 

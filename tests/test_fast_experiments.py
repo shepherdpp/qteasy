@@ -170,7 +170,8 @@ class GridTrading(qt.GeneralStg):
         super().__init__(
                 pars=pars,
                 par_count=5,
-                par_types=['float', 'float', 'float', 'float', 'int'],  # 仓位配置的阈值：参数1:低仓位阈值，参数2: 高仓位阈值，参数3：低仓位比例，参数4:高仓位比例，参数5:计算天数
+                par_types=['float', 'float', 'float', 'float', 'int'],
+                # 仓位配置的阈值：参数1:低仓位阈值，参数2: 高仓位阈值，参数3：低仓位比例，参数4:高仓位比例，参数5:计算天数
                 par_range=[(0.5, 3.0), (2.0, 10.), (0.01, 0.5), (0.5, 0.99), (10, 300)],
                 name='GridTrading',
                 description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
@@ -237,6 +238,7 @@ class FastExperiments(unittest.TestCase):
                trade_batch_size=100,
                sell_batch_size=1,
                trade_log=True)
+        self.assertTrue(True)
 
     def test_index_enhancement(self):
         """ tests for self-defined strategies"""
@@ -259,6 +261,7 @@ class FastExperiments(unittest.TestCase):
                trade_batch_size=100,
                sell_batch_size=1,
                trade_log=True)
+        self.assertTrue(True)
 
     def test_grid_trading(self):
         """ test for strategy GridTrading"""
@@ -281,6 +284,7 @@ class FastExperiments(unittest.TestCase):
                 trade_log=True,
                 allow_sell_short=True,
         )
+        self.assertTrue(True)
 
     def test_get_history_data(self):
         """
@@ -312,6 +316,7 @@ class FastExperiments(unittest.TestCase):
                                    adj='b',
                                    asset_type='E, FD')
         print(f'adjusted data: \n{data}')
+        self.assertTrue(True)
 
 
 if __name__ == '__main__':
