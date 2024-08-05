@@ -1619,15 +1619,15 @@ class Trader(object):
         )
 
         # 检查账户中的成交结果，完成全部交易结果的交割
-        delivery_result = process_account_delivery(
+        delivery_results = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
                 config=self._config,
         )
 
         # 生成交割结果信息推送到信息队列
-        for res in delivery_result:
-            if res['deliver_status'] is None:
+        for res in delivery_results:
+            if res.get('deliver_status') is None:
                 continue
 
             self.log_cash_delivery(res)
