@@ -1115,7 +1115,7 @@ class Trader(object):
         self.write_log_file(**trade_log)
         # 生成system_log 现金及持仓变动记录
         if qty_change != 0.:
-            self.send_message(f'<RESULT>: position {symbol}({pos}) changed: '
+            self.send_message(f'<RESULT RECORDED {order_id}>: position {symbol}({pos}) changed: '
                               f'own qyt: {qty - qty_change:.2f}->{qty:.2f}; '
                               f'available qyt: {available_qty - full_trade_result["available_qty_change"]:.2f}'
                               f'->{available_qty:.2f}; '
@@ -1177,7 +1177,7 @@ class Trader(object):
         }
         self.write_log_file(**trade_log)
         # 发送system log信息
-        self.send_message(f'<DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
+        self.send_message(f'<RESULT DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
                           f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
 
     def log_qty_delivery(self, delivery_result) -> None:
@@ -1232,7 +1232,7 @@ class Trader(object):
         }
         self.write_log_file(**trade_log)
         # 发送system log信息
-        self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
+        self.send_message(f'<RESULT DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                           f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
 
     def log_manual_cash_change(self, cash_change_detail) -> None:
@@ -1261,7 +1261,7 @@ class Trader(object):
         self.write_log_file(**cash_change_detail)
         # 发送消息通知现金变动并记录system log
         cash, available, investment = self.account_cash
-        self.send_message(f'Cash changed, now cash: {cash:.2f}, '
+        self.send_message(f'<MANUAL CHANGED CASH>: {cash:.2f}, '
                           f'available: {available:.2f}, '
                           f'total invest: {investment:.2f}')
 
@@ -1314,7 +1314,7 @@ class Trader(object):
         }
         self.write_log_file(**log_content)
         # 发送消息通知持仓变动并记录system log
-        self.send_message(f'Changed position {symbol}/{position["position"]}: '
+        self.send_message(f'<MANUAL CHANGED pos {symbol}/{position["position"]}>: '
                           f'qty: {qty - qty_change} -> {qty} '
                           f'available: {available - available_change} -> {available} '
                           f'cost: {cost - cost_change:.2f} -> {cost:.2f}')
