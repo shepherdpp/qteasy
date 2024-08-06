@@ -1677,13 +1677,24 @@ class Trader(object):
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
 
+        # 检查未提交订单，确认是否有"created"的订单，如果有，生成取消订单
+        unsubmitted_orders = query_trade_orders(
+                account_id=self.account_id,
+                status='created',
+                data_source=self._datasource,
+        )
+        self.send_message(f'{len(unsubmitted_orders)} Un-submitted orders found, they are to be canceled')
+
         # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
         unfilled_orders = query_trade_orders(
                 account_id=self.account_id,
                 status='submitted',
                 data_source=self._datasource,
         )
-        self.send_message(f'Unfilled orders found ({len(unfilled_orders)} in total), they are to be canceled')
+        self.send_message(f'{len(unfilled_orders)} Unfilled orders found, they are to be canceled')
+        # 合并unfilled_orders 以及 unsubmitted_orders
+        unfilled_orders = pd.concat((unsubmitted_orders, unfilled_orders))
+
         for order_id in unfilled_orders.index:
             # 对于所有未成交的订单，生成取消订单
             cancel_order(order_id=order_id, data_source=self._datasource)
@@ -2171,18 +2182,11 @@ class Trader(object):
         if self.debug:
             self.send_message(f'Acquiring live price data')
         from qteasy.emfuncs import stock_live_kline_price
-        try:
-            real_time_data = stock_live_kline_price(symbols=self.asset_pool)
-        except Exception as e:
-            self.send_message(f'Error in acquiring live prices: {e}')
-            if self.debug:
-                import traceback
-                self.send_message(traceback.format_exc())
-            return None
+        real_time_data = stock_live_kline_price(symbols=self.asset_pool)
         if real_time_data.empty:
             # empty data downloaded
             if self.debug:
-                self.send_message(f'Something wrong, failed to download live price data.')
+                self.send_message(f'Something went wrong, failed to download live price data.')
             return
         real_time_data.set_index('symbol', inplace=True)
         # 将real_time_data 赋值给self.live_price

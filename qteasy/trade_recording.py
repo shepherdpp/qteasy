@@ -918,7 +918,7 @@ def query_trade_orders(account_id,
                        direction=None,
                        order_type=None,
                        status=None,
-                       data_source=None):
+                       data_source=None) -> pd.DataFrame:
     """ 根据symbol、direction、status 从数据库中查询交易信号并批量返回结果
 
     Parameters

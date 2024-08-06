@@ -277,7 +277,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
                 except TimeoutError:
                     continue
                 except Exception as exc:
-                    print(f'{exc} generated an exception: {exc}')
+                    print(f'Encountered an exception: {exc}')
                 else:
                     if df.empty:
                         continue
