@@ -2253,7 +2253,6 @@ def run(operator, **kwargs):
                 reference_data=hist_ref,
                 cash_plan=invest_cash_plan,
         )
-
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
         loop_result = _evaluate_one_parameter(
                 par=None,

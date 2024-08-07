@@ -334,6 +334,12 @@ class TraderShell(Cmd):
                                   ' according to broker rules, Currently only market price '
                                   'orders can be submitted, and the orders might not be executed '
                                   'immediately if market is not open'),
+        'cancel':     dict(prog='cancel', description='Cancel un-filled orders',
+                           usage='cancel ORDER_ID',
+                           epilog='The order can only be canceled if its status is '
+                                  '"created"/"submitted"/"partial-filled", if the order is'
+                                  'filled already, error message will be printed and nothing'
+                                  'else will happen.'),
         'positions':  dict(prog='positions', description='Get account positions',
                            usage='positions [-h]',
                            epilog='Print out holding quantities and available quantities '
@@ -403,6 +409,7 @@ class TraderShell(Cmd):
                        ('--price', '-p'),
                        ('--side', '-s'),
                        ('--force', '-f')],
+        'cancel':     [('order_id',)],
         'positions':  [],
         'overview':   [('--detail', '-d'),
                        ('--system', '-s')],
@@ -487,6 +494,9 @@ class TraderShell(Cmd):
                         'help':    'order position side, default long'},
                        {'action': 'store_true',
                         'help':   'force sell regardless of current prices'}],
+        'cancel':     [{'action': 'store',
+                        'type': int,
+                        'help': 'ID of the order to be canceled'}],
         'positions':  [],
         'overview':   [{'action': 'store_true',
                         'help':   'show detailed account info'},
@@ -1113,6 +1123,43 @@ class TraderShell(Cmd):
                         position=position,
                 ),
         )
+
+        if trade_order:
+            self.trader.broker.order_queue.put(trade_order)
+            order_id = trade_order['order_id']
+            print(f'Order <{order_id}> has been submitted to broker: '
+                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                  f'at price {trade_order["price"]:.2f}')
+
+            if not self.trader.is_market_open:
+                print(f'Market is not open, order might not be executed immediately')
+
+    def do_cancel(self, arg):
+        """usage: cancel ORDER_ID
+
+        Cancel an order if the order is not fully filled yet.
+
+        positional arguments:
+          order_id              id of the order to be canceled
+
+        optional arguments:
+
+        The order can only be canceled if its status is
+        'created'/'submitted'/'partial-filled', if the order is
+        filled already, error message will be printed and nothing
+        else will happen.
+
+        Examples:
+        ---------
+        to cancel order 291:
+        (QTEASY) cancel 291
+        """
+
+        args = self.parse_args('sell', arg)
+        if not args:
+            return False
+
+        raise NotImplementedError
 
     def do_positions(self, arg):
         """usage: positions [-h]
