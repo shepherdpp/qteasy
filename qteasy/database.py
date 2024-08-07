@@ -4304,20 +4304,19 @@ class DataSource:
     def read_sys_table_data(self, table, **kwargs) -> pd.DataFrame:
         """读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录
 
-        每次读取的数据都以行为单位，必须读取整行数据，不允许读取个别列，
-        如果给出id，只返回id行记录（dict），如果不给出id，返回所有记录（DataFrame）
+        返回的数据类型为pd.DataFrame，如果给出kwargs，返回根据条件筛选后的数据
 
         Parameters
         ----------
         table: str
             需要读取的数据表名称
         kwargs: dict
-            筛选数据的条件，包括用作筛选条件的字典如: account_id = 123
+            筛选数据的条件，包括用作筛选条件的字典如: {account_id = 123}
 
         Returns
         -------
         pd.DataFrame:
-            当不给出record_id时，读取的数据为DataFrame，包括数据表的结构化信息以及数据表中的记录
+            返回的数据为DataFrame，如果给出kwargs，返回的数据仅包括筛选后的数据
         """
 
         ensure_sys_table(table)

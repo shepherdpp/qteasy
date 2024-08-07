@@ -1584,7 +1584,7 @@ class Trader(object):
         )
 
         # 记录交割结果到trade_log和system_log
-        if deliver_result['delivery_status'] != 'DL':
+        if deliver_result.get('delivery_status') != 'DL':
             return
         self.log_cash_delivery(delivery_result=deliver_result)
         self.log_qty_delivery(delivery_result=deliver_result)
@@ -1627,7 +1627,7 @@ class Trader(object):
 
         # 生成交割结果信息推送到信息队列
         for res in delivery_results:
-            if res.get('deliver_status') is None:
+            if res.get('deliver_status') != 'DL':
                 continue
 
             self.log_cash_delivery(res)
@@ -1670,12 +1670,11 @@ class Trader(object):
                 status='partial-filled',
                 data_source=self._datasource,
         )
-        self.send_message(f'partially filled orders found({len(partially_filled_orders)} in total), '
-                          f'they are to be canceled')
+        self.send_message(f'Looking for partial-filled orders... {len(partially_filled_orders)} found!')
         for order_id in partially_filled_orders.index:
             # 对于所有没有完全成交的订单，生成取消订单，取消剩余的部分
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
+            self.send_message(f'Canceled remaining qty of partial-filled order: {order_id}')
 
         # 检查未提交订单，确认是否有"created"的订单，如果有，生成取消订单
         unsubmitted_orders = query_trade_orders(
@@ -1683,7 +1682,12 @@ class Trader(object):
                 status='created',
                 data_source=self._datasource,
         )
-        self.send_message(f'{len(unsubmitted_orders)} Un-submitted orders found, they are to be canceled')
+        self.send_message(f'Looking for Un-submitted orders... {len(unsubmitted_orders)} found!')
+
+        for order_id in unsubmitted_orders.index:
+            # 对于所有未成交的订单，生成取消订单
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.send_message(f'Canceled un-submitted order: {order_id}')
 
         # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
         unfilled_orders = query_trade_orders(
@@ -1691,14 +1695,12 @@ class Trader(object):
                 status='submitted',
                 data_source=self._datasource,
         )
-        self.send_message(f'{len(unfilled_orders)} Unfilled orders found, they are to be canceled')
-        # 合并unfilled_orders 以及 unsubmitted_orders
-        unfilled_orders = pd.concat((unsubmitted_orders, unfilled_orders))
+        self.send_message(f'Looking for Unfilled orders...{len(unfilled_orders)} found!')
 
         for order_id in unfilled_orders.index:
             # 对于所有未成交的订单，生成取消订单
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled unfilled order({order_id})')
+            self.send_message(f'Canceled unfilled order: {order_id}')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：

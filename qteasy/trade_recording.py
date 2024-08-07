@@ -1314,7 +1314,7 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     return trade_results
 
 
-def read_trade_results_by_delivery_status(delivery_status, data_source=None):
+def read_trade_results_by_delivery_status(delivery_status, data_source=None) -> pd.DataFrame:
     """ 根据delivery_status从数据库中读取所有与signal相关的交易结果，以DataFrame的形式返回
 
     Parameters

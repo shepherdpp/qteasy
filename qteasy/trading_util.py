@@ -808,8 +808,11 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
 
     delivery_result = []
 
-    undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
-    if undelivered_results is None:
+    undelivered_results = read_trade_results_by_delivery_status(
+            delivery_status='ND',
+            data_source=data_source,
+    )
+    if undelivered_results.empty:
         return delivery_result
 
     # 循环处理每一条未交割的交易结果：
@@ -824,7 +827,7 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
                 data_source=data_source,
         )
 
-        if res:
+        if res.get('delivery_status') == 'DL':
             delivery_result.append(res)
 
     return delivery_result
