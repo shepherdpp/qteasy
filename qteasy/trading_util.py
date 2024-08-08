@@ -645,7 +645,7 @@ def output_trade_order():
     pass
 
 
-def submit_order(order_id, data_source=None):
+def submit_order(order_id, data_source):
     """ 将交易订单提交给交易平台或用户以等待交易结果，同时更新账户和持仓信息
 
     只有刚刚创建的交易订单（status == 'created'）才能提交，否则不需要再次提交
@@ -658,8 +658,8 @@ def submit_order(order_id, data_source=None):
     ----------
     order_id: int
         交易订单的id
-    data_source: str, optional
-        数据源的名称, 默认为None, 表示使用默认的数据源
+    data_source: Any
+        数据源的名称
 
     Returns
     -------
@@ -669,7 +669,6 @@ def submit_order(order_id, data_source=None):
 
     # 读取交易订单
     trade_order = read_trade_order(order_id, data_source=data_source)
-
     # 如果交易订单的状态不为created，则说明交易订单已经提交过，不需要再次提交
     if trade_order['status'] != 'created':
         return None
@@ -771,8 +770,7 @@ def cancel_order(order_id, data_source=None, config=None) -> int:
     }
     process_trade_result(
             raw_trade_result=result_of_cancel,
-            data_source=data_source,
-            config=config
+            data_source=data_source
     )
 
     return order_id
@@ -792,7 +790,7 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
     config: dict, optional
-        配置参数, 默认为None, 表示使用默认的配置参数
+
 
     Returns
     -------
@@ -810,25 +808,27 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
     if not isinstance(config, dict):
         raise TypeError('config must be a dict')
 
-    undelivered_results = read_trade_results_by_delivery_status('ND', data_source=data_source)
-    if undelivered_results is None:
-        return
-
     delivery_result = []
+
+    undelivered_results = read_trade_results_by_delivery_status(
+            delivery_status='ND',
+            data_source=data_source,
+    )
+    if undelivered_results.empty:
+        return delivery_result
+
     # 循环处理每一条未交割的交易结果：
     for result_id, result in undelivered_results.iterrows():
 
         res = deliver_trade_result(
-                result_id=result_id,
+                result_id=int(result_id),
                 account_id=account_id,
                 result=result.to_dict(),
                 stock_delivery_period=config['stock_delivery_period'],
                 cash_delivery_period=config['cash_delivery_period'],
                 data_source=data_source,
         )
-
-        if res:
-            delivery_result.append(res)
+        delivery_result.append(res)
 
     return delivery_result
 
@@ -844,7 +844,7 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     Parameters
     ----------
     result_id: int
-        结果ID，需要交割的交易结果
+        结果ID，需要交割的交易结果的ID
     account_id: int
         账户ID，如果result所属的account与account_id不匹配则不执行交割
     result: dict, default None
@@ -861,12 +861,16 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
     delivery_result: dict
     交割结果：包含以下信息
     {
-        'pos_id' : int, 更新的持仓ID，如果没有更新则为None
+        'order_id': int, 交割的订单的ID, 总是等于交易结果的order_id
+        'account_id': int, 更新的账户ID，如果没有更新则为None
+        'pos_id': int, 更新的持仓ID，如果没有更新则为None
+        'symbol': str, 更新的持仓代码，如果没有更新则为None
+        'position': str, 更新的持仓方向，如果没有更新则为None
         'prev_qty': float, 更新前的资产可用持仓数量，如果没有更新则为None
         'updated_qty': float, 更新后的资产可用持仓数量，如果没有更新则为None
-        'account_id': int, 更新的账户ID，如果没有更新则为None
         'prev_amount': float, 更新前的账户可用现金余额，如果没有更新则为None
         'updated_amount': float, 更新后的账户可用现金余额，如果没有更新则为None
+        'delivery_status': str, 更新后订单的交割状态，如果正常交割，则为'DL',否则为None
     }
     """
     from .trade_recording import read_trade_result_by_id
@@ -877,12 +881,31 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
         raise err
     if result['delivery_status'] != 'ND':
         # 如果交易结果已经交割过了，则不再交割
+        # print(f'[DEBUG]: in deliver_trade_result, got result {result}, status is '
+        #       f'{result["delivery_status"]}, no need to deliver')
         return {}
     order_id = result['order_id']
     order_detail = read_trade_order_detail(order_id=order_id, data_source=data_source)
+    if order_detail is None:
+        err = RuntimeError(f'Cannot find order detail for order_id: {order_id}')
+        raise err
+
+    # 初始化交割结果字典
+    delivery_result = {'order_id': order_id,
+                       'account_id':  None,
+                       'pos_id': None,
+                       'symbol': None,
+                       'position': None,
+                       'prev_qty': None,
+                       'updated_qty': None,
+                       'prev_amount': None,
+                       'updated_amount': None,
+                       'delivery_status': None}
 
     if order_detail['account_id'] != account_id:
         # 如果订单不是发自account_id，则不予交割
+        # print(f'[DEBUG]: in deliver_trade_result, got order detail {order_detail} with ID '
+        #       f'{order_detail["account_id"]} != account_id {account_id}, no need to deliver')
         return {}
 
     # 读取交易方向，根据方向判断需要交割现金还是持仓，并分别读取现金/持仓的交割期
@@ -895,69 +918,83 @@ def deliver_trade_result(result_id, account_id, result=None, stock_delivery_peri
         err = ValueError(f'Invalid direction: {trade_direction}')
         raise err
 
+    # print(f'[DEBUG]: in deliver_trade_result, got delivery periods: '
+    #       f'stock {stock_delivery_period}, cash {cash_delivery_period}')
+
     # 读取交易结果的execution_time，如果execution_time与现在的日期差小于交割期，则不予交割
     execution_date = pd.to_datetime(result['execution_time']).date()
     current_date = pd.to_datetime('today').date()
     day_diff = (current_date - execution_date).days
     if day_diff < delivery_period:
-        return {}
-
-    # 可以开始执行交割
-    delivery_result = {
-        'order_id':         None,
-        'pos_id':           None,
-        'prev_qty':         None,
-        'updated_qty':      None,
-        'account_id':       None,
-        'prev_amount':      None,
-        'updated_amount':   None,
-    }
+        # print(f'[DEBUG]: in deliver_trade_result, calculating day diff: {day_diff} '
+        #       f'is < delivery_period {delivery_period}, thus no need to deliver')
+        return delivery_result
 
     # 执行交割，更新现金/持仓的available，更新交易结果的delivery_status
+    position_id = order_detail['pos_id']
+    position = get_position_by_id(pos_id=position_id, data_source=data_source)
+    delivery_result['pos_id'] = position_id
+    delivery_result['position'] = position['position']
+    delivery_result['symbol'] = position['symbol']
+
+    delivery_result['account_id'] = account_id
+    account = get_account(account_id, data_source=data_source)
+
     if trade_direction == 'buy':
-        position_id = order_detail['pos_id']
-        position = get_position_by_id(pos_id=position_id, data_source=data_source)
-        delivery_result['order_id'] = order_id
-        delivery_result['pos_id'] = position_id
+        # 如果交易方向为买入，买入的股票持仓需要进行交割
         delivery_result['prev_qty'] = position['available_qty']
 
-        update_position(
-                position_id=position_id,
-                data_source=data_source,
-                available_qty_change=result['delivery_amount'],
-        )
-        position = get_position_by_id(pos_id=position_id, data_source=data_source)
-        delivery_result['updated_qty'] = position['available_qty']
+        try:
+            update_position(
+                    position_id=position_id,
+                    data_source=data_source,
+                    available_qty_change=result['delivery_amount'],
+            )
+            delivery_result['updated_qty'] = delivery_result['prev_qty'] + result['delivery_amount']
 
-    elif trade_direction == 'sell':
-        position_id = order_detail['pos_id']
-        delivery_result['account_id'] = account_id
-        account = get_account(account_id, data_source=data_source)
-        delivery_result['order_id'] = order_id
-        delivery_result['pos_id'] = position_id
+            # print(f'[DEBUG]: in deliver_trade_result, did actual delivery: position {position_id} available'
+            #       f'quantity changed from {delivery_result["prev_qty"]} to {delivery_result["updated_qty"]}')
+        except Exception as e:
+            # print(f'{e} failed to updated position, position will NOT be updated, '
+            #       f'result {result_id} will remain un-delivered')
+            delivery_result['updated_qty'] = delivery_result['prev_qty']
+
+            return delivery_result
+
+    else:  # trade_direction == 'sell', 其他情况已经排除过了
+        # 如果交易方向为卖出，卖出后获得的现金需要进行交割
         delivery_result['prev_amount'] = account['available_cash']
-        update_account_balance(
-                account_id=account_id,
-                data_source=data_source,
-                available_cash_change=result['delivery_amount'],
-        )
-        account = get_account(account_id, data_source=data_source)
-        delivery_result['updated_amount'] = account['available_cash']
-    else:
-        err = RuntimeError(f'Wrong trade direction! {trade_direction}')
-        raise err
+
+        try:
+            update_account_balance(
+                    account_id=account_id,
+                    data_source=data_source,
+                    available_cash_change=result['delivery_amount'],
+            )
+            delivery_result['updated_amount'] = delivery_result['prev_amount'] + result['delivery_amount']
+            # print(f'[DEBUG]: in deliver_trade_result, did actual delivery: account {account_id} available'
+            #       f'cash changed from {delivery_result["prev_amount"]} to {delivery_result["updated_amount"]}')
+        except Exception as e:
+            # print(f'{e} failed to updated account cashes, account will NOT be updated, '
+            #       f'result {result_id} will remain un-delivered')
+            delivery_result['updated_amount'] = delivery_result['prev_amount']
+
+            return delivery_result
 
     update_trade_result(
             result_id=result_id,
             data_source=data_source,
             delivery_status='DL',
     )
+    delivery_result['delivery_status'] = 'DL'
+    # print(f'[DEBUG]: in deliver_trade_result, updated result delivery status to '
+    #       f'{delivery_result["delivery_status"]} and will return')
 
     return delivery_result
 
 
-def process_trade_result(raw_trade_result, data_source=None, config=None):
-    """ 处理交易结果: 更新交易委托的状态，更新账户的持仓，更新持有现金金额
+def process_trade_result(raw_trade_result, data_source=None) -> dict:
+    """ 处理交易结果: 更新交易订单的状态，更新账户的持仓，更新持有现金金额
 
     交易结果一旦生成，其内容就不会再改变，因此不需要更新交易结果，只需要根据交易结果
     更新相应交易订单（委托）的状态，更新账户的持仓，更新账户的现金余额
@@ -969,13 +1006,31 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         原始交易结果是尚未确认的交易结果，只有确认有足够的现金和持仓时才能确认交易结果
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
-    config: dict, optional
-        配置参数, 默认为None, 表示使用默认的配置参数
 
     Returns
     -------
-    result_id: int
-        交易结果的ID
+    full_trade_result: dict
+        交易结果的完整信息，包含以下字段
+        {
+            'result_id': int, 交易结果的id
+            'order_id': int, 交易订单的id
+            'pos_id': int, 交易订单的持仓id
+            'symbol': str, 股票代码
+            'position': str, 持仓类型
+            'direction': str, 交易方向
+            'filled_qty': float, 成交数量
+            'price': float, 成交价格
+            'transaction_fee': float, 交易费用
+            'canceled_qty': float, 取消数量
+            'delivery_amount': float, 交割数量
+            'qty_change': float, 持仓变动数量
+            'available_qty_change': float, 可用持仓数量变动
+            'cost_change': float,  持仓成本变动
+            'cash_amount_change': float,  持有现金金额变动
+            'available_cash_change': float,  可用现金金额变动量
+            'delivery_status': str, 交易结果的交割状态 'DL'/'ND'
+            'order_status': str, 交易订单的状态 'filled'/'partial-filled'/'canceled'
+        }
     """
     # TODO: 一个函数只做一件事情，我感觉这个函数太长了，需要拆分成多个子函数
 
@@ -990,12 +1045,6 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
         raise AttributeError(f'order {order_id} is noy submitted yet')
     if order_detail['status'] in ['filled', 'canceled']:
         raise AttributeError(f'order {order_id} has already been filled or canceled')
-    # 交割历史交易结果
-    if config is None:
-        import qteasy as qt
-        config = qt.QT_CONFIG
-    if not isinstance(config, dict):
-        raise TypeError('config must be a dict')
 
     # 读取交易订单的历史交易记录，计算尚未成交的数量：remaining_qty
     trade_results = read_trade_results_by_order_id(order_id, data_source=data_source)
@@ -1008,7 +1057,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
             AMOUNT_DECIMAL_PLACES,
     )
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
-        raise TypeError(f'qty {order_detail["qty"]} is not an integer')
+        raise TypeError(f'remaining qty {remaining_qty} is not a number!')
     # 如果交易结果中的cancel_qty大于0，则将交易订单的状态设置为 'canceled'，同时确认 canceled_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
@@ -1069,7 +1118,7 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
                            f'available cash {available_cash}')
         raise err
 
-    # 计算并生成交易结果的交割数量和交割状态，如果是买入信号，交割数量为position_change，如果是卖出信号，交割数量为cash_change
+    # 计算并生成交易结果的交割数量和交割状态，如果是买入订单，交割数量为position_change，如果是卖出订单，交割数量为cash_change
     if order_detail['direction'] == 'buy':
         raw_trade_result['delivery_amount'] = position_change
     elif order_detail['direction'] == 'sell':
@@ -1084,67 +1133,91 @@ def process_trade_result(raw_trade_result, data_source=None, config=None):
     raw_trade_result['execution_time'] = execution_time
     result_id = write_trade_result(raw_trade_result, data_source=data_source)
 
-    # 更新账户的持仓和现金余额和订单状态
     # TODO: 这里可能会有Bug：为了避免在更新账户余额和持仓时出现错误，需要将更新账户余额和持仓的操作放在一个事务中
     #  否则可能出现更新账户余额成功，但更新持仓失败的情况，或订单状态更新失败的情况
 
-    # TODO: 最佳的做法是：买入或卖出的交易结果应该只更新qty/cash
-    #  而available_qty/available_cash统一应该留到订单交易后交割时更新
-    #  但是在实际进行实盘交易时，上面的做法要求每次执行完订单后都进行一次交割，
-    #  因为只有这样，才能将卖出交易后获取的现金交割到账户的available_cash中，
-    #  否则，会导致available_cash不能得到及时更新，从而导致后续的交易失败
-    #  在目前的实现中，交割操作是在每天早上9:15分进行的，这样就会导致available_cash
-    #  不能及时更新。
-    #  现在采用这样的做法，在每次处理完交易信号后，立即进行该交易信号的交割，如果
-    #  交易信号不符合交割条件，则不进行交割，但是这样会导致交割操作过于频繁，不够高效
-    #  需要注意的是，交割操作不应该在process_trade_result内部完成，而应该由调用者完成
+    # 添加trade_result中的其他关键信息
+    full_trade_result = raw_trade_result
+    full_trade_result['result_id'] = result_id
+    full_trade_result['order_id'] = order_id
+    full_trade_result['pos_id'] = order_detail['pos_id']
+    full_trade_result['symbol'] = order_detail['symbol']
+    full_trade_result['position'] = position_info['position']
+    full_trade_result['direction'] = order_detail['direction']
+    full_trade_result['order_status'] = order_detail['status']
 
-    # 如果direction为buy，则同时更新cash_amount和available_cash，如果direction为sell，则只更新cash_amount
-    if order_detail['direction'] == 'buy':
-        update_account_balance(
-                account_id=order_detail['account_id'],
-                data_source=data_source,
-                cash_amount_change=cash_change,
-                available_cash_change=cash_change,
-        )
-        # calculate new cost if (position_change + owned_qty) is not 0
-        prev_cost = position_cost * owned_qty
-        if position_change + owned_qty == 0:
-            new_cost = 0
-        else:
-            additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
-            new_cost = (prev_cost + additional_cost) / (owned_qty + position_change)
-        update_position(
-                position_id=order_detail['pos_id'],
-                data_source=data_source,
-                qty_change=position_change,
-                cost=new_cost,
-        )
-    # 如果direction为sell，则同时更新qty和available_qty，如果direction为buy，则只更新qty
-    else:  # order_detail['direction'] == 'sell', 因为其他情况已经在前面raise ValueError了
-        update_account_balance(
-                account_id=order_detail['account_id'],
-                data_source=data_source,
-                cash_amount_change=cash_change,
-        )
-        # calculate new cost
-        prev_cost = position_cost * owned_qty
-        if owned_qty + position_change == 0:  # 如果卖出后持仓为0，则成本为0
-            new_cost = 0
-        else:
-            additional_cost = position_change * raw_trade_result['price'] + raw_trade_result['transaction_fee']
-            new_cost = (prev_cost + additional_cost) / (owned_qty + position_change)
-        update_position(
-                position_id=order_detail['pos_id'],
-                data_source=data_source,
-                qty_change=position_change,
-                available_qty_change=position_change,
-                cost=new_cost,
-        )
-    # 更新交易订单的状态
+    # calculate new cost
+    cost_change, new_cost = calculate_cost_change(
+            prev_qty=owned_qty,
+            prev_unit_cost=position_cost,
+            qty_change=position_change,
+            price=raw_trade_result['price'],
+            transaction_fee=raw_trade_result['transaction_fee'],
+    )
+    full_trade_result['cost_change'] = cost_change
+    # 更新现金及持仓的变动量
+    cash_amount_change = available_cash_change = cash_change
+    qty_change = available_qty_change = position_change
+    if order_detail['direction'] == 'buy': # 只更新qty，不更新available_qty，因为available_qty应该在交割时更新
+        available_qty_change = 0
+    else:  # 如果direction为sell, 只更新cash_amount，不更新available_cash，因为available_cash应该在交割时更新
+        available_cash_change = 0
+
+    full_trade_result['qty_change'] = qty_change
+    full_trade_result['available_qty_change'] = available_qty_change
+    full_trade_result['cash_amount_change'] = cash_amount_change
+    full_trade_result['available_cash_change'] = available_cash_change
+
+    # 更新现金余额和订单状态
+    update_account_balance(
+            account_id=order_detail['account_id'],
+            data_source=data_source,
+            cash_amount_change=cash_amount_change,
+            available_cash_change=available_cash_change,
+    )
+    # 更新账户持仓
+    update_position(
+            position_id=order_detail['pos_id'],
+            data_source=data_source,
+            qty_change=qty_change,
+            available_qty_change=available_qty_change,
+            cost=new_cost,
+    )
+    # 更新订单状态
     update_trade_order(order_id, data_source=data_source, status=order_detail['status'])
 
-    return result_id
+    return raw_trade_result
+
+
+def calculate_cost_change(prev_qty, prev_unit_cost, qty_change, price, transaction_fee) -> tuple:
+    """ 当股票持仓的数量发生变化后，根据买入价格、买入数量和交易费用计算新的持仓成本
+
+    Parameters
+    ----------
+    prev_qty: float
+        变动前持仓数量
+    prev_unit_cost: float
+        变动前单位持仓成本
+    qty_change: float
+        持仓变化量
+    price: float
+        交易价格
+    transaction_fee: float
+        交易费用
+
+    Returns
+    -------
+    tuple:
+    cost_change: float, 持仓成本变动量
+    new_cost: float, 新的持仓成本
+    """
+    prev_cost = prev_unit_cost * prev_qty
+    if prev_qty + qty_change == 0:
+        new_cost = 0
+    else:
+        additional_cost = qty_change * price + transaction_fee
+        new_cost = (prev_cost + additional_cost) / (prev_qty + qty_change)
+    return new_cost - prev_unit_cost, new_cost
 
 
 def get_last_trade_result_summary(account_id, shares=None, data_source=None):

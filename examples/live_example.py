@@ -43,6 +43,12 @@ if __name__ == '__main__':
 
     asset_pool = ['000651.SZ', '688609.SH', '000550.SZ', '301215.SZ', '002676.SZ', '603726.SH']
 
+    datasource = qt.QT_DATA_SOURCE
+    if args.restart:
+        # clean up all trade data in current account
+        from qteasy.trade_recording import delete_account
+        delete_account(account_id=args.account, data_source=datasource, keep_account_id=True)
+
     qt.configure(
             mode=0,
             time_zone='Asia/Shanghai',
@@ -60,12 +66,5 @@ if __name__ == '__main__':
             live_trade_ui_type=args.ui,
             live_trade_broker_params=None,
     )
-    datasource = qt.QT_DATA_SOURCE
-
-    if args.restart:
-        # clean up all account data in datasource
-        for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
-            if datasource.table_data_exists(table):
-                datasource.drop_table_data(table)
 
     op.run()

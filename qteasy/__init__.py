@@ -35,18 +35,19 @@ from .visual import candle
 from .finance import CashPlan, set_cost, update_cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG, ConfigDict
+from .trade_recording import delete_account
 
 
 # qteasy版本信息
-__version__ = '1.2.15'
+__version__ = '1.3.0'
 version_info = Namespace(
         major=1,
-        minor=2,
-        patch=15,
-        short=(1, 2),
-        full=(1, 2, 15),
-        string='1.2.15',
-        tuple=('1', '2', '15'),
+        minor=3,
+        patch=0,
+        short=(1, 3),
+        full=(1, 3, 0),
+        string='1.3.0',
+        tuple=('1', '3', '0'),
         releaselevel='beta',
 )
 
@@ -205,5 +206,5 @@ __all__ = [
     'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
     'utilfuncs',
     'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
-    'logger_core', 'live_trade_accounts',
+    'logger_core', 'live_trade_accounts', 'delete_account',
 ]

@@ -32,6 +32,7 @@ from qteasy.trade_recording import get_or_create_position, new_account, update_p
 from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
 from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
+from qteasy.trading_util import calculate_cost_change
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -998,7 +999,8 @@ class Trader(object):
 
         return lines
 
-    def submit_trade_order(self, symbol: str, position: str, direction: str, order_type: str, qty: int, price: float) -> dict:
+    def submit_trade_order(self, symbol: str, position: str, direction: str,
+                           order_type: str, qty: int, price: float) -> dict:
         """ 提交订单
 
         Parameters
@@ -1048,6 +1050,278 @@ class Trader(object):
             return trade_order
 
         return {}
+
+    def log_trade_result(self, full_trade_result) -> None:
+        """ 根据返回的完整交易记录full_trade_result，生成交易记录
+        trade_log和系统记录system_log，
+        同时将交易记录记入log文件，将系统记录通过消息发送到trader
+
+        Parameters
+        ----------
+        full_trade_result: dict
+            一个字典，包含完整的交易结果信息，字典包含的内容与process_trade_result函数的返回值相同
+
+        Returns
+        -------
+        None
+        """
+        # 获取交易结果和订单信息
+        order_id = full_trade_result['order_id']
+        pos, d, symbol = full_trade_result['position'], full_trade_result['direction'], full_trade_result['symbol']
+        status = full_trade_result['order_status']
+
+        filled_qty = full_trade_result['filled_qty']
+        filled_price = full_trade_result['price']
+        trade_cost = full_trade_result['transaction_fee']
+
+        # send message to indicate execution of order
+        self.send_message(f'<ORDER EXECUTED {order_id}>: '
+                          f'{d}-{pos} of {symbol}: {status} with {filled_qty} @ {filled_price}')
+
+        # 读取交易处理以后的账户信息和持仓信息
+        pos_id = full_trade_result['pos_id']
+        position = get_position_by_id(pos_id, data_source=self._datasource)
+        qty, available_qty, cost = position['qty'], position['available_qty'], position['cost']
+        # 读取持有现金
+        account = get_account(self.account_id, data_source=self._datasource)
+        cash_amount = account['cash_amount']
+        available_cash = account['available_cash']
+        name = get_symbol_names(datasource=self.datasource, symbols=symbol)[0]
+        #
+        qty_change = full_trade_result['qty_change']
+        cash_amount_change = full_trade_result['cash_amount_change']
+        trade_log = {
+            'reason':                'order',
+            'order_id':              order_id,
+            'position_id':           pos_id,
+            'symbol':                symbol,  # 股票代码
+            'name':                  name,  # 股票名称
+            'position_type':         pos,  # 'long'/'short'
+            'direction':             d,  # 'buy'/'sell'
+            'trade_qty':             filled_qty,  # 成交数量
+            'price':                 filled_price,  # 成交价格
+            'trade_cost':            trade_cost,  # 交易费用
+            'qty_change':            qty_change,  #
+            'qty':                   qty,
+            'available_qty_change':  full_trade_result['available_qty_change'],
+            'available_qty':         available_qty,
+            'cost_change':           full_trade_result['cost_change'],
+            'holding_cost':          cost,
+            'cash_change':           cash_amount_change,
+            'cash':                  cash_amount,
+            'available_cash_change': full_trade_result['available_cash_change'],
+            'available_cash':        available_cash,
+        }
+        self.write_log_file(**trade_log)
+        # 生成system_log 现金及持仓变动记录
+        if qty_change != 0.:
+            self.send_message(f'<RESULT RECORDED {order_id}>: position {symbol}({pos}) changed: '
+                              f'own qyt: {qty - qty_change:.2f}->{qty:.2f}; '
+                              f'available qyt: {available_qty - full_trade_result["available_qty_change"]:.2f}'
+                              f'->{available_qty:.2f}; '
+                              f'cost: {cost - full_trade_result["cost_change"]:.2f}->{cost:.2f}')
+        if full_trade_result['cash_amount_change'] != 0:
+            self.send_message(f'<RESULT LOGGED>: account cash changed: '
+                              f'cash: ¥{cash_amount - cash_amount_change:,.2f}->¥{cash_amount:,.2f}'
+                              f'available: ¥{available_cash - full_trade_result["available_cash_change"]:,.2f}'
+                              f'->¥{available_cash:,.2f}')
+
+    def log_cash_delivery(self, delivery_result) -> None:
+        """ 根据现金交割记录，生成详细trade_log和system_log
+        并将trade_log和system_log记录到相应的文件或消息队列中
+
+        Parameters
+        ---------
+        delivery_result: dict
+            交割记录，一个字典，内容与deliver_trade_result函数的返回值一致
+            {
+                'order_id': int, 交割的订单的ID, 总是等于交易结果的order_id
+                'account_id': int, 更新的账户ID，如果没有更新则为None
+                'pos_id' : int, 更新的持仓ID，如果没有更新则为None
+                'symbol': str, 更新的持仓代码，如果没有更新则为None
+                'position': str, 更新的持仓方向，如果没有更新则为None
+                'prev_qty': float, 更新前的资产可用持仓数量，如果没有更新则为None
+                'updated_qty': float, 更新后的资产可用持仓数量，如果没有更新则为None
+                'prev_amount': float, 更新前的账户可用现金余额，如果没有更新则为None
+                'updated_amount': float, 更新后的账户可用现金余额，如果没有更新则为None
+                'delivery_status': str, 更新后订单的交割状态，如果正常交割，则为'DL',否则为None
+            }
+
+        Returns
+        -------
+        None
+        """
+        if delivery_result['delivery_status'] is None:  # 如果未发生交割，则返回
+            return
+        order_id = delivery_result['order_id']
+        if delivery_result['updated_amount'] is None:  # 如果交割结果不含现金，则返回
+            return
+
+        symbol = delivery_result['symbol']
+        pos_type = delivery_result['position']
+        account = get_account(account_id=self.account_id, data_source=self.datasource)
+        account_name = account['user_name']
+        prev_amount = delivery_result['prev_amount']
+        updated_amount = delivery_result['updated_amount']
+        color_tag = 'bold red' if prev_amount > updated_amount else 'bold green'
+        # 生成trade_log并写入文件
+        trade_log = {
+            'reason':                'delivery',
+            'order_id':              order_id,
+            'position_id':           delivery_result['pos_id'],
+            'symbol':                symbol,
+            'position_type':         pos_type,
+            'name':                  get_symbol_names(datasource=self.datasource, symbols=symbol)[0],
+            'cash_change':           0.,
+            'cash':                  account['cash_amount'],
+            'available_cash_change': updated_amount - prev_amount,
+            'available_cash':        updated_amount
+        }
+        self.write_log_file(**trade_log)
+        # 发送system log信息
+        self.send_message(f'<RESULT DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
+                          f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
+
+    def log_qty_delivery(self, delivery_result) -> None:
+        """ 根据股票持仓交割记录，生成详细的trade_log和system_log
+        并将trade_log和system_log记录到相应的文件或消息队列中
+
+        Parameters
+        ---------
+        delivery_result: dict
+            交割记录，一个字典，内容与deliver_trade_result函数的返回值一致
+            {
+                'order_id': int, 交割的订单的ID, 总是等于交易结果的order_id
+                'account_id': int, 更新的账户ID，如果没有更新则为None
+                'pos_id' : int, 更新的持仓ID，如果没有更新则为None
+                'symbol': str, 更新的持仓代码，如果没有更新则为None
+                'position': str, 更新的持仓方向，如果没有更新则为None
+                'prev_qty': float, 更新前的资产可用持仓数量，如果没有更新则为None
+                'updated_qty': float, 更新后的资产可用持仓数量，如果没有更新则为None
+                'prev_amount': float, 更新前的账户可用现金余额，如果没有更新则为None
+                'updated_amount': float, 更新后的账户可用现金余额，如果没有更新则为None
+                'delivery_status': str, 更新后订单的交割状态，如果正常交割，则为'DL',否则为None
+            }
+
+        Returns
+        -------
+        None
+        """
+        if delivery_result['delivery_status'] is None:  # 如果未发生交割，则返回
+            return
+        order_id = delivery_result['order_id']
+        if delivery_result['updated_qty'] is None:  # 如果交割结果不含股票，则返回
+            return
+
+        pos = get_position_by_id(pos_id=delivery_result['pos_id'], data_source=self.datasource)
+        symbol = pos['symbol']
+        pos_type = pos['position']
+        prev_qty = delivery_result['prev_qty']
+        updated_qty = delivery_result['updated_qty']
+        color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
+
+        name = get_symbol_names(self.datasource, symbols=symbol)
+        # 生成trade_log并写入文件
+        trade_log = {
+            'reason':               'delivery',
+            'order_id':             order_id,
+            'position_id':          delivery_result['pos_id'],
+            'symbol':               symbol,
+            'position_type':        pos_type,
+            'name':                 get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
+            'qty_change':           0.,
+            'qty':                  pos['qty'],
+            'available_qty_change': updated_qty - prev_qty,
+            'available_qty':        updated_qty,
+        }
+        self.write_log_file(**trade_log)
+        # 发送system log信息
+        self.send_message(f'<RESULT DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
+                          f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
+
+    def log_manual_cash_change(self, cash_change_detail) -> None:
+        """ 当手动调整现金时，生成详细的trade_log和system_log
+        并将trade_log和system_log记录到相应的文件或消息队列中
+
+        Parameters
+        ---------
+        cash_change_detail: dict
+            现金变动详情，包含：
+            {
+                'cash_change': float, 持有现金变动量
+                'cash': float, 变动后持有现金总额
+                'available_cash_change': float, 可用现金变动量
+                'available_cash': float, 变动后可用现金总额
+            }
+
+        Returns
+        -------
+        None
+        """
+        if not isinstance(cash_change_detail, dict):
+            raise TypeError(f'cash_change_detail should be a dict, got {type(cash_change_detail)} instead.')
+        # 补充金额变动的额外信息
+        cash_change_detail['reason'] = 'manual'
+        self.write_log_file(**cash_change_detail)
+        # 发送消息通知现金变动并记录system log
+        cash, available, investment = self.account_cash
+        self.send_message(f'<MANUAL CHANGED CASH>: {cash:.2f}, '
+                          f'available: {available:.2f}, '
+                          f'total invest: {investment:.2f}')
+
+    def log_manual_qty_change(self, qty_change_detail) -> None:
+        """ 当手动调整持仓时，生成详细的trade_log和system_log
+        并将trade_log和system_log记录到相应的文件或消息队列中
+
+        Parameters
+        ---------
+        qty_change_detail: dict
+            持仓变动详情，包含：
+            {
+                'pos_id': int, 发生变动的持仓ID
+                'qty_change': float, 发生的持仓数量变动
+                'available_qty_change': float, 发生的可用持仓变动量
+                'cost_change': float, 发生的持仓成本变动量
+            }
+
+        Returns
+        -------
+        None
+        """
+
+        pos_id = qty_change_detail['pos_id']
+        qty_change = qty_change_detail['qty_change']
+        available_change = qty_change_detail['available_qty_change']
+        cost_change = qty_change_detail['cost_change']
+        # 在trade_log中记录持仓变动
+        position = get_position_by_id(
+                pos_id=pos_id,
+                data_source=self.datasource,
+        )
+        symbol = position['symbol']
+        qty = position['qty']
+        available = position['available_qty']
+        cost = position['cost']
+        name = get_symbol_names(self.datasource, symbols=symbol)[0]
+        log_content = {
+            'reason':               'manual',
+            'position_id':          pos_id,
+            'symbol':               symbol,
+            'position_type':        position['position'],  # 'long' or 'short'
+            'name':                 name,
+            'qty_change':           qty_change,
+            'qty':                  qty,
+            'available_qty_change': available_change,
+            'available_qty':        available,
+            'cost_change':          cost_change,
+            'holding_cost':         cost,
+        }
+        self.write_log_file(**log_content)
+        # 发送消息通知持仓变动并记录system log
+        self.send_message(f'<MANUAL CHANGED pos {symbol}/{position["position"]}>: '
+                          f'qty: {qty - qty_change} -> {qty} '
+                          f'available: {available - available_change} -> {available} '
+                          f'cost: {cost - cost_change:.2f} -> {cost:.2f}')
 
     # ============ definition of tasks ================
     def _start(self):
@@ -1267,44 +1541,30 @@ class Trader(object):
         self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
         return submitted_qty
 
-    def _process_result(self, result):
+    def _process_result(self, result) -> None:
         """ 从result_queue中读取并处理交易结果
 
         1，处理交易结果，更新账户和持仓信息
         2，处理交易结果的交割，记录交割结果（未达到交割条件的交易结果不会被处理）
-        4，生成交易结果信息推送到信息队列
+        3，生成交易结果信息推送到信息队列
+
+        Parameters
+        ----------
+        result: dict
+            交易结果
+
+        Returns
+        -------
+        None
         """
 
         if self.debug:
             self.send_message(f'running task process_result, got result: \n{result}')
 
-        from qteasy.trade_recording import read_trade_result_by_id, read_trade_order_detail, get_position_by_id
-        from qteasy.trade_recording import get_account
-
-        # 读取交易处理以前的账户信息和持仓信息
-        order_id = result['order_id']
-        order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
-        # 读取持仓信息
-        pos_id = order_detail['pos_id']
-        position = get_position_by_id(pos_id, data_source=self._datasource)
-        pre_qty, pre_available, pre_cost = position['qty'], position['available_qty'], position['cost']
-        # 读取持有现金
-        account = get_account(self.account_id, data_source=self._datasource)
-        pre_cash_amount = account['cash_amount']
-        pre_available_cash = account['available_cash']
-
-        # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
         try:
-            result_id = process_trade_result(result, data_source=self._datasource)
-
-            # 执行本次交易结果的交割，如果不符合交割条件，则不会执行交割
-            deliver_trade_result(
-                    result_id=result_id,
-                    account_id=self.account_id,
-                    stock_delivery_period=self._config['stock_delivery_period'],
-                    cash_delivery_period=self._config['cash_delivery_period'],
-                    data_source=self._datasource,
-            )
+            # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
+            trade_result = process_trade_result(result, data_source=self._datasource)
+            result_id = trade_result['result_id']
 
         except Exception as e:
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
@@ -1312,69 +1572,26 @@ class Trader(object):
                 import traceback
                 self.send_message(traceback.format_exc())  # print_exc是UI的任务，不是trader的任务
             return
+
         # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）
-        if result_id is not None:
-            # 获取交易结果和订单信息
-            result_detail = read_trade_result_by_id(result_id, data_source=self._datasource)
-            order_id = result_detail['order_id']
-            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
-            pos, d, sym = order_detail['position'], order_detail['direction'], order_detail['symbol']
-            status = order_detail['status']
+        if result_id is None:
+            return
+        self.log_trade_result(full_trade_result=trade_result)
 
-            filled_qty = result_detail['filled_qty']
-            filled_price = result_detail['price']
-            trade_cost = result_detail['transaction_fee']
+        # 执行交易结果的立即交割; 如果交割期为0，则立即交割结果，否则第二天开盘前集中交割
+        deliver_result = deliver_trade_result(
+                result_id=result_id,
+                account_id=self.account_id,
+                stock_delivery_period=self._config['stock_delivery_period'],
+                cash_delivery_period=self._config['cash_delivery_period'],
+                data_source=self._datasource,
+        )
 
-            # send message to indicate execution of order
-            self.send_message(f'<ORDER EXECUTED {order_id}>: '
-                              f'{d}-{pos} of {sym}: {status} with {filled_qty} @ {filled_price}')
-            # send message to indicate change of positions / cashes
-            # 读取交易处理以后的账户信息和持仓信息
-            order_id = result['order_id']
-            order_detail = read_trade_order_detail(order_id, data_source=self._datasource)
-            # 读取持仓信息
-            pos_id = order_detail['pos_id']
-            position = get_position_by_id(pos_id, data_source=self._datasource)
-            post_qty, post_available, post_cost = position['qty'], position['available_qty'], position['cost']
-            symbol = position['symbol']
-            # 读取持有现金
-            account = get_account(self.account_id, data_source=self._datasource)
-            post_cash_amount = account['cash_amount']
-            post_available_cash = account['available_cash']
-            name = get_symbol_names(datasource=self.datasource, symbols=symbol)[0]
-            trade_log = {
-                'reason':                'order',
-                'order_id':              order_id,
-                'position_id':           pos_id,
-                'symbol':                symbol,
-                'name':                  name,
-                'position_type':         position['position'],
-                'direction':             order_detail['direction'],
-                'trade_qty':             filled_qty,
-                'price':                 filled_price,
-                'trade_cost':            trade_cost,
-                'qty_change':            post_qty - pre_qty,
-                'qty':                   post_qty,
-                'available_qty_change':  post_available - pre_available,
-                'available_qty':         post_available,
-                'cost_change':           post_cost - pre_cost,
-                'holding_cost':          post_cost,
-                'cash_change':           post_cash_amount - pre_cash_amount,
-                'cash':                  post_cash_amount,
-                'available_cash_change': post_available_cash - pre_available_cash,
-                'available_cash':        post_available_cash,
-            }
-            self.write_log_file(**trade_log)
-            # 生成system_log
-            if pre_qty != post_qty:
-                self.send_message(f'<RESULT>: {sym}({pos}): '
-                                  f'own {pre_qty:.2f}->{post_qty:.2f}; '
-                                  f'available {pre_available:.2f}->{post_available:.2f}; '
-                                  f'cost: {pre_cost:.2f}->{post_cost:.2f}')
-            if pre_cash_amount != post_cash_amount:
-                self.send_message(f'<RESULT>: account cash changed: '
-                                  f'cash: ¥{pre_cash_amount:,.2f}->¥{post_cash_amount:,.2f}'
-                                  f'available: ¥{pre_available_cash:,.2f}->¥{post_available_cash:,.2f}')
+        # 记录交割结果到trade_log和system_log
+        if deliver_result.get('delivery_status') != 'DL':
+            return
+        self.log_cash_delivery(delivery_result=deliver_result)
+        self.log_qty_delivery(delivery_result=deliver_result)
 
     def _pre_open(self):
         """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
@@ -1384,20 +1601,23 @@ class Trader(object):
         - 处理订单的交割
         - 获取当日实时价格
         """
+
+        self.send_message(f'Checking Trader and Broker connections...')
         datasource = self._datasource
         config = self._config
         operator = self._operator
 
+        self.send_message(f'Reconnecting to datasource...')
         datasource.reconnect()
 
+        self.send_message(f'Preparing historical financial data...')
         datasource.get_all_basic_table_data(
                 refresh_cache=True,
                 raise_error=False,
         )
-        self.send_message(f'data source reconnected...')
 
+        self.send_message(f'Preparing live trading data...')
         # 扫描数据源，下载缺失的日频或以上数据
-
         refill_missing_datasource_data(
                 operator=operator,
                 trader=self,
@@ -1405,65 +1625,23 @@ class Trader(object):
                 datasource=datasource,
         )
 
+        self.send_message(f'Looking for un-delivered trade results...')
         # 检查账户中的成交结果，完成全部交易结果的交割
-        delivery_result = process_account_delivery(
+        delivery_results = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
                 config=self._config,
         )
 
+        # self.send_message(f'{len(delivery_results)} results found, they are: \n{delivery_results}')
         # 生成交割结果信息推送到信息队列
-        for res in delivery_result:
-            order_id = res['order_id']
-            if res['account_id']:  # 发生了现金交割，更新了账户现金的可用数量
-                pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
-                symbol = pos['symbol']
-                pos_type = pos['position']
-                account = get_account(account_id=self.account_id, data_source=self.datasource)
-                account_name = account['user_name']
-                prev_amount = res['prev_amount']
-                updated_amount = res['updated_amount']
-                color_tag = 'bold red' if prev_amount > updated_amount else 'bold green'
-                # 生成trade_log并写入文件
-                trade_log = {
-                    'reason':                'delivery',
-                    'order_id':              order_id,
-                    'position_id':           res['pos_id'],
-                    'symbol':                symbol,
-                    'position_type':         pos_type,
-                    'name':                  get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
-                    'available_cash_change': updated_amount - prev_amount,
-                    'available_cash':        updated_amount
-                }
-                self.write_log_file(**trade_log)
-                # 发送system log信息
-                self.send_message(f'<DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
-                                  f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
-
-            elif res['pos_id']:  # 发生了股票/资产交割，更新了资产股票的可用持仓数量
-                pos = get_position_by_id(pos_id=res['pos_id'], data_source=self.datasource)
-                symbol = pos['symbol']
-                pos_type = pos['position']
-                prev_qty = res['prev_qty']
-                updated_qty = res['updated_qty']
-                color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
-
-                name = get_symbol_names(self.datasource, symbols=symbol)
-                # 生成trade_log并写入文件
-                trade_log = {
-                    'reason':               'delivery',
-                    'order_id':             order_id,
-                    'position_id':          res['pos_id'],
-                    'symbol':               symbol,
-                    'position_type':        pos_type,
-                    'name':                 get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
-                    'available_qty_change': updated_qty - prev_qty,
-                    'available_qty':        updated_qty,
-                }
-                self.write_log_file(**trade_log)
-                # 发送system log信息
-                self.send_message(f'<DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
-                                  f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
+        for res in delivery_results:
+            if res.get('delivery_status') != 'DL':
+                # self.send_message(f'{res} is not delivered yet, passing...')
+                continue
+            # self.send_message(f'Recording delivery to trade record: {res}')
+            self.log_cash_delivery(res)
+            self.log_qty_delivery(res)
 
         # 获取当日实时价格
         self._update_live_price()
@@ -1502,12 +1680,24 @@ class Trader(object):
                 status='partial-filled',
                 data_source=self._datasource,
         )
-        self.send_message(f'partially filled orders found({len(partially_filled_orders)} in total), '
-                          f'they are to be canceled')
+        self.send_message(f'Looking for partial-filled orders... {len(partially_filled_orders)} found!')
         for order_id in partially_filled_orders.index:
             # 对于所有没有完全成交的订单，生成取消订单，取消剩余的部分
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled remaining qty of partial-filled order({order_id})')
+            self.send_message(f'Canceled remaining qty of partial-filled order: {order_id}')
+
+        # 检查未提交订单，确认是否有"created"的订单，如果有，生成取消订单
+        unsubmitted_orders = query_trade_orders(
+                account_id=self.account_id,
+                status='created',
+                data_source=self._datasource,
+        )
+        self.send_message(f'Looking for Un-submitted orders... {len(unsubmitted_orders)} found!')
+
+        for order_id in unsubmitted_orders.index:
+            # 对于所有未成交的订单，生成取消订单
+            cancel_order(order_id=order_id, data_source=self._datasource)
+            self.send_message(f'Canceled un-submitted order: {order_id}')
 
         # 检查未成交订单，确认是否有"submitted"的订单，如果有，生成取消订单
         unfilled_orders = query_trade_orders(
@@ -1515,11 +1705,12 @@ class Trader(object):
                 status='submitted',
                 data_source=self._datasource,
         )
-        self.send_message(f'Unfilled orders found ({len(unfilled_orders)} in total), they are to be canceled')
+        self.send_message(f'Looking for Unfilled orders...{len(unfilled_orders)} found!')
+
         for order_id in unfilled_orders.index:
             # 对于所有未成交的订单，生成取消订单
             cancel_order(order_id=order_id, data_source=self._datasource)
-            self.send_message(f'canceled unfilled order({order_id})')
+            self.send_message(f'Canceled unfilled order: {order_id}')
 
     def _change_date(self):
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
@@ -1859,16 +2050,13 @@ class Trader(object):
                 data_source=self.datasource
         )
         # 在trade_log中记录现金变动
-        log_content = {
+        cash_change_detail = {
             'cash_change':           amount,
             'cash':                  cash_amount,
             'available_cash_change': amount,
             'available_cash':        available_cash,
-            'reason':                'manual_change'
         }
-        self.write_log_file(**log_content)
-        # 发送消息通知现金变动并记录system log
-        self.send_message(f'Cash amount changed to {self.account_cash}')
+        self.log_manual_cash_change(cash_change_detail)
 
         return
 
@@ -1898,6 +2086,12 @@ class Trader(object):
         """
 
         from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position, get_position_ids
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+
+        if not is_complete_cn_stock_symbol_like(symbol):
+            self.send_message(f'Invalid symbol: {symbol}, please check your input.'
+                              f'the symbol should include suffix like "SH"/"SZ", etc.')
+            return
 
         position_ids = get_position_ids(
                 account_id=self.account_id,
@@ -1970,12 +2164,16 @@ class Trader(object):
             self.send_message(f'Not enough position to decrease, '
                               f'available: {position["available_qty"]}, skipping operation')
             return
-        prev_cost = position['cost']
-        current_total_cost = prev_cost * position['qty']
-        additional_cost = np.round(price * float(quantity), 2)
-        new_average_cost = np.round((current_total_cost + additional_cost) / (position['qty'] + quantity), 2)
-        if np.isnan(new_average_cost):
-            new_average_cost = 0
+
+        # 计算持仓变动后的持仓成本
+        cost_change, new_average_cost = calculate_cost_change(
+                prev_qty=position['qty'],
+                prev_unit_cost=position['cost'],
+                qty_change=quantity,
+                price=price,
+                transaction_fee=0.0,
+        )
+
         position_data = {
             'qty_change':           quantity,
             'available_qty_change': quantity,
@@ -1986,29 +2184,14 @@ class Trader(object):
                 data_source=self.datasource,
                 **position_data
         )
-        # 在trade_log中记录持仓变动
-        position = get_position_by_id(
-                pos_id=position_id,
-                data_source=self.datasource,
-        )
-        name = get_symbol_names(self.datasource, symbols=symbol)[0]
-        log_content = {
-            'reason':               'manual',
-            'position_id':          position_id,
-            'symbol':               position['symbol'],
-            'position_type':        position['position'],  # 'long' or 'short'
-            'name':                 name,
-            'qty_change':           quantity,
-            'qty':                  position["qty"],
+        position_change_detail = {
+            'pos_id': position_id,
+            'qty_change': quantity,
             'available_qty_change': quantity,
-            'available_qty':        position["available_qty"],
-            'cost_change':          position['cost'] - prev_cost,
-            'holding_cost':         position['cost'],
+            'cost_change': cost_change,
         }
-        self.write_log_file(**log_content)
-        # 发送消息通知持仓变动并记录system log
-        self.send_message(f'Position {position["symbol"]}/{position["position"]} '
-                          f'changed to {position["qty"] + quantity}')
+        # 在trade_log中记录持仓变动
+        self.log_manual_qty_change(position_change_detail)
 
         return
 
@@ -2017,18 +2200,11 @@ class Trader(object):
         if self.debug:
             self.send_message(f'Acquiring live price data')
         from qteasy.emfuncs import stock_live_kline_price
-        try:
-            real_time_data = stock_live_kline_price(symbols=self.asset_pool)
-        except Exception as e:
-            self.send_message(f'Error in acquiring live prices: {e}')
-            if self.debug:
-                import traceback
-                self.send_message(traceback.format_exc())
-            return None
+        real_time_data = stock_live_kline_price(symbols=self.asset_pool)
         if real_time_data.empty:
             # empty data downloaded
             if self.debug:
-                self.send_message(f'Something wrong, failed to download live price data.')
+                self.send_message(f'Something went wrong, failed to download live price data.')
             return
         real_time_data.set_index('symbol', inplace=True)
         # 将real_time_data 赋值给self.live_price

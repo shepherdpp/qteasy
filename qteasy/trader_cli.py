@@ -1721,7 +1721,7 @@ class TraderShell(Cmd):
             return False
 
         # get current price if price is not given
-        if price == 0:
+        if price == 0 and symbol != '':
             try:
                 freq = self.trader.operator.op_data_freq
                 last_available_data = self.trader.datasource.get_history_data(
@@ -1733,13 +1733,13 @@ class TraderShell(Cmd):
                 )
                 current_price = last_available_data['close'][symbol][-1]
             except Exception as e:
-                print(f'Error: {e}, latest available data can not be downloaded. 10.00 will be used as current price.')
+                print(f'Error: {e}, latest price not available at the moment. 10.00 will be used as current price.')
                 import traceback
                 traceback.print_exc()
                 current_price = 10.00
             price = current_price
 
-        if qty != 0:
+        if qty != 0 and symbol != '':
             if side in ['s', 'short']:
                 side = 'short'
             if side in ['l', 'long']:

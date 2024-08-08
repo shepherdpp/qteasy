@@ -21,6 +21,7 @@ from qteasy.database import DataSource
 from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
+from qteasy.trading_util import calculate_cost_change
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -1551,8 +1552,8 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(positions.index.to_list(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         self.assertEqual(orders.index.to_list(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         self.assertEqual(results.index.to_list(), [1, 2, 3, 4])
-        # delete account 2
-        delete_account(2, data_source=self.test_ds)
+        # delete account 2 while keeping account_id
+        delete_account(2, data_source=self.test_ds, keep_account_id=True)
         # read all data from tables and print to check
         print(f'after deleting:')
         accounts = self.test_ds.read_sys_table_data('sys_op_live_accounts')
@@ -1560,7 +1561,7 @@ class TestTradeRecording(unittest.TestCase):
         orders = self.test_ds.read_sys_table_data('sys_op_trade_orders')
         results = self.test_ds.read_sys_table_data('sys_op_trade_results')
         print(f'accounts: \n{accounts}\npositions: \n{positions}\norders: \n{orders}\nresults: \n{results}')
-        self.assertEqual(accounts.index.to_list(), [1])
+        self.assertEqual(accounts.index.to_list(), [1, 2])
         self.assertEqual(positions.index.to_list(), [1, 2, 3, 4, 5])
         self.assertEqual(orders.index.to_list(), [1, 2, 3, 4, 5])
         self.assertEqual(results.index.to_list(), [1, 2])
@@ -1571,6 +1572,7 @@ class TestTradeRecording(unittest.TestCase):
             delete_account(1, data_source='not_a_datasource')
             delete_account(-1, data_source=self.test_ds)
             delete_account(3, data_source=self.test_ds)
+
 
 class TestTradingUtilFuncs(unittest.TestCase):
     """ test trading util funcs """
@@ -1817,7 +1819,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 1, trade signal: \n'
               f'{read_trade_order_detail(1, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1872,7 +1874,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 2, trade signal: \n'
               f'{read_trade_order_detail(2, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1933,7 +1935,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 3, trade signal: \n'
               f'{read_trade_order_detail(3, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -1994,7 +1996,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 4, trade signal: \n'
               f'{read_trade_order_detail(4, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2080,7 +2082,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 7, trade signal: \n'
               f'{read_trade_order_detail(7, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2142,7 +2144,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
               f'before processing trade result 9, trade signal: \n'
               f'{read_trade_order_detail(9, data_source=self.test_ds)}\n')
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -2200,7 +2202,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
-        process_trade_result(raw_trade_result, data_source=self.test_ds, config=delivery_config)
+        process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
               f'cash availability of account_id == 1: \n'
@@ -3135,6 +3137,68 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         print(symbol_names)
         self.assertEqual(symbol_names, ['平安银行', '万科A', '天弘优选', '鹏华普悦'])
+
+    def test_calculate_cost_change(self):
+        """ test function calculate_cost_change"""
+        cost_change, new_cost = calculate_cost_change(
+                prev_qty=100.0,
+                prev_unit_cost=10.0,
+                qty_change=100.0,
+                price=12.0,
+                transaction_fee=0.0,
+        )
+        self.assertAlmostEqual(cost_change, 1.)
+        self.assertAlmostEqual(new_cost, 11.)
+
+        cost_change, new_cost = calculate_cost_change(
+                prev_qty=100.0,
+                prev_unit_cost=10.0,
+                qty_change=100.0,
+                price=12.0,
+                transaction_fee=200.0,
+        )
+        self.assertAlmostEqual(cost_change, 2.)
+        self.assertAlmostEqual(new_cost, 12.)
+
+        cost_change, new_cost = calculate_cost_change(
+                prev_qty=200.0,
+                prev_unit_cost=10.0,
+                qty_change=-100.0,
+                price=12.0,
+                transaction_fee=0.0,
+        )
+        self.assertAlmostEqual(cost_change, -2.)
+        self.assertAlmostEqual(new_cost, 8.)
+
+        cost_change, new_cost = calculate_cost_change(
+                prev_qty=200.0,
+                prev_unit_cost=10.0,
+                qty_change=-100.0,
+                price=30.0,
+                transaction_fee=0.0,
+        )
+        self.assertAlmostEqual(cost_change, -20.)
+        self.assertAlmostEqual(new_cost, -10.)
+
+        cost_change, new_cost = calculate_cost_change(
+                prev_qty=200.0,
+                prev_unit_cost=10.0,
+                qty_change=-100.0,
+                price=30.0,
+                transaction_fee=100.0,
+        )
+        self.assertAlmostEqual(cost_change, -19.)
+        self.assertAlmostEqual(new_cost, -9.)
+
+        cost_change, new_cost = calculate_cost_change(
+                prev_qty=200.0,
+                prev_unit_cost=10.0,
+                qty_change=-200.0,
+                price=30.0,
+                transaction_fee=100.0,
+        )
+        self.assertAlmostEqual(cost_change, -10.)
+        self.assertAlmostEqual(new_cost, -0.)
 
 
 if __name__ == '__main__':

@@ -225,7 +225,7 @@ def update_account_balance(account_id, data_source=None, **cash_change) -> None:
     )
 
 
-def delete_account(account_id: int, data_source=None) -> None:
+def delete_account(account_id: int, data_source=None, keep_account_id=True) -> None:
     """ 删除账户，删除账户时，需要同时删除账户的持仓和交易信号。如果账户不存在，则直接返回None
     在删除账户时，同时删除账户的持仓和交易信号，如果删除账户的持仓或交易信号失败，则会回滚删除操作
 
@@ -235,6 +235,8 @@ def delete_account(account_id: int, data_source=None) -> None:
         账户的id
     data_source: DataSource, optional
         进行操作的数据源, 默认为None, 表示使用默认的数据源
+    keep_account_id: bool, optional, default True
+        是否保留account_id, 如果为False, 则删除account_id, 该id不再使用，如果为True, 则保留account_id
 
     Returns
     -------
@@ -276,8 +278,18 @@ def delete_account(account_id: int, data_source=None) -> None:
           f'orders: {order_ids}\n'
           f'results: {result_ids}')
     try:
-        # 删除账户
-        data_source.delete_sys_table_data('sys_op_live_accounts', record_ids=[account_id])
+        if not keep_account_id:
+            # 删除账户
+            data_source.delete_sys_table_data('sys_op_live_accounts', record_ids=[account_id])
+        else:
+            # 保留账户，但是删除账户的持仓并重置创建日期
+            refreshed_data = {'created_time': pd.to_datetime('today').strftime('%Y-%m-%d %H:%M:%S'),
+                              'cash_amount': 0,
+                              'available_cash': 0,
+                              'total_invest': 0,}
+            data_source.update_sys_table_data('sys_op_live_accounts',
+                                              record_id=account_id,
+                                              **refreshed_data)
         # 删除持仓
         data_source.delete_sys_table_data('sys_op_positions', record_ids=pos_ids)
         # 删除交易信号
@@ -906,7 +918,7 @@ def query_trade_orders(account_id,
                        direction=None,
                        order_type=None,
                        status=None,
-                       data_source=None):
+                       data_source=None) -> pd.DataFrame:
     """ 根据symbol、direction、status 从数据库中查询交易信号并批量返回结果
 
     Parameters
@@ -971,8 +983,10 @@ def query_trade_orders(account_id,
 
 
 # 2 2nd level functions for trade signal TODO: (maybe) move to trading_util.py
-def read_trade_order_detail(order_id, data_source=None):
-    """ 从数据库中读取交易信号的详细信息，包括从关联表中读取symbol和position的信息
+def read_trade_order_detail(order_id, data_source=None) -> dict:
+    """ 从数据库中读取交易信号的详细信息，除了trade_order表中已有的信息以外，
+     返回值还包括从关联表中读取的信息，包括三个字段：
+     account_id, symbol, position
 
     Parameters
     ----------
@@ -983,19 +997,20 @@ def read_trade_order_detail(order_id, data_source=None):
 
     Returns
     -------
-    trade_signal_detail: dict
+    trade_order_detail: dict
         包含symbol和position信息的交易信号明细:
         {
-            'account_id': int,
-            'pos_id': int,
-            'symbol': str,
-            'position': str,
-            'direction': str,
-            'order_type': str,
-            'qty': float,
-            'price': float,
-            'status': str,
-            'submitted_time': str,
+            'order_id': int, 订单ID
+            'account_id': int,  账户ID
+            'pos_id': int,  持仓ID
+            'symbol': str,  持仓股票代码
+            'position': str,  多头/空头
+            'direction': str,  买入/卖出
+            'order_type': str,  订单类型
+            'qty': float,  挂单数量
+            'price': float,  挂单价格
+            'submitted_time': str,  订单提交时间
+            'status': str,  订单状态
         }
     """
 
@@ -1006,19 +1021,20 @@ def read_trade_order_detail(order_id, data_source=None):
         err = TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
         raise err
 
-    trade_signal_detail = read_trade_order(order_id, data_source=data_source)
-    if trade_signal_detail == {}:
+    trade_order_detail = read_trade_order(order_id, data_source=data_source)
+    if trade_order_detail == {}:
         return None
-    pos_id = trade_signal_detail['pos_id']
+    pos_id = trade_order_detail['pos_id']
     position = get_position_by_id(pos_id, data_source=data_source)
     if position is None:
         err = RuntimeError(f'Position (position_id = {pos_id}) not found!')
         raise err
     # 从关联表中读取symbol和position的信，添加到trade_signal_detail中
-    trade_signal_detail['account_id'] = position['account_id']
-    trade_signal_detail['symbol'] = position['symbol']
-    trade_signal_detail['position'] = position['position']
-    return trade_signal_detail
+    trade_order_detail['order_id'] = order_id
+    trade_order_detail['account_id'] = position['account_id']
+    trade_order_detail['symbol'] = position['symbol']
+    trade_order_detail['position'] = position['position']
+    return trade_order_detail
 
 
 def save_parsed_trade_orders(account_id, symbols, positions, directions, quantities, prices, data_source=None):
@@ -1298,7 +1314,7 @@ def read_trade_results_by_order_id(order_id, data_source=None):
     return trade_results
 
 
-def read_trade_results_by_delivery_status(delivery_status, data_source=None):
+def read_trade_results_by_delivery_status(delivery_status, data_source=None) -> pd.DataFrame:
     """ 根据delivery_status从数据库中读取所有与signal相关的交易结果，以DataFrame的形式返回
 
     Parameters

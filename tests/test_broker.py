@@ -74,7 +74,10 @@ class TestBroker(unittest.TestCase):
             'submitted_time': '2023-04-09 09:30:00',
             'status':         'created',
         }
-        record_trade_order(test_signal, data_source=self.test_ds)
+        order_id = record_trade_order(test_signal, data_source=self.test_ds)
+        # 立即读取order并检查是否成功
+        order = read_trade_order(order_id, data_source=self.test_ds)
+        print(f'got order with order id ({order_id}): \n{order}')
         test_signal = {
             'pos_id':         1,
             'direction':      'sell',

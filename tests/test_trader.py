@@ -20,6 +20,7 @@ import numpy as np
 from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_account_delivery
+from qteasy.trading_util import deliver_trade_result
 from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
@@ -81,7 +82,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        self.stoppage = 0.5
+        self.stoppage = 0.05
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (
@@ -125,6 +126,23 @@ class TestTrader(unittest.TestCase):
         # submit orders
         for order_id in order_ids:
             submit_order(order_id, test_ds)
+        print('saved and submitted 9 trade orders')
+
+        # 生成Trader对象
+        self.ts = Trader(
+                account_id=1,
+                operator=operator,
+                broker=broker,
+                config=config,
+                datasource=test_ds,
+                debug=False,
+        )
+        self.ts.renew_trade_log_file()
+        self.ts.init_system_logger()
+        # remove test sys_log_file
+        sys_log_file_path = self.ts.sys_log_file_path_name
+        os.remove(sys_log_file_path)
+        self.assertFalse(os.path.exists(sys_log_file_path))
 
         # 添加交易订单执行结果
         delivery_config = {
@@ -139,8 +157,11 @@ class TestTrader(unittest.TestCase):
             'canceled_qty':    0.0,
         }
 
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=1, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        2,
@@ -149,8 +170,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=2, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -159,8 +183,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=3, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        4,
@@ -169,8 +196,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=4, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        5,
@@ -179,8 +209,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result, test_ds, delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=5, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -189,8 +222,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=6, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        6,
@@ -199,8 +235,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=7, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        7,
@@ -209,8 +248,11 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=8, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        9,
@@ -219,11 +261,16 @@ class TestTrader(unittest.TestCase):
             'transaction_fee': 5.0,
             'canceled_qty':    0.0,
         }
-        process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds, config=delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        full_trade_result = process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
+        self.ts.log_trade_result(full_trade_result)
+        deliver_result = deliver_trade_result(result_id=9, account_id=1, data_source=test_ds)
+        self.ts.log_qty_delivery(delivery_result=deliver_result)
+        self.ts.log_cash_delivery(delivery_result=deliver_result)
+
+        print('generated execution result and delivered results')
         # order 8 is canceled
         cancel_order(8, test_ds, delivery_config)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        deliver_results = process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
 
         print('creating Trader object...')
         # 生成Trader对象
@@ -470,6 +517,320 @@ class TestTrader(unittest.TestCase):
 
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
+
+    def test_log_trade_result(self):
+        """ test higher level function log_trade_result """
+        ts = self.ts
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 19)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[1]
+            print(log_row)
+            self.assertEqual(log_row[1], 'order')  # reason
+            self.assertEqual(log_row[2], '1')  # order_id
+            self.assertEqual(log_row[3], '1')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[7], 'buy')  # direction
+            self.assertEqual(log_row[8], '100.000')  # trade_qty
+            self.assertEqual(log_row[9], '60.5')  # price
+            self.assertEqual(log_row[10], '5.000')  # trade_cost
+            self.assertEqual(log_row[11], '100.000')  # qty_change
+            self.assertEqual(log_row[12], '300.000')  # qty
+            self.assertEqual(log_row[13], '0.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '200.000')  # avail-qty
+            self.assertEqual(log_row[17], '-6055.000')  # cash_change
+            self.assertEqual(log_row[18], '93945.000')  # cash
+            self.assertEqual(log_row[19], '-6055.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '93945.000')  # avail-cash
+
+            log_row = rows[3]
+            print(log_row)
+            self.assertEqual(log_row[1], 'order')  # reason
+            self.assertEqual(log_row[2], '2')  # order_id
+            self.assertEqual(log_row[3], '2')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[7], 'sell')  # direction
+            self.assertEqual(log_row[8], '100.000')  # trade_qty
+            self.assertEqual(log_row[9], '70.5')  # price
+            self.assertEqual(log_row[10], '5.000')  # trade_cost
+            self.assertEqual(log_row[11], '-100.000')  # qty_change
+            self.assertEqual(log_row[12], '100.000')  # qty
+            self.assertEqual(log_row[13], '-100.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '100.000')  # avail-qty
+            self.assertEqual(log_row[17], '7045.000')  # cash_change
+            self.assertEqual(log_row[18], '100990.000')  # cash
+            self.assertEqual(log_row[19], '0.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '93945.000')  # avail-cash
+
+            log_row = rows[5]
+            print(log_row)
+            self.assertEqual(log_row[1], 'order')  # reason
+            self.assertEqual(log_row[2], '3')  # order_id
+            self.assertEqual(log_row[3], '3')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[7], 'sell')  # direction
+            self.assertEqual(log_row[8], '200.000')  # trade_qty
+            self.assertEqual(log_row[9], '80.5')  # price
+            self.assertEqual(log_row[10], '5.000')  # trade_cost
+            self.assertEqual(log_row[11], '-200.000')  # qty_change
+            self.assertEqual(log_row[12], '100.000')  # qty
+            self.assertEqual(log_row[13], '-200.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '100.000')  # avail-qty
+            self.assertEqual(log_row[17], '16095.000')  # cash_change
+            self.assertEqual(log_row[18], '117085.000')  # cash
+            self.assertEqual(log_row[19], '0.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '100990.000')  # avail-cash
+
+    def test_log_cash_delivery(self):
+        """ test higher level function log_cash_delivery """
+        ts = self.ts
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 19)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[4]
+            print(log_row)
+            self.assertEqual(log_row[1], 'delivery')  # reason
+            self.assertEqual(log_row[2], '2')  # order_id
+            self.assertEqual(log_row[3], '2')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[17], '0.000')  # cash_change
+            self.assertEqual(log_row[18], '100990.000')  # cash
+            self.assertEqual(log_row[19], '7045.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '100990.000')  # avail-cash
+
+            log_row = rows[6]
+            print(log_row)
+            self.assertEqual(log_row[1], 'delivery')  # reason
+            self.assertEqual(log_row[2], '3')  # order_id
+            self.assertEqual(log_row[3], '3')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[17], '0.000')  # cash_change
+            self.assertEqual(log_row[18], '117085.000')  # cash
+            self.assertEqual(log_row[19], '16095.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '117085.000')  # avail-cash
+
+    def test_log_qty_delivery(self):
+        """ test higher level function log_qty_delivery """
+        ts = self.ts
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 19)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[2]
+            print(log_row)
+            self.assertEqual(log_row[1], 'delivery')  # reason
+            self.assertEqual(log_row[2], '1')  # order_id
+            self.assertEqual(log_row[3], '1')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[11], '0.000')  # qty_change
+            self.assertEqual(log_row[12], '300.000')  # qty
+            self.assertEqual(log_row[13], '100.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '300.000')  # avail-qty
+
+            log_row = rows[8]
+            print(log_row)
+            self.assertEqual(log_row[1], 'delivery')  # reason
+            self.assertEqual(log_row[2], '4')  # order_id
+            self.assertEqual(log_row[3], '5')  # pos_id
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[11], '0.000')  # qty_change
+            self.assertEqual(log_row[12], '400.000')  # qty
+            self.assertEqual(log_row[13], '400.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '400.000')  # avail-qty
+
+    def test_log_manual_cash_change(self):
+        """ test higher level function log_manual_cash_change """
+        ts = self.ts
+
+        ts.manual_change_cash(10000.)
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 20)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[19]
+            print(log_row)
+            self.assertEqual(log_row[1], 'manual')  # reason
+            self.assertEqual(log_row[2], '')  # order_id
+            self.assertEqual(log_row[3], '')  # pos_id
+            self.assertEqual(log_row[6], '')  # position
+            self.assertEqual(log_row[17], '10000.000')  # cash_change
+            self.assertEqual(log_row[18], '83905.000')  # cash
+            self.assertEqual(log_row[19], '10000.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '83905.000')  # avail-cash
+
+        ts.manual_change_cash(20000.)
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 21)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[20]
+            print(log_row)
+            self.assertEqual(log_row[1], 'manual')  # reason
+            self.assertEqual(log_row[2], '')  # order_id
+            self.assertEqual(log_row[3], '')  # pos_id
+            self.assertEqual(log_row[6], '')  # position
+            self.assertEqual(log_row[17], '20000.000')  # cash_change
+            self.assertEqual(log_row[18], '103905.000')  # cash
+            self.assertEqual(log_row[19], '20000.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '103905.000')  # avail-cash
+
+        ts.manual_change_cash(-200000.)  # manual change cash over availability will not seccess
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 21)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[20]
+            print(log_row)
+            self.assertEqual(log_row[1], 'manual')  # reason
+            self.assertEqual(log_row[2], '')  # order_id
+            self.assertEqual(log_row[3], '')  # pos_id
+            self.assertEqual(log_row[6], '')  # position
+            self.assertEqual(log_row[17], '20000.000')  # cash_change
+            self.assertEqual(log_row[18], '103905.000')  # cash
+            self.assertEqual(log_row[19], '20000.000')  # avail-cash_change
+            self.assertEqual(log_row[20], '103905.000')  # avail-cash
+
+    def test_log_manual_qty_change(self):
+        """ test higher level function log_manual_qty_change """
+        ts = self.ts
+
+        ts.manual_change_position(symbol='000001.SZ', quantity=200, price=30, side='long')
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 20)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[19]
+            print(log_row)
+            self.assertEqual(log_row[1], 'manual')  # reason
+            self.assertEqual(log_row[2], '')  # order_id
+            self.assertEqual(log_row[3], '1')  # pos_id
+            self.assertEqual(log_row[4], '000001.SZ')  # symbol
+            self.assertEqual(log_row[5], '平安银行')  # name
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[7], '')  # direction
+            self.assertEqual(log_row[11], '200.000')  # qty_change
+            self.assertEqual(log_row[12], '300.000')  # qty
+            self.assertEqual(log_row[13], '200.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '300.000')  # avail-qty
+            self.assertEqual(log_row[15], '72.267')  # cost_change
+            self.assertEqual(log_row[16], '-6.133')  # cost
+
+        ts.manual_change_position(symbol='000006.SZ', quantity=200, price=30, side='long')
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 21)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[20]
+            print(log_row)
+            self.assertEqual(log_row[1], 'manual')  # reason
+            self.assertEqual(log_row[2], '')  # order_id
+            self.assertEqual(log_row[3], '5')  # pos_id
+            self.assertEqual(log_row[4], '000006.SZ')  # symbol
+            self.assertEqual(log_row[5], '深振业A')  # name
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[7], '')  # direction
+            self.assertEqual(log_row[11], '200.000')  # qty_change
+            self.assertEqual(log_row[12], '600.000')  # qty
+            self.assertEqual(log_row[13], '200.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '600.000')  # avail-qty
+            self.assertEqual(log_row[15], '-19.838')  # cost_change
+            self.assertEqual(log_row[16], '69.675')  # cost
+
+        ts.manual_change_position(symbol='wrong_symbol', quantity=200, price=30, side='long')
+        # changing wrong symbol will not be logged
+
+        log_file_path_name = ts.trade_log_file_path_name
+        print(f'trade file path is {log_file_path_name}')
+        import csv
+        with open(log_file_path_name, 'r') as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
+
+            # there should be two rows including the header row, check the new row
+            self.assertEqual(len(rows), 21)
+            self.assertEqual(len(rows[1]), 21)
+            # check key parameters in the log result:
+            log_row = rows[20]
+            print(log_row)
+            self.assertEqual(log_row[1], 'manual')  # reason
+            self.assertEqual(log_row[2], '')  # order_id
+            self.assertEqual(log_row[3], '5')  # pos_id
+            self.assertEqual(log_row[4], '000006.SZ')  # symbol
+            self.assertEqual(log_row[5], '深振业A')  # name
+            self.assertEqual(log_row[6], 'long')  # position
+            self.assertEqual(log_row[7], '')  # direction
+            self.assertEqual(log_row[11], '200.000')  # qty_change
+            self.assertEqual(log_row[12], '600.000')  # qty
+            self.assertEqual(log_row[13], '200.000')  # avail-qty_change
+            self.assertEqual(log_row[14], '600.000')  # avail-qty
+            self.assertEqual(log_row[15], '-19.838')  # cost_change
+            self.assertEqual(log_row[16], '69.675')  # cost
 
     def test_trader_status(self):
         """Test class Trader"""
