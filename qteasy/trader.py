@@ -1261,7 +1261,7 @@ class Trader(object):
         if not isinstance(cash_change_detail, dict):
             raise TypeError(f'cash_change_detail should be a dict, got {type(cash_change_detail)} instead.')
         # 补充金额变动的额外信息
-        cash_change_detail['reason'] = 'manual_change'
+        cash_change_detail['reason'] = 'manual'
         self.write_log_file(**cash_change_detail)
         # 发送消息通知现金变动并记录system log
         cash, available, investment = self.account_cash
@@ -2086,6 +2086,12 @@ class Trader(object):
         """
 
         from qteasy.trade_recording import get_or_create_position, get_position_by_id, update_position, get_position_ids
+        from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
+
+        if not is_complete_cn_stock_symbol_like(symbol):
+            self.send_message(f'Invalid symbol: {symbol}, please check your input.'
+                              f'the symbol should include suffix like "SH"/"SZ", etc.')
+            return
 
         position_ids = get_position_ids(
                 account_id=self.account_id,
