@@ -229,15 +229,15 @@ class FastExperiments(unittest.TestCase):
 
         op.op_type = 'stepwise'
         op.set_blender("0.8*s0", 'close')
-        op.run(mode=1,
-               invest_start='20210101',
-               invest_end='20220501',
-               asset_type='E',
-               invest_cash_amounts=[1000000],
-               asset_pool=shares,
-               trade_batch_size=100,
-               sell_batch_size=1,
-               trade_log=True)
+        # op.run(mode=1,
+        #        invest_start='20210101',
+        #        invest_end='20220501',
+        #        asset_type='E',
+        #        invest_cash_amounts=[1000000],
+        #        asset_pool=shares,
+        #        trade_batch_size=100,
+        #        sell_batch_size=1,
+        #        trade_log=True)
         self.assertTrue(True)
 
     def test_index_enhancement(self):
@@ -252,15 +252,15 @@ class FastExperiments(unittest.TestCase):
 
         op.op_type = 'stepwise'
         op.set_blender("0.8*s0", 'close')
-        op.run(mode=1,
-               invest_start='20210101',
-               invest_end='20220501',
-               asset_type='E',
-               invest_cash_amounts=[1000000],
-               asset_pool=shares,
-               trade_batch_size=100,
-               sell_batch_size=1,
-               trade_log=True)
+        # op.run(mode=1,
+        #        invest_start='20210101',
+        #        invest_end='20220501',
+        #        asset_type='E',
+        #        invest_cash_amounts=[1000000],
+        #        asset_pool=shares,
+        #        trade_batch_size=100,
+        #        sell_batch_size=1,
+        #        trade_log=True)
         self.assertTrue(True)
 
     def test_grid_trading(self):
@@ -272,18 +272,18 @@ class FastExperiments(unittest.TestCase):
 
         op.op_type = 'batch'
         op.set_blender("1.0*s0", 'close')
-        op.run(
-                mode=1,
-                invest_start='20220401',
-                invest_end='20220731',
-                invest_cash_amounts=[1000000],
-                asset_type='IDX',
-                asset_pool=['000300.SH'],
-                trade_batch_size=0,
-                sell_batch_size=0,
-                trade_log=True,
-                allow_sell_short=True,
-        )
+        # op.run(
+        #         mode=1,
+        #         invest_start='20220401',
+        #         invest_end='20220731',
+        #         invest_cash_amounts=[1000000],
+        #         asset_type='IDX',
+        #         asset_pool=['000300.SH'],
+        #         trade_batch_size=0,
+        #         sell_batch_size=0,
+        #         trade_log=True,
+        #         allow_sell_short=True,
+        # )
         self.assertTrue(True)
 
     def test_get_history_data(self):

@@ -1121,7 +1121,7 @@ class Trader(object):
                               f'->{available_qty:.2f}; '
                               f'cost: {cost - full_trade_result["cost_change"]:.2f}->{cost:.2f}')
         if full_trade_result['cash_amount_change'] != 0:
-            self.send_message(f'<RESULT>: account cash changed: '
+            self.send_message(f'<RESULT LOGGED>: account cash changed: '
                               f'cash: ¥{cash_amount - cash_amount_change:,.2f}->¥{cash_amount:,.2f}'
                               f'available: ¥{available_cash - full_trade_result["available_cash_change"]:,.2f}'
                               f'->¥{available_cash:,.2f}')
@@ -1172,6 +1172,8 @@ class Trader(object):
             'symbol':                symbol,
             'position_type':         pos_type,
             'name':                  get_symbol_names(datasource=self.datasource, symbols=symbol)[0],
+            'cash_change':           0.,
+            'cash':                  account['cash_amount'],
             'available_cash_change': updated_amount - prev_amount,
             'available_cash':        updated_amount
         }
@@ -1227,6 +1229,8 @@ class Trader(object):
             'symbol':               symbol,
             'position_type':        pos_type,
             'name':                 get_symbol_names(datasource=self.datasource, symbols=pos['symbol'])[0],
+            'qty_change':           0.,
+            'qty':                  pos['qty'],
             'available_qty_change': updated_qty - prev_qty,
             'available_qty':        updated_qty,
         }
@@ -1597,20 +1601,23 @@ class Trader(object):
         - 处理订单的交割
         - 获取当日实时价格
         """
+
+        self.send_message(f'Checking Trader and Broker connections...')
         datasource = self._datasource
         config = self._config
         operator = self._operator
 
+        self.send_message(f'Reconnecting to datasource...')
         datasource.reconnect()
 
+        self.send_message(f'Preparing historical financial data...')
         datasource.get_all_basic_table_data(
                 refresh_cache=True,
                 raise_error=False,
         )
-        self.send_message(f'data source reconnected...')
 
+        self.send_message(f'Preparing live trading data...')
         # 扫描数据源，下载缺失的日频或以上数据
-
         refill_missing_datasource_data(
                 operator=operator,
                 trader=self,
@@ -1618,6 +1625,7 @@ class Trader(object):
                 datasource=datasource,
         )
 
+        self.send_message(f'Looking for un-delivered trade results...')
         # 检查账户中的成交结果，完成全部交易结果的交割
         delivery_results = process_account_delivery(
                 account_id=self.account_id,
@@ -1625,11 +1633,13 @@ class Trader(object):
                 config=self._config,
         )
 
+        # self.send_message(f'{len(delivery_results)} results found, they are: \n{delivery_results}')
         # 生成交割结果信息推送到信息队列
         for res in delivery_results:
-            if res.get('deliver_status') != 'DL':
+            if res.get('delivery_status') != 'DL':
+                # self.send_message(f'{res} is not delivered yet, passing...')
                 continue
-
+            # self.send_message(f'Recording delivery to trade record: {res}')
             self.log_cash_delivery(res)
             self.log_qty_delivery(res)
 
