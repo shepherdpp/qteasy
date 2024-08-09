@@ -608,6 +608,14 @@ class TraderShell(Cmd):
     def watch_list(self):
         return self._watch_list
 
+    @property
+    def debug(self):
+        return self.trader.debug
+
+    def toggle_debug(self):
+        """ toggle debug value"""
+        self.trader.debug = not self.trader.debug
+
     def format_watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
@@ -633,8 +641,7 @@ class TraderShell(Cmd):
                     watched_price_string += f' ={symbol[:-3]}/--/---'
             self._watched_price_string = watched_price_string
         else:
-            self._watched_price_string = ' == Realtime prices can be displayed here. ' \
-                                   'Use "watch" command to add stocks to watch list. =='
+            self._watched_price_string = ' == Live prices not available yet. =='
         return
 
     # ----- command arg parsers -----
@@ -821,6 +828,28 @@ class TraderShell(Cmd):
             return False
         self.trader.add_task('resume')
         sys.stdout.write(f'Resuming trader...\n')
+
+    def do_debug(self, arg):
+        """usage: debug [-h]
+
+        Toggle or set trader debug status
+
+        optional arguments:
+          --on        set debug mode on
+          --off       set debug mode off
+          -h, --help  show this help message and exit
+
+        Examples:
+        ---------
+        to toggle debug:
+        (QTEASY) debug
+        to set debug status:
+        (QTEASY) debug --on
+        """
+        args = self.parse_args('resume', arg)
+        if not args:
+            return False
+        self.toggle_debug()
 
     def do_bye(self, arg):
         """usage: bye [-h]
@@ -2016,6 +2045,8 @@ class TraderShell(Cmd):
 
         prev_message = ''
         live_price_refresh_timer = 0
+        watched_price_refresh_interval = self.trader.get_config(
+                'watched_price_refresh_interval')['watched_price_refresh_interval']
         while True:
             # enter shell loop
             try:
@@ -2024,12 +2055,10 @@ class TraderShell(Cmd):
                     break
                 if self.status == 'dashboard':
                     # check trader message queue and display messages
-                    watched_price_refresh_interval = self.trader.get_config(
-                            'watched_price_refresh_interval')['watched_price_refresh_interval']
-                    # adjust message length to terminal width
                     text_width = int(shutil.get_terminal_size().columns)
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
+                        prev_message = message
                         # TODO: there's no more _R message, _R messages should be created by CLI
                         #  when no trader messages are popped out, then the messages are generated
                         #  by CLI to show countdown to next task read from the trader
@@ -2064,23 +2093,25 @@ class TraderShell(Cmd):
                         #                                    format_tags=True)
                         #     rich.print(message)
                         # prev_message = message
+                        # adjust message length to terminal width
+                        message = self.trader.add_message_prefix(message, self.debug)
                         message = adjust_string_length(message,
                                                        text_width - 2)
                         rich.print(message)
                     else:
-                        # 如果没有消息，显示倒计时信息
+                        # 如果没有消息，原位重复显示上一条信息并显示倒计时/实时价格
                         next_task = self.trader.next_task
                         count_down = self.trader.count_down_to_next_task
                         count_down_string = sec_to_duration(count_down, estimation=True)
-                        message = ''
+                        message = prev_message
                         message = self.trader.add_message_prefix(message)
                         message += f'Next task: {next_task}'
-                        message = message + ' ' + self._watched_price_string
                         message = Text(message)
                         if count_down > 60:
                             message.append(f' in {count_down_string}', style='bold green')
                         else:
                             message.append(f' in {count_down_string}', style='bold red')
+                        message = message + ' ' + self._watched_price_string
                         message.truncate(text_width - 2)
                         # 倒计时信息覆盖原有信息
                         rich.print(message, end='\r')

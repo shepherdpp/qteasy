@@ -292,8 +292,7 @@ class Trader(object):
                         end=today,
                 )['close'].iloc[-1]
             except Exception as e:
-                if self.debug:
-                    self.send_message(f'Error in getting current prices: {e}')
+                self.send_message(f'Error in getting current prices: {e}', debug=True)
                 current_prices = pd.Series(index=positions.index, data=np.nan)
         else:
             current_prices = self.live_price['close'].reindex(index=positions.index).astype('float')
@@ -488,19 +487,16 @@ class Trader(object):
                     white_listed_tasks = self.TASK_WHITELIST[self.status]
                     task = self.task_queue.get()
                     if isinstance(task, tuple):
-                        if self.debug:
-                            self.send_message(f'tuple task: {task} is taken from task queue, task[0]: {task[0]}'
-                                              f'task[1]: {task[1]}')
+                        self.send_message(f'tuple task: {task} is taken from task queue, task[0]: {task[0]}'
+                                          f'task[1]: {task[1]}', debug=True)
                         task_name = task[0]
                         args = task[1]
                     else:
                         task_name = task
                         args = None
-                    if self.debug:
-                        self.send_message(f'task queue is not empty, taking next task from queue: {task_name}')
+                    self.send_message(f'task queue is not empty, taking next task from queue: {task_name}', debug=True)
                     if task_name not in white_listed_tasks:
-                        if self.debug:
-                            self.send_message(f'task: {task} cannot be executed in current status: {self.status}')
+                        self.send_message(f'task: {task} cannot be executed in current status: {self.status}', debug=True)
                         self.task_queue.task_done()
                         continue
                     try:
@@ -512,7 +508,7 @@ class Trader(object):
                         self.send_message(f'error occurred when executing task: {task_name}, error: {e}')
                         if self.debug:
                             import traceback
-                            traceback.print_exc()
+                            traceback.print_exc()  # TODO: print_exc()是UI的任务，不是trader的任务
                     self.task_queue.task_done()
 
                 # 如果没有暂停，从任务日程中添加任务到任务队列
@@ -552,7 +548,7 @@ class Trader(object):
             self.send_message(f'error occurred when running trader, error: {e}')
             if self.debug:
                 import traceback
-                traceback.print_exc()
+                traceback.print_exc()  # TODO: print_exc是UI的任务，不是trader的任务
         return
 
     def info(self, verbose=False, detail=False, system=False) -> dict:
@@ -683,17 +679,20 @@ class Trader(object):
         order_ids = trade_orders.index.values
         return read_trade_results_by_order_id(order_id=order_ids, data_source=self._datasource)
 
-    def send_message(self, message: (str, Text)) -> None:
-        """ 发送消息到消息队列, 在消息前添加必要的信息如日期、时间等
+    def send_message(self, message: (str, Text), debug=False) -> None:
+        """ 发送消息到消息队列, 并根据情况对消息进行处理
 
-        根据当前状态和消息类型，在添加到消息队列的同时，执行不同的操作：
-        - 在消息前添加时间、状态等信息
-        - 如果是debug状态，添加<DEBUG>标签在信息头部
+        在处理消息时，执行下面：
+        - 在消息前添加时间、状态等信息，并将消息记录到system log中
+        - 如果debug=True，只有self.debug == True时才将消息推送到消息队列
+        - 如果debug=False，总是将消息推送到消息队列
 
         Parameters
         ----------
         message: str, Text
             消息内容
+        debug: bool, optional, default: False
+            消息是否为debug类型，如果消息为debug类型，但当前不是debug模式时，消息会被阻断，不发送到消息队列
         """
 
         if self.live_sys_logger is None:
@@ -701,25 +700,35 @@ class Trader(object):
         else:
             logger_live = self.live_sys_logger
 
-        message = self.add_message_prefix(message)
+        prefix_message = self.add_message_prefix(message, debug=debug)
 
-        # 处理消息，发送消息且写入log文件
+        # 将添加消息头的消息写入log文件
+        if debug:
+            logger_live.debug(prefix_message)
+        else:
+            logger_live.info(prefix_message)
+
+        # 如果debug 但 not self.debug，不发送消息到消息队列
+        if debug and (not self.debug):
+            return
+        # 其他情况下，发送原始消息到消息队列
         self.message_queue.put(message)
-        logger_live.info(message)
 
-    def add_message_prefix(self, message: str) -> str:
-        ''' 在消息前添加时间、状态等信息
+    def add_message_prefix(self, message: str, debug=False) -> str:
+        """ 在消息前添加时间、状态等信息
 
         Parameters
         ----------
         message: str
             消息内容
+        debug: bool, optional, default: False
+            是否在消息头中添加"<debug>"字样
 
         Returns
         -------
         message: str
             添加了时间、状态等信息的消息
-        '''
+        """
 
         time_string = self.get_current_tz_datetime().strftime("%b%d %H:%M:%S")  # 本地时间
         if self.time_zone != 'local':
@@ -730,7 +739,7 @@ class Trader(object):
         # 在message前添加时间、状态等信息
         message = f'<{time_string}{tz}>{self.status}: {message}'
 
-        if self.debug:
+        if debug:
             message = f'<DEBUG>{message}'
 
         return message
@@ -754,8 +763,7 @@ class Trader(object):
 
         if kwargs:
             task = (task, kwargs)
-        if self.debug:
-            self.send_message(f'adding task: {task}')
+        self.send_message(f'adding task: {task}', debug=True)
         self._add_task_to_queue(task)
 
     def history_orders(self, with_trade_results=True):
@@ -1377,8 +1385,7 @@ class Trader(object):
         """
 
         # TODO: 这里应该可以允许用户输入blender，从而灵活地测试不同交易策略的组合和混合方式
-        if self.debug:
-            self.send_message(f'running task run strategy: {strategy_ids}')
+        self.send_message(f'running task run strategy: {strategy_ids}', debug=True)
         operator = self._operator
         signal_type = operator.signal_type
         shares = self.asset_pool
@@ -1398,8 +1405,7 @@ class Trader(object):
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
         # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
-        if self.debug:
-            self.send_message(f'getting live price data for strategy run...')
+        self.send_message(f'getting live price data for strategy run...', debug=True)
         # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
@@ -1427,16 +1433,14 @@ class Trader(object):
         else:
             pass
         # 读取最新数据,设置operator的数据分配,创建trade_data
-        if self.debug:
-            self.send_message(f'preparing trade data...')
+        self.send_message(f'preparing trade data...', debug=True)
         hist_op, hist_ref = check_and_prepare_live_trade_data(
                 operator=operator,
                 config=config,
                 datasource=self._datasource,
                 live_prices=self.live_price,
         )
-        if self.debug:
-            self.send_message(f'read real time data and set operator data allocation')
+        self.send_message(f'read real time data and set operator data allocation', debug=True)
         operator.assign_hist_data(
                 hist_data=hist_op,
                 reference_data=hist_ref,
@@ -1461,8 +1465,7 @@ class Trader(object):
                 shares=shares,
                 data_source=self._datasource,
         )
-        if self.debug:
-            self.send_message(f'Generating trade data from position availabilities...')
+        self.send_message(f'Generating trade data from position availabilities...', debug=True)
         trade_data[:, 0] = position_availabilities[1]
         trade_data[:, 1] = position_availabilities[2]
         trade_data[:, 2] = current_prices
@@ -1478,8 +1481,7 @@ class Trader(object):
                     sample_idx=0,
                     price_type_idx=0
             )  # 生成交易清单
-        if self.debug:
-            self.send_message(f'ran strategy and created signal: {op_signal}')
+        self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
 
         # 解析交易信号
         symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
@@ -1495,13 +1497,13 @@ class Trader(object):
         )
         names = get_symbol_names(self._datasource, symbols)
         submitted_qty = 0
-        if self.debug:
-            self.send_message(f'generated trade signals:\n'
-                              f'symbols: {symbols}\n'
-                              f'positions: {positions}\n'
-                              f'directions: {directions}\n'
-                              f'quantities: {quantities}\n'
-                              f'current_prices: {quoted_prices}\n')
+        self.send_message(f'generated trade signals:\n'
+                          f'symbols: {symbols}\n'
+                          f'positions: {positions}\n'
+                          f'directions: {directions}\n'
+                          f'quantities: {quantities}\n'
+                          f'current_prices: {quoted_prices}\n',
+                          debug=True)
         for sym, name, pos, d, qty, price, remark in zip(
                 symbols,
                 names,
@@ -1558,8 +1560,7 @@ class Trader(object):
         None
         """
 
-        if self.debug:
-            self.send_message(f'running task process_result, got result: \n{result}')
+        self.send_message(f'running task process_result, got result: \n{result}', debug=True)
 
         try:
             # 交易结果处理, 更新账户和持仓信息, 如果交易结果导致错误，不会更新账户和持仓信息
@@ -1570,7 +1571,7 @@ class Trader(object):
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
             if self.debug:
                 import traceback
-                self.send_message(traceback.format_exc())  # print_exc是UI的任务，不是trader的任务
+                self.send_message(traceback.format_exc())  # TODO: print_exc是UI的任务，不是trader的任务
             return
 
         # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）
@@ -1653,12 +1654,10 @@ class Trader(object):
         2，处理当日已成交的订单结果的交割，记录交割结果
         3，生成消息发送到消息队列
         """
-        if self.debug:
-            self.send_message('running task post_close')
+        self.send_message('running task post_close', debug=True)
 
         if self.is_market_open:
-            if self.debug:
-                self.send_message('market is still open, post_close can not be executed during open time!')
+            self.send_message('market is still open, post_close can not be executed during open time!', debug=True)
             return
 
         # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
@@ -1729,8 +1728,7 @@ class Trader(object):
         1，启动broker的主循环，将broker的status设置为running
         2，生成消息发送到消息队列
         """
-        if self.debug:
-            self.send_message('running task: market open')
+        self.send_message('running task: market open', debug=True)
         self.is_market_open = True
         self.run_task('wakeup')
         self.send_message('market is open, trader is running, broker is running')
@@ -1741,16 +1739,14 @@ class Trader(object):
         1，停止broker的主循环，将broker的status设置为stopped
         2，生成消息发送到消息队列
         """
-        if self.debug:
-            self.send_message('running task: market close')
+        self.send_message('running task: market close', debug=True)
         self.is_market_open = False
         self.run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
     def _refill(self, tables, freq):
         """ 补充数据库内的历史数据 """
-        if self.debug:
-            self.send_message('running task: refill, this task will be done only during sleeping')
+        self.send_message('running task: refill, this task will be done only during sleeping', debug=True)
         # 更新数据源中的数据，不同频率的数据表可以不同时机更新，每次更新时仅更新当天或最近一个freq的数据
         # 例如，freq为H或min的数据，更新当天的数据，freq为W的数据，更新最近一周
         # 在arg中必须给出freq以及tables两个参数，tables参数直接传入refill_local_source函数
@@ -1824,12 +1820,10 @@ class Trader(object):
                 t = Thread(target=task_func, args=args, daemon=True)
             else:
                 t = Thread(target=task_func, daemon=True)
-            if self.debug:
-                self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}')
+            self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
             t.start()
         else:
-            if self.debug:
-                self.send_message(f'running task: {task} with args: {args}')
+            self.send_message(f'running task: {task} with args: {args}', debug=True)
             if args:
                 task_func(*args)
             else:
@@ -1865,8 +1859,7 @@ class Trader(object):
         task: str
             任务名称
         """
-        if self.debug:
-            self.send_message(f'putting task {task} into task queue')
+        self.send_message(f'putting task {task} into task queue', debug=True)
         self.task_queue.put(task)
 
     def _add_task_from_schedule(self, current_time=None):
@@ -1895,8 +1888,7 @@ class Trader(object):
             # 当task_time小于等于current_time时，添加task，同时删除该task
             if task_time <= current_time:
                 task_tuple = self.task_daily_schedule.pop(idx)
-                if self.debug:
-                    self.send_message(f'adding task: {task_tuple} from agenda')
+                self.send_message(f'adding task: {task_tuple} from agenda', debug=True)
                 if len(task_tuple) == 3:
                     task = task_tuple[1:3]
                 elif len(task_tuple) == 2:
@@ -1905,9 +1897,8 @@ class Trader(object):
                     err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
                     raise err
 
-                if self.debug:
-                    self.send_message(f'current time {current_time} >= task time {task_time}, '
-                                      f'adding task: {task} from agenda')
+                self.send_message(f'current time {current_time} >= task time {task_time}, '
+                                      f'adding task: {task} from agenda', debug=True)
                 self._add_task_to_queue(task)
                 task_added = True
             # 计算count_down_to_next_task秒数
@@ -1941,24 +1932,21 @@ class Trader(object):
         if current_time is None:
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
-        if self.debug:
-            self.send_message('initializing agenda...')
+        self.send_message('initializing agenda...', debug=True)
         # 如果不是交易日，直接返回
         if not self.is_trade_day:
-            if self.debug:
-                self.send_message('not a trade day, no need to initialize agenda')
+            self.send_message('not a trade day, no need to initialize agenda', debug=True)
             return
         if self.task_daily_schedule:
             # 如果任务日程非空列表，直接返回
-            if self.debug:
-                self.send_message('task agenda is not empty, no need to initialize agenda')
+            self.send_message('task agenda is not empty, no need to initialize agenda', debug=True)
             return
         self.task_daily_schedule = create_daily_task_schedule(
                 self.operator,
                 self._config
         )
-        if self.debug:
-            self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}')
+        self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}',
+                          debug=True)
         # 根据当前时间删除过期的任务
         moa = pd.to_datetime(self._config['market_open_time_am']).time()
         mca = pd.to_datetime(self._config['market_close_time_am']).time()
@@ -1966,21 +1954,19 @@ class Trader(object):
         mcc = pd.to_datetime(self._config['market_close_time_pm']).time()
         if current_time < moa:
             # before market morning open, keep all tasks
-            if self.debug:
-                self.send_message('before market morning open, keeping all tasks')
+            self.send_message('before market morning open, keeping all tasks', debug=True)
         elif moa < current_time < mca:
             # market open time, remove all task before current time except pre_open
-            if self.debug:
-                self.send_message('market open, removing all tasks before current time except pre_open and open_market')
+            self.send_message('market open, removing all tasks before current time except pre_open and open_market',
+                              debug=True)
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
                                                      'open_market'])]
         elif mca < current_time < moc:
             # before market afternoon open, remove all task before current time except pre_open, open_market and sleep
-            if self.debug:
-                self.send_message('before market afternoon open, removing all tasks before current time '
-                                  'except pre_open, open_market and sleep')
+            self.send_message('before market afternoon open, removing all tasks before current time '
+                              'except pre_open, open_market and sleep', debug=True)
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
@@ -1988,9 +1974,8 @@ class Trader(object):
                                                      'close_market'])]
         elif moc < current_time < mcc:
             # market afternoon open, remove all task before current time except pre_open, open_market, sleep, and wakeup
-            if self.debug:
-                self.send_message('market afternoon open, removing all tasks before current time '
-                                  'except pre_open, open_market, sleep and wakeup')
+            self.send_message('market afternoon open, removing all tasks before current time '
+                              'except pre_open, open_market, sleep and wakeup', debug=True)
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
@@ -1998,8 +1983,7 @@ class Trader(object):
                                                      'close_market'])]
         elif mcc < current_time:
             # after market close, remove all task before current time except pre_open and post_close
-            if self.debug:
-                self.send_message('market closed, removing all tasks before current time except post_close')
+            self.send_message('market closed, removing all tasks before current time except post_close', debug=True)
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
@@ -2008,8 +1992,7 @@ class Trader(object):
             err = ValueError(f'Invalid current time: {current_time}')
             raise err
 
-        if self.debug:
-            self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}')
+        self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}', debug=True)
 
     def manual_change_cash(self, amount):
         """ 手动修改现金，根据amount的正负号，增加或减少现金
@@ -2109,8 +2092,7 @@ class Trader(object):
                     position_type=side,
                     data_source=self.datasource,
             )
-            if self.debug:
-                self.send_message('Position to be modified does not exist, new position is created!')
+            self.send_message('Position to be modified does not exist, new position is created!', debug=True)
         elif len(position_ids) == 1:
             # found one position, use it, if side is not consistent, create a new one on the other side
             position_id = position_ids[0]
@@ -2156,9 +2138,8 @@ class Trader(object):
                 pos_id=position_id,
                 data_source=self.datasource,
         )
-        if self.debug:
-            self.send_message(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
-                              f'from {position["qty"]} to {position["qty"] + quantity}')
+        self.send_message(f'Changing position {position_id} {position["symbol"]}/{position["position"]} '
+                          f'from {position["qty"]} to {position["qty"] + quantity}', debug=True)
         # 如果减少持仓，则可用持仓数量必须足够，否则退出
         if quantity < 0 and position['available_qty'] < -quantity:
             self.send_message(f'Not enough position to decrease, '
@@ -2197,20 +2178,17 @@ class Trader(object):
 
     def _update_live_price(self):
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
-        if self.debug:
-            self.send_message(f'Acquiring live price data')
+        self.send_message(f'Acquiring live price data', debug=True)
         from qteasy.emfuncs import stock_live_kline_price
         real_time_data = stock_live_kline_price(symbols=self.asset_pool)
         if real_time_data.empty:
             # empty data downloaded
-            if self.debug:
-                self.send_message(f'Something went wrong, failed to download live price data.')
+            self.send_message(f'Something went wrong, failed to download live price data.', debug=True)
             return
         real_time_data.set_index('symbol', inplace=True)
         # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data
-        if self.debug:
-            self.send_message(f'acquired live price data, live prices updated!')
+        self.send_message(f'acquired live price data, live prices updated!', debug=True)
         return
 
     def update_watched_prices(self) -> pd.DataFrame:
@@ -2226,12 +2204,9 @@ class Trader(object):
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
                 live_prices.set_index('symbol', inplace=True)
 
-                if self.debug:
-                    self.send_message('live prices acquired to update watched prices!')
+                self.send_message('live prices acquired to update watched prices!', debug=True)
             else:
-
-                if self.debug:
-                    self.send_message('Failed to acquire live prices to update watch price string!')
+                self.send_message('Failed to acquire live prices to update watch price string!', debug=True)
 
             self.watched_prices = live_prices
 
