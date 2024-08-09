@@ -611,7 +611,7 @@ class TraderShell(Cmd):
     def format_watched_prices(self):
         """ 根据watch list返回清单中股票的信息：代码、名称、当前价格、涨跌幅
         """
-        watched_prices = self.trader.update_watched_prices()
+        watched_prices = self.trader.watched_prices
         symbols = self._watch_list
         watched_price_string = ''
 
@@ -2075,6 +2075,7 @@ class TraderShell(Cmd):
                         message = ''
                         message = self.trader.add_message_prefix(message)
                         message += f'Next task: {next_task}'
+                        message = message + ' ' + self._watched_price_string
                         message = Text(message)
                         if count_down > 60:
                             message.append(f' in {count_down_string}', style='bold green')
