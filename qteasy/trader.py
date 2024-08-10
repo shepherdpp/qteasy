@@ -505,10 +505,9 @@ class Trader(object):
                         else:
                             self.run_task(task_name)
                     except Exception as e:
+                        import traceback
                         self.send_message(f'error occurred when executing task: {task_name}, error: {e}')
-                        if self.debug:
-                            import traceback
-                            traceback.print_exc()  # TODO: print_exc()是UI的任务，不是trader的任务
+                        self.send_message(f'Traceback: \n{traceback.format_exc()}', debug=True)
                     self.task_queue.task_done()
 
                 # 如果没有暂停，从任务日程中添加任务到任务队列
@@ -546,9 +545,8 @@ class Trader(object):
             self.run_task('stop')
         except Exception as e:
             self.send_message(f'error occurred when running trader, error: {e}')
-            if self.debug:
-                import traceback
-                traceback.print_exc()  # TODO: print_exc是UI的任务，不是trader的任务
+            import traceback
+            self.send_message(f'Traceback: \n{traceback.format_exc()}', debug=True)
         return
 
     def info(self, verbose=False, detail=False, system=False) -> dict:
@@ -1569,9 +1567,8 @@ class Trader(object):
 
         except Exception as e:
             self.send_message(f'{e} Error occurred during processing trade result, result will be ignored')
-            if self.debug:
-                import traceback
-                self.send_message(traceback.format_exc())  # TODO: print_exc是UI的任务，不是trader的任务
+            import traceback
+            self.send_message(f'Traceback: \n{traceback.format_exc()}', debug=True)
             return
 
         # 生成交易结果后，逐个检查交易结果并记录到trade_log文件并推送到信息队列（记录到system_log中）

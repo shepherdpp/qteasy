@@ -9,6 +9,8 @@
 #   effects.
 # ======================================
 
+import os
+
 import mplfinance as mpf
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -24,6 +26,9 @@ from .tafuncs import macd, dema, rsi, bbands, sma
 
 from pandas.plotting import register_matplotlib_converters
 
+
+zh_font_name = 'Heiti TC' if os.name == 'nt' else 'pingfang HK'
+
 register_matplotlib_converters()
 
 ValidCandlePlotIndicators = ['macd',
@@ -37,7 +42,7 @@ ValidCandlePlotMATypes = ['ma',
 
 ValidPlotTypes = ['candle', 'renko', 'ohlc', 'line']
 
-title_font = {'fontname': 'pingfang HK',
+title_font = {'fontname': zh_font_name,
               'size':     '16',
               'color':    'black',
               'weight':   'bold',
@@ -63,7 +68,7 @@ small_green_font = {'fontname': 'Arial',
                     'color':    'green',
                     'weight':   'bold',
                     'va':       'bottom'}
-normal_label_font = {'fontname': 'pingfang HK',
+normal_label_font = {'fontname': zh_font_name,
                      'size':     '12',
                      'color':    'black',
                      'weight':   'normal',
