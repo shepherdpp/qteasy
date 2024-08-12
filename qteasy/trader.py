@@ -2200,6 +2200,8 @@ class Trader(object):
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
                 live_prices.set_index('symbol', inplace=True)
+                # remove duplicated indices if any
+                live_prices = live_prices[~live_prices.index.duplicated(keep='first')]
 
                 self.send_message('live prices acquired to update watched prices!', debug=True)
             else:

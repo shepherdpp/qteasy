@@ -621,28 +621,36 @@ class TraderShell(Cmd):
         """
         watched_prices = self.trader.watched_prices
         symbols = self._watch_list
-        watched_price_string = ''
+        watched_price_string = Text()
 
-        if not watched_prices.empty:
-            for symbol in symbols:
-                if symbol in watched_prices.index:
-                    change = watched_prices.loc[symbol, 'change']
-                    watched_prices_seg = f' ={symbol[:-3]}{watched_prices.loc[symbol, "name"]}/' \
-                                         f'{watched_prices.loc[symbol, "close"]:.2f}/' \
-                                         f'{watched_prices.loc[symbol, "change"]:+.2%}'
-                    if change > 0:
-                        watched_price_string += ('[bold red]' + watched_prices_seg + '[/bold red]')
-                    elif change < 0:
-                        watched_price_string += ('[bold green]' + watched_prices_seg + '[/bold green]')
-                    else:
-                        watched_price_string += watched_prices_seg
-
-                else:
-                    watched_price_string += f' ={symbol[:-3]}/--/---'
-            self._watched_price_string = watched_price_string
-        else:
+        if watched_prices is None:
             self._watched_price_string = ' == Live prices not available yet. =='
-        return
+            return
+
+        if watched_prices.empty:
+            self._watched_price_string = ' == Live prices not available yet. =='
+            return
+        # remove duplicated symbols in watched_prices and symbols
+        watched_prices = watched_prices[~watched_prices.index.duplicated(keep='first')]
+        symbols = list(set(symbols))
+
+        # start to build watched price strings
+        for symbol in symbols:
+            if symbol in watched_prices.index:
+                change = watched_prices.loc[symbol, 'change']
+                watched_prices_seg = f' ={symbol[:-3]}{watched_prices.loc[symbol, "name"]}/' \
+                                     f'{watched_prices.loc[symbol, "close"]:.2f}/' \
+                                     f'{watched_prices.loc[symbol, "change"]:+.2%}'
+                if change > 0:
+                    watched_price_string.append(watched_prices_seg, style='bold red')
+                elif change < 0:
+                    watched_price_string.append(watched_prices_seg, style='bold green')
+                else:
+                    watched_price_string.append(watched_prices_seg)
+
+            else:
+                watched_price_string += f' ={symbol[:-3]}/--/---'
+        self._watched_price_string = watched_price_string
 
     # ----- command arg parsers -----
     def init_arg_parsers(self):
@@ -2043,7 +2051,7 @@ class TraderShell(Cmd):
         Thread(target=self.trader.run).start()
         Thread(target=self.trader.broker.run).start()
 
-        prev_message = ''
+        live_price_refresh_interval = 0.05
         live_price_refresh_timer = 0
         watched_price_refresh_interval = self.trader.get_config(
                 'watched_price_refresh_interval')['watched_price_refresh_interval']
@@ -2058,7 +2066,6 @@ class TraderShell(Cmd):
                     text_width = int(shutil.get_terminal_size().columns)
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
-                        prev_message = message
                         # TODO: there's no more _R message, _R messages should be created by CLI
                         #  when no trader messages are popped out, then the messages are generated
                         #  by CLI to show countdown to next task read from the trader
@@ -2099,33 +2106,35 @@ class TraderShell(Cmd):
                                                        text_width - 2)
                         rich.print(message)
                     else:
-                        # 如果没有消息，原位重复显示上一条信息并显示倒计时/实时价格
+                        # 如果没有消息，原位显示倒计时/实时价格
                         next_task = self.trader.next_task
                         count_down = self.trader.count_down_to_next_task
                         count_down_string = sec_to_duration(count_down, estimation=True)
-                        message = prev_message
+                        message = ''
                         message = self.trader.add_message_prefix(message)
-                        message += f'Next task: {next_task}'
+                        # print(f'next task: {next_task}')
+                        next_task_string = next_task[1] if next_task else 'None'
+                        message += f'{next_task_string}'
                         message = Text(message)
                         if count_down > 60:
                             message.append(f' in {count_down_string}', style='bold green')
                         else:
                             message.append(f' in {count_down_string}', style='bold red')
                         message = message + ' ' + self._watched_price_string
-                        message.truncate(text_width - 2)
+                        message.truncate(text_width, overflow='ellipsis')
                         # 倒计时信息覆盖原有信息
                         rich.print(message, end='\r')
 
                     # check if live price refresh timer is up, if yes, refresh live prices
-                    live_price_refresh_timer += 0.05
+                    live_price_refresh_timer += live_price_refresh_interval
                     if live_price_refresh_timer > watched_price_refresh_interval:
                         # 在一个新的进程中读取实时价格, 收盘后不获取
                         if self.trader.is_market_open:
                             from threading import Thread
                             t = Thread(target=self.trader.update_watched_prices, daemon=True)
                             t.start()
-                            if self.trader.debug:
-                                self.trader.send_message(f'Acquiring watched prices in a new thread<{t.name}>')
+
+                        self.format_watched_prices()
                         live_price_refresh_timer = 0
                 elif self.status == 'command':
                     # get user command input and do commands
@@ -2139,7 +2148,7 @@ class TraderShell(Cmd):
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
                     self.do_bye('')
-                time.sleep(0.05)
+                time.sleep(live_price_refresh_interval)
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
                 t = Timer(5, lambda: print(
