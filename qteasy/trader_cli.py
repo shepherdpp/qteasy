@@ -240,10 +240,7 @@ def pack_pool_info(trader_info, width=80):
 
     info_str = ''
 
-    asset_pool_string = adjust_string_length(
-            s=' '.join(asset_pool),
-            n=width - 2,
-    )
+    asset_pool_string = adjust_string_length(s=' '.join(asset_pool), n=width - 2)
 
     info_str += f'{" Investment ":=^{width}}\n'
     info_str += f'Current Investment Type:        {trader_info["Asset Type"]}\n'
@@ -302,6 +299,8 @@ class TraderShell(Cmd):
                                   'suspended until trader is resumed'),
         'resume':     dict(prog='resume', description='Resume trader',
                            usage='resume [-h]', ),
+        'debug':      dict(prog='debug', description='toggle or set debug mode',
+                           usage='debug [-h] [--set]'),
         'bye':        dict(prog='bye', description='Stop trader and exit shell',
                            usage='bye [-h]',
                            epilog='You can also exit shell using command "exit" or "stop"'),
@@ -383,6 +382,7 @@ class TraderShell(Cmd):
         'status':     [],
         'pause':      [],
         'resume':     [],
+        'debug':      [('--set', '-s')],
         'bye':        [],
         'exit':       [],
         'stop':       [],
@@ -438,6 +438,10 @@ class TraderShell(Cmd):
         'status':     [],
         'pause':      [],
         'resume':     [],
+        'debug':      [{'action':  'store',
+                        'default': '',
+                        'choices': ['on', 'off'],
+                        'help':    'turn on or off debug mode with on/off'}],
         'bye':        [],
         'exit':       [],
         'stop':       [],
@@ -624,7 +628,7 @@ class TraderShell(Cmd):
         watched_price_string = Text()
 
         if watched_prices is None:
-            self._watched_price_string = ' == Live prices not available yet. =='
+            self._watched_price_string = ' == Live prices not available at the moment. =='
             return
 
         if watched_prices.empty:
@@ -678,7 +682,7 @@ class TraderShell(Cmd):
                     raise RuntimeError(f'Error: failed to add argument {arg} to parser for command {command}\n'
                                        f'pars: {arg_property}')
 
-    def parse_args(self, command, args=None):
+    def parse_args(self, command, args=None) -> argparse.Namespace or None:
         """ 解析命令行参数
 
         Parameters
@@ -702,12 +706,11 @@ class TraderShell(Cmd):
             print(f'{e}')
             return None
         except SystemExit:  # wrong argument, this should work for python < 3.10
-            # print(f'Wrong argument, use "help {command}" to see more info')
             return None
 
         return args
 
-    def check_buy_sell_args(self, args, type):
+    def check_buy_sell_args(self, args, type) -> bool:
         """ 检查买卖参数是否合法
 
         Parameters
@@ -838,13 +841,12 @@ class TraderShell(Cmd):
         sys.stdout.write(f'Resuming trader...\n')
 
     def do_debug(self, arg):
-        """usage: debug [-h]
+        """usage: debug [-h] [--set]
 
         Toggle or set trader debug status
 
         optional arguments:
-          --on        set debug mode on
-          --off       set debug mode off
+          --set, -s   set debug mode on or off with on/off
           -h, --help  show this help message and exit
 
         Examples:
@@ -852,12 +854,29 @@ class TraderShell(Cmd):
         to toggle debug:
         (QTEASY) debug
         to set debug status:
-        (QTEASY) debug --on
+        (QTEASY) debug -s on
         """
-        args = self.parse_args('resume', arg)
+        args = self.parse_args('debug', arg)
         if not args:
             return False
-        self.toggle_debug()
+
+        if args.set == '':
+            # Nothing is input, toggle debug
+            self.toggle_debug()
+        elif args.set == 'on':
+            self.trader.debug = True
+        elif args.set == 'off':
+            self.trader.debug = False
+        else:
+            import pdb; pdb.set_trace()
+            print('Wrong argument, use "on" or "off" to set debug mode')
+            return False
+
+        if self.debug:
+            print('Debug mode is on')
+        else:
+            print('Debug mode is off')
+
 
     def do_bye(self, arg):
         """usage: bye [-h]
@@ -2066,44 +2085,10 @@ class TraderShell(Cmd):
                     text_width = int(shutil.get_terminal_size().columns)
                     if not self._trader.message_queue.empty():
                         message = self._trader.message_queue.get()
-                        # TODO: there's no more _R message, _R messages should be created by CLI
-                        #  when no trader messages are popped out, then the messages are generated
-                        #  by CLI to show countdown to next task read from the trader
-                        # if message[-2:] == '_R':
-                        #     # 如果读取到覆盖型信息，则逐次读取所有的覆盖型信息，并显示最后一条和下一条常规信息
-                        #     next_normal_message = None
-                        #     while True:
-                        #         if self._trader.message_queue.empty():
-                        #             break
-                        #         next_message = self._trader.message_queue.get()
-                        #         if message[-2:] != '_R':
-                        #             next_normal_message = next_message
-                        #             break
-                        #         message = next_message
-                        #
-                        #     message = message[:-2] + ' ' + self._watched_price_string
-                        #     message = adjust_string_length(message,
-                        #                                    text_width - 2,
-                        #                                    hans_aware=True,
-                        #                                    format_tags=True)
-                        #     message = f'{message: <{text_width - 2}}'
-                        #     rich.print(message, end='\r')
-                        #     if next_normal_message:
-                        #         rich.print(message)
-                        # else:
-                        #     # 在前一条信息为覆盖型信息时，在信息前插入"\n"使常规信息在下一行显示
-                        #     if prev_message[-2:] == '_R':
-                        #         print('\n', end='')
-                        #     message = adjust_string_length(message,
-                        #                                    text_width - 2,
-                        #                                    hans_aware=True,
-                        #                                    format_tags=True)
-                        #     rich.print(message)
-                        # prev_message = message
+
                         # adjust message length to terminal width
                         message = self.trader.add_message_prefix(message, self.debug)
-                        message = adjust_string_length(message,
-                                                       text_width - 2)
+                        message = adjust_string_length(message, text_width - 2)
                         rich.print(message)
                     else:
                         # 如果没有消息，原位显示倒计时/实时价格
@@ -2111,7 +2096,7 @@ class TraderShell(Cmd):
                         count_down = self.trader.count_down_to_next_task
                         count_down_string = sec_to_duration(count_down, estimation=True)
                         message = ''
-                        message = self.trader.add_message_prefix(message)
+                        message = self.trader.add_message_prefix(message, self.debug)
                         # print(f'next task: {next_task}')
                         next_task_string = next_task[1] if next_task else 'None'
                         message += f'{next_task_string}'

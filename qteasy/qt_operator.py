@@ -1627,12 +1627,12 @@ class Operator:
                 run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
                 qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
                 data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
-                rprint(f'{adjust_string_length(stg_id, id_width):<{id_width}}'
-                       f'{adjust_string_length(stg.name, name_width):<{name_width}}'
-                       f'{adjust_string_length(run_type_str, run_timing_width):^{run_timing_width}}'
-                       f'{adjust_string_length(data_type_str, data_window_width):^{data_window_width}}'
-                       f'{adjust_string_length(str(stg.history_data_types), data_type_width):^{data_type_width}}'
-                       f'{adjust_string_length(str(stg.pars), par_width):^{par_width}}')
+                rprint(f'{adjust_string_length(stg_id, id_width) :<{id_width}}'
+                       f'{adjust_string_length(stg.name, name_width) :<{name_width}}'
+                       f'{adjust_string_length(run_type_str, run_timing_width) :^{run_timing_width}}'
+                       f'{adjust_string_length(data_type_str, data_window_width) :^{data_window_width}}'
+                       f'{adjust_string_length(str(stg.history_data_types), data_type_width) :^{data_type_width}}'
+                       f'{adjust_string_length(str(stg.pars), par_width) :^{par_width}}')
             print('=' * info_width)
         # 打印每个strategy的详细信息
         if (self.strategy_count > 0) and verbose:
