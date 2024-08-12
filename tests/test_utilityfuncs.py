@@ -747,7 +747,6 @@ class TestUtilityFuncs(unittest.TestCase):
                          '中文字符string      ')
         self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=False),
                          '中文字符string          ')
-        self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=True, padder='*'),
         self.assertEqual(adjust_string_length('中文字符string', 20, padder='*', hans_aware=True),
                          '中文字符string******')
         self.assertEqual(adjust_string_length('中国平安', 8, hans_aware=True),
