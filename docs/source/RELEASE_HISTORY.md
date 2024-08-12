@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.3.1 (2024-08-13)
+- Fixed and improved watched prices in trader CLI
+- Fixed a bug that may lead to failure displaying watched prices in trader CLI
+- Corrected a font name issue in candle chart in Windows environment
+
 ## 1.3.0 (2024-08-09)
 - New Feature:
   - Running example strategy files with parameter -r can now remove orders only for designated account, instead of all accounts
