@@ -833,21 +833,25 @@ class TestUtilityFuncs(unittest.TestCase):
                                                     '/green]')
         self.assertEqual(adjust_string_length(
             '[red]string[/red] [blue]with[/blue] [yellow]format[/yellow] [green]tags[/green]及[white]中文字符[/white]',
-            13, hans_aware=False, format_tags=True), '[red]string[/red] [blue]...[/blue][yellow][/yellow][green][/green][white]文字符[/white]')
+            13, hans_aware=False, format_tags=True),
+                '[red]string[/red] [blue]...[/blue][yellow][/yellow][green][/green][white]文字符[/white]')
         self.assertEqual(adjust_string_length(
             '[red]string[/red] [blue]with[/blue] [yellow]format[/yellow] [green]tags[/green]及[white]中文字符[/white]',
-            13, hans_aware=True, format_tags=True), '[red]string[/red] [blue]..[/blue][yellow][/yellow][green][/green][white]字符[/white]')
+            13, hans_aware=True, format_tags=True),
+                '[red]string[/red] [blue]..[/blue][yellow][/yellow][green][/green][white]字符[/white]')
         self.assertEqual(adjust_string_length(
             '[red]完全[/red][blue]由[/blue][yellow]中文字符[/yellow][green]组成[/green]的[white]字符串[/white]', 10,
-            hans_aware=False, format_tags=True), '[red]完全[/red][blue]由[/blue][yellow]中文..[/yellow][green].[/green][white]符串[/white]')
+            hans_aware=False, format_tags=True),
+                '[red]完全[/red][blue]由[/blue][yellow]中文..[/yellow][green].[/green][white]符串[/white]')
         self.assertEqual(adjust_string_length(
             '[red]完全[/red][blue]由[/blue][yellow]中文字符[/yellow][green]组成[/green]的[white]字符串[/white]', 13,
-            hans_aware=True, format_tags=True), '[red]完全[/red][blue]由[/blue][yellow]中.[/yellow][green][/green][white]符串[/white]')
+            hans_aware=True, format_tags=True),
+                '[red]完全[/red][blue]由[/blue][yellow]中.[/yellow][green][/green][white]符串[/white]')
         self.assertEqual(adjust_string_length('this is a long string', 7, format_tags=True), 'thi...g')
 
         self.assertRaises(TypeError, adjust_string_length, 123, 10)
         self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')
-        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, '__')
+        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, ellipsis='__')
         self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 0)
 
 

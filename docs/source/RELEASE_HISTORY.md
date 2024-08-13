@@ -1,7 +1,7 @@
 # RELEASE HISTORY
 
 ## 1.3.1 (2024-08-13)
-- Added trader CLI command `debug`, to set or toggle debug mode
+- Added trader CLI command `debug`, to set or toggle debug mode while trader is running
 - Fixed and improved watched prices in trader CLI
 - Fixed a bug that may lead to failure displaying watched prices in trader CLI
 - Corrected a font name issue in candle chart in Windows environment
