@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.3.2 (2024-08-13)
+- Corrected Font name in candle chart in Windows environment
+
 ## 1.3.1 (2024-08-13)
 - Added trader CLI command `debug`, to set or toggle debug mode while trader is running
 - Fixed and improved watched prices in trader CLI
