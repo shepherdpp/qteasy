@@ -1939,7 +1939,8 @@ def truncate_string(s, n, padder='.') -> str:  # to be deprecated
     return adjust_string_length(s, n, ellipsis=padder)
 
 
-def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False) -> str:
+def adjust_string_length(s, n, *,
+                         ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False) -> str:
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 
@@ -1970,17 +1971,17 @@ def adjust_string_length(s, n, ellipsis='.', padder=' ', hans_aware=False, paddi
 
     Examples
     --------
-    >>> adjust_string_length('hello world', 8)
+    >>> adjust_string_length('hello world',8)
     'hell...d'
-    >>> adjust_string_length('hello world', 15, padder='*')
+    >>> adjust_string_length('hello world',15,padder='*')
     'hello world****'
-    >>> adjust_string_length('hello world', 9, ellipsis='_')
+    >>> adjust_string_length('hello world',9,ellipsis='_')
     'hell___ld'
-    >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=False)
+    >>> adjust_string_length('中文字符占据2个位置',9,hans_aware=False)
     '中文字符...位置'
-    >>> adjust_string_length('中文字符占据2个位置', 9, hans_aware=True)
+    >>> adjust_string_length('中文字符占据2个位置',9,hans_aware=True)
     '中文...置'
-    >>> adjust_string_length('hello [bold red]world[/bold red]', 9, format_tags=True)
+    >>> adjust_string_length('hello [bold red]world[/bold red]',9,format_tags=True)
     'hell[bold red]...ld[/bold red]'
     """
 

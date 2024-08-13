@@ -1060,11 +1060,11 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False, width=80):
 
         no += 1
         output_strings.append(f'{no: <4}')
-        output_strings.append(f'{adjust_string_length(str(key), column_w_key-1): <{column_w_key}}')
+        output_strings.append(f'{adjust_string_length(str(key), column_w_key - 1) : <{column_w_key}}')
         if info:
             output_strings.append(
-                    f'{adjust_string_length(cur_value, column_w_current-1): <{column_w_current}}'
-                    f'<{adjust_string_length(default_value, column_w_default-3, padder="")}>\n')
+                    f'{adjust_string_length(cur_value, column_w_current - 1) : <{column_w_current}}'
+                    f'<{adjust_string_length(default_value, column_w_default - 3, padder="")}>\n')
             if verbose:
                 output_strings.append(
                         f'{reindent(description, column_offset_description): <{column_w_key + column_w_current * 2}}'
