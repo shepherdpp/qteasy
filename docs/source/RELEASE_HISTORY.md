@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.3.3 (2024-08-14)
+- Added freq alias support for pandas version >= 2.2.0, to prevent from FutureWarning raised by pandas
+
 ## 1.3.2 (2024-08-13)
 - Corrected Font name in candle chart in Windows environment
 
