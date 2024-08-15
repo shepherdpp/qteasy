@@ -442,7 +442,7 @@ def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
 
 
 @njit
-def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
+def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short) -> tuple:
     """ 解析VS类型的交易信号
 
     Parameters
@@ -458,11 +458,9 @@ def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
 
     Returns
     -------
-    tuple: (cash_to_spend, amounts_to_sell)
-    - symbols: list of str, 产生交易信号的资产代码
-    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
-    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
-    - quantities: list of float, 所有交易信号的交易数量
+    tuple of np.ndarray: (cash_to_spend, amounts_to_sell)
+    - cash_to_spend: ndarray, 计划用于买入每一种资产花费的资金数量，如果没有买入计划，相应位置为0
+    - amounts_to_sell: ndarray, 计划卖出每一种资产的数量，如果没有卖出计划，相应位置为0
     """
 
     # 计算各个资产的计划买入金额和计划卖出数量

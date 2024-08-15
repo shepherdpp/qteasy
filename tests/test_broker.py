@@ -19,7 +19,7 @@ import talib as ta
 
 from qteasy.trade_recording import new_account, get_or_create_position, record_trade_order, read_trade_order
 
-from qteasy.broker import get_broker, Broker, SimulatorBroker, SimpleBroker, NotImplementedBroker
+from qteasy.broker import get_broker, Broker, SimulatorBroker, ManualBroker, BacktestBroker
 from qteasy.broker import _verify_trade_result
 
 
@@ -121,14 +121,17 @@ class TestBroker(unittest.TestCase):
         bkr = get_broker('simulator', params={'data_source': self.test_ds})
         self.assertIsInstance(bkr, SimulatorBroker)
         self.assertIs(bkr.data_source, self.test_ds)
-        bkr = get_broker('simple', params={'data_source': self.test_ds})
-        self.assertIsInstance(bkr, SimpleBroker)
+        bkr = get_broker('manual', params={'data_source': self.test_ds})
+        self.assertIsInstance(bkr, ManualBroker)
         self.assertIs(bkr.data_source, self.test_ds)
         bkr = get_broker('random', params={'data_source': self.test_ds})
         self.assertIsInstance(bkr, SimulatorBroker)
         self.assertIs(bkr.data_source, self.test_ds)
         bkr = get_broker('unknown', params={'data_source': self.test_ds})
         self.assertIsInstance(bkr, SimulatorBroker)
+        self.assertIs(bkr.data_source, self.test_ds)
+        bkr = get_broker('backtest', params={'data_source': self.test_ds})
+        self.assertIsInstance(bkr, BacktestBroker)
         self.assertIs(bkr.data_source, self.test_ds)
         # Notimplementederror will be raised
         with self.assertRaises(NotImplementedError):

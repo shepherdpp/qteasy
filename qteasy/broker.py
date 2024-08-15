@@ -111,12 +111,6 @@ class Broker(object):
     """
     __metaclass__ = ABCMeta
 
-    # TODO: for v1.2:
-    #  重构Broker类，使Broker基类提供通用的接口，如log_in, log_out, run, transaction等
-    #  并将具体的交易所实现放在子类中，如SimulatorBroker, SimpleBroker等
-    #  重构后的Broker类应该是一个抽象类，不能直接实例化，只能通过子类实例化
-    #  重构后的Broker类提供的接口可以通用于模拟交易所和真实交易所，同时所有的接口以真实交易所的接口
-    #  为标准，模拟交易所的接口应该尽量与真实交易所的接口保持一致
     def __init__(self, data_source=None):
         """ 生成一个Broker对象
 
@@ -138,6 +132,10 @@ class Broker(object):
         self.order_queue = Queue()
         self.result_queue = Queue()
         self.broker_messages = Queue()
+
+    @property
+    def data_source(self):
+        return self._data_source
 
     def register(self, debug=False, **kwargs) -> bool:
         """ Broker对象在开始运行前的注册过程，作用是设置broker的状态为is_registered
@@ -319,10 +317,9 @@ class SimulatorBroker(Broker):
             模拟完全成交、部分成交和未成交三种情况出现的概率
 
         """
-        super(SimulatorBroker, self).__init__()
+        super(SimulatorBroker, self).__init__(data_source=data_source)
 
-        self._data_source = data_source
-        self.broker_name = 'BaseBroker'
+        self.broker_name = 'SimulationBroker'
         self.user_name = ''
         self.password = ''
         self.token = ''
@@ -671,9 +668,28 @@ class SimulatorBroker(Broker):
 class BacktestBroker(Broker):
     """ BacktestBroker is a broker for backtesting trading strategies"""
 
-    def __init__(self):
-        super(BacktestBroker, self).__init__()
+    def __init__(self,
+                 fee_rate_buy=0.0003,
+                 fee_rate_sell=0.0001,
+                 fee_min_buy=0.0,
+                 fee_min_sell=0.0,
+                 fee_fix_buy=0.0,
+                 fee_fix_sell=0.0,
+                 slipage=0.0,
+                 moq_buy=0.0,
+                 moq_sell=0.0,
+                 data_source=None):
+        super(BacktestBroker, self).__init__(data_source=data_source)
         self.broker_name = 'BacktestBroker'
+        self.fee_rate_buy = fee_rate_buy
+        self.fee_rate_sell = fee_rate_sell
+        self.fee_min_buy = fee_min_buy
+        self.fee_min_sell = fee_min_sell
+        self.fee_fix_buy = fee_fix_buy
+        self.fee_fix_sell = fee_fix_sell
+        self.slipage = slipage
+        self.moq_buy = moq_buy
+        self.moq_sell = moq_sell
 
 
 class ManualBroker(Broker):
