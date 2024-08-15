@@ -18,7 +18,7 @@ import qteasy
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES
+from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES, pandas_freq_alias_version_conversion
 from .strategy import BaseStrategy
 from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
 from .blender import blender_parser
@@ -1968,6 +1968,7 @@ class Operator:
                 #  运行，规则是：如果需要某策略运行，则将其采样时间序列设置为[1]，如果不需要某策略运行，
                 #  则将其采样时间序列设置为[0]。这时，在运行op.create_signal时，传入参数sample_idx=1
                 #  即可。
+                freq = pandas_freq_alias_version_conversion(freq)
                 temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
                 if len(temp_date_series) <= 1:
                     # 如果strategy_run_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
