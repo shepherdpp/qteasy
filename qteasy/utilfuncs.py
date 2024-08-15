@@ -2193,3 +2193,37 @@ def _count_hans(s: str):
             hans_total += 1
     return hans_total
 
+
+def pandas_freq_alias_version_conversion(freq) -> str:
+    """ 修改时间频率别名以确保对pandas 2.2.0及以后的版本兼容
+
+    pandas从2.2.0版本开始，将一批时间频率做了修改，本函数检查当前
+    pandas的版本号，如果版本号大于等于2.2.0，则将时间别名修改成新
+    版本的时间别名；否则返回原有别名
+
+    Parameters
+    ----------
+    freq: str
+        pandas v2.2 以前的时间频率别名
+
+    Returns
+    -------
+    str: 切换后的时间频率别名
+    """
+    version = pd.__version__
+    if version < '2.2':
+        return freq
+    # freq aliases like '5MIN' should also be converted to '5min'
+    freq_alias_map = {
+        'M':    'ME',
+        'Q':    'QE',
+        'Y':    'YE',
+        'H':    'h',
+        'MIN':  'min',
+    }
+    mapped_freq = freq_alias_map.get(freq, freq)
+
+    if mapped_freq in ['1MIN', '5MIN', '15MIN', '30MIN', '60MIN']:
+        mapped_freq = freq.replace('MIN', 'min')
+
+    return mapped_freq

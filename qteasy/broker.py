@@ -614,7 +614,7 @@ class SimulatorBroker(Broker):
                 self.send_message(f'order will be canceled because max retries exceeded')
                 result_type = 'canceled'
             # 如果当前价高于挂卖价(允许误差由price_deviation控制)，大概率成交或部分成交
-            if (live_price >= order_price - price_deviation) and (direction == 'sell'):
+            elif (live_price >= order_price - price_deviation) and (direction == 'sell'):
                 result_type = np.random.choice(['filled', 'partial-filled', 'canceled'], p=self.probabilities)
                 # 如果change非常接近-10%(跌停)，则非常大概率canceled
                 if abs(change + 0.1) <= 0.001:

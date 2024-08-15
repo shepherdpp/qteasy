@@ -19,7 +19,7 @@ from functools import lru_cache
 from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .utilfuncs import freq_dither
+from .utilfuncs import freq_dither, pandas_freq_alias_version_conversion
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
@@ -5493,6 +5493,10 @@ def _resample_data(hist_data, target_freq,
     # 如果hist_data的freq为None，可以infer freq
     if hist_data.index.inferred_freq == target_freq:
         return hist_data
+
+    # 新版本pandas修改了部分freq alias，为了确保向后兼容，确保freq_aliases与pandas版本匹配
+    target_freq = pandas_freq_alias_version_conversion(target_freq)
+
     resampled = hist_data.resample(target_freq)
     if method in ['last', 'close']:
         resampled = resampled.last()

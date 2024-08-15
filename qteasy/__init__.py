@@ -39,15 +39,15 @@ from .trade_recording import delete_account
 
 
 # qteasy版本信息
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 version_info = Namespace(
         major=1,
         minor=3,
-        patch=2,
+        patch=3,
         short=(1, 3),
-        full=(1, 3, 2),
-        string='1.3.2',
-        tuple=('1', '3', '2'),
+        full=(1, 3, 3),
+        string='1.3.3',
+        tuple=('1', '3', '3'),
         releaselevel='beta',
 )
 
