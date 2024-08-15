@@ -1,6 +1,7 @@
 # RELEASE HISTORY
 
 ## 1.3.3 (2024-08-14)
+- Fixed a bug that will cause buying stock with 0 price when live prices are not available
 - Added freq alias support for pandas version >= 2.2.0, to prevent from FutureWarning raised by pandas
 
 ## 1.3.2 (2024-08-13)
