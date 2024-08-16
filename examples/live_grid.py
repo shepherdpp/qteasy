@@ -51,7 +51,8 @@ class GridTrade(qt.RuleIterator):
             result = 0.
 
         # 使用新的基准网格更新交易参数
-        base_grid = np.round(base_grid, 2)
+        if not np.isnan(base_grid):
+            base_grid = np.round(base_grid, 2)
         self.pars = (grid_size, trade_batch, base_grid)
 
         return result
