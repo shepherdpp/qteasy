@@ -580,7 +580,6 @@ class SimulatorBroker(Broker):
         while True:
 
             import time
-            time.sleep(1)  # 延迟1秒重试
 
             if total_filled >= order_qty:  # 订单完全成交，退出
                 break
@@ -592,7 +591,7 @@ class SimulatorBroker(Broker):
                 continue
 
             # 获取当前实时价格
-            retry = 0
+            retry = 10  # 重试次数为10次（秒）
             from .emfuncs import stock_live_kline_price
             live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
@@ -608,6 +607,7 @@ class SimulatorBroker(Broker):
                 change = 0
                 price_deviation = 0
                 if retry > 0:
+                    time.sleep(1)  # 延迟1秒重试
                     continue
             # 重试超过max_retry，直接cancel订单
             if retry <= 0:
@@ -636,6 +636,7 @@ class SimulatorBroker(Broker):
                 if self.debug:
                     self.send_message(f'current price does not satisfy quoted, retries left: {retry}')
                 retry -= 1
+                time.sleep(1)  # 延迟1秒重试
                 continue
 
             # 成交类型为成交或部分成交，计算成交数量及交易费用
@@ -679,6 +680,7 @@ class SimulatorBroker(Broker):
                 qty = order_qty - total_filled
             # 不能成交，稍后重试
             else:
+                time.sleep(1)  # 延迟1秒重试
                 continue
 
             order_result = (result_type, qty, order_price, transaction_fee)

@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.3.4 (2024-08-17)
+- Improved Live trade broker, added retry count before canceling submitted orders when live price is not available, reduced chance of order filling failure
+- Corrected a mistake in grid trading example files, nan prices are now not written to strategy parameters
+
 ## 1.3.3 (2024-08-16)
 - Fixed a bug that will cause buying stock with 0 price when live prices are not available
 - Added freq alias support for pandas version >= 2.2.0, to prevent from FutureWarning raised by pandas

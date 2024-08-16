@@ -58,7 +58,8 @@ class MultiGridTrade(qt.GeneralStg):
                 trade_signals[i] = 0.
 
             # 使用新的基准网格更新交易参数
-            base_grid = np.round(base_grid, 2)
+            if not np.isnan(base_grid):
+                base_grid = np.round(base_grid, 2)
             self.pars[symbol] = (grid_size, trade_batch, base_grid)
 
         return trade_signals

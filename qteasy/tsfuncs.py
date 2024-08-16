@@ -1337,7 +1337,6 @@ def balance(ts_code: str,
     return res
 
 
-
 def cashflow(ts_code: str,
              rpt_date: str = None,
              start: str = None,
