@@ -342,6 +342,21 @@ class Trader(object):
         return log_file_path_name
 
     @property
+    def trade_config_file_path_name(self):
+        """ 返回实盘交易设置文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
+
+        Returns
+        -------
+        file_path_name: str
+            完整的系统记录文件路径和文件名，含扩展名.cfg
+        """
+
+        from qteasy import QT_SYS_LOG_PATH
+        trade_config_file_name = self._log_file_name + '.cfg'
+        cfg_file_path_name = os.path.join(QT_SYS_LOG_PATH, trade_config_file_name)
+        return cfg_file_path_name
+
+    @property
     def trade_log_file_path_name(self):
         """ 返回实盘交易记录文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
 
@@ -380,9 +395,14 @@ class Trader(object):
         except FileNotFoundError:
             return False
 
+    @property
     def sys_log_file_exists(self):
         """ 返回系统记录文件是否存在 """
         return os.path.exists(self.sys_log_file_path_name)
+
+    def config_file_exists(self):
+        """ 返回交易设置文件是否存在 """
+        return os.path.exists(self.trade_config_file_path_name)
 
     # ================== methods ==================
     def get_current_tz_datetime(self):
