@@ -840,8 +840,13 @@ class Operator:
             else:
                 stg_id = 'custom'
             strategy = stg()
+        elif isinstance(stg, (tuple, list)):
+            err = TypeError(f'Strategy can not be a tuple of a list, only one strategy can be added! \n'
+                            f'To add multiple strategies in the same time, use add_strategies() method instead!')
+            raise err
         else:
-            raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
+            err = TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
+            raise err
         stg_id = self._next_stg_id(stg_id)
         self._strategy_id.append(stg_id)
         self._strategies[stg_id] = strategy
