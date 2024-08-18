@@ -386,7 +386,7 @@ class TestTrader(unittest.TestCase):
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0], ts.trade_log_file_headers)
 
-        print(f'test function write_log_file')
+        print(f'test function write_trade_log_file')
         log_content = {
             'position_id': 1,
             'order_id': 1,
@@ -395,7 +395,7 @@ class TestTrader(unittest.TestCase):
             'qty_change': 100,
             'qty': 100,
         }
-        ts.write_log_file(**log_content)
+        ts.write_trade_log_file(**log_content)
         with open(log_file_path_name, 'r') as f:
             reader = csv.reader(f)
             rows = [row for row in reader]
@@ -424,7 +424,7 @@ class TestTrader(unittest.TestCase):
             'reason': 'order',
             'position_type': 'long',
         }
-        ts.write_log_file(**log_content)
+        ts.write_trade_log_file(**log_content)
         log_content = {
             'position_id': 1,
             'order_id': 3,
@@ -435,7 +435,7 @@ class TestTrader(unittest.TestCase):
             'holding_cost': 80.5,
             'reason': 'order',
         }
-        ts.write_log_file(**log_content)
+        ts.write_trade_log_file(**log_content)
         log_content = {
             'reason': 'manual',
             'cash_change': 10000.0,
@@ -443,7 +443,7 @@ class TestTrader(unittest.TestCase):
             'available_cash_change': 10000.0,
             'available_cash': 100000.0,
         }
-        ts.write_log_file(**log_content)
+        ts.write_trade_log_file(**log_content)
 
         with open(log_file_path_name, 'r') as f:
             reader = csv.reader(f)

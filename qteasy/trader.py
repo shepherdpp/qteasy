@@ -192,11 +192,11 @@ class Trader(object):
 
     # ================== properties ==================
     @property
-    def status(self):
+    def status(self) -> str:
         return self._status
 
     @status.setter
-    def status(self, value):
+    def status(self, value) -> None:
         if value not in ['running', 'sleeping', 'paused', 'stopped']:
             err = ValueError(f'invalid status: {value}')
             raise err
@@ -204,29 +204,29 @@ class Trader(object):
         self._status = value
 
     @property
-    def prev_status(self):
+    def prev_status(self) -> str:
         return self._prev_status
 
     @property
-    def operator(self):
+    def operator(self) -> Operator:
         return self._operator
 
     @property
-    def broker(self):
+    def broker(self) -> Broker:
         return self._broker
 
     @property
-    def asset_pool(self):
+    def asset_pool(self) -> list:
         """ 账户的资产池，一个list，包含所有允许投资的股票代码 """
         return self._asset_pool
 
     @property
-    def asset_type(self):
+    def asset_type(self) -> str:
         """ 账户的资产类型，一个str，包含所有允许投资的资产类型 """
         return self._asset_type
 
     @property
-    def account_cash(self):
+    def account_cash(self) -> tuple:
         """ 账户的现金, 包括持有现金和可用现金和总投资金额
 
         Returns
@@ -240,7 +240,7 @@ class Trader(object):
         return get_account_cash_availabilities(self.account_id, data_source=self._datasource)
 
     @property
-    def account_positions(self):
+    def account_positions(self) -> pd.DataFrame:
         """ 账户的持仓，一个tuple,包含两个ndarray，包括每种股票的持有数量和可用数量
 
         Returns
@@ -262,7 +262,7 @@ class Trader(object):
         return positions
 
     @property
-    def non_zero_positions(self):
+    def non_zero_positions(self) -> pd.DataFrame:
         """ 账户当前的持仓，一个tuple，当前持有非零的股票仓位symbol，持有数量和可用数量 """
         positions = self.account_positions
         return positions.loc[positions['qty'] != 0]
@@ -306,15 +306,15 @@ class Trader(object):
         return positions.loc[positions['qty'] != 0]
 
     @property
-    def datasource(self):
+    def datasource(self) -> DataSource:
         return self._datasource
 
     @property
-    def config(self):
+    def config(self) -> dict:
         return self._config
 
     @property
-    def _log_file_name(self):
+    def _log_file_name(self) -> str:
         """ 返回视盘交易和系统记录文件的文件名
 
         Returns
@@ -327,7 +327,7 @@ class Trader(object):
         return f'live_log_{self.account_id}_{account_name}'
 
     @property
-    def sys_log_file_path_name(self):
+    def sys_log_file_path_name(self) -> str:
         """ 返回实盘系统记录文件的路径和文件名，文件路径为QT_SYS_LOG_PATH
 
         Returns
@@ -342,7 +342,7 @@ class Trader(object):
         return log_file_path_name
 
     @property
-    def trade_config_file_path_name(self):
+    def trade_config_file_path_name(self) -> str:
         """ 返回实盘交易设置文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
 
         Returns
@@ -357,7 +357,7 @@ class Trader(object):
         return cfg_file_path_name
 
     @property
-    def trade_log_file_path_name(self):
+    def trade_log_file_path_name(self) -> str:
         """ 返回实盘交易记录文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
 
         Returns
@@ -372,7 +372,7 @@ class Trader(object):
         return log_file_path_name
 
     @property
-    def trade_log_file_is_valid(self):
+    def trade_log_file_is_valid(self) -> bool:
         """ 返回交易记录文件是否存在
 
         同时检查交易记录文件格式是否正确，header内容是否与self.trade_log_file_header一致
@@ -396,16 +396,16 @@ class Trader(object):
             return False
 
     @property
-    def sys_log_file_exists(self):
+    def sys_log_file_exists(self) -> bool:
         """ 返回系统记录文件是否存在 """
         return os.path.exists(self.sys_log_file_path_name)
 
-    def config_file_exists(self):
+    def config_file_exists(self) -> bool:
         """ 返回交易设置文件是否存在 """
         return os.path.exists(self.trade_config_file_path_name)
 
     # ================== methods ==================
-    def get_current_tz_datetime(self):
+    def get_current_tz_datetime(self) -> pd.Timestamp:
         """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
 
         tz_time = get_current_timezone_datetime(self.time_zone)
@@ -415,14 +415,14 @@ class Trader(object):
         # else return tz_time
         return tz_time
 
-    def get_config(self, key=None):
+    def get_config(self, key=None) -> dict:
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
         if key is not None:
             return {key: self._config.get(key)}
         else:
             return self._config
 
-    def update_config(self, key=None, value=None):
+    def update_config(self, key=None, value=None) -> dict:
         """ 更新交易系统的配置信息 """
         if key not in self._config:
             return None
@@ -457,12 +457,12 @@ class Trader(object):
 
         return schedule_string
 
-    def register_broker(self, debug=False, **kwargs):
+    def register_broker(self, debug=False, **kwargs) -> None:
         """ 注册broker，以便实现登录等处理
         """
         self.broker.register(debug=debug, **kwargs)
 
-    def run(self):
+    def run(self) -> None:
         """ 交易系统的main loop：
 
         1，检查task_queue中是否有任务，如果有任务，则提取任务，根据当前status确定是否执行任务，如果可以执行，则执行任务，否则忽略任务
@@ -674,7 +674,7 @@ class Trader(object):
 
         return trader_info_dict
 
-    def trade_results(self, status='filled'):
+    def trade_results(self, status='filled') -> pd.DataFrame:
         """ 返回账户的交易结果
 
         Parameters
@@ -762,8 +762,9 @@ class Trader(object):
 
         return message
 
-    def add_task(self, task, kwargs=None):
+    def add_task(self, task, kwargs=None) -> None:
         """ 添加任务到任务队列
+        TODO: 应该允许用户添加AsyncTask到任务队列，以便以异步方式执行任务
 
         Parameters
         ----------
@@ -783,6 +784,18 @@ class Trader(object):
             task = (task, kwargs)
         self.send_message(f'adding task: {task}', debug=True)
         self._add_task_to_queue(task)
+
+    def add_async_task(self, task, kwargs=None) -> None:
+        """ 添加异步任务到任务队列，异步任务将以异步形式在主线程以外的子线程执行
+
+        Parameters
+        ----------
+        task: str
+            任务名称
+        **kwargs: dict
+            任务参数
+        """
+        raise NotImplementedError
 
     def history_orders(self, with_trade_results=True):
         """ 账户的历史订单详细信息
@@ -933,7 +946,7 @@ class Trader(object):
 
         return log_file_path_name
 
-    def write_log_file(self, **log_content: dict):
+    def write_trade_log_file(self, **log_content: dict) -> None:
         """ 写入log到trade_log记录文件的最后一行
 
         log文件必须存在，否则会报错
@@ -1138,7 +1151,7 @@ class Trader(object):
             'available_cash_change': full_trade_result['available_cash_change'],
             'available_cash':        available_cash,
         }
-        self.write_log_file(**trade_log)
+        self.write_trade_log_file(**trade_log)
         # 生成system_log 现金及持仓变动记录
         if qty_change != 0.:
             self.send_message(f'<RESULT RECORDED {order_id}>: position {symbol}({pos}) changed: '
@@ -1203,7 +1216,7 @@ class Trader(object):
             'available_cash_change': updated_amount - prev_amount,
             'available_cash':        updated_amount
         }
-        self.write_log_file(**trade_log)
+        self.write_trade_log_file(**trade_log)
         # 发送system log信息
         self.send_message(f'<RESULT DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
                           f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
@@ -1260,7 +1273,7 @@ class Trader(object):
             'available_qty_change': updated_qty - prev_qty,
             'available_qty':        updated_qty,
         }
-        self.write_log_file(**trade_log)
+        self.write_trade_log_file(**trade_log)
         # 发送system log信息
         self.send_message(f'<RESULT DELIVERED {order_id}>: <{name}-{symbol}@{pos_type} side> available qty:'
                           f'[{color_tag}]{prev_qty}->{updated_qty} [/{color_tag}]')
@@ -1288,7 +1301,7 @@ class Trader(object):
             raise TypeError(f'cash_change_detail should be a dict, got {type(cash_change_detail)} instead.')
         # 补充金额变动的额外信息
         cash_change_detail['reason'] = 'manual'
-        self.write_log_file(**cash_change_detail)
+        self.write_trade_log_file(**cash_change_detail)
         # 发送消息通知现金变动并记录system log
         cash, available, investment = self.account_cash
         self.send_message(f'<MANUAL CHANGED CASH>: {cash:.2f}, '
@@ -1342,7 +1355,7 @@ class Trader(object):
             'cost_change':          cost_change,
             'holding_cost':         cost,
         }
-        self.write_log_file(**log_content)
+        self.write_trade_log_file(**log_content)
         # 发送消息通知持仓变动并记录system log
         self.send_message(f'<MANUAL CHANGED pos {symbol}/{position["position"]}>: '
                           f'qty: {qty - qty_change} -> {qty} '
@@ -1350,44 +1363,44 @@ class Trader(object):
                           f'cost: {cost - cost_change:.2f} -> {cost:.2f}')
 
     # ============ definition of tasks ================
-    def _start(self):
+    def _start(self) -> None:
         """ 启动交易系统 """
         self.send_message('Starting Trader...')
         self.status = 'sleeping'
 
-    def _stop(self):
+    def _stop(self) -> None:
         """ 停止交易系统 """
         self.send_message('Stopping Trader, the broker will be stopped as well...')
         self._broker.status = 'stopped'
         self.status = 'stopped'
 
-    def _sleep(self):
+    def _sleep(self) -> None:
         """ 休眠交易系统 """
         msg = Text('Putting Trader to sleep', style='bold red')
         self.send_message(message=msg)
         self.status = 'sleeping'
         self.broker.status = 'paused'
 
-    def _wakeup(self):
+    def _wakeup(self) -> None:
         """ 唤醒交易系统 """
         self.status = 'running'
         self.broker.status = 'running'
         msg = Text('Trader is awake, broker is running', style='bold red')
         self.send_message(message=msg)
 
-    def _pause(self):
+    def _pause(self) -> None:
         """ 暂停交易系统 """
         self.status = 'paused'
         msg = Text('Trader is Paused, broker is still running', style='bold red')
         self.send_message(message=msg)
 
-    def _resume(self):
+    def _resume(self) -> None:
         """ 恢复交易系统 """
         self.status = self.prev_status
         msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
         self.send_message(message=msg)
 
-    def _run_strategy(self, strategy_ids=None):
+    def _run_strategy(self, strategy_ids=None) -> None:
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
@@ -1611,7 +1624,7 @@ class Trader(object):
         self.log_cash_delivery(delivery_result=deliver_result)
         self.log_qty_delivery(delivery_result=deliver_result)
 
-    def _pre_open(self):
+    def _pre_open(self) -> None:
         """ pre_open处理所有应该在开盘前完成的任务，包括运行中断后重新开始trader所需的初始化任务：
 
         - 确保data_source重新连接,
@@ -1664,7 +1677,7 @@ class Trader(object):
         # 获取当日实时价格
         self._update_live_price()
 
-    def _post_close(self):
+    def _post_close(self) -> None:
         """ 所有收盘后应该完成的任务
 
         1，处理当日未完成的交易信号，生成取消订单，并记录订单取消结果
@@ -1728,7 +1741,7 @@ class Trader(object):
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.send_message(f'Canceled unfilled order: {order_id}')
 
-    def _change_date(self):
+    def _change_date(self) -> None:
         """ 改变日期，在日期改变（午夜）前执行的操作，包括：
 
         - 处理前一日交易的交割
@@ -1739,7 +1752,7 @@ class Trader(object):
         """
         raise NotImplementedError
 
-    def _market_open(self):
+    def _market_open(self) -> None:
         """ 开市时操作：
 
         1，启动broker的主循环，将broker的status设置为running
@@ -1750,7 +1763,7 @@ class Trader(object):
         self.run_task('wakeup')
         self.send_message('market is open, trader is running, broker is running')
 
-    def _market_close(self):
+    def _market_close(self) -> None:
         """ 收市时操作：
 
         1，停止broker的主循环，将broker的status设置为stopped
@@ -1761,7 +1774,7 @@ class Trader(object):
         self.run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
-    def _refill(self, tables, freq):
+    def _refill(self, tables, freq) -> None:
         """ 补充数据库内的历史数据 """
         self.send_message('running task: refill, this task will be done only during sleeping', debug=True)
         # 更新数据源中的数据，不同频率的数据表可以不同时机更新，每次更新时仅更新当天或最近一个freq的数据
@@ -1788,6 +1801,7 @@ class Trader(object):
     # ================ task operations =================
     def run_task(self, task, *args, run_in_main_thread=False):
         """ 运行任务
+        TODO: 增加run_async_task()函数以异步方式执行任务，此函数仅保留同步执行任务的功能
 
         Parameters
         ----------
@@ -1845,6 +1859,15 @@ class Trader(object):
                 task_func(*args)
             else:
                 task_func()
+
+    def run_async_task(self, task, *args):
+        """ 以异步方式执行任务
+
+        :param task:
+        :param args:
+        :return:
+        """
+        raise NotImplementedError
 
     # =============== internal methods =================
 
