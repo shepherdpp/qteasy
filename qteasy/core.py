@@ -1405,7 +1405,6 @@ def save_config(*, config=None, file_name=None, overwrite=True, initial_config=F
 
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
-    import pickle
     import os
 
     if config is None:
@@ -1416,20 +1415,25 @@ def save_config(*, config=None, file_name=None, overwrite=True, initial_config=F
     file_name = _check_config_file_name(file_name=file_name, allow_default_name=initial_config)
 
     config_path = os.path.join(QT_ROOT_PATH, '../config/')
-    if not os.path.exists(config_path):
-        os.makedirs(config_path, exist_ok=False)
+
+    # write_binary_file
+    from .utilfuncs import write_binary_file
     if overwrite:
         open_method = 'wb'  # overwrite the file
     else:
         open_method = 'xb'  # raise if file already existed
-    with open(os.path.join(config_path, file_name), open_method) as f:
-        try:
-            pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
-            logger_core.info(f'config file content written to: {f.name}')
-            return f.name
-        except Exception as e:
-            logger_core.warning(f'{e}, error during writing config to local file.')
-            return ""
+    try:
+        file_name = write_binary_file(
+                file_path=config_path,
+                file_name=file_name,
+                data=config,
+                mode=open_method,
+        )
+        logger_core.info(f'config file content written to: {file_name}')
+        return file_name
+    except Exception as e:
+        logger_core.warning(f'{e}, error during writing config to local file.')
+        return ""
 
 
 def load_config(*, config=None, file_name=None) -> dict:
@@ -1455,15 +1459,20 @@ def load_config(*, config=None, file_name=None) -> dict:
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
-    import pickle
 
     file_name = _check_config_file_name(file_name=file_name, allow_default_name=False)
 
     config_path = os.path.join(QT_ROOT_PATH, '../config/')
+
+    # read_binary_file
+    from .utilfuncs import read_binary_file
     try:
-        with open(os.path.join(config_path, file_name), 'rb') as f:
-            saved_config = pickle.load(f)
-            logger_core.info(f'read configuration file: {f.name}')
+        saved_config = read_binary_file(
+            file_path=config_path,
+            file_name=file_name,
+            mode='rb',
+        )
+        logger_core.info(f'read configuration file: {file_name}')
     except FileNotFoundError as e:
         msg = f'{e}\nConfiguration file {file_name} not found! nothing will be read.'
         logger_core.warning(msg)
