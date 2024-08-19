@@ -1255,20 +1255,74 @@ class Trader(object):
 
         return lines
 
-    def write_config_file(self, config: dict) -> str:
-        """ 将特定的config写入config文件
+    def save_break_point(self) -> str:
+        """ 保存工作断点
 
-        :param config:
+        Returns
+        -------
+        break_point_file_name: str
+            断点文件路径
+        """
+        break_point_data = dict()
+        break_point_data['operator'] = self.operator
+        break_point_data['broker'] = self.broker
+        break_point_data['config'] = self.config
+
+        from .utilfuncs import write_binary_file
+        from qteasy import QT_SYS_LOG_PATH
+
+        break_point_file_name = self._log_file_name + '.bkp'
+        try:
+            break_point_file_name = write_binary_file(
+                    file_path=QT_SYS_LOG_PATH,
+                    file_name=break_point_file_name,
+                    data=break_point_data,
+            )
+        except Exception as e:
+            msg = f'{e}, error writing break point!'
+            self.send_message(msg)
+
+        return break_point_file_name
+
+    def load_break_point(self) -> dict:
+        """ 从断点文件中读取信息并载入相关属性
+
         :return:
         """
-        raise NotImplementedError
+        from .utilfuncs import read_binary_file
+        from qteasy import QT_SYS_LOG_PATH
 
-    def read_config_file(self) -> dict:
-        """ 从配置文件中读取配置信息
+        break_point_file_name = self._log_file_name + '.bkp'
+        try:
+            break_point_data = read_binary_file(
+                    file_path=QT_SYS_LOG_PATH,
+                    file_name=break_point_file_name,
+            )
+        except Exception as e:
+            msg = f'{e}, error writing break point!'
+            self.send_message(msg)
+            return {}
 
-        :return:
-        """
-        raise NotImplementedError
+        if not isinstance(break_point_data, dict):
+            err = TypeError()
+            raise err
+
+        operator = break_point_data.get('operator', None)
+        if operator:
+            self._operator = operator
+            self.send_message('Loaded operator from break point!')
+
+        broker = break_point_data.get('broker', None)
+        if broker:
+            self._broker = broker
+            self.send_message('Loaded broker from break point!')
+
+        config = break_point_data.get('config', None)
+        if config:
+            self._config = config
+            self.send_message('Loaded configurations from break point!')
+            
+        return break_point_data
 
     def submit_trade_order(self, symbol: str, position: str, direction: str,
                            order_type: str, qty: int, price: float) -> dict:
