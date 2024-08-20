@@ -310,6 +310,8 @@ def delete_account(account_id: int, data_source=None, keep_account_id=True) -> N
         msg = f'Error occurred: {e}, delete account failed, rollback to previous state!'
         warnings.warn(msg, RuntimeWarning)
 
+    # 删除账户遗留下来的trade_log文件、system_log文件以及break_point文件
+
 
 def get_position_by_id(pos_id, data_source=None):
     """ 通过pos_id获取持仓的信息

@@ -33,6 +33,7 @@ from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_po
 from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
 from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
 from qteasy.trading_util import calculate_cost_change
+from qteasy.trading_util import break_point_file_path_name, sys_log_file_path_name, trade_log_file_path_name
 from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
 from qteasy.utilfuncs import get_current_timezone_datetime
 
@@ -314,71 +315,13 @@ class Trader(object):
         return self._config
 
     @property
-    def _log_file_name(self) -> str:
-        """ 返回视盘交易和系统记录文件的文件名
-
-        Returns
-        -------
-        file_name: str
-            文件名不含扩展名，系统记录文件扩展名为.lo，交易记录文件扩展名为.csv
-        """
-        account = get_account(self.account_id, data_source=self._datasource)
-        account_name = account['user_name']
-        return f'live_log_{self.account_id}_{account_name}'
-
-    @property
-    def sys_log_file_path_name(self) -> str:
-        """ 返回实盘系统记录文件的路径和文件名，文件路径为QT_SYS_LOG_PATH
-
-        Returns
-        -------
-        file_path_name: str
-            完整的系统记录文件路径和文件名，含扩展名.log
-        """
-
-        from qteasy import QT_SYS_LOG_PATH
-        sys_log_file_name = self._log_file_name + '.log'
-        log_file_path_name = os.path.join(QT_SYS_LOG_PATH, sys_log_file_name)
-        return log_file_path_name
-
-    @property
-    def trade_config_file_path_name(self) -> str:
-        """ 返回实盘交易设置文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
-
-        Returns
-        -------
-        file_path_name: str
-            完整的系统记录文件路径和文件名，含扩展名.cfg
-        """
-
-        from qteasy import QT_SYS_LOG_PATH
-        trade_config_file_name = self._log_file_name + '.cfg'
-        cfg_file_path_name = os.path.join(QT_SYS_LOG_PATH, trade_config_file_name)
-        return cfg_file_path_name
-
-    @property
-    def trade_log_file_path_name(self) -> str:
-        """ 返回实盘交易记录文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
-
-        Returns
-        -------
-        file_path_name: str
-            完整的系统记录文件路径和文件名，含扩展名.csv
-        """
-
-        from qteasy import QT_TRADE_LOG_PATH
-        trade_log_file_name = self._log_file_name + '.csv'
-        log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
-        return log_file_path_name
-
-    @property
     def trade_log_file_is_valid(self) -> bool:
         """ 返回交易记录文件是否存在
 
         同时检查交易记录文件格式是否正确，header内容是否与self.trade_log_file_header一致
         """
 
-        log_file_path_name = self.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name()
 
         try:
             import csv
@@ -398,11 +341,11 @@ class Trader(object):
     @property
     def sys_log_file_exists(self) -> bool:
         """ 返回系统记录文件是否存在 """
-        return os.path.exists(self.sys_log_file_path_name)
+        return os.path.exists(sys_log_file_path_name(self.account_id, self.datasource))
 
     def config_file_exists(self) -> bool:
         """ 返回交易设置文件是否存在 """
-        return os.path.exists(self.trade_config_file_path_name)
+        return os.path.exists(break_point_file_path_name(self.account_id, self.datasource))
 
     # ================== methods ==================
     def get_current_tz_datetime(self) -> pd.Timestamp:
@@ -1081,7 +1024,7 @@ class Trader(object):
         """
 
         live_handler = logging.FileHandler(
-                filename=self.sys_log_file_path_name,
+                filename=sys_log_file_path_name(self.account_id, self.datasource),
                 mode='a',
                 encoding='utf-8',
                 delay=False,
@@ -1137,7 +1080,7 @@ class Trader(object):
             交易记录文件的路径和文件名
         """
         import csv
-        log_file_path_name = self.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(self.account_id, self.datasource)
 
         if os.path.exists(log_file_path_name):
             os.remove(log_file_path_name)
@@ -1194,7 +1137,8 @@ class Trader(object):
                 base_log_content[key] = f'{base_log_content[key]:.3f}'
 
         import csv
-        with open(self.trade_log_file_path_name, mode='a', encoding='utf-8') as f:
+        file_name = trade_log_file_path_name(self.account_id, self.datasource)
+        with open(file_name, mode='a', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=self.trade_log_file_headers)
             # append log_content to the end of the file
             writer.writerow(base_log_content)
@@ -1207,7 +1151,7 @@ class Trader(object):
         trade_log: pd.DataFrame
         """
         if self.trade_log_file_is_valid:
-            df = pd.read_csv(self.trade_log_file_path_name)
+            df = pd.read_csv(trade_log_file_path_name(self.account_id, self.datasource))
             return df
         else:
             return pd.DataFrame()
@@ -1226,7 +1170,7 @@ class Trader(object):
             逐行读取的系统log文本
         """
 
-        log_file_path = self.sys_log_file_path_name
+        log_file_path = sys_log_file_path_name(self.account_id, self.datasource)
         if not os.path.exists(log_file_path):
             return []
         with open(log_file_path, 'r') as f:
@@ -1255,13 +1199,12 @@ class Trader(object):
         break_point_data['config'] = self.config
 
         from .utilfuncs import write_binary_file
-        from qteasy import QT_SYS_LOG_PATH
 
-        break_point_file_name = self._log_file_name + '.bkp'
+        break_point_file_name = break_point_file_path_name(self.account_id, self.datasource)
         try:
             break_point_file_name = write_binary_file(
-                    file_path=QT_SYS_LOG_PATH,
-                    file_name=break_point_file_name,
+                    file_path=os.path.dirname(break_point_file_name),
+                    file_name=os.path.basename(break_point_file_name),
                     data=break_point_data,
             )
         except Exception as e:
@@ -1276,13 +1219,12 @@ class Trader(object):
         :return:
         """
         from .utilfuncs import read_binary_file
-        from qteasy import QT_SYS_LOG_PATH
 
-        break_point_file_name = self._log_file_name + '.bkp'
+        break_point_file_name = break_point_file_path_name(self.account_id, self.datasource)
         try:
             break_point_data = read_binary_file(
-                    file_path=QT_SYS_LOG_PATH,
-                    file_name=break_point_file_name,
+                    file_path=os.path.dirname(break_point_file_name),
+                    file_name=os.path.basename(break_point_file_name),
             )
             self.send_message(f'Loaded break point from {break_point_file_name}')
         except Exception as e:
@@ -1627,7 +1569,7 @@ class Trader(object):
         self.send_message('Starting Trader...')
 
         # 初始化交易记录文件
-        self.send_message(f'Initializing trade log file: {self.trade_log_file_path_name}...')
+        self.send_message(f'Initializing trade log file...')
         self.init_trade_log_file()
         # 初始化系统logger
         self.send_message(f'Initializing system logger...')
