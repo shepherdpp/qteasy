@@ -21,6 +21,7 @@ from qteasy import DataSource, Operator, BaseStrategy
 from qteasy.trade_recording import new_account, get_or_create_position, update_position, save_parsed_trade_orders
 from qteasy.trading_util import submit_order, process_trade_result, cancel_order, process_account_delivery
 from qteasy.trading_util import deliver_trade_result
+from qteasy.trading_util import sys_log_file_path_name, trade_log_file_path_name, break_point_file_path_name
 from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
@@ -140,7 +141,7 @@ class TestTrader(unittest.TestCase):
         self.ts.renew_trade_log_file()
         self.ts.init_system_logger()
         # remove test sys_log_file
-        sys_log_file_path = self.ts.sys_log_file_path_name
+        sys_log_file_path = sys_log_file_path_name(self.ts.account_id, test_ds)
         os.remove(sys_log_file_path)
         self.assertFalse(os.path.exists(sys_log_file_path))
 
