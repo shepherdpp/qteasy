@@ -470,20 +470,7 @@ class Trader(object):
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
 
-        # 初始化交易记录文件
-        self.init_trade_log_file()
-        # 初始化系统logger
-        self.init_system_logger()
-
-        # 初始化trader的状态，初始化任务计划
-        self.status = 'sleeping'
-        self._check_trade_day()
-        self._initialize_schedule()
-        self.send_message(f'Trader is started, running with account_id: {self.account_id}\n'
-                          f' = Started on date / time: '
-                          f'{self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")}\n'
-                          f' = current day is trade day: {self.is_trade_day}\n'
-                          f' = running agenda (first 5 tasks): {self.task_daily_schedule[:5]}')
+        self.run_task('start')
 
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
@@ -494,7 +481,6 @@ class Trader(object):
         # TODO: 这里似乎应该重新思考trader和UI的关系，将trader和UI彻底分开：
         #  1，抓取 KeyboardInterrupt 似乎应该是UI的任务，trader应该专注于交易任务
         #  2，trader应该专注于交易任务，UI应该专注于交互任务，两者应该分开
-        #  3，覆盖型信息应该由UI负责，trader只发出与交易有关的消息，UI负责显示或者在没有消息时覆盖或刷新
         try:
             while self.status != 'stopped':
                 pre_date = current_date
@@ -1265,7 +1251,7 @@ class Trader(object):
         """
         break_point_data = dict()
         break_point_data['operator'] = self.operator
-        break_point_data['broker'] = self.broker
+        # break_point_data['broker'] = self.broker
         break_point_data['config'] = self.config
 
         from .utilfuncs import write_binary_file
@@ -1298,30 +1284,17 @@ class Trader(object):
                     file_path=QT_SYS_LOG_PATH,
                     file_name=break_point_file_name,
             )
+            self.send_message(f'Loaded break point from {break_point_file_name}')
         except Exception as e:
-            msg = f'{e}, error writing break point!'
+            msg = f'{e}, break point does not exist or can not be loaded!'
             self.send_message(msg)
             return {}
 
         if not isinstance(break_point_data, dict):
-            err = TypeError()
-            raise err
+            msg = f'break point data is currupted, wrong data will be ignored'
+            self.send_message(msg)
+            return {}
 
-        operator = break_point_data.get('operator', None)
-        if operator:
-            self._operator = operator
-            self.send_message('Loaded operator from break point!')
-
-        broker = break_point_data.get('broker', None)
-        if broker:
-            self._broker = broker
-            self.send_message('Loaded broker from break point!')
-
-        config = break_point_data.get('config', None)
-        if config:
-            self._config = config
-            self.send_message('Loaded configurations from break point!')
-            
         return break_point_data
 
     def submit_trade_order(self, symbol: str, position: str, direction: str,
@@ -1652,10 +1625,55 @@ class Trader(object):
     def _start(self) -> None:
         """ 启动交易系统 """
         self.send_message('Starting Trader...')
+
+        # 初始化交易记录文件
+        self.send_message(f'Initializing trade log file: {self.trade_log_file_path_name}...')
+        self.init_trade_log_file()
+        # 初始化系统logger
+        self.send_message(f'Initializing system logger...')
+        self.init_system_logger()
+
+        # 检查是否有断点，如果有，则载入断点
+        self.send_message('Checking for break point...')
+        break_point = self.load_break_point()
+
+        if break_point:
+            self.send_message('Break point loaded, resuming from break point...')
+            operator = break_point.get('operator', None)
+            if operator:
+                self._operator = operator
+                self.send_message('Loaded operator from break point!')
+
+            # broker = break_point.get('broker', None)
+            # if broker:
+            #     self._broker = broker
+            #     self.send_message('Loaded broker from break point!')
+
+            config = break_point.get('config', None)
+            if config:
+                self._config = config
+                self.send_message('Loaded configurations from break point!')
+        else:
+            self.send_message('No break point found, will using default configurations...')
+
+        # 初始化trader的状态，初始化任务计划
         self.status = 'sleeping'
+        self.send_message('Checking trade day and initializing schedule...')
+        self._check_trade_day()
+        self._initialize_schedule()
+
+        # 启动broker
+        self.send_message(f'Trader is started, running with account_id: {self.account_id}\n'
+                          f' = Started on date / time: '
+                          f'{self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")}\n'
+                          f' = current day is trade day: {self.is_trade_day}\n'
+                          f' = running agenda (first 5 tasks): {self.task_daily_schedule[:5]}')
 
     def _stop(self) -> None:
         """ 停止交易系统 """
+        self.send_message('Saving Trading Data to break point...')
+        break_point_file_name = self.save_break_point()
+        self.send_message(f'Break point saved to {break_point_file_name}')
         self.send_message('Stopping Trader, the broker will be stopped as well...')
         self._broker.status = 'stopped'
         self.status = 'stopped'

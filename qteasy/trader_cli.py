@@ -877,7 +877,6 @@ class TraderShell(Cmd):
         else:
             print('Debug mode is off')
 
-
     def do_bye(self, arg):
         """usage: bye [-h]
 
