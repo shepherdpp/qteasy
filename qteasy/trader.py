@@ -321,7 +321,7 @@ class Trader(object):
         同时检查交易记录文件格式是否正确，header内容是否与self.trade_log_file_header一致
         """
 
-        log_file_path_name = trade_log_file_path_name()
+        log_file_path_name = trade_log_file_path_name(self.account_id, self.datasource)
 
         try:
             import csv
@@ -1226,14 +1226,13 @@ class Trader(object):
                     file_path=os.path.dirname(break_point_file_name),
                     file_name=os.path.basename(break_point_file_name),
             )
-            self.send_message(f'Loaded break point from {break_point_file_name}')
         except Exception as e:
             msg = f'{e}, break point does not exist or can not be loaded!'
             self.send_message(msg)
             return {}
 
         if not isinstance(break_point_data, dict):
-            msg = f'break point data is currupted, wrong data will be ignored'
+            msg = f'Wrong data read from break point, the file might be corrupted, data will be ignored!'
             self.send_message(msg)
             return {}
 

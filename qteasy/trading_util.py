@@ -1584,7 +1584,7 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
     return names_found
 
 
-def log_file_name(account_id, datasource) -> str:
+def account_log_file_name(account_id, datasource) -> str:
     """ 根据account_ID获取该account所存储的log文件的文件名（不同的扩展名用于不同类型的log文件，但文件名相同）
 
     Parameters
@@ -1621,7 +1621,7 @@ def sys_log_file_path_name(account_id, datasource) -> str:
     """
 
     from qteasy import QT_SYS_LOG_PATH
-    sys_log_file_name = log_file_name(account_id, datasource) + '.log'
+    sys_log_file_name = account_log_file_name(account_id, datasource) + '.log'
     log_file_path_name = os.path.join(QT_SYS_LOG_PATH, sys_log_file_name)
     return log_file_path_name
 
@@ -1643,9 +1643,9 @@ def break_point_file_path_name(account_id, datasource) -> str:
     """
 
     from qteasy import QT_SYS_LOG_PATH
-    trade_config_file_name = log_file_name(account_id, datasource) + '.bkp'
-    break_point_file_path_name = os.path.join(QT_SYS_LOG_PATH, trade_config_file_name)
-    return break_point_file_path_name
+    trade_config_file_name = account_log_file_name(account_id, datasource) + '.bkp'
+    bp_file_path_name = os.path.join(QT_SYS_LOG_PATH, trade_config_file_name)
+    return bp_file_path_name
 
 
 def trade_log_file_path_name(account_id, datasource) -> str:
@@ -1665,6 +1665,6 @@ def trade_log_file_path_name(account_id, datasource) -> str:
     """
 
     from qteasy import QT_TRADE_LOG_PATH
-    trade_log_file_name = log_file_name(account_id, datasource) + '.csv'
+    trade_log_file_name = account_log_file_name(account_id, datasource) + '.csv'
     log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
     return log_file_path_name
