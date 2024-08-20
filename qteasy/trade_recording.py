@@ -317,9 +317,13 @@ def delete_account(account_id: int, data_source=None, keep_account_id=True) -> N
         data_source.delete_sys_table_data('sys_op_trade_results', record_ids=result_ids)
 
         # 删除log文件
-        os.remove(sys_log_file)
-        os.remove(trade_log_file)
-        os.remove(break_point_file)
+        if os.path.exists(sys_log_file):
+            os.remove(sys_log_file)
+        if os.path.exists(trade_log_file):
+            os.remove(trade_log_file)
+        if os.path.exists(break_point_file):
+            os.remove(break_point_file)
+
     except Exception as e:
         # 如果删除失败，则回滚删除操作
         data_source.drop_table_data('sys_op_live_accounts')
