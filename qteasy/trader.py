@@ -343,7 +343,8 @@ class Trader(object):
         """ 返回系统记录文件是否存在 """
         return os.path.exists(sys_log_file_path_name(self.account_id, self.datasource))
 
-    def config_file_exists(self) -> bool:
+    @property
+    def break_point_file_exists(self) -> bool:
         """ 返回交易设置文件是否存在 """
         return os.path.exists(break_point_file_path_name(self.account_id, self.datasource))
 
