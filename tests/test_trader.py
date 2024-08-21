@@ -548,8 +548,18 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(break_point, dict)
         loaded_operator = break_point['operator']
         loaded_config = break_point['config']
-        self.assertIs(ts.operator, loaded_operator)
-        self.assertIs(ts.config, loaded_config)
+
+        self.assertIsInstance(loaded_operator, Operator)
+        # 对比loaded_operator以及ts的operator的各个方面是否相等
+        op1 = ts.operator
+        op2 = loaded_operator
+        self.assertEqual(op1.strategy_ids, op2.strategy_ids)
+        self.assertEqual(op1[0].pars, op2[0].pars)
+
+        self.assertIsInstance(loaded_config, dict)
+        conf1 = ts.config
+        conf2 = loaded_config
+        self.assertEqual(conf1['mode'], conf2['mode'])
 
     def test_log_trade_result(self):
         """ test higher level function log_trade_result """
