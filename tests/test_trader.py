@@ -292,7 +292,7 @@ class TestTrader(unittest.TestCase):
         """
         ts = self.ts
         # remove test sys_log_file
-        sys_log_file_path = ts.sys_log_file_path_name
+        sys_log_file_path = sys_log_file_path_name(ts.account_id, ts.datasource)
         os.remove(sys_log_file_path)
         self.assertFalse(os.path.exists(sys_log_file_path))
         ts.init_system_logger()
@@ -345,18 +345,18 @@ class TestTrader(unittest.TestCase):
 
         print(f'test property trade_log_file_is_valid')
         ts = self.ts
-        trade_log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         # remove the log file
-        os.remove(trade_log_file_path_name)
+        os.remove(log_file_path_name)
         self.assertFalse(ts.trade_log_file_is_valid)
-        self.assertFalse(os.path.exists(trade_log_file_path_name))
+        self.assertFalse(os.path.exists(log_file_path_name))
 
-        self.assertFalse(os.path.exists(trade_log_file_path_name))
+        self.assertFalse(os.path.exists(log_file_path_name))
         res = ts.renew_trade_log_file()
-        self.assertTrue(os.path.exists(trade_log_file_path_name))
-        self.assertEqual(res, ts.trade_log_file_path_name)
+        self.assertTrue(os.path.exists(log_file_path_name))
+        self.assertEqual(res, log_file_path_name)
         # remove the file and re-init
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         self.assertTrue(os.path.exists(log_file_path_name))
         self.assertTrue(ts.trade_log_file_is_valid)
 
@@ -519,11 +519,43 @@ class TestTrader(unittest.TestCase):
         # remove the log file and check if it is removed
         os.remove(log_file_path_name)
 
+    def test_break_point_saving(self):
+        """ Test functions to save and load break points"""
+
+        print(f'test property break_point_file_exists')
+        ts = self.ts
+        log_file_path_name = break_point_file_path_name(ts.account_id, ts.datasource)
+        # remove the log file
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.break_point_file_exists)
+        self.assertFalse(os.path.exists(log_file_path_name))
+
+        res = ts.save_break_point()
+        self.assertTrue(os.path.exists(log_file_path_name))
+        self.assertEqual(res, log_file_path_name)
+        # remove the file and the file should not exist
+        log_file_path_name = break_point_file_path_name(ts.account_id, ts.datasource)
+        os.remove(log_file_path_name)
+        self.assertFalse(ts.break_point_file_exists)
+        self.assertFalse(os.path.exists(log_file_path_name))
+
+        # save the break point and read from it
+        res = ts.save_break_point()
+        self.assertEqual(res, log_file_path_name)
+        self.assertTrue(os.path.exists(log_file_path_name))
+
+        break_point = ts.load_break_point()
+        self.assertIsInstance(break_point, dict)
+        loaded_operator = break_point['operator']
+        loaded_config = break_point['config']
+        self.assertIs(ts.operator, loaded_operator)
+        self.assertIs(ts.config, loaded_config)
+
     def test_log_trade_result(self):
         """ test higher level function log_trade_result """
         ts = self.ts
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -595,7 +627,7 @@ class TestTrader(unittest.TestCase):
         """ test higher level function log_cash_delivery """
         ts = self.ts
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -632,7 +664,7 @@ class TestTrader(unittest.TestCase):
         """ test higher level function log_qty_delivery """
         ts = self.ts
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -671,7 +703,7 @@ class TestTrader(unittest.TestCase):
 
         ts.manual_change_cash(10000.)
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -695,7 +727,7 @@ class TestTrader(unittest.TestCase):
 
         ts.manual_change_cash(20000.)
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -719,7 +751,7 @@ class TestTrader(unittest.TestCase):
 
         ts.manual_change_cash(-200000.)  # manual change cash over availability will not seccess
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -747,7 +779,7 @@ class TestTrader(unittest.TestCase):
 
         ts.manual_change_position(symbol='000001.SZ', quantity=200, price=30, side='long')
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -776,7 +808,7 @@ class TestTrader(unittest.TestCase):
 
         ts.manual_change_position(symbol='000006.SZ', quantity=200, price=30, side='long')
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
@@ -806,7 +838,7 @@ class TestTrader(unittest.TestCase):
         ts.manual_change_position(symbol='wrong_symbol', quantity=200, price=30, side='long')
         # changing wrong symbol will not be logged
 
-        log_file_path_name = ts.trade_log_file_path_name
+        log_file_path_name = trade_log_file_path_name(ts.account_id, ts.datasource)
         print(f'trade file path is {log_file_path_name}')
         import csv
         with open(log_file_path_name, 'r') as f:
