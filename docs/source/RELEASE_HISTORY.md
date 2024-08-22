@@ -1,5 +1,10 @@
 # RELEASE HISTORY
 
+## 1.3.5 (2024-08-22)
+- Added new feature: now trader will save the latest operation status on the dist while exit, and will restore the status when re-enter
+- Improved delete_account() function, now it will delete all account related files, including trade logs, trade records, and trader break points
+- Other bug fixes and optimizations in trader
+
 ## 1.3.4 (2024-08-17)
 - Improved Live trade broker, added retry count before canceling submitted orders when live price is not available, reduced chance of order filling failure
 - Corrected a mistake in grid trading example files, nan prices are now not written to strategy parameters
