@@ -268,7 +268,7 @@ class TraderApp(App):
         trader_info = self.trader.info(detail=True)
         self.refresh_values(trader_info)
         self.refresh_info_panels(trader_info)
-        self.refresh_tree()
+        self.refresh_operator_tree()
 
         cum_time_counter = 0
 
@@ -304,18 +304,25 @@ class TraderApp(App):
                 system_log.write(msg)
 
             if self.trader.status not in ['running', 'paused']:
-                continue
+                info_refresh_interval = 600  # every 1 minutes
+            else:
+                info_refresh_interval = 50  # every 5 seconds while running
 
+            # refresh the operator tree every interval
             cum_time_counter += 1
-            if cum_time_counter % 50 == 0:
-                # refresh the tree every 10 seconds
+            if cum_time_counter % info_refresh_interval == 0:
+
+                # TODO: refresh should be done asynchrously
                 trader_info = self.trader.info(detail=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
-                self.refresh_tree()
+                self.refresh_operator_tree()
                 self.refresh_holdings()
                 self.refresh_watches()
                 cum_time_counter = 0
+
+            if self.trader.status not in ['running', 'paused']:
+                continue
 
         system_log.write(f"System stopped, status: {self.status}")
 
@@ -514,7 +521,7 @@ class TraderApp(App):
         cash.update(f"{own_cash:.2f}")
 
     @work(exclusive=True, thread=True)
-    def refresh_tree(self):
+    def refresh_operator_tree(self):
         """Refresh the operator tree.
         The operator tree has 3 layers of nodes:
         1. Timing: strategy timings
@@ -555,7 +562,7 @@ class TraderApp(App):
         trader_info = self.trader.info(detail=True)
         self.refresh_values(trader_info)
         self.refresh_info_panels(trader_info)
-        self.refresh_tree()
+        self.refresh_operator_tree()
 
         # initialize widgets
         tables = self.query_one(Tables)
@@ -588,13 +595,10 @@ class TraderApp(App):
         """Actions to perform before exiting the app.
         """
         # stop the trader, broker and the trader event loop
-        self.trader.status = 'stopped'
-        time.sleep(0.1)
-        self.trader.broker.status = 'stopped'
+        self.trader.run_task('stop')
         time.sleep(0.1)
 
         self.status = 'stopped'
-        time.sleep(0.1)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

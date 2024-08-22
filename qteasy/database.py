@@ -3194,6 +3194,9 @@ class DataSource:
         -------
         int: rows affected
         """
+        # 如果没有记录需要删除，则直接返回
+        if not record_ids:
+            return 0
 
         # 生成删除记录的SQL语句
         sql = f"DELETE FROM `{db_table}` WHERE "
@@ -3202,6 +3205,7 @@ class DataSource:
             sql += f"`{primary_key}` IN {tuple(record_ids)}"
         elif len(record_ids) == 1:
             sql += f"`{primary_key}` = {record_ids[0]}"
+
         import pymysql
         con = pymysql.connect(
                 host=self.host,

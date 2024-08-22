@@ -11,7 +11,7 @@
 import argparse
 import re
 import shutil
-import sys
+import sys, os
 import time
 import warnings
 import numpy as np
@@ -2227,3 +2227,65 @@ def pandas_freq_alias_version_conversion(freq) -> str:
         mapped_freq = freq.replace('MIN', 'min')
 
     return mapped_freq
+
+
+def write_binary_file(*, file_path: str, file_name: str, data, mode: str = 'wb'):
+    """ 将二进制数据写入文件
+
+    Parameters
+    ----------
+    file_path: str
+        文件路径
+    file_name: str
+        文件名
+    data: Any
+        二进制数据
+    mode: str, Default: 'wb'
+        写入文件的模式
+        'wb'  overwrite the file
+        'xb'  raise if file already existed
+
+    Examples
+    --------
+    >>> write_binary_file('test.bin', b'hello world')
+    """
+
+    if not os.path.exists(file_path):
+        os.makedirs(file_path, exist_ok=False)
+
+    with open(os.path.join(file_path, file_name), mode) as f:
+        import pickle
+        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+        return f.name
+
+
+def read_binary_file(*, file_path: str, file_name: str, mode: str = 'rb'):
+    """ 读取二进制文件, 返回二进制形式存储的dict字典对象
+
+    Parameters
+    ----------
+    file_path: str
+        文件路径
+    file_name: str
+        文件名
+    mode: str, Default: 'rb'
+        读取文件的模式
+
+    Returns
+    -------
+    Objects: 二进制数据
+
+    Examples
+    --------
+    >>> read_binary_file('test.bin')
+    b'hello world'
+    """
+    file_path_name = os.path.join(file_path, file_name)
+    if not os.path.exists(file_path_name):
+        return None
+    import pickle
+
+    with open(os.path.join(file_path, file_name), mode) as f:
+        saved_data = pickle.load(f)
+
+    return saved_data

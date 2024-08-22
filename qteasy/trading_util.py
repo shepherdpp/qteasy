@@ -11,6 +11,7 @@
 # modules.
 # ======================================
 
+import os
 import pandas as pd
 import numpy as np
 
@@ -1581,3 +1582,89 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
     names_found = ['N/A' if pd.isna(name) else name for name in names_found]
 
     return names_found
+
+
+def account_log_file_name(account_id, datasource) -> str:
+    """ 根据account_ID获取该account所存储的log文件的文件名（不同的扩展名用于不同类型的log文件，但文件名相同）
+
+    Parameters
+    ----------
+    account_id: int
+        账户的ID
+    datasource: Datasource
+        存储account信息的数据源
+
+    Returns
+    -------
+    file_name: str
+        文件名不含扩展名，系统记录文件扩展名为.lo，交易记录文件扩展名为.csv
+    """
+    account = get_account(account_id, data_source=datasource)
+    account_name = account['user_name']
+    return f'live_log_{account_id}_{account_name}'
+
+
+def sys_log_file_path_name(account_id, datasource) -> str:
+    """ 返回指定交易账户实盘系统记录文件的路径和文件名，文件路径为QT_SYS_LOG_PATH
+
+    Parameters
+    ----------
+    account_id: int
+        账户的ID
+    datasource: Datasource
+        存储account信息的数据源
+
+    Returns
+    -------
+    file_path_name: str
+        完整的系统记录文件路径和文件名，含扩展名.log
+    """
+
+    from qteasy import QT_SYS_LOG_PATH
+    sys_log_file_name = account_log_file_name(account_id, datasource) + '.log'
+    log_file_path_name = os.path.join(QT_SYS_LOG_PATH, sys_log_file_name)
+    return log_file_path_name
+
+
+def break_point_file_path_name(account_id, datasource) -> str:
+    """ 返回指定交易账户实盘交易设置文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
+
+    Parameters
+    ----------
+    account_id: int
+        账户的ID
+    datasource: Datasource
+        存储account信息的数据源
+
+    Returns
+    -------
+    file_path_name: str
+        完整的系统记录文件路径和文件名，含扩展名.cfg
+    """
+
+    from qteasy import QT_SYS_LOG_PATH
+    trade_config_file_name = account_log_file_name(account_id, datasource) + '.bkp'
+    bp_file_path_name = os.path.join(QT_SYS_LOG_PATH, trade_config_file_name)
+    return bp_file_path_name
+
+
+def trade_log_file_path_name(account_id, datasource) -> str:
+    """ 返回指定交易账户实盘交易记录文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
+
+    Parameters
+    ----------
+    account_id: int
+        账户的ID
+    datasource: Datasource
+        存储account信息的数据源
+
+    Returns
+    -------
+    file_path_name: str
+        完整的系统记录文件路径和文件名，含扩展名.csv
+    """
+
+    from qteasy import QT_TRADE_LOG_PATH
+    trade_log_file_name = account_log_file_name(account_id, datasource) + '.csv'
+    log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
+    return log_file_path_name
