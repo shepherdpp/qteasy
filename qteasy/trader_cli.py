@@ -936,6 +936,14 @@ class TraderShell(Cmd):
         """
         return self.do_bye(arg)
 
+    def do_summary(self, arg):
+        """ Display the summary of today's operations and trade results
+
+        :param arg:
+        :return:
+        """
+        raise NotImplementedError
+
     def do_info(self, arg):
         """usage: info [-h] [--detail] [--system]
 
