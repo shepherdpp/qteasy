@@ -329,10 +329,13 @@ Now a strategy is added to the operator with ID 'dma', with which we can set or 
 
 'DMA' is a built-in timing strategy that generates buy/sell signals based on the difference between the fast and slow moving averages of the stock price. 
 
-Detailed info of this strategy can be print out with `op.info()` method:
+Detailed info of this strategy can be print out with `qt.built_in_doc()` function, and the strategy can be obtained with `qt.built_ins()` function:
 
 ```python
-qt.built_ins('dma')
+
+```python
+import qteasy as qt
+qt.built_in_doc('dma')
 ```
 following info will be printed:
 
@@ -361,6 +364,13 @@ following info will be printed:
 ```
 By default, the strategy uses three **adjustable parameters**: `(12,26,9)`, but we can give any three integers greater than 2 and less than 250 as the parameters of the strategy to adapt to stocks with different trading activity or to adapt to different strategy running cycles.
 
+You can let qteasy to list all built-in strategies with `qt.built_in_list()` function:
+
+```python
+qt.built_in_list()
+```
+
+```python
 
 ### Backtest strategy with history data and evaluate its performance
 
