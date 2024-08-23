@@ -63,30 +63,31 @@
 
 ### **金融历史数据**: 
 
-- 获取、清洗、本地存储大量金融历史数据
-- 检索、处理、调用本地数据
-- 本地金融数据可视化
+- 一个函数即可获取、清洗、本地存储大量金融历史数据
+- 所有本地数据统一格式存储，统一定义数据标签，一个接口即可方便调用
+- 金融数据可视化、进一步统计分析并生成分析结果
 
 ![png](docs/source/img/output_5_2.png)
 
-### **创建交易策略**
+### **创建交易策略，模拟自动化交易**
 
-- 提供几十种内置交易策略，可以直接搭积木式使用
-- 快速创建自定义交易策略，灵活设置可调参数
-- 交易策略的回测、优化、评价，可视化输出回测结果
-
-![png](docs/source/img/output_14_3.png)
-
-### **实盘交易模拟**
-- 读取实时市场数据，实盘运行交易策略
-- 生成交易信号，模拟交易结果
+- 快速搭建交易策略，使用内置交易策略或自行创建交易策略
+- 获取实时市场数据，运行策略模拟自动化交易
 - 跟踪记录交易日志、股票持仓、账户资金变化等信息
-- 随时查看交易过程，检查盈亏情况
-- 手动控制交易进程、调整交易参数，手动下单
+- 通过多种用户界面查看并控制交易程序
+- 未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易
 
 ![png](docs/source/examples/img/trader_app_1.png)  
 ![png](docs/source/examples/img/trader_app_2.png)  
 ![png](docs/source/examples/img/trader_app_light_theme.png) 
+
+### **回测、评价、优化交易策略**
+
+- 使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果
+- 对交易结果进行多维度全方位评价，生成交易报告和结果图标
+- 提供多种优化算法，帮助搜索最优的策略参数，提高策略表现
+
+![png](docs/source/img/output_14_3.png)
 
 ## 安装
 
@@ -285,7 +286,9 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 关于`DataSource`对象的更多详细介绍，请参见[qteasy文档](https://qteasy.readthedocs.io)
 
 
-###  创建一个投资策略
+###  创建一个投资策略并启动实盘自动化运行（模拟）
+
+![png](docs/source/examples/img/trader_app_2.png) 
 
 `qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略。
@@ -295,7 +298,7 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 - **使用内置交易策略组合**
 - **通过策略类自行创建策略**
 
-#### 生成一个DMA均线择时交易策略
+#### 创建一个DMA均线择时交易策略
 在这里，我们将使用一个内置的`DMA`均线择时策略来生成一个最简单的大盘择时交易系统。所有内置交易策略的清单和详细说明请参见文档。
 
 创建`Operator`对象时传入参数：`strategies='DMA'`，可以新建一个`DMA`双均线择时交易策略。
@@ -348,8 +351,94 @@ qt.built
 
 您可以使用`qt.built_in_list()`函数查看所有内置策略的清单，并使用`qt.built_ins()`或`qt.built_in_strategies()`函数查看特定策略的详细说明。
 
+### 启动交易策略的实盘自动化模拟运行
 
-### 回测并评价交易策略的性能表现
+在配置好`Operator`对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
+
+`Qteasy`的实盘一旦启动，就会在`terminal`中启动一个单独的线程在后台运行，运行的时机也是跟真实的股票市场一致的，股票市场收市的时候不运行，交易日早上9点15分唤醒系统开始拉取实时股价，9点半开始运行交易策略，交易策略的运行时机和运行频率在策略的属性中设置。如果策略运行的结果产生交易信号，则根据交易信号模拟挂单，挂单成交后修改响应账户资金和股票持仓，交易费用按照设置中的费率扣除。如果资金不足或持仓不足会导致交易失败，当天买入的股票同真实市场一样T+1交割，第二个交易日开始前交割完毕。
+
+```python
+import qteasy as qt
+
+# 创建一个交易策略alpha
+alpha = qt.get_built_in_strategy('ndayrate')  # 创建一个N日股价涨幅交易策略
+
+# 设置策略的运行参数
+alpha.strategy_run_freq = 'd'  # 每日运行
+alpha.data_freq = 'd' # 策略使用日频数据
+alpha.window_length = 20  # 数据窗口长度
+alpha.sort_ascending = False  # 优先选择涨幅最大的股票
+alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
+alpha.ubound = 0.005  # 筛选出涨幅大于0.5%的股票
+alpha.sel_count = 7  # 每次选出7支股票
+
+# 创建一个交易员对象，运行alpha策略
+op = qt.Operator(alpha, signal_type='PT', op_type='step')
+
+# 设置策略运行参数
+# 交易股票池包括所有的银行股和家用电器股
+asset_pool = qt.filter_stock_codes(industry='银行, 家用电器', exchange='SSE, SZSE')
+
+qt.configure(
+        asset_type='E',  # 交易的标的类型为股票
+        asset_pool=asset_pool,  # 交易股票池为所有银行股和家用电器股
+        trade_batch_size=100,  # 交易批量为100股的整数倍
+        sell_batch_size=1,  # 卖出数量为1股的整数倍
+        live_trade_account_id=None,  # 不指定实盘交易账户，给出账户名称并创建一个新的账户
+        live_trade_account_name='new_account'
+        # 如果想要使用已有的账户，应该指定账户ID同时不给出account_name：
+        # live_trade_account_id=1
+        # live_trade_account_name=None
+        live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
+)
+```
+完成上述设置后，使用下面的代码运行交易策略，运行交易策略时指定模式0，代表实盘交易:
+
+```python
+qt.run(op, mode=0,  # 交易模式为实盘运行)
+```
+
+`Qteasy`的实盘运行有一个“账户”的概念，就跟您在股票交易市场开户一样，一个账户可以有自己的持有资金，股票持仓，单独计算盈亏。运行过程中您可以随时终止程序，这时所有的交易记录都会保存下来，下次重新启动时，只要引用上一次运行使用的账户ID（account ID）就可以从上次中断的地方继续运行了，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行。
+
+在启动实盘时可以通过`qteasy`的系统配置变量`live_trade_account_name`来指定使用的账户名，系统会自动创建一个新的账户并赋予账户ID；如果想要使用已有的账户，可以在启动时通过`live_trade_account_id`指定账户ID。
+
+#### 实盘自动化交易的控制界面
+
+为了对策略运行过程进行监控，同时与`qteasy`进行互动，`qteasy`提供了两种不同的交互界面：
+
+- **`TraderShell`** 交互式命令行界面CLI，可以在命令行中输入命令，查看交易日志、查看持仓、查看账户资金变化等信息：
+![png](docs/source/img/output_27_1.png)  
+![png](docs/source/img/output_27_3.png) 
+
+在命令行界面中，启动后默认显示的是交易策略的dashboard(状态页)，在该屏幕上会滚动显示交易策略运行日志，打印产生的交易信号、交易结果、当前最新股票价格等信息。
+
+在策略运行过程中，用户可以通过键入"Ctrl+C"进入主菜单，按1键进入交互模式，这时用户可以通过键盘输入命令来查看持仓、查看账户资金变化、查看交易日志等信息，也可以通过命令来控制交易策略的运行，例如暂停、继续、终止交易策略的运行。
+
+CLI界面目前支持的交互命令较多，包括：
+- 暂停、恢复、终止交易策略的运行
+- 查看持仓、账户资金、交易订单、交易历史等信息
+- 手动调整持仓数量、资金数量、手动调整交易配置
+- 手动下单，手动撤单
+- 设置实时价格监控的股票代码
+
+- **`TraderApp`** (v1.2.0新增) 交互式图形界面TUI，可以在图形界面中查看交易日志、查看持仓、查看账户资金变化等信息
+![png](docs/source/examples/img/trader_app_light_theme.png)
+
+在TUI图形界面中，用户的Terminal会被划分为多个区域，显示策略运行过程中的所有关键信息，例如在顶部显示当前资产总额、浮动盈亏，在画面中部以图表显示当前持仓、交易订单历史记录、实时股票价格、以及策略运行参数等信息，在画面底部显示交易日志。
+
+用户可以在TUI界面中以快捷键或者鼠标按钮点击的方式与qteasy的自动化交易程序互动，目前支持的功能较少，包括：
+- 设置或调整实时价格监控的股票代码
+- 更多的功能正在逐步添加中
+
+上面两种方式都可以在实盘运行时使用，根据`qteasy`的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
+
+
+### 回测、评价并优化交易策略的性能表现
+
+交易策略的表现与策略的参数息息相关，针对不同类型的股票，不同的交易风格、不同的交易周期，策略的参数可能需要不同的设置，`qteasy`提供了策略回测功能，并多种优化算法，帮助搜索最优的策略参数，提高策略表现。
+
+#### 交易策略的回测
+
 `qteasy`可以使用历史数据回测策略表现并输出图表如下：
 ![png](docs/source/img/output_14_3.png)
 
@@ -372,6 +461,7 @@ res = op.run(
         trade_log=True                  # 打印交易日志
 )
 ```
+
 输出结果如下：
 ```
      ====================================
@@ -419,7 +509,7 @@ Max drawdown:                    11.92%
 ```
 ![png](docs/source/img/output_21_1.png)
 
-### 交易策略的参数调优
+#### 交易策略的参数调优
 
 交易策略的表现与参数有关，如果输入不同的参数，策略回报相差会非常大。`qteasy`可以用多种不同的优化算法，帮助搜索最优的策略参数，
 
@@ -490,68 +580,3 @@ res = op.run(
 
 
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
-
-### 部署并开始交易策略的实盘运行
-
-在配置好`Operator`对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。
-
-`Qteasy`的实盘一旦启动，就会在terminal中启动一个单独的线程在后台运行，运行的时机也是跟真实的股票市场一致的，股票市场收市的时候不运行，交易日早上9点15分唤醒系统开始拉取实时股价，9点半开始运行交易策略，交易策略的运行时机和运行频率在策略的属性中设置。如果策略运行的结果产生交易信号，则根据交易信号模拟挂单，挂单成交后修改响应账户资金和股票持仓，交易费用按照设置中的费率扣除。如果资金不足或持仓不足会导致交易失败，当天买入的股票同真实市场一样T+1交割，第二个交易日开始前交割完毕。
-
-```python
-import qteasy as qt
-
-# 创建一个交易策略alpha
-alpha = qt.get_built_in_strategy('ndayrate')  # 创建一个N日股价涨幅交易策略
-
-# 设置策略的运行参数
-alpha.strategy_run_freq = 'd'  # 每日运行
-alpha.data_freq = 'd' # 策略使用日频数据
-alpha.window_length = 20  # 数据窗口长度
-alpha.sort_ascending = False  # 优先选择涨幅最大的股票
-alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
-alpha.ubound = 0.005  # 筛选出涨幅大于0.5%的股票
-alpha.sel_count = 7  # 每次选出7支股票
-
-# 创建一个交易员对象，运行alpha策略
-op = qt.Operator(alpha, signal_type='PT', op_type='step')
-
-# 设置策略运行参数
-# 交易股票池包括所有的银行股和家用电器股
-asset_pool = qt.filter_stock_codes(industry='银行, 家用电器', exchange='SSE, SZSE')
-
-qt.configure(
-        mode=0,  # 交易模式为实盘运行
-        asset_type='E',  # 交易的标的类型为股票
-        asset_pool=asset_pool,  # 交易股票池为所有银行股和家用电器股
-        trade_batch_size=100,  # 交易批量为100股的整数倍
-        sell_batch_size=1,  # 卖出数量为1股的整数倍
-)
-```
-完成上述设置后，使用下面的代码运行交易策略。
-
-`Qteasy`的实盘运行有一个“账户”的概念，就跟您在股票交易市场开户一样，一个账户可以有自己的持有资金，股票持仓，单独计算盈亏。运行过程中您可以随时终止程序，这时所有的交易记录都会保存下来，下次重新启动时，只要引用上一次运行使用的账户ID（account ID）就可以从上次中断的地方继续运行了，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行。
-
-在启动实盘时可以通过`qteasy`的系统配置变量`live_trade_account_name`来指定使用的账户名，系统会自动创建一个新的账户并赋予账户ID；如果想要使用已有的账户，可以在启动时通过`live_trade_account_id`指定账户ID。
-
-```python
-qt.run(
-        op,
-        live_trade_account_id=None,  # 不指定实盘交易账户，给出账户名称并创建一个新的账户
-        live_trade_account_name='new_account'
-        # 如果想要使用已有的账户，应该指定账户ID同时不给出account_name：
-        # live_trade_account_id=1
-        # live_trade_account_name=None
-        live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
-)
-```
-
-为了对策略运行过程进行监控，同时与`qteasy`进行互动，`qteasy`提供了两种不同的交互界面：
-
-- **`TraderShell`** 交互式命令行界面，可以在命令行中输入命令，查看交易日志、查看持仓、查看账户资金变化等信息：
-![png](docs/source/img/output_27_1.png)  
-![png](docs/source/img/output_27_3.png) 
-- **`TraderApp`** (v1.2.0新增) 交互式图形界面，可以在图形界面中查看交易日志、查看持仓、查看账户资金变化等信息
-![png](docs/source/examples/img/trader_app_light_theme.png) 
-![png](docs/source/examples/img/trader_app_2.png) 
-
-上面两种方式都可以在实盘运行时使用，根据`qteasy`的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
