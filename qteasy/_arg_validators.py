@@ -1026,9 +1026,9 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False, width=80):
     else:
         raise TypeError(f'level should be an integer or list of integers, got {type(level)}')
     assert all(isinstance(item, int) for item in levels), f'TypeError, levels should be a list of integers'
-    column_w_key = min(int(width * 0.2), 30)
-    column_w_default = min(int(width * 0.2), 30)
-    column_w_current = width - column_w_key - column_w_default - 4
+    column_w_key = min(int(width * 0.2), 15)
+    column_w_default = min(int(width * 0.2), 15)
+    column_w_current = min(width - column_w_key - column_w_default - 4, 20)
     column_offset_description = 4
     vkwargs = _valid_qt_kwargs()
     output_strings = list()
