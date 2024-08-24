@@ -454,7 +454,7 @@ class TraderShell(Cmd):
                         'default': 'today',
                         'choices': ['today', 't', 'yesterday', 'y', '3day', '3', 'week', 'w',
                                     'month', 'm', 'all', 'a'],
-                        'help':   'time to show summary for'}],
+                        'help':   'time period to show summary for'}],
         'info':       [{'action': 'store_true',
                         'help':   'show detailed account info'},
                        {'action': 'store_true',
@@ -1062,7 +1062,7 @@ class TraderShell(Cmd):
         Display the summary of operation histories in human-readable format.
 
         positional arguments:
-            TIME                {today,t,yesterday,y,3day,3,week,w,month,m,all,a}, default today
+          TIME                  {today,t,yesterday,y,3day,3,week,w,month,m,all,a}, default today
                                 time range to show summary
 
         optional arguments:
@@ -1075,29 +1075,57 @@ class TraderShell(Cmd):
         to show summary of yesterday's operation:
         (QTEASY) summary yesterday
         """
-        args = self.parse_args('orders', arg)
+        args = self.parse_args('summary', arg)
         if not args:
             return False
 
-        time = args.time
-
+        time_period = args.time
         order_details = self._trader.history_orders()
         order_details = self.filter_order_details(
                 order_details,
                 symbols=None,
-                order_time=time,
+                order_time=time_period,
         )
 
         if order_details.empty:
-            print('No order history found.')
+            print(f'No order history found with given time period "{time_period}", please expand the time range')
             return
 
-        # create the summary
-        # print total number of orders executed in the period
-        rich.print(f'Total number of orders executed in the period: {len(order_details)}')
-        # human-readable format of each order:
-        for order in order_details:
-            print(order)
+        # get the names of all symbols
+        symbols = order_details['symbol'].tolist()
+        names = get_symbol_names(datasource=self.trader.datasource, symbols=symbols)
+        order_details['name'] = names
+
+        # calculate total number of orders executed in the period and total transaction cost
+        symbols = list(set(symbols))
+        rich.print(f'({len(symbols)}) share(s) are operated in time period "{time_period}": \n{symbols}')
+
+        # human-readable format of each order of each symbol:
+        for symbol in symbols:
+            order_detail_for_symbol = order_details[order_details['symbol'] == symbol]
+            rich.print(f'\nFor symbol {symbol} {order_detail_for_symbol["name"].iloc[0]}:')
+            rich.print('====================')
+            net_qty = 0
+            total_cost = 0
+            for row, order in order_detail_for_symbol.iterrows():
+                # messages like "On 2021-01-01 12:00:00, bought 1000 shares @ 10.00,"
+                #               "800 shares filled at 2021-01-01 12:00:01 @ 10.01 with transaction cost 10.01"
+                message = f'- {order["submitted_time"].strftime("%Y%m%d %H:%M")}, {order["direction"]} {order["qty"]} ' \
+                          f'share(s) @ {order["price_quoted"]}, -- '
+                if order["filled_qty"] > 0:
+                    message += f'{order["filled_qty"]} share(s) filled at {order["execution_time"].strftime("%H:%M")}' \
+                               f' @ {order["price_filled"]} with cost {order["transaction_fee"]}'
+                elif order["canceled_qty"] > 0:
+                    message += f'{order["canceled_qty"]} share(s) got canceled at ' \
+                               f'{order["execution_time"].strftime("%H:%M")}'
+                else:
+                    message += f', order is still pending'
+                net_qty += order["filled_qty"] if order["direction"] == 'buy' else -order["filled_qty"]
+                total_cost += order["transaction_fee"]
+
+                rich.print(message)
+
+            rich.print(f'\nNet bought quantity for {symbol} is {net_qty}, total transaction cost is {total_cost:.2f}')
 
     def do_info(self, arg):
         """usage: info [-h] [--detail] [--system]
