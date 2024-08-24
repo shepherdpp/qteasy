@@ -757,22 +757,22 @@ class TraderShell(Cmd):
 
         # select orders by order symbol arguments like '000001.SZ'
 
-        # normalize symbols to upper case and with suffix codes
+        # normalize symbols to upper case and with suffix codes when symbols are given
         if symbols:
             symbols = [symbol.upper() for symbol in symbols]
 
-        possible_symbols = []
-        for symbol in symbols:
-            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
-            if is_complete_cn_stock_symbol_like(symbol):
-                possible_symbols.append(symbol)
-            # select orders by order symbol arguments like '000001'
-            elif is_cn_stock_symbol_like(symbol):
-                possible_symbols.extend([symbol + '.SH', symbol + '.SZ', symbol + '.BJ'])
-            else:
-                continue
+            possible_symbols = []
+            for symbol in symbols:
+                from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
+                if is_complete_cn_stock_symbol_like(symbol):
+                    possible_symbols.append(symbol)
+                # select orders by order symbol arguments like '000001'
+                elif is_cn_stock_symbol_like(symbol):
+                    possible_symbols.extend([symbol + '.SH', symbol + '.SZ', symbol + '.BJ'])
+                else:
+                    continue
 
-        order_details = order_details[order_details['symbol'].isin(possible_symbols)]
+            order_details = order_details[order_details['symbol'].isin(possible_symbols)]
 
         return order_details
 
@@ -1082,7 +1082,11 @@ class TraderShell(Cmd):
         time = args.time
 
         order_details = self._trader.history_orders()
-        order_details = self.filter_order_details(order_details, order_time=time)
+        order_details = self.filter_order_details(
+                order_details,
+                symbols=None,
+                order_time=time,
+        )
 
         if order_details.empty:
             print('No order history found.')
