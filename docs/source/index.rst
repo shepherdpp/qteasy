@@ -47,6 +47,8 @@ What Can You Do with ``QTEASY`` ?
     :width: 900px
     :align: center
 
+
+
 创建交易策略，模拟自动化交易
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -66,6 +68,7 @@ What Can You Do with ``QTEASY`` ?
     :align: center
 
 
+
 回测、评价、优化交易策略
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -76,6 +79,7 @@ What Can You Do with ``QTEASY`` ?
 .. image:: img/output_14_3.png
     :width: 900px
     :align: center
+
 
 
 .. toctree::
