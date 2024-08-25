@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.3.6 (2024-08-25)
+- Fixed bugs in command `orders` in trader CLI:
+  - now `orders` command selects symbols correctly
+  - now parameter `--time` works with value 'all' or 'a'
+- Added new command `summary` that displays trading operations in given period in human readable way
+
 ## 1.3.5 (2024-08-22)
 - Added new feature: now trader will save the latest operation status on the dist while exit, and will restore the status when re-enter
 - Improved delete_account() function, now it will delete all account related files, including trade logs, trade records, and trader break points
