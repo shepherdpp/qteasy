@@ -310,6 +310,9 @@ class TraderShell(Cmd):
         'stop':       dict(prog='stop', description='Stop trader and exit shell',
                            usage='stop [-h]',
                            epilog='You can also exit shell using command "exit" or "bye"'),
+        'summary':    dict(prog='summary', description='Show human readable operation summary',
+                           usage='summary [TIME] [-h]',
+                           epilog='Display the summary of operation histories in human-readable format.'),
         'info':       dict(prog='info', description='Get trader info, same as overview',
                            usage='info [-h] [--detail] [--system]',
                            epilog='Get trader info, including basic information of current '
@@ -386,6 +389,7 @@ class TraderShell(Cmd):
         'bye':        [],
         'exit':       [],
         'stop':       [],
+        'summary':    [('time',)],
         'info':       [('--detail', '-d'),
                        ('--system', '-s')],
         'pool':       [],
@@ -445,6 +449,12 @@ class TraderShell(Cmd):
         'bye':        [],
         'exit':       [],
         'stop':       [],
+        'summary':    [{'action': 'store',
+                        'nargs':  '?',  # nargs='?' will require at most one argument
+                        'default': 'today',
+                        'choices': ['today', 't', 'yesterday', 'y', '3day', '3', 'week', 'w',
+                                    'month', 'm', 'all', 'a'],
+                        'help':   'time period to show summary for'}],
         'info':       [{'action': 'store_true',
                         'help':   'show detailed account info'},
                        {'action': 'store_true',
@@ -513,7 +523,8 @@ class TraderShell(Cmd):
                         'type':    str,
                         'help':    'stock symbol to show history for, if not given, show history for all'}],
         'orders':     [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
-                        'nargs':  '*',  # nargs='+' will require at least one argument
+                        'nargs':  '*',  # nargs='*' allows 0 or any positive number of arguments.
+                        # nargs='+' will require at least one argument
                         'help':   'stock symbol to show orders for'},
                        {'action':  'store',
                         'default': 'all',
@@ -655,6 +666,115 @@ class TraderShell(Cmd):
             else:
                 watched_price_string += f' ={symbol[:-3]}/--/---'
         self._watched_price_string = watched_price_string
+
+    def filter_order_details(self,
+                             order_details: pd.DataFrame,
+                             *,
+                             symbols: [str] = None,
+                             status: str = None,
+                             order_time: str = None,
+                             order_type: str = None,
+                             side: str = None,
+                             ):
+        """ Filter order details by arguments and return the filtered records
+
+        Parameters:
+        -----------
+        order_details: pd.DataFrame
+            订单详情数据框
+        symbols: list of str
+            股票代码列表
+        status: str
+            订单状态
+        order_time: str
+            订单时间
+        order_type: str
+            订单类型
+        side: str
+            订单方向
+
+        Returns:
+        --------
+        order_details: pd.DataFrame
+            筛选过后的订单详情
+        """
+
+        # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
+        end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
+        if order_time in['all', 'a']:
+            start = pd.to_datetime('1970-01-01 00:00:00')
+        elif order_time in ['last_hour', 'l']:
+            start = pd.to_datetime(end) - pd.Timedelta(hours=1)
+        elif order_time in ['today', 't']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['yesterday', 'y']:
+            yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = yesterday.strftime("%Y-%m-%d 00:00:00")
+            end = yesterday.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['3day', '3']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=3)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['week', 'w']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=7)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        elif order_time in ['month', 'm']:
+            start = pd.to_datetime(end) - pd.Timedelta(days=30)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+        else:
+            start = pd.to_datetime(end) - pd.Timedelta(days=1)
+            start = start.strftime("%Y-%m-%d 23:59:59")
+
+        # select orders by time range
+        order_details = order_details[(order_details['submitted_time'] >= start) &
+                                      (order_details['submitted_time'] <= end)]
+
+        # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
+        if status in ['filled', 'f']:
+            order_details = order_details[order_details['status'] == 'filled']
+        elif status in ['canceled', 'c']:
+            order_details = order_details[order_details['status'] == 'canceled']
+        elif status in ['partial-filled', 'p']:
+            order_details = order_details[order_details['status'] == 'partial-filled']
+        else:  # default to show all statuses
+            pass
+
+        # select orders by order side arguments like 'long', 'short'
+        if side in ['long', 'l']:
+            order_details = order_details[order_details['position'] == 'long']
+        elif side in ['short', 's']:
+            order_details = order_details[order_details['position'] == 'short']
+        else:  # default to show all sides
+            pass
+
+        # select orders by order side arguments like 'buy', 'sell'
+        if order_type in ['buy', 'b']:
+            order_details = order_details[order_details['direction'] == 'buy']
+        elif order_type in ['sell', 's']:
+            order_details = order_details[order_details['direction'] == 'sell']
+        else:  # default to show all directions
+            pass
+
+        # select orders by order symbol arguments like '000001.SZ'
+
+        # normalize symbols to upper case and with suffix codes when symbols are given
+        if symbols:
+            symbols = [symbol.upper() for symbol in symbols]
+
+            possible_symbols = []
+            for symbol in symbols:
+                from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
+                if is_complete_cn_stock_symbol_like(symbol):
+                    possible_symbols.append(symbol)
+                # select orders by order symbol arguments like '000001'
+                elif is_cn_stock_symbol_like(symbol):
+                    possible_symbols.extend([symbol + '.SH', symbol + '.SZ', symbol + '.BJ'])
+                else:
+                    continue
+
+            order_details = order_details[order_details['symbol'].isin(possible_symbols)]
+
+        return order_details
 
     # ----- command arg parsers -----
     def init_arg_parsers(self):
@@ -935,6 +1055,77 @@ class TraderShell(Cmd):
         (QTEASY) stop
         """
         return self.do_bye(arg)
+
+    def do_summary(self, arg):
+        """ usage: summary [TIME] [-h]
+
+        Display the summary of operation histories in human-readable format.
+
+        positional arguments:
+          TIME                  {today,t,yesterday,y,3day,3,week,w,month,m,all,a}, default today
+                                time range to show summary
+
+        optional arguments:
+          -h, --help            show this help message and
+
+        Examples:
+        ---------
+        to show summary of today's operation:
+        (QTEASY) summary today
+        to show summary of yesterday's operation:
+        (QTEASY) summary yesterday
+        """
+        args = self.parse_args('summary', arg)
+        if not args:
+            return False
+
+        time_period = args.time
+        order_details = self._trader.history_orders()
+        order_details = self.filter_order_details(
+                order_details,
+                symbols=None,
+                order_time=time_period,
+        )
+
+        if order_details.empty:
+            print(f'No order history found with given time period "{time_period}", please expand the time range')
+            return
+
+        # get the names of all symbols
+        symbols = order_details['symbol'].tolist()
+        names = get_symbol_names(datasource=self.trader.datasource, symbols=symbols)
+        order_details['name'] = names
+
+        # calculate total number of orders executed in the period and total transaction cost
+        symbols = list(set(symbols))
+        rich.print(f'({len(symbols)}) share(s) are operated in time period "{time_period}": \n{symbols}')
+
+        # human-readable format of each order of each symbol:
+        for symbol in symbols:
+            order_detail_for_symbol = order_details[order_details['symbol'] == symbol]
+            rich.print(f'\nFor symbol {symbol} {order_detail_for_symbol["name"].iloc[0]}:')
+            rich.print('====================')
+            net_qty = 0
+            total_cost = 0
+            for row, order in order_detail_for_symbol.iterrows():
+                # messages like "On 2021-01-01 12:00:00, bought 1000 shares @ 10.00,"
+                #               "800 shares filled at 2021-01-01 12:00:01 @ 10.01 with transaction cost 10.01"
+                message = f'- {order["submitted_time"].strftime("%Y%m%d %H:%M")}, {order["direction"]} {order["qty"]} ' \
+                          f'share(s) @ {order["price_quoted"]}, -- '
+                if order["filled_qty"] > 0:
+                    message += f'{order["filled_qty"]} share(s) filled at {order["execution_time"].strftime("%H:%M")}' \
+                               f' @ {order["price_filled"]} with cost {order["transaction_fee"]}'
+                elif order["canceled_qty"] > 0:
+                    message += f'{order["canceled_qty"]} share(s) got canceled at ' \
+                               f'{order["execution_time"].strftime("%H:%M")}'
+                else:
+                    message += f', order is still pending'
+                net_qty += order["filled_qty"] if order["direction"] == 'buy' else -order["filled_qty"]
+                total_cost += order["transaction_fee"]
+
+                rich.print(message)
+
+            rich.print(f'\nNet bought quantity for {symbol} is {net_qty}, total transaction cost is {total_cost:.2f}')
 
     def do_info(self, arg):
         """usage: info [-h] [--detail] [--system]
@@ -1594,80 +1785,17 @@ class TraderShell(Cmd):
 
         # filter orders by arguments
 
-        # select orders by time range arguments like 'last_hour', 'today', '3day', 'week', 'month'
-        end = self.trader.get_current_tz_datetime()  # 产生本地时区时间
-        if order_time in ['last_hour', 'l']:
-            start = pd.to_datetime(end) - pd.Timedelta(hours=1)
-        elif order_time in ['today', 't']:
-            start = pd.to_datetime(end) - pd.Timedelta(days=1)
-            start = start.strftime("%Y-%m-%d 23:59:59")
-        elif order_time in ['yesterday', 'y']:
-            yesterday = pd.to_datetime(end) - pd.Timedelta(days=1)
-            start = yesterday.strftime("%Y-%m-%d 00:00:00")
-            end = yesterday.strftime("%Y-%m-%d 23:59:59")
-        elif order_time in ['3day', '3']:
-            start = pd.to_datetime(end) - pd.Timedelta(days=3)
-            start = start.strftime("%Y-%m-%d 23:59:59")
-        elif order_time in ['week', 'w']:
-            start = pd.to_datetime(end) - pd.Timedelta(days=7)
-            start = start.strftime("%Y-%m-%d 23:59:59")
-        elif order_time in ['month', 'm']:
-            start = pd.to_datetime(end) - pd.Timedelta(days=30)
-            start = start.strftime("%Y-%m-%d 23:59:59")
-        else:
-            start = pd.to_datetime(end) - pd.Timedelta(days=1)
-            start = start.strftime("%Y-%m-%d 23:59:59")
-
-        # select orders by time range
-        order_details = order_details[(order_details['submitted_time'] >= start) &
-                                      (order_details['submitted_time'] <= end)]
-
-        # select orders by status arguments like 'filled', 'canceled', 'partial-filled'
-        if status in ['filled', 'f']:
-            order_details = order_details[order_details['status'] == 'filled']
-        elif status in ['canceled', 'c']:
-            order_details = order_details[order_details['status'] == 'canceled']
-        elif status in ['partial-filled', 'p']:
-            order_details = order_details[order_details['status'] == 'partial-filled']
-        else:  # default to show all statuses
-            pass
-
-        # select orders by order side arguments like 'long', 'short'
-        if side in ['long', 'l']:
-            order_details = order_details[order_details['position'] == 'long']
-        elif side in ['short', 's']:
-            order_details = order_details[order_details['position'] == 'short']
-        else:  # default to show all sides
-            pass
-
-        # select orders by order side arguments like 'buy', 'sell'
-        if order_type in ['buy', 'b']:
-            order_details = order_details[order_details['direction'] == 'buy']
-        elif order_type in ['sell', 's']:
-            order_details = order_details[order_details['direction'] == 'sell']
-        else:  # default to show all directions
-            pass
-
-            # select orders by order symbol arguments like '000001.SZ'
-
-        # normalize symbols to upper case and with suffix codes
-        if symbols:
-            symbols = [symbol.upper() for symbol in symbols]
-
-        for symbol in symbols:
-            from qteasy.utilfuncs import is_complete_cn_stock_symbol_like, is_cn_stock_symbol_like
-            if is_complete_cn_stock_symbol_like(symbol.upper()):
-                order_details = order_details[order_details['symbol'] == symbol.upper()]
-            # select orders by order symbol arguments like '000001'
-            elif is_cn_stock_symbol_like(symbol):
-                possible_complete_symbols = [symbol + '.SH', symbol + '.SZ', symbol + '.BJ']
-                order_details = order_details[order_details['symbol'].isin(possible_complete_symbols)]
-            else:
-                print(f'"{symbol}" invalid: Please input a valid symbol to get order details.')
-                return False
+        order_details = self.filter_order_details(
+                order_details=order_details,
+                symbols=symbols,
+                status=status,
+                order_time=order_time,
+                order_type=order_type,
+                side=side,
+        )
 
         if order_details.empty:
-            rich.print(f'No orders found with argument ({args}). try other arguments.')
+            rich.print(f'No orders found with criteria ({args}). try other ways to filter orders.')
         else:
             symbols = order_details['symbol'].tolist()
             names = get_symbol_names(datasource=self.trader.datasource, symbols=symbols)

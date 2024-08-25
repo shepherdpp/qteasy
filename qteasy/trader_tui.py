@@ -292,7 +292,7 @@ class TraderApp(App):
                 msg = self.trader.message_queue.get()
                 system_log.write(msg)
 
-                if any(words in msg for words in ['RAN STRATEGY', 'RESULT', 'delivery']):
+                if any(words in msg for words in ['RAN STRATEGY', 'RESULT', 'DELIVERY']):
                     # if ran strategy or got result from broker, refresh UI
                     self.refresh_order()
                     self.refresh_holdings()
@@ -312,7 +312,7 @@ class TraderApp(App):
             cum_time_counter += 1
             if cum_time_counter % info_refresh_interval == 0:
 
-                # TODO: refresh should be done asynchrously
+                # TODO: refresh UI in async way
                 trader_info = self.trader.info(detail=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
@@ -615,6 +615,39 @@ class TraderApp(App):
         syslog = self.query_one(SysLog)
         syslog.write(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
+
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+        # def confirm_buy(confirmed:bool) -> None:
+        #     if confirmed:
+        #         self.trader.add_task('buy')
+        #     self.refresh_ui = True
+        #
+        # self.refresh_ui = False
+        # self.push_screen(QuitScreen(), confirm_buy)
+        raise NotImplementedError
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+        # def confirm_sell(confirmed:bool) -> None:
+        #     if confirmed:
+        #         self.trader.add_task('sell')
+        #     self.refresh_ui = True
+        #
+        # self.refresh_ui = False
+        # self.push_screen(QuitScreen(), confirm_sell)
+        raise NotImplementedError
+
+    def action_cancel_order(self) -> None:
+        """ Action to cancel an order."""
+        # def confirm_cancel(confirmed:bool) -> None:
+        #     if confirmed:
+        #         self.trader.add_task('cancel')
+        #     self.refresh_ui = True
+        #
+        # self.refresh_ui = False
+        # self.push_screen(QuitScreen(), confirm_cancel)
+        raise NotImplementedError
 
     def action_request_quit(self) -> None:
         """Action to display the quit dialog."""

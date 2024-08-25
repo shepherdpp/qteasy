@@ -1223,7 +1223,17 @@ def configuration(config_key=None, level=0, up_to=0, default=True, verbose=False
         assert all(isinstance(item, str) for item in config_key)
         kwargs = {key: QT_CONFIG[key] for key in config_key}
         level = [0, 1, 2, 3, 4, 5]
-    print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
+
+    from shutil import get_terminal_size
+    screen_width = get_terminal_size().columns
+    from rich import print as rprint
+    rprint(_vkwargs_to_text(
+            kwargs=kwargs,
+            level=level,
+            info=default,
+            verbose=verbose,
+            width=screen_width,
+    ))
 
 
 def get_configurations(config_key=None, level=0, up_to=0, default=True, verbose=False):

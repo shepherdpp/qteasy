@@ -21,7 +21,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.3.5`
+- Latest Version: `1.3.6`
 - License: BSD 3-Clause
 
 Introduction
@@ -47,6 +47,8 @@ What Can You Do with ``QTEASY`` ?
     :width: 900px
     :align: center
 
+
+
 创建交易策略，模拟自动化交易
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -66,6 +68,7 @@ What Can You Do with ``QTEASY`` ?
     :align: center
 
 
+
 回测、评价、优化交易策略
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -76,6 +79,7 @@ What Can You Do with ``QTEASY`` ?
 .. image:: img/output_14_3.png
     :width: 900px
     :align: center
+
 
 
 .. toctree::
