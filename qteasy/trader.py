@@ -1646,11 +1646,11 @@ class Trader(object):
         msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
         self.send_message(message=msg)
 
-    def _run_strategy(self, strategy_ids=None) -> None:
+    def _run_strategy(self, strategy_ids=None) -> int:
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
-        2，根据strtegy_id设定operator的运行模式，生成交易信号
+        2，根据strtegy_ids设定operator的运行模式，生成交易信号
         3，解析信号为交易订单，并将交易订单发送到交易所的订单队列
         4，将交易订单的ID保存到数据库，更新账户和持仓信息
         5，生成交易订单状态信息推送到信息队列
@@ -1659,6 +1659,11 @@ class Trader(object):
         ----------
         strategy_ids: list of str
             交易策略ID列表
+
+        Returns
+        -------
+        submitted_qty: int
+            提交的交易订单数量
         """
 
         # TODO: 这里应该可以允许用户输入blender，从而灵活地测试不同交易策略的组合和混合方式
@@ -1910,13 +1915,10 @@ class Trader(object):
                 config=self._config,
         )
 
-        # self.send_message(f'{len(delivery_results)} results found, they are: \n{delivery_results}')
         # 生成交割结果信息推送到信息队列
         for res in delivery_results:
             if res.get('delivery_status') != 'DL':
-                # self.send_message(f'{res} is not delivered yet, passing...')
                 continue
-            # self.send_message(f'Recording delivery to trade record: {res}')
             self.log_cash_delivery(res)
             self.log_qty_delivery(res)
 
@@ -2200,10 +2202,6 @@ class Trader(object):
         if not task_added:
             self.next_task = next_task
             self.count_down_to_next_task = count_down_to_next_task
-
-            # self.send_message(f'Next task:({next_task[1]}) in '
-            #                   f'{sec_to_duration(count_down_to_next_task, estimation=True)}',
-            #                   new_line=False)
 
     def _initialize_schedule(self, current_time=None) -> None:
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：

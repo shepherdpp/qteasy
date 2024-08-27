@@ -48,9 +48,29 @@ class HoldingTable(DataTable):
 class OrderTable(DataTable):
     """A widget to display current holdings."""
 
+    BINDINGS = [
+        ("ctrl+b", "buy_stock", "Buy"),
+        ("ctrl+s", "sell_stock", "Sell"),
+    ]
+
     df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
                   "submitted_time", "status", "price_filled", "filled_qty", "canceled_qty", "transaction_fee",
                   "execution_time",  "delivery_status")
+
+    headers = ("ID",
+               "Symbol", "Position", "Side", "Type", "Qty", "Quote",
+               "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
+               "Execution Time", "Delivery")
+
+
+class TradeLogTable(DataTable):
+    """A widget to display all trade logs."""
+
+    df_columns = ("datetime", "reason", "order_id", "position_id", "symbol", "name", "position_type",
+                  "direction", "trade_qty", "price", "trade_cost", "qty_change", "qty",
+                  "available_qty_change", "available_qty", "cost_change", "holding_cost",
+                  "cash_change", "cash", "available_cash_change", "available_cash")
+
     headers = ("ID",
                "Symbol", "Position", "Side", "Type", "Qty", "Quote",
                "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
@@ -61,12 +81,15 @@ class WatchTable(DataTable):
     """A widget to display current holdings."""
 
     BINDINGS = [
-        ("ctrl+a", "add_symbol", "add symbol"),
-        ("delete", "remove_symbol", "remove symbol"),
+        ("ctrl+a", "add_symbol", "Add"),
+        ("delete", "remove_symbol", "Remove"),
+        ("ctrl+b", "buy_stock", "Buy"),
+        ("ctrl+s", "sell_stock", "Sell"),
     ]
 
     df_columns = ("name", "close", "pre_close", "open", "high",
                   "low", "vol", "amount", "change")
+
     headers = ("Symbol",
                "Name", "Price", "Last Close", "Open", "High",
                "Low", "Volume", "Amount", "Change")
@@ -379,7 +402,7 @@ class TraderApp(App):
             row = list(row)
             row[5] = f'{row[5]:.2f}'
             
-            if row[8] == 'cancelled':
+            if row[8] == 'canceled':
                 row_color = 'yellow'
             elif row[3] == 'sell':
                 row_color = 'green'
