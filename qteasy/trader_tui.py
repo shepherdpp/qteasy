@@ -403,7 +403,7 @@ class TraderApp(App):
             row[5] = f'{row[5]:.2f}'
             
             if row[8] == 'canceled':
-                row_color = 'yellow'
+                row_color = 'gray'
             elif row[3] == 'sell':
                 row_color = 'green'
             elif row[3] == 'buy':
@@ -641,25 +641,56 @@ class TraderApp(App):
 
     def action_buy_stock(self) -> None:
         """ Action to buy a stock."""
-        # def confirm_buy(confirmed:bool) -> None:
-        #     if confirmed:
-        #         self.trader.add_task('buy')
-        #     self.refresh_ui = True
-        #
-        # self.refresh_ui = False
-        # self.push_screen(QuitScreen(), confirm_buy)
-        raise NotImplementedError
+
+        qty = self.amount
+        symbol = self.symbol.upper()
+        price = self.price
+        position = self.side
+
+        trade_order = self.trader.submit_trade_order(
+                symbol=symbol,
+                qty=qty,
+                price=price,
+                position=position,
+                direction='buy',
+                order_type='market',
+        )
+        if trade_order:
+            self.trader.broker.order_queue.put(trade_order)
+            order_id = trade_order['order_id']
+            print(f'Order <{order_id}> has been submitted to broker: '
+                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                  f'at price {trade_order["price"]:.2f}')
+
+        if not self.trader.is_market_open:
+            print(f'Market is not open, order might not be executed immediately')
 
     def action_sell_stock(self) -> None:
         """ Action to sell a stock."""
-        # def confirm_sell(confirmed:bool) -> None:
-        #     if confirmed:
-        #         self.trader.add_task('sell')
-        #     self.refresh_ui = True
-        #
-        # self.refresh_ui = False
-        # self.push_screen(QuitScreen(), confirm_sell)
-        raise NotImplementedError
+
+        qty = self.amount
+        symbol = self.symbol.upper()
+        price = self.price
+        position =self.side
+
+        trade_order = self.trader.submit_trade_order(
+                symbol=symbol,
+                qty=qty,
+                price=price,
+                position=position,
+                direction='sell',
+                order_type='market',
+        )
+
+        if trade_order:
+            self.trader.broker.order_queue.put(trade_order)
+            order_id = trade_order['order_id']
+            print(f'Order <{order_id}> has been submitted to broker: '
+                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                  f'at price {trade_order["price"]:.2f}')
+
+            if not self.trader.is_market_open:
+                print(f'Market is not open, order might not be executed immediately')
 
     def action_cancel_order(self) -> None:
         """ Action to cancel an order."""
