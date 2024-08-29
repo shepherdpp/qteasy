@@ -32,17 +32,85 @@ class SysLog(RichLog):
 
 class StrategyTree(Tree):
     """A widget to display the strategies."""
-    pass
+
+    BINDINGS = [
+        ("shift+c", "change", "Change"),
+    ]
+
+    def action_change(self) -> None:
+        """ Action to change the strategy."""
+        return
 
 
 class HoldingTable(DataTable):
     """A widget to display current holdings."""
+
+    BINDINGS = [
+        ("ctrl+b", "buy_stock", "Buy"),
+        ("ctrl+s", "sell_stock", "Sell"),
+        ("shift+c", "change", "Change"),
+    ]
 
     df_columns = ("name", "qty", "available_qty", "current_price", "cost",
                   "total_cost", "market_value", "profit", "profit_ratio")
     headers = ("Symbol",
                "Name", "Qty", "Available", "Price", "Cost",
                "Total Cost", "Value", "Profit", "Profit Ratio")
+
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price, position = self.get_sel_symbol_price_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, price, 'buy')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to buy {symbol}({position}) @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price, position = self.get_sel_symbol_price_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, price, 'sell')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to sell {symbol}({position}) @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_change(self) -> None:
+        """ Action to change the strategy."""
+        return
+
+    def get_sel_symbol_price_and_position(self):
+        """ Get the selected symbol and price in the watch list."""
+        sel_row = self.cursor_row
+        if not sel_row:
+            return None, None, None
+        symbol = self.get_row_at(sel_row)[0]
+        qty = float(self.get_row_at(sel_row)[2])
+        position = 'long' if qty > 0 else 'short'
+        price = self.get_row_at(sel_row)[4]
+        return symbol, price, position
 
 
 class OrderTable(DataTable):
@@ -51,6 +119,7 @@ class OrderTable(DataTable):
     BINDINGS = [
         ("ctrl+b", "buy_stock", "Buy"),
         ("ctrl+s", "sell_stock", "Sell"),
+        ("ctrl+shift+c", "cancel_order", "Cancel"),
     ]
 
     df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
@@ -61,6 +130,65 @@ class OrderTable(DataTable):
                "Symbol", "Position", "Side", "Type", "Qty", "Quote",
                "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
                "Execution Time", "Delivery")
+
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+
+        self.app.refresh_ui = False
+        symbol, position = self.get_sel_symbol_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, 0., 'buy')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to buy {symbol}({position}), please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+
+        self.app.refresh_ui = False
+        symbol, position = self.get_sel_symbol_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, 0., 'sell')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to sell {symbol}({position}), please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_cancel_order(self) -> None:
+        """ Action to cancel an order."""
+        def confirm_cancel(confirmed:bool) -> None:
+            if confirmed:
+                self.app.action_cancel_order()
+            self.app.refresh_ui = True
+
+        self.app.refresh_ui = False
+        self.app.push_screen(QuitScreen(), confirm_cancel)
+
+    def get_sel_symbol_and_position(self):
+        """ Get the selected symbol and price in the watch list."""
+        sel_row = self.cursor_row
+        if not sel_row:
+            return None, None
+        symbol = str(self.get_row_at(sel_row)[1])
+        position = str(self.get_row_at(sel_row)[2])
+        return symbol, position
 
 
 class TradeLogTable(DataTable):
@@ -100,11 +228,10 @@ class WatchTable(DataTable):
             # received input string: input_string, add it to the watch list
             from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
             symbols = str_to_list(input_string)
-            # log = self.app.query_one(SysLog)
+
             for symbol in symbols:
                 if is_complete_cn_stock_symbol_like(symbol):
                     self.app.trader.watch_list.append(symbol)
-                    # log.write(f"Added {symbol} to watch list {self.app.trader.watch_list}.")
 
             self.app.refresh_ui = True
             self.app.refresh_watches()
@@ -115,23 +242,67 @@ class WatchTable(DataTable):
     def action_remove_symbol(self) -> None:
         """Action to remove selected symbol, if no symbol selected, don't do anything."""
         watch_list = self.app.trader.watch_list
-        # log = self.app.query_one(SysLog)
-        sel_row = self.cursor_row
-        if not sel_row:
-            return 
-
-        symbol = self.get_row_at(sel_row)[0]
-
-        # log.write(f'[debug]: selected row: {sel_row}, symbol: {self.get_row_at(sel_row)[0]}')
+        self.app.refresh_ui = False
+        symbol, price = self.get_sel_symbol_and_price()
+        if not symbol:
+            return
 
         try:
             watch_list.remove(symbol)
-            # log.write(f"[debug]: Deleted symbol {symbol} from watch list({watch_list})")
         except ValueError:
             return
 
         self.app.refresh_ui = True
         self.app.refresh_watches()
+
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price = self.get_sel_symbol_and_price()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to buy {symbol} @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price = self.get_sel_symbol_and_price()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to sell {symbol} @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def get_sel_symbol_and_price(self):
+        """ Get the selected symbol and price in the watch list."""
+        sel_row = self.cursor_row
+        if not sel_row:
+            return None, None
+        symbol = self.get_row_at(sel_row)[0]
+        price = str(self.get_row_at(sel_row)[2])
+        return symbol, float(price)
 
 
 class Tables(TabbedContent):
@@ -160,6 +331,13 @@ class Tables(TabbedContent):
                         zebra_stripes=True,
                         cursor_type='row',
                 )
+            with TabPane("TradeLogs"):
+                yield TradeLogTable(
+                        id='tradelog',
+                        fixed_columns=3,
+                        zebra_stripes=True,
+                        cursor_type='none',
+                )
 
 
 class InfoPanel(TabbedContent):
@@ -184,15 +362,15 @@ class DisplayPanel(Horizontal):
         yield Digits(id='cash', name='Cash', value='0.00')
 
 
-class ControlPanel(Static):
-    """A widget to display control buttons."""
-
-    def compose(self) -> ComposeResult:
-        yield Button("Start", id='start', name="start")
-        yield Button("Stop", id='stop', name="stop")
-        yield Button("Pause", id='pause', name="pause")
-        yield Button("Resume", id='resume', name="resume")
-        yield Button("Exit", id='exit', name="exit")
+# class ControlPanel(Static):
+#     """A widget to display control buttons."""
+#
+#     def compose(self) -> ComposeResult:
+#         yield Button("Start", id='start', name="start")
+#         yield Button("Stop", id='stop', name="stop")
+#         yield Button("Pause", id='pause', name="pause")
+#         yield Button("Resume", id='resume', name="resume")
+#         yield Button("Exit", id='exit', name="exit")
 
 
 class InputScreen(ModalScreen):
@@ -639,58 +817,48 @@ class TraderApp(App):
         syslog.write(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
 
-    def action_buy_stock(self) -> None:
-        """ Action to buy a stock."""
+    def submit_order(self, symbol, position, qty, price, direction) -> None:
+        """ Action to buy a stock.
 
-        qty = self.amount
-        symbol = self.symbol.upper()
-        price = self.price
-        position = self.side
+        Parameters
+        ----------
+        symbol : str
+            The symbol of the stock to buy.
+        position : str
+            The position of the stock to buy.
+        qty : float
+            The quantity of the stock to buy.
+        price : float
+            The price of the stock to buy.
+        direction : str
+            The direction of the order, 'buy' or 'sell'.
+
+        Returns
+        -------
+        None
+        """
+
+        syslog = self.query_one(SysLog)
 
         trade_order = self.trader.submit_trade_order(
                 symbol=symbol,
                 qty=qty,
                 price=price,
                 position=position,
-                direction='buy',
+                direction=direction,
                 order_type='market',
         )
         if trade_order:
             self.trader.broker.order_queue.put(trade_order)
             order_id = trade_order['order_id']
-            print(f'Order <{order_id}> has been submitted to broker: '
-                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
-                  f'at price {trade_order["price"]:.2f}')
+            syslog.write(f'Order <{order_id}> has been submitted to broker: '
+                         f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                         f'at price {trade_order["price"]:.2f}')
 
         if not self.trader.is_market_open:
-            print(f'Market is not open, order might not be executed immediately')
+            syslog.write(f'Market is not open, order might not be executed immediately')
 
-    def action_sell_stock(self) -> None:
-        """ Action to sell a stock."""
-
-        qty = self.amount
-        symbol = self.symbol.upper()
-        price = self.price
-        position =self.side
-
-        trade_order = self.trader.submit_trade_order(
-                symbol=symbol,
-                qty=qty,
-                price=price,
-                position=position,
-                direction='sell',
-                order_type='market',
-        )
-
-        if trade_order:
-            self.trader.broker.order_queue.put(trade_order)
-            order_id = trade_order['order_id']
-            print(f'Order <{order_id}> has been submitted to broker: '
-                  f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
-                  f'at price {trade_order["price"]:.2f}')
-
-            if not self.trader.is_market_open:
-                print(f'Market is not open, order might not be executed immediately')
+        return
 
     def action_cancel_order(self) -> None:
         """ Action to cancel an order."""
