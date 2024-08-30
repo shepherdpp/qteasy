@@ -287,6 +287,9 @@ class WatchTable(DataTable):
         if not sel_row:
             return None, None
         symbol = self.get_row_at(sel_row)[0]
+        if symbol not in self.app.trader.asset_pool:
+            # if the symbol is not in the asset pool, return None
+            return None, None
         price = str(self.get_row_at(sel_row)[2])
         return symbol, float(price)
 
@@ -630,22 +633,21 @@ class TraderApp(App):
         for row in list_tuples:
 
             row = list(row)
-            reason = row[1]
+            reason = row[2]
             direction = row[6]
             if reason == 'manual':
-                row_color = 'bold yellow'
+                row_color = 'yellow'
             elif reason == 'delivery':
-                row_color = 'bold blue'
+                row_color = 'blue'
             elif direction == 'sell':
                 row_color = 'bold green'
             elif direction == 'buy':
                 row_color = 'bold red'
             else:
-                row_color = 'bold'
+                row_color = ''
 
-            styled_row = row[:4]
-            styled_row += [
-                Text(str(cell), style=row_color) for cell in row[4:]
+            styled_row = [
+                Text(str(cell), style=row_color) for cell in row
             ]
 
             trade_log.add_row(*styled_row)
