@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.3.7 (2024-08-31)
+- Added features in trader TUI:
+  - Added commands and short-cuts to manually place buy and sell orders
+  - Added commands and short-cuts to cancel submitted orders
+  - Added a new data table to display trade logs
+
 ## 1.3.6 (2024-08-25)
 - Fixed bugs in command `orders` in trader CLI:
   - now `orders` command selects symbols correctly
