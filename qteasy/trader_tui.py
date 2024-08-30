@@ -16,7 +16,7 @@ from threading import Thread
 from textual import work, on
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Horizontal
-from textual.screen import ModalScreen, Screen
+from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
 from textual.widgets import TabPane, Label, Input
 
@@ -191,20 +191,6 @@ class OrderTable(DataTable):
         return symbol, position
 
 
-class TradeLogTable(DataTable):
-    """A widget to display all trade logs."""
-
-    df_columns = ("datetime", "reason", "order_id", "position_id", "symbol", "name", "position_type",
-                  "direction", "trade_qty", "price", "trade_cost", "qty_change", "qty",
-                  "available_qty_change", "available_qty", "cost_change", "holding_cost",
-                  "cash_change", "cash", "available_cash_change", "available_cash")
-
-    headers = ("ID",
-               "Symbol", "Position", "Side", "Type", "Qty", "Quote",
-               "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
-               "Execution Time", "Delivery")
-
-
 class WatchTable(DataTable):
     """A widget to display current holdings."""
 
@@ -305,6 +291,19 @@ class WatchTable(DataTable):
         return symbol, float(price)
 
 
+class TradeLogTable(DataTable):
+    """A widget to display all trade logs."""
+
+    df_columns = ("datetime", "reason", "symbol", "name", "position_type",
+                  "direction", "trade_qty", "price", "trade_cost", "qty",
+                  "available_qty", "holding_cost", "cash", "available_cash")
+
+    headers = ("ID",
+               "Date", "Reason", "Symbol", "Name", "Position",
+               "Direction", "Qty", "Price", "Trade fee", "Holding",
+               "Available", "Holding cost", "Own cash", "Available cash")
+
+
 class Tables(TabbedContent):
     """A widget to display tables."""
 
@@ -334,9 +333,9 @@ class Tables(TabbedContent):
             with TabPane("TradeLogs"):
                 yield TradeLogTable(
                         id='tradelog',
-                        fixed_columns=3,
+                        fixed_columns=5,
                         zebra_stripes=True,
-                        cursor_type='none',
+                        cursor_type='row',
                 )
 
 
@@ -360,17 +359,6 @@ class DisplayPanel(Horizontal):
         yield Digits(id='total_value', name='Value', value='0.00')
         yield Digits(id='earning', name='Earning', value='0.00')
         yield Digits(id='cash', name='Cash', value='0.00')
-
-
-# class ControlPanel(Static):
-#     """A widget to display control buttons."""
-#
-#     def compose(self) -> ComposeResult:
-#         yield Button("Start", id='start', name="start")
-#         yield Button("Stop", id='stop', name="stop")
-#         yield Button("Pause", id='pause', name="pause")
-#         yield Button("Resume", id='resume', name="resume")
-#         yield Button("Exit", id='exit', name="exit")
 
 
 class InputScreen(ModalScreen):
@@ -497,7 +485,7 @@ class TraderApp(App):
                     # if ran strategy or got result from broker, refresh UI
                     self.refresh_order()
                     self.refresh_holdings()
-                    self.refresh_watches()
+                    self.refresh_trade_log()
 
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
@@ -513,13 +501,13 @@ class TraderApp(App):
             cum_time_counter += 1
             if cum_time_counter % info_refresh_interval == 0:
 
-                # TODO: refresh UI in async way
                 trader_info = self.trader.info(detail=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
                 self.refresh_operator_tree()
                 self.refresh_holdings()
                 self.refresh_watches()
+                self.refresh_trade_log()
                 cum_time_counter = 0
 
             if self.trader.status not in ['running', 'paused']:
@@ -569,7 +557,7 @@ class TraderApp(App):
         """Refresh the order table."""
         if not self.refresh_ui:
             return
-        orders = self.query_one(OrderTable)
+        orders = self.query_one("#orders")
         orders.clear()
         order_list = self.trader.history_orders(with_trade_results=True)
         if order_list.empty:
@@ -595,6 +583,7 @@ class TraderApp(App):
             ]
             orders.add_row(*styled_row)
 
+    @work(exclusive=True, thread=True)
     def refresh_watches(self):
         """Refresh the watch list."""
         if not self.refresh_ui:
@@ -605,7 +594,7 @@ class TraderApp(App):
         watches.clear()
         if watched_prices.empty:
             return
-        # watched_prices.fillna(0, inplace=True)
+
         list_tuples = list(watched_prices.itertuples(name=None))
         for row in list_tuples:
             row = list(row)
@@ -623,6 +612,28 @@ class TraderApp(App):
                 Text(str(cell), style=f"bold {row_color}") for cell in row[2:]
             ]
             watches.add_row(*styled_row)
+
+    @work(exclusive=True, thread=True)
+    def refresh_trade_log(self):
+        """Refresh the trade log table."""
+        if not self.refresh_ui:
+            return
+        trade_log = self.query_one("#tradelog")
+        t_log = self.trader.read_trade_log()
+        # syslog = self.query_one(SysLog)
+        # trade_log.clear()
+
+        if t_log.empty:
+            return
+        t_log = t_log.reindex(columns=trade_log.df_columns)
+        list_tuples = list(t_log.itertuples(name=None))
+        trade_log.add_rows(list_tuples)
+        # for row in list_tuples:
+        #
+        #     row = list(row)
+        #     row = [str(cell) for cell in row]
+        #     row_key = trade_log.add_row(*row)
+            # syslog.write(f"[DEBUG]Added trade log row: {row_key.value}: {row}")
 
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
@@ -774,18 +785,24 @@ class TraderApp(App):
         info_pad.border_title = "Information"
 
         # refresh the holdings table and order tables
-        holdings = self.query_one(HoldingTable)
+        holdings = self.query_one("#holdings")
         holdings.add_columns(*holdings.headers)
         self.refresh_holdings()
-        orders = self.query_one(OrderTable)
+        orders = self.query_one("#orders")
         orders.add_columns(*orders.headers)
-        self.refresh_order()
-        watches = self.query_one('#watches')
+        # self.refresh_order()
+        watches = self.query_one("#watches")
         watches.add_columns(*watches.headers)
         self.refresh_watches()
+        trade_log = self.query_one("#tradelog")
+        trade_log.add_columns(*trade_log.headers)
+        self.refresh_trade_log()
 
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
+        # system_log.write(f"System started, status: {self.status}\n"
+        #                  f"added watches columns: {w_keys}\n"
+        #                  f"added trade log columns: {keys}")
 
         # start the trader, broker and the trader event loop all in separate threads
         Thread(target=self.trader_event_loop).start()
