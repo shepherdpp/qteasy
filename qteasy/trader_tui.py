@@ -620,20 +620,35 @@ class TraderApp(App):
             return
         trade_log = self.query_one("#tradelog")
         t_log = self.trader.read_trade_log()
-        # syslog = self.query_one(SysLog)
-        # trade_log.clear()
+        trade_log.clear()
 
         if t_log.empty:
             return
         t_log = t_log.reindex(columns=trade_log.df_columns)
+        t_log.fillna('', inplace=True)
         list_tuples = list(t_log.itertuples(name=None))
-        trade_log.add_rows(list_tuples)
-        # for row in list_tuples:
-        #
-        #     row = list(row)
-        #     row = [str(cell) for cell in row]
-        #     row_key = trade_log.add_row(*row)
-            # syslog.write(f"[DEBUG]Added trade log row: {row_key.value}: {row}")
+        for row in list_tuples:
+
+            row = list(row)
+            reason = row[1]
+            direction = row[6]
+            if reason == 'manual':
+                row_color = 'bold yellow'
+            elif reason == 'delivery':
+                row_color = 'bold blue'
+            elif direction == 'sell':
+                row_color = 'bold green'
+            elif direction == 'buy':
+                row_color = 'bold red'
+            else:
+                row_color = 'bold'
+
+            styled_row = row[:4]
+            styled_row += [
+                Text(str(cell), style=row_color) for cell in row[4:]
+            ]
+
+            trade_log.add_row(*styled_row)
 
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
@@ -784,13 +799,13 @@ class TraderApp(App):
         info_pad = self.query_one(InfoPanel)
         info_pad.border_title = "Information"
 
-        # refresh the holdings table and order tables
+        # refresh all the data tables, adding columns and refreshing the data
         holdings = self.query_one("#holdings")
         holdings.add_columns(*holdings.headers)
         self.refresh_holdings()
         orders = self.query_one("#orders")
         orders.add_columns(*orders.headers)
-        # self.refresh_order()
+        self.refresh_order()
         watches = self.query_one("#watches")
         watches.add_columns(*watches.headers)
         self.refresh_watches()
@@ -800,10 +815,6 @@ class TraderApp(App):
 
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
-        # system_log.write(f"System started, status: {self.status}\n"
-        #                  f"added watches columns: {w_keys}\n"
-        #                  f"added trade log columns: {keys}")
-
         # start the trader, broker and the trader event loop all in separate threads
         Thread(target=self.trader_event_loop).start()
 
