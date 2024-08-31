@@ -20,7 +20,7 @@ from .finance import CashPlan, get_selling_result, get_purchase_result, get_cost
 from .qt_operator import Operator
 
 
-@njit(nogil=False, cache=True)
+@njit(nogil=True, cache=True)
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
