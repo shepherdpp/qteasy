@@ -69,7 +69,10 @@ class HoldingTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
+            try:
+                quantity = float(input_string)
+            except ValueError:
+                return
             self.app.submit_order(symbol, position, quantity, price, 'buy')
             self.app.refresh_ui = True
             self.app.refresh_order()
@@ -89,7 +92,10 @@ class HoldingTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
+            try:
+                quantity = float(input_string)
+            except ValueError:
+                return
             self.app.submit_order(symbol, position, quantity, price, 'sell')
             self.app.refresh_ui = True
             self.app.refresh_order()
@@ -107,10 +113,10 @@ class HoldingTable(DataTable):
         if not sel_row:
             return None, None, None
         symbol = self.get_row_at(sel_row)[0]
-        qty = float(self.get_row_at(sel_row)[2])
+        qty = str(self.get_row_at(sel_row)[1])
         position = 'long' if qty > 0 else 'short'
-        price = self.get_row_at(sel_row)[4]
-        return symbol, price, position
+        price = str(self.get_row_at(sel_row)[4])
+        return symbol, float(price), float(position)
 
 
 class OrderTable(DataTable):
@@ -143,7 +149,10 @@ class OrderTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
+            try:
+                quantity = float(input_string)
+            except ValueError:
+                return
             self.app.submit_order(symbol, position, quantity, 0., 'buy')
             self.app.refresh_ui = True
             self.app.refresh_order()
@@ -163,7 +172,10 @@ class OrderTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
+            try:
+                quantity = float(input_string)
+            except ValueError:
+                return
             self.app.submit_order(symbol, position, quantity, 0., 'sell')
             self.app.refresh_ui = True
             self.app.refresh_order()
@@ -253,7 +265,10 @@ class WatchTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
+            try:
+                quantity = float(input_string)
+            except ValueError:
+                return
             self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
             self.app.refresh_ui = True
             self.app.refresh_order()
@@ -273,7 +288,10 @@ class WatchTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
+            try:
+                quantity = float(input_string)
+            except ValueError:
+                return
             self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
             self.app.refresh_ui = True
             self.app.refresh_order()
