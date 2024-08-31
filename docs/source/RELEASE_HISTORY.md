@@ -1,5 +1,12 @@
 # RELEASE HISTORY
 
+## 1.3.8 (2024-09-06)
+- Added new features: now qteasy has multiple functions to access and modify start up setting file:
+  - Added new function `qt.start_up_settings()`, to access and print contents of start up settings file
+  - Added new function `qt.update_start_up_setting()`, to modify start up settings file
+  - Added new function `qt.remove_start_up_setting()`, to remove settings from the file
+- Fixed bugs in trader TUI buy and sell orders, added error handling for wrong inputs
+
 ## 1.3.7 (2024-08-31)
 - Added features in trader TUI:
   - Added commands and short-cuts to manually place buy and sell orders
