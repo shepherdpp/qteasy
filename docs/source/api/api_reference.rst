@@ -1,7 +1,7 @@
 配置QTEASY
 ==============
 
-查看qteasy的配置信息:
+查看qteasy的当前系统配置信息:
 
 .. autofunction:: qteasy.configuration
 
@@ -14,6 +14,14 @@
 .. autofunction:: qteasy.configure
 
 .. autofunction:: qteasy.set_config
+
+查看、修改或删除qteasy的启动配置内容：
+
+.. autofunction:: qteasy.start_up_settings
+
+.. autofunction:: qteasy.update_start_up_setting
+
+.. autofunction:: qteasy.remove_start_up_setting
 
 将所有的配置变量重置为默认值:
 

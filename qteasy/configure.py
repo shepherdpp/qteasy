@@ -471,9 +471,21 @@ def view_config_files(details=False) -> None:
 
 
 def start_up_settings() -> None:
-    """ 读取qteasy.cfg文件中存储的启动设置
+    """ 读取qteasy启动配置文件中存储的启动设置内容
 
-    启动设置中可以包括系统定义配置参数以及用户自定义配置参数
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.start_up_settings()
+    Start up settings:
+    --------------------
+    local_data_source = file
+    local_data_file_type = csv
+    local_data_file_path = data/
     """
     from qteasy import QT_ROOT_PATH
     start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
@@ -495,7 +507,7 @@ def start_up_settings() -> None:
 
 
 def update_start_up_setting(**kwargs) -> None:
-    """ 更新qteasy.cfg文件中存储的启动设置
+    """ 更新qteasy启动配置文件中存储的启动设置
 
     启动设置中可以包括系统定义配置参数以及用户自定义配置参数
 
@@ -507,6 +519,27 @@ def update_start_up_setting(**kwargs) -> None:
     Returns
     -------
     None
+
+    Examples
+    --------
+    >>> import qteasy as qt
+
+    >>> qt.start_up_settings()
+    Start up settings:
+    --------------------
+    local_data_source = file
+    local_data_file_type = csv
+    local_data_file_path = data/
+
+    >>> qt.update_start_up_setting(local_data_source='database', local_data_file_type='feather')
+    Start up settings updated successfully!
+
+    >>> qt.start_up_settings()
+    Start up settings:
+    --------------------
+    local_data_source = file
+    local_data_file_type = feather
+    local_data_file_path = data/
     """
 
     from qteasy import QT_ROOT_PATH
@@ -532,9 +565,9 @@ def update_start_up_setting(**kwargs) -> None:
 
 
 def remove_start_up_setting(*args) -> None:
-    """ 删除qteasy.cfg文件中存储的一项或者多项启动设置
+    """ 删除qteasy启动配置文件中存储的一项或者多项启动设置
 
-    必须给出需要删除的配置参数名称
+    必须给出需要删除的配置参数名称，可以同时删除多个配置参数
 
     Parameters
     ----------
@@ -544,6 +577,25 @@ def remove_start_up_setting(*args) -> None:
     Returns
     -------
     None
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.start_up_settings()
+    Start up settings:
+    --------------------
+    local_data_source = file
+    local_data_file_type = csv
+    local_data_file_path = data/
+
+    >>> qt.remove_start_up_setting('local_data_source')
+    Start up settings removed:  ('local_data_source',)
+
+    >>> qt.start_up_settings()
+    Start up settings:
+    --------------------
+    local_data_file_type = csv
+    local_data_file_path = data/
     """
 
     from qteasy import QT_ROOT_PATH
