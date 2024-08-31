@@ -561,7 +561,7 @@ def update_start_up_setting(**kwargs) -> None:
     config_lines = [f'{k} = {v}\n' for k, v in start_up_config.items()]
     _write_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), config_lines)
 
-    print('Start up settings updated successfully!')
+    print('Start up settings updated successfully! The settings will be effective next time you start qteasy.')
 
 
 def remove_start_up_setting(*args) -> None:
@@ -611,7 +611,7 @@ def remove_start_up_setting(*args) -> None:
     config_lines = [f'{k} = {v}\n' for k, v in start_up_config.items()]
     _write_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), config_lines)
 
-    print('Start up settings removed: ', args)
+    print(f'Start up settings removed: {args}\nThe settings will be effective next time you start qteasy.')
 
 
 def _read_start_up_file(file_path_name) -> list:
