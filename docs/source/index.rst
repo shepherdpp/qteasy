@@ -21,7 +21,7 @@
 - Author: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.3.6`
+- Latest Version: `1.3.7`
 - License: BSD 3-Clause
 
 Introduction
@@ -41,12 +41,12 @@ What Can You Do with ``QTEASY`` ?
 
 - 获取、清洗、本地存储大量金融历史数据
 - 检索、处理、调用本地数据
-- 本地金融数据可视化
 
 .. image:: img/output_3_4.png
     :width: 900px
     :align: center
 
+- 本地金融数据可视化
 
 
 创建交易策略，模拟自动化交易

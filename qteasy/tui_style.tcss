@@ -43,6 +43,10 @@ Tables {
     height: 1fr;
 }
 
+#tradelog {
+    height: 1fr;
+}
+
 InfoPanel {
     border: round $accent;
     height: 1fr;
@@ -94,8 +98,8 @@ InputScreen {
     grid-size: 2;
     grid-rows: 3 3;
     grid-gutter: 0;
-    width: 60;
-    height: 11;
+    width: 70;
+    height: 20;
     border: thick $background 80%;
     background: $surface;
 }

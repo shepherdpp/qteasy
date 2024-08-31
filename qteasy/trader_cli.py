@@ -1016,6 +1016,7 @@ class TraderShell(Cmd):
         if not args:
             return False
         print(f'canceling all unfinished orders')
+        print(f'cancelling all pending tasks: {self.trader.task_daily_schedule}')
         self.trader.add_task('post_close')
         print(f'stopping trader...')
         self.trader.add_task('stop')
@@ -2259,7 +2260,8 @@ class TraderShell(Cmd):
                     self.cmdloop()
                 else:
                     sys.stdout.write('status error, shell will exit, trader and broker will be shut down\n')
-                    self.do_bye('')
+                    # self.do_bye('')
+                    break
                 time.sleep(live_price_refresh_interval)
             except KeyboardInterrupt:
                 # ask user if he/she wants to: [1], command mode; [2], stop trader; [3 or other], resume dashboard mode
@@ -2276,7 +2278,9 @@ class TraderShell(Cmd):
                 elif option == '2':
                     self.do_dashboard('')
                 elif option == '3':
-                    self.do_bye('')
+                    # self.do_bye('')
+                    t.cancel()
+                    break
                 else:
                     continue
                 t.cancel()
@@ -2287,7 +2291,8 @@ class TraderShell(Cmd):
                 self.stdout.write(f'Unexpected Error: {e}\n')
                 import traceback
                 traceback.print_exc()
-                self.do_bye('')
+                break
+                # self.do_bye('')
 
         sys.stdout.write('Thank you for using qteasy!\n')
         self.do_bye('')

@@ -16,7 +16,7 @@ from threading import Thread
 from textual import work, on
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Horizontal
-from textual.screen import ModalScreen, Screen
+from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
 from textual.widgets import TabPane, Label, Input
 
@@ -32,11 +32,24 @@ class SysLog(RichLog):
 
 class StrategyTree(Tree):
     """A widget to display the strategies."""
-    pass
+
+    BINDINGS = [
+        ("shift+c", "change", "Change"),
+    ]
+
+    def action_change(self) -> None:
+        """ Action to change the strategy."""
+        return
 
 
 class HoldingTable(DataTable):
     """A widget to display current holdings."""
+
+    BINDINGS = [
+        ("ctrl+b", "buy_stock", "Buy"),
+        ("ctrl+s", "sell_stock", "Sell"),
+        ("shift+c", "change", "Change"),
+    ]
 
     df_columns = ("name", "qty", "available_qty", "current_price", "cost",
                   "total_cost", "market_value", "profit", "profit_ratio")
@@ -44,29 +57,153 @@ class HoldingTable(DataTable):
                "Name", "Qty", "Available", "Price", "Cost",
                "Total Cost", "Value", "Profit", "Profit Ratio")
 
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price, position = self.get_sel_symbol_price_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, price, 'buy')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to buy {symbol}({position}) @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price, position = self.get_sel_symbol_price_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, price, 'sell')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to sell {symbol}({position}) @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_change(self) -> None:
+        """ Action to change the strategy."""
+        return
+
+    def get_sel_symbol_price_and_position(self):
+        """ Get the selected symbol and price in the watch list."""
+        sel_row = self.cursor_row
+        if not sel_row:
+            return None, None, None
+        symbol = self.get_row_at(sel_row)[0]
+        qty = float(self.get_row_at(sel_row)[2])
+        position = 'long' if qty > 0 else 'short'
+        price = self.get_row_at(sel_row)[4]
+        return symbol, price, position
+
 
 class OrderTable(DataTable):
     """A widget to display current holdings."""
 
+    BINDINGS = [
+        ("ctrl+b", "buy_stock", "Buy"),
+        ("ctrl+s", "sell_stock", "Sell"),
+        ("ctrl+shift+c", "cancel_order", "Cancel"),
+    ]
+
     df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
                   "submitted_time", "status", "price_filled", "filled_qty", "canceled_qty", "transaction_fee",
                   "execution_time",  "delivery_status")
+
     headers = ("ID",
                "Symbol", "Position", "Side", "Type", "Qty", "Quote",
                "Submitted", "Status", "Filled Price", "Filled Qty", "Canceled Qty", "Fee",
                "Execution Time", "Delivery")
+
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+
+        self.app.refresh_ui = False
+        symbol, position = self.get_sel_symbol_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, 0., 'buy')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to buy {symbol}({position}), please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+
+        self.app.refresh_ui = False
+        symbol, position = self.get_sel_symbol_and_position()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, position, quantity, 0., 'sell')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to sell {symbol}({position}), please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_cancel_order(self) -> None:
+        """ Action to cancel an order."""
+        def confirm_cancel(confirmed:bool) -> None:
+            if confirmed:
+                self.app.action_cancel_order()
+            self.app.refresh_ui = True
+
+        self.app.refresh_ui = False
+        self.app.push_screen(QuitScreen(), confirm_cancel)
+
+    def get_sel_symbol_and_position(self):
+        """ Get the selected symbol and price in the watch list."""
+        sel_row = self.cursor_row
+        if not sel_row:
+            return None, None
+        symbol = str(self.get_row_at(sel_row)[1])
+        position = str(self.get_row_at(sel_row)[2])
+        return symbol, position
 
 
 class WatchTable(DataTable):
     """A widget to display current holdings."""
 
     BINDINGS = [
-        ("ctrl+a", "add_symbol", "add symbol"),
-        ("delete", "remove_symbol", "remove symbol"),
+        ("ctrl+a", "add_symbol", "Add"),
+        ("delete", "remove_symbol", "Remove"),
+        ("ctrl+b", "buy_stock", "Buy"),
+        ("ctrl+s", "sell_stock", "Sell"),
     ]
 
     df_columns = ("name", "close", "pre_close", "open", "high",
                   "low", "vol", "amount", "change")
+
     headers = ("Symbol",
                "Name", "Price", "Last Close", "Open", "High",
                "Low", "Volume", "Amount", "Change")
@@ -77,11 +214,10 @@ class WatchTable(DataTable):
             # received input string: input_string, add it to the watch list
             from .utilfuncs import is_complete_cn_stock_symbol_like, str_to_list
             symbols = str_to_list(input_string)
-            # log = self.app.query_one(SysLog)
+
             for symbol in symbols:
                 if is_complete_cn_stock_symbol_like(symbol):
                     self.app.trader.watch_list.append(symbol)
-                    # log.write(f"Added {symbol} to watch list {self.app.trader.watch_list}.")
 
             self.app.refresh_ui = True
             self.app.refresh_watches()
@@ -92,23 +228,83 @@ class WatchTable(DataTable):
     def action_remove_symbol(self) -> None:
         """Action to remove selected symbol, if no symbol selected, don't do anything."""
         watch_list = self.app.trader.watch_list
-        # log = self.app.query_one(SysLog)
-        sel_row = self.cursor_row
-        if not sel_row:
-            return 
-
-        symbol = self.get_row_at(sel_row)[0]
-
-        # log.write(f'[debug]: selected row: {sel_row}, symbol: {self.get_row_at(sel_row)[0]}')
+        self.app.refresh_ui = False
+        symbol, price = self.get_sel_symbol_and_price()
+        if not symbol:
+            return
 
         try:
             watch_list.remove(symbol)
-            # log.write(f"[debug]: Deleted symbol {symbol} from watch list({watch_list})")
         except ValueError:
             return
 
         self.app.refresh_ui = True
         self.app.refresh_watches()
+
+    def action_buy_stock(self) -> None:
+        """ Action to buy a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price = self.get_sel_symbol_and_price()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to buy {symbol} @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_sell_stock(self) -> None:
+        """ Action to sell a stock."""
+
+        self.app.refresh_ui = False
+        symbol, price = self.get_sel_symbol_and_price()
+        if not symbol:
+            return
+
+        def on_input(input_string):
+            # input the quantity to buy or sell
+            if input_string == '':
+                return
+            quantity = float(input_string)
+            self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
+            self.app.refresh_ui = True
+            self.app.refresh_order()
+
+        pop_str = f"Will place order to sell {symbol} @ {price}, please input quantity:"
+        self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def get_sel_symbol_and_price(self):
+        """ Get the selected symbol and price in the watch list."""
+        sel_row = self.cursor_row
+        if not sel_row:
+            return None, None
+        symbol = self.get_row_at(sel_row)[0]
+        if symbol not in self.app.trader.asset_pool:
+            # if the symbol is not in the asset pool, return None
+            return None, None
+        price = str(self.get_row_at(sel_row)[2])
+        return symbol, float(price)
+
+
+class TradeLogTable(DataTable):
+    """A widget to display all trade logs."""
+
+    df_columns = ("datetime", "reason", "symbol", "name", "position_type",
+                  "direction", "trade_qty", "price", "trade_cost", "qty",
+                  "available_qty", "holding_cost", "cash", "available_cash")
+
+    headers = ("ID",
+               "Date", "Reason", "Symbol", "Name", "Position",
+               "Direction", "Qty", "Price", "Trade fee", "Holding",
+               "Available", "Holding cost", "Own cash", "Available cash")
 
 
 class Tables(TabbedContent):
@@ -137,6 +333,13 @@ class Tables(TabbedContent):
                         zebra_stripes=True,
                         cursor_type='row',
                 )
+            with TabPane("TradeLogs"):
+                yield TradeLogTable(
+                        id='tradelog',
+                        fixed_columns=5,
+                        zebra_stripes=True,
+                        cursor_type='row',
+                )
 
 
 class InfoPanel(TabbedContent):
@@ -159,17 +362,6 @@ class DisplayPanel(Horizontal):
         yield Digits(id='total_value', name='Value', value='0.00')
         yield Digits(id='earning', name='Earning', value='0.00')
         yield Digits(id='cash', name='Cash', value='0.00')
-
-
-class ControlPanel(Static):
-    """A widget to display control buttons."""
-
-    def compose(self) -> ComposeResult:
-        yield Button("Start", id='start', name="start")
-        yield Button("Stop", id='stop', name="stop")
-        yield Button("Pause", id='pause', name="pause")
-        yield Button("Resume", id='resume', name="resume")
-        yield Button("Exit", id='exit', name="exit")
 
 
 class InputScreen(ModalScreen):
@@ -296,7 +488,7 @@ class TraderApp(App):
                     # if ran strategy or got result from broker, refresh UI
                     self.refresh_order()
                     self.refresh_holdings()
-                    self.refresh_watches()
+                    self.refresh_trade_log()
 
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
@@ -312,13 +504,13 @@ class TraderApp(App):
             cum_time_counter += 1
             if cum_time_counter % info_refresh_interval == 0:
 
-                # TODO: refresh UI in async way
                 trader_info = self.trader.info(detail=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
                 self.refresh_operator_tree()
                 self.refresh_holdings()
                 self.refresh_watches()
+                self.refresh_trade_log()
                 cum_time_counter = 0
 
             if self.trader.status not in ['running', 'paused']:
@@ -368,7 +560,7 @@ class TraderApp(App):
         """Refresh the order table."""
         if not self.refresh_ui:
             return
-        orders = self.query_one(OrderTable)
+        orders = self.query_one("#orders")
         orders.clear()
         order_list = self.trader.history_orders(with_trade_results=True)
         if order_list.empty:
@@ -379,8 +571,8 @@ class TraderApp(App):
             row = list(row)
             row[5] = f'{row[5]:.2f}'
             
-            if row[8] == 'cancelled':
-                row_color = 'yellow'
+            if row[8] == 'canceled':
+                row_color = 'gray'
             elif row[3] == 'sell':
                 row_color = 'green'
             elif row[3] == 'buy':
@@ -394,6 +586,7 @@ class TraderApp(App):
             ]
             orders.add_row(*styled_row)
 
+    @work(exclusive=True, thread=True)
     def refresh_watches(self):
         """Refresh the watch list."""
         if not self.refresh_ui:
@@ -404,7 +597,7 @@ class TraderApp(App):
         watches.clear()
         if watched_prices.empty:
             return
-        # watched_prices.fillna(0, inplace=True)
+
         list_tuples = list(watched_prices.itertuples(name=None))
         for row in list_tuples:
             row = list(row)
@@ -422,6 +615,42 @@ class TraderApp(App):
                 Text(str(cell), style=f"bold {row_color}") for cell in row[2:]
             ]
             watches.add_row(*styled_row)
+
+    @work(exclusive=True, thread=True)
+    def refresh_trade_log(self):
+        """Refresh the trade log table."""
+        if not self.refresh_ui:
+            return
+        trade_log = self.query_one("#tradelog")
+        t_log = self.trader.read_trade_log()
+        trade_log.clear()
+
+        if t_log.empty:
+            return
+        t_log = t_log.reindex(columns=trade_log.df_columns)
+        t_log.fillna('', inplace=True)
+        list_tuples = list(t_log.itertuples(name=None))
+        for row in list_tuples:
+
+            row = list(row)
+            reason = row[2]
+            direction = row[6]
+            if reason == 'manual':
+                row_color = 'yellow'
+            elif reason == 'delivery':
+                row_color = 'blue'
+            elif direction == 'sell':
+                row_color = 'bold green'
+            elif direction == 'buy':
+                row_color = 'bold red'
+            else:
+                row_color = ''
+
+            styled_row = [
+                Text(str(cell), style=row_color) for cell in row
+            ]
+
+            trade_log.add_row(*styled_row)
 
     @work(exclusive=True, thread=True)
     def refresh_info_panels(self, trader_info):
@@ -572,20 +801,22 @@ class TraderApp(App):
         info_pad = self.query_one(InfoPanel)
         info_pad.border_title = "Information"
 
-        # refresh the holdings table and order tables
-        holdings = self.query_one(HoldingTable)
+        # refresh all the data tables, adding columns and refreshing the data
+        holdings = self.query_one("#holdings")
         holdings.add_columns(*holdings.headers)
         self.refresh_holdings()
-        orders = self.query_one(OrderTable)
+        orders = self.query_one("#orders")
         orders.add_columns(*orders.headers)
         self.refresh_order()
-        watches = self.query_one('#watches')
+        watches = self.query_one("#watches")
         watches.add_columns(*watches.headers)
         self.refresh_watches()
+        trade_log = self.query_one("#tradelog")
+        trade_log.add_columns(*trade_log.headers)
+        self.refresh_trade_log()
 
         system_log = self.query_one(SysLog)
         system_log.border_title = "System Log"
-
         # start the trader, broker and the trader event loop all in separate threads
         Thread(target=self.trader_event_loop).start()
 
@@ -616,27 +847,48 @@ class TraderApp(App):
         syslog.write(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
 
-    def action_buy_stock(self) -> None:
-        """ Action to buy a stock."""
-        # def confirm_buy(confirmed:bool) -> None:
-        #     if confirmed:
-        #         self.trader.add_task('buy')
-        #     self.refresh_ui = True
-        #
-        # self.refresh_ui = False
-        # self.push_screen(QuitScreen(), confirm_buy)
-        raise NotImplementedError
+    def submit_order(self, symbol, position, qty, price, direction) -> None:
+        """ Action to buy a stock.
 
-    def action_sell_stock(self) -> None:
-        """ Action to sell a stock."""
-        # def confirm_sell(confirmed:bool) -> None:
-        #     if confirmed:
-        #         self.trader.add_task('sell')
-        #     self.refresh_ui = True
-        #
-        # self.refresh_ui = False
-        # self.push_screen(QuitScreen(), confirm_sell)
-        raise NotImplementedError
+        Parameters
+        ----------
+        symbol : str
+            The symbol of the stock to buy.
+        position : str
+            The position of the stock to buy.
+        qty : float
+            The quantity of the stock to buy.
+        price : float
+            The price of the stock to buy.
+        direction : str
+            The direction of the order, 'buy' or 'sell'.
+
+        Returns
+        -------
+        None
+        """
+
+        syslog = self.query_one(SysLog)
+
+        trade_order = self.trader.submit_trade_order(
+                symbol=symbol,
+                qty=qty,
+                price=price,
+                position=position,
+                direction=direction,
+                order_type='market',
+        )
+        if trade_order:
+            self.trader.broker.order_queue.put(trade_order)
+            order_id = trade_order['order_id']
+            syslog.write(f'Order <{order_id}> has been submitted to broker: '
+                         f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                         f'at price {trade_order["price"]:.2f}')
+
+        if not self.trader.is_market_open:
+            syslog.write(f'Market is not open, order might not be executed immediately')
+
+        return
 
     def action_cancel_order(self) -> None:
         """ Action to cancel an order."""
