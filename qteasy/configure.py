@@ -11,11 +11,12 @@
 # ======================================
 
 import os
+import warnings
 
-from qteasy import QT_CONFIG
+from qteasy._arg_validators import QT_CONFIG
 from qteasy._arg_validators import ConfigDict
 from qteasy._arg_validators import _update_config_kwargs, _vkwargs_to_text
-from qteasy.utilfuncs import str_to_list
+from qteasy.utilfuncs import str_to_list, is_float_like, is_integer_like
 
 
 def configure(config=None, reset=False, only_built_in_keys=True, **kwargs) -> None:
@@ -366,7 +367,7 @@ def save_config(*, config=None, file_name=None, overwrite=True, initial_config=F
         return ""
 
 
-def load_config(*, config=None, file_name=None) -> dict:
+def load_config(*, config=None, file_name=None) -> ConfigDict:
     """ 从文件file_name中读取相应的config参数，写入到config中，如果config为
         None，则保存参数到QT_CONFIG中
 
@@ -379,13 +380,17 @@ def load_config(*, config=None, file_name=None) -> dict:
 
     Returns
     -------
-    config: dict
+    config: ConfigDict
         读取的配置参数
 
     Raises
     ------
     FileNotFoundError
         如果给定文件不存在，则报错。如果没有给定文件名，则当config/saved_config.cfg不存在时，报错
+
+    Examples:
+    --------
+    >>> load_config()
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
@@ -416,7 +421,7 @@ def load_config(*, config=None, file_name=None) -> dict:
                   only_built_in_keys=False,
                   **saved_config)
 
-    return saved_config
+    return ConfigDict(saved_config)
 
 
 def view_config_files(details=False) -> None:
@@ -463,6 +468,234 @@ def view_config_files(details=False) -> None:
         print('Config files found in config folder:')
         for file in files:
             print(file)
+
+
+def start_up_settings() -> None:
+    """ 读取qteasy.cfg文件中存储的启动设置
+
+    启动设置中可以包括系统定义配置参数以及用户自定义配置参数
+    """
+    from qteasy import QT_ROOT_PATH
+    start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
+
+    if len(start_up_config_lines) == 0:
+        print('Start up setting file is empty')
+        return
+
+    print(f'Start up settings:\n{"-" * 20}')
+    for line in start_up_config_lines:
+        # 忽略注释行
+        if line[0] == '#':
+            continue
+        # 忽略空行
+        if len(line.strip()) == 0:
+            continue
+        # 删除行尾的换行符
+        print(line.strip())
+
+
+def update_start_up_setting(**kwargs) -> None:
+    """ 更新qteasy.cfg文件中存储的启动设置
+
+    启动设置中可以包括系统定义配置参数以及用户自定义配置参数
+
+    Parameters
+    ----------
+    **kwargs:
+        需要更新的配置参数
+
+    Returns
+    -------
+    None
+    """
+
+    from qteasy import QT_ROOT_PATH
+    from qteasy.utilfuncs import is_integer_like, is_float_like
+    start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
+    start_up_config = _parse_start_up_config_lines(start_up_config_lines)
+
+    for k, v in kwargs.items():
+        if isinstance(v, str):
+            # 字符串类型的参数值，如果是数字、浮点数、布尔值或None，需要加上引号
+            if is_integer_like(v) or is_float_like(v):
+                v = f'\'{v}\''
+            elif v.lower() in ['true', 'false', 'none']:
+                v = f'\'{v}\''  # True, False, None
+            else:
+                v = v
+        start_up_config[k] = v
+
+    config_lines = [f'{k} = {v}\n' for k, v in start_up_config.items()]
+    _write_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), config_lines)
+
+    print('Start up settings updated successfully!')
+
+
+def remove_start_up_setting(*args) -> None:
+    """ 删除qteasy.cfg文件中存储的一项或者多项启动设置
+
+    必须给出需要删除的配置参数名称
+
+    Parameters
+    ----------
+    *args: str
+        需要的配置参数名称清单
+
+    Returns
+    -------
+    None
+    """
+
+    from qteasy import QT_ROOT_PATH
+    start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
+    start_up_config = _parse_start_up_config_lines(start_up_config_lines)
+
+    for arg in args:
+        if arg in start_up_config:
+            start_up_config.pop(arg)
+        else:
+            print(f'Parameter {arg} not found in start up settings, nothing to remove.')
+
+    config_lines = [f'{k} = {v}\n' for k, v in start_up_config.items()]
+    _write_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), config_lines)
+
+    print('Start up settings removed: ', args)
+
+
+def _read_start_up_file(file_path_name) -> list:
+    """ 读取qteasy.cfg文件中存储的内容到一个列表中
+
+    如果启动配置文件不存在，则创建一个新的启动配置文件，并返回一个空列表
+
+    Parameters
+    ----------
+    file_path_name: str
+        启动配置文件的路径
+
+    """
+    try:
+        with open(file_path_name) as f:
+            config_lines = f.readlines()
+
+    except FileNotFoundError:
+        _new_start_up_file(file_path_name)
+
+        config_lines = []  # 本地配置文件行
+        msg = f'qteasy.cfg not found, a new start up configuration file is created, \nview file at: ' \
+              f'{file_path_name}'
+        warnings.warn(msg)
+    except Exception as e:
+        msg = f'Error reading start up configuration file, all configurations will fall back to default! \n{e}'
+        warnings.warn(msg)
+        config_lines = []
+
+    return config_lines
+
+
+def _new_start_up_file(file_path_name) -> str:
+    """ 创建一个新的启动配置文件qteasy.cfg
+
+    如果文件已经存在，则覆盖原有文件
+
+    Parameters
+    ----------
+    file_path_name: str
+        启动配置文件的路径
+    """
+
+    # 启动配置文件的默认内容
+    qt_start_up_file_intro = '# qteasy configuration file\n' \
+                             '# following configurations will be loaded when initialize qteasy\n\n' \
+                             '# example:\n' \
+                             '# local_data_source = database\n\n'
+
+    try:
+        with open(file_path_name, mode='w', encoding='utf-8') as f:
+            intro = qt_start_up_file_intro
+            f.write(intro)
+    except Exception as e:
+        err = FileNotFoundError(f'Error creating start up configuration file: {e}')
+        raise err
+
+    return file_path_name
+
+
+def _write_start_up_file(file_path_name, config_lines) -> str:
+    """ 将配置文件中的配置参数写入到文件中
+
+    如果文件不存在，创建一个新的文件，并写入内容；如果文件存在，则覆盖原有文件
+
+    Parameters
+    ----------
+    file_path_name: str
+        启动配置文件的路径
+    config_lines: list
+        配置文件中的所有行
+
+    Returns
+    -------
+    file_path_name: str
+        写入的文件名
+    """
+
+    file_path_name = _new_start_up_file(file_path_name)
+
+    try:
+        with open(file_path_name, mode='w', encoding='utf-8') as f:
+            f.writelines(config_lines)
+    except Exception as e:
+        err = FileNotFoundError(f'Error writing start up configuration file: {e}')
+        raise err
+
+    return file_path_name
+
+
+def _parse_start_up_config_lines(config_lines) -> dict:
+    """ 解析配置文件中的配置参数
+
+    Parameters
+    ----------
+    config_lines: list
+        配置文件中的所有行
+
+    Returns
+    -------
+    configs: dict
+        解析后的配置参数
+    """
+    # 解析config_lines列表，依次读取所有存储的属性
+    start_up_config = {}
+
+    for line in config_lines:
+        if line[0] == '#':  # 忽略注释行
+            continue
+        line = line.split('=')
+        if len(line) == 2:
+            arg_name = line[0].strip()
+            read_value = line[1].strip()
+            if (read_value[0] in ['\'', '"']) and (read_value[-1] == ['\'', '"']):
+                read_value = str(read_value[1:-1])
+            elif read_value == 'True':
+                read_value = True
+            elif read_value == 'False':
+                read_value = False
+            elif read_value == 'None':
+                read_value = None
+            elif is_integer_like(read_value):
+                read_value = int(read_value)
+            elif is_float_like(read_value):
+                read_value = float(read_value)
+            else:
+                pass
+
+            arg_value = read_value
+            try:
+                start_up_config[arg_name] = arg_value
+            except Exception as e:
+                msg = f'{e}, invalid parameter: {arg_name}'
+                warnings.warn(msg)
+
+    return start_up_config
 
 
 def reset_config(config=None):

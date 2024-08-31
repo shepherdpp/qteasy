@@ -31,7 +31,7 @@ class TestEntry(unittest.TestCase):
 
     def test_qt_config_file_intro(self):
         print(f'test qteasy config file intro')
-        print(f'qteasy config file intro: {qt.QT_CONFIG_FILE_INTRO}')
+        print(f'qteasy config file intro: {qt.QT_START_UP_FILE_INTRO}')
 
     def test_qt_built_ins(self):
         """ test functions built_ins, built_in_list, built_in_strategies, get_built_in_strategy, built_in_doc"""

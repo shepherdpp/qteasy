@@ -8,7 +8,6 @@
 #   Core functions and Classes of qteasy.
 # ======================================
 
-import os
 import pandas as pd
 import numpy as np
 from warnings import warn
@@ -25,6 +24,7 @@ from .qt_operator import Operator
 from .visual import _plot_loop_result, _loop_report_str, _print_test_result
 from .visual import _plot_test_result
 from ._arg_validators import QT_CONFIG, ConfigDict
+from .configure import configure
 from .optimization import _evaluate_all_parameters, _evaluate_one_parameter
 
 
