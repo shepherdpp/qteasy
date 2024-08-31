@@ -71,9 +71,10 @@ class HoldingTable(DataTable):
                 return
             try:
                 quantity = float(input_string)
-            except ValueError:
+                self.app.submit_order(symbol, position, quantity, price, 'buy')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
                 return
-            self.app.submit_order(symbol, position, quantity, price, 'buy')
             self.app.refresh_ui = True
             self.app.refresh_order()
 
@@ -94,9 +95,10 @@ class HoldingTable(DataTable):
                 return
             try:
                 quantity = float(input_string)
-            except ValueError:
+                self.app.submit_order(symbol, position, quantity, price, 'sell')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
                 return
-            self.app.submit_order(symbol, position, quantity, price, 'sell')
             self.app.refresh_ui = True
             self.app.refresh_order()
 
@@ -112,11 +114,18 @@ class HoldingTable(DataTable):
         sel_row = self.cursor_row
         if not sel_row:
             return None, None, None
-        symbol = self.get_row_at(sel_row)[0]
-        qty = str(self.get_row_at(sel_row)[1])
-        position = 'long' if qty > 0 else 'short'
+        symbol = str(self.get_row_at(sel_row)[0])
+        qty = str(self.get_row_at(sel_row)[2])
         price = str(self.get_row_at(sel_row)[4])
-        return symbol, float(price), float(position)
+        try:
+            qty = float(qty)
+            price = float(price)
+        except Exception:
+            return None, None, None
+
+        position = 'long' if qty > 0 else 'short'
+
+        return symbol, price, position
 
 
 class OrderTable(DataTable):
@@ -151,9 +160,10 @@ class OrderTable(DataTable):
                 return
             try:
                 quantity = float(input_string)
-            except ValueError:
+                self.app.submit_order(symbol, position, quantity, 0., 'buy')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
                 return
-            self.app.submit_order(symbol, position, quantity, 0., 'buy')
             self.app.refresh_ui = True
             self.app.refresh_order()
 
@@ -172,11 +182,14 @@ class OrderTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
+
             try:
                 quantity = float(input_string)
-            except ValueError:
+                self.app.submit_order(symbol, position, quantity, 0., 'sell')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
                 return
-            self.app.submit_order(symbol, position, quantity, 0., 'sell')
+
             self.app.refresh_ui = True
             self.app.refresh_order()
 
@@ -267,9 +280,11 @@ class WatchTable(DataTable):
                 return
             try:
                 quantity = float(input_string)
-            except ValueError:
+                self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
+            except ValueError as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
                 return
-            self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
+
             self.app.refresh_ui = True
             self.app.refresh_order()
 
@@ -288,11 +303,14 @@ class WatchTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
+
             try:
                 quantity = float(input_string)
-            except ValueError:
+                self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
                 return
-            self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
+
             self.app.refresh_ui = True
             self.app.refresh_order()
 
@@ -304,12 +322,15 @@ class WatchTable(DataTable):
         sel_row = self.cursor_row
         if not sel_row:
             return None, None
-        symbol = self.get_row_at(sel_row)[0]
+        symbol = str(self.get_row_at(sel_row)[0])
         if symbol not in self.app.trader.asset_pool:
             # if the symbol is not in the asset pool, return None
             return None, None
         price = str(self.get_row_at(sel_row)[2])
-        return symbol, float(price)
+        price = float(price)
+        if price <= 0:
+            return None, None
+        return symbol, price
 
 
 class TradeLogTable(DataTable):
