@@ -99,7 +99,7 @@ InputScreen {
     grid-rows: 3 3;
     grid-gutter: 0;
     width: 70;
-    height: 20;
+    height: 30;
     border: thick $background 80%;
     background: $surface;
 }
