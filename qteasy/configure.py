@@ -18,6 +18,12 @@ from qteasy._arg_validators import ConfigDict
 from qteasy._arg_validators import _update_config_kwargs, _vkwargs_to_text
 from qteasy.utilfuncs import str_to_list, is_float_like, is_integer_like
 
+# 启动配置文件的默认内容
+QT_START_UP_FILE_INTRO = '# qteasy configuration file\n' \
+                         '# following configurations will be loaded when initialize qteasy\n\n' \
+                         '# example:\n' \
+                         '# local_data_source = database\n\n'
+
 
 def configure(config=None, reset=False, only_built_in_keys=True, **kwargs) -> None:
     """ 配置qteasy的运行参数QT_CONFIG
@@ -470,12 +476,13 @@ def view_config_files(details=False) -> None:
             print(file)
 
 
-def start_up_settings() -> None:
+def start_up_settings() -> list:
     """ 读取qteasy启动配置文件中存储的启动设置内容
 
     Returns
     -------
-    None
+    start_up_setting_lines: list
+        启动设置的内容
 
     Examples
     --------
@@ -492,7 +499,7 @@ def start_up_settings() -> None:
 
     if len(start_up_config_lines) == 0:
         print('Start up setting file is empty')
-        return
+        return[]
 
     print(f'Start up settings:\n{"-" * 20}')
     for line in start_up_config_lines:
@@ -504,6 +511,8 @@ def start_up_settings() -> None:
             continue
         # 删除行尾的换行符
         print(line.strip())
+
+    return start_up_config_lines
 
 
 def update_start_up_setting(**kwargs) -> None:
@@ -655,15 +664,9 @@ def _new_start_up_file(file_path_name) -> str:
         启动配置文件的路径
     """
 
-    # 启动配置文件的默认内容
-    qt_start_up_file_intro = '# qteasy configuration file\n' \
-                             '# following configurations will be loaded when initialize qteasy\n\n' \
-                             '# example:\n' \
-                             '# local_data_source = database\n\n'
-
     try:
         with open(file_path_name, mode='w', encoding='utf-8') as f:
-            intro = qt_start_up_file_intro
+            intro = QT_START_UP_FILE_INTRO
             f.write(intro)
     except Exception as e:
         err = FileNotFoundError(f'Error creating start up configuration file: {e}')
