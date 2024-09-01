@@ -1207,7 +1207,7 @@ def _process_deprecated_keys(key):
     return key
 
 
-def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
+def _validate_key_and_value(key, value, raise_key_error=False, raise_value_error=True) -> bool:
     """ 给定一个参数, 根据参数的验证方法验证值的正确性
 
     验证通过返回True, 否则返回报错
@@ -1219,9 +1219,12 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         需要验证的参数
     value: any
         被验证的参数值
-    raise_if_key_not_existed: bool, default False
+    raise_key_error: bool, default False
         当此参数为False时，如果key不存在，不会报错，而是返回False
         当此参数为True时，如果key不存在，会报错
+    raise_value_error: bool, default True
+        当此参数为True时，如果value不符合参数的验证方法，会报错
+        当此参数为False时，如果value不符合参数的验证方法，返回False
 
     Returns
     -------
@@ -1232,10 +1235,11 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     Raises
     ------
     KeyError: 当key不存在且raise_if_key_not_existed为True时，会报错，否则返回False
+    ValueError: 当value不符合参数的验证方法时，会报错
     """
     vkwargs = _valid_qt_kwargs()
 
-    if (key not in vkwargs) and raise_if_key_not_existed:
+    if (key not in vkwargs) and raise_key_error:
         err_msg = f'config_key: <{key}> is not a built-in parameter key, please check your input!'
         raise KeyError(err_msg)
     if key not in vkwargs:
@@ -1243,16 +1247,24 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
 
     try:
         valid = vkwargs[key]['Validator'](value)
-    except Exception as ex:
-        ex.extra_info = f'Invalid value: ({str(value)}) for config_key: <{key}>.'
-        raise ex
+    except Exception as err:
+        err.extra_info = f'Invalid value: ({str(value)}) for config_key: <{key}>.'
+        if raise_value_error:
+            raise err
+        else:
+            return False
+
     if not valid:
         import inspect
         v = inspect.getsource(vkwargs[key]['Validator']).strip()
-        raise TypeError(
+        err = ValueError(
                 f'Invalid value: "{str(value)}"({type(value)}) for config_key: <{key}>\n'
                 f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v
         )
+        if raise_value_error:
+            raise err
+        else:
+            return False
 
     return True
 
