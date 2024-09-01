@@ -1,6 +1,11 @@
 # RELEASE HISTORY
 
-## 1.3.8 (2024-09-06)
+## 1.3.9 (2024-09-01)
+- Added setting key validation in `qt.update_start_up_setting()` to prevent from invalid values if the key is in qt_config_kwargs
+- improved print outs and return values of `qt.start_up_settings()`
+- improved the way the start up setting file is written to always keep intro messages
+
+## 1.3.8 (2024-09-01)
 - Added new features: now qteasy has multiple functions to access and modify start up setting file:
   - Added new function `qt.start_up_settings()`, to access and print contents of start up settings file
   - Added new function `qt.update_start_up_setting()`, to modify start up settings file

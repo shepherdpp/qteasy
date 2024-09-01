@@ -19,7 +19,9 @@ from qteasy._arg_validators import _update_config_kwargs, _vkwargs_to_text
 from qteasy.utilfuncs import str_to_list, is_float_like, is_integer_like
 
 # 启动配置文件的默认内容
-QT_START_UP_FILE_INTRO = '# qteasy configuration file\n' \
+QT_START_UP_FILE_INTRO = '# **********************************\n' \
+                         '# qteasy start up configuration file\n' \
+                         '# **********************************\n\n' \
                          '# following configurations will be loaded when initialize qteasy\n\n' \
                          '# example:\n' \
                          '# local_data_source = database\n\n'
@@ -497,9 +499,11 @@ def start_up_settings() -> list:
     from qteasy import QT_ROOT_PATH
     start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
 
+    config_lines = []
+
     if len(start_up_config_lines) == 0:
         print('Start up setting file is empty')
-        return[]
+        return config_lines
 
     print(f'Start up settings:\n{"-" * 20}')
     for line in start_up_config_lines:
@@ -511,8 +515,9 @@ def start_up_settings() -> list:
             continue
         # 删除行尾的换行符
         print(line.strip())
+        config_lines.append(line.strip())
 
-    return start_up_config_lines
+    return config_lines
 
 
 def update_start_up_setting(**kwargs) -> None:
@@ -553,6 +558,7 @@ def update_start_up_setting(**kwargs) -> None:
 
     from qteasy import QT_ROOT_PATH
     from qteasy.utilfuncs import is_integer_like, is_float_like
+    from qteasy._arg_validators import _valid_qt_kwargs, _validate_key_and_value
     start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
     start_up_config = _parse_start_up_config_lines(start_up_config_lines)
 
@@ -560,12 +566,19 @@ def update_start_up_setting(**kwargs) -> None:
         if isinstance(v, str):
             # 字符串类型的参数值，如果是数字、浮点数、布尔值或None，需要加上引号
             if is_integer_like(v) or is_float_like(v):
-                v = f'\'{v}\''
+                v = f'"{v}"'
             elif v.lower() in ['true', 'false', 'none']:
-                v = f'\'{v}\''  # True, False, None
+                v = f'"{v}"'  # True, False, None
             else:
                 v = v
-        start_up_config[k] = v
+
+        # validate the value if key is in valid_qt_kwargs
+        validated = True
+        if k in _valid_qt_kwargs():
+            validated = _validate_key_and_value(k, v)
+
+        if validated:
+            start_up_config[k] = v
 
     config_lines = [f'{k} = {v}\n' for k, v in start_up_config.items()]
     _write_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'), config_lines)
@@ -697,6 +710,9 @@ def _write_start_up_file(file_path_name, config_lines) -> str:
 
     try:
         with open(file_path_name, mode='w', encoding='utf-8') as f:
+            intro = QT_START_UP_FILE_INTRO
+            f.write(intro)
+
             f.writelines(config_lines)
     except Exception as e:
         err = FileNotFoundError(f'Error writing start up configuration file: {e}')
