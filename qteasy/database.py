@@ -4992,7 +4992,7 @@ class DataSource:
                     )
             for item in dtypes:  # 如果给出了dtypes，进一步筛选tables中的表，删除不需要的
                 tables_to_keep = set()
-                for tbl, schema in table_master.schema.iteritems():
+                for tbl, schema in table_master.schema.items():  # iteritems()在pandas中已经被废弃
                     if item.lower() in TABLE_SCHEMA[schema]['columns']:
                         tables_to_keep.add(tbl)
                 tables_to_refill.intersection_update(
