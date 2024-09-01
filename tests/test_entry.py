@@ -31,7 +31,29 @@ class TestEntry(unittest.TestCase):
 
     def test_qt_config_file_intro(self):
         print(f'test qteasy config file intro')
-        print(f'qteasy config file intro: {qt.QT_CONFIG_FILE_INTRO}')
+        from qteasy.configure import QT_START_UP_FILE_INTRO
+        print(f'qteasy config file intro: {QT_START_UP_FILE_INTRO}')
+
+    def test_qt_start_up_settings(self):
+        """ test accessing and modifying start up settings"""
+        print(f'test qteasy start up settings')
+        config_lines = qt.start_up_settings()
+        print(f'qteasy start up settings: {config_lines}')
+        self.assertIsInstance(config_lines, list)
+        self.assertTrue(len(config_lines) > 0)
+        self.assertIsInstance(config_lines[0], str)
+
+        # test modify start up settings
+        qt.update_start_up_setting(test_key='test_value')
+        config_lines = qt.start_up_settings()
+        print(f'qteasy start up settings after update: {config_lines}')
+        self.assertTrue('test_key = test_value\n' in config_lines)
+
+        # test remove start up settings
+        qt.remove_start_up_setting('test_key')
+        config_lines = qt.start_up_settings()
+        print(f'qteasy start up settings after remove: {config_lines}')
+        self.assertTrue('test_key = test_value\n' not in config_lines)
 
     def test_qt_built_ins(self):
         """ test functions built_ins, built_in_list, built_in_strategies, get_built_in_strategy, built_in_doc"""

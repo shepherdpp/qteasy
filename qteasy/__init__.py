@@ -21,8 +21,10 @@ from logging.handlers import TimedRotatingFileHandler
 from argparse import Namespace
 
 from .utilfuncs import is_float_like, is_integer_like
-from .core import run, set_config, get_configurations, get_config, view_config_files
-from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
+from .configure import set_config, get_configurations, get_config, view_config_files
+from .configure import configuration, save_config, load_config, reset_config, _parse_start_up_config_lines
+from .configure import _read_start_up_file, start_up_settings, update_start_up_setting, remove_start_up_setting
+from .core import run, info, is_ready, configure
 from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source
 from .core import get_history_data, filter_stock_codes, filter_stocks
 from .core import reconnect_ds, get_table_info, get_table_overview, live_trade_accounts
@@ -39,15 +41,15 @@ from .trade_recording import delete_account
 
 
 # qteasy版本信息
-__version__ = '1.3.7'
+__version__ = '1.3.8'
 version_info = Namespace(
         major=1,
         minor=3,
-        patch=7,
+        patch=8,
         short=(1, 3),
-        full=(1, 3, 7),
-        string='1.3.7',
-        tuple=('1', '3', '7'),
+        full=(1, 3, 8),
+        string='1.3.8',
+        tuple=('1', '3', '8'),
         releaselevel='beta',
 )
 
@@ -58,59 +60,13 @@ QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
 # 准备从本地配置文件中读取预先存储的qteasy配置
 qt_local_configs = {}
 
-QT_CONFIG_FILE_INTRO = '# qteasy configuration file\n' \
-                       '# following configurations will be loaded when initialize qteasy\n\n' \
-                       '# example:\n' \
-                       '# local_data_source = database\n\n'
-# 读取configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
-try:
-    with open(os.path.join(QT_ROOT_PATH, 'qteasy.cfg')) as f:
-        config_lines = f.readlines()
-
-except FileNotFoundError as e:
-    qt_config_file_path_name = os.path.join(QT_ROOT_PATH, 'qteasy.cfg')
-    with open(qt_config_file_path_name, mode='w', encoding='utf-8') as f:
-        intro = QT_CONFIG_FILE_INTRO
-        f.write(intro)
-
-    config_lines = []  # 本地配置文件行
-    msg = f'qteasy.cfg not found, a new configuration file is created, \nview file at: {qt_config_file_path_name}'
-    warnings.warn(msg)
-except Exception as e:
-    msg = f'Error reading configuration file, all configurations will fall back to default! \n{e}'
-    warnings.warn(msg)
-    config_lines = []
+# 读取start up configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
+config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
-# config_key = value
-for line in config_lines:
-    if line[0] == '#':  # 忽略注释行
-        continue
-    line = line.split('=')
-    if len(line) == 2:
-        arg_name = line[0].strip()
-        read_value = line[1].strip()
-        if (read_value[0] in ['\'', '"']) and (read_value[-1] == ['\'', '"']):
-            read_value = str(read_value[1:-1])
-        elif read_value == 'True':
-            read_value = True
-        elif read_value == 'False':
-            read_value = False
-        elif read_value == 'None':
-            read_value = None
-        elif is_integer_like(read_value):
-            read_value = int(read_value)
-        elif is_float_like(read_value):
-            read_value = float(read_value)
-        else:
-            pass
+start_up_config = _parse_start_up_config_lines(config_lines=config_lines)
 
-        arg_value = read_value
-        try:
-            qt_local_configs[arg_name] = arg_value
-        except Exception as e:
-            msg = f'{e}, invalid parameter: {arg_name}'
-            warnings.warn(msg)
+qt_local_configs.update(start_up_config)
 
 # 读取tushare token，如果读取失败，抛出warning
 try:
@@ -181,30 +137,17 @@ py_version = sys.version_info
 py_ver_major = py_version.major
 py_ver_minor = py_version.minor
 
-# if py_ver_major < 3 or (py_ver_major == 3 and py_ver_minor <= 6):
-#     warnings.warn(f'qteasy is not fully tested on Python version {py_ver_major}.{py_ver_minor}, '
-#                   f'it is highly recommended to use python 3.8 or later for qteasy!')
-# elif py_ver_major == 3 and py_ver_minor == 7:
-#     warnings.warn(f'A few features of qteasy are planned to be deprecated in Python 3.7, '
-#                   f'please updated to python 3.8 or later for qteasy!', DeprecationWarning)
-
-
 __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
     'get_history_data', 'filter_stock_codes', 'filter_stocks',
     'reconnect_ds', 'get_table_info', 'get_table_overview',
-    'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes',
-    'Operator',
-    'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter',
+    'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting',
+    'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
     'built_ins', 'built_in_list', 'built_in_strategies', 'get_built_in_strategy',
-    'candle',
-    'CashPlan', 'set_cost', 'update_cost',
-    'DataSource', 'find_history_data',
+    'candle', 'CashPlan', 'set_cost', 'update_cost', 'DataSource', 'find_history_data',
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
-    'QT_DATA_SOURCE', 'QT_CONFIG_FILE_INTRO',
-    'utilfuncs',
-    'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
+    'QT_DATA_SOURCE', 'QT_CONFIG', 'utilfuncs', 'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
     'logger_core', 'live_trade_accounts', 'delete_account',
 ]

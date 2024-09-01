@@ -27,7 +27,11 @@ from .utilfuncs import sec_to_duration
 
 class SysLog(RichLog):
     """A widget to display system logs."""
-    pass
+
+    BINDINGS = [
+        ("ctrl+p", "pause_trader", "Pause"),
+        ("ctrl+r", "resume_trader", "Resume"),
+    ]
 
 
 class StrategyTree(Tree):
@@ -49,6 +53,7 @@ class HoldingTable(DataTable):
         ("ctrl+b", "buy_stock", "Buy"),
         ("ctrl+s", "sell_stock", "Sell"),
         ("shift+c", "change", "Change"),
+        ("ctrl+r", "refresh_table", "Refresh"),
     ]
 
     df_columns = ("name", "qty", "available_qty", "current_price", "cost",
@@ -69,12 +74,16 @@ class HoldingTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
-            self.app.submit_order(symbol, position, quantity, price, 'buy')
+            try:
+                quantity = float(input_string)
+                self.app.submit_order(symbol, position, quantity, 0, 'buy')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
+                return
             self.app.refresh_ui = True
             self.app.refresh_order()
 
-        pop_str = f"Will place order to buy {symbol}({position}) @ {price}, please input quantity:"
+        pop_str = f"Input qty for buying {symbol}({position[1].upper()}) @ market price:"
         self.app.push_screen(InputScreen(pop_str), on_input)
 
     def action_sell_stock(self) -> None:
@@ -89,27 +98,42 @@ class HoldingTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
-            self.app.submit_order(symbol, position, quantity, price, 'sell')
+            try:
+                quantity = float(input_string)
+                self.app.submit_order(symbol, position, quantity, 0, 'sell')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
+                return
             self.app.refresh_ui = True
             self.app.refresh_order()
 
-        pop_str = f"Will place order to sell {symbol}({position}) @ {price}, please input quantity:"
+        pop_str = f"Input qty for selling {symbol}({position[1].upper()}) @ market price:"
         self.app.push_screen(InputScreen(pop_str), on_input)
 
     def action_change(self) -> None:
         """ Action to change the strategy."""
         return
 
+    def action_refresh_table(self) -> None:
+        """ refresh table"""
+        self.app.refresh_holdings()
+
     def get_sel_symbol_price_and_position(self):
         """ Get the selected symbol and price in the watch list."""
         sel_row = self.cursor_row
         if not sel_row:
             return None, None, None
-        symbol = self.get_row_at(sel_row)[0]
-        qty = float(self.get_row_at(sel_row)[2])
+        symbol = str(self.get_row_at(sel_row)[0])
+        qty = str(self.get_row_at(sel_row)[2])
+        price = str(self.get_row_at(sel_row)[4])
+        try:
+            qty = float(qty)
+            price = float(price)
+        except Exception:
+            return None, None, None
+
         position = 'long' if qty > 0 else 'short'
-        price = self.get_row_at(sel_row)[4]
+
         return symbol, price, position
 
 
@@ -120,6 +144,7 @@ class OrderTable(DataTable):
         ("ctrl+b", "buy_stock", "Buy"),
         ("ctrl+s", "sell_stock", "Sell"),
         ("ctrl+shift+c", "cancel_order", "Cancel"),
+        ("ctrl+r", "refresh_table", "Refresh"),
     ]
 
     df_columns = ("symbol", "position", "direction", "order_type", "qty", "price_quoted",
@@ -143,12 +168,16 @@ class OrderTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
-            self.app.submit_order(symbol, position, quantity, 0., 'buy')
+            try:
+                quantity = float(input_string)
+                self.app.submit_order(symbol, position, quantity, 0., 'buy')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
+                return
             self.app.refresh_ui = True
             self.app.refresh_order()
 
-        pop_str = f"Will place order to buy {symbol}({position}), please input quantity:"
+        pop_str = f"Input qty for buying {symbol}({position[1].upper()}) @ market price:"
         self.app.push_screen(InputScreen(pop_str), on_input)
 
     def action_sell_stock(self) -> None:
@@ -163,12 +192,18 @@ class OrderTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
-            self.app.submit_order(symbol, position, quantity, 0., 'sell')
+
+            try:
+                quantity = float(input_string)
+                self.app.submit_order(symbol, position, quantity, 0., 'sell')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
+                return
+
             self.app.refresh_ui = True
             self.app.refresh_order()
 
-        pop_str = f"Will place order to sell {symbol}({position}), please input quantity:"
+        pop_str = f"Input qty for selling {symbol}({position}), please input quantity:"
         self.app.push_screen(InputScreen(pop_str), on_input)
 
     def action_cancel_order(self) -> None:
@@ -180,6 +215,10 @@ class OrderTable(DataTable):
 
         self.app.refresh_ui = False
         self.app.push_screen(QuitScreen(), confirm_cancel)
+
+    def action_refresh_table(self) -> None:
+        """ refresh table"""
+        self.app.refresh_order()
 
     def get_sel_symbol_and_position(self):
         """ Get the selected symbol and price in the watch list."""
@@ -199,6 +238,7 @@ class WatchTable(DataTable):
         ("delete", "remove_symbol", "Remove"),
         ("ctrl+b", "buy_stock", "Buy"),
         ("ctrl+s", "sell_stock", "Sell"),
+        ("ctrl+r", "refresh_table", "Refresh"),
     ]
 
     df_columns = ("name", "close", "pre_close", "open", "high",
@@ -253,12 +293,17 @@ class WatchTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
-            self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
+            try:
+                quantity = float(input_string)
+                self.app.submit_order(symbol, 'long', quantity, float(price), 'buy')
+            except ValueError as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
+                return
+
             self.app.refresh_ui = True
             self.app.refresh_order()
 
-        pop_str = f"Will place order to buy {symbol} @ {price}, please input quantity:"
+        pop_str = f"Input qty for buying {symbol}(L) @ {price}:"
         self.app.push_screen(InputScreen(pop_str), on_input)
 
     def action_sell_stock(self) -> None:
@@ -273,29 +318,46 @@ class WatchTable(DataTable):
             # input the quantity to buy or sell
             if input_string == '':
                 return
-            quantity = float(input_string)
-            self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
+
+            try:
+                quantity = float(input_string)
+                self.app.submit_order(symbol, 'long', quantity, float(price), 'sell')
+            except Exception as e:
+                self.app.trader.send_message(f'Error submitting order: {e}')
+                return
+
             self.app.refresh_ui = True
             self.app.refresh_order()
 
-        pop_str = f"Will place order to sell {symbol} @ {price}, please input quantity:"
+        pop_str = f"Input qty for selling {symbol}(L) @ {price}:"
         self.app.push_screen(InputScreen(pop_str), on_input)
+
+    def action_refresh_table(self) -> None:
+        """ refresh table"""
+        self.app.refresh_watches()
 
     def get_sel_symbol_and_price(self):
         """ Get the selected symbol and price in the watch list."""
         sel_row = self.cursor_row
         if not sel_row:
             return None, None
-        symbol = self.get_row_at(sel_row)[0]
+        symbol = str(self.get_row_at(sel_row)[0])
         if symbol not in self.app.trader.asset_pool:
             # if the symbol is not in the asset pool, return None
             return None, None
         price = str(self.get_row_at(sel_row)[2])
-        return symbol, float(price)
+        price = float(price)
+        if price <= 0:
+            return None, None
+        return symbol, price
 
 
 class TradeLogTable(DataTable):
     """A widget to display all trade logs."""
+
+    BINDINGS = [
+        ("ctrl+r", "refresh_table", "Refresh"),
+    ]
 
     df_columns = ("datetime", "reason", "symbol", "name", "position_type",
                   "direction", "trade_qty", "price", "trade_cost", "qty",
@@ -305,6 +367,10 @@ class TradeLogTable(DataTable):
                "Date", "Reason", "Symbol", "Name", "Position",
                "Direction", "Qty", "Price", "Trade fee", "Holding",
                "Available", "Holding cost", "Own cash", "Available cash")
+
+    def action_refresh_table(self) -> None:
+        """ refresh table"""
+        self.app.refresh_trade_log()
 
 
 class Tables(TabbedContent):
@@ -421,8 +487,6 @@ class TraderApp(App):
     CSS_PATH = "tui_style.tcss"
     BINDINGS = [
         ("d", "toggle_dark", "Dark mode"),
-        ("ctrl+p", "pause_trader", "Pause"),
-        ("ctrl+r", "resume_trader", "Resume"),
         ("ctrl+q", "request_quit", "Quit app"),
     ]
 

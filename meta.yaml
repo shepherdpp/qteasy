@@ -1,6 +1,6 @@
 package:
   name: "qteasy"
-  version: "1.3.7"
+  version: "1.3.8"
 
 source:
   git_rev: v1.3.7

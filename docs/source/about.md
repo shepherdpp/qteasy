@@ -4,5 +4,5 @@
 - Author: **Jackie PENG**
 - Email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.3.7`
+- Latest Version: `1.3.8`
 - License: BSD 3-Clause

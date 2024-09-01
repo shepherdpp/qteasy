@@ -180,7 +180,6 @@ def _valid_qt_kwargs():
                           '- tui : 一个基于Terminal的图形化用户界面\n'
                           '- cli : 一个基于命令行交互的Shell用户界面'},
 
-
         'live_price_acquire_channel':
             {'Default':   'eastmoney',
              'Validator': lambda value: isinstance(value, str) and value.lower() in ['eastmoney', 'tushare', 'akshare'],
@@ -618,7 +617,7 @@ def _valid_qt_kwargs():
                           '- aggressive: 在整个策略运行时间点上都会产生交易信号，不论此时PT信号是否发\n'
                           '              生变化，实时监控实际持仓与计划持仓之间的差异，只要二者发生偏\n'
                           '              离，就产生信号\n'
-                          '- lazy:       在策略运行时间点上，只有当持仓比例发生变化时，才会产生交易\n'
+                          '- lazy:       只有在策略运行时间点上，当持仓比例发生变化时，才会产生交易\n'
                           '              信号，不实时监控实际持仓与计划持仓的差异'},
 
         'PT_buy_threshold':
