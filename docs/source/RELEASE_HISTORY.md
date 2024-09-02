@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.3.10 (2024-09-03)
+- removed deprecated pandas syntax from database.py and updated version requirements
+- corrected help messages for live trader users
+
 ## 1.3.9 (2024-09-01)
 - Added setting key validation in `qt.update_start_up_setting()` to prevent from invalid values if the key is in qt_config_kwargs
 - improved print outs and return values of `qt.start_up_settings()`
