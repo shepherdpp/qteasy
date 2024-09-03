@@ -27,7 +27,7 @@ from .tafuncs import macd, dema, rsi, bbands, sma
 from pandas.plotting import register_matplotlib_converters
 
 
-zh_font_name = 'STFangsong' if os.name == 'nt' else 'pingfang HK'
+zh_font_name = 'Microsoft YaHei' if os.name == 'nt' else 'pingfang HK'
 
 register_matplotlib_converters()
 
