@@ -21,7 +21,7 @@ from logging.handlers import TimedRotatingFileHandler
 from argparse import Namespace
 
 from .utilfuncs import is_float_like, is_integer_like
-from .configure import set_config, get_configurations, get_config, view_config_files
+from .configure import set_config, get_configurations, get_config, view_config_files, get_start_up_settings
 from .configure import configuration, save_config, load_config, reset_config, _parse_start_up_config_lines
 from .configure import _read_start_up_file, start_up_settings, update_start_up_setting, remove_start_up_setting
 from .core import run, info, is_ready, configure
@@ -142,7 +142,7 @@ __all__ = [
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
     'get_history_data', 'filter_stock_codes', 'filter_stocks',
-    'reconnect_ds', 'get_table_info', 'get_table_overview',
+    'reconnect_ds', 'get_table_info', 'get_table_overview', 'get_start_up_settings',
     'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting',
     'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
     'built_ins', 'built_in_list', 'built_in_strategies', 'get_built_in_strategy',
