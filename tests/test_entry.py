@@ -27,7 +27,7 @@ class TestEntry(unittest.TestCase):
 
     def test_qt_local_configs(self):
         print(f'test qteasy local configs')
-        print(f'qteasy local configs: {qt.qt_local_configs}')
+        print(f'qteasy local configs: {qt._qt_local_configs}')
 
     def test_qt_config_file_intro(self):
         print(f'test qteasy config file intro')

@@ -58,19 +58,19 @@ QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardi
 QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
 
 # 准备从本地配置文件中读取预先存储的qteasy配置
-qt_local_configs = {}
+_qt_local_configs = {}
 
 # 读取start up configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
-config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
+_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
-start_up_config = _parse_start_up_config_lines(config_lines=config_lines)
+start_up_config = _parse_start_up_config_lines(config_lines=_config_lines)
 
-qt_local_configs.update(start_up_config)
+_qt_local_configs.update(start_up_config)
 
 # 读取tushare token，如果读取失败，抛出warning
 try:
-    TUSHARE_TOKEN = qt_local_configs['tushare_token']
+    TUSHARE_TOKEN = _qt_local_configs['tushare_token']
     ts.set_token(TUSHARE_TOKEN)
 except Exception as e:
     msg = f'Failed Loading tushare_token, configure it in qteasy.cfg:\n' \
@@ -80,7 +80,7 @@ except Exception as e:
     warnings.warn(msg)
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
-configure(only_built_in_keys=False, **qt_local_configs)
+configure(only_built_in_keys=False, **_qt_local_configs)
 
 # 连接默认的本地数据源
 QT_DATA_SOURCE = DataSource(
@@ -141,7 +141,7 @@ __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
-    'get_history_data', 'filter_stock_codes', 'filter_stocks',
+    'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config',
     'reconnect_ds', 'get_table_info', 'get_table_overview', 'get_start_up_settings',
     'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting',
     'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
