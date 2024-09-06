@@ -977,6 +977,13 @@ def _valid_qt_kwargs():
              'text':      'Windows系统下的中文字体名称，用于绘图时显示中文\n'
                           '该设置须重新启动qteasy后生效'},
 
+        'ZH_font_name_LINUX':  # v1.3.10新增
+            {'Default':   'Song',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'Linux系统下的中文字体名称，用于绘图时显示中文\n'
+                          '该设置须重新启动qteasy后生效'},
+
     }
     _validate_vkwargs_dict(vkwargs)
 
