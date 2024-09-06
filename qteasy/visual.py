@@ -22,23 +22,11 @@ import pandas as pd
 import numpy as np
 
 import qteasy as qt
-from qteasy import QT_CONFIG
 from qteasy.history import get_history_panel
 from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, sma
 
 from pandas.plotting import register_matplotlib_converters
-
-system = platform.system()
-if system == 'Darwin':
-    zh_font_name = QT_CONFIG['ZH_font_name_MAC']
-elif system == 'Windows':
-    zh_font_name = QT_CONFIG['ZH_font_name_WIN']
-elif system == 'Linux':
-    zh_font_name = QT_CONFIG['ZH_font_name_LINUX']
-else:
-    warnings.warn(f'Unknown system type: {system}, Chinese contents might not be displayed correctly.')
-    zh_font_name = 'Arial'
 
 register_matplotlib_converters()
 
@@ -52,45 +40,6 @@ ValidCandlePlotMATypes = ['ma',
                           'bbands']
 
 ValidPlotTypes = ['candle', 'renko', 'ohlc', 'line']
-
-title_font = {'fontname': zh_font_name,
-              'size':     '16',
-              'color':    'black',
-              'weight':   'bold',
-              'va':       'bottom',
-              'ha':       'center'}
-large_red_font = {'fontname': 'Arial',
-                  'size':     '22',
-                  'color':    'red',
-                  'weight':   'bold',
-                  'va':       'bottom'}
-large_green_font = {'fontname': 'Arial',
-                    'size':     '22',
-                    'color':    'green',
-                    'weight':   'bold',
-                    'va':       'bottom'}
-small_red_font = {'fontname': 'Arial',
-                  'size':     '12',
-                  'color':    'red',
-                  'weight':   'bold',
-                  'va':       'bottom'}
-small_green_font = {'fontname': 'Arial',
-                    'size':     '12',
-                    'color':    'green',
-                    'weight':   'bold',
-                    'va':       'bottom'}
-normal_label_font = {'fontname': zh_font_name,
-                     'size':     '12',
-                     'color':    'black',
-                     'weight':   'normal',
-                     'va':       'bottom',
-                     'ha':       'right'}
-normal_font = {'fontname': 'Arial',
-               'size':     '12',
-               'color':    'black',
-               'weight':   'normal',
-               'va':       'bottom',
-               'ha':       'left'}
 
 
 # 动态交互式蜡烛图类
@@ -151,6 +100,8 @@ class InterCandle:
 
         self.cur_xlim = None
 
+        self._set_up_font_types()
+
         # 初始化figure对象，在figure上建立三个Axes对象并分别设置好它们的位置和基本属性
         self.fig = mpf.figure(style=style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         fig = self.fig
@@ -161,34 +112,87 @@ class InterCandle:
         self.ax2.set_ylabel('This is not Volume')
         self.ax3 = fig.add_axes([0.08, 0.05, 0.86, 0.10], sharex=self.ax1)
         # 初始化figure对象，在figure上预先放置文本并设置格式，文本内容根据需要显示的数据实时更新
-        self.t1 = fig.text(0.50, 0.94, f'{self.plot_title}', **title_font)
-        self.t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
-        self.t3 = fig.text(0.14, 0.89, f'', **large_red_font)
-        self.t4 = fig.text(0.14, 0.86, f'', **small_red_font)
-        self.t5 = fig.text(0.22, 0.86, f'', **small_red_font)
-        self.t6 = fig.text(0.12, 0.86, f'', **normal_label_font)
-        self.t7 = fig.text(0.40, 0.90, '高: ', **normal_label_font)
-        self.t8 = fig.text(0.40, 0.90, f'', **small_red_font)
-        self.t9 = fig.text(0.40, 0.86, '低: ', **normal_label_font)
-        self.t10 = fig.text(0.40, 0.86, f'', **small_green_font)
-        self.t11 = fig.text(0.55, 0.90, '量(万手): ', **normal_label_font)
-        self.t12 = fig.text(0.55, 0.90, f'', **normal_font)
-        self.t13 = fig.text(0.55, 0.86, '额(亿元): ', **normal_label_font)
-        self.t14 = fig.text(0.55, 0.86, f'', **normal_font)
-        self.t15 = fig.text(0.70, 0.90, '涨停: ', **normal_label_font)
-        self.t16 = fig.text(0.70, 0.90, f'', **small_red_font)
-        self.t17 = fig.text(0.70, 0.86, '跌停: ', **normal_label_font)
-        self.t18 = fig.text(0.70, 0.86, f'', **small_green_font)
-        self.t19 = fig.text(0.85, 0.90, '均价: ', **normal_label_font)
-        self.t20 = fig.text(0.85, 0.90, f'', **normal_font)
-        self.t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
-        self.t22 = fig.text(0.85, 0.86, f'', **normal_font)
+        self.t1 = fig.text(0.50, 0.94, f'{self.plot_title}', **self.title_font)
+        self.t2 = fig.text(0.12, 0.90, '开/收: ', **self.normal_label_font)
+        self.t3 = fig.text(0.14, 0.89, f'', **self.large_red_font)
+        self.t4 = fig.text(0.14, 0.86, f'', **self.small_red_font)
+        self.t5 = fig.text(0.22, 0.86, f'', **self.small_red_font)
+        self.t6 = fig.text(0.12, 0.86, f'', **self.normal_label_font)
+        self.t7 = fig.text(0.40, 0.90, '高: ', **self.normal_label_font)
+        self.t8 = fig.text(0.40, 0.90, f'', **self.small_red_font)
+        self.t9 = fig.text(0.40, 0.86, '低: ', **self.normal_label_font)
+        self.t10 = fig.text(0.40, 0.86, f'', **self.small_green_font)
+        self.t11 = fig.text(0.55, 0.90, '量(万手): ', **self.normal_label_font)
+        self.t12 = fig.text(0.55, 0.90, f'', **self.normal_font)
+        self.t13 = fig.text(0.55, 0.86, '额(亿元): ', **self.normal_label_font)
+        self.t14 = fig.text(0.55, 0.86, f'', **self.normal_font)
+        self.t15 = fig.text(0.70, 0.90, '涨停: ', **self.normal_label_font)
+        self.t16 = fig.text(0.70, 0.90, f'', **self.small_red_font)
+        self.t17 = fig.text(0.70, 0.86, '跌停: ', **self.normal_label_font)
+        self.t18 = fig.text(0.70, 0.86, f'', **self.small_green_font)
+        self.t19 = fig.text(0.85, 0.90, '均价: ', **self.normal_label_font)
+        self.t20 = fig.text(0.85, 0.90, f'', **self.normal_font)
+        self.t21 = fig.text(0.85, 0.86, '昨收: ', **self.normal_label_font)
+        self.t22 = fig.text(0.85, 0.86, f'', **self.normal_font)
 
         fig.canvas.mpl_connect('button_press_event', self.on_press)
         fig.canvas.mpl_connect('button_release_event', self.on_release)
         fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         fig.canvas.mpl_connect('scroll_event', self.on_scroll)
         fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+
+    def _set_up_font_types(self):
+
+        from qteasy import QT_CONFIG
+        system = platform.system()
+        if system == 'Darwin':
+            zh_font_name = QT_CONFIG['ZH_font_name_MAC']
+        elif system == 'Windows':
+            zh_font_name = QT_CONFIG['ZH_font_name_WIN']
+        elif system == 'Linux':
+            zh_font_name = QT_CONFIG['ZH_font_name_LINUX']
+        else:
+            warnings.warn(f'Unknown system type: {system}, Chinese contents might not be displayed correctly.')
+            zh_font_name = 'Arial'
+
+        self.title_font = {'fontname': zh_font_name,
+                           'size':     '16',
+                           'color':    'black',
+                           'weight':   'bold',
+                           'va':       'bottom',
+                           'ha':       'center'}
+        self.large_red_font = {'fontname': 'Arial',
+                               'size':     '22',
+                               'color':    'red',
+                               'weight':   'bold',
+                               'va':       'bottom'}
+        self.large_green_font = {'fontname': 'Arial',
+                                 'size':     '22',
+                                 'color':    'green',
+                                 'weight':   'bold',
+                                 'va':       'bottom'}
+        self.small_red_font = {'fontname': 'Arial',
+                               'size':     '12',
+                               'color':    'red',
+                               'weight':   'bold',
+                               'va':       'bottom'}
+        self.small_green_font = {'fontname': 'Arial',
+                                 'size':     '12',
+                                 'color':    'green',
+                                 'weight':   'bold',
+                                 'va':       'bottom'}
+        self.normal_label_font = {'fontname': zh_font_name,
+                                  'size':     '12',
+                                  'color':    'black',
+                                  'weight':   'normal',
+                                  'va':       'bottom',
+                                  'ha':       'right'}
+        self.normal_font = {'fontname': 'Arial',
+                            'size':     '12',
+                            'color':    'black',
+                            'weight':   'normal',
+                            'va':       'bottom',
+                            'ha':       'left'}
 
     def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
