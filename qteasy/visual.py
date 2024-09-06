@@ -9,7 +9,9 @@
 #   effects.
 # ======================================
 
-import os
+import platform
+
+import warnings
 
 import mplfinance as mpf
 import matplotlib.pyplot as plt
@@ -19,15 +21,24 @@ import matplotlib.ticker as mtick
 import pandas as pd
 import numpy as np
 
-import qteasy
+import qteasy as qt
+from qteasy import QT_CONFIG
 from qteasy.history import get_history_panel
 from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, sma
 
 from pandas.plotting import register_matplotlib_converters
 
-
-zh_font_name = 'Microsoft YaHei' if os.name == 'nt' else 'pingfang HK'
+system = platform.system()
+if system == 'Darwin':
+    zh_font_name = QT_CONFIG['ZH_font_name_MAC']
+elif system == 'Windows':
+    zh_font_name = QT_CONFIG['ZH_font_name_WIN']
+elif system == 'Linux':
+    zh_font_name = QT_CONFIG['ZH_font_name_LINUX']
+else:
+    warnings.warn(f'Unknown system type: {system}, Chinese contents might not be displayed correctly.')
+    zh_font_name = 'Arial'
 
 register_matplotlib_converters()
 
@@ -684,7 +695,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
                'FT':  'Futures 期货',
                'FD':  'Fund 基金',
                'OPT': 'Options 期权'}
-    ds = qteasy.QT_DATA_SOURCE
+    ds = qt.QT_DATA_SOURCE
     if asset_type.upper() == 'E':
         basic_info = ds.read_table_data('stock_basic')
     elif asset_type.upper() == 'IDX':
