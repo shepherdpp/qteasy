@@ -478,13 +478,12 @@ def view_config_files(details=False) -> None:
             print(file)
 
 
-def start_up_settings() -> list:
-    """ 读取qteasy启动配置文件中存储的启动设置内容
+def start_up_settings() -> None:
+    """ 打印qteasy启动配置文件中存储的启动设置内容
 
     Returns
     -------
-    start_up_setting_lines: list
-        启动设置的内容
+    None
 
     Examples
     --------
@@ -503,7 +502,7 @@ def start_up_settings() -> list:
 
     if len(start_up_config_lines) == 0:
         print('Start up setting file is empty')
-        return config_lines
+        return None
 
     print(f'Start up settings:\n{"-" * 20}')
     for line in start_up_config_lines:
@@ -517,7 +516,33 @@ def start_up_settings() -> list:
         print(line.strip())
         config_lines.append(line.strip())
 
-    return config_lines
+    return None
+
+
+def get_start_up_settings() -> dict:
+    """ 返回qteasy启动配置文件中存储的启动设置内容
+
+    Returns
+    -------
+    start_up_settings: dict
+        当前qteasy.cfg中存储的启动设置内容，以dict形式返回
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> settings = qt.get_start_up_settings()
+    >>> print(settings)
+    {
+        'local_data_source': 'file'
+        'local_data_file_type': 'csv'
+        'local_data_file_path': 'data/'
+    }
+    """
+
+    from qteasy import QT_ROOT_PATH
+    start_up_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
+
+    return _parse_start_up_config_lines(config_lines=start_up_config_lines)
 
 
 def update_start_up_setting(**kwargs) -> None:

@@ -963,6 +963,24 @@ def _valid_qt_kwargs():
              'level':     3,
              'text':      '策略参数优化后输出的最优参数数量，取值范围为大于0的整数'},
 
+        'ZH_font_name_MAC':  # v1.3.10新增
+            {'Default':   'pingfang HK',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'Mac OS系统下的中文字体名称，用于绘图时显示中文'},
+
+        'ZH_font_name_WIN':  # v1.3.10新增
+            {'Default':   'SimHei',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'Windows系统下的中文字体名称，用于绘图时显示中文'},
+
+        'ZH_font_name_LINUX':  # v1.3.10新增
+            {'Default':   'Song',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'Linux系统下的中文字体名称，用于绘图时显示中文'},
+
     }
     _validate_vkwargs_dict(vkwargs)
 

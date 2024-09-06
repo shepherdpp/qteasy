@@ -1,5 +1,14 @@
 # RELEASE HISTORY
 
+## 1.3.10 (2024-09-03)
+- removed deprecated pandas syntax from database.py and updated version requirements
+- added qt level configure keys for Chinese font names in candle chart for different Operating systems respectively:
+  - 'ZH_font_name_MAC' / 'ZH_font_name_WIN' / 'ZH_font_name_LINUX'
+- added qt function and attributes:
+  - 'get_start_up_settings()'
+  - 'start_up_config'
+- corrected help messages for live trader users
+
 ## 1.3.9 (2024-09-01)
 - Added setting key validation in `qt.update_start_up_setting()` to prevent from invalid values if the key is in qt_config_kwargs
 - improved print outs and return values of `qt.start_up_settings()`
