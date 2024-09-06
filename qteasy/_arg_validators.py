@@ -967,22 +967,19 @@ def _valid_qt_kwargs():
             {'Default':   'pingfang HK',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      'Mac OS系统下的中文字体名称，用于绘图时显示中文\n'
-                          '该设置须重新启动qteasy后生效'},
+             'text':      'Mac OS系统下的中文字体名称，用于绘图时显示中文'},
 
         'ZH_font_name_WIN':  # v1.3.10新增
             {'Default':   'SimHei',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      'Windows系统下的中文字体名称，用于绘图时显示中文\n'
-                          '该设置须重新启动qteasy后生效'},
+             'text':      'Windows系统下的中文字体名称，用于绘图时显示中文'},
 
         'ZH_font_name_LINUX':  # v1.3.10新增
             {'Default':   'Song',
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
-             'text':      'Linux系统下的中文字体名称，用于绘图时显示中文\n'
-                          '该设置须重新启动qteasy后生效'},
+             'text':      'Linux系统下的中文字体名称，用于绘图时显示中文'},
 
     }
     _validate_vkwargs_dict(vkwargs)
