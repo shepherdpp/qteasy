@@ -15,7 +15,7 @@
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
-TABLE_USAGES = ['sys', 'cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
+TABLE_USAGES = ['sys', 'cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins', 'reference']
 
 '''
 量化投资研究所需用到各种金融数据，DataSource提供了管理金融数据的方式：
@@ -55,6 +55,8 @@ asset_type(key):            数据对应的金融资产类型:
                             FT - 期货
                             FD - 基金
                             OPT - 期权
+                            THS - 同花顺指数
+                            SW - 申万行业指数
                             
 table_name:                 历史数据所在的表的名称
 
@@ -84,8 +86,9 @@ table_usage:                数据表的用途，用于筛选不同的数据表:
                             -  comp: 成分数据表，包含指数、基金、期货等金融产品的成分数据
                             -  report: 财务报表数据表，包含公司财务报表数据
                             -  mins: 分钟数据表，包含分钟线数据
+                            -  reference: 参考数据表，包含各种与任何特定资产都无关的参考数据，如宏观经济数据等
 
-asset_type:                 表内数据对应的资产类型，none表示不对应特定资产类型
+asset_type:                 表内数据对应的资产类型，none表示不对应任何特定资产类型
 
 freq:                       表内数据的频率，如分钟、日、周等
                             设置为'D'、'W'等，用于筛选不同的数据表
@@ -1436,24 +1439,24 @@ TABLE_MASTERS = {
          '', '', '', ''],
 
     'stock_limit':  # New, 涨跌停价格!
-        ['stock_limit', '涨跌停价格', 'data', 'E,FD', 'd', 'stk_limit', 'trade_date', 'trade_date', '19901211', '', '', '',
+        ['stock_limit', '涨跌停价格', 'data', 'E,FD', 'd', 'stk_limit', 'trade_date', 'trade_date', '20100101', '', '', '',
          '', '', '', ''],
 
     'stock_suspend':  # New, 停复牌信息!
-        ['stock_suspend', '停复牌信息', 'events', 'E', 'd', 'suspend_d', 'trade_date', 'trade_date', '19901211', '', '',
+        ['stock_suspend', '停复牌信息', 'events', 'E', 'd', 'suspend_d', 'trade_date', 'trade_date', '20100101', '', '',
          '', '', '', '', ''],
 
-    'HS_money_flow':  # New, 沪深股通资金流向.
-        ['HS_money_flow', '沪深股通资金流向', 'data', 'E', 'd', 'moneyflow_hsgt', 'trade_date', 'trade_date', '19901211',
-         '', '', '', '', '', '', ''],
+    'HS_money_flow':  # New, 沪深股通资金流向!
+        ['HS_money_flow', '沪深股通资金流向', 'reference', 'none', 'd', 'moneyflow_hsgt', 'trade_date', 'trade_date',
+         '20100101', '', '', '', '', '', '', ''],
 
-    'HS_top10_stock':  # New, 沪深股通十大成交股.
-        ['HS_top10_stock', '沪深股通十大成交股东', 'holders', 'E', 'd', 'top10_holders', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+    'HS_top10_stock':  # New, 沪深股通十大成交股!
+        ['HS_top10_stock', '沪深股通十大成交股东', 'events', 'E', 'd', 'hsgt_top10', 'trade_date', 'trade_date',
+         '20100101', '', '', '', '', '', '', ''],
 
-    'HK_top10_stock':  # New, 港股通十大成交股.
-        ['HK_top10_stock', '港股通十大成交股东', 'holders', 'E', 'd', 'top10_holders', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+    'HK_top10_stock':  # New, 港股通十大成交股!
+        ['HK_top10_stock', '港股通十大成交股东', 'events', 'E', 'd', 'ggt_top10', 'trade_date', 'trade_date',
+         '20100101', '', '', '', '', '', '', ''],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', 'index_basic', 'market', 'list',
@@ -1469,6 +1472,10 @@ TABLE_MASTERS = {
     'opt_basic':
         ['opt_basic', '期权基本信息', 'basics', 'OPT', 'none', 'options_basic', 'exchange', 'list',
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', '', '', '', '', '', ''],
+
+    'ths_index_basic':  # New, 同花顺指数基本信息
+        ['ths_index_basic', '同花顺指数基本信息', 'basic', 'THS', 'none', 'ths_index', 'exchange', 'list',
+         'A, HK, US', '', '', '', '', '', '', ''],
 
     'stock_1min':
         ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y',
@@ -1534,21 +1541,25 @@ TABLE_MASTERS = {
         ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', '',
          '', '', '', '', ''],
 
-    'ths_index_daily':  # New, 同花顺行业指数日线行情
-        ['ths_index_daily', '同花顺行业指数日线行情', 'data', 'E', 'd', 'industry_index_daily', 'trade_date', 'trade_date',
+    'ths_index_daily':  # New, 同花顺行业指数日线行情!
+        ['ths_index_daily', '同花顺行业指数日线行情', 'data', 'THS', 'd', 'ths_daily', 'trade_date', 'trade_date',
+         '20100101', '', '', '', '', '', '', ''],
+
+    'ths_index_weight':  # New, 同花顺行业指数成分股权重!
+        ['ths_index_weight', '同花顺行业指数成分股权重', 'comp', 'THS', 'd', 'ths_member', 'trade_date', 'trade_date',
+         '20100101', '', '', '', '', '', '', ''],
+
+    'ci_index_daily':  # New, 中信指数日线行情!
+        ['ci_index_daily', '中证指数日线行情', 'reference', 'none', 'd', 'ci_daily', 'trade_date', 'trade_date',
          '19901211', '', '', '', '', '', '', ''],
 
-    'ths_index_weight':  # New, 同花顺行业指数成分股权重
-        ['ths_index_weight', '同花顺行业指数成分股权重', 'data', 'E', 'd', 'industry_index_weight', 'trade_date', 'trade_date',
+    'sw_index_daily':  # New, 申万指数日线行情!
+        ['sw_index_daily', '申万指数日线行情', 'reference', 'none', 'd', 'sw_daily', 'trade_date', 'trade_date',
          '19901211', '', '', '', '', '', '', ''],
 
-    'ci_index_daily':  # New, 中信指数日线行情
-        ['ci_index_daily', '中证指数日线行情', 'data', 'E', 'd', 'ci_index_daily', 'trade_date', 'trade_date', '19901211',
-         '', '', '', '', '', '', ''],
-
-    'sw_index_daily':  # New, 申万指数日线行情
-        ['sw_index_daily', '申万指数日线行情', 'data', 'E', 'd', 'sw_index_daily', 'trade_date', 'trade_date', '19901211',
-         '', '', '', '', '', '', ''],
+    'global_index_daily':  # New, 全球指数日线行情!
+        ['global_index_daily', '全球指数日线行情', 'reference', 'none', 'd', 'index_global', 'trade_date', 'trade_date',
+         '19901211', '', '', '', '', '', '', ''],
 
     'fund_1min':
         ['min_bars', '场内基金分钟K线行情', 'mins', 'FD', '1min', 'mins1', 'ts_code', 'table_index', 'fund_basic',
@@ -1725,10 +1736,6 @@ TABLE_MASTERS = {
         ['class_industry_sw_detail', '申万行业分类明细', 'class', 'E', 'none', 'industry_sw_detail', 'trade_date',
          'trade_date', '19901211', '', '', '', '', '', '', ''],
 
-    'class_industry_ths':  # New, 同花顺行业分类
-        ['class_industry_ths', '同花顺行业分类', 'class', 'E', 'none', 'industry_ths', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
-
     'block_trade':  # New, 大宗交易
         ['block_trade', '大宗交易', 'data', 'E', 'd', 'block_trade', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
 
@@ -1744,26 +1751,26 @@ TABLE_MASTERS = {
          '', '', '', '', '', '', ''],
 
     'shibor':
-        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'data', 'none', 'd', 'shibor', 'date', 'trade_date', '20000101',
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', 'd', 'shibor', 'date', 'trade_date', '20000101',
          '',
          'Y', '', '', '', '', ''],
 
     'libor':
-        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'data', 'none', 'd', 'libor', 'date', 'trade_date', '20000101', '',
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', 'd', 'libor', 'date', 'trade_date', '20000101', '',
          'Y', '', '', '', '', ''],
 
     'hibor':
-        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'data', 'none', 'd', 'hibor', 'date', 'trade_date', '20000101', '',
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', 'd', 'hibor', 'date', 'trade_date', '20000101', '',
          'Y', '', '', '', '', ''],
 
     'wz_index':  # New, 温州民间借贷指数
-        ['wz_index', '温州民间借贷指数', 'data', 'E', 'd', 'wz_index', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+        ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', 'wz_index', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
 
     'gz_index':  # New, 广州民间借贷指数
-        ['gz_index', '广州民间借贷指数', 'data', 'E', 'd', 'gz_index', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+        ['gz_index', '广州民间借贷指数', 'reference', 'none', 'd', 'gz_index', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
 
     'gdp_quarterly':  # New, 国内生产总值年度数据
-        ['gdp_quarterly', '国内生产总值年度数据', 'data', 'E', 'q', 'gdp', 'trade_date', 'trade_date', '19901211',
+        ['gdp_quarterly', '国内生产总值年度数据', 'reference', 'none', 'q', 'gdp', 'trade_date', 'trade_date', '19901211',
          '', '', '', '', '', '', ''],
 
     'cpi_monthly':  # New, 居民消费价格指数月度数据
