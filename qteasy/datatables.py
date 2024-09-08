@@ -2605,24 +2605,39 @@ TABLE_SCHEMA = {
          },
 
     'dividend':  # New, 分红送股!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["ts_code", "end_date", "ann_date", "div_proc", "stk_div", "stk_bo_rate", "stk_co_rate",
+                         "cash_div", "cash_div_tax", "record_date", "ex_date", "pay_date", "div_listdate",
+                         "imp_ann_date", "base_date", "base_share"],
+         'dtypes':      ["varchar(14)", "date", "date", "varchar(10)", "float", "float", "float",
+                         "float", "float", "date", "date", "date", "date",
+                         "date", "date", "float"],
+         'remarks':     ["TS代码", "分红年度", "预案公告日", "实施进度", "每股送转", "每股送股比例", "每股转增比例",
+                         "每股分红（税后）", "每股分红（税前）", "股权登记日", "除权除息日", "派息日", "红股上市日",
+                         "实施公告日", "基准日", "基准股本（万）"],
+         'prime_keys':  [0, 2]
          },
 
     'top_list':  # New, 龙虎榜交易明细!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["trade_date", "ts_code", "name", "close", "pct_change", "turnover_rate", "amount", "l_sell",
+                         "l_buy", "l_amount", "net_amount", "net_rate", "amount_rate",
+                         "float_values", "reason"],
+         'dtypes':      ["date", "varchar(14)", "varchar(10)", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float",
+                         "float", "text"],
+         'remarks':     ["交易日期", "TS代码", "名称", "收盘价", "涨跌幅", "换手率", "总成交额", "龙虎榜卖出额",
+                         "龙虎榜买入额", "龙虎榜成交额", "龙虎榜净买入额", "龙虎榜净买额占比", "龙虎榜成交额占比",
+                         "当日流通市值", "上榜理由"],
+         'prime_keys':  [0, 1]
          },
 
     'top_inst':  # New, 龙虎榜机构交易明细!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["trade_date", "ts_code", "exalter", "side", "buy",
+                         "buy_rate", "sell", "sell_rate", "net_buy", "reason"],
+         'dtypes':      ["date", "varchar(14)", "text", "varchar(2)", "float",
+                         "float", "float", "float", "float", "text"],
+         'remarks':     ["交易日期", "TS代码", "营业部名称", "买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名",
+                         "买入额（元）", "买入占总成交比例", "卖出额（元）", "卖出占总成交比例", "净成交额（元）", "上榜理由"],
+         'prime_keys':  [0, 1]
          },
 
     'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
