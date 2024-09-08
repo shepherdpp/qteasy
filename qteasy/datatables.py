@@ -70,13 +70,13 @@ description:                历史数据的详细描述，可以用于列搜索
 table source mapping定义了一张数据表的基本属性以及数据来源： 
 table_name(key):            数据表的名称（主键）自定义表名称不能与内置表名称重复
 ---------------------------------------------------------------------------------------------------------
-schema:                     数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
+1, schema:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
                             型和详情描述
                             数据表的数据结构存储在不同的数据结构表中，许多表拥有相同的数据结构
 
-desc:                       数据表的中文描述
+2, desc:                    数据表的中文描述
 
-table_usage:                数据表的用途，用于筛选不同的数据表:
+3, table_usage:             数据表的用途，用于筛选不同的数据表:
                             -  sys: 系统数据表，包含系统运行所需的数据
                             -  cal: 交易日历表，包含交易日历数据
                             -  basics: 基本面数据表，包含资产基本信息
@@ -88,15 +88,15 @@ table_usage:                数据表的用途，用于筛选不同的数据表:
                             -  mins: 分钟数据表，包含分钟线数据
                             -  reference: 参考数据表，包含各种与任何特定资产都无关的参考数据，如宏观经济数据等
 
-asset_type:                 表内数据对应的资产类型，none表示不对应任何特定资产类型
+4, asset_type:              表内数据对应的资产类型，none表示不对应任何特定资产类型
 
-freq:                       表内数据的频率，如分钟、日、周等
+5, freq:                    表内数据的频率，如分钟、日、周等
                             设置为'D'、'W'等，用于筛选不同的数据表
                             'none'表示无频率
 
-tushare:                    对应的tushare API函数名
+6, tushare:                 对应的tushare API函数名, 参见tsfuncs.py中的定义
 
-fill_arg_name:              从tushare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
+7, fill_arg_name:           从tushare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
                             例如，所有股票所有日期的日K线数据一共有超过1500万行，这些数据无法一次性下载
                             必须分步多次下载。要么每次下载一只股票所有日期的数据，要么下载每天所有股票的数据。
                             -   如果每次下载一只股票的数据，股票的代码就是关键参数，将所有股票的代码依次作为关键参数
@@ -113,45 +113,45 @@ fill_arg_name:              从tushare下载数据时的关键参数，使用该
                             可惜的是，并不是所有API都支持使用日期作为关键参数，所以，只要能用日期的数据表，都用日期
                             为关键参数，否则采用其他类型的关键参数。
 
-fill_arg_type:              关键参数的数据类型，可以为list、table_index、datetime、trade_date，含义分别为：
+8, fill_arg_type:           关键参数的数据类型，可以为list、table_index、datetime、trade_date，含义分别为：
                             -   list: 
                                 列表类型，这个关键参数的取值只能是列表中的某一个元素
                             -   table_index: 
                                 表索引，这个关键参数的取值只能是另一张数据表的索引值，这通常表示tushare不支持使用日期
                                 作为关键参数，因此必须使用一系列股票或证券代码作为关键参数的值，这些值保存在另一张数据
                                 表中，且是这个表的索引值。例如，所有股票的代码就保存在stock_basic表的索引中。
-
                             -   datetime:
                                 日期类型，表示使用日期作为下载数据的关键参数。此时的日期不带时间类型，包含交易日与非
                                 交易日
                             -   trade_date:
                                 交易日，与日期类型功能相同，但作为关键参数的日期必须为交易日
 
-arg_rng:                    关键参数的取值范围，
+9, arg_rng:                 关键参数的取值范围，
                             -   如果数据类型为datetime或trade_date，是一个起始日期，表示取值范围从该日期到今日之间
                             -   如果数据类型为table_index，取值范围是一张表，如stock_basic，表示数据从stock_basic的
                                 索引中取值
                             -   如果数据类型为list，则直接给出取值范围，如"SSE,SZSE"表示可以取值SSE以及SZSE。
 
-arg_allowed_code_suffix:    table_index类型取值范围的限制值，限制只有特定后缀的证券代码才会被用作参数下载数据。
+10, arg_allowed_code_suffix:
+                            table_index类型取值范围的限制值，限制只有特定后缀的证券代码才会被用作参数下载数据。
                             例如，取值"SH,SZ"表示只有以SH、SZ结尾的证券代码才会被用作参数从tushare下载数据。
 
-arg_allow_start_end:        使用table_index类型参数时，是否同时允许传入开始结束日期作为参数。如果设置为"Y"，则会在使用
+11, arg_allow_start_end:    使用table_index类型参数时，是否同时允许传入开始结束日期作为参数。如果设置为"Y"，则会在使用
                             table_index中的代码作为参数下载数据时，同时传入开始和结束日期作为附加参数，否则仅传入代码
 
-start_end_chunk_size:       传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
+12, start_end_chunk_size:   传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
                             一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
                             过这个天数。
                             例如，设置该参数为100，则每个分块内的时间跨度不超过100天
                     
-akshare:                    对应的akshare API函数名
+13, akshare:                对应的akshare API函数名
 
-ak_fill_arg_name:           从akshare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
+14, ak_fill_arg_name:       从akshare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
                             与tushare的fill_arg_name相同
                             
-ak_fill_arg_type:           与tushare的fill_arg_type相同, 用于akshare API
+15, ak_fill_arg_type:       与tushare的fill_arg_type相同, 用于akshare API
 
-ak_arg_rng:                 与tushare的arg_rng相同, 用于akshare API
+16, ak_arg_rng:             与tushare的arg_rng相同, 用于akshare API
 ---------------------------------------------------------------------------------------------------------
 
 3, TABLE_SCHEMAS:
@@ -1377,22 +1377,22 @@ DATA_TABLE_MAP = {
 }
 # Table_masters，用于存储表的基本信息
 TABLE_MASTER_COLUMNS = [
-    'schema',  # 数据表schema
-    'desc',  # 数据表描述
-    'table_usage',  # 数据表用途
-    'asset_type',  # 资产类型
-    'freq',  # 数据频率
-    'tushare',  # 从tushare获取数据时使用的api名
-    'fill_arg_name',  # 从tushare获取数据时使用的api参数名
-    'fill_arg_type',  # 从tushare获取数据时使用的api参数类型
-    'arg_rng',  # 从tushare获取数据时使用的api参数取值范围
-    'arg_allowed_code_suffix',  # 从tushare获取数据时使用的api参数允许的股票代码后缀
-    'arg_allow_start_end',  # 从tushare获取数据时使用的api参数允许的start_date和end_date
-    'start_end_chunk_size',  # 从tushare获取数据时使用的api参数start_date和end_date的最大时间跨度
-    'akshare',   # 从akshare获取数据时使用的api名
-    'ak_fill_arg_name',   # 从akshare获取数据时使用的api参数名
-    'ak_fill_arg_type',   # 从akshare获取数据时使用的api参数类型
-    'ak_arg_rng',  # 从eastmoney获取数据时使用的api参数取值范围
+    'schema',  # 1, 数据表schema
+    'desc',  # 2, 数据表描述
+    'table_usage',  # 3, 数据表用途
+    'asset_type',  # 4, 资产类型
+    'freq',  # 5, 数据频率
+    'tushare',  # 6, 从tushare获取数据时使用的api名
+    'fill_arg_name',  # 7, 从tushare获取数据时使用的api参数名
+    'fill_arg_type',  # 8, 从tushare获取数据时使用的api参数类型
+    'arg_rng',  # 9, 从tushare获取数据时使用的api参数取值范围
+    'arg_allowed_code_suffix',  # 10, 从tushare获取数据时使用的api参数允许的股票代码后缀
+    'arg_allow_start_end',  # 11, 从tushare获取数据时使用的api参数是否允许start_date和end_date
+    'start_end_chunk_size',  # 12, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
+    'akshare',   # 13, 从akshare获取数据时使用的api名
+    'ak_fill_arg_name',   # 14, 从akshare获取数据时使用的api参数名
+    'ak_fill_arg_type',   # 15, 从akshare获取数据时使用的api参数类型
+    'ak_arg_rng',  # 16, 从eastmoney获取数据时使用的api参数取值范围
 ]
 TABLE_MASTERS = {
 
@@ -1630,7 +1630,7 @@ TABLE_MASTERS = {
          '', 'y', '360', '', '', '', ''],
 
     'future_daily':
-        ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
+        ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'trade_date', '19950417', '',
          '', '', '', '', '', ''],
 
     'future_weekly':  # New, 期货周线行情!
@@ -1662,7 +1662,7 @@ TABLE_MASTERS = {
          '', 'y', '360', '', '', '', ''],
 
     'options_daily':
-        ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209', '',
+        ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'trade_date', '20150209', '',
          '', '', '', '', '', ''],
 
     'stock_adj_factor':
@@ -1683,7 +1683,7 @@ TABLE_MASTERS = {
          '19990101', '', '', '', '', '', '', ''],
 
     'index_indicator':
-        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
+        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'trade_date',
          '20040102', '', '', '', '', '', '', ''],
 
     'index_weight':
@@ -1721,11 +1721,11 @@ TABLE_MASTERS = {
          '', '', '', ''],
 
     'top_list':  # New, 龙虎榜交易明细!
-        ['top_list', '龙虎榜交易明细', 'events', 'E', 'd', 'top_list', 'trade_date', 'datetime', '20050101', '', '', '',
+        ['top_list', '龙虎榜交易明细', 'events', 'E', 'd', 'top_list', 'trade_date', 'trade_date', '20050101', '', '', '',
          '', '', '', ''],
 
     'top_inst':  # New, 龙虎榜机构交易明细!
-        ['top_inst', '龙虎榜机构交易明细', 'events', 'E', 'd', 'top_inst', 'trade_date', 'datetime', '19901211', '', '', '',
+        ['top_inst', '龙虎榜机构交易明细', 'events', 'E', 'd', 'top_inst', 'trade_date', 'trade_date', '19901211', '', '', '',
          '', '', '', ''],
 
     'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
@@ -1733,69 +1733,71 @@ TABLE_MASTERS = {
          'stock_basic', '', '', '', '', '', '', ''],
 
     'block_trade':  # New, 大宗交易!
-        ['block_trade', '大宗交易', 'events', 'E', 'd', 'block_trade', 'trade_date', 'datetime', '20100101', '', '', '',
+        ['block_trade', '大宗交易', 'events', 'E', 'd', 'block_trade', 'trade_date', 'trade_date', '20100101', '', '', '',
          '', '', '', ''],
 
     'stock_holder_trade':  # New, 股东交易（股东增减持）!
-        ['stock_holder_trade', '股东交易', 'events', 'E', 'd', 'stk_holdertrade', 'trade_date', 'datetime', '20100101',
+        ['stock_holder_trade', '股东交易', 'events', 'E', 'd', 'stk_holdertrade', 'trade_date', 'trade_date', '20100101',
          '', '', '', '', '', '', ''],
 
     'margin':  # New, 融资融券交易概况!
         ['margin', '融资融券交易概况', 'reference', 'none', 'd', 'margin', 'exchange_id', 'list', 'SSE,SZSE,BSE', '', '',
          '', '', '', '', ''],
 
-    'margin_detail':  # New, 融资融券交易明细
-        ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', 'margin_detail', 'trade_date', 'datetime', '20190910',
+    'margin_detail':  # New, 融资融券交易明！
+        ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', 'margin_detail', 'trade_date', 'trade_date', '20190910',
          '', '', '', '', '', '', ''],
 
     'shibor':
-        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', 'd', 'shibor', 'date', 'trade_date', '20000101',
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', 'd', 'shibor', 'date', 'datetime', '20000101',
          '',
-         'Y', '', '', '', '', ''],
-
-    'libor':
-        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', 'd', 'libor', 'date', 'trade_date', '20000101', '',
-         'Y', '', '', '', '', ''],
-
-    'hibor':
-        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', 'd', 'hibor', 'date', 'trade_date', '20000101', '',
-         'Y', '', '', '', '', ''],
-
-    'wz_index':  # New, 温州民间借贷指数
-        ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', 'wz_index', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
-
-    'gz_index':  # New, 广州民间借贷指数
-        ['gz_index', '广州民间借贷指数', 'reference', 'none', 'd', 'gz_index', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
-
-    'gdp_quarterly':  # New, 国内生产总值年度数据
-        ['gdp_quarterly', '国内生产总值年度数据', 'reference', 'none', 'q', 'gdp', 'trade_date', 'trade_date', '19901211',
-         '', '', '', '', '', '', ''],
-
-    'cpi_monthly':  # New, 居民消费价格指数月度数据
-        ['cpi_monthly', '居民消费价格指数月度数据', 'data', 'E', 'm', 'cpi_monthly', 'trade_date', 'trade_date', '19901211',
-         'Y', '', '', '', '', ''],
-
-    'ppi_monthly':  # New, 工业品出厂价格指数月度数据
-        ['ppi_monthly', '工业品出厂价格指数月度数据', 'data', 'E', 'm', 'ppi_monthly', 'trade_date', 'trade_date', '19901211',
-         'Y', '', '', '', '', ''],
-
-    'cn_money_supply':  # New, 中国货币供应量
-        ['cn_money_supply', '中国货币供应量', 'data', 'E', 'm', 'money_supply', 'trade_date', 'trade_date', '19901211', '',
          '', '', '', '', '', ''],
 
-    'cn_sf_monthly':  # New, 中国社会融资规模月度数据
-        ['cn_sf_monthly', '中国社会融资规模月度数据', 'data', 'E', 'm', 'social_financing', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+    'libor':
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', 'd', 'libor', 'date', 'datetime', '20000101', '',
+         '', '', '', '', '', ''],
 
-    'pmi_monthly':  # New, 采购经理人指数月度数据
-        ['pmi_monthly', '采购经理人指数月度数据', 'data', 'E', 'm', 'pmi_monthly', 'trade_date', 'trade_date', '19901211',
-         'Y', '', '', '', '', ''],
+    'hibor':
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', 'd', 'hibor', 'date', 'datetime', '20000101', '',
+         '', '', '', '', '', ''],
+
+    'wz_index':  # New, 温州民间借贷指数!
+        ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', 'wz_index', 'date', 'datetime', '20121207', '', '', '',
+         '', '', '', ''],
+
+    'gz_index':  # New, 广州民间借贷指数!
+        ['gz_index', '广州民间借贷指数', 'reference', 'none', 'd', 'gz_index', 'date', 'datetime', '19901211', '', '', '',
+         '', '', '', ''],
+
+    'cn_gdp':  # New, 国内生产总值季度数据!
+        ['cn_gdp', '国内生产总值年度数据', 'reference', 'none', 'q', 'cn_gdp', '', '', '',
+         '', '', '', '', '', '', ''],
+
+    'cn_cpi':  # New, 居民消费价格指数月度数据!
+        ['cn_cpi', '居民消费价格指数月度数据', 'reference', 'none', 'm', 'cn_cpi', '', '', '',
+         '', '', '', '', '', ''],
+
+    'cn_ppi':  # New, 工业品出厂价格指数月度数据!
+        ['cn_ppi', '工业品出厂价格指数月度数据', 'reference', 'none', 'm', 'cn_ppi', '', '', '',
+         '', '', '', '', '', ''],
+
+    'cn_money':  # New, 中国货币供应量
+        ['cn_money', '中国货币供应量', 'reference', 'none', 'm', 'cn_m', '', '', '', '',
+         '', '', '', '', '', ''],
+
+    'cn_sf':  # New, 中国社会融资规模月度数据
+        ['cn_sf', '中国社会融资规模月度数据', 'reference', 'none', 'm', 'sf_month', '', '', '',
+         '', '', '', '', '', '', ''],
+
+    'cn_pmi':  # New, 采购经理人指数月度数据
+        ['cn_pmi', '采购经理人指数月度数据', 'reference', 'none', 'm', 'cn_pmi', '', '', '',
+         '', '', '', '', '', '', ''],
 
 }
 # Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_SCHEMA = {
 
-    # TODO: for v1.1:
+    # TODO: for v1.5:
     #  在live_account_master表中增加运行基本设置的字段如交易柜台连接设置、log设置、交易时间段设置、用户权限设置等，动态修改
     'sys_op_live_accounts':  # 实盘交易账户表
         {'columns':    ['account_id', 'user_name', 'created_time', 'cash_amount', 'available_cash', 'total_invest'],
