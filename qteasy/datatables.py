@@ -1774,22 +1774,22 @@ TABLE_MASTERS = {
          '', '', '', '', '', '', ''],
 
     'cn_cpi':  # New, 居民消费价格指数月度数据!
-        ['cn_cpi', '居民消费价格指数月度数据', 'reference', 'none', 'm', 'cn_cpi', '', '', '',
+        ['cn_cpi', '居民消费价格指数月度数据', 'reference', 'none', 'm', 'cn_cpi', '', '', '', '',
          '', '', '', '', '', ''],
 
     'cn_ppi':  # New, 工业品出厂价格指数月度数据!
-        ['cn_ppi', '工业品出厂价格指数月度数据', 'reference', 'none', 'm', 'cn_ppi', '', '', '',
+        ['cn_ppi', '工业品出厂价格指数月度数据', 'reference', 'none', 'm', 'cn_ppi', '', '', '', '',
          '', '', '', '', '', ''],
 
-    'cn_money':  # New, 中国货币供应量
+    'cn_money':  # New, 中国货币供应量!
         ['cn_money', '中国货币供应量', 'reference', 'none', 'm', 'cn_m', '', '', '', '',
          '', '', '', '', '', ''],
 
-    'cn_sf':  # New, 中国社会融资规模月度数据
+    'cn_sf':  # New, 中国社会融资规模月度数据!
         ['cn_sf', '中国社会融资规模月度数据', 'reference', 'none', 'm', 'sf_month', '', '', '',
          '', '', '', '', '', '', ''],
 
-    'cn_pmi':  # New, 采购经理人指数月度数据
+    'cn_pmi':  # New, 采购经理人指数月度数据!
         ['cn_pmi', '采购经理人指数月度数据', 'reference', 'none', 'm', 'cn_pmi', '', '', '',
          '', '', '', '', '', '', ''],
 
@@ -2498,7 +2498,125 @@ TABLE_SCHEMA = {
          'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
          'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '2个月', '3个月', '6个月', '12个月'],
          'prime_keys': [0]
-         }
+         },
+
+    'wz_index':  # New, 温州民间借贷指数!
+        {'columns':     ["date", "comp_rate", "center_rate", "micro_rate", "cm_rate", "sdb_rate", "om_rate", "aa_rate",
+                         "m1_rate", "m3_rate", "m6_rate", "m12_rate", "long_rate"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float"],
+         'remarks':     ["日期", "温州民间融资综合利率指数 (%，下同)", "民间借贷服务中心利率", "小额贷款公司放款利率", "民间资本管理公司融资价格",
+                         "社会直接借贷利率", "其他市场主体利率", "农村互助会互助金费率", "温州地区民间借贷分期限利率（一月期）", "温州地区民间借贷分期限利率（三月期）",
+                         "温州地区民间借贷分期限利率（六月期）", "温州地区民间借贷分期限利率（一年期）", "温州地区民间借贷分期限利率（长期）"],
+         'prime_keys':  [0]
+         },
+
+    'gz_index':  # New, 广州民间借贷指数!
+        {'columns':     ["date", "d10_rate", "m1_rate", "m3_rate", "m6_rate", "m12_rate", "long_rate"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["日期", "小额贷市场平均利率（十天） （单位：%，下同）", "小额贷市场平均利率（一月期）", "小额贷市场平均利率（三月期）",
+                         "小额贷市场平均利率（六月期）", "小额贷市场平均利率（一年期）", "小额贷市场平均利率（长期）"],
+         'prime_keys':  [0]
+         },
+
+    'cn_gdp':  # New, 国内生产总值季度数据!
+        {'columns':     ["quarter", "gdp", "gdp_yoy", "pi", "pi_yoy", "si", "si_yoy", "ti", "ti_yoy"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["季度", "GDP累计值（亿元）", "当季同比增速（%）", "第一产业累计值（亿元）", "第一产业同比增速（%）",
+                         "第二产业累计值（亿元）", "第二产业同比增速（%）", "第三产业累计值（亿元）", "第三产业同比增速（%）"],
+         'prime_keys':  [0]
+         },
+
+    'cn_cpi':  # New, 居民消费价格指数月度数据!
+        {'columns':     ["month", "nt_val", "nt_yoy", "nt_mom", "nt_accu", "town_val", "town_yoy",
+                         "town_mom", "town_accu", "cnt_val", "cnt_yoy", "cnt_mom", "cnt_accu"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["月份YYYYMM", "全国当月值", "全国同比（%）", "全国环比（%）", "全国累计值", "城市当月值", "城市同比（%）",
+                         "城市环比（%）", "城市累计值", "农村当月值", "农村同比（%）", "农村环比（%）", "农村累计值"],
+         'prime_keys':  [0]
+         },
+
+    'cn_ppi':  # New, 工业品出厂价格指数月度数据!
+        {'columns':     ["month", "ppi_yoy", "ppi_mp_yoy", "ppi_mp_qm_yoy", "ppi_mp_rm_yoy", "ppi_mp_p_yoy",
+                         "ppi_cg_yoy", "ppi_cg_f_yoy", "ppi_cg_c_yoy", "ppi_cg_adu_yoy", "ppi_cg_dcg_yoy", "ppi_mom",
+                         "ppi_mp_mom", "ppi_mp_qm_mom", "ppi_mp_rm_mom", "ppi_mp_p_mom", "ppi_cg_mom", "ppi_cg_f_mom",
+                         "ppi_cg_c_mom", "ppi_cg_adu_mom", "ppi_cg_dcg_mom", "ppi_accu", "ppi_mp_accu",
+                         "ppi_mp_qm_accu", "ppi_mp_rm_accu", "ppi_mp_p_accu", "ppi_cg_accu", "ppi_cg_f_accu",
+                         "ppi_cg_c_accu", "ppi_cg_adu_accu", "ppi_cg_dcg_accu"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float",
+                         "float", "float", "float"],
+         'remarks':     ["月份YYYYMM", "PPI：全部工业品：当月同比", "PPI：生产资料：当月同比", "PPI：生产资料：采掘业：当月同比",
+                         "PPI：生产资料：原料业：当月同比", "PPI：生产资料：加工业：当月同比", "PPI：生活资料：当月同比",
+                         "PPI：生活资料：食品类：当月同比", "PPI：生活资料：衣着类：当月同比", "PPI：生活资料：一般日用品类：当月同比",
+                         "PPI：生活资料：耐用消费品类：当月同比", "PPI：全部工业品：环比", "PPI：生产资料：环比",
+                         "PPI：生产资料：采掘业：环比", "PPI：生产资料：原料业：环比", "PPI：生产资料：加工业：环比",
+                         "PPI：生活资料：环比", "PPI：生活资料：食品类：环比", "PPI：生活资料：衣着类：环比",
+                         "PPI：生活资料：一般日用品类：环比", "PPI：生活资料：耐用消费品类：环比", "PPI：全部工业品：累计同比",
+                         "PPI：生产资料：累计同比", "PPI：生产资料：采掘业：累计同比", "PPI：生产资料：原料业：累计同比",
+                         "PPI：生产资料：加工业：累计同比", "PPI：生活资料：累计同比", "PPI：生活资料：食品类：累计同比",
+                         "PPI：生活资料：衣着类：累计同比", "PPI：生活资料：一般日用品类：累计同比", "PPI：生活资料：耐用消费品类：累计同比"],
+         'prime_keys':  [0]
+         },
+
+    'cn_money':  # New, 中国货币供应量!
+        {'columns':     ["month", "m0", "m0_yoy", "m0_mom", "m1", "m1_yoy", "m1_mom", "m2", "m2_yoy", "m2_mom"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["月份YYYYMM", "M0（亿元）", "M0同比（%）", "M0环比（%）", "M1（亿元）", "M1同比（%）", "M1环比（%）",
+                         "M2（亿元）", "M2同比（%）", "M2环比（%）"],
+         'prime_keys':  [0]
+         },
+
+    'cn_sf':  # New, 中国社会融资规模月度数据!
+        {'columns':     ["month", "inc_month", "inc_cumval", "stk_endval"],
+         'dtypes':      ["date", "float", "float", "float"],
+         'remarks':     ["月度", "社融增量当月值（亿元）", "社融增量累计值（亿元）", "社融存量期末值（万亿元）"],
+         'prime_keys':  [0]
+         },
+
+    'cn_pmi':  # New, 采购经理人指数月度数据!
+        {'columns':     ["month", "pmi010000", "pmi010100", "pmi010200", "pmi010300", "pmi010400", "pmi010401",
+                         "pmi010402", "pmi010403", "pmi010500", "pmi010501", "pmi010502", "pmi010503", "pmi010600",
+                         "pmi010601", "pmi010602", "pmi010603", "pmi010700", "pmi010701", "pmi010702", "pmi010703",
+                         "pmi010800", "pmi010801", "pmi010802", "pmi010803", "pmi010900", "pmi011000", "pmi011100",
+                         "pmi011200", "pmi011300", "pmi011400", "pmi011500", "pmi011600", "pmi011700", "pmi011800",
+                         "pmi011900", "pmi012000", "pmi020100", "pmi020101", "pmi020102", "pmi020200", "pmi020201",
+                         "pmi020202", "pmi020300", "pmi020301", "pmi020302", "pmi020400", "pmi020401", "pmi020402",
+                         "pmi020500", "pmi020501", "pmi020502", "pmi020600", "pmi020601", "pmi020602", "pmi020700",
+                         "pmi020800", "pmi020900", "pmi021000", "pmi030000"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["月份YYYYMM", "制造业PMI", "制造业PMI:企业规模/大型企业", "制造业PMI:企业规模/中型企业",
+                         "制造业PMI:企业规模/小型企业", "制造业PMI:构成指数/生产指数", "制造业PMI:构成指数/生产指数:企业规模/大型企业",
+                         "制造业PMI:构成指数/生产指数:企业规模/中型企业", "制造业PMI:构成指数/生产指数:企业规模/小型企业",
+                         "制造业PMI:构成指数/新订单指数", "制造业PMI:构成指数/新订单指数:企业规模/大型企业",
+                         "制造业PMI:构成指数/新订单指数:企业规模/中型企业", "制造业PMI:构成指数/新订单指数:企业规模/小型企业",
+                         "制造业PMI:构成指数/供应商配送时间指数", "制造业PMI:构成指数/供应商配送时间指数:企业规模/大型企业",
+                         "制造业PMI:构成指数/供应商配送时间指数:企业规模/中型企业", "制造业PMI:构成指数/供应商配送时间指数:企业规模/小型企业",
+                         "制造业PMI:构成指数/原材料库存指数", "制造业PMI:构成指数/原材料库存指数:企业规模/大型企业",
+                         "制造业PMI:构成指数/原材料库存指数:企业规模/中型企业", "制造业PMI:构成指数/原材料库存指数:企业规模/小型企业",
+                         "制造业PMI:构成指数/从业人员指数", "制造业PMI:构成指数/从业人员指数:企业规模/大型企业",
+                         "制造业PMI:构成指数/从业人员指数:企业规模/中型企业", "制造业PMI:构成指数/从业人员指数:企业规模/小型企业",
+                         "制造业PMI:其他/新出口订单", "制造业PMI:其他/进口", "制造业PMI:其他/采购量", "制造业PMI:其他/主要原材料购进价格",
+                         "制造业PMI:其他/出厂价格", "制造业PMI:其他/产成品库存", "制造业PMI:其他/在手订单", "制造业PMI:其他/生产经营活动预期",
+                         "制造业PMI:分行业/装备制造业", "制造业PMI:分行业/高技术制造业", "制造业PMI:分行业/基础原材料制造业",
+                         "制造业PMI:分行业/消费品制造业", "非制造业PMI:商务活动", "非制造业PMI:商务活动:分行业/建筑业", "非制造业PMI:商务活动:分行业/服务业业",
+                         "非制造业PMI:新订单指数", "非制造业PMI:新订单指数:分行业/建筑业", "非制造业PMI:新订单指数:分行业/服务业", "非制造业PMI:投入品价格指数",
+                         "非制造业PMI:投入品价格指数:分行业/建筑业", "非制造业PMI:投入品价格指数:分行业/服务业", "非制造业PMI:销售价格指数",
+                         "非制造业PMI:销售价格指数:分行业/建筑业", "非制造业PMI:销售价格指数:分行业/服务业", "非制造业PMI:从业人员指数",
+                         "非制造业PMI:从业人员指数:分行业/建筑业", "非制造业PMI:从业人员指数:分行业/服务业", "非制造业PMI:业务活动预期指数",
+                         "非制造业PMI:业务活动预期指数:分行业/建筑业", "非制造业PMI:业务活动预期指数:分行业/服务业", "非制造业PMI:新出口订单",
+                         "非制造业PMI:在手订单", "非制造业PMI:存货", "非制造业PMI:供应商配送时间", "中国综合PMI:产出指数"],
+         'prime_keys':  [0]
+         },
 
 }
 
