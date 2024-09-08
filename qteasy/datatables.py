@@ -1534,8 +1534,7 @@ TABLE_MASTERS = {
 
     'index_daily':
         ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic',
-         'SH,CSI,SZ',
-         'y', '', '', '', '', ''],
+         'SH,CSI,SZ', 'y', '', '', '', '', ''],
 
     'index_weekly':
         ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'trade_date', '19910705', '', '',
@@ -1550,8 +1549,8 @@ TABLE_MASTERS = {
          '20100101', '', '', '', '', '', '', ''],
 
     'ths_index_weight':  # New, 同花顺行业指数成分股权重!
-        ['ths_index_weight', '同花顺行业指数成分股权重', 'comp', 'THS', 'd', 'ths_member', 'trade_date', 'trade_date',
-         '20100101', '', '', '', '', '', '', ''],
+        ['ths_index_weight', '同花顺行业指数成分股权重', 'comp', 'THS', 'd', 'ths_member', 'ts_code', 'table_index',
+         'ths_index_basic', '', '', '', '', '', '', ''],
 
     'ci_index_daily':  # New, 中信指数日线行情!
         ['ci_index_daily', '中证指数日线行情', 'reference', 'none', 'd', 'ci_daily', 'trade_date', 'trade_date',
@@ -1634,11 +1633,11 @@ TABLE_MASTERS = {
          '', '', '', '', '', ''],
 
     'future_weekly':  # New, 期货周线行情!
-        ['future_weekly', '期货周线行情', 'data', 'FT', 'w', 'future_weekly', 'trade_date', 'trade_date', '19950417', '',
+        ['future_daily', '期货周线行情', 'data', 'FT', 'w', 'future_weekly', 'trade_date', 'trade_date', '19950417', '',
          '', '', '', '', '', ''],
 
     'future_monthly':  # New, 期货月线行情!
-        ['future_monthly', '期货月线行情', 'data', 'FT', 'm', 'future_monthly', 'trade_date', 'trade_date', '19950417', '',
+        ['future_daily', '期货月线行情', 'data', 'FT', 'm', 'future_monthly', 'trade_date', 'trade_date', '19950417', '',
          '', '', '', '', '', ''],
 
     'options_1min':
@@ -2021,6 +2020,23 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
+    'ths_index_basic':  # New, 同花顺指数基本信息
+        {'columns':     ["ts_code", "name", "count", "exchange", "list_date", "type"],
+         'dtypes':      ["varchar(14)", "text", "int", "varchar(4)", "date", "varchar(4)"],
+         'remarks':     ["代码", "名称", "成分个数", "交易所", "上市日期", "N概念指数S特色指数"],
+         'prime_keys':  [0]
+         },
+
+    'sw_industry_basic':  # New, 申万行业分类
+        {'columns':     ["index_code", "industry_name", "parent_code", "level", "industry_code",
+                         "is_pub", "src"],
+         'dtypes':      ["varchar(14)", "varchar(10)", "varchar(6)", "varchar(6)", "varchar(10)",
+                         "varchar(4)", "varchar(4)"],
+         'remarks':     ["指数代码", "行业名称", "父级代码", "行业名称", "行业代码",
+                         "是否发布了指数", "行业分类（SW申万）"],
+         'prime_keys':  [0]
+         },
+
     'bars':  # 日线行情表
         {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'change',
                         'pct_chg', 'vol', 'amount'],
@@ -2045,6 +2061,53 @@ TABLE_SCHEMA = {
          'dtypes':     ['varchar(9)', 'date', 'double'],
          'remarks':    ['证券代码', '交易日期', '复权因子'],
          'prime_keys': [0, 1]
+         },
+
+    'ths_index_daily':  # New, 同花顺行业指数日线行情!
+        {'columns':     ["ts_code", "trade_date", "close", "open", "high", "low", "pre_close", "avg_price",
+                         "change", "pct_change", "vol", "turnover_rate", "total_mv", "float_mv"],
+         'dtypes':      ["varchar(14)", "date", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["TS指数代码", "交易日", "收盘点位", "开盘点位", "最高点位", "最低点位", "昨日收盘点", "平均价",
+                         "涨跌点位", "涨跌幅", "成交量", "换手率", "总市值", "流通市值"],
+         'prime_keys':  [0, 1]
+         },
+
+    'ths_index_weight':  # New, 同花顺行业指数成分股权重!
+        {'columns':     ["ts_code", "code", "name", "weight", "in_date", "out_date", "is_new"],
+         'dtypes':      ["str", "str", "str", "float", "str", "str", "str"],
+         'remarks':     ["指数代码", "股票代码", "股票名称", "权重(暂无)", "纳入日期(暂无)", "剔除日期(暂无)", "是否最新Y是N否"],
+         'prime_keys':  [0, 1]
+         },
+
+    'ci_index_daily':  # New, 中信行业指数日线行情!
+        {'columns':     ["ts_code", "trade_date", "open", "low", "high", "close", "pre_close", "change",
+                         "pct_change", "vol", "amount"],
+         'dtypes':      ["varchar(14)", "date", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float"],
+         'remarks':     ["指数代码", "交易日期", "开盘点位", "最低点位", "最高点位", "收盘点位", "昨日收盘点位", "涨跌点位",
+                         "涨跌幅", "成交量（万股）", "成交额（万元）"],
+         'prime_keys':  [0, 1]
+         },
+
+    'sw_index_daily':  # New, 申万指数日线行情!
+        {'columns':     ["ts_code", "trade_date", "name", "open", "low", "high", "close", "change",
+                         "pct_change", "vol", "amount", "pe", "pb", "float_mv", "total_mv"],
+         'dtypes':      ["varchar(14)", "date", "varchar(24)", "float", "float", "float", "float",
+                         "float", "float", "float", "float", "float", "float", "float", "float"],
+         'remarks':     ["指数代码", "交易日期", "指数名称", "开盘点位", "最低点位", "最高点位", "收盘点位", "涨跌点位",
+                         "涨跌幅", "成交量（万股）", "成交额（万元）", "市盈率", "市净率", "流通市值（万元）", "总市值（万元）"],
+         'prime_keys':  [0, 1]
+         },
+
+    'global_index_daily':  # New, 全球指数日线行情!
+        {'columns':     ["ts_code", "trade_date", "open", "close", "high", "low", "pre_close", "change",
+                         "pct_chg", "swing", "vol", "amount"],
+         'dtypes':      ["varchar(14)", "date", "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float"],
+         'remarks':     ["TS指数代码", "交易日", "开盘点位", "收盘点位", "最高点位", "最低点位", "昨日收盘点", "涨跌点位",
+                         "涨跌幅", "振幅", "成交量 （大部分无此项数据）", "成交额 （大部分无此项数据）"],
+         'prime_keys':  [0, 1]
          },
 
     'fund_nav':  # 基金净值表
@@ -2539,6 +2602,62 @@ TABLE_SCHEMA = {
                         '去年同期每股收益', '期初净资产', '期初每股净资产', '业绩简要说明', '是否审计： 1是 0否',
                         '备注'],
          'prime_keys': [0, 1]
+         },
+
+    'dividend':  # New, 分红送股!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'top_list':  # New, 龙虎榜交易明细!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'top_inst':  # New, 龙虎榜机构交易明细!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'block_trade':  # New, 大宗交易!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'stock_holder_trade':  # New, 股东交易（股东增减持）!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'margin':  # New, 融资融券交易概况!
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
+         },
+
+    'margin_detail':  # New, 融资融券交易明！
+        {'columns':     [],
+         'dtypes':      [],
+         'remarks':     [],
+         'prime_keys':  []
          },
 
     'shibor':  # 上海银行间同业拆放利率
