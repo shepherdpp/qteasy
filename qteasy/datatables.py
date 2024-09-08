@@ -1477,6 +1477,10 @@ TABLE_MASTERS = {
         ['ths_index_basic', '同花顺指数基本信息', 'basic', 'THS', 'none', 'ths_index', 'exchange', 'list',
          'A, HK, US', '', '', '', '', '', '', ''],
 
+    'sw_industry_basic':  # New, 申万行业分类
+        ['class_industry_sw', '申万行业分类', 'basic', 'IDX', 'none', 'industry_sw', 'src', 'list', 'sw2014, sw2021',
+         '', '', '', '', '', '', ''],
+
     'stock_1min':
         ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y',
          '30', '', '', '', ''],
@@ -1599,9 +1603,9 @@ TABLE_MASTERS = {
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
          'OF, SZ, SH', '', '', '', '', '', ''],
 
-    'future_mapping':  # New, 期货合约映射表
-        ['future_mapping', '期货合约映射表', 'data', 'FT', 'none', 'future_mapping', 'ts_code', 'table_index',
-         'future_basic', '', '', '', '', '', '', ''],
+    'future_mapping':  # New, 期货合约映射表!
+        ['future_mapping', '期货合约映射表', 'data', 'FT', 'none', 'fut_mapping', 'trade_date', 'trade_date', '19901219',
+         '', '', '', '', '', '', ''],
 
     'future_1min':
         ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', 'ft_mins1', 'ts_code', 'table_index', 'future_basic',
@@ -1629,11 +1633,11 @@ TABLE_MASTERS = {
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
          '', '', '', '', '', ''],
 
-    'future_weekly':  # New, 期货周线行情
+    'future_weekly':  # New, 期货周线行情!
         ['future_weekly', '期货周线行情', 'data', 'FT', 'w', 'future_weekly', 'trade_date', 'trade_date', '19950417', '',
          '', '', '', '', '', ''],
 
-    'future_monthly':  # New, 期货月线行情
+    'future_monthly':  # New, 期货月线行情!
         ['future_monthly', '期货月线行情', 'data', 'FT', 'm', 'future_monthly', 'trade_date', 'trade_date', '19950417', '',
          '', '', '', '', '', ''],
 
@@ -1683,7 +1687,8 @@ TABLE_MASTERS = {
          '20040102', '', '', '', '', '', '', ''],
 
     'index_weight':
-        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', '', '', '', '', '', ''],
+        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', '', '',
+         '', '', '', ''],
 
     'income':
         ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
@@ -1711,43 +1716,36 @@ TABLE_MASTERS = {
         ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
          '', '', '', '', ''],
 
-    'dividend':  # New, 分红送股
-        ['dividend', '分红送股', 'events', 'E', 'd', 'dividend', 'end_date', 'datetime', '19901211', '', '', '', '', '', '', ''],
+    'dividend':  # New, 分红送股!
+        ['dividend', '分红送股', 'events', 'E', 'd', 'dividend', 'ts_code', 'table_index', 'stock_basic', '', '', '',
+         '', '', '', ''],
 
-    'top_list':  # New, 龙虎榜交易明细
-        ['top_list', '龙虎榜交易明细', 'data', 'E', 'd', 'top_list', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+    'top_list':  # New, 龙虎榜交易明细!
+        ['top_list', '龙虎榜交易明细', 'events', 'E', 'd', 'top_list', 'trade_date', 'datetime', '20050101', '', '', '',
+         '', '', '', ''],
 
-    'top_inst':  # New, 龙虎榜机构交易明细
-        ['top_inst', '龙虎榜机构交易明细', 'data', 'E', 'd', 'top_inst', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+    'top_inst':  # New, 龙虎榜机构交易明细!
+        ['top_inst', '龙虎榜机构交易明细', 'events', 'E', 'd', 'top_inst', 'trade_date', 'datetime', '19901211', '', '', '',
+         '', '', '', ''],
 
-    'class_concept':  # New, 概念板块
-        ['class_concept', '概念板块', 'class', 'E', 'none', 'concept', 'trade_date', 'trade_date', '19901211', '', '',
-         '', '', '', '', ''],
+    'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
+        ['sw_industry_detail', '申万行业分类明细', 'comp', 'IDX', 'none', 'index_member_all', 'ts_code', 'table_index',
+         'stock_basic', '', '', '', '', '', '', ''],
 
-    'class_concept_detail':  # New, 概念板块明细
-        ['class_concept_detail', '概念板块明细', 'class', 'E', 'none', 'concept_detail', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+    'block_trade':  # New, 大宗交易!
+        ['block_trade', '大宗交易', 'events', 'E', 'd', 'block_trade', 'trade_date', 'datetime', '20100101', '', '', '',
+         '', '', '', ''],
 
-    'class_industry_sw':  # New, 申万行业分类
-        ['class_industry_sw', '申万行业分类', 'class', 'E', 'none', 'industry_sw', 'trade_date', 'trade_date', '19901211',
+    'stock_holder_trade':  # New, 股东交易（股东增减持）!
+        ['stock_holder_trade', '股东交易', 'events', 'E', 'd', 'stk_holdertrade', 'trade_date', 'datetime', '20100101',
          '', '', '', '', '', '', ''],
 
-    'class_industry_sw_detail':  # New, 申万行业分类明细
-        ['class_industry_sw_detail', '申万行业分类明细', 'class', 'E', 'none', 'industry_sw_detail', 'trade_date',
-         'trade_date', '19901211', '', '', '', '', '', '', ''],
-
-    'block_trade':  # New, 大宗交易
-        ['block_trade', '大宗交易', 'data', 'E', 'd', 'block_trade', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
-
-    'stock_holder_trade':  # New, 股东交易
-        ['stock_holder_trade', '股东交易', 'data', 'E', 'd', 'holder_trade', 'trade_date', 'trade_date', '19901211', '',
-         '', '', '', '', '', ''],
-
-    'margin':  # New, 融资融券交易概况
-        ['margin', '融资融券交易概况', 'data', 'E', 'd', 'margin', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+    'margin':  # New, 融资融券交易概况!
+        ['margin', '融资融券交易概况', 'reference', 'none', 'd', 'margin', 'exchange_id', 'list', 'SSE,SZSE,BSE', '', '',
+         '', '', '', '', ''],
 
     'margin_detail':  # New, 融资融券交易明细
-        ['margin_detail', '融资融券交易明细', 'data', 'E', 'd', 'margin_detail', 'trade_date', 'trade_date', '19901211',
+        ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', 'margin_detail', 'trade_date', 'datetime', '20190910',
          '', '', '', '', '', '', ''],
 
     'shibor':
