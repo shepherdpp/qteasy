@@ -1889,16 +1889,79 @@ TABLE_SCHEMA = {
          },
 
     'new_share':  # IPO新股列表
-        {'columns':    ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
+        {'columns':     ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
                         'amount', 'market_amount', 'price', 'pe', 'limit_amount',
                         'funds', 'ballot'],
-         'dtypes':     ['varchar(20)', 'varchar(20)', 'varchar(50)', 'date', 'date',
+         'dtypes':      ['varchar(20)', 'varchar(20)', 'varchar(50)', 'date', 'date',
                         'float', 'float', 'float', 'float', 'float',
                         'float', 'float'],
-         'remarks':    ['TS股票代码', '申购代码', '名称', '上网发行日期', '上市日期',
+         'remarks':     ['TS股票代码', '申购代码', '名称', '上网发行日期', '上市日期',
                         '发行总量（万股）', '上网发行总量（万股）', '发行价格', '市盈率', '个人申购上限（万股）',
                         '募集资金（亿元）', '中签率'],
-         'prime_keys': [0, 1]
+         'prime_keys':  [0, 1]
+         },
+
+    'money_flow':  # New, 个股资金流向!
+        {'columns':     ["ts_code", "trade_date", "buy_sm_vol", "buy_sm_amount", "sell_sm_vol", "sell_sm_amount",
+                         "buy_md_vol", "buy_md_amount", "sell_md_vol", "sell_md_amount", "buy_lg_vol", "buy_lg_amount",
+                         "sell_lg_vol", "sell_lg_amount", "buy_elg_vol", "buy_elg_amount", "sell_elg_vol",
+                         "sell_elg_amount", "net_mf_vol", "net_mf_amount"],
+         'dtypes':      ["varchar(10)", "date", "int", "float", "int", "float",
+                         "int", "float", "int", "float", "int", "float",
+                         "int", "float", "int", "float", "int",
+                         "float", "int", "float"],
+         'remarks':     ["TS代码", "交易日期", "小单买入量（手）", "小单买入金额（万元）", "小单卖出量（手）", "小单卖出金额（万元）",
+                         "中单买入量（手）", "中单买入金额（万元）", "中单卖出量（手）", "中单卖出金额（万元）", "大单买入量（手）", "大单买入金额（万元）",
+                         "大单卖出量（手）", "大单卖出金额（万元）", "特大单买入量（手）", "特大单买入金额（万元）", "特大单卖出量（手）",
+                         "特大单卖出金额（万元）", "净流入量（手）", "净流入额（万元）"],
+         'prime_keys':  [0, 1]
+         },
+
+    'stock_limit':  # New, 涨跌停价格!
+        {'columns':     ["trade_date", "ts_code", "pre_close", "up_limit", "down_limit"],
+         'dtypes':      ["date", "varchar(10)", "float", "float", "float"],
+         'remarks':     ["交易日期", "TS股票代码", "昨日收盘价", "涨停价", "跌停价"],
+         'prime_keys':  [0, 1]
+         },
+
+    'stock_suspend':  # New, 停复牌信息!
+        {'columns':     ["ts_code", "trade_date", "suspend_timing", "suspend_type"],
+         'dtypes':      ["varchar(10)", "date", "varchar(15)", "varchar(2)"],
+         'remarks':     ["TS代码", "停复牌日期", "日内停牌时间段", "停复牌类型：S-停牌，R-复牌"],
+         'prime_keys':  [0, 1]
+         },
+
+    'HS_money_flow':  # New, 沪深股通资金流向!
+        {'columns':     ["trade_date", "ggt_ss", "ggt_sz", "hgt", "sgt", "north_money",
+                         "south_money"],
+         'dtypes':      ["date", "float", "float", "float", "float", "float",
+                         "float"],
+         'remarks':     ["交易日期", "港股通（上海）", "港股通（深圳）", "沪股通（百万元）", "深股通（百万元）", "北向资金（百万元）",
+                         "南向资金（百万元）"],
+         'prime_keys':  [0]
+         },
+
+    'HS_top10_stock':  # New, 沪深股通十大成交股!
+        {'columns':     ["trade_date", "ts_code", "name", "close", "change", "rank", "market_type", "amount",
+                         "net_amount", "buy", "sell"],
+         'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "int", "str", "float",
+                         "float", "float", "float"],
+         'remarks':     ["交易日期", "股票代码", "股票名称", "收盘价", "涨跌额", "资金排名", "市场类型（1：沪市 3：深市）", "成交金额（元）",
+                         "净成交金额（元）", "买入金额（元）", "卖出金额（元）"],
+         'prime_keys':  [0, 1]
+         },
+
+    'HK_top10_stock':  # New, 港股通十大成交股!
+        {'columns':     ["trade_date", "ts_code", "name", "close", "p_change", "rank", "market_type",
+                         "amount", "net_amount", "sh_amount", "sh_net_amount", "sh_buy", "sh_sell",
+                         "sz_amount", "sz_net_amount", "sz_buy", "sz_sell"],
+         'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "varchar(10)", "varchar(4)",
+                         "float", "float", "float", "float", "float", "float",
+                         "float", "float", "float", "float"],
+         'remarks':     ["交易日期", "股票代码", "股票名称", "收盘价", "涨跌幅", "资金排名", "市场类型 2：港股通（沪） 4：港股通（深）",
+                         "累计成交金额（元）", "净买入金额（元）", "沪市成交金额（元）", "沪市净买入金额（元）", "沪市买入金额（元）", "沪市卖出金额",
+                         "深市成交金额（元）", "深市净买入金额（元）", "深市买入金额（元）", "深市卖出金额（元）"],
+         'prime_keys':  [0, 1]
          },
 
     'index_basic':  # 指数基本信息表
