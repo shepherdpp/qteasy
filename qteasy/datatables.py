@@ -1478,7 +1478,7 @@ TABLE_MASTERS = {
          'A, HK, US', '', '', '', '', '', '', ''],
 
     'sw_industry_basic':  # New, 申万行业分类
-        ['class_industry_sw', '申万行业分类', 'basic', 'IDX', 'none', 'industry_sw', 'src', 'list', 'sw2014, sw2021',
+        ['sw_industry_basic', '申万行业分类', 'basic', 'IDX', 'none', 'industry_sw', 'src', 'list', 'sw2014, sw2021',
          '', '', '', '', '', '', ''],
 
     'stock_1min':
@@ -2134,6 +2134,13 @@ TABLE_SCHEMA = {
                         'varchar(30)', 'varchar(4)', 'date', 'date', 'text'],
          'remarks':    ['证券代码', '公告日期', '基金经理姓名', '性别', '出生年份', '学历', '国籍', '任职日期',
                         '离任日期', '简历'],
+         'prime_keys': [0, 1]
+         },
+
+    'future_mapping':  # New, 期货合约映射表!
+        {'columns':    ["ts_code", "trade_date", "mapping_ts_code"],
+         'dtypes':     ["varchar(14)", "date", "varchar(18)"],
+         'remarks':    ["连续合约代码", "起始日期", "期货合约代码"],
          'prime_keys': [0, 1]
          },
 
