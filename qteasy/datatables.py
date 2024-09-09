@@ -2641,38 +2641,53 @@ TABLE_SCHEMA = {
          },
 
     'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["l1_code", "l1_name", "l2_code", "l2_name", "l3_code", "l3_name",
+                         "ts_code", "name", "in_date", "out_date", "is_new"],
+         'dtypes':      ["varchar(14)", "varchar(10)", "varchar(14)", "varchar(10)", "varchar(14)", "varchar(10)",
+                         "varchar(14)", "varchar(14)", "date", "date", "varchar(2)"],
+         'remarks':     ["一级行业代码", "一级行业名称", "二级行业代码", "二级行业名称", "三级行业代码", "三级行业名称",
+                         "成分股票代码", "成分股票名称", "纳入日期", "剔除日期", "是否最新Y是N否"],
+         'prime_keys':  [0]
          },
 
     'block_trade':  # New, 大宗交易!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["ts_code", "trade_date", "price", "vol", "amount", "buyer", "seller"],
+         'dtypes':      ["varchar(14)", "date", "float", "float", "float", "text", "text"],
+         'remarks':     ["TS代码", "交易日历", "成交价", "成交量（万股）", "成交金额", "买方营业部", "卖方营业部"],
+         'prime_keys':  [0, 1]
          },
 
     'stock_holder_trade':  # New, 股东交易（股东增减持）!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["ts_code", "ann_date", "holder_name", "holder_type", "in_de", "change_vol",
+                         "change_ratio", "after_share", "after_ratio", "avg_price", "total_share", "begin_date",
+                         "close_date"],
+         'dtypes':      ["varchar(14)", "date", "text", "varchar(2)", "varchar(4)", "float",
+                         "float", "float", "float", "float", "float", "date",
+                         "date"],
+         'remarks':     ["TS代码", "公告日期", "股东名称", "股东类型G高管P个人C公司", "类型IN增持DE减持", "变动数量",
+                         "占流通比例（%）", "变动后持股", "变动后占流通比例（%）", "平均价格", "持股总数", "增减持开始日期",
+                         "增减持结束日期"],
+         'prime_keys':  [0, 1]
          },
 
     'margin':  # New, 融资融券交易概况!
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["trade_date", "exchange_id", "rzye", "rzmre", "rzche",
+                         "rqye", "rqmcl", "rzrqye", "rqyl"],
+         'dtypes':      ["date", "varchar(6)", "float", "float", "float",
+                         "float", "float", "float", "float"],
+         'remarks':     ["交易日期", "交易所代码（SSE上交所SZSE深交所BSE北交所）", "融资余额(元)", "融资买入额(元)", "融资偿还额(元)",
+                         "融券余额(元)", "融券卖出量(股,份,手)", "融资融券余额(元)", "融券余量(股,份,手)"],
+         'prime_keys':  [0, 1]
          },
 
     'margin_detail':  # New, 融资融券交易明！
-        {'columns':     [],
-         'dtypes':      [],
-         'remarks':     [],
-         'prime_keys':  []
+        {'columns':     ["trade_date", "ts_code", "rzye", "rqye", "rzmre", "rqyl",
+                         "rzche", "rqchl", "rqmcl", "rzrqye"],
+         'dtypes':      ["date", "varchar(14)", "float", "float", "float", "float",
+                         "float", "float", "float", "float"],
+         'remarks':     ["交易日期", "TS股票代码", "融资余额(元)", "融券余额(元)", "融资买入额(元)", "融券余量（股）",
+                         "融资偿还额(元)", "融券偿还量(股)", "融券卖出量(股,份,手)", "融资融券余额(元)"],
+         'prime_keys':  [0, 1]
          },
 
     'shibor':  # 上海银行间同业拆放利率
