@@ -1409,7 +1409,7 @@ TABLE_MASTERS = {
         ['sys_op_trade_results', '实盘运行交易结果记录表', 'sys', '', '', '', '', '', '', '', '', '', '', '', '', ''],
 
     'trade_calendar':
-        ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
+        ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_cal', 'exchange', 'list',
          'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE,XHKG', '', '', '', '', '', '', ''],
 
     'stock_basic':
@@ -1418,7 +1418,7 @@ TABLE_MASTERS = {
          '', '', '', '', ''],
 
     'stock_names':
-        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic',
+        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'namechange', 'ts_code', 'table_index', 'stock_basic',
          '', 'Y', '', '', '', '', ''],
 
     'stock_company':
