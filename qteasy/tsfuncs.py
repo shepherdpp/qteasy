@@ -2038,6 +2038,23 @@ def express(ts_code: str = None,
     return res
 
 
+# 'dividend':  # New, 分红送股!
+#
+# 'top_list':  # New, 龙虎榜交易明细!
+#
+# 'top_inst':  # New, 龙虎榜机构交易明细!
+#
+# 'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
+#
+# 'block_trade':  # New, 大宗交易!
+#
+# 'stock_holder_trade':  # New, 股东交易（股东增减持）!
+#
+# 'margin':  # New, 融资融券交易概况!
+#
+# 'margin_detail':  # New, 融资融券交易明！
+
+
 # Market Data
 # =================
 
@@ -2177,6 +2194,11 @@ def index_basic(ts_code: str = None,
     return res
 
 
+# 'ths_index_basic':  # New, 同花顺指数基本信息
+#
+# 'sw_industry_basic':  # New, 申万行业分类
+
+
 def index_indicators(trade_date: str = None,
                      ts_code: str = None,
                      start: str = None,
@@ -2237,6 +2259,16 @@ def index_indicators(trade_date: str = None,
     logger_core.info(f'Downloaded {len(res)} rows from tushare: index_indicators with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}, fields={fields}')
     return res
+
+# 'ths_index_daily':  # New, 同花顺行业指数日线行情!
+#
+# 'ths_index_weight':  # New, 同花顺行业指数成分股权重!
+#
+# 'ci_index_daily':  # New, 中信指数日线行情!
+#
+# 'sw_index_daily':  # New, 申万指数日线行情!
+#
+# 'global_index_daily':  # New, 全球指数日线行情!
 
 
 def composite(index: str = None,
@@ -2459,6 +2491,9 @@ def future_basic(exchange: str = None,
     return res
 
 
+# 'future_mapping':  # New, 期货合约映射表!
+
+
 def options_basic(exchange: str = None,
                   call_put: str = None) -> pd.DataFrame:
     """ 获取期权合约信息
@@ -2574,6 +2609,10 @@ def future_daily(trade_date: str = None,
     logger_core.info(f'Downloaded {len(res)} rows from tushare: future_daily with trade_date={trade_date}, '
                      f'ts_code={future}, exchange={exchange}, start_date={start}, end_date={end}, fields={fields}')
     return res
+
+# 'future_weekly':  # New, 期货周线行情!
+#
+# 'future_monthly':  # New, 期货月线行情!
 
 
 def options_daily(trade_date: str = None,
