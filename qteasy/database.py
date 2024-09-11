@@ -114,9 +114,11 @@ class DataSource:
         None
         """
         if not isinstance(source_type, str):
-            raise TypeError(f'source type should be a string, got {type(source_type)} instead.')
+            err = TypeError(f'source type should be a string, got {type(source_type)} instead.')
+            raise err
         if source_type.lower() not in ['file', 'database', 'db']:
-            raise ValueError(f'invalid source_type')
+            err = ValueError(f'invalid source_type')
+            raise err
         self._table_list = set()
 
         if source_type.lower() in ['db', 'database']:
@@ -124,16 +126,19 @@ class DataSource:
             try:
                 import pymysql
             except ImportError:
-                msg = 'Missing dependency \'pymysql\' for datasource type \'database\'. ' \
-                        'Use pip or conda to install pymysql: $ pip install pymysql'
-                raise ImportError(msg)
+                err = ImportError(f'Missing package \'pymysql\' for datasource type \'database\'. '
+                                  f'Use pip or conda to install pymysql: $ pip install pymysql')
+                raise err
             # set up connection to the data base
             if not isinstance(port, int):
-                raise TypeError(f'port should be of type int')
+                err = TypeError(f'port should be int type, got {type(port)} instead!')
+                raise err
             if user is None:
-                raise ValueError(f'Missing user name for database connection')
+                err = ValueError(f'Missing user name for database connection')
+                raise err
             if password is None:
-                raise ValueError(f'Missing password for database connection')
+                err = ValueError(f'Missing password for database connection')
+                raise err
             # try to create pymysql connections
             self.source_type = 'db'
             try:
@@ -175,7 +180,8 @@ class DataSource:
             # set up file type and file location
             if not isinstance(file_type, str):
                 msg = f'file type should be a string, got {type(file_type)} instead!'
-                raise TypeError(msg)
+                err = TypeError(msg)
+                raise err
             file_type = file_type.lower()
             if file_type not in AVAILABLE_DATA_FILE_TYPES:
                 msg = f'file type not recognized, supported file types are {AVAILABLE_DATA_FILE_TYPES}'
@@ -577,7 +583,8 @@ class DataSource:
         except FileNotFoundError:
             return -1
         except Exception as e:
-            raise RuntimeError(f'{e}, unknown error encountered.')
+            err = RuntimeError(f'{e}, unknown error encountered.')
+            raise err
 
     def get_file_rows(self, file_name):
         """获取csv、hdf、feather文件中数据的行数"""
@@ -674,7 +681,8 @@ class DataSource:
 
             return df
         except Exception as e:
-            raise RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
+            err = RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
+            raise err
         finally:
             con.close()
 
@@ -731,9 +739,10 @@ class DataSource:
                 con.commit()
             except Exception as e:
                 con.rollback()
-                raise RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
+                err = RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
                                    f'Exception:\n{e}\n'
                                    f'SQL:\n{sql}')
+                raise err
 
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
@@ -758,9 +767,10 @@ class DataSource:
             return rows_affected
         except Exception as e:
             con.rollback()
-            raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
+            err = RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
                                f'Exception:\n{e}\n'
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
+            raise err
         finally:
             con.close()
 
@@ -826,10 +836,10 @@ class DataSource:
             return rows_affected
         except Exception as e:
             con.rollback()
-            msg = f'Error during updating data to table {db_table} with following sql:\n' \
-                    f'Exception:\n{e}\n' \
-                    f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}'
-            raise RuntimeError(msg)
+            err = RuntimeError(f'Error during updating data to table {db_table} with following sql:\n'
+                               f'Exception:\n{e}\n'
+                               f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
+            raise err
         finally:
             con.close()
 
@@ -878,10 +888,10 @@ class DataSource:
             return rows_affected
         except Exception as e:
             con.rollback()
-            msg = f'Error during deleting data from table {db_table} with following sql:\n' \
-                    f'Exception:\n{e}\n' \
-                    f'SQL:\n{sql}'
-            raise RuntimeError(msg)
+            err = RuntimeError(f'Error during deleting data from table {db_table} with following sql:\n'
+                               f'Exception:\n{e}\n'
+                               f'SQL:\n{sql}')
+            raise err
 
     def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -920,9 +930,10 @@ class DataSource:
             return res
         except Exception as e:
             con.rollback()
-            raise RuntimeError(f'Exception:\n{e}\n'
+            err = RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
+            raise err
         finally:
             con.close()
 
@@ -970,9 +981,10 @@ class DataSource:
             return res
         except Exception as e:
             con.rollback()
-            raise RuntimeError(f'Exception:\n{e}\n'
+            err = RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
+            raise err
         finally:
             con.close()
 
@@ -989,7 +1001,8 @@ class DataSource:
         bool
         """
         if self.source_type == 'file':
-            raise RuntimeError('can not connect to database while source type is "file"')
+            err = RuntimeError('can not connect to database while source type is "file"')
+            raise err
         import pymysql
         con = pymysql.connect(
                 host=self.host,
@@ -1006,9 +1019,10 @@ class DataSource:
             res = cursor.fetchall()
             return len(res) > 0
         except Exception as e:
-            raise RuntimeError(f'Exception:\n{e}\n'
+            err = RuntimeError(f'Exception:\n{e}\n'
                                f'Error during querying data from db_table {db_table} with following sql:\n'
                                f'SQL:\n{sql} \n')
+            raise err
         finally:
             con.close()
 
@@ -1034,7 +1048,8 @@ class DataSource:
         None
         """
         if self.source_type != 'db':
-            raise TypeError(f'Datasource is not connected to a database')
+            err = TypeError(f'Datasource is not connected to a database')
+            raise err
 
         import pymysql
         con = pymysql.connect(
@@ -1125,9 +1140,11 @@ class DataSource:
         None
         """
         if self.source_type != 'db':
-            raise TypeError(f'Datasource is not connected to a database')
+            err = TypeError(f'Datasource is not connected to a database')
+            raise err
         if not isinstance(db_table, str):
-            raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
+            err = TypeError(f'db_table name should be a string, got {type(db_table)} instead')
+            raise err
 
         import pymysql
         con = pymysql.connect(
@@ -1234,7 +1251,8 @@ class DataSource:
         #  ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
         #  csv文件的读取效率，其他文件系统的读取还需要进一步优化
         if not isinstance(table, str):
-            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+            err = TypeError(f'table name should be a string, got {type(table)} instead.')
+            raise err
         if table not in TABLE_MASTERS.keys():
             raise KeyError(f'Invalid table name: {table}.')
 
@@ -1312,7 +1330,8 @@ class DataSource:
                 return df
             set_primary_key_index(df, primary_key, pk_dtypes)
         else:  # for unexpected cases:
-            raise TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
+            err = TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
+            raise err
 
         return df
 
@@ -1349,7 +1368,8 @@ class DataSource:
         table_master = get_table_master()
         non_sys_tables = table_master[table_master['table_usage'] != 'sys'].index.to_list()
         if table not in non_sys_tables:
-            raise ValueError(f'Invalid table name: {table}!')
+            err = ValueError(f'Invalid table name: {table}!')
+            raise err
 
         # 检查file_name是否合法
         if file_name is None:
@@ -1367,7 +1387,8 @@ class DataSource:
         try:
             df.to_csv(file_path_name, encoding='utf-8')
         except Exception as e:
-            raise RuntimeError(f'{e}, Failed to export table {table} to file {file_path_name}!')
+            err = RuntimeError(f'{e}, Failed to export table {table} to file {file_path_name}!')
+            raise err
 
         return file_path_name
 
@@ -1400,7 +1421,8 @@ class DataSource:
 
         assert isinstance(df, pd.DataFrame)
         if not isinstance(table, str):
-            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+            err = TypeError(f'table name should be a string, got {type(table)} instead.')
+            raise err
         if table not in TABLE_MASTERS.keys():
             raise KeyError(f'Invalid table name.')
         columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
@@ -1456,11 +1478,13 @@ class DataSource:
         # 目前仅支持从tushare获取数据，未来可能增加新的API
         from .tsfuncs import acquire_data
         if not isinstance(table, str):
-            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+            err = TypeError(f'table name should be a string, got {type(table)} instead.')
+            raise err
         if table not in TABLE_MASTERS.keys():
             raise KeyError(f'Invalid table name {table}')
         if not isinstance(channel, str):
-            raise TypeError(f'channel should be a string, got {type(channel)} instead.')
+            err = TypeError(f'channel should be a string, got {type(channel)} instead.')
+            raise err
         if channel not in AVAILABLE_CHANNELS:
             raise KeyError(f'Invalid channel name {channel}')
 
@@ -1469,16 +1493,20 @@ class DataSource:
         if channel == 'df':
             # 通过参数传递的DF获取数据
             if df is None:
-                raise ValueError(f'a DataFrame must be given while channel == "df"')
+                err = ValueError(f'a DataFrame must be given while channel == "df"')
+                raise err
             if not isinstance(df, pd.DataFrame):
-                raise TypeError(f'local df should be a DataFrame, got {type(df)} instead.')
+                err = TypeError(f'local df should be a DataFrame, got {type(df)} instead.')
+                raise err
             dnld_data = df
         elif channel == 'csv':
             # 读取本地csv数据文件获取数据
             if f_name is None:
-                raise ValueError(f'a file path and name must be given while channel == "csv"')
+                err = ValueError(f'a file path and name must be given while channel == "csv"')
+                raise err
             if not isinstance(f_name, str):
-                raise TypeError(f'file name should be a string, got {type(df)} instead.')
+                err = TypeError(f'file name should be a string, got {type(df)} instead.')
+                raise err
             dnld_data = pd.read_csv(f_name, **kwargs)
         elif channel == 'excel':
             # 读取本地Excel文件获取数据
@@ -1522,7 +1550,8 @@ class DataSource:
         """
         # 目前支持从tushare和eastmoney获取数据，未来可能增加新的API
         if not isinstance(table, str):
-            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+            err = TypeError(f'table name should be a string, got {type(table)} instead.')
+            raise err
         if table not in ['stock_1min', 'stock_5min', 'stock_15min', 'stock_30min', 'stock_hourly']:
             raise KeyError(f'realtime minute data is not available for table {table}')
 
@@ -1545,7 +1574,8 @@ class DataSource:
             # 通过tushare的API下载数据
             api_name = 'realtime_min'
             if symbols is None:
-                raise ValueError(f'ts_code must be given while channel == "tushare"')
+                err = ValueError(f'ts_code must be given while channel == "tushare"')
+                raise err
             try:
                 dnld_data = acquire_data_from_ts(api_name, ts_code=symbols, freq=realtime_data_freq)
             except Exception as e:
@@ -1624,9 +1654,11 @@ class DataSource:
         int, 写入数据表中的数据的行数
         """
         if not isinstance(df, pd.DataFrame):
-            raise TypeError(f'df should be a dataframe, got {type(df)} instead')
+            err = TypeError(f'df should be a dataframe, got {type(df)} instead')
+            raise err
         if not isinstance(merge_type, str):
-            raise TypeError(f'merge type should be a string, got {type(merge_type)} instead.')
+            err = TypeError(f'merge type should be a string, got {type(merge_type)} instead.')
+            raise err
         if merge_type not in ['ignore', 'update']:
             raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
 
@@ -1753,7 +1785,8 @@ class DataSource:
             columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
             return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes, min_max_only)
         else:
-            raise TypeError(f'Invalid source type: {self.source_type}')
+            err = TypeError(f'Invalid source type: {self.source_type}')
+        raise err
 
     def get_data_table_size(self, table, human=True, string_form=True):
         """ 获取数据表占用磁盘空间的大小
@@ -1779,7 +1812,8 @@ class DataSource:
         elif self.source_type == 'db':
             rows, size = self.get_db_table_size(table)
         else:
-            raise RuntimeError(f'unknown source type: {self.source_type}')
+            err = RuntimeError(f'unknown source type: {self.source_type}')
+            raise err
         if size == -1:
             return 0, 0
         if not string_form:
@@ -1829,9 +1863,11 @@ class DataSource:
         pk_min2 = None
         pk_max2 = None
         if not isinstance(table, str):
-            raise TypeError(f'table should be name of a table, got {type(table)} instead')
+            err = TypeError(f'table should be name of a table, got {type(table)} instead')
+            raise err
         if not table.lower() in TABLE_MASTERS:
-            raise ValueError(f'in valid table name: {table}')
+            err = ValueError(f'in valid table name: {table}')
+            raise err
 
         columns, dtypes, remarks, primary_keys, pk_dtypes = get_built_in_table_schema(table,
                                                                                       with_remark=True,
@@ -1953,8 +1989,9 @@ class DataSource:
                 res = cursor.fetchall()
                 return res[0][0] if len(res) > 0 else 0
             except Exception as e:
-                raise RuntimeError(
+                err = RuntimeError(
                     f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
+                raise err
             finally:
                 con.close()
 
@@ -2137,7 +2174,8 @@ class DataSource:
         """
         # 检察数据，如果data中有不可用的字段，则抛出异常，如果data为空，则返回None
         if not isinstance(data, dict):
-            raise TypeError(f'Input data must be a dict, but got {type(data)}')
+            err = TypeError(f'Input data must be a dict, but got {type(data)}')
+            raise err
         if not data:
             return None
 
@@ -2172,7 +2210,8 @@ class DataSource:
                 self.conn.execute(sql)
                 self.conn.commit()
             except Exception as e:
-                raise RuntimeError(f'{e}, An error occurred when insert data into table {table} with sql:\n{sql}')
+                err = RuntimeError(f'{e}, An error occurred when insert data into table {table} with sql:\n{sql}')
+                raise err
         else:  # for other unexpected cases
             pass
         last_id = self.get_last_id(table)
@@ -2595,14 +2634,16 @@ class DataSource:
             dtypes = []
         valid_table_values = list(TABLE_MASTERS.keys()) + TABLE_USAGES + ['all']
         if not isinstance(tables, (str, list)):
-            raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
+            err = TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
+            raise err
         if isinstance(tables, str):
             tables = str_to_list(tables)
         if not all(item.lower() in valid_table_values for item in tables):
             raise KeyError(f'some items in tables list are not valid: '
                            f'{[item for item in tables if item not in valid_table_values]}')
         if not isinstance(dtypes, (str, list)):
-            raise TypeError(f'dtypes should be a list of a string, got {type(dtypes)} instead.')
+            err = TypeError(f'dtypes should be a list of a string, got {type(dtypes)} instead.')
+            raise err
         if isinstance(dtypes, str):
             dtypes = str_to_list(dtypes)
 
@@ -2619,7 +2660,8 @@ class DataSource:
         code_end = None
         if symbols is not None:
             if not isinstance(symbols, (str, list)):
-                raise TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
+                err = TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
+                raise err
             if isinstance(symbols, str):
                 if len(str_to_list(symbols, ':')) == 2:
                     code_start, code_end = str_to_list(symbols, ':')
@@ -2629,7 +2671,8 @@ class DataSource:
 
         if list_arg_filter is not None:
             if not isinstance(list_arg_filter, (str, list)):
-                raise TypeError(f'list_arg_filter should be a string or list, got {type(list_arg_filter)} instead.')
+                err = TypeError(f'list_arg_filter should be a string or list, got {type(list_arg_filter)} instead.')
+                raise err
             if isinstance(list_arg_filter, str):
                 list_arg_filter = str_to_list(list_arg_filter, ',')
 
@@ -3034,7 +3077,8 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
         df.index = m_index
     else:
         # for other unexpected cases
-        raise ValueError(f'wrong input!')
+        err = ValueError(f'wrong input!')
+        raise err
     df.drop(columns=primary_key, inplace=True)
 
     return None
@@ -3137,7 +3181,8 @@ def _resample_data(hist_data, target_freq,
     """
 
     if not isinstance(target_freq, str):
-        raise TypeError
+        err = TypeError
+        raise err
     target_freq = target_freq.upper()
     # 如果hist_data为空，直接返回
     if hist_data.empty:
@@ -3181,7 +3226,8 @@ def _resample_data(hist_data, target_freq,
         resampled = resampled.first().fillna(0)
     else:
         # for unexpected cases
-        raise ValueError(f'resample method {method} can not be recognized.')
+        err = ValueError(f'resample method {method} can not be recognized.')
+        raise err
 
     # 完成resample频率切换后，根据设置去除非工作日或非交易时段的数据
     # 并填充空数据
@@ -3270,13 +3316,16 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     """
 
     if not isinstance(df, pd.DataFrame):
-        raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+        err = TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+        raise err
     if df.empty:
         return df
     if not isinstance(primary_key, list):
-        raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        raise err
     if not isinstance(pk_dtypes, list):
-        raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        raise err
 
     all_columns = df.columns
     if not all(item in all_columns for item in primary_key):
@@ -3640,7 +3689,8 @@ def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
         pk_dtypes: 主键列的数据类型
     """
     if not isinstance(table, str):
-        raise TypeError(f'table name should be a string, got {type(table)} instead')
+        err = TypeError(f'table name should be a string, got {type(table)} instead')
+        raise err
     if table not in TABLE_MASTERS.keys():
         raise KeyError(f'invalid table name')
 
@@ -3785,7 +3835,8 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     """
 
     if not isinstance(s, str):
-        raise TypeError(f'input should be a string, got {type(s)} instead.')
+        err = TypeError(f'input should be a string, got {type(s)} instead.')
+        raise err
     # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述
     try:
         s.encode('ascii')
@@ -3806,13 +3857,15 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
         if isinstance(freq, str):
             freq = str_to_list(freq)
         if not isinstance(freq, list):
-            raise TypeError(f'freq should be a string or a list, got {type(freq)} instead')
+            err = TypeError(f'freq should be a string or a list, got {type(freq)} instead')
+            raise err
         data_table_map = data_table_map.loc[data_table_map['freq'].isin(freq)]
     if asset_type is not None:
         if isinstance(asset_type, str):
             asset_type = str_to_list(asset_type)
         if not isinstance(asset_type, list):
-            raise TypeError(f'asset_type should be a string or a list, got {type(asset_type)} instead')
+            err = TypeError(f'asset_type should be a string or a list, got {type(asset_type)} instead')
+            raise err
         data_table_map = data_table_map.loc[data_table_map['asset_type'].isin(asset_type)]
 
     data_table_map['n_matched'] = 0  # name列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
@@ -3887,12 +3940,15 @@ def ensure_sys_table(table: str) -> None:
 
     # 检察输入的table名称，以及是否属于sys表
     if not isinstance(table, str):
-        raise TypeError(f'table name should be a string, got {type(table)} instead.')
+        err = TypeError(f'table name should be a string, got {type(table)} instead.')
+        raise err
     try:
         table_usage = TABLE_MASTERS[table][2]
         if not table_usage == 'sys':
-            raise TypeError(f'Table {table}<{table_usage}> is not subjected to sys use')
+            err = TypeError(f'Table {table}<{table_usage}> is not subjected to sys use')
+            raise err
     except KeyError as e:
         raise KeyError(f'"{e}" is not a valid table name')
     except Exception as e:
-        raise RuntimeError(f'{e}: An error occurred when checking table usage')
+        err = RuntimeError(f'{e}: An error occurred when checking table usage')
+        raise err
