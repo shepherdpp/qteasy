@@ -2039,20 +2039,128 @@ def express(ts_code: str = None,
 
 
 # 'dividend':  # New, 分红送股!
-#
+def dividend(ts_code: str = None,
+             ann_date: str = None,
+             record_date: str = None,
+             ex_date: str = None,
+             imp_ann_date: str = None):
+    """ 获取分红送股数据"""
+    pro = ts.pro_api()
+    res = pro.dividend(ts_code=ts_code,
+                       ann_date=ann_date,
+                       record_date=record_date,
+                       ex_date=ex_date,
+                       imp_ann_date=imp_ann_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: dividend with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, record_date={record_date}, ex_date={ex_date}, imp_ann_date={imp_ann_date}')
+    return res
+
+
 # 'top_list':  # New, 龙虎榜交易明细!
-#
+def top_list(trade_date: str = None,
+             ts_code: str = None):
+    """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000"""
+    pro = ts.pro_api()
+    res = pro.top_list(trade_date=trade_date,
+                       ts_code=ts_code)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: top_list with ts_code={ts_code}, trade_date={trade_date}')
+    return res
+
+
 # 'top_inst':  # New, 龙虎榜机构交易明细!
-#
-# 'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
-#
+def top_inst(trade_date: str = None,
+             ts_code: str = None):
+    """ 龙虎榜机构交易明细，2005年至今全部历史数据，单次获取数量不超过10000"""
+    pro = ts.pro_api()
+    res = pro.top_inst(trade_date=trade_date,
+                       ts_code=ts_code)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
+    return res
+
+
+# New, 申万行业分类明细(成分股)!
+def index_member_all(index_code: str = None,
+                     level: str = None,
+                     parent_code: str = None,
+                     src: str = None):
+    """ 获取申万行业分类明细(成分股)"""
+    pro = ts.pro_api()
+    res = pro.index_member_all(index_code=index_code,
+                               level=level,
+                               parent_code=parent_code,
+                               src=src)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry_detail with index_code={index_code}, '
+                     f'level={level}, parent_code={parent_code}, src={src}')
+    return res
+
+
 # 'block_trade':  # New, 大宗交易!
-#
-# 'stock_holder_trade':  # New, 股东交易（股东增减持）!
-#
+def block_trade(ts_code: str = None,
+                trade_date: str = None,
+                start_date: str = None,
+                end_date: str = None):
+    """ 获取大宗交易数据"""
+    pro = ts.pro_api()
+    res = pro.block_trade(ts_code=ts_code,
+                          trade_date=trade_date,
+                          start_date=start_date,
+                          end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: block_trade with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+    return res
+
+
+# New, 股东交易（股东增减持）!
+def stk_holdertrade(ts_code: str = None,
+                    ann_date: str = None,
+                    start_date: str = None,
+                    end_date: str = None,
+                    trade_type: str = None,
+                    holder_name: str = None):
+    """ 获取股东交易（股东增减持）数据"""
+    pro = ts.pro_api()
+    res = pro.stk_holdertrade(ts_code=ts_code,
+                              ann_date=ann_date,
+                              start_date=start_date,
+                              end_date=end_date,
+                              trade_type=trade_type,
+                              holder_name=holder_name)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: stk_holdertrade with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, start_date={start_date}, end_date={end_date}, trade_type={trade_type}, '
+                     f'holder_name={holder_name}')
+    return res
+
+
 # 'margin':  # New, 融资融券交易概况!
-#
+def margin(trade_date: str = None,
+           exchange_id: str = None,
+           start_date: str = None,
+           end_date: str = None):
+    """ 获取融资融券交易概况""""
+    pro = ts.pro_api()
+    res = pro.margin(trade_date=trade_date,
+                     exchange_id=exchange_id,
+                     start_date=start_date,
+                     end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: margin with trade_date={trade_date}, '
+                     f'exchange_id={exchange_id}, start_date={start_date}, end_date={end_date}')
+    return res
+
+
 # 'margin_detail':  # New, 融资融券交易明！
+def margin_detail(trade_date: str = None,
+                  ts_code: str = None,
+                  start_date: str = None,
+                  end_date: str = None):
+    """ 获取融资融券交易明细""""
+    pro = ts.pro_api()
+    res = pro.margin_detail(trade_date=trade_date,
+                            ts_code=ts_code,
+                            start_date=start_date,
+                            end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: margin_detail with trade_date={trade_date}, '
+                     f'ts_code={ts_code}, start_date={start_date}, end_date={end_date}')
+    return res
 
 
 # Market Data
@@ -2194,9 +2302,34 @@ def index_basic(ts_code: str = None,
     return res
 
 
-# 'ths_index_basic':  # New, 同花顺指数基本信息
-#
+# 'ths_index_basic':  # New, 同花顺概念和指数基本信息
+def ths_index(ts_code: str = None,
+              exchange: str = None,
+              type: str = None) -> pd.DataFrame:
+    """ 获取同花顺概念和指数基本信息"""
+    pro = ts.pro_api()
+    res = pro.ths_index(ts_code=ts_code,
+                        exchange=exchange,
+                        type=type)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_index with ts_code={ts_code}, '
+                     f'exchange={exchange}, type={type}')
+    return res
+
+
 # 'sw_industry_basic':  # New, 申万行业分类
+def index_classify(index_code: str = None,
+                   level: str = None,
+                   parent_code: str = None,
+                   src: str = None) -> pd.DataFrame:
+    """ 获取申万行业分类"""
+    pro = ts.pro_api()
+    res = pro.sw_industry(index_code=index_code,
+                          level=level,
+                          parent_code=parent_code,
+                          src=src)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry with index_code={index_code}, '
+                     f'level={level}, parent_code={parent_code}, src={src}')
+    return res
 
 
 def index_indicators(trade_date: str = None,
@@ -2261,14 +2394,78 @@ def index_indicators(trade_date: str = None,
     return res
 
 # 'ths_index_daily':  # New, 同花顺行业指数日线行情!
-#
+def ths_daily(ts_code: str = None,
+              trade_date: str = None,
+              start_date: str = None,
+              end_date: str = None) -> pd.DataFrame:
+    """ 获取同花顺行业指数日线行情"""
+    pro = ts.pro_api()
+    res = pro.ths_index_daily(ts_code=ts_code,
+                              trade_date=trade_date,
+                              start_date=start_date,
+                              end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+    return res
+
+
 # 'ths_index_weight':  # New, 同花顺行业指数成分股权重!
-#
+def ths_member(ts_code: str = None,
+               code: str = None) -> pd.DataFrame:
+    """ 获取同花顺行业指数成分股权重"""
+    pro = ts.pro_api()
+    res = pro.ths_index_weight(ts_code=ts_code,
+                               code=code)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_member with ts_code={ts_code}, code={code}')
+    return res
+
+
 # 'ci_index_daily':  # New, 中信指数日线行情!
-#
+def ci_daily(ts_code: str = None,
+             trade_date: str = None,
+             start_date: str = None,
+             end_date: str = None) -> pd.DataFrame:
+    """ 获取中信指数日线行情"""
+    pro = ts.pro_api()
+    res = pro.ci_index_daily(ts_code=ts_code,
+                             trade_date=trade_date,
+                             start_date=start_date,
+                             end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ci_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+    return res
+
+
 # 'sw_index_daily':  # New, 申万指数日线行情!
-#
-# 'global_index_daily':  # New, 全球指数日线行情!
+def sw_daily(ts_code: str = None,
+             trade_date: str = None,
+             start_date: str = None,
+             end_date: str = None) -> pd.DataFrame:
+    """ 获取申万指数日线行情"""
+    pro = ts.pro_api()
+    res = pro.sw_index_daily(ts_code=ts_code,
+                             trade_date=trade_date,
+                             start_date=start_date,
+                             end_date   =end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+    return res
+
+
+# New, 全球指数日线行情!
+def index_global(ts_code: str = None,
+                 trade_date: str = None,
+                 start_date: str = None,
+                 end_date: str = None) -> pd.DataFrame:
+    """ 获取全球指数日线行情"""
+    pro = ts.pro_api()
+    res = pro.global_index_daily(ts_code=ts_code,
+                                 trade_date=trade_date,
+                                 start_date=start_date,
+                                 end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_global with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+    return res
 
 
 def composite(index: str = None,
@@ -2491,7 +2688,20 @@ def future_basic(exchange: str = None,
     return res
 
 
-# 'future_mapping':  # New, 期货合约映射表!
+# New, 期货合约映射表!
+def fut_mapping(ts_code: str = None,
+                trade_date: str = None,
+                start_date: str = None,
+                end_date: str = None) -> pd.DataFrame:
+    """ 获取期货合约映射表"""
+    pro = ts.pro_api()
+    res = pro.fut_mapping(ts_code=ts_code,
+                          trade_date=trade_date,
+                          start_date=start_date,
+                          end_date=end_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_mapping with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+    return res
 
 
 def options_basic(exchange: str = None,
@@ -2611,8 +2821,41 @@ def future_daily(trade_date: str = None,
     return res
 
 # 'future_weekly':  # New, 期货周线行情!
-#
+def fut_weekly(ts_code: str = None,
+               trade_date: str = None,
+               start_date: str = None,
+               end_date: str = None,
+               exchange: str = None) -> pd.DataFrame:
+    """ 获取期货周线行情"""
+    pro = ts.pro_api()
+    res = pro.fut_weekly_monthly(ts_code=ts_code,
+                                 trade_date=trade_date,
+                                 start_date=start_date,
+                                 end_date=end_date,
+                                 freq='week',
+                                 exchange=exchange)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_weekly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}, exchange={exchange}')
+    return res
+
+
 # 'future_monthly':  # New, 期货月线行情!
+def fut_monthly(ts_code: str = None,
+                trade_date: str = None,
+                start_date: str = None,
+                end_date: str = None,
+                exchange: str = None) -> pd.DataFrame:
+    """ 获取期货周线行情"""
+    pro = ts.pro_api()
+    res = pro.fut_weekly_monthly(ts_code=ts_code,
+                                 trade_date=trade_date,
+                                 start_date=start_date,
+                                 end_date=end_date,
+                                 freq='month',
+                                 exchange=exchange)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_monthly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}, exchange={exchange}')
+    return res
 
 
 def options_daily(trade_date: str = None,
