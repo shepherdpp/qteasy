@@ -1693,11 +1693,11 @@ TABLE_MASTERS = {
          '', '', '', '', '', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date',
+        ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', 'bak_daily', 'trade_date', 'trade_date',
          '19990101', '', '', '', '', '', '', ''],
 
     'index_indicator':
-        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'trade_date',
+        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_dailybasic', 'trade_date', 'trade_date',
          '20040102', '', '', '', '', '', '', ''],
 
     'index_weight':
