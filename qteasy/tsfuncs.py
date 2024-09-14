@@ -2731,7 +2731,30 @@ def sw_daily(ts_code: str = None,
 
     Parameters
     ----------
-    
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    指数代码
+        trade_date	    str	    Y	    交易日期
+        name	        str	    Y	    指数名称
+        open	        float	Y	    开盘点位
+        low	            float	Y	    最低点位
+        high	        float	Y	    最高点位
+        close	        float	Y	    收盘点位
+        change	        float	Y	    涨跌点位
+        pct_change	    float	Y	    涨跌幅
+        vol	            float	Y	    成交量（万股）
+        amount	        float	Y	    成交额（万元）
+        pe	            float	Y	    市盈率
+        pb	            float	Y	    市净率
+        float_mv	    float	Y	    流通市值（万元）
+        total_mv	    float	Y	    总市值（万元）
     """
     pro = ts.pro_api()
     res = pro.sw_index_daily(ts_code=ts_code,
@@ -2748,7 +2771,32 @@ def index_global(ts_code: str = None,
                  trade_date: str = None,
                  start_date: str = None,
                  end_date: str = None) -> pd.DataFrame:
-    """ 获取全球指数日线行情"""
+    """ 获取全球指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS指数代码
+        trade_date	    str	    Y	    交易日
+        open	        float	Y	    开盘点位
+        close	        float	Y	    收盘点位
+        high	        float	Y	    最高点位
+        low	            float	Y	    最低点位
+        pre_close	    float	Y	    昨日收盘点
+        change	        float	Y	    涨跌点位
+        pct_chg	        float	Y	    涨跌幅
+        swing	        float	Y	    振幅
+        vol	            float	Y	    成交量 （大部分无此项数据）
+        amount	        float	N	    成交额 （大部分无此项数据）
+    """
     pro = ts.pro_api()
     res = pro.global_index_daily(ts_code=ts_code,
                                  trade_date=trade_date,
@@ -2984,7 +3032,23 @@ def fut_mapping(ts_code: str = None,
                 trade_date: str = None,
                 start_date: str = None,
                 end_date: str = None) -> pd.DataFrame:
-    """ 获取期货合约映射表"""
+    """ 获取期货合约映射表
+
+    Parameters
+    ----------
+    ts_code: str, 合约代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    连续合约代码
+        trade_date	    str	    Y	    起始日期
+        mapping_ts_code	str	    Y	    期货合约代码
+    """
     pro = ts.pro_api()
     res = pro.fut_mapping(ts_code=ts_code,
                           trade_date=trade_date,
@@ -3111,13 +3175,45 @@ def future_daily(trade_date: str = None,
                      f'ts_code={future}, exchange={exchange}, start_date={start}, end_date={end}, fields={fields}')
     return res
 
+
 # 'future_weekly':  # New, 期货周线行情!
 def fut_weekly(ts_code: str = None,
                trade_date: str = None,
                start_date: str = None,
                end_date: str = None,
                exchange: str = None) -> pd.DataFrame:
-    """ 获取期货周线行情"""
+    """ 获取期货周线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+    exchange: str, 交易所代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column      type    default description
+        ts_code	    str	    Y	    期货代码
+        trade_date	str	    Y	    交易日期
+        freq	    str	    Y	    频率(周week,月month)
+        open	    float	Y	    (周/月)开盘价
+        high	    float	Y	    (周/月)最高价
+        low	        float	Y	    (周/月)最低价
+        close	    float	Y	    (周/月)收盘价
+        pre_close	float	Y	    前一(周/月)收盘价
+        settle	    float	Y	    (周/月)结算价
+        pre_settle	float	Y	    前一(周/月)结算价
+        vol	        float	Y	    (周/月)成交量(手)
+        amount	    float	Y	    (周/月)成交金额(万元)
+        oi	        float	Y	    (周/月)持仓量(手)
+        oi_chg	    float	Y	    (周/月)持仓量变化
+        exchange	str	    Y	    交易所
+        change1	    float	Y	    (周/月)涨跌1 收盘价-昨结算价
+        change2	    float	Y	    (周/月)涨跌2 结算价-昨结算价
+    """
     pro = ts.pro_api()
     res = pro.fut_weekly_monthly(ts_code=ts_code,
                                  trade_date=trade_date,
@@ -3136,7 +3232,38 @@ def fut_monthly(ts_code: str = None,
                 start_date: str = None,
                 end_date: str = None,
                 exchange: str = None) -> pd.DataFrame:
-    """ 获取期货周线行情"""
+    """ 获取期货周线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+    exchange: str, 交易所代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column      type    default description
+        ts_code	    str	    Y	    期货代码
+        trade_date	str	    Y	    交易日期
+        freq	    str	    Y	    频率(周week,月month)
+        open	    float	Y	    (周/月)开盘价
+        high	    float	Y	    (周/月)最高价
+        low	        float	Y	    (周/月)最低价
+        close	    float	Y	    (周/月)收盘价
+        pre_close	float	Y	    前一(周/月)收盘价
+        settle	    float	Y	    (周/月)结算价
+        pre_settle	float	Y	    前一(周/月)结算价
+        vol	        float	Y	    (周/月)成交量(手)
+        amount	    float	Y	    (周/月)成交金额(万元)
+        oi	        float	Y	    (周/月)持仓量(手)
+        oi_chg	    float	Y	    (周/月)持仓量变化
+        exchange	str	    Y	    交易所
+        change1	    float	Y	    (周/月)涨跌1 收盘价-昨结算价
+        change2	    float	Y	    (周/月)涨跌2 结算价-昨结算价
+    """
     pro = ts.pro_api()
     res = pro.fut_weekly_monthly(ts_code=ts_code,
                                  trade_date=trade_date,
