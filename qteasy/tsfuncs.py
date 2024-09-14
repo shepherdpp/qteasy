@@ -2136,7 +2136,7 @@ def margin(trade_date: str = None,
            exchange_id: str = None,
            start_date: str = None,
            end_date: str = None):
-    """ 获取融资融券交易概况""""
+    """ 获取融资融券交易概况"""
     pro = ts.pro_api()
     res = pro.margin(trade_date=trade_date,
                      exchange_id=exchange_id,
@@ -2152,7 +2152,7 @@ def margin_detail(trade_date: str = None,
                   ts_code: str = None,
                   start_date: str = None,
                   end_date: str = None):
-    """ 获取融资融券交易明细""""
+    """ 获取融资融券交易明细"""
     pro = ts.pro_api()
     res = pro.margin_detail(trade_date=trade_date,
                             ts_code=ts_code,

@@ -15,7 +15,19 @@
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
-TABLE_USAGES = ['sys', 'cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins', 'reference']
+TABLE_USAGES = [
+    'sys',   # 系统数据表，用于存储系统数据
+    'cal',   # 交易日历，用于存储交易状态
+    'basics',   # 基本信息表，用于存储与个股有关的，但与时间无关的基本特征信息
+    'data',   # 数据表，用于存储与个股有关的，且随时间连续变化的变量，连续变化的频率可以有多种
+    'mins',   # 使用方法等同于data，用于存储分钟线数据
+    'adj',   # 使用方法等同于data，复权系数，用于存储复权因子等数据，
+    'events',  # 事件表，用于存储与个股有关，但是不定期发生的事件数据，数据是稀疏的，且这些数据对个股的影响是瞬时的
+    'status',  # 状态变化表，用于存储与个股有关，不定期发生的状态的改变，数据也是稀疏的，但状态可以持续一段时间，该表中存储状态的起止时间
+    'comp',  # 成分表，用于存储指数、基金、期货等金融产品的成分以及比例数据
+    'report',   # 相当于事件表，用于存储公司财务报表数据
+    'reference',  # 参考数据表，用于存储与任何特定资产都无关的参考数据，如宏观经济数据等，使用方法同data
+]
 
 '''
 量化投资研究所需用到各种金融数据，DataSource提供了管理金融数据的方式：
@@ -450,6 +462,8 @@ DATA_TABLE_MAP = {
                                                        '个股资金流向 - 特大单卖出金额（万元）'],
     ('net_mf_vol', 'd', 'E'):                         ['money_flow', 'net_mf_vol', '个股资金流向 - 净流入量（手）'],
     ('net_mf_amount', 'd', 'E'):                      ['money_flow', 'net_mf_amount', '个股资金流向 - 净流入额（万元）'],
+    ('up_limit', 'd', 'E'):                           ['stock_limit', 'up_limit', '涨停板 - 涨停价'],
+    ('down_limit', 'd', 'E'):                         ['stock_limit', 'down_limit', '跌停板 - 跌停价'],
     ('ggt_ss', 'd', 'Any'):                           ['moneyflow_hsgt', 'ggt_ss', '沪深港通资金流向 - 港股通（上海）'],
     ('ggt_sz', 'd', 'Any'):                           ['moneyflow_hsgt', 'ggt_sz', '沪深港通资金流向 - 港股通（深圳）'],
     ('hgt', 'd', 'Any'):                              ['moneyflow_hsgt', 'hgt', '沪深港通资金流向 - 沪股通（百万元）'],
@@ -1392,7 +1406,7 @@ TABLE_MASTER_COLUMNS = [
     'akshare',   # 13, 从akshare获取数据时使用的api名
     'ak_fill_arg_name',   # 14, 从akshare获取数据时使用的api参数名
     'ak_fill_arg_type',   # 15, 从akshare获取数据时使用的api参数类型
-    'ak_arg_rng',  # 16, 从eastmoney获取数据时使用的api参数取值范围
+    'ak_arg_rng',  # 16, 从akshare获取数据时使用的api参数取值范围
 ]
 TABLE_MASTERS = {
 
@@ -1463,7 +1477,8 @@ TABLE_MASTERS = {
          'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', '', '', '', '', '', ''],
 
     'fund_basic':
-        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none', 'fund_basic', 'market', 'list', 'E,O', '', '', '', '', '', '', ''],
+        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none', 'fund_basic', 'market', 'list', 'E,O', '', '', '', '', '',
+         '', ''],
 
     'future_basic':
         ['future_basic', '期货基本信息', 'basics', 'FT', 'none', 'future_basic', 'exchange', 'list',
