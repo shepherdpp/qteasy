@@ -1420,7 +1420,7 @@ class Trader(object):
         self.write_trade_log_file(**trade_log)
         # 发送system log信息
         self.send_message(f'<RESULT DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
-                          f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
+                          f'[{color_tag}]¥{prev_amount:.3f}->¥{updated_amount:.3f}[/{color_tag}]')
 
     def log_qty_delivery(self, delivery_result) -> None:
         """ 根据股票持仓交割记录，生成详细的trade_log和system_log
