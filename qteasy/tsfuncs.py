@@ -125,12 +125,23 @@ def trade_cal(exchange: str = 'SSE',
         cal_date        str     日历日期
         is_open         str     是否交易 0休市 1交易
         pretrade_date   str     默认不显示，  上一个交易日
+
+    Examples
+    --------
+    >>> from qteasy.tsfuncs import trade_cal
+    >>> df = trade_cal(exchange='SSE', start='20200101', end='20200131')
+    >>> df
+        exchange    cal_date    is_open pretrade_date
+    0   SSE         20200101    0       20191231
+    1   SSE         20200102    1       20200101
+    2   SSE         20200103    1       20200102
+    ...
     """
     pro = ts.pro_api()
     res = pro.trade_cal(exchange=exchange,
-                              start_date=start,
-                              end_date=end,
-                              is_open=is_open)
+                        start_date=start,
+                        end_date=end,
+                        is_open=is_open)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table trade_calendar with exchange={exchange}, start_date={start}'
                      f'end_date={end}, is_open={is_open}')
@@ -506,8 +517,8 @@ def daily_basic(ts_code: object = None,
                 trade_date: object = None,
                 start: object = None,
                 end: object = None) -> pd.DataFrame:
-    """ 获取个股行情 (日线)
-    TODO: 以下字段需要进一步确认
+    """ 获取个股每日技术指标
+
     Parameters
     ----------
     ts_code: str, 股票代码
@@ -540,7 +551,8 @@ def daily_basic(ts_code: object = None,
 
     Examples
     --------
-    >>> pro.daily_basic(ts_code='000001.SZ', trade_date='20180713')
+    >>> from qteasy.tsfuncs import daily_basic
+    >>> daily_basic(ts_code='000001.SZ', trade_date='20180713')
         ts_code  trade_date  close  turnover_rate  ...  free_share  total_mv      circ_mv
     0    000001.SZ    20180713  11.01         0.0000  ...     165.000  1845.000  1845.000000
     1    000001.SZ    20180712  11.01         0.0000  ...     165.000  1845.000  1845.000000
@@ -564,10 +576,10 @@ def daily_basic(ts_code: object = None,
     return res
 
 
-def daily_basic2(ts_code: object = None,
-                 trade_date: object = None,
-                 start: object = None,
-                 end: object = None) -> pd.DataFrame:
+def bak_daily(ts_code: object = None,
+              trade_date: object = None,
+              start: object = None,
+              end: object = None) -> pd.DataFrame:
     """ 获取个股行情
 
     Parameters
@@ -581,28 +593,42 @@ def daily_basic2(ts_code: object = None,
     -------
     pd.DataFrame
         column          type    default     description
-        ts_code	        str	    Y	        TS股票代码
+        ts_code	        str	    Y	        股票代码
         trade_date	    str	    Y	        交易日期
-        close	        float	Y	        当日收盘价
-        turnover_rate	float	Y	        换手率
-        turnover_rate_f	float	Y	        换手率(自由流通股)
-        volume_ratio	float	Y	        量比
-        pe	            float	Y	        市盈率
-        pe_ttm	        float	Y	        市盈率TTM
-        pb	            float	Y	        市净率
-        ps	            float	Y	        市销率
-        ps_ttm	        float	Y	        市销率TTM
-        dv_ratio	    float	Y	        股息率(%)，如果是指数，则为股息率
-        dv_ttm	        float	Y	        股息率TTM(%)，如果是指数，则为股息率TTM
-        total_share	    float	Y	        总股本 （万）
-        float_share	    float	Y	        流通股本 （万）
-        free_share	    float	Y	        自由流通股本 （万）
-        total_mv	    float	Y	        总市值 （万元）
-        circ_mv	        float	Y	        流通市值（万元）
+        name	        str	    Y	        股票名称
+        pct_change	    float	Y	        涨跌幅
+        close	        float	Y	        收盘价
+        change	        float	Y	        涨跌额
+        open	        float	Y	        开盘价
+        high	        float	Y	        最高价
+        low	            float	Y	        最低价
+        pre_close	    float	Y	        昨收价
+        vol_ratio	    float	Y	        量比
+        turn_over	    float	Y	        换手率
+        swing	        float	Y	        振幅
+        vol	            float	Y	        成交量
+        amount	        float	Y	        成交额
+        selling	        float	Y	        内盘（主动卖，手）
+        buying	        float	Y	        外盘（主动买， 手）
+        total_share	    float	Y	        总股本(亿)
+        float_share	    float	Y	        流通股本(亿)
+        pe	            float	Y	        市盈(动)
+        industry	    str	    Y	        所属行业
+        area	        str	    Y	        所属地域
+        float_mv	    float	Y	        流通市值
+        total_mv	    float	Y	        总市值
+        avg_price	    float	Y	        平均价
+        strength	    float	Y	        强弱度(%)
+        activity	    float	Y	        活跃度(%)
+        avg_turnover	float	Y	        笔换手
+        attack	        float	Y	        攻击波(%)
+        interval_3	    float	Y	        近3月涨幅
+        interval_6	    float	Y	        近6月涨幅
 
     Examples
     --------
-    >>> pro.daily_basic2(ts_code='000001.SZ', trade_date='20180713')
+    >>> from qteasy.tsfuncs import bak_daily
+    >>> bak_daily(ts_code='000001.SZ', trade_date='20180713')
 
     """
     pro = ts.pro_api()
@@ -616,10 +642,10 @@ def daily_basic2(ts_code: object = None,
     return res
 
 
-def index_daily_basic(ts_code: object = None,
-                      trade_date: object = None,
-                      start: object = None,
-                      end: object = None) -> pd.DataFrame:
+def index_dailybasic(ts_code: object = None,
+                     trade_date: object = None,
+                     start: object = None,
+                     end: object = None) -> pd.DataFrame:
     """ 获取指数行情
 
     Parameters
@@ -633,19 +659,26 @@ def index_daily_basic(ts_code: object = None,
     -------
     pd.DataFrame
         column          type    default     description
-        ts_code	        str	    Y	        TS股票代码
+        ts_code	        str	    Y	        TS代码
         trade_date	    str	    Y	        交易日期
-        close	        float	Y	        当日收盘价
+        total_mv	    float	Y	        当日总市值（元）
+        float_mv	    float	Y	        当日流通市值（元）
+        total_share	    float	Y	        当日总股本（股）
+        float_share	    float	Y	        当日流通股本（股）
+        free_share	    float	Y	        当日自由流通股本（股）
         turnover_rate	float	Y	        换手率
-        turnover_rate_f	float	Y	        换手率(自由流通股)
-        """
+        turnover_rate_f	float	Y	        换手率(基于自由流通股本)
+        pe	            float	Y	        市盈率
+        pe_ttm	        float	Y	        市盈率TTM
+        pb	            float	Y	        市净率
+    """
     pro = ts.pro_api()
     res = pro.index_dailybasic(ts_code=ts_code,
                                trade_date=trade_date,
                                start_date=start,
                                end_date=end)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
-                     f' table index_daily_basic with ts_code={ts_code}, trade_date={trade_date}'
+                     f' table index_dailybasic with ts_code={ts_code}, trade_date={trade_date}'
                      f'start_date={start}, end_date={end}')
     return res
 
@@ -675,7 +708,6 @@ def realtime_min(ts_code, freq):
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stk_mins with ts_code={ts_code}, freq={freq}')
     return res
-
 
 
 def mins1(ts_code,
@@ -2044,7 +2076,42 @@ def dividend(ts_code: str = None,
              record_date: str = None,
              ex_date: str = None,
              imp_ann_date: str = None):
-    """ 获取分红送股数据"""
+    """ 获取分红送股数据
+
+    Parameters
+    ----------
+    ts_code: str
+        股票代码
+    ann_date: str
+        公告日期
+    record_date: str
+        股权登记日期
+    ex_date: str
+        除权除息日
+    imp_ann_date: str
+        实施公告日
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS代码
+        end_date	    str	    Y	    分红年度
+        ann_date	    str	    Y	    预案公告日
+        div_proc	    str	    Y	    实施进度
+        stk_div	        float	Y	    每股送转
+        stk_bo_rate	    float	Y	    每股送股比例
+        stk_co_rate	    float	Y	    每股转增比例
+        cash_div	    float	Y	    每股分红（税后）
+        cash_div_tax	float	Y	    每股分红（税前）
+        record_date	    str	    Y	    股权登记日
+        ex_date	        str	    Y	    除权除息日
+        pay_date	    str	    Y	    派息日
+        div_listdate	str	    Y	    红股上市日
+        imp_ann_date	str	    Y	    实施公告日
+        base_date	    str	    N	    基准日
+        base_share	    float	N	    基准股本（万）
+    """
     pro = ts.pro_api()
     res = pro.dividend(ts_code=ts_code,
                        ann_date=ann_date,
@@ -2059,7 +2126,35 @@ def dividend(ts_code: str = None,
 # 'top_list':  # New, 龙虎榜交易明细!
 def top_list(trade_date: str = None,
              ts_code: str = None):
-    """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000"""
+    """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000
+
+    Parameters
+    ----------
+    trade_date: str
+        交易日期
+    ts_code: str
+        股票代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        trade_date	    str	    Y	    交易日期
+        ts_code	        str	    Y	    TS代码
+        name	        str	    Y	    名称
+        close	        float	Y	    收盘价
+        pct_change	    float	Y	    涨跌幅
+        turnover_rate	float	Y	    换手率
+        amount	        float	Y	    总成交额
+        l_sell	        float	Y	    龙虎榜卖出额
+        l_buy	        float	Y	    龙虎榜买入额
+        l_amount	    float	Y	    龙虎榜成交额
+        net_amount	    float	Y	    龙虎榜净买入额
+        net_rate	    float	Y	    龙虎榜净买额占比
+        amount_rate	    float	Y	    龙虎榜成交额占比
+        float_values	float	Y	    当日流通市值
+        reason	        str	    Y	    上榜理由
+    """
     pro = ts.pro_api()
     res = pro.top_list(trade_date=trade_date,
                        ts_code=ts_code)
