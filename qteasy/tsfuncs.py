@@ -2123,10 +2123,10 @@ def dividend(ts_code: str = None,
     return res
 
 
-# 'top_list':  # New, 龙虎榜交易明细!
-def top_list(trade_date: str = None,
+# 'top_inst':  # New, 龙虎榜机构交易明细!
+def top_inst(trade_date: str = None,
              ts_code: str = None):
-    """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000
+    """ 龙虎榜机构交易明细，2005年至今全部历史数据，单次获取数量不超过10000
 
     Parameters
     ----------
@@ -2141,31 +2141,15 @@ def top_list(trade_date: str = None,
         column          type    default description
         trade_date	    str	    Y	    交易日期
         ts_code	        str	    Y	    TS代码
-        name	        str	    Y	    名称
-        close	        float	Y	    收盘价
-        pct_change	    float	Y	    涨跌幅
-        turnover_rate	float	Y	    换手率
-        amount	        float	Y	    总成交额
-        l_sell	        float	Y	    龙虎榜卖出额
-        l_buy	        float	Y	    龙虎榜买入额
-        l_amount	    float	Y	    龙虎榜成交额
-        net_amount	    float	Y	    龙虎榜净买入额
-        net_rate	    float	Y	    龙虎榜净买额占比
-        amount_rate	    float	Y	    龙虎榜成交额占比
-        float_values	float	Y	    当日流通市值
+        exalter	        str	    Y	    营业部名称
+        side	        str	    Y	    买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名
+        buy	            float	Y	    买入额（元）
+        buy_rate	    float	Y	    买入占总成交比例
+        sell	        float	Y	    卖出额（元）
+        sell_rate	    float	Y	    卖出占总成交比例
+        net_buy	        float	Y	    净成交额（元）
         reason	        str	    Y	    上榜理由
     """
-    pro = ts.pro_api()
-    res = pro.top_list(trade_date=trade_date,
-                       ts_code=ts_code)
-    logger_core.info(f'Downloaded {len(res)} rows from tushare: top_list with ts_code={ts_code}, trade_date={trade_date}')
-    return res
-
-
-# 'top_inst':  # New, 龙虎榜机构交易明细!
-def top_inst(trade_date: str = None,
-             ts_code: str = None):
-    """ 龙虎榜机构交易明细，2005年至今全部历史数据，单次获取数量不超过10000"""
     pro = ts.pro_api()
     res = pro.top_inst(trade_date=trade_date,
                        ts_code=ts_code)
@@ -2178,7 +2162,31 @@ def index_member_all(index_code: str = None,
                      level: str = None,
                      parent_code: str = None,
                      src: str = None):
-    """ 获取申万行业分类明细(成分股)"""
+    """ 获取申万行业分类明细(成分股)
+
+    Parameters
+    ---------
+    index_code: str
+        行业代码
+    level: str
+        行业级别
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        l1_code	        str	    Y	一级行业代码
+        l1_name	        str	    Y	一级行业名称
+        l2_code	        str	    Y	二级行业代码
+        l2_name	        str	    Y	二级行业名称
+        l3_code	        str	    Y	三级行业代码
+        l3_name	        str	    Y	三级行业名称
+        ts_code	        str	    Y	成分股票代码
+        name	        str	    Y	成分股票名称
+        in_date	        str	    Y	纳入日期
+        out_date	    str	    Y	剔除日期
+        is_new	        str	    Y	是否最新Y是N否
+    """
     pro = ts.pro_api()
     res = pro.index_member_all(index_code=index_code,
                                level=level,
@@ -2194,7 +2202,31 @@ def block_trade(ts_code: str = None,
                 trade_date: str = None,
                 start_date: str = None,
                 end_date: str = None):
-    """ 获取大宗交易数据"""
+    """ 获取大宗交易数据
+
+    Parameters
+    ----------
+    ts_code: str
+        股票代码
+    trade_date: str
+        交易日期
+    start_date: str
+        开始日期
+    end_date: str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS代码
+        trade_date	    str	    Y	    交易日历
+        price	        float	Y	    成交价
+        vol	            float	Y	    成交量（万股）
+        amount	        float	Y	    成交金额
+        buyer	        str	    Y	    买方营业部
+        seller	        str	    Y	    卖方营业部
+    """
     pro = ts.pro_api()
     res = pro.block_trade(ts_code=ts_code,
                           trade_date=trade_date,
@@ -2211,18 +2243,53 @@ def stk_holdertrade(ts_code: str = None,
                     start_date: str = None,
                     end_date: str = None,
                     trade_type: str = None,
-                    holder_name: str = None):
-    """ 获取股东交易（股东增减持）数据"""
+                    holder_type: str = None):
+    """ 获取股东交易（股东增减持）数据
+
+    Parameters
+    ----------
+    ts_code: str
+        股票代码
+    ann_date: str
+        公告日期
+    start_date: str
+        开始日期
+    end_date: str
+        结束日期
+    trade_type: str
+        交易类型
+    holder_type: str
+        股东类型
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS代码
+        ann_date	    str     Y	    公告日期
+        holder_name	    str     Y	    股东名称
+        holder_type	    str     Y	    股东类型G高管P个人C公司
+        in_de	        str     Y	    类型IN增持DE减持
+        change_vol	    float	Y	    变动数量
+        change_ratio	float	Y	    占流通比例（%）
+        after_share	    float	Y	    变动后持股
+        after_ratio	    float	Y	    变动后占流通比例（%）
+        avg_price	    float	Y	    平均价格
+        total_share	    float	Y	    持股总数
+        begin_date	    str	    N	    增减持开始日期
+        close_date	    str	    N	    增减持结束日期
+
+    """
     pro = ts.pro_api()
     res = pro.stk_holdertrade(ts_code=ts_code,
                               ann_date=ann_date,
                               start_date=start_date,
                               end_date=end_date,
                               trade_type=trade_type,
-                              holder_name=holder_name)
+                              holder_type=holder_type)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: stk_holdertrade with ts_code={ts_code}, '
                      f'ann_date={ann_date}, start_date={start_date}, end_date={end_date}, trade_type={trade_type}, '
-                     f'holder_name={holder_name}')
+                     f'holder_type={holder_type}')
     return res
 
 
@@ -2231,7 +2298,33 @@ def margin(trade_date: str = None,
            exchange_id: str = None,
            start_date: str = None,
            end_date: str = None):
-    """ 获取融资融券交易概况"""
+    """ 获取融资融券交易概况
+
+    Parameters
+    ----------
+    trade_date: str
+        交易日期
+    exchange_id: str
+        交易所代码
+    start_date: str
+        开始日期
+    end_date: str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    description
+        trade_date	    str	    交易日期
+        exchange_id	    str	    交易所代码（SSE上交所SZSE深交所BSE北交所）
+        rzye	        float	融资余额(元)
+        rzmre	        float	融资买入额(元)
+        rzche	        float	融资偿还额(元)
+        rqye	        float	融券余额(元)
+        rqmcl	        float	融券卖出量(股,份,手)
+        rzrqye	        float	融资融券余额(元)
+        rqyl	        float	融券余量(股,份,手)
+    """
     pro = ts.pro_api()
     res = pro.margin(trade_date=trade_date,
                      exchange_id=exchange_id,
@@ -2247,7 +2340,35 @@ def margin_detail(trade_date: str = None,
                   ts_code: str = None,
                   start_date: str = None,
                   end_date: str = None):
-    """ 获取融资融券交易明细"""
+    """ 获取融资融券交易明细
+
+    Parameters
+    ----------
+    trade_date: str
+        交易日期
+    ts_code: str
+        股票代码
+    start_date: str
+        开始日期
+    end_date: str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    description
+        trade_date	    str	    交易日期
+        ts_code	        str	    TS股票代码
+        name	        str	    股票名称 （20190910后有数据）
+        rzye	        float	融资余额(元)
+        rqye	        float	融券余额(元)
+        rzmre	        float	融资买入额(元)
+        rqyl	        float	融券余量（股）
+        rzche	        float	融资偿还额(元)
+        rqchl	        float	融券偿还量(股)
+        rqmcl	        float	融券卖出量(股,份,手)
+        rzrqye	        float	融资融券余额(元)
+    """
     pro = ts.pro_api()
     res = pro.margin_detail(trade_date=trade_date,
                             ts_code=ts_code,
@@ -2488,12 +2609,40 @@ def index_indicators(trade_date: str = None,
                      f'trade_date={trade_date}, start_date={start}, end_date={end}, fields={fields}')
     return res
 
+
 # 'ths_index_daily':  # New, 同花顺行业指数日线行情!
 def ths_daily(ts_code: str = None,
               trade_date: str = None,
               start_date: str = None,
               end_date: str = None) -> pd.DataFrame:
-    """ 获取同花顺行业指数日线行情"""
+    """ 获取同花顺行业指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS指数代码
+        trade_date	    str	    Y	    交易日
+        close	        float	Y	    收盘点位
+        open	        float	Y	    开盘点位
+        high	        float	Y	    最高点位
+        low	            float	Y	    最低点位
+        pre_close	    float	Y	    昨日收盘点
+        avg_price	    float	Y	    平均价
+        change	        float	Y	    涨跌点位
+        pct_change	    float	Y	    涨跌幅
+        vol	            float	Y	    成交量
+        turnover_rate	float	Y	    换手率
+        total_mv	    float	N	    总市值
+        float_mv	    float	N	    流通市值
+    """
     pro = ts.pro_api()
     res = pro.ths_index_daily(ts_code=ts_code,
                               trade_date=trade_date,
@@ -2507,7 +2656,25 @@ def ths_daily(ts_code: str = None,
 # 'ths_index_weight':  # New, 同花顺行业指数成分股权重!
 def ths_member(ts_code: str = None,
                code: str = None) -> pd.DataFrame:
-    """ 获取同花顺行业指数成分股权重"""
+    """ 获取同花顺行业指数成分股权重
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    code: str, 指数代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    指数代码
+        code	        str	    Y	    股票代码
+        name	        str	    Y	    股票名称
+        weight	        float	N	    权重(暂无)
+        in_date	        str	    N	    纳入日期(暂无)
+        out_date	    str	    N	    剔除日期(暂无)
+        is_new	        str	    N	    是否最新Y是N否
+    """
     pro = ts.pro_api()
     res = pro.ths_index_weight(ts_code=ts_code,
                                code=code)
@@ -2520,7 +2687,31 @@ def ci_daily(ts_code: str = None,
              trade_date: str = None,
              start_date: str = None,
              end_date: str = None) -> pd.DataFrame:
-    """ 获取中信指数日线行情"""
+    """ 获取中信指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start_date: str, 开始日期
+    end_date: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    指数代码
+        trade_date	    str	    Y	    交易日期
+        open	        float	Y	    开盘点位
+        low	            float	Y	    最低点位
+        high	        float	Y	    最高点位
+        close	        float	Y	    收盘点位
+        pre_close	    float	Y	    昨日收盘点位
+        change	        float	Y	    涨跌点位
+        pct_change	    float	Y	    涨跌幅
+        vol	            float	Y	    成交量（万股）
+        amount	        float	Y	    成交额（万元）
+    """
     pro = ts.pro_api()
     res = pro.ci_index_daily(ts_code=ts_code,
                              trade_date=trade_date,
@@ -2536,7 +2727,12 @@ def sw_daily(ts_code: str = None,
              trade_date: str = None,
              start_date: str = None,
              end_date: str = None) -> pd.DataFrame:
-    """ 获取申万指数日线行情"""
+    """ 获取申万指数日线行情
+
+    Parameters
+    ----------
+    
+    """
     pro = ts.pro_api()
     res = pro.sw_index_daily(ts_code=ts_code,
                              trade_date=trade_date,
