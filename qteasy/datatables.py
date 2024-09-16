@@ -13,7 +13,7 @@
 
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
-AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
+AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare', 'akshare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
 TABLE_USAGES = [
     'sys',   # 系统数据表，用于存储系统数据
