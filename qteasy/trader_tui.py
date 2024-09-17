@@ -33,6 +33,11 @@ class SysLog(RichLog):
         ("ctrl+r", "resume_trader", "Resume"),
     ]
 
+    def write_message(self, msg):
+        """ adding time in front of msg and write"""
+        msg = self.app.trader.add_message_prefix(msg)
+        self.write(msg)
+
 
 class StrategyTree(Tree):
     """A widget to display the strategies."""
@@ -519,7 +524,7 @@ class TraderApp(App):
 
         self.status = 'running'
 
-        system_log.write(f"System started, status: {self.status}")
+        system_log.write_message(f"System started, status: {self.status}")
 
         trader_info = self.trader.info(detail=True)
         self.refresh_values(trader_info)
@@ -546,7 +551,7 @@ class TraderApp(App):
             # check the message queue of the trader
             if not self.trader.message_queue.empty():
                 msg = self.trader.message_queue.get()
-                system_log.write(msg)
+                system_log.write_message(msg)
 
                 if any(words in msg for words in ['RAN STRATEGY', 'RESULT', 'DELIVERY']):
                     # if ran strategy or got result from broker, refresh UI
@@ -557,7 +562,7 @@ class TraderApp(App):
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
                 msg = self.trader.broker.broker_messages.get()
-                system_log.write(msg)
+                system_log.write_message(msg)
 
             if self.trader.status not in ['running', 'paused']:
                 info_refresh_interval = 600  # every 1 minutes
@@ -580,7 +585,7 @@ class TraderApp(App):
             if self.trader.status not in ['running', 'paused']:
                 continue
 
-        system_log.write(f"System stopped, status: {self.status}")
+        system_log.write_message(f"System stopped, status: {self.status}")
 
     @work(exclusive=True, thread=True)
     def refresh_holdings(self):
@@ -902,13 +907,13 @@ class TraderApp(App):
     def action_pause_trader(self) -> None:
         """ Parse the trader"""
         syslog = self.query_one(SysLog)
-        syslog.write(f"ctrl-p pressed, Pausing the trader")
+        syslog.write_message(f"ctrl-p pressed, Pausing the trader")
         self.trader.add_task('pause')
 
     def action_resume_trader(self) -> None:
         """ Resume the trader"""
         syslog = self.query_one(SysLog)
-        syslog.write(f"ctrl-r pressed, Resuming the trader")
+        syslog.write_message(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
 
     def submit_order(self, symbol, position, qty, price, direction) -> None:
@@ -945,12 +950,12 @@ class TraderApp(App):
         if trade_order:
             self.trader.broker.order_queue.put(trade_order)
             order_id = trade_order['order_id']
-            syslog.write(f'Order <{order_id}> has been submitted to broker: '
-                         f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
-                         f'at price {trade_order["price"]:.2f}')
+            syslog.write_message(f'Order <{order_id}> has been submitted to broker: '
+                                 f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                                 f'at price {trade_order["price"]:.2f}')
 
         if not self.trader.is_market_open:
-            syslog.write(f'Market is not open, order might not be executed immediately')
+            syslog.write_message(f'Market is not open, order might not be executed immediately')
 
         return
 
