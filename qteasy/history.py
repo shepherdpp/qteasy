@@ -6,7 +6,7 @@
 # Created:  2020-02-16
 # Desc:
 #   HistoryPanel Class, and more history
-#   data manipulating functions.
+# data manipulating functions.
 # ======================================
 
 import pandas as pd

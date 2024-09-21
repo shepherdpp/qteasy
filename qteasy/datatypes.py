@@ -7,6 +7,7 @@
 # Desc:
 #   Definition of DataType class,
 # representing historical data types
-# that can be used by qteasy.
+# that can be used by qteasy, and the
+# collection of all built-in data types.
 # ======================================
 

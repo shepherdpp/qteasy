@@ -5,7 +5,8 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-11-29
 # Desc:
-#   Local historical data management.
+#   Definition of DataSource class, managing
+# local data storage and retrieval.
 # ======================================
 
 import os
