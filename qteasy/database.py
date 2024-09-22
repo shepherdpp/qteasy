@@ -18,10 +18,11 @@ import warnings
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from functools import lru_cache
 
-from .datatables import AVAILABLE_CHANNELS, AVAILABLE_DATA_FILE_TYPES, DATA_TABLE_MAP_COLUMNS
-from .datatables import TABLE_MASTERS, TABLE_SCHEMA, DATA_TABLE_MAP, TABLE_MASTER_COLUMNS, TABLE_USAGES
-from .datatables import DATA_TABLE_MAP_INDEX_NAMES, ADJUSTABLE_PRICE_TYPES
-from .datatables import DataConflictWarning
+from .datatypes import DATA_TYPE_MAP, DATA_TYPE_MAP_COLUMNS, DATA_TYPE_MAP_INDEX_NAMES
+
+from .datatables import AVAILABLE_CHANNELS, AVAILABLE_DATA_FILE_TYPES
+from .datatables import TABLE_MASTERS, TABLE_SCHEMA, TABLE_MASTER_COLUMNS, TABLE_USAGES
+from .datatables import ADJUSTABLE_PRICE_TYPES, DataConflictWarning
 
 from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
@@ -3721,9 +3722,9 @@ def get_dtype_map():
     Returns
     -------
     """
-    dtype_map = pd.DataFrame(DATA_TABLE_MAP).T
-    dtype_map.columns = DATA_TABLE_MAP_COLUMNS
-    dtype_map.index.names = DATA_TABLE_MAP_INDEX_NAMES
+    dtype_map = pd.DataFrame(DATA_TYPE_MAP).T
+    dtype_map.columns = DATA_TYPE_MAP_COLUMNS
+    dtype_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
     return dtype_map
 
 
