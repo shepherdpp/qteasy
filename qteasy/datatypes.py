@@ -12,7 +12,42 @@
 # ======================================
 
 
+"""
 
+DATA_TYPE_MAP:          定义数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到
+                        每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置
+
+
+
+1, DATA_TYPE_MAP:
+
+Data table mapping中各列的含义如下：
+htype_name(key):            数据类型名称（主键）
+
+freq(key):                  数据的可用频率（主键）
+                            min - 分钟数据
+                            d - 日数据
+                            w - 周数据
+                            m - 月数据
+                            q - 季度数据
+
+asset_type(key):            数据对应的金融资产类型:
+                            E - 股票
+                            IDX - 指数
+                            FT - 期货
+                            FD - 基金
+                            OPT - 期权
+                            THS - 同花顺指数
+                            SW - 申万行业指数
+
+table_name:                 历史数据所在的表的名称
+
+column:                     历史数据在表中的列名称
+
+description:                历史数据的详细描述，可以用于列搜索
+------------------------------------------------------------------------------------------------------------
+
+"""
 class DataType:
     """
     DataType class, representing historical data types that can be used by qteasy
