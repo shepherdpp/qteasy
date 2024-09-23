@@ -12,14 +12,73 @@
 # ======================================
 
 
+
 """
+
+
+数据类型的定义应该通过一个类来实现，因而用户自定义可以较容易实现。
+
+同时，qteasy应该提供相当完善的内置数据类型以减少用户自定义工作量。
+
+鉴于大量的内置数据类型需要被定义，那么这些数据类型的定义必须是简单地，参数化的，所幸数据类型类并不也不会太复杂，应该容易实现参数化定义。
+
+用法和输出
+首先是数据类型的用法和输出，看起来应统一为两个API：
+
+API1:
+data_type.get(start, end, frequency):获取该类型与个股无关的，区间内的单频数据，输出为类似Series 的数据
+
+API2:
+data_type.get(shares, start, end, frequency):
+获取该类型与给定个股有关的区间内单频数据
+
+以上API应该完全统一，不管是内置还是自定义类型都可返回相同格式的数据
+
+数据类型的类型
+其次应该研究的是数据类型的类型，有多少种不同类型的数据类型？当然，这里的类型取决于从数据表中获取数据的方式和产出，如股价数据和成份数据的获取方式就不同，前者直接用数据标签从表中读取，而后者需从表中筛选后再通过行列变换得到。当然，还有可能更多的方式，如通过多表查询如复权价格或多数据计算得到。
+这里只是说，明显不同的数据类型都有各自的特点，一个类就必须分别处理。
+
+如果不考虑多数据计算类的数据类型的话（因为多数据计算可以在策略中实现，但双数据计算型的特殊型：复权价格又应含在内），数据类型的类型也许有下面几种：
+
+以下属性被称为数据的获取类型（acquisition_type）这些类型的数据可以输出symbolised或者un-symbolised数据，且
+这些数据都支持输出时间段数据(Periods)以及时间戳数据(TimeStamp)：
+
+在指定数据类型时，这种数据类型可以支持的输出类型是在数据类型定义中就确定了的，无法更改
+
+- 'direct', 直读数据型。也就是根据区间频段直接从数据表内直接读取的数据，如价格或指标
+    这种类型的数据类型只需要从一个表名和列名中读取数据即可，因此读取参数只有一个表名和列名
+- 'adjustment', 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
+    这种类型的数据需要从两张表中读取数据，因此读取参数有两个表名和列名
+- 'relations' 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如价格倒挂
+- 'event_status', 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
+- 'event_signal' 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
+- 'composition' 成份查询型。从成份表中筛选出来数据并行列转换
+另外还应该有一些特殊类型，由特殊的过程实现
+- 'compound' 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
+
+Output Type
+
+- 'symbolised'
+    以时间段为单位的symbolised数据，这种数据结构类似一个DataFrame，行为时间段，列为股票代码
+- 'un-symbolised'
+    以时间段为单位的un-symbolised数据，这种数据结构类似于一个Series，行为时间段，只包含单列数据
+
+数据类型类的定义
+类型的定义为了简单，应该是参数化的，只要参数定了，读取方式和读取目标表就确定了
+
+类的唯一一个可被外部调用的方法只有一个，这个方法根据不同的读取方式调用不同的方法，从目标表中读取数据，并清洗后输出。
+
+甚至，不同的数据特点都可以定义在类型中，如open可以在最新的cycle中使用，而close则不可以
+
+为了可扩展情，类中也可以定义一个空白函数，用于特殊情况下由用户重写后自定义数据读取方式
+
+qteasy内置数据类型有非常多，为了方便这些类的创建，这里创建一个数据类型映射表，将所有的数据类型与其关键参数映射起来，
+这样就可以通过一个简单的函数调用来创建一个数据类型类了。
+
+1, DATA_TYPE_MAP:
 
 DATA_TYPE_MAP:          定义数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到
                         每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置
-
-
-
-1, DATA_TYPE_MAP:
 
 Data table mapping中各列的含义如下：
 htype_name(key):            数据类型名称（主键）
@@ -48,15 +107,130 @@ description:                历史数据的详细描述，可以用于列搜索
 ------------------------------------------------------------------------------------------------------------
 
 """
+import pandas as pd
+
+from .database import DataSource
+
+
 class DataType:
     """
     DataType class, representing historical data types that can be used by qteasy
     """
 
-    def __init__(self, dtype, freq, asset_type):
-        self.dtype = dtype
+    def __init__(self, *, id, freq, asset_type, description, acquisition_type, **kwargs):
+        """
+        初始化DataType类
+        :param id:
+        :param freq:
+        :param asset_type:
+        :param description:
+        :param acquisition_type:
+        :param output_type:
+        :param kwargs:
+        """
+        self.id = id
         self.freq = freq
         self.asset_type = asset_type
+        self.description = description
+        self.acquisition_type = acquisition_type
+
+        self.kwargs = kwargs
+
+    def get_output(self, *, datasource=None, symbols=None, starts=None, ends=None, freq=None, **kwargs):
+        """ DataType类的最终输出方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
+
+        如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
+
+        Parameters
+        ----------
+        datasource: DataSource
+            数据源名称
+        symbols: list
+            股票代码列表
+        starts: str
+            开始日期
+        ends: str
+            结束日期
+        freq: str
+            用户要求的频率
+        kwargs: dict
+            其他参数
+
+        """
+
+        acquisition_type = self.acquisition_type
+        if acquisition_type == 'direct':
+            acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'adjustment':
+            acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'relations':
+            acquired_data = self._get_relations(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'event_status':
+            acquired_data = self._get_event_status(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'event_signal':
+            acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'composition':
+            acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        else:
+            raise ValueError(f'Unknown acquisition type: {acquisition_type}')
+
+        # adjust the time index frequency
+        acquired_freq = acquired_data.index.freq
+        if acquired_freq != self.freq:
+            raise RuntimeError("there's something wrong, the acquired freq should be the same as the data type's freq")
+
+        if freq is not None and freq != self.freq:
+            acquired_data = self._adjust_freq(acquired_data, freq)
+
+        if symbols is None:
+            return self._unsymbolised(acquired_data)
+
+        return self._symbolised(acquired_data)
+
+    def _get_direct(self, *, datasource=None, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """直读数据型的数据获取方法"""
+
+        # try to get arguments from kwargs
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+        if table_name is None or column is None:
+            raise ValueError('table_name and column must be provided for direct data type')
+
+        datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+
+        return pd.DataFrame()
+
+    def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据修正型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据关联型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """事件状态型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """事件信号型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """成份查询型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _adjust_freq(self, acquired_data, freq) -> pd.DataFrame:
+        """调整获取的数据的频率"""
+        return acquired_data
+
+    def _symbolised(self, acquired_data) -> pd.DataFrame:
+        """将数据转换为symbolised格式"""
+        return
+
+    def _unsymbolised(self, acquired_data) -> pd.Series:
+        """将数据转换为un-symbolised格式"""
+        return
 
 
 DATA_TYPE_MAP_COLUMNS = ['table_name', 'column', 'description']
