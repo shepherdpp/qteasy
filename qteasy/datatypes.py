@@ -12,7 +12,6 @@
 # ======================================
 
 
-
 """
 
 
@@ -117,7 +116,7 @@ class DataType:
     DataType class, representing historical data types that can be used by qteasy
     """
 
-    def __init__(self, *, id, freq, asset_type, description, acquisition_type, **kwargs):
+    def __init__(self, *, id, freq, asset_type, description, acquisition_type, datasource, **kwargs):
         """
         初始化DataType类
         :param id:
@@ -133,18 +132,17 @@ class DataType:
         self.asset_type = asset_type
         self.description = description
         self.acquisition_type = acquisition_type
+        self.datasource = datasource
 
         self.kwargs = kwargs
 
-    def get_output(self, *, datasource=None, symbols=None, starts=None, ends=None, freq=None, **kwargs):
+    def get_output(self, *, symbols=None, starts=None, ends=None, freq=None, **kwargs):
         """ DataType类的最终输出方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
 
         如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
 
         Parameters
         ----------
-        datasource: DataSource
-            数据源名称
         symbols: list
             股票代码列表
         starts: str
@@ -187,7 +185,7 @@ class DataType:
 
         return self._symbolised(acquired_data)
 
-    def _get_direct(self, *, datasource=None, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_direct(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """直读数据型的数据获取方法"""
 
         # try to get arguments from kwargs
@@ -196,12 +194,26 @@ class DataType:
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for direct data type')
 
-        datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = self.datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
 
-        return pd.DataFrame()
+        data_series = acquired_data[column]
+        unstacked_df = data_series.unstack(level=0)
+
+        return unstacked_df
 
     def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据修正型的数据获取方法"""
+        table_name_A = kwargs.get('table_name_A')
+        column_A = kwargs.get('column_A')
+        table_name_B = kwargs.get('table_name_B')
+        column_B = kwargs.get('column_B')
+
+        if table_name_A is None or column_A is None or table_name_B is None or column_B is None:
+            raise ValueError('table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
+
+        acquired_data_A = self.datasource.read_table_data(table_name_A, shares=symbols, start=starts, end=ends)
+        acquired_data_B = self.datasource.read_table_data(table_name_B, shares=symbols, start=starts, end=ends)
+        
         return pd.DataFrame()
 
     def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
