@@ -108,8 +108,6 @@ description:                历史数据的详细描述，可以用于列搜索
 """
 import pandas as pd
 
-from .database import DataSource
-
 
 class DataType:
     """
@@ -203,17 +201,17 @@ class DataType:
 
     def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据修正型的数据获取方法"""
-        table_name_A = kwargs.get('table_name_A')
-        column_A = kwargs.get('column_A')
-        table_name_B = kwargs.get('table_name_B')
-        column_B = kwargs.get('column_B')
+        table_name_a = kwargs.get('table_name_A')
+        column_a = kwargs.get('column_A')
+        table_name_b = kwargs.get('table_name_B')
+        column_b = kwargs.get('column_B')
 
-        if table_name_A is None or column_A is None or table_name_B is None or column_B is None:
+        if table_name_a is None or column_a is None or table_name_b is None or column_b is None:
             raise ValueError('table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
-        acquired_data_A = self.datasource.read_table_data(table_name_A, shares=symbols, start=starts, end=ends)
-        acquired_data_B = self.datasource.read_table_data(table_name_B, shares=symbols, start=starts, end=ends)
-        
+        acquired_data_a = self.datasource.read_table_data(table_name_a, shares=symbols, start=starts, end=ends)
+        acquired_data_b = self.datasource.read_table_data(table_name_b, shares=symbols, start=starts, end=ends)
+
         return pd.DataFrame()
 
     def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
