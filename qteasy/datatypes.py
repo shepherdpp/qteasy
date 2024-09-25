@@ -98,11 +98,13 @@ asset_type(key):            数据对应的金融资产类型:
                             THS - 同花顺指数
                             SW - 申万行业指数
 
+description:                历史数据的详细描述，可以用于列搜索
+
+acquisition_type:           数据的获取方式
+
 table_name:                 历史数据所在的表的名称
 
 column:                     历史数据在表中的列名称
-
-description:                历史数据的详细描述，可以用于列搜索
 ------------------------------------------------------------------------------------------------------------
 
 """
@@ -114,136 +116,28 @@ class DataType:
     DataType class, representing historical data types that can be used by qteasy
     """
 
-    def __init__(self, *, id, freq, asset_type, description, acquisition_type, datasource, **kwargs):
+    def __init__(self, *, name, freq, asset_type, description, acquisition_type, **kwargs):
         """
-        初始化DataType类
-        :param id:
-        :param freq:
-        :param asset_type:
-        :param description:
-        :param acquisition_type:
-        :param output_type:
-        :param kwargs:
-        """
-        self.id = id
-        self.freq = freq
-        self.asset_type = asset_type
-        self.description = description
-        self.acquisition_type = acquisition_type
-        self.datasource = datasource
-
-        self.kwargs = kwargs
-
-    def get_output(self, *, symbols=None, starts=None, ends=None, freq=None, **kwargs):
-        """ DataType类的最终输出方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
-
-        如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
+        初始化DataType类，检查输入是否合法，解析参数
 
         Parameters
         ----------
-        symbols: list
-            股票代码列表
-        starts: str
-            开始日期
-        ends: str
-            结束日期
-        freq: str
-            用户要求的频率
-        kwargs: dict
-            其他参数
-
+        id: str
         """
+        self._name = name
+        self._freq = freq  # freq is to be parsed by the parser
+        self._asset_type = asset_type
+        self._description = description
+        self._acquisition_type = acquisition_type
 
-        acquisition_type = self.acquisition_type
-        if acquisition_type == 'direct':
-            acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'adjustment':
-            acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'relations':
-            acquired_data = self._get_relations(symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'event_status':
-            acquired_data = self._get_event_status(symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'event_signal':
-            acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'composition':
-            acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
-        else:
-            raise ValueError(f'Unknown acquisition type: {acquisition_type}')
+        self.kwargs = kwargs
 
-        # adjust the time index frequency
-        acquired_freq = acquired_data.index.freq
-        if acquired_freq != self.freq:
-            raise RuntimeError("there's something wrong, the acquired freq should be the same as the data type's freq")
-
-        if freq is not None and freq != self.freq:
-            acquired_data = self._adjust_freq(acquired_data, freq)
-
-        if symbols is None:
-            return self._unsymbolised(acquired_data)
-
-        return self._symbolised(acquired_data)
-
-    def _get_direct(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """直读数据型的数据获取方法"""
-
-        # try to get arguments from kwargs
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        if table_name is None or column is None:
-            raise ValueError('table_name and column must be provided for direct data type')
-
-        acquired_data = self.datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
-
-        data_series = acquired_data[column]
-        unstacked_df = data_series.unstack(level=0)
-
-        return unstacked_df
-
-    def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """数据修正型的数据获取方法"""
-        table_name_a = kwargs.get('table_name_A')
-        column_a = kwargs.get('column_A')
-        table_name_b = kwargs.get('table_name_B')
-        column_b = kwargs.get('column_B')
-
-        if table_name_a is None or column_a is None or table_name_b is None or column_b is None:
-            raise ValueError('table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
-
-        acquired_data_a = self.datasource.read_table_data(table_name_a, shares=symbols, start=starts, end=ends)
-        acquired_data_b = self.datasource.read_table_data(table_name_b, shares=symbols, start=starts, end=ends)
-
-        return pd.DataFrame()
-
-    def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """数据关联型的数据获取方法"""
-        return pd.DataFrame()
-
-    def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """事件状态型的数据获取方法"""
-        return pd.DataFrame()
-
-    def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """事件信号型的数据获取方法"""
-        return pd.DataFrame()
-
-    def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """成份查询型的数据获取方法"""
-        return pd.DataFrame()
-
-    def _adjust_freq(self, acquired_data, freq) -> pd.DataFrame:
-        """调整获取的数据的频率"""
-        return acquired_data
-
-    def _symbolised(self, acquired_data) -> pd.DataFrame:
-        """将数据转换为symbolised格式"""
-        return
-
-    def _unsymbolised(self, acquired_data) -> pd.Series:
-        """将数据转换为un-symbolised格式"""
-        return
+    @property
+    def acquisition_type(self):
+        return self._acquisition_type
 
 
-DATA_TYPE_MAP_COLUMNS = ['table_name', 'column', 'description']
+DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'table_name', 'column']
 DATA_TYPE_MAP_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
 DATA_TYPE_MAP = {
     ('chairman', 'd', 'E'):                           ['stock_company', 'chairman', '公司信息 - 法人代表'],
