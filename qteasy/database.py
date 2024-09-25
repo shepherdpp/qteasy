@@ -2291,7 +2291,7 @@ class DataSource:
         return res
 
     # ==============
-    # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
+    # 特殊函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     # ==============
     def get_history_data(self, shares=None, symbols=None, htypes=None, freq='d', start=None, end=None, row_count=100,
                          asset_type='any', adj='none'):
@@ -3031,6 +3031,120 @@ class DataSource:
             return False
         finally:
             con.close()
+
+    # 真正的顶层数据获取API接口函数
+
+    def get_data(self, htype, *, symbols=None, starts=None, ends=None, freq=None, **kwargs):
+        """ DataSource类的最终输出方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
+
+        如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
+
+        Parameters
+        ----------
+        htype: DataType
+            数据类型对象
+        symbols: list
+            股票代码列表
+        starts: str
+            开始日期
+        ends: str
+            结束日期
+        freq: str
+            用户要求的频率
+        kwargs: dict
+            其他参数
+
+        """
+
+        acquisition_type = htype.acquisition_type
+        if acquisition_type == 'direct':
+            acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'adjustment':
+            acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'relations':
+            acquired_data = self._get_relations(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'event_status':
+            acquired_data = self._get_event_status(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'event_signal':
+            acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'composition':
+            acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        else:
+            raise ValueError(f'Unknown acquisition type: {acquisition_type}')
+
+        # adjust the time index frequency
+        acquired_freq = acquired_data.index.freq
+        if acquired_freq != self.freq:
+            raise RuntimeError("there's something wrong, the acquired freq should be the same as the data type's freq")
+
+        if freq is not None and freq != self.freq:
+            acquired_data = self._adjust_freq(acquired_data, freq)
+
+        if symbols is None:
+            return self._unsymbolised(acquired_data)
+
+        return self._symbolised(acquired_data)
+
+    # 下面获取数据的方法都放在datasource中
+    def _get_direct(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """直读数据型的数据获取方法"""
+
+        # try to get arguments from kwargs
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+        if table_name is None or column is None:
+            raise ValueError('table_name and column must be provided for direct data type')
+
+        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+
+        data_series = acquired_data[column]
+        unstacked_df = data_series.unstack(level=0)
+
+        return unstacked_df
+
+    def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据修正型的数据获取方法"""
+        table_name_a = kwargs.get('table_name_A')
+        column_a = kwargs.get('column_A')
+        table_name_b = kwargs.get('table_name_B')
+        column_b = kwargs.get('column_B')
+
+        if table_name_a is None or column_a is None or table_name_b is None or column_b is None:
+            raise ValueError(
+                'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
+
+        acquired_data_a = self.read_table_data(table_name_a, shares=symbols, start=starts, end=ends)
+        acquired_data_b = self.read_table_data(table_name_b, shares=symbols, start=starts, end=ends)
+
+        return pd.DataFrame()
+
+    def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据关联型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """事件状态型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """事件信号型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """成份查询型的数据获取方法"""
+        return pd.DataFrame()
+
+    def _adjust_freq(self, acquired_data, freq) -> pd.DataFrame:
+        """调整获取的数据的频率"""
+        return acquired_data
+
+    def _symbolised(self, acquired_data) -> pd.DataFrame:
+        """将数据转换为symbolised格式"""
+        return
+
+    def _unsymbolised(self, acquired_data) -> pd.Series:
+        """将数据转换为un-symbolised格式"""
+        return
 
 
 # 以下是通用dataframe操作函数

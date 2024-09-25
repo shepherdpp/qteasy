@@ -18,11 +18,17 @@ from qteasy.datatypes import DataType
 class TestDataTypes(unittest.TestCase):
     def test_all_types(self):
         for k, v in DATA_TYPE_MAP.items():
-            self.assertTrue(k in v)
-            self.assertTrue(v[k] in DATA_TYPE_MAP)
+            self.assertIsInstance(k, tuple)
+            self.assertIsInstance(v, list)
 
             # create a new instance of the data type
-            dtype = DataType(k, v)
+            id, freq, asset_type = k
+            dtype = DataType(
+                    id=id,
+                    freq=freq,
+                    asset_type=asset_type,
+
+            )
 
 
 if __name__ == '__main__':
