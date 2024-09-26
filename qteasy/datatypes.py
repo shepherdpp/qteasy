@@ -43,7 +43,8 @@ data_type.get(shares, start, end, frequency):
 这些数据都支持输出时间段数据(Periods)以及时间戳数据(TimeStamp)：
 
 在指定数据类型时，这种数据类型可以支持的输出类型是在数据类型定义中就确定了的，无法更改
-
+- 'basics', 基本数据型。这些数据与时间无关，原则上不属于历史数据，仅作为信息调用。
+    这种类型的数据只需要一个表名和列名作为kwargs读取参数
 - 'direct', 直读数据型。也就是根据区间频段直接从数据表内直接读取的数据，如价格或指标
     这种类型的数据类型只需要从一个表名和列名中读取数据即可，因此读取参数只有一个表名和列名
 - 'adjustment', 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
@@ -129,7 +130,7 @@ class DataType:
         self._description = description
         self._acquisition_type = acquisition_type
 
-        self.kwargs = kwargs
+        self._kwargs = kwargs
 
     @property
     def name(self):
@@ -151,24 +152,34 @@ class DataType:
     def acquisition_type(self):
         return self._acquisition_type
 
+    @property
+    def kwargs(self):
+        return self._kwargs
+
+    def __repr__(self):
+        return f'DataType(\'{self.name}\', \'{self.freq}\', \'{self.asset_type}\')'
+
+    def __str__(self):
+        return f'dtype({self.name}) - {self.description}'
+
 
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'table_name', 'column']
 DATA_TYPE_MAP_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
 DATA_TYPE_MAP = {
-('chairman','d','E'):	['公司信息 - 法人代表','direct',{'table_name': 'stock_company', 'column': 'chairman'}],
-('manager','d','E'):	['公司信息 - 总经理','direct',{'table_name': 'stock_company', 'column': 'manager'}],
-('secretary','d','E'):	['公司信息 - 董秘','direct',{'table_name': 'stock_company', 'column': 'secretary'}],
-('reg_capital','d','E'):	['公司信息 - 注册资本','direct',{'table_name': 'stock_company', 'column': 'reg_capital'}],
-('setup_date','d','E'):	['公司信息 - 注册日期','direct',{'table_name': 'stock_company', 'column': 'setup_date'}],
-('province','d','E'):	['公司信息 - 所在省份','direct',{'table_name': 'stock_company', 'column': 'province'}],
-('city','d','E'):	['公司信息 - 所在城市','direct',{'table_name': 'stock_company', 'column': 'city'}],
-('introduction','d','E'):	['公司信息 - 公司介绍','direct',{'table_name': 'stock_company', 'column': 'introduction'}],
-('website','d','E'):	['公司信息 - 公司主页','direct',{'table_name': 'stock_company', 'column': 'website'}],
-('email','d','E'):	['公司信息 - 电子邮件','direct',{'table_name': 'stock_company', 'column': 'email'}],
-('office','d','E'):	['公司信息 - 办公室','direct',{'table_name': 'stock_company', 'column': 'office'}],
-('employees','d','E'):	['公司信息 - 员工人数','direct',{'table_name': 'stock_company', 'column': 'employees'}],
-('main_business','d','E'):	['公司信息 - 主要业务及产品','direct',{'table_name': 'stock_company', 'column': 'main_business'}],
-('business_scope','d','E'):	['公司信息 - 经营范围','direct',{'table_name': 'stock_company', 'column': 'business_scope'}],
+('chairman','d','E'):	['公司信息 - 法人代表','basics',{'table_name': 'stock_company', 'column': 'chairman'}],
+('manager','d','E'):	['公司信息 - 总经理','basics',{'table_name': 'stock_company', 'column': 'manager'}],
+('secretary','d','E'):	['公司信息 - 董秘','basics',{'table_name': 'stock_company', 'column': 'secretary'}],
+('reg_capital','d','E'):	['公司信息 - 注册资本','basics',{'table_name': 'stock_company', 'column': 'reg_capital'}],
+('setup_date','d','E'):	['公司信息 - 注册日期','basics',{'table_name': 'stock_company', 'column': 'setup_date'}],
+('province','d','E'):	['公司信息 - 所在省份','basics',{'table_name': 'stock_company', 'column': 'province'}],
+('city','d','E'):	['公司信息 - 所在城市','basics',{'table_name': 'stock_company', 'column': 'city'}],
+('introduction','d','E'):	['公司信息 - 公司介绍','basics',{'table_name': 'stock_company', 'column': 'introduction'}],
+('website','d','E'):	['公司信息 - 公司主页','basics',{'table_name': 'stock_company', 'column': 'website'}],
+('email','d','E'):	['公司信息 - 电子邮件','basics',{'table_name': 'stock_company', 'column': 'email'}],
+('office','d','E'):	['公司信息 - 办公室','basics',{'table_name': 'stock_company', 'column': 'office'}],
+('employees','d','E'):	['公司信息 - 员工人数','basics',{'table_name': 'stock_company', 'column': 'employees'}],
+('main_business','d','E'):	['公司信息 - 主要业务及产品','basics',{'table_name': 'stock_company', 'column': 'main_business'}],
+('business_scope','d','E'):	['公司信息 - 经营范围','basics',{'table_name': 'stock_company', 'column': 'business_scope'}],
 ('manager_name','d','E'):	['公司高管信息 - 高管姓名','direct',{'table_name': 'stk_managers', 'column': 'name'}],
 ('gender','d','E'):	['公司高管信息 - 性别','direct',{'table_name': 'stk_managers', 'column': 'gender'}],
 ('lev','d','E'):	['公司高管信息 - 岗位类别','direct',{'table_name': 'stk_managers', 'column': 'lev'}],

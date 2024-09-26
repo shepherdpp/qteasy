@@ -683,14 +683,14 @@ TABLE_SCHEMA = {
 
     'new_share':  # IPO新股列表
         {'columns':     ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
-                        'amount', 'market_amount', 'price', 'pe', 'limit_amount',
-                        'funds', 'ballot'],
+                         'amount', 'market_amount', 'price', 'pe', 'limit_amount',
+                         'funds', 'ballot'],
          'dtypes':      ['varchar(20)', 'varchar(20)', 'varchar(50)', 'date', 'date',
-                        'float', 'float', 'float', 'float', 'float',
-                        'float', 'float'],
+                         'float', 'float', 'float', 'float', 'float',
+                         'float', 'float'],
          'remarks':     ['TS股票代码', '申购代码', '名称', '上网发行日期', '上市日期',
-                        '发行总量（万股）', '上网发行总量（万股）', '发行价格', '市盈率', '个人申购上限（万股）',
-                        '募集资金（亿元）', '中签率'],
+                         '发行总量（万股）', '上网发行总量（万股）', '发行价格', '市盈率', '个人申购上限（万股）',
+                         '募集资金（亿元）', '中签率'],
          'prime_keys':  [0, 1]
          },
 
