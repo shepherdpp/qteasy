@@ -3118,7 +3118,7 @@ class DataSource:
             raise ValueError('table_name and column must be provided for direct data type')
 
         acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
-        import pdb; pdb.set_trace()
+
         data_series = acquired_data[column]
         unstacked_df = data_series.unstack(level=0)
 
