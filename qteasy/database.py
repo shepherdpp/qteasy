@@ -3034,7 +3034,7 @@ class DataSource:
 
     # 真正的顶层数据获取API接口函数
 
-    def get_data(self, htype, *, symbols=None, starts=None, ends=None, freq=None, **kwargs):
+    def get_data(self, htype, *, symbols=None, starts=None, ends=None, target_freq=None):
         """ DataSource类的最终输出方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
 
         如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
@@ -3049,15 +3049,17 @@ class DataSource:
             开始日期
         ends: str
             结束日期
-        freq: str
+        target_freq: str, optional
             用户要求的频率
-        kwargs: dict
-            其他参数
 
         """
 
         acquisition_type = htype.acquisition_type
-        if acquisition_type == 'direct':
+        kwargs = htype.kwargs
+
+        if acquisition_type == 'basics':
+            acquired_data = self._get_basics(symbols=symbols, **kwargs)
+        elif acquisition_type == 'direct':
             acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'adjustment':
             acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
@@ -3072,13 +3074,16 @@ class DataSource:
         else:
             raise ValueError(f'Unknown acquisition type: {acquisition_type}')
 
+        if acquisition_type == 'basics':
+            return acquired_data
+
         # adjust the time index frequency
         acquired_freq = acquired_data.index.freq
-        if acquired_freq != self.freq:
+        if acquired_freq != htype.freq:
             raise RuntimeError("there's something wrong, the acquired freq should be the same as the data type's freq")
 
-        if freq is not None and freq != self.freq:
-            acquired_data = self._adjust_freq(acquired_data, freq)
+        if target_freq is not None and target_freq != htype.freq:
+            acquired_data = self._adjust_freq(acquired_data, target_freq)
 
         if symbols is None:
             return self._unsymbolised(acquired_data)
@@ -3086,6 +3091,23 @@ class DataSource:
         return self._symbolised(acquired_data)
 
     # 下面获取数据的方法都放在datasource中
+    def _get_basics(self, *, symbols=None, **kwargs) -> pd.Series:
+        """基本数据的获取方法"""
+
+        # try to get arguments from kwargs
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+
+        table_usage = TABLE_MASTERS[table_name][2]
+        if table_usage != 'basics':
+            raise TypeError(f'table ({table_name}) usage should be "basics", got "{table_usage}" instead')
+        if table_name is None or column is None:
+            raise ValueError('table_name and column must be provided for direct data type')
+
+        acquired_data = self.read_table_data(table_name, shares=symbols)
+
+        return acquired_data[column]
+
     def _get_direct(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """直读数据型的数据获取方法"""
 
@@ -3096,7 +3118,7 @@ class DataSource:
             raise ValueError('table_name and column must be provided for direct data type')
 
         acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
-
+        import pdb; pdb.set_trace()
         data_series = acquired_data[column]
         unstacked_df = data_series.unstack(level=0)
 
@@ -3858,7 +3880,7 @@ def get_table_map():  # deprecated
 
 
 @lru_cache(maxsize=1)
-def get_table_master():
+def get_table_master() -> pd.DataFrame:
     """ 获取所有内置数据表的清单
 
     Returns
