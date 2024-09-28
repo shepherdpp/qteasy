@@ -63,6 +63,10 @@ class TestDataTypes(unittest.TestCase):
 
             print(f'getting data for {dtype} - {dtype.description}')
 
+            shares = []
+            starts = '2020-01-01'
+            ends = '2020-05-01'
+
             if acq_type == 'basics':
                 shares = ['000651.SZ']
             elif (acq_type == 'direct') and (asset_type == 'E'):
@@ -73,12 +77,14 @@ class TestDataTypes(unittest.TestCase):
                 shares = ['515630.SH']
             elif (acq_type == 'direct') and (asset_type == 'FT'):
                 shares = ['A0001.DCE']
-            else:
-                shares = None
+            elif (acq_type == 'direct') and (asset_type == 'OPT'):
+                shares = ['10000001.SH']
 
             data = ds.get_data(
                     dtype,
                     symbols=shares,
+                    starts=starts,
+                    ends=ends,
             )
             print(f'got {type(data)}: {data}')
 
