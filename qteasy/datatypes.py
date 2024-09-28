@@ -160,7 +160,7 @@ class DataType:
         return f'DataType(\'{self.name}\', \'{self.freq}\', \'{self.asset_type}\')'
 
     def __str__(self):
-        return f'dtype({self.name}) - {self.description}'
+        return f'{self.name}({self.asset_type})@{self.freq}'
 
 
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'table_name', 'column']
