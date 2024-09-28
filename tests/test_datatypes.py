@@ -61,10 +61,14 @@ class TestDataTypes(unittest.TestCase):
             self.assertEqual(dtype.description, desc)
             self.assertEqual(dtype.acquisition_type, acq_type)
 
-            print(f'getting data for {dtype}')
+            print(f'getting data for {dtype} - {dtype.description}')
 
             if acq_type == 'basics':
-                shares = ['000651.SZ', '600536.SH']
+                shares = ['000651.SZ']
+            elif (acq_type == 'direct') and (asset_type == 'E'):
+                shares = ['000651.SZ']
+            elif (acq_type == 'direct') and (asset_type == 'IDX'):
+                shares = ['000300.SH']
             else:
                 shares = None
 
