@@ -3077,10 +3077,13 @@ class DataSource:
         if acquisition_type == 'basics':
             return acquired_data
 
+        if acquired_data.empty:
+            return acquired_data
+
         # adjust the time index frequency
-        acquired_freq = acquired_data.index.freq
-        if acquired_freq != htype.freq:
-            raise RuntimeError("there's something wrong, the acquired freq should be the same as the data type's freq")
+        # acquired_freq = acquired_data.index.freq
+        # if acquired_freq != htype.freq:
+        #     raise RuntimeError("there's something wrong, the acquired freq should be the same as the data type's freq")
 
         if target_freq is not None and target_freq != htype.freq:
             acquired_data = self._adjust_freq(acquired_data, target_freq)
@@ -3099,8 +3102,8 @@ class DataSource:
         column = kwargs.get('column')
 
         table_usage = TABLE_MASTERS[table_name][2]
-        if table_usage != 'basics':
-            raise TypeError(f'table ({table_name}) usage should be "basics", got "{table_usage}" instead')
+        # if table_usage != 'basics':
+        #     raise TypeError(f'table ({table_name}) usage should be "basics", got "{table_usage}" instead')
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for direct data type')
 
@@ -3108,8 +3111,8 @@ class DataSource:
 
         return acquired_data[column]
 
-    def _get_direct(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """直读数据型的数据获取方法"""
+    def _get_direct(self, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """直读数据型的数据获取方法, 必须给出symbols"""
 
         # try to get arguments from kwargs
         table_name = kwargs.get('table_name')
@@ -3162,11 +3165,11 @@ class DataSource:
 
     def _symbolised(self, acquired_data) -> pd.DataFrame:
         """将数据转换为symbolised格式"""
-        return
+        return acquired_data
 
     def _unsymbolised(self, acquired_data) -> pd.Series:
         """将数据转换为un-symbolised格式"""
-        return
+        return acquired_data
 
 
 # 以下是通用dataframe操作函数
