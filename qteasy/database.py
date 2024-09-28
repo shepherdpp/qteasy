@@ -3123,6 +3123,9 @@ class DataSource:
         acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
 
         data_series = acquired_data[column]
+        if data_series.empty:
+            return data_series
+
         unstacked_df = data_series.unstack(level=0)
 
         return unstacked_df

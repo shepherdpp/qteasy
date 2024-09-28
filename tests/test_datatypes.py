@@ -69,6 +69,10 @@ class TestDataTypes(unittest.TestCase):
                 shares = ['000651.SZ']
             elif (acq_type == 'direct') and (asset_type == 'IDX'):
                 shares = ['000300.SH']
+            elif (acq_type == 'direct') and (asset_type == 'FD'):
+                shares = ['515630.SH']
+            elif (acq_type == 'direct') and (asset_type == 'FT'):
+                shares = ['A0001.DCE']
             else:
                 shares = None
 
