@@ -3109,6 +3109,13 @@ class DataSource:
 
         acquired_data = self.read_table_data(table_name, shares=symbols)
 
+        if column not in acquired_data.columns:
+            raise KeyError(f'column {column} not in table data: {acquired_data.columns}')
+        # debug
+        try:
+            data = acquired_data[column]
+        except KeyError:
+            import pdb; pdb.set_trace()
         return acquired_data[column]
 
     def _get_direct(self, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
@@ -3871,7 +3878,7 @@ def get_dtype_map():
 
 
 @lru_cache(maxsize=1)
-def get_table_map():  # deprecated
+def get_table_map() -> pd.DataFrame:  # deprecated
     """ 获取所有内置数据表的清单，to be deprecated
 
     Returns
@@ -3880,9 +3887,7 @@ def get_table_map():  # deprecated
     数据表清单
     """
     warnings.warn('get_table_map() is deprecated, use get_table_master() instead', DeprecationWarning)
-    table_map = pd.DataFrame(TABLE_MASTERS).T
-    table_map.columns = TABLE_MASTER_COLUMNS
-    return table_map
+    return get_table_master()
 
 
 @lru_cache(maxsize=1)
