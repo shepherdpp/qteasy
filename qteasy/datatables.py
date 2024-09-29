@@ -244,11 +244,11 @@ TABLE_MASTERS = {
          '20100101', '', '', '', '', '', '', ''],
 
     'HS_top10_stock':  # New, 沪深股通十大成交股!
-        ['HS_top10_stock', '沪深股通十大成交股东', 'events', 'E', 'd', 'hsgt_top10', 'trade_date', 'trade_date',
+        ['HS_top10_stock', '沪深股通十大成交股', 'events', 'E', 'd', 'hsgt_top10', 'trade_date', 'trade_date',
          '20100101', '', '', '', '', '', '', ''],
 
     'HK_top10_stock':  # New, 港股通十大成交股!
-        ['HK_top10_stock', '港股通十大成交股东', 'events', 'E', 'd', 'ggt_top10', 'trade_date', 'trade_date',
+        ['HK_top10_stock', '港股通十大成交股', 'events', 'E', 'd', 'ggt_top10', 'trade_date', 'trade_date',
          '20100101', '', '', '', '', '', '', ''],
 
     'index_basic':
@@ -389,7 +389,7 @@ TABLE_MASTERS = {
          '', '', '', '', '', ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', '',
+        ['fund_share', '基金份额', 'data', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', '',
          '', '', '', '', ''],
 
     'fund_manager':
