@@ -67,17 +67,16 @@ class TestDataTypes(unittest.TestCase):
             starts = '2020-01-01'
             ends = '2020-05-01'
 
-            if acq_type == 'basics':
+            type_with_shares = ['direct', 'basics']
+            if (acq_type in type_with_shares) and (asset_type == 'E'):
                 shares = ['000651.SZ']
-            elif (acq_type == 'direct') and (asset_type == 'E'):
-                shares = ['000651.SZ']
-            elif (acq_type == 'direct') and (asset_type == 'IDX'):
+            elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
                 shares = ['000300.SH']
-            elif (acq_type == 'direct') and (asset_type == 'FD'):
+            elif (acq_type in type_with_shares) and (asset_type == 'FD'):
                 shares = ['515630.SH']
-            elif (acq_type == 'direct') and (asset_type == 'FT'):
+            elif (acq_type in type_with_shares) and (asset_type == 'FT'):
                 shares = ['A0001.DCE']
-            elif (acq_type == 'direct') and (asset_type == 'OPT'):
+            elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
                 shares = ['10000001.SH']
 
             data = ds.get_data(

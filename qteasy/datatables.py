@@ -224,7 +224,7 @@ TABLE_MASTERS = {
          '', '', '', '', '', '', ''],
 
     'new_share':
-        ['new_share', 'IPO新股列表', 'events', 'E', 'd', 'new_share', 'none', 'none', 'none',
+        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_share', 'none', 'none', 'none',
          '', 'Y', '200', '', '', '', ''],
 
     'money_flow':  # New, 个股资金流向!
