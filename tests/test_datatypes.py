@@ -63,7 +63,7 @@ class TestDataTypes(unittest.TestCase):
 
             print(f'getting data for {dtype} - {dtype.description}')
 
-            shares = []
+            shares = None
             starts = '2020-01-01'
             ends = '2020-05-01'
 

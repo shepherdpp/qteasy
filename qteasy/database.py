@@ -3155,23 +3155,23 @@ class DataSource:
 
     def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据关联型的数据获取方法"""
-        return pd.DataFrame()
+        raise NotImplementedError
 
     def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件状态型的数据获取方法"""
-        return pd.DataFrame()
+        raise NotImplementedError
 
     def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件信号型的数据获取方法"""
-        return pd.DataFrame()
+        raise NotImplementedError
 
     def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """成份查询型的数据获取方法"""
-        return pd.DataFrame()
+        raise NotImplementedError
 
     def _adjust_freq(self, acquired_data, freq) -> pd.DataFrame:
         """调整获取的数据的频率"""
-        return acquired_data
+        raise NotImplementedError
 
     def _symbolised(self, acquired_data) -> pd.DataFrame:
         """将数据转换为symbolised格式"""
