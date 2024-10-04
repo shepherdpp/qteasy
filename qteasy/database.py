@@ -3094,44 +3094,32 @@ class DataSource:
         return self._symbolised(acquired_data)
 
     # 下面获取数据的方法都放在datasource中
-    def _get_basics(self, *, symbols=None, **kwargs) -> pd.Series:
+    def _get_basics(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
         """基本数据的获取方法"""
 
         # try to get arguments from kwargs
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
 
-        table_usage = TABLE_MASTERS[table_name][2]
-        # if table_usage != 'basics':
-        #     raise TypeError(f'table ({table_name}) usage should be "basics", got "{table_usage}" instead')
         if table_name is None or column is None:
-            raise ValueError('table_name and column must be provided for direct data type')
+            raise ValueError('table_name and column must be provided for basics data type')
 
-        acquired_data = self.read_table_data(table_name, shares=symbols)
+        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
 
         if column not in acquired_data.columns:
             raise KeyError(f'column {column} not in table data: {acquired_data.columns}')
-        # debug
-        try:
-            data = acquired_data[column]
-        except KeyError:
-            import pdb; pdb.set_trace()
+
         return acquired_data[column]
 
     def _get_direct(self, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """直读数据型的数据获取方法, 必须给出symbols"""
+        if starts is None or ends is None:
+            raise ValueError('start and end must be provided for direct data type')
 
-        # try to get arguments from kwargs
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        if table_name is None or column is None:
-            raise ValueError('table_name and column must be provided for direct data type')
+        data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
 
-        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
-
-        data_series = acquired_data[column]
         if data_series.empty:
-            return data_series
+            return pd.DataFrame()
 
         unstacked_df = data_series.unstack(level=0)
 
@@ -3159,7 +3147,24 @@ class DataSource:
 
     def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件状态型的数据获取方法"""
-        raise NotImplementedError
+
+        import pdb; pdb.set_trace()
+
+        if symbols is None:
+            raise ValueError('symbols must be provided for event status data type')
+        if starts is None or ends is None:
+            raise ValueError('start and end must be provided for event status data type')
+
+        data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
+
+        if data_series.empty:
+            return pd.DataFrame()
+
+        grouped = data_series.groupby('ts_code')
+        event_status = grouped.apply(lambda x: list(x))
+        event_status = event_status.unstack(level=0)
+
+        return event_status
 
     def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件信号型的数据获取方法"""
