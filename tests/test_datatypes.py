@@ -68,16 +68,21 @@ class TestDataTypes(unittest.TestCase):
             ends = '2020-05-01'
 
             type_with_shares = ['direct', 'basics']
+            type_with_events = ['event_status', 'event_signal']
             if (acq_type in type_with_shares) and (asset_type == 'E'):
-                shares = ['000651.SZ']
+                shares = ['000651.SZ', '000001.SZ']
             elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
-                shares = ['000300.SH']
+                shares = ['000300.SH', '000001.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FD'):
                 shares = ['515630.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FT'):
                 shares = ['A0001.DCE']
             elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
                 shares = ['10000001.SH']
+            elif acq_type in type_with_events:
+                shares = ['000001.SZ', '000002.SZ', '000003.SZ']
+                starts = '2020-01-01'
+                ends = '2020-05-01'
 
             data = ds.get_data(
                     dtype,
