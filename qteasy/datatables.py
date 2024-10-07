@@ -210,7 +210,7 @@ TABLE_MASTERS = {
          '',
          '', '', '', '', ''],
 
-    'stock_names':
+    'stock_names':  # Complete, 股票名称变更
         ['name_changes', '股票名称变更', 'events', 'E', 'none', 'namechange', 'ts_code', 'table_index', 'stock_basic',
          '', 'Y', '', '', '', '', ''],
 
@@ -668,7 +668,7 @@ TABLE_SCHEMA = {
          'prime_keys': [0]
          },
 
-    'stk_managers':  # 上市公司管理层表
+    'stk_managers':  # 上市公司管理层表 -- REFINE!
         {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'lev',
                         'title', 'edu', 'national', 'birthday', 'begin_date',
                         'end_date', 'resume'],
@@ -678,7 +678,7 @@ TABLE_SCHEMA = {
          'remarks':    ['TS股票代码', '公告日期', '姓名', '性别', '岗位类别',
                         '岗位', '学历', '国籍', '出生年月', '上任日期',
                         '离任日期', '个人简历'],
-         'prime_keys': [0, 1]
+         'prime_keys': [0, 1, 2]
          },
 
     'new_share':  # IPO新股列表
@@ -921,14 +921,14 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
-    'fund_manager':  # 基金经理表
+    'fund_manager':  # 基金经理表 -- REFINE
         {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'birth_year', 'edu', 'nationality',
                         'begin_date', 'end_date', 'resume'],
          'dtypes':     ['varchar(20)', 'date', 'varchar(20)', 'varchar(2)', 'varchar(12)',
                         'varchar(30)', 'varchar(4)', 'date', 'date', 'text'],
          'remarks':    ['证券代码', '公告日期', '基金经理姓名', '性别', '出生年份', '学历', '国籍', '任职日期',
                         '离任日期', '简历'],
-         'prime_keys': [0, 1]
+         'prime_keys': [0, 1, 2]
          },
 
     'future_mapping':  # New, 期货合约映射表!
