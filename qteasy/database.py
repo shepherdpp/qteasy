@@ -3065,6 +3065,8 @@ class DataSource:
             acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'relations':
             acquired_data = self._get_relations(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'event_multi_stat':
+            acquired_data = self._get_event_multi_stat(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'event_status':
             acquired_data = self._get_event_status(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'event_signal':
@@ -3144,6 +3146,41 @@ class DataSource:
     def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据关联型的数据获取方法"""
         raise NotImplementedError
+
+    def _get_event_multi_stat(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """事件多状态型的数据获取方法"""
+
+        if symbols is None:
+            raise ValueError('symbols must be provided for event status data type')
+        if starts is None or ends is None:
+            raise ValueError('start and end must be provided for event status data type')
+
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+        id_index = kwargs.get('id_index')
+        start_col = kwargs.get('start_col')
+        end_col = kwargs.get('end_col')
+
+        if table_name is None or column is None:
+            raise ValueError('table_name and column must be provided for basics data type')
+
+        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table_name, with_primary_keys=True)
+        acquired_data = set_primary_key_frame(acquired_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+        cols_to_keep = [start_col, end_col, column]
+        cols_to_keep.extend(primary_keys)
+        acquired_data = acquired_data[cols_to_keep]
+        # create id_index and column pairs
+        acquired_data[column] = acquired_data[id_index] + '-' + acquired_data[column].astype(str)
+
+        if acquired_data.empty:
+            return pd.DataFrame()
+
+        grouped = acquired_data.groupby(['ts_code', start_col])
+        event_series = grouped[column].apply(lambda x: list(x))
+        event_series = event_series.unstack(level=0)
+
+        return event_series
 
     def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件状态型的数据获取方法"""
@@ -3824,7 +3861,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
 
 # noinspection PyTypeChecker
 @lru_cache(maxsize=16)
-def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
+def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=True) -> tuple:
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
 
     Parameters

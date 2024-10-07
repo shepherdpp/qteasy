@@ -51,6 +51,7 @@ data_type.get(shares, start, end, frequency):
     这种类型的数据需要从两张表中读取数据，因此读取参数有两个表名和列名
 - 'relations' 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如价格倒挂
 - 'event_status', 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
+- 'event_multi_stat', 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
 - 'event_signal' 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
 - 'composition' 成份查询型。从成份表中筛选出来数据并行列转换
 另外还应该有一些特殊类型，由特殊的过程实现
@@ -115,6 +116,16 @@ class DataType:
     """
     DataType class, representing historical data types that can be used by qteasy
     """
+    aquisition_types = [
+        'basics',
+        'direct',
+        'adjustment',
+        'relations',
+        'event_status',
+        'event_multi_stat',
+        'event_signal',
+        'composition',
+    ]
 
     def __init__(self, *, name, freq, asset_type, description, acquisition_type, **kwargs):
         """
@@ -262,16 +273,14 @@ DATA_TYPE_MAP = {
 ('employees','d','E'):	['公司信息 - 员工人数','basics',{'table_name': 'stock_company', 'column': 'employees'}],
 ('main_business','d','E'):	['公司信息 - 主要业务及产品','basics',{'table_name': 'stock_company', 'column': 'main_business'}],
 ('business_scope','d','E'):	['公司信息 - 经营范围','basics',{'table_name': 'stock_company', 'column': 'business_scope'}],
-('manager_name','d','E'):	['公司高管信息 - 高管姓名','event_status',{'table_name': 'stk_managers', 'column': 'name'}],
-('gender','d','E'):	['公司高管信息 - 性别','event_status',{'table_name': 'stk_managers', 'column': 'gender'}],
-('lev','d','E'):	['公司高管信息 - 岗位类别','event_status',{'table_name': 'stk_managers', 'column': 'lev'}],
-('manager_title','d','E'):	['公司高管信息 - 岗位','event_status',{'table_name': 'stk_managers', 'column': 'title'}],
-('edu','d','E'):	['公司高管信息 - 学历','event_status',{'table_name': 'stk_managers', 'column': 'edu'}],
-('national','d','E'):	['公司高管信息 - 国籍','event_status',{'table_name': 'stk_managers', 'column': 'national'}],
-('birthday','d','E'):	['公司高管信息 - 出生年月','event_status',{'table_name': 'stk_managers', 'column': 'birthday'}],
-('begin_date','d','E'):	['公司高管信息 - 上任日期','event_status',{'table_name': 'stk_managers', 'column': 'begin_date'}],
-('end_date','d','E'):	['公司高管信息 - 离任日期','event_status',{'table_name': 'stk_managers', 'column': 'end_date'}],
-('resume','d','E'):	['公司高管信息 - 个人简历','event_status',{'table_name': 'stk_managers', 'column': 'resume'}],
+# ('managers_name','d','E'):	['公司高管信息 - 高管姓名','event_multi_stat',{'table_name': 'stk_managers', 'column': 'name', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date', ''}],
+('managers_gender','d','E'):	['公司高管信息 - 性别','event_multi_stat',{'table_name': 'stk_managers', 'column': 'gender', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
+('managers_lev','d','E'):	['公司高管信息 - 岗位类别','event_multi_stat',{'table_name': 'stk_managers', 'column': 'lev', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
+('manager_title','d','E'):	['公司高管信息 - 岗位','event_multi_stat',{'table_name': 'stk_managers', 'column': 'title', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
+('managers_edu','d','E'):	['公司高管信息 - 学历','event_multi_stat',{'table_name': 'stk_managers', 'column': 'edu', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
+('managers_national','d','E'):	['公司高管信息 - 国籍','event_multi_stat',{'table_name': 'stk_managers', 'column': 'national', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
+('managers_birthday','d','E'):	['公司高管信息 - 出生年月','event_multi_stat',{'table_name': 'stk_managers', 'column': 'birthday', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
+('managers_resume','d','E'):	['公司高管信息 - 个人简历','event_multi_stat',{'table_name': 'stk_managers', 'column': 'resume', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
 # ('manager_salary_name','d','E'):	['管理层薪酬 - 姓名','direct',{'table_name': 'stk_rewards', 'column': 'name'}],
 # ('manager_salary_title','d','E'):	['管理层薪酬 - 职务','direct',{'table_name': 'stk_rewards', 'column': 'title'}],
 # ('reward','d','E'):	['管理层薪酬 - 报酬','direct',{'table_name': 'stk_rewards', 'column': 'reward'}],
@@ -1110,12 +1119,12 @@ DATA_TYPE_MAP = {
 ('top10_buy','d','E'):	['沪深港通十大成交股上榜 - 买入金额（元）','event_signal',{'table_name': 'HS_top10_stock', 'column': 'buy'}],
 ('top10_sell','d','E'):	['沪深港通十大成交股上榜 - 卖出金额（元）','event_signal',{'table_name': 'HS_top10_stock', 'column': 'sell'}],
 ('fd_share','d','FD'):	['基金份额（万）','direct',{'table_name': 'fund_share', 'column': 'fd_share'}],
-('name','d','FD'):	['基金经理姓名','event_status',{'table_name': 'fund_manager', 'column': 'name'}],
-('gender','d','FD'):	['基金经理 - 性别','event_status',{'table_name': 'fund_manager', 'column': 'gender'}],
-('birth_year','d','FD'):	['基金经理 - 出生年份','event_status',{'table_name': 'fund_manager', 'column': 'birth_year'}],
-('edu','d','FD'):	['基金经理 - 学历','event_status',{'table_name': 'fund_manager', 'column': 'edu'}],
-('nationality','d','FD'):	['基金经理 - 国籍','event_status',{'table_name': 'fund_manager', 'column': 'nationality'}],
-('resume','d','FD'):	['基金经理 - 简历','event_status',{'table_name': 'fund_manager', 'column': 'resume'}],
+# ('managers_name','d','FD'):	['基金经理姓名','event_multi_stat',{'table_name': 'fund_manager', 'column': 'name'}],
+('managers_gender','d','FD'):	['基金经理 - 性别','event_multi_stat',{'table_name': 'fund_manager', 'column': 'gender'}],
+('managers_birth_year','d','FD'):	['基金经理 - 出生年份','event_multi_stat',{'table_name': 'fund_manager', 'column': 'birth_year'}],
+('managers_edu','d','FD'):	['基金经理 - 学历','event_multi_stat',{'table_name': 'fund_manager', 'column': 'edu'}],
+('managers_nationality','d','FD'):	['基金经理 - 国籍','event_multi_stat',{'table_name': 'fund_manager', 'column': 'nationality'}],
+('managers_resume','d','FD'):	['基金经理 - 简历','event_multi_stat',{'table_name': 'fund_manager', 'column': 'resume'}],
 ('div_proc','d','E'):	['实施进度','event_status',{'table_name': 'dividend', 'column': 'div_proc'}],
 ('stk_div','d','E'):	['每股送转','event_status',{'table_name': 'dividend', 'column': 'stk_div'}],
 ('stk_bo_rate','d','E'):	['每股送股比例','event_status',{'table_name': 'dividend', 'column': 'stk_bo_rate'}],
