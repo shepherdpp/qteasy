@@ -14,7 +14,6 @@ from warnings import warn
 
 import datetime
 
-from qteasy import QT_DATA_SOURCE
 from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
@@ -98,6 +97,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     601229.SH  上海银行   上海       银行     主板 2016-11-16      SSE
     601328.SH  交通银行   上海       银行     主板 2007-05-15      SSE
     """
+    from qteasy import QT_DATA_SOURCE
     try:
         date = pd.to_datetime(date)
     except:
@@ -343,6 +343,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     list_date    2004-05-14
     -------------------------------------------
     """
+    from qteasy import QT_DATA_SOURCE
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
     ds = QT_DATA_SOURCE
@@ -514,6 +515,7 @@ def get_table_info(table_name, data_source=None, verbose=True):
     13  delist_date         date    退市日期
     14        is_hs   varchar(2)  是否沪深港通
     """
+    from qteasy import QT_DATA_SOURCE
     if data_source is None:
         data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
@@ -544,6 +546,7 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False) 
 
     from .database import DataSource
     if data_source is None:
+        from qteasy import QT_DATA_SOURCE
         data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
@@ -721,6 +724,7 @@ def refill_data_source(*, data_source=None, **kwargs) -> None:
     """
     from .database import DataSource
     if data_source is None:
+        from qteasy import QT_DATA_SOURCE
         data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
@@ -1129,6 +1133,7 @@ def live_trade_accounts() -> pd.DataFrame:
     all_accounts: pd.DataFrame
         包含所有实盘交易账户信息的DataFrame
     """
+    from qteasy import QT_DATA_SOURCE
     from qteasy.trade_recording import get_all_accounts
     return get_all_accounts(QT_DATA_SOURCE)
 
@@ -1371,6 +1376,7 @@ def reconnect_ds(data_source=None):  # deprecated
     -------
     """
     if data_source is None:
+        from qteasy import QT_DATA_SOURCE
         data_source = QT_DATA_SOURCE
 
     if not isinstance(data_source, DataSource):

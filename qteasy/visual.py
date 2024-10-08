@@ -23,7 +23,6 @@ import numpy as np
 
 from pandas.plotting import register_matplotlib_converters
 
-from qteasy import QT_DATA_SOURCE
 from qteasy.history import get_history_panel
 
 from qteasy.utilfuncs import (
@@ -707,6 +706,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     -------
     tuple：(pd.DataFrame, share_name)
     """
+    from qteasy import QT_DATA_SOURCE
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
     name_of = {'E':   'Stock 股票',
                'IDX': 'Index 指数',

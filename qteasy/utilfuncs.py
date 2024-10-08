@@ -20,8 +20,6 @@ import pandas as pd
 from numba import njit
 from functools import wraps, lru_cache
 
-from qteasy import QT_TRADE_CALENDAR
-
 TIME_FREQ_LEVELS = {
     'Y':      10,
     'Q':      20,
@@ -931,6 +929,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     >>> is_market_trade_day('2019-01-01')
     False
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     try:
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
@@ -983,6 +984,9 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
     datetime-like
         最后一个已知交易日的日期
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
                                                       'DCE', 'INE', 'IB', 'XHKG']:
         msg = f'exchange \'{exchange}\' is not a valid input'
@@ -1035,6 +1039,9 @@ def prev_market_trade_day(date, exchange='SSE'):
     --------
     is_market_trade_day()
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     try:
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as e:
