@@ -20,10 +20,21 @@ from pymysql import connect
 from qteasy.utilfuncs import str_to_list
 from qteasy.trading_util import _trade_time_index
 
-from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col
-from qteasy.database import _resample_data, freq_dither
-from qteasy.utilfuncs import get_main_freq_level, next_main_freq, parse_freq_string
+from qteasy.database import (
+    DataSource,
+    set_primary_key_index,
+    set_primary_key_frame,
+    get_primary_key_range,
+    htype_to_table_col,
+    _resample_data,
+    freq_dither,
+)
+
+from qteasy.utilfuncs import (
+    get_main_freq_level,
+    next_main_freq,
+    parse_freq_string,
+)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

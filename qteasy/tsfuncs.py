@@ -11,9 +11,13 @@
 import pandas as pd
 import tushare as ts
 
-from qteasy import logger_core, QT_CONFIG
-from .utilfuncs import regulate_date_format, list_to_str_format
-from .utilfuncs import retry
+from qteasy.__init__ import logger_core, QT_CONFIG
+
+from qteasy.utilfuncs import (
+    regulate_date_format,
+    list_to_str_format,
+    retry,
+)
 
 
 ERRORS_TO_CHECK_ON_RETRY = Exception

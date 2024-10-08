@@ -14,18 +14,42 @@ from warnings import warn
 
 import datetime
 
-import qteasy
-from .history import get_history_panel, HistoryPanel
-from .utilfuncs import str_to_list, regulate_date_format, match_ts_code
-from .utilfuncs import next_market_trade_day
-from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
-from .finance import CashPlan
-from .qt_operator import Operator
-from .visual import _plot_loop_result, _loop_report_str, _print_test_result
-from .visual import _plot_test_result
-from ._arg_validators import QT_CONFIG, ConfigDict
-from .configure import configure
-from .optimization import _evaluate_all_parameters, _evaluate_one_parameter
+from qteasy import QT_DATA_SOURCE
+from qteasy.finance import CashPlan
+from qteasy.configure import configure
+from qteasy.qt_operator import Operator
+from qteasy.database import DataSource
+
+from qteasy.history import (
+    get_history_panel,
+    HistoryPanel,
+)
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    regulate_date_format,
+    match_ts_code,
+    next_market_trade_day,
+    AVAILABLE_ASSET_TYPES,
+    _partial_lev_ratio,
+)
+
+from qteasy.visual import (
+    _plot_loop_result,
+    _loop_report_str,
+    _print_test_result,
+    _plot_test_result,
+)
+
+from qteasy._arg_validators import (
+    QT_CONFIG,
+    ConfigDict,
+)
+
+from qteasy.optimization import (
+    _evaluate_all_parameters,
+    _evaluate_one_parameter,
+)
 
 
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
@@ -84,7 +108,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
-    ds = qteasy.QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     # ts_code是dataframe的index
     share_basics = ds.read_table_data('stock_basic')
     if not share_basics.empty:
@@ -321,7 +345,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     """
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
-    ds = qteasy.QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
@@ -491,8 +515,8 @@ def get_table_info(table_name, data_source=None, verbose=True):
     14        is_hs   varchar(2)  是否沪深港通
     """
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
-    if not isinstance(data_source, qteasy.DataSource):
+        data_source = QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data_source should be a DataSource, got {type(data_source)} instead.')
     return data_source.get_table_info(table=table_name, verbose=verbose)
 
@@ -520,7 +544,7 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False) 
 
     from .database import DataSource
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
 
@@ -697,7 +721,7 @@ def refill_data_source(*, data_source=None, **kwargs) -> None:
     """
     from .database import DataSource
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
     print(f'Filling data source {data_source} ...')
@@ -989,7 +1013,7 @@ def get_history_data(htypes,
     if symbols is not None and shares is None:
         shares = symbols
     if shares is None:
-        shares = qteasy.QT_CONFIG.asset_pool
+        shares = QT_CONFIG.asset_pool
 
     one_year = pd.Timedelta(365, 'd')
     one_week = pd.Timedelta(7, 'd')
@@ -1106,7 +1130,7 @@ def live_trade_accounts() -> pd.DataFrame:
         包含所有实盘交易账户信息的DataFrame
     """
     from qteasy.trade_recording import get_all_accounts
-    return get_all_accounts(qteasy.QT_DATA_SOURCE)
+    return get_all_accounts(QT_DATA_SOURCE)
 
 
 # TODO: Bug检查：
@@ -1347,9 +1371,9 @@ def reconnect_ds(data_source=None):  # deprecated
     -------
     """
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
 
-    if not isinstance(data_source, qteasy.DataSource):
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data source not recognized!')
 
     # reconnect twice to make sure the connection is established

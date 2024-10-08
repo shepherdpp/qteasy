@@ -18,16 +18,39 @@ import warnings
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from functools import lru_cache
 
-from .datatypes import DATA_TYPE_MAP, DATA_TYPE_MAP_COLUMNS, DATA_TYPE_MAP_INDEX_NAMES
+from .datatypes import (
+    DATA_TYPE_MAP,
+    DATA_TYPE_MAP_COLUMNS,
+    DATA_TYPE_MAP_INDEX_NAMES,
+)
 
-from .datatables import AVAILABLE_CHANNELS, AVAILABLE_DATA_FILE_TYPES
-from .datatables import TABLE_MASTERS, TABLE_SCHEMA, TABLE_MASTER_COLUMNS, TABLE_USAGES
-from .datatables import ADJUSTABLE_PRICE_TYPES, DataConflictWarning
+from .datatables import (
+    AVAILABLE_CHANNELS,
+    AVAILABLE_DATA_FILE_TYPES,
+    TABLE_MASTERS,
+    TABLE_SCHEMA,
+    TABLE_MASTER_COLUMNS,
+    TABLE_USAGES,
+    ADJUSTABLE_PRICE_TYPES,
+    DataConflictWarning
+)
 
-from .utilfuncs import progress_bar, sec_to_duration, nearest_market_trade_day, input_to_list
-from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
-from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .utilfuncs import freq_dither, pandas_freq_alias_version_conversion
+from .utilfuncs import (
+    progress_bar,
+    sec_to_duration,
+    nearest_market_trade_day,
+    input_to_list,
+    is_market_trade_day,
+    str_to_list,
+    regulate_date_format,
+    freq_dither,
+    pandas_freq_alias_version_conversion,
+    _wildcard_match,
+    _partial_lev_ratio,
+    _lev_ratio,
+    human_file_size,
+    human_units,
+)
 
 
 # noinspection SqlDialectInspection #,PyTypeChecker,PyPackageRequirements
@@ -3241,14 +3264,31 @@ class DataSource:
             return pd.DataFrame()
 
         grouped = data_series.groupby('ts_code')
-        event_status = grouped.apply(lambda x: list(x))
-        event_status = event_status.unstack(level=0)
+        status = grouped.apply(lambda x: list(x))
+        status = status.unstack(level=0)
 
-        return event_status
+        return status
 
     def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件信号型的数据获取方法"""
-        raise NotImplementedError
+
+        import pdb; pdb.set_trace()
+
+        if symbols is None:
+            raise ValueError('symbols must be provided for event status data type')
+        if starts is None or ends is None:
+            raise ValueError('start and end must be provided for event status data type')
+
+        data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
+
+        if data_series.empty:
+            return pd.DataFrame()
+
+        grouped = data_series.groupby('ts_code')
+        signals = grouped.apply(lambda x: list(x))
+        signals = signals.unstack(level=0)
+
+        return signals
 
     def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """成份查询型的数据获取方法"""

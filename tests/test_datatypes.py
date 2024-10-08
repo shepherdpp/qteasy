@@ -79,7 +79,7 @@ class TestDataTypes(unittest.TestCase):
                 shares = ['A0001.DCE']
             elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
                 shares = ['10000001.SH']
-            elif acq_type in type_with_events:
+            elif (acq_type in type_with_events) and (asset_type == 'E'):
                 shares = ['000001.SZ', '000002.SZ', '000003.SZ']
                 starts = '2020-01-01'
                 ends = '2020-05-01'

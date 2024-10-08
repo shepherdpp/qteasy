@@ -14,14 +14,26 @@ import warnings
 import numpy as np
 import pandas as pd
 
-import qteasy
-from .finance import CashPlan
-from .history import HistoryPanel
-from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES, pandas_freq_alias_version_conversion
-from .strategy import BaseStrategy
-from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
-from .blender import blender_parser
+from qteasy.finance import CashPlan
+from qteasy.history import HistoryPanel
+from qteasy.strategy import BaseStrategy
+from qteasy.blender import blender_parser
+
+from qteasy.utilfuncs import (
+    AVAILABLE_SIGNAL_TYPES,
+    AVAILABLE_OP_TYPES,
+    pandas_freq_alias_version_conversion,
+    str_to_list,
+    ffill_2d_data,
+    fill_nan_data,
+    rolling_window,
+)
+
+from qteasy.built_in import (
+    available_built_in_strategies,
+    BUILT_IN_STRATEGIES,
+    get_built_in_strategy,
+)
 
 
 class Operator:
@@ -824,7 +836,7 @@ class Operator:
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
             stg_id = stg.lower()
-            strategy = qteasy.get_built_in_strategy(stg)
+            strategy = get_built_in_strategy(stg)
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, BaseStrategy):
             if stg in available_built_in_strategies:

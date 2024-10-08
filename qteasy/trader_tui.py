@@ -14,16 +14,43 @@ import time
 
 from threading import Thread
 
-from textual import work, on
-from textual.app import App, ComposeResult
-from textual.containers import Grid, Horizontal
-from textual.screen import ModalScreen
-from textual.widgets import Header, Footer, Button, Static, RichLog, DataTable, TabbedContent, Tree, Digits
-from textual.widgets import TabPane, Label, Input
-
 from rich.text import Text
+from textual.screen import ModalScreen
 
-from .utilfuncs import sec_to_duration
+from textual import (
+    work,
+    on,
+)
+from textual.app import (
+    App,
+    ComposeResult,
+)
+
+from textual.containers import (
+    Grid,
+    Horizontal,
+)
+
+from textual.widgets import (
+    Header,
+    Footer,
+    Button,
+    Static,
+    RichLog,
+    DataTable,
+    TabbedContent,
+    Tree,
+    Digits,
+)
+
+from textual.widgets import (
+    TabPane,
+    Label,
+    Input,
+)
+
+from qteasy.utilfuncs import sec_to_duration
+
 
 
 class SysLog(RichLog):

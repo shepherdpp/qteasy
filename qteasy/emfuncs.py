@@ -17,7 +17,7 @@ import requests
 
 from concurrent.futures import as_completed, ThreadPoolExecutor
 
-from .utilfuncs import str_to_list
+from qteasy.utilfuncs import str_to_list
 
 
 # eastmoney interface function, call this function to extract data

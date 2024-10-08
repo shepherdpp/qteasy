@@ -27,7 +27,11 @@ from threading import Timer
 from rich.text import Text
 
 from qteasy.trading_util import get_symbol_names
-from qteasy.utilfuncs import adjust_string_length, sec_to_duration
+
+from qteasy.utilfuncs import (
+    adjust_string_length,
+    sec_to_duration,
+)
 
 
 def pack_system_info(trader_info, width=80):

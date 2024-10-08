@@ -22,20 +22,50 @@ import pandas as pd
 from queue import Queue
 from rich.text import Text
 
-import qteasy
-from qteasy import ConfigDict, DataSource, Operator
+from qteasy.__init__ import __version__ as qteasy_version
+from qteasy.configure import ConfigDict, QT_CONFIG
+from qteasy.database import DataSource
+from qteasy.qt_operator import Operator
 from qteasy.broker import Broker
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.trade_recording import get_account, get_account_position_availabilities, get_account_position_details
-from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
-from qteasy.trade_recording import get_or_create_position, new_account, update_position
-from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
-from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
-from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
-from qteasy.trading_util import calculate_cost_change
-from qteasy.trading_util import break_point_file_path_name, sys_log_file_path_name, trade_log_file_path_name
-from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
-from qteasy.utilfuncs import get_current_timezone_datetime
+
+from qteasy.trade_recording import (
+    get_account,
+    get_account_position_availabilities,
+    get_account_position_details,
+    get_account_cash_availabilities,
+    query_trade_orders,
+    record_trade_order,
+    get_or_create_position,
+    new_account,
+    update_position,
+)
+
+from qteasy.trading_util import (
+    cancel_order,
+    create_daily_task_schedule,
+    get_position_by_id,
+    get_last_trade_result_summary,
+    get_symbol_names,
+    process_account_delivery,
+    parse_trade_signal,
+    process_trade_result,
+    submit_order,
+    deliver_trade_result,
+    calculate_cost_change,
+    break_point_file_path_name,
+    sys_log_file_path_name,
+    trade_log_file_path_name,
+)
+
+from qteasy.utilfuncs import (
+    TIME_FREQ_LEVELS,
+    adjust_string_length,
+    parse_freq_string,
+    str_to_list,
+    get_current_timezone_datetime,
+)
+
 
 UNIT_TO_TABLE = {
     'h':     'stock_hourly',
@@ -150,7 +180,7 @@ class Trader(object):
         self._broker = broker
         self._operator = operator
         self._config = ConfigDict()
-        self._config.update(qteasy.QT_CONFIG.copy())
+        self._config.update(QT_CONFIG.copy())
         self._config.update(config)
         self._datasource = datasource
         asset_pool = self._config['asset_pool']
@@ -539,9 +569,8 @@ class Trader(object):
 
         if system:
             # System Info
-            py_v = sys.version_info
-            trader_info_dict['python'] = f'{py_v.major}.{py_v.minor}.{py_v.micro}'
-            trader_info_dict['qteasy'] = qteasy.__version__
+            trader_info_dict['python'] = sys.version
+            trader_info_dict['qteasy'] = qteasy_version
             import tushare
             trader_info_dict['tushare'] = tushare.__version__
             try:

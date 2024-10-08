@@ -12,9 +12,16 @@
 import pandas as pd
 import numpy as np
 
-import qteasy
-from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, ffill_3d_data
-from .utilfuncs import fill_nan_data, fill_inf_data
+from qteasy.database import DataSource
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    list_or_slice,
+    labels_to_dict,
+    ffill_3d_data,
+    fill_nan_data,
+    fill_inf_data,
+)
 
 
 class HistoryPanel():
@@ -379,10 +386,10 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
-        ...                          levels=['000001', '000002', '000003'],
-        ...                          rows=pd.date_range('2015-01-05', periods=10),
-        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   rows=pd.date_range('2015-01-05', periods=10),
+        ...                   columns=['open', 'high', 'low', 'close', 'volume'])
         >>> hp
                 share 0, label: 000001
                     open  high  low  close  volume
@@ -592,7 +599,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -648,7 +655,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -694,7 +701,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -726,7 +733,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -784,7 +791,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -811,7 +818,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -983,12 +990,12 @@ class HistoryPanel():
         Examples
         --------
         # 如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
-        >>> hp1 = qteasy.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
+        >>> hp1 = HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
         ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
         ...                           levels=['000200', '000300'],
         ...                           rows=pd.date_range('2020-01-01', periods=5),
         ...                           columns=['close', 'open', 'high'])
-        >>> hp2 = qteasy.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
+        >>> hp2 = HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
         ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
         ...                           levels=['000400', '000500'],
         ...                           rows=pd.date_range('2020-01-01', periods=5),
@@ -1249,7 +1256,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
         ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
         ...                          levels=['000300', '000001'],
         ...                          rows=['2020-01-01', '2020-01-02'],
@@ -1305,7 +1312,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
         ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
         ...                          levels=['000300', '000001'],
         ...                          rows=['2020-01-01', '2020-01-02'],
@@ -1350,7 +1357,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
         ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
         ...                          levels=['000300', '000001'],
         ...                          rows=['2020-01-01', '2020-01-02'],
@@ -1580,7 +1587,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -1634,7 +1641,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -1688,7 +1695,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -1747,7 +1754,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -2411,7 +2418,7 @@ def get_history_panel(
         from qteasy import QT_DATA_SOURCE
         ds = QT_DATA_SOURCE
     else:
-        if not isinstance(data_source, qteasy.DataSource):
+        if not isinstance(data_source, DataSource):
             err = TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
             raise err
         ds = data_source
