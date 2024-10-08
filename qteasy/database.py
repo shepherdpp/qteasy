@@ -3148,12 +3148,40 @@ class DataSource:
         raise NotImplementedError
 
     def _get_event_multi_stat(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """事件多状态型的数据获取方法"""
+        """事件多状态型的数据获取方法
+
+        Parameters
+        ----------
+        symbols: list
+            股票代码列表
+        starts: str
+            开始日期
+        ends: str
+            结束日期
+        **kwargs
+            table_name: str
+                数据表名
+            column: str
+                数据表中的列名
+            id_index: str
+                数据表中的id列名
+            start_col: str
+                数据表中的开始时间列名
+            end_col: str
+                数据表中的结束时间列名
+
+        Returns
+        -------
+        DataFrame
+        """
 
         if symbols is None:
             raise ValueError('symbols must be provided for event status data type')
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
+
+        starts = pd.to_datetime(starts)
+        ends = pd.to_datetime(ends)
 
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
@@ -3176,11 +3204,26 @@ class DataSource:
         if acquired_data.empty:
             return pd.DataFrame()
 
+        # make group and combine events on the same date for the same symbol
         grouped = acquired_data.groupby(['ts_code', start_col])
-        event_series = grouped[column].apply(lambda x: list(x))
-        event_series = event_series.unstack(level=0)
+        events = grouped[column].apply(lambda x: list(x))
+        events = events.unstack(level=0)
 
-        return event_series
+        # expand the index to include starts and ends dates
+        events.index = pd.to_datetime(events.index)
+        expanded_index = events.index.to_list()
+        if starts not in expanded_index:
+            expanded_index.append(starts)
+        if ends not in expanded_index:
+            expanded_index.append(ends)
+        # sort the index and fill the missing values
+        events = events.reindex(expanded_index).sort_index(ascending=True).ffill()
+
+        # filter out events that are not in the date range
+        date_mask = (events.index >= starts) & (events.index <= ends)
+        events = events.loc[date_mask]
+
+        return events
 
     def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件状态型的数据获取方法"""
@@ -3907,11 +3950,13 @@ def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=Tru
 
 
 @lru_cache(maxsize=1)
-def get_dtype_map():
+def get_dtype_map() -> pd.DataFrame:
     """ 获取所有内置数据类型的清单
 
     Returns
     -------
+    dtype_map: pd.DataFrame
+
     """
     dtype_map = pd.DataFrame(DATA_TYPE_MAP).T
     dtype_map.columns = DATA_TYPE_MAP_COLUMNS

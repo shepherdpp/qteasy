@@ -174,7 +174,7 @@ class DataType:
         return f'{self.name}({self.asset_type})@{self.freq}'
 
 
-DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'table_name', 'column']
+DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'kwargs']
 DATA_TYPE_MAP_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
 DATA_TYPE_MAP = {
 ('stock_symbol','None','E'):	['股票基本信息 - 股票代码','basics',{'table_name': 'stock_basic', 'column': 'symbol'}],
