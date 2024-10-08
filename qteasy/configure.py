@@ -13,10 +13,18 @@
 import os
 import warnings
 
-from qteasy._arg_validators import QT_CONFIG
-from qteasy._arg_validators import ConfigDict
-from qteasy._arg_validators import _update_config_kwargs, _vkwargs_to_text
-from qteasy.utilfuncs import str_to_list, is_float_like, is_integer_like
+from qteasy._arg_validators import (
+    QT_CONFIG,
+    ConfigDict,
+    _update_config_kwargs,
+    _vkwargs_to_text,
+)
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    is_float_like,
+    is_integer_like,
+)
 
 # 启动配置文件的默认内容
 QT_START_UP_FILE_INTRO = '# **********************************\n' \

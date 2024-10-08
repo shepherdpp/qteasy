@@ -11,9 +11,13 @@
 import numpy as np
 import pandas as pd
 
-import qteasy
-from .utilfuncs import str_to_list, pandas_freq_alias_version_conversion
-from .space import ResultPool
+from qteasy.space import ResultPool
+from qteasy.finance import CashPlan
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    pandas_freq_alias_version_conversion,
+)
 
 
 # TODO: 改进evaluate：生成完整的evaluate参数DataFrame
@@ -192,7 +196,7 @@ def evaluate(looped_values: pd.DataFrame,
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_values)} instead')
     if benchmark_data not in hist_benchmark.columns:
         raise KeyError(f'reference data type \'{benchmark_data}\' can not be found in reference data')
-    if not isinstance(cash_plan, qteasy.CashPlan):
+    if not isinstance(cash_plan, CashPlan):
         raise TypeError(f'Cash plan is not valid, got {type(cash_plan)} instead')
 
     indicator_list = str_to_list(indicators)

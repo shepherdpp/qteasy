@@ -15,9 +15,15 @@ import numpy as np
 from numba import njit  # try taichi, which might be even faster
 
 import qteasy
-from .history import HistoryPanel
-from .finance import CashPlan, get_selling_result, get_purchase_result, get_cost_pamams
-from .qt_operator import Operator
+from qteasy.history import HistoryPanel
+from qteasy.qt_operator import Operator
+
+from qteasy.finance import (
+    CashPlan,
+    get_selling_result,
+    get_purchase_result,
+    get_cost_pamams,
+)
 
 
 @njit(nogil=True, cache=True)
