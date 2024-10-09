@@ -53,7 +53,6 @@ from .utilfuncs import (
 )
 
 
-# noinspection SqlDialectInspection #,PyTypeChecker,PyPackageRequirements
 class DataSource:
     """ DataSource 对象管理存储在本地的历史数据文件或数据库.
 
@@ -3220,9 +3219,6 @@ class DataSource:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
-        starts = pd.to_datetime(starts)
-        ends = pd.to_datetime(ends)
-
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
         id_index = kwargs.get('id_index')
@@ -3250,14 +3246,7 @@ class DataSource:
         events = events.unstack(level=0)
 
         # expand the index to include starts and ends dates
-        events.index = pd.to_datetime(events.index)
-        expanded_index = events.index.to_list()
-        if starts not in expanded_index:
-            expanded_index.append(starts)
-        if ends not in expanded_index:
-            expanded_index.append(ends)
-        # sort the index and fill the missing values
-        events = events.reindex(expanded_index).sort_index(ascending=True).ffill()
+        events = _expand_df_index(events, starts, ends).ffill()
 
         # filter out events that are not in the date range
         date_mask = (events.index >= starts) & (events.index <= ends)
@@ -3273,16 +3262,20 @@ class DataSource:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
-        import pdb; pdb.set_trace()
-
-        data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        # acquire data with out time thus status can be ffilled from previous dates
+        data_series = self._get_basics(symbols=symbols, starts=None, ends=None, **kwargs)
 
         if data_series.empty:
             return pd.DataFrame()
 
-        grouped = data_series.groupby('ts_code')
-        status = grouped.apply(lambda x: list(x))
-        status = status.unstack(level=0)
+        data_df = data_series.unstack(level='ts_code')
+
+        # expand the index to include starts and ends dates
+        status = _expand_df_index(data_df, starts, ends).ffill()
+
+        # filter out events that are not in the date range
+        date_mask = (status.index >= starts) & (status.index <= ends)
+        status = status.loc[date_mask]
 
         return status
 
@@ -3293,7 +3286,7 @@ class DataSource:
             raise ValueError('symbols must be provided for event status data type')
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
-        
+
         data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
 
         if data_series.empty:
@@ -4241,3 +4234,18 @@ def ensure_sys_table(table: str) -> None:
     except Exception as e:
         err = RuntimeError(f'{e}: An error occurred when checking table usage')
         raise err
+
+
+def _expand_df_index(df: pd.DataFrame, starts: str, ends: str) -> pd.DataFrame:
+    """将DataFrame的索引扩展到包含开始和结束日期"""
+
+    starts = pd.to_datetime(starts)
+    ends = pd.to_datetime(ends)
+
+    df.index = pd.to_datetime(df.index)
+    expanded_index = df.index.to_list()
+    if starts not in expanded_index:
+        expanded_index.append(starts)
+    if ends not in expanded_index:
+        expanded_index.append(ends)
+    return df.reindex(expanded_index).sort_index(ascending=True)
