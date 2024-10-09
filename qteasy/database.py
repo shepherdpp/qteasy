@@ -1499,6 +1499,12 @@ class DataSource:
         pd.DataFrame:
             下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
         """
+        # TODO: 将该函数移动到别的文件中如datachannels.py
+        #  这个函数的功能与DataSource的定义不符。
+        #  在DataSource中应该有一个API专司数据的清洗，以便任何形式的数据都
+        #  可以在清洗后被写入特定的数据表，而数据的获取则不应该放在DataSource中
+        #  DataSource应该被设计为专精与数据的存储接口，而不是数据获取接口
+        #  同样的道理适用于refill_local_source()函数
 
         # 目前仅支持从tushare获取数据，未来可能增加新的API
         from .tsfuncs import acquire_data
@@ -1573,6 +1579,14 @@ class DataSource:
             下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
             columns: ts_code, trade_time, open, high, low, close, vol, amount
         """
+
+        # TODO: 将该函数移动到别的文件中如datachannels.py
+        #  这个函数的功能与DataSource的定义不符。
+        #  在DataSource中应该有一个API专司数据的清洗，以便任何形式的数据都
+        #  可以在清洗后被写入特定的数据表，而数据的获取则不应该放在DataSource中
+        #  DataSource应该被设计为专精与数据的存储接口，而不是数据获取接口
+        #  同样的道理适用于refill_local_source()函数
+
         # 目前支持从tushare和eastmoney获取数据，未来可能增加新的API
         if not isinstance(table, str):
             err = TypeError(f'table name should be a string, got {type(table)} instead.')
@@ -3259,12 +3273,12 @@ class DataSource:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
+        import pdb; pdb.set_trace()
+
         data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
 
         if data_series.empty:
             return pd.DataFrame()
-
-        import pdb; pdb.set_trace()
 
         grouped = data_series.groupby('ts_code')
         status = grouped.apply(lambda x: list(x))
@@ -3279,17 +3293,13 @@ class DataSource:
             raise ValueError('symbols must be provided for event status data type')
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
-
+        
         data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
 
         if data_series.empty:
             return pd.DataFrame()
 
-        import pdb; pdb.set_trace()
-
-        grouped = data_series.groupby('ts_code')
-        signals = grouped.apply(lambda x: list(x))
-        signals = signals.unstack(level=0)
+        signals = data_series.unstack(level='ts_code')
 
         return signals
 
