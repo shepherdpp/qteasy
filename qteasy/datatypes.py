@@ -1117,7 +1117,6 @@ DATA_TYPE_MAP = {
 ('top10_buy','d','E'):	['沪深港通十大成交股上榜 - 买入金额（元）','event_signal',{'table_name': 'HS_top10_stock', 'column': 'buy'}],
 ('top10_sell','d','E'):	['沪深港通十大成交股上榜 - 卖出金额（元）','event_signal',{'table_name': 'HS_top10_stock', 'column': 'sell'}],
 ('fd_share','d','FD'):	['基金份额（万）','direct',{'table_name': 'fund_share', 'column': 'fd_share'}],
-# ('managers_name','d','FD'):	['基金经理姓名','event_multi_stat',{'table_name': 'fund_manager', 'column': 'name'}],
 ('managers_name','d','FD'):	['基金经理姓名','event_multi_stat',{'table_name': 'fund_manager', 'column': 'name', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
 ('managers_gender','d','FD'):	['基金经理 - 性别','event_multi_stat',{'table_name': 'fund_manager', 'column': 'gender', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
 ('managers_birth_year','d','FD'):	['基金经理 - 出生年份','event_multi_stat',{'table_name': 'fund_manager', 'column': 'birth_year', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date'}],
