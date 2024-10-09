@@ -83,6 +83,10 @@ class TestDataTypes(unittest.TestCase):
                 shares = ['000001.SZ', '000002.SZ', '000003.SZ']
                 starts = '2020-01-01'
                 ends = '2020-05-01'
+            elif (acq_type in type_with_events) and (asset_type == 'FD'):
+                shares = ['000152.OF', '960032.OF', '000152.OF']
+                starts = '2020-01-01'
+                ends = '2020-05-01'
 
             data = ds.get_data(
                     dtype,

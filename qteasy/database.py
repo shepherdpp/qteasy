@@ -3131,8 +3131,11 @@ class DataSource:
 
         acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
 
+        if acquired_data.empty:
+            return pd.Series()
+
         if column not in acquired_data.columns:
-            raise KeyError(f'column {column} not in table data: {acquired_data.columns}')
+            raise KeyError(f'column {column} not in table data: {acquired_data.columns()}')
 
         return acquired_data[column]
 
@@ -3251,8 +3254,6 @@ class DataSource:
     def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件状态型的数据获取方法"""
 
-        import pdb; pdb.set_trace()
-
         if symbols is None:
             raise ValueError('symbols must be provided for event status data type')
         if starts is None or ends is None:
@@ -3262,6 +3263,8 @@ class DataSource:
 
         if data_series.empty:
             return pd.DataFrame()
+
+        import pdb; pdb.set_trace()
 
         grouped = data_series.groupby('ts_code')
         status = grouped.apply(lambda x: list(x))
@@ -3272,8 +3275,6 @@ class DataSource:
     def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件信号型的数据获取方法"""
 
-        import pdb; pdb.set_trace()
-
         if symbols is None:
             raise ValueError('symbols must be provided for event status data type')
         if starts is None or ends is None:
@@ -3283,6 +3284,8 @@ class DataSource:
 
         if data_series.empty:
             return pd.DataFrame()
+
+        import pdb; pdb.set_trace()
 
         grouped = data_series.groupby('ts_code')
         signals = grouped.apply(lambda x: list(x))
