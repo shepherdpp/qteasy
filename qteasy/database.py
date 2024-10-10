@@ -1915,6 +1915,7 @@ class DataSource:
         columns, dtypes, remarks, primary_keys, pk_dtypes = get_built_in_table_schema(table,
                                                                                       with_remark=True,
                                                                                       with_primary_keys=True)
+        table_desc = TABLE_MASTERS[table][1]
         critical_key = TABLE_MASTERS[table][6]
         table_schema = pd.DataFrame({'columns': columns,
                                      'dtypes':  dtypes,
@@ -1925,9 +1926,9 @@ class DataSource:
                 table_size, table_rows = self.get_data_table_size(table, human=human)
             else:
                 table_size, table_rows = '0 MB', '0'
-            print(f'<{table}>, {table_size}/{table_rows} records on disc\n'
+            print(f'<{table}>--<{table_desc}>\n{table_size}/{table_rows} records on disc\n'
                   f'primary keys: \n'
-                  f'-----------------------------------')
+                  f'----------------------------------------')
         else:
             if table_exists:
                 table_size, table_rows = self.get_data_table_size(table, string_form=human, human=human)
@@ -1944,11 +1945,9 @@ class DataSource:
             if len(pk_min_max_count) == 0:
                 pk_min_max_count = ['N/A', 'N/A']
             if print_info:
-                if pk == critical_key:
-                    critical = "       *<CRITICAL>*"
-                print(f'{pk_count}:  {pk}:{critical}\n'
-                      f'    <{record_count}> entries\n'
-                      f'    starts:'
+                critical = "*" if pk == critical_key else " "
+                print(f'{pk_count}: {critical} {pk}:  <{record_count}> entries\n'
+                      f'     starts:'
                       f' {pk_min_max_count[0]}, end: {pk_min_max_count[1]}')
             if pk_count == 1:
                 pk1 = pk
