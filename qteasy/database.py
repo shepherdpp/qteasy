@@ -713,7 +713,7 @@ class DataSource:
         finally:
             con.close()
 
-    def write_database(self, df, db_table):
+    def write_database(self, df, db_table, primary_key):
         """ 将DataFrame中的数据添加到数据库表末尾，如果表不存在，则
         新建一张数据库表，并设置primary_key（如果给出）
 
@@ -725,6 +725,8 @@ class DataSource:
             需要添加的DataFrame
         db_table: str
             需要添加数据的数据库表
+        primary_key: tuple
+            数据表的primary_key，必须定义在数据表中
 
         Returns
         -------
@@ -735,14 +737,6 @@ class DataSource:
         调用update_database()执行任务，设置参数ignore_duplicate=True
         """
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
         # if table does not exist, create a new table without primary key info
         if not self.db_table_exists(db_table):
             dtype_mapping = {'object': 'varchar(255)',
@@ -761,6 +755,14 @@ class DataSource:
                 fields.append(f"`{col}` {dtype}\n")
             sql += f"{', '.join(fields)});"
             try:
+                import pymysql
+                con = pymysql.connect(
+                        host=self.host,
+                        port=self.port,
+                        user=self.__user__,
+                        password=self.__password__,
+                        db=self.db_name,
+                )
                 cursor = con.cursor()
                 cursor.execute(sql)
                 con.commit()
@@ -772,6 +774,9 @@ class DataSource:
                 raise err
 
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
+        # TODO:
+        #  实际上，下面的代码与update_database()中的代码几乎一样
+        #  应该将这一大坨代码抽象出来，作为一个单独的函数，统一调用
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notna(df), None)  # where-fill None in dataframe result in filling np.nan since pandas v2.0
@@ -788,6 +793,14 @@ class DataSource:
             sql += "%s, "
         sql += "%s)\n"
         try:
+            import pymysql
+            con = pymysql.connect(
+                    host=self.host,
+                    port=self.port,
+                    user=self.__user__,
+                    password=self.__password__,
+                    db=self.db_name,
+            )
             cursor = con.cursor()
             rows_affected = cursor.executemany(sql, df_tuple)
             con.commit()
@@ -1463,7 +1476,7 @@ class DataSource:
             if not self.db_table_exists(table):
                 self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':
-                rows_affected = self.write_database(df, db_table=table)
+                rows_affected = self.write_database(df, db_table=table, primary_key=primary_key)
             elif on_duplicate == 'update':
                 rows_affected = self.update_database(df, db_table=table, primary_key=primary_key)
             else:  # for unexpected cases

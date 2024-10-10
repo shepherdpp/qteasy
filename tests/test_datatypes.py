@@ -61,8 +61,6 @@ class TestDataTypes(unittest.TestCase):
             self.assertEqual(dtype.description, desc)
             self.assertEqual(dtype.acquisition_type, acq_type)
 
-            print(f'getting data for {dtype} - {dtype.description}')
-
             shares = None
             starts = '2020-01-01'
             ends = '2020-05-01'
@@ -70,7 +68,10 @@ class TestDataTypes(unittest.TestCase):
             type_with_shares = ['direct', 'basics']
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
             if (acq_type in type_with_shares) and (asset_type == 'E'):
-                shares = ['000651.SZ', '000001.SZ']
+                shares = ['000651.SZ', '000001.SZ','002936.SZ', '603810.SH']
+                if freq[-3:] == 'min':
+                    starts = '2022-04-01'
+                    ends = '2022-04-15'
             elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
                 shares = ['000300.SH', '000001.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FD'):
@@ -80,7 +81,7 @@ class TestDataTypes(unittest.TestCase):
             elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
                 shares = ['10000001.SH']
             elif (acq_type in type_with_events) and (asset_type == 'E'):
-                shares = ['000007.SZ', '000017.SZ', '000003.SZ']
+                shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '6000009.SH']
                 starts = '2018-01-01'
                 ends = '2020-05-01'
             elif (acq_type in type_with_events) and (asset_type == 'FD'):
@@ -94,7 +95,9 @@ class TestDataTypes(unittest.TestCase):
                     starts=starts,
                     ends=ends,
             )
-            print(f'got {type(data)}: {data}')
+            if data.empty:
+                print(f'getting data for {dtype} - {dtype.description}')
+                print(f'got {type(data)}: \n{data}')
 
 
 if __name__ == '__main__':
