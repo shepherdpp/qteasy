@@ -314,7 +314,10 @@ class DataSource:
         all_info.drop(columns=['table'], inplace=True)
         if print_out:
             info_to_print = all_info.loc[all_info.has_data == True][['has_data', 'size', 'records', 'min2', 'max2']]
-            print(f'\n{self}\nFollowing tables contain local data, to view complete list, print returned DataFrame')
+            print(f'\nFinished analyzing datasource: \n{self}\n'
+                  f'{len(info_to_print)} table(s) out of {len(all_info)} contain local data as summary below, '
+                  f'to view complete list, print returned DataFrame\n'
+                  f'{"tables with local data":=^84}')
             print(info_to_print.to_string(columns=['has_data',
                                                    'size',
                                                    'records',
@@ -1750,7 +1753,7 @@ class DataSource:
             dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
             rows_affected = self.write_table_data(df=dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
-            raise KeyError(f'invalid data source type')
+            raise KeyError(f'invalid data source type: {self.source_type}')
 
         return rows_affected
 
@@ -1861,7 +1864,7 @@ class DataSource:
         else:
             return f'{size}', f'{rows}'
 
-    def get_table_info(self, table, verbose=True, print_info=True, human=True) -> tuple:
+    def get_table_info(self, table, verbose=True, print_info=True, human=True) -> dict:
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
@@ -1878,19 +1881,21 @@ class DataSource:
 
         Returns
         -------
-        一个tuple，包含数据表的结构化信息：
-            (table name:    数据表名称
-             table_exists:  bool，数据表是否存在
-             table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
-             table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
-             primary_key1:  str，数据表第一个主键名称
-             pk_count1:     int，数据表第一个主键记录数量
-             pk_min1:       obj，数据表主键1起始记录
-             pk_max1:       obj，数据表主键2最终记录
-             primary_key2:  str，数据表第二个主键名称
-             pk_count2:     int，数据表第二个主键记录
-             pk_min2:       obj，数据表主键2起始记录
-             pk_max2:       obj，数据表主键2最终记录)
+        一个dict，包含数据表的结构化信息：
+        {
+            table name:    数据表名称
+            table_exists:  bool，数据表是否存在
+            table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+            table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
+            primary_key1:  str，数据表第一个主键名称
+            pk_count1:     int，数据表第一个主键记录数量
+            pk_min1:       obj，数据表主键1起始记录
+            pk_max1:       obj，数据表主键2最终记录
+            primary_key2:  str，数据表第二个主键名称
+            pk_count2:     int，数据表第二个主键记录
+            pk_min2:       obj，数据表主键2起始记录
+            pk_max2:       obj，数据表主键2最终记录
+        }
         """
         pk1 = None
         pk_records1 = None
@@ -1903,7 +1908,7 @@ class DataSource:
         if not isinstance(table, str):
             err = TypeError(f'table should be name of a table, got {type(table)} instead')
             raise err
-        if not table.lower() in TABLE_MASTERS:
+        if table not in TABLE_MASTERS:
             err = ValueError(f'in valid table name: {table}')
             raise err
 
@@ -1961,19 +1966,19 @@ class DataSource:
             print(f'\ncolumns of table:\n'
                   f'------------------------------------\n'
                   f'{table_schema}\n')
-        return (table,
-                table_exists,
-                table_size,
-                table_rows,
-                pk1,
-                pk_records1,
-                pk_min1,
-                pk_max1,
-                pk2,
-                pk_records2,
-                pk_min2,
-                pk_max2
-                )
+        return {'table': table,
+                'table_exists': table_exists,
+                'table_size': table_size,
+                'table_rows': table_rows,
+                'primary_key1': pk1,
+                'pk_records1': pk_records1,
+                'pk_min1': pk_min1,
+                'pk_max1': pk_max1,
+                'primary_key2': pk2,
+                'pk_records2': pk_records2,
+                'pk_min2': pk_min2,
+                'pk_max2': pk_max2
+                }
 
     # ==============
     # 系统操作表操作函数，专门用于操作sys_operations表，记录系统操作信息，数据格式简化
