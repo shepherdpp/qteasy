@@ -11,10 +11,13 @@
 
 import unittest
 
-from qteasy.datatypes import DATA_TYPE_MAP
-from qteasy.datatypes import DataType
-
 from qteasy.database import DataSource
+from qteasy.utilfuncs import progress_bar
+
+from qteasy.datatypes import (
+    DATA_TYPE_MAP,
+    DataType,
+)
 
 
 class TestDataTypes(unittest.TestCase):
@@ -37,6 +40,8 @@ class TestDataTypes(unittest.TestCase):
 
     def test_all_types(self):
         ds = self.ds
+        total = len(DATA_TYPE_MAP)
+        acquired = 0
         for k, v in DATA_TYPE_MAP.items():
             self.assertIsInstance(k, tuple)
             self.assertIsInstance(v, list)
@@ -69,17 +74,14 @@ class TestDataTypes(unittest.TestCase):
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
             if (acq_type in type_with_shares) and (asset_type == 'E'):
                 shares = ['000651.SZ', '000001.SZ','002936.SZ', '603810.SH']
-                if freq[-3:] == 'min':
-                    starts = '2022-04-01'
-                    ends = '2022-04-15'
             elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
                 shares = ['000300.SH', '000001.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FD'):
                 shares = ['515630.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FT'):
-                shares = ['A0001.DCE']
+                shares = ['A0001.DCE', 'A.DCE', 'CU2310.SHF']
             elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
-                shares = ['10000001.SH']
+                shares = ['10000001.SH', '10001909.SH', '10001910.SH', '10001911.SH', '10007976.SH']
             elif (acq_type in type_with_events) and (asset_type == 'E'):
                 shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '6000009.SH']
                 starts = '2018-01-01'
@@ -89,14 +91,35 @@ class TestDataTypes(unittest.TestCase):
                 starts = '2018-01-01'
                 ends = '2020-05-01'
 
+            if (asset_type in 'E') and (freq[-3:] == 'min'):
+                starts = '2022-04-01'
+                ends = '2022-04-15'
+            elif (asset_type == 'FT') and (freq[-3:] == 'min'):
+                starts = '2023-08-25'
+                ends = '2023-08-27'
+            elif (asset_type == 'OPT') and (freq[-3:] == 'min'):
+                starts = '2024-09-27'
+                ends = '2024-09-28'
+            elif (asset_type == 'FD') and (freq == '60min'):
+                starts = '2021-09-20'
+                ends = '2021-09-30'
+            elif freq[-3:] == 'min':
+                starts = '2022-04-01'
+                ends = '2022-04-15'
+
+
             data = ds.get_data(
                     dtype,
                     symbols=shares,
                     starts=starts,
                     ends=ends,
             )
+
+            acquired += 1
+            progress_bar(acquired, total, f'{dtype} - {dtype.description}')
+
             if data.empty:
-                print(f'getting data for {dtype} - {dtype.description}')
+                print(f'\nempty data for {dtype} - {dtype.description}')
                 print(f'got {type(data)}: \n{data}')
 
 
