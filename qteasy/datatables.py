@@ -737,7 +737,7 @@ TABLE_SCHEMA = {
     'HS_top10_stock':  # New, 沪深股通十大成交股!
         {'columns':     ["trade_date", "ts_code", "name", "close", "change", "rank", "market_type", "amount",
                          "net_amount", "buy", "sell"],
-         'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "int", "str", "float",
+         'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "int", "varchar(3)", "float",
                          "float", "float", "float"],
          'remarks':     ["交易日期", "股票代码", "股票名称", "收盘价", "涨跌额", "资金排名", "市场类型（1：沪市 3：深市）", "成交金额（元）",
                          "净成交金额（元）", "买入金额（元）", "卖出金额（元）"],

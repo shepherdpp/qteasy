@@ -1108,7 +1108,7 @@ DATA_TYPE_MAP = {
 ('change_reason','d','E'):	['股票更名 - 变更原因','event_signal',{'table_name': 'stock_names', 'column': 'change_reason'}],
 ('suspend_timing','d','E'):	['日内停牌时间段','event_signal',{'table_name': 'stock_suspend', 'column': 'suspend_timing'}],
 ('is_suspended','d','E'):	['停复牌类型：S-停牌，R-复牌','event_signal',{'table_name': 'stock_suspend', 'column': 'suspend_type'}],
-('is_HS_top10','d','E'):	['沪深港通十大成交股上榜','event_signal',{'table_name': 'HS_top10_stock', 'column': 'ts_code'}],
+('is_HS_top10','d','E'):	['沪深港通十大成交股上榜','event_signal',{'table_name': 'HS_top10_stock', 'column': 'name'}],
 ('top10_close','d','E'):	['沪深港通十大成交股上榜 - 收盘价','event_signal',{'table_name': 'HS_top10_stock', 'column': 'close'}],
 ('top10_change','d','E'):	['沪深港通十大成交股上榜 - 涨跌额','event_signal',{'table_name': 'HS_top10_stock', 'column': 'change'}],
 ('top10_rank','d','E'):	['沪深港通十大成交股上榜 - 资金排名','event_signal',{'table_name': 'HS_top10_stock', 'column': 'rank'}],
