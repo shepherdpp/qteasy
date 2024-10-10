@@ -21,12 +21,25 @@ import matplotlib.ticker as mtick
 import pandas as pd
 import numpy as np
 
-import qteasy as qt
-from qteasy.history import get_history_panel
-from .utilfuncs import sec_to_duration, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
-from .tafuncs import macd, dema, rsi, bbands, sma
-
 from pandas.plotting import register_matplotlib_converters
+
+from qteasy.history import get_history_panel
+
+from qteasy.utilfuncs import (
+    sec_to_duration,
+    list_to_str_format,
+    match_ts_code,
+    TIME_FREQ_STRINGS,
+)
+
+from qteasy.tafuncs import (
+    macd,
+    dema,
+    rsi,
+    bbands,
+    sma,
+)
+
 
 register_matplotlib_converters()
 
@@ -693,13 +706,14 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     -------
     tuple：(pd.DataFrame, share_name)
     """
+    from qteasy import QT_DATA_SOURCE
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
     name_of = {'E':   'Stock 股票',
                'IDX': 'Index 指数',
                'FT':  'Futures 期货',
                'FD':  'Fund 基金',
                'OPT': 'Options 期权'}
-    ds = qt.QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     if asset_type.upper() == 'E':
         basic_info = ds.read_table_data('stock_basic')
     elif asset_type.upper() == 'IDX':

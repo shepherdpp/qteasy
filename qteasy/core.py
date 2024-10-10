@@ -14,18 +14,41 @@ from warnings import warn
 
 import datetime
 
-import qteasy
-from .history import get_history_panel, HistoryPanel
-from .utilfuncs import str_to_list, regulate_date_format, match_ts_code
-from .utilfuncs import next_market_trade_day
-from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
-from .finance import CashPlan
-from .qt_operator import Operator
-from .visual import _plot_loop_result, _loop_report_str, _print_test_result
-from .visual import _plot_test_result
-from ._arg_validators import QT_CONFIG, ConfigDict
-from .configure import configure
-from .optimization import _evaluate_all_parameters, _evaluate_one_parameter
+from qteasy.finance import CashPlan
+from qteasy.configure import configure
+from qteasy.qt_operator import Operator
+from qteasy.database import DataSource
+
+from qteasy.history import (
+    get_history_panel,
+    HistoryPanel,
+)
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    regulate_date_format,
+    match_ts_code,
+    next_market_trade_day,
+    AVAILABLE_ASSET_TYPES,
+    _partial_lev_ratio,
+)
+
+from qteasy.visual import (
+    _plot_loop_result,
+    _loop_report_str,
+    _print_test_result,
+    _plot_test_result,
+)
+
+from qteasy._arg_validators import (
+    QT_CONFIG,
+    ConfigDict,
+)
+
+from qteasy.optimization import (
+    _evaluate_all_parameters,
+    _evaluate_one_parameter,
+)
 
 
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
@@ -74,6 +97,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     601229.SH  上海银行   上海       银行     主板 2016-11-16      SSE
     601328.SH  交通银行   上海       银行     主板 2007-05-15      SSE
     """
+    from qteasy import QT_DATA_SOURCE
     try:
         date = pd.to_datetime(date)
     except:
@@ -84,7 +108,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
-    ds = qteasy.QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     # ts_code是dataframe的index
     share_basics = ds.read_table_data('stock_basic')
     if not share_basics.empty:
@@ -319,9 +343,10 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     list_date    2004-05-14
     -------------------------------------------
     """
+    from qteasy import QT_DATA_SOURCE
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
-    ds = qteasy.QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
@@ -433,7 +458,7 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
                           verbose=verbose)
 
 
-def get_table_info(table_name, data_source=None, verbose=True):
+def get_table_info(table_name, data_source=None, verbose=True) -> dict:
     """ 获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容
         以及数据列的名称、数据类型及说明
 
@@ -448,19 +473,21 @@ def get_table_info(table_name, data_source=None, verbose=True):
 
     Returns
     -------
-    一个tuple，包含数据表的结构化信息：
-        (table name:    str, 数据表名称
-         table_exists:  bool，数据表是否存在
-         table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
-         table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
-         primary_key1:  str，数据表第一个主键名称
-         pk_count1:     int，数据表第一个主键记录数量
-         pk_min1:       obj，数据表主键1起始记录
-         pk_max1:       obj，数据表主键2最终记录
-         primary_key2:  str，数据表第二个主键名称
-         pk_count2:     int，数据表第二个主键记录
-         pk_min2:       obj，数据表主键2起始记录
-         pk_max2:       obj，数据表主键2最终记录)
+    一个dict，包含数据表的结构化信息：
+        {
+            table name:    数据表名称
+            table_exists:  bool，数据表是否存在
+            table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+            table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
+            primary_key1:  str，数据表第一个主键名称
+            pk_count1:     int，数据表第一个主键记录数量
+            pk_min1:       obj，数据表主键1起始记录
+            pk_max1:       obj，数据表主键2最终记录
+            primary_key2:  str，数据表第二个主键名称
+            pk_count2:     int，数据表第二个主键记录
+            pk_min2:       obj，数据表主键2起始记录
+            pk_max2:       obj，数据表主键2最终记录
+        }
 
     Examples
     --------
@@ -490,14 +517,15 @@ def get_table_info(table_name, data_source=None, verbose=True):
     13  delist_date         date    退市日期
     14        is_hs   varchar(2)  是否沪深港通
     """
+    from qteasy import QT_DATA_SOURCE
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
-    if not isinstance(data_source, qteasy.DataSource):
+        data_source = QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data_source should be a DataSource, got {type(data_source)} instead.')
     return data_source.get_table_info(table=table_name, verbose=verbose)
 
 
-def get_table_overview(data_source=None, tables=None, include_sys_tables=False) -> None:
+def get_table_overview(data_source=None, tables=None, include_sys_tables=False) -> pd.DataFrame:
     """ 显示默认数据源或指定数据源的数据总览
 
     Parameters
@@ -511,7 +539,7 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False) 
 
     Returns
     -------
-    None
+    pd.DataFrame
 
     Notes
     -----
@@ -520,14 +548,15 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False) 
 
     from .database import DataSource
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
 
-    data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
+    return data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
 
 
-def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -> None:
+def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -> pd.DataFrame:
     """ 显示数据源的数据总览，等同于get_table_overview()
 
     获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等
@@ -543,7 +572,8 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
 
     Returns
     -------
-    None
+    pd.DataFrame
+    返回一个包含数据表的overview信息的DataFrame
 
     Examples
     --------
@@ -697,7 +727,8 @@ def refill_data_source(*, data_source=None, **kwargs) -> None:
     """
     from .database import DataSource
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
     print(f'Filling data source {data_source} ...')
@@ -989,7 +1020,7 @@ def get_history_data(htypes,
     if symbols is not None and shares is None:
         shares = symbols
     if shares is None:
-        shares = qteasy.QT_CONFIG.asset_pool
+        shares = QT_CONFIG.asset_pool
 
     one_year = pd.Timedelta(365, 'd')
     one_week = pd.Timedelta(7, 'd')
@@ -1105,8 +1136,9 @@ def live_trade_accounts() -> pd.DataFrame:
     all_accounts: pd.DataFrame
         包含所有实盘交易账户信息的DataFrame
     """
+    from qteasy import QT_DATA_SOURCE
     from qteasy.trade_recording import get_all_accounts
-    return get_all_accounts(qteasy.QT_DATA_SOURCE)
+    return get_all_accounts(QT_DATA_SOURCE)
 
 
 # TODO: Bug检查：
@@ -1347,9 +1379,10 @@ def reconnect_ds(data_source=None):  # deprecated
     -------
     """
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
 
-    if not isinstance(data_source, qteasy.DataSource):
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data source not recognized!')
 
     # reconnect twice to make sure the connection is established
