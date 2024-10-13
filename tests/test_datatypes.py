@@ -11,6 +11,8 @@
 
 import unittest
 
+import pandas as pd
+
 from qteasy.database import DataSource
 from qteasy.utilfuncs import progress_bar
 
@@ -42,6 +44,10 @@ class TestDataTypes(unittest.TestCase):
         ds = self.ds
         total = len(DATA_TYPE_MAP)
         acquired = 0
+        empty_count = 0
+        empty_types = []
+        empty_type_descs = []
+        empty_type_acq_types = []
         for k, v in DATA_TYPE_MAP.items():
             self.assertIsInstance(k, tuple)
             self.assertIsInstance(v, list)
@@ -67,8 +73,8 @@ class TestDataTypes(unittest.TestCase):
             self.assertEqual(dtype.acquisition_type, acq_type)
 
             shares = None
-            starts = '2020-01-01'
-            ends = '2020-05-01'
+            starts = '2019-09-01'
+            ends = '2019-09-30'
 
             type_with_shares = ['direct', 'basics']
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
@@ -100,13 +106,12 @@ class TestDataTypes(unittest.TestCase):
             elif (asset_type == 'OPT') and (freq[-3:] == 'min'):
                 starts = '2024-09-27'
                 ends = '2024-09-28'
-            elif (asset_type == 'FD') and (freq == '60min'):
+            elif (asset_type == 'FD') and (freq == 'h'):
                 starts = '2021-09-20'
                 ends = '2021-09-30'
             elif freq[-3:] == 'min':
                 starts = '2022-04-01'
                 ends = '2022-04-15'
-
 
             data = ds.get_data(
                     dtype,
@@ -119,8 +124,20 @@ class TestDataTypes(unittest.TestCase):
             progress_bar(acquired, total, f'{dtype} - {dtype.description}')
 
             if data.empty:
-                print(f'\nempty data for {dtype} - {dtype.description}')
-                print(f'got {type(data)}: \n{data}')
+                empty_count += 1
+                empty_types.append(k)
+                empty_type_descs.append(desc)
+                empty_type_acq_types.append(acq_type)
+                # print(f'\nempty data for {dtype} - {dtype.description}')
+                # print(f'got {type(data)}: \n{data}')
+
+        print(f'\n{empty_count} out of {total} empty data types:')
+        emptys = pd.DataFrame({
+            'type': empty_types,
+            'description': empty_type_descs,
+            'acquisition_type': empty_type_acq_types
+        })
+        print(emptys.to_string())
 
 
 if __name__ == '__main__':
