@@ -72,9 +72,11 @@ class TestDataTypes(unittest.TestCase):
             self.assertEqual(dtype.description, desc)
             self.assertEqual(dtype.acquisition_type, acq_type)
 
+            table_name = dtype.kwargs['table_name']
+
             shares = None
             starts = '2019-09-01'
-            ends = '2019-09-30'
+            ends = '2020-09-12'
 
             type_with_shares = ['direct', 'basics']
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
@@ -92,6 +94,13 @@ class TestDataTypes(unittest.TestCase):
                 shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '6000009.SH']
                 starts = '2018-01-01'
                 ends = '2020-05-01'
+                # for special tables:
+                if table_name == 'stock_suspend':
+                    starts = '2020-03-10'
+                    ends = '2020-03-13'
+                elif table_name == 'top_inst':
+                    starts = '2021-05-21'
+                    ends = '2021-05-25'
             elif (acq_type in type_with_events) and (asset_type == 'FD'):
                 shares = ['000152.OF', '960032.OF', '000152.OF']
                 starts = '2018-01-01'
