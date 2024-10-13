@@ -304,7 +304,7 @@ class DataSource:
         completed_reading_count = 0
         for table_name in all_table_names:
             progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing table: <{table_name}>')
-            all_info.append(self.get_table_info(table_name, verbose=False, print_info=False, human=True))
+            all_info.append(self.get_table_info(table_name, verbose=False, print_info=False, human=True).values())
             completed_reading_count += 1
         progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing completed!')
         all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size', 'records',
@@ -1726,7 +1726,7 @@ class DataSource:
         # 如果table中的相当部分(25%)不能从df中找到，判断df与table完全不匹配，报错
         # 否则判断df基本与table匹配，根据Constraints，添加缺少的列(通常为NULL列)
         missing_columns = [col for col in table_columns if col not in dnld_columns]
-        if len(missing_columns) >= (len(table_columns) * 0.25):
+        if len(missing_columns) >= (len(table_columns) * 0.75):
             err = ValueError(f'there are too many missing columns in downloaded df, can not merge to local table:'
                              f'table_columns:\n{[table_columns]}\n'
                              f'downloaded:\n{[dnld_columns]}')
@@ -1896,18 +1896,18 @@ class DataSource:
         -------
         一个dict，包含数据表的结构化信息：
         {
-            table name:    数据表名称
-            table_exists:  bool，数据表是否存在
-            table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
-            table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
-            primary_key1:  str，数据表第一个主键名称
-            pk_count1:     int，数据表第一个主键记录数量
-            pk_min1:       obj，数据表主键1起始记录
-            pk_max1:       obj，数据表主键2最终记录
-            primary_key2:  str，数据表第二个主键名称
-            pk_count2:     int，数据表第二个主键记录
-            pk_min2:       obj，数据表主键2起始记录
-            pk_max2:       obj，数据表主键2最终记录
+            table name:    1, str, 数据表名称
+            table_exists:  2, bool，数据表是否存在
+            table_size:    3, int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+            table_rows:    4, int/str，数据表的行数，human 为True时返回容易阅读的字符串
+            primary_key1:  5, str，数据表第一个主键名称
+            pk_count1:     6, int，数据表第一个主键记录数量
+            pk_min1:       7, obj，数据表主键1起始记录
+            pk_max1:       8, obj，数据表主键2最终记录
+            primary_key2:  9, str，数据表第二个主键名称
+            pk_count2:     10, int，数据表第二个主键记录
+            pk_min2:       11, obj，数据表主键2起始记录
+            pk_max2:       12, obj，数据表主键2最终记录
         }
         """
         pk1 = None
@@ -2789,7 +2789,7 @@ class DataSource:
                     tables_to_refill.add('trade_calendar')
                 else:
                     # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
-                    latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
+                    latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)['pk_max2']
                     try:
                         latest_calendar_date = pd.to_datetime(latest_calendar_date)
                         if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
