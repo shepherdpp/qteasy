@@ -48,6 +48,7 @@ class TestDataTypes(unittest.TestCase):
         empty_types = []
         empty_type_descs = []
         empty_type_acq_types = []
+        all_tables = ds.all_tables
         for k, v in DATA_TYPE_MAP.items():
             self.assertIsInstance(k, tuple)
             self.assertIsInstance(v, list)
@@ -132,6 +133,11 @@ class TestDataTypes(unittest.TestCase):
             acquired += 1
             progress_bar(acquired, total, f'{dtype} - {dtype.description}')
 
+            try:
+                all_tables.remove(table_name)
+            except ValueError:
+                pass
+
             if data.empty:
                 empty_count += 1
                 empty_types.append(k)
@@ -147,6 +153,10 @@ class TestDataTypes(unittest.TestCase):
             'acquisition_type': empty_type_acq_types
         })
         print(emptys.to_string())
+        print('\n')
+        print('data tables that are not covered:')
+        for table in all_tables:
+            print(ds.get_table_info(table))
 
 
 if __name__ == '__main__':

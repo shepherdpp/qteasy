@@ -245,9 +245,14 @@ class DataSource:
             self.__password__ = None
 
     @property
-    def tables(self):
+    def tables(self) -> list:
         """ 所有已经建立的tables的清单"""
         return list(self._table_list)
+
+    @property
+    def all_tables(self) -> list:
+        """ 获取所有数据表的清单"""
+        return get_table_master().index.to_list()
 
     def __repr__(self):
         if self.source_type == 'db':
@@ -334,7 +339,7 @@ class DataSource:
         return all_info
 
     # 文件操作层函数，只操作文件，不修改数据
-    def get_file_path_name(self, file_name):
+    def _get_file_path_name(self, file_name):
         """获取完整文件路径名"""
         if self.source_type == 'db':
             err = RuntimeError('can not check file system while source type is "db"')
@@ -346,7 +351,7 @@ class DataSource:
         file_path_name = path.join(self.file_path, file_name)
         return file_path_name
 
-    def file_exists(self, file_name):
+    def _file_exists(self, file_name):
         """ 检查文件是否已存在
 
         Parameters
@@ -356,10 +361,10 @@ class DataSource:
         -------
         Boolean: 文件存在时返回真，否则返回假
         """
-        file_path_name = self.get_file_path_name(file_name)
+        file_path_name = self._get_file_path_name(file_name)
         return path.exists(file_path_name)
 
-    def write_file(self, df, file_name):
+    def _write_file(self, df, file_name):
         """ 将df写入本地文件，在把文件写入文件之前，需要将primary key写入index，使用
         set_primary_key_index()函数
 
@@ -371,7 +376,7 @@ class DataSource:
         -------
         str: file_name 如果数据保存成功，返回完整文件路径名称
         """
-        file_path_name = self.get_file_path_name(file_name)
+        file_path_name = self._get_file_path_name(file_name)
         if self.file_type == 'csv':
             df.to_csv(file_path_name, encoding='utf-8')
         elif self.file_type == 'fth':
@@ -383,8 +388,8 @@ class DataSource:
             raise err
         return len(df)
 
-    def read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
-                  shares=None, date_like_pk=None, start=None, end=None, chunk_size=50000):
+    def _read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
+                   shares=None, date_like_pk=None, start=None, end=None, chunk_size=50000):
         """ 从文件中读取DataFrame，当文件类型为csv时，支持分块读取且完成数据筛选
 
         Parameters
@@ -416,8 +421,8 @@ class DataSource:
         # TODO: 这里对所有读取的文件都进行筛选，需要考虑是否在read_table_data还需要筛选？
         #  也就是说，在read_table_data级别筛选数据还是在read_file/read_database级别
         #  筛选数据？
-        file_path_name = self.get_file_path_name(file_name)
-        if not self.file_exists(file_name):
+        file_path_name = self._get_file_path_name(file_name)
+        if not self._file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
         if date_like_pk is not None:
@@ -494,7 +499,7 @@ class DataSource:
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         return df
 
-    def delete_file_records(self, file_name, primary_key, record_ids) -> int:
+    def _delete_file_records(self, file_name, primary_key, record_ids) -> int:
         """ 从文件中删除指定的记录
 
         Parameters
@@ -517,7 +522,7 @@ class DataSource:
             raise err
         # read all data from file into a dataframe
         primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
-        df = self.read_file(file_name, primary_key, pk_dtypes=['int'])
+        df = self._read_file(file_name, primary_key, pk_dtypes=['int'])
         # check if the record_ids are in the dataframe, remove them if they are
         rows_deleted = 0
         for record_id in record_ids:
@@ -528,11 +533,11 @@ class DataSource:
         # write the updated dataframe back to the file, make sure primary keys are in index
         df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=['int'])
         set_primary_key_index(df, primary_key=primary_key, pk_dtypes=['int'])
-        self.write_file(df, file_name)
+        self._write_file(df, file_name)
 
         return rows_deleted
 
-    def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
+    def _get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
 
         Parameters
@@ -553,9 +558,9 @@ class DataSource:
         list of str
             数据表中存储的数据关键列的清单
         """
-        if not self.file_exists(table):
+        if not self._file_exists(table):
             return list()
-        df = self.read_file(table, primary_key, pk_dtypes)
+        df = self._read_file(table, primary_key, pk_dtypes)
         if df.empty:
             return list()
         if column in list(df.index.names):
@@ -575,7 +580,7 @@ class DataSource:
 
         return list(res)
 
-    def drop_file(self, file_name):
+    def _drop_file(self, file_name):
         """ 删除本地文件
 
         Parameters
@@ -588,11 +593,11 @@ class DataSource:
         None
         """
         import os
-        if self.file_exists(file_name):
+        if self._file_exists(file_name):
             file_path_name = os.path.join(self.file_path, file_name + '.' + self.file_type)
             os.remove(file_path_name)
 
-    def get_file_size(self, file_name):
+    def _get_file_size(self, file_name):
         """ 获取文件大小，输出
 
         Parameters
@@ -603,7 +608,7 @@ class DataSource:
             str representing file size
         """
         import os
-        file_path_name = self.get_file_path_name(file_name)
+        file_path_name = self._get_file_path_name(file_name)
         try:
             file_size = os.path.getsize(file_path_name)
             return file_size
@@ -613,9 +618,9 @@ class DataSource:
             err = RuntimeError(f'{e}, unknown error encountered.')
             raise err
 
-    def get_file_rows(self, file_name):
+    def _get_file_rows(self, file_name):
         """获取csv、hdf、feather文件中数据的行数"""
-        file_path_name = self.get_file_path_name(file_name)
+        file_path_name = self._get_file_path_name(file_name)
         if self.file_type == 'csv':
             with open(file_path_name, 'r', encoding='utf-8') as fp:
                 line_count = None
@@ -630,7 +635,7 @@ class DataSource:
             return len(df)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
-    def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
+    def _read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
         """ 从一张数据库表中读取数据，读取时根据share(ts_code)和dates筛选
             具体筛选的字段通过share_like_pk和date_like_pk两个字段给出
 
@@ -655,7 +660,7 @@ class DataSource:
         -------
             DataFrame，从数据库中读取的DataFrame
         """
-        if not self.db_table_exists(db_table):
+        if not self._db_table_exists(db_table):
             return pd.DataFrame()
         ts_code_filter = ''
         has_ts_code_filter = False
@@ -713,7 +718,7 @@ class DataSource:
         finally:
             con.close()
 
-    def write_database(self, df, db_table, primary_key):
+    def _write_database(self, df, db_table, primary_key):
         """ 将DataFrame中的数据添加到数据库表末尾，如果表不存在，则
         新建一张数据库表，并设置primary_key（如果给出）
 
@@ -738,7 +743,7 @@ class DataSource:
         """
 
         # if table does not exist, create a new table without primary key info
-        if not self.db_table_exists(db_table):
+        if not self._db_table_exists(db_table):
             dtype_mapping = {'object': 'varchar(255)',
                              'datetime64[ns]': 'datetime',
                              'int64': 'int',
@@ -773,7 +778,7 @@ class DataSource:
                                    f'SQL:\n{sql}')
                 raise err
 
-        tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
+        tbl_columns = tuple(self._get_db_table_schema(db_table).keys())
         # TODO:
         #  实际上，下面的代码与update_database()中的代码几乎一样
         #  应该将这一大坨代码抽象出来，作为一个单独的函数，统一调用
@@ -814,7 +819,7 @@ class DataSource:
         finally:
             con.close()
 
-    def update_database(self, df, db_table, primary_key):
+    def _update_database(self, df, db_table, primary_key):
         """ 用DataFrame中的数据更新数据表中的数据记录
 
         假定df的列与db_table的列相同且顺序也相同
@@ -834,7 +839,7 @@ class DataSource:
         -------
         int: rows affected
         """
-        tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
+        tbl_columns = tuple(self._get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
@@ -883,7 +888,7 @@ class DataSource:
         finally:
             con.close()
 
-    def delete_database_records(self, db_table, primary_key, record_ids):
+    def _delete_database_records(self, db_table, primary_key, record_ids):
         """ 从数据库表中删除数据
 
         必须给出数据表的主键名，以及需要删除的记录的主键值
@@ -933,7 +938,7 @@ class DataSource:
                                f'SQL:\n{sql}')
             raise err
 
-    def get_db_table_coverage(self, db_table, column):
+    def _get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
 
         Parameters
@@ -947,7 +952,7 @@ class DataSource:
         -------
         """
         import datetime
-        if not self.db_table_exists(db_table):
+        if not self._db_table_exists(db_table):
             return list()
         sql = f'SELECT DISTINCT `{column}`' \
               f'FROM `{db_table}`' \
@@ -977,7 +982,7 @@ class DataSource:
         finally:
             con.close()
 
-    def get_db_table_minmax(self, db_table, column, with_count=False):
+    def _get_db_table_minmax(self, db_table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
 
         Parameters
@@ -994,7 +999,7 @@ class DataSource:
         list: [min, max, count]
         """
         import datetime
-        if not self.db_table_exists(db_table):
+        if not self._db_table_exists(db_table):
             return list()
         if with_count:
             add_sql = f', COUNT(DISTINCT(`{column}`))'
@@ -1028,7 +1033,7 @@ class DataSource:
         finally:
             con.close()
 
-    def db_table_exists(self, db_table):
+    def _db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
 
         Parameters
@@ -1066,7 +1071,7 @@ class DataSource:
         finally:
             con.close()
 
-    def new_db_table(self, db_table, columns, dtypes, primary_key, auto_increment_id=False):
+    def _new_db_table(self, db_table, columns, dtypes, primary_key, auto_increment_id=False):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
             并创建正确的index
 
@@ -1124,7 +1129,7 @@ class DataSource:
         finally:
             con.close()
 
-    def get_db_table_schema(self, db_table):
+    def _get_db_table_schema(self, db_table):
         """ 获取数据库表的列名称和数据类型
 
         Parameters
@@ -1167,7 +1172,7 @@ class DataSource:
         finally:
             con.close()
 
-    def drop_db_table(self, db_table):
+    def _drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
 
         Parameters
@@ -1205,7 +1210,7 @@ class DataSource:
         finally:
             con.close()
 
-    def get_db_table_size(self, db_table):
+    def _get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
 
         Parameters
@@ -1217,7 +1222,7 @@ class DataSource:
         -------
         rows: int
         """
-        if not self.db_table_exists(db_table):
+        if not self._db_table_exists(db_table):
             return -1
 
         import pymysql
@@ -1258,9 +1263,9 @@ class DataSource:
         bool: True if table exists, False otherwise
         """
         if self.source_type == 'db':
-            return self.db_table_exists(db_table=table)
+            return self._db_table_exists(db_table=table)
         elif self.source_type == 'file':
-            return self.file_exists(table)
+            return self._file_exists(table)
         else:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
@@ -1329,14 +1334,14 @@ class DataSource:
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
-            df = self.read_file(file_name=table,
-                                primary_key=primary_key,
-                                pk_dtypes=pk_dtypes,
-                                share_like_pk=share_like_pk,
-                                shares=shares,
-                                date_like_pk=date_like_pk,
-                                start=start,
-                                end=end)
+            df = self._read_file(file_name=table,
+                                 primary_key=primary_key,
+                                 pk_dtypes=pk_dtypes,
+                                 share_like_pk=share_like_pk,
+                                 shares=shares,
+                                 date_like_pk=date_like_pk,
+                                 start=start,
+                                 end=end)
             if df.empty:
                 return df
             if share_like_pk is not None:
@@ -1352,20 +1357,20 @@ class DataSource:
         elif self.source_type == 'db':
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
-            if not self.db_table_exists(db_table=table):
+            if not self._db_table_exists(db_table=table):
                 # 如果数据库中不存在该表，则创建表
-                self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+                self._new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if share_like_pk is None:
                 shares = None
             if date_like_pk is None:
                 start = None
                 end = None
-            df = self.read_database(db_table=table,
-                                    share_like_pk=share_like_pk,
-                                    shares=shares,
-                                    date_like_pk=date_like_pk,
-                                    start=start,
-                                    end=end)
+            df = self._read_database(db_table=table,
+                                     share_like_pk=share_like_pk,
+                                     shares=shares,
+                                     date_like_pk=date_like_pk,
+                                     start=start,
+                                     end=end)
             if df.empty:
                 return df
             set_primary_key_index(df, primary_key, pk_dtypes)
@@ -1470,15 +1475,15 @@ class DataSource:
         if self.source_type == 'file':
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
-            rows_affected = self.write_file(df, file_name=table)
+            rows_affected = self._write_file(df, file_name=table)
         elif self.source_type == 'db':
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
-            if not self.db_table_exists(table):
-                self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+            if not self._db_table_exists(table):
+                self._new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':
-                rows_affected = self.write_database(df, db_table=table, primary_key=primary_key)
+                rows_affected = self._write_database(df, db_table=table, primary_key=primary_key)
             elif on_duplicate == 'update':
-                rows_affected = self.update_database(df, db_table=table, primary_key=primary_key)
+                rows_affected = self._update_database(df, db_table=table, primary_key=primary_key)
             else:  # for unexpected cases
                 raise KeyError(f'Invalid process mode on duplication: {on_duplicate}')
         self._table_list.add(table)
@@ -1783,9 +1788,9 @@ class DataSource:
         None
         """
         if self.source_type == 'db':
-            self.drop_db_table(db_table=table)
+            self._drop_db_table(db_table=table)
         elif self.source_type == 'file':
-            self.drop_file(file_name=table)
+            self._drop_file(file_name=table)
         self._table_list.difference_update([table])
         return None
 
@@ -1832,12 +1837,12 @@ class DataSource:
         """
         if self.source_type == 'db':
             if min_max_only:
-                return self.get_db_table_minmax(table, column)
+                return self._get_db_table_minmax(table, column)
             else:
-                return self.get_db_table_coverage(table, column)
+                return self._get_db_table_coverage(table, column)
         elif self.source_type == 'file':
             columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
-            return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes, min_max_only)
+            return self._get_file_table_coverage(table, column, primary_keys, pk_dtypes, min_max_only)
         else:
             err = TypeError(f'Invalid source type: {self.source_type}')
         raise err
@@ -1860,11 +1865,11 @@ class DataSource:
 
         """
         if self.source_type == 'file':
-            size = self.get_file_size(table)
-            rows = self.get_file_rows(table)
+            size = self._get_file_size(table)
+            rows = self._get_file_rows(table)
             # rows = 'unknown'
         elif self.source_type == 'db':
-            rows, size = self.get_db_table_size(table)
+            rows, size = self._get_db_table_size(table)
         else:
             err = RuntimeError(f'unknown source type: {self.source_type}')
             raise err
@@ -2017,13 +2022,13 @@ class DataSource:
             return int(df.index.max())
         # 如果是数据库系统，直接获取最后一个id, 这种做法某些情况下有问，使用下面的方法无法获取最后一个id
         elif self.source_type == 'db':
-            if not self.db_table_exists(table):
+            if not self._db_table_exists(table):
                 columns, dtypes, prime_keys, pk_dtypes = get_built_in_table_schema(table)
-                self.new_db_table(table,
-                                  columns=columns,
-                                  dtypes=dtypes,
-                                  primary_key=prime_keys,
-                                  auto_increment_id=True)
+                self._new_db_table(table,
+                                   columns=columns,
+                                   dtypes=dtypes,
+                                   primary_key=prime_keys,
+                                   auto_increment_id=True)
                 return 0
 
             import pymysql
@@ -2082,12 +2087,12 @@ class DataSource:
 
         # 读取数据，如果给出id，则只读取一条数据，否则读取所有数据
         if self.source_type == 'db':
-            res_df = self.read_database(table)
+            res_df = self._read_database(table)
             if res_df.empty:
                 return res_df
             set_primary_key_index(res_df, primary_key=p_keys, pk_dtypes=pk_dtypes)
         elif self.source_type == 'file':
-            res_df = self.read_file(table, p_keys, pk_dtypes)
+            res_df = self._read_file(table, p_keys, pk_dtypes)
         else:  # for other unexpected cases
             return pd.DataFrame()
 
@@ -2250,9 +2255,9 @@ class DataSource:
         elif self.source_type == 'db':
             # 使用SQL插入一条数据到数据库
             db_table = table
-            if not self.db_table_exists(db_table=table):
+            if not self._db_table_exists(db_table=table):
                 # 如果数据库中不存在该表，则创建表
-                self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+                self._new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             # 生成sql语句
             sql = f"INSERT INTO `{db_table}` ("
             for col in columns[:-1]:
@@ -2334,9 +2339,9 @@ class DataSource:
         primary_key = primary_keys[0]
 
         if self.source_type == 'db':
-            res = self.delete_database_records(table, primary_key=primary_key, record_ids=record_ids)
+            res = self._delete_database_records(table, primary_key=primary_key, record_ids=record_ids)
         elif self.source_type == 'file':
-            res = self.delete_file_records(table, primary_key=primary_key, record_ids=record_ids)
+            res = self._delete_file_records(table, primary_key=primary_key, record_ids=record_ids)
         else:
             err = RuntimeError(f'invalid source type: {self.source_type}')
             raise err
