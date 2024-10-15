@@ -11,7 +11,11 @@
 
 import numpy as np
 from numba import njit
-from .utilfuncs import is_number_like, BLENDER_STRATEGY_INDEX_IDENTIFIER
+
+from qteasy.utilfuncs import (
+    is_number_like,
+    BLENDER_STRATEGY_INDEX_IDENTIFIER,
+)
 
 
 # 这里定义可用的交易信号混合函数
