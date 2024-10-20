@@ -11,7 +11,11 @@
 
 import numpy as np
 import itertools
-from .utilfuncs import str_to_list, input_to_list
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    input_to_list,
+)
 
 
 class Space:
