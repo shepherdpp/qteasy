@@ -154,7 +154,7 @@ class TestDataTypes(unittest.TestCase):
         })
         print(emptys.to_string())
         print('\n')
-        print('data tables that are not covered:')
+        print(f'{len(all_tables)} tables are not covered, those are:')
         for table in all_tables:
             print(ds.get_table_info(table))
 
