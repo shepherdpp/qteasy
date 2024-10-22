@@ -41,5 +41,6 @@ class TestCode(unittest.TestCase):
         code = 'AAPL'
         qt_code = QtCode(code)
 
+
 if __name__ == '__main__':
     unittest.main()
