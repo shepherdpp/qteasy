@@ -10,20 +10,59 @@
 # ======================================
 
 
-def _is_valid_code(code):
+from .utilfuncs import AVAILABLE_ASSET_TYPES
+
+
+def _is_valid_code(code: str) -> bool:
     """ check if the code is legal
 
     """
-    if code is not None:
-        parts = code.split('.')
-        if len(parts) == 2:
-            return True
-        elif len(parts) == 3:
-            return True
-        else:
-            return False
-    else:
+    if not isinstance(code, str):
         return False
+    # no space or special characters
+    if any([c in code for c in ' ~!@#$%^&*()_+={}[]|\\:;\"\'<>,.?/']):
+        return False
+
+    # max two parts separated by a dot and length of each part is at least 1
+    parts = code.split('.')
+    if len(parts) > 2:
+        return False
+    if not all([len(p) > 0 for p in parts]):
+        return False
+    # if both parts are longer than 2, then return False
+    if all([len(p) > 2 for p in parts]):
+        return False
+
+    return True
+
+
+def _infer_symbol(code):
+    """ infer the symbol from the code:
+
+    Parameters
+    ----------
+    code : str
+        the market code
+    """
+    # if the code splits into only one part, then it is the symbol
+    parts = code.split('.')
+    if len(parts) == 1:
+        return parts[0]
+    else:
+        # if both parts are pure letters, then the longer one is the symbol
+        if all([p.isalpha() for p in parts]):
+            return max(parts, key=len)
+        # if one part is pure letters and the other is pure digits, then the digit part is the symbol
+        elif parts[0].isalpha() and parts[1].isdigit():
+            return parts[1]
+        elif parts[1].isalpha() and parts[0].isdigit():
+            return parts[0]
+        # if both parts are digits, then the longer one is the symbol
+        elif parts[0].isdigit() and parts[1].isdigit():
+            return max(parts, key=len)
+        # if both parts are mixed, then the longer one is the symbol
+        else:
+            return max(parts, key=len)
 
 
 def _infer_market(code):
@@ -68,43 +107,59 @@ class QtCode(str):
     market_names = {
         'SZ': 'Shenzhen',
         'SH': 'Shanghai',
+        'BJ': 'Beijing',
         'HK': 'Hong Kong',
         'US': 'United States',
-        'BJ': 'Beijing',
     }
 
-    def __init__(self, code: str, *, symbol=None, market=None, asset_type=None):
+    def __init__(self, code_or_symbol=None, *, market=None, asset_type=None):
+        """ initialize the QtCode object
+
+        Parameters
+        ----------
+        code_or_symbol : str
+            the market symbol or complete code with market separated by a dot
+        market : str
+            the market of the symbol
+        asset_type : str
+            the asset type of the symbol
+        """
+        self._symbol = None
         self._market = None
         self._asset_type = None
-        self._symbol = None
-        if _is_valid_code(code):
-            self.code = self._parse_code(code, symbol, market, asset_type)
+        self._code = None
+
+        if _is_valid_code(code_or_symbol):
+            symbol = _infer_symbol(code_or_symbol)
+            if market is None:
+                market = _infer_market(code_or_symbol)
+            if asset_type is None:
+                asset_type = _infer_asset_type(code_or_symbol)
+
+            self._parse_code(symbol, market, asset_type)
         else:
-            raise ValueError('Invalid code format: ' + code)
+            raise ValueError('Invalid code: ' + code_or_symbol)
 
-    def _parse_code(self, code, symbol, market, asset_type):
-        """ parse the code string into market, symbol and asset type
-
+    def _parse_code(self, symbol, market, asset_type) -> None:
+        """ check if symbol matches market and asset type
+        if so, return the code, otherwise raise ValueError
         """
-        if code is not None:
-            parts = code.split('.')
-            if len(parts) == 2:
-                self._market = parts[0]
-                self._symbol = parts[1]
-                self._asset_type = asset_type
-            elif len(parts) == 3:
-                self._market = parts[0]
-                self._symbol = parts[1]
-                self._asset_type = parts[2]
-            else:
-                self._market = None
-                self._symbol = None
-                self._asset_type = None
+        if asset_type not in AVAILABLE_ASSET_TYPES:
+            raise ValueError('Invalid asset type: ' + asset_type)
 
-            return self._symbol + '.' + self._market
+        if market not in self.market_names:
+            raise ValueError('Invalid market: ' + market)
 
-        else:
-            return ''
+        self._symbol = symbol
+        self._market = market
+        self._asset_type = asset_type
+        self._code = f'{symbol}.{market}'
+
+        return None
+
+    @property
+    def code(self):
+        return self._code
 
     @property
     def market(self):
