@@ -17,6 +17,7 @@ def _is_valid_code(code: str) -> bool:
     """ check if the code is legal
 
     """
+    import pdb; pdb.set_trace()
     if not isinstance(code, str):
         return False
     # no space or special characters
@@ -36,65 +37,76 @@ def _is_valid_code(code: str) -> bool:
     return True
 
 
-def _infer_symbol(code):
-    """ infer the symbol from the code:
+def _infer_symbol_market(code):
+    """ infer the symbol and market from the code as a tuple:
 
     Parameters
     ----------
-    code : str
-        the market code
+    (code, market) : tuple
+        tuple of code and market
     """
     # if the code splits into only one part, then it is the symbol
     parts = code.split('.')
     if len(parts) == 1:
-        return parts[0]
+        return parts[0], None
     else:
         # if both parts are pure letters, then the longer one is the symbol
         if all([p.isalpha() for p in parts]):
-            return max(parts, key=len)
+            return max(parts, key=len), min(parts, key=len)
         # if one part is pure letters and the other is pure digits, then the digit part is the symbol
         elif parts[0].isalpha() and parts[1].isdigit():
-            return parts[1]
+            return parts[1], parts[0]
         elif parts[1].isalpha() and parts[0].isdigit():
-            return parts[0]
+            return parts[0], parts[1]
         # if both parts are digits, then the longer one is the symbol
         elif parts[0].isdigit() and parts[1].isdigit():
-            return max(parts, key=len)
+            return max(parts, key=len), min(parts, key=len)
         # if both parts are mixed, then the longer one is the symbol
         else:
-            return max(parts, key=len)
+            return max(parts, key=len), min(parts, key=len)
 
 
-def _infer_market(code):
-    """ infer the market from the code
-
-    """
-    if code is not None:
-        parts = code.split('.')
-        if len(parts) == 2:
-            return parts[0]
-        elif len(parts) == 3:
-            return parts[0]
-        else:
-            return None
-    else:
-        return None
-
-
-def _infer_asset_type(code):
-    """ infer the asset type from the code
+def _infer_asset_type(symbol, market):
+    """ infer the asset type according to symbol and market
 
     """
-    if code is not None:
-        parts = code.split('.')
-        if len(parts) == 2:
-            return None
-        elif len(parts) == 3:
-            return parts[2]
+    # rules are different from market to market
+    if market == 'SH':
+        if symbol[0:3] in ['600', '601', '603', '900']:
+            return 'E'
+        elif symbol[0:3] in ['000']:
+            return 'IDX'
+        elif symbol[0:3] in ['001', '110', '120']:
+            return 'BOND'
+        elif symbol[0:3] in ['500', '550']:
+            return 'FD'
         else:
-            return None
-    else:
-        return None
+            return 'E'
+    elif market == 'SZ':
+        if symbol[0:2] in ['00', '03', '07', '08', '09']:
+            return 'E'
+        elif symbol[0:2] in ['10', '11', '12', '13']:
+            return 'BOND'
+        elif symbol[0:2] in ['17', '18']:
+            return 'FD'
+        elif symbol[0:2] in ['39']:
+            return 'IDX'
+        else:
+            return 'E'
+    elif market == 'BJ':
+        if symbol[0:3] in ['688', '002', '60', '90']:
+            return 'E'
+        else:
+            return 'UNK'
+
+    elif market == 'HK':
+        if symbol[0:1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+            return 'E'
+        else:
+            return 'IDX'
+
+    elif market == 'US':
+        return 'E'
 
 
 class QtCode(str):
@@ -130,11 +142,13 @@ class QtCode(str):
         self._code = None
 
         if _is_valid_code(code_or_symbol):
-            symbol = _infer_symbol(code_or_symbol)
             if market is None:
-                market = _infer_market(code_or_symbol)
+                symbol, market = _infer_symbol_market(code_or_symbol)
+            else:
+                symbol, _ = _infer_symbol_market(code_or_symbol)
+
             if asset_type is None:
-                asset_type = _infer_asset_type(code_or_symbol)
+                asset_type = _infer_asset_type(symbol, market)
 
             self._parse_code(symbol, market, asset_type)
         else:
