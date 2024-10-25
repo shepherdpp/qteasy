@@ -17,21 +17,24 @@ def _is_valid_code(code: str) -> bool:
     """ check if the code is legal
 
     """
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     if not isinstance(code, str):
         return False
     # no space or special characters
-    if any([c in code for c in ' ~!@#$%^&*()_+={}[]|\\:;\"\'<>,.?/']):
+    if any([c in code for c in ' ~!@#$%^&*()_+={}[]|\\:;\"\'<>,?/']):
         return False
 
     # max two parts separated by a dot and length of each part is at least 1
     parts = code.split('.')
     if len(parts) > 2:
         return False
+    if len(parts) == 1 and len(parts[0]) < 4:
+        return False
+
     if not all([len(p) > 0 for p in parts]):
         return False
     # if both parts are longer than 2, then return False
-    if all([len(p) > 2 for p in parts]):
+    if len(parts) == 2 and all([len(p) > 2 for p in parts]):
         return False
 
     return True
@@ -48,7 +51,21 @@ def _infer_symbol_market(code):
     # if the code splits into only one part, then it is the symbol
     parts = code.split('.')
     if len(parts) == 1:
-        return parts[0], None
+        symbol = parts[0]
+        # infer market according to symbol
+        if len(symbol) == 5 and all(c.isdigit() for c in symbol):
+            return symbol, 'HK'
+        elif len(symbol) == 6 and all(c.isdigit() for c in symbol):
+            if symbol[0] in ['6', '9']:
+                return symbol, 'SH'
+            elif symbol[0] in ['0', '3']:
+                return symbol, 'SZ'
+            else:
+                return symbol, 'SH'
+        elif len(symbol) <= 6 and all(c.isalpha() for c in symbol):
+            return symbol, 'US'
+        else:
+            return parts[0], 'SH'
     else:
         # if both parts are pure letters, then the longer one is the symbol
         if all([p.isalpha() for p in parts]):
@@ -108,6 +125,9 @@ def _infer_asset_type(symbol, market):
     elif market == 'US':
         return 'E'
 
+    else:
+        return 'E'
+
 
 class QtCode(str):
     """ special string class for market symbols, with properties
@@ -152,17 +172,17 @@ class QtCode(str):
 
             self._parse_code(symbol, market, asset_type)
         else:
-            raise ValueError('Invalid code: ' + code_or_symbol)
+            raise ValueError(f'Invalid code: {code_or_symbol}')
 
     def _parse_code(self, symbol, market, asset_type) -> None:
         """ check if symbol matches market and asset type
         if so, return the code, otherwise raise ValueError
         """
         if asset_type not in AVAILABLE_ASSET_TYPES:
-            raise ValueError('Invalid asset type: ' + asset_type)
+            raise ValueError(f'Invalid asset type: {asset_type}')
 
         if market not in self.market_names:
-            raise ValueError('Invalid market: ' + market)
+            raise ValueError(f'Invalid market: {market}')
 
         self._symbol = symbol
         self._market = market
