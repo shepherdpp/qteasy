@@ -54,17 +54,27 @@ def _infer_symbol_market(code):
         symbol = parts[0]
         # infer market according to symbol
         if len(symbol) == 5 and all(c.isdigit() for c in symbol):
+            # symbols like '00001' are HK stocks
             return symbol, 'HK'
+        elif len(symbol) == 8 and all(c.isdigit() for c in symbol):
+            # symbols like '00000001' are SH options
+            return symbol, 'SH'
         elif len(symbol) == 6 and all(c.isdigit() for c in symbol):
+            # symbols like '000001' are SH stocks or SZ stocks depending on the first digit
             if symbol[0] in ['6', '9']:
                 return symbol, 'SH'
             elif symbol[0] in ['0', '3']:
                 return symbol, 'SZ'
             else:
                 return symbol, 'SH'
+        elif len(symbol) < 6 and all(c.isdigit() for c in symbol[-4:]) and all(c.isalpha() for c in symbol[:-4]):
+            # symbols like 'A0001' or 'CU2310' are futures
+            return symbol, 'FT'
         elif len(symbol) <= 6 and all(c.isalpha() for c in symbol):
+            # symbols like 'MSFT' or 'AAPL' are US stocks
             return symbol, 'US'
         else:
+            # the rest are temporarily considered as SH stocks
             return parts[0], 'SH'
     else:
         # if both parts are pure letters, then the longer one is the symbol
@@ -89,7 +99,9 @@ def _infer_asset_type(symbol, market):
     """
     # rules are different from market to market
     if market == 'SH':
-        if symbol[0:3] in ['600', '601', '603', '900']:
+        if len(symbol) > 6 and all(c.isdigit() for c in symbol):
+            return 'OPT'
+        elif symbol[0:3] in ['600', '601', '603', '900']:
             return 'E'
         elif symbol[0:3] in ['000']:
             return 'IDX'
