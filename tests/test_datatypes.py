@@ -103,7 +103,7 @@ class TestDataTypes(unittest.TestCase):
                     starts = '2021-05-21'
                     ends = '2021-05-25'
             elif (acq_type in type_with_events) and (asset_type == 'FD'):
-                shares = ['000152.OF', '960032.OF', '000152.OF']
+                shares = ['000152.OF', '960032.OF']
                 starts = '2018-01-01'
                 ends = '2020-05-01'
 
