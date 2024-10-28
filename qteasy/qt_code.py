@@ -17,7 +17,6 @@ def _is_valid_code(code: str) -> bool:
     """ check if the code is legal
 
     """
-    # import pdb; pdb.set_trace()
     if not isinstance(code, str):
         return False
     # no space or special characters
@@ -69,7 +68,22 @@ def _infer_symbol_market(code):
                 return symbol, 'SH'
         elif len(symbol) < 6 and all(c.isdigit() for c in symbol[-4:]) and all(c.isalpha() for c in symbol[:-4]):
             # symbols like 'A0001' or 'CU2310' are futures
-            return symbol, 'FT'
+            initials = ''.join([c for c in symbol if c.isalpha()])
+            if initials in ['CU', 'AL', 'AL-C/P', 'PB', 'ZN', 'ZN-C/P', 'SN', 'NI', 'SS', 'AU',
+                            'AG', 'RB', 'HC', 'BU', 'RU', 'FU', 'SP', 'RU-C/P', 'WR']:
+                return symbol, 'SHF'
+            elif initials in ['A', 'B', 'M', 'M-C/P', 'Y', 'P', 'I', 'J', 'JM', 'C', 'CS', 'L', 'V', 'PP', 'EG',
+                              'RR', 'EB', 'I-C/P', 'PG', 'JD', 'FB', 'BB', 'LH']:
+                return symbol, 'DCE'
+            elif initials in ['RM', 'OI', 'CF', 'TA', 'SR', 'MA', 'FG', 'ZC', 'CY', 'SA', 'PF', 'JR', 'RS', 'PM',
+                              'WH', 'RI', 'LR', 'SF', 'SM', 'AP', 'CJ', 'UR', 'PK', 'PX', 'SH']:
+                return symbol, 'ZCE'
+            elif initials in ['IF', 'IH', 'IC', 'TF', 'T', 'TS']:
+                return symbol, 'CFX'
+            elif initials in ['SC', 'NR', 'LU', 'BC']:
+                return symbol, 'INE'
+            elif initials in ['SI', 'LC']:
+                return symbol, 'GFE'
         elif len(symbol) <= 6 and all(c.isalpha() for c in symbol):
             # symbols like 'MSFT' or 'AAPL' are US stocks
             return symbol, 'US'
@@ -105,9 +119,9 @@ def _infer_asset_type(symbol, market):
             return 'E'
         elif symbol[0:3] in ['000']:
             return 'IDX'
-        elif symbol[0:3] in ['001', '110', '120']:
+        elif (symbol[0:3] > '100') and (symbol < '270'):
             return 'BOND'
-        elif symbol[0:3] in ['500', '550']:
+        elif symbol[0] == '5':
             return 'FD'
         else:
             return 'E'
@@ -123,10 +137,11 @@ def _infer_asset_type(symbol, market):
         else:
             return 'E'
     elif market == 'BJ':
-        if symbol[0:3] in ['688', '002', '60', '90']:
-            return 'E'
-        else:
-            return 'UNK'
+        return 'E'
+    elif market == 'OF':
+        return 'FD'
+    elif market in ['DCE', 'ZCE', 'CFX', 'INE', 'GFE', 'SHF']:
+        return 'FT'
 
     elif market == 'HK':
         if symbol[0:1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
@@ -152,6 +167,13 @@ class QtCode(str):
         'SZ': 'Shenzhen',
         'SH': 'Shanghai',
         'BJ': 'Beijing',
+        'OF': 'Out market Fund',
+        'DCE': 'Dalian Commodity Exchange',
+        'ZCE': 'Zhengzhou Commodity Exchange',
+        'CFX': 'China Financial Exchange',
+        'INE': 'International Exchange',
+        'GFE': 'Guangzhou Futures Exchange',
+        'SHF': 'Shanghai Futures Exchange',
         'HK': 'Hong Kong',
         'US': 'United States',
     }

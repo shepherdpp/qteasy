@@ -94,26 +94,34 @@ class TestCode(unittest.TestCase):
         code = 'A0001'  # Futures
         qt_code = QtCode(code)
         print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
-        self.assertEqual(qt_code, 'AAPL.US')
-        self.assertEqual(qt_code.market, 'US')
-        self.assertEqual(qt_code.symbol, 'AAPL')
-        self.assertEqual(qt_code.asset_type, 'E')
+        self.assertEqual(qt_code, 'A0001.DCE')
+        self.assertEqual(qt_code.market, 'DCE')
+        self.assertEqual(qt_code.symbol, 'A0001')
+        self.assertEqual(qt_code.asset_type, 'FT')
 
         code = '10001909'  # Options
         qt_code = QtCode(code)
         print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
-        self.assertEqual(qt_code, 'AAPL.US')
-        self.assertEqual(qt_code.market, 'US')
-        self.assertEqual(qt_code.symbol, 'AAPL')
-        self.assertEqual(qt_code.asset_type, 'E')
+        self.assertEqual(qt_code, '10001909.SH')
+        self.assertEqual(qt_code.market, 'SH')
+        self.assertEqual(qt_code.symbol, '10001909')
+        self.assertEqual(qt_code.asset_type, 'OPT')
 
         code = '960032'
         qt_code = QtCode(code)
         print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
-        self.assertEqual(qt_code, 'AAPL.US')
-        self.assertEqual(qt_code.market, 'US')
-        self.assertEqual(qt_code.symbol, 'AAPL')
+        self.assertEqual(qt_code, '960032.SH')
+        self.assertEqual(qt_code.market, 'SH')
+        self.assertEqual(qt_code.symbol, '960032')
         self.assertEqual(qt_code.asset_type, 'E')
+
+        code = '960032.OF'
+        qt_code = QtCode(code)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '960032.OF')
+        self.assertEqual(qt_code.market, 'OF')
+        self.assertEqual(qt_code.symbol, '960032')
+        self.assertEqual(qt_code.asset_type, 'FD')
 
 
 if __name__ == '__main__':
