@@ -156,7 +156,7 @@ def _infer_asset_type(symbol, market):
         return 'E'
 
 
-class QtCode(str):
+class QtCode:
     """ special string class for market symbols, with properties
     that can be used to identify market types, and easy access of
     stock symbols and asset types
@@ -245,6 +245,21 @@ class QtCode(str):
     def asset_type(self):
         return self._asset_type
 
+    def upper(self):
+        return self.code.upper()
+
+    def lower(self):
+        return self.code.lower()
+
+    def title(self):
+        return self.code.title()
+
+    def __get__(self, instance, owner):
+        return self.code
+
+    def __iter__(self):
+        return iter(self.code)
+
     def __str__(self):
         return self.code
 
@@ -289,6 +304,12 @@ class QtCode(str):
 
     def __getitem__(self, item):
         return self.code[item]
+
+    def __setitem__(self, key, value):
+        self.code[key] = value
+
+    def __delitem__(self, key):
+        del self.code[key]
 
     def __len__(self):
         return len(self.code)
