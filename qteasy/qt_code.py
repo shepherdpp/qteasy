@@ -319,3 +319,21 @@ class QtCode:
 
     def __reversed__(self):
         return reversed(self.code)
+
+    def __contains__(self, item: object) -> object:
+        return item in self.code
+
+    def find(self, sub, start=None, end=None):
+        return self.code.find(sub, start, end)
+
+    def rfind(self, sub, start=None, end=None):
+        return self.code.rfind(sub, start, end)
+
+    def index(self, sub, start=None, end=None):
+        return self.code.index(sub, start, end)
+
+    def rindex(self, sub, start=None, end=None):
+        return self.code.rindex(sub, start, end)
+
+    def count(self, sub, start=None, end=None):
+        return self.code.count(sub, start, end)
