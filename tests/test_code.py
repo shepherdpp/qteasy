@@ -181,6 +181,43 @@ class TestCode(unittest.TestCase):
         self.assertEqual(qt_code.symbol, '00001')
         self.assertEqual(qt_code.asset_type, 'E')
 
+    def test_methods(self):
+        """ test methods of the class"""
+        qt_code = QtCode('000001.SZ')
+        self.assertEqual(qt_code, '000001.SZ')
+        self.assertEqual(qt_code.market, 'SZ')
+        self.assertEqual(qt_code.symbol, '000001')
+        self.assertEqual(qt_code.asset_type, 'E')
+
+        self.assertEqual(len(qt_code), 9)
+        self.assertEqual(qt_code.market_name, 'Shenzhen')
+        self.assertEqual(qt_code == '000001.SZ', True)
+        self.assertEqual(qt_code == '000001.SH', False)
+        self.assertEqual(qt_code.lower(), '000001.sz')
+        self.assertEqual(qt_code.upper(), '000001.SZ')
+        self.assertEqual(qt_code.title(), '000001.Sz')
+        self.assertEqual(qt_code[0], '0')
+        self.assertEqual(qt_code[-1], 'Z')
+        self.assertEqual(qt_code[1:4], '000')
+
+        qt_code2 = QtCode('000001.SZ')
+        self.assertEqual(qt_code == qt_code2, True)
+        self.assertEqual(qt_code != qt_code2, False)
+        self.assertEqual(qt_code.__hash__(), hash('000001.SZ'))
+        self.assertEqual(qt_code.__ne__('000001.SZ'), False)
+        self.assertEqual(qt_code.__lt__('000001.SZ'), False)
+        self.assertEqual(qt_code.__repr__(), '000001.SZ')
+        self.assertEqual(qt_code.__str__(), '000001.SZ')
+        self.assertEqual(qt_code + qt_code2, '000001.SZ000001.SZ')
+        self.assertEqual(qt_code * 2, '000001.SZ000001.SZ')
+        self.assertEqual(qt_code * 0, '')
+
+        for i in qt_code:
+            print(i)
+            self.assertIsInstance(i, str)
+            self.assertIn(i, qt_code)
+            idx = qt_code.index(i)
+            self.assertTrue(i == qt_code[idx])
 
 
 if __name__ == '__main__':
