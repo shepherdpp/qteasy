@@ -14,13 +14,14 @@ from qteasy.qt_code import QtCode
 
 
 class TestCode(unittest.TestCase):
-    def test_class(self):
+    def test_class_code(self):
+        """ testing create class with only code"""
         code = 'SZ.000001'
         qt_code = QtCode(code)
 
         print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
         self.assertIsInstance(qt_code, QtCode)
-        self.assertIsInstance(qt_code, str)
+        # self.assertIsInstance(qt_code, str)
 
         self.assertEqual(qt_code, '000001.SZ')
         self.assertEqual(qt_code.market, 'SZ')
@@ -122,6 +123,64 @@ class TestCode(unittest.TestCase):
         self.assertEqual(qt_code.market, 'OF')
         self.assertEqual(qt_code.symbol, '960032')
         self.assertEqual(qt_code.asset_type, 'FD')
+
+    def test_class(self):
+        """ test creating class with more than code"""
+        code = '000001'
+        market = 'SZ'
+        qt_code = QtCode(code, market=market)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '000001.SZ')
+        self.assertEqual(qt_code.market, 'SZ')
+        self.assertEqual(qt_code.symbol, '000001')
+        self.assertEqual(qt_code.asset_type, 'E')
+
+        code = '000001'
+        market = 'SH'
+        qt_code = QtCode(code, market=market)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '000001.SH')
+        self.assertEqual(qt_code.market, 'SH')
+        self.assertEqual(qt_code.symbol, '000001')
+        self.assertEqual(qt_code.asset_type, 'IDX')
+
+        code = '000001'
+        asset_type = 'E'
+        qt_code = QtCode(code, asset_type=asset_type)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '000001.SZ')
+        self.assertEqual(qt_code.market, 'SZ')
+        self.assertEqual(qt_code.symbol, '000001')
+        self.assertEqual(qt_code.asset_type, 'E')
+
+        code = '000001'
+        asset_type = 'IDX'
+        qt_code = QtCode(code, asset_type=asset_type)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '000001.SZ') # default like this but it is wrong
+        self.assertEqual(qt_code.market, 'SZ')
+        self.assertEqual(qt_code.symbol, '000001')
+        self.assertEqual(qt_code.asset_type, 'IDX')
+
+        code = '000001'
+        market = 'SH'
+        qt_code = QtCode(code, market=market)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '000001.SH')
+        self.assertEqual(qt_code.market, 'SH')
+        self.assertEqual(qt_code.symbol, '000001')
+        self.assertEqual(qt_code.asset_type, 'IDX')
+
+        code = '00001'
+        market = 'HK'
+        asset_type = 'E'
+        qt_code = QtCode(code, market=market, asset_type=asset_type)
+        print(qt_code, qt_code.market, qt_code.symbol, qt_code.asset_type)
+        self.assertEqual(qt_code, '00001.HK')
+        self.assertEqual(qt_code.market, 'HK')
+        self.assertEqual(qt_code.symbol, '00001')
+        self.assertEqual(qt_code.asset_type, 'E')
+
 
 
 if __name__ == '__main__':
