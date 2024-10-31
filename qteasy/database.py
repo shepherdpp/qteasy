@@ -6,7 +6,7 @@
 # Created:  2020-11-29
 # Desc:
 #   Definition of DataSource class, managing
-# local data storage and retrieval.
+# local data storage and acquiring.
 # ======================================
 
 import os
