@@ -17,14 +17,17 @@ class DataType:
     DataType class, representing historical data types that can be used by qteasy
     """
     aquisition_types = [
-        'basics',
-        'direct',
-        'adjustment',
-        'relations',
-        'event_status',
-        'event_multi_stat',
-        'event_signal',
-        'composition',
+        'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关
+        'direct',  # 直接获取数据表中与资产有关的一个数据字段，并筛选位于开始/结束日期之间的数据
+        'adjustment',  # 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
+        'relations',  # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
+        'operation',  # 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//
+        'event_status',  # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
+        'event_multi_stat',  # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
+        'event_signal',  # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
+        'composition',  # 成份查询型。从成份表中筛选出来数据并行列转换
+        # 以下为一些特殊类型，由特殊的过程实现
+        'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
 
     def __init__(self, *, name, freq, asset_type, description, acquisition_type, **kwargs):
@@ -203,6 +206,14 @@ DATA_TYPE_MAP = {
 ('limit_amount','d','E'):	['新股上市信息 - 个人申购上限（万股）','basics',{'table_name': 'new_share', 'column': 'limit_amount'}],
 ('funds','d','E'):	['新股上市信息 - 募集资金（亿元）','basics',{'table_name': 'new_share', 'column': 'funds'}],
 ('ballot','d','E'):	['新股上市信息 - 中签率','basics',{'table_name': 'new_share', 'column': 'ballot'}],
+('open_b','d','E'):	['股票日K线 - 后复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open'}],
+('high_b','d','E'):	['股票日K线 - 后复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high'}],
+('low_b','d','E'):	['股票日K线 - 后复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low'}],
+('close_b','d','E'):	['股票日K线 - 后复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close'}],
+('open_f','d','E'):	['股票日K线 - 前复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open'}],
+('high_f','d','E'):	['股票日K线 - 前复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high'}],
+('low_f','d','E'):	['股票日K线 - 前复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low'}],
+('close_f','d','E'):	['股票日K线 - 前复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close'}],
 ('open','d','E'):	['股票日K线 - 开盘价','direct',{'table_name': 'stock_daily', 'column': 'open'}],
 ('high','d','E'):	['股票日K线 - 最高价','direct',{'table_name': 'stock_daily', 'column': 'high'}],
 ('low','d','E'):	['股票日K线 - 最低价','direct',{'table_name': 'stock_daily', 'column': 'low'}],
