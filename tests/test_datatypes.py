@@ -79,7 +79,7 @@ class TestDataTypes(unittest.TestCase):
             starts = '2019-09-01'
             ends = '2020-09-12'
 
-            type_with_shares = ['direct', 'basics']
+            type_with_shares = ['direct', 'basics', 'adjustment', 'operation']
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
             if (acq_type in type_with_shares) and (asset_type == 'E'):
                 shares = ['000651.SZ', '000001.SZ','002936.SZ', '603810.SH']

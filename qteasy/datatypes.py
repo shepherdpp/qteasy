@@ -76,15 +76,6 @@ class DataType:
     def __str__(self):
         return f'{self.name}({self.asset_type})@{self.freq}'
 
-    # easy APIs to get, assess, compair, visualize, or analyze DataTypes
-    def get(self, **kwargs):
-        """ call functions in database to get data"""
-        pass
-
-    def plot(self):
-        """ plot the data """
-        pass
-
 
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'kwargs']
 DATA_TYPE_MAP_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
@@ -206,14 +197,14 @@ DATA_TYPE_MAP = {
 ('limit_amount','d','E'):	['新股上市信息 - 个人申购上限（万股）','basics',{'table_name': 'new_share', 'column': 'limit_amount'}],
 ('funds','d','E'):	['新股上市信息 - 募集资金（亿元）','basics',{'table_name': 'new_share', 'column': 'funds'}],
 ('ballot','d','E'):	['新股上市信息 - 中签率','basics',{'table_name': 'new_share', 'column': 'ballot'}],
-('open_b','d','E'):	['股票日K线 - 后复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open'}],
-('high_b','d','E'):	['股票日K线 - 后复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high'}],
-('low_b','d','E'):	['股票日K线 - 后复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low'}],
-('close_b','d','E'):	['股票日K线 - 后复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close'}],
-('open_f','d','E'):	['股票日K线 - 前复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open'}],
-('high_f','d','E'):	['股票日K线 - 前复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high'}],
-('low_f','d','E'):	['股票日K线 - 前复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low'}],
-('close_f','d','E'):	['股票日K线 - 前复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close'}],
+('open_b','d','E'):	['股票日K线 - 后复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','d','E'):	['股票日K线 - 后复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','d','E'):	['股票日K线 - 后复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','d','E'):	['股票日K线 - 后复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','d','E'):	['股票日K线 - 前复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','d','E'):	['股票日K线 - 前复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','d','E'):	['股票日K线 - 前复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','d','E'):	['股票日K线 - 前复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','d','E'):	['股票日K线 - 开盘价','direct',{'table_name': 'stock_daily', 'column': 'open'}],
 ('high','d','E'):	['股票日K线 - 最高价','direct',{'table_name': 'stock_daily', 'column': 'high'}],
 ('low','d','E'):	['股票日K线 - 最低价','direct',{'table_name': 'stock_daily', 'column': 'low'}],
