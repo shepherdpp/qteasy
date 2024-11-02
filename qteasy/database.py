@@ -3205,12 +3205,19 @@ class DataSource:
                 'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
         acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
-        import pdb; pdb.set_trace()
-        print(acquired_data)
-        adj_data = self.read_table_data(adj_table, shares=symbols, start=starts, end=ends)
-        print(adj_data)
+        acquired_data = acquired_data[column].unstack(level=0)
 
-        raise NotImplementedError
+        adj_factors = self.read_table_data(adj_table, shares=symbols, start=starts, end=ends)
+        adj_factors = adj_factors[adj_column].unstack(level=0)
+
+        adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
+        back_adj_data = acquired_data * adj_factors
+
+        if adj_type == 'backward':
+            return back_adj_data
+
+        fwd_adj_data = back_adj_data / adj_factors.iloc[-1]
+        return fwd_adj_data
 
     def _get_operation(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据操作型的数据获取方法"""
