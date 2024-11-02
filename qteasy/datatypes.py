@@ -12,6 +12,8 @@
 # ======================================
 
 
+import pandas as pd
+
 class DataType:
     """
     DataType class, representing historical data types that can be used by qteasy
@@ -29,6 +31,9 @@ class DataType:
         # 以下为一些特殊类型，由特殊的过程实现
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
+
+# TODO: 确认是否需要进行唯一性检查？
+#  是否还有必要维持数据唯一性？如何体现唯一性？为什么还需要唯一性？
 
     def __init__(self, *, name, freq, asset_type, description, acquisition_type, **kwargs):
         """
@@ -75,6 +80,12 @@ class DataType:
 
     def __str__(self):
         return f'{self.name}({self.asset_type})@{self.freq}'
+
+
+def check_data_type_map():
+    """check if data type map is valid"""
+    df = pd.DataFrame(DATA_TYPE_MAP, columns=DATA_TYPE_MAP_COLUMNS, index=DATA_TYPE_MAP_INDEX_NAMES)
+    print(df)
 
 
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'kwargs']
@@ -211,42 +222,98 @@ DATA_TYPE_MAP = {
 ('close','d','E'):	['股票日K线 - 收盘价','direct',{'table_name': 'stock_daily', 'column': 'close'}],
 ('vol','d','E'):	['股票日K线 - 成交量 （手）','direct',{'table_name': 'stock_daily', 'column': 'vol'}],
 ('amount','d','E'):	['股票日K线 - 成交额 （千元）','direct',{'table_name': 'stock_daily', 'column': 'amount'}],
+('open_b','w','E'):	['股票周K线 - 后复权开盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','w','E'):	['股票周K线 - 后复权最高价','adjustment',{'table_name': 'stock_weekly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','w','E'):	['股票周K线 - 后复权最低价','adjustment',{'table_name': 'stock_weekly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','w','E'):	['股票周K线 - 后复权收盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','w','E'):	['股票周K线 - 前复权开盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','w','E'):	['股票周K线 - 前复权最高价','adjustment',{'table_name': 'stock_weekly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','w','E'):	['股票周K线 - 前复权最低价','adjustment',{'table_name': 'stock_weekly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','w','E'):	['股票周K线 - 前复权收盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','w','E'):	['股票周K线 - 开盘价','direct',{'table_name': 'stock_weekly', 'column': 'open'}],
 ('high','w','E'):	['股票周K线 - 最高价','direct',{'table_name': 'stock_weekly', 'column': 'high'}],
 ('low','w','E'):	['股票周K线 - 最低价','direct',{'table_name': 'stock_weekly', 'column': 'low'}],
 ('close','w','E'):	['股票周K线 - 收盘价','direct',{'table_name': 'stock_weekly', 'column': 'close'}],
 ('vol','w','E'):	['股票周K线 - 成交量 （手）','direct',{'table_name': 'stock_weekly', 'column': 'vol'}],
 ('amount','w','E'):	['股票周K线 - 成交额 （千元）','direct',{'table_name': 'stock_weekly', 'column': 'amount'}],
+('open_b','m','E'):	['股票月K线 - 后复权开盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','m','E'):	['股票月K线 - 后复权最高价','adjustment',{'table_name': 'stock_monthly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','m','E'):	['股票月K线 - 后复权最低价','adjustment',{'table_name': 'stock_monthly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','m','E'):	['股票月K线 - 后复权收盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','m','E'):	['股票月K线 - 前复权开盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','m','E'):	['股票月K线 - 前复权最高价','adjustment',{'table_name': 'stock_monthly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','m','E'):	['股票月K线 - 前复权最低价','adjustment',{'table_name': 'stock_monthly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','m','E'):	['股票月K线 - 前复权收盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','m','E'):	['股票月K线 - 开盘价','direct',{'table_name': 'stock_monthly', 'column': 'open'}],
 ('high','m','E'):	['股票月K线 - 最高价','direct',{'table_name': 'stock_monthly', 'column': 'high'}],
 ('low','m','E'):	['股票月K线 - 最低价','direct',{'table_name': 'stock_monthly', 'column': 'low'}],
 ('close','m','E'):	['股票月K线 - 收盘价','direct',{'table_name': 'stock_monthly', 'column': 'close'}],
 ('vol','m','E'):	['股票月K线 - 成交量 （手）','direct',{'table_name': 'stock_monthly', 'column': 'vol'}],
 ('amount','m','E'):	['股票月K线 - 成交额 （千元）','direct',{'table_name': 'stock_monthly', 'column': 'amount'}],
+('open_b','1min','E'):	['股票60秒K线 - 后复权开盘价','adjustment',{'table_name': 'stock_1min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','1min','E'):	['股票60秒K线 - 后复权最高价','adjustment',{'table_name': 'stock_1min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','1min','E'):	['股票60秒K线 - 后复权最低价','adjustment',{'table_name': 'stock_1min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','1min','E'):	['股票60秒K线 - 后复权收盘价','adjustment',{'table_name': 'stock_1min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','1min','E'):	['股票60秒K线 - 前复权开盘价','adjustment',{'table_name': 'stock_1min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','1min','E'):	['股票60秒K线 - 前复权最高价','adjustment',{'table_name': 'stock_1min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','1min','E'):	['股票60秒K线 - 前复权最低价','adjustment',{'table_name': 'stock_1min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','1min','E'):	['股票60秒K线 - 前复权收盘价','adjustment',{'table_name': 'stock_1min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','1min','E'):	['股票60秒K线 - 开盘价','direct',{'table_name': 'stock_1min', 'column': 'open'}],
 ('high','1min','E'):	['股票60秒K线 - 最高价','direct',{'table_name': 'stock_1min', 'column': 'high'}],
 ('low','1min','E'):	['股票60秒K线 - 最低价','direct',{'table_name': 'stock_1min', 'column': 'low'}],
 ('close','1min','E'):	['股票60秒K线 - 收盘价','direct',{'table_name': 'stock_1min', 'column': 'close'}],
 ('vol','1min','E'):	['股票60秒K线 - 成交量 （手）','direct',{'table_name': 'stock_1min', 'column': 'vol'}],
 ('amount','1min','E'):	['股票60秒K线 - 成交额 （千元）','direct',{'table_name': 'stock_1min', 'column': 'amount'}],
+('open_b','5min','E'):	['股票5分钟K线 - 后复权开盘价','adjustment',{'table_name': 'stock_5min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','5min','E'):	['股票5分钟K线 - 后复权最高价','adjustment',{'table_name': 'stock_5min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','5min','E'):	['股票5分钟K线 - 后复权最低价','adjustment',{'table_name': 'stock_5min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','5min','E'):	['股票5分钟K线 - 后复权收盘价','adjustment',{'table_name': 'stock_5min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','5min','E'):	['股票5分钟K线 - 前复权开盘价','adjustment',{'table_name': 'stock_5min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','5min','E'):	['股票5分钟K线 - 前复权最高价','adjustment',{'table_name': 'stock_5min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','5min','E'):	['股票5分钟K线 - 前复权最低价','adjustment',{'table_name': 'stock_5min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','5min','E'):	['股票5分钟K线 - 前复权收盘价','adjustment',{'table_name': 'stock_5min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','5min','E'):	['股票5分钟K线 - 开盘价','direct',{'table_name': 'stock_5min', 'column': 'open'}],
 ('high','5min','E'):	['股票5分钟K线 - 最高价','direct',{'table_name': 'stock_5min', 'column': 'high'}],
 ('low','5min','E'):	['股票5分钟K线 - 最低价','direct',{'table_name': 'stock_5min', 'column': 'low'}],
 ('close','5min','E'):	['股票5分钟K线 - 收盘价','direct',{'table_name': 'stock_5min', 'column': 'close'}],
 ('vol','5min','E'):	['股票5分钟K线 - 成交量 （手）','direct',{'table_name': 'stock_5min', 'column': 'vol'}],
 ('amount','5min','E'):	['股票5分钟K线 - 成交额 （千元）','direct',{'table_name': 'stock_5min', 'column': 'amount'}],
+('open_b','15min','E'):	['股票15分钟K线 - 后复权开盘价','adjustment',{'table_name': 'stock_15min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','15min','E'):	['股票15分钟K线 - 后复权最高价','adjustment',{'table_name': 'stock_15min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','15min','E'):	['股票15分钟K线 - 后复权最低价','adjustment',{'table_name': 'stock_15min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','15min','E'):	['股票15分钟K线 - 后复权收盘价','adjustment',{'table_name': 'stock_15min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','15min','E'):	['股票15分钟K线 - 前复权开盘价','adjustment',{'table_name': 'stock_15min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','15min','E'):	['股票15分钟K线 - 前复权最高价','adjustment',{'table_name': 'stock_15min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','15min','E'):	['股票15分钟K线 - 前复权最低价','adjustment',{'table_name': 'stock_15min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','15min','E'):	['股票15分钟K线 - 前复权收盘价','adjustment',{'table_name': 'stock_15min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','15min','E'):	['股票15分钟K线 - 开盘价','direct',{'table_name': 'stock_15min', 'column': 'open'}],
 ('high','15min','E'):	['股票15分钟K线 - 最高价','direct',{'table_name': 'stock_15min', 'column': 'high'}],
 ('low','15min','E'):	['股票15分钟K线 - 最低价','direct',{'table_name': 'stock_15min', 'column': 'low'}],
 ('close','15min','E'):	['股票15分钟K线 - 收盘价','direct',{'table_name': 'stock_15min', 'column': 'close'}],
 ('vol','15min','E'):	['股票15分钟K线 - 成交量 （手）','direct',{'table_name': 'stock_15min', 'column': 'vol'}],
 ('amount','15min','E'):	['股票15分钟K线 - 成交额 （千元）','direct',{'table_name': 'stock_15min', 'column': 'amount'}],
+('open_b','30min','E'):	['股票30分钟K线 - 后复权开盘价','adjustment',{'table_name': 'stock_30min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','30min','E'):	['股票30分钟K线 - 后复权最高价','adjustment',{'table_name': 'stock_30min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','30min','E'):	['股票30分钟K线 - 后复权最低价','adjustment',{'table_name': 'stock_30min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','30min','E'):	['股票30分钟K线 - 后复权收盘价','adjustment',{'table_name': 'stock_30min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','30min','E'):	['股票30分钟K线 - 前复权开盘价','adjustment',{'table_name': 'stock_30min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','30min','E'):	['股票30分钟K线 - 前复权最高价','adjustment',{'table_name': 'stock_30min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','30min','E'):	['股票30分钟K线 - 前复权最低价','adjustment',{'table_name': 'stock_30min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','30min','E'):	['股票30分钟K线 - 前复权收盘价','adjustment',{'table_name': 'stock_30min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','30min','E'):	['股票30分钟K线 - 开盘价','direct',{'table_name': 'stock_30min', 'column': 'open'}],
 ('high','30min','E'):	['股票30分钟K线 - 最高价','direct',{'table_name': 'stock_30min', 'column': 'high'}],
 ('low','30min','E'):	['股票30分钟K线 - 最低价','direct',{'table_name': 'stock_30min', 'column': 'low'}],
 ('close','30min','E'):	['股票30分钟K线 - 收盘价','direct',{'table_name': 'stock_30min', 'column': 'close'}],
 ('vol','30min','E'):	['股票30分钟K线 - 成交量 （手）','direct',{'table_name': 'stock_30min', 'column': 'vol'}],
 ('amount','30min','E'):	['股票30分钟K线 - 成交额 （千元）','direct',{'table_name': 'stock_30min', 'column': 'amount'}],
+('open_b','h','E'):	['股票小时K线 - 后复权开盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('high_b','h','E'):	['股票小时K线 - 后复权最高价','adjustment',{'table_name': 'stock_hourly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('low_b','h','E'):	['股票小时K线 - 后复权最低价','adjustment',{'table_name': 'stock_hourly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('close_b','h','E'):	['股票小时K线 - 后复权收盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
+('open_f','h','E'):	['股票小时K线 - 前复权开盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('high_f','h','E'):	['股票小时K线 - 前复权最高价','adjustment',{'table_name': 'stock_hourly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('low_f','h','E'):	['股票小时K线 - 前复权最低价','adjustment',{'table_name': 'stock_hourly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('close_f','h','E'):	['股票小时K线 - 前复权收盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
 ('open','h','E'):	['股票小时K线 - 开盘价','direct',{'table_name': 'stock_hourly', 'column': 'open'}],
 ('high','h','E'):	['股票小时K线 - 最高价','direct',{'table_name': 'stock_hourly', 'column': 'high'}],
 ('low','h','E'):	['股票小时K线 - 最低价','direct',{'table_name': 'stock_hourly', 'column': 'low'}],
@@ -1057,3 +1124,5 @@ DATA_TYPE_MAP = {
 ('net_buy','d','E'):	['龙虎榜机构明细 - 净成交额（元）','event_signal',{'table_name': 'top_inst', 'column': 'net_buy'}],
 ('reason','d','E'):	['龙虎榜机构明细 - 上榜理由','event_signal',{'table_name': 'top_inst', 'column': 'reason'}],
 }
+
+

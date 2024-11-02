@@ -143,8 +143,9 @@ class TestDataTypes(unittest.TestCase):
                 empty_types.append(k)
                 empty_type_descs.append(desc)
                 empty_type_acq_types.append(acq_type)
-                # print(f'\nempty data for {dtype} - {dtype.description}')
-                # print(f'got {type(data)}: \n{data}')
+                print(f'\nempty data for {dtype} - {dtype.description}')
+
+            print(f'got data for {dtype}: \n{data}')
 
         print(f'\n{empty_count} out of {total} empty data types:')
         emptys = pd.DataFrame({
@@ -157,6 +158,9 @@ class TestDataTypes(unittest.TestCase):
         print(f'{len(all_tables)} tables are not covered, those are:')
         for table in all_tables:
             print(ds.get_table_info(table))
+
+    def test_data_type(self):
+        type =
 
 
 if __name__ == '__main__':
