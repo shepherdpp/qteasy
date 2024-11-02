@@ -3121,6 +3121,8 @@ class DataSource:
             acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'adjustment':
             acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'operation':
+            acquired_data = self._get_operation(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'relations':
             acquired_data = self._get_relations(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'event_multi_stat':
@@ -3131,6 +3133,8 @@ class DataSource:
             acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'composition':
             acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'complex':
+            acquired_data = self._get_complex(symbols=symbols, date=starts, **kwargs)
         else:
             raise ValueError(f'Unknown acquisition type: {acquisition_type}')
 
@@ -3190,19 +3194,27 @@ class DataSource:
 
     def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据修正型的数据获取方法"""
-        table_name_a = kwargs.get('table_name_A')
-        column_a = kwargs.get('column_A')
-        table_name_b = kwargs.get('table_name_B')
-        column_b = kwargs.get('column_B')
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+        adj_table = kwargs.get('adj_table')
+        adj_column = kwargs.get('adj_column')
+        adj_type = kwargs.get('adj_type')
 
-        if table_name_a is None or column_a is None or table_name_b is None or column_b is None:
+        if table_name is None or column is None or adj_table is None or adj_column is None:
             raise ValueError(
                 'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
-        acquired_data_a = self.read_table_data(table_name_a, shares=symbols, start=starts, end=ends)
-        acquired_data_b = self.read_table_data(table_name_b, shares=symbols, start=starts, end=ends)
+        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        import pdb; pdb.set_trace()
+        print(acquired_data)
+        adj_data = self.read_table_data(adj_table, shares=symbols, start=starts, end=ends)
+        print(adj_data)
 
-        return pd.DataFrame()
+        raise NotImplementedError
+
+    def _get_operation(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据操作型的数据获取方法"""
+        raise NotImplementedError
 
     def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据关联型的数据获取方法"""
@@ -3320,6 +3332,10 @@ class DataSource:
 
     def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """成份查询型的数据获取方法"""
+        raise NotImplementedError
+
+    def _get_complex(self, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
+        """复合型的数据获取方法"""
         raise NotImplementedError
 
     def _adjust_freq(self, acquired_data, freq) -> pd.DataFrame:
