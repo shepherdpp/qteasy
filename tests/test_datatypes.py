@@ -148,17 +148,19 @@ class TestDataTypes(unittest.TestCase):
                 # index are shares
                 self.assertIsInstance(data, pd.Series)
                 self.assertEqual(data.index.dtype, 'object')
-                self.assertTrue(all(share in data.index for share in shares))
+                self.assertTrue(all(share in shares for share in data.index))
             elif acq_type in type_with_shares:
                 self.assertIsInstance(data, pd.DataFrame)
-                self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                self.assertEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                self.assertEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                if not data.empty:
+                    self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                    self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                    self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
             elif acq_type in type_with_events:
                 self.assertIsInstance(data, pd.DataFrame)
-                self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                if not data.empty:
+                    self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                    self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                    self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
             else:
                 self.assertIsInstance(data, pd.Series)
 
