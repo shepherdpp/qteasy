@@ -769,7 +769,7 @@ def _parse_start_up_config_lines(config_lines) -> dict:
         if len(line) == 2:
             arg_name = line[0].strip()
             read_value = line[1].strip()
-            if (read_value[0] in ['\'', '"']) and (read_value[-1] == ['\'', '"']):
+            if (read_value[0] in ['\'', '"']) and (read_value[-1] in ['\'', '"']):
                 read_value = str(read_value[1:-1])
             elif read_value == 'True':
                 read_value = True

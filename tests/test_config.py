@@ -15,6 +15,7 @@ import qteasy as qt
 from qteasy import QT_CONFIG
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
+from qteasy.configure import _parse_start_up_config_lines
 
 
 class TestConfig(unittest.TestCase):
@@ -101,6 +102,84 @@ class TestConfig(unittest.TestCase):
 
     def test_pars_string_to_type(self):
         _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())
+
+    def test_parse_start_up_config_lines(self):
+        """ test the function that parses start up configuration lines """
+        config_line = [
+            'mode = 2',
+            'opti_type = None',
+            'cash_delivery_period = 1',
+            'local_db_name = True',
+            'local_db_host = 3306',
+            'local_db_user = root',
+            'local_db_password = \'123456\'',
+        ]
+        configs = _parse_start_up_config_lines(config_lines=config_line)
+        print(configs)
+        self.assertEqual(configs['mode'], 2)
+        self.assertEqual(configs['opti_type'], None)
+        self.assertEqual(configs['cash_delivery_period'], 1)
+        self.assertEqual(configs['local_db_name'], True)
+        self.assertEqual(configs['local_db_host'], 3306)
+        self.assertEqual(configs['local_db_user'], 'root')
+        self.assertEqual(configs['local_db_password'], '123456')
+
+        config_line = [
+            'mode = 2',
+            'opti_type = multiple',
+            'cash_delivery_period = "1"',
+            'local_db_name = test_db',
+            "local_db_host = '3306'",
+            'local_db_user = 345.6',
+            'local_db_password = "123456"',
+        ]
+        configs = _parse_start_up_config_lines(config_lines=config_line)
+        print(configs)
+        self.assertEqual(configs['mode'], 2)
+        self.assertEqual(configs['opti_type'], 'multiple')
+        self.assertEqual(configs['cash_delivery_period'], "1")
+        self.assertEqual(configs['local_db_name'], 'test_db')
+        self.assertEqual(configs['local_db_host'], '3306')
+        self.assertEqual(configs['local_db_user'], 345.6)
+        self.assertEqual(configs['local_db_password'], '123456')
+
+        config_line = [
+            'mode = 2',
+            'opti_type = false',
+            'cash_delivery_period = 1',
+            'local_db_name = False',
+            'local_db_host = "3306',
+            'local_db_user = 12345678',
+            'local_db_password = "12345.6"',
+        ]
+        configs = _parse_start_up_config_lines(config_lines=config_line)
+        print(configs)
+        self.assertEqual(configs['mode'], 2)
+        self.assertEqual(configs['opti_type'], 'false')
+        self.assertEqual(configs['cash_delivery_period'], 1)
+        self.assertEqual(configs['local_db_name'], False)
+        self.assertEqual(configs['local_db_host'], '"3306')
+        self.assertEqual(configs['local_db_user'], 12345678)
+        self.assertEqual(configs['local_db_password'], '12345.6')
+
+        config_line = [
+            'mode = 2',
+            'opti_type = multiple',
+            'cash_delivery_period = 1',
+            'local_db_name = test_db',
+            'local_db_host = 3306',
+            'local_db_user = root',
+            'local_db_password = 12345a6',
+        ]
+        configs = _parse_start_up_config_lines(config_lines=config_line)
+        print(configs)
+        self.assertEqual(configs['mode'], 2)
+        self.assertEqual(configs['opti_type'], 'multiple')
+        self.assertEqual(configs['cash_delivery_period'], 1)
+        self.assertEqual(configs['local_db_name'], 'test_db')
+        self.assertEqual(configs['local_db_host'], 3306)
+        self.assertEqual(configs['local_db_user'], 'root')
+        self.assertEqual(configs['local_db_password'], '12345a6')
 
 
 if __name__ == '__main__':
