@@ -13,11 +13,69 @@
 
 
 import pandas as pd
+from functools import lru_cache
+
+
+def define(name, freq, asset_type, description, acquisition_type, **kwargs):
+    """
+    Define a new data type and add it to the USER_DATA_TYPE_MAP.
+
+    Parameters
+    ----------
+    name: str
+    freq: str
+    asset_type: str
+    description: str
+    acquisition_type: str
+    kwargs: dict
+    """
+    global DATA_TYPE_MAP
+    global DATA_TYPE_MAP_COLUMNS
+    global DATA_TYPE_MAP_INDEX_NAMES
+
+    key = (name, freq, asset_type)
+    if key in DATA_TYPE_MAP:
+        raise ValueError(f'DataType {key} already exists in DATA_TYPE_MAP.')
+    DATA_TYPE_MAP[key] = [description, acquisition_type, kwargs]
+    DATA_TYPE_MAP_INDEX_NAMES = list(set(DATA_TYPE_MAP_INDEX_NAMES) | set(key))
+    get_data_type_map()
+
+
+@lru_cache(maxsize=1)
+def get_data_type_map() -> pd.DataFrame:
+    """get a DataFrame of DATA_TYPE_MAP for checking."""
+    type_map = pd.DataFrame(DATA_TYPE_MAP).T
+    type_map.columns = DATA_TYPE_MAP_COLUMNS
+    type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
+
+    return type_map
+
+
+def get_user_data_type_map() -> pd.DataFrame:
+    """get a DataFrame of USER_DATA_TYPE_MAP for checking."""
+    type_map = pd.DataFrame(USER_DATA_TYPE_MAP).T
+    type_map.columns = DATA_TYPE_MAP_COLUMNS
+    type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
+
+    return type_map
+
 
 class DataType:
     """
-    DataType class, representing historical data types that can be used by qteasy
+    DataType class, 代表qteasy可以使用的历史数据类型。
+
+    qteasy的每一个历史数据类型由三组参数定义：
+    - name: 数据类型的名称
+    - freq: 数据的频率
+    - asset_type: 数据的资产类型
+    以上三组参数唯一地定义了一个数据类型。qteasy定义了大量常用的数据类型，用户可以直接使用这些数据类型，也可以根据自己的需求定义新的数据类型。
+    如果用户自定义新的数据类型，三组参数不能与已有的数据类型重复。
+
+    用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。
+
+    一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。
     """
+
     aquisition_types = [
         'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关
         'direct',  # 直接获取数据表中与资产有关的一个数据字段，并筛选位于开始/结束日期之间的数据
@@ -32,19 +90,54 @@ class DataType:
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
 
-# TODO: 确认是否需要进行唯一性检查？
-#  是否还有必要维持数据唯一性？如何体现唯一性？为什么还需要唯一性？
-
-    def __init__(self, *, name, freq, asset_type, description, acquisition_type, **kwargs):
+    def __init__(self, *, name, freq=None, asset_type=None):
         """
-        初始化DataType类，检查输入是否合法，解析参数
+        根据用户输入的名称或完整参数实例化一个DataType对象。
+
+        如果用户输入完整的三合一参数，将检查该类型是否已经存在，如果存在，则生成该类型的实例，否则抛出异常。
+        如果用户仅输入名称，将尝试从DATA_TYPE_MAP中匹配相应的参数，如果找到唯一匹配，则生成该类型的实例，否则抛出异常并给出提示。
+
+        用户自定义的数据类型也在上述查找匹配范围内。而用户需要通过datatypes.define()方法将自定义的数据类型添加到DATA_TYPE_MAP中。
 
         Parameters
         ----------
-        id: str
+        name: str
+            数据类型的名称
+        freq: str
+            数据的频率: d(日), w(周), m(月), q(季), y(年)
+        asset_type: str
+            数据的资产类型: E(股票), IDX(指数), FD(基金), FT(期货), OPT(期权)
+
+        Raises
+        ------
+        ValueError
+            如果用户输入的参数不在DATA_TYPE_MAP中
+            ValueError: DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.
+        ValueError
+            如果用户输入的参数不完整，在DATA_TYPE_MAP中无法匹配到唯一的数据类型
+            ValueError: Input matches multiple data types in DATA_TYPE_MAP, specify your input: {types}?.
         """
+
+        if freq is not None and asset_type is not None:
+            # 如果用户输入了完整的三合一参，检查参数是否有效
+            if (name, freq, asset_type) not in DATA_TYPE_MAP:
+                raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+            description, acquisition_type, kwargs = DATA_TYPE_MAP[(name, freq, asset_type)]
+        else:
+            # 如果用户仅输入名称，没有完整的三合一参数，尝试从DATA_TYPE_MAP中匹配
+            freq_slice = slice(None) if freq is None else freq
+            asset_type_slice = slice(None) if asset_type is None else asset_type
+            data_map = get_data_type_map()
+            matched_types = data_map.loc[(name, freq_slice, asset_type_slice)]
+            if len(matched_types) == 0:
+                raise ValueError(f'DataType {name} not found in DATA_TYPE_MAP.')
+            elif len(matched_types) > 1:
+                raise ValueError(f'Input matches multiple data types in DATA_TYPE_MAP, specify your input: {matched_types.index}?')
+            else:
+                description, acquisition_type, kwargs = matched_types.iloc[0]
+
         self._name = name
-        self._freq = freq  # freq is to be parsed by the parser
+        self._freq = freq  # TODO: freq is to be parsed by the parser
         self._asset_type = asset_type
         self._description = description
         self._acquisition_type = acquisition_type
@@ -82,14 +175,8 @@ class DataType:
         return f'{self.name}({self.asset_type})@{self.freq}'
 
 
-def check_data_type_map():
-    """check if data type map is valid"""
-    df = pd.DataFrame(DATA_TYPE_MAP, columns=DATA_TYPE_MAP_COLUMNS, index=DATA_TYPE_MAP_INDEX_NAMES)
-    print(df)
-
-
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'kwargs']
-DATA_TYPE_MAP_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
+DATA_TYPE_MAP_INDEX_NAMES = ('dtype', 'freq', 'asset_type')
 DATA_TYPE_MAP = {
 ('stock_symbol','None','E'):	['股票基本信息 - 股票代码','basics',{'table_name': 'stock_basic', 'column': 'symbol'}],
 ('stock_name','None','E'):	['股票基本信息 - 股票名称','basics',{'table_name': 'stock_basic', 'column': 'name'}],
@@ -1125,4 +1212,5 @@ DATA_TYPE_MAP = {
 ('reason','d','E'):	['龙虎榜机构明细 - 上榜理由','event_signal',{'table_name': 'top_inst', 'column': 'reason'}],
 }
 
-
+USER_DATA_TYPE_MAP = {
+}

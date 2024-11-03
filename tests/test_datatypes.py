@@ -57,14 +57,10 @@ class TestDataTypes(unittest.TestCase):
             name, freq, asset_type = k
             desc = v[0]
             acq_type = v[1]
-            kwargs = v[2]
             dtype = DataType(
                     name=name,
                     freq=freq,
                     asset_type=asset_type,
-                    description=desc,
-                    acquisition_type=acq_type,
-                    **kwargs,
             )
             self.assertIsInstance(dtype, DataType)
             self.assertEqual(dtype.name, name)
@@ -145,7 +141,26 @@ class TestDataTypes(unittest.TestCase):
                 empty_type_acq_types.append(acq_type)
                 print(f'\nempty data for {dtype} - {dtype.description}')
 
-            print(f'got data for {dtype}: \n{data}')
+            # print(f'\ngot data for {dtype}: \n{data}')
+
+            # checking the datatypes and start / end dates of the data
+            if acq_type == 'basics':
+                # index are shares
+                self.assertIsInstance(data, pd.Series)
+                self.assertEqual(data.index.dtype, 'object')
+                self.assertTrue(all(share in data.index for share in shares))
+            elif acq_type in type_with_shares:
+                self.assertIsInstance(data, pd.DataFrame)
+                self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                self.assertEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                self.assertEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+            elif acq_type in type_with_events:
+                self.assertIsInstance(data, pd.DataFrame)
+                self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+            else:
+                self.assertIsInstance(data, pd.Series)
 
         print(f'\n{empty_count} out of {total} empty data types:')
         emptys = pd.DataFrame({
@@ -158,9 +173,6 @@ class TestDataTypes(unittest.TestCase):
         print(f'{len(all_tables)} tables are not covered, those are:')
         for table in all_tables:
             print(ds.get_table_info(table))
-
-    def test_data_type(self):
-        type =
 
 
 if __name__ == '__main__':
