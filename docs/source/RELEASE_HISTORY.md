@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.3.11 (2024-11-03)
+- fixed a bug: pure digit strings are not properly parsed from start up configuration file
+
 ## 1.3.10 (2024-09-03)
 - removed deprecated pandas syntax from database.py and updated version requirements
 - added qt level configure keys for Chinese font names in candle chart for different Operating systems respectively:
