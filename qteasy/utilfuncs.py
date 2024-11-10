@@ -233,11 +233,17 @@ def parse_freq_string(freq, std_freq_only=False):
     return qty, main_freq, sub_freq
 
 
-def get_main_freq_level(freq):
+def get_main_freq_level(freq) -> int or None:
     """ 确定并返回freqency的级别
 
-    :param freq:
-    :return:
+    Parameters
+    ----------
+    freq: str
+        频率字符串
+
+    Returns
+    -------
+    int: 频率级别
     """
     qty, main_freq, sub_freq = parse_freq_string(freq)
     if main_freq in TIME_FREQ_STRINGS:
@@ -423,9 +429,6 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
     '~ 1D'
     """
 
-    # TODO: 此函数在estimation=True时，输出结果不准确，需要修正，例如，86399秒应该输出为1天，
-    #  而不是23小时
-    # TODO: 修正函数输出值的错，在estimation=True时，输出结果不正确）
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'

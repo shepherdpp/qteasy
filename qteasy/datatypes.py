@@ -168,6 +168,16 @@ class DataType:
     def kwargs(self):
         return self._kwargs
 
+    @property
+    def named_args(self):
+        """Return argument in htype name, such as '000300.SH'
+        in 'index_weight_000300.SH'."""
+        return {
+            'name': self.name,
+            'freq': self.freq,
+            'asset_type': self.asset_type,
+        }
+
     def __repr__(self):
         return f'DataType(\'{self.name}\', \'{self.freq}\', \'{self.asset_type}\')'
 
@@ -192,8 +202,36 @@ DATA_TYPE_MAP = {
 ('list_date','None','E'):	['股票基本信息 - 上市日期','basics',{'table_name': 'stock_basic', 'column': 'list_date'}],
 ('delist_date','None','E'):	['股票基本信息 - 退市日期','basics',{'table_name': 'stock_basic', 'column': 'delist_date'}],
 ('is_hs','None','E'):	['股票基本信息 - 是否沪深港通标的','basics',{'table_name': 'stock_basic', 'column': 'is_hs'}],
-# ('act_name','None','E'):	['股票基本信息 - 实控人名称','basics',{'table_name': 'stock_basic', 'column': 'act_name'}],
-# ('act_ent_type','None','E'):	['股票基本信息 - 实控人企业性质','basics',{'table_name': 'stock_basic', 'column': 'act_ent_type'}],
+('wt_in_SHCI','None','E'):	['股票在指数中所占权重 - 上证综合指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000001.SH'}],
+('wt_in_SHA','None','E'):	['股票在指数中所占权重 - 上证A股指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000002.SH'}],
+('wt_in_SHB','None','E'):	['股票在指数中所占权重 - 上证B股指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000003.SH'}],
+('wt_in_SHInd','None','E'):	['股票在指数中所占权重 - 上证工业指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000004.SH'}],
+('wt_in_SHCom','None','E'):	['股票在指数中所占权重 - 上证商业指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000005.SH'}],
+('wt_in_SHReal','None','E'):	['股票在指数中所占权重 - 上证地产指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000006.SH'}],
+('wt_in_SHUtil','None','E'):	['股票在指数中所占权重 - 上证公用指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
+('wt_in_SH50','None','E'):	['股票在指数中所占权重 - 上证50指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000016.SH'}],
+('wt_in_SH180','None','E'):	['股票在指数中所占权重 - 上证180指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000010.SH'}],
+('wt_in_SH380','None','E'):	['股票在指数中所占权重 - 上证380指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000009.SH'}],
+('wt_in_SHLar','None','E'):	['股票在指数中所占权重 - 上证超大盘指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000043.SH'}],
+('wt_in_SHMed','None','E'):	['股票在指数中所占权重 - 上证中盘指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000044.SH'}],
+('wt_in_SHSma','None','E'):	['股票在指数中所占权重 - 上证小盘指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000045.SH'}],
+('wt_in_HS300','None','E'):	['股票在指数中所占权重 - 沪深300指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000300.SH'}],
+('wt_in_SZCI','None','E'):	['股票在指数中所占权重 - 深证成分指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399001.SZ'}],
+('wt_in_SZCN','None','E'):	['股票在指数中所占权重 - 创业板指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399006.SZ'}],
+('wt_in_SZ100','None','E'):	['股票在指数中所占权重 - 深证100指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399004.SZ'}],
+('wt_in_SZ200','None','E'):	['股票在指数中所占权重 - 深证200指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399009.SZ'}],
+('wt_in_SZ300','None','E'):	['股票在指数中所占权重 - 深证300指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399007.SZ'}],
+('wt_in_SZ700','None','E'):	['股票在指数中所占权重 - 深证700指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399010.SZ'}],
+('wt_in_SZ1000','None','E'):	['股票在指数中所占权重 - 深证1000指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
+# TODO: test the following data types
+# ('is_in_SHInd','None','E'):	['股票是否在指数中 - 上证工业指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000004.SH'}],
+# ('is_in_SHCom','None','E'):	['股票是否在指数中 - 上证商业指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000005.SH'}],
+# ('is_in_SHReal','None','E'):	['股票是否在指数中 - 上证地产指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000006.SH'}],
+# ('is_in_SHUtil','None','E'):	['股票是否在指数中 - 上证公用指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
+# ('is_in_SH50','None','E'):	['股票是否在指数中 - 上证50指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
+# ('is_in_SH180','None','E'):	['股票是否在指数中 - 上证180指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
+# ('is_in_SH380','None','E'):	['股票是否在指数中 - 上证380指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
+# ('is_in_HS300','None','E'):	['股票是否在指数中 - 沪深300指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000300.SH'}],
 ('market','None','IDX'):	['指数基本信息 - 市场','basics',{'table_name': 'index_basic', 'column': 'market'}],
 ('publisher','None','IDX'):	['指数基本信息 - 发布方','basics',{'table_name': 'index_basic', 'column': 'publisher'}],
 ('index_type','None','IDX'):	['指数基本信息 - 指数风格','basics',{'table_name': 'index_basic', 'column': 'index_type'}],
