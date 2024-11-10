@@ -6,9 +6,9 @@
 # Created:  2024-10-09
 # Desc:
 #   Definition of series of functions to
-# acquire or donwload historical data
+# acquire or download historical data
 # that can be stored in the datasource
 # from different sources such as
-# tushare, yahoo finance, etc.
+# tushare, yahoo finance, akshare, etc.
 # ======================================
 
