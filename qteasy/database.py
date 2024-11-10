@@ -3132,7 +3132,6 @@ class DataSource:
         elif acquisition_type == 'event_signal':
             acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'composition':
-            named_args = htype.named_args
             acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'complex':
             acquired_data = self._get_complex(symbols=symbols, date=starts, **kwargs)
@@ -3297,7 +3296,32 @@ class DataSource:
         return events
 
     def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """事件状态型的数据获取方法"""
+        """事件状态型的数据获取方法
+
+        Parameters
+        ----------
+        symbols: list
+            股票代码列表
+        starts: str
+            开始日期
+        ends: str
+            结束日期
+        **kwargs
+            table_name: str
+                数据表名
+            column: str
+                数据表中的列名
+            id_index: str
+                数据表中的id列名
+            start_col: str
+                数据表中的开始时间列名
+            end_col: str
+                数据表中的结束时间列名
+
+        Returns
+        -------
+        DataFrame
+        """
 
         if symbols is None:
             raise ValueError('symbols must be provided for event status data type')
@@ -3322,7 +3346,32 @@ class DataSource:
         return status
 
     def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """事件信号型的数据获取方法"""
+        """事件信号型的数据获取方法
+
+        Parameters
+        ----------
+        symbols: list
+            股票代码列表
+        starts: str
+            开始日期
+        ends: str
+            结束日期
+        **kwargs
+            table_name: str
+                数据表名
+            column: str
+                数据表中的列名
+            id_index: str
+                数据表中的id列名
+            start_col: str
+                数据表中的开始时间列名
+            end_col: str
+                数据表中的结束时间列名
+
+        Returns
+        -------
+        DataFrame
+        """
 
         if symbols is None:
             raise ValueError('symbols must be provided for event status data type')
@@ -3339,12 +3388,50 @@ class DataSource:
         return signals
 
     def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """成份查询型的数据获取方法"""
+        """成份查询型的数据获取方法
+
+        Parameters
+        ----------
+        symbols: list
+            股票代码列表
+        starts: str
+            开始日期
+        ends: str
+            结束日期
+        **kwargs
+            table_name: str
+                数据表名
+            column: str
+                数据表中的列名
+            comp_column: str
+                数据表中的成份列名
+            index: str
+                数据表中的索引列名
+
+        Returns
+        -------
+        DataFrame
+        """
+
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
         comp_column = kwargs.get('comp_column')
+        index = kwargs.get('index')
 
-        index = htype
+        weight_data = self.read_table_data(table_name, shares=index, start=starts, end=ends)
+        if not weight_data.empty:
+            weight_data = weight_data.unstack()
+        else:
+            # return empty data
+            return weight_data
+
+        weight_data.columns = weight_data.columns.get_level_values(1)
+        weight_data.index = weight_data.index.get_level_values(1)
+
+        if symbols is not None:
+            weight_data = weight_data.reindex(columns=symbols)
+
+        return weight_data
 
     def _get_complex(self, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
         """复合型的数据获取方法"""

@@ -75,10 +75,13 @@ class TestDataTypes(unittest.TestCase):
             starts = '2019-09-01'
             ends = '2020-09-12'
 
-            type_with_shares = ['direct', 'basics', 'adjustment', 'operation']
+            type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition']
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
             if (acq_type in type_with_shares) and (asset_type == 'E'):
                 shares = ['000651.SZ', '000001.SZ','002936.SZ', '603810.SH']
+                if table_name == 'index_weight':
+                    starts = '2018-09-01'
+                    ends = '2020-12-31'
             elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
                 shares = ['000300.SH', '000001.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FD'):
@@ -141,7 +144,7 @@ class TestDataTypes(unittest.TestCase):
                 empty_type_acq_types.append(acq_type)
                 print(f'\nempty data for {dtype} - {dtype.description}')
 
-            # print(f'\ngot data for {dtype}: \n{data}')
+            print(f'\ngot data for {dtype}: \n{data}')
 
             # checking the datatypes and start / end dates of the data
             if acq_type == 'basics':

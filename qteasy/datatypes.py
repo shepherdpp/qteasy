@@ -168,16 +168,6 @@ class DataType:
     def kwargs(self):
         return self._kwargs
 
-    @property
-    def named_args(self):
-        """Return argument in htype name, such as '000300.SH'
-        in 'index_weight_000300.SH'."""
-        return {
-            'name': self.name,
-            'freq': self.freq,
-            'asset_type': self.asset_type,
-        }
-
     def __repr__(self):
         return f'DataType(\'{self.name}\', \'{self.freq}\', \'{self.asset_type}\')'
 
