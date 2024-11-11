@@ -3117,6 +3117,8 @@ class DataSource:
 
         if acquisition_type == 'basics':
             acquired_data = self._get_basics(symbols=symbols, **kwargs)
+        elif acquisition_type == 'selection':
+            acquired_data = self._get_selection(**kwargs)
         elif acquisition_type == 'direct':
             acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'adjustment':
@@ -3133,6 +3135,8 @@ class DataSource:
             acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'composition':
             acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        elif acquisition_type == 'category':
+            acquired_data = self._get_category(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'complex':
             acquired_data = self._get_complex(symbols=symbols, date=starts, **kwargs)
         else:
@@ -3177,6 +3181,10 @@ class DataSource:
             raise KeyError(f'column {column} not in table data: {acquired_data.columns()}')
 
         return acquired_data[column]
+
+    def _get_selection(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据筛选型的数据获取方法"""
+        raise NotImplementedError
 
     def _get_direct(self, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """直读数据型的数据获取方法, 必须给出symbols"""
@@ -3432,6 +3440,10 @@ class DataSource:
             weight_data = weight_data.reindex(columns=symbols)
 
         return weight_data
+
+    def _get_category(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+        """数据分类型的数据获取方法"""
+        raise NotImplementedError
 
     def _get_complex(self, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
         """复合型的数据获取方法"""
