@@ -82,6 +82,10 @@ class TestDataTypes(unittest.TestCase):
                 if table_name == 'index_weight':
                     starts = '2018-09-01'
                     ends = '2020-12-31'
+                if table_name == 'sw_industrial_basic':
+                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
+                if table_name == 'ths_industrial_basic':
+                    shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
             elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
                 shares = ['000300.SH', '000001.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FD'):
