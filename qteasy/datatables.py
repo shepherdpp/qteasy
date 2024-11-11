@@ -272,7 +272,7 @@ TABLE_MASTERS = {
          'A, HK, US', '', '', '', '', '', '', ''],
 
     'sw_industry_basic':  # New, 申万行业分类
-        ['sw_industry_basic', '申万行业分类', 'basic', 'IDX', 'none', 'industry_sw', 'src', 'list', 'sw2014, sw2021',
+        ['sw_industry_basic', '申万行业分类', 'basic', 'IDX', 'none', 'index_classify', 'src', 'list', 'sw2014, sw2021',
          '', '', '', '', '', '', ''],
 
     'stock_1min':

@@ -78,6 +78,9 @@ class DataType:
 
     aquisition_types = [
         'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关
+        # {'table_name': table, 'column': column}
+        'selection',  # 数据筛选型。从表中筛选出数据并输出，如股票代码、行业分类等
+        # {'table_name': table, 'sel_by': column, 'keys': keys}
         'direct',  # 直接获取数据表中与资产有关的一个数据字段，并筛选位于开始/结束日期之间的数据
         'adjustment',  # 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
         'relations',  # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
@@ -85,7 +88,8 @@ class DataType:
         'event_status',  # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
         'event_multi_stat',  # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
         'event_signal',  # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
-        'composition',  # 成份查询型。从成份表中筛选出来数据并行列转换
+        'composition',  # 成份数据。从成份表中筛选出来数据并行列转换，该成分表与时间相关，如指数成分股
+        'category',  # 成分分类数据，输出某个股票属于哪一个成分，该成分是静态的与时间无关，如行业分类、地域分类等
         # 以下为一些特殊类型，由特殊的过程实现
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
@@ -213,15 +217,8 @@ DATA_TYPE_MAP = {
 ('wt_in_SZ300','None','E'):	['股票在指数中所占权重 - 深证300指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399007.SZ'}],
 ('wt_in_SZ700','None','E'):	['股票在指数中所占权重 - 深证700指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399010.SZ'}],
 ('wt_in_SZ1000','None','E'):	['股票在指数中所占权重 - 深证1000指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
-# TODO: test the following data types
-# ('is_in_SHInd','None','E'):	['股票是否在指数中 - 上证工业指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000004.SH'}],
-# ('is_in_SHCom','None','E'):	['股票是否在指数中 - 上证商业指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000005.SH'}],
-# ('is_in_SHReal','None','E'):	['股票是否在指数中 - 上证地产指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000006.SH'}],
-# ('is_in_SHUtil','None','E'):	['股票是否在指数中 - 上证公用指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
-# ('is_in_SH50','None','E'):	['股票是否在指数中 - 上证50指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
-# ('is_in_SH180','None','E'):	['股票是否在指数中 - 上证180指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
-# ('is_in_SH380','None','E'):	['股票是否在指数中 - 上证380指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000007.SH'}],
-# ('is_in_HS300','None','E'):	['股票是否在指数中 - 沪深300指数','event_status',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '000300.SH'}],
+# ('ths_category','None','E'):	['股票行业分类 - 同花顺','category',{'table_name': 'ths_index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
+# ('sw_category','None','E'):	['股票行业分类 - 申万','category',{'table_name': 'sw_index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
 ('market','None','IDX'):	['指数基本信息 - 市场','basics',{'table_name': 'index_basic', 'column': 'market'}],
 ('publisher','None','IDX'):	['指数基本信息 - 发布方','basics',{'table_name': 'index_basic', 'column': 'publisher'}],
 ('index_type','None','IDX'):	['指数基本信息 - 指数风格','basics',{'table_name': 'index_basic', 'column': 'index_type'}],
@@ -232,6 +229,14 @@ DATA_TYPE_MAP = {
 ('weight_rule','None','IDX'):	['指数基本信息 - 加权方式','basics',{'table_name': 'index_basic', 'column': 'weight_rule'}],
 ('desc','None','IDX'):	['指数基本信息 - 描述','basics',{'table_name': 'index_basic', 'column': 'desc'}],
 ('exp_date','None','IDX'):	['指数基本信息 - 终止日期','basics',{'table_name': 'index_basic', 'column': 'exp_date'}],
+('sw_industry_name','None','IDX'):	['申万行业分类 - 名称','basics',{'table_name': 'sw_industry_basic', 'column': 'industry_name'}],
+('sw_parent_code','None','IDX'):	['申万行业分类 - 上级行业代码','basics',{'table_name': 'sw_industry_basic', 'column': 'parent_code'}],
+('sw_level','None','IDX'):	['申万行业分类 - 级别','basics',{'table_name': 'sw_industry_basic', 'column': 'level'}],
+('sw_industry_code','None','IDX'):	['申万行业分类 - 行业代码','basics',{'table_name': 'sw_industry_basic', 'column': 'industry_code'}],
+('sw_published','None','IDX'):	['申万行业分类 - 是否发布','basics',{'table_name': 'sw_industry_basic', 'column': 'is_pub'}],
+('sw_source','None','IDX'):	['申万行业分类 - 分类版本','basics',{'table_name': 'sw_industry_basic', 'column': 'src'}],
+('sw_select_level','None','IDX'):	['申万行业分类筛选 - 按级别筛选','select',{'table_name': 'sw_industry_basic', 'column': 'src'}],
+# ('ths','None','E'):	['同花顺行业分类基本信息','basic',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
 ('fund_name','None','FD'):	['基金基本信息 - 简称','basics',{'table_name': 'fund_basic', 'column': 'name'}],
 ('management','None','FD'):	['基金基本信息 - 管理人','basics',{'table_name': 'fund_basic', 'column': 'management'}],
 ('custodian','None','FD'):	['基金基本信息 - 托管人','basics',{'table_name': 'fund_basic', 'column': 'custodian'}],
