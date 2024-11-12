@@ -3136,7 +3136,7 @@ class DataSource:
         elif acquisition_type == 'composition':
             acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'category':
-            acquired_data = self._get_category(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_category(symbols=symbols, **kwargs)
         elif acquisition_type == 'complex':
             acquired_data = self._get_complex(symbols=symbols, date=starts, **kwargs)
         else:
@@ -3168,6 +3168,8 @@ class DataSource:
         # try to get arguments from kwargs
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
+        # if table_name == 'sw_industry_basic':
+        #     import pdb; pdb.set_trace()
 
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
@@ -3441,9 +3443,43 @@ class DataSource:
 
         return weight_data
 
-    def _get_category(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """数据分类型的数据获取方法"""
-        raise NotImplementedError
+    def _get_category(self, *, symbols=None, **kwargs) -> pd.DataFrame:
+        """成份查询型的数据获取方法
+
+                Parameters
+                ----------
+                symbols: list
+                    股票代码列表
+                starts: str
+                    开始日期
+                ends: str
+                    结束日期
+                **kwargs
+                    table_name: str
+                        数据表名
+                    column: str
+                        数据表中的列名
+                    comp_column: str
+                        数据表中的成份列名
+                    index: str
+                        数据表中的索引列名
+
+                Returns
+                -------
+                DataFrame
+                """
+
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+        comp_column = kwargs.get('comp_column')
+
+        category_data = self.read_table_data(table_name)
+        category = category_data.index.to_frame()
+        category.index = category[column]
+
+        category = category.reindex(index=symbols)
+
+        return category[comp_column]
 
     def _get_complex(self, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
         """复合型的数据获取方法"""
