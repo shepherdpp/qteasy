@@ -75,19 +75,19 @@ class TestDataTypes(unittest.TestCase):
             starts = '2019-09-01'
             ends = '2020-09-12'
 
-            type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition']
+            type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition', 'category']
             type_with_events = ['event_status', 'event_signal', 'event_multi_stat']
             if (acq_type in type_with_shares) and (asset_type == 'E'):
                 shares = ['000651.SZ', '000001.SZ','002936.SZ', '603810.SH']
                 if table_name == 'index_weight':
                     starts = '2018-09-01'
                     ends = '2020-12-31'
-                if table_name == 'sw_industrial_basic':
-                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
-                if table_name == 'ths_industrial_basic':
-                    shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
             elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
                 shares = ['000300.SH', '000001.SH']
+                if table_name == 'sw_industry_basic':
+                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
+                if table_name == 'ths_index_basic':
+                    shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
             elif (acq_type in type_with_shares) and (asset_type == 'FD'):
                 shares = ['515630.SH']
             elif (acq_type in type_with_shares) and (asset_type == 'FT'):
@@ -147,11 +147,12 @@ class TestDataTypes(unittest.TestCase):
                 empty_type_descs.append(desc)
                 empty_type_acq_types.append(acq_type)
                 print(f'\nempty data for {dtype} - {dtype.description}')
+                continue
 
-            print(f'\ngot data for {dtype}: \n{data}')
+            # print(f'\ngot data for {dtype}: \n{data}')
 
             # checking the datatypes and start / end dates of the data
-            if acq_type == 'basics':
+            if acq_type in ['basics', 'category']:
                 # index are shares
                 self.assertIsInstance(data, pd.Series)
                 self.assertEqual(data.index.dtype, 'object')

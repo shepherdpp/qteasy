@@ -869,7 +869,7 @@ TABLE_SCHEMA = {
 
     'ths_index_weight':  # New, 同花顺行业指数成分股权重!
         {'columns':     ["ts_code", "code", "name", "weight", "in_date", "out_date", "is_new"],
-         'dtypes':      ["str", "str", "str", "float", "str", "str", "str"],
+         'dtypes':      ["varchar(10)", "varchar(10)", "varchar(10)", "float", "varchar(10)", "varchar(10)", "varchar(2)"],
          'remarks':     ["指数代码", "股票代码", "股票名称", "权重(暂无)", "纳入日期(暂无)", "剔除日期(暂无)", "是否最新Y是N否"],
          'prime_keys':  [0, 1]
          },

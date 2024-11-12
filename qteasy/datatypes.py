@@ -79,7 +79,7 @@ class DataType:
     aquisition_types = [
         'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关
         # {'table_name': table, 'column': column}
-        'selection',  # 数据筛选型。从表中筛选出数据并输出，如股票代码、行业分类等
+        'selection',  # 数据筛选型。从basics表中筛选出数据并输出，如股票代码、行业分类等
         # {'table_name': table, 'sel_by': column, 'keys': keys}
         'direct',  # 直接获取数据表中与资产有关的一个数据字段，并筛选位于开始/结束日期之间的数据
         'adjustment',  # 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
@@ -217,7 +217,7 @@ DATA_TYPE_MAP = {
 ('wt_in_SZ300','None','E'):	['股票在指数中所占权重 - 深证300指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399007.SZ'}],
 ('wt_in_SZ700','None','E'):	['股票在指数中所占权重 - 深证700指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399010.SZ'}],
 ('wt_in_SZ1000','None','E'):	['股票在指数中所占权重 - 深证1000指数','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
-# ('ths_category','None','E'):	['股票行业分类 - 同花顺','category',{'table_name': 'ths_index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
+('ths_category','None','E'):	['股票同花顺行业分类','category',{'table_name': 'ths_index_weight', 'column': 'code', 'comp_column': 'ts_code'}],
 # ('sw_category','None','E'):	['股票行业分类 - 申万','category',{'table_name': 'sw_index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
 ('market','None','IDX'):	['指数基本信息 - 市场','basics',{'table_name': 'index_basic', 'column': 'market'}],
 ('publisher','None','IDX'):	['指数基本信息 - 发布方','basics',{'table_name': 'index_basic', 'column': 'publisher'}],
@@ -240,10 +240,10 @@ DATA_TYPE_MAP = {
 # ('sw_level3','None','IDX'):	['申万行业分类筛选 - L3','selection',{'table_name': 'sw_industry_basic', 'column': 'level', 'keys': ['L3']}],
 # ('sw_2014','None','IDX'):	['申万行业分类筛选 - 2014版本','selection',{'table_name': 'sw_industry_basic', 'column': 'src', 'keys': ['SW2014']}],
 # ('sw_2021','None','IDX'):	['申万行业分类筛选 - 2021版本','selection',{'table_name': 'sw_industry_basic', 'column': 'src', 'keys': ['SW2021']}],
-('ths_industry_name','None','E'):	['同花顺行业分类基本信息 - 行业名称','basic',{'table_name': 'ths_index_basic', 'column': 'name'}],
-('ths_industry_count','None','E'):	['同花顺行业分类基本信息 - 股票数量','basic',{'table_name': 'ths_index_basic', 'column': 'count'}],
-('ths_industry_exchange','None','E'):	['同花顺行业分类基本信息 - 交易所','basic',{'table_name': 'ths_index_basic', 'column': 'exchange'}],
-('ths_industry_date','None','E'):	['同花顺行业分类基本信息 - 发布日期','basic',{'table_name': 'ths_index_basic', 'column': 'list_date'}],
+('ths_industry_name','None','IDX'):	['同花顺行业分类基本信息 - 行业名称','basics',{'table_name': 'ths_index_basic', 'column': 'name'}],
+('ths_industry_count','None','IDX'):	['同花顺行业分类基本信息 - 股票数量','basics',{'table_name': 'ths_index_basic', 'column': 'count'}],
+('ths_industry_exchange','None','IDX'):	['同花顺行业分类基本信息 - 交易所','basics',{'table_name': 'ths_index_basic', 'column': 'exchange'}],
+('ths_industry_date','None','IDX'):	['同花顺行业分类基本信息 - 发布日期','basics',{'table_name': 'ths_index_basic', 'column': 'list_date'}],
 ('fund_name','None','FD'):	['基金基本信息 - 简称','basics',{'table_name': 'fund_basic', 'column': 'name'}],
 ('management','None','FD'):	['基金基本信息 - 管理人','basics',{'table_name': 'fund_basic', 'column': 'management'}],
 ('custodian','None','FD'):	['基金基本信息 - 托管人','basics',{'table_name': 'fund_basic', 'column': 'custodian'}],
@@ -447,6 +447,18 @@ DATA_TYPE_MAP = {
 ('close','h','E'):	['股票小时K线 - 收盘价','direct',{'table_name': 'stock_hourly', 'column': 'close'}],
 ('vol','h','E'):	['股票小时K线 - 成交量 （手）','direct',{'table_name': 'stock_hourly', 'column': 'vol'}],
 ('amount','h','E'):	['股票小时K线 - 成交额 （千元）','direct',{'table_name': 'stock_hourly', 'column': 'amount'}],
+('sw_open','d','IDX'):	['申万指数日K线 - 开盘价','direct',{'table_name': 'sw_index_daily', 'column': 'open'}],
+('sw_high','d','IDX'):	['申万指数日K线 - 最高价','direct',{'table_name': 'sw_index_daily', 'column': 'high'}],
+('sw_low','d','IDX'):	['申万指数日K线 - 最低价','direct',{'table_name': 'sw_index_daily', 'column': 'low'}],
+('sw_close','d','IDX'):	['申万指数日K线 - 收盘价','direct',{'table_name': 'sw_index_daily', 'column': 'close'}],
+('sw_change','d','IDX'):	['申万指数日K线 - 最低价','direct',{'table_name': 'sw_index_daily', 'column': 'change'}],
+('sw_pct_change','d','IDX'):	['申万指数日K线 - 收盘价','direct',{'table_name': 'sw_index_daily', 'column': 'pct_change'}],
+('sw_vol','d','IDX'):	['申万指数日K线 - 成交量 （万股）','direct',{'table_name': 'sw_index_daily', 'column': 'vol'}],
+('sw_amount','d','IDX'):	['申万指数日K线 - 成交额 （万元）','direct',{'table_name': 'sw_index_daily', 'column': 'amount'}],
+('sw_pe','d','IDX'):	['申万指数日K线 - 市盈率','direct',{'table_name': 'sw_index_daily', 'column': 'pe'}],
+('sw_pb','d','IDX'):	['申万指数日K线 - 市净率','direct',{'table_name': 'sw_index_daily', 'column': 'pb'}],
+('sw_float_mv','d','IDX'):	['申万指数日K线 - 流通市值 （万元）','direct',{'table_name': 'sw_index_daily', 'column': 'float_mv'}],
+('sw_total_mv','d','IDX'):	['申万指数日K线 - 总市值 （万元）','direct',{'table_name': 'sw_index_daily', 'column': 'total_mv'}],
 ('open','d','IDX'):	['指数日K线 - 开盘价','direct',{'table_name': 'index_daily', 'column': 'open'}],
 ('high','d','IDX'):	['指数日K线 - 最高价','direct',{'table_name': 'index_daily', 'column': 'high'}],
 ('low','d','IDX'):	['指数日K线 - 最低价','direct',{'table_name': 'index_daily', 'column': 'low'}],
