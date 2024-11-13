@@ -180,7 +180,8 @@ class TestDataTypes(unittest.TestCase):
         })
         print(emptys.to_string())
         print('\n')
-        print(f'{len(all_tables)} tables are not covered, those are:')
+        print(f'{len(all_tables)} tables are not covered, those are:\n'
+              f'{"="*80}\n')
         for table in all_tables:
             print(ds.get_table_info(table))
 

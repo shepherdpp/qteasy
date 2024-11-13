@@ -260,11 +260,16 @@ class DataSource:
         tables = get_table_master()
         return tables[tables['table_usage'] == 'sys'].index.to_list()
 
-    @property
-    def all_data_tables(self) -> list:
+    def none_sys_tables(self) -> list:
         """ 获取所有非系统数据表的清单"""
         tables = get_table_master()
         return tables[tables['table_usage'] != 'sys'].index.to_list()
+
+    @property
+    def all_data_tables(self) -> list:
+        """ 获取所有历史数据表（不包括调整表）的清单"""
+        tables = get_table_master()
+        return tables[~tables['table_usage'].isin(['sys', 'adj'])].index.to_list()
 
     @property
     def all_basic_tables(self) -> list:
@@ -3198,7 +3203,7 @@ class DataSource:
             return pd.Series()
 
         if column not in acquired_data.columns:
-            raise KeyError(f'column {column} not in table data: {acquired_data.columns()}')
+            raise KeyError(f'column {column} not in table data: {acquired_data.columns}')
 
         return acquired_data[column]
 
