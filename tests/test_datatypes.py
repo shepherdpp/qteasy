@@ -48,7 +48,7 @@ class TestDataTypes(unittest.TestCase):
         empty_types = []
         empty_type_descs = []
         empty_type_acq_types = []
-        all_tables = ds.all_tables
+        all_tables = ds.all_data_tables
         for k, v in DATA_TYPE_MAP.items():
             self.assertIsInstance(k, tuple)
             self.assertIsInstance(v, list)
@@ -146,7 +146,7 @@ class TestDataTypes(unittest.TestCase):
                 empty_types.append(k)
                 empty_type_descs.append(desc)
                 empty_type_acq_types.append(acq_type)
-                print(f'\nempty data for {dtype} - {dtype.description}')
+                # print(f'\nempty data for {dtype} - {dtype.description}')
                 continue
 
             # print(f'\ngot data for {dtype}: \n{data}')

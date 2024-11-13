@@ -254,6 +254,24 @@ class DataSource:
         """ 获取所有数据表的清单"""
         return get_table_master().index.to_list()
 
+    @property
+    def all_sys_tables(self) -> list:
+        """ 获取所有系统数据表的清单"""
+        tables = get_table_master()
+        return tables[tables['table_usage'] == 'sys'].index.to_list()
+
+    @property
+    def all_data_tables(self) -> list:
+        """ 获取所有非系统数据表的清单"""
+        tables = get_table_master()
+        return tables[tables['table_usage'] != 'sys'].index.to_list()
+
+    @property
+    def all_basic_tables(self) -> list:
+        """ 获取所有基础数据表的清单"""
+        tables = get_table_master()
+        return tables[tables['table_usage'] == 'basic'].index.to_list()
+
     def __repr__(self):
         if self.source_type == 'db':
             return f'DataSource(\'db\', \'{self.host}\', {self.port})'
