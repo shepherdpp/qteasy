@@ -3209,7 +3209,7 @@ class DataSource:
 
     def _get_selection(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据筛选型的数据获取方法"""
-        raise NotImplementedError
+        return pd.DataFrame()
 
     def _get_direct(self, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """直读数据型的数据获取方法, 必须给出symbols"""
