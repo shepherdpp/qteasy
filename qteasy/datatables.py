@@ -224,7 +224,7 @@ TABLE_MASTERS = {
          '', '', '', '', '', '', ''],
 
     'new_share':
-        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_share', 'none', 'none', 'none',
+        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_shasw_industry_detailre', 'none', 'none', 'none',
          '', 'Y', '200', '', '', '', ''],
 
     'money_flow':  # New, 个股资金流向!
@@ -1448,7 +1448,7 @@ TABLE_SCHEMA = {
                          "varchar(14)", "varchar(14)", "date", "date", "varchar(2)"],
          'remarks':     ["一级行业代码", "一级行业名称", "二级行业代码", "二级行业名称", "三级行业代码", "三级行业名称",
                          "成分股票代码", "成分股票名称", "纳入日期", "剔除日期", "是否最新Y是N否"],
-         'prime_keys':  [0]
+         'prime_keys':  [0, 2, 4]
          },
 
     'block_trade':  # New, 大宗交易!

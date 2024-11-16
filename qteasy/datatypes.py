@@ -88,6 +88,7 @@ class DataType:
         'event_status',  # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
         'event_multi_stat',  # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
         'event_signal',  # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
+        # {'table_name': table, 'column': output_col}
         'composition',  # 成份数据。从成份表中筛选出来数据并行列转换，该成分表与时间相关，如指数成分股
         'category',  # 成分分类数据，输出某个股票属于哪一个成分，该成分是静态的与时间无关，如行业分类、地域分类等
         # 以下为一些特殊类型，由特殊的过程实现
@@ -1562,7 +1563,39 @@ DATA_TYPE_MAP = {
 ('pmi020800','m','None'): ['非制造业PMI:在手订单','direct',{'table_name': 'cn_pmi', 'column': 'pmi020800'}],
 ('pmi020900','m','None'): ['非制造业PMI:存货','direct',{'table_name': 'cn_pmi', 'column': 'pmi020900'}],
 ('pmi021000','m','None'): ['非制造业PMI:供应商配送时间','direct',{'table_name': 'cn_pmi', 'column': 'pmi021000'}],
-('pmi030000','m','None'): ['中国综合PMI:产出指数','direct',{'table_name': 'cn_pmi', 'column': 'pmi030000'}]
+('pmi030000','m','None'): ['中国综合PMI:产出指数','direct',{'table_name': 'cn_pmi', 'column': 'pmi030000'}],
+('p_change_min','d','E'): ['预告净利润变动幅度下限(%)','event_signal',{'table_name': 'forecast', 'column': 'p_change_min'}],
+('p_change_max','d','E'): ['预告净利润变动幅度上限(%)','event_signal',{'table_name': 'forecast', 'column': 'p_change_max'}],
+('net_profit_min','d','E'): ['预告净利润下限(万元)','event_signal',{'table_name': 'forecast', 'column': 'net_profit_min'}],
+('net_profit_max','d','E'): ['预告净利润上限(万元)','event_signal',{'table_name': 'forecast', 'column': 'net_profit_max'}],
+('last_parent_net','d','E'): ['上年同期归属母公司净利润','event_signal',{'table_name': 'forecast', 'column': 'last_parent_net'}],
+('first_ann_date','d','E'): ['首次公告日','event_signal',{'table_name': 'forecast', 'column': 'first_ann_date'}],
+('summary','d','E'): ['业绩预告摘要','event_signal',{'table_name': 'forecast', 'column': 'summary'}],
+('change_reason','d','E'): ['业绩变动原因','event_signal',{'table_name': 'forecast', 'column': 'change_reason'}],
+('block_trade_price','d','E'): ['大宗交易 - 成交价','event_signal',{'table_name': 'block_trade', 'column': 'price'}],
+('block_trade_vol','d','E'): ['大宗交易 - 成交量（万股）','event_signal',{'table_name': 'block_trade', 'column': 'vol'}],
+('block_trade_amount','d','E'): ['大宗交易 - 成交金额','event_signal',{'table_name': 'block_trade', 'column': 'amount'}],
+('block_trade_buyer','d','E'): ['大宗交易 - 买方营业部','event_signal',{'table_name': 'block_trade', 'column': 'buyer'}],
+('block_trade_seller','d','E'): ['大宗交易 - 卖方营业部','event_signal',{'table_name': 'block_trade', 'column': 'seller'}],
+('stock_holder_trade_name','d','E'): ['股东交易 - 股东名称','event_signal',{'table_name': 'stock_holder_trade', 'column': 'holder_name'}],
+('stock_holder_trade_type','d','E'): ['股东交易 - 股东类型G高管P个人C公司','event_signal',{'table_name': 'stock_holder_trade', 'column': 'holder_type'}],
+('stock_holder_trade_in_de','d','E'): ['股东交易 - 类型IN增持DE减持','event_signal',{'table_name': 'stock_holder_trade', 'column': 'in_de'}],
+('stock_holder_trade_change_vol','d','E'): ['股东交易 - 变动数量','event_signal',{'table_name': 'stock_holder_trade', 'column': 'change_vol'}],
+('stock_holder_trade_change_ratio','d','E'): ['股东交易 - 占流通比例（%）','event_signal',{'table_name': 'stock_holder_trade', 'column': 'change_ratio'}],
+('stock_holder_trade_after_share','d','E'): ['股东交易 - 变动后持股','event_signal',{'table_name': 'stock_holder_trade', 'column': 'after_share'}],
+('stock_holder_trade_after_ratio','d','E'): ['股东交易 - 变动后占流通比例（%）','event_signal',{'table_name': 'stock_holder_trade', 'column': 'after_ratio'}],
+('stock_holder_trade_avg_price','d','E'): ['股东交易 - 平均价格','event_signal',{'table_name': 'stock_holder_trade', 'column': 'avg_price'}],
+('stock_holder_trade_total_share','d','E'): ['股东交易 - 持股总数','event_signal',{'table_name': 'stock_holder_trade', 'column': 'total_share'}],
+('stock_holder_trade_begin_date','d','E'): ['股东交易 - 增减持开始日期','event_signal',{'table_name': 'stock_holder_trade', 'column': 'begin_date'}],
+('stock_holder_trade_close_date','d','E'): ['股东交易 - 增减持结束日期','event_signal',{'table_name': 'stock_holder_trade', 'column': 'close_date'}],
+('margin_detail_rzye','d','E'): ['融资融券交易明细 - 融资余额(元)','event_signal',{'table_name': 'margin_detail', 'column': 'rzye'}],
+('margin_detail_rqye','d','E'): ['融资融券交易明细 - 融券余额(元)','event_signal',{'table_name': 'margin_detail', 'column': 'rqye'}],
+('margin_detail_rzmre','d','E'): ['融资融券交易明细 - 融资买入额(元)','event_signal',{'table_name': 'margin_detail', 'column': 'rzmre'}],
+('margin_detail_rqyl','d','E'): ['融资融券交易明细 - 融券余量（股）','event_signal',{'table_name': 'margin_detail', 'column': 'rqyl'}],
+('margin_detail_rzche','d','E'): ['融资融券交易明细 - 融资偿还额(元)','event_signal',{'table_name': 'margin_detail', 'column': 'rzche'}],
+('margin_detail_rqchl','d','E'): ['融资融券交易明细 - 融券偿还量(股)','event_signal',{'table_name': 'margin_detail', 'column': 'rqchl'}],
+('margin_detail_rqmcl','d','E'): ['融资融券交易明细 - 融券卖出量(股,份,手)','event_signal',{'table_name': 'margin_detail', 'column': 'rqmcl'}],
+('margin_detail_rzrqye','d','E'): ['融资融券交易明细 - 融资融券余额(元)','event_signal',{'table_name': 'margin_detail', 'column': 'rzrqye'}]
 }
 
 USER_DATA_TYPE_MAP = {
