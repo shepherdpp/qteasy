@@ -3418,6 +3418,10 @@ class DataSource:
 
         signals = data_series.unstack(level='ts_code')
 
+        # if index is a MultiIndex with multiple datetime levels, use the last level as the date index
+        if isinstance(signals.index, pd.MultiIndex):
+            signals.index = signals.index.get_level_values(-1)
+
         return signals
 
     def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
