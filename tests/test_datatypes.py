@@ -126,8 +126,8 @@ class TestDataTypes(unittest.TestCase):
                 starts = '2022-04-01'
                 ends = '2022-04-15'
 
-            data = ds.get_data(
-                    dtype,
+            data = dtype.get_data_from(
+                    ds,
                     symbols=shares,
                     starts=starts,
                     ends=ends,
