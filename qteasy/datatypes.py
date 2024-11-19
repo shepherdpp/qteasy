@@ -14,7 +14,6 @@
 
 import pandas as pd
 from functools import lru_cache
-from database import DataSource
 
 
 def define(name, freq, asset_type, description, acquisition_type, **kwargs):
@@ -205,29 +204,29 @@ class DataType:
         kwargs = self.kwargs
 
         if acquisition_type == 'basics':
-            acquired_data = self._get_basics(symbols=symbols, **kwargs)
+            acquired_data = self._get_basics(datasource, symbols=symbols, **kwargs)
         elif acquisition_type == 'selection':
-            acquired_data = self._get_selection(**kwargs)
+            acquired_data = self._get_selection(datasource, **kwargs)
         elif acquisition_type == 'direct':
-            acquired_data = self._get_direct(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_direct(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'adjustment':
-            acquired_data = self._get_adjustment(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_adjustment(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'operation':
-            acquired_data = self._get_operation(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_operation(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'relations':
-            acquired_data = self._get_relations(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_relations(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'event_multi_stat':
-            acquired_data = self._get_event_multi_stat(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_event_multi_stat(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'event_status':
-            acquired_data = self._get_event_status(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_event_status(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'event_signal':
-            acquired_data = self._get_event_signal(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_event_signal(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'composition':
-            acquired_data = self._get_composition(symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_composition(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
         elif acquisition_type == 'category':
-            acquired_data = self._get_category(symbols=symbols, **kwargs)
+            acquired_data = self._get_category(datasource, symbols=symbols, **kwargs)
         elif acquisition_type == 'complex':
-            acquired_data = self._get_complex(symbols=symbols, date=starts, **kwargs)
+            acquired_data = self._get_complex(datasource, symbols=symbols, date=starts, **kwargs)
         else:
             raise ValueError(f'Unknown acquisition type: {acquisition_type}')
 
@@ -246,7 +245,7 @@ class DataType:
         return self._symbolised(acquired_data)
 
     # 下面获取数据的方法都放在datasource中
-    def _get_basics(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
+    def _get_basics(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
         """基本数据的获取方法"""
 
         # try to get arguments from kwargs
@@ -258,7 +257,7 @@ class DataType:
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
 
-        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
 
         if acquired_data.empty:
             return pd.Series()
@@ -268,16 +267,16 @@ class DataType:
 
         return acquired_data[column]
 
-    def _get_selection(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据筛选型的数据获取方法"""
         return pd.DataFrame()
 
-    def _get_direct(self, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_direct(self, datasource, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """直读数据型的数据获取方法, 必须给出symbols"""
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for direct data type')
 
-        data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -286,7 +285,7 @@ class DataType:
 
         return unstacked_df
 
-    def _get_adjustment(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_adjustment(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据修正型的数据获取方法"""
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
@@ -298,10 +297,10 @@ class DataType:
             raise ValueError(
                     'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
-        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
         acquired_data = acquired_data[column].unstack(level=0)
 
-        adj_factors = self.read_table_data(adj_table, shares=symbols, start=starts, end=ends)
+        adj_factors = datasource.read_table_data(adj_table, shares=symbols, start=starts, end=ends)
         adj_factors = adj_factors[adj_column].unstack(level=0)
 
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
@@ -313,15 +312,15 @@ class DataType:
         fwd_adj_data = back_adj_data / adj_factors.iloc[-1]
         return fwd_adj_data
 
-    def _get_operation(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_operation(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据操作型的数据获取方法"""
         raise NotImplementedError
 
-    def _get_relations(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_relations(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据关联型的数据获取方法"""
         raise NotImplementedError
 
-    def _get_event_multi_stat(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_event_multi_stat(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件多状态型的数据获取方法
 
         Parameters
@@ -349,6 +348,11 @@ class DataType:
         DataFrame
         """
 
+        from .database import (
+            get_built_in_table_schema,
+            set_primary_key_frame,
+        )
+
         if symbols is None:
             raise ValueError('symbols must be provided for event status data type')
         if starts is None or ends is None:
@@ -363,9 +367,14 @@ class DataType:
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
 
-        acquired_data = self.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = datasource.read_table_data(
+                table_name,
+                shares=symbols,
+                start=starts,
+                end=ends,
+                primary_key_in_index=False,
+        )
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table_name, with_primary_keys=True)
-        acquired_data = set_primary_key_frame(acquired_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         cols_to_keep = [start_col, end_col, column]
         cols_to_keep.extend(primary_keys)
         acquired_data = acquired_data[cols_to_keep]
@@ -389,7 +398,7 @@ class DataType:
 
         return events
 
-    def _get_event_status(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_event_status(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件状态型的数据获取方法
 
         Parameters
@@ -423,7 +432,7 @@ class DataType:
             raise ValueError('start and end must be provided for event status data type')
 
         # acquire data with out time thus status can be ffilled from previous dates
-        data_series = self._get_basics(symbols=symbols, starts=None, ends=None, **kwargs)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=None, ends=None, **kwargs)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -439,7 +448,7 @@ class DataType:
 
         return status
 
-    def _get_event_signal(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_event_signal(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """事件信号型的数据获取方法
 
         Parameters
@@ -472,7 +481,7 @@ class DataType:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
-        data_series = self._get_basics(symbols=symbols, starts=starts, ends=ends, **kwargs)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -485,7 +494,7 @@ class DataType:
 
         return signals
 
-    def _get_composition(self, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_composition(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """成份查询型的数据获取方法
 
         Parameters
@@ -516,7 +525,7 @@ class DataType:
         comp_column = kwargs.get('comp_column')
         index = kwargs.get('index')
 
-        weight_data = self.read_table_data(table_name, shares=index, start=starts, end=ends)
+        weight_data = datasource.read_table_data(table_name, shares=index, start=starts, end=ends)
         if not weight_data.empty:
             weight_data = weight_data.unstack()
         else:
@@ -531,7 +540,7 @@ class DataType:
 
         return weight_data
 
-    def _get_category(self, *, symbols=None, **kwargs) -> pd.DataFrame:
+    def _get_category(self, datasource, *, symbols=None, **kwargs) -> pd.DataFrame:
         """成份查询型的数据获取方法
 
                 Parameters
@@ -561,7 +570,7 @@ class DataType:
         column = kwargs.get('column')
         comp_column = kwargs.get('comp_column')
 
-        category_data = self.read_table_data(table_name)
+        category_data = datasource.read_table_data(table_name)
         category = category_data.index.to_frame()
         category.index = category[column]
 
@@ -569,7 +578,7 @@ class DataType:
 
         return category[comp_column]
 
-    def _get_complex(self, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
+    def _get_complex(self, datasource, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
         """复合型的数据获取方法"""
         raise NotImplementedError
 

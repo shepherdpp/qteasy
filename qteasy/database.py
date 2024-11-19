@@ -1292,7 +1292,7 @@ class DataSource:
         else:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
-    def read_table_data(self, table, shares=None, start=None, end=None):
+    def read_table_data(self, table, shares=None, start=None, end=None, primary_key_in_index=True):
         """ 从本地数据表中读取数据并返回DataFrame，不修改数据格式，primary_key为DataFrame的index
 
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
@@ -1307,6 +1307,9 @@ class DataSource:
             YYYYMMDD格式日期，为空时不筛选
         end: str，
             YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
+        primary_key_in_index: bool, default True
+            是否将primary key设置为DataFrame的index
+            如果为False，primary key将作为普通的列返回，此时DataFrame的index为默认的整数index
 
         Returns
         -------
@@ -1400,6 +1403,9 @@ class DataSource:
         else:  # for unexpected cases:
             err = TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
             raise err
+
+        if not primary_key_in_index:
+            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
 
         return df
 
@@ -2613,6 +2619,17 @@ class DataSource:
                 weight_df = weight_df.reindex(columns=shares)
             df_by_index['wt-' + idx] = weight_df
         return df_by_index
+
+    def get_data_type(self, htype, *, symbols=None, starts=None, ends=None, target_freq=None):
+        """ DataSource类的主要获取数据的方法，根据数据类型，获取数据并输出
+
+        如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
+
+        Parameters
+        ----------
+        htype: DataType
+        """
+        return htype.get_data_from(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
 
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, list_arg_filter=None, symbols=None, merge_type='update',
