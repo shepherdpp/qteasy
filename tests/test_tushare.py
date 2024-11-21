@@ -13,8 +13,8 @@ import unittest
 import pandas as pd
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
-from qteasy.tsfuncs import income, indicators, name_change
-from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
+from qteasy.tsfuncs import income, indicators, namechange
+from qteasy.tsfuncs import stock_basic, trade_cal, new_share
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
 from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic, stock_company
@@ -40,7 +40,7 @@ class TestTushare(unittest.TestCase):
 
     def test_trade_calendar(self):
         print(f'test tushare function: trade_calendar')
-        df = trade_calendar(exchange='SSE')
+        df = trade_cal(exchange='SSE')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         df.info()
@@ -51,13 +51,13 @@ class TestTushare(unittest.TestCase):
         shares = '600748.SH'
         start = '20180101'
         end = '20191231'
-        df = name_change(ts_code=shares)
+        df = namechange(ts_code=shares)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         df.info()
         print(df.head(10))
 
-        df = name_change(ts_code=shares, start=start, end=end)
+        df = namechange(ts_code=shares, start=start, end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
         df.info()
