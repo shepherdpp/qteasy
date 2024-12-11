@@ -77,17 +77,21 @@ class DataType:
     """
 
     aquisition_types = [
-        'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关，输出index为qt_code的Series
+        'basics',
+            # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关，输出index为qt_code的Series
             # {'table_name': table, 'column': column}
-        'selection',  # 数据筛选型。从basics表中筛选出数据并输出，如股票代码、行业分类等。输出index为qt_code的Series
+        'selection',
+            # 数据筛选型。从basics表中筛选出数据并输出，如股票代码、行业分类等。输出index为qt_code的Series
             # {'table_name': table, 'column': output_col, 'sel_by': sel_column, 'keys': keys}
         'direct',
             # 获取时间数据表中部分资产有关一个确定时间段的数据字段，并筛选位于开始/结束日期之间的数据，
             # 输出index为datetime，column为qt_code的DataFrame
             # {'table_name': table, 'column': column}
-        'adjustment',  # 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
+        'adjustment',
+            # 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
             # {'table_name': table, 'column': column, 'adj_table': table, 'adj_column': column, 'adj_type': type}
-        'relations',  # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
+        'relations',
+            # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
         'operation',  # 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//
         'event_status',  # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
         'event_multi_stat',  # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
@@ -127,23 +131,7 @@ class DataType:
             ValueError: Input matches multiple data types in DATA_TYPE_MAP, specify your input: {types}?.
         """
 
-        if freq is not None and asset_type is not None:
-            # 如果用户输入了完整的三合一参，检查参数是否有效
-            if (name, freq, asset_type) not in DATA_TYPE_MAP:
-                raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
-            description, acquisition_type, kwargs = DATA_TYPE_MAP[(name, freq, asset_type)]
-        else:
-            # 如果用户仅输入名称，没有完整的三合一参数，尝试从DATA_TYPE_MAP中匹配
-            freq_slice = slice(None) if freq is None else freq
-            asset_type_slice = slice(None) if asset_type is None else asset_type
-            data_map = get_data_type_map()
-            matched_types = data_map.loc[(name, freq_slice, asset_type_slice)]
-            if len(matched_types) == 0:
-                raise ValueError(f'DataType {name} not found in DATA_TYPE_MAP.')
-            elif len(matched_types) > 1:
-                raise ValueError(f'Input matches multiple data types in DATA_TYPE_MAP, specify your input: {matched_types.index}?')
-            else:
-                description, acquisition_type, kwargs = matched_types.iloc[0]
+        name, freq, asset_type, description, acquisition_type, kwargs = self.parse_type_id(name, freq, asset_type)
 
         self._name = name
         self._freq = freq  # TODO: freq is to be parsed by the parser
@@ -183,10 +171,29 @@ class DataType:
     def __str__(self):
         return f'{self.name}({self.asset_type})@{self.freq}'
 
-    def parse_type_id(self, type_id) -> tuple:
-        """parse a type_id string into a tuple of name, freq, asset_type"""
-        raise NotImplementedError
-        return tuple(type_id.split('@'))
+    def parse_type_id(self, name: str, freq: str = None, asset_type: str = None) -> tuple:
+        """parse a type_id string into a tuple of name, freq, asset_type, description, acquisition_type, kwargs"""
+
+        if freq is not None and asset_type is not None:
+            # 如果用户输入了完整的三合一参，检查参数是否有效
+            if (name, freq, asset_type) not in DATA_TYPE_MAP:
+                raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+            description, acquisition_type, kwargs = DATA_TYPE_MAP[(name, freq, asset_type)]
+        else:
+            # 如果用户仅输入名称，没有完整的三合一参数，尝试从DATA_TYPE_MAP中匹配
+            freq_slice = slice(None) if freq is None else freq
+            asset_type_slice = slice(None) if asset_type is None else asset_type
+            data_map = get_data_type_map()
+            matched_types = data_map.loc[(name, freq_slice, asset_type_slice)]
+            if len(matched_types) == 0:
+                raise ValueError(f'DataType {name} not found in DATA_TYPE_MAP.')
+            elif len(matched_types) > 1:
+                raise ValueError(
+                    f'Input matches multiple data types in DATA_TYPE_MAP, specify your input: {matched_types.index}?')
+            else:
+                description, acquisition_type, kwargs = matched_types.iloc[0]
+
+        return name, freq, asset_type, description, acquisition_type, kwargs
 
     # 真正的顶层数据获取API接口函数
     def get_data_from(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
@@ -306,11 +313,11 @@ class DataType:
         selected_data = acquired_data[acquired_data[sel_by].isin(keys)]
         return selected_data[column]
 
-    def _get_direct(self, datasource, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_direct(self, datasource, *, symbols, starts, ends, **kwargs) -> pd.DataFrame:
         """直读从时间序列数据表中读取数据
         从table_name表中选出column列的数据并输出。
         必须给出symbols数据，以输出index为datetime，column为symbols的DataFrame
-        如果给出start和end则筛选出在start和end之间的数据，否则输出全部数据
+        必须给出start和end以筛选出在start和end之间的数据
         """
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for direct data type')
@@ -324,8 +331,12 @@ class DataType:
 
         return unstacked_df
 
-    def _get_adjustment(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """数据修正型的数据获取方法"""
+    def _get_adjustment(self, datasource, *, symbols, starts, ends, **kwargs) -> pd.DataFrame:
+        """修正型的数据获取方法
+        从table_name表中选出column列的数据，并从adj_table表中选出adj_column列数据，根据adj_type调整后输出
+        必须给出symbols数据，以输出index为datetime，column为symbols的DataFrame
+        必须给出start和end以筛选出在start和end之间的数据
+        """
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
         adj_table = kwargs.get('adj_table')
