@@ -77,21 +77,25 @@ class DataType:
     """
 
     aquisition_types = [
-        'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关
-        # {'table_name': table, 'column': column}
-        'selection',  # 数据筛选型。从basics表中筛选出数据并输出，如股票代码、行业分类等
-        # {'table_name': table, 'column': output_col, 'sel_by': sel_column, 'keys': keys}
-        'direct',  # 直接获取数据表中与资产有关的一个数据字段，并筛选位于开始/结束日期之间的数据
+        'basics',  # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关，输出index为qt_code的Series
+            # {'table_name': table, 'column': column}
+        'selection',  # 数据筛选型。从basics表中筛选出数据并输出，如股票代码、行业分类等。输出index为qt_code的Series
+            # {'table_name': table, 'column': output_col, 'sel_by': sel_column, 'keys': keys}
+        'direct',
+            # 获取时间数据表中部分资产有关一个确定时间段的数据字段，并筛选位于开始/结束日期之间的数据，
+            # 输出index为datetime，column为qt_code的DataFrame
+            # {'table_name': table, 'column': column}
         'adjustment',  # 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格
+            # {'table_name': table, 'column': column, 'adj_table': table, 'adj_column': column, 'adj_type': type}
         'relations',  # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
         'operation',  # 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//
         'event_status',  # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
         'event_multi_stat',  # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
         'event_signal',  # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
-        # {'table_name': table, 'column': output_col}
+            # {'table_name': table, 'column': output_col}
         'composition',  # 成份数据。从成份表中筛选出来数据并行列转换，该成分表与时间相关，如指数成分股
         'category',  # 成分分类数据，输出某个股票属于哪一个成分，该成分是静态的与时间无关，如行业分类、地域分类等
-        # 以下为一些特殊类型，由特殊的过程实现
+            # 以下为一些特殊类型，由特殊的过程实现
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
 
@@ -179,6 +183,11 @@ class DataType:
     def __str__(self):
         return f'{self.name}({self.asset_type})@{self.freq}'
 
+    def parse_type_id(self, type_id) -> tuple:
+        """parse a type_id string into a tuple of name, freq, asset_type"""
+        raise NotImplementedError
+        return tuple(type_id.split('@'))
+
     # 真正的顶层数据获取API接口函数
     def get_data_from(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
         """ Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
@@ -246,13 +255,15 @@ class DataType:
 
     # 下面获取数据的方法都放在datasource中
     def _get_basics(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
-        """基本数据的获取方法"""
+        """基本数据的获取方法：
+        从table_name表中选出column列的数据并输出。
+        如果给出symbols则筛选出symbols的数据，否则输出全部数据。
+        start和end无效，只是为了保持接口一致性。
+        """
 
         # try to get arguments from kwargs
         table_name = kwargs.get('table_name')
         column = kwargs.get('column')
-        # if table_name == 'sw_industry_basic':
-        #     import pdb; pdb.set_trace()
 
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
@@ -267,12 +278,40 @@ class DataType:
 
         return acquired_data[column]
 
-    def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """数据筛选型的数据获取方法"""
-        return pd.DataFrame()
+    def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
+        """筛选型的数据获取方法：
+        从table_name表中筛选出sel_by=keys的数据并输出column列数据
+        如果给出symbols则筛选出symbols的数据，否则输出全部数据。
+        start和end无效，只是为了保持接口一致性。
+        """
+
+        # try to get arguments from kwargs
+        table_name = kwargs.get('table_name')
+        column = kwargs.get('column')
+        sel_by = kwargs.get('sel_by')
+        keys = kwargs.get('keys')
+
+        if table_name is None or column is None or sel_by is None or keys is None:
+            import pdb; pdb.set_trace()
+            raise ValueError('table_name, column, sel_by and keys must be provided for selection data type')
+
+        acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+
+        if acquired_data.empty:
+            return pd.Series()
+
+        if sel_by not in acquired_data.columns:
+            raise KeyError(f'sel_by {sel_by} not in table data: {acquired_data.columns}')
+
+        selected_data = acquired_data[acquired_data[sel_by].isin(keys)]
+        return selected_data[column]
 
     def _get_direct(self, datasource, *, symbols, starts=None, ends=None, **kwargs) -> pd.DataFrame:
-        """直读数据型的数据获取方法, 必须给出symbols"""
+        """直读从时间序列数据表中读取数据
+        从table_name表中选出column列的数据并输出。
+        必须给出symbols数据，以输出index为datetime，column为symbols的DataFrame
+        如果给出start和end则筛选出在start和end之间的数据，否则输出全部数据
+        """
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for direct data type')
 
@@ -1811,27 +1850,27 @@ DATA_TYPE_MAP = {
 ('shibor-6m','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 6月利率','direct',{'table_name': 'shibor', 'column': '6m'}],
 ('shibor-9m','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 9月利率','direct',{'table_name': 'shibor', 'column': '9m'}],
 ('shibor-1y','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 1年利率','direct',{'table_name': 'shibor', 'column': '1y'}],
-('libor_usd-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_usd-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_usd-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_usd-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_usd-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_usd-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_usd-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'key': ['usd']}],
-('libor_eur-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_eur-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_eur-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_eur-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_eur-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_eur-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_eur-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'key': ['eur']}],
-('libor_gbp-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'key': ['gbp']}],
-('libor_gbp-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'key': ['gbp']}],
-('libor_gbp-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'key': ['gbp']}],
-('libor_gbp-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'key': ['gbp']}],
-('libor_gbp-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'key': ['gbp']}],
-('libor_gbp-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'key': ['gbp']}],
-('libor_gbp-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'key': ['gbp']}],
+('libor_usd-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_usd-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_usd-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_usd-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_usd-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_usd-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_usd-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_eur-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_eur-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_eur-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_eur-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_eur-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_eur-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_eur-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_gbp-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('libor_gbp-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('libor_gbp-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('libor_gbp-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('libor_gbp-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('libor_gbp-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('libor_gbp-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
 ('hibor-on','d','None'):	['香港银行间行业拆放利率(HIBOR) - 隔夜利率','direct',{'table_name': 'hibor', 'column': 'on'}],
 ('hibor-1w','d','None'):	['香港银行间行业拆放利率(HIBOR) - 一周利率','direct',{'table_name': 'hibor', 'column': '1w'}],
 ('hibor-1m','d','None'):	['香港银行间行业拆放利率(HIBOR) - 1月利率','direct',{'table_name': 'hibor', 'column': '1m'}],
