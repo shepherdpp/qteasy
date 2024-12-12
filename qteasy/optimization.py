@@ -16,15 +16,39 @@ import math
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from .backtest import apply_loop, process_loop_results, _get_complete_hist
-from .history import HistoryPanel, stack_dataframes
-from .utilfuncs import sec_to_duration, progress_bar
-from .utilfuncs import next_market_trade_day
-from .space import Space, ResultPool
-from .finance import CashPlan, set_cost
-from .qt_operator import Operator
-from .evaluate import evaluate, performance_statistics
-from ._arg_validators import ConfigDict
+from qteasy.qt_operator import Operator
+from qteasy._arg_validators import ConfigDict
+
+from qteasy.backtest import (
+    apply_loop,
+    process_loop_results,
+    _get_complete_hist,
+)
+
+from qteasy.history import (
+    HistoryPanel,
+    stack_dataframes,
+)
+
+from qteasy.utilfuncs import (
+    sec_to_duration,
+    progress_bar,
+    next_market_trade_day,
+)
+
+from qteasy.space import (
+    Space,
+    ResultPool,
+)
+from qteasy.finance import (
+    CashPlan,
+    set_cost,
+
+)
+from qteasy.evaluate import (
+    evaluate,
+    performance_statistics,
+)
 
 
 def _evaluate_all_parameters(par_generator,
