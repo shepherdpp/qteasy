@@ -146,15 +146,17 @@ class TestDataSource(unittest.TestCase):
 
     def test_properties(self):
         """test properties"""
+        host = self.ds_db.host
+        port = self.ds_db.port
         self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/data_test/')
         self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/data_test/')
         self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/data_test/')
-        self.assertEqual(self.ds_db.__str__(), 'db:mysql://localhost@3306/test_db')
+        self.assertEqual(self.ds_db.__str__(), f'db:mysql://{host}@{port}/test_db')
 
         self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'data_test/')")
         self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'data_test/')")
         self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'data_test/')")
-        self.assertEqual(self.ds_db.__repr__(), "DataSource('db', 'localhost', 3306)")
+        self.assertEqual(self.ds_db.__repr__(), f"DataSource('db', '{host}', {port})")
 
         self.assertEqual(self.ds_csv.tables, [])
         self.assertEqual(self.ds_hdf.tables, [])
@@ -214,8 +216,10 @@ class TestDataSource(unittest.TestCase):
 
     def test_datasource_creation(self):
         """ test creation of all kinds of arr sources"""
+        host = self.ds_db.host
+        port = self.ds_db.port
         self.assertIsInstance(self.ds_db, DataSource)
-        self.assertEqual(self.ds_db.connection_type, 'db:mysql://localhost@3306/test_db')
+        self.assertEqual(self.ds_db.connection_type, f'db:mysql://{host}@{port}/test_db')
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)
