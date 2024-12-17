@@ -39,27 +39,27 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
 ('list_date','None','E'),
 ('delist_date','None','E'),
 ('is_hs','None','E'),
-('wt_in_000001.SH','None','E'),
-('wt_in_000002.SH','None','E'),
-('wt_in_000003.SH','None','E'),
-('wt_in_000004.SH','None','E'),
-('wt_in_000005.SH','None','E'),
-('wt_in_000006.SH','None','E'),
-('wt_in_000007.SH','None','E'),
-('wt_in_000016.SH','None','E'),
-('wt_in_000010.SH','None','E'),
-('wt_in_000009.SH','None','E'),
-('wt_in_000043.SH','None','E'),
-('wt_in_000044.SH','None','E'),
-('wt_in_000045.SH','None','E'),
-('wt_in_000300.SH','None','E'),
-('wt_in_399001.SZ','None','E'),
-('wt_in_399006.SZ','None','E'),
-('wt_in_399004.SZ','None','E'),
-('wt_in_399009.SZ','None','E'),
-('wt_in_399007.SZ','None','E'),
-('wt_in_399010.SZ','None','E'),
-('wt_in_399011.SZ','None','E'),
+('wt_idx:000001.SH','None','E'),
+('wt_idx:000002.SH','None','E'),
+('wt_idx:000003.SH','None','E'),
+('wt_idx:000004.SH','None','E'),
+('wt_idx:000005.SH','None','E'),
+('wt_idx:000006.SH','None','E'),
+('wt_idx:000007.SH','None','E'),
+('wt_idx:000016.SH','None','E'),
+('wt_idx:000010.SH','None','E'),
+('wt_idx:000009.SH','None','E'),
+('wt_idx:000043.SH','None','E'),
+('wt_idx:000044.SH','None','E'),
+('wt_idx:000045.SH','None','E'),
+('wt_idx:000300.SH','None','E'),
+('wt_idx:399001.SZ','None','E'),
+('wt_idx:399006.SZ','None','E'),
+('wt_idx:399004.SZ','None','E'),
+('wt_idx:399009.SZ','None','E'),
+('wt_idx:399007.SZ','None','E'),
+('wt_idx:399010.SZ','None','E'),
+('wt_idx:399011.SZ','None','E'),
 ('ths_category','None','E'),
 # ('sw_category','None','E'),
 ('market','None','IDX'),
@@ -191,14 +191,14 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
 ('HK_top10_sz_net_amount','d','E'),
 ('HK_top10_sh_buy','d','E'),
 ('HK_top10_sh_sell','d','E'),
-('open_b','d','E'),
-('high_b','d','E'),
-('low_b','d','E'),
-('close_b','d','E'),
-('open_f','d','E'),
-('high_f','d','E'),
-('low_f','d','E'),
-('close_f','d','E'),
+('open:b','d','E'),
+('high:b','d','E'),
+('low:b','d','E'),
+('close:b','d','E'),
+('open:f','d','E'),
+('high:f','d','E'),
+('low:f','d','E'),
+('close:f','d','E'),
 ('open','d','E'),
 ('high','d','E'),
 ('low','d','E'),
@@ -1467,6 +1467,26 @@ class TestDataTypes(unittest.TestCase):
         )
 
         self.ds = QT_DATA_SOURCE
+
+    def test_type_parsing(self):
+        for k in ALL_TYPES_TO_TEST_WITH_SOME_ID:
+            if isinstance(k, tuple):
+                name, freq, asset_type = k
+            else:
+                name = k
+                freq = None
+                asset_type = None
+
+            dtype = DataType(
+                    name=name,
+                    freq=freq,
+                    asset_type=asset_type,
+            )
+
+            self.assertIsInstance(dtype, DataType)
+            self.assertEqual(dtype.name, name)
+            self.assertEqual(dtype.freq, freq)
+            self.assertEqual(dtype.asset_type, asset_type)
 
     def test_all_types_with_full_id(self):
         ds = self.ds
