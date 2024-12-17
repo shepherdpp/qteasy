@@ -11,11 +11,47 @@
 import numpy as np
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 # commonly used ta-lib funcs that have a None ta-lib version
-from .tafuncs import sma, ema, trix, bbands, adosc, obv, atr
-from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
-from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
-from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
-from .tafuncs import stochrsi, ultosc, willr, ad, dema, apo, cdldoji, atr
+from qteasy.tafuncs import (
+    sma,
+    ema,
+    trix,
+    bbands,
+    adosc,
+    obv,
+    atr,
+    ht,
+    kama,
+    mama,
+    t3,
+    tema,
+    trima,
+    wma,
+    sarext,
+    adx,
+    aroon,
+    aroonosc,
+    cci,
+    cmo,
+    macdext,
+    mfi,
+    minus_di,
+    plus_di,
+    minus_dm,
+    plus_dm,
+    mom,
+    ppo,
+    rsi,
+    stoch,
+    stochf,
+    stochrsi,
+    ultosc,
+    willr,
+    ad,
+    dema,
+    apo,
+    cdldoji,
+    atr,
+)
 
 
 # Built-in Rolling timing strategies:

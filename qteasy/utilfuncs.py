@@ -20,8 +20,6 @@ import pandas as pd
 from numba import njit
 from functools import wraps, lru_cache
 
-import qteasy
-
 TIME_FREQ_LEVELS = {
     'Y':      10,
     'Q':      20,
@@ -235,11 +233,17 @@ def parse_freq_string(freq, std_freq_only=False):
     return qty, main_freq, sub_freq
 
 
-def get_main_freq_level(freq):
+def get_main_freq_level(freq) -> int or None:
     """ 确定并返回freqency的级别
 
-    :param freq:
-    :return:
+    Parameters
+    ----------
+    freq: str
+        频率字符串
+
+    Returns
+    -------
+    int: 频率级别
     """
     qty, main_freq, sub_freq = parse_freq_string(freq)
     if main_freq in TIME_FREQ_STRINGS:
@@ -425,9 +429,6 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
     '~ 1D'
     """
 
-    # TODO: 此函数在estimation=True时，输出结果不准确，需要修正，例如，86399秒应该输出为1天，
-    #  而不是23小时
-    # TODO: 修正函数输出值的错，在estimation=True时，输出结果不正确）
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
@@ -931,6 +932,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     >>> is_market_trade_day('2019-01-01')
     False
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     try:
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
@@ -943,9 +947,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
                                                       'DCE', 'INE', 'IB', 'XHKG']:
         msg = f'exchange \'{exchange}\' is not a valid input'
         raise TypeError(msg)
-    if qteasy.QT_TRADE_CALENDAR is not None:
+    if QT_TRADE_CALENDAR is not None:
         try:
-            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+            exchange_trade_cal = QT_TRADE_CALENDAR.loc[exchange]
         except KeyError as e:
             e.extra_info = f'Trade Calender for exchange: {exchange} is not downloaded, please refill data'
             raise e
@@ -983,13 +987,16 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
     datetime-like
         最后一个已知交易日的日期
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
                                                       'DCE', 'INE', 'IB', 'XHKG']:
         msg = f'exchange \'{exchange}\' is not a valid input'
         raise TypeError(msg)
-    if qteasy.QT_TRADE_CALENDAR is not None:
+    if QT_TRADE_CALENDAR is not None:
         try:
-            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+            exchange_trade_cal = QT_TRADE_CALENDAR.loc[exchange]
         except KeyError as e:
             msg = f'Trade Calender for exchange: {e} was not properly downloaded, please refill data'
             raise KeyError(msg)
@@ -1035,13 +1042,16 @@ def prev_market_trade_day(date, exchange='SSE'):
     --------
     is_market_trade_day()
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     try:
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as e:
         e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise e
-    if qteasy.QT_TRADE_CALENDAR is not None:
-        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+    if QT_TRADE_CALENDAR is not None:
+        exchange_trade_cal = QT_TRADE_CALENDAR.loc[exchange]
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
         return pd.to_datetime(pretrade_date)
     else:
