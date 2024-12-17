@@ -93,11 +93,16 @@ class DataType:
         'relations',
             # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
         'operation',  # 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//
-        'event_status',  # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
-        'event_multi_stat',  # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
-        'event_signal',  # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
+        'event_status',
+            # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
+        'event_multi_stat',
+            # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
+        'event_signal',
+            # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
             # {'table_name': table, 'column': output_col}
-        'composition',  # 成份数据。从成份表中筛选出来数据并行列转换，该成分表与时间相关，如指数成分股
+        'composition',
+            # 成份数据。从成份表中筛选出来数据并行列转换，该成分表与时间相关，如指数成分股
+            # {'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '%'}],
         'category',  # 成分分类数据，输出某个股票属于哪一个成分，该成分是静态的与时间无关，如行业分类、地域分类等
             # 以下为一些特殊类型，由特殊的过程实现
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
@@ -174,13 +179,17 @@ class DataType:
     def parse_type_id(self, name: str, freq: str = None, asset_type: str = None) -> tuple:
         """parse a type_id string into a tuple of name, freq, asset_type, description, acquisition_type, kwargs"""
 
-        if freq is not None and asset_type is not None:
-            # 如果用户输入了完整的三合一参，检查参数是否有效
+        if ":" in name:
+            # 如果用户输入含参数的名称，解析出参数并调用
+            name, freq, asset_type, description, acquisition_type, kwargs = self.parse_type_name_params(name)
+
+        elif (":" not in name) and (freq is not None) and (asset_type is not None):
+            # 如果用户输入了完整的三合一参数，且名称不含参数，直接调用参数
             if (name, freq, asset_type) not in DATA_TYPE_MAP:
                 raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
             description, acquisition_type, kwargs = DATA_TYPE_MAP[(name, freq, asset_type)]
         else:
-            # 如果用户仅输入名称，没有完整的三合一参数，尝试从DATA_TYPE_MAP中匹配
+            # 如果用户没有完整的三合一参数，尝试从DATA_TYPE_MAP中匹配
             freq_slice = slice(None) if freq is None else freq
             asset_type_slice = slice(None) if asset_type is None else asset_type
             data_map = get_data_type_map()
@@ -194,6 +203,14 @@ class DataType:
                 description, acquisition_type, kwargs = matched_types.iloc[0]
 
         return name, freq, asset_type, description, acquisition_type, kwargs
+
+    def parse_type_name_params(self, name: str) -> tuple:
+        """ 如果name中含有参数，则解析出参数并返回
+
+        :param name:
+        :return:
+        """
+        raise NotImplementedError
 
     # 真正的顶层数据获取API接口函数
     def get_data_from(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
@@ -664,7 +681,7 @@ DATA_TYPE_MAP = {
 ('list_date','None','E'):	['股票基本信息 - 上市日期','basics',{'table_name': 'stock_basic', 'column': 'list_date'}],
 ('delist_date','None','E'):	['股票基本信息 - 退市日期','basics',{'table_name': 'stock_basic', 'column': 'delist_date'}],
 ('is_hs','None','E'):	['股票基本信息 - 是否沪深港通标的','basics',{'table_name': 'stock_basic', 'column': 'is_hs'}],
-('wt_in_%','None','E'):	['股票在指数中所占权重 - %','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '%'}],
+('wt_idx:%','None','E'):	['股票在指数中所占权重 - %','composition',{'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '%'}],
 ('ths_category','None','E'):	['股票同花顺行业分类','category',{'table_name': 'ths_index_weight', 'column': 'code', 'comp_column': 'ts_code'}],
 # ('sw_category','None','E'):	['股票行业分类 - 申万','category',{'table_name': 'sw_index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '399011.SZ'}],
 ('market','None','IDX'):	['指数基本信息 - 市场','basics',{'table_name': 'index_basic', 'column': 'market'}],
@@ -683,8 +700,8 @@ DATA_TYPE_MAP = {
 ('sw_industry_code','None','IDX'):	['申万行业分类 - 行业代码','basics',{'table_name': 'sw_industry_basic', 'column': 'industry_code'}],
 ('sw_published','None','IDX'):	['申万行业分类 - 是否发布','basics',{'table_name': 'sw_industry_basic', 'column': 'is_pub'}],
 ('sw_source','None','IDX'):	['申万行业分类 - 分类版本','basics',{'table_name': 'sw_industry_basic', 'column': 'src'}],
-('sw_level_%','None','IDX'):	['申万行业分类筛选 - %','selection',{'table_name': 'sw_industry_basic', 'column': 'level', 'sel_by': 'level', 'keys': ['%']}],
-('sw_%','None','IDX'):	['申万行业分类筛选 - %','selection',{'table_name': 'sw_industry_basic', 'column': 'src', 'sel_by': 'src', 'keys': ['%']}],
+('sw_level:%','None','IDX'):	['申万行业分类筛选 - %','selection',{'table_name': 'sw_industry_basic', 'column': 'level', 'sel_by': 'level', 'keys': ['%']}],
+('sw:%','None','IDX'):	['申万行业分类筛选 - %','selection',{'table_name': 'sw_industry_basic', 'column': 'src', 'sel_by': 'src', 'keys': ['%']}],
 ('ths_industry_name','None','IDX'):	['同花顺行业分类基本信息 - 行业名称','basics',{'table_name': 'ths_index_basic', 'column': 'name'}],
 ('ths_industry_count','None','IDX'):	['同花顺行业分类基本信息 - 股票数量','basics',{'table_name': 'ths_index_basic', 'column': 'count'}],
 ('ths_industry_exchange','None','IDX'):	['同花顺行业分类基本信息 - 交易所','basics',{'table_name': 'ths_index_basic', 'column': 'exchange'}],
@@ -793,14 +810,10 @@ DATA_TYPE_MAP = {
 ('HK_top10_sz_net_amount','d','E'):	[' 港股通十大成交 - 深市净买入额（元）','direct',{'table_name': 'HK_top10_stock', 'column': 'sz_net_amount'}],
 ('HK_top10_sh_buy','d','E'):	[' 港股通十大成交 - 深市净买入金额（元）','direct',{'table_name': 'HK_top10_stock', 'column': 'sz_buy'}],
 ('HK_top10_sh_sell','d','E'):	[' 港股通十大成交 - 深市净买入金额（元）','direct',{'table_name': 'HK_top10_stock', 'column': 'sz_sell'}],
-('open_b','d','E'):	['股票日K线 - 后复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','d','E'):	['股票日K线 - 后复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','d','E'):	['股票日K线 - 后复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','d','E'):	['股票日K线 - 后复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','d','E'):	['股票日K线 - 前复权开盘价','adjustment',{'table_name': 'stock_daily', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','d','E'):	['股票日K线 - 前复权最高价','adjustment',{'table_name': 'stock_daily', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','d','E'):	['股票日K线 - 前复权最低价','adjustment',{'table_name': 'stock_daily', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','d','E'):	['股票日K线 - 前复权收盘价','adjustment',{'table_name': 'stock_daily', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','d','E'):	['股票日K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_daily', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','d','E'):	['股票日K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_daily', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','d','E'):	['股票日K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_daily', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','d','E'):	['股票日K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_daily', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','d','E'):	['股票日K线 - 开盘价','direct',{'table_name': 'stock_daily', 'column': 'open'}],
 ('high','d','E'):	['股票日K线 - 最高价','direct',{'table_name': 'stock_daily', 'column': 'high'}],
 ('low','d','E'):	['股票日K线 - 最低价','direct',{'table_name': 'stock_daily', 'column': 'low'}],
