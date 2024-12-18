@@ -51,16 +51,10 @@ def pack_system_info(trader_info, width=80):
 
     # System Info
     info_str += f'{" System Info ":=^{width}}\n'
-    info_str += f'{"python":<{semi_width - 20}}{sys.version}\n'
-    import qteasy
-    info_str += f'{"qteasy":<{semi_width - 20}}{qteasy.__version__}\n'
-    import tushare
-    info_str += f'{"tushare":<{semi_width - 20}}{tushare.__version__}\n'
-    try:
-        import talib
-        info_str += f'{"ta-lib":<{semi_width - 20}}{talib.__version__}\n'
-    except ImportError:
-        info_str += f'{"ta-lib":<{semi_width - 20}}not installed\n'
+    info_str += f'{"python":<{semi_width - 20}}{trader_info["python"]}\n'
+    info_str += f'{"qteasy":<{semi_width - 20}}{trader_info["qteasy"]}\n'
+    info_str += f'{"tushare":<{semi_width - 20}}{trader_info["tushare"]}\n'
+    info_str += f'{"ta-lib":<{semi_width - 20}}{trader_info["ta-lib"]}\n'
     info_str += f'{"Local DataSource":<{semi_width - 20}}{trader_info["Local DataSource"]}\n'
     info_str += f'{"System log file path":<{semi_width - 20}}{trader_info["System log file path"]}\n'
     info_str += f'{"Trade log file path":<{semi_width - 20}}{trader_info["Trade log file path"]}\n'
