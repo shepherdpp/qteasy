@@ -539,7 +539,8 @@ class Trader(object):
 
         if system:
             # System Info
-            trader_info_dict['python'] = sys.version
+            py_v = sys.version_info
+            trader_info_dict['python'] = f'{py_v.major}.{py_v.minor}.{py_v.micro}'
             trader_info_dict['qteasy'] = qteasy.__version__
             import tushare
             trader_info_dict['tushare'] = tushare.__version__
@@ -1420,7 +1421,7 @@ class Trader(object):
         self.write_trade_log_file(**trade_log)
         # 发送system log信息
         self.send_message(f'<RESULT DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
-                          f'[{color_tag}]¥{prev_amount}->¥{updated_amount}[/{color_tag}]')
+                          f'[{color_tag}]¥{prev_amount:.2f}->¥{updated_amount:.2f}[/{color_tag}]')
 
     def log_qty_delivery(self, delivery_result) -> None:
         """ 根据股票持仓交割记录，生成详细的trade_log和system_log

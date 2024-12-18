@@ -521,7 +521,7 @@ def _signal_to_order_elements(shares,
     if total_cash_to_spend > available_cash:
         available_to_plan_ratio = available_cash / total_cash_to_spend
         cash_to_spend = cash_to_spend * available_to_plan_ratio
-        base_remark = f'Not enough available cash ({available_cash:.2f}), ' \
+        base_remark = f'Not enough available cash ({available_cash:.3f}), ' \
                       f'adjusted cash to spend to {available_to_plan_ratio:.1%}'
 
     # 逐个计算每一只资产的买入和卖出的数量
@@ -687,7 +687,7 @@ def submit_order(order_id, data_source):
         account = get_account(account_id, data_source=data_source)
         # 如果账户的现金不足，则输出警告信息
         if account['available_cash'] < trade_order['qty'] * trade_order['price']:
-            logger.warning(f'Available cash {account["available_cash"]} is not enough for trade order: \n'
+            logger.warning(f'Available cash {account["available_cash"]:.3f} is not enough for trade order: \n'
                            f'{trade_order}'
                            f'trade order might not be executed!')
 
@@ -1115,8 +1115,8 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
         raise err
     # 如果cash_change小于available_cash，则抛出异常
     if available_cash + cash_change < 0:
-        err = RuntimeError(f'cash_change {cash_change} is greater than '
-                           f'available cash {available_cash}')
+        err = RuntimeError(f'cash_change {cash_change:.3f} is greater than '
+                           f'available cash {available_cash:.3f}')
         raise err
 
     # 计算并生成交易结果的交割数量和交割状态，如果是买入订单，交割数量为position_change，如果是卖出订单，交割数量为cash_change

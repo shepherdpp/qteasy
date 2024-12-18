@@ -9,6 +9,7 @@
 # qteasy live trade system.
 # ======================================
 
+import sys
 import time
 
 from threading import Thread
@@ -32,6 +33,15 @@ class SysLog(RichLog):
         ("ctrl+p", "pause_trader", "Pause"),
         ("ctrl+r", "resume_trader", "Resume"),
     ]
+
+    def write_with_timestamp(self, msg:str) -> None:
+        """Write a message to the log, adding Time infor before the message."""
+        from qteasy.utilfuncs import get_current_timezone_datetime
+        datetime = get_current_timezone_datetime(time_zone='local').strftime("%Y-%m-%d %H:%M:%S")
+        msg = f"[{datetime}] - {msg}"
+        self.write(msg)
+
+        return
 
 
 class StrategyTree(Tree):
@@ -519,9 +529,9 @@ class TraderApp(App):
 
         self.status = 'running'
 
-        system_log.write(f"System started, status: {self.status}")
+        system_log.write_with_timestamp(f"System started, status: {self.status}")
 
-        trader_info = self.trader.info(detail=True)
+        trader_info = self.trader.info(detail=True, system=True)
         self.refresh_values(trader_info)
         self.refresh_info_panels(trader_info)
         self.refresh_operator_tree()
@@ -546,7 +556,7 @@ class TraderApp(App):
             # check the message queue of the trader
             if not self.trader.message_queue.empty():
                 msg = self.trader.message_queue.get()
-                system_log.write(msg)
+                system_log.write_with_timestamp(msg)
 
                 if any(words in msg for words in ['RAN STRATEGY', 'RESULT', 'DELIVERY']):
                     # if ran strategy or got result from broker, refresh UI
@@ -557,7 +567,7 @@ class TraderApp(App):
             # check the message queue of the broker
             if not self.trader.broker.broker_messages.empty():
                 msg = self.trader.broker.broker_messages.get()
-                system_log.write(msg)
+                system_log.write_with_timestamp(msg)
 
             if self.trader.status not in ['running', 'paused']:
                 info_refresh_interval = 600  # every 1 minutes
@@ -568,7 +578,7 @@ class TraderApp(App):
             cum_time_counter += 1
             if cum_time_counter % info_refresh_interval == 0:
 
-                trader_info = self.trader.info(detail=True)
+                trader_info = self.trader.info(detail=True, system=True)
                 self.refresh_values(trader_info)
                 self.refresh_info_panels(trader_info)
                 self.refresh_operator_tree()
@@ -580,7 +590,7 @@ class TraderApp(App):
             if self.trader.status not in ['running', 'paused']:
                 continue
 
-        system_log.write(f"System stopped, status: {self.status}")
+        system_log.write_with_timestamp(f"System stopped, status: {self.status}")
 
     @work(exclusive=True, thread=True)
     def refresh_holdings(self):
@@ -771,6 +781,11 @@ class TraderApp(App):
         )
 
         system.update(
+                f'[b]Python:[/b]             {trader_info["python"]}\n'
+                f'[b]qteasy:[/b]             {trader_info["qteasy"]}\n'
+                f'[b]Tushare:[/b]            {trader_info["tushare"]}\n'
+                f'[b]Ta-lib:[/b]             {trader_info["ta-lib"]}\n'
+                f'[b]Local Datasource:[/b]   {trader_info["Local DataSource"]}\n'
                 f'[b]Account:[/b]            {account}\n'
                 f'[b]Username:[/b]           {user_name}\n'
                 f'[b]Created On:[/b]         {created_on}\n'
@@ -852,7 +867,7 @@ class TraderApp(App):
         """Actions to perform after mounting the app."""
 
         # updated status
-        trader_info = self.trader.info(detail=True)
+        trader_info = self.trader.info(detail=True, system=True)
         self.refresh_values(trader_info)
         self.refresh_info_panels(trader_info)
         self.refresh_operator_tree()
@@ -902,13 +917,13 @@ class TraderApp(App):
     def action_pause_trader(self) -> None:
         """ Parse the trader"""
         syslog = self.query_one(SysLog)
-        syslog.write(f"ctrl-p pressed, Pausing the trader")
+        syslog.write_with_timestamp(f"ctrl-p pressed, Pausing the trader")
         self.trader.add_task('pause')
 
     def action_resume_trader(self) -> None:
         """ Resume the trader"""
         syslog = self.query_one(SysLog)
-        syslog.write(f"ctrl-r pressed, Resuming the trader")
+        syslog.write_with_timestamp(f"ctrl-r pressed, Resuming the trader")
         self.trader.add_task('resume')
 
     def submit_order(self, symbol, position, qty, price, direction) -> None:
@@ -945,12 +960,16 @@ class TraderApp(App):
         if trade_order:
             self.trader.broker.order_queue.put(trade_order)
             order_id = trade_order['order_id']
-            syslog.write(f'Order <{order_id}> has been submitted to broker: '
-                         f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
-                         f'at price {trade_order["price"]:.2f}')
+            syslog.write_with_timestamp(
+                    f'Order <{order_id}> has been submitted to broker: '
+                    f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
+                    f'at price {trade_order["price"]:.2f}'
+            )
 
         if not self.trader.is_market_open:
-            syslog.write(f'Market is not open, order might not be executed immediately')
+            syslog.write_with_timestamp(
+                    f'Market is not open, order might not be executed immediately'
+            )
 
         return
 
