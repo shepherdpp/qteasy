@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.3.12 (2024-12-18)
+- Improved Log information and print outs in trader TUI and CLI:
+  - excessive digits of amount changes are now truncated to 2 or 3 digits in trader CLI for RESULT DELIVERY
+  - added timestamp before all system logs on the system log pane
+  - added system environment information in TUI system info panel
+
 ## 1.3.11 (2024-11-03)
 - fixed a bug: pure digit strings are not properly parsed from start up configuration file
 
