@@ -1468,7 +1468,7 @@ class TestDataTypes(unittest.TestCase):
 
         self.ds = QT_DATA_SOURCE
 
-    def test_type_parsing(self):
+    def test_init(self):
         for k in ALL_TYPES_TO_TEST_WITH_SOME_ID:
             if isinstance(k, tuple):
                 name, freq, asset_type = k

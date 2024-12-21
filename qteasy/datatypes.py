@@ -60,6 +60,86 @@ def get_user_data_type_map() -> pd.DataFrame:
     return type_map
 
 
+def parse_name_and_params(name: str) -> tuple:
+    """parse the name string into name and parameters
+
+    Parameters
+    ----------
+    name: str
+        the name string
+
+    Returns
+    -------
+    tuple
+        search_name: str
+            the search_name of the data type, replacing the parameters with '%' if there are any
+        params: str
+            the parameters of the data type
+    """
+    if ':' in name:
+        search_name, params = name.split(':')
+        search_name = search_name + ':%'
+        return search_name, params
+    else:
+        return name, None
+
+
+def parse_built_in_type_id(name: str) -> tuple or None:
+    """ 根据客户输入的名称在内置数据类型中查找匹配的数据类型
+    如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回None
+
+    Parameters
+    ----------
+    name: str
+        数据类型的名称
+
+    Returns
+    -------
+    tuple
+        built_in_freqs: tuple
+            数据的频率
+        built_in_asset_types: tuple
+            数据的资产类型
+    """
+    data_map = get_data_type_map()
+
+    matched_types = data_map.loc[(name, slice(None), slice(None))]
+
+    if matched_types.empty:
+        return None
+    else:
+        return matched_types.index.get_level_values('freq').unique(), \
+            matched_types.index.get_level_values('asset_type').unique()
+
+
+def parse_user_defined_type_id(name: str) -> tuple or None:
+    """ 根据客户输入的名称在用户自定义数据类型中查找匹配的数据类型
+    如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回None
+
+    Parameters
+    ----------
+    name: str
+        数据类型的名称
+
+    Returns
+    -------
+    tuple
+        user_defined_freqs: tuple
+            数据的频率
+        user_defined_asset_types: tuple
+            数据的资产类型
+    """
+    type_map = get_user_data_type_map()
+
+    matched_types = type_map.loc[(name, slice(None), slice(None))]
+
+    if matched_types.empty:
+        return None
+    else:
+        return matched_types.index.get_level_values('freq').unique(), \
+            matched_types.index.get_level_values('asset_type').unique()
+
+
 class DataType:
     """
     DataType class, 代表qteasy可以使用的历史数据类型。
@@ -121,10 +201,14 @@ class DataType:
         ----------
         name: str
             数据类型的名称
-        freq: str
+        freq: str, optional
             数据的频率: d(日), w(周), m(月), q(季), y(年)
+            如果给出此参数，必须匹配某一个内置数据类型的频率
+            如果不给出此参数，将使用内置数据类型中的第一个频率
         asset_type: str
             数据的资产类型: E(股票), IDX(指数), FD(基金), FT(期货), OPT(期权)
+            如果给出此参数，必须匹配某一个内置数据类型的资产类型
+            如果不给出此参数，将使用内置数据类型中的第一个资产类型
 
         Raises
         ------
@@ -135,12 +219,38 @@ class DataType:
             如果用户输入的参数不完整，在DATA_TYPE_MAP中无法匹配到唯一的数据类型
             ValueError: Input matches multiple data types in DATA_TYPE_MAP, specify your input: {types}?.
         """
+        if not isinstance(name, str):
+            raise TypeError(f'name must be a string, got {type(name)}')
 
-        name, freq, asset_type, description, acquisition_type, kwargs = self.parse_type_id(name, freq, asset_type)
+        search_name, name_pars = self.parse_type_name_params(name)
+
+        # 根据用户输入的name查找所有匹配的频率和资产类型
+        built_in_freqs, built_in_asset_types = parse_built_in_type_id(search_name)
+
+        # 如果用户同时输入了freq和asset_type，确认用户输入是否在匹配的范围内
+        # 如果用户输入不在匹配范围内，抛出异常，如果在匹配范围内，使用用户输入作为default值
+        if freq is None:
+            default_freq = built_in_freqs[0]
+        elif freq in built_in_freqs:
+            default_freq = freq
+        else:
+            raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+
+        if asset_type is None:
+            default_asset_type = built_in_asset_types[0]
+        elif asset_type in built_in_asset_types:
+            default_asset_type = asset_type
+        else:
+            raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
         self._name = name
-        self._freq = freq  # TODO: freq is to be parsed by the parser
-        self._asset_type = asset_type
+        self._name_pars = None
+        self._default_freq = default_freq
+        self._default_asset_type = default_asset_type
+        self._all_built_in_freqs = None
+        self._all_built_in_asset_types = None
+        self._all_user_defined_freqs = None
+        self._all_user_defined_asset_types = None
         self._description = description
         self._acquisition_type = acquisition_type
 
@@ -152,11 +262,19 @@ class DataType:
 
     @property
     def freq(self):
-        return self._freq
+        return self._all_built_in_freqs[0]
 
     @property
     def asset_type(self):
-        return self._asset_type
+        return self._all_built_in_asset_types[0]
+
+    @property
+    def secondary_freqs(self):
+        return self._all_built_in_asset_types.extend(self._all_user_defined_freqs)
+
+    @property
+    def secondary_asset_types(self):
+        return self._all_built_in_asset_types.extend(self._all_user_defined_asset_types)
 
     @property
     def description(self):
@@ -175,34 +293,6 @@ class DataType:
 
     def __str__(self):
         return f'{self.name}({self.asset_type})@{self.freq}'
-
-    def parse_type_id(self, name: str, freq: str = None, asset_type: str = None) -> tuple:
-        """parse a type_id string into a tuple of name, freq, asset_type, description, acquisition_type, kwargs"""
-
-        if ":" in name:
-            # 如果用户输入含参数的名称，解析出参数并调用
-            name, freq, asset_type, description, acquisition_type, kwargs = self.parse_type_name_params(name)
-
-        elif (":" not in name) and (freq is not None) and (asset_type is not None):
-            # 如果用户输入了完整的三合一参数，且名称不含参数，直接调用参数
-            if (name, freq, asset_type) not in DATA_TYPE_MAP:
-                raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
-            description, acquisition_type, kwargs = DATA_TYPE_MAP[(name, freq, asset_type)]
-        else:
-            # 如果用户没有完整的三合一参数，尝试从DATA_TYPE_MAP中匹配
-            freq_slice = slice(None) if freq is None else freq
-            asset_type_slice = slice(None) if asset_type is None else asset_type
-            data_map = get_data_type_map()
-            matched_types = data_map.loc[(name, freq_slice, asset_type_slice)]
-            if len(matched_types) == 0:
-                raise ValueError(f'DataType {name} not found in DATA_TYPE_MAP.')
-            elif len(matched_types) > 1:
-                raise ValueError(
-                    f'Input matches multiple data types in DATA_TYPE_MAP, specify your input: {matched_types.index}?')
-            else:
-                description, acquisition_type, kwargs = matched_types.iloc[0]
-
-        return name, freq, asset_type, description, acquisition_type, kwargs
 
     def parse_type_name_params(self, name: str) -> tuple:
         """ 如果name中含有参数，则解析出参数并返回
@@ -837,98 +927,70 @@ DATA_TYPE_MAP = {
 ('close','d','E'):	['股票日K线 - 收盘价','direct',{'table_name': 'stock_daily', 'column': 'close'}],
 ('vol','d','E'):	['股票日K线 - 成交量 （手）','direct',{'table_name': 'stock_daily', 'column': 'vol'}],
 ('amount','d','E'):	['股票日K线 - 成交额 （千元）','direct',{'table_name': 'stock_daily', 'column': 'amount'}],
-('open_b','w','E'):	['股票周K线 - 后复权开盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','w','E'):	['股票周K线 - 后复权最高价','adjustment',{'table_name': 'stock_weekly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','w','E'):	['股票周K线 - 后复权最低价','adjustment',{'table_name': 'stock_weekly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','w','E'):	['股票周K线 - 后复权收盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','w','E'):	['股票周K线 - 前复权开盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','w','E'):	['股票周K线 - 前复权最高价','adjustment',{'table_name': 'stock_weekly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','w','E'):	['股票周K线 - 前复权最低价','adjustment',{'table_name': 'stock_weekly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','w','E'):	['股票周K线 - 前复权收盘价','adjustment',{'table_name': 'stock_weekly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','w','E'):	['股票周K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_weekly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','w','E'):	['股票周K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_weekly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','w','E'):	['股票周K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_weekly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','w','E'):	['股票周K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_weekly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','w','E'):	['股票周K线 - 开盘价','direct',{'table_name': 'stock_weekly', 'column': 'open'}],
 ('high','w','E'):	['股票周K线 - 最高价','direct',{'table_name': 'stock_weekly', 'column': 'high'}],
 ('low','w','E'):	['股票周K线 - 最低价','direct',{'table_name': 'stock_weekly', 'column': 'low'}],
 ('close','w','E'):	['股票周K线 - 收盘价','direct',{'table_name': 'stock_weekly', 'column': 'close'}],
 ('vol','w','E'):	['股票周K线 - 成交量 （手）','direct',{'table_name': 'stock_weekly', 'column': 'vol'}],
 ('amount','w','E'):	['股票周K线 - 成交额 （千元）','direct',{'table_name': 'stock_weekly', 'column': 'amount'}],
-('open_b','m','E'):	['股票月K线 - 后复权开盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','m','E'):	['股票月K线 - 后复权最高价','adjustment',{'table_name': 'stock_monthly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','m','E'):	['股票月K线 - 后复权最低价','adjustment',{'table_name': 'stock_monthly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','m','E'):	['股票月K线 - 后复权收盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','m','E'):	['股票月K线 - 前复权开盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','m','E'):	['股票月K线 - 前复权最高价','adjustment',{'table_name': 'stock_monthly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','m','E'):	['股票月K线 - 前复权最低价','adjustment',{'table_name': 'stock_monthly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','m','E'):	['股票月K线 - 前复权收盘价','adjustment',{'table_name': 'stock_monthly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','m','E'):	['股票月K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_monthly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','m','E'):	['股票月K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_monthly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','m','E'):	['股票月K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_monthly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','m','E'):	['股票月K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_monthly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','m','E'):	['股票月K线 - 开盘价','direct',{'table_name': 'stock_monthly', 'column': 'open'}],
 ('high','m','E'):	['股票月K线 - 最高价','direct',{'table_name': 'stock_monthly', 'column': 'high'}],
 ('low','m','E'):	['股票月K线 - 最低价','direct',{'table_name': 'stock_monthly', 'column': 'low'}],
 ('close','m','E'):	['股票月K线 - 收盘价','direct',{'table_name': 'stock_monthly', 'column': 'close'}],
 ('vol','m','E'):	['股票月K线 - 成交量 （手）','direct',{'table_name': 'stock_monthly', 'column': 'vol'}],
 ('amount','m','E'):	['股票月K线 - 成交额 （千元）','direct',{'table_name': 'stock_monthly', 'column': 'amount'}],
-('open_b','1min','E'):	['股票60秒K线 - 后复权开盘价','adjustment',{'table_name': 'stock_1min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','1min','E'):	['股票60秒K线 - 后复权最高价','adjustment',{'table_name': 'stock_1min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','1min','E'):	['股票60秒K线 - 后复权最低价','adjustment',{'table_name': 'stock_1min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','1min','E'):	['股票60秒K线 - 后复权收盘价','adjustment',{'table_name': 'stock_1min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','1min','E'):	['股票60秒K线 - 前复权开盘价','adjustment',{'table_name': 'stock_1min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','1min','E'):	['股票60秒K线 - 前复权最高价','adjustment',{'table_name': 'stock_1min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','1min','E'):	['股票60秒K线 - 前复权最低价','adjustment',{'table_name': 'stock_1min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','1min','E'):	['股票60秒K线 - 前复权收盘价','adjustment',{'table_name': 'stock_1min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','1min','E'):	['股票60秒K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_1min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','1min','E'):	['股票60秒K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_1min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','1min','E'):	['股票60秒K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_1min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','1min','E'):	['股票60秒K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_1min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','1min','E'):	['股票60秒K线 - 开盘价','direct',{'table_name': 'stock_1min', 'column': 'open'}],
 ('high','1min','E'):	['股票60秒K线 - 最高价','direct',{'table_name': 'stock_1min', 'column': 'high'}],
 ('low','1min','E'):	['股票60秒K线 - 最低价','direct',{'table_name': 'stock_1min', 'column': 'low'}],
 ('close','1min','E'):	['股票60秒K线 - 收盘价','direct',{'table_name': 'stock_1min', 'column': 'close'}],
 ('vol','1min','E'):	['股票60秒K线 - 成交量 （手）','direct',{'table_name': 'stock_1min', 'column': 'vol'}],
 ('amount','1min','E'):	['股票60秒K线 - 成交额 （千元）','direct',{'table_name': 'stock_1min', 'column': 'amount'}],
-('open_b','5min','E'):	['股票5分钟K线 - 后复权开盘价','adjustment',{'table_name': 'stock_5min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','5min','E'):	['股票5分钟K线 - 后复权最高价','adjustment',{'table_name': 'stock_5min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','5min','E'):	['股票5分钟K线 - 后复权最低价','adjustment',{'table_name': 'stock_5min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','5min','E'):	['股票5分钟K线 - 后复权收盘价','adjustment',{'table_name': 'stock_5min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','5min','E'):	['股票5分钟K线 - 前复权开盘价','adjustment',{'table_name': 'stock_5min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','5min','E'):	['股票5分钟K线 - 前复权最高价','adjustment',{'table_name': 'stock_5min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','5min','E'):	['股票5分钟K线 - 前复权最低价','adjustment',{'table_name': 'stock_5min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','5min','E'):	['股票5分钟K线 - 前复权收盘价','adjustment',{'table_name': 'stock_5min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','5min','E'):	['股票5分钟K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_5min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','5min','E'):	['股票5分钟K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_5min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','5min','E'):	['股票5分钟K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_5min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','5min','E'):	['股票5分钟K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_5min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','5min','E'):	['股票5分钟K线 - 开盘价','direct',{'table_name': 'stock_5min', 'column': 'open'}],
 ('high','5min','E'):	['股票5分钟K线 - 最高价','direct',{'table_name': 'stock_5min', 'column': 'high'}],
 ('low','5min','E'):	['股票5分钟K线 - 最低价','direct',{'table_name': 'stock_5min', 'column': 'low'}],
 ('close','5min','E'):	['股票5分钟K线 - 收盘价','direct',{'table_name': 'stock_5min', 'column': 'close'}],
 ('vol','5min','E'):	['股票5分钟K线 - 成交量 （手）','direct',{'table_name': 'stock_5min', 'column': 'vol'}],
 ('amount','5min','E'):	['股票5分钟K线 - 成交额 （千元）','direct',{'table_name': 'stock_5min', 'column': 'amount'}],
-('open_b','15min','E'):	['股票15分钟K线 - 后复权开盘价','adjustment',{'table_name': 'stock_15min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','15min','E'):	['股票15分钟K线 - 后复权最高价','adjustment',{'table_name': 'stock_15min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','15min','E'):	['股票15分钟K线 - 后复权最低价','adjustment',{'table_name': 'stock_15min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','15min','E'):	['股票15分钟K线 - 后复权收盘价','adjustment',{'table_name': 'stock_15min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','15min','E'):	['股票15分钟K线 - 前复权开盘价','adjustment',{'table_name': 'stock_15min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','15min','E'):	['股票15分钟K线 - 前复权最高价','adjustment',{'table_name': 'stock_15min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','15min','E'):	['股票15分钟K线 - 前复权最低价','adjustment',{'table_name': 'stock_15min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','15min','E'):	['股票15分钟K线 - 前复权收盘价','adjustment',{'table_name': 'stock_15min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','15min','E'):	['股票15分钟K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_15min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','15min','E'):	['股票15分钟K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_15min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','15min','E'):	['股票15分钟K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_15min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','15min','E'):	['股票15分钟K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_15min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','15min','E'):	['股票15分钟K线 - 开盘价','direct',{'table_name': 'stock_15min', 'column': 'open'}],
 ('high','15min','E'):	['股票15分钟K线 - 最高价','direct',{'table_name': 'stock_15min', 'column': 'high'}],
 ('low','15min','E'):	['股票15分钟K线 - 最低价','direct',{'table_name': 'stock_15min', 'column': 'low'}],
 ('close','15min','E'):	['股票15分钟K线 - 收盘价','direct',{'table_name': 'stock_15min', 'column': 'close'}],
 ('vol','15min','E'):	['股票15分钟K线 - 成交量 （手）','direct',{'table_name': 'stock_15min', 'column': 'vol'}],
 ('amount','15min','E'):	['股票15分钟K线 - 成交额 （千元）','direct',{'table_name': 'stock_15min', 'column': 'amount'}],
-('open_b','30min','E'):	['股票30分钟K线 - 后复权开盘价','adjustment',{'table_name': 'stock_30min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','30min','E'):	['股票30分钟K线 - 后复权最高价','adjustment',{'table_name': 'stock_30min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','30min','E'):	['股票30分钟K线 - 后复权最低价','adjustment',{'table_name': 'stock_30min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','30min','E'):	['股票30分钟K线 - 后复权收盘价','adjustment',{'table_name': 'stock_30min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','30min','E'):	['股票30分钟K线 - 前复权开盘价','adjustment',{'table_name': 'stock_30min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','30min','E'):	['股票30分钟K线 - 前复权最高价','adjustment',{'table_name': 'stock_30min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','30min','E'):	['股票30分钟K线 - 前复权最低价','adjustment',{'table_name': 'stock_30min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','30min','E'):	['股票30分钟K线 - 前复权收盘价','adjustment',{'table_name': 'stock_30min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','30min','E'):	['股票30分钟K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_30min', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','30min','E'):	['股票30分钟K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_30min', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','30min','E'):	['股票30分钟K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_30min', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','30min','E'):	['股票30分钟K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_30min', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','30min','E'):	['股票30分钟K线 - 开盘价','direct',{'table_name': 'stock_30min', 'column': 'open'}],
 ('high','30min','E'):	['股票30分钟K线 - 最高价','direct',{'table_name': 'stock_30min', 'column': 'high'}],
 ('low','30min','E'):	['股票30分钟K线 - 最低价','direct',{'table_name': 'stock_30min', 'column': 'low'}],
 ('close','30min','E'):	['股票30分钟K线 - 收盘价','direct',{'table_name': 'stock_30min', 'column': 'close'}],
 ('vol','30min','E'):	['股票30分钟K线 - 成交量 （手）','direct',{'table_name': 'stock_30min', 'column': 'vol'}],
 ('amount','30min','E'):	['股票30分钟K线 - 成交额 （千元）','direct',{'table_name': 'stock_30min', 'column': 'amount'}],
-('open_b','h','E'):	['股票小时K线 - 后复权开盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','h','E'):	['股票小时K线 - 后复权最高价','adjustment',{'table_name': 'stock_hourly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','h','E'):	['股票小时K线 - 后复权最低价','adjustment',{'table_name': 'stock_hourly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','h','E'):	['股票小时K线 - 后复权收盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','h','E'):	['股票小时K线 - 前复权开盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','h','E'):	['股票小时K线 - 前复权最高价','adjustment',{'table_name': 'stock_hourly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','h','E'):	['股票小时K线 - 前复权最低价','adjustment',{'table_name': 'stock_hourly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','h','E'):	['股票小时K线 - 前复权收盘价','adjustment',{'table_name': 'stock_hourly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','h','E'):	['股票小时K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_hourly', 'column': 'open', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','h','E'):	['股票小时K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'stock_hourly', 'column': 'high', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','h','E'):	['股票小时K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'stock_hourly', 'column': 'low', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','h','E'):	['股票小时K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'stock_hourly', 'column': 'close', 'adj_table': 'stock_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','h','E'):	['股票小时K线 - 开盘价','direct',{'table_name': 'stock_hourly', 'column': 'open'}],
 ('high','h','E'):	['股票小时K线 - 最高价','direct',{'table_name': 'stock_hourly', 'column': 'high'}],
 ('low','h','E'):	['股票小时K线 - 最低价','direct',{'table_name': 'stock_hourly', 'column': 'low'}],
@@ -1129,84 +1191,60 @@ DATA_TYPE_MAP = {
 ('close','h','OPT'):	['期权小时K线 - 收盘价','direct',{'table_name': 'options_hourly', 'column': 'close'}],
 ('vol','h','OPT'):	['期权小时K线 - 成交量 （手）','direct',{'table_name': 'options_hourly', 'column': 'vol'}],
 ('amount','h','OPT'):	['期权小时K线 - 成交额 （千元）','direct',{'table_name': 'options_hourly', 'column': 'amount'}],
-('open_b','d','FD'):	['基金日K线 - 后复权开盘价','adjustment',{'table_name': 'fund_daily', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','d','FD'):	['基金日K线 - 后复权最高价','adjustment',{'table_name': 'fund_daily', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','d','FD'):	['基金日K线 - 后复权最低价','adjustment',{'table_name': 'fund_daily', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','d','FD'):	['基金日K线 - 后复权收盘价','adjustment',{'table_name': 'fund_daily', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','d','FD'):	['基金日K线 -前复权开盘价','adjustment',{'table_name': 'fund_daily', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','d','FD'):	['基金日K线 -前复权最高价','adjustment',{'table_name': 'fund_daily', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','d','FD'):	['基金日K线 -前复权最低价','adjustment',{'table_name': 'fund_daily', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','d','FD'):	['基金日K线 - 前复权收盘价','adjustment',{'table_name': 'fund_daily', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','d','FD'):	['基金日K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_daily', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','d','FD'):	['基金日K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'fund_daily', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','d','FD'):	['基金日K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'fund_daily', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','d','FD'):	['基金日K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_daily', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','d','FD'):	['基金日K线 - 开盘价','direct',{'table_name': 'fund_daily', 'column': 'open'}],
 ('high','d','FD'):	['基金日K线 - 最高价','direct',{'table_name': 'fund_daily', 'column': 'high'}],
 ('low','d','FD'):	['基金日K线 - 最低价','direct',{'table_name': 'fund_daily', 'column': 'low'}],
 ('close','d','FD'):	['基金日K线 - 收盘价','direct',{'table_name': 'fund_daily', 'column': 'close'}],
 ('vol','d','FD'):	['基金日K线 - 成交量 （手）','direct',{'table_name': 'fund_daily', 'column': 'vol'}],
 ('amount','d','FD'):	['基金日K线 - 成交额 （千元）','direct',{'table_name': 'fund_daily', 'column': 'amount'}],
-('open_b','1min','FD'):	['基金60秒K线 - 后复权开盘价','adjustment',{'table_name': 'fund_1min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','1min','FD'):	['基金60秒K线 - 后复权最高价','adjustment',{'table_name': 'fund_1min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','1min','FD'):	['基金60秒K线 - 后复权最低价','adjustment',{'table_name': 'fund_1min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','1min','FD'):	['基金60秒K线 - 后复权收盘价','adjustment',{'table_name': 'fund_1min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','1min','FD'):	['基金60秒K线 - 前复权开盘价','adjustment',{'table_name': 'fund_1min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','1min','FD'):	['基金60秒K线 - 前复权最高价','adjustment',{'table_name': 'fund_1min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','1min','FD'):	['基金60秒K线 - 前复权最低价','adjustment',{'table_name': 'fund_1min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','1min','FD'):	['基金60秒K线 - 前复权收盘价','adjustment',{'table_name': 'fund_1min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','1min','FD'):	['基金60秒K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_1min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','1min','FD'):	['基金60秒K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'fund_1min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','1min','FD'):	['基金60秒K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'fund_1min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','1min','FD'):	['基金60秒K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_1min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','1min','FD'):	['基金60秒K线 - 开盘价','direct',{'table_name': 'fund_1min', 'column': 'open'}],
 ('high','1min','FD'):	['基金60秒K线 - 最高价','direct',{'table_name': 'fund_1min', 'column': 'high'}],
 ('low','1min','FD'):	['基金60秒K线 - 最低价','direct',{'table_name': 'fund_1min', 'column': 'low'}],
 ('close','1min','FD'):	['基金60秒K线 - 收盘价','direct',{'table_name': 'fund_1min', 'column': 'close'}],
 ('vol','1min','FD'):	['基金60秒K线 - 成交量 （手）','direct',{'table_name': 'fund_1min', 'column': 'vol'}],
 ('amount','1min','FD'):	['基金60秒K线 - 成交额 （千元）','direct',{'table_name': 'fund_1min', 'column': 'amount'}],
-('open_b','5min','FD'):	['基金5分钟K线 - 后复权开盘价','adjustment',{'table_name': 'fund_5min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','5min','FD'):	['基金5分钟K线 - 后复权最高价','adjustment',{'table_name': 'fund_5min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','5min','FD'):	['基金5分钟K线 - 后复权最低价','adjustment',{'table_name': 'fund_5min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','5min','FD'):	['基金5分钟K线 - 后复权收盘价','adjustment',{'table_name': 'fund_5min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','5min','FD'):	['基金5分钟K线 - 前复权开盘价','adjustment',{'table_name': 'fund_5min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','5min','FD'):	['基金5分钟K线 - 前复权最高价','adjustment',{'table_name': 'fund_5min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','5min','FD'):	['基金5分钟K线 - 前复权最低价','adjustment',{'table_name': 'fund_5min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','5min','FD'):	['基金5分钟K线 - 前复权收盘价','adjustment',{'table_name': 'fund_5min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','5min','FD'):	['基金5分钟K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_5min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','5min','FD'):	['基金5分钟K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'fund_5min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','5min','FD'):	['基金5分钟K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'fund_5min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','5min','FD'):	['基金5分钟K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_5min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','5min','FD'):	['基金5分钟K线 - 开盘价','direct',{'table_name': 'fund_5min', 'column': 'open'}],
 ('high','5min','FD'):	['基金5分钟K线 - 最高价','direct',{'table_name': 'fund_5min', 'column': 'high'}],
 ('low','5min','FD'):	['基金5分钟K线 - 最低价','direct',{'table_name': 'fund_5min', 'column': 'low'}],
 ('close','5min','FD'):	['基金5分钟K线 - 收盘价','direct',{'table_name': 'fund_5min', 'column': 'close'}],
 ('vol','5min','FD'):	['基金5分钟K线 - 成交量 （手）','direct',{'table_name': 'fund_5min', 'column': 'vol'}],
 ('amount','5min','FD'):	['基金5分钟K线 - 成交额 （千元）','direct',{'table_name': 'fund_5min', 'column': 'amount'}],
-('open_b','15min','FD'):	['基金15分钟K线 - 后复权开盘价','adjustment',{'table_name': 'fund_15min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','15min','FD'):	['基金15分钟K线 - 后复权最高价','adjustment',{'table_name': 'fund_15min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','15min','FD'):	['基金15分钟K线 - 后复权最低价','adjustment',{'table_name': 'fund_15min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','15min','FD'):	['基金15分钟K线 - 后复权收盘价','adjustment',{'table_name': 'fund_15min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','15min','FD'):	['基金15分钟K线 - 前复权开盘价','adjustment',{'table_name': 'fund_15min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','15min','FD'):	['基金15分钟K线 - 前复权最高价','adjustment',{'table_name': 'fund_15min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','15min','FD'):	['基金15分钟K线 - 前复权最低价','adjustment',{'table_name': 'fund_15min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','15min','FD'):	['基金15分钟K线 - 前复权收盘价','adjustment',{'table_name': 'fund_15min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','15min','FD'):	['基金15分钟K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_15min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','15min','FD'):	['基金15分钟K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'fund_15min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','15min','FD'):	['基金15分钟K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'fund_15min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','15min','FD'):	['基金15分钟K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_15min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','15min','FD'):	['基金15分钟K线 - 开盘价','direct',{'table_name': 'fund_15min', 'column': 'open'}],
 ('high','15min','FD'):	['基金15分钟K线 - 最高价','direct',{'table_name': 'fund_15min', 'column': 'high'}],
 ('low','15min','FD'):	['基金15分钟K线 - 最低价','direct',{'table_name': 'fund_15min', 'column': 'low'}],
 ('close','15min','FD'):	['基金15分钟K线 - 收盘价','direct',{'table_name': 'fund_15min', 'column': 'close'}],
 ('vol','15min','FD'):	['基金15分钟K线 - 成交量 （手）','direct',{'table_name': 'fund_15min', 'column': 'vol'}],
 ('amount','15min','FD'):	['基金15分钟K线 - 成交额 （千元）','direct',{'table_name': 'fund_15min', 'column': 'amount'}],
-('open_b','30min','FD'):	['基金30分钟K线 - 后复权开盘价','adjustment',{'table_name': 'fund_30min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','30min','FD'):	['基金30分钟K线 - 后复权最高价','adjustment',{'table_name': 'fund_30min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','30min','FD'):	['基金30分钟K线 - 后复权最低价','adjustment',{'table_name': 'fund_30min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','30min','FD'):	['基金30分钟K线 - 后复权收盘价','adjustment',{'table_name': 'fund_30min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','30min','FD'):	['基金30分钟K线 - 前复权开盘价','adjustment',{'table_name': 'fund_30min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','30min','FD'):	['基金30分钟K线 - 前复权最高价','adjustment',{'table_name': 'fund_30min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','30min','FD'):	['基金30分钟K线 - 前复权最低价','adjustment',{'table_name': 'fund_30min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','30min','FD'):	['基金30分钟K线 - 前复权收盘价','adjustment',{'table_name': 'fund_30min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','30min','FD'):	['基金30分钟K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_30min', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','30min','FD'):	['基金30分钟K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'fund_30min', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','30min','FD'):	['基金30分钟K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'fund_30min', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','30min','FD'):	['基金30分钟K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_30min', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','30min','FD'):	['基金30分钟K线 - 开盘价','direct',{'table_name': 'fund_30min', 'column': 'open'}],
 ('high','30min','FD'):	['基金30分钟K线 - 最高价','direct',{'table_name': 'fund_30min', 'column': 'high'}],
 ('low','30min','FD'):	['基金30分钟K线 - 最低价','direct',{'table_name': 'fund_30min', 'column': 'low'}],
 ('close','30min','FD'):	['基金30分钟K线 - 收盘价','direct',{'table_name': 'fund_30min', 'column': 'close'}],
 ('vol','30min','FD'):	['基金30分钟K线 - 成交量 （手）','direct',{'table_name': 'fund_30min', 'column': 'vol'}],
 ('amount','30min','FD'):	['基金30分钟K线 - 成交额 （千元）','direct',{'table_name': 'fund_30min', 'column': 'amount'}],
-('open_b','h','FD'):	['基金小时K线 - 后复权开盘价','adjustment',{'table_name': 'fund_hourly', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('high_b','h','FD'):	['基金小时K线 - 后复权最高价','adjustment',{'table_name': 'fund_hourly', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('low_b','h','FD'):	['基金小时K线 - 后复权最低价','adjustment',{'table_name': 'fund_hourly', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('close_b','h','FD'):	['基金小时K线 - 后复权收盘价','adjustment',{'table_name': 'fund_hourly', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'backward'}],
-('open_f','h','FD'):	['基金小时K线 - 前复权开盘价','adjustment',{'table_name': 'fund_hourly', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('high_f','h','FD'):	['基金小时K线 - 前复权最高价','adjustment',{'table_name': 'fund_hourly', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('low_f','h','FD'):	['基金小时K线 - 前复权最低价','adjustment',{'table_name': 'fund_hourly', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
-('close_f','h','FD'):	['基金小时K线 - 前复权收盘价','adjustment',{'table_name': 'fund_hourly', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': 'forward'}],
+('open:%','h','FD'):	['基金小时K线 - 复权开盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_hourly', 'column': 'open', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('high:%','h','FD'):	['基金小时K线 - 复权最高价-b:后复权f:前复权','adjustment',{'table_name': 'fund_hourly', 'column': 'high', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('low:%','h','FD'):	['基金小时K线 - 复权最低价-b:后复权f:前复权','adjustment',{'table_name': 'fund_hourly', 'column': 'low', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
+('close:%','h','FD'):	['基金小时K线 - 复权收盘价-b:后复权f:前复权','adjustment',{'table_name': 'fund_hourly', 'column': 'close', 'adj_table': 'fund_adj_factor', 'adj_column': 'adj_factor', 'adj_type': '%'}],
 ('open','h','FD'):	['基金小时K线 - 开盘价','direct',{'table_name': 'fund_hourly', 'column': 'open'}],
 ('high','h','FD'):	['基金小时K线 - 最高价','direct',{'table_name': 'fund_hourly', 'column': 'high'}],
 ('low','h','FD'):	['基金小时K线 - 最低价','direct',{'table_name': 'fund_hourly', 'column': 'low'}],
