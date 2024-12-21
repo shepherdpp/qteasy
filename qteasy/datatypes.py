@@ -212,6 +212,23 @@ class DataType:
         """
         raise NotImplementedError
 
+    def parse_freq(self, freq: str) -> str:
+        """parse the freq string into a standard freq string"""
+        raise NotImplementedError
+
+    def parse_asset_type(self, asset_type: str) -> str:
+        """parse the asset_type string into a standard asset_type string"""
+        if asset_type is None:
+            return 'None'
+
+        if not isinstance(asset_type, str):
+            raise ValueError(f'asset_type must be a string, got {type(asset_type)}')
+
+        asset_type = asset_type.upper()
+
+        if asset_type not in ['E', 'IDX', 'FD', 'FT', 'OPT', 'ANY']   :
+            raise ValueError(f'asset_type must be one of E, IDX, FD, FT, OPT, got {asset_type}')
+
     # 真正的顶层数据获取API接口函数
     def get_data_from(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
         """ Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
