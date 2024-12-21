@@ -1443,9 +1443,9 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     'area',
     'industry',
     'close',
-    'close-b',
-    'high-f',
-    ('low-forward', None, 'E'),
+    'close:b',
+    'high:f',
+    ('low:forward', None, 'E'),
     ('open', 'IDX'),
 ]
 
@@ -1483,6 +1483,7 @@ class TestDataTypes(unittest.TestCase):
                     asset_type=asset_type,
             )
 
+            print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}')
             self.assertIsInstance(dtype, DataType)
             self.assertEqual(dtype.name, name)
             self.assertEqual(dtype.freq, freq)

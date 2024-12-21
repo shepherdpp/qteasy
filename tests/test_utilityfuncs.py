@@ -741,7 +741,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(adjust_string_length('this is a long string', 2), '..')
         self.assertEqual(adjust_string_length('this is a long string', 1), '.')
 
-        self.assertEqual(adjust_string_length('this is a long string', 10, ellipsis='*'), 'this ***ng')
+        self.assertEqual(adjust_string_length('this is a long string', 10, filler='*'), 'this ***ng')
         self.assertEqual(adjust_string_length('short string', 15), 'short string   ')
         self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=True),
                          '中文字符string      ')

@@ -21,19 +21,19 @@ from numba import njit
 from functools import wraps, lru_cache
 
 TIME_FREQ_LEVELS = {
-    'Y':      10,
-    'Q':      20,
-    'M':      30,
-    'W':      40,
-    'D':      50,
-    'H':      60,
-    '30MIN':  70,
-    '15MIN':  80,
-    '5MIN':   90,
-    '1MIN':   100,
-    'MIN':    100,
-    'T':      110,
-    'TICK':   110,
+    'Y':     10,
+    'Q':     20,
+    'M':     30,
+    'W':     40,
+    'D':     50,
+    'H':     60,
+    '30MIN': 70,
+    '15MIN': 80,
+    '5MIN':  90,
+    '1MIN':  100,
+    'MIN':   100,
+    'T':     110,
+    'TICK':  110,
 }  # TODO: 最好是将所有的frequency封装为一个类，确保字符串大小写正确，且引入复合频率的比较和处理
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
 AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
@@ -304,7 +304,7 @@ def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError,]
+                    exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError, ]
                     error_str = str(e)
                     if ('没有访问该接口的权限' in error_str) or ('api init error' in error_str):
                         raise e
@@ -458,10 +458,10 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
             return f'~{days:.0f}D' if hours == 0 else f'~{days:.0f}D{hours:.0f}H'
         else:
             return f'about {days:.0f} day' \
-                    if hours == 0 \
-                    else f'about {days:.0f} day {hours:.0f} hour' \
-                    if days == 1 \
-                    else f'about {days:.0f} days {hours:.0f} hours'
+                if hours == 0 \
+                else f'about {days:.0f} day {hours:.0f} hour' \
+                if days == 1 \
+                else f'about {days:.0f} days {hours:.0f} hours'
     else:  # estimation:
         seconds = int(milliseconds / 1000)
         milliseconds = milliseconds - seconds * 1000
@@ -781,7 +781,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
             prog = total
         progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
                        f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
-        progress_str = adjust_string_length(progress_str, column_width)
+        progress_str = adjust_string_length(progress_str, column_width, cut_off=0.8)
         sys.stdout.write(progress_str)
         sys.stdout.flush()
 
@@ -961,9 +961,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         return is_open == 1
     else:
         msg = 'Trade Calendar is not available,  will use maybe_trade_day instead to check trade day\n' \
-                'Trade Calendar can be downloaded to DataSource, Use:\n' \
-                'qteasy.refill_data_source(tables="basics")\n' \
-                'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+              'Trade Calendar can be downloaded to DataSource, Use:\n' \
+              'qteasy.refill_data_source(tables="basics")\n' \
+              'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
         warnings.warn(msg, RuntimeWarning)
         return maybe_trade_day(_date)
 
@@ -1003,8 +1003,8 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
         return exchange_trade_cal[exchange_trade_cal.is_open == 1].index.max()
     else:
         msg = 'Trade Calendar is not available, please download basic data into DataSource, Use:\n' \
-               'qteasy.refill_data_source(tables="basics")\n' \
-               'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+              'qteasy.refill_data_source(tables="basics")\n' \
+              'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
         raise RuntimeError(msg)
 
 
@@ -1056,8 +1056,8 @@ def prev_market_trade_day(date, exchange='SSE'):
         return pd.to_datetime(pretrade_date)
     else:
         msg = 'Trade Calendar is not available, please download basic data into DataSource, Use:\n' \
-                'qteasy.refill_data_source(tables="basics")\n' \
-                'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+              'qteasy.refill_data_source(tables="basics")\n' \
+              'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
         raise RuntimeError(msg)
 
 
@@ -1946,11 +1946,16 @@ def truncate_string(s, n, padder='.') -> str:  # to be deprecated
     'h..'
     """
     warnings.warn('truncate_string will be deprecated, use adjust_string_length instead', DeprecationWarning)
-    return adjust_string_length(s, n, ellipsis=padder)
+    return adjust_string_length(s, n, filler=padder)
 
 
 def adjust_string_length(s, n, *,
-                         ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False) -> str:
+                         filler: str = '.',
+                         padder: str = ' ',
+                         cut_off: float = 0.7,
+                         hans_aware: bool = False,
+                         padding: str = 'right',
+                         format_tags: bool = False) -> str:
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 
@@ -1964,10 +1969,12 @@ def adjust_string_length(s, n, *,
         字符串
     n: int
         需要保留的长度
-    ellipsis: str, Default: '.'
+    filler: str, Default: '.'
         填充在截短的字符串后用于表示省略号的字符，默认为'.'
     padder: str, Default: ' '
         填充在字符串末尾补充长度的字符，默认为空格
+    cut_off: float, Default: 0.7
+        截断字符串的比例，如果字符串长度超过n，则截断的比例，默认为0.7
     hans_aware: bool, Default: False
         是否考虑汉字的长度，如果为True，则汉字的长度为2，否则为1
     padding: str, Default: 'right'
@@ -1985,7 +1992,7 @@ def adjust_string_length(s, n, *,
     'hell...d'
     >>> adjust_string_length('hello world',15,padder='*')
     'hello world****'
-    >>> adjust_string_length('hello world',9,ellipsis='_')
+    >>> adjust_string_length('hello world',9,filler='_')
     'hell___ld'
     >>> adjust_string_length('中文字符占据2个位置',9,hans_aware=False)
     '中文字符...位置'
@@ -2001,7 +2008,7 @@ def adjust_string_length(s, n, *,
         format_tags = []
         format_tags_positions = []
 
-    cut_off_proportion = 0.7
+    cut_off_proportion = cut_off
 
     if not isinstance(s, str):
         msg = f'the first argument should be a string, got {type(s)} instead'
@@ -2009,11 +2016,11 @@ def adjust_string_length(s, n, *,
     if not isinstance(n, int):
         msg = f'the second argument should be an integer, got {type(n)} instead'
         raise TypeError(msg)
-    if not isinstance(ellipsis, str):
-        msg = f'the padder should be a character, got {type(ellipsis)} instead'
+    if not isinstance(filler, str):
+        msg = f'the padder should be a character, got {type(filler)} instead'
         raise TypeError(msg)
-    if not len(ellipsis) == 1:
-        msg = f'the padder should be a single character, got {len(ellipsis)} characters'
+    if not len(filler) == 1:
+        msg = f'the padder should be a single character, got {len(filler)} characters'
         raise ValueError(msg)
     if not isinstance(padder, str):
         msg = f'the padder should be a character, got {type(padder)} instead'
@@ -2060,7 +2067,7 @@ def adjust_string_length(s, n, *,
             front_part.append(char)
             if front_print_width - front_length == 2:
                 front_part.pop()  # 如果刚好多增加了一个中文字符，则需要将最后一个字符去掉
-                front_print_width -=2
+                front_print_width -= 2
                 break
             if front_print_width - front_length >= 0:
                 break
@@ -2072,7 +2079,7 @@ def adjust_string_length(s, n, *,
     if (n >= 5) and (remainder_length == 0):
         remainder_length = 1  # there must be a character in the remainder part if n >= 5
     if remainder_length > 0:
-        for char in s[::-1]:  # build up ellipsis part of the string
+        for char in s[::-1]:  # build up filler part of the string
             if hans_aware and ('\u4e00' <= char <= '\u9fff'):
                 remainder_print_width += 2
             else:
@@ -2086,7 +2093,7 @@ def adjust_string_length(s, n, *,
         # 此时前面的字符数和后面的字符数加上省略号的字符数比n多，需要将省略号的字符数减少
         elipsis_count -= front_print_width + remainder_print_width + elipsis_count - n
 
-    combined_string = ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
+    combined_string = ''.join(front_part) + filler * elipsis_count + ''.join(remainder_part[::-1])
     if format_tags:
         cut_off_position = len(front_part) + elipsis_count
         removed_count = len(s) - len(combined_string)
@@ -2225,11 +2232,11 @@ def pandas_freq_alias_version_conversion(freq) -> str:
         return freq
     # freq aliases like '5MIN' should also be converted to '5min'
     freq_alias_map = {
-        'M':    'ME',
-        'Q':    'QE',
-        'Y':    'YE',
-        'H':    'h',
-        'MIN':  'min',
+        'M':   'ME',
+        'Q':   'QE',
+        'Y':   'YE',
+        'H':   'h',
+        'MIN': 'min',
     }
     mapped_freq = freq_alias_map.get(freq, freq)
 
