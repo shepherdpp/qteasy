@@ -1483,11 +1483,16 @@ class TestDataTypes(unittest.TestCase):
                     asset_type=asset_type,
             )
 
-            print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}')
+            print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}:\n'
+                  f'desc:     {dtype.description}\n'
+                  f'acq_type: {dtype.acquisition_type}\n'
+                  f'kwargs:   {dtype.kwargs}\n')
             self.assertIsInstance(dtype, DataType)
             self.assertEqual(dtype.name, name)
-            self.assertEqual(dtype.freq, freq)
-            self.assertEqual(dtype.asset_type, asset_type)
+            if freq is not None:
+                self.assertEqual(dtype.freq, freq)
+            if asset_type is not None:
+                self.assertEqual(dtype.asset_type, asset_type)
 
     def test_all_types_with_full_id(self):
         ds = self.ds

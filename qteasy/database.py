@@ -2380,6 +2380,7 @@ class DataSource:
     # ==============
     # 特殊函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     # ==============
+    # TODO: functions like get_history_data belong to DataType class, not in DataSource
     def get_history_data(self, shares=None, symbols=None, htypes=None, freq='d', start=None, end=None, row_count=100,
                          asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
@@ -2631,6 +2632,7 @@ class DataSource:
         """
         return htype.get_data_from(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
 
+    # TODO: This function belongs to DataEngine class, not DataSource
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, list_arg_filter=None, symbols=None, merge_type='update',
                             reversed_par_seq=False, parallel=True, process_count=None, chunk_size=100,
@@ -3184,6 +3186,8 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
+# TODO: consider moving this function to utility functions, separated in multiple simpler functions and been used
+#  in other functions in other modules
 def _resample_data(hist_data, target_freq,
                    method='last',
                    b_days_only=True,
@@ -3576,6 +3580,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
+# TODO: this function is no longer needed with new DataType class
 def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_freq=False):
     """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
         仅支持精确匹配。无法精确匹配数据表时，报错
@@ -3813,6 +3818,7 @@ def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=Tru
         return columns, dtypes, remarks, primary_keys, pk_dtypes
 
 
+# TODO: this function belongs to DataTypes, should be moved to that module
 @lru_cache(maxsize=1)
 def get_dtype_map() -> pd.DataFrame:
     """ 获取所有内置数据类型的清单
@@ -3855,6 +3861,8 @@ def get_table_master() -> pd.DataFrame:
     return table_master
 
 
+# TODO: this function searches datatypes, should be realized in DataTypes module as core,
+#  with a wrapper in qteasy module
 def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):
     """ 根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
     查找匹配的历史数据类型。

@@ -53,6 +53,10 @@ def get_data_type_map() -> pd.DataFrame:
 
 def get_user_data_type_map() -> pd.DataFrame:
     """get a DataFrame of USER_DATA_TYPE_MAP for checking."""
+
+    if not USER_DATA_TYPE_MAP:
+        return pd.DataFrame()
+
     type_map = pd.DataFrame(USER_DATA_TYPE_MAP).T
     type_map.columns = DATA_TYPE_MAP_COLUMNS
     type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
@@ -84,9 +88,9 @@ def parse_name_and_params(name: str) -> tuple:
         return name, None
 
 
-def parse_built_in_type_id(name: str) -> tuple or None:
+def parse_built_in_type_id(name: str) -> tuple:
     """ 根据客户输入的名称在内置数据类型中查找匹配的数据类型
-    如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回None
+    如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回空tuple
 
     Parameters
     ----------
@@ -106,15 +110,15 @@ def parse_built_in_type_id(name: str) -> tuple or None:
     matched_types = data_map.loc[(name, slice(None), slice(None))]
 
     if matched_types.empty:
-        return None
+        return tuple(), tuple()
     else:
         return matched_types.index.get_level_values('freq').unique(), \
             matched_types.index.get_level_values('asset_type').unique()
 
 
-def parse_user_defined_type_id(name: str) -> tuple or None:
+def parse_user_defined_type_id(name: str) -> tuple:
     """ 根据客户输入的名称在用户自定义数据类型中查找匹配的数据类型
-    如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回None
+    如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回空tuple
 
     Parameters
     ----------
@@ -131,13 +135,67 @@ def parse_user_defined_type_id(name: str) -> tuple or None:
     """
     type_map = get_user_data_type_map()
 
+    if type_map.empty:
+        return tuple(), tuple()
+
     matched_types = type_map.loc[(name, slice(None), slice(None))]
 
     if matched_types.empty:
-        return None
+        return tuple(), tuple()
     else:
         return matched_types.index.get_level_values('freq').unique(), \
             matched_types.index.get_level_values('asset_type').unique()
+
+
+def parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_in_tables=True) -> tuple:
+    """ 根据正确的search_name， name_par， freq和asset_type查找数据类型的获取参数
+    如果存在name_par，将name_par解析为参数的一部分，放入获取参数中
+
+    Parameters
+    ----------
+    search_name: str
+        数据类型的名称
+    name_par: str
+        数据类型的参数
+    freq: str
+        数据的频率
+    asset_type: str
+        数据的资产类型
+    built_in_tables: bool, default True
+        是否查找内置数据类型表，如果为False，查找用户自定义数据类型表
+
+    Returns
+    -------
+    tuple
+        description: str
+            数据类型的描述
+        acquisition_type: str
+            数据获取方式
+        kwargs: dict
+            获取数据的参数
+    """
+    if built_in_tables:
+        data_map = DATA_TYPE_MAP
+    else:
+        data_map = USER_DATA_TYPE_MAP
+
+    key = (search_name, freq, asset_type)
+    if key not in data_map:
+        raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+
+    description, acquisition_type, kwargs = data_map[key]
+
+    # 如果name_par不为空，解析name_par并加入description或者kwargs中
+    if name_par is not None:
+        # 解析description中的参数
+        if '%' in description:
+            description = description.replace('%', name_par)
+        # 解析kwargs中的参数
+        for k, v in kwargs.items():
+            if '%' in v:
+                kwargs[k] = v.replace('%', name_par)
+
+    return description, acquisition_type, kwargs
 
 
 class DataType:
@@ -222,26 +280,41 @@ class DataType:
         if not isinstance(name, str):
             raise TypeError(f'name must be a string, got {type(name)}')
 
-        search_name, name_pars = self.parse_type_name_params(name)
+        search_name, name_pars = parse_name_and_params(name)
 
         # 根据用户输入的name查找所有匹配的频率和资产类型
         built_in_freqs, built_in_asset_types = parse_built_in_type_id(search_name)
+        user_defined_freqs, user_defined_asset_types = parse_user_defined_type_id(search_name)
 
         # 如果用户同时输入了freq和asset_type，确认用户输入是否在匹配的范围内
         # 如果用户输入不在匹配范围内，抛出异常，如果在匹配范围内，使用用户输入作为default值
-        if freq is None:
+        if (freq is None) and len(built_in_freqs) > 0:
             default_freq = built_in_freqs[0]
-        elif freq in built_in_freqs:
+        elif (freq is None) and len(user_defined_freqs) > 0:
+            default_freq = user_defined_freqs[0]
+        elif (freq in built_in_freqs) or (freq in user_defined_freqs):
             default_freq = freq
         else:
             raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
-        if asset_type is None:
+        if (asset_type is None) and len(built_in_asset_types) > 0:
             default_asset_type = built_in_asset_types[0]
-        elif asset_type in built_in_asset_types:
+        elif (asset_type is None) and len(user_defined_asset_types) > 0:
+            default_asset_type = user_defined_asset_types[0]
+        elif (asset_type in built_in_asset_types) or (asset_type in user_defined_asset_types):
             default_asset_type = asset_type
         else:
             raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+
+        # 已经确认了name，freq和asset_type的合法性，现在可以生成DataType实例
+        # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
+        description, acquisition_type, kwargs = parse_aquisition_parameters(
+                search_name=search_name,
+                name_par=name_pars,
+                freq=default_freq,
+                asset_type=default_asset_type,
+                built_in_tables=built_in_freqs is not None,
+        )
 
         self._name = name
         self._name_pars = None
@@ -262,18 +335,18 @@ class DataType:
 
     @property
     def freq(self):
-        return self._all_built_in_freqs[0]
+        return self._default_freq
 
     @property
     def asset_type(self):
-        return self._all_built_in_asset_types[0]
+        return self._default_asset_type
 
     @property
-    def secondary_freqs(self):
+    def available_freqs(self):
         return self._all_built_in_asset_types.extend(self._all_user_defined_freqs)
 
     @property
-    def secondary_asset_types(self):
+    def available_asset_types(self):
         return self._all_built_in_asset_types.extend(self._all_user_defined_asset_types)
 
     @property
@@ -293,31 +366,6 @@ class DataType:
 
     def __str__(self):
         return f'{self.name}({self.asset_type})@{self.freq}'
-
-    def parse_type_name_params(self, name: str) -> tuple:
-        """ 如果name中含有参数，则解析出参数并返回
-
-        :param name:
-        :return:
-        """
-        raise NotImplementedError
-
-    def parse_freq(self, freq: str) -> str:
-        """parse the freq string into a standard freq string"""
-        raise NotImplementedError
-
-    def parse_asset_type(self, asset_type: str) -> str:
-        """parse the asset_type string into a standard asset_type string"""
-        if asset_type is None:
-            return 'None'
-
-        if not isinstance(asset_type, str):
-            raise ValueError(f'asset_type must be a string, got {type(asset_type)}')
-
-        asset_type = asset_type.upper()
-
-        if asset_type not in ['E', 'IDX', 'FD', 'FT', 'OPT', 'ANY']   :
-            raise ValueError(f'asset_type must be one of E, IDX, FD, FT, OPT, got {asset_type}')
 
     # 真正的顶层数据获取API接口函数
     def get_data_from(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
