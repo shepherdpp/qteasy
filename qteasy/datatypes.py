@@ -192,8 +192,10 @@ def parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_i
             description = description.replace('%', name_par)
         # 解析kwargs中的参数
         for k, v in kwargs.items():
-            if '%' in v:
+            if '%' in v and isinstance(v, str):
                 kwargs[k] = v.replace('%', name_par)
+            if '%' in v and isinstance(v, list):
+                kwargs[k] = [i.replace('%', name_par) for i in v]
 
     return description, acquisition_type, kwargs
 
@@ -1946,42 +1948,11 @@ DATA_TYPE_MAP = {
 ('sell_rate','d','E'):	['龙虎榜机构明细 - 卖出占总成交比例','event_signal',{'table_name': 'top_inst', 'column': 'sell_rate'}],
 ('net_buy','d','E'):	['龙虎榜机构明细 - 净成交额（元）','event_signal',{'table_name': 'top_inst', 'column': 'net_buy'}],
 ('reason','d','E'):	['龙虎榜机构明细 - 上榜理由','event_signal',{'table_name': 'top_inst', 'column': 'reason'}],
-('shibor-on','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 隔夜利率','direct',{'table_name': 'shibor', 'column': 'on'}],
-('shibor-1w','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 一周利率','direct',{'table_name': 'shibor', 'column': '1w'}],
-('shibor-2w','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 2周利率','direct',{'table_name': 'shibor', 'column': '2w'}],
-('shibor-1m','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 1月利率','direct',{'table_name': 'shibor', 'column': '1m'}],
-('shibor-3m','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 3月利率','direct',{'table_name': 'shibor', 'column': '3m'}],
-('shibor-6m','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 6月利率','direct',{'table_name': 'shibor', 'column': '6m'}],
-('shibor-9m','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 9月利率','direct',{'table_name': 'shibor', 'column': '9m'}],
-('shibor-1y','d','None'):	['上海银行间行业拆放利率(SHIBOR) - 1年利率','direct',{'table_name': 'shibor', 'column': '1y'}],
-('libor_usd-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_usd-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_usd-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_usd-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_usd-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_usd-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_usd-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'keys': ['usd']}],
-('libor_eur-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_eur-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_eur-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_eur-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_eur-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_eur-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_eur-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'keys': ['eur']}],
-('libor_gbp-on','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 隔夜利率','selection',{'table_name': 'libor', 'column': 'on', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('libor_gbp-1w','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 一周利率','selection',{'table_name': 'libor', 'column': '1w', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('libor_gbp-1m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 1月利率','selection',{'table_name': 'libor', 'column': '1m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('libor_gbp-2m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 2月利率','selection',{'table_name': 'libor', 'column': '2m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('libor_gbp-3m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 3月利率','selection',{'table_name': 'libor', 'column': '3m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('libor_gbp-6m','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 6月利率','selection',{'table_name': 'libor', 'column': '6m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('libor_gbp-1y','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - 1年利率','selection',{'table_name': 'libor', 'column': '12m', 'sel_by': 'curr_type', 'keys': ['gbp']}],
-('hibor-on','d','None'):	['香港银行间行业拆放利率(HIBOR) - 隔夜利率','direct',{'table_name': 'hibor', 'column': 'on'}],
-('hibor-1w','d','None'):	['香港银行间行业拆放利率(HIBOR) - 一周利率','direct',{'table_name': 'hibor', 'column': '1w'}],
-('hibor-1m','d','None'):	['香港银行间行业拆放利率(HIBOR) - 1月利率','direct',{'table_name': 'hibor', 'column': '1m'}],
-('hibor-2m','d','None'):	['香港银行间行业拆放利率(HIBOR) - 2月利率','direct',{'table_name': 'hibor', 'column': '2m'}],
-('hibor-3m','d','None'):	['香港银行间行业拆放利率(HIBOR) - 3月利率','direct',{'table_name': 'hibor', 'column': '3m'}],
-('hibor-6m','d','None'):	['香港银行间行业拆放利率(HIBOR) - 6月利率','direct',{'table_name': 'hibor', 'column': '6m'}],
-('hibor-1y','d','None'):	['香港银行间行业拆放利率(HIBOR) - 1年利率','direct',{'table_name': 'hibor', 'column': '12m'}],
+('shibor:%','d','None'):	['上海银行间行业拆放利率(SHIBOR) - %','direct',{'table_name': 'shibor', 'column': '%'}],
+('libor_usd:%','d','None'):	['伦敦银行间行业拆放利率(LIBOR) USD - %','selection',{'table_name': 'libor', 'column': '%', 'sel_by': 'curr_type', 'keys': ['usd']}],
+('libor_eur:%','d','None'):	['伦敦银行间行业拆放利率(LIBOR) EUR - %','selection',{'table_name': 'libor', 'column': '%', 'sel_by': 'curr_type', 'keys': ['eur']}],
+('libor_gbp:%','d','None'):	['伦敦银行间行业拆放利率(LIBOR) GBP - %','selection',{'table_name': 'libor', 'column': '%', 'sel_by': 'curr_type', 'keys': ['gbp']}],
+('hibor:%','d','None'):	['香港银行间行业拆放利率(HIBOR) - %','direct',{'table_name': 'hibor', 'column': '%'}],
 ('wz_comp','d','None'): ['温州民间融资综合利率指数','direct',{'table_name': 'wz_index', 'column': 'comp_rate'}],
 ('wz_center','d','None'): ['民间借贷服务中心利率','direct',{'table_name': 'wz_index', 'column': 'center_rate'}],
 ('wz_micro','d','None'): ['小额贷款公司放款利率','direct',{'table_name': 'wz_index', 'column': 'micro_rate'}],
