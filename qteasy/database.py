@@ -1518,6 +1518,7 @@ class DataSource:
         self._table_list.add(table)
         return rows_affected
 
+    # TODO: This function belongs to datachannels.py
     def fetch_history_table_data(self, table, channel='tushare', df=None, f_name=None, **kwargs):
         """从网络获取本地数据表的历史数据，并进行内容写入前的预处理：
 
@@ -1606,6 +1607,7 @@ class DataSource:
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         return res
 
+    # TODO: this function belongs to datachannels.py
     def fetch_realtime_price_data(self, table, channel, symbols):
         """ 获取分钟级实时股票价格数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
         stock_1min/stock_5min/stock_15min/stock_30min/stock_hourly
@@ -2835,11 +2837,12 @@ class DataSource:
                 if refresh_trade_calendar:
                     tables_to_refill.add('trade_calendar')
                 else:
-                    # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+                    # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖本周，如果没有数据或数据不足，也需要添加该表
                     latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)['pk_max2']
                     try:
                         latest_calendar_date = pd.to_datetime(latest_calendar_date)
-                        if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+                        present_week_day = pd.Timedelta(7, 'd') + pd.to_datetime('today')
+                        if present_week_day >= pd.to_datetime(latest_calendar_date):
                             tables_to_refill.add('trade_calendar')
                     except:
                         tables_to_refill.add('trade_calendar')

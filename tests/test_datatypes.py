@@ -1590,7 +1590,7 @@ class TestDataTypes(unittest.TestCase):
             )
 
             acquired += 1
-            progress_bar(acquired, total, comments=f'{dtype} - {dtype.description}', column_width=0)
+            progress_bar(acquired, total, comments=f'{dtype} - {dtype.description}', column_width=120)
 
             try:
                 all_tables.remove(table_name)
@@ -1605,7 +1605,7 @@ class TestDataTypes(unittest.TestCase):
                 print(f'\nempty data for {dtype} - {dtype.description}')
                 continue
 
-            print(f'\ngot data for {dtype}: \n{data}')
+            # print(f'\ngot data for {dtype}: \n{data}')
 
             # checking the datatypes and start / end dates of the data
             if acq_type in ['basics', 'category']:
