@@ -2634,7 +2634,7 @@ class DataSource:
         """
         return htype.get_data_from(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
 
-    # TODO: This function belongs to DataEngine class, not DataSource
+    # TODO: This function belongs to DataChannel class, not DataSource
     def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
                             end_date=None, list_arg_filter=None, symbols=None, merge_type='update',
                             reversed_par_seq=False, parallel=True, process_count=None, chunk_size=100,

@@ -355,47 +355,47 @@ def suspend_d(ts_code: str = None,
 
 # New, 沪深股通资金流向!
 def moneyflow_hsgt(trade_date: str = None,
-                   start_date: str = None,
-                   end_date: str = None) -> pd.DataFrame:
+                   start: str = None,
+                   end: str = None) -> pd.DataFrame:
     """ 获取沪深股通资金流向数据
     """
     pro = ts.pro_api()
-    res = pro.moneyflow_hsgt(trade_date=trade_date, start_date=start_date, end_date=end_date)
+    res = pro.moneyflow_hsgt(trade_date=trade_date, start_date=start, end_date=end)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
-                     f' table moneyflow_hsgt with trade_date={trade_date}, start_date={start_date}'
-                     f'end_date={end_date}')
+                     f' table moneyflow_hsgt with trade_date={trade_date}, start_date={start}'
+                     f'end_date={end}')
     return res
 
 
 # New, 沪深股通十大成交股!
 def hsgt_top10(ts_code: str = None,
                trade_date: str = None,
-               start_date: str = None,
-               end_date: str = None,
+               start: str = None,
+               end: str = None,
                market_type: str = None) -> pd.DataFrame:
     """ 获取沪深股通十大成交股
     """
     pro = ts.pro_api()
-    res = pro.hsgt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start_date, end_date=end_date, market_type=market_type)
+    res = pro.hsgt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, market_type=market_type)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table hsgt_top10 with ts_code={ts_code}, trade_date={trade_date}'
-                        f'start_date={start_date}, end_date={end_date}, market_type={market_type}')
+                        f'start_date={start}, end_date={end}, market_type={market_type}')
     return res
 
 
 # New, 港股通十大成交股!
 def ggt_top10(ts_code: str = None,
               trade_date: str = None,
-                start_date: str = None,
-                end_date: str = None,
+              start: str = None,
+              end: str = None,
               market_type: str = None) -> pd.DataFrame:
     """ 获取港股通十大成交股
     """
     pro = ts.pro_api()
-    res = pro.ggt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start_date, end_date=end_date, market_type=market_type)
+    res = pro.ggt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, market_type=market_type)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table ggt_top10 with ts_code={ts_code}, trade_date={trade_date}'
-                     f'start_date={start_date}, end_date={end_date}, market_type={market_type}')
+                     f'start_date={start}, end_date={end}, market_type={market_type}')
     return res
 
 
@@ -2204,8 +2204,8 @@ def index_member_all(index_code: str = None,
 # 'block_trade':  # New, 大宗交易!
 def block_trade(ts_code: str = None,
                 trade_date: str = None,
-                start_date: str = None,
-                end_date: str = None):
+                start: str = None,
+                end: str = None):
     """ 获取大宗交易数据
 
     Parameters
@@ -2214,9 +2214,9 @@ def block_trade(ts_code: str = None,
         股票代码
     trade_date: str
         交易日期
-    start_date: str
+    start: str
         开始日期
-    end_date: str
+    end: str
         结束日期
 
     Returns
@@ -2234,18 +2234,18 @@ def block_trade(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.block_trade(ts_code=ts_code,
                           trade_date=trade_date,
-                          start_date=start_date,
-                          end_date=end_date)
+                          start_date=start,
+                          end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: block_trade with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
 
 
 # New, 股东交易（股东增减持）!
 def stk_holdertrade(ts_code: str = None,
                     ann_date: str = None,
-                    start_date: str = None,
-                    end_date: str = None,
+                    start: str = None,
+                    end: str = None,
                     trade_type: str = None,
                     holder_type: str = None):
     """ 获取股东交易（股东增减持）数据
@@ -2256,9 +2256,9 @@ def stk_holdertrade(ts_code: str = None,
         股票代码
     ann_date: str
         公告日期
-    start_date: str
+    start: str
         开始日期
-    end_date: str
+    end: str
         结束日期
     trade_type: str
         交易类型
@@ -2287,12 +2287,12 @@ def stk_holdertrade(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.stk_holdertrade(ts_code=ts_code,
                               ann_date=ann_date,
-                              start_date=start_date,
-                              end_date=end_date,
+                              start_date=start,
+                              end_date=end,
                               trade_type=trade_type,
                               holder_type=holder_type)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: stk_holdertrade with ts_code={ts_code}, '
-                     f'ann_date={ann_date}, start_date={start_date}, end_date={end_date}, trade_type={trade_type}, '
+                     f'ann_date={ann_date}, start_date={start}, end_date={end}, trade_type={trade_type}, '
                      f'holder_type={holder_type}')
     return res
 
@@ -2300,8 +2300,8 @@ def stk_holdertrade(ts_code: str = None,
 # 'margin':  # New, 融资融券交易概况!
 def margin(trade_date: str = None,
            exchange_id: str = None,
-           start_date: str = None,
-           end_date: str = None):
+           start: str = None,
+           end: str = None):
     """ 获取融资融券交易概况
 
     Parameters
@@ -2332,18 +2332,18 @@ def margin(trade_date: str = None,
     pro = ts.pro_api()
     res = pro.margin(trade_date=trade_date,
                      exchange_id=exchange_id,
-                     start_date=start_date,
-                     end_date=end_date)
+                     start_date=start,
+                     end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: margin with trade_date={trade_date}, '
-                     f'exchange_id={exchange_id}, start_date={start_date}, end_date={end_date}')
+                     f'exchange_id={exchange_id}, start_date={start}, end_date={end}')
     return res
 
 
 # 'margin_detail':  # New, 融资融券交易明！
 def margin_detail(trade_date: str = None,
                   ts_code: str = None,
-                  start_date: str = None,
-                  end_date: str = None):
+                  start: str = None,
+                  end: str = None):
     """ 获取融资融券交易明细
 
     Parameters
@@ -2376,10 +2376,10 @@ def margin_detail(trade_date: str = None,
     pro = ts.pro_api()
     res = pro.margin_detail(trade_date=trade_date,
                             ts_code=ts_code,
-                            start_date=start_date,
-                            end_date=end_date)
+                            start_date=start,
+                            end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: margin_detail with trade_date={trade_date}, '
-                     f'ts_code={ts_code}, start_date={start_date}, end_date={end_date}')
+                     f'ts_code={ts_code}, start_date={start}, end_date={end}')
     return res
 
 
@@ -2525,12 +2525,12 @@ def index_basic(ts_code: str = None,
 # 'ths_index_basic':  # New, 同花顺概念和指数基本信息
 def ths_index(ts_code: str = None,
               exchange: str = None,
-              type: str = None) -> pd.DataFrame:
+              idx_type: str = None) -> pd.DataFrame:
     """ 获取同花顺概念和指数基本信息"""
     pro = ts.pro_api()
     res = pro.ths_index(ts_code=ts_code,
                         exchange=exchange,
-                        type=type)
+                        type=idx_type)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_index with ts_code={ts_code}, '
                      f'exchange={exchange}, type={type}')
     return res
@@ -2617,8 +2617,8 @@ def index_indicators(trade_date: str = None,
 # 'ths_index_daily':  # New, 同花顺行业指数日线行情!
 def ths_daily(ts_code: str = None,
               trade_date: str = None,
-              start_date: str = None,
-              end_date: str = None) -> pd.DataFrame:
+              start: str = None,
+              end: str = None) -> pd.DataFrame:
     """ 获取同花顺行业指数日线行情
 
     Parameters
@@ -2650,10 +2650,10 @@ def ths_daily(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.ths_index_daily(ts_code=ts_code,
                               trade_date=trade_date,
-                              start_date=start_date,
-                              end_date=end_date)
+                              start_date=start,
+                              end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_daily with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
 
 
@@ -2689,8 +2689,8 @@ def ths_member(ts_code: str = None,
 # 'ci_index_daily':  # New, 中信指数日线行情!
 def ci_daily(ts_code: str = None,
              trade_date: str = None,
-             start_date: str = None,
-             end_date: str = None) -> pd.DataFrame:
+             start: str = None,
+             end: str = None) -> pd.DataFrame:
     """ 获取中信指数日线行情
 
     Parameters
@@ -2719,18 +2719,18 @@ def ci_daily(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.ci_index_daily(ts_code=ts_code,
                              trade_date=trade_date,
-                             start_date=start_date,
-                             end_date=end_date)
+                             start_date=start,
+                             end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ci_daily with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
 
 
 # 'sw_index_daily':  # New, 申万指数日线行情!
 def sw_daily(ts_code: str = None,
              trade_date: str = None,
-             start_date: str = None,
-             end_date: str = None) -> pd.DataFrame:
+             start: str = None,
+             end: str = None) -> pd.DataFrame:
     """ 获取申万指数日线行情
 
     Parameters
@@ -2763,18 +2763,18 @@ def sw_daily(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.sw_index_daily(ts_code=ts_code,
                              trade_date=trade_date,
-                             start_date=start_date,
-                             end_date   =end_date)
+                             start_date=start,
+                             end_date   =end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_daily with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
 
 
 # New, 全球指数日线行情!
 def index_global(ts_code: str = None,
                  trade_date: str = None,
-                 start_date: str = None,
-                 end_date: str = None) -> pd.DataFrame:
+                 start: str = None,
+                 end: str = None) -> pd.DataFrame:
     """ 获取全球指数日线行情
 
     Parameters
@@ -2804,10 +2804,10 @@ def index_global(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.global_index_daily(ts_code=ts_code,
                                  trade_date=trade_date,
-                                 start_date=start_date,
-                                 end_date=end_date)
+                                 start_date=start,
+                                 end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: index_global with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
 
 

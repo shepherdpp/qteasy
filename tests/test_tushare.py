@@ -5,19 +5,85 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2020-02-12
 # Desc:
-#   Unittest for all tushare wrapper
-#   functions.
+#   Unittest for all tushare wrapped
+# apis with basic parameters. How data
+# is saved and loaded is not tested here.
 # ======================================
 import unittest
 
 import pandas as pd
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
-from qteasy.tsfuncs import income, indicators, namechange
-from qteasy.tsfuncs import stock_basic, trade_cal, new_share
-from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
-from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
-from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic, stock_company
+from qteasy.utilfuncs import list_to_str_format, str_to_list
+from qteasy.tsfuncs import (
+    income,
+    trade_cal,
+    indicators,
+    namechange,
+    moneyflow,
+    new_share,
+    stk_limit,
+    suspend_d,
+    moneyflow_hsgt,
+    hsgt_top10,
+    ggt_top10,
+    stock_company,
+    stk_managers,
+    daily_basic,
+    index_dailybasic,
+    realtime_min,
+    mins1,
+    ft_mins1,
+    daily,
+    weekly,
+    monthly,
+    index_daily,
+    index_weekly,
+    index_monthly,
+    stock_basic,
+    fund_daily,
+    adj_factors,
+    fund_adj,
+    fund_share,
+    fund_manager,
+    fund_net_value,
+    income,
+    balance,
+    cashflow,
+    indicators,
+    forecast,
+    express,
+    dividend,
+    top_list,
+    top_inst,
+    index_member_all,
+    block_trade,
+    stk_holdertrade,
+    margin,
+    margin_detail,
+    index_basic,
+    ths_index,
+    index_classify,
+    index_indicators,
+    ths_daily,
+    ths_member,
+    ci_daily,
+    sw_daily,
+    index_global,
+    composite,
+    fund_basic,
+    future_daily,
+    fut_mapping,
+    options_daily,
+    future_basic,
+    future_daily,
+    fut_weekly,
+    fut_monthly,
+    options_basic,
+    options_daily,
+    shibor,
+    hibor,
+    libor,
+)
 
 
 class TestTushare(unittest.TestCase):
@@ -51,12 +117,6 @@ class TestTushare(unittest.TestCase):
         shares = '600748.SH'
         start = '20180101'
         end = '20191231'
-        df = namechange(ts_code=shares)
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
         df = namechange(ts_code=shares, start=start, end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
@@ -79,12 +139,261 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
+    def test_moneyflow(self):
+        """test api moneyflow"""
+        print(f'test tushare function: moneyflow')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = moneyflow(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_stk_limit(self):
+        print(f'test tushare function: stk_limit')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = stk_limit(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_suspend_d(self):
+        print(f'test tushare function: suspend_d')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = suspend_d(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_moneyflow_hsgt(self):
+        print(f'test tushare function: moneyflow_hsgt')
+        start = '20180101'
+        end = '20191231'
+        df = moneyflow_hsgt(start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_hsgt_top10(self):
+        print(f'test tushare function: hsgt_top10')
+        start = '20180101'
+        end = '20191231'
+        df = hsgt_top10(start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_ggt_top10(self):
+        print(f'test tushare function: ggt_top10')
+        start = '20180101'
+        end = '20191231'
+        df = ggt_top10(start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
     def test_stock_company(self):
         print(f'test tushare function: stock_company')
         shares = '600748.SH'
         df = stock_company(ts_code=shares)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_stk_managers(self):
+        print(f'test tushare function: stk_managers')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = stk_managers(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_daily_basic(self):
+        print(f'test tushare function: daily_basic')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = daily_basic(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_index_dailybasic(self):
+        print(f'test tushare function: index_dailybasic')
+        shares = '000300.SH'
+        start = '20180101'
+        end = '20191231'
+        df = index_dailybasic(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_realtime_min(self):
+        print(f'test tushare function: realtime_min')
+        shares = '600748.SH'
+        freq = '5MIN'
+        df = realtime_min(ts_code=shares, freq=freq)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_mins1(self):
+        print(f'test tushare function: mins1')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = mins1(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_ft_mins1(self):
+        print(f'test tushare function: ft_mins1')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = ft_mins1(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_daily(self):
+        print(f'test tushare function: daily')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = daily(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_weekly(self):
+        print(f'test tushare function: weekly')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180205'
+        df = weekly(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_monthly(self):
+        print(f'test tushare function: monthly')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180505'
+        df = monthly(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_index_daily(self):
+        print(f'test tushare function: index_daily')
+        shares = '000300.SH'
+        start = '20180101'
+        end = '20180105'
+        df = index_daily(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_index_weekly(self):
+        print(f'test tushare function: index_weekly')
+        shares = '000300.SH'
+        start = '20180101'
+        end = '20180205'
+        df = index_weekly(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_index_monthly(self):
+        print(f'test tushare function: index_monthly')
+        shares = '000300.SH'
+        start = '20180101'
+        end = '20180505'
+        df = index_monthly(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_fund_daily(self):
+        print(f'test tushare function: fund_daily')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = fund_daily(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_adj_factors(self):
+        print(f'test tushare function: adj_factors')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = adj_factors(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_fund_adj(self):
+        print(f'test tushare function: fund_adj')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = fund_adj(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_fund_share(self):
+        print(f'test tushare function: fund_share')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20180105'
+        df = fund_share(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_fund_manager(self):
+        print(f'test tushare function: fund_manager')
+        shares = '600748.SH'
+        start = '20180101'
+        df = fund_manager(ts_code=shares, ann_date=start)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
         df.info()
         print(df.head(10))
 
@@ -208,6 +517,99 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
         print(f'\nTest indicators 2: extracted indicator: \n{df}')
 
+    def test_forecast(self):
+        print(f'test tushare function: forecast')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = forecast(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_express(self):
+        print(f'test tushare function: express')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = express(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_dividend(self):
+        print(f'test tushare function: dividend')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = dividend(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_top_inst(self):
+        print(f'test tushare function: top_inst')
+        trade_date = '20180104'
+        print(f'test 1: test no specific shares')
+        df = top_inst(trade_date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+    def test_index_member_all(self):
+        print(f'test tushare function: index_member_all')
+        level = 'L1'
+        df = index_member_all(level=level)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+    def test_block_trade(self):
+        print(f'test tushare function: block_trade')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = block_trade(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_stk_holdertrade(self):
+        print(f'test tushare function: stk_holdertrade')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = stk_holdertrade(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_margin(self):
+        print(f'test tushare function: margin')
+        start = '20180101'
+        end = '20180105'
+        df = margin(start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_margin_detail(self):
+        print(f'test tushare function: margin_detail')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = margin_detail(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
     def test_top_list(self):
         shares = '000732.SZ'
         trade_date = '20180104'
@@ -253,6 +655,24 @@ class TestTushare(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
+    def test_ths_index(self):
+        print(f'test tushare function: ths_index')
+        exchange = 'SZ'
+        df = ths_index(exchange=exchange)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_index_classify(self):
+        print(f'test tushare function: index_classify')
+        level = 'L1'
+        df = index_classify(level=level)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
     def test_index_indicators(self):
         print(f'test tushare function: index_indicators\n'
               f'=======================================')
@@ -289,6 +709,50 @@ class TestTushare(unittest.TestCase):
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+
+    def test_ths_daily(self):
+        print(f'test tushare function: ths_daily')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = ths_daily(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_ths_member(self):
+        print(f'test tushare function: ths_member')
+        shares = '600016.SH'
+        df = ths_member(ts_code=shares)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_ci_daily(self):
+        print(f'test tushare function: ci_daily')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = ci_daily(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_sw_daily(self):
+        print(f'test tushare function: sw_daily')
+        shares = '600016.SH'
+        start = '20180101'
+        end = '20191231'
+        df = sw_daily(ts_code=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
+
+
 
     def test_composite(self):
         print(f'test tushare function: composit\n'
