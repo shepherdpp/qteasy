@@ -2310,9 +2310,9 @@ def margin(trade_date: str = None,
         交易日期
     exchange_id: str
         交易所代码
-    start_date: str
+    start: str
         开始日期
-    end_date: str
+    end: str
         结束日期
 
     Returns
@@ -2352,9 +2352,9 @@ def margin_detail(trade_date: str = None,
         交易日期
     ts_code: str
         股票代码
-    start_date: str
+    start: str
         开始日期
-    end_date: str
+    end: str
         结束日期
 
     Returns
@@ -2543,10 +2543,10 @@ def index_classify(index_code: str = None,
                    src: str = None) -> pd.DataFrame:
     """ 获取申万行业分类"""
     pro = ts.pro_api()
-    res = pro.sw_industry(index_code=index_code,
-                          level=level,
-                          parent_code=parent_code,
-                          src=src)
+    res = pro.index_classify(index_code=index_code,
+                             level=level,
+                             parent_code=parent_code,
+                             src=src)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry with index_code={index_code}, '
                      f'level={level}, parent_code={parent_code}, src={src}')
     return res
@@ -2625,8 +2625,8 @@ def ths_daily(ts_code: str = None,
     ----------
     ts_code: str, TS代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
 
     Returns
     -------
@@ -2648,7 +2648,7 @@ def ths_daily(ts_code: str = None,
         float_mv	    float	N	    流通市值
     """
     pro = ts.pro_api()
-    res = pro.ths_index_daily(ts_code=ts_code,
+    res = pro.ths_daily(ts_code=ts_code,
                               trade_date=trade_date,
                               start_date=start,
                               end_date=end)
@@ -2680,7 +2680,7 @@ def ths_member(ts_code: str = None,
         is_new	        str	    N	    是否最新Y是N否
     """
     pro = ts.pro_api()
-    res = pro.ths_index_weight(ts_code=ts_code,
+    res = pro.ths_member(ts_code=ts_code,
                                code=code)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_member with ts_code={ts_code}, code={code}')
     return res
@@ -2697,8 +2697,8 @@ def ci_daily(ts_code: str = None,
     ----------
     ts_code: str, TS代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
 
     Returns
     -------
@@ -2717,7 +2717,7 @@ def ci_daily(ts_code: str = None,
         amount	        float	Y	    成交额（万元）
     """
     pro = ts.pro_api()
-    res = pro.ci_index_daily(ts_code=ts_code,
+    res = pro.ci_daily(ts_code=ts_code,
                              trade_date=trade_date,
                              start_date=start,
                              end_date=end)
@@ -2737,8 +2737,8 @@ def sw_daily(ts_code: str = None,
     ----------
     ts_code: str, TS代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
 
     Returns
     -------
@@ -2761,7 +2761,7 @@ def sw_daily(ts_code: str = None,
         total_mv	    float	Y	    总市值（万元）
     """
     pro = ts.pro_api()
-    res = pro.sw_index_daily(ts_code=ts_code,
+    res = pro.sw_daily(ts_code=ts_code,
                              trade_date=trade_date,
                              start_date=start,
                              end_date   =end)
@@ -2781,8 +2781,8 @@ def index_global(ts_code: str = None,
     ----------
     ts_code: str, TS代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
 
     Returns
     -------
@@ -2802,7 +2802,7 @@ def index_global(ts_code: str = None,
         amount	        float	N	    成交额 （大部分无此项数据）
     """
     pro = ts.pro_api()
-    res = pro.global_index_daily(ts_code=ts_code,
+    res = pro.index_global(ts_code=ts_code,
                                  trade_date=trade_date,
                                  start_date=start,
                                  end_date=end)
@@ -3034,16 +3034,16 @@ def future_basic(exchange: str = None,
 # New, 期货合约映射表!
 def fut_mapping(ts_code: str = None,
                 trade_date: str = None,
-                start_date: str = None,
-                end_date: str = None) -> pd.DataFrame:
+                start: str = None,
+                end: str = None) -> pd.DataFrame:
     """ 获取期货合约映射表
 
     Parameters
     ----------
     ts_code: str, 合约代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
 
     Returns
     -------
@@ -3056,10 +3056,10 @@ def fut_mapping(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.fut_mapping(ts_code=ts_code,
                           trade_date=trade_date,
-                          start_date=start_date,
-                          end_date=end_date)
+                          start_date=start,
+                          end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_mapping with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
 
 
@@ -3183,8 +3183,8 @@ def future_daily(trade_date: str = None,
 # 'future_weekly':  # New, 期货周线行情!
 def fut_weekly(ts_code: str = None,
                trade_date: str = None,
-               start_date: str = None,
-               end_date: str = None,
+               start: str = None,
+               end: str = None,
                exchange: str = None) -> pd.DataFrame:
     """ 获取期货周线行情
 
@@ -3192,8 +3192,8 @@ def fut_weekly(ts_code: str = None,
     ----------
     ts_code: str, TS代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
     exchange: str, 交易所代码
 
     Returns
@@ -3221,20 +3221,20 @@ def fut_weekly(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.fut_weekly_monthly(ts_code=ts_code,
                                  trade_date=trade_date,
-                                 start_date=start_date,
-                                 end_date=end_date,
+                                 start_date=start,
+                                 end_date=end,
                                  freq='week',
                                  exchange=exchange)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_weekly with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}, exchange={exchange}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}, exchange={exchange}')
     return res
 
 
 # 'future_monthly':  # New, 期货月线行情!
 def fut_monthly(ts_code: str = None,
                 trade_date: str = None,
-                start_date: str = None,
-                end_date: str = None,
+                start: str = None,
+                end: str = None,
                 exchange: str = None) -> pd.DataFrame:
     """ 获取期货周线行情
 
@@ -3242,8 +3242,8 @@ def fut_monthly(ts_code: str = None,
     ----------
     ts_code: str, TS代码
     trade_date: str, 交易日期
-    start_date: str, 开始日期
-    end_date: str, 结束日期
+    start: str, 开始日期
+    end: str, 结束日期
     exchange: str, 交易所代码
 
     Returns
@@ -3271,12 +3271,12 @@ def fut_monthly(ts_code: str = None,
     pro = ts.pro_api()
     res = pro.fut_weekly_monthly(ts_code=ts_code,
                                  trade_date=trade_date,
-                                 start_date=start_date,
-                                 end_date=end_date,
+                                 start_date=start,
+                                 end_date=end,
                                  freq='month',
                                  exchange=exchange)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_monthly with ts_code={ts_code}, '
-                     f'trade_date={trade_date}, start_date={start_date}, end_date={end_date}, exchange={exchange}')
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}, exchange={exchange}')
     return res
 
 
