@@ -41,7 +41,7 @@ class TestChannels(unittest.TestCase):
 
         for table in all_tables:
             # get all tables in the API mapping
-
+            print('downloading data for table:', table)
 
 
 if __name__ == '__main__':

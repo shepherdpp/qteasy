@@ -2966,12 +2966,13 @@ class DataSource:
                             futures.update({worker.submit(acquire_data, api_name, **kw): kw})
                             submitted += 1
                             if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
-                                progress_bar(submitted, total, f'<{table}>: Submitting tasks, '
-                                                               f'Pausing for {download_batch_interval} sec...')
+                                progress_bar(submitted, total,comments=
+                                                f'<{table}>: Submitting tasks, '
+                                                f'Pausing for {download_batch_interval} sec...')
                                 time.sleep(download_batch_interval)
                         # futures = {worker.submit(acquire_data, api_name, **kw): kw
                         #            for kw in all_kwargs}
-                        progress_bar(0, total, f'<{table}>: estimating time left...')
+                        progress_bar(0, total, comments=f'<{table}>: estimating time left...')
                         for f in as_completed(futures):
                             df = f.result()
                             cur_kwargs = futures[f]
@@ -2986,12 +2987,12 @@ class DataSource:
                             time_elapsed = time.time() - st
                             time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
-                            progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
+                            progress_bar(completed, total, comments=f'<{table}:{list(cur_kwargs.values())[0]}>'
                                                            f'{total_written}wrtn/{time_remain} left')
 
                         total_written += self.update_table_data(table, dnld_data)
                 else:
-                    progress_bar(0, total, f'<{table}> estimating time left...')
+                    progress_bar(0, total, comments=f'<{table}> estimating time left...')
                     for kwargs in all_kwargs:
                         df = self.fetch_history_table_data(table, channel='tushare', **kwargs)
                         completed += 1
@@ -3010,13 +3011,17 @@ class DataSource:
                         )
 
                         if (download_batch_interval != 0) and (completed % download_batch_size == 0):
-                            progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
-                                                           f'{total_written}wrtn/Pausing for '
-                                                           f'{download_batch_interval} sec...')
+                            progress_bar(completed, total, comments=
+                                            f'<{table}:{list(kwargs.values())[0]}>'
+                                            f'{total_written}wrtn/Pausing for '
+                                            f'{download_batch_interval} sec...'
+                                         )
                             time.sleep(download_batch_interval)
                         else:
-                            progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
-                                                           f'{total_written}wrtn/{time_remain} left')
+                            progress_bar(completed, total, comments=
+                                            f'<{table}:{list(kwargs.values())[0]}>'
+                                            f'{total_written}wrtn/{time_remain} left'
+                                         )
                     total_written += self.update_table_data(table, dnld_data)
                 strftime_elapsed = sec_to_duration(
                         time_elapsed,
@@ -3024,11 +3029,15 @@ class DataSource:
                         short_form=True
                 )
                 if len(arg_coverage) > 1:
-                    progress_bar(total, total, f'<{table}:{arg_coverage[0]}-{arg_coverage[-1]}>'
-                                               f'{total_written}wrtn in {strftime_elapsed}\n')
+                    progress_bar(total, total, comments=
+                                    f'<{table}:{arg_coverage[0]}-{arg_coverage[-1]}>'
+                                    f'{total_written}wrtn in {strftime_elapsed}\n'
+                                 )
                 else:
-                    progress_bar(total, total, f'[{table}:None>'
-                                               f'{total_written}wrtn in {strftime_elapsed}\n')
+                    progress_bar(total, total, comments=
+                                    f'[{table}:None>'
+                                    f'{total_written}wrtn in {strftime_elapsed}\n'
+                                 )
             except Exception as e:
                 total_written += self.update_table_data(table, dnld_data)
                 msg = f'\n{str(e)}: \ndownload process interrupted at [{table}]:' \

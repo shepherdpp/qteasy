@@ -44,12 +44,11 @@ import pandas as pd
 
 
 # TODO: This function belongs to datachannels.py
-def fetch_history_table_data(self, table, channel='tushare', df=None, f_name=None, **kwargs):
-    """从网络获取本地数据表的历史数据，并进行内容写入前的预处理：
+def fetch_history_table_data(table, channel='tushare', **kwargs):
+    """从网络获取本地数据表的历史数据：
 
-    数据预处理包含以下步骤：
-    1，根据channel确定数据源，根据table名下载相应的数据表
-    2，处理获取的df的格式，确保为只含简单range-index的格式
+    1，根据table以及channel的不同，调用不同的数据API获取函数，获取数据
+    2，数据API从模块中定义的各个MAP表中获取
 
     Parameters
     ----------
@@ -57,15 +56,9 @@ def fetch_history_table_data(self, table, channel='tushare', df=None, f_name=Non
         数据表名，必须是database中定义的数据表
     channel: str, optional
         str: 数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
-        - 'df'      : 通过参数传递一个df，该df的columns必须与table的定义相同
-        - 'csv'     : 通过本地csv文件导入数据，此时必须给出f_name参数
-        - 'excel'   : 通过一个Excel文件导入数据，此时必须给出f_name参数
-        - 'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分
-        - 'other'   : NotImplemented 其他金融数据API，尚未开发
-    df: pd.DataFrame
-        通过传递一个DataFrame获取数据, 如果数据获取渠道为"df"，则必须给出此参数
-    f_name: str 通过本地csv文件或excel文件获取数据
-        如果数据获取方式为"csv"或者"excel"时，必须给出此参数，表示文件的路径
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
     **kwargs:
         用于下载金融数据的函数参数，或者读取本地csv文件的函数参数
 
@@ -86,75 +79,56 @@ def fetch_history_table_data(self, table, channel='tushare', df=None, f_name=Non
     if not isinstance(table, str):
         err = TypeError(f'table name should be a string, got {type(table)} instead.')
         raise err
-    if table not in TABLE_MASTERS.keys():
-        raise KeyError(f'Invalid table name {table}')
-    if not isinstance(channel, str):
-        err = TypeError(f'channel should be a string, got {type(channel)} instead.')
-        raise err
-    if channel not in AVAILABLE_CHANNELS:
-        raise KeyError(f'Invalid channel name {channel}')
-
-    column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
     # 从指定的channel获取数据
-    if channel == 'df':
-        # 通过参数传递的DF获取数据
-        if df is None:
-            err = ValueError(f'a DataFrame must be given while channel == "df"')
-            raise err
-        if not isinstance(df, pd.DataFrame):
-            err = TypeError(f'local df should be a DataFrame, got {type(df)} instead.')
-            raise err
-        dnld_data = df
-    elif channel == 'csv':
-        # 读取本地csv数据文件获取数据
-        if f_name is None:
-            err = ValueError(f'a file path and name must be given while channel == "csv"')
-            raise err
-        if not isinstance(f_name, str):
-            err = TypeError(f'file name should be a string, got {type(df)} instead.')
-            raise err
-        dnld_data = pd.read_csv(f_name, **kwargs)
-    elif channel == 'excel':
-        # 读取本地Excel文件获取数据
-        assert f_name is not None, f'a file path and name must be given while channel == "excel"'
-        assert isinstance(f_name, str), \
-            f'file name should be a string, got {type(df)} instead.'
-        raise NotImplementedError
-    elif channel == 'tushare':
+    if channel == 'tushare':
         # 通过tushare的API下载数据
-        api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
+        api_name = TUSHARE_API_MAP[table][TUSHARE_API_MAP_COLUMNS.index('api')]
         try:
             dnld_data = acquire_data(api_name, **kwargs)
         except Exception as e:
             raise Exception(f'{e}: data {table} can not be acquired from tushare')
+    elif channel == 'akshare':
+        # 通过akshare的API下载数据
+        api_name = AKSHARE_API_MAP[table][AKSHARE_API_MAP_COLUMNS.index('api')]
+        try:
+            dnld_data = acquire_data(api_name, **kwargs)
+        except Exception as e:
+            raise Exception(f'{e}: data {table} can not be acquired from akshare')
+    elif channel == 'emoney':
+        # 通过东方财富网的API下载数据
+        api_name = EASTMONEY_API_MAP[table][EASTMONEY_API_MAP_COLUMNS.index('api')]
+        try:
+            dnld_data = acquire_data(api_name, **kwargs)
+        except Exception as e:
+            raise Exception(f'{e}: data {table} can not be acquired from eastmoney')
     else:
         raise NotImplementedError
-    res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-    return res
+
+    return dnld_data
 
 
 # TODO: this function belongs to datachannels.py
-def fetch_realtime_price_data(self, table, channel, symbols):
-    """ 获取分钟级实时股票价格数据，并进行内容写入前的预处理, 目前只支持下面的数据表获取实时分钟数据：
-    stock_1min/stock_5min/stock_15min/stock_30min/stock_hourly
+def fetch_realtime_price_data(channel, qt_code):
+    """ 从网络数据提供商获取实时股票价格数据
+
+    如果一个Channel提供了相应的实时数据获取API，这些API会被记录在MAP表中
+    以'real_time'为key的数据列中，这些API会被调用以获取实时数据
 
     Parameters
     ----------
-    table: str,
-        数据表名，必须是database中定义的数据表
     channel: str,
         数据获取渠道，金融数据API，支持以下选项:
         - 'eastmoney': 通过东方财富网的API获取数据
         - 'tushare':   从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'other':     NotImplemented 其他金融数据API，尚未开发
-    symbols: str or list of str
+    qt_code: str or list of str
         用于下载金融数据的函数参数，需要输入完整的ts_code，表示股票代码
 
     Returns
     -------
     pd.DataFrame:
         下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
-        columns: ts_code, trade_time, open, high, low, close, vol, amount
+        columns: qt_code, trade_time, open, high, low, close, vol, amount
     """
 
     # TODO: 将该函数移动到别的文件中如datachannels.py
@@ -244,33 +218,22 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
                         reversed_par_seq=False, parallel=True, process_count=None, chunk_size=100,
                         download_batch_size=0, download_batch_interval=0, refresh_trade_calendar=False,
                         log=False) -> None:
-    """ 批量下载历史数据并保存到本地数据仓库
+    """ 大批量下载数据表中的数据，并将下载的数据组装成pd.DataFrame，检查数据的完整性
+    完成数据清洗并返回可以直接写入数据表中的数据。
+
+    本函数一次下载一张数据表中的数据，目的是大批量下载全部数据，因此仅支持时间分段下载，不允许
+    指定单个证券代码下载数据。
+
+    本函数会解析输入的参数，如果参数范围过大导致下载的数据超出数据提供商的限制，会根据数据MAP表
+    中定义的规则将数据拆分成多组，分批下载。
+
+    下载过程可以并行进行，也可以顺序进行，可以设置下载的并行线程数，也可以设置下载的批次大小和
+    批次间隔时间。
+
+    数据下载的过程可以记录到日志中，以便查看下载的进度和结果
 
     Parameters
     ----------
-    tables: str or list of str
-        需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
-        例如，下面两种方式都合法且相同：
-            table='stock_indicator, stock_daily, income, stock_adj_factor'
-            table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']
-        除了直接给出表名称以外，还可以通过表类型指明多个表，可以同时输入多个类型的表：
-            - 'all'     : 所有的表
-            - 'cal'     : 交易日历表
-            - 'basics'  : 所有的基础信息表
-            - 'adj'     : 所有的复权因子表
-            - 'data'    : 所有的历史数据表
-            - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
-            - 'report'  : 财务报表
-            - 'comp'    : 指数成分表
-    dtypes: str or list of str
-        通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
-        如果给出了tables，则dtypes参数会被忽略
-    freqs: str or list of str
-        通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
-        如果tables != all时，给出freq会排除掉freq与之不符的数据表
-    asset_types: str or list of str
-        通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
-        如果tables != all时，给出asset_type会排除掉与之不符的数据表
     start_date: str YYYYMMDD
         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
     end_date: str YYYYMMDD
@@ -285,21 +248,6 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         - ['SSE', 'SZSE']
         - 'SSE, SZSE'
             上面两种写法等效，下载上海和深圳交易所的股票数据
-    symbols: str or list of str
-        限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
-        可以多种形式确定范围，以下输入均为合法输入：
-        - '000001'
-            没有指定asset_types时，000001.SZ, 000001.SH ... 等所有代码都会被选中下载
-            如果指定asset_types，只有符合类型的证券数据会被下载
-        - '000001, 000002, 000003'
-        - ['000001', '000002', '000003']
-            两种写法等效，列表中列举出的证券数据会被下载
-        - '000001:000300'
-            从'000001'开始到'000300'之间的所有证券数据都会被下载
-    merge_type: str, Default update
-        数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
-        - 'update' 默认值，下载并更新本地数据的重复部分，使用下载的数据覆盖本地数据
-        - 'ignore' 不覆盖本地的数据，在将数据复制到本地时，先去掉本地已经存在的数据，会导致速度降低
     reversed_par_seq: Bool, Default False
         是否逆序参数下载数据， 默认False
         - True:  逆序参数下载数据
@@ -321,8 +269,6 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
         该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效
         如果<=0，则不暂停，立即开始下一批数据下载
-    refresh_trade_calendar: Bool, Default False
-        是否强制刷新交易日历，如果为True，将下载最新的交易日历数据，如果为False，仅在交易日历数据不足时下载
     log: Bool, Default False
         是否记录数据下载日志
 
@@ -385,6 +331,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
             list_arg_filter = str_to_list(list_arg_filter, ',')
 
     # 2 生成需要处理的数据表清单 tables
+    # TODO: 这部分功能应该独立为一个函数，且数据表应该由函数调用者提供
     table_master = get_table_master()
     tables_to_refill = set()
     tables = [item.lower() for item in tables]
@@ -437,7 +384,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         tables_to_refill.update(dependent_tables)
 
         # 检查trade_calendar中是否有足够的数据，如果没有，需要包含trade_calendar表：
-        
+        # TODO, 将这部分功能独立为一个函数
         if 'trade_calendar' not in tables_to_refill:
             if refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
@@ -462,6 +409,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         table_count += 1
         cur_table_info = table_master.loc[table]
         # 3 生成数据下载参数序列
+        # TODO: 下载参数的生成应该独立为一个函数，方便不同的channel共用
         arg_name = cur_table_info.fill_arg_name
         fill_type = cur_table_info.fill_arg_type
         freq = cur_table_info.freq
@@ -486,6 +434,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         chunked_additional_args = []
         start_end_chunk_multiplier = 1
         # 生成start和end参数，如果需要的话
+        # TODO: 不同类型的参数生成应该独立为不同的函数，由不同的表视情况调用
         if allow_start_end:
             additional_args = {'start': start, 'end': end}
         if start_end_chunk_size > 0:
@@ -557,8 +506,12 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         time_elapsed = 0
         rows_affected = 0
         try:
+            # TODO: 这部分功能应该独立为一个函数，方便不同的channel共用
+            # TODO: data_channel下载数据后并不应该直接写入数据库，而是应该返回一个DataFrame
+            #  写入数据库由DataSource完成
             # 清单中的第一张表不使用parallel下载
             if parallel and table_count != 1:
+                # TODO: 每次下载一张表的数据，需要优化数据的组合，减少数据在内存中拷贝的次数，提升效率
                 with ThreadPoolExecutor(max_workers=process_count) as worker:
      '''
                     这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
@@ -642,7 +595,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
             warnings.warn(msg)
 
 
-TUSHARE_API_MAP_COLUMNS = {
+TUSHARE_API_MAP_COLUMNS = [
     'api',  # 1, 从tushare获取数据时使用的api名
     'fill_arg_name',  # 2, 从tushare获取数据时使用的api参数名
     'fill_arg_type',  # 3, 从tushare获取数据时使用的api参数类型
@@ -650,9 +603,15 @@ TUSHARE_API_MAP_COLUMNS = {
     'arg_allowed_code_suffix',  # 5, 从tushare获取数据时使用的api参数允许的股票代码后缀
     'arg_allow_start_end',  # 6, 从tushare获取数据时使用的api参数是否允许start_date和end_date
     'start_end_chunk_size',  # 7, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
-}
+]
 
 TUSHARE_API_MAP = {
+    'real_time':  # 实时行情数据
+        ['get_realtime_quotes', 'symbols', 'list', 'none', '', 'N', '', ''],
+
+    'trade_calendar':
+        ['trade_cal', 'exchange', 'list', 'SSE, SZSE, CFFEX, SHFE, CZCE, DCE, INE', '', 'N', '', ''],
+
     'stock_names':
         ['namechange', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
@@ -930,24 +889,24 @@ TUSHARE_API_MAP = {
         ['cn_pmi', '', '', '', '', '', ''],
 }
 
-AKSHARE_API_MAP_COLUMNS = {
-    'akshare',  # 1, 从akshare获取数据时使用的api名
+AKSHARE_API_MAP_COLUMNS = [
+    'api',  # 1, 从akshare获取数据时使用的api名
     'ak_fill_arg_name',  # 2, 从akshare获取数据时使用的api参数名
     'ak_fill_arg_type',  # 3, 从akshare获取数据时使用的api参数类型
     'ak_arg_rng',  # 4, 从akshare获取数据时使用的api参数取值范围
-}
+]
 
 AKSHARE_API_MAP = {
 
 }
 
-EASTMONEY_API_MAP_COLUMNS = {
-    'eastmoney',  # 8, 从东方财富网获取数据时使用的api名
-    'em_fill_arg_name',  # 9, 从东方财富网获取数据时使用的api参数名
-    'em_fill_arg_type',  # 10, 从东方财富网获取数据时使用的api参数类型
-    'em_arg_rng',  # 11, 从东方财富网获取数据时使用的api参数取值范围
-    'em_arg_allowed_code_suffix',  # 12, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
-}
+EASTMONEY_API_MAP_COLUMNS = [
+    'api',  # 1, 从东方财富网获取数据时使用的api名
+    'em_fill_arg_name',  # 2, 从东方财富网获取数据时使用的api参数名
+    'em_fill_arg_type',  # 3, 从东方财富网获取数据时使用的api参数类型
+    'em_arg_rng',  # 4, 从东方财富网获取数据时使用的api参数取值范围
+    'em_arg_allowed_code_suffix',  # 5, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
+]
 
 EASTMONEY_API_MAP = {
 
