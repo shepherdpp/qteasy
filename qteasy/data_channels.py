@@ -199,10 +199,7 @@ def fetch_realtime_price_data(self, table, channel, symbols):
 
         # 从下载的数据中提取出需要的列
         dnld_data = dnld_data[['code', 'time', 'open', 'high', 'low', 'close', 'volume', 'amount']]
-        dnld_data = dnld_data.rename(columns={
-            'code':   'ts_code',
-            'time':   'trade_time',
-            'volume': 'vol',
+        dnld_data = dnld_data.rename(columns={ 'code':   'ts_code', 'time':   'trade_time', 'volume': 'vol',
         })
 
         return dnld_data
@@ -215,12 +212,7 @@ def fetch_realtime_price_data(self, table, channel, symbols):
         result_data = pd.DataFrame(
                 columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
         )
-        table_freq_map = {
-            '1min':  1,
-            '5min':  5,
-            '15min': 15,
-            '30min': 30,
-            'h':     60,
+        table_freq_map = { '1min':  1, '5min':  5, '15min': 15, '30min': 30, 'h':     60,
         }
         current_time = pd.to_datetime('today')
         # begin time is freq minutes before current time
@@ -445,6 +437,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         tables_to_refill.update(dependent_tables)
 
         # 检查trade_calendar中是否有足够的数据，如果没有，需要包含trade_calendar表：
+        
         if 'trade_calendar' not in tables_to_refill:
             if refresh_trade_calendar:
                 tables_to_refill.add('trade_calendar')
@@ -567,10 +560,10 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
             # 清单中的第一张表不使用parallel下载
             if parallel and table_count != 1:
                 with ThreadPoolExecutor(max_workers=process_count) as worker:
-                    '''
+     '''
                     这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
                     通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
-                    '''
+     '''
                     api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
                     futures = {}
                     submitted = 0
@@ -649,7 +642,7 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
             warnings.warn(msg)
 
 
-TUSHARE_API_PARAM_COLUMNS = {
+TUSHARE_API_MAP_COLUMNS = {
     'api',  # 1, 从tushare获取数据时使用的api名
     'fill_arg_name',  # 2, 从tushare获取数据时使用的api参数名
     'fill_arg_type',  # 3, 从tushare获取数据时使用的api参数类型
@@ -659,23 +652,296 @@ TUSHARE_API_PARAM_COLUMNS = {
     'start_end_chunk_size',  # 7, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
 }
 
-TUSHARE_API_PARAMS = {
-    'trade_calender': ['trade_cal', 'exchange', 'list', 'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE,XHKG', '', '', '',],
-    'stock_basic': ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '',]
+TUSHARE_API_MAP = {
+    'stock_names':
+        ['namechange', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'stock_company':
+        ['stock_company', 'exchange', 'list', 'SSE, SZSE, BSE', '', '', ''],
+
+    'stk_managers':
+        ['stk_managers', 'ann_date', 'datetime', '19901211', '', '', ''],
+
+    'new_share':
+        ['new_share', 'none', 'none', 'none', '', 'Y', '200'],
+
+    'money_flow':
+        ['moneyflow', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'stock_limit':
+        ['stk_limit', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'stock_suspend':
+        ['suspend_d', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'HS_money_flow':
+        ['moneyflow_hsgt', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'HS_top10_stock':
+        ['hsgt_top10', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'HK_top10_stock':
+        ['ggt_top10', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'index_basic':
+        ['index_basic', 'market', 'list', 'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', '', ''],
+
+    'fund_basic':
+        ['fund_basic', 'market', 'list', 'E,O', '', '', ''],
+
+    'future_basic':
+        ['future_basic', 'exchange', 'list', 'CFFEX,DCE,CZCE,SHFE,INE', '', '', ''],
+
+    'opt_basic':
+        ['options_basic', 'exchange', 'list', 'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', '', ''],
+
+    'ths_index_basic':
+        ['ths_index', 'exchange', 'list', 'A, HK, US', '', '', ''],
+
+    'sw_industry_basic':
+        ['index_classify', 'src', 'list', 'sw2014, sw2021', '', '', ''],
+
+    'stock_1min':
+        ['mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y', '30'],
+
+    'stock_5min':
+        ['mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y', '90'],
+
+    'stock_15min':
+        ['mins15', 'ts_code', 'table_index', 'stock_basic', '', 'y', '180'],
+
+    'stock_30min':
+        ['mins30', 'ts_code', 'table_index', 'stock_basic', '', 'y', '360'],
+
+    'stock_hourly':
+        ['mins60', 'ts_code', 'table_index', 'stock_basic', '', 'y', '360'],
+
+    'stock_daily':
+        ['daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'stock_weekly':
+        ['weekly', 'trade_date', 'trade_date', '19901221', '', '', ''],
+
+    'stock_monthly':
+        ['monthly', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'index_1min':
+        ['mins1', 'ts_code', 'table_index', 'index_basic', 'SH,SZ', 'y', '30'],
+
+    'index_5min':
+        ['mins5', 'ts_code', 'table_index', 'index_basic', 'SH,SZ', 'y', '90'],
+
+    'index_15min':
+        ['mins15', 'ts_code', 'table_index', 'index_basic', 'SH,SZ', 'y', '180'],
+
+    'index_30min':
+        ['mins30', 'ts_code', 'table_index', 'index_basic', 'SH,SZ', 'y', '360'],
+
+    'index_hourly':
+        ['mins60', 'ts_code', 'table_index', 'index_basic', 'SH,SZ', 'y', '360'],
+
+    'index_daily':
+        ['index_daily', 'ts_code', 'table_index', 'index_basic', 'SH,CSI,SZ', 'y', ''],
+
+    'index_weekly':
+        ['index_weekly', 'trade_date', 'trade_date', '19910705', '', '', ''],
+
+    'index_monthly':
+        ['index_monthly', 'trade_date', 'trade_date', '19910731', '', '', ''],
+
+    'ths_index_daily':
+        ['ths_daily', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'ths_index_weight':
+        ['ths_member', 'ts_code', 'table_index', 'ths_index_basic', '', '', ''],
+
+    'ci_index_daily':
+        ['ci_daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'sw_index_daily':
+        ['sw_daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'global_index_daily':
+        ['index_global', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'fund_1min':
+        ['mins1', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ', 'y', '30'],
+
+    'fund_5min':
+        ['mins5', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ', 'y', '90'],
+
+    'fund_15min':
+        ['mins15', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ', 'y', '180'],
+
+    'fund_30min':
+        ['mins30', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ', 'y', '360'],
+
+    'fund_hourly':
+        ['mins60', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ', 'y', '360'],
+
+    'fund_daily':
+        ['fund_daily', 'trade_date', 'trade_date', '19980417', '', '', ''],
+
+    'fund_nav':
+        ['fund_net_value', 'nav_date', 'datetime', '20000107', '', '', ''],
+
+    'fund_share':
+        ['fund_share', 'ts_code', 'table_index', 'fund_basic', '', '', ''],
+
+    'fund_manager':
+        ['fund_manager', 'ts_code', 'table_index', 'fund_basic', 'OF, SZ, SH', '', ''],
+
+    'future_mapping':
+        ['fut_mapping', 'trade_date', 'trade_date', '19901219', '', '', ''],
+
+    'future_1min':
+        ['ft_mins1', 'ts_code', 'table_index', 'future_basic', '', 'y', '30'],
+
+    'future_5min':
+        ['ft_mins5', 'ts_code', 'table_index', 'future_basic', '', 'y', '90'],
+
+    'future_15min':
+        ['ft_mins15', 'ts_code', 'table_index', 'future_basic', '', 'y', '180'],
+
+    'future_30min':
+        ['ft_mins30', 'ts_code', 'table_index', 'future_basic', '', 'y', '360'],
+
+    'future_hourly':
+        ['ft_mins60', 'ts_code', 'table_index', 'future_basic', '', 'y', '360'],
+
+    'future_daily':
+        ['future_daily', 'trade_date', 'trade_date', '19950417', '', '', ''],
+
+    'future_weekly':
+        ['future_weekly', 'trade_date', 'trade_date', '19950417', '', '', ''],
+
+    'future_monthly':
+        ['future_monthly', 'trade_date', 'trade_date', '19950417', '', '', ''],
+
+    'options_1min':
+        ['mins1', 'ts_code', 'table_index', 'opt_basic', '', 'y', '30'],
+
+    'options_5min':
+        ['mins5', 'ts_code', 'table_index', 'opt_basic', '', 'y', '90'],
+
+    'options_15min':
+        ['mins15', 'ts_code', 'table_index', 'opt_basic', '', 'y', '180'],
+
+    'options_30min':
+        ['mins30', 'ts_code', 'table_index', 'opt_basic', '', 'y', '360'],
+
+    'options_hourly':
+        ['mins60', 'ts_code', 'table_index', 'opt_basic', '', 'y', '360'],
+
+    'options_daily':
+        ['options_daily', 'trade_date', 'trade_date', '20150209', '', '', ''],
+
+    'stock_adj_factor':
+        ['adj_factors', 'trade_date', 'trade_date', '19901219', '', '', ''],
+
+    'fund_adj_factor':
+        ['fund_adj', 'trade_date', 'trade_date', '19980407', '', '', ''],
+
+    'stock_indicator':
+        ['daily_basic', 'trade_date', 'trade_date', '19990101', '', '', ''],
+
+    'stock_indicator2':
+        ['bak_daily', 'trade_date', 'trade_date', '19990101', '', '', ''],
+
+    'index_indicator':
+        ['index_dailybasic', 'trade_date', 'trade_date', '20040102', '', '', ''],
+
+    'index_weight':
+        ['composite', 'trade_date', 'datetime', '20050408', '', '', ''],
+
+    'income':
+        ['income', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'balance':
+        ['balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'cashflow':
+        ['cashflow', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'financial':
+        ['indicators', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'forecast':
+        ['forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'express':
+        ['express', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'dividend':
+        ['dividend', 'ts_code', 'table_index', 'stock_basic', '', '', ''],
+
+    'top_list':
+        ['top_list', 'trade_date', 'trade_date', '20050101', '', '', ''],
+
+    'top_inst':
+        ['top_inst', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'sw_industry_detail':
+        ['index_member_all', 'ts_code', 'table_index', 'stock_basic', '', '', ''],
+
+    'block_trade':
+        ['block_trade', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'stock_holder_trade':
+        ['stk_holdertrade', 'trade_date', 'trade_date', '20100101', '', '', ''],
+
+    'margin':
+        ['margin', 'exchange_id', 'list', 'SSE,SZSE,BSE', '', '', ''],
+
+    'margin_detail':
+        ['margin_detail', 'trade_date', 'trade_date', '20190910', '', '', ''],
+
+    'shibor':
+        ['shibor', 'date', 'datetime', '20000101', '', '', ''],
+
+    'libor':
+        ['libor', 'date', 'datetime', '20000101', '', '', ''],
+
+    'hibor':
+        ['hibor', 'date', 'datetime', '20000101', '', '', ''],
+
+    'wz_index':
+        ['wz_index', 'date', 'datetime', '20121207', '', '', ''],
+
+    'gz_index':
+        ['gz_index', 'date', 'datetime', '19901211', '', '', ''],
+
+    'cn_gdp':
+        ['cn_gdp', '', '', '', '', '', ''],
+
+    'cn_cpi':
+        ['cn_cpi', '', '', '', '', '', ''],
+
+    'cn_ppi':
+        ['cn_ppi', '', '', '', '', '', ''],
+
+    'cn_money':
+        ['cn_m', '', '', '', '', '', ''],
+
+    'cn_sf':
+        ['sf_month', '', '', '', '', '', ''],
+
+    'cn_pmi':
+        ['cn_pmi', '', '', '', '', '', ''],
 }
 
-AKSHARE_API_PARAM_COLUMNS = {
-    'akshare',  # 13, 从akshare获取数据时使用的api名
-    'ak_fill_arg_name',  # 14, 从akshare获取数据时使用的api参数名
-    'ak_fill_arg_type',  # 15, 从akshare获取数据时使用的api参数类型
-    'ak_arg_rng',  # 16, 从akshare获取数据时使用的api参数取值范围
+AKSHARE_API_MAP_COLUMNS = {
+    'akshare',  # 1, 从akshare获取数据时使用的api名
+    'ak_fill_arg_name',  # 2, 从akshare获取数据时使用的api参数名
+    'ak_fill_arg_type',  # 3, 从akshare获取数据时使用的api参数类型
+    'ak_arg_rng',  # 4, 从akshare获取数据时使用的api参数取值范围
 }
 
-AKSHARE_API_PARAMS = {
+AKSHARE_API_MAP = {
 
 }
 
-EASTMONEY_API_PARAM_COLUMNS = {
+EASTMONEY_API_MAP_COLUMNS = {
     'eastmoney',  # 8, 从东方财富网获取数据时使用的api名
     'em_fill_arg_name',  # 9, 从东方财富网获取数据时使用的api参数名
     'em_fill_arg_type',  # 10, 从东方财富网获取数据时使用的api参数类型
@@ -683,6 +949,6 @@ EASTMONEY_API_PARAM_COLUMNS = {
     'em_arg_allowed_code_suffix',  # 12, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
 }
 
-EASTMONEY_API_PARAMS = {
+EASTMONEY_API_MAP = {
 
 }
