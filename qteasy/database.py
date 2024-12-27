@@ -3396,7 +3396,7 @@ def _resample_data(hist_data, target_freq,
 
 
 # noinspection PyUnresolvedReferences
-def set_primary_key_frame(df, primary_key, pk_dtypes):
+def set_primary_key_frame(df: pd.DataFrame, primary_key: [str], pk_dtypes: [str]) -> pd.DataFrame:
     """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
         并重设df的index为0，1，2，3，4...
 

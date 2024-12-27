@@ -43,7 +43,6 @@ data_channels.download_data(
 import pandas as pd
 
 
-# TODO: This function belongs to datachannels.py
 def fetch_history_table_data(table, channel='tushare', **kwargs):
     """从网络获取本地数据表的历史数据：
 
@@ -67,12 +66,6 @@ def fetch_history_table_data(table, channel='tushare', **kwargs):
     pd.DataFrame:
         下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
     """
-    # TODO: 将该函数移动到别的文件中如datachannels.py
-    #  这个函数的功能与DataSource的定义不符。
-    #  在DataSource中应该有一个API专司数据的清洗，以便任何形式的数据都
-    #  可以在清洗后被写入特定的数据表，而数据的获取则不应该放在DataSource中
-    #  DataSource应该被设计为专精与数据的存储接口，而不是数据获取接口
-    #  同样的道理适用于refill_local_source()函数
 
     # 目前仅支持从tushare获取数据，未来可能增加新的API
     from .tsfuncs import acquire_data
@@ -83,32 +76,23 @@ def fetch_history_table_data(table, channel='tushare', **kwargs):
     if channel == 'tushare':
         # 通过tushare的API下载数据
         api_name = TUSHARE_API_MAP[table][TUSHARE_API_MAP_COLUMNS.index('api')]
-        try:
-            dnld_data = acquire_data(api_name, **kwargs)
-        except Exception as e:
-            raise Exception(f'{e}: data {table} can not be acquired from tushare')
     elif channel == 'akshare':
         # 通过akshare的API下载数据
         api_name = AKSHARE_API_MAP[table][AKSHARE_API_MAP_COLUMNS.index('api')]
-        try:
-            dnld_data = acquire_data(api_name, **kwargs)
-        except Exception as e:
-            raise Exception(f'{e}: data {table} can not be acquired from akshare')
     elif channel == 'emoney':
         # 通过东方财富网的API下载数据
         api_name = EASTMONEY_API_MAP[table][EASTMONEY_API_MAP_COLUMNS.index('api')]
-        try:
-            dnld_data = acquire_data(api_name, **kwargs)
-        except Exception as e:
-            raise Exception(f'{e}: data {table} can not be acquired from eastmoney')
     else:
         raise NotImplementedError
+    try:
+        dnld_data = acquire_data(api_name, **kwargs)
+    except Exception as e:
+        raise Exception(f'{e}: data {table} can not be acquired from {channel}')
 
     return dnld_data
 
 
-# TODO: this function belongs to datachannels.py
-def fetch_realtime_price_data(channel, qt_code):
+def fetch_realtime_price_data(channel, qt_code, **kwargs):
     """ 从网络数据提供商获取实时股票价格数据
 
     如果一个Channel提供了相应的实时数据获取API，这些API会被记录在MAP表中
@@ -137,13 +121,6 @@ def fetch_realtime_price_data(channel, qt_code):
     #  可以在清洗后被写入特定的数据表，而数据的获取则不应该放在DataSource中
     #  DataSource应该被设计为专精与数据的存储接口，而不是数据获取接口
     #  同样的道理适用于refill_local_source()函数
-
-    # 目前支持从tushare和eastmoney获取数据，未来可能增加新的API
-    if not isinstance(table, str):
-        err = TypeError(f'table name should be a string, got {type(table)} instead.')
-        raise err
-    if table not in ['stock_1min', 'stock_5min', 'stock_15min', 'stock_30min', 'stock_hourly']:
-        raise KeyError(f'realtime minute data is not available for table {table}')
 
     table_freq_map = {
         '1min':  '1MIN',
@@ -513,10 +490,10 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
             if parallel and table_count != 1:
                 # TODO: 每次下载一张表的数据，需要优化数据的组合，减少数据在内存中拷贝的次数，提升效率
                 with ThreadPoolExecutor(max_workers=process_count) as worker:
-     '''
+                    '''
                     这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
                     通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
-     '''
+                    '''
                     api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
                     futures = {}
                     submitted = 0
@@ -871,22 +848,22 @@ TUSHARE_API_MAP = {
         ['gz_index', 'date', 'datetime', '19901211', '', '', ''],
 
     'cn_gdp':
-        ['cn_gdp', '', '', '', '', '', ''],
+        ['cn_gdp', 'none', '', '', '', '', ''],
 
     'cn_cpi':
-        ['cn_cpi', '', '', '', '', '', ''],
+        ['cn_cpi', 'none', '', '', '', '', ''],
 
     'cn_ppi':
-        ['cn_ppi', '', '', '', '', '', ''],
+        ['cn_ppi', 'none', '', '', '', '', ''],
 
     'cn_money':
-        ['cn_m', '', '', '', '', '', ''],
+        ['cn_m', 'none', '', '', '', '', ''],
 
     'cn_sf':
-        ['sf_month', '', '', '', '', '', ''],
+        ['sf_month', 'none', '', '', '', '', ''],
 
     'cn_pmi':
-        ['cn_pmi', '', '', '', '', '', ''],
+        ['cn_pmi', 'none', '', '', '', '', ''],
 }
 
 AKSHARE_API_MAP_COLUMNS = [

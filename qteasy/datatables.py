@@ -825,7 +825,7 @@ TABLE_SCHEMA = {
         {'columns':     ["index_code", "industry_name", "parent_code", "level", "industry_code",
                          "is_pub", "src"],
          'dtypes':      ["varchar(14)", "varchar(10)", "varchar(6)", "varchar(6)", "varchar(10)",
-                         "varchar(4)", "varchar(4)"],
+                         "varchar(4)", "varchar(8)"],
          'remarks':     ["指数代码", "行业名称", "父级代码", "行业名称", "行业代码",
                          "是否发布了指数", "行业分类（SW申万）"],
          'prime_keys':  [0]

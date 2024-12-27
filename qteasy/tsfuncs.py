@@ -37,10 +37,39 @@ EXTRA_RETRY_API = [
 
 # tsfuncs interface function, call this function to extract data
 def acquire_data(api_name, **kwargs):
-    """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
-    data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
-    data_download_retry_wait = QT_CONFIG.hist_dnld_retry_wait
-    data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
+    """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据
+
+    Parameters
+    ----------
+    api_name: str
+        tushare API的函数名
+    **kwargs:
+        tushare API的参数
+        除此之外，还可以传入以下参数：
+        retry_count: int, optional, should be greater than 0 and smaller than 10
+            重试次数
+        retry_wait: float, optional, should be in [0, 1]
+            重试等待时间, 单位秒
+        retry_backoff: float, optional, should be in [1, 3]
+            重试等待时间的指数增长因子
+    """
+
+    if 'retry_count' in kwargs:
+        data_download_retry_count = kwargs.pop('retry_count')
+    else:
+        data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
+
+    if 'retry_wait' in kwargs:
+        data_download_retry_wait = kwargs.pop('retry_wait')
+    else:
+        data_download_retry_wait = QT_CONFIG.hist_dnld_retry_wait
+
+    if 'retry_backoff' in kwargs:
+        data_download_retry_backoff = kwargs.pop('retry_backoff')
+    else:
+        data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
+
+    # make sure that the retry parameters are set to a reasonable value
 
     if api_name in EXTRA_RETRY_API:
         data_download_retry_count += 3
