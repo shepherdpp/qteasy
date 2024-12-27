@@ -1534,7 +1534,7 @@ TABLE_SCHEMA = {
 
     'cn_gdp':  # New, 国内生产总值季度数据!
         {'columns':     ["quarter", "gdp", "gdp_yoy", "pi", "pi_yoy", "si", "si_yoy", "ti", "ti_yoy"],
-         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float", "float"],
+         'dtypes':      ["varchar(8)", "float", "float", "float", "float", "float", "float", "float", "float"],
          'remarks':     ["季度", "GDP累计值（亿元）", "当季同比增速（%）", "第一产业累计值（亿元）", "第一产业同比增速（%）",
                          "第二产业累计值（亿元）", "第二产业同比增速（%）", "第三产业累计值（亿元）", "第三产业同比增速（%）"],
          'prime_keys':  [0]
@@ -1543,7 +1543,7 @@ TABLE_SCHEMA = {
     'cn_cpi':  # New, 居民消费价格指数月度数据!
         {'columns':     ["month", "nt_val", "nt_yoy", "nt_mom", "nt_accu", "town_val", "town_yoy",
                          "town_mom", "town_accu", "cnt_val", "cnt_yoy", "cnt_mom", "cnt_accu"],
-         'dtypes':      ["date", "float", "float", "float", "float", "float", "float",
+         'dtypes':      ["varchar(8)", "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float", "float"],
          'remarks':     ["月份YYYYMM", "全国当月值", "全国同比（%）", "全国环比（%）", "全国累计值", "城市当月值", "城市同比（%）",
                          "城市环比（%）", "城市累计值", "农村当月值", "农村同比（%）", "农村环比（%）", "农村累计值"],
@@ -1557,7 +1557,7 @@ TABLE_SCHEMA = {
                          "ppi_cg_c_mom", "ppi_cg_adu_mom", "ppi_cg_dcg_mom", "ppi_accu", "ppi_mp_accu",
                          "ppi_mp_qm_accu", "ppi_mp_rm_accu", "ppi_mp_p_accu", "ppi_cg_accu", "ppi_cg_f_accu",
                          "ppi_cg_c_accu", "ppi_cg_adu_accu", "ppi_cg_dcg_accu"],
-         'dtypes':      ["date", "float", "float", "float", "float", "float",
+         'dtypes':      ["varchar(8)", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float",
@@ -1578,7 +1578,7 @@ TABLE_SCHEMA = {
 
     'cn_money':  # New, 中国货币供应量!
         {'columns':     ["month", "m0", "m0_yoy", "m0_mom", "m1", "m1_yoy", "m1_mom", "m2", "m2_yoy", "m2_mom"],
-         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float", "float", "float"],
+         'dtypes':      ["varchar(8)", "float", "float", "float", "float", "float", "float", "float", "float", "float"],
          'remarks':     ["月份YYYYMM", "M0（亿元）", "M0同比（%）", "M0环比（%）", "M1（亿元）", "M1同比（%）", "M1环比（%）",
                          "M2（亿元）", "M2同比（%）", "M2环比（%）"],
          'prime_keys':  [0]
@@ -1586,7 +1586,7 @@ TABLE_SCHEMA = {
 
     'cn_sf':  # New, 中国社会融资规模月度数据!
         {'columns':     ["month", "inc_month", "inc_cumval", "stk_endval"],
-         'dtypes':      ["date", "float", "float", "float"],
+         'dtypes':      ["varchar(8)", "float", "float", "float"],
          'remarks':     ["月度", "社融增量当月值（亿元）", "社融增量累计值（亿元）", "社融存量期末值（万亿元）"],
          'prime_keys':  [0]
          },
@@ -1601,7 +1601,7 @@ TABLE_SCHEMA = {
                          "pmi020202", "pmi020300", "pmi020301", "pmi020302", "pmi020400", "pmi020401", "pmi020402",
                          "pmi020500", "pmi020501", "pmi020502", "pmi020600", "pmi020601", "pmi020602", "pmi020700",
                          "pmi020800", "pmi020900", "pmi021000", "pmi030000"],
-         'dtypes':      ["date", "float", "float", "float", "float", "float", "float", "float", "float", "float",
+         'dtypes':      ["varchar(8)", "float", "float", "float", "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float", "float", "float", "float", "float", "float",

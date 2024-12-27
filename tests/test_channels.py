@@ -44,7 +44,8 @@ class TestChannels(unittest.TestCase):
             if table == 'real_time':
                 continue
             if self.ds.table_data_exists(table):
-                self.ds.drop_table_data(table)
+                # these data can be retained for further testing
+                # self.ds.drop_table_data(table)
                 print(f'table {table} dropped.')
         print('tables dropped.')
 
