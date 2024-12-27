@@ -864,6 +864,7 @@ class DataSource:
         """
         tbl_columns = tuple(self._get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
+        # 确保df的列与数据库表的列相同
         if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notna(df), None)  # fill None in Dataframe will result in filling Nan since pandas v2.0

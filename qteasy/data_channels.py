@@ -730,7 +730,7 @@ TUSHARE_API_MAP = {
     'future_mapping':
         ['fut_mapping', 'trade_date', 'trade_date', '19901219', '', '', ''],
 
-    'future_1min':
+    'future_1min':  # future_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
         ['ft_mins1', 'ts_code', 'table_index', 'future_basic', '', 'y', '30'],
 
     'future_5min':
@@ -754,7 +754,7 @@ TUSHARE_API_MAP = {
     'future_monthly':
         ['future_monthly', 'trade_date', 'trade_date', '19950417', '', '', ''],
 
-    'options_1min':
+    'options_1min':  # options_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
         ['mins1', 'ts_code', 'table_index', 'opt_basic', '', 'y', '30'],
 
     'options_5min':
@@ -842,28 +842,28 @@ TUSHARE_API_MAP = {
         ['hibor', 'date', 'datetime', '20000101', '', '', ''],
 
     'wz_index':
-        ['wz_index', 'date', 'datetime', '20121207', '', '', ''],
+        ['wz_index', 'none', '', '', '', '', ''],
 
     'gz_index':
-        ['gz_index', 'date', 'datetime', '19901211', '', '', ''],
+        ['gz_index', 'none', '', '', '', '', ''],
 
     'cn_gdp':
-        ['cn_gdp', 'none', '', '', '', '', ''],
+        ['cn_gdp', 'start', 'quarter', '1976Q4', '', '', ''],
 
     'cn_cpi':
-        ['cn_cpi', 'none', '', '', '', '', ''],
+        ['cn_cpi', 'start', 'month', '197601', '', '', ''],
 
     'cn_ppi':
-        ['cn_ppi', 'none', '', '', '', '', ''],
+        ['cn_ppi', 'start', 'month', '197601', '', '', ''],
 
     'cn_money':
-        ['cn_m', 'none', '', '', '', '', ''],
+        ['cn_m', 'start', 'month', '197601', '', '', ''],
 
     'cn_sf':
-        ['sf_month', 'none', '', '', '', '', ''],
+        ['sf_month', 'start', 'month', '197601', '', '', ''],
 
     'cn_pmi':
-        ['cn_pmi', 'none', '', '', '', '', ''],
+        ['cn_pmi', 'start', 'month', '197601', '', '', ''],
 }
 
 AKSHARE_API_MAP_COLUMNS = [

@@ -82,7 +82,10 @@ def acquire_data(api_name, **kwargs):
             backoff=data_download_retry_backoff,
             logger=logger_core,
     )
-    func = globals()[api_name]
+    try:
+        func = globals()[api_name]
+    except KeyError:
+        raise KeyError(f'undefined API {api_name} for tushare')
     decorated_func = retry_decorator(func)
     res = decorated_func(**kwargs)
     return res
@@ -2145,6 +2148,8 @@ def dividend(ts_code: str = None,
         base_date	    str	    N	    基准日
         base_share	    float	N	    基准股本（万）
     """
+    fields = 'ts_code, ann_date, end_date, div_proc, stk_div, stk_bo_rate, stk_co_rate, cash_div, cash_div_tax,' \
+                ' record_date, ex_date, pay_date, div_listdate, imp_ann_date, base_date, base_share'
     pro = ts.pro_api()
     res = pro.dividend(ts_code=ts_code,
                        ann_date=ann_date,
@@ -3551,4 +3556,91 @@ def libor(date=None, start=None, end=None, currency=None):
                     currency=currency)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: libor with date={date}, '
                      f'start_date={start}, end_date={end}, currency={currency}')
+    return res
+
+
+def wz_index(date=None, start=None, end=None):
+    """ 获取温州民间借贷利率指数"""
+    pro = ts.pro_api()
+    res = pro.wz_index(date=date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: wz_index with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def gz_index(date=None, start=None, end=None):
+    """ 获取广州民间借贷利率指数"""
+    pro = ts.pro_api()
+    res = pro.gz_index(date=date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: gz_index with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def cn_gdp(quarter=None, start=None, end=None):
+    """ 获取中国国内生产总值"""
+    fields = 'quarter,gdp,gdp_yoy,pi,pi_yoy,si,si_yoy,ti,ti_yoy'
+    pro = ts.pro_api()
+    res = pro.cn_gdp(q=quarter, start_q=start, end_q=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_gdp with quarter={quarter}')
+    return res
+
+
+def cn_cpi(month=None, start=None, end=None):
+    """ 获取中国居民消费价格指数"""
+    fields = "month, nt_val, nt_yoy, nt_mom, nt_accu, town_val, town_yoy, " \
+             "town_mom, town_accu, cnt_val, cnt_yoy, cnt_mom, cnt_accu"
+    pro = ts.pro_api()
+    res = pro.cn_cpi(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_cpi with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_ppi(month=None, start=None, end=None):
+    """ 获取中国工业品出厂价格指数"""
+    fields = "month, ppi_yoy, ppi_mp_yoy, ppi_mp_qm_yoy, ppi_mp_rm_yoy, ppi_mp_p_yoy, ppi_cg_yoy, ppi_cg_f_yoy, " \
+             "ppi_cg_c_yoy, ppi_cg_adu_yoy, ppi_cg_dcg_yoy, ppi_mom, ppi_mp_mom, ppi_mp_qm_mom, ppi_mp_rm_mom, " \
+             "ppi_mp_p_mom, ppi_cg_mom, ppi_cg_f_mom, ppi_cg_c_mom, ppi_cg_adu_mom, ppi_cg_dcg_mom, ppi_accu, " \
+             "ppi_mp_accu, ppi_mp_qm_accu, ppi_mp_rm_accu, ppi_mp_p_accu, ppi_cg_accu, ppi_cg_f_accu, ppi_cg_c_accu, " \
+             "ppi_cg_adu_accu, ppi_cg_dcg_accu"
+    pro = ts.pro_api()
+    res = pro.cn_ppi(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_ppi with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_money(month=None, start=None, end=None):
+    """ 获取中国货币供应量"""
+    fields = "month, m0, m0_yoy, m0_mom, m1, m1_yoy, m1_mom, m2, m2_yoy, m2_mom"
+    pro = ts.pro_api()
+    res = pro.cn_m(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_money_supply with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_sf(month=None, start=None, end=None):
+    """ 获取中国社会融资规模"""
+    fields = "month, inc_month, inc_cumval, stk_endval"
+    pro = ts.pro_api()
+    res = pro.cn_sf(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_social_fin with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_pmi(month=None, start=None, end=None):
+    """ 获取中国采购经理指数"""
+    fields = "month, pmi010000, pmi010100, pmi010200, pmi010300, pmi010400, pmi010401, pmi010402, pmi010403, " \
+             "pmi010500, pmi010501, pmi010502, pmi010503, pmi010600, pmi010601, pmi010602, pmi010603, pmi010700, " \
+             "pmi010701, pmi010702, pmi010703, pmi010800, pmi010801, pmi010802, pmi010803, pmi010900, pmi011000, " \
+             "pmi011100, pmi011200, pmi011300, pmi011400, pmi011500, pmi011600, pmi011700, pmi011800, pmi011900, " \
+             "pmi012000, pmi020100, pmi020101, pmi020102, pmi020200, pmi020201, pmi020202, pmi020300, pmi020301, " \
+             "pmi020302, pmi020400, pmi020401, pmi020402, pmi020500, pmi020501, pmi020502, pmi020600, pmi020601, " \
+             "pmi020602, pmi020700, pmi020800, pmi020900, pmi021000, pmi030000"
+    pro = ts.pro_api()
+    res = pro.cn_pmi(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_pmi with start_m={start}, end_m={end}')
     return res

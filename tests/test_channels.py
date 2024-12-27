@@ -82,15 +82,19 @@ class TestChannels(unittest.TestCase):
                     arg_value = '20210226'
                 elif arg_type == 'trade_date':
                     arg_value = '20210226'  # 这个交易日是特意选择的，因为它既是一个交易日，也同时是一周/一月内的最后一个交易日
+                elif arg_type == 'quarter':
+                    arg_value = '2020Q4'
+                elif arg_type == 'month':
+                    arg_value = '202102'
                 elif arg_type == 'table_index' and arg_range == 'stock_basic':
                     arg_value = '000651.SZ'
                 elif arg_type == 'table_index' and arg_range == 'index_basic':
                     arg_value = '000001.SH'
                 elif arg_type == 'table_index' and arg_range == 'fund_basic':
                     arg_value = '531300.SH'
-                elif arg_type == 'table_index' and arg_range == 'futures_basic':
+                elif arg_type == 'table_index' and arg_range == 'future_basic':
                     arg_value = 'IF2009.CCFX'
-                elif arg_type == 'table_index' and arg_range == 'option_basic':
+                elif arg_type == 'table_index' and arg_range == 'opt_basic':
                     arg_value = '10001234.SH'
                 elif arg_type == 'table_index' and arg_range == 'ths_index_basic':
                     arg_value = '700031.TI'

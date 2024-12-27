@@ -400,7 +400,7 @@ TABLE_MASTERS = {
         ['future_mapping', '期货合约映射表', 'data', 'FT', 'none', 'fut_mapping', 'trade_date', 'trade_date', '19901219',
          '', '', '', '', '', '', ''],
 
-    'future_1min':
+    'future_1min':  # future_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
         ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', 'ft_mins1', 'ts_code', 'table_index', 'future_basic',
          '', 'y', '30', '', '', '', ''],
 
@@ -434,7 +434,7 @@ TABLE_MASTERS = {
         ['future_daily', '期货月线行情', 'data', 'FT', 'm', 'future_monthly', 'trade_date', 'trade_date', '19950417', '',
          '', '', '', '', '', ''],
 
-    'options_1min':
+    'options_1min':  # options_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
         ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', 'mins1', 'ts_code', 'table_index', 'opt_basic',
          '', 'y', '30', '', '', '', ''],
 
@@ -852,7 +852,7 @@ TABLE_SCHEMA = {
 
     'adj_factors':  # 复权因子表
         {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
-         'dtypes':     ['varchar(9)', 'date', 'double'],
+         'dtypes':     ['varchar(24)', 'date', 'double'],
          'remarks':    ['证券代码', '交易日期', '复权因子'],
          'prime_keys': [0, 1]
          },
@@ -916,7 +916,7 @@ TABLE_SCHEMA = {
 
     'fund_share':  # 基金份额表
         {'columns':    ['ts_code', 'trade_date', 'fd_share'],
-         'dtypes':     ['varchar(20)', 'date', 'float'],
+         'dtypes':     ['varchar(24)', 'date', 'float'],
          'remarks':    ['证券代码', '变动日期，格式YYYYMMDD', '基金份额(万)'],
          'prime_keys': [0, 1]
          },
@@ -924,7 +924,7 @@ TABLE_SCHEMA = {
     'fund_manager':  # 基金经理表 -- REFINE
         {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'birth_year', 'edu', 'nationality',
                         'begin_date', 'end_date', 'resume'],
-         'dtypes':     ['varchar(20)', 'date', 'varchar(20)', 'varchar(2)', 'varchar(12)',
+         'dtypes':     ['varchar(24)', 'date', 'varchar(20)', 'varchar(2)', 'varchar(12)',
                         'varchar(30)', 'varchar(4)', 'date', 'date', 'text'],
          'remarks':    ['证券代码', '公告日期', '基金经理姓名', '性别', '出生年份', '学历', '国籍', '任职日期',
                         '离任日期', '简历'],
@@ -1406,7 +1406,7 @@ TABLE_SCHEMA = {
          },
 
     'dividend':  # New, 分红送股!
-        {'columns':     ["ts_code", "end_date", "ann_date", "div_proc", "stk_div", "stk_bo_rate", "stk_co_rate",
+        {'columns':     ["ts_code", "ann_date", "end_date", "div_proc", "stk_div", "stk_bo_rate", "stk_co_rate",
                          "cash_div", "cash_div_tax", "record_date", "ex_date", "pay_date", "div_listdate",
                          "imp_ann_date", "base_date", "base_share"],
          'dtypes':      ["varchar(14)", "date", "date", "varchar(10)", "float", "float", "float",
@@ -1415,7 +1415,7 @@ TABLE_SCHEMA = {
          'remarks':     ["TS代码", "分红年度", "预案公告日", "实施进度", "每股送转", "每股送股比例", "每股转增比例",
                          "每股分红（税后）", "每股分红（税前）", "股权登记日", "除权除息日", "派息日", "红股上市日",
                          "实施公告日", "基准日", "基准股本（万）"],
-         'prime_keys':  [0, 2]
+         'prime_keys':  [0, 1]
          },
 
     'top_list':  # New, 龙虎榜交易明细!
