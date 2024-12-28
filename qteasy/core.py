@@ -1080,6 +1080,24 @@ def get_history_data(htypes,
     else:
         return hp
 
+    
+def refill_local_source(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
+                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
+                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
+                        download_batch_interval=0, log=False) -> dict:
+    """ 从远程数据源下载数据并填充到本地数据源
+    """
+    from qteasy.data_channels import fetch_tables
+    from qteasy.database import update_local_data
+    dnld_data = fetch_tables(
+            channel, tables=tables, dtypes=dtypes, freqs=freqs, asset_types=asset_types,
+            refresh_trade_calendar=refresh_trade_calendar, symbols=symbols, start_date=start_date,
+            end_date=end_date, list_arg_filter=list_arg_filter, reversed_par_seq=reversed_par_seq,
+            parallel=parallel, process_count=process_count, chunk_size=chunk_size,
+            download_batch_size=download_batch_size, download_batch_interval=download_batch_interval,
+            log=log,
+    )
+    update_local_data(channel, dnld_data)
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
