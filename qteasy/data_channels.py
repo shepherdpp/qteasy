@@ -44,7 +44,7 @@ import pandas as pd
 
 
 def fetch_history_table_data(table, channel='tushare', **kwargs):
-    """从网络获取本地数据表的历史数据：
+    """从网络获取本地数据表的历史数据，调用API的参数只能是一组数据
 
     1，根据table以及channel的不同，调用不同的数据API获取函数，获取数据
     2，数据API从模块中定义的各个MAP表中获取
@@ -52,7 +52,7 @@ def fetch_history_table_data(table, channel='tushare', **kwargs):
     Parameters
     ----------
     table: str,
-        数据表名，必须是database中定义的数据表
+        数据表名，必须是API_MAP中定义的数据表
     channel: str, optional
         str: 数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
@@ -69,9 +69,6 @@ def fetch_history_table_data(table, channel='tushare', **kwargs):
 
     # 目前仅支持从tushare获取数据，未来可能增加新的API
     from .tsfuncs import acquire_data
-    if not isinstance(table, str):
-        err = TypeError(f'table name should be a string, got {type(table)} instead.')
-        raise err
     # 从指定的channel获取数据
     if channel == 'tushare':
         # 通过tushare的API下载数据
@@ -90,6 +87,242 @@ def fetch_history_table_data(table, channel='tushare', **kwargs):
         raise Exception(f'{e}: data {table} can not be acquired from {channel}')
 
     return dnld_data
+
+
+def fetch_batched_table_data(*, table, channel, arg_list, parallel, process_count, log,
+                             chunk_size, download_batch_size, download_batch_interval) -> pd.DataFrame:
+    """ 批量获取同一张数据表的数据，反复调用同一个API，但是传入一系列不同的参数
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是database中定义的数据表
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    arg_list: iterable
+        用于下载数据的函数参数
+    parallel: bool
+        是否启用多线程下载数据
+    process_count: int
+        启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+    """
+
+    # 本函数解析arg_list中的参数，循环或者并行调用fetch_history_table_data函数获取
+    # 数据，然后将数据合并成一个DataFrame返回
+    raise NotImplementedError
+
+
+def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_arg_filter, reversed_par_seq) -> dict:
+    """ 解析数据获取API的参数，生成下载数据的参数序列
+
+    本函数为data_channel的主API进行参数解析，用户在获取数据时，一般仅会指定需要获取的数据
+    类型、频率、开始和结束日期，以及可能的筛选参数，如股票代码、交易所等。Data_channel会将
+    这些参数解析成一组参数序列，用于调用数据获取API。
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是database中定义的数据表
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    start_date: str, optional
+        数据下载的开始日期
+    end_date: str, optional
+        数据下载的结束日期
+    list_arg_filter: str or list of str, optional
+        用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
+        如果filter_arg为None，则下载所有数据。
+        例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+        - 'SZSE'
+            仅下载深圳交易所的股票数据
+        - ['SSE', 'SZSE']
+        - 'SSE, SZSE'
+            上面两种写法等效，下载上海和深圳交易所的股票数据
+    symbols: str or list of str, optional
+        用于下载数据的股票代码，如果给出了symbols，只有这些股
+
+    Returns
+    -------
+    dict:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+# ======================================
+# 下面是一系列函数，针对不同的API主参数类型，生成下载数据的参数序列
+# ======================================
+
+
+def _parse_list_args(table, list_arg_filter) -> list:
+    """ 解析list类型的参数，生成下载数据的参数序列
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是database中定义的数据表
+    list_arg_filter: str or list of str, optional
+        用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
+        如果filter_arg为None，则下载所有数据。
+        例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+        - 'SZSE'
+            仅下载深圳交易所的股票数据
+        - ['SSE', 'SZSE']
+        - 'SSE, SZSE'
+            上面两种写法等效，下载上海和深圳交易所的股票数据
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_datetime_args(start_date, end_date) -> list:
+    """ 根据开始和结束日期，生成数据获取的参数序列
+
+    Parameters
+    ----------
+    start_date: str,
+        数据下载的开始日期
+    end_date: str,
+        数据下载的结束日期
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_trade_date_args(start_date, end_date) -> list:
+    """ 根据开始和结束日期，生成数据获取的参数序列
+
+    Parameters
+    ----------
+    start_date: str,
+        数据下载的开始日期
+    end_date: str,
+        数据下载的结束日期
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_table_index_args(table, symbols) -> list:
+    """ 根据开始和结束日期，生成数据获取的参数序列
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是database中定义的数据表
+    symbols: str or list of str,
+        用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_quarter_args(start_date, end_date) -> list:
+    """ 根据开始和结束日期，生成数据获取的参数序列
+
+    Parameters
+    ----------
+    start_date: str,
+        数据下载的开始日期
+    end_date: str,
+        数据下载的结束日期
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_month_args(start_date, end_date) -> list:
+    """ 根据开始和结束日期，生成数据获取的参数序列
+
+    Parameters
+    ----------
+    start_date: str,
+        数据下载的开始日期
+    end_date: str,
+        数据下载的结束日期
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_trade_time_args(start_date, end_date, freq) -> list:
+    """ 根据开始和结束日期，生成交易时间类型（分钟精度）数据获取的参数序列
+
+    Parameters
+    ----------
+    start_date: str,
+        数据下载的开始日期
+    end_date: str,
+        数据下载的结束日期
+    freq: str,
+        数据下载的频率，支持以下选项：
+        - '1min':  1分钟频率
+        - '5min':  5分钟频率
+        - '15min': 15分钟频率
+        - '30min': 30分钟频率
+        - 'h':     1小时频率
+
+    Returns
+    -------
+    list:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_calendar) -> set:
+    """ 根据输入的参数，生成需要下载的数据表清单
+
+    Parameters
+    ----------
+    tables: str or list of str,
+        数据表名，必须是database中定义的数据表
+    dtypes: str or list of str,
+        数据表的数据类型，必须是database中定义的数据类型
+    freqs: str or list of str,
+        数据表的数据频率，必须是database中定义的数据频率
+    asset_types: str or list of str,
+        数据表的资产类型，必须是database中定义的资产类型
+    refresh_trade_calendar: bool,
+        是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
+
+    Returns
+    -------
+    set:
+        需要下载的数据表清单
+    """
+    raise NotImplementedError
 
 
 def fetch_realtime_price_data(channel, qt_code, **kwargs):
@@ -189,16 +422,14 @@ def fetch_realtime_price_data(channel, qt_code, **kwargs):
         raise NotImplementedError
 
 
-# TODO: This function belongs to DataChannel class, not DataSource
-def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None, start_date=None,
-                        end_date=None, list_arg_filter=None, symbols=None, merge_type='update',
-                        reversed_par_seq=False, parallel=True, process_count=None, chunk_size=100,
-                        download_batch_size=0, download_batch_interval=0, refresh_trade_calendar=False,
-                        log=False) -> None:
-    """ 大批量下载数据表中的数据，并将下载的数据组装成pd.DataFrame，检查数据的完整性
+def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
+                 symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
+                 parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
+                 download_batch_interval=0, log=False) -> dict:
+    """ 大批量下载多张数据表中的数据，并将下载的数据组装成pd.DataFrame，检查数据的完整性
     完成数据清洗并返回可以直接写入数据表中的数据。
 
-    本函数一次下载一张数据表中的数据，目的是大批量下载全部数据，因此仅支持时间分段下载，不允许
+    本函数逐个下载指定数据表中的数据，目的是大批量下载全部数据，因此仅支持时间分段下载，不允许
     指定单个证券代码下载数据。
 
     本函数会解析输入的参数，如果参数范围过大导致下载的数据超出数据提供商的限制，会根据数据MAP表
@@ -211,6 +442,26 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
 
     Parameters
     ----------
+    channel: str,
+        数据获取渠道，金融数据API，支持以下选项:
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    == 前面四个参数用于筛选需要下载的数据表，必须至少输入一个 ==
+    tables: str or list of str, default: None
+        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+    dtypes: str or list of str, default: None
+        需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型
+    freqs: str or list of str, default: None
+        需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率
+    asset_types: str or list of str, default: None
+        需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型
+
+    == 第五个参数用于特别指定更新trade_calendar表 ==
+    refresh_trade_calendar: Bool, Default False
+        是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
+
+    == 后续几个参数用于下载数据的参数设置 ==
     start_date: str YYYYMMDD
         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
     end_date: str YYYYMMDD
@@ -225,10 +476,14 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
         - ['SSE', 'SZSE']
         - 'SSE, SZSE'
             上面两种写法等效，下载上海和深圳交易所的股票数据
+    symbols: str or list of str, default: None
+        用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载
     reversed_par_seq: Bool, Default False
         是否逆序参数下载数据， 默认False
         - True:  逆序参数下载数据
         - False: 顺序参数下载数据
+
+    == 最后几个参数用于下载数据的设置 ==
     parallel: Bool, Default True
         是否启用多线程下载数据
         - True:  启用多线程下载数据
@@ -251,325 +506,41 @@ def refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=
 
     Returns
     -------
-    None
-
+    dict:
+        返回一个字典，包含下载的数据DataFrame
     """
 
-    from .tsfuncs import acquire_data
-    # 1 参数合法性检查 TODO: 参数检查在core.py中完成，这里只需要调用即可
-    if (tables is None) and (dtypes is None):
-        raise KeyError(f'tables and dtypes can not both be None.')
-    if tables is None:
-        tables = []
-    if dtypes is None:
-        dtypes = []
-    valid_table_values = list(TABLE_MASTERS.keys()) + TABLE_USAGES + ['all']
-    if not isinstance(tables, (str, list)):
-        err = TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
-        raise err
-    if isinstance(tables, str):
-        tables = str_to_list(tables)
-    if not all(item.lower() in valid_table_values for item in tables):
-        raise KeyError(f'some items in tables list are not valid: '
-                       f'{[item for item in tables if item not in valid_table_values]}')
-    if not isinstance(dtypes, (str, list)):
-        err = TypeError(f'dtypes should be a list of a string, got {type(dtypes)} instead.')
-        raise err
-    if isinstance(dtypes, str):
-        dtypes = str_to_list(dtypes)
+    # 1, 解析需要下载的数据表清单
+    table_list = _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_calendar)
 
-    if chunk_size <= 0:
-        chunk_size = 100
+    result_data = {}
+    # 2, 循环下载数据表，单独对每个数据表进行参数拆解
+    for table in table_list:
+        # 2.1, 解析下载数据的参数
+        data_fetch_args = _parse_data_fetch_args(
+                table=table,
+                channel=channel,
+                symbols=symbols,
+                start_date=start_date,
+                end_date=end_date,
+                list_arg_filter=list_arg_filter,
+                reversed_par_seq=reversed_par_seq,
+        )
+        # 2.2, 批量下载数据
+        dnld_data = fetch_batched_table_data(
+                table=table,
+                channel=channel,
+                arg_list=data_fetch_args,
+                parallel=parallel,
+                process_count=process_count,
+                log=log,
+                chunk_size=chunk_size,
+                download_batch_size=download_batch_size,
+                download_batch_interval=download_batch_interval,
+        )
+        result_data[table] = dnld_data
 
-    if download_batch_size <= 0:
-        download_batch_size = 999999999999  # 一个很大的数，保证不会暂停下载
-
-    if download_batch_interval <= 0:
-        download_batch_interval = 0
-
-    code_start = None
-    code_end = None
-    if symbols is not None:
-        if not isinstance(symbols, (str, list)):
-            err = TypeError(f'code_range should be a string or list, got {type(symbols)} instead.')
-            raise err
-        if isinstance(symbols, str):
-            if len(str_to_list(symbols, ':')) == 2:
-                code_start, code_end = str_to_list(symbols, ':')
-                symbols = None
-            else:
-                symbols = str_to_list(symbols, ',')
-
-    if list_arg_filter is not None:
-        if not isinstance(list_arg_filter, (str, list)):
-            err = TypeError(f'list_arg_filter should be a string or list, got {type(list_arg_filter)} instead.')
-            raise err
-        if isinstance(list_arg_filter, str):
-            list_arg_filter = str_to_list(list_arg_filter, ',')
-
-    # 2 生成需要处理的数据表清单 tables
-    # TODO: 这部分功能应该独立为一个函数，且数据表应该由函数调用者提供
-    table_master = get_table_master()
-    tables_to_refill = set()
-    tables = [item.lower() for item in tables]
-    if 'all' in tables:
-        tables_to_refill.update(TABLE_MASTERS)
-    else:
-        for item in tables:
-            if item in TABLE_MASTERS:
-                tables_to_refill.add(item)
-            elif item in TABLE_USAGES:
-                tables_to_refill.update(
-                        table_master.loc[table_master.table_usage == item.lower()].index.to_list()
-                )
-        for item in dtypes:  # 如果给出了dtypes，进一步筛选tables中的表，删除不需要的
-            tables_to_keep = set()
-            for tbl, schema in table_master.schema.items():  # iteritems()在pandas中已经被废弃
-                if item.lower() in TABLE_SCHEMA[schema]['columns']:
-                    tables_to_keep.add(tbl)
-            tables_to_refill.intersection_update(
-                    tables_to_keep
-            )
-
-        if freqs is not None:
-            tables_to_keep = set()
-            for freq in str_to_list(freqs):
-                tables_to_keep.update(
-                        table_master.loc[table_master.freq == freq.lower()].index.to_list()
-                )
-            tables_to_refill.intersection_update(
-                    tables_to_keep
-            )
-        if asset_types is not None:
-            tables_to_keep = set()
-            for a_type in str_to_list(asset_types):
-                tables_to_keep.update(
-                        table_master.loc[table_master.asset_type == a_type.upper()].index.to_list()
-                )
-            tables_to_refill.intersection_update(
-                    tables_to_keep
-            )
-
-        dependent_tables = set()
-        for table in tables_to_refill:
-            cur_table = table_master.loc[table]
-            fill_type = cur_table.fill_arg_type
-            if fill_type == 'trade_date' and refresh_trade_calendar:
-                dependent_tables.add('trade_calendar')
-            elif fill_type == 'table_index':
-                dependent_tables.add(cur_table.arg_rng)
-        tables_to_refill.update(dependent_tables)
-
-        # 检查trade_calendar中是否有足够的数据，如果没有，需要包含trade_calendar表：
-        # TODO, 将这部分功能独立为一个函数
-        if 'trade_calendar' not in tables_to_refill:
-            if refresh_trade_calendar:
-                tables_to_refill.add('trade_calendar')
-            else:
-                # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖本周，如果没有数据或数据不足，也需要添加该表
-                latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)['pk_max2']
-                try:
-                    latest_calendar_date = pd.to_datetime(latest_calendar_date)
-                    present_week_day = pd.Timedelta(7, 'd') + pd.to_datetime('today')
-                    if present_week_day >= pd.to_datetime(latest_calendar_date):
-                        tables_to_refill.add('trade_calendar')
-                except:
-                    tables_to_refill.add('trade_calendar')
-
-    # 开始逐个下载清单中的表数据
-    table_count = 0
-    import time
-    for table in table_master.index:
-        # 逐个下载数据并写入本地数据表中
-        if table not in tables_to_refill:
-            continue
-        table_count += 1
-        cur_table_info = table_master.loc[table]
-        # 3 生成数据下载参数序列
-        # TODO: 下载参数的生成应该独立为一个函数，方便不同的channel共用
-        arg_name = cur_table_info.fill_arg_name
-        fill_type = cur_table_info.fill_arg_type
-        freq = cur_table_info.freq
-
-        # 开始生成所有的参数，参数的生成取决于fill_arg_type
-        if (start_date is None) and (fill_type in ['datetime', 'trade_date']):
-            start = cur_table_info.arg_rng
-        else:
-            start = start_date
-        if start is not None:
-            start = pd.to_datetime(start).strftime('%Y%m%d')
-        if end_date is None:
-            end = 'today'
-        else:
-            end = end_date
-        end = pd.to_datetime(end).strftime('%Y%m%d')
-        allow_start_end = (cur_table_info.arg_allow_start_end.lower() == 'y')
-        start_end_chunk_size = 0
-        if cur_table_info.start_end_chunk_size != '':
-            start_end_chunk_size = int(cur_table_info.start_end_chunk_size)
-        additional_args = {}
-        chunked_additional_args = []
-        start_end_chunk_multiplier = 1
-        # 生成start和end参数，如果需要的话
-        # TODO: 不同类型的参数生成应该独立为不同的函数，由不同的表视情况调用
-        if allow_start_end:
-            additional_args = {'start': start, 'end': end}
-        if start_end_chunk_size > 0:
-            start_end_chunk_lbounds = list(pd.date_range(start=start,
-                                                         end=end,
-                                                         freq=f'{start_end_chunk_size}d'
-                                                         ).strftime('%Y%m%d'))
-            start_end_chunk_rbounds = start_end_chunk_lbounds[1:]
-            # 取到的日线或更低频率数据是包括右边界的，去掉右边界可以得到更精确的结果
-            # 但是这样做可能没有意义
-            if freq.upper() in ['D', 'W', 'M']:
-                prev_day = pd.Timedelta(1, 'd')
-                start_end_chunk_rbounds = pd.to_datetime(start_end_chunk_lbounds[1:]) - prev_day
-                start_end_chunk_rbounds = list(start_end_chunk_rbounds.strftime('%Y%m%d'))
-
-            start_end_chunk_rbounds.append(end)
-            chunked_additional_args = [{'start': s, 'end': e} for s, e in
-                                       zip(start_end_chunk_lbounds, start_end_chunk_rbounds)]
-            start_end_chunk_multiplier = len(chunked_additional_args)
-        # 生成其他参数，根据不同的fill_type生成不同的参数序列
-        if fill_type in ['datetime', 'trade_date']:
-            # 根据start_date和end_date生成数据获取区间
-            additional_args = {}  # 使用日期作为关键参数，不再需要additional_args
-            arg_coverage = pd.date_range(start=start, end=end, freq=freq)
-            if fill_type == 'trade_date':
-                if freq.lower() in ['m', 'w', 'w-Fri']:
-                    # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
-                    arg_coverage = map(nearest_market_trade_day, arg_coverage)
-                if freq == 'd':
-                    arg_coverage = (date for date in arg_coverage if is_market_trade_day(date))
-            arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
-        elif fill_type == 'list':
-            # 如果参数是一个列表，直接使用这个列表作为参数序列，除非给出了list_arg_filter
-            arg_coverage = str_to_list(cur_table_info.arg_rng) if list_arg_filter is None else list_arg_filter
-        elif fill_type == 'table_index':
-            suffix = str_to_list(cur_table_info.arg_allowed_code_suffix)
-            source_table = self.read_table_data(cur_table_info.arg_rng)
-            arg_coverage = source_table.index.to_list()
-            if code_start is not None:
-                arg_coverage = [code for code in arg_coverage if (code_start <= code.split('.')[0] <= code_end)]
-            if symbols is not None:
-                arg_coverage = [code for code in arg_coverage if code.split('.')[0] in symbols]
-            if suffix:
-                arg_coverage = [code for code in arg_coverage if code.split('.')[1] in suffix]
-        else:
-            arg_coverage = []
-
-        # 处理数据下载参数序列，剔除已经存在的数据key
-        if self.table_data_exists(table) and merge_type.lower() == 'ignore':
-            # 当数据已经存在，且合并模式为"忽略新数据"时，从计划下载的数据范围中剔除已经存在的部分
-            already_existed = self.get_table_data_coverage(table, arg_name)
-            arg_coverage = [arg for arg in arg_coverage if arg not in already_existed]
-
-        # 生成所有的参数, 开始循环下载并更新数据
-        if reversed_par_seq:
-            arg_coverage.reverse()
-        if chunked_additional_args:
-            import itertools
-            all_kwargs = ({arg_name: val, **add_arg} for val, add_arg in
-                          itertools.product(arg_coverage, chunked_additional_args))
-        else:
-            all_kwargs = ({arg_name: val, **additional_args} for val in arg_coverage)
-
-        completed = 0
-        total = len(list(arg_coverage)) * start_end_chunk_multiplier
-        total_written = 0
-        st = time.time()
-        dnld_data = pd.DataFrame()
-        time_elapsed = 0
-        rows_affected = 0
-        try:
-            # TODO: 这部分功能应该独立为一个函数，方便不同的channel共用
-            # TODO: data_channel下载数据后并不应该直接写入数据库，而是应该返回一个DataFrame
-            #  写入数据库由DataSource完成
-            # 清单中的第一张表不使用parallel下载
-            if parallel and table_count != 1:
-                # TODO: 每次下载一张表的数据，需要优化数据的组合，减少数据在内存中拷贝的次数，提升效率
-                with ThreadPoolExecutor(max_workers=process_count) as worker:
-                    '''
-                    这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
-                    通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
-                    '''
-                    api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
-                    futures = {}
-                    submitted = 0
-                    for kw in all_kwargs:
-                        futures.update({worker.submit(acquire_data, api_name, **kw): kw})
-                        submitted += 1
-                        if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
-                            progress_bar(submitted, total, f'<{table}>: Submitting tasks, '
-                                                           f'Pausing for {download_batch_interval} sec...')
-                            time.sleep(download_batch_interval)
-                    # futures = {worker.submit(acquire_data, api_name, **kw): kw
-                    #            for kw in all_kwargs}
-                    progress_bar(0, total, f'<{table}>: estimating time left...')
-                    for f in as_completed(futures):
-                        df = f.result()
-                        cur_kwargs = futures[f]
-                        completed += 1
-                        if completed % chunk_size:
-                            dnld_data = pd.concat([dnld_data, df])
-                        else:
-                            dnld_data = pd.concat([dnld_data, df])
-                            rows_affected = self.update_table_data(table, dnld_data)
-                            dnld_data = pd.DataFrame()
-                        total_written += rows_affected
-                        time_elapsed = time.time() - st
-                        time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
-                                                      estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
-                                                       f'{total_written}wrtn/{time_remain} left')
-
-                    total_written += self.update_table_data(table, dnld_data)
-            else:
-                progress_bar(0, total, f'<{table}> estimating time left...')
-                for kwargs in all_kwargs:
-                    df = self.fetch_history_table_data(table, channel='tushare', **kwargs)
-                    completed += 1
-                    if completed % chunk_size:
-                        dnld_data = pd.concat([dnld_data, df])
-                    else:
-                        dnld_data = pd.concat([dnld_data, df])
-                        rows_affected = self.update_table_data(table, dnld_data)
-                        dnld_data = pd.DataFrame()
-                    total_written += rows_affected
-                    time_elapsed = time.time() - st
-                    time_remain = sec_to_duration(
-                            (total - completed) * time_elapsed / completed,
-                            estimation=True,
-                            short_form=False
-                    )
-
-                    if (download_batch_interval != 0) and (completed % download_batch_size == 0):
-                        progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
-                                                       f'{total_written}wrtn/Pausing for '
-                                                       f'{download_batch_interval} sec...')
-                        time.sleep(download_batch_interval)
-                    else:
-                        progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
-                                                       f'{total_written}wrtn/{time_remain} left')
-                total_written += self.update_table_data(table, dnld_data)
-            strftime_elapsed = sec_to_duration(
-                    time_elapsed,
-                    estimation=True,
-                    short_form=True
-            )
-            if len(arg_coverage) > 1:
-                progress_bar(total, total, f'<{table}:{arg_coverage[0]}-{arg_coverage[-1]}>'
-                                           f'{total_written}wrtn in {strftime_elapsed}\n')
-            else:
-                progress_bar(total, total, f'[{table}:None>'
-                                           f'{total_written}wrtn in {strftime_elapsed}\n')
-        except Exception as e:
-            total_written += self.update_table_data(table, dnld_data)
-            msg = f'\n{str(e)}: \ndownload process interrupted at [{table}]:' \
-                          f'<{arg_coverage[0]}>-<{arg_coverage[completed - 1]}>\n' \
-                          f'{total_written} rows downloaded, will proceed with next table!'
-            warnings.warn(msg)
+    return result_data
 
 
 TUSHARE_API_MAP_COLUMNS = [

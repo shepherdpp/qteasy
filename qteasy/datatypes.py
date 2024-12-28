@@ -2144,3 +2144,366 @@ def _expand_df_index(df: pd.DataFrame, starts: str, ends: str) -> pd.DataFrame:
     if ends not in expanded_index:
         expanded_index.append(ends)
     return df.reindex(expanded_index).sort_index(ascending=True)
+
+
+def get_history_data(self, shares=None, symbols=None, htypes=None, freq='d', start=None, end=None, row_count=100,
+                     asset_type='any', adj='none'):
+    """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
+        HistoryPanel对象。
+
+    Parameters
+    ----------
+    shares: str or list of str
+        等同于新的symbols参数，为了兼容旧的代码，保留此参数
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    symbols: str or list of str
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    htypes: str or list of str
+        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     'open, high, low, close'
+         - list:    ['open', 'high', 'low', 'close']
+    freq: str
+        获取的历史数据的频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+    start: str, optional
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+    end: str, optional
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    row_count: int, optional, default 10
+        获取的历史数据的行数，如果指定了start和end，则忽略此参数
+    asset_type: str or list of str
+        限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+        逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+         - any: 可以获取任意资产类型的证券数据(默认值)
+         - E:   只获取股票类型证券的数据
+         - IDX: 只获取指数类型证券的数据
+         - FT:  只获取期货类型证券的数据
+         - FD:  只获取基金类型证券的数据
+    adj: str
+        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+         - none / n: 不复权(默认值)
+         - back / b: 后复权
+         - forward / fw / f: 前复权
+
+    Returns
+    -------
+    Dict of DataFrame: {htype: DataFrame[shares]}
+        一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
+        HistoryPanel对象
+    """
+    if symbols is not None:
+        shares = symbols
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
+    if isinstance(asset_type, str):
+        if asset_type.lower() == 'any':
+            from qteasy.utilfuncs import AVAILABLE_ASSET_TYPES
+            asset_type = AVAILABLE_ASSET_TYPES
+        else:
+            asset_type = str_to_list(asset_type)
+
+    # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
+    table_master = get_table_master()
+    # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
+    tables_to_read = htype_to_table_col(
+            htypes=htypes,
+            freq=freq,
+            asset_type=asset_type,
+            soft_freq=True
+    )
+    table_data_acquired = {}
+    table_data_columns = {}
+    if (start is not None) or (end is not None):
+        # 如果指定了start或end，则忽略row_count参数, 但是如果row_count为None，则默认为-1, 读取所有数据
+        row_count = 0 if row_count is not None else -1
+    # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的键为表名，值为读取的DataFrame
+    for tbl, columns in tables_to_read.items():
+        df = self.read_table_data(tbl, shares=shares, start=start, end=end)
+        if not df.empty:
+            cols_to_drop = [col for col in df.columns if col not in columns]
+            df.drop(columns=cols_to_drop, inplace=True)
+            if row_count > 0:
+                # 读取每一个ts_code的最后row_count行数据
+                df = df.groupby('ts_code').tail(row_count)
+        table_data_acquired[tbl] = df
+        table_data_columns[tbl] = df.columns
+    # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
+    # 在df_by_htypes中预先存储了多个空DataFrame，用于逐个合并相关的历史数据
+    df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
+    for htyp in htypes:
+        for tbl in tables_to_read:
+            if htyp in table_data_columns[tbl]:
+                df = table_data_acquired[tbl]
+                # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstack，成为多列、单index的数据
+                if not df.empty:
+                    htyp_series = df[htyp]
+                    new_df = htyp_series.unstack(level=0)
+                    old_df = df_by_htypes[htyp]
+                    # 使用两种方法实现df的合并，分别是merge()和join()
+                    # df_by_htypes[htyp] = old_df.merge(new_df,
+                    #                                   how='outer',
+                    #                                   left_index=True,
+                    #                                   right_index=True,
+                    #                                   suffixes=('', '_y'))
+                    df_by_htypes[htyp] = old_df.join(new_df,
+                                                     how='outer',
+                                                     rsuffix='_y')
+
+    # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
+    conflict_cols = ''
+    for htyp in htypes:
+        df_columns = df_by_htypes[htyp].columns.to_list()
+        col_with_suffix = [col for col in df_columns if col[-2:] == '_y']
+        if len(col_with_suffix) > 0:
+            df_by_htypes[htyp].drop(columns=col_with_suffix, inplace=True)
+            conflict_cols += f'd-type {htyp} conflicts in {list(set(col[:-2] for col in col_with_suffix))};\n'
+    if conflict_cols != '':
+        warnings.warn(f'\nConflict data encountered, some types of data are loaded from multiple tables, '
+                      f'conflicting data might be discarded:\n'
+                      f'{conflict_cols}', DataConflictWarning)
+    # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
+    if all(df.empty for df in df_by_htypes.values()):
+        err = RuntimeError(f'Empty data extracted from DataSource {self.connection_type} with parameters:\n'
+                           f'shares: {shares}\n'
+                           f'htypes: {htypes}\n'
+                           f'start/end/freq: {start}/{end}/"{freq}"\n'
+                           f'asset_type/adj: {asset_type} / {adj}\n'
+                           f'To check data availability, use one of the following:\n'
+                           f'Availability of all tables:     qt.get_table_overview()，or\n'
+                           f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
+                           f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
+                           f'**kwargs)')
+        raise err
+    # 如果需要复权数据，计算复权价格
+    adj_factors = {}
+    if adj.lower() not in ['none', 'n']:
+        # 下载复权因子
+        adj_tables_to_read = table_master.loc[(table_master.table_usage == 'adj') &
+                                              table_master.asset_type.isin(asset_type)].index.to_list()
+        for tbl in adj_tables_to_read:
+            adj_df = self.read_table_data(tbl, shares=shares, start=start, end=end)
+            if not adj_df.empty:
+                adj_df = adj_df['adj_factor'].unstack(level=0)
+            adj_factors[tbl] = adj_df
+        # 如果adj table不为空但无法读取adj因子，则报错
+        if adj_tables_to_read and (not adj_factors):
+            err = ValueError(f'Failed reading price adjust factor data. call "qt.get_table_info()" to '
+                             f'check local source data availability')
+            raise err
+
+    if adj_factors:
+        # 根据复权因子更新所有可复权数据
+        prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]
+        for htyp in prices_to_adjust:
+            price_df = df_by_htypes[htyp]
+            all_ts_codes = price_df.columns
+            combined_factors = 1.0
+            # 后复权价 = 当日最新价 × 当日复权因子
+            for af in adj_factors:
+                combined_factors *= adj_factors[af].reindex(columns=all_ts_codes, index=price_df.index).fillna(1.0)
+            # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
+            #  但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
+            if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
+                expanded_factors = combined_factors.reindex(price_df.index.date)
+                expanded_factors.index = price_df.index
+                price_df *= expanded_factors
+            else:
+                price_df *= combined_factors
+            # 前复权价 = 当日复权价 ÷ 最新复权因子
+            if adj.lower() in ['forward', 'fw', 'f'] and len(combined_factors) > 1:
+                price_df /= combined_factors.iloc[-1]
+
+    # 最后整理数据，确保每一个htype的数据框的columns与shares相同
+    for htyp, df in df_by_htypes.items():
+        df_by_htypes[htyp] = df.reindex(columns=shares)
+    # print(f'[DEBUG]: in database.py get_history_data() got db_by_htypes:\n{df_by_htypes}')
+    return df_by_htypes
+
+def get_data_type(self, htype, *, symbols=None, starts=None, ends=None, target_freq=None):
+    """ DataSource类的主要获取数据的方法，根据数据类型，获取数据并输出
+
+    如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
+
+    Parameters
+    ----------
+    htype: DataType
+    """
+    return htype.get_data_from(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
+
+
+# TODO: this function searches datatypes, should be realized in DataTypes module as core,
+#  with a wrapper in qteasy module
+def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):
+    """ 根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
+    查找匹配的历史数据类型。
+
+    Parameters
+    ----------
+    s: str
+        一个字符串，用于查找或匹配历史数据类型
+    match_description: bool, Default: False
+        是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True
+         - False: 仅匹配数据名称
+         - True:  同时匹配数据描述
+    fuzzy: bool, Default: False
+        是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True
+         - False: 精确匹配数据名称
+         - True:  模糊匹配数据名称或数据描述
+    freq: str, Default: None
+        数据频率，如果提供，则只匹配该频率的数据
+        可以输入单个频率，也可以输入逗号分隔的多个频率
+    asset_type: str, Default: None
+        证券类型，如果提供，则只匹配该证券类型的数据
+        可以输入单个证券类型，也可以输入逗号分隔的多个证券类型
+    match_threshold: float, default 0.85
+        匹配度阈值，匹配度超过该阈值的项目会被判断为匹配
+
+    Returns
+    -------
+    data_id: list
+        匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.find_history_data('pe')
+    matched following history data,
+    use "qt.get_history_data()" to load these historical data by its data_id:
+    ------------------------------------------------------------------------
+               freq asset             table                            desc
+    data_id
+    initial_pe    d     E         new_share                  新股上市信息 - 发行市盈率
+    pe            d   IDX   index_indicator                    指数技术指标 - 市盈率
+    pe            d     E   stock_indicator  股票技术指标 - 市盈率（总市值/净利润， 亏损的PE为空）
+    pe_2          d     E  stock_indicator2                  股票技术指标 - 动态市盈率
+    ========================================================================
+
+    >>> qt.find_history_data('ep*')
+    matched following history data,
+    use "qt.get_history_data()" to load these historical data by its data_id:
+    ------------------------------------------------------------------------
+                  freq asset      table                 desc
+    data_id
+    eps_last_year    q     E    express  上市公司业绩快报 - 去年同期每股收益
+    eps              q     E  financial    上市公司财务指标 - 基本每股收益
+    ========================================================================
+
+    >>> qt.find_history_data('每股收益')
+    matched following history data,
+    use "qt.get_history_data()" to load these historical data by its data_id:
+    ------------------------------------------------------------------------
+                    freq asset      table                 desc
+    data_id
+    basic_eps              q     E     income           上市公司利润表 - 基本每股收益
+    diluted_eps            q     E     income           上市公司利润表 - 稀释每股收益
+    express_diluted_eps    q     E    express     上市公司业绩快报 - 每股收益(摊薄)(元)
+    yoy_eps                q     E    express    上市公司业绩快报 - 同比增长率:基本每股收益
+    eps_last_year          q     E    express        上市公司业绩快报 - 去年同期每股收益
+    eps                    q     E  financial          上市公司财务指标 - 基本每股收益
+    dt_eps                 q     E  financial          上市公司财务指标 - 稀释每股收益
+    diluted2_eps           q     E  financial        上市公司财务指标 - 期末摊薄每股收益
+    q_eps                  q     E  financial       上市公司财务指标 - 每股收益(单季度)
+    basic_eps_yoy          q     E  financial  上市公司财务指标 - 基本每股收益同比增长率(%)
+    dt_eps_yoy             q     E  financial  上市公司财务指标 - 稀释每股收益同比增长率(%)
+    ========================================================================
+
+    Raises
+    ------
+    TypeError: 输入的s不是字符串，或者freq/asset_type不是字符串或列表
+    """
+
+    if not isinstance(s, str):
+        err = TypeError(f'input should be a string, got {type(s)} instead.')
+        raise err
+    # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述
+    try:
+        s.encode('ascii')
+    except UnicodeEncodeError:
+        # is_ascii = False, 此时强制匹配description, 并且fuzzy匹配
+        match_description = True
+        fuzzy = True
+    if match_description:
+        fuzzy = True
+    if ('?' in s) or ('*' in s):
+        fuzzy = True  # 给出通配符时强制fuzzy匹配
+
+    data_table_map = get_dtype_map()
+    data_table_map['freq'] = data_table_map.index.get_level_values(level=1)
+    data_table_map['asset_type'] = data_table_map.index.get_level_values(level=2)
+
+    if freq is not None:
+        if isinstance(freq, str):
+            freq = str_to_list(freq)
+        if not isinstance(freq, list):
+            err = TypeError(f'freq should be a string or a list, got {type(freq)} instead')
+            raise err
+        data_table_map = data_table_map.loc[data_table_map['freq'].isin(freq)]
+    if asset_type is not None:
+        if isinstance(asset_type, str):
+            asset_type = str_to_list(asset_type)
+        if not isinstance(asset_type, list):
+            err = TypeError(f'asset_type should be a string or a list, got {type(asset_type)} instead')
+            raise err
+        data_table_map = data_table_map.loc[data_table_map['asset_type'].isin(asset_type)]
+
+    data_table_map['n_matched'] = 0  # name列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
+    data_table_map['d_matched'] = 0  # description列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
+
+    if (not fuzzy) and (not match_description):
+        data_table_map['n_matched'] = data_table_map['column'] == s
+        data_table_map['n_matched'] = data_table_map['n_matched'].astype('int')
+    else:
+        if match_description:
+            where_to_look = ['column', 'description']
+            match_how = [_lev_ratio, _partial_lev_ratio]
+            result_columns = ['n_matched', 'd_matched']
+        elif fuzzy:
+            where_to_look = ['column']
+            match_how = [_partial_lev_ratio]
+            result_columns = ['n_matched']
+        else:
+            where_to_look = ['column']
+            match_how = [_lev_ratio]
+            result_columns = ['n_matched']
+
+        for where, how, res in zip(where_to_look, match_how, result_columns):
+            if ('?' in s) or ('*' in s):
+                matched = _wildcard_match(s, data_table_map[where])
+                match_values = [1 if item in matched else 0 for item in data_table_map[where]]
+            else:
+                match_values = list(map(how, [s] * len(data_table_map[where]), data_table_map[where]))
+            data_table_map[res] = match_values
+
+    data_table_map['matched'] = data_table_map['n_matched'] + data_table_map['d_matched']
+    data_table_map = data_table_map.loc[data_table_map['matched'] >= match_threshold]
+    data_table_map.drop(columns=['n_matched', 'd_matched', 'matched'], inplace=True)
+    data_table_map.index = data_table_map.index.get_level_values(level=0)
+    data_table_map.index.name = 'data_id'
+    print(f'matched following history data, \n'
+          f'use "qt.get_history_data()" to load these historical data by its data_id:\n'
+          f'------------------------------------------------------------------------')
+    print(
+            data_table_map.to_string(
+                    columns=['freq',
+                             'asset_type',
+                             'table_name',
+                             'description'],
+                    header=['freq',
+                            'asset',
+                            'table',
+                            'desc'],
+            )
+    )
+    print(f'========================================================================')
+    return list(data_table_map.index)
