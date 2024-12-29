@@ -115,7 +115,7 @@ def fetch_batched_table_data(*, table, channel, arg_list, parallel, process_coun
     raise NotImplementedError
 
 
-def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_arg_filter, reversed_par_seq) -> dict:
+def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, list_arg_filter, reversed_par_seq) -> dict:
     """ 解析数据获取API的参数，生成下载数据的参数序列
 
     本函数为data_channel的主API进行参数解析，用户在获取数据时，一般仅会指定需要获取的数据
@@ -135,6 +135,13 @@ def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_a
         数据下载的开始日期
     end_date: str, optional
         数据下载的结束日期
+    freq: str, optional
+        数据下载的频率，支持以下选项(仅当数据类型为trade_time时)：
+        - '1min':  1分钟频率
+        - '5min':  5分钟频率
+        - '15min': 15分钟频率
+        - '30min': 30分钟频率
+        - 'h':     1小时频率
     list_arg_filter: str or list of str, optional
         用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
         参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
@@ -153,20 +160,62 @@ def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_a
     dict:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+
+    if channel == 'tushare':
+        API_MAP = TUSHARE_API_MAP
+    elif channel == 'akshare':
+        API_MAP = AKSHARE_API_MAP
+    elif channel == 'eastmoney':
+        API_MAP = EASTMONEY_API_MAP
+    else:
+        raise NotImplementedError(f'channel {channel} is not supported')
+
+    # get all tables in the API mapping
+    arg_type = API_MAP[table][2]
+    arg_range = API_MAP[table][3]
+
+    # parse the filling args and pick the first filling arg value from the range
+
+    arg_name = None
+
+    if arg_type == 'list':
+        arg_values = _parse_list_args(arg_range, list_arg_filter)
+    elif arg_type == 'datetime':
+        arg_values = _parse_datetime_args(arg_range, start_date, end_date)
+    elif arg_type == 'trade_date':
+        arg_values = _parse_trade_date_args(arg_range, start_date, end_date)
+    elif arg_type == 'trade_time':
+        arg_values = _parse_trade_time_args(arg_range, start_date, end_date, freq)
+    elif arg_type == 'quarter':
+        arg_values = _parse_quarter_args(arg_range, start_date, end_date)
+    elif arg_type == 'month':
+        arg_values = _parse_month_args(arg_range, start_date, end_date)
+    elif arg_type == 'table_index':
+        arg_values = _parse_table_index_args(arg_range, symbols)
+    else:
+        raise ValueError('unexpected arg type:', arg_type)
+
+    # build the args dict
+    if arg_name is not None:
+        kwargs = {arg_name: arg_values}
+    else:
+        kwargs = {}
+
+    return kwargs
 
 # ======================================
 # 下面是一系列函数，针对不同的API主参数类型，生成下载数据的参数序列
 # ======================================
 
 
-def _parse_list_args(table, list_arg_filter) -> list:
+def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str]):
     """ 解析list类型的参数，生成下载数据的参数序列
 
     Parameters
     ----------
-    table: str,
-        数据表名，必须是database中定义的数据表
+    arg_range: str or list of str,
+        用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
     list_arg_filter: str or list of str, optional
         用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
         参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
@@ -180,13 +229,33 @@ def _parse_list_args(table, list_arg_filter) -> list:
 
     Returns
     -------
+    list generator:
+        用于下载数据的参数序列
+    """
+    raise NotImplementedError
+
+
+def _parse_datetime_args(arg_range: str or [str], start_date: str, end_date: str):
+    """ 根据开始和结束日期，生成数据获取的参数序列
+
+    Parameters
+    ----------
+    arg_range: str or list of str,
+        用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+    start_date: str, YYYYMMDD
+        数据下载的开始日期
+    end_date: str, YYYYMMDD
+        数据下载的结束日期
+
+    Returns
+    -------
     list:
         用于下载数据的参数序列
     """
     raise NotImplementedError
 
 
-def _parse_datetime_args(start_date, end_date) -> list:
+def _parse_trade_date_args(arg_range, start_date, end_date):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
@@ -204,31 +273,13 @@ def _parse_datetime_args(start_date, end_date) -> list:
     raise NotImplementedError
 
 
-def _parse_trade_date_args(start_date, end_date) -> list:
+def _parse_table_index_args(table_name, symbols):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
     ----------
-    start_date: str,
-        数据下载的开始日期
-    end_date: str,
-        数据下载的结束日期
-
-    Returns
-    -------
-    list:
-        用于下载数据的参数序列
-    """
-    raise NotImplementedError
-
-
-def _parse_table_index_args(table, symbols) -> list:
-    """ 根据开始和结束日期，生成数据获取的参数序列
-
-    Parameters
-    ----------
-    table: str,
-        数据表名，必须是database中定义的数据表
+    table_name: str,
+        数据表名，定义为basics的数据表，包含股票代码等基本信息
     symbols: str or list of str,
         用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载
 
@@ -240,7 +291,7 @@ def _parse_table_index_args(table, symbols) -> list:
     raise NotImplementedError
 
 
-def _parse_quarter_args(start_date, end_date) -> list:
+def _parse_quarter_args(arg_range, start_date, end_date) -> list:
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
@@ -258,7 +309,7 @@ def _parse_quarter_args(start_date, end_date) -> list:
     raise NotImplementedError
 
 
-def _parse_month_args(start_date, end_date) -> list:
+def _parse_month_args(arg_range, start_date, end_date) -> list:
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
@@ -276,7 +327,7 @@ def _parse_month_args(start_date, end_date) -> list:
     raise NotImplementedError
 
 
-def _parse_trade_time_args(start_date, end_date, freq) -> list:
+def _parse_trade_time_args(arg_range, start_date, end_date, freq) -> list:
     """ 根据开始和结束日期，生成交易时间类型（分钟精度）数据获取的参数序列
 
     Parameters
@@ -523,6 +574,7 @@ def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=N
                 symbols=symbols,
                 start_date=start_date,
                 end_date=end_date,
+                freq=freqs,
                 list_arg_filter=list_arg_filter,
                 reversed_par_seq=reversed_par_seq,
         )

@@ -127,6 +127,20 @@ class TestChannels(unittest.TestCase):
             self.ds.update_table_data(table, ready_data, merge_type='update')
             print('data written to database.')
 
+    def test_arg_parsing(self):
+        """testing parsing of filling args"""
+
+        arg_name = 'ts_code'
+        arg_type = 'list'
+        arg_range = '000001.SZ,000002.SZ,000651.SZ'
+        range_list = str_to_list(arg_range)
+        arg_value = range_list[0]
+
+        print('arg_name:', arg_name)
+        print('arg_type:', arg_type)
+        print('arg_range:', arg_range)
+        print('arg_value:', arg_value)
+
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""
 

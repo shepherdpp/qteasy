@@ -1080,7 +1080,7 @@ def get_history_data(htypes,
     else:
         return hp
 
-    
+
 def refill_local_source(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
                         symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                         parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
