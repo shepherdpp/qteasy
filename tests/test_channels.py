@@ -19,6 +19,12 @@ from qteasy.data_channels import (
     AKSHARE_API_MAP,
     fetch_history_table_data,
     fetch_realtime_price_data,
+    _parse_list_args,
+    _parse_datetime_args,
+    _parse_trade_date_args,
+    _parse_quarter_args,
+    _parse_month_args,
+    _parse_table_index_args,
 )
 
 
@@ -36,9 +42,16 @@ class TestChannels(unittest.TestCase):
         )
         print('test datasource created.')
 
-        # if there already are tables existing in the datasource, drop them
+    def test_channel_tushare(self):
+        """testing downloading small piece of data and store them in self.test_ds"""
+
+        # tables into which to download data are from TABLE_MASTERS,
+        # but in the future, tables should be from data_channels
         all_tables = TUSHARE_API_MAP.keys()
 
+        self.assertIsInstance(self.ds, DataSource)
+
+        # if there already are tables existing in the datasource, drop them
         print('dropping tables in the test database...')
         for table in all_tables:
             if table == 'real_time':
@@ -48,15 +61,6 @@ class TestChannels(unittest.TestCase):
                 self.ds.drop_table_data(table)
                 print(f'table {table} dropped.')
         print('tables dropped.')
-
-    def test_channel_tushare(self):
-        """testing downloading small piece of data and store them in self.test_ds"""
-
-        # tables into which to download data are from TABLE_MASTERS,
-        # but in the future, tables should be from data_channels
-        all_tables = TUSHARE_API_MAP.keys()
-
-        self.assertIsInstance(self.ds, DataSource)
 
         for table in all_tables:
             if table == 'real_time':
@@ -130,16 +134,74 @@ class TestChannels(unittest.TestCase):
     def test_arg_parsing(self):
         """testing parsing of filling args"""
 
-        arg_name = 'ts_code'
-        arg_type = 'list'
-        arg_range = '000001.SZ,000002.SZ,000651.SZ'
-        range_list = str_to_list(arg_range)
-        arg_value = range_list[0]
+        print('testing parsing list type args')
+        arg_range = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z'
+        list_arg_filter = 'A, B, E'
 
-        print('arg_name:', arg_name)
-        print('arg_type:', arg_type)
-        print('arg_range:', arg_range)
-        print('arg_value:', arg_value)
+        res = list(_parse_list_args(arg_range, list_arg_filter))
+        print(f'arg filter: {list_arg_filter}:\n{res}')
+        self.assertEqual(res, ['A', 'B', 'E'])
+
+        list_arg_filter = ['A', 'B', 'E']
+        res = list(_parse_list_args(arg_range, ['A', 'B', 'E'], reversed=True))
+        print(f'arg filter: {list_arg_filter}:\n{res}')
+        self.assertEqual(res, ['E', 'B', 'A'])
+
+        list_arg_filter = 'A:E'
+        res = list(_parse_list_args(arg_range, 'A:E', reversed=False))
+        print(f'arg filter: {list_arg_filter}:\n{res}')
+        self.assertEqual(res, ['A', 'B', 'C', 'D', 'E'])
+
+        list_arg_filter = 'D:A'
+        res = list(_parse_list_args(arg_range, 'D:A', reversed=False))
+        print(f'arg filter: {list_arg_filter}:\n{res}')
+        self.assertEqual(res, ['A', 'B', 'C', 'D'])
+
+        list_arg_filter = None
+        res = list(_parse_list_args(arg_range, None, reversed=True))
+        print(f'arg filter: {list_arg_filter}:\n{res}')
+        self.assertEqual(res, ['Z', 'Y', 'X', 'W', 'V', 'U', 'T', 'S', 'R', 'Q', 'P', 'O', 'N', 'M', 'L', 'K',
+                               'J', 'I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A']
+        )
+
+        list_arg_filter = 'A:C:P'
+        res = list(_parse_list_args(arg_range, 'A:C:P', reversed=False))
+        print(f'arg filter: {list_arg_filter}:\n{res}')
+        self.assertEqual(res, ['A', 'B', 'C'])
+
+        # testing error handling:
+        with self.assertRaises(Exception):
+            list(_parse_list_args(arg_range, ['A:Z:1'], reversed=False))
+            list(_parse_list_args(arg_range, 35, reversed=False))
+
+        print('testing parsing datetime type args')
+        arg_range = '20210101'
+
+        start, end = '20210201', '20210210'
+        res = _parse_datetime_args(arg_range, start, end)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210201', '20210202', '20210203', '20210204', '20210205', '20210206',
+                               '20210207', '20210208', '20210209', '20210210'])
+
+        start, end = '20201220', '20210105'
+        res = _parse_datetime_args(arg_range, start, end)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210101', '20210102', '20210103', '20210104', '20210105'])
+
+        start, end = '20201220', '20210105'
+        res = _parse_datetime_args(arg_range, start, end, reversed=True)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210105', '20210104', '20210103', '20210102', '20210101'])
+
+        start, end = '20210110', '20210105'
+        res = _parse_datetime_args(arg_range, start, end, reversed=True)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210110', '20210109', '20210108', '20210107', '20210106', '20210105'])
+
+        # testing error handling:
+        with self.assertRaises(Exception):
+            _parse_datetime_args(arg_range, 'not_a_date', '20201231')
+            _parse_datetime_args(arg_range, '20210101', 20201231)
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""

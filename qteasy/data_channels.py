@@ -12,6 +12,11 @@
 # tushare, yahoo finance, akshare, etc.
 # ======================================
 
+
+import pandas as pd
+
+from .utilfuncs import str_to_list
+
 """
 这个模块提供一个统一数据下载api：
 data_channels.download_data(
@@ -179,7 +184,7 @@ def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, 
     arg_name = None
 
     if arg_type == 'list':
-        arg_values = _parse_list_args(arg_range, list_arg_filter)
+        arg_values = _parse_list_args(arg_range, list_arg_filter, reversed_par_seq)
     elif arg_type == 'datetime':
         arg_values = _parse_datetime_args(arg_range, start_date, end_date)
     elif arg_type == 'trade_date':
@@ -208,7 +213,7 @@ def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, 
 # ======================================
 
 
-def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str]):
+def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = None, reversed: bool = False):
     """ 解析list类型的参数，生成下载数据的参数序列
 
     Parameters
@@ -226,36 +231,81 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str]):
         - ['SSE', 'SZSE']
         - 'SSE, SZSE'
             上面两种写法等效，下载上海和深圳交易所的股票数据
+    reversed: bool, default False
+        是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
     -------
     list generator:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+    if isinstance(arg_range, str):
+        arg_range = str_to_list(arg_range)
+
+    if reversed:
+        arg_range = arg_range[::-1]
+
+    if list_arg_filter is None:
+        return (item for item in arg_range)
+
+    if (isinstance(list_arg_filter, str)) and ":" not in list_arg_filter:
+        # 如果list_arg_filter是字符串，且不包含":"，则将其转换为列表
+        list_arg_filter = str_to_list(list_arg_filter)
+
+    if isinstance(list_arg_filter, str):
+        # 如果list_arg_filter是字符串，且包含":"，则将其转换为上下限
+        list_arg_bounds = list_arg_filter.split(':')
+        list_idx_lower = arg_range.index(list_arg_bounds[0])
+        list_idx_upper = arg_range.index(list_arg_bounds[1])
+        if list_idx_lower > list_idx_upper:
+            # reverse the lower and upper index if lower is larger than upper
+            list_idx_lower, list_idx_upper = list_idx_upper, list_idx_lower
+        # 确认上下限的位置
+        return (item for item in arg_range[list_idx_lower:list_idx_upper+1])
+
+    return (item for item in arg_range if item in list_arg_filter)
 
 
-def _parse_datetime_args(arg_range: str or [str], start_date: str, end_date: str):
+def _parse_datetime_args(arg_range: str, start_date: str, end_date: str, reversed: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
     ----------
-    arg_range: str or list of str,
-        用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+    arg_range: str,
+        表示数据的时间范围的起始日期，如'20210101'表示从2021年1月1日开始
     start_date: str, YYYYMMDD
         数据下载的开始日期
     end_date: str, YYYYMMDD
         数据下载的结束日期
+    reversed: bool, default False
+        是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
     -------
     list:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+
+    first_date = pd.to_datetime(arg_range)  # assert arg_range is a valid date
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    if start_date < first_date:
+        start_date = first_date
+
+    if end_date < start_date:
+        # reverse the start and end date if end date is earlier than start date
+        start_date, end_date = end_date, start_date
+
+    res = pd.date_range(start_date, end_date).strftime('%Y%m%d').to_list()
+
+    if reversed:
+        return res[::-1]
+    else:
+        return res
 
 
-def _parse_trade_date_args(arg_range, start_date, end_date):
+def _parse_trade_date_args(arg_range, start_date: str, end_date: str, reversed: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
