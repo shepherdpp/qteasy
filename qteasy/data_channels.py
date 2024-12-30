@@ -213,7 +213,7 @@ def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, 
 # ======================================
 
 
-def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = None, reversed: bool = False):
+def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = None, reversed_par_seq: bool = False):
     """ 解析list类型的参数，生成下载数据的参数序列
 
     Parameters
@@ -231,7 +231,7 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = No
         - ['SSE', 'SZSE']
         - 'SSE, SZSE'
             上面两种写法等效，下载上海和深圳交易所的股票数据
-    reversed: bool, default False
+    reversed_par_seq: bool, default False
         是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
@@ -242,7 +242,7 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = No
     if isinstance(arg_range, str):
         arg_range = str_to_list(arg_range)
 
-    if reversed:
+    if reversed_par_seq:
         arg_range = arg_range[::-1]
 
     if list_arg_filter is None:
@@ -266,7 +266,8 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = No
     return (item for item in arg_range if item in list_arg_filter)
 
 
-def _parse_datetime_args(arg_range: str, start_date: str, end_date: str, reversed: bool = False):
+def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
+                         freq: str = 'd', reversed_par_seq: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
@@ -277,7 +278,12 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str, reverse
         数据下载的开始日期
     end_date: str, YYYYMMDD
         数据下载的结束日期
-    reversed: bool, default False
+    freq: str, optional
+        数据下载的频率，支持以下选项：
+        - 'd':  日频率
+        - 'w':  周频率
+        - 'm':  月频率
+    reversed_par_seq: bool, default False
         是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
@@ -297,15 +303,21 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str, reverse
         # reverse the start and end date if end date is earlier than start date
         start_date, end_date = end_date, start_date
 
-    res = pd.date_range(start_date, end_date).strftime('%Y%m%d').to_list()
+    if freq.lower() == 'w':
+        freq = 'w-Fri'
+    if freq.lower() == 'm':
+        freq = 'ME'
 
-    if reversed:
+    res = pd.date_range(start_date, end_date, freq=freq).strftime('%Y%m%d').to_list()
+
+    if reversed_par_seq:
         return res[::-1]
     else:
         return res
 
 
-def _parse_trade_date_args(arg_range, start_date: str, end_date: str, reversed: bool = False):
+def _parse_trade_date_args(arg_range, start_date: str, end_date: str,
+                           freq: str = 'd', market: str = 'SSE', reversed_par_seq: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
@@ -314,13 +326,36 @@ def _parse_trade_date_args(arg_range, start_date: str, end_date: str, reversed: 
         数据下载的开始日期
     end_date: str,
         数据下载的结束日期
+    freq: str, optional
+        数据下载的频率，支持以下选项：
+        - 'd':  日频率
+        - 'w':  周频率
+        - 'm':  月频率
+    market: str, optional
+        交易市场，支持数据表Trade_calendar中定义的交易市场
+    reversed_par_seq: bool, default False
+        是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
     -------
     list:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+
+    from .utilfuncs import is_market_trade_day, nearest_market_trade_day
+    full_dates = _parse_datetime_args(arg_range, start_date, end_date, freq, reversed_par_seq)
+
+    # 如果频率是月或周，分别查找所有日期的nearest_trade_day并删除重复日期
+    if freq.lower() in ['w', 'm']:
+        trade_dates = list(map(nearest_market_trade_day, full_dates))
+        trade_dates = list(set(trade_dates))
+        trade_dates.sort(reverse=reversed_par_seq)
+        trade_dates = [date.strftime('%Y%m%d') for date in trade_dates]
+    else:
+        # 如果频率是日，删除所有非交易日
+        trade_dates = [date for date in full_dates if is_market_trade_day(date, market)]
+
+    return trade_dates
 
 
 def _parse_table_index_args(table_name, symbols):
@@ -341,7 +376,7 @@ def _parse_table_index_args(table_name, symbols):
     raise NotImplementedError
 
 
-def _parse_quarter_args(arg_range, start_date, end_date) -> list:
+def _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq: bool = False) -> list:
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters

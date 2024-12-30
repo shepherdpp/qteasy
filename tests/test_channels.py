@@ -143,36 +143,36 @@ class TestChannels(unittest.TestCase):
         self.assertEqual(res, ['A', 'B', 'E'])
 
         list_arg_filter = ['A', 'B', 'E']
-        res = list(_parse_list_args(arg_range, ['A', 'B', 'E'], reversed=True))
+        res = list(_parse_list_args(arg_range, ['A', 'B', 'E'], reversed_par_seq=True))
         print(f'arg filter: {list_arg_filter}:\n{res}')
         self.assertEqual(res, ['E', 'B', 'A'])
 
         list_arg_filter = 'A:E'
-        res = list(_parse_list_args(arg_range, 'A:E', reversed=False))
+        res = list(_parse_list_args(arg_range, 'A:E', reversed_par_seq=False))
         print(f'arg filter: {list_arg_filter}:\n{res}')
         self.assertEqual(res, ['A', 'B', 'C', 'D', 'E'])
 
         list_arg_filter = 'D:A'
-        res = list(_parse_list_args(arg_range, 'D:A', reversed=False))
+        res = list(_parse_list_args(arg_range, 'D:A', reversed_par_seq=False))
         print(f'arg filter: {list_arg_filter}:\n{res}')
         self.assertEqual(res, ['A', 'B', 'C', 'D'])
 
         list_arg_filter = None
-        res = list(_parse_list_args(arg_range, None, reversed=True))
+        res = list(_parse_list_args(arg_range, None, reversed_par_seq=True))
         print(f'arg filter: {list_arg_filter}:\n{res}')
         self.assertEqual(res, ['Z', 'Y', 'X', 'W', 'V', 'U', 'T', 'S', 'R', 'Q', 'P', 'O', 'N', 'M', 'L', 'K',
                                'J', 'I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A']
         )
 
         list_arg_filter = 'A:C:P'
-        res = list(_parse_list_args(arg_range, 'A:C:P', reversed=False))
+        res = list(_parse_list_args(arg_range, 'A:C:P', reversed_par_seq=False))
         print(f'arg filter: {list_arg_filter}:\n{res}')
         self.assertEqual(res, ['A', 'B', 'C'])
 
         # testing error handling:
         with self.assertRaises(Exception):
-            list(_parse_list_args(arg_range, ['A:Z:1'], reversed=False))
-            list(_parse_list_args(arg_range, 35, reversed=False))
+            list(_parse_list_args(arg_range, ['A:Z:1'], reversed_par_seq=False))
+            list(_parse_list_args(arg_range, 35, reversed_par_seq=False))
 
         print('testing parsing datetime type args')
         arg_range = '20210101'
@@ -189,19 +189,69 @@ class TestChannels(unittest.TestCase):
         self.assertEqual(res, ['20210101', '20210102', '20210103', '20210104', '20210105'])
 
         start, end = '20201220', '20210105'
-        res = _parse_datetime_args(arg_range, start, end, reversed=True)
+        res = _parse_datetime_args(arg_range, start, end, reversed_par_seq=True)
         print(f'start, end: {start, end}:\n{res}')
         self.assertEqual(res, ['20210105', '20210104', '20210103', '20210102', '20210101'])
 
         start, end = '20210110', '20210105'
-        res = _parse_datetime_args(arg_range, start, end, reversed=True)
+        res = _parse_datetime_args(arg_range, start, end, reversed_par_seq=True)
         print(f'start, end: {start, end}:\n{res}')
         self.assertEqual(res, ['20210110', '20210109', '20210108', '20210107', '20210106', '20210105'])
+
+        start, end, freq = '20210101', '20210201', 'W'
+        res = _parse_datetime_args(arg_range, start, end, freq=freq)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210101', '20210108', '20210115', '20210122', '20210129'])
+
+        start, end, freq = '20210101', '20210401', 'M'
+        res = _parse_datetime_args(arg_range, start, end, freq=freq)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210131', '20210228', '20210331'])
 
         # testing error handling:
         with self.assertRaises(Exception):
             _parse_datetime_args(arg_range, 'not_a_date', '20201231')
             _parse_datetime_args(arg_range, '20210101', 20201231)
+
+        print('testing parsing trade_date args')
+        arg_range = '20210101'
+
+        start, end = '20210201', '20210210'
+        res = _parse_trade_date_args(arg_range, start, end)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210201', '20210202', '20210203', '20210204', '20210205',
+                               '20210208', '20210209', '20210210'])
+
+        start, end = '20201220', '20210105'
+        res = _parse_trade_date_args(arg_range, start, end)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210104', '20210105'])
+
+        start, end = '20201220', '20210105'
+        res = _parse_trade_date_args(arg_range, start, end, reversed_par_seq=True)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210105', '20210104'])
+
+        start, end = '20210110', '20210105'
+        res = _parse_trade_date_args(arg_range, start, end, reversed_par_seq=True)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210108', '20210107', '20210106', '20210105'])
+
+        start, end, freq = '20210101', '20210201', 'W'
+        res = _parse_trade_date_args(arg_range, start, end, freq=freq)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20201231', '20210108', '20210115', '20210122', '20210129'])
+
+        start, end, freq = '20210101', '20210401', 'M'
+        res = _parse_trade_date_args(arg_range, start, end, freq=freq)
+        print(f'start, end: {start, end}:\n{res}')
+        self.assertEqual(res, ['20210129', '20210226', '20210331'])
+
+        # testing error handling:
+        with self.assertRaises(Exception):
+            _parse_trade_date_args(arg_range, 'not_a_date', '20201231')
+            _parse_trade_date_args(arg_range, '20210101', 20201231)
+        
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""
