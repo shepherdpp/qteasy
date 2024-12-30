@@ -176,35 +176,47 @@ def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, 
         raise NotImplementedError(f'channel {channel} is not supported')
 
     # get all tables in the API mapping
+    arg_name = API_MAP[table][1]
     arg_type = API_MAP[table][2]
     arg_range = API_MAP[table][3]
+    allowed_code_suffix = API_MAP[table][4]
+    additional_start_end = API_MAP[table][5]
+    start_end_chunk_size = API_MAP[table][6]
 
     # parse the filling args and pick the first filling arg value from the range
 
-    arg_name = None
+    if arg_name == 'none':
+        arg_name = None
 
     if arg_type == 'list':
         arg_values = _parse_list_args(arg_range, list_arg_filter, reversed_par_seq)
     elif arg_type == 'datetime':
-        arg_values = _parse_datetime_args(arg_range, start_date, end_date)
+        arg_values = _parse_datetime_args(arg_range, start_date, end_date, freq, reversed_par_seq)
     elif arg_type == 'trade_date':
-        arg_values = _parse_trade_date_args(arg_range, start_date, end_date)
-    elif arg_type == 'trade_time':
-        arg_values = _parse_trade_time_args(arg_range, start_date, end_date, freq)
+        arg_values = _parse_trade_date_args(arg_range, start_date, end_date, freq, 'SSE', reversed_par_seq)
     elif arg_type == 'quarter':
-        arg_values = _parse_quarter_args(arg_range, start_date, end_date)
+        arg_values = _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq)
     elif arg_type == 'month':
-        arg_values = _parse_month_args(arg_range, start_date, end_date)
+        arg_values = _parse_month_args(arg_range, start_date, end_date, reversed_par_seq)
     elif arg_type == 'table_index':
-        arg_values = _parse_table_index_args(arg_range, symbols)
+        arg_values = _parse_table_index_args(arg_range, symbols, allowed_code_suffix, reversed_par_seq)
     else:
         raise ValueError('unexpected arg type:', arg_type)
 
     # build the args dict
-    if arg_name is not None:
-        kwargs = {arg_name: arg_values}
-    else:
+    if arg_name is None:
         kwargs = {}
+    elif additional_start_end.lower() != 'y':
+        # only standard args
+        kwargs = ({arg_name: val} for val in arg_values)
+    elif additional_start_end.lower() == 'y':
+        # build additional start/end args
+        additional_args = _parse_additional_time_args(start_end_chunk_size, start_date, end_date)
+        import itertools
+        kwargs = ({arg_name: val, **add_arg} for val, add_arg in
+                              itertools.product(arg_values, additional_args))
+    else:
+        raise ValueError('unexpected additional_start_end:', additional_start_end)
 
     return kwargs
 
@@ -505,29 +517,47 @@ def _parse_month_args(arg_range: str, start_date: str, end_date: str, reversed_p
     return month_list
 
 
-def _parse_trade_time_args(arg_range, start_date, end_date, freq) -> list:
-    """ 根据开始和结束日期，生成交易时间类型（分钟精度）数据获取的参数序列
+def _parse_additional_time_args(chunk_size, start_date, end_date) -> list:
+    """ 生成附加的开始/结束日期参数。对于分钟类型的数据表，按照qt_code生成参数序列
+    还有可能无法完整下载所有数据，因此需要增加start/end限制参数，限制每次下载的数据量
+    确保数据下载的完整性。
 
     Parameters
     ----------
+    chunk_size: str,
+        分批下载数据时，每一批数据包含的数据量，单位为天，表示每次下载多少天的数据
     start_date: str,
         数据下载的开始日期
     end_date: str,
         数据下载的结束日期
-    freq: str,
-        数据下载的频率，支持以下选项：
-        - '1min':  1分钟频率
-        - '5min':  5分钟频率
-        - '15min': 15分钟频率
-        - '30min': 30分钟频率
-        - 'h':     1小时频率
 
     Returns
     -------
-    list:
-        用于下载数据的参数序列
+    list: [{'start': date, 'end': date}, ...]
+        用于下载数据的额外参数序列，在主参数序列的基础上，增加了start和end参数
     """
-    raise NotImplementedError
+
+    start_date, end_date = _ensure_date_sequence('19700101', start_date, end_date)
+
+    if chunk_size is None or chunk_size == '':
+        chunk_size = 0
+    # assert arg_range is an integer and greater than or equal to 0
+    assert isinstance(chunk_size, int) and (chunk_size >= 0)
+
+    if chunk_size == 0:
+        return [{'start': start_date.strftime('%Y%m%d'), 'end': end_date.strftime('%Y%m%d')}]  # return the whole period
+
+    start_end_chunk_lbounds = list(pd.date_range(start=start_date,
+                                                 end=end_date,
+                                                 freq=f'{chunk_size}d'
+                                                 ).strftime('%Y%m%d'))
+    start_end_chunk_rbounds = start_end_chunk_lbounds[1:]
+
+    start_end_chunk_rbounds.append(end_date.strftime('%Y%m%d'))
+    chunked_additional_args = [{'start': s, 'end': e} for s, e in
+                               zip(start_end_chunk_lbounds, start_end_chunk_rbounds)]
+
+    return chunked_additional_args
 
 
 def _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_calendar) -> set:
@@ -821,6 +851,9 @@ TUSHARE_API_MAP = {
 
     'trade_calendar':
         ['trade_cal', 'exchange', 'list', 'SSE, SZSE, CFFEX, SHFE, CZCE, DCE, INE', '', 'N', '', ''],
+
+    'stock_basic':
+        ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '',],
 
     'stock_names':
         ['namechange', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],

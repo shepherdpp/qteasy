@@ -25,6 +25,8 @@ from qteasy.data_channels import (
     _parse_quarter_args,
     _parse_month_args,
     _parse_table_index_args,
+    _parse_additional_time_args,
+    _parse_data_fetch_args,
 )
 
 
@@ -309,6 +311,83 @@ class TestChannels(unittest.TestCase):
         self.assertEqual(res, ['202105', '202104', '202103', '202102', '202101',
                                '202012', '202011', '202010', '202009'])
 
+        # testing error handling:
+        with self.assertRaises(Exception):
+            _parse_quarter_args(arg_range, '202001', '2020030')
+            _parse_month_args(arg_range, '20200101', 20200930)
+
+        print('testing parsing additional start/end args')
+        arg_range = 15
+        res = _parse_additional_time_args(arg_range, '20210101', '20210321')
+        print(f'start, end: 20210101, 20210321:\n{res}')
+        self.assertEqual(
+                res,
+                [
+                    {'end': '20210116', 'start': '20210101'},
+                    {'end': '20210131', 'start': '20210116'},
+                    {'end': '20210215', 'start': '20210131'},
+                    {'end': '20210302', 'start': '20210215'},
+                    {'end': '20210317', 'start': '20210302'},
+                    {'end': '20210321', 'start': '20210317'},
+                ]
+        )
+
+    def test_table_arg_parsing(self):
+        """ testing parsing complete table download args """
+
+        table = 'stock_basic'
+
+        print(f'testing parsing args for table: {table}')
+        # parse the filling args and pick the first filling arg value from the range
+        args = _parse_data_fetch_args(table=table,
+                                      channel='tushare',
+                                      symbols='000651.SZ:000660.SZ',
+                                      start_date='20210101',
+                                      end_date='20210321',
+                                      freq='d',
+                                      list_arg_filter=None,
+                                      reversed_par_seq=False,
+                                      )
+        args = list(args)
+        print(f'args: {args}')
+        self.assertEqual(args, [{'exchange': 'SSE'}, {'exchange': 'SZSE'}, {'exchange': 'BSE'}])
+
+        table = 'stock_daily'
+        print(f'testing parsing args for table: {table}')
+        # parse the filling args and pick the first filling arg value from the range
+        args = _parse_data_fetch_args(table=table,
+                                      channel='tushare',
+                                      symbols='000651.SZ:000660.SZ',
+                                      start_date='20210101',
+                                      end_date='20210110',
+                                      freq='d',
+                                      list_arg_filter=None,
+                                      reversed_par_seq=False,
+                                      )
+        args = list(args)
+        print(f'args: {args}')
+        self.assertEqual(args, [{'trade_date': '20210104'},
+                                {'trade_date': '20210105'},
+                                {'trade_date': '20210106'},
+                                {'trade_date': '20210107'},
+                                {'trade_date': '20210108'}])
+
+        table = 'index_daily'
+        print(f'testing parsing args for table: {table}')
+        # parse the filling args and pick the first filling arg value from the range
+        args = _parse_data_fetch_args(table=table,
+                                      channel='tushare',
+                                      symbols='000001.SH, 000011.SH, 000016.SH, 000300.OTHER',
+                                      start_date='20210101',
+                                      end_date='20210110',
+                                      freq='d',
+                                      list_arg_filter=None,
+                                      reversed_par_seq=False,
+                                      )
+        args = list(args)
+        print(f'args: {args}')
+        self.assertEqual(args, [{'ts_code': '000001.SH', 'start': '20210101', 'end': '20210110'},
+                                {'ts_code': '000016.SH', 'start': '20210101', 'end': '20210110'}])
 
 
     def test_realtime_data(self):
