@@ -413,7 +413,7 @@ def _parse_table_index_args(arg_range: str, symbols: str, allowed_code_suffix: s
     return all_args
 
 
-def _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq: bool = False) -> list:
+def _parse_quarter_args(arg_range: str, start_date: str, end_date: str, reversed_par_seq: bool = False) -> list:
     """ 根据开始和结束日期，生成数据获取的参数序列，类似2022Q1等
 
     Parameters
@@ -457,22 +457,52 @@ def _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq: bool 
 
     return quarter_list
 
-def _parse_month_args(arg_range, start_date, end_date) -> list:
+
+def _parse_month_args(arg_range: str, start_date: str, end_date: str, reversed_par_seq: bool = False) -> list:
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
     ----------
+    arg_range: str,
+        数据下载的开始日期
     start_date: str,
         数据下载的开始日期
     end_date: str,
         数据下载的结束日期
+    reversed_par_seq: bool, default False
+        是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
     -------
     list:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
+
+    start_year = start_date.year
+    start_month = start_date.month
+    end_year = end_date.year
+    end_month = end_date.month
+
+    # calculate absolute month number
+    start_month = start_year * 12 + start_month
+    end_month = end_year * 12 + end_month
+
+    # complete list with all months
+    month_list = list(range(start_month, end_month + 1))
+
+    # convert absolute month number to year and month
+    month_list = [(m // 12, m % 12) for m in month_list]
+    # if month is 0, convert it to 12 and year - 1
+    month_list = [(y - 1, 12) if m == 0 else (y, m) for y, m in month_list]
+
+    # convert year and month to string
+    month_list = [f'{y}{m:02d}' for y, m in month_list]
+
+    if reversed_par_seq:
+        return month_list[::-1]
+
+    return month_list
 
 
 def _parse_trade_time_args(arg_range, start_date, end_date, freq) -> list:

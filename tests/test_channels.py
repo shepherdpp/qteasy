@@ -282,7 +282,7 @@ class TestChannels(unittest.TestCase):
             _parse_table_index_args(arg_range, symbols=['000651.SZ:000660.SZ'],
                                     allowed_code_suffix='SZ,SH')
 
-        print('testing parsing quarter args')
+        print('testing parsing quarter and month args')
 
         arg_range = '2020Q1'
         res = _parse_quarter_args(arg_range, '20200101', '20200930')
@@ -297,6 +297,17 @@ class TestChannels(unittest.TestCase):
         res = _parse_quarter_args(arg_range, '20210331', '20191021', reversed_par_seq=True)
         print(f'start, end: 2021Q1, 2019Q3:\n{res}')
         self.assertEqual(res, ['2021Q1', '2020Q4', '2020Q3', '2020Q2', '2020Q1'])
+
+        arg_range = '20210101'
+        res = _parse_month_args(arg_range, '20210101', '20210331')
+        print(f'start, end: 20210101, 20210331:\n{res}')
+        self.assertEqual(res, ['202101', '202102', '202103'])
+
+        arg_range = '20200901'
+        res = _parse_month_args(arg_range, '20200101', '20210530', reversed_par_seq=True)
+        print(f'start, end: 20200101, 20210530:\n{res}')
+        self.assertEqual(res, ['202105', '202104', '202103', '202102', '202101',
+                               '202012', '202011', '202010', '202009'])
 
 
 
