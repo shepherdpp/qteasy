@@ -251,7 +251,54 @@ class TestChannels(unittest.TestCase):
         with self.assertRaises(Exception):
             _parse_trade_date_args(arg_range, 'not_a_date', '20201231')
             _parse_trade_date_args(arg_range, '20210101', 20201231)
-        
+
+        print('testing parsing table index args')
+
+        arg_range = 'stock_basic'
+        res = _parse_table_index_args(arg_range, symbols='000651.SZ:000660.SZ')
+        print(f'symbols: 000651.SZ:000660.SZ:\n{res}')
+        self.assertEqual(res, ['000651.SZ', '000652.SZ', '000655.SZ', '000656.SZ', '000657.SZ', '000659.SZ'])
+
+        arg_range = 'stock_basic'
+        res = _parse_table_index_args(arg_range, symbols='000651.SZ:000660.SZ', reversed_par_seq=True)
+        print(f'symbols: 000651.SZ:000660.SZ:\n{res}')
+        self.assertEqual(res, ['000659.SZ', '000657.SZ', '000656.SZ', '000655.SZ', '000652.SZ', '000651.SZ'])
+
+        arg_range = 'stock_basic'
+        res = _parse_table_index_args(arg_range, symbols='000651.SZ,000659.SZ, 600000.SH, 600004.SH')
+        print(f'symbols: 000651.SZ,000660.SZ, 600001.SH, 600002.SH:\n{res}')
+        self.assertEqual(res, ['000651.SZ', '000659.SZ', '600000.SH', '600004.SH'])
+
+        arg_range = 'stock_basic'
+        res = _parse_table_index_args(arg_range, symbols='000651.SZ,000659.SZ, 600000.SH, 600004.SH',
+                                      allowed_code_suffix='SZ')
+        print(f'symbols: 000651.SZ,000659.SZ, 600000.SH, 600004.SH:\n{res}')
+        self.assertEqual(res, ['000651.SZ', '000659.SZ'])
+
+        # testing error handling:
+        with self.assertRaises(Exception):
+            _parse_table_index_args(arg_range, symbols=651,
+                                    allowed_code_suffix='SZ,SH')
+            _parse_table_index_args(arg_range, symbols=['000651.SZ:000660.SZ'],
+                                    allowed_code_suffix='SZ,SH')
+
+        print('testing parsing quarter args')
+
+        arg_range = '2020Q1'
+        res = _parse_quarter_args(arg_range, '20200101', '20200930')
+        print(f'start, end: 20200101, 20200930:\n{res}')
+        self.assertEqual(res, ['2020Q1', '2020Q2', '2020Q3'])
+
+        arg_range = '2020Q1'
+        res = _parse_quarter_args(arg_range, '20200101', '20201031')
+        print(f'start, end: 20200101, 20201031:\n{res}')
+        self.assertEqual(res, ['2020Q1', '2020Q2', '2020Q3', '2020Q4'])
+
+        res = _parse_quarter_args(arg_range, '20210331', '20191021', reversed_par_seq=True)
+        print(f'start, end: 2021Q1, 2019Q3:\n{res}')
+        self.assertEqual(res, ['2021Q1', '2020Q4', '2020Q3', '2020Q2', '2020Q1'])
+
+
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""

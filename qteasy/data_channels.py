@@ -292,16 +292,7 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
         用于下载数据的参数序列
     """
 
-    first_date = pd.to_datetime(arg_range)  # assert arg_range is a valid date
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
-
-    if start_date < first_date:
-        start_date = first_date
-
-    if end_date < start_date:
-        # reverse the start and end date if end date is earlier than start date
-        start_date, end_date = end_date, start_date
+    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
 
     if freq.lower() == 'w':
         freq = 'w-Fri'
@@ -316,7 +307,7 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
         return res
 
 
-def _parse_trade_date_args(arg_range, start_date: str, end_date: str,
+def _parse_trade_date_args(arg_range: str, start_date: str, end_date: str,
                            freq: str = 'd', market: str = 'SSE', reversed_par_seq: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
@@ -358,29 +349,77 @@ def _parse_trade_date_args(arg_range, start_date: str, end_date: str,
     return trade_dates
 
 
-def _parse_table_index_args(table_name, symbols):
+def _parse_table_index_args(arg_range: str, symbols: str, allowed_code_suffix: str = None,
+                            reversed_par_seq: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
 
     Parameters
     ----------
-    table_name: str,
+    arg_range: str,
         数据表名，定义为basics的数据表，包含股票代码等基本信息
     symbols: str or list of str,
         用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载
+    allowed_code_suffix: str, optional
+        用于下载数据的股票代码后缀，如果给出了allowed_code_suffix，只有这些股票代码的数据会被下载
+    reversed_par_seq: bool, default False
+        是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
     -------
     list:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+
+    from qteasy import QT_DATA_SOURCE
+
+    df_s, df_i, df_f, df_ft, df_o = QT_DATA_SOURCE.get_all_basic_table_data()
+
+    table_name = arg_range
+
+    if table_name == 'stock_basic':
+        all_args = df_s.index.to_list()
+    elif table_name == 'index_basic':
+        all_args = df_i.index.to_list()
+    elif table_name == 'fund_basic':
+        all_args = df_f.index.to_list()
+    elif table_name == 'futures_basic':
+        all_args = df_ft.index.to_list()
+    elif table_name == 'option_basic':
+        all_args = df_o.index.to_list()
+    else:
+        raise ValueError(f'unknown table name {table_name}')
+
+    if symbols is not None:  # assert symbols is a str, 进行第一次筛选
+        # 冒号分隔的字符串，表示股票代码的上下限
+        if ':' in symbols:
+            symbols = symbols.split(':')
+            lower = symbols[0].split('.')[0]
+            upper = symbols[1].split('.')[0]
+            if lower > upper:
+                lower, upper = upper, lower
+            all_args = [arg for arg in all_args if (lower <= arg.split('.')[0] <= upper)]
+
+        else:
+            symbols = str_to_list(symbols)
+            all_args = [arg for arg in all_args if arg in symbols]
+
+    if allowed_code_suffix is not None:  # assert allowed_code_suffix is a str, 进行第二次筛选
+        suffix = str_to_list(allowed_code_suffix)
+        all_args = [arg for arg in all_args if arg[-2:] in suffix]
+
+    if reversed_par_seq:
+        all_args = all_args[::-1]
+
+    return all_args
 
 
 def _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq: bool = False) -> list:
-    """ 根据开始和结束日期，生成数据获取的参数序列
+    """ 根据开始和结束日期，生成数据获取的参数序列，类似2022Q1等
 
     Parameters
     ----------
+    arg_range: str,
+        可以下载的最早数据的季度标识，如1976Q1标识1976年第一季度
     start_date: str,
         数据下载的开始日期
     end_date: str,
@@ -391,8 +430,32 @@ def _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq: bool 
     list:
         用于下载数据的参数序列
     """
-    raise NotImplementedError
+    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
 
+    start_year = start_date.year
+    start_quarter = (start_date.month - 1) // 3 + 1
+    end_year = end_date.year
+    end_quarter = (end_date.month - 1) // 3 + 1
+
+    # calculate absolute quarter number
+    start_quarter = start_year * 4 + start_quarter
+    end_quarter = end_year * 4 + end_quarter
+
+    # complete list with all quarters
+    quarter_list = list(range(start_quarter, end_quarter + 1))
+
+    # convert absolute quarter number to year and quarter
+    quarter_list = [(q // 4, q % 4) for q in quarter_list]
+    # if quarter is 0, convert it to 4 and year - 1
+    quarter_list = [(y - 1, 4) if q == 0 else (y, q) for y, q in quarter_list]
+
+    # convert year and quarter to string
+    quarter_list = [f'{y}Q{q}' for y, q in quarter_list]
+
+    if reversed_par_seq:
+        return quarter_list[::-1]
+
+    return quarter_list
 
 def _parse_month_args(arg_range, start_date, end_date) -> list:
     """ 根据开始和结束日期，生成数据获取的参数序列
@@ -459,6 +522,38 @@ def _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_cal
         需要下载的数据表清单
     """
     raise NotImplementedError
+
+
+def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
+    """ 确保开始和结束日期在first_date之后，如果不是，则交换开始和结束日期
+
+    Parameters
+    ----------
+    first_date: str,
+        数据表中的最早日期
+    start_date: str,
+        数据下载的开始日期
+    end_date: str,
+        数据下载的结束日期
+
+    Returns
+    -------
+    tuple: start_date, end_date
+        确保开始和结束日期在first_date之后的开始和结束日期
+    """
+
+    first_date = pd.to_datetime(first_date)
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    if start_date < first_date:
+        start_date = first_date
+    if end_date < first_date:
+        end_date = first_date
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+
+    return start_date, end_date
 
 
 def fetch_realtime_price_data(channel, qt_code, **kwargs):
@@ -685,8 +780,8 @@ TUSHARE_API_MAP_COLUMNS = [
     'fill_arg_name',  # 2, 从tushare获取数据时使用的api参数名
     'fill_arg_type',  # 3, 从tushare获取数据时使用的api参数类型
     'arg_rng',  # 4, 从tushare获取数据时使用的api参数取值范围
-    'arg_allowed_code_suffix',  # 5, 从tushare获取数据时使用的api参数允许的股票代码后缀
-    'arg_allow_start_end',  # 6, 从tushare获取数据时使用的api参数是否允许start_date和end_date
+    'allowed_code_suffix',  # 5, 从tushare获取数据时使用的api参数允许的股票代码后缀
+    'allow_start_end',  # 6, 从tushare获取数据时使用的api参数是否允许start_date和end_date
     'start_end_chunk_size',  # 7, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
 ]
 
