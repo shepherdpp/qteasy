@@ -88,65 +88,10 @@ table_name(key):            数据表的名称（主键）自定义表名称不�
 5, freq:                    表内数据的频率，如分钟、日、周等
                             设置为'D'、'W'等，用于筛选不同的数据表
                             'none'表示无频率
-
-6, tushare:                 对应的tushare API函数名, 参见tsfuncs.py中的定义
-
-7, fill_arg_name:           从tushare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
-                            例如，所有股票所有日期的日K线数据一共有超过1500万行，这些数据无法一次性下载
-                            必须分步多次下载。要么每次下载一只股票所有日期的数据，要么下载每天所有股票的数据。
-                            -   如果每次下载一只股票的数据，股票的代码就是关键参数，将所有股票的代码依次作为关键参数
-                                输入tushare API，就可以下载所有数据
-                            -   如果每次下载一天的数据，交易日期就是关键参数，将所有的交易日作为关键参数，也可以下载
-                                所有的数据
-                            对很多API来说，上述两种方式都是可行的，但是以日期为关键参数的方式更好，因为两个原因：
-                            1,  作为关键参数，交易日的数量更少，每年200个交易日，20年的数据也只需要下载4000次，如果
-                                使用股票代码，很多证券类型的代码远远超过4000个
-                            2,  补充下载数据时更方便，如果过去20年的数据都已经下载好了，仅需要补充下载最新一天的数据
-                                如果使用日期作为关键参数，仅下载一次就可以了，如果使用证券代码作为关键参数，需要下载
-                                数千次
-                            因此，应该尽可能使用日期作为关键参数
-                            可惜的是，并不是所有API都支持使用日期作为关键参数，所以，只要能用日期的数据表，都用日期
-                            为关键参数，否则采用其他类型的关键参数。
-
-8, fill_arg_type:           关键参数的数据类型，可以为list、table_index、datetime、trade_date，含义分别为：
-                            -   list: 
-                                列表类型，这个关键参数的取值只能是列表中的某一个元素
-                            -   table_index: 
-                                表索引，这个关键参数的取值只能是另一张数据表的索引值，这通常表示tushare不支持使用日期
-                                作为关键参数，因此必须使用一系列股票或证券代码作为关键参数的值，这些值保存在另一张数据
-                                表中，且是这个表的索引值。例如，所有股票的代码就保存在stock_basic表的索引中。
-                            -   datetime:
-                                日期类型，表示使用日期作为下载数据的关键参数。此时的日期不带时间类型，包含交易日与非
-                                交易日
-                            -   trade_date:
-                                交易日，与日期类型功能相同，但作为关键参数的日期必须为交易日
-
-9, arg_rng:                 关键参数的取值范围，
-                            -   如果数据类型为datetime或trade_date，是一个起始日期，表示取值范围从该日期到今日之间
-                            -   如果数据类型为table_index，取值范围是一张表，如stock_basic，表示数据从stock_basic的
-                                索引中取值
-                            -   如果数据类型为list，则直接给出取值范围，如"SSE,SZSE"表示可以取值SSE以及SZSE。
-
-10, arg_allowed_code_suffix:
-                            table_index类型取值范围的限制值，限制只有特定后缀的证券代码才会被用作参数下载数据。
-                            例如，取值"SH,SZ"表示只有以SH、SZ结尾的证券代码才会被用作参数从tushare下载数据。
-
-11, arg_allow_start_end:    使用table_index类型参数时，是否同时允许传入开始结束日期作为参数。如果设置为"Y"，则会在使用
-                            table_index中的代码作为参数下载数据时，同时传入开始和结束日期作为附加参数，否则仅传入代码
-
-12, start_end_chunk_size:   传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
-                            一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
-                            过这个天数。
-                            例如，设置该参数为100，则每个分块内的时间跨度不超过100天
-                    
-13, akshare:                对应的akshare API函数名
-
-14, ak_fill_arg_name:       从akshare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
-                            与tushare的fill_arg_name相同
-                            
-15, ak_fill_arg_type:       与tushare的fill_arg_type相同, 用于akshare API
-
-16, ak_arg_rng:             与tushare的arg_rng相同, 用于akshare API
+6, index_column:            数据表的索引列，除了数据表的Primary Key以外需要额外创建的索引列, 使用mysql数据库存储
+                            数据时设置索引可以大大提高查询性能，对于文件存储形式无效
+7, partition_column:        数据表的分区列，使用mysql数据库存储时，使用KEY(column)分区方式，对于文件存储形式无效
+8, partitions:              数据表的分区数量，使用mysql数据库存储时，使用KEY(column)分区方式，对于文件存储形式无效
 ---------------------------------------------------------------------------------------------------------
 
 2, TABLE_SCHEMAS:
@@ -176,416 +121,305 @@ TABLE_MASTER_COLUMNS = [
     'table_usage',  # 3, 数据表用途
     'asset_type',  # 4, 资产类型
     'freq',  # 5, 数据频率
-    'tushare',  # 6, 从tushare获取数据时使用的api名
-    'fill_arg_name',  # 7, 从tushare获取数据时使用的api参数名
-    'fill_arg_type',  # 8, 从tushare获取数据时使用的api参数类型
-    'arg_rng',  # 9, 从tushare获取数据时使用的api参数取值范围
-    'arg_allowed_code_suffix',  # 10, 从tushare获取数据时使用的api参数允许的股票代码后缀
-    'arg_allow_start_end',  # 11, 从tushare获取数据时使用的api参数是否允许start_date和end_date
-    'start_end_chunk_size',  # 12, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
-    'akshare',   # 13, 从akshare获取数据时使用的api名
-    'ak_fill_arg_name',   # 14, 从akshare获取数据时使用的api参数名
-    'ak_fill_arg_type',   # 15, 从akshare获取数据时使用的api参数类型
-    'ak_arg_rng',  # 16, 从akshare获取数据时使用的api参数取值范围
+    'index_column',  # 6, 数据表index column信，除了数据表的Primary Key以外需要额外创建的索引列
+    'partition_column',  # 7, 数据表分区列
+    'partitions',  # 8, 数据表分区数量
 ]
 TABLE_MASTERS = {
 
     'sys_op_live_accounts':
-        ['sys_op_live_accounts', '实盘运行基本信息主记录表', 'sys', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        ['sys_op_live_accounts', '实盘运行基本信息主记录表', 'sys', '', '', '', '', ''],
 
     'sys_op_positions':
-        ['sys_op_positions', '实盘运行持仓记录', 'sys', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        ['sys_op_positions', '实盘运行持仓记录', 'sys', '', '', '', '', ''],
 
     'sys_op_trade_orders':
-        ['sys_op_trade_orders', '实盘运行交易订单记录表', 'sys', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        ['sys_op_trade_orders', '实盘运行交易订单记录表', 'sys', '', '', '', '', ''],
 
     'sys_op_trade_results':
-        ['sys_op_trade_results', '实盘运行交易结果记录表', 'sys', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        ['sys_op_trade_results', '实盘运行交易结果记录表', 'sys', '', '', '', '', ''],
 
     'trade_calendar':
-        ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_cal', 'exchange', 'list',
-         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE,XHKG', '', '', '', '', '', '', ''],
+        ['trade_calendar', '交易日历', 'cal', 'none', 'none', '', '', ''],
 
     'stock_basic':
-        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '',
-         '',
-         '', '', '', '', ''],
+        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', '', '', ''],
 
     'stock_names':  # Complete, 股票名称变更
-        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'namechange', 'ts_code', 'table_index', 'stock_basic',
-         '', 'Y', '', '', '', '', ''],
+        ['name_changes', '股票名称变更', 'events', 'E', 'none', '', '', ''],
 
     'stock_company':
-        ['stock_company', '上市公司基本信息', 'basics', 'E', 'none', 'stock_company', 'exchange', 'list',
-         'SSE, SZSE, BSE',
-         '', '', '', '', '', '', ''],
+        ['stock_company', '上市公司基本信息', 'basics', 'E', 'none', '', '', ''],
 
     'stk_managers':
-        ['stk_managers', '上市公司管理层', 'events', 'E', 'd', 'stk_managers', 'ann_date', 'datetime', '19901211',
-         '', '', '', '', '', '', ''],
+        ['stk_managers', '上市公司管理层', 'events', 'E', 'd', '', '', ''],
 
     'new_share':
-        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_share', 'none', 'none', 'none',
-         '', 'Y', '200', '', '', '', ''],
+        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', '', '', ''],
 
     'money_flow':  # New, 个股资金流向!
-        ['money_flow', '资金流向', 'data', 'E', 'd', 'moneyflow', 'trade_date', 'trade_date', '20100101', '', '', '',
-         '', '', '', ''],
+        ['money_flow', '资金流向', 'data', 'E', 'd', '', '', ''],
 
     'stock_limit':  # New, 涨跌停价格!
-        ['stock_limit', '涨跌停价格', 'data', 'E,FD', 'd', 'stk_limit', 'trade_date', 'trade_date', '20100101', '', '', '',
-         '', '', '', ''],
+        ['stock_limit', '涨跌停价格', 'data', 'E,FD', '', '', '', ''],
 
     'stock_suspend':  # New, 停复牌信息!
-        ['stock_suspend', '停复牌信息', 'events', 'E', 'd', 'suspend_d', 'trade_date', 'trade_date', '20100101', '', '',
-         '', '', '', '', ''],
+        ['stock_suspend', '停复牌信息', 'events', 'E', 'd', '', '', ''],
 
     'HS_money_flow':  # New, 沪深股通资金流向!
-        ['HS_money_flow', '沪深股通资金流向', 'reference', 'none', 'd', 'moneyflow_hsgt', 'trade_date', 'trade_date',
-         '20100101', '', '', '', '', '', '', ''],
+        ['HS_money_flow', '沪深股通资金流向', 'reference', 'none', 'd', '', '', ''],
 
     'HS_top10_stock':  # New, 沪深股通十大成交股!
-        ['HS_top10_stock', '沪深股通十大成交股', 'events', 'E', 'd', 'hsgt_top10', 'trade_date', 'trade_date',
-         '20100101', '', '', '', '', '', '', ''],
+        ['HS_top10_stock', '沪深股通十大成交股', 'events', 'E', 'd', '', '', ''],
 
     'HK_top10_stock':  # New, 港股通十大成交股!
-        ['HK_top10_stock', '港股通十大成交股', 'events', 'E', 'd', 'ggt_top10', 'trade_date', 'trade_date',
-         '20100101', '', '', '', '', '', '', ''],
+        ['HK_top10_stock', '港股通十大成交股', 'events', 'E', 'd', '', '', ''],
 
     'index_basic':
-        ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', 'index_basic', 'market', 'list',
-         'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', '', '', '', '', '', ''],
+        ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', '', '', ''],
 
     'fund_basic':
-        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none', 'fund_basic', 'market', 'list', 'E,O', '', '', '', '', '',
-         '', ''],
+        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none', '', '', ''],
 
     'future_basic':
-        ['future_basic', '期货基本信息', 'basics', 'FT', 'none', 'future_basic', 'exchange', 'list',
-         'CFFEX,DCE,CZCE,SHFE,INE', '', '', '', '', '', '', ''],
+        ['future_basic', '期货基本信息', 'basics', 'FT', 'none', '', '', ''],
 
     'opt_basic':
-        ['opt_basic', '期权基本信息', 'basics', 'OPT', 'none', 'options_basic', 'exchange', 'list',
-         'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', '', '', '', '', '', ''],
+        ['opt_basic', '期权基本信息', 'basics', 'OPT', 'none', '', '', ''],
 
     'ths_index_basic':  # New, 同花顺指数基本信息
-        ['ths_index_basic', '同花顺指数基本信息', 'basic', 'THS', 'none', 'ths_index', 'exchange', 'list',
-         'A, HK, US', '', '', '', '', '', '', ''],
+        ['ths_index_basic', '同花顺指数基本信息', 'basic', 'THS', 'none', '', '', ''],
 
     'sw_industry_basic':  # New, 申万行业分类
-        ['sw_industry_basic', '申万行业分类', 'basic', 'IDX', 'none', 'index_classify', 'src', 'list', 'sw2014, sw2021',
-         '', '', '', '', '', '', ''],
+        ['sw_industry_basic', '申万行业分类', 'basic', 'IDX', 'none', '', '', ''],
 
     'stock_1min':
-        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y',
-         '30', '', '', '', ''],
+        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', '', '', ''],
 
     'stock_5min':
-        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y',
-         '90', '', '', '', ''],
+        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', '', '', ''],
 
     'stock_15min':
-        ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', 'mins15', 'ts_code', 'table_index', 'stock_basic', '',
-         'y', '180', '', '', '', ''],
+        ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', '', '', ''],
 
     'stock_30min':
-        ['min_bars', '股票30分钟K线行情', 'mins', 'E', '30min', 'mins30', 'ts_code', 'table_index', 'stock_basic', '',
-         'y', '360', '', '', '', ''],
+        ['min_bars', '股票30分钟K线行情', 'mins', 'E', '30min', '', '', ''],
 
     'stock_hourly':
-        ['min_bars', '股票60分钟K线行情', 'mins', 'E', 'h', 'mins60', 'ts_code', 'table_index', 'stock_basic', '',
-         'y', '360', '', '', '', ''],
+        ['min_bars', '股票60分钟K线行情', 'mins', 'E', 'h', '', '', ''],
 
     'stock_daily':
-        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+        ['bars', '股票日线行情', 'data', 'E', 'd', '', '', ''],
 
     'stock_weekly':
-        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'trade_date', '19901221', '', '', '', '', '', '', ''],
+        ['bars', '股票周线行情', 'data', 'E', 'w', '', '', ''],
 
     'stock_monthly':
-        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', '', '', '', '', '', ''],
+        ['bars', '股票月线行情', 'data', 'E', 'm', '', '', ''],
 
     'index_1min':
-        ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ',
-         'y', '30', '', '', '', ''],
+        ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', '', '', ''],
 
     'index_5min':
-        ['min_bars', '指数5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ',
-         'y', '90', '', '', '', ''],
+        ['min_bars', '指数5分钟K线行情', 'mins', 'IDX', '5min', '', '', ''],
 
     'index_15min':
-        ['min_bars', '指数15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ', 'y', '180', '', '', '', ''],
+        ['min_bars', '指数15分钟K线行情', 'mins', 'IDX', '15min', '', '', ''],
 
     'index_30min':
-        ['min_bars', '指数30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ', 'y', '360', '', '', '', ''],
+        ['min_bars', '指数30分钟K线行情', 'mins', 'IDX', '30min', '', '', ''],
 
     'index_hourly':
-        ['min_bars', '指数60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ', 'y', '360', '', '', '', ''],
+        ['min_bars', '指数60分钟K线行情', 'mins', 'IDX', 'h', '', '', ''],
 
     'index_daily':
-        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic',
-         'SH,CSI,SZ', 'y', '', '', '', '', ''],
+        ['bars', '指数日线行情', 'data', 'IDX', 'd', '', '', ''],
 
     'index_weekly':
-        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'trade_date', '19910705', '', '',
-         '', '', '', '', ''],
+        ['bars', '指数周线行情', 'data', 'IDX', 'w', '', '', ''],
 
     'index_monthly':
-        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', '',
-         '', '', '', '', ''],
+        ['bars', '指数月度行情', 'data', 'IDX', 'm', '', '', ''],
 
     'ths_index_daily':  # New, 同花顺行业指数日线行情!
-        ['ths_index_daily', '同花顺行业指数日线行情', 'data', 'THS', 'd', 'ths_daily', 'trade_date', 'trade_date',
-         '20100101', '', '', '', '', '', '', ''],
+        ['ths_index_daily', '同花顺行业指数日线行情', 'data', 'THS', 'd', '', '', ''],
 
     'ths_index_weight':  # New, 同花顺行业指数成分股权重!
-        ['ths_index_weight', '同花顺行业指数成分股权重', 'comp', 'THS', 'd', 'ths_member', 'ts_code', 'table_index',
-         'ths_index_basic', '', '', '', '', '', '', ''],
+        ['ths_index_weight', '同花顺行业指数成分股权重', 'comp', 'THS', 'd', '', '', ''],
 
     'ci_index_daily':  # New, 中信指数日线行情!
-        ['ci_index_daily', '中证指数日线行情', 'reference', 'none', 'd', 'ci_daily', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+        ['ci_index_daily', '中证指数日线行情', 'reference', 'none', 'd', '', '', ''],
 
     'sw_index_daily':  # New, 申万指数日线行情!
-        ['sw_index_daily', '申万指数日线行情', 'reference', 'none', 'd', 'sw_daily', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+        ['sw_index_daily', '申万指数日线行情', 'reference', 'none', 'd', '', '', ''],
 
     'global_index_daily':  # New, 全球指数日线行情!
-        ['global_index_daily', '全球指数日线行情', 'reference', 'none', 'd', 'index_global', 'trade_date', 'trade_date',
-         '19901211', '', '', '', '', '', '', ''],
+        ['global_index_daily', '全球指数日线行情', 'reference', 'none', 'd', '', '', ''],
 
     'fund_1min':
-        ['min_bars', '场内基金分钟K线行情', 'mins', 'FD', '1min', 'mins1', 'ts_code', 'table_index', 'fund_basic',
-         'SH,SZ',
-         'y', '30', '', '', '', ''],
+        ['min_bars', '场内基金分钟K线行情', 'mins', 'FD', '1min', '', '', ''],
 
     'fund_5min':
-        ['min_bars', '场内基金5分钟K线行情', 'mins', 'FD', '5min', 'mins5', 'ts_code', 'table_index', 'fund_basic',
-         'SH,SZ',
-         'y', '90', '', '', '', ''],
+        ['min_bars', '场内基金5分钟K线行情', 'mins', 'FD', '5min', '', '', ''],
 
     'fund_15min':
-        ['min_bars', '场内基金15分钟K线行情', 'mins', 'FD', '15min', 'mins15', 'ts_code', 'table_index', 'fund_basic',
-         'SH,SZ', 'y', '180', '', '', '', ''],
+        ['min_bars', '场内基金15分钟K线行情', 'mins', 'FD', '15min', '', '', ''],
 
     'fund_30min':
-        ['min_bars', '场内基金30分钟K线行情', 'mins', 'FD', '30min', 'mins30', 'ts_code', 'table_index', 'fund_basic',
-         'SH,SZ', 'y', '360', '', '', '', ''],
+        ['min_bars', '场内基金30分钟K线行情', 'mins', 'FD', '30min', '', '', ''],
 
     'fund_hourly':
-        ['min_bars', '场内基金60分钟K线行情', 'mins', 'FD', 'h', 'mins60', 'ts_code', 'table_index', 'fund_basic',
-         'SH,SZ', 'y', '360', '', '', '', ''],
+        ['min_bars', '场内基金60分钟K线行情', 'mins', 'FD', 'h', '', '', ''],
 
     'fund_daily':
-        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'trade_date', '19980417', '', '',
-         '', '', '', '', ''],
+        ['bars', '场内基金每日行情', 'data', 'FD', 'd', '', '', ''],
 
     'fund_nav':
-        ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'nav_date', 'datetime', '20000107', '',
-         '', '', '', '', '', ''],
+        ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', '', '', ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'data', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', '',
-         '', '', '', '', ''],
+        ['fund_share', '基金份额', 'data', 'FD', 'none', '', '', ''],
 
     'fund_manager':
-        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
-         'OF, SZ, SH', '', '', '', '', '', ''],
+        ['fund_manager', '基金经理', 'events', 'FD', 'none', '', '', ''],
 
     'future_mapping':  # New, 期货合约映射表!
-        ['future_mapping', '期货合约映射表', 'data', 'FT', 'none', 'fut_mapping', 'trade_date', 'trade_date', '19901219',
-         '', '', '', '', '', '', ''],
+        ['future_mapping', '期货合约映射表', 'data', 'FT', 'none', '', '', ''],
 
     'future_1min':  # future_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
-        ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', 'ft_mins1', 'ts_code', 'table_index', 'future_basic',
-         '', 'y', '30', '', '', '', ''],
+        ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', '', '', ''],
 
     'future_5min':
-        ['future_mins', '期货5分钟K线行情', 'mins', 'FT', '5min', 'ft_mins5', 'ts_code', 'table_index', 'future_basic',
-         '', 'y', '90', '', '', '', ''],
+        ['future_mins', '期货5分钟K线行情', 'mins', 'FT', '5min', '', '', ''],
 
     'future_15min':
-        ['future_mins', '期货15分钟K线行情', 'mins', 'FT', '15min', 'ft_mins15', 'ts_code', 'table_index',
-         'future_basic',
-         '', 'y', '180', '', '', '', ''],
+        ['future_mins', '期货15分钟K线行情', 'mins', 'FT', '15min', '', '', ''],
 
     'future_30min':
-        ['future_mins', '期货30分钟K线行情', 'mins', 'FT', '30min', 'ft_mins30', 'ts_code', 'table_index',
-         'future_basic',
-         '', 'y', '360', '', '', '', ''],
+        ['future_mins', '期货30分钟K线行情', 'mins', 'FT', '30min', '', '', ''],
 
     'future_hourly':
-        ['future_mins', '期货60分钟K线行情', 'mins', 'FT', 'h', 'ft_mins60', 'ts_code', 'table_index', 'future_basic',
-         '', 'y', '360', '', '', '', ''],
+        ['future_mins', '期货60分钟K线行情', 'mins', 'FT', 'h', '', '', ''],
 
     'future_daily':
-        ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'trade_date', '19950417', '',
-         '', '', '', '', '', ''],
+        ['future_daily', '期货每日行情', 'data', 'FT', 'd', '', '', ''],
 
     'future_weekly':  # New, 期货周线行情!
-        ['future_daily', '期货周线行情', 'data', 'FT', 'w', 'future_weekly', 'trade_date', 'trade_date', '19950417', '',
-         '', '', '', '', '', ''],
+        ['future_daily', '期货周线行情', 'data', 'FT', 'w', '', '', ''],
 
     'future_monthly':  # New, 期货月线行情!
-        ['future_daily', '期货月线行情', 'data', 'FT', 'm', 'future_monthly', 'trade_date', 'trade_date', '19950417', '',
-         '', '', '', '', '', ''],
+        ['future_daily', '期货月线行情', 'data', 'FT', 'm', '', '', ''],
 
     'options_1min':  # options_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
-        ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', 'mins1', 'ts_code', 'table_index', 'opt_basic',
-         '', 'y', '30', '', '', '', ''],
+        ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', '', '', ''],
 
     'options_5min':
-        ['min_bars', '期权5分钟K线行情', 'mins', 'OPT', '5min', 'mins5', 'ts_code', 'table_index', 'opt_basic',
-         '', 'y', '90', '', '', '', ''],
+        ['min_bars', '期权5分钟K线行情', 'mins', 'OPT', '5min', '', '', ''],
 
     'options_15min':
-        ['min_bars', '期权15分钟K线行情', 'mins', 'OPT', '15min', 'mins15', 'ts_code', 'table_index', 'opt_basic',
-         '', 'y', '180', '', '', '', ''],
+        ['min_bars', '期权15分钟K线行情', 'mins', 'OPT', '15min', '', '', ''],
 
     'options_30min':
-        ['min_bars', '期权30分钟K线行情', 'mins', 'OPT', '30min', 'mins30', 'ts_code', 'table_index', 'opt_basic',
-         '', 'y', '360', '', '', '', ''],
+        ['min_bars', '期权30分钟K线行情', 'mins', 'OPT', '30min', '', '', ''],
 
     'options_hourly':
-        ['min_bars', '期权60分钟K线行情', 'mins', 'OPT', 'h', 'mins60', 'ts_code', 'table_index', 'opt_basic',
-         '', 'y', '360', '', '', '', ''],
+        ['min_bars', '期权60分钟K线行情', 'mins', 'OPT', 'h', '', '', ''],
 
     'options_daily':
-        ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'trade_date', '20150209', '',
-         '', '', '', '', '', ''],
+        ['options_daily', '期权每日行情', 'data', 'OPT', 'd', '', '', ''],
 
     'stock_adj_factor':
-        ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'trade_date', '19901219', '',
-         '', '', '', '', '', ''],
+        ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', '', '', ''],
 
     'fund_adj_factor':
-        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '',
-         '',
-         '', '', '', '', ''],
+        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', '', '', ''],
 
     'stock_indicator':
-        ['stock_indicator', '股票技术指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
-         '', '', '', '', '', ''],
+        ['stock_indicator', '股票技术指标', 'data', 'E', 'd', '', '', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', 'bak_daily', 'trade_date', 'trade_date',
-         '19990101', '', '', '', '', '', '', ''],
+        ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', '', '', ''],
 
     'index_indicator':
-        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_dailybasic', 'trade_date', 'trade_date',
-         '20040102', '', '', '', '', '', '', ''],
+        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', '', '', ''],
 
     'index_weight':
-        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', '', '',
-         '', '', '', ''],
+        ['index_weight', '指数成分', 'comp', 'IDX', 'd', '', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
-         '', '', '', '', ''],
+        ['income', '上市公司利润表', 'report', 'E', 'q', '', '', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '',
-         'Y',
-         '', '', '', '', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', '', '', ''],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
-         'Y', '', '', '', '', ''],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', '', '', ''],
 
     'financial':
-        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', '',
-         'Y', '', '', '', '', ''],
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', '', '', ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '',
-         'Y',
-         '', '', '', '', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', '', '', ''],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
-         '', '', '', '', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', '', '', ''],
 
     'dividend':  # New, 分红送股!
-        ['dividend', '分红送股', 'events', 'E', 'd', 'dividend', 'ts_code', 'table_index', 'stock_basic', '', '', '',
-         '', '', '', ''],
+        ['dividend', '分红送股', 'events', 'E', 'd', '', '', ''],
 
     'top_list':  # New, 龙虎榜交易明细!
-        ['top_list', '龙虎榜交易明细', 'events', 'E', 'd', 'top_list', 'trade_date', 'trade_date', '20050101', '', '', '',
-         '', '', '', ''],
+        ['top_list', '龙虎榜交易明细', 'events', 'E', 'd', '', '', ''],
 
     'top_inst':  # New, 龙虎榜机构交易明细!
-        ['top_inst', '龙虎榜机构交易明细', 'events', 'E', 'd', 'top_inst', 'trade_date', 'trade_date', '19901211', '', '', '',
-         '', '', '', ''],
+        ['top_inst', '龙虎榜机构交易明细', 'events', 'E', 'd', '', '', ''],
 
     'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
-        ['sw_industry_detail', '申万行业分类明细', 'comp', 'IDX', 'none', 'index_member_all', 'ts_code', 'table_index',
-         'stock_basic', '', '', '', '', '', '', ''],
+        ['sw_industry_detail', '申万行业分类明细', 'comp', 'IDX', 'none', '', '', ''],
 
     'block_trade':  # New, 大宗交易!
-        ['block_trade', '大宗交易', 'events', 'E', 'd', 'block_trade', 'trade_date', 'trade_date', '20100101', '', '', '',
-         '', '', '', ''],
+        ['block_trade', '大宗交易', 'events', 'E', 'd', '', '', ''],
 
     'stock_holder_trade':  # New, 股东交易（股东增减持）!
-        ['stock_holder_trade', '股东交易', 'events', 'E', 'd', 'stk_holdertrade', 'trade_date', 'trade_date', '20100101',
-         '', '', '', '', '', '', ''],
+        ['stock_holder_trade', '股东交易', 'events', 'E', 'd', '', '', ''],
 
     'margin':  # New, 融资融券交易概况!
-        ['margin', '融资融券交易概况', 'reference', 'none', 'd', 'margin', 'exchange_id', 'list', 'SSE,SZSE,BSE', '', '',
-         '', '', '', '', ''],
+        ['margin', '融资融券交易概况', 'reference', 'none', 'd', '', '', ''],
 
     'margin_detail':  # New, 融资融券交易明！
-        ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', 'margin_detail', 'trade_date', 'trade_date', '20190910',
-         '', '', '', '', '', '', ''],
+        ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', '', '', ''],
 
     'shibor':
-        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', 'd', 'shibor', 'date', 'datetime', '20000101',
-         '',
-         '', '', '', '', '', ''],
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', '', '', ''],
 
     'libor':
-        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', 'd', 'libor', 'date', 'datetime', '20000101', '',
-         '', '', '', '', '', ''],
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', '', '', ''],
 
     'hibor':
-        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', 'd', 'hibor', 'date', 'datetime', '20000101', '',
-         '', '', '', '', '', ''],
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', '', '', ''],
 
     'wz_index':  # New, 温州民间借贷指数!
-        ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', 'wz_index', 'date', 'datetime', '20121207', '', '', '',
-         '', '', '', ''],
+        ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', '', '', ''],
 
     'gz_index':  # New, 广州民间借贷指数!
-        ['gz_index', '广州民间借贷指数', 'reference', 'none', 'd', 'gz_index', 'date', 'datetime', '19901211', '', '', '',
-         '', '', '', ''],
+        ['gz_index', '广州民间借贷指数', 'reference', 'none', 'd', '', '', ''],
 
     'cn_gdp':  # New, 国内生产总值季度数据!
-        ['cn_gdp', '国内生产总值年度数据', 'reference', 'none', 'q', 'cn_gdp', '', '', '',
-         '', '', '', '', '', '', ''],
+        ['cn_gdp', '国内生产总值年度数据', 'reference', 'none', 'q', '', '', ''],
 
     'cn_cpi':  # New, 居民消费价格指数月度数据!
-        ['cn_cpi', '居民消费价格指数月度数据', 'reference', 'none', 'm', 'cn_cpi', '', '', '', '',
-         '', '', '', '', '', ''],
+        ['cn_cpi', '居民消费价格指数月度数据', 'reference', 'none', 'm', '', '', ''],
 
     'cn_ppi':  # New, 工业品出厂价格指数月度数据!
-        ['cn_ppi', '工业品出厂价格指数月度数据', 'reference', 'none', 'm', 'cn_ppi', '', '', '', '',
-         '', '', '', '', '', ''],
+        ['cn_ppi', '工业品出厂价格指数月度数据', 'reference', 'none', 'm', '', '', ''],
 
     'cn_money':  # New, 中国货币供应量!
-        ['cn_money', '中国货币供应量', 'reference', 'none', 'm', 'cn_m', '', '', '', '',
-         '', '', '', '', '', ''],
+        ['cn_money', '中国货币供应量', 'reference', 'none', 'm', '', '', ''],
 
     'cn_sf':  # New, 中国社会融资规模月度数据!
-        ['cn_sf', '中国社会融资规模月度数据', 'reference', 'none', 'm', 'sf_month', '', '', '',
-         '', '', '', '', '', '', ''],
+        ['cn_sf', '中国社会融资规模月度数据', 'reference', 'none', 'm', '', '', ''],
 
     'cn_pmi':  # New, 采购经理人指数月度数据!
-        ['cn_pmi', '采购经理人指数月度数据', 'reference', 'none', 'm', 'cn_pmi', '', '', '',
-         '', '', '', '', '', '', ''],
+        ['cn_pmi', '采购经理人指数月度数据', 'reference', 'none', 'm', '', '', ''],
 
 }
 # Table schema，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构

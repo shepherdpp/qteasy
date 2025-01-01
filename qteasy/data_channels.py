@@ -834,6 +834,59 @@ def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=N
 
     return result_data
 
+"""
+TUSHARE API MAP表column的定义：
+1, api:                     对应的tushare API函数名, 参见tsfuncs.py中的定义
+
+2, fill_arg_name:           从tushare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
+                            例如，所有股票所有日期的日K线数据一共有超过1500万行，这些数据无法一次性下载
+                            必须分步多次下载。要么每次下载一只股票所有日期的数据，要么下载每天所有股票的数据。
+                            -   如果每次下载一只股票的数据，股票的代码就是关键参数，将所有股票的代码依次作为关键参数
+                                输入tushare API，就可以下载所有数据
+                            -   如果每次下载一天的数据，交易日期就是关键参数，将所有的交易日作为关键参数，也可以下载
+                                所有的数据
+                            对很多API来说，上述两种方式都是可行的，但是以日期为关键参数的方式更好，因为两个原因：
+                            1,  作为关键参数，交易日的数量更少，每年200个交易日，20年的数据也只需要下载4000次，如果
+                                使用股票代码，很多证券类型的代码远远超过4000个
+                            2,  补充下载数据时更方便，如果过去20年的数据都已经下载好了，仅需要补充下载最新一天的数据
+                                如果使用日期作为关键参数，仅下载一次就可以了，如果使用证券代码作为关键参数，需要下载
+                                数千次
+                            因此，应该尽可能使用日期作为关键参数
+                            可惜的是，并不是所有API都支持使用日期作为关键参数，所以，只要能用日期的数据表，都用日期
+                            为关键参数，否则采用其他类型的关键参数。
+
+3, fill_arg_type:           关键参数的数据类型，可以为list、table_index、datetime、trade_date，含义分别为：
+                            -   list: 
+                                列表类型，这个关键参数的取值只能是列表中的某一个元素
+                            -   table_index: 
+                                表索引，这个关键参数的取值只能是另一张数据表的索引值，这通常表示tushare不支持使用日期
+                                作为关键参数，因此必须使用一系列股票或证券代码作为关键参数的值，这些值保存在另一张数据
+                                表中，且是这个表的索引值。例如，所有股票的代码就保存在stock_basic表的索引中。
+                            -   datetime:
+                                日期类型，表示使用日期作为下载数据的关键参数。此时的日期不带时间类型，包含交易日与非
+                                交易日
+                            -   trade_date:
+                                交易日，与日期类型功能相同，但作为关键参数的日期必须为交易日
+
+4, arg_rng:                 关键参数的取值范围，
+                            -   如果数据类型为datetime或trade_date，是一个起始日期，表示取值范围从该日期到今日之间
+                            -   如果数据类型为table_index，取值范围是一张表，如stock_basic，表示数据从stock_basic的
+                                索引中取值
+                            -   如果数据类型为list，则直接给出取值范围，如"SSE,SZSE"表示可以取值SSE以及SZSE。
+
+5, arg_allowed_code_suffix:
+                            table_index类型取值范围的限制值，限制只有特定后缀的证券代码才会被用作参数下载数据。
+                            例如，取值"SH,SZ"表示只有以SH、SZ结尾的证券代码才会被用作参数从tushare下载数据。
+
+6, arg_allow_start_end:     使用table_index类型参数时，是否同时允许传入开始结束日期作为参数。如果设置为"Y"，则会在使用
+                            table_index中的代码作为参数下载数据时，同时传入开始和结束日期作为附加参数，否则仅传入代码
+
+7, start_end_chunk_size:    传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
+                            一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
+                            过这个天数。
+                            例如，设置该参数为100，则每个分块内的时间跨度不超过100天
+"""
+
 
 TUSHARE_API_MAP_COLUMNS = [
     'api',  # 1, 从tushare获取数据时使用的api名
@@ -1131,6 +1184,18 @@ TUSHARE_API_MAP = {
     'cn_pmi':
         ['cn_pmi', 'start', 'month', '197601', '', '', ''],
 }
+
+"""
+AKSHARE API MAP表column的定义：
+1, akshare:                 对应的akshare API函数名
+
+2, ak_fill_arg_name:        从akshare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
+                            与tushare的fill_arg_name相同
+                            
+3, ak_fill_arg_type:        与tushare的fill_arg_type相同, 用于akshare API
+
+4, ak_arg_rng:              与tushare的arg_rng相同, 用于akshare API
+"""
 
 AKSHARE_API_MAP_COLUMNS = [
     'api',  # 1, 从akshare获取数据时使用的api名

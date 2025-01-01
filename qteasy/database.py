@@ -766,6 +766,7 @@ class DataSource:
         """
 
         # if table does not exist, create a new table without primary key info
+        # TODO: 为什么要创建一张新的数据表且不包含primary key信息？为什么不调用_new_db_table()函数创建一张正确的表？
         if not self._db_table_exists(db_table):
             dtype_mapping = {'object': 'varchar(255)',
                              'datetime64[ns]': 'datetime',
@@ -776,30 +777,38 @@ class DataSource:
             columns = df.columns
             dtypes = df.dtypes.tolist()
             dtypes = [dtype_mapping.get(str(dtype.name), 'varchar(255)') for dtype in dtypes]
-
-            sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
-            fields = []
-            for col, dtype in zip(columns, dtypes):
-                fields.append(f"`{col}` {dtype}\n")
-            sql += f"{', '.join(fields)});"
-            try:
-                import pymysql
-                con = pymysql.connect(
-                        host=self.host,
-                        port=self.port,
-                        user=self.__user__,
-                        password=self.__password__,
-                        db=self.db_name,
-                )
-                cursor = con.cursor()
-                cursor.execute(sql)
-                con.commit()
-            except Exception as e:
-                con.rollback()
-                err = RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
-                                   f'Exception:\n{e}\n'
-                                   f'SQL:\n{sql}')
-                raise err
+            # create a new table
+            self._new_db_table(
+                    db_table=db_table,
+                    columns=columns,
+                    dtypes=dtypes,
+                    primary_key=primary_key)
+            #
+            # sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
+            # fields = []
+            # for col, dtype in zip(columns, dtypes):
+            #     fields.append(f"`{col}` {dtype}\n")
+            # sql += f"{', '.join(fields)});"
+            # import pymysql
+            # con = pymysql.connect(
+            #         host=self.host,
+            #         port=self.port,
+            #         user=self.__user__,
+            #         password=self.__password__,
+            #         db=self.db_name,
+            # )
+            # cursor = con.cursor()
+            # try:
+            #     cursor.execute(sql)
+            #     con.commit()
+            # except Exception as e:
+            #     con.rollback()
+            #     err = RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
+            #                        f'Exception:\n{e}\n'
+            #                        f'SQL:\n{sql}')
+            #     raise err
+            # finally:
+            #     con.close()
 
         tbl_columns = tuple(self._get_db_table_schema(db_table).keys())
         # TODO:
@@ -820,16 +829,16 @@ class DataSource:
         for val in tbl_columns[:-1]:
             sql += "%s, "
         sql += "%s)\n"
+        import pymysql
+        con = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.__user__,
+                password=self.__password__,
+                db=self.db_name,
+        )
+        cursor = con.cursor()
         try:
-            import pymysql
-            con = pymysql.connect(
-                    host=self.host,
-                    port=self.port,
-                    user=self.__user__,
-                    password=self.__password__,
-                    db=self.db_name,
-            )
-            cursor = con.cursor()
             rows_affected = cursor.executemany(sql, df_tuple)
             con.commit()
             return rows_affected
@@ -961,6 +970,8 @@ class DataSource:
                                f'Exception:\n{e}\n'
                                f'SQL:\n{sql}')
             raise err
+        finally:
+            con.close()
 
     def _get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -1095,7 +1106,8 @@ class DataSource:
         finally:
             con.close()
 
-    def _new_db_table(self, db_table, columns, dtypes, primary_key, auto_increment_id=False):
+    def _new_db_table(self, db_table, columns, dtypes, primary_key,
+                      auto_increment_id=False, index=None, partitions=None) -> None:
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
             并创建正确的index
 
@@ -1111,6 +1123,10 @@ class DataSource:
             数据表的所有primary_key
         auto_increment_id: bool, Default: False
             是否使用自增主键
+        index: list of str, Default: None
+            数据表的索引列
+        partitions: list of str, Default: None
+            数据表的分区列
 
         Returns
         -------
