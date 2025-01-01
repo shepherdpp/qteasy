@@ -137,9 +137,9 @@ class DataSource:
             # optional packages to be imported
             try:
                 import pymysql
-                from DBUtils.PooledDB import PooledDB
+                from dbutils.pooled_db import PooledDB
             except ImportError:
-                err = ImportError(f'Missing package \'pymysql\' for datasource type \'database\'. '
+                err = ImportError(f'Missing package \'pymysql\' or \'dbutils\' for datasource type \'database\'. '
                                   f'Use pip or conda to install pymysql: $ pip install pymysql')
                 raise err
             # TODO: here a database connection pool should be created
@@ -700,7 +700,7 @@ class DataSource:
             rows_affected = cursor.execute(sql)
             conn.commit()
             if fetch_and_return:
-                result = cursor.fetchone()
+                result = cursor.fetchall()
                 return result
             return rows_affected
         except Exception as e:
@@ -814,7 +814,11 @@ class DataSource:
         # data = self._db_execute_one(sql)
         # df = pd.DataFrame(data, columns=[i[0] for i in cursor.description])
         # return df
+        # data = self._db_execute_one(sql)
+        # if data is None:
+        #     df = pd.DataFrame(data, columns=[i[0] for i in cursor.description])
 
+        # TODO: 解决cursor.description的问题就可以将下面的代码放到_db_execute_one()函数中了
         con, cursor = self._db_open_connection()
         try:
             # cursor = con.cursor()
@@ -1212,7 +1216,10 @@ class DataSource:
         # )
         sql = f"SHOW TABLES LIKE '{db_table}'"
         res = self._db_execute_one(sql)
-        return len(res) > 0
+        if res is not None:
+            return len(res) > 0
+        else:
+            return False
 
         # con, cursor = self._db_open_connection()
         # cursor = con.cursor()
@@ -1435,8 +1442,8 @@ class DataSource:
               "FROM INFORMATION_SCHEMA.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s;"
-        res = self._db_execute_one(sql, fetch_and_return=True)
-        return res[0]
+        rows, size = self._db_execute_one(sql, fetch_and_return=True)[0]
+        return rows, size
         # con, cursor = self._db_open_connection()
         # try:
         #     cursor.execute(sql, (self.db_name, db_table))
@@ -2036,6 +2043,7 @@ class DataSource:
         last_id: int 当前使用的最后一个ID（自增ID）
         """
 
+        from .datatables import ensure_sys_table
         ensure_sys_table(table)
         # 如果是文件系统，在可行的情况下，直接从文件系统中获取最后一个id，否则读取文件数据后获取id
         if self.source_type in ['file']:
@@ -2054,29 +2062,32 @@ class DataSource:
                                    auto_increment_id=True)
                 return 0
 
-            import pymysql
-            con = pymysql.connect(
-                    host=self.host,
-                    port=self.port,
-                    user=self.__user__,
-                    password=self.__password__,
-                    db=self.db_name,
-            )
-            cursor = con.cursor()
+            # import pymysql
+            # con = pymysql.connect(
+            #         host=self.host,
+            #         port=self.port,
+            #         user=self.__user__,
+            #         password=self.__password__,
+            #         db=self.db_name,
+            # )
+            # cursor = con.cursor()
             columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table, with_primary_keys=True)
             primary_key = primary_keys[0]
             sql = f"SELECT * FROM `{table}` ORDER BY `{primary_key}` DESC LIMIT 1;"
-            try:
-                cursor.execute(sql)
-                con.commit()
-                res = cursor.fetchall()
+            res = self._db_execute_one(sql)
+            if res is not None:
                 return res[0][0] if len(res) > 0 else 0
-            except Exception as e:
-                err = RuntimeError(
-                        f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
-                raise err
-            finally:
-                con.close()
+            # try:
+            #     cursor.execute(sql)
+            #     con.commit()
+            #     res = cursor.fetchall()
+            #     return res[0][0] if len(res) > 0 else 0
+            # except Exception as e:
+            #     err = RuntimeError(
+            #             f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
+            #     raise err
+            # finally:
+            #     con.close()
 
         else:  # for other unexpected cases
             pass
@@ -2100,6 +2111,7 @@ class DataSource:
             返回的数据为DataFrame，如果给出kwargs，返回的数据仅包括筛选后的数据
         """
 
+        from .datatables import ensure_sys_table
         ensure_sys_table(table)
 
         # 检查kwargs中是否有不可用的字段
@@ -3175,62 +3187,3 @@ def get_dtype_map() -> pd.DataFrame:
     return dtype_map
 
 
-@lru_cache(maxsize=1)
-def get_table_map() -> pd.DataFrame:  # deprecated
-    """ 获取所有内置数据表的清单，to be deprecated
-
-    Returns
-    -------
-    pd.DataFrame
-    数据表清单
-    """
-    warnings.warn('get_table_map() is deprecated, use get_table_master() instead', DeprecationWarning)
-    return get_table_master()
-
-
-@lru_cache(maxsize=1)
-def get_table_master() -> pd.DataFrame:
-    """ 获取所有内置数据表的清单
-
-    Returns
-    -------
-    table_masters: pd.DataFrame
-    数据表清单, 包含以下字段:
-    """
-    table_master = pd.DataFrame(TABLE_MASTERS).T
-    table_master.columns = TABLE_MASTER_COLUMNS
-    return table_master
-
-
-def ensure_sys_table(table: str) -> None:
-    """ 检察table是不是sys表
-
-    Parameters
-    ----------
-    table: str
-        表名称
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    KeyError: 当输入的表名称不正确时，或筛选条件字段名不存在时
-    TypeError: 当输入的表名称类型不正确，或表使用方式不是sys类型时
-    """
-
-    # 检察输入的table名称，以及是否属于sys表
-    if not isinstance(table, str):
-        err = TypeError(f'table name should be a string, got {type(table)} instead.')
-        raise err
-    try:
-        table_usage = TABLE_MASTERS[table][2]
-        if not table_usage == 'sys':
-            err = TypeError(f'Table {table}<{table_usage}> is not subjected to sys use')
-            raise err
-    except KeyError as e:
-        raise KeyError(f'"{e}" is not a valid table name')
-    except Exception as e:
-        err = RuntimeError(f'{e}: An error occurred when checking table usage')
-        raise err

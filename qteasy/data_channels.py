@@ -560,7 +560,11 @@ def _parse_additional_time_args(chunk_size, start_date, end_date) -> list:
     return chunked_additional_args
 
 
-def _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_calendar) -> set:
+def _parse_tables_to_fetch(tables: str or [str], *,
+                           dtypes: str or [str] = None,
+                           freqs: str or [str] = None,
+                           asset_types: str or [str] = None,
+                           refresh_trade_calendar: bool = False) -> set:
     """ 根据输入的参数，生成需要下载的数据表清单
 
     Parameters
@@ -581,7 +585,76 @@ def _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_cal
     set:
         需要下载的数据表清单
     """
-    raise NotImplementedError
+
+    from .datatables import get_table_master, TABLE_MASTERS, TABLE_USAGES, TABLE_SCHEMA
+
+    table_master = get_table_master()
+    tables_to_refill = set()
+    tables = [item.lower() for item in tables]
+    if 'all' in tables:
+        tables_to_refill.update(TABLE_MASTERS)
+        return tables_to_refill
+
+    for item in tables:
+        if item in TABLE_MASTERS:
+            tables_to_refill.add(item)
+        elif item in TABLE_USAGES:
+            tables_to_refill.update(
+                    table_master.loc[table_master.table_usage == item.lower()].index.to_list()
+            )
+    for item in dtypes:  # 如果给出了dtypes，进一步筛选tables中的表，删除不需要的
+        tables_to_keep = set()
+        for tbl, schema in table_master.schema.items():  # iteritems()在pandas中已经被废弃
+            if item.lower() in TABLE_SCHEMA[schema]['columns']:
+                tables_to_keep.add(tbl)
+        tables_to_refill.intersection_update(
+                tables_to_keep
+        )
+
+    if freqs is not None:
+        tables_to_keep = set()
+        for freq in str_to_list(freqs):
+            tables_to_keep.update(
+                    table_master.loc[table_master.freq == freq.lower()].index.to_list()
+            )
+        tables_to_refill.intersection_update(
+                tables_to_keep
+        )
+    if asset_types is not None:
+        tables_to_keep = set()
+        for a_type in str_to_list(asset_types):
+            tables_to_keep.update(
+                    table_master.loc[table_master.asset_type == a_type.upper()].index.to_list()
+            )
+        tables_to_refill.intersection_update(
+                tables_to_keep
+        )
+
+    dependent_tables = set()
+    for table in tables_to_refill:
+        cur_table = table_master.loc[table]
+        fill_type = cur_table.fill_arg_type
+        if fill_type == 'trade_date' and refresh_trade_calendar:
+            dependent_tables.add('trade_calendar')
+        elif fill_type == 'table_index':
+            dependent_tables.add(cur_table.arg_rng)
+    tables_to_refill.update(dependent_tables)
+
+    # 检查trade_calendar中是否有足够的数据，如果没有，需要包含trade_calendar表：
+    if 'trade_calendar' not in tables_to_refill:
+        if refresh_trade_calendar:
+            tables_to_refill.add('trade_calendar')
+        else:
+            # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+            latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
+            try:
+                latest_calendar_date = pd.to_datetime(latest_calendar_date)
+                if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+                    tables_to_refill.add('trade_calendar')
+            except:
+                tables_to_refill.add('trade_calendar')
+
+    return tables_to_refill
 
 
 def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:

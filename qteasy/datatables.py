@@ -11,6 +11,11 @@
 # types to data tables.
 # ======================================
 
+import warnings
+import pandas as pd
+
+from functools import lru_cache
+
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare', 'akshare']
@@ -166,14 +171,14 @@ TABLE_MASTERS = {
     'stock_suspend':  # New, 停复牌信息!
         ['stock_suspend', '停复牌信息', 'events', 'E', 'd', '', '', ''],
 
-    'HS_money_flow':  # New, 沪深股通资金流向!
-        ['HS_money_flow', '沪深股通资金流向', 'reference', 'none', 'd', '', '', ''],
+    'hs_money_flow':  # New, 沪深股通资金流向!
+        ['hs_money_flow', '沪深股通资金流向', 'reference', 'none', 'd', '', '', ''],
 
-    'HS_top10_stock':  # New, 沪深股通十大成交股!
-        ['HS_top10_stock', '沪深股通十大成交股', 'events', 'E', 'd', '', '', ''],
+    'hs_top10_stock':  # New, 沪深股通十大成交股!
+        ['hs_top10_stock', '沪深股通十大成交股', 'events', 'E', 'd', '', '', ''],
 
-    'HK_top10_stock':  # New, 港股通十大成交股!
-        ['HK_top10_stock', '港股通十大成交股', 'events', 'E', 'd', '', '', ''],
+    'hk_top10_stock':  # New, 港股通十大成交股!
+        ['hk_top10_stock', '港股通十大成交股', 'events', 'E', 'd', '', '', ''],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', '', '', ''],
@@ -559,7 +564,7 @@ TABLE_SCHEMA = {
          'prime_keys':  [0, 1]
          },
 
-    'HS_money_flow':  # New, 沪深股通资金流向!
+    'hs_money_flow':  # New, 沪深股通资金流向!
         {'columns':     ["trade_date", "ggt_ss", "ggt_sz", "hgt", "sgt", "north_money",
                          "south_money"],
          'dtypes':      ["date", "float", "float", "float", "float", "float",
@@ -569,7 +574,7 @@ TABLE_SCHEMA = {
          'prime_keys':  [0]
          },
 
-    'HS_top10_stock':  # New, 沪深股通十大成交股!
+    'hs_top10_stock':  # New, 沪深股通十大成交股!
         {'columns':     ["trade_date", "ts_code", "name", "close", "change", "rank", "market_type", "amount",
                          "net_amount", "buy", "sell"],
          'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "int", "varchar(3)", "float",
@@ -579,7 +584,7 @@ TABLE_SCHEMA = {
          'prime_keys':  [0, 1]
          },
 
-    'HK_top10_stock':  # New, 港股通十大成交股!
+    'hk_top10_stock':  # New, 港股通十大成交股!
         {'columns':     ["trade_date", "ts_code", "name", "close", "p_change", "rank", "market_type",
                          "amount", "net_amount", "sh_amount", "sh_net_amount", "sh_buy", "sh_sell",
                          "sz_amount", "sz_net_amount", "sz_buy", "sz_sell"],
@@ -1467,6 +1472,68 @@ TABLE_SCHEMA = {
          },
 
 }
+
+
+# TODO: these functions belong to Datatables, should be moved to that module
+@lru_cache(maxsize=1)
+def get_table_map() -> pd.DataFrame:  # deprecated
+    """ 获取所有内置数据表的清单，to be deprecated
+
+    Returns
+    -------
+    pd.DataFrame
+    数据表清单
+    """
+    warnings.warn('get_table_map() is deprecated, use get_table_master() instead', DeprecationWarning)
+    return get_table_master()
+
+
+@lru_cache(maxsize=1)
+def get_table_master() -> pd.DataFrame:
+    """ 获取所有内置数据表的清单
+
+    Returns
+    -------
+    table_masters: pd.DataFrame
+    数据表清单, 包含以下字段:
+    """
+    table_master = pd.DataFrame(TABLE_MASTERS).T
+    table_master.columns = TABLE_MASTER_COLUMNS
+    return table_master
+
+
+def ensure_sys_table(table: str) -> None:
+    """ 检察table是不是sys表
+
+    Parameters
+    ----------
+    table: str
+        表名称
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    KeyError: 当输入的表名称不正确时，或筛选条件字段名不存在时
+    TypeError: 当输入的表名称类型不正确，或表使用方式不是sys类型时
+    """
+
+    # 检察输入的table名称，以及是否属于sys表
+    if not isinstance(table, str):
+        err = TypeError(f'table name should be a string, got {type(table)} instead.')
+        raise err
+    try:
+        table_usage = TABLE_MASTERS[table][2]
+        if not table_usage == 'sys':
+            err = TypeError(f'Table {table}<{table_usage}> is not subjected to sys use')
+            raise err
+    except KeyError as e:
+        raise KeyError(f'"{e}" is not a valid table name')
+    except Exception as e:
+        err = RuntimeError(f'{e}: An error occurred when checking table usage')
+        raise err
 
 
 class DataConflictWarning(Warning):

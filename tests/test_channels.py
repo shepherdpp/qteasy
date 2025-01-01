@@ -27,6 +27,7 @@ from qteasy.data_channels import (
     _parse_table_index_args,
     _parse_additional_time_args,
     _parse_data_fetch_args,
+    _parse_tables_to_fetch,
 )
 
 
@@ -389,6 +390,16 @@ class TestChannels(unittest.TestCase):
         self.assertEqual(args, [{'ts_code': '000001.SH', 'start': '20210101', 'end': '20210110'},
                                 {'ts_code': '000016.SH', 'start': '20210101', 'end': '20210110'}])
 
+    def test_parse_table_names(self):
+        """ test function _parse_tables_to_fetch"""
+        print('testing parsing table names')
+        res = _parse_tables_to_fetch('all', )
+        print(f'fetching all tables: {res}')
+        self.assertEqual(res, list(TUSHARE_API_MAP.keys()))
+
+        res = _parse_tables_to_fetch(tables='stock_basic, stock_daily, index_daily')
+        print(f'fetching tables: stock_basic, stock_daily, index_daily: {res}')
+        self.assertEqual(res, ['stock_basic', 'stock_daily', 'index_daily'])
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""
