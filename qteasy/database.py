@@ -15,7 +15,6 @@ import pandas as pd
 import numpy as np
 import warnings
 
-from concurrent.futures import as_completed, ThreadPoolExecutor
 from functools import lru_cache
 
 from .datatypes import (
@@ -25,29 +24,18 @@ from .datatypes import (
 )
 
 from .datatables import (
-    AVAILABLE_CHANNELS,
     AVAILABLE_DATA_FILE_TYPES,
     TABLE_MASTERS,
     TABLE_SCHEMA,
     TABLE_MASTER_COLUMNS,
-    TABLE_USAGES,
-    ADJUSTABLE_PRICE_TYPES,
-    DataConflictWarning
 )
 
 from .utilfuncs import (
-    progress_bar,
-    sec_to_duration,
-    nearest_market_trade_day,
     input_to_list,
-    is_market_trade_day,
     str_to_list,
     regulate_date_format,
     freq_dither,
     pandas_freq_alias_version_conversion,
-    _wildcard_match,
-    _partial_lev_ratio,
-    _lev_ratio,
     human_file_size,
     human_units,
 )
@@ -149,10 +137,15 @@ class DataSource:
             # optional packages to be imported
             try:
                 import pymysql
+                from DBUtils.PooledDB import PooledDB
             except ImportError:
                 err = ImportError(f'Missing package \'pymysql\' for datasource type \'database\'. '
                                   f'Use pip or conda to install pymysql: $ pip install pymysql')
                 raise err
+            # TODO: here a database connection pool should be created
+            #  thus all db related operations can utilize this pool by
+            #  getting connection with self._db_open() and self._db_close()
+            #  to avoid creating and closing connections every time
             # set up connection to the data base
             if not isinstance(port, int):
                 err = TypeError(f'port should be int type, got {type(port)} instead!')
@@ -166,18 +159,29 @@ class DataSource:
             # try to create pymysql connections
             self.source_type = 'db'
             try:
-                con = pymysql.connect(host=host,
-                                      port=port,
-                                      user=user,
-                                      password=password)
-                # 检查db是否存在，当db不存在时创建新的db
-                cursor = con.cursor()
-                sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
-                cursor.execute(sql)
-                con.commit()
-                sql = f"USE {db_name}"
-                cursor.execute(sql)
-                con.commit()
+                self.pool = PooledDB(
+                        creator=pymysql,  # 使用链接数据库的模块
+                        mincached=10,  # 初始化时，链接池中至少创建的链接，0表示不创建
+                        maxconnections=200,  # 连接池允许的最大连接数，0和None表示不限制连接数
+                        blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
+                        host=host,
+                        port=port,
+                        user=user,
+                        password=password,
+                        database=db_name,
+                )
+                # con = pymysql.connect(host=host,
+                #                       port=port,
+                #                       user=user,
+                #                       password=password)
+                # # 检查db是否存在，当db不存在时创建新的db
+                # cursor = con.cursor()
+                # sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
+                # cursor.execute(sql)
+                # con.commit()
+                # sql = f"USE {db_name}"
+                # cursor.execute(sql)
+                # con.commit()
                 # create mysql database connection info
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
                 self.host = host
@@ -188,7 +192,7 @@ class DataSource:
                 self.__user__ = user
                 self.__password__ = password
 
-                con.close()
+                # con.close()
 
             except Exception as e:
                 msg = f'Mysql connection failed: {str(e)}\n' \
@@ -658,6 +662,21 @@ class DataSource:
             return len(df)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
+    def _db_open(self):
+        """从数据连接池中获取数据连接，返回con和cursor对象"""
+        try:
+            conn = self.pool.connection()
+            cursor = conn.cursor()  # 表示读取的数据为字典类型
+            return conn, cursor
+        except Exception as e:
+            err = RuntimeError(f'{e}, error in opening database connection')
+            return None, None
+
+    def _db_close(self, conn, cursor):
+        """关闭数据库连接"""
+        cursor.close()
+        conn.close()
+
     def _read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
         """ 从一张数据库表中读取数据，读取时根据share(ts_code)和dates筛选
             具体筛选的字段通过share_like_pk和date_like_pk两个字段给出
@@ -701,14 +720,14 @@ class DataSource:
             has_date_filter = True
             date_filter = f'{date_like_pk} BETWEEN "{start}" AND "{end}"'
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
         sql = f'SELECT * ' \
               f'FROM {db_table}\n'
         if not (has_ts_code_filter or has_date_filter):
@@ -725,8 +744,9 @@ class DataSource:
             # only one WHERE clause for date
             sql += f'WHERE {date_filter}'
         sql += ''
+        con, cursor = self._db_open()
         try:
-            cursor = con.cursor()
+            # cursor = con.cursor()
             cursor.execute(sql)
             con.commit()
 
@@ -739,7 +759,8 @@ class DataSource:
             err = RuntimeError(f'{e}, error in reading data from database with sql:\n"{sql}"')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _write_database(self, df, db_table, primary_key):
         """ 将DataFrame中的数据添加到数据库表末尾，如果表不存在，则
@@ -829,14 +850,15 @@ class DataSource:
         for val in tbl_columns[:-1]:
             sql += "%s, "
         sql += "%s)\n"
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         cursor = con.cursor()
         try:
             rows_affected = cursor.executemany(sql, df_tuple)
@@ -849,7 +871,8 @@ class DataSource:
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _update_database(self, df, db_table, primary_key):
         """ 用DataFrame中的数据更新数据表中的数据记录
@@ -899,14 +922,15 @@ class DataSource:
             sql += f"`{col}`=VALUES(`{col}`),\n"
         sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         try:
             cursor = con.cursor()
             rows_affected = cursor.executemany(sql, df_tuple)
@@ -919,7 +943,8 @@ class DataSource:
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _delete_database_records(self, db_table, primary_key, record_ids):
         """ 从数据库表中删除数据
@@ -951,14 +976,15 @@ class DataSource:
         elif len(record_ids) == 1:
             sql += f"`{primary_key}` = {record_ids[0]}"
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         try:
             cursor = con.cursor()
             rows_affected = cursor.execute(sql)
@@ -971,7 +997,8 @@ class DataSource:
                                f'SQL:\n{sql}')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -992,14 +1019,15 @@ class DataSource:
         sql = f'SELECT DISTINCT `{column}`' \
               f'FROM `{db_table}`' \
               f'ORDER BY `{column}`'
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         cursor = con.cursor()
         try:
             cursor.execute(sql)
@@ -1015,7 +1043,8 @@ class DataSource:
                                f'SQL:\n{sql} \n')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _get_db_table_minmax(self, db_table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
@@ -1042,14 +1071,15 @@ class DataSource:
             add_sql = ''
         sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} '
         sql += f'FROM `{db_table}`'
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         cursor = con.cursor()
         try:
             cursor.execute(sql)
@@ -1066,7 +1096,8 @@ class DataSource:
                                f'SQL:\n{sql} \n')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
@@ -1083,14 +1114,15 @@ class DataSource:
         if self.source_type == 'file':
             err = RuntimeError('can not connect to database while source type is "file"')
             raise err
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         cursor = con.cursor()
         sql = f"SHOW TABLES LIKE '{db_table}'"
         try:
@@ -1104,10 +1136,15 @@ class DataSource:
                                f'SQL:\n{sql} \n')
             raise err
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
-    def _new_db_table(self, db_table, columns, dtypes, primary_key,
-                      auto_increment_id=False, index=None, partitions=None) -> None:
+    def _new_db_table(self, db_table, columns, dtypes,
+                      primary_key: [str],
+                      auto_increment_id: bool = False,
+                      index_col: [str] = None,
+                      partition_by: [str] = None,
+                      partitions: int = None) -> None:
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
             并创建正确的index
 
@@ -1123,10 +1160,12 @@ class DataSource:
             数据表的所有primary_key
         auto_increment_id: bool, Default: False
             是否使用自增主键
-        index: list of str, Default: None
+        index_col: list of str, Default: None
             数据表的索引列
-        partitions: list of str, Default: None
+        partition_by: list of str, Default: None
             数据表的分区列
+        partitions: int, Default: None
+            数据表的分区数
 
         Returns
         -------
@@ -1136,15 +1175,15 @@ class DataSource:
             err = TypeError(f'Datasource is not connected to a database')
             raise err
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
-        cursor = con.cursor()
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
         for col_name, dtype in zip(columns, dtypes):
             sql += f"`{col_name}` {dtype}"
@@ -1159,7 +1198,13 @@ class DataSource:
             # 如果primary key多于一个，则创建KEY INDEX
             if len(primary_key) > 1:
                 sql += ",\nKEY (`" + '`),\nKEY (`'.join(primary_key[1:]) + "`)"
-        sql += '\n);'
+        sql += '\n)'
+
+        # 如果设置了partition则添加partition by KEY()
+        if partition_by is not None:
+            sql += f"PARTITION BY KEY(`{partition_by}`) PARTITIONS {partitions}"
+
+        # 执行sql语句
         try:
             cursor.execute(sql)
             con.commit()
@@ -1169,6 +1214,20 @@ class DataSource:
         finally:
             con.close()
 
+        # 如果设置了额外的index则添加index:
+        if index_col is not None:
+            sql = f"CREATE INDEX `{db_table}_idx` ON `{db_table}` (`{index_col}`)"
+
+        # 执行sql语句
+        try:
+            cursor.execute(sql)
+            con.commit()
+        except Exception as e:
+            con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
+        finally:
+            # con.close()
+            self._db_close(con, cursor)
     # ==============
     # 特殊数据库操作层函数，当数据表结构发生变化时用于调整数据库表结构，建立索引或执行分区等操作
     def _get_db_table_schema(self, db_table):
@@ -1184,15 +1243,15 @@ class DataSource:
             dict: 一个包含列名和数据类型的Dict: {column1: dtype1, column2: dtype2, ...}
         """
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
-        cursor = con.cursor()
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
 
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
@@ -1212,7 +1271,8 @@ class DataSource:
             con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
@@ -1233,14 +1293,15 @@ class DataSource:
             err = TypeError(f'db_table name should be a string, got {type(db_table)} instead')
             raise err
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        con, cursor = self._db_open()
         cursor = con.cursor()
         sql = f"DROP TABLE IF EXISTS {db_table};"
         try:
@@ -1250,7 +1311,8 @@ class DataSource:
             con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
@@ -1267,15 +1329,16 @@ class DataSource:
         if not self._db_table_exists(db_table):
             return -1
 
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
-        cursor = con.cursor()
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        # cursor = con.cursor()
+        con, cursor = self._db_open()
         sql = "SELECT table_rows, data_length + index_length " \
               "FROM INFORMATION_SCHEMA.tables " \
               "WHERE table_schema = %s " \
@@ -1289,7 +1352,8 @@ class DataSource:
             con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
         finally:
-            con.close()
+            # con.close()
+            self._db_close(con, cursor)
 
     def _alter_db_table(self, db_table, columns, dtypes, primary_key, auto_increment_id=False):
         """ 修改数据库表的schema，建立index，从而提升数据库的查询速度提升效能
