@@ -710,7 +710,6 @@ class DataSource:
             raise err
         finally:
             self._db_close_connection(conn, cursor)
-            return None
 
     def _db_execute_many(self, sql, data, rollback=False) -> int or None:
         """从mysql连接池获取一个新的连接，执行包含多条数据的sql语句，返回执行的结果并关闭连接
@@ -740,7 +739,6 @@ class DataSource:
             raise err
         finally:
             self._db_close_connection(conn, cursor)
-            return None
 
     def _read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
         """ 从一张数据库表中读取数据，读取时根据share(ts_code)和dates筛选
