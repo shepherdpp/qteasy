@@ -15,9 +15,9 @@
 
 import pandas as pd
 
-from .utilfuncs import str_to_list
+from functools import lru_cache
 
-from .datatables import get_table_master
+from .utilfuncs import str_to_list
 
 """
 这个模块提供一个统一数据下载api：
@@ -95,9 +95,9 @@ def fetch_history_table_data(table, channel='tushare', **kwargs):
     return dnld_data
 
 
-def fetch_batched_table_data(*, table, channel, arg_list, parallel, process_count, log,
+def fetch_batched_table_data(*, table, channel, arg_list, log, parallel, process_count,
                              chunk_size, download_batch_size, download_batch_interval) -> pd.DataFrame:
-    """ 批量获取同一张数据表的数据，反复调用同一个API，但是传入一系列不同的参数
+    """ 顺序批量获取同一张数据表的数据，反复调用同一个API，但是传入一系列不同的参数
 
     Parameters
     ----------
@@ -110,15 +110,81 @@ def fetch_batched_table_data(*, table, channel, arg_list, parallel, process_coun
         - 'emoney'      : 从东方财富网获取金融数据
     arg_list: iterable
         用于下载数据的函数参数
-    parallel: bool
-        是否启用多线程下载数据
-    process_count: int
-        启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+    log: logger
+        用于记录下载数据的日志
+    chunk_size: int
+        分批下载数据时，每一批数据包含的数据量，单位为天，表示每次下载多少天的数据
+
     """
 
     # 本函数解析arg_list中的参数，循环或者并行调用fetch_history_table_data函数获取
     # 数据，然后将数据合并成一个DataFrame返回
-    raise NotImplementedError
+    # data_fetch_args = _parse_data_fetch_args(table, channel, *arg_list)
+    # completed = 0
+    # total = len(list(arg_coverage)) * start_end_chunk_multiplier
+    # total_written = 0
+    # st = time.time()
+    # dnld_data = pd.DataFrame()
+    # time_elapsed = 0
+    # rows_affected = 0
+    # try:
+    #     # 清单中的第一张表不使用parallel下载
+    #     if parallel and table_count != 1:
+    #         with ThreadPoolExecutor(max_workers=process_count) as worker:
+    #             '''
+    #             这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
+    #             通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
+    #             '''
+    #             api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
+    #             futures = {}
+    #             submitted = 0
+    #             for kw in all_kwargs:
+    #                 futures.update({worker.submit(acquire_data, api_name, **kw): kw})
+    #                 submitted += 1
+    #                 if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
+    #                     progress_bar(submitted, total, f'<{table}>: Submitting tasks, '
+    #                                                    f'Pausing for {download_batch_interval} sec...')
+    #                     time.sleep(download_batch_interval)
+    #             # futures = {worker.submit(acquire_data, api_name, **kw): kw
+    #             #            for kw in all_kwargs}
+    #             progress_bar(0, total, f'<{table}>: estimating time left...')
+    #             for f in as_completed(futures):
+    #                 df = f.result()
+    #                 cur_kwargs = futures[f]
+    #                 completed += 1
+    #                 if completed % chunk_size:
+    #                     dnld_data = pd.concat([dnld_data, df])
+    #                 else:
+    #                     dnld_data = pd.concat([dnld_data, df])
+    #                     rows_affected = self.update_table_data(table, dnld_data)
+    #                     dnld_data = pd.DataFrame()
+    #                 total_written += rows_affected
+    #                 time_elapsed = time.time() - st
+    #                 time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
+    #                                               estimation=True, short_form=False)
+    #                 progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
+    #                                                f'{total_written}wrtn/{time_remain} left')
+    #
+    #             total_written += self.update_table_data(table, dnld_data)
+    #     else:
+    #         progress_bar(0, total, f'<{table}> estimating time left...')
+    #         for kwargs in all_kwargs:
+    #             df = self.fetch_history_table_data(table, channel='tushare', **kwargs)
+    #             completed += 1
+    #             if completed % chunk_size:
+    #                 dnld_data = pd.concat([dnld_data, df])
+    #             else:
+    #                 dnld_data = pd.concat([dnld_data, df])
+    #                 rows_affected = self.update_table_data(table, dnld_data)
+    #                 dnld_data = pd.DataFrame()
+    #             total_written += rows_affected
+    #             time_elapsed = time.time() - st
+    #             time_remain = sec_to_duration(
+    #                     (total - completed) * time_elapsed / completed,
+    #                     estimation=True,
+    #                     short_form=False
+    #             )
+    pass
 
 
 def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, list_arg_filter, reversed_par_seq) -> dict:
@@ -787,7 +853,7 @@ def fetch_realtime_price_data(channel, qt_code, **kwargs):
         raise NotImplementedError
 
 
-def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
+def fetch_tables(channel, *, tables, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
                  symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                  parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
                  download_batch_interval=0, log=False) -> dict:
@@ -876,7 +942,21 @@ def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=N
     """
 
     # 1, 解析需要下载的数据表清单
-    table_list = _parse_tables_to_fetch(tables, dtypes, freqs, asset_types, refresh_trade_calendar)
+    if isinstance(tables, str):
+        tables = str_to_list(tables)
+    if isinstance(dtypes, str):
+        dtypes = str_to_list(dtypes)
+    if isinstance(freqs, str):
+        freqs = str_to_list(freqs)
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    table_list = _parse_tables_to_fetch(
+            channel=channel,
+            tables=tables,
+            dtypes=dtypes,
+            freqs=freqs,
+            asset_types=asset_types,
+            refresh_trade_calendar=refresh_trade_calendar)
 
     result_data = {}
     # 2, 循环下载数据表，单独对每个数据表进行参数拆解
@@ -909,6 +989,7 @@ def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=N
     return result_data
 
 
+@lru_cache(maxsize=4)
 def get_api_map(channel: str) -> pd.DataFrame:
     """ 获取指定金融数据API的MAP表
 

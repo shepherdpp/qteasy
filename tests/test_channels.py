@@ -41,7 +41,8 @@ class TestChannels(unittest.TestCase):
             port=QT_CONFIG['test_db_port'],
             user=QT_CONFIG['test_db_user'],
             password=QT_CONFIG['test_db_password'],
-            db_name=QT_CONFIG['test_db_name']
+            db_name=QT_CONFIG['test_db_name'],
+            allow_drop_table=True,
         )
         print('test datasource created.')
 
@@ -56,14 +57,16 @@ class TestChannels(unittest.TestCase):
 
         # if there already are tables existing in the datasource, drop them
         print('dropping tables in the test database...')
+        deleted = 0
         for table in all_tables:
             if table == 'real_time':
                 continue
             if self.ds.table_data_exists(table):
                 # these data can be retained for further testing
                 self.ds.drop_table_data(table)
+                deleted += 1
                 print(f'table {table} dropped.')
-        print('tables dropped.')
+        print(f'{deleted} tables dropped.')
 
         for table in all_tables:
             if table == 'real_time':
@@ -132,7 +135,8 @@ class TestChannels(unittest.TestCase):
 
             # write data to datasource
             self.ds.update_table_data(table, ready_data, merge_type='update')
-            print('data written to database.')
+            data = self.ds.read_table_data(table)
+            print('data written to database:', data.head())
 
     def test_arg_parsing(self):
         """testing parsing of filling args"""
