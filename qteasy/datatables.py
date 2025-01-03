@@ -394,13 +394,13 @@ TABLE_MASTERS = {
         ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', '', '', ''],
 
     'shibor':
-        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', '', '', ''],
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', '', '', '', ''],
 
     'libor':
-        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', '', '', ''],
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', '', '', '', ''],
 
     'hibor':
-        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', '', '', ''],
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', '', '', '', ''],
 
     'wz_index':  # New, 温州民间借贷指数!
         ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', '', '', ''],

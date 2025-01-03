@@ -28,6 +28,7 @@ from .datatables import (
     TABLE_MASTERS,
     TABLE_SCHEMA,
     TABLE_MASTER_COLUMNS,
+    get_table_master,
 )
 
 from .utilfuncs import (
@@ -248,6 +249,8 @@ class DataSource:
             self.__user__ = None
             self.__password__ = None
 
+        self._allow_drop_table = False
+
     @property
     def tables(self) -> list:
         """ 所有已经建立的tables的清单"""
@@ -280,6 +283,19 @@ class DataSource:
         """ 获取所有基础数据表的清单"""
         tables = get_table_master()
         return tables[tables['table_usage'] == 'basic'].index.to_list()
+
+    @property
+    def allow_drop_table(self) -> bool:
+        """ 获取是否允许删除数据表"""
+        return self._allow_drop_table
+
+    @allow_drop_table.setter
+    def allow_drop_table(self, value: bool):
+        """ 设置是否允许删除数据表"""
+        if not isinstance(value, bool):
+            err = TypeError(f'allow_drop_table should be a boolean, got {type(value)} instead!')
+            raise err
+        self._allow_drop_table = value
 
     def __repr__(self):
         if self.source_type == 'db':
@@ -1815,6 +1831,12 @@ class DataSource:
         -------
         None
         """
+
+        if not self.allow_drop_table:
+            warnings.warn('Can\'t drop table from current datasource according to setting, please check'
+                          'datasource.allow_drop_table', RuntimeWarning)
+            return None
+
         if self.source_type == 'db':
             self._drop_db_table(db_table=table)
         elif self.source_type == 'file':
