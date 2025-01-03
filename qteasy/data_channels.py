@@ -17,6 +17,8 @@ import pandas as pd
 
 from .utilfuncs import str_to_list
 
+from .datatables import get_table_master
+
 """
 这个模块提供一个统一数据下载api：
 data_channels.download_data(
@@ -45,7 +47,6 @@ data_channels.download_data(
 3，数据缓存组装，对于大量数据，进行优化组装，提高速度
 
 """
-import pandas as pd
 
 
 def fetch_history_table_data(table, channel='tushare', **kwargs):
@@ -560,23 +561,28 @@ def _parse_additional_time_args(chunk_size, start_date, end_date) -> list:
     return chunked_additional_args
 
 
-def _parse_tables_to_fetch(tables: str or [str], *,
-                           dtypes: str or [str] = None,
-                           freqs: str or [str] = None,
-                           asset_types: str or [str] = None,
+def _parse_tables_to_fetch(channel: str, tables: [str], *,
+                           dtypes: [str] = None,
+                           freqs: [str] = None,
+                           asset_types: [str] = None,
                            refresh_trade_calendar: bool = False) -> set:
     """ 根据输入的参数，生成需要下载的数据表清单
 
     Parameters
     ----------
-    tables: str or list of str,
+    channel: str,
+        数据获取渠道，指定金融数据API，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网 获取金融数据
+    tables: list of str,
         数据表名，必须是database中定义的数据表
-    dtypes: str or list of str,
-        数据表的数据类型，必须是database中定义的数据类型
-    freqs: str or list of str,
-        数据表的数据频率，必须是database中定义的数据频率
-    asset_types: str or list of str,
-        数据表的资产类型，必须是database中定义的资产类型
+    dtypes: list of str,
+        与freqs以及asset_types一起反推需要下载的表，如果给出了此参数，将补充tables中的表
+    freqs: list of str,
+        与dtypes以及asset_types一起反推需要下载的表，如果给出了此参数，将补充tables中的表
+    asset_types: list of str,
+        与freqs以及dtypes一起反推需要下载的表，如果给出了此参数，将补充tables中的表
     refresh_trade_calendar: bool,
         是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
 
@@ -586,53 +592,57 @@ def _parse_tables_to_fetch(tables: str or [str], *,
         需要下载的数据表清单
     """
 
-    from .datatables import get_table_master, TABLE_MASTERS, TABLE_USAGES, TABLE_SCHEMA
+    from .datatables import get_table_master
 
     table_master = get_table_master()
+    api_map = get_api_map(channel=channel)
+    all_tables = api_map.index.to_list()
+    TABLE_USAGES = table_master.table_usage.unique()
     tables_to_refill = set()
+
+    if isinstance(tables, str):
+        tables = str_to_list(tables)
     tables = [item.lower() for item in tables]
+
     if 'all' in tables:
-        tables_to_refill.update(TABLE_MASTERS)
-        return tables_to_refill
+        # add all tables from TABLE_MASTERS
+        tables_to_refill.update(all_tables)
 
     for item in tables:
-        if item in TABLE_MASTERS:
+        if item in all_tables:
             tables_to_refill.add(item)
         elif item in TABLE_USAGES:
             tables_to_refill.update(
                     table_master.loc[table_master.table_usage == item.lower()].index.to_list()
             )
-    for item in dtypes:  # 如果给出了dtypes，进一步筛选tables中的表，删除不需要的
-        tables_to_keep = set()
-        for tbl, schema in table_master.schema.items():  # iteritems()在pandas中已经被废弃
-            if item.lower() in TABLE_SCHEMA[schema]['columns']:
-                tables_to_keep.add(tbl)
-        tables_to_refill.intersection_update(
-                tables_to_keep
-        )
 
-    if freqs is not None:
+    if (dtypes is not None) or (freqs is not None) or (asset_types is not None):
+        # 如果给出了dtypes，freq、asset_types中的任意一个，将用这三个参数作为
+        # 数据类型，反推需要下载的数据表
+        dtype_slice = [slice(None)] if dtypes is None else dtypes
+        freq_slice = [slice(None)] if freqs is None else freqs
+        asset_slice = [slice(None)] if asset_types is None else asset_types
+
+        from itertools import product
+        dtype_filters = product(dtype_slice, freq_slice, asset_slice)
+
         tables_to_keep = set()
-        for freq in str_to_list(freqs):
-            tables_to_keep.update(
-                    table_master.loc[table_master.freq == freq.lower()].index.to_list()
-            )
-        tables_to_refill.intersection_update(
-                tables_to_keep
-        )
-    if asset_types is not None:
-        tables_to_keep = set()
-        for a_type in str_to_list(asset_types):
-            tables_to_keep.update(
-                    table_master.loc[table_master.asset_type == a_type.upper()].index.to_list()
-            )
+        for dtype_filter in dtype_filters:
+            # find out the table name from dtype definition
+            from .datatypes import get_data_type_map
+            dtype_map = get_data_type_map()
+            matched_kwargs = dtype_map.loc[dtype_filter].kwargs
+            for kw in matched_kwargs:
+                tables_to_keep.update(
+                        [kw['table_name']]
+                )
         tables_to_refill.intersection_update(
                 tables_to_keep
         )
 
     dependent_tables = set()
     for table in tables_to_refill:
-        cur_table = table_master.loc[table]
+        cur_table = api_map.loc[table]
         fill_type = cur_table.fill_arg_type
         if fill_type == 'trade_date' and refresh_trade_calendar:
             dependent_tables.add('trade_calendar')
@@ -644,15 +654,6 @@ def _parse_tables_to_fetch(tables: str or [str], *,
     if 'trade_calendar' not in tables_to_refill:
         if refresh_trade_calendar:
             tables_to_refill.add('trade_calendar')
-        else:
-            # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
-            latest_calendar_date = self.get_table_info('trade_calendar', print_info=False)[11]
-            try:
-                latest_calendar_date = pd.to_datetime(latest_calendar_date)
-                if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
-                    tables_to_refill.add('trade_calendar')
-            except:
-                tables_to_refill.add('trade_calendar')
 
     return tables_to_refill
 
@@ -747,7 +748,7 @@ def fetch_realtime_price_data(channel, qt_code, **kwargs):
 
         # 从下载的数据中提取出需要的列
         dnld_data = dnld_data[['code', 'time', 'open', 'high', 'low', 'close', 'volume', 'amount']]
-        dnld_data = dnld_data.rename(columns={ 'code':   'ts_code', 'time':   'trade_time', 'volume': 'vol',
+        dnld_data = dnld_data.rename(columns={'code':   'ts_code', 'time':   'trade_time', 'volume': 'vol',
         })
 
         return dnld_data
@@ -907,6 +908,41 @@ def fetch_tables(channel, *, tables=None, dtypes=None, freqs=None, asset_types=N
 
     return result_data
 
+
+def get_api_map(channel: str) -> pd.DataFrame:
+    """ 获取指定金融数据API的MAP表
+
+    Parameters
+    ----------
+    channel: str,
+        数据获取渠道，金融数据API，支持以下选项:
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+
+    Returns
+    -------
+    pd.DataFrame
+        根据channel返回对应的API MAP表，DataFrame格式
+    """
+
+    if channel == 'tushare':
+        API_MAP = TUSHARE_API_MAP
+        MAP_COLUMNS = TUSHARE_API_MAP_COLUMNS
+    elif channel == 'akshare':
+        API_MAP = AKSHARE_API_MAP
+        MAP_COLUMNS = AKSHARE_API_MAP_COLUMNS
+    elif channel == 'emoney':
+        API_MAP = EASTMONEY_API_MAP
+        MAP_COLUMNS = EASTMONEY_API_MAP_COLUMNS
+    else:
+        raise NotImplementedError(f'channel {channel} is not supported')
+
+    api_map = pd.DataFrame(API_MAP).T
+    api_map.columns = MAP_COLUMNS
+
+    return api_map
+
 """
 TUSHARE API MAP表column的定义：
 1, api:                     对应的tushare API函数名, 参见tsfuncs.py中的定义
@@ -972,11 +1008,8 @@ TUSHARE_API_MAP_COLUMNS = [
 ]
 
 TUSHARE_API_MAP = {
-    'real_time':  # 实时行情数据
-        ['get_realtime_quotes', 'symbols', 'list', 'none', '', 'N', '', ''],
-
     'trade_calendar':
-        ['trade_cal', 'exchange', 'list', 'SSE, SZSE, CFFEX, SHFE, CZCE, DCE, INE', '', 'N', '', ''],
+        ['trade_cal', 'exchange', 'list', 'SSE, SZSE, CFFEX, SHFE, CZCE, DCE, INE', '', '', ''],
 
     'stock_basic':
         ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '',],
@@ -1002,13 +1035,13 @@ TUSHARE_API_MAP = {
     'stock_suspend':
         ['suspend_d', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
-    'HS_money_flow':
+    'hs_money_flow':
         ['moneyflow_hsgt', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
-    'HS_top10_stock':
+    'hs_top10_stock':
         ['hsgt_top10', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
-    'HK_top10_stock':
+    'hk_top10_stock':
         ['ggt_top10', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
     'index_basic':
@@ -1258,6 +1291,11 @@ TUSHARE_API_MAP = {
         ['cn_pmi', 'start', 'month', '197601', '', '', ''],
 }
 
+TUSHARE_REALTIME_API_MAP = {
+    'real_time':  # 实时行情数据
+        ['get_realtime_quotes', 'symbols', 'list', 'none', '', 'N', '', ''],
+}
+
 """
 AKSHARE API MAP表column的定义：
 1, akshare:                 对应的akshare API函数名
@@ -1272,23 +1310,33 @@ AKSHARE API MAP表column的定义：
 
 AKSHARE_API_MAP_COLUMNS = [
     'api',  # 1, 从akshare获取数据时使用的api名
-    'ak_fill_arg_name',  # 2, 从akshare获取数据时使用的api参数名
-    'ak_fill_arg_type',  # 3, 从akshare获取数据时使用的api参数类型
-    'ak_arg_rng',  # 4, 从akshare获取数据时使用的api参数取值范围
+    'fill_arg_name',  # 2, 从akshare获取数据时使用的api参数名
+    'fill_arg_type',  # 3, 从akshare获取数据时使用的api参数类型
+    'arg_rng',  # 4, 从akshare获取数据时使用的api参数取值范围
 ]
 
 AKSHARE_API_MAP = {
 
 }
 
+AKSHARE_REALTIME_API_MAP = {
+    'real_time':  # 实时行情数据
+        ['get_realtime_quotes', 'symbols', 'list', 'none', '', 'N', '', ''],
+}
+
 EASTMONEY_API_MAP_COLUMNS = [
     'api',  # 1, 从东方财富网获取数据时使用的api名
-    'em_fill_arg_name',  # 2, 从东方财富网获取数据时使用的api参数名
-    'em_fill_arg_type',  # 3, 从东方财富网获取数据时使用的api参数类型
-    'em_arg_rng',  # 4, 从东方财富网获取数据时使用的api参数取值范围
-    'em_arg_allowed_code_suffix',  # 5, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
+    'fill_arg_name',  # 2, 从东方财富网获取数据时使用的api参数名
+    'fill_arg_type',  # 3, 从东方财富网获取数据时使用的api参数类型
+    'arg_rng',  # 4, 从东方财富网获取数据时使用的api参数取值范围
+    'arg_allowed_code_suffix',  # 5, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
 ]
 
 EASTMONEY_API_MAP = {
 
+}
+
+EASTMONEY_REALTIME_API_MAP = {
+    'realtime_min':  # 实时行情数据
+        ['get_k_history', 'code', 'list', 'none', '', 'N', '', ''],
 }

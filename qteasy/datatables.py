@@ -193,10 +193,10 @@ TABLE_MASTERS = {
         ['opt_basic', '期权基本信息', 'basics', 'OPT', 'none', '', '', ''],
 
     'ths_index_basic':  # New, 同花顺指数基本信息
-        ['ths_index_basic', '同花顺指数基本信息', 'basic', 'THS', 'none', '', '', ''],
+        ['ths_index_basic', '同花顺指数基本信息', 'basics', 'THS', 'none', '', '', ''],
 
     'sw_industry_basic':  # New, 申万行业分类
-        ['sw_industry_basic', '申万行业分类', 'basic', 'IDX', 'none', '', '', ''],
+        ['sw_industry_basic', '申万行业分类', 'basics', 'IDX', 'none', '', '', ''],
 
     'stock_1min':
         ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', '', '', ''],

@@ -86,7 +86,8 @@ class DataSource:
                  port: int = 3306,
                  user: str = None,
                  password: str = None,
-                 db_name: str = 'qt_db'):
+                 db_name: str = 'qt_db',
+                 allow_drop_table: bool = False):
         """ 创建一个DataSource 对象
 
         创建对象时确定本地数据存储方式，确定文件存储位置、文件类型，或者建立数据库的连接
@@ -694,7 +695,7 @@ class DataSource:
         cursor.close()
         conn.close()
 
-    def _db_execute_one(self, sql, fetch_and_return=True, rollback=False) -> any:
+    def _db_execute_one(self, sql, data=None, *, fetch_and_return=True, rollback=False) -> any:
         """从mysql连接池获取一个新的连接，执行一条sql语句， 返回结果并关闭连接
 
         Parameters
@@ -713,7 +714,7 @@ class DataSource:
         """
         conn, cursor = self._db_open_connection()
         try:
-            rows_affected = cursor.execute(sql)
+            rows_affected = cursor.execute(sql, data)
             conn.commit()
             if fetch_and_return:
                 result = cursor.fetchall()
@@ -1179,7 +1180,7 @@ class DataSource:
         #         password=self.__password__,
         #         db=self.db_name,
         # )
-        res = self._db_execute_one(sql)
+        res = self._db_execute_one(sql)[0]
         res = list(res)
         if isinstance(res[0], datetime.datetime):
             res = list(pd.to_datetime(res).strftime('%Y%m%d'))
@@ -1456,7 +1457,7 @@ class DataSource:
               "FROM INFORMATION_SCHEMA.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s;"
-        rows, size = self._db_execute_one(sql, fetch_and_return=True)[0]
+        rows, size = self._db_execute_one(sql, (self.db_name, db_table), fetch_and_return=True)[0]
         return rows, size
         # con, cursor = self._db_open_connection()
         # try:
@@ -2008,6 +2009,7 @@ class DataSource:
             pk_count += 1
             critical = ''
             record_count = 'unknown'
+
             if len(pk_min_max_count) == 3:
                 record_count = pk_min_max_count[2]
             if len(pk_min_max_count) == 0:
@@ -2033,7 +2035,7 @@ class DataSource:
             print(f'\ncolumns of table:\n'
                   f'------------------------------------\n'
                   f'{table_schema}\n')
-        return {'table':        table,
+        _res = {'table':        table,
                 'table_exists': table_exists,
                 'table_size':   table_size,
                 'table_rows':   table_rows,
@@ -2046,6 +2048,7 @@ class DataSource:
                 'pk_min2':      pk_min2,
                 'pk_max2':      pk_max2
                 }
+        return _res
 
     # ==============
     # 系统操作表操作函数，专门用于操作sys_operations表，记录系统操作信息，数据格式简化

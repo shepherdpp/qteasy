@@ -745,6 +745,15 @@ def refill_data_source(*, data_source=None, **kwargs) -> None:
             **kwargs,
     )
 
+    # TODO: 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+    latest_calendar_date = QT_DATA_SOURCE.get_table_info('trade_calendar', print_info=False)['pk_max2']
+    try:
+        latest_calendar_date = pd.to_datetime(latest_calendar_date)
+        if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+            tables_to_refill.add('trade_calendar')
+    except:
+        tables_to_refill.add('trade_calendar')
+
 
 def get_history_data(htypes,
                      shares=None,
