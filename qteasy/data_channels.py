@@ -14,10 +14,12 @@
 
 
 import pandas as pd
+import time
 
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .utilfuncs import str_to_list
+from .utilfuncs import str_to_list, progress_bar, sec_to_duration
 
 """
 这个模块提供一个统一数据下载api：
@@ -49,55 +51,114 @@ data_channels.download_data(
 """
 
 
-def fetch_history_table_data(table, channel='tushare', **kwargs):
-    """从网络获取本地数据表的历史数据，调用API的参数只能是一组数据
-
-    1，根据table以及channel的不同，调用不同的数据API获取函数，获取数据
-    2，数据API从模块中定义的各个MAP表中获取
+def fetch_table_data_from_tushare(table, **kwargs):
+    """使用kwargs参数，从tushare获取一次金融数据
 
     Parameters
     ----------
     table: str,
         数据表名，必须是API_MAP中定义的数据表
-    channel: str, optional
-        str: 数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
-        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
-        - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
     **kwargs:
-        用于下载金融数据的函数参数，或者读取本地csv文件的函数参数
+        用于下载金融数据的函数参数
 
     Returns
     -------
     pd.DataFrame:
-        下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
+        下载后的数据
     """
 
-    # 目前仅支持从tushare获取数据，未来可能增加新的API
     from .tsfuncs import acquire_data
-    # 从指定的channel获取数据
-    if channel == 'tushare':
-        # 通过tushare的API下载数据
-        api_name = TUSHARE_API_MAP[table][TUSHARE_API_MAP_COLUMNS.index('api')]
-    elif channel == 'akshare':
-        # 通过akshare的API下载数据
-        api_name = AKSHARE_API_MAP[table][AKSHARE_API_MAP_COLUMNS.index('api')]
-    elif channel == 'emoney':
-        # 通过东方财富网的API下载数据
-        api_name = EASTMONEY_API_MAP[table][EASTMONEY_API_MAP_COLUMNS.index('api')]
-    else:
-        raise NotImplementedError
-    try:
-        dnld_data = acquire_data(api_name, **kwargs)
-    except Exception as e:
-        raise Exception(f'{e}: data {table} can not be acquired from {channel}')
+
+    # 通过tushare的API下载数据
+    api_name = TUSHARE_API_MAP[table][TUSHARE_API_MAP_COLUMNS.index('api')]
+
+    dnld_data = acquire_data(api_name, **kwargs)
 
     return dnld_data
 
 
-def fetch_batched_table_data(*, table, channel, arg_list, log, parallel, process_count,
-                             chunk_size, download_batch_size, download_batch_interval) -> pd.DataFrame:
-    """ 顺序批量获取同一张数据表的数据，反复调用同一个API，但是传入一系列不同的参数
+def fetch_table_data_from_akshare(table, **kwargs):
+    """ 使用kwargs参数，从akshare获取一次金融数据
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是API_MAP中定义的数据表
+    **kwargs:
+        用于下载金融数据的函数参数
+
+    Returns
+    -------
+    pd.DataFrame:
+        下载后的数据
+    """
+    from .akfuncs import acquire_data
+    api_name = AKSHARE_API_MAP[table][AKSHARE_API_MAP_COLUMNS.index('api')]
+
+    dnld_data = acquire_data(api_name, **kwargs)
+
+    return dnld_data
+
+
+def fetch_table_data_from_emoney(table, **kwargs):
+    """ 使用kwargs参数，从东方财富网获取一次金融数据
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是API_MAP中定义的数据表
+    **kwargs:
+        用于下载金融数据的函数参数
+
+    Returns
+    -------
+    pd.DataFrame:
+        下载后的数据
+    """
+    from .emfuncs import acquire_data
+    api_name = EASTMONEY_API_MAP[table][EASTMONEY_API_MAP_COLUMNS.index('api')]
+
+    dnld_data = acquire_data(api_name, **kwargs)
+
+    return dnld_data
+
+
+def get_fetch_table_func(channel: str):
+    """ 获取数据下载函数
+
+    Parameters
+    ----------
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+
+    Returns
+    -------
+    function:
+        数据下载函数
+    """
+    if channel == 'tushare':
+        return fetch_table_data_from_tushare
+    elif channel == 'akshare':
+        return fetch_table_data_from_akshare
+    elif channel == 'emoney':
+        return fetch_table_data_from_emoney
+    else:
+        raise NotImplementedError(f'channel {channel} is not supported')
+
+
+def fetch_batched_table_data(
+        *,
+        table: str,
+        channel: str,
+        arg_list: any,
+        log: any,
+        chunk_size: int = 100,
+        download_batch_size: int = 0,
+        download_batch_interval: int = 0.) -> pd.DataFrame:
+    """ 顺序循环批量获取同一张数据表的数据，传入一系列不同的参数反复调用同一个API，但是传入一系列不同的参数
 
     Parameters
     ----------
@@ -112,79 +173,174 @@ def fetch_batched_table_data(*, table, channel, arg_list, log, parallel, process
         用于下载数据的函数参数
     log: logger
         用于记录下载数据的日志
+        并行下载数据时，使用的进程数, 默认为None，表示使用cpu_count()个进程
     chunk_size: int
-        分批下载数据时，每一批数据包含的数据量，单位为天，表示每次下载多少天的数据
+        为减少数据合并操作的频率，会下载一定数量的数据后再进行DataFrame的合并。此参数代表
+        合并的数据数量，表示每次下载多少组数据后合并
+    download_batch_size: int
+        为降低网络请求的频率，在暂停之前连续网络请求的次数，单位为次，如果设置为0，则不暂停
+    download_batch_interval: float
+        为降低网络请求的频率，连续网络请求一定次数后，暂停的时间，单位为秒
 
     """
 
     # 本函数解析arg_list中的参数，循环或者并行调用fetch_history_table_data函数获取
     # 数据，然后将数据合并成一个DataFrame返回
-    # data_fetch_args = _parse_data_fetch_args(table, channel, *arg_list)
-    # completed = 0
-    # total = len(list(arg_coverage)) * start_end_chunk_multiplier
-    # total_written = 0
-    # st = time.time()
-    # dnld_data = pd.DataFrame()
-    # time_elapsed = 0
-    # rows_affected = 0
-    # try:
-    #     # 清单中的第一张表不使用parallel下载
-    #     if parallel and table_count != 1:
-    #         with ThreadPoolExecutor(max_workers=process_count) as worker:
-    #             '''
-    #             这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
-    #             通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
-    #             '''
-    #             api_name = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('tushare')]
-    #             futures = {}
-    #             submitted = 0
-    #             for kw in all_kwargs:
-    #                 futures.update({worker.submit(acquire_data, api_name, **kw): kw})
-    #                 submitted += 1
-    #                 if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
-    #                     progress_bar(submitted, total, f'<{table}>: Submitting tasks, '
-    #                                                    f'Pausing for {download_batch_interval} sec...')
-    #                     time.sleep(download_batch_interval)
-    #             # futures = {worker.submit(acquire_data, api_name, **kw): kw
-    #             #            for kw in all_kwargs}
-    #             progress_bar(0, total, f'<{table}>: estimating time left...')
-    #             for f in as_completed(futures):
-    #                 df = f.result()
-    #                 cur_kwargs = futures[f]
-    #                 completed += 1
-    #                 if completed % chunk_size:
-    #                     dnld_data = pd.concat([dnld_data, df])
-    #                 else:
-    #                     dnld_data = pd.concat([dnld_data, df])
-    #                     rows_affected = self.update_table_data(table, dnld_data)
-    #                     dnld_data = pd.DataFrame()
-    #                 total_written += rows_affected
-    #                 time_elapsed = time.time() - st
-    #                 time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
-    #                                               estimation=True, short_form=False)
-    #                 progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
-    #                                                f'{total_written}wrtn/{time_remain} left')
-    #
-    #             total_written += self.update_table_data(table, dnld_data)
-    #     else:
-    #         progress_bar(0, total, f'<{table}> estimating time left...')
-    #         for kwargs in all_kwargs:
-    #             df = self.fetch_history_table_data(table, channel='tushare', **kwargs)
-    #             completed += 1
-    #             if completed % chunk_size:
-    #                 dnld_data = pd.concat([dnld_data, df])
-    #             else:
-    #                 dnld_data = pd.concat([dnld_data, df])
-    #                 rows_affected = self.update_table_data(table, dnld_data)
-    #                 dnld_data = pd.DataFrame()
-    #             total_written += rows_affected
-    #             time_elapsed = time.time() - st
-    #             time_remain = sec_to_duration(
-    #                     (total - completed) * time_elapsed / completed,
-    #                     estimation=True,
-    #                     short_form=False
-    #             )
-    pass
+
+    fetch_table_data = get_fetch_table_func(channel)
+
+    completed = 0
+    total = len(arg_list)
+    total_written = 0
+    st = time.time()
+    time_elapsed = 0
+    dnld_data_list = []
+    df_concat_list = []
+    rows_affected = 0
+    # 使用for-loop循环下载数据
+    progress_bar(0, total, comments=f'<{table}> estimating time left...')
+
+    for kwargs in arg_list:
+        df = fetch_table_data(table, channel='tushare', **kwargs)
+        completed += 1
+        df_concat_list.append(df)
+        if not completed % chunk_size:
+            dnld_data_list.append(pd.concat(df_concat_list))
+        if download_batch_size > 0:
+            if not completed % download_batch_size:
+                time.sleep(download_batch_interval)
+                progress_bar(completed, total, comments=f'<{table}:{list(kwargs.values())[0]}-'
+                                                        f'Pausing for {download_batch_interval} sec>')
+        total_written += rows_affected
+        time_elapsed = time.time() - st
+        time_remain = sec_to_duration(
+                (total - completed) * time_elapsed / completed,
+                estimation=True,
+                short_form=False
+        )
+        progress_bar(completed, total, comments=f'<{table}:{list(kwargs.values())[0]}{time_remain}>')
+
+    strftime_elapsed = sec_to_duration(
+            time_elapsed,
+            estimation=True,
+            short_form=True
+    )
+    if len(arg_list) > 1:
+        progress_bar(total, total,
+                     comments=f'<{table}:{arg_list[0]}-{arg_list[-1]}>'
+                                   f'{total_written}wrtn in {strftime_elapsed}\n')
+    else:
+        progress_bar(total, total,
+                     comments=f'[{table}:None> {total_written}wrtn in {strftime_elapsed}\n')
+
+    return pd.concat(dnld_data_list)
+
+
+def fetch_async_batched_table_data(
+        *,
+        table: str,
+        channel: str,
+        arg_list: any,
+        log: any,
+        process_count: any = None,
+        chunk_size: int = 100,
+        download_batch_size: int = 0,
+        download_batch_interval: int = 0.) -> pd.DataFrame:
+    """ 并行批量获取同一张数据表的数据，反复调用同一个API，但是传入一系列不同的参数
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是database中定义的数据表
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    arg_list: iterable
+        用于下载数据的函数参数
+    log: logger
+        用于记录下载数据的日志
+    process_count: int, optional
+        并行下载数据时，使用的进程数, 默认为None，表示使用cpu_count()个进程
+    chunk_size: int
+        为减少数据合并操作的频率，会下载一定数量的数据后再进行DataFrame的合并。此参数代表
+        合并的数据数量，表示每次下载多少组数据后合并
+    download_batch_size: int
+        为降低网络请求的频率，在暂停之前连续网络请求的次数，单位为次，如果设置为0，则不暂停
+    download_batch_interval: float
+        为降低网络请求的频率，连续网络请求一定次数后，暂停的时间，单位为秒
+
+    Returns
+    -------
+    pd.DataFrame:
+        下载的数据
+    """
+    # 本函数解析arg_list中的参数，循环或者并行调用fetch_history_table_data函数获取
+    # 数据，然后将数据合并成一个DataFrame返回
+
+    fetch_table_data = get_fetch_table_func(channel)
+
+    completed = 0
+    total = len(arg_list)
+    total_written = 0
+    st = time.time()
+    time_elapsed = 0
+    dnld_data_list = []
+    df_concat_list = []
+    rows_affected = 0
+
+    # 使用ThreadPoolExecutor循环下载数据
+    progress_bar(0, total, comments=f'<{table}> estimating time left...')
+    with ThreadPoolExecutor(max_workers=process_count) as worker:
+        '''
+        在原来的实现中，
+        这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
+        通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
+        现在尝试
+        '''
+        futures = {}
+        submitted = 0
+        for kw in arg_list:
+            futures.update({worker.submit(fetch_table_data, **kw): kw})
+            submitted += 1
+            if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
+                progress_bar(submitted, total,
+                             comments=f'<{table}>: Submitting tasks, '
+                                      f'Pausing for {download_batch_interval} sec...')
+                time.sleep(download_batch_interval)
+        progress_bar(0, total, comments=f'<{table}>: estimating time left...')
+        for f in as_completed(futures):
+            cur_kwargs = futures[f]
+            completed += 1
+            df_concat_list.append(f.result())
+
+            if not completed % chunk_size:
+                dnld_data_list.append(pd.concat(df_concat_list))
+                df_concat_list = []
+
+            total_written += rows_affected
+            time_elapsed = time.time() - st
+            time_remain = sec_to_duration((total - completed) * time_elapsed / completed,
+                                          estimation=True, short_form=False)
+            progress_bar(completed, total,
+                         comments=f'<{table}:{list(cur_kwargs.values())[0]}>'
+                                  f'{total_written}wrtn/{time_remain} left')
+
+    strftime_elapsed = sec_to_duration(
+            time_elapsed,
+            estimation=True,
+            short_form=True
+    )
+    if len(arg_list) > 1:
+        progress_bar(total, total,
+                     comments=f'<{table}:{arg_list[0]}-{arg_list[-1]}>'
+                                   f'{total_written}wrtn in {strftime_elapsed}\n')
+    else:
+        progress_bar(total, total,
+                     comments=f'[{table}:None> {total_written}wrtn in {strftime_elapsed}\n')
+
+    return pd.concat(dnld_data_list)
 
 
 def _parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, list_arg_filter, reversed_par_seq) -> dict:
@@ -973,17 +1129,26 @@ def fetch_tables(channel, *, tables, dtypes=None, freqs=None, asset_types=None, 
                 reversed_par_seq=reversed_par_seq,
         )
         # 2.2, 批量下载数据
-        dnld_data = fetch_batched_table_data(
-                table=table,
-                channel=channel,
-                arg_list=data_fetch_args,
-                parallel=parallel,
-                process_count=process_count,
-                log=log,
-                chunk_size=chunk_size,
-                download_batch_size=download_batch_size,
-                download_batch_interval=download_batch_interval,
-        )
+        if parallel:
+            dnld_data = fetch_async_batched_table_data(
+                    table=table,
+                    channel=channel,
+                    arg_list=data_fetch_args,
+                    log=log,
+                    process_count=process_count,
+                    chunk_size=chunk_size,
+            )
+        else:
+            dnld_data = fetch_batched_table_data(
+                    table=table,
+                    channel=channel,
+                    arg_list=data_fetch_args,
+                    log=log,
+                    chunk_size=chunk_size,
+                    download_batch_size=download_batch_size,
+                    download_batch_interval=download_batch_interval,
+            )
+
         result_data[table] = dnld_data
 
     return result_data

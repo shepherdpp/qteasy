@@ -17,7 +17,7 @@ from qteasy.data_channels import (
     TUSHARE_API_MAP,
     EASTMONEY_API_MAP,
     AKSHARE_API_MAP,
-    fetch_history_table_data,
+    fetch_table_data_from_tushare,
     fetch_realtime_price_data,
     _parse_list_args,
     _parse_datetime_args,
@@ -122,7 +122,7 @@ class TestChannels(unittest.TestCase):
             kwargs['retry_count'] = 1
 
             try:
-                dnld_data = fetch_history_table_data(table, channel='tushare', **kwargs)
+                dnld_data = fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
                 print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
             except Exception as e:
                 print(f'error downloading data for table {table}: {e}')
@@ -470,6 +470,16 @@ class TestChannels(unittest.TestCase):
         print('tables more than expected', [table for table in res if table not in expected_tables])
         self.assertTrue(all(table in res for table in expected_tables))
         self.assertTrue(all(table in expected_tables for table in res))
+
+    def test_fetch_tables(self):
+        """ test function fetch tables"""
+        print('testing fetching tables')
+        tables = 'trade_calendar, stock_daily, index_daily'
+        res = fetch_table_data_from_tushare(
+                tables,
+                channel='tushare',
+                start_date='20210101',
+                end_date='20210110',)
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""
