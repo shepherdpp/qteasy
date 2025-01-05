@@ -10,6 +10,7 @@
 
 import pandas as pd
 import numpy as np
+import time
 from warnings import warn
 
 import datetime
@@ -31,6 +32,8 @@ from qteasy.utilfuncs import (
     next_market_trade_day,
     AVAILABLE_ASSET_TYPES,
     _partial_lev_ratio,
+    progress_bar,
+    sec_to_duration,
 )
 
 from qteasy.visual import (
@@ -641,7 +644,10 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
     return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
-def refill_data_source(*, data_source=None, **kwargs) -> None:
+def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
+                 symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
+                 parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
+                 download_batch_interval=0, log=False, data_source=None, **kwargs) -> None:
     """ 填充数据数据源
 
     Parameters
@@ -732,27 +738,201 @@ def refill_data_source(*, data_source=None, **kwargs) -> None:
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
     print(f'Filling data source {data_source} ...')
-    hist_dnld_delay = None
-    hist_dnld_delay_evy = None
-    if 'download_batch_size' not in kwargs:
+    hist_dnld_delay = download_batch_interval
+    hist_dnld_delay_evy = download_batch_size
+    if hist_dnld_delay is None:
         hist_dnld_delay = QT_CONFIG.hist_dnld_delay
-    if 'download_batch_interval' not in kwargs:
+    if hist_dnld_delay_evy is None:
         hist_dnld_delay_evy = QT_CONFIG.hist_dnld_delay_evy
 
-    data_source.refill_local_source(
-            download_batch_size=hist_dnld_delay_evy,
-            download_batch_interval=hist_dnld_delay,
-            **kwargs,
+
+    """ 大批量下载多张数据表中的数据，并将下载的数据组装成pd.DataFrame，检查数据的完整性
+    完成数据清洗并返回可以直接写入数据表中的数据。
+
+    本函数逐个下载指定数据表中的数据，目的是大批量下载全部数据，因此仅支持时间分段下载，不允许
+    指定单个证券代码下载数据。
+
+    本函数会解析输入的参数，如果参数范围过大导致下载的数据超出数据提供商的限制，会根据数据MAP表
+    中定义的规则将数据拆分成多组，分批下载。
+
+    下载过程可以并行进行，也可以顺序进行，可以设置下载的并行线程数，也可以设置下载的批次大小和
+    批次间隔时间。
+
+    数据下载的过程可以记录到日志中，以便查看下载的进度和结果
+
+    Parameters
+    ----------
+    channel: str,
+        数据获取渠道，金融数据API，支持以下选项:
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    == 前面四个参数用于筛选需要下载的数据表，必须至少输入一个 ==
+    tables: str or list of str, default: None
+        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+    dtypes: str or list of str, default: None
+        需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型
+    freqs: str or list of str, default: None
+        需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率
+    asset_types: str or list of str, default: None
+        需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型
+
+    == 第五个参数用于特别指定更新trade_calendar表 ==
+    refresh_trade_calendar: Bool, Default False
+        是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
+
+    == 后续几个参数用于下载数据的参数设置 ==
+    start_date: str YYYYMMDD
+        限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+    end_date: str YYYYMMDD
+        限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+    list_arg_filter: str or list of str, default: None  **注意，不是所有情况下filter_arg参数都有效**
+        限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
+        如果filter_arg为None，则下载所有数据。
+        例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+        - 'SZSE'
+            仅下载深圳交易所的股票数据
+        - ['SSE', 'SZSE']
+        - 'SSE, SZSE'
+            上面两种写法等效，下载上海和深圳交易所的股票数据
+    symbols: str or list of str, default: None
+        用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载
+    reversed_par_seq: Bool, Default False
+        是否逆序参数下载数据， 默认False
+        - True:  逆序参数下载数据
+        - False: 顺序参数下载数据
+
+    == 最后几个参数用于下载数据的设置 ==
+    parallel: Bool, Default True
+        是否启用多线程下载数据
+        - True:  启用多线程下载数据
+        - False: 禁用多线程下载
+    process_count: int
+        启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+    chunk_size: int
+        保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
+        再批量保存到本地，chunk_size即批量，默认值100
+    download_batch_size: int, default 0
+        为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
+        该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效
+        如果为0，则不暂停，一次性下载所有数据
+    download_batch_interval: int, default 0
+        为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
+        该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效
+        如果<=0，则不暂停，立即开始下一批数据下载
+    log: Bool, Default False
+        是否记录数据下载日志
+
+    Returns
+    -------
+    dict:
+        返回一个字典，包含下载的数据DataFrame
+    """
+
+    # 1, 解析需要下载的数据表清单
+    if isinstance(tables, str):
+        tables = str_to_list(tables)
+    if isinstance(dtypes, str):
+        dtypes = str_to_list(dtypes)
+    if isinstance(freqs, str):
+        freqs = str_to_list(freqs)
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+
+    from .datatables import get_tables_by_name_or_usage
+    from .data_channels import get_dependent_tables
+    from .datatypes import get_tables_by_dtypes
+    table_list = get_tables_by_name_or_usage(
+            tables=tables,
     )
 
-    # TODO: 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
-    latest_calendar_date = QT_DATA_SOURCE.get_table_info('trade_calendar', print_info=False)['pk_max2']
+    table_list.update(get_tables_by_dtypes(
+            dtypes=dtypes,
+            freqs=freqs,
+            asset_types=asset_types,
+    ))
+
+    for table in table_list:
+        table_list.add(get_dependent_tables(table, channel=channel))
+
+    # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+    latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max2']
     try:
         latest_calendar_date = pd.to_datetime(latest_calendar_date)
         if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
-            tables_to_refill.add('trade_calendar')
+            table_list.add('trade_calendar')
     except:
-        tables_to_refill.add('trade_calendar')
+        table_list.add('trade_calendar')
+
+    # 2, 循环下载数据表，单独对每个数据表进行参数拆解
+    from .data_channels import parse_data_fetch_args, fetch_batched_table_data
+    for table in table_list:
+        # 2.1, 解析下载数据的参数
+        arg_list = parse_data_fetch_args(
+                table=table,
+                channel=channel,
+                symbols=symbols,
+                start_date=start_date,
+                end_date=end_date,
+                freq=freqs,
+                list_arg_filter=list_arg_filter,
+                reversed_par_seq=reversed_par_seq,
+        )
+        # 2.2, 批量下载数据
+        completed = 0
+        total = len(arg_list)
+        total_written = 0
+        st = time.time()
+        time_elapsed = 0
+        dnld_data_list = []
+        df_concat_list = []
+        rows_affected = 0
+
+        progress_bar(0, total, comments=f'<{table}> estimating time left...')
+
+        for kwargs, data in fetch_batched_table_data(
+                table=table,
+                arg_list=arg_list,
+                parallel=parallel,
+                process_count=process_count,
+                download_batch_size=download_batch_size,
+                download_batch_interval=download_batch_interval,
+        ):
+            completed += 1
+            df_concat_list.append(data)
+            if not completed % chunk_size:
+                # 将下载的数据写入数据源
+                rows_affected += data_source.update_table_data(
+                        table=table,
+                        df=pd.concat(df_concat_list),
+                        merge_type='update',
+                )
+
+            total_written += rows_affected
+            time_elapsed = time.time() - st
+            time_remain = sec_to_duration(
+                    (total - completed) * time_elapsed / completed,
+                    estimation=True,
+                    short_form=False
+            )
+            progress_bar(completed, total, comments=f'<{table}:{kwargs}{time_remain}>')
+
+        strftime_elapsed = sec_to_duration(
+                time_elapsed,
+                estimation=True,
+                short_form=True
+        )
+        if len(arg_list) > 1:
+            progress_bar(total, total,
+                         comments=f'<{table}:{arg_list[0]}-{arg_list[-1]}>'
+                                  f'{total_written}wrtn in {strftime_elapsed}\n')
+        else:
+            progress_bar(total, total,
+                         comments=f'[{table}:None> {total_written}wrtn in {strftime_elapsed}\n')
+
+
+    return None
 
 
 def get_history_data(htypes,

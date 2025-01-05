@@ -11,14 +11,14 @@
 # ======================================
 
 import unittest
+import time
+
+import pandas as pd
 
 from qteasy.database import DataSource
 from qteasy.data_channels import (
     TUSHARE_API_MAP,
-    EASTMONEY_API_MAP,
-    AKSHARE_API_MAP,
-    fetch_table_data_from_tushare,
-    fetch_realtime_price_data,
+    fetch_batched_table_data,
     _parse_list_args,
     _parse_datetime_args,
     _parse_trade_date_args,
@@ -26,8 +26,7 @@ from qteasy.data_channels import (
     _parse_month_args,
     _parse_table_index_args,
     _parse_additional_time_args,
-    _parse_data_fetch_args,
-    _parse_tables_to_fetch,
+    parse_data_fetch_args,
 )
 
 
@@ -344,15 +343,15 @@ class TestChannels(unittest.TestCase):
 
         print(f'testing parsing args for table: {table}')
         # parse the filling args and pick the first filling arg value from the range
-        args = _parse_data_fetch_args(table=table,
-                                      channel='tushare',
-                                      symbols='000651.SZ:000660.SZ',
-                                      start_date='20210101',
-                                      end_date='20210321',
-                                      freq='d',
-                                      list_arg_filter=None,
-                                      reversed_par_seq=False,
-                                      )
+        args = parse_data_fetch_args(table=table,
+                                     channel='tushare',
+                                     symbols='000651.SZ:000660.SZ',
+                                     start_date='20210101',
+                                     end_date='20210321',
+                                     freq='d',
+                                     list_arg_filter=None,
+                                     reversed_par_seq=False,
+                                     )
         args = list(args)
         print(f'args: {args}')
         self.assertEqual(args, [{'exchange': 'SSE'}, {'exchange': 'SZSE'}, {'exchange': 'BSE'}])
@@ -360,15 +359,15 @@ class TestChannels(unittest.TestCase):
         table = 'stock_daily'
         print(f'testing parsing args for table: {table}')
         # parse the filling args and pick the first filling arg value from the range
-        args = _parse_data_fetch_args(table=table,
-                                      channel='tushare',
-                                      symbols='000651.SZ:000660.SZ',
-                                      start_date='20210101',
-                                      end_date='20210110',
-                                      freq='d',
-                                      list_arg_filter=None,
-                                      reversed_par_seq=False,
-                                      )
+        args = parse_data_fetch_args(table=table,
+                                     channel='tushare',
+                                     symbols='000651.SZ:000660.SZ',
+                                     start_date='20210101',
+                                     end_date='20210110',
+                                     freq='d',
+                                     list_arg_filter=None,
+                                     reversed_par_seq=False,
+                                     )
         args = list(args)
         print(f'args: {args}')
         self.assertEqual(args, [{'trade_date': '20210104'},
@@ -380,106 +379,69 @@ class TestChannels(unittest.TestCase):
         table = 'index_daily'
         print(f'testing parsing args for table: {table}')
         # parse the filling args and pick the first filling arg value from the range
-        args = _parse_data_fetch_args(table=table,
-                                      channel='tushare',
-                                      symbols='000001.SH, 000011.SH, 000016.SH, 000300.OTHER',
-                                      start_date='20210101',
-                                      end_date='20210110',
-                                      freq='d',
-                                      list_arg_filter=None,
-                                      reversed_par_seq=False,
-                                      )
+        args = parse_data_fetch_args(table=table,
+                                     channel='tushare',
+                                     symbols='000001.SH, 000011.SH, 000016.SH, 000300.OTHER',
+                                     start_date='20210101',
+                                     end_date='20210110',
+                                     freq='d',
+                                     list_arg_filter=None,
+                                     reversed_par_seq=False,
+                                     )
         args = list(args)
         print(f'args: {args}')
         self.assertEqual(args, [{'ts_code': '000001.SH', 'start': '20210101', 'end': '20210110'},
                                 {'ts_code': '000016.SH', 'start': '20210101', 'end': '20210110'}])
 
-    def test_parse_table_names(self):
-        """ test function _parse_tables_to_fetch"""
-        tables = ['all']
-        print(f'testing parsing table names {tables}')
-        res = _parse_tables_to_fetch('tushare', tables, )
-        print(f'fetching all tables: \n{res}')
-        print('tables under expected',[table for table in TUSHARE_API_MAP.keys() if table not in res])
-        print('tables more than expected', [table for table in res if table not in TUSHARE_API_MAP.keys()])
-        self.assertTrue(all(table in res for table in TUSHARE_API_MAP.keys()))
-        self.assertTrue(all(table in TUSHARE_API_MAP.keys() for table in res))
-
-        tables = ['stock_basic', 'stock_daily', 'index_daily']
-        res = _parse_tables_to_fetch('tushare', tables=tables)
-        print(f'fetching tables: stock_basic, stock_daily, index_daily: \n{res}')
-        expected_tables = ['stock_basic', 'stock_daily', 'index_daily', 'index_basic']
-        print('tables under expected', [table for table in expected_tables if table not in res])
-        print('tables more than expected', [table for table in res if table not in expected_tables])
-        self.assertTrue(all(table in res for table in expected_tables))
-        self.assertTrue(all(table in expected_tables for table in res))
-
-        tables = ['basics']
-        res = _parse_tables_to_fetch('tushare', tables=tables)
-        print(f'fetching tables: basics: \n{res}')
-        expected_tables = ['stock_basic', 'index_basic', 'fund_basic', 'future_basic', 'opt_basic', 'ths_index_basic',
-                           'stock_company', 'new_share','sw_industry_basic']
-        print('tables under expected', [table for table in expected_tables if table not in res])
-        print('tables more than expected', [table for table in res if table not in expected_tables])
-        self.assertTrue(all(table in res for table in expected_tables))
-        self.assertTrue(all(table in expected_tables for table in res))
-
-        tables = ['events']
-        res = _parse_tables_to_fetch('tushare', tables=tables)
-        print(f'fetching tables: events: \n{res}')
-        expected_tables = ['stock_suspend', 'dividend', 'hs_top10_stock', 'block_trade', 'stock_holder_trade',
-                           'stock_names', 'margin_detail', 'stock_basic', 'hk_top10_stock', 'stk_managers',
-                           'fund_basic', 'top_list', 'fund_manager', 'top_inst']
-        print('tables under expected', [table for table in expected_tables if table not in res])
-        print('tables more than expected', [table for table in res if table not in expected_tables])
-        self.assertTrue(all(table in res for table in expected_tables))
-        self.assertTrue(all(table in expected_tables for table in res))
-
-        tables = ['mins']
-        res = _parse_tables_to_fetch('tushare', tables=tables)
-        print(f'fetching tables: mins: \n{res}')
-        expected_tables = ['fund_15min', 'future_15min', 'opt_basic', 'index_basic', 'fund_1min', 'options_1min',
-                           'stock_15min', 'future_basic', 'index_5min', 'stock_hourly', 'options_5min', 'stock_30min',
-                           'options_hourly', 'future_1min', 'index_15min', 'stock_basic', 'fund_30min', 'future_hourly',
-                           'fund_hourly', 'future_30min', 'options_15min', 'options_30min', 'stock_5min',
-                           'index_hourly', 'future_5min', 'stock_1min', 'index_30min', 'index_1min', 'fund_5min',
-                           'fund_basic']
-        print('tables under expected', [table for table in expected_tables if table not in res])
-        print('tables more than expected', [table for table in res if table not in expected_tables])
-        self.assertTrue(all(table in res for table in expected_tables))
-        self.assertTrue(all(table in expected_tables for table in res))
-
-        tables = ['mins', 'events']
-        freq = ['h']
-        expected_tables = ['fund_hourly', 'future_hourly', 'options_hourly', 'stock_hourly', 'index_hourly',
-                           'future_basic', 'index_basic', 'opt_basic', 'fund_basic', 'stock_basic']
-        res = _parse_tables_to_fetch('tushare', tables=tables, freqs=freq)
-        print(f'fetching tables: mins, events: \n{res}')
-        print('tables under expected', [table for table in expected_tables if table not in res])
-        print('tables more than expected', [table for table in res if table not in expected_tables])
-        self.assertTrue(all(table in res for table in expected_tables))
-        self.assertTrue(all(table in expected_tables for table in res))
-
-        tables = ['stock_basic', 'stock_daily', 'index_daily']
-        freq = ['d']
-        dtypes = ['close']
-        expected_tables = ['index_basic', 'stock_daily', 'index_daily']
-        res = _parse_tables_to_fetch('tushare', tables=tables, freqs=freq, dtypes=dtypes)
-        print(f'fetching tables: stock_basic, stock_daily, index_daily: \n{res}')
-        print('tables under expected', [table for table in expected_tables if table not in res])
-        print('tables more than expected', [table for table in res if table not in expected_tables])
-        self.assertTrue(all(table in res for table in expected_tables))
-        self.assertTrue(all(table in expected_tables for table in res))
-
-    def test_fetch_tables(self):
-        """ test function fetch tables"""
+    def test_fetch_batch_table(self):
+        """ test function fetch batch table data"""
         print('testing fetching tables')
-        tables = 'trade_calendar, stock_daily, index_daily'
-        res = fetch_table_data_from_tushare(
-                tables,
+        table = 'stock_daily'
+        arg_list = parse_data_fetch_args(table=table,
+                                         channel='tushare',
+                                         symbols='000651.SZ:000660.SZ',
+                                         start_date='20210104',
+                                         end_date='20210110',
+                                         freq='d',
+                                         list_arg_filter=None,
+                                         reversed_par_seq=False,
+                                         )
+        for df in fetch_batched_table_data(
+                table=table,
                 channel='tushare',
-                start_date='20210101',
-                end_date='20210110',)
+                arg_list=arg_list,
+                parallel=False,
+                process_count=None,
+                logger=None
+        ):
+            print(df.head())
+            self.assertIsInstance(df, pd.DataFrame)
+
+        table = 'index_daily'
+        arg_list = parse_data_fetch_args(table=table,
+                                         channel='tushare',
+                                         symbols='000001.SH:000010.SH',
+                                         start_date='20210104',
+                                         end_date='20210110',
+                                         freq='d',
+                                         list_arg_filter=None,
+                                         reversed_par_seq=False,
+                                         )
+
+        print('testing fetching tables with parallel fetching, will start in 5 seconds...')
+        time.sleep(5)
+
+        # test parallel fetching
+        for df in fetch_batched_table_data(
+                table=table,
+                channel='tushare',
+                arg_list=arg_list,
+                parallel=True,
+                logger=None
+        ):
+            print(df.head())
+            self.assertIsInstance(df, pd.DataFrame)
+
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""

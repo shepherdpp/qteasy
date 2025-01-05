@@ -3991,3 +3991,28 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     )
     print(f'========================================================================')
     return list(data_table_map.index)
+
+
+def get_tables_by_dtypes(dtypes=None, freqs=None, asset_types=None) -> set:
+    """根据输入的数据类型反推相关的数据表名称"""
+
+    # 如果给出了dtypes，freq、asset_types中的任意一个，将用这三个参数作为
+    # 数据类型，反推需要下载的数据表
+    dtype_slice = [slice(None)] if dtypes is None else dtypes
+    freq_slice = [slice(None)] if freqs is None else freqs
+    asset_slice = [slice(None)] if asset_types is None else asset_types
+
+    from itertools import product
+    dtype_filters = product(dtype_slice, freq_slice, asset_slice)
+
+    tables_to_keep = set()
+    for dtype_filter in dtype_filters:
+        # find out the table name from dtype definition
+        dtype_map = get_data_type_map()
+        matched_kwargs = dtype_map.loc[dtype_filter].kwargs
+        for kw in matched_kwargs:
+            tables_to_keep.update(
+                    [kw['table_name']]
+            )
+
+    return tables_to_keep

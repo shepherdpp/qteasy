@@ -16,6 +16,8 @@ import pandas as pd
 
 from functools import lru_cache
 
+from .utilfuncs import str_to_list
+
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare', 'akshare']
@@ -1534,6 +1536,46 @@ def ensure_sys_table(table: str) -> None:
     except Exception as e:
         err = RuntimeError(f'{e}: An error occurred when checking table usage')
         raise err
+
+
+def get_tables_by_name_or_usage(tables: str or [str]) -> set:
+    """ 根据输入的参数，生成需要下载的数据表清单
+
+    Parameters
+    ----------
+    tables: str or list of str
+
+    Returns
+    -------
+    set:
+        需要下载的数据表清单
+    """
+
+    if isinstance(tables, str):
+        tables = str_to_list(tables)
+
+    table_master = get_table_master()
+    all_tables = table_master.loc[table_master.table_usage != 'sys'].index.to_list()
+    table_usages = table_master.table_usage.unique()
+    tables_to_refill = set()
+
+    if isinstance(tables, str):
+        tables = str_to_list(tables)
+    tables = [item.lower() for item in tables]
+
+    if 'all' in tables:
+        # add all tables from TABLE_MASTERS
+        tables_to_refill.update(all_tables)
+
+    for item in tables:
+        if item in all_tables:
+            tables_to_refill.add(item)
+        elif item in table_usages:
+            tables_to_refill.update(
+                    table_master.loc[table_master.table_usage == item.lower()].index.to_list()
+            )
+
+    return tables_to_refill
 
 
 class DataConflictWarning(Warning):
