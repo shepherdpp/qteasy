@@ -263,6 +263,9 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, l
             上面两种写法等效，下载上海和深圳交易所的股票数据
     symbols: str or list of str, optional
         用于下载数据的股票代码，如果给出了symbols，只有这些股
+        票代码的数据会被下载
+    reversed_par_seq: bool, default False
+        是否将参数序列反转，如果为True，则会将参数序列反转，用于下载数据时的优化
 
     Returns
     -------
@@ -409,6 +412,8 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
 
     start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
 
+    if freq is None:
+        freq = 'd'
     if freq.lower() == 'w':
         freq = 'w-Fri'
     if freq.lower() == 'm':
@@ -451,6 +456,8 @@ def _parse_trade_date_args(arg_range: str, start_date: str, end_date: str,
     from .utilfuncs import is_market_trade_day, nearest_market_trade_day
     full_dates = _parse_datetime_args(arg_range, start_date, end_date, freq, reversed_par_seq)
 
+    if freq is None:
+        freq = 'd'
     # 如果频率是月或周，分别查找所有日期的nearest_trade_day并删除重复日期
     if freq.lower() in ['w', 'm']:
         trade_dates = list(map(nearest_market_trade_day, full_dates))
@@ -487,7 +494,7 @@ def _parse_table_index_args(arg_range: str, symbols: str, allowed_code_suffix: s
 
     from qteasy import QT_DATA_SOURCE
 
-    df_s, df_i, df_f, df_ft, df_o = QT_DATA_SOURCE.get_all_basic_table_data()
+    df_s, df_i, df_f, df_ft, df_o, df_ths = QT_DATA_SOURCE.get_all_basic_table_data()
 
     table_name = arg_range
 
@@ -497,10 +504,12 @@ def _parse_table_index_args(arg_range: str, symbols: str, allowed_code_suffix: s
         all_args = df_i.index.to_list()
     elif table_name == 'fund_basic':
         all_args = df_f.index.to_list()
-    elif table_name == 'futures_basic':
+    elif table_name == 'future_basic':
         all_args = df_ft.index.to_list()
-    elif table_name == 'option_basic':
+    elif table_name == 'opt_basic':
         all_args = df_o.index.to_list()
+    elif table_name == 'ths_index_basic':
+        all_args = df_ths.index.to_list()
     else:
         raise ValueError(f'unknown table name {table_name}')
 
@@ -642,12 +651,14 @@ def _parse_additional_time_args(chunk_size, start_date, end_date) -> list:
 
     start_date, end_date = _ensure_date_sequence('19700101', start_date, end_date)
 
-    if chunk_size is None or chunk_size == '':
+    if chunk_size is None:
+        return [{'start': start_date.strftime('%Y%m%d'), 'end': end_date.strftime('%Y%m%d')}]
+    try:
+        chunk_size = int(chunk_size)
+    except ValueError:
         chunk_size = 0
-    # assert arg_range is an integer and greater than or equal to 0
-    assert isinstance(chunk_size, int) and (chunk_size >= 0)
 
-    if chunk_size == 0:
+    if chunk_size <= 0:
         return [{'start': start_date.strftime('%Y%m%d'), 'end': end_date.strftime('%Y%m%d')}]  # return the whole period
 
     start_end_chunk_lbounds = list(pd.date_range(start=start_date,

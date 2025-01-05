@@ -2221,7 +2221,12 @@ class DataSource:
             err = ValueError('opt_basic table is empty, please refill data source with '
                              '"qt.refill_data_source(tables="opt_basic")"')
             raise err
-        return df_s, df_i, df_f, df_ft, df_o
+        df_ths = self.read_table_data('ths_index_basic')
+        if df_ths.empty and raise_error:
+            err = ValueError('ths_index_basic table is empty, please refill data source with '
+                             '"qt.refill_data_source(tables="ths_index_basic")"')
+            raise err
+        return df_s, df_i, df_f, df_ft, df_o, df_ths
 
     def reconnect(self):
         """ 当数据库超时或其他原因丢失连接时，Ping数据库检查状态，

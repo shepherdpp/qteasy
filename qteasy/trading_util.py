@@ -1569,7 +1569,7 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
             raise ValueError(f'invalid asset_types: {asset_types}, must be one of '
                              f'["stock", "index", "fund", "future", "option"]')
 
-    df_s, df_i, df_f, df_ft, df_o = datasource.get_all_basic_table_data(
+    df_s, df_i, df_f, df_ft, df_o, df_ths = datasource.get_all_basic_table_data(
             raise_error=False,
             refresh_cache=refresh,
     )

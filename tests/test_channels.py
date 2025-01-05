@@ -18,6 +18,7 @@ import pandas as pd
 from qteasy.database import DataSource
 from qteasy.data_channels import (
     TUSHARE_API_MAP,
+    _fetch_table_data_from_tushare,
     fetch_batched_table_data,
     _parse_list_args,
     _parse_datetime_args,
@@ -121,7 +122,7 @@ class TestChannels(unittest.TestCase):
             kwargs['retry_count'] = 1
 
             try:
-                dnld_data = fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
+                dnld_data = _fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
                 print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
             except Exception as e:
                 print(f'error downloading data for table {table}: {e}')
@@ -136,6 +137,19 @@ class TestChannels(unittest.TestCase):
             self.ds.update_table_data(table, ready_data, merge_type='update')
             data = self.ds.read_table_data(table)
             print('data written to database:', data.head())
+
+    def test_refill_data_source(self):
+        """ 测试批量填充多张数据表的数据到测试数据源"""
+        from qteasy.core import refill_data_source
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='stock_daily, index_daily',
+            symbols='000001:000020',
+            start_date='20241220',
+            end_date='20241225',
+            parallel=False,
+        )
 
     def test_arg_parsing(self):
         """testing parsing of filling args"""
@@ -393,6 +407,28 @@ class TestChannels(unittest.TestCase):
         self.assertEqual(args, [{'ts_code': '000001.SH', 'start': '20210101', 'end': '20210110'},
                                 {'ts_code': '000016.SH', 'start': '20210101', 'end': '20210110'}])
 
+        # parse the filling args and pick the first filling arg value from the range
+        args = parse_data_fetch_args(table=table,
+                                     channel='tushare',
+                                     symbols='000001:000007',
+                                     start_date='20210101',
+                                     end_date='20210110',
+                                     freq='d',
+                                     list_arg_filter=None,
+                                     reversed_par_seq=False,
+                                     )
+        args = list(args)
+        print(f'args: {args}')
+        self.assertEqual(args,
+                         [{'end': '20210110', 'start': '20210101', 'ts_code': '000001.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000001CNY01.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000002.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000003.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000004.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000005.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000006.SH'},
+                          {'end': '20210110', 'start': '20210101', 'ts_code': '000007.SH'}])
+
     def test_fetch_batch_table(self):
         """ test function fetch batch table data"""
         print('testing fetching tables')
@@ -406,7 +442,7 @@ class TestChannels(unittest.TestCase):
                                          list_arg_filter=None,
                                          reversed_par_seq=False,
                                          )
-        for df in fetch_batched_table_data(
+        for res in fetch_batched_table_data(
                 table=table,
                 channel='tushare',
                 arg_list=arg_list,
@@ -414,7 +450,8 @@ class TestChannels(unittest.TestCase):
                 process_count=None,
                 logger=None
         ):
-            print(df.head())
+            df = res['data']
+            print(f'kwarg: {res["kwargs"]}, data:\n{df.head()}')
             self.assertIsInstance(df, pd.DataFrame)
 
         table = 'index_daily'
@@ -432,14 +469,15 @@ class TestChannels(unittest.TestCase):
         time.sleep(5)
 
         # test parallel fetching
-        for df in fetch_batched_table_data(
+        for res in fetch_batched_table_data(
                 table=table,
                 channel='tushare',
                 arg_list=arg_list,
                 parallel=True,
                 logger=None
         ):
-            print(df.head())
+            df = res['data']
+            print(f'kwarg: {res["kwargs"]}, data:\n{df.head()}')
             self.assertIsInstance(df, pd.DataFrame)
 
 

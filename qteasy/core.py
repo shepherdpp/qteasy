@@ -350,7 +350,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
     ds = QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
+    df_s, df_i, df_f, df_ft, df_o, df_ths = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     matched_count = matched_codes['count']
@@ -644,130 +644,22 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
     return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
-def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
-                 symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
-                 parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
-                 download_batch_interval=0, log=False, data_source=None, **kwargs) -> None:
+def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None, asset_types=None,
+                       refresh_trade_calendar=False,
+                       symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
+                       parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
+                       download_batch_interval=0, log=False) -> None:
     """ 填充数据数据源
 
     Parameters
     ----------
     data_source: DataSource, Default None
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
-    **kwargs:
-     tables: str or list of str, default: None
-         需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
-         例如，下面两种方式都合法且相同：
-             table='stock_indicator, stock_daily, income, stock_adj_factor'
-             table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']
-         除了直接给出表名称以外，还可以通过表类型指明多个表，可以同时输入多个类型的表：
-             - 'all'     : 所有的表
-             - 'cal'     : 交易日历表
-             - 'basics'  : 所有的基础信息表
-             - 'adj'     : 所有的复权因子表
-             - 'data'    : 所有的历史数据表
-             - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
-             - 'report'  : 财务报表
-             - 'comp'    : 指数成分表
-     dtypes: str or list of str, default: None
-         通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
-         如果给出了tables，则dtypes参数会被忽略
-     freqs: str, default: None
-         通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
-         如果tables != all时，给出freq会排除掉freq与之不符的数据表
-     asset_types: Str of List of Str, default: None
-         通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
-         如果tables != all时，给出asset_type会排除掉与之不符的数据表
-     start_date: DateTime Like, default: None
-         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-     end_date: DateTime Like, default: None
-         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-     list_arg_filter: str or list of str, default: None  **注意，不是所有情况下该参数都有效**
-         限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
-         参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
-         如果filter_arg为None，则下载所有数据。
-         例如，下载stock_basic表数据时，下载以下输入均为合法输入：
-         - 'SZSE'
-             仅下载深圳交易所的股票数据
-         - ['SSE', 'SZSE']
-         - 'SSE, SZSE'
-             上面两种写法等效，下载上海和深圳交易所的股票数据
-     symbols: str or list of str, default: None  **注意，不是所有情况下该参数都有效**
-         限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
-         可以多种形式确定范围，以下输入均为合法输入：
-         - '000001'
-             没有指定asset_types时，000001.SZ, 000001.SH ... 等所有代码都会被选中下载
-             如果指定asset_types，只有符合类型的证券数据会被下载
-         - '000001, 000002, 000003'
-         - ['000001', '000002', '000003']
-             两种写法等效，列表中列举出的证券数据会被下载
-         - '000001:000300'
-             从'000001'开始到'000300'之间的所有证券数据都会被下载
-     merge_type: str, default: 'ignore'
-         数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
-         - 'ignore' 默认值，不下载重复的数据
-         - 'update' 下载并更新本地数据的重复部分
-     reversed_par_seq: Bool, default: False
-         是否逆序参数下载数据， 默认False
-         - True:  逆序参数下载数据
-         - False: 顺序参数下载数据
-     parallel: Bool, default: True
-         是否启用多线程下载数据，默认True
-         - True:  启用多线程下载数据
-         - False: 禁用多线程下载
-     process_count: int, default: None
-         启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
-     chunk_size: int, default: 100
-         保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
-         再批量保存到本地，chunk_size即批量，默认值100
-
-    Returns
-    -------
-    None
-
-    Examples
-    --------
-    >>> import qteasy as qt
-    >>> qt.refill_data_source(tables='stock_basic')
-
-    """
-    from .database import DataSource
-    if data_source is None:
-        from qteasy import QT_DATA_SOURCE
-        data_source = QT_DATA_SOURCE
-    if not isinstance(data_source, DataSource):
-        raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
-    print(f'Filling data source {data_source} ...')
-    hist_dnld_delay = download_batch_interval
-    hist_dnld_delay_evy = download_batch_size
-    if hist_dnld_delay is None:
-        hist_dnld_delay = QT_CONFIG.hist_dnld_delay
-    if hist_dnld_delay_evy is None:
-        hist_dnld_delay_evy = QT_CONFIG.hist_dnld_delay_evy
-
-
-    """ 大批量下载多张数据表中的数据，并将下载的数据组装成pd.DataFrame，检查数据的完整性
-    完成数据清洗并返回可以直接写入数据表中的数据。
-
-    本函数逐个下载指定数据表中的数据，目的是大批量下载全部数据，因此仅支持时间分段下载，不允许
-    指定单个证券代码下载数据。
-
-    本函数会解析输入的参数，如果参数范围过大导致下载的数据超出数据提供商的限制，会根据数据MAP表
-    中定义的规则将数据拆分成多组，分批下载。
-
-    下载过程可以并行进行，也可以顺序进行，可以设置下载的并行线程数，也可以设置下载的批次大小和
-    批次间隔时间。
-
-    数据下载的过程可以记录到日志中，以便查看下载的进度和结果
-
-    Parameters
-    ----------
     channel: str,
         数据获取渠道，金融数据API，支持以下选项:
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
         - 'emoney'      : 从东方财富网获取金融数据
-    == 前面四个参数用于筛选需要下载的数据表，必须至少输入一个 ==
     tables: str or list of str, default: None
         数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
     dtypes: str or list of str, default: None
@@ -776,12 +668,8 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
         需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率
     asset_types: str or list of str, default: None
         需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型
-
-    == 第五个参数用于特别指定更新trade_calendar表 ==
     refresh_trade_calendar: Bool, Default False
         是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
-
-    == 后续几个参数用于下载数据的参数设置 ==
     start_date: str YYYYMMDD
         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
     end_date: str YYYYMMDD
@@ -802,8 +690,6 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
         是否逆序参数下载数据， 默认False
         - True:  逆序参数下载数据
         - False: 顺序参数下载数据
-
-    == 最后几个参数用于下载数据的设置 ==
     parallel: Bool, Default True
         是否启用多线程下载数据
         - True:  启用多线程下载数据
@@ -826,9 +712,29 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
 
     Returns
     -------
-    dict:
-        返回一个字典，包含下载的数据DataFrame
+    None
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> qt.refill_data_source(tables='stock_basic')
+
     """
+
+    # 0, 输入数据检查
+
+    from .database import DataSource
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
+    print(f'Filling data source {data_source} ...')
+
+    if download_batch_interval is None:
+        download_batch_interval = QT_CONFIG.hist_dnld_delay
+    if download_batch_size is None:
+        download_batch_size = QT_CONFIG.hist_dnld_delay_evy
 
     # 1, 解析需要下载的数据表清单
     if isinstance(tables, str):
@@ -847,29 +753,37 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
             tables=tables,
     )
 
-    table_list.update(get_tables_by_dtypes(
-            dtypes=dtypes,
-            freqs=freqs,
-            asset_types=asset_types,
-    ))
+    if dtypes or freqs or asset_types:
+        table_list.update(get_tables_by_dtypes(
+                dtypes=dtypes,
+                freqs=freqs,
+                asset_types=asset_types,
+        ))
 
+    dependent_tables = set()
     for table in table_list:
-        table_list.add(get_dependent_tables(table, channel=channel))
+        dependent_tables.add(get_dependent_tables(table, channel=channel))
+    table_list.update(dependent_tables)
 
-    # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
-    latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max2']
-    try:
-        latest_calendar_date = pd.to_datetime(latest_calendar_date)
-        if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
-            table_list.add('trade_calendar')
-    except:
+    if refresh_trade_calendar:
         table_list.add('trade_calendar')
+    else:
+        # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+        latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max2']
+        try:
+            latest_calendar_date = pd.to_datetime(latest_calendar_date)
+            if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+                table_list.add('trade_calendar')
+        except:
+            table_list.add('trade_calendar')
 
-    # 2, 循环下载数据表，单独对每个数据表进行参数拆解
+    print(f'Filling data source {data_source} with tables: {table_list}')
+
+    # 2, 循环下载数据表
     from .data_channels import parse_data_fetch_args, fetch_batched_table_data
     for table in table_list:
         # 2.1, 解析下载数据的参数
-        arg_list = parse_data_fetch_args(
+        arg_list = list(parse_data_fetch_args(
                 table=table,
                 channel=channel,
                 symbols=symbols,
@@ -878,21 +792,21 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
                 freq=freqs,
                 list_arg_filter=list_arg_filter,
                 reversed_par_seq=reversed_par_seq,
-        )
+        ))
         # 2.2, 批量下载数据
         completed = 0
         total = len(arg_list)
         total_written = 0
         st = time.time()
         time_elapsed = 0
-        dnld_data_list = []
         df_concat_list = []
         rows_affected = 0
 
         progress_bar(0, total, comments=f'<{table}> estimating time left...')
 
-        for kwargs, data in fetch_batched_table_data(
+        for res in fetch_batched_table_data(
                 table=table,
+                channel=channel,
                 arg_list=arg_list,
                 parallel=parallel,
                 process_count=process_count,
@@ -900,14 +814,18 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
                 download_batch_interval=download_batch_interval,
         ):
             completed += 1
-            df_concat_list.append(data)
+            kwargs = res['kwargs']
+            data = res['data']
+            if not data.empty:
+                df_concat_list.append(data)
             if not completed % chunk_size:
                 # 将下载的数据写入数据源
                 rows_affected += data_source.update_table_data(
                         table=table,
-                        df=pd.concat(df_concat_list),
+                        df=pd.concat(df_concat_list, copy=False),
                         merge_type='update',
                 )
+                df_concat_list = []
 
             total_written += rows_affected
             time_elapsed = time.time() - st
@@ -916,7 +834,19 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
                     estimation=True,
                     short_form=False
             )
-            progress_bar(completed, total, comments=f'<{table}:{kwargs}{time_remain}>')
+            progress_bar(completed, total,
+                         comments=f'<{table}:{kwargs}{time_remain}>',
+                         column_width=120,
+                         cut_off_pos=1.0,
+                         )
+
+        if df_concat_list:
+            rows_affected += data_source.update_table_data(
+                    table=table,
+                    df=pd.concat(df_concat_list, copy=False),
+                    merge_type='update',
+            )
+            total_written += rows_affected
 
         strftime_elapsed = sec_to_duration(
                 time_elapsed,
@@ -926,11 +856,16 @@ def refill_data_source(channel, *, tables, dtypes=None, freqs=None, asset_types=
         if len(arg_list) > 1:
             progress_bar(total, total,
                          comments=f'<{table}:{arg_list[0]}-{arg_list[-1]}>'
-                                  f'{total_written}wrtn in {strftime_elapsed}\n')
+                                  f'{total_written}wrtn in {strftime_elapsed}\n',
+                         column_width=120,
+                         cut_off_pos=1.0,
+                         )
         else:
             progress_bar(total, total,
-                         comments=f'[{table}:None> {total_written}wrtn in {strftime_elapsed}\n')
-
+                         comments=f'[{table}:None> {total_written}wrtn in {strftime_elapsed}\n',
+                         column_width=120,
+                         cut_off_pos=1.0,
+                         )
 
     return None
 
@@ -1270,7 +1205,8 @@ def get_history_data(htypes,
         return hp
 
 
-def refill_local_source(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None, refresh_trade_calendar=False,
+def refill_local_source(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None,
+                        refresh_trade_calendar=False,
                         symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                         parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
                         download_batch_interval=0, log=False) -> dict:
@@ -1287,6 +1223,7 @@ def refill_local_source(channel, *, tables=None, dtypes=None, freqs=None, asset_
             log=log,
     )
     update_local_data(channel, dnld_data)
+
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
@@ -1407,9 +1344,9 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
         invest_start = regulate_date_format(invest_cash_plan.first_day)
         if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
             warn(
-                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                f' date will be used!',
-                RuntimeWarning)
+                    f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
+                    f' date will be used!',
+                    RuntimeWarning)
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config['opti_cash_dates'] is None:

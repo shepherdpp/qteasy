@@ -781,22 +781,24 @@ def progress_bar(prog: int, total: int = 100, *, comments: str = '', column_widt
     """
     if column_width == -1:
         column_width, _ = shutil.get_terminal_size()
-    elif column_width == 0:
-        column_width = 999
     if column_width < 20:
         column_width = 20
 
     if cut_off_pos > 1:
         cut_off_pos = 1
 
-    if total > 0:
-        if prog > total:
-            prog = total
-        progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                       f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+    if total <= 0:
+        return
+
+    if prog > total:
+        prog = total
+
+    progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
+                   f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+    if column_width > 0:
         progress_str = adjust_string_length(progress_str, column_width, cut_off=cut_off_pos)
-        sys.stdout.write(progress_str)
-        sys.stdout.flush()
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
 
 
 def get_current_timezone_datetime(time_zone='local'):
@@ -1417,7 +1419,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
+    df_s, df_i, df_f, df_ft, df_o, df_ths = ds.get_all_basic_table_data(raise_error=False)
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     if asset_types is None:
