@@ -19,6 +19,8 @@ from qteasy.utilfuncs import progress_bar
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
     DataType,
+    get_tables_by_dtypes,
+    get_history_data
 )
 
 
@@ -1643,6 +1645,44 @@ class TestDataTypes(unittest.TestCase):
               f'{"="*80}\n')
         for table in all_tables:
             print(ds.get_table_info(table))
+
+    def test_get_tables_by_dtypes(self):
+        """ test module function get_tables_by_dtypes()"""
+        tables = get_tables_by_dtypes(
+                dtypes=['close', 'high', 'low'],
+                freqs=['d', 'w', 'm'],
+                asset_types=['E', 'IDX'],
+        )
+        print(f'\n{len(tables)} tables are covered by the data types:')
+        print(tables)
+        self.assertEqual(len(tables), 6)
+        self.assertEqual(
+                tables,
+                {'stock_daily', 'index_monthly', 'stock_weekly', 'stock_monthly', 'index_weekly', 'index_daily'}
+        )
+
+        tables = get_tables_by_dtypes(
+                dtypes=['close', 'high', 'low'],
+                freqs=None,
+                asset_types=['E', 'IDX'],
+        )
+
+        print(f'\n{len(tables)} tables are covered by the data types:')
+        print(tables)
+        self.assertEqual(len(tables), 16)
+        self.assertEqual(
+                tables,
+                {'stock_daily', 'index_monthly', 'stock_weekly', 'stock_monthly', 'index_weekly', 'index_daily',
+                 'stock_1min', 'index_1min', 'stock_hourly', 'stock_5min', 'stock_15min', 'stock_30min',
+                 'index_hourly', 'index_5min', 'index_15min', 'index_30min', 'index_1min'}
+        )
+
+    def test_get_history_data(self):
+        """ test module function get_history_data()"""
+        data = get_history_data(self.ds, ALL_TYPES_TO_TEST_WITH_FULL_ID, '2021-01-01', '2021-01-31')
+        print(f'\n{len(data)} data types are covered by the history data:')
+        print(data)
+        print('\n')
 
 
 if __name__ == '__main__':

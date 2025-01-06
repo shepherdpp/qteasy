@@ -362,7 +362,6 @@ class TestChannels(unittest.TestCase):
                                      symbols='000651.SZ:000660.SZ',
                                      start_date='20210101',
                                      end_date='20210321',
-                                     freq='d',
                                      list_arg_filter=None,
                                      reversed_par_seq=False,
                                      )
@@ -378,7 +377,6 @@ class TestChannels(unittest.TestCase):
                                      symbols='000651.SZ:000660.SZ',
                                      start_date='20210101',
                                      end_date='20210110',
-                                     freq='d',
                                      list_arg_filter=None,
                                      reversed_par_seq=False,
                                      )
@@ -398,7 +396,6 @@ class TestChannels(unittest.TestCase):
                                      symbols='000001.SH, 000011.SH, 000016.SH, 000300.OTHER',
                                      start_date='20210101',
                                      end_date='20210110',
-                                     freq='d',
                                      list_arg_filter=None,
                                      reversed_par_seq=False,
                                      )
@@ -413,7 +410,6 @@ class TestChannels(unittest.TestCase):
                                      symbols='000001:000007',
                                      start_date='20210101',
                                      end_date='20210110',
-                                     freq='d',
                                      list_arg_filter=None,
                                      reversed_par_seq=False,
                                      )
@@ -522,7 +518,24 @@ class TestChannels(unittest.TestCase):
             parallel=True,
         )
 
-        for table in ['stock_daily', 'index_daily']:
+        for table in ['cn_cpi', 'ths_index_daily']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
+
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='basics',
+            dtypes='close, vol',
+            freqs='d, m',
+            asset_types='E, IDX',
+            symbols='000001:000020',
+            start_date='20240330',
+            end_date='20240405',
+            parallel=True,
+        )
+
+        for table in ['sw_industry_basic', 'sw_industry_basic', 'new_share', 'fund_basic']:
             data = self.ds.read_table_data(table)
             print(f'data written to database for table {table}:\n{data.head()}')
 

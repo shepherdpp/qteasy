@@ -3993,7 +3993,10 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     return list(data_table_map.index)
 
 
-def get_tables_by_dtypes(dtypes=None, freqs=None, asset_types=None) -> set:
+def get_tables_by_dtypes(
+        dtypes: [str] = None,
+        freqs: [str] = None,
+        asset_types: [str] = None) -> set:
     """根据输入的数据类型反推相关的数据表名称"""
 
     # 如果给出了dtypes，freq、asset_types中的任意一个，将用这三个参数作为
@@ -4010,9 +4013,14 @@ def get_tables_by_dtypes(dtypes=None, freqs=None, asset_types=None) -> set:
         # find out the table name from dtype definition
         dtype_map = get_data_type_map()
         matched_kwargs = dtype_map.loc[dtype_filter].kwargs
-        for kw in matched_kwargs:
-            tables_to_keep.update(
-                    [kw['table_name']]
-            )
+        # 此时如果只有一个match，会返回dict，否则是一个series，需要分别处理
+        if isinstance(matched_kwargs, dict):
+            tables_to_keep.add(matched_kwargs['table_name'])
+        else:
+            # 此时返回一个Series，包含多个dict，需要逐个处理
+            for kw in matched_kwargs:
+                tables_to_keep.update(
+                        [kw['table_name']]
+                )
 
     return tables_to_keep

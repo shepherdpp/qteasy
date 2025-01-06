@@ -780,7 +780,7 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         except:
             table_list.add('trade_calendar')
 
-    print(f'Filling data source {data_source} with tables: {table_list}')
+    print(f'into tables: {table_list}')
 
     # 2, 循环下载数据表
     from .data_channels import parse_data_fetch_args, fetch_batched_table_data
@@ -792,7 +792,6 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                 symbols=symbols,
                 start_date=start_date,
                 end_date=end_date,
-                freq=freqs,
                 list_arg_filter=list_arg_filter,
                 reversed_par_seq=reversed_par_seq,
         ))
@@ -807,41 +806,45 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
 
         progress_bar(0, total, comments=f'<{table}> estimating time left...')
 
-        for res in fetch_batched_table_data(
-                table=table,
-                channel=channel,
-                arg_list=arg_list,
-                parallel=parallel,
-                process_count=process_count,
-                download_batch_size=download_batch_size,
-                download_batch_interval=download_batch_interval,
-        ):
-            completed += 1
-            kwargs = res['kwargs']
-            data = res['data']
-            if not data.empty:
-                df_concat_list.append(data)
-            if not completed % chunk_size:
-                # 将下载的数据写入数据源
-                rows_affected += data_source.update_table_data(
-                        table=table,
-                        df=pd.concat(df_concat_list, copy=False),
-                        merge_type='update',
-                )
-                df_concat_list = []
+        try:
+            for res in fetch_batched_table_data(
+                    table=table,
+                    channel=channel,
+                    arg_list=arg_list,
+                    parallel=parallel,
+                    process_count=process_count,
+                    download_batch_size=download_batch_size,
+                    download_batch_interval=download_batch_interval,
+            ):
+                completed += 1
+                kwargs = res['kwargs']
+                data = res['data']
+                if not data.empty:
+                    df_concat_list.append(data)
+                if not completed % chunk_size:
+                    # 将下载的数据写入数据源
+                    rows_affected += data_source.update_table_data(
+                            table=table,
+                            df=pd.concat(df_concat_list, copy=False),
+                            merge_type='update',
+                    )
+                    df_concat_list = []
 
-            total_written += rows_affected
-            time_elapsed = time.time() - st
-            time_remain = sec_to_duration(
-                    (total - completed) * time_elapsed / completed,
-                    estimation=True,
-                    short_form=False
-            )
-            progress_bar(completed, total,
-                         comments=f'<{table}:{kwargs}{time_remain}>',
-                         column_width=120,
-                         cut_off_pos=1.0,
-                         )
+                total_written += rows_affected
+                time_elapsed = time.time() - st
+                time_remain = sec_to_duration(
+                        (total - completed) * time_elapsed / completed,
+                        estimation=True,
+                        short_form=False
+                )
+                progress_bar(completed, total,
+                             comments=f'<{table}:{kwargs}{time_remain}>',
+                             column_width=120,
+                             cut_off_pos=1.0,
+                             )
+        except Exception as e:
+            print(f'Error occurred when downloading data for table {table}: {e}')
+            continue
 
         if df_concat_list:
             rows_affected += data_source.update_table_data(

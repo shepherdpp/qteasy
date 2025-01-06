@@ -224,7 +224,7 @@ def fetch_batched_table_data(
                 yield {'kwargs': kwargs, 'data': f.result()}
 
 
-def parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, list_arg_filter, reversed_par_seq) -> dict:
+def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_arg_filter, reversed_par_seq) -> dict:
     """ 解析数据获取API的参数，生成下载数据的参数序列
 
     本函数为data_channel的主API进行参数解析，用户在获取数据时，一般仅会指定需要获取的数据
@@ -244,13 +244,6 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, l
         数据下载的开始日期
     end_date: str, optional
         数据下载的结束日期
-    freq: str, optional
-        数据下载的频率，支持以下选项(仅当数据类型为trade_time时)：
-        - '1min':  1分钟频率
-        - '5min':  5分钟频率
-        - '15min': 15分钟频率
-        - '30min': 30分钟频率
-        - 'h':     1小时频率
     list_arg_filter: str or list of str, optional
         用于下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
         参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
@@ -298,8 +291,12 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, l
     if arg_type == 'list':
         arg_values = _parse_list_args(arg_range, list_arg_filter, reversed_par_seq)
     elif arg_type == 'datetime':
+        from .datatables import TABLE_MASTERS
+        freq = TABLE_MASTERS[table][4]
         arg_values = _parse_datetime_args(arg_range, start_date, end_date, freq, reversed_par_seq)
     elif arg_type == 'trade_date':
+        from .datatables import TABLE_MASTERS
+        freq = TABLE_MASTERS[table][4]
         arg_values = _parse_trade_date_args(arg_range, start_date, end_date, freq, 'SSE', reversed_par_seq)
     elif arg_type == 'quarter':
         arg_values = _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq)
@@ -307,11 +304,13 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, freq, l
         arg_values = _parse_month_args(arg_range, start_date, end_date, reversed_par_seq)
     elif arg_type == 'table_index':
         arg_values = _parse_table_index_args(arg_range, symbols, allowed_code_suffix, reversed_par_seq)
+    elif arg_type == 'none':
+        arg_values = []
     else:
         raise ValueError('unexpected arg type:', arg_type)
 
     # build the args dict
-    if arg_name is None:
+    if (arg_name is None) or not arg_values:
         kwargs = {}
     elif additional_start_end.lower() != 'y':
         # only standard args
