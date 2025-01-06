@@ -870,32 +870,6 @@ class DataSource:
                     columns=columns,
                     dtypes=dtypes,
                     primary_key=primary_key)
-            #
-            # sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
-            # fields = []
-            # for col, dtype in zip(columns, dtypes):
-            #     fields.append(f"`{col}` {dtype}\n")
-            # sql += f"{', '.join(fields)});"
-            # import pymysql
-            # con = pymysql.connect(
-            #         host=self.host,
-            #         port=self.port,
-            #         user=self.__user__,
-            #         password=self.__password__,
-            #         db=self.db_name,
-            # )
-            # cursor = con.cursor()
-            # try:
-            #     cursor.execute(sql)
-            #     con.commit()
-            # except Exception as e:
-            #     con.rollback()
-            #     err = RuntimeError(f'db table {db_table} does not exist and can not be created:\n'
-            #                        f'Exception:\n{e}\n'
-            #                        f'SQL:\n{sql}')
-            #     raise err
-            # finally:
-            #     con.close()
 
         tbl_columns = tuple(self._get_db_table_schema(db_table).keys())
         # TODO:
@@ -1472,7 +1446,7 @@ class DataSource:
         self._table_list.add(table)
         return rows_affected
 
-    def update_table_data(self, table, df, merge_type='update'):
+    def update_table_data(self, table, df, merge_type='update') -> int:
         """ 检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤：
 
             1，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
@@ -1545,14 +1519,14 @@ class DataSource:
                 raise KeyError(f'Invalid merge type, got "{merge_type}"')
             rows_affected = self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
         elif self.source_type == 'db':
-            # 如果source_type == 'db'，不需要合并数据，当merge_type == 'update'时，甚至不需要下载
-            # 本地数据
-            if merge_type == 'ignore':
-                dnld_data_range = get_primary_key_range(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-                local_data = self.read_table_data(table, **dnld_data_range)
-                set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-                dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
-            dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+            # 如果source_type == 'db'，直接调用write_table_data()函数，将数据写入数据库
+            # 并在调用函数时指定on_duplicate参数即可
+            # if merge_type == 'ignore':  # TODO: ignore模式实现很不好，需要改进！！
+            #     dnld_data_range = get_primary_key_range(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+            #     local_data = self.read_table_data(table, **dnld_data_range)
+            #     set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+            #     dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
+            # dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
             rows_affected = self.write_table_data(df=dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
             raise KeyError(f'invalid data source type: {self.source_type}')

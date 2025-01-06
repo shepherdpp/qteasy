@@ -747,7 +747,7 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         asset_types = str_to_list(asset_types)
 
     from .datatables import get_tables_by_name_or_usage
-    from .data_channels import get_dependent_tables
+    from .data_channels import get_dependent_table
     from .datatypes import get_tables_by_dtypes
     table_list = get_tables_by_name_or_usage(
             tables=tables,
@@ -762,7 +762,10 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
 
     dependent_tables = set()
     for table in table_list:
-        dependent_tables.add(get_dependent_tables(table, channel=channel))
+        dependent_table = get_dependent_table(table, channel=channel)
+        if dependent_table is None:
+            continue
+        dependent_tables.add(dependent_table)
     table_list.update(dependent_tables)
 
     if refresh_trade_calendar:

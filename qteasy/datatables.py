@@ -1538,12 +1538,16 @@ def ensure_sys_table(table: str) -> None:
         raise err
 
 
-def get_tables_by_name_or_usage(tables: str or [str]) -> set:
+def get_tables_by_name_or_usage(tables: str or [str],
+                                include_sys_tables=False) -> set:
     """ 根据输入的参数，生成需要下载的数据表清单
 
     Parameters
     ----------
     tables: str or list of str
+        数据表名称或用途
+    include_sys_tables: bool
+        是否包含系统表
 
     Returns
     -------
@@ -1555,7 +1559,12 @@ def get_tables_by_name_or_usage(tables: str or [str]) -> set:
         tables = str_to_list(tables)
 
     table_master = get_table_master()
-    all_tables = table_master.loc[table_master.table_usage != 'sys'].index.to_list()
+
+    if include_sys_tables:
+        all_tables = table_master.index.to_list()
+    else:
+        all_tables = table_master.loc[table_master.table_usage != 'sys'].index.to_list()
+
     table_usages = table_master.table_usage.unique()
     tables_to_refill = set()
 

@@ -30,12 +30,23 @@ class TestDataTables(unittest.TestCase):
         """ test function get_tables_by_name_or_usage"""
         tables = ['all']
         print(f'testing parsing table names {tables}')
-        res = get_tables_by_name_or_usage(tables, )
+        res = get_tables_by_name_or_usage(tables, include_sys_tables=True)
         print(f'fetching all tables: \n{res}')
         print('tables under expected', [table for table in TABLE_MASTERS.keys() if table not in res])
         print('tables more than expected', [table for table in res if table not in TABLE_MASTERS.keys()])
         self.assertTrue(all(table in res for table in TABLE_MASTERS.keys()))
         self.assertTrue(all(table in TABLE_MASTERS.keys() for table in res))
+
+        tables = ['all']
+        print(f'testing parsing table names {tables}')
+        table_master = get_table_master()
+        res = get_tables_by_name_or_usage(tables, include_sys_tables=False)
+        all_tables = table_master.loc[table_master.table_usage != 'sys'].index.to_list()
+        print(f'fetching all tables: \n{res}')
+        print('tables under expected', [table for table in all_tables if table not in res])
+        print('tables more than expected', [table for table in res if table not in all_tables])
+        self.assertTrue(all(table in res for table in all_tables))
+        self.assertTrue(all(table in all_tables for table in res))
 
         tables = ['stock_basic', 'stock_daily', 'index_daily']
         res = get_tables_by_name_or_usage(tables=tables)

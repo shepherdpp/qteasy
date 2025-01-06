@@ -28,6 +28,7 @@ from qteasy.data_channels import (
     _parse_table_index_args,
     _parse_additional_time_args,
     parse_data_fetch_args,
+    get_dependent_table,
 )
 
 
@@ -129,27 +130,23 @@ class TestChannels(unittest.TestCase):
                 continue
 
             # clean up the data, making it ready to be written to the datasource
-            from qteasy.database import get_built_in_table_schema, set_primary_key_frame
-            columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
-            ready_data = set_primary_key_frame(dnld_data, primary_keys, pk_dtypes)
+            # from qteasy.database import get_built_in_table_schema, set_primary_key_frame
+            # columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+            # ready_data = set_primary_key_frame(dnld_data, primary_keys, pk_dtypes)
+            ready_data = dnld_data
 
             # write data to datasource
             self.ds.update_table_data(table, ready_data, merge_type='update')
             data = self.ds.read_table_data(table)
             print('data written to database:', data.head())
 
-    def test_refill_data_source(self):
-        """ 测试批量填充多张数据表的数据到测试数据源"""
-        from qteasy.core import refill_data_source
-        refill_data_source(
-            self.ds,
-            channel='tushare',
-            tables='stock_daily, index_daily',
-            symbols='000001:000020',
-            start_date='20241220',
-            end_date='20241225',
-            parallel=False,
-        )
+    def test_get_dependent_table(self):
+        """ test function get_dependent_table"""
+        self.assertEqual(get_dependent_table('stock_daily', 'tushare'), 'trade_calendar')
+        self.assertEqual(get_dependent_table('index_daily', 'tushare'), 'index_basic')
+        self.assertEqual(get_dependent_table('cn_cpi', 'tushare'), None)
+        self.assertEqual(get_dependent_table('ths_index_daily', 'tushare'), 'trade_calendar')
+        self.assertEqual(get_dependent_table('trade_calendar', 'tushare'), None)
 
     def test_arg_parsing(self):
         """testing parsing of filling args"""
@@ -322,6 +319,9 @@ class TestChannels(unittest.TestCase):
         res = _parse_month_args(arg_range, '20210101', '20210331')
         print(f'start, end: 20210101, 20210331:\n{res}')
         self.assertEqual(res, ['202101', '202102', '202103'])
+        res = _parse_month_args(arg_range, '20210101', '20210110')
+        print(f'start, end: 20210101, 20210110:\n{res}')
+        self.assertEqual(res, ['202101'])
 
         arg_range = '20200901'
         res = _parse_month_args(arg_range, '20200101', '20210530', reversed_par_seq=True)
@@ -480,6 +480,51 @@ class TestChannels(unittest.TestCase):
             print(f'kwarg: {res["kwargs"]}, data:\n{df.head()}')
             self.assertIsInstance(df, pd.DataFrame)
 
+    def test_refill_data_source(self):
+        """ 测试批量填充多张数据表的数据到测试数据源"""
+        from qteasy.core import refill_data_source
+
+        all_tables = TUSHARE_API_MAP.keys()
+        # if there already are tables existing in the datasource, drop them
+        print('dropping tables in the test database...')
+        deleted = 0
+        for table in all_tables:
+            if table == 'real_time':
+                continue
+            if self.ds.table_data_exists(table):
+                # these data can be retained for further testing
+                self.ds.drop_table_data(table)
+                deleted += 1
+                print(f'table {table} dropped.')
+        print(f'{deleted} tables dropped.')
+
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='stock_daily, index_daily',
+            symbols='000001:000020',
+            start_date='20240320',
+            end_date='20240325',
+            parallel=False,
+        )
+
+        for table in ['stock_daily', 'index_daily']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
+
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='cn_cpi, index_daily, ths_index_daily',
+            symbols='000001:000020',
+            start_date='20240326',
+            end_date='20240329',
+            parallel=True,
+        )
+
+        for table in ['stock_daily', 'index_daily']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
 
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""

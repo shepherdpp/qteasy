@@ -706,7 +706,7 @@ def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
     return start_date, end_date
 
 
-def get_dependent_tables(table: str, channel: str) -> str:
+def get_dependent_table(table: str, channel: str) -> str:
     """ 获取数据表的依赖表. 依赖表是指在获取某个数据表之前，需要先获取的数据表
 
     依赖表主要包括在api_map中定义的fill_arg_type为'table_index'的数据表，如stock_basic表
@@ -1202,19 +1202,19 @@ TUSHARE_API_MAP = {
         ['cn_gdp', 'start', 'quarter', '1976Q4', '', '', ''],
 
     'cn_cpi':
-        ['cn_cpi', 'start', 'month', '197601', '', '', ''],
+        ['cn_cpi', 'start', 'month', '19760101', '', '', ''],
 
     'cn_ppi':
-        ['cn_ppi', 'start', 'month', '197601', '', '', ''],
+        ['cn_ppi', 'start', 'month', '19760101', '', '', ''],
 
     'cn_money':
-        ['cn_m', 'start', 'month', '197601', '', '', ''],
+        ['cn_m', 'start', 'month', '19760101', '', '', ''],
 
     'cn_sf':
-        ['sf_month', 'start', 'month', '197601', '', '', ''],
+        ['sf_month', 'start', 'month', '19760101', '', '', ''],
 
     'cn_pmi':
-        ['cn_pmi', 'start', 'month', '197601', '', '', ''],
+        ['cn_pmi', 'start', 'month', '19760101', '', '', ''],
 }
 
 TUSHARE_REALTIME_API_MAP = {
