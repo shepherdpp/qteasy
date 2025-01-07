@@ -780,7 +780,7 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         except:
             table_list.add('trade_calendar')
 
-    print(f'into tables: {table_list}')
+    print(f'into {len(table_list)} tables: {table_list}')
 
     # 2, 循环下载数据表
     from .data_channels import parse_data_fetch_args, fetch_batched_table_data

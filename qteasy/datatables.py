@@ -168,7 +168,7 @@ TABLE_MASTERS = {
         ['money_flow', '资金流向', 'data', 'E', 'd', '', '', ''],
 
     'stock_limit':  # New, 涨跌停价格!
-        ['stock_limit', '涨跌停价格', 'data', 'E,FD', '', '', '', ''],
+        ['stock_limit', '涨跌停价格', 'data', 'E,FD', 'd', '', '', ''],
 
     'stock_suspend':  # New, 停复牌信息!
         ['stock_suspend', '停复牌信息', 'events', 'E', 'd', '', '', ''],
@@ -291,7 +291,7 @@ TABLE_MASTERS = {
         ['fund_manager', '基金经理', 'events', 'FD', 'none', '', '', ''],
 
     'future_mapping':  # New, 期货合约映射表!
-        ['future_mapping', '期货合约映射表', 'data', 'FT', 'none', '', '', ''],
+        ['future_mapping', '期货合约映射表', 'data', 'FT', 'd', '', '', ''],
 
     'future_1min':  # future_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
         ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', '', '', ''],
@@ -396,13 +396,13 @@ TABLE_MASTERS = {
         ['margin_detail', '融资融券交易明细', 'events', 'E', 'd', '', '', ''],
 
     'shibor':
-        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', '', '', '', ''],
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'reference', 'none', 'd', '', '', ''],
 
     'libor':
-        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', '', '', '', ''],
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'reference', 'none', 'd', '', '', ''],
 
     'hibor':
-        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', '', '', '', ''],
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'reference', 'none', 'd', '', '', ''],
 
     'wz_index':  # New, 温州民间借贷指数!
         ['wz_index', '温州民间借贷指数', 'reference', 'none', 'd', '', '', ''],

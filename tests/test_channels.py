@@ -539,6 +539,50 @@ class TestChannels(unittest.TestCase):
             data = self.ds.read_table_data(table)
             print(f'data written to database for table {table}:\n{data.head()}')
 
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='events, report, reference',
+            symbols='000001:000020',
+            start_date='20240330',
+            end_date='20240405',
+            parallel=True,
+        )
+
+        for table in ['libor', 'cn_money', 'hk_top10_stock', 'hs_money_flow', 'top_list', 'stock_suspend',
+                      'gz_index', 'cn_sf']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
+
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='data, adj',
+            symbols='000001:000020',
+            start_date='20240330',
+            end_date='20240405',
+            parallel=True,
+        )
+
+        for table in ['index_daily', 'fund_adj_factor']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
+
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='mins',
+            symbols='000001:000020',
+            start_date='20240330',
+            end_date='20240405',
+            parallel=True,
+        )
+
+        for table in ['index_5min', 'stock_15min']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
+
+
     def test_realtime_data(self):
         """testing downloading small piece of data and store them in self.test_ds"""
 

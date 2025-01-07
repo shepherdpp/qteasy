@@ -417,8 +417,10 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
         freq = 'w-Fri'
     if freq.lower() == 'm':
         freq = 'ME'
-
-    res = pd.date_range(start_date, end_date, freq=freq).strftime('%Y%m%d').to_list()
+    try:
+        res = pd.date_range(start_date, end_date, freq=freq).strftime('%Y%m%d').to_list()
+    except:
+        import pdb; pdb.set_trace()
 
     if reversed_par_seq:
         return res[::-1]
@@ -1099,10 +1101,10 @@ TUSHARE_API_MAP = {
         ['future_daily', 'trade_date', 'trade_date', '19950417', '', '', ''],
 
     'future_weekly':
-        ['future_weekly', 'trade_date', 'trade_date', '19950417', '', '', ''],
+        ['fut_weekly', 'trade_date', 'trade_date', '19950417', '', '', ''],
 
     'future_monthly':
-        ['future_monthly', 'trade_date', 'trade_date', '19950417', '', '', ''],
+        ['fut_monthly', 'trade_date', 'trade_date', '19950417', '', '', ''],
 
     'options_1min':  # options_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
         ['mins1', 'ts_code', 'table_index', 'opt_basic', '', 'y', '30'],
@@ -1174,7 +1176,7 @@ TUSHARE_API_MAP = {
         ['block_trade', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
     'stock_holder_trade':
-        ['stk_holdertrade', 'trade_date', 'trade_date', '20100101', '', '', ''],
+        ['stk_holdertrade', 'ann_date', 'datetime', '20100101', '', '', ''],
 
     'margin':
         ['margin', 'exchange_id', 'list', 'SSE,SZSE,BSE', '', '', ''],
@@ -1192,10 +1194,10 @@ TUSHARE_API_MAP = {
         ['hibor', 'date', 'datetime', '20000101', '', '', ''],
 
     'wz_index':
-        ['wz_index', 'none', '', '', '', '', ''],
+        ['wz_index', 'none', 'none', '', '', '', ''],
 
     'gz_index':
-        ['gz_index', 'none', '', '', '', '', ''],
+        ['gz_index', 'none', 'none', '', '', '', ''],
 
     'cn_gdp':
         ['cn_gdp', 'start', 'quarter', '1976Q4', '', '', ''],
@@ -1207,10 +1209,10 @@ TUSHARE_API_MAP = {
         ['cn_ppi', 'start', 'month', '19760101', '', '', ''],
 
     'cn_money':
-        ['cn_m', 'start', 'month', '19760101', '', '', ''],
+        ['cn_money', 'start', 'month', '19760101', '', '', ''],
 
     'cn_sf':
-        ['sf_month', 'start', 'month', '19760101', '', '', ''],
+        ['cn_sf', 'start', 'month', '19760101', '', '', ''],
 
     'cn_pmi':
         ['cn_pmi', 'start', 'month', '19760101', '', '', ''],
