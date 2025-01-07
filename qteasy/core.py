@@ -780,11 +780,17 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         except:
             table_list.add('trade_calendar')
 
-    print(f'into {len(table_list)} tables: {table_list}')
+    if parallel:
+        print(f'into {len(table_list)} tables (parallely): {table_list}')
+    else:
+        print(f'into {len(table_list)} tables (sequentially): {table_list}')
 
     # 2, 循环下载数据表
     from .data_channels import parse_data_fetch_args, fetch_batched_table_data
     for table in table_list:
+        if table in ['dividend']:  # 报错RuntimeError: (1292, "Incorrect date value: 'NaT' for column 'ann_date' at row 49"), error in executing sql: INSERT INTO `dividend` (`ts_code`, `ann_date`, `end_date`, `div_proc`, `stk_div`, `stk_bo_rate`, `stk_co_rate`, `cash_div`, `cash_div_tax`, `record_date`, `ex_date`, `pay_date`, `div_listdate`, `imp_ann_date`, `base_date`, `base_share`)
+            continue
+            # import pdb; pdb.set_trace()
         # 2.1, 解析下载数据的参数
         arg_list = list(parse_data_fetch_args(
                 table=table,

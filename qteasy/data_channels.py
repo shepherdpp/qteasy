@@ -417,10 +417,8 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
         freq = 'w-Fri'
     if freq.lower() == 'm':
         freq = 'ME'
-    try:
-        res = pd.date_range(start_date, end_date, freq=freq).strftime('%Y%m%d').to_list()
-    except:
-        import pdb; pdb.set_trace()
+
+    res = pd.date_range(start_date, end_date, freq=freq).strftime('%Y%m%d').to_list()
 
     if reversed_par_seq:
         return res[::-1]
@@ -528,7 +526,7 @@ def _parse_table_index_args(arg_range: str, symbols: str, allowed_code_suffix: s
             symbols = str_to_list(symbols)
             all_args = [arg for arg in all_args if arg in symbols]
 
-    if allowed_code_suffix is not None:  # assert allowed_code_suffix is a str, 进行第二次筛选
+    if allowed_code_suffix:  # assert allowed_code_suffix is a str, 进行第二次筛选
         suffix = str_to_list(allowed_code_suffix)
         all_args = [arg for arg in all_args if arg[-2:] in suffix]
 

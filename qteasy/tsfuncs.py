@@ -3626,7 +3626,7 @@ def cn_sf(month=None, start=None, end=None):
     """ 获取中国社会融资规模"""
     fields = "month, inc_month, inc_cumval, stk_endval"
     pro = ts.pro_api()
-    res = pro.cn_sf(m=month, start_m=start, end_m=end, fields=fields)
+    res = pro.sf_month(m=month, start_m=start, end_m=end, fields=fields)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_social_fin with start_m={start}, end_m={end}')
     return res
 
