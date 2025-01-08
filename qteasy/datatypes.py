@@ -373,7 +373,7 @@ class DataType:
         return f'{self.name}({self.asset_type})@{self.freq}'
 
     # 真正的顶层数据获取API接口函数
-    def get_data_from(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
+    def get_data_from_source(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
         """ Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
 
         如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
@@ -3825,7 +3825,7 @@ def get_data_type(self, htype, *, symbols=None, starts=None, ends=None, target_f
     ----------
     htype: DataType
     """
-    return htype.get_data_from(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
+    return htype.get_data_from_source(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
 
 
 def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):

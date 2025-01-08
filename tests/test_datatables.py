@@ -117,6 +117,19 @@ class TestDataTables(unittest.TestCase):
         self.assertTrue(all(table in res for table in expected_tables))
         self.assertTrue(all(table in expected_tables for table in res))
 
+    def test_get_table_map(self):
+        table_map = get_table_map()
+        print(f'table map: {table_map}')
+        self.assertTrue(all(table in table_map for table in TABLE_MASTERS.keys()))
+        self.assertTrue(all(table in TABLE_MASTERS.keys() for table in table_map))
+
+    def test_get_table_master(self):
+        table_master = get_table_master()
+        print(f'table master: \n{table_master}')
+        self.assertTrue(all(table in table_master.index for table in TABLE_MASTERS.keys()))
+        self.assertTrue(all(table in TABLE_MASTERS.keys() for table in table_master.index))
+        self.assertTrue(all(table_master.loc[table, 'table_usage'] in TABLE_SCHEMA[table] for table in table_master.index))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -18,7 +18,7 @@ import pandas as pd
 from qteasy.database import DataSource
 from qteasy.data_channels import (
     TUSHARE_API_MAP,
-    _fetch_table_data_from_tushare,
+    fetch_table_data_from_tushare,
     fetch_batched_table_data,
     _parse_list_args,
     _parse_datetime_args,
@@ -123,7 +123,7 @@ class TestChannels(unittest.TestCase):
             kwargs['retry_count'] = 1
 
             try:
-                dnld_data = _fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
+                dnld_data = fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
                 print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
             except Exception as e:
                 print(f'error downloading data for table {table}: {e}')

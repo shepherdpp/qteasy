@@ -51,7 +51,7 @@ data_channels.download_data(
 """
 
 
-def _fetch_table_data_from_tushare(table, **kwargs):
+def fetch_table_data_from_tushare(table, **kwargs):
     """使用kwargs参数，从tushare获取一次金融数据
 
     Parameters
@@ -77,7 +77,7 @@ def _fetch_table_data_from_tushare(table, **kwargs):
     return dnld_data
 
 
-def _fetch_table_data_from_akshare(table, **kwargs):
+def fetch_table_data_from_akshare(table, **kwargs):
     """ 使用kwargs参数，从akshare获取一次金融数据
 
     Parameters
@@ -100,7 +100,7 @@ def _fetch_table_data_from_akshare(table, **kwargs):
     return dnld_data
 
 
-def _fetch_table_data_from_emoney(table, **kwargs):
+def fetch_table_data_from_eastmoney(table, **kwargs):
     """ 使用kwargs参数，从东方财富网获取一次金融数据
 
     Parameters
@@ -140,11 +140,11 @@ def _get_fetch_table_func(channel: str):
         数据下载函数
     """
     if channel == 'tushare':
-        return _fetch_table_data_from_tushare
+        return fetch_table_data_from_tushare
     elif channel == 'akshare':
-        return _fetch_table_data_from_akshare
+        return fetch_table_data_from_akshare
     elif channel == 'emoney':
-        return _fetch_table_data_from_emoney
+        return fetch_table_data_from_eastmoney
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 

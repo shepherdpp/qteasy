@@ -239,10 +239,10 @@ qt.get_table_overview()
 
 ## 获取历史数据，并将数据保存在DataSource中
 如果`DataSource`中没有数据，那么`qteasy`将很难发挥所长，因此，首先需要将数据保存到`DataSource`中
-`DataSource`类提供了`_fetch_table_data_from_tushare()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。
+`DataSource`类提供了`fetch_table_data_from_tushare()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。
 使用`DataSource`对象获取、更新数据的方法包括：
 
-### `DataSource._fetch_table_data_from_tushare(table, channel, df=None, f_name=None, **kwargs)`
+### `DataSource.fetch_table_data_from_tushare(table, channel, df=None, f_name=None, **kwargs)`
 从外部数据源获取数据，调整清洗数据以使它与数据源中的数据表匹配
 
 数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
@@ -268,7 +268,7 @@ qt.get_table_overview()
 
 ```python
 # stock_data 是事先准备好的股票价格数据，格式为pd.DataFrame
-df = ds_csv._fetch_table_data_from_tushare(table='stock_basic', channel='df', df=stock_data)
+df = ds_csv.fetch_table_data_from_tushare(table='stock_basic', channel='df', df=stock_data)
 ds_csv.update_table_data('stock_basic', df)
 ds_csv.table_data_exists('stock_basic')
 ```
@@ -280,7 +280,7 @@ ds_csv.table_data_exists('stock_basic')
 连接到`tushare`获取数据的时候，只需要指定数据表的名称即可，`DataSource`会自行调用相应的`tushare API`下载数据：
 
 ```python
-df = ds_csv._fetch_table_data_from_tushare(table='trade_calendar', channel='tushare')
+df = ds_csv.fetch_table_data_from_tushare(table='trade_calendar', channel='tushare')
 ds_csv.update_table_data('trade_calendar', df)
 ds_csv.table_data_exists('trade_calendar')
 ```

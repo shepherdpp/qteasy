@@ -94,7 +94,7 @@ table_name(key):            数据表的名称（主键）自定义表名称不�
 
 5, freq:                    表内数据的频率，如分钟、日、周等
                             设置为'D'、'W'等，用于筛选不同的数据表
-                            'none'表示无频率
+                            
 6, index_column:            数据表的索引列，除了数据表的Primary Key以外需要额外创建的索引列, 使用mysql数据库存储
                             数据时设置索引可以大大提高查询性能，对于文件存储形式无效
 7, partition_column:        数据表的分区列，使用mysql数据库存储时，使用KEY(column)分区方式，对于文件存储形式无效
@@ -121,7 +121,6 @@ prime_keys:                 一个列表，包含一个或多个整数，它们�
 """
 
 # Table_masters，用于存储表的基本信息
-# TODO: 去掉table_master中关于API的信息，添加关于表本身的信息，例如index,partition等
 TABLE_MASTER_COLUMNS = [
     'schema',  # 1, 数据表schema
     'desc',  # 2, 数据表描述

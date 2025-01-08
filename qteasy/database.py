@@ -63,18 +63,6 @@ class DataSource:
     -------
     overview(print_out=True)
         以表格形式列出所有数据表的当前数据状态
-    read_table_data(self, table, shares=None, start=None, end=None)
-        从本地数据表中读取数据并返回DataFrame，不修改数据格式
-    export_table_data(self, table, shares=None, start=None, end=None)
-        NotImplemented 将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小
-        规模转移数据
-    get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none')
-        根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
-        HistoryPanel对象。
-    get_index_weights(self, index, start=None, end=None, shares=None)
-        从本地数据仓库中获取一个指数的成分权重
-    refill_local_source(self, tables=None, dtypes=None, freqs=None, asset_types=None,...)
-        批量补充本地数据，手动或自动运行补充本地数据库
 
     """
 
@@ -1934,6 +1922,7 @@ class DataSource:
         KeyError: 当给出的字段不存在时
         """
 
+        from .datatables import ensure_sys_table
         ensure_sys_table(table)
         # TODO: 为了提高开发速度，使用self.update_table_data()，后续需要重构代码
         #  用下面的思路重构代码，提高运行效率
@@ -1996,6 +1985,7 @@ class DataSource:
         KeyError: 当给出的字段不完整或者有不可用的字段时
         """
 
+        from .datatables import ensure_sys_table
         ensure_sys_table(table)
         # TODO: 为了缩短开发时间，先暂时调用self.update_table_data()，后续需要重构
         #  按照下面的思路重构简化代码：
@@ -2082,6 +2072,7 @@ class DataSource:
             删除的记录数量
         """
 
+        from .datatables import ensure_sys_table
         # 如果不是system table，直接返回0
         try:
             ensure_sys_table(table)
@@ -2671,198 +2662,6 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
-# TODO: this function is no longer needed with new DataType class
-def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_freq=False):
-    """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
-        仅支持精确匹配。无法精确匹配数据表时，报错
-
-    Parameters
-    ----------
-    htypes: str or list of str
-        需要查找的的数据类型，该数据类型必须能在data_table_map中找到，包括所有内置数据类型，
-        也包括自定义数据类型（自定义数据类型必须事先添加到data_table_map中），
-        否则会被忽略
-        当输入类型为str时，可以接受逗号分隔的字符串表示多个不同的data type
-        如下面两种输入等效：
-        'close, open, high' == ['close', 'open', 'high']
-    freq: str or list of str default 'd'
-        所需数据的频率，数据频率必须符合标准频率定义，即包含以下关键字：
-        min / hour / H / d / w / M / Q / Y
-        同时支持含数字或附加信息的频率如：
-        5min / 2d / W-Fri
-        如果输入的频率在data_table_map中无法找到，则根据soft_freq的值采取不同处理方式：
-        - 如果soft_freq == True:
-            在已有的data_table_map中查找最接近的freq并输出
-        - 如果soft_freq == False:
-            该项被忽略
-    asset_type: (str, list) default 'E'
-        所需数据的资产类型。该资产类型必须能在data_table_map中找到，
-        否则会被忽略
-        输入逗号分隔的多个asset_type等效于多个asset_type的list
-    method: str
-        决定htype和asset_type数据的匹配方式以及输出的数据表数量：
-        - 'exact': 完全匹配，针对输入的每一个参数匹配一张数据表
-          输出的数据列数量与htype/freq/asset_type的最大数量相同，
-          如果输入的数据中freq与asset_type数量不足时，自动补足
-          如果输入的数据中freq与asset_type数量太多时，自动忽略
-          当输入的htype或asset_type中有一个或多个无法在data_table_map中找到匹配项时，该项会被忽略
-        举例：
-            输入为:
-                ['close', 'pe'], ['d', 'd'], ['E', 'IDX'] 时，
-            输出为:
-                {'stock_daily':     ['close'],
-                 'index_indicator': ['pe']}
-
-        - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
-          输出的数据列数量与htype/freq/asset_type的数量乘积相同，但同一张表中的数据列会
-          被合并
-          当某一个htype或asset_type的组合无法在data_table_map中找到时，忽略该组合
-        举例：
-            输入为:
-                ['close', 'pe', 'open'], ['d'], ['E', 'IDX']时，
-            输出为:
-                {'stock_daily':     ['close', 'open'],
-                 'index_daily':     ['close', 'open'],
-                 'stock_indicator': ['pe'],
-                 'index_indicator': ['pe']}
-    soft_freq: bool, default False
-        决定freq的匹配方式：
-        - True: 允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
-          失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
-          或被忽略(当method为'permute'时)
-        - False:不允许不完全匹配的freq，当输入的freq无法匹配时输出None(当method为'exact'时)
-
-    Returns
-    -------
-    matched_tables: dict
-    key为需要的数据所在数据表，value为该数据表中的数据列:
-    {tables: columns}
-
-    TODO: 未来可以考虑增加对freq的soft匹配，即允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
-     失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
-     或被忽略(当method为'permute'时)
-
-    TODO: 下面Example中的输出结果需要更新
-    Examples
-    --------
-    >>> htype_to_table_col('close, open, high', freq='d', asset_type='E', method='exact')
-    {'stock_daily': ['close', 'open', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E', method='exact')
-    {'stock_daily': ['close', 'high'], 'stock_monthly': ['open']}
-    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E, IDX', method='exact')
-    {'index_monthly': ['open'], 'stock_daily': ['close', 'high']}
-    >>> htype_to_table_col('close, open, high', freq='d, m', asset_type='E, IDX', method='permute')
-    {'stock_daily': ['close', 'open', 'high'],
-     'stock_monthly': ['close', 'open', 'high'],
-     'index_daily': ['close', 'open', 'high'],
-     'index_monthly': ['close', 'open', 'high']}
-    """
-    if isinstance(htypes, str):
-        htypes = str_to_list(htypes)
-    if isinstance(freq, str):
-        freq = str_to_list(freq)
-    if isinstance(asset_type, str):
-        if asset_type.lower() == 'any':
-            from .utilfuncs import AVAILABLE_ASSET_TYPES
-            asset_type = AVAILABLE_ASSET_TYPES
-        else:
-            asset_type = str_to_list(asset_type)
-
-    # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
-
-    # 并开始从dtype_map中查找内容,
-    # - exact模式下使用reindex确保找足数量，按照输入组合的数量查找，找不到的输出NaN
-    # - permute模式下将dtype/freq/atype排列组合后查找所有可能的数据表，找不到的输出NaN
-    dtype_map = get_dtype_map()
-    if method.lower() == 'exact':
-        # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
-        idx_count = max(len(htypes), len(freq), len(asset_type))
-        freq_padder = freq[0] if len(freq) == 1 else 'd'
-        asset_padder = asset_type[0] if len(asset_type) == 1 else 'E'
-        htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
-        freq = input_to_list(freq, idx_count, padder=freq_padder)
-        asset_type = input_to_list(asset_type, idx_count, padder=asset_padder)
-        dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
-
-    elif method.lower() == 'permute':
-        import itertools
-        dtype_idx = list(itertools.product(htypes, freq, asset_type))
-
-    else:  # for some unexpected cases
-        raise KeyError(f'invalid method {method}')
-
-    # 查找内容
-    found_dtypes = dtype_map.reindex(index=dtype_idx)
-
-    # 检查找到的数据中是否有NaN值，即未精确匹配到的值，确认是由于dtype/atype不对还是freq不对造成的
-    # 如果是freq不对造成的，则需要抖动freq后重新匹配
-    not_matched = found_dtypes.isna().all(axis=1)
-    all_found = ~not_matched.any()  # 如果没有任何组合未找到，等价于全部组合都找到了
-    # 在soft_freq模式下，进一步确认无法找到数据的原因，如果因为freq不匹配，则抖动freq后重新查找
-    rematched_tables = {}
-    if (not all_found) and soft_freq:
-        # 有部分htype/freq/type组合没有找到结果，这部分index需要调整
-        unmatched_index = found_dtypes.loc[not_matched].index
-        unmatched_dtypes = [item[0] for item in unmatched_index]
-        unmatched_freqs = [item[1] for item in unmatched_index]
-        unmatched_atypes = [item[2] for item in unmatched_index]
-        map_index = dtype_map.index
-        all_dtypes = map_index.get_level_values(0)
-        all_freqs = map_index.get_level_values(1)
-        all_atypes = map_index.get_level_values(2)
-
-        rematched_dtype_index = []
-        for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
-            try:
-                rematched_dtype_loc = all_dtypes.get_loc(dt)
-                rematched_atype_loc = all_atypes.get_loc(at)
-            except KeyError:
-                # 如果产生Exception，说明dt或at无法精确匹配
-                # 此时应该保留全NaN输出
-                continue
-                # raise KeyError(f'dtype ({dt}) or asset_type ({at}) can not be found in dtype map')
-            # 否则就是freq无法精确匹配，此时需要抖动freq
-            '''
-            原本使用下面的方法获取同时满足两个条件的freq的集合
-            available_freq_list = all_freqs[rematched_dtype_loc & rematched_atype_loc]
-            available_freq_list = list(set(available_freq_list))
-            但是rematched_dtype_loc和rematched_atype_loc有时候类型不同，因此无法直接&
-            例如，当dt = invest_income 时，rematched_dtype_loc返回值为一个数字209，
-            而当at = E 时，rematched_atype_loc返回值为一个bool series
-            两者无法直接进行 & 运算，因此会导致错误结果
-            因此直接使用集合交集运算
-            '''
-            dtype_freq_list = set(all_freqs[rematched_dtype_loc])
-            atype_freq_list = set(all_freqs[rematched_atype_loc])
-            available_freq_list = list(dtype_freq_list.intersection(atype_freq_list))
-
-            # 当无法找到available freq list时，跳过这一步
-            if len(available_freq_list) == 0:
-                continue
-
-            dithered_freq = freq_dither(fr, available_freq_list)
-            # 将抖动后生成的新的dtype ID保存下来
-            rematched_dtype_index.append((dt, dithered_freq.lower(), at))
-
-        # 抖动freq后生成的index中可能有重复项，需要去掉重复项
-        rematched_dtype_index_unduplicated = list(set(rematched_dtype_index))
-        # 通过去重后的index筛选出所需的dtypes
-        rematched_dtypes = dtype_map.reindex(index=rematched_dtype_index_unduplicated)
-        # 合并成组后生成dict
-        group = rematched_dtypes.groupby(['table_name'])
-        rematched_tables = group['column'].apply(list).to_dict()
-
-    # 从found_dtypes中提取数据并整理为dict
-    group = found_dtypes.groupby(['table_name'])
-    matched_tables = group['column'].apply(list).to_dict()
-
-    if soft_freq:
-        # 将找到的dtypes与重新匹配的dtypes合并
-        matched_tables.update(rematched_tables)
-    return matched_tables
-
-
-# noinspection PyTypeChecker
 @lru_cache(maxsize=16)
 def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=True) -> tuple:
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
@@ -2923,5 +2722,3 @@ def get_dtype_map() -> pd.DataFrame:
     dtype_map.columns = DATA_TYPE_MAP_COLUMNS
     dtype_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
     return dtype_map
-
-

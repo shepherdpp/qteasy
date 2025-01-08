@@ -20,12 +20,16 @@ from pymysql import connect
 from qteasy.utilfuncs import str_to_list
 from qteasy.trading_util import _trade_time_index
 
+from qteasy.data_channels import (
+    fetch_table_data_from_tushare,
+    fetch_table_data_from_eastmoney,
+)
+
 from qteasy.database import (
     DataSource,
     set_primary_key_index,
     set_primary_key_frame,
     get_primary_key_range,
-    htype_to_table_col,
     _resample_data,
     freq_dither,
 )
@@ -763,12 +767,12 @@ class TestDataSource(unittest.TestCase):
         con.commit()
         con.close()
         # 为确保update顺利进行，建立新表并设置primary_key
-        self.ds_db._write_database(df, table_name)
+        self.ds_db._write_database(df, table_name, ['ts_code', 'trade_date'])
         loaded_df = self.ds_db._read_database(table_name)
         saved_index = df.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df.values)
-        loaded_values = np.array(loaded_df.values)
+        saved_values = np.array(df.sort_values(['trade_date']).values)
+        loaded_values = np.array(loaded_df.sort_values(['trade_date']).values)
         print(f'retrieve whole arr table from database\n'
               f'df retrieved from database is\n'
               f'{loaded_df}\n')
@@ -897,7 +901,7 @@ class TestDataSource(unittest.TestCase):
                 }
         )
 
-        self.ds_db._write_database(test_sys_df, table_name)
+        self.ds_db._write_database(test_sys_df, table_name, ['account_id'])
         loaded_df = self.ds_db._read_database(table_name)
         set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
         print(f'df retrieved from database is\n'
@@ -967,7 +971,7 @@ class TestDataSource(unittest.TestCase):
                                  columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
                                  dtypes=['varchar(9)', 'date', 'float', 'float', 'float', 'float'],
                                  primary_key=['ts_code', 'trade_date'])
-        self.ds_db._write_database(df, table_name)
+        self.ds_db._write_database(df, table_name, ['ts_code', 'trade_date'])
         self.ds_db._update_database(df_add, table_name, ['ts_code', 'trade_date'])
         loaded_df = self.ds_db._read_database(table_name)
         saved_index = df_res.index.values
@@ -1036,7 +1040,7 @@ class TestDataSource(unittest.TestCase):
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
-            df = data_source.fetch_history_table_data(test_table, 'df', df=self.built_in_add_df)
+            df = self.built_in_add_df
             data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
             print(f'df read from arr source after updating with merge type IGNORE:\n'
@@ -1053,8 +1057,7 @@ class TestDataSource(unittest.TestCase):
             data_source.write_table_data(self.built_in_df, test_table)
         # 测试写入新增数据并设置合并类型为"update"
         for data_source in all_data_sources:
-            df = data_source.fetch_history_table_data(test_table, 'df', df=self.built_in_add_df)
-            data_source.update_table_data(test_table, df, 'update')
+            data_source.update_table_data(test_table, df=self.built_in_add_df, merge_type='update')
             df = data_source.read_table_data(test_table)
             print(f'df read from arr source after updating with merge type UPDATE:\n'
                   f'{data_source.source_type}-{data_source.connection_type}\n{df}')
@@ -1111,7 +1114,7 @@ class TestDataSource(unittest.TestCase):
             # 下载并写入数据到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
-            df = self.ds_csv.fetch_history_table_data(table, 'tushare', **tables_to_test[table])
+            df = fetch_table_data_from_tushare(table, **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table arr ({table}) from tushare for '
@@ -1133,7 +1136,7 @@ class TestDataSource(unittest.TestCase):
             # 下载数据并添加到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
-            df = self.ds_hdf.fetch_history_table_data(table, 'tushare', **tables_to_add[table])
+            df = fetch_table_data_from_tushare(table, **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table arr ({table}) from tushare for '
@@ -1255,87 +1258,6 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(df.index[0], 3)
                 self.assertEqual(df.index[1], 5)
 
-    def test_get_history_panel_data(self):
-        """ test getting arr, from real database """
-        ds = qt.QT_DATA_SOURCE
-        shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
-        htypes = 'pe, close, open, swing, strength'
-        htypes = str_to_list(htypes)
-        start = '20210101'
-        end = '20210301'
-        asset_type = 'E, IDX, FD'
-        freq = 'd'
-        adj = 'back'
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj=adj)
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with backward price recover:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with forward price recover:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with price:\n{dfs}')
-        htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq='w',
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history data:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes='close, high',
-                                  start=None,
-                                  end=None,
-                                  row_count=20,
-                                  asset_type='E, IDX, FD',
-                                  freq='d',
-                                  adj='none')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['close', 'high'])
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history data:\n{dfs}')
-
-    def test_get_index_weights(self):
-        """ test get_index_weights() function"""
-        ds = qt.QT_DATA_SOURCE
-        dfs = ds.get_index_weights('000300.SH,000002.SZ',
-                                   start='20200101',
-                                   end='20200102',
-                                   shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['wt-000300.SH', 'wt-000002.SZ'])
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(dfs)
-
     def test_get_table_info(self):
         """ 获取打印数据表的基本信息"""
         ds = qt.QT_DATA_SOURCE
@@ -1366,125 +1288,6 @@ class TestDataSource(unittest.TestCase):
             print(ov[['has_data', 'size', 'records']])
             print(ov[['pk1', 'min1', 'max1']])
             print(ov[['pk2', 'min2', 'max2']])
-
-    def test_get_related_tables(self):
-        """根据数据名称查找相关数据表及数据列名称"""
-        # 精确查找数据表及数据列
-        tbls = htype_to_table_col(htypes='close', freq='d')
-        print("by: htype_to_table_col(htypes='close', freq='d')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close']}
-        )
-        tbls = htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')
-        print("by: htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'income': ['invest_income']}
-        )
-        # 精确查找多个数据表及数据列
-        tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')
-        print("by: htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close', 'open']}
-        )
-        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')
-        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'index_weekly': ['open'],
-                 'stock_daily':  ['close']}
-        )
-        tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
-        print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stk_managers': ['name'],
-                 'stock_daily':  ['close']}
-        )
-        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
-        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'index_daily':  ['close', 'open'],
-                 'index_weekly': ['close', 'open'],
-                 'stock_daily':  ['close', 'open'],
-                 'stock_weekly': ['close', 'open']}
-        )
-        # 部分无法精确匹配时，只输出可以匹配的部分
-        tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
-        print("by: htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'index_daily':  ['close'],
-                 'index_weekly': ['close'],
-                 'stock_daily':  ['close'],
-                 'stock_weekly': ['close']}
-        )
-        tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')
-        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close']}
-        )
-        # 全部无法精确匹配时，不报错，输出空集合
-        tbls = htype_to_table_col(htypes='clese, opan', freq='d, t', asset_type='E, IDX', method='exact')
-        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {}
-        )
-        # 当soft_freq为True时，匹配查找相应的可等分freq
-        tbls = htype_to_table_col(htypes='close, open', freq='2d',
-                                  asset_type='E, IDX', method='exact', soft_freq=True)
-        print(f"by: htype_to_table_col(htypes='close, open', freq='2d, 2d', "
-              f"asset_type='E, IDX', method='exact', soft_freq=True)")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close'],
-                 'index_daily': ['open']}
-        )
-
-        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min',
-                                  asset_type='E, IDX', method='permute', soft_freq=True)
-        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
-              f"asset_type='E, IDX', method='permute', soft_freq=True)")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_weekly':    ['close'],
-                 'index_weekly':    ['close'],
-                 'stock_15min':     ['close'],
-                 'index_15min':     ['close'],
-                 'stock_indicator': ['pe'],
-                 'index_indicator': ['pe'],
-                 'income':          ['invest_income']
-                 }
-        )
-
-        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun',
-                                  asset_type='E, IDX', method='exact', soft_freq=True)
-        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
-              f"asset_type='E, IDX', method='exact', soft_freq=True)")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_weekly':    ['close'],
-                 'index_indicator': ['pe'],
-                 'income':          ['invest_income']
-                 }
-        )
 
     def test_freq_resample(self):
         """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（频率到日频以下时，仅保留交易时段）"""
@@ -2378,9 +2181,8 @@ class TestDataSource(unittest.TestCase):
 
     def test_fetch_realtime_price_data(self):
         """ test datasource function fetch_realtime_price_data()"""
-        res = self.ds_csv.fetch_realtime_price_data(
+        res = fetch_table_data_from_eastmoney(
                 table='stock_5min',
-                channel='eastmoney',
                 symbols=['000001.SZ', '000002.SZ'],
         )
         print(res)
