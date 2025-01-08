@@ -434,7 +434,6 @@ class TestChannels(unittest.TestCase):
                                          symbols='000651.SZ:000660.SZ',
                                          start_date='20210104',
                                          end_date='20210110',
-                                         freq='d',
                                          list_arg_filter=None,
                                          reversed_par_seq=False,
                                          )
@@ -456,7 +455,6 @@ class TestChannels(unittest.TestCase):
                                          symbols='000001.SH:000010.SH',
                                          start_date='20210104',
                                          end_date='20210110',
-                                         freq='d',
                                          list_arg_filter=None,
                                          reversed_par_seq=False,
                                          )
@@ -493,6 +491,20 @@ class TestChannels(unittest.TestCase):
                 deleted += 1
                 print(f'table {table} dropped.')
         print(f'{deleted} tables dropped.')
+
+        refill_data_source(
+            self.ds,
+            channel='tushare',
+            tables='dividend',
+            symbols='000001:000020',
+            start_date='20240330',
+            end_date='20240405',
+            parallel=True,
+        )
+
+        for table in ['index_5min', 'stock_15min']:
+            data = self.ds.read_table_data(table)
+            print(f'data written to database for table {table}:\n{data.head()}')
 
         refill_data_source(
             self.ds,

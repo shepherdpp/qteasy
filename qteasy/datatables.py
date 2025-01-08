@@ -201,19 +201,19 @@ TABLE_MASTERS = {
         ['sw_industry_basic', '申万行业分类', 'basics', 'IDX', 'none', '', '', ''],
 
     'stock_1min':
-        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', '', '', ''],
+        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', '', 'ts_code', '30'],  # 10
 
     'stock_5min':
-        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', '', '', ''],
+        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', '', 'ts_code', '10'],
 
     'stock_15min':
-        ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', '', '', ''],
+        ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', '', 'ts_code', '10'],  # 5
 
     'stock_30min':
-        ['min_bars', '股票30分钟K线行情', 'mins', 'E', '30min', '', '', ''],
+        ['min_bars', '股票30分钟K线行情', 'mins', 'E', '30min', '', 'ts_code', '5'],  # 5
 
     'stock_hourly':
-        ['min_bars', '股票60分钟K线行情', 'mins', 'E', 'h', '', '', ''],
+        ['min_bars', '股票60分钟K线行情', 'mins', 'E', 'h', '', 'ts_code', '5'],  # 5
 
     'stock_daily':
         ['bars', '股票日线行情', 'data', 'E', 'd', '', '', ''],
@@ -225,19 +225,19 @@ TABLE_MASTERS = {
         ['bars', '股票月线行情', 'data', 'E', 'm', '', '', ''],
 
     'index_1min':
-        ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', '', '', ''],
+        ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', '', 'ts_code', '30'],  # 30
 
     'index_5min':
-        ['min_bars', '指数5分钟K线行情', 'mins', 'IDX', '5min', '', '', ''],
+        ['min_bars', '指数5分钟K线行情', 'mins', 'IDX', '5min', '', 'ts_code', '10'],  # 10
 
     'index_15min':
-        ['min_bars', '指数15分钟K线行情', 'mins', 'IDX', '15min', '', '', ''],
+        ['min_bars', '指数15分钟K线行情', 'mins', 'IDX', '15min', '', 'ts_code', '10'],  # 10
 
     'index_30min':
-        ['min_bars', '指数30分钟K线行情', 'mins', 'IDX', '30min', '', '', ''],
+        ['min_bars', '指数30分钟K线行情', 'mins', 'IDX', '30min', '', 'ts_code', '5'],  # 5
 
     'index_hourly':
-        ['min_bars', '指数60分钟K线行情', 'mins', 'IDX', 'h', '', '', ''],
+        ['min_bars', '指数60分钟K线行情', 'mins', 'IDX', 'h', '', 'ts_code', '5'],  # 5
 
     'index_daily':
         ['bars', '指数日线行情', 'data', 'IDX', 'd', '', '', ''],
@@ -264,19 +264,19 @@ TABLE_MASTERS = {
         ['global_index_daily', '全球指数日线行情', 'reference', 'none', 'd', '', '', ''],
 
     'fund_1min':
-        ['min_bars', '场内基金分钟K线行情', 'mins', 'FD', '1min', '', '', ''],
+        ['min_bars', '场内基金分钟K线行情', 'mins', 'FD', '1min', '', 'ts_code', '30'],
 
     'fund_5min':
-        ['min_bars', '场内基金5分钟K线行情', 'mins', 'FD', '5min', '', '', ''],
+        ['min_bars', '场内基金5分钟K线行情', 'mins', 'FD', '5min', '', 'ts_code', '10'],
 
     'fund_15min':
-        ['min_bars', '场内基金15分钟K线行情', 'mins', 'FD', '15min', '', '', ''],
+        ['min_bars', '场内基金15分钟K线行情', 'mins', 'FD', '15min', '', 'ts_code', '10'],
 
     'fund_30min':
-        ['min_bars', '场内基金30分钟K线行情', 'mins', 'FD', '30min', '', '', ''],
+        ['min_bars', '场内基金30分钟K线行情', 'mins', 'FD', '30min', '', 'ts_code', '5'],
 
     'fund_hourly':
-        ['min_bars', '场内基金60分钟K线行情', 'mins', 'FD', 'h', '', '', ''],
+        ['min_bars', '场内基金60分钟K线行情', 'mins', 'FD', 'h', '', 'ts_code', '5'],
 
     'fund_daily':
         ['bars', '场内基金每日行情', 'data', 'FD', 'd', '', '', ''],
@@ -294,19 +294,19 @@ TABLE_MASTERS = {
         ['future_mapping', '期货合约映射表', 'data', 'FT', 'd', '', '', ''],
 
     'future_1min':  # future_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
-        ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', '', '', ''],
+        ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', '', 'ts_code', '30'],
 
     'future_5min':
-        ['future_mins', '期货5分钟K线行情', 'mins', 'FT', '5min', '', '', ''],
+        ['future_mins', '期货5分钟K线行情', 'mins', 'FT', '5min', '', 'ts_code', '10'],
 
     'future_15min':
-        ['future_mins', '期货15分钟K线行情', 'mins', 'FT', '15min', '', '', ''],
+        ['future_mins', '期货15分钟K线行情', 'mins', 'FT', '15min', '', 'ts_code', '10'],
 
     'future_30min':
-        ['future_mins', '期货30分钟K线行情', 'mins', 'FT', '30min', '', '', ''],
+        ['future_mins', '期货30分钟K线行情', 'mins', 'FT', '30min', '', 'ts_code', '5'],
 
     'future_hourly':
-        ['future_mins', '期货60分钟K线行情', 'mins', 'FT', 'h', '', '', ''],
+        ['future_mins', '期货60分钟K线行情', 'mins', 'FT', 'h', '', 'ts_code', '5'],
 
     'future_daily':
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', '', '', ''],
@@ -1248,16 +1248,16 @@ TABLE_SCHEMA = {
          },
 
     'dividend':  # New, 分红送股!
-        {'columns':     ["ts_code", "ann_date", "end_date", "div_proc", "stk_div", "stk_bo_rate", "stk_co_rate",
+        {'columns':     ["ts_code", "end_date", "div_proc", "ann_date", "stk_div", "stk_bo_rate", "stk_co_rate",
                          "cash_div", "cash_div_tax", "record_date", "ex_date", "pay_date", "div_listdate",
                          "imp_ann_date", "base_date", "base_share"],
-         'dtypes':      ["varchar(14)", "date", "date", "varchar(10)", "float", "float", "float",
+         'dtypes':      ["varchar(14)", "date", "varchar(14)", "date", "float", "float", "float",
                          "float", "float", "date", "date", "date", "date",
                          "date", "date", "float"],
-         'remarks':     ["TS代码", "分红年度", "预案公告日", "实施进度", "每股送转", "每股送股比例", "每股转增比例",
+         'remarks':     ["TS代码", "分红年度", "实施进度", "预案公告日", "每股送转", "每股送股比例", "每股转增比例",
                          "每股分红（税后）", "每股分红（税前）", "股权登记日", "除权除息日", "派息日", "红股上市日",
                          "实施公告日", "基准日", "基准股本（万）"],
-         'prime_keys':  [0, 1]
+         'prime_keys':  [0, 1, 2]
          },
 
     'top_list':  # New, 龙虎榜交易明细!

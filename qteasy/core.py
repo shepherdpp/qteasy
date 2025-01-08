@@ -788,9 +788,6 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
     # 2, 循环下载数据表
     from .data_channels import parse_data_fetch_args, fetch_batched_table_data
     for table in table_list:
-        if table in ['dividend']:  # 报错RuntimeError: (1292, "Incorrect date value: 'NaT' for column 'ann_date' at row 49"), error in executing sql: INSERT INTO `dividend` (`ts_code`, `ann_date`, `end_date`, `div_proc`, `stk_div`, `stk_bo_rate`, `stk_co_rate`, `cash_div`, `cash_div_tax`, `record_date`, `ex_date`, `pay_date`, `div_listdate`, `imp_ann_date`, `base_date`, `base_share`)
-            continue
-            # import pdb; pdb.set_trace()
         # 2.1, 解析下载数据的参数
         arg_list = list(parse_data_fetch_args(
                 table=table,
@@ -853,6 +850,7 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
             continue
 
         if df_concat_list:
+            # 将下载的数据写入数据源
             rows_affected += data_source.update_table_data(
                     table=table,
                     df=pd.concat(df_concat_list, copy=False),
@@ -865,19 +863,12 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                 estimation=True,
                 short_form=True
         )
-        if len(arg_list) > 1:
-            progress_bar(total, total,
-                         comments=f'<{table}:{arg_list[0]}-{arg_list[-1]}>'
-                                  f'{total_written}wrtn in {strftime_elapsed}\n',
-                         column_width=120,
-                         cut_off_pos=1.0,
-                         )
-        else:
-            progress_bar(total, total,
-                         comments=f'[{table}:None> {total_written}wrtn in {strftime_elapsed}\n',
-                         column_width=120,
-                         cut_off_pos=1.0,
-                         )
+
+        progress_bar(total, total,
+                     comments=f'<{table}> {total_written} wrtn in {strftime_elapsed}\n',
+                     column_width=120,
+                     cut_off_pos=1.0,
+                     )
 
     return None
 

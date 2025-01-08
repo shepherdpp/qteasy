@@ -57,14 +57,18 @@ class TestDataSource(unittest.TestCase):
                 port=QT_CONFIG['test_db_port'],
                 user=QT_CONFIG['test_db_user'],
                 password=QT_CONFIG['test_db_password'],
-                db_name=QT_CONFIG['test_db_name']
+                db_name=QT_CONFIG['test_db_name'],
+                allow_drop_table=True,
         )
         print(f'created test data source: {self.ds_db}')
-        self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
+        self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir,
+                                 allow_drop_table=True)
         print(f'created test data source: {self.ds_csv}')
-        self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
+        self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir,
+                                 allow_drop_table=True)
         print(f'created test data source: {self.ds_hdf}')
-        self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
+        self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir,
+                                 allow_drop_table=True)
         print(f'created test data source: {self.ds_fth}')
 
         print('preparing test data...')

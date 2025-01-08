@@ -1519,14 +1519,6 @@ class DataSource:
                 raise KeyError(f'Invalid merge type, got "{merge_type}"')
             rows_affected = self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
         elif self.source_type == 'db':
-            # 如果source_type == 'db'，直接调用write_table_data()函数，将数据写入数据库
-            # 并在调用函数时指定on_duplicate参数即可
-            # if merge_type == 'ignore':  # TODO: ignore模式实现很不好，需要改进！！
-            #     dnld_data_range = get_primary_key_range(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-            #     local_data = self.read_table_data(table, **dnld_data_range)
-            #     set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-            #     dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
-            # dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
             rows_affected = self.write_table_data(df=dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
             raise KeyError(f'invalid data source type: {self.source_type}')
