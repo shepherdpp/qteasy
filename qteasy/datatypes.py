@@ -18,22 +18,6 @@ from functools import lru_cache
 
 from .utilfuncs import str_to_list, _lev_ratio, _partial_lev_ratio, _wildcard_match
 
-HISTORY_DATA_ACQUISITION_TYPES = [
-    'direct',
-    'adjustment',
-    'relations',
-    'operation',
-    'event_status',
-    'event_multi_stat',
-    'event_signal',
-    'composition',
-    'category',
-]
-
-BASIC_DATA_ACQUISITION_TYPES = [
-    'basics',
-]
-
 
 def define(name, freq, asset_type, description, acquisition_type, **kwargs):
     """
@@ -57,22 +41,36 @@ def define(name, freq, asset_type, description, acquisition_type, **kwargs):
         raise ValueError(f'DataType {key} already exists in DATA_TYPE_MAP.')
     DATA_TYPE_MAP[key] = [description, acquisition_type, kwargs]
     DATA_TYPE_MAP_INDEX_NAMES = list(set(DATA_TYPE_MAP_INDEX_NAMES) | set(key))
-    get_built_in_data_type_map()
+    _get_built_in_data_type_map()
 
 
-def get_dtype_map() -> pd.DataFrame:
-    """ 获取所有内置数据类型的清单
+def get_dtype_map(include_user_defined=False, refresh_cache=False) -> pd.DataFrame:
+    """ 获取所有内置以及用户定义数据类型的清单
+
+    Parameters
+    ----------
+    include_user_defined: bool, default False
+        是否包含用户定义的数据类型, 如果为True, 则返回所有数据类型，包括内置和用户定义的
+    refresh_cache: bool, default False
+        是否刷新用户定义的数据类型缓存，如果为True，清除缓存并重新获取用户定义的数据类型
 
     Returns
     -------
     dtype_map: pd.DataFrame
 
     """
-    return get_built_in_data_type_map()
+    if refresh_cache:
+        _get_user_data_type_map.cache_clear()
+    built_in_map = _get_built_in_data_type_map()
+    if include_user_defined:
+        user_map = _get_user_data_type_map()
+        return pd.concat([built_in_map, user_map])
+
+    return built_in_map
 
 
 @lru_cache(maxsize=1)
-def get_built_in_data_type_map() -> pd.DataFrame:
+def _get_built_in_data_type_map() -> pd.DataFrame:
     """ 获取所有内置数据类型的清单
 
     Returns
@@ -86,7 +84,8 @@ def get_built_in_data_type_map() -> pd.DataFrame:
     return type_map
 
 
-def get_user_data_type_map() -> pd.DataFrame:
+@lru_cache(maxsize=1)
+def _get_user_data_type_map() -> pd.DataFrame:
     """get a DataFrame of USER_DATA_TYPE_MAP for checking."""
 
     if not USER_DATA_TYPE_MAP:
@@ -99,7 +98,7 @@ def get_user_data_type_map() -> pd.DataFrame:
     return type_map
 
 
-def parse_name_and_params(name: str) -> tuple:
+def _parse_name_and_params(name: str) -> tuple:
     """parse the name string into name and parameters
 
     Parameters
@@ -123,7 +122,7 @@ def parse_name_and_params(name: str) -> tuple:
         return name, None
 
 
-def parse_built_in_type_id(name: str) -> tuple:
+def _parse_built_in_type_id(name: str) -> tuple:
     """ 根据客户输入的名称在内置数据类型中查找匹配的数据类型
     如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回空tuple
 
@@ -140,7 +139,7 @@ def parse_built_in_type_id(name: str) -> tuple:
         built_in_asset_types: tuple
             数据的资产类型
     """
-    data_map = get_built_in_data_type_map()
+    data_map = _get_built_in_data_type_map()
 
     matched_types = data_map.loc[(name, slice(None), slice(None))]
 
@@ -151,7 +150,7 @@ def parse_built_in_type_id(name: str) -> tuple:
             matched_types.index.get_level_values('asset_type').unique()
 
 
-def parse_user_defined_type_id(name: str) -> tuple:
+def _parse_user_defined_type_id(name: str) -> tuple:
     """ 根据客户输入的名称在用户自定义数据类型中查找匹配的数据类型
     如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回空tuple
 
@@ -168,7 +167,7 @@ def parse_user_defined_type_id(name: str) -> tuple:
         user_defined_asset_types: tuple
             数据的资产类型
     """
-    type_map = get_user_data_type_map()
+    type_map = _get_user_data_type_map()
 
     if type_map.empty:
         return tuple(), tuple()
@@ -182,7 +181,7 @@ def parse_user_defined_type_id(name: str) -> tuple:
             matched_types.index.get_level_values('asset_type').unique()
 
 
-def parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_in_tables=True) -> tuple:
+def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_in_tables=True) -> tuple:
     """ 根据正确的search_name， name_par， freq和asset_type查找数据类型的获取参数
     如果存在name_par，将name_par解析为参数的一部分，放入获取参数中
 
@@ -317,11 +316,11 @@ class DataType:
         if not isinstance(name, str):
             raise TypeError(f'name must be a string, got {type(name)}')
 
-        search_name, name_pars = parse_name_and_params(name)
+        search_name, name_pars = _parse_name_and_params(name)
 
         # 根据用户输入的name查找所有匹配的频率和资产类型
-        built_in_freqs, built_in_asset_types = parse_built_in_type_id(search_name)
-        user_defined_freqs, user_defined_asset_types = parse_user_defined_type_id(search_name)
+        built_in_freqs, built_in_asset_types = _parse_built_in_type_id(search_name)
+        user_defined_freqs, user_defined_asset_types = _parse_user_defined_type_id(search_name)
 
         # 如果用户同时输入了freq和asset_type，确认用户输入是否在匹配的范围内
         # 如果用户输入不在匹配范围内，抛出异常，如果在匹配范围内，使用用户输入作为default值
@@ -345,7 +344,7 @@ class DataType:
 
         # 已经确认了name，freq和asset_type的合法性，现在可以生成DataType实例
         # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
-        description, acquisition_type, kwargs = parse_aquisition_parameters(
+        description, acquisition_type, kwargs = _parse_aquisition_parameters(
                 search_name=search_name,
                 name_par=name_pars,
                 freq=default_freq,
@@ -3617,6 +3616,8 @@ def get_history_data_from_source(
 ) -> {str: pd.DataFrame}:
     """ 根据给出的历史数据类型对象，获取相应的数据并组装成一个标准的DataFrame-Dict并返回
     如果给出qt_codes/start/end参数，则返回符合要求的数据范围，或者返回最近的row_count行数据
+    历史数据返回的结果为column为qt_codes，index为时间的DataFrame，因此只有htype的freq
+    不是'none‘，且asset_type也不为'none'时，才能返回正确的数据
 
     Parameters
     ----------
@@ -3648,7 +3649,7 @@ def get_history_data_from_source(
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
         # 检查数据类型是否属于历史数据，参考数据和基本信息数据不能通过此方法获取
-        if htype.acquisition_type not in HISTORY_DATA_ACQUISITION_TYPES:
+        if htype.freq == 'none' or htype.asset_type == 'none':
             raise ValueError(f'Invalid data type {htype.name}, not a history data type')
         # 从数据源获取数据
         df = htype.get_data_from_source(datasource, shares=qt_codes, start=start, end=end)
@@ -3674,6 +3675,82 @@ def get_history_data_from_source(
     # 最后整理数据，确保每一个htype的数据框的columns与shares相同
     for htyp, df in history_data_acquired.items():
         history_data_acquired[htyp] = df.reindex(columns=qt_codes)
+
+    return history_data_acquired
+
+
+def get_reference_data_from_source(
+        datasource,
+        htypes: [DataType], *,
+        qt_code: str,
+        start: str = None,
+        end: str = None,
+        freq: str = None,
+        row_count: int = 100,
+) -> {str: pd.Series}:
+    """ 根据给出的参考数据类型对象，获取相应的数据并组装成一个标准的Series-Dict并返回
+
+    由于获取的数据是参考数据，因此数据是一个Series，index为时间，value为数据值，该数据
+    并不针对具体的证券，因此普遍应该从不含证券代码的数据表中获取数据，如货币数据、国债数据等。
+    如果需要用某证券的数据作为参考数据，可以给出证券代码，但该证券代码会作为Series的index
+    而不会作为column返回。
+
+    Parameters
+    ----------
+    datasource: DataSource
+        数据源对象，用于获取参考数据
+    htypes: [DataType]
+        需要获取的参考数据类型，必须是合法的参考数据类型对象，可以是一个或多个
+    qt_code: str
+        合法的qt_code代码，如果需要获取的数据是与证券代码相关的，则必须给出且仅
+        给出一个证券代码，并将该代码的名称和htype一起作为index的名称返回
+    freq: str, Optional
+        获取的参考数据的目标频率，
+        如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+    start: str, optional
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的参考数据的开始日期/时间(如果可用)
+    end: str, optional
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的参考数据的结束日期/时间(如果可用)
+    row_count: int, optional, default 100
+        获取的参考数据的行数，如果指定了start和end，则忽略此参数
+
+    Returns
+    -------
+    Dict of Series: {rtype: Series[qt_code]}
+    """
+
+    history_data_acquired = {}
+
+    # 逐个获取每一个历史数据类型的数据
+    for htype in htypes:
+        # 检查数据类型是否属于历史数据，参考数据和基本信息数据不能通过此方法获取
+        if htype.freq == 'none':
+            raise ValueError(f'Invalid data type {htype.name}, not a reference data type')
+        # 从数据源获取数据
+        ser = htype.get_data_from_source(datasource, shares=qt_code, start=start, end=end)
+        if isinstance(ser, pd.DataFrame):  # if htype.asset_type != 'none':
+            # 此时数据本身是与证券相关的数据，需要从DataFrame中提取出对应的证券代码的数据
+            ser = ser[qt_code]
+            ser.name = f'{qt_code} - {htype.name}'
+        else:
+            ser.name = htype.name
+        if not ser.empty:
+            if row_count > 0:
+                # 读取每一个ts_code的最后row_count行数据
+                df = ser.tail(row_count)
+        history_data_acquired[htype.name] = ser
+
+    # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
+    if all(ser.empty for ser in history_data_acquired.values()):
+        err = RuntimeError(f'Empty data extracted from {datasource} with parameters:\n'
+                           f'htypes: {htypes}\n'
+                           f'start/end/freq: {start}/{end}/"{freq}"\n'
+                           f'To check data availability, use one of the following:\n'
+                           f'Availability of all tables:     qt.get_table_overview()，or\n'
+                           f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
+                           f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
+                           f'**kwargs)')
+        raise err
 
     return history_data_acquired
 
@@ -3873,7 +3950,7 @@ def get_tables_by_dtypes(
     tables_to_keep = set()
     for dtype_filter in dtype_filters:
         # find out the table name from dtype definition
-        dtype_map = get_built_in_data_type_map()
+        dtype_map = _get_built_in_data_type_map()
         matched_kwargs = dtype_map.loc[dtype_filter].kwargs
         # 此时如果只有一个match，会返回dict，否则是一个series，需要分别处理
         if isinstance(matched_kwargs, dict):

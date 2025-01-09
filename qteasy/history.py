@@ -12,8 +12,6 @@
 import pandas as pd
 import numpy as np
 
-from qteasy.database import DataSource
-
 from qteasy.utilfuncs import (
     str_to_list,
     list_or_slice,
@@ -21,6 +19,12 @@ from qteasy.utilfuncs import (
     ffill_3d_data,
     fill_nan_data,
     fill_inf_data,
+)
+
+from qteasy.datatypes import (
+    DataType,
+    get_history_data_from_source,
+    get_reference_data_from_source,
 )
 
 
@@ -2359,42 +2363,45 @@ def get_history_panel(
         htype_code_pairs = {itm[0]: itm[1] for itm in htype_splits if len(itm) > 1}
         pure_ref_htypes = [itm[0] for itm in htype_splits if len(itm) == 1]
     # 获取常规类型的历史数据如量价数据和指标数据
-    normal_dfs = ds.get_history_data(
-            shares=shares,
+    if adj is not None:
+        normal_htypes = [itm + ':' + adj for itm in normal_htypes]
+    normal_htypes = [
+        DataType(name=htp, freq=freq) for
+        htp, freq in
+        zip(normal_htypes, [freq] * len(normal_htypes))
+    ]
+    normal_dfs = get_history_data_from_source(
             htypes=normal_htypes,
+            qt_codes=shares,
             start=start,
             end=end,
             freq=freq,
             row_count=rows,
-            asset_type=asset_type,
-            adj=adj
     ) if normal_htypes else {}
     # 获取指数成分权重数据
-    weight_dfs = ds.get_index_weights(
-            index=weight_indices,
+    weight_dfs = get_history_data_from_source(
+            htypes=weight_indices,
+            qt_codes=shares,
             start=start,
             end=end,
-            shares=shares
+            freq=freq,
+            row_count=rows,
     ) if weight_indices else {}
+
     # 获取无share数据
-    reference_dfs = ds.get_history_data(
-            shares=list(htype_code_pairs.values()),
+    reference_dfs = get_reference_data_from_source(
+            qt_code=list(htype_code_pairs.values()),
             htypes=list(htype_code_pairs.keys()),
             start=start,
             end=end,
             freq=freq,
             row_count=rows,
-            asset_type=asset_type,
-            adj=adj
     ) if htype_code_pairs else {}
-    pure_ref_dfs = ds.get_history_data(
-            shares=None,
+    pure_ref_dfs = get_reference_data_from_source(
             htypes=pure_ref_htypes,
             start=start,
             end=end,
             freq=freq,
-            asset_type=asset_type,
-            adj=adj
     ) if pure_ref_htypes else {}
     if shares:
         # 合并两个hp，合并前整理字典的keys，使之与htypes的顺序一致，否则产生的historyPanel

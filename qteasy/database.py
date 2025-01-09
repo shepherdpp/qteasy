@@ -2113,7 +2113,7 @@ class DataSource:
         return res
 
     # ==============
-    # 特殊函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
+    # 特殊函数，用于快速获取所有basic数据表
     # ==============
     def get_all_basic_table_data(self, refresh_cache=False, raise_error=True):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
