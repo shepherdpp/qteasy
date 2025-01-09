@@ -14,7 +14,10 @@ import unittest
 import pandas as pd
 
 from qteasy.database import DataSource
-from qteasy.utilfuncs import progress_bar
+from qteasy.utilfuncs import (
+    progress_bar,
+    str_to_list,
+)
 
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
@@ -179,19 +182,19 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
 ('limit_amount','d','E'),
 ('funds','d','E'),
 ('ballot','d','E'),
-('HK_top10_close','d','E'),
-('HK_top10_p_change','d','E'),
-('HK_top10_rank','d','E'),
-('HK_top10_amount','d','E'),
-('HK_top10_net_amount','d','E'),
-('HK_top10_sh_amount','d','E'),
-('HK_top10_sh_net_amount','d','E'),
-('HK_top10_sh_buy','d','E'),
-('HK_top10_sh_sell','d','E'),
-('HK_top10_sz_amount','d','E'),
-('HK_top10_sz_net_amount','d','E'),
-('HK_top10_sh_buy','d','E'),
-('HK_top10_sh_sell','d','E'),
+('hk_top10_close','d','E'),
+('hk_top10_p_change','d','E'),
+('hk_top10_rank','d','E'),
+('hk_top10_amount','d','E'),
+('hk_top10_net_amount','d','E'),
+('hk_top10_sh_amount','d','E'),
+('hk_top10_sh_net_amount','d','E'),
+('hk_top10_sh_buy','d','E'),
+('hk_top10_sh_sell','d','E'),
+('hk_top10_sz_amount','d','E'),
+('hk_top10_sz_net_amount','d','E'),
+('hk_top10_sh_buy','d','E'),
+('hk_top10_sh_sell','d','E'),
 ('open:b','d','E'),
 ('high:b','d','E'),
 ('low:b','d','E'),
@@ -1678,7 +1681,7 @@ class TestDataTypes(unittest.TestCase):
 
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
-        ds = qt.QT_DATA_SOURCE
+        ds = self.ds
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
         htypes = str_to_list(htypes)

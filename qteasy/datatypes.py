@@ -18,6 +18,22 @@ from functools import lru_cache
 
 from .utilfuncs import str_to_list, _lev_ratio, _partial_lev_ratio, _wildcard_match
 
+HISTORY_DATA_ACQUISITION_TYPES = [
+    'direct',
+    'adjustment',
+    'relations',
+    'operation',
+    'event_status',
+    'event_multi_stat',
+    'event_signal',
+    'composition',
+    'category',
+]
+
+BASIC_DATA_ACQUISITION_TYPES = [
+    'basics',
+]
+
 
 def define(name, freq, asset_type, description, acquisition_type, **kwargs):
     """
@@ -41,12 +57,28 @@ def define(name, freq, asset_type, description, acquisition_type, **kwargs):
         raise ValueError(f'DataType {key} already exists in DATA_TYPE_MAP.')
     DATA_TYPE_MAP[key] = [description, acquisition_type, kwargs]
     DATA_TYPE_MAP_INDEX_NAMES = list(set(DATA_TYPE_MAP_INDEX_NAMES) | set(key))
-    get_data_type_map()
+    get_built_in_data_type_map()
+
+
+def get_dtype_map() -> pd.DataFrame:
+    """ 获取所有内置数据类型的清单
+
+    Returns
+    -------
+    dtype_map: pd.DataFrame
+
+    """
+    return get_built_in_data_type_map()
 
 
 @lru_cache(maxsize=1)
-def get_data_type_map() -> pd.DataFrame:
-    """get a DataFrame of DATA_TYPE_MAP for checking."""
+def get_built_in_data_type_map() -> pd.DataFrame:
+    """ 获取所有内置数据类型的清单
+
+    Returns
+    -------
+    dtype_map: pd.DataFrame
+    """
     type_map = pd.DataFrame(DATA_TYPE_MAP).T
     type_map.columns = DATA_TYPE_MAP_COLUMNS
     type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
@@ -108,7 +140,7 @@ def parse_built_in_type_id(name: str) -> tuple:
         built_in_asset_types: tuple
             数据的资产类型
     """
-    data_map = get_data_type_map()
+    data_map = get_built_in_data_type_map()
 
     matched_types = data_map.loc[(name, slice(None), slice(None))]
 
@@ -265,7 +297,7 @@ class DataType:
         name: str
             数据类型的名称
         freq: str, optional
-            数据的频率: d(日), w(周), m(月), q(季), y(年)
+            数据的频率: d(日), w(周), m(月), q(季), y(年), 1/5/15/30min, h
             如果给出此参数，必须匹配某一个内置数据类型的频率
             如果不给出此参数，将使用内置数据类型中的第一个频率
         asset_type: str
@@ -394,32 +426,31 @@ class DataType:
         """
 
         acquisition_type = self.acquisition_type
-        kwargs = self.kwargs
 
         if acquisition_type == 'basics':
-            acquired_data = self._get_basics(datasource, symbols=symbols, **kwargs)
+            acquired_data = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'selection':
-            acquired_data = self._get_selection(datasource, **kwargs)
+            acquired_data = self._get_selection(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'direct':
-            acquired_data = self._get_direct(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_direct(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'adjustment':
-            acquired_data = self._get_adjustment(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_adjustment(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'operation':
-            acquired_data = self._get_operation(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_operation(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'relations':
-            acquired_data = self._get_relations(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_relations(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'event_multi_stat':
-            acquired_data = self._get_event_multi_stat(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_event_multi_stat(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'event_status':
-            acquired_data = self._get_event_status(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_event_status(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'event_signal':
-            acquired_data = self._get_event_signal(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_event_signal(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'composition':
-            acquired_data = self._get_composition(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            acquired_data = self._get_composition(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'category':
-            acquired_data = self._get_category(datasource, symbols=symbols, **kwargs)
+            acquired_data = self._get_category(datasource, symbols=symbols)
         elif acquisition_type == 'complex':
-            acquired_data = self._get_complex(datasource, symbols=symbols, date=starts, **kwargs)
+            acquired_data = self._get_complex(datasource, symbols=symbols, date=starts)
         else:
             raise ValueError(f'Unknown acquisition type: {acquisition_type}')
 
@@ -438,7 +469,7 @@ class DataType:
         return self._symbolised(acquired_data)
 
     # 下面获取数据的方法都放在datasource中
-    def _get_basics(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
+    def _get_basics(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.Series:
         """基本数据的获取方法：
         从table_name表中选出column列的数据并输出。
         如果给出symbols则筛选出symbols的数据，否则输出全部数据。
@@ -446,8 +477,8 @@ class DataType:
         """
 
         # try to get arguments from kwargs
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
+        table_name = self.kwargs.get('table_name')
+        column = self.kwargs.get('column')
 
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
@@ -462,7 +493,7 @@ class DataType:
 
         return acquired_data[column]
 
-    def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.Series:
+    def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.Series:
         """筛选型的数据获取方法：
         从table_name表中筛选出sel_by=keys的数据并输出column列数据
         如果给出symbols则筛选出symbols的数据，否则输出全部数据。
@@ -470,10 +501,10 @@ class DataType:
         """
 
         # try to get arguments from kwargs
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        sel_by = kwargs.get('sel_by')
-        keys = kwargs.get('keys')
+        table_name = self.kwargs.get('table_name')
+        column = self.kwargs.get('column')
+        sel_by = self.kwargs.get('sel_by')
+        keys = self.kwargs.get('keys')
 
         if table_name is None or column is None or sel_by is None or keys is None:
             import pdb;
@@ -491,7 +522,7 @@ class DataType:
         selected_data = acquired_data[acquired_data[sel_by].isin(keys)]
         return selected_data[column]
 
-    def _get_direct(self, datasource, *, symbols, starts, ends, **kwargs) -> pd.DataFrame:
+    def _get_direct(self, datasource, *, symbols, starts, ends) -> pd.DataFrame:
         """直读从时间序列数据表中读取数据
         从table_name表中选出column列的数据并输出。
         必须给出symbols数据，以输出index为datetime，column为symbols的DataFrame
@@ -500,7 +531,7 @@ class DataType:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for direct data type')
 
-        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -509,17 +540,17 @@ class DataType:
 
         return unstacked_df
 
-    def _get_adjustment(self, datasource, *, symbols, starts, ends, **kwargs) -> pd.DataFrame:
+    def _get_adjustment(self, datasource, *, symbols, starts, ends) -> pd.DataFrame:
         """修正型的数据获取方法
         从table_name表中选出column列的数据，并从adj_table表中选出adj_column列数据，根据adj_type调整后输出
         必须给出symbols数据，以输出index为datetime，column为symbols的DataFrame
         必须给出start和end以筛选出在start和end之间的数据
         """
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        adj_table = kwargs.get('adj_table')
-        adj_column = kwargs.get('adj_column')
-        adj_type = kwargs.get('adj_type')
+        table_name = self.kwargs.get('table_name')
+        column = self.kwargs.get('column')
+        adj_table = self.kwargs.get('adj_table')
+        adj_column = self.kwargs.get('adj_column')
+        adj_type = self.kwargs.get('adj_type')
 
         if table_name is None or column is None or adj_table is None or adj_column is None:
             raise ValueError(
@@ -540,15 +571,15 @@ class DataType:
         fwd_adj_data = back_adj_data / adj_factors.iloc[-1]
         return fwd_adj_data
 
-    def _get_operation(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_operation(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """数据操作型的数据获取方法"""
         raise NotImplementedError
 
-    def _get_relations(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_relations(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """数据关联型的数据获取方法"""
         raise NotImplementedError
 
-    def _get_event_multi_stat(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_event_multi_stat(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """事件多状态型的数据获取方法
 
         Parameters
@@ -559,17 +590,6 @@ class DataType:
             开始日期
         ends: str
             结束日期
-        **kwargs
-            table_name: str
-                数据表名
-            column: str
-                数据表中的列名
-            id_index: str
-                数据表中的id列名
-            start_col: str
-                数据表中的开始时间列名
-            end_col: str
-                数据表中的结束时间列名
 
         Returns
         -------
@@ -578,7 +598,6 @@ class DataType:
 
         from .database import (
             get_built_in_table_schema,
-            set_primary_key_frame,
         )
 
         if symbols is None:
@@ -586,11 +605,11 @@ class DataType:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        id_index = kwargs.get('id_index')
-        start_col = kwargs.get('start_col')
-        end_col = kwargs.get('end_col')
+        table_name = self.kwargs.get('table_name')
+        column = self.kwargs.get('column')
+        id_index = self.kwargs.get('id_index')
+        start_col = self.kwargs.get('start_col')
+        end_col = self.kwargs.get('end_col')
 
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
@@ -626,7 +645,7 @@ class DataType:
 
         return events
 
-    def _get_event_status(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_event_status(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """事件状态型的数据获取方法
 
         Parameters
@@ -637,17 +656,6 @@ class DataType:
             开始日期
         ends: str
             结束日期
-        **kwargs
-            table_name: str
-                数据表名
-            column: str
-                数据表中的列名
-            id_index: str
-                数据表中的id列名
-            start_col: str
-                数据表中的开始时间列名
-            end_col: str
-                数据表中的结束时间列名
 
         Returns
         -------
@@ -660,7 +668,7 @@ class DataType:
             raise ValueError('start and end must be provided for event status data type')
 
         # acquire data with out time thus status can be ffilled from previous dates
-        data_series = self._get_basics(datasource, symbols=symbols, starts=None, ends=None, **kwargs)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=None, ends=None)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -676,7 +684,7 @@ class DataType:
 
         return status
 
-    def _get_event_signal(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_event_signal(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """事件信号型的数据获取方法
 
         Parameters
@@ -687,17 +695,6 @@ class DataType:
             开始日期
         ends: str
             结束日期
-        **kwargs
-            table_name: str
-                数据表名
-            column: str
-                数据表中的列名
-            id_index: str
-                数据表中的id列名
-            start_col: str
-                数据表中的开始时间列名
-            end_col: str
-                数据表中的结束时间列名
 
         Returns
         -------
@@ -709,7 +706,7 @@ class DataType:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
-        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -722,7 +719,7 @@ class DataType:
 
         return signals
 
-    def _get_composition(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
+    def _get_composition(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """成份查询型的数据获取方法
 
         Parameters
@@ -733,25 +730,16 @@ class DataType:
             开始日期
         ends: str
             结束日期
-        **kwargs
-            table_name: str
-                数据表名
-            column: str
-                数据表中的列名
-            comp_column: str
-                数据表中的成份列名
-            index: str
-                数据表中的索引列名
 
         Returns
         -------
         DataFrame
         """
 
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        comp_column = kwargs.get('comp_column')
-        index = kwargs.get('index')
+        table_name = self.kwargs.get('table_name')
+        column = self.kwargs.get('column')
+        comp_column = self.kwargs.get('comp_column')
+        index = self.kwargs.get('index')
 
         weight_data = datasource.read_table_data(table_name, shares=index, start=starts, end=ends)
         if not weight_data.empty:
@@ -768,35 +756,22 @@ class DataType:
 
         return weight_data
 
-    def _get_category(self, datasource, *, symbols=None, **kwargs) -> pd.DataFrame:
+    def _get_category(self, datasource, *, symbols=None) -> pd.DataFrame:
         """成份查询型的数据获取方法
 
-                Parameters
-                ----------
-                symbols: list
-                    股票代码列表
-                starts: str
-                    开始日期
-                ends: str
-                    结束日期
-                **kwargs
-                    table_name: str
-                        数据表名
-                    column: str
-                        数据表中的列名
-                    comp_column: str
-                        数据表中的成份列名
-                    index: str
-                        数据表中的索引列名
+        Parameters
+        ----------
+        symbols: list
+            股票代码列表
 
-                Returns
-                -------
-                DataFrame
-                """
+        Returns
+        -------
+        DataFrame
+        """
 
-        table_name = kwargs.get('table_name')
-        column = kwargs.get('column')
-        comp_column = kwargs.get('comp_column')
+        table_name = self.kwargs.get('table_name')
+        column = self.kwargs.get('column')
+        comp_column = self.kwargs.get('comp_column')
 
         category_data = datasource.read_table_data(table_name)
         category = category_data.index.to_frame()
@@ -806,7 +781,7 @@ class DataType:
 
         return category[comp_column]
 
-    def _get_complex(self, datasource, *, symbols=None, date=None, **kwargs) -> pd.DataFrame:
+    def _get_complex(self, datasource, *, symbols=None, date=None) -> pd.DataFrame:
         """复合型的数据获取方法"""
         raise NotImplementedError
 
@@ -3631,53 +3606,35 @@ def _expand_df_index(df: pd.DataFrame, starts: str, ends: str) -> pd.DataFrame:
     return df.reindex(expanded_index).sort_index(ascending=True)
 
 
-def get_history_data(self, shares=None, symbols=None, htypes=None, freq='d', start=None, end=None, row_count=100,
-                     asset_type='any', adj='none'):
-    """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
-        HistoryPanel对象。
+def get_history_data_from_source(
+        datasource,
+        htypes: [DataType], *,
+        qt_codes: [str] = None,
+        start: str = None,
+        end: str = None,
+        freq: str = None,
+        row_count: int = 100,
+) -> {str: pd.DataFrame}:
+    """ 根据给出的历史数据类型对象，获取相应的数据并组装成一个标准的DataFrame-Dict并返回
+    如果给出qt_codes/start/end参数，则返回符合要求的数据范围，或者返回最近的row_count行数据
 
     Parameters
     ----------
-    shares: str or list of str
-        等同于新的symbols参数，为了兼容旧的代码，保留此参数
-        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-        如以下两种输入方式皆合法且等效：
-         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    symbols: str or list of str
-        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-        如以下两种输入方式皆合法且等效：
-         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    htypes: str or list of str
-        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-        如以下两种输入方式皆合法且等效：
-         - str:     'open, high, low, close'
-         - list:    ['open', 'high', 'low', 'close']
-    freq: str
-        获取的历史数据的频率，包括以下选项：
-         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
-         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+    datasource: DataSource
+        数据源对象，用于获取历史数据
+    htypes: [DataType]
+        需要获取的历史数据类型，必须是合法的历史数据类型对象，可以是一个或多个
+    qt_codes: [str],  Optional
+        合法的qt_code代码列表，如果为None，则获取所有数据
+    freq: str, Optional
+        获取的历史数据的目标频率，
+        如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
     start: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
     end: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-    row_count: int, optional, default 10
+    row_count: int, optional, default 100
         获取的历史数据的行数，如果指定了start和end，则忽略此参数
-    asset_type: str or list of str
-        限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
-        逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-         - any: 可以获取任意资产类型的证券数据(默认值)
-         - E:   只获取股票类型证券的数据
-         - IDX: 只获取指数类型证券的数据
-         - FT:  只获取期货类型证券的数据
-         - FD:  只获取基金类型证券的数据
-    adj: str
-        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-         - none / n: 不复权(默认值)
-         - back / b: 后复权
-         - forward / fw / f: 前复权
 
     Returns
     -------
@@ -3685,135 +3642,40 @@ def get_history_data(self, shares=None, symbols=None, htypes=None, freq='d', sta
         一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
         HistoryPanel对象
     """
-    if symbols is not None:
-        shares = symbols
-    if isinstance(htypes, str):
-        htypes = str_to_list(htypes)
-    if isinstance(shares, str):
-        shares = str_to_list(shares)
-    if isinstance(asset_type, str):
-        if asset_type.lower() == 'any':
-            from qteasy.utilfuncs import AVAILABLE_ASSET_TYPES
-            asset_type = AVAILABLE_ASSET_TYPES
-        else:
-            asset_type = str_to_list(asset_type)
 
-    # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
-    table_master = get_table_master()
-    # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
-    tables_to_read = htype_to_table_col(
-            htypes=htypes,
-            freq=freq,
-            asset_type=asset_type,
-            soft_freq=True
-    )
-    table_data_acquired = {}
-    table_data_columns = {}
-    if (start is not None) or (end is not None):
-        # 如果指定了start或end，则忽略row_count参数, 但是如果row_count为None，则默认为-1, 读取所有数据
-        row_count = 0 if row_count is not None else -1
-    # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的键为表名，值为读取的DataFrame
-    for tbl, columns in tables_to_read.items():
-        df = self.read_table_data(tbl, shares=shares, start=start, end=end)
+    history_data_acquired = {}
+
+    # 逐个获取每一个历史数据类型的数据
+    for htype in htypes:
+        # 检查数据类型是否属于历史数据，参考数据和基本信息数据不能通过此方法获取
+        if htype.acquisition_type not in HISTORY_DATA_ACQUISITION_TYPES:
+            raise ValueError(f'Invalid data type {htype.name}, not a history data type')
+        # 从数据源获取数据
+        df = htype.get_data_from_source(datasource, shares=qt_codes, start=start, end=end)
         if not df.empty:
-            cols_to_drop = [col for col in df.columns if col not in columns]
-            df.drop(columns=cols_to_drop, inplace=True)
             if row_count > 0:
                 # 读取每一个ts_code的最后row_count行数据
                 df = df.groupby('ts_code').tail(row_count)
-        table_data_acquired[tbl] = df
-        table_data_columns[tbl] = df.columns
-    # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
-    # 在df_by_htypes中预先存储了多个空DataFrame，用于逐个合并相关的历史数据
-    df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
-    for htyp in htypes:
-        for tbl in tables_to_read:
-            if htyp in table_data_columns[tbl]:
-                df = table_data_acquired[tbl]
-                # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstack，成为多列、单index的数据
-                if not df.empty:
-                    htyp_series = df[htyp]
-                    new_df = htyp_series.unstack(level=0)
-                    old_df = df_by_htypes[htyp]
-                    # 使用两种方法实现df的合并，分别是merge()和join()
-                    # df_by_htypes[htyp] = old_df.merge(new_df,
-                    #                                   how='outer',
-                    #                                   left_index=True,
-                    #                                   right_index=True,
-                    #                                   suffixes=('', '_y'))
-                    df_by_htypes[htyp] = old_df.join(new_df,
-                                                     how='outer',
-                                                     rsuffix='_y')
+        history_data_acquired[htype.name] = df
 
-    # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
-    conflict_cols = ''
-    for htyp in htypes:
-        df_columns = df_by_htypes[htyp].columns.to_list()
-        col_with_suffix = [col for col in df_columns if col[-2:] == '_y']
-        if len(col_with_suffix) > 0:
-            df_by_htypes[htyp].drop(columns=col_with_suffix, inplace=True)
-            conflict_cols += f'd-type {htyp} conflicts in {list(set(col[:-2] for col in col_with_suffix))};\n'
-    if conflict_cols != '':
-        warnings.warn(f'\nConflict data encountered, some types of data are loaded from multiple tables, '
-                      f'conflicting data might be discarded:\n'
-                      f'{conflict_cols}', DataConflictWarning)
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
-    if all(df.empty for df in df_by_htypes.values()):
-        err = RuntimeError(f'Empty data extracted from DataSource {self.connection_type} with parameters:\n'
-                           f'shares: {shares}\n'
+    if all(df.empty for df in history_data_acquired.values()):
+        err = RuntimeError(f'Empty data extracted from {datasource} with parameters:\n'
+                           f'shares: {qt_codes}\n'
                            f'htypes: {htypes}\n'
                            f'start/end/freq: {start}/{end}/"{freq}"\n'
-                           f'asset_type/adj: {asset_type} / {adj}\n'
                            f'To check data availability, use one of the following:\n'
                            f'Availability of all tables:     qt.get_table_overview()，or\n'
                            f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
                            f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
                            f'**kwargs)')
         raise err
-    # 如果需要复权数据，计算复权价格
-    adj_factors = {}
-    if adj.lower() not in ['none', 'n']:
-        # 下载复权因子
-        adj_tables_to_read = table_master.loc[(table_master.table_usage == 'adj') &
-                                              table_master.asset_type.isin(asset_type)].index.to_list()
-        for tbl in adj_tables_to_read:
-            adj_df = self.read_table_data(tbl, shares=shares, start=start, end=end)
-            if not adj_df.empty:
-                adj_df = adj_df['adj_factor'].unstack(level=0)
-            adj_factors[tbl] = adj_df
-        # 如果adj table不为空但无法读取adj因子，则报错
-        if adj_tables_to_read and (not adj_factors):
-            err = ValueError(f'Failed reading price adjust factor data. call "qt.get_table_info()" to '
-                             f'check local source data availability')
-            raise err
-
-    if adj_factors:
-        # 根据复权因子更新所有可复权数据
-        prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]
-        for htyp in prices_to_adjust:
-            price_df = df_by_htypes[htyp]
-            all_ts_codes = price_df.columns
-            combined_factors = 1.0
-            # 后复权价 = 当日最新价 × 当日复权因子
-            for af in adj_factors:
-                combined_factors *= adj_factors[af].reindex(columns=all_ts_codes, index=price_df.index).fillna(1.0)
-            # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
-            #  但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
-            if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
-                expanded_factors = combined_factors.reindex(price_df.index.date)
-                expanded_factors.index = price_df.index
-                price_df *= expanded_factors
-            else:
-                price_df *= combined_factors
-            # 前复权价 = 当日复权价 ÷ 最新复权因子
-            if adj.lower() in ['forward', 'fw', 'f'] and len(combined_factors) > 1:
-                price_df /= combined_factors.iloc[-1]
 
     # 最后整理数据，确保每一个htype的数据框的columns与shares相同
-    for htyp, df in df_by_htypes.items():
-        df_by_htypes[htyp] = df.reindex(columns=shares)
-    # print(f'[DEBUG]: in database.py get_history_data() got db_by_htypes:\n{df_by_htypes}')
-    return df_by_htypes
+    for htyp, df in history_data_acquired.items():
+        history_data_acquired[htyp] = df.reindex(columns=qt_codes)
+
+    return history_data_acquired
 
 
 def get_data_type(self, htype, *, symbols=None, starts=None, ends=None, target_freq=None):
@@ -4011,7 +3873,7 @@ def get_tables_by_dtypes(
     tables_to_keep = set()
     for dtype_filter in dtype_filters:
         # find out the table name from dtype definition
-        dtype_map = get_data_type_map()
+        dtype_map = get_built_in_data_type_map()
         matched_kwargs = dtype_map.loc[dtype_filter].kwargs
         # 此时如果只有一个match，会返回dict，否则是一个series，需要分别处理
         if isinstance(matched_kwargs, dict):

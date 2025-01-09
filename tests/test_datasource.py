@@ -823,7 +823,7 @@ class TestDataSource(unittest.TestCase):
         con.commit()
         con.close()
 
-        self.ds_db._write_database(self.df2, table_name)
+        self.ds_db._write_database(self.df2, table_name, ['ts_code'])
         loaded_df = self.ds_db._read_database(table_name)
         saved_index = self.df2.index.values
         loaded_index = loaded_df.index.values

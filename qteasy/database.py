@@ -841,7 +841,6 @@ class DataSource:
         """
 
         # if table does not exist, create a new table without primary key info
-        # TODO: 为什么要创建一张新的数据表且不包含primary key信息？为什么不调用_new_db_table()函数创建一张正确的表？
         if not self._db_table_exists(db_table):
             dtype_mapping = {'object':         'varchar(255)',
                              'datetime64[ns]': 'datetime',
@@ -1099,11 +1098,12 @@ class DataSource:
         self._db_execute_one(sql, fetch_and_return=False)
 
         # 如果设置了额外的index则添加index:
-        if index_col is not None:
-            sql = f"CREATE INDEX `{db_table}_idx` ON `{db_table}` (`{index_col}`)"
-
-            # 执行sql语句
-            self._db_execute_one(sql, fetch_and_return=False)
+        # TODO: 使用KEY关键字添加额外的index
+        # if index_col is not None:
+        #     sql = f"CREATE INDEX `{db_table}_idx` ON `{db_table}` (`{index_col}`)"
+        #
+        #     # 执行sql语句
+        #     self._db_execute_one(sql, fetch_and_return=False)
 
     # ==============
     # 特殊数据库操作层函数，当数据表结构发生变化时用于调整数据库表结构，建立索引或执行分区等操作
@@ -1208,6 +1208,7 @@ class DataSource:
         else:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
+    @lru_cache(maxsize=32)
     def read_table_data(self, table, shares=None, start=None, end=None, primary_key_in_index=True):
         """ 从本地数据表中读取数据并返回DataFrame，不修改数据格式，primary_key为DataFrame的index
 
@@ -1264,7 +1265,7 @@ class DataSource:
             except:
                 warnings.warn(f'can not find share-like primary key in the table {table}!\n'
                               f'passed argument shares will be ignored!', RuntimeWarning)
-        # 识别Primary key中的，并确认是否需要筛选日期型pk
+        # 识别Primary key中的日期型字段，并确认是否需要筛选日期型pk
         if (start is not None) and (end is not None):
             try:
                 date_like_dtype = [item for item in pk_dtypes if item in ['date', 'datetime']][0]
@@ -1297,8 +1298,10 @@ class DataSource:
                 m2 = df.index.get_level_values(date_like_pk) <= end
                 df = df[m1 & m2]
         elif self.source_type == 'db':
-            # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
-            # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
+            # TODO: 下面这部分代码应该都不需要，如果数据库表不存在时就新建一张表，则跟文件操作
+            #  结果不一致，另外shares和start / end的判断跟前面重复了，且跟文件操作也不一样
+            #  暂时先注释掉，后续再根据实际情况修改
+            """
             if not self._db_table_exists(db_table=table):
                 # 如果数据库中不存在该表，则创建表
                 self._new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
@@ -1306,7 +1309,9 @@ class DataSource:
                 shares = None
             if date_like_pk is None:
                 start = None
-                end = None
+                end = None"""
+            # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
+            # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
             df = self._read_database(db_table=table,
                                      share_like_pk=share_like_pk,
                                      shares=shares,
@@ -2706,19 +2711,3 @@ def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=Tru
         return columns, dtypes
     if with_remark and with_primary_keys:
         return columns, dtypes, remarks, primary_keys, pk_dtypes
-
-
-# TODO: this function belongs to DataTypes, should be moved to that module
-@lru_cache(maxsize=1)
-def get_dtype_map() -> pd.DataFrame:
-    """ 获取所有内置数据类型的清单
-
-    Returns
-    -------
-    dtype_map: pd.DataFrame
-
-    """
-    dtype_map = pd.DataFrame(DATA_TYPE_MAP).T
-    dtype_map.columns = DATA_TYPE_MAP_COLUMNS
-    dtype_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
-    return dtype_map

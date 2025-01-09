@@ -128,7 +128,7 @@ TABLE_MASTER_COLUMNS = [
     'asset_type',  # 4, 资产类型
     'freq',  # 5, 数据频率
     'index_column',  # 6, 数据表index column信，除了数据表的Primary Key以外需要额外创建的索引列
-    'partition_column',  # 7, 数据表分区列
+    'partition_column',  # 7, 数据表分区列名
     'partitions',  # 8, 数据表分区数量
 ]
 TABLE_MASTERS = {
@@ -317,19 +317,19 @@ TABLE_MASTERS = {
         ['future_daily', '期货月线行情', 'data', 'FT', 'm', '', '', ''],
 
     'options_1min':  # options_xmin 表应该通过trade_time(start/end)来切表索引，而不是通过table_index
-        ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', '', '', ''],
+        ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', '', 'ts_code', '30'],
 
     'options_5min':
-        ['min_bars', '期权5分钟K线行情', 'mins', 'OPT', '5min', '', '', ''],
+        ['min_bars', '期权5分钟K线行情', 'mins', 'OPT', '5min', '', 'ts_code', '10'],
 
     'options_15min':
-        ['min_bars', '期权15分钟K线行情', 'mins', 'OPT', '15min', '', '', ''],
+        ['min_bars', '期权15分钟K线行情', 'mins', 'OPT', '15min', '', 'ts_code', '10'],
 
     'options_30min':
-        ['min_bars', '期权30分钟K线行情', 'mins', 'OPT', '30min', '', '', ''],
+        ['min_bars', '期权30分钟K线行情', 'mins', 'OPT', '30min', '', 'ts_code', '5'],
 
     'options_hourly':
-        ['min_bars', '期权60分钟K线行情', 'mins', 'OPT', 'h', '', '', ''],
+        ['min_bars', '期权60分钟K线行情', 'mins', 'OPT', 'h', '', 'ts_code', '5'],
 
     'options_daily':
         ['options_daily', '期权每日行情', 'data', 'OPT', 'd', '', '', ''],

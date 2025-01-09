@@ -1142,6 +1142,84 @@ def get_history_data(htypes,
 
     """
 
+    # 检查数据合法性：
+    if shares is None:
+        shares = ''
+
+    if not isinstance(shares, (str, list)):
+        raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+    if not isinstance(htypes, (str, list)):
+        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
+    if isinstance(shares, list):
+        if not all(isinstance(item, str) for item in shares):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    if isinstance(htypes, list):
+        if not all(isinstance(item, str) for item in htypes):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
+
+    if start is not None:
+        try:
+            start = pd.to_datetime(start)
+        except Exception:
+            raise Exception(f'Start date can not be converted to datetime format')
+    if end is not None:
+        try:
+            end = pd.to_datetime(end)
+        except Exception:
+            raise Exception(f'End date can not be converted to datetime format')
+
+    # if isinstance(freq, list):
+    #     freq = ','.join(freq)
+    if not isinstance(freq, str):
+        err = TypeError(f'freq should be a string, got {type(freq)} instead')
+        raise err
+    if freq.upper() not in TIME_FREQ_STRINGS:
+        err = KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+        raise err
+    freq = freq.lower()
+
+    if asset_type is None:
+        asset_type = 'any'
+    if not isinstance(asset_type, (str, list)):
+        err = TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+        raise err
+    if isinstance(asset_type, str):
+        asset_type = str_to_list(asset_type)
+    if not all(isinstance(item, str) for item in asset_type):
+        err = KeyError(f'not all items in asset type are strings')
+        raise err
+    if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
+        err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+        raise err
+    if any(item.upper() == 'ANY' for item in asset_type):
+        asset_type = AVAILABLE_ASSET_TYPES
+    asset_type = [item.upper() for item in asset_type]
+
+    if adj is None:
+        adj = 'none'
+    if not isinstance(adj, str):
+        err = TypeError(f'adj type should be a string, got {type(adj)} instead')
+        raise err
+    if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
+        err = KeyError(f"invalid adj type ({adj}), which should be anyone of "
+                       f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
+        raise err
+    adj = adj.lower()
+
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        ds = QT_DATA_SOURCE
+    else:
+        if not isinstance(data_source, DataSource):
+            err = TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
+            raise err
+        ds = data_source
+
     if htypes is None:
         raise ValueError(f'htype should not be None')
     if symbols is not None and shares is None:
@@ -1206,27 +1284,6 @@ def get_history_data(htypes,
         return hp.unstack(by=group_by)
     else:
         return hp
-
-
-def refill_local_source(channel, *, tables=None, dtypes=None, freqs=None, asset_types=None,
-                        refresh_trade_calendar=False,
-                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
-                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
-                        download_batch_interval=0, log=False) -> dict:
-    """ 从远程数据源下载数据并填充到本地数据源
-    """
-    from qteasy.data_channels import fetch_tables
-    from qteasy.database import update_local_data
-    dnld_data = fetch_tables(
-            channel, tables=tables, dtypes=dtypes, freqs=freqs, asset_types=asset_types,
-            refresh_trade_calendar=refresh_trade_calendar, symbols=symbols, start_date=start_date,
-            end_date=end_date, list_arg_filter=list_arg_filter, reversed_par_seq=reversed_par_seq,
-            parallel=parallel, process_count=process_count, chunk_size=chunk_size,
-            download_batch_size=download_batch_size, download_batch_interval=download_batch_interval,
-            log=log,
-    )
-    update_local_data(channel, dnld_data)
-
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
