@@ -17,12 +17,6 @@ import warnings
 
 from functools import lru_cache
 
-from .datatypes import (
-    DATA_TYPE_MAP,
-    DATA_TYPE_MAP_COLUMNS,
-    DATA_TYPE_MAP_INDEX_NAMES,
-)
-
 from .datatables import (
     AVAILABLE_DATA_FILE_TYPES,
     TABLE_MASTERS,
@@ -32,10 +26,8 @@ from .datatables import (
 )
 
 from .utilfuncs import (
-    input_to_list,
     str_to_list,
     regulate_date_format,
-    freq_dither,
     pandas_freq_alias_version_conversion,
     human_file_size,
     human_units,
@@ -124,31 +116,18 @@ class DataSource:
         self._table_list = set()
 
         if source_type.lower() in ['db', 'database']:
-            # optional packages to be imported
-            try:
-                import pymysql
-                from dbutils.pooled_db import PooledDB
-            except ImportError:
-                err = ImportError(f'Missing package \'pymysql\' or \'dbutils\' for datasource type \'database\'. '
-                                  f'Use pip or conda to install pymysql: $ pip install pymysql')
-                raise err
-            # TODO: here a database connection pool should be created
-            #  thus all db related operations can utilize this pool by
-            #  getting connection with self._db_open_connection() and self._db_close_connection()
-            #  to avoid creating and closing connections every time
-            # set up connection to the data base
-            if not isinstance(port, int):
-                err = TypeError(f'port should be int type, got {type(port)} instead!')
-                raise err
-            if user is None:
-                err = ValueError(f'Missing user name for database connection')
-                raise err
-            if password is None:
-                err = ValueError(f'Missing password for database connection')
-                raise err
             # try to create pymysql connections
             self.source_type = 'db'
             try:
+                # optional packages to be imported
+                import pymysql
+                from dbutils.pooled_db import PooledDB
+
+                # set up connection parameters to database
+                assert isinstance(port, int), f'port should be int type, got {type(port)} instead!'
+                assert user is not None, f'Missing user name for database connection'
+                assert password is not None, f'Missing password for database connection'
+
                 self.pool = PooledDB(
                         creator=pymysql,  # 使用链接数据库的模块
                         mincached=5,  # 初始化时，链接池中至少创建的链接，0表示不创建
@@ -160,19 +139,6 @@ class DataSource:
                         password=password,
                         database=db_name,
                 )
-                # con = pymysql.connect(host=host,
-                #                       port=port,
-                #                       user=user,
-                #                       password=password)
-                # # 检查db是否存在，当db不存在时创建新的db
-                # cursor = con.cursor()
-                # sql = f"CREATE DATABASE IF NOT EXISTS {db_name}"
-                # cursor.execute(sql)
-                # con.commit()
-                # sql = f"USE {db_name}"
-                # cursor.execute(sql)
-                # con.commit()
-                # create mysql database connection info
                 self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
                 self.host = host
                 self.port = port
@@ -182,7 +148,22 @@ class DataSource:
                 self.__user__ = user
                 self.__password__ = password
 
-                # con.close()
+            except ImportError as e:
+                msg = f'{str(e)}' \
+                      f'Use pip or conda to install pymysql: $ pip install pymysql' \
+                      f'Can not set data source type to "db", will fall back to csv file'
+
+                warnings.warn(msg, ImportWarning)
+                source_type = 'file'
+                file_type = 'csv'
+
+            except AssertionError as e:
+                msg = f'Failed setting up mysql connection: {str(e)}\n' \
+                      f'Can not set data source type to "db", will fall back to csv file'
+
+                warnings.warn(msg, RuntimeWarning)
+                source_type = 'file'
+                file_type = 'csv'
 
             except Exception as e:
                 msg = f'Mysql connection failed: {str(e)}\n' \
@@ -191,43 +172,43 @@ class DataSource:
                 warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
+
             finally:
                 pass
 
         if source_type.lower() == 'file':
-            # set up file type and file location
-            if not isinstance(file_type, str):
-                msg = f'file type should be a string, got {type(file_type)} instead!'
-                err = TypeError(msg)
-                raise err
-            file_type = file_type.lower()
-            if file_type not in AVAILABLE_DATA_FILE_TYPES:
-                msg = f'file type not recognized, supported file types are {AVAILABLE_DATA_FILE_TYPES}'
-                raise KeyError(msg)
-            if file_type in ['hdf']:
-                try:
-                    import tables
-                except ImportError:
-                    err = ImportError(f'Missing optional dependency \'pytables\' for datasource file type '
-                                      f'\'hdf\'. Please install pytables: $ conda install pytables')
-                    raise err
-                file_type = 'hdf'
-            if file_type in ['feather', 'fth']:
-                try:
-                    import pyarrow
-                except ImportError:
-                    err = ImportError(f'Missing optional dependency \'pyarrow\' for datasource file type '
-                                      f'\'feather\'. Use pip or conda to install pyarrow: $ pip install pyarrow')
-                    raise err
-                file_type = 'fth'
             from qteasy import QT_ROOT_PATH
-            self.file_path = path.join(QT_ROOT_PATH, file_loc)
             try:
+                file_type = file_type.lower()
+                assert file_type in AVAILABLE_DATA_FILE_TYPES, (f'Wrong file type!'
+                                                                f'supported file types are {AVAILABLE_DATA_FILE_TYPES}')
+                if file_type in ['hdf']:
+                    import tables
+                    file_type = 'hdf'
+                if file_type in ['feather', 'fth']:
+                    import pyarrow
+                    file_type = 'fth'
+
+                self.file_path = path.join(QT_ROOT_PATH, file_loc)
                 os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
-            except Exception:
-                err = SystemError(f'Failed creating data directory \'{file_loc}\' in qt root path, '
+            except AssertionError as e:
+                err = AssertionError(f'{str(e)}')
+                raise err
+            except TypeError as e:
+                err = TypeError(f'{str(e)}, file type should be a string, got {type(file_type)} instead!')
+                raise err
+            except ImportError as e:
+                msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
+                      f'\'hdf\'. Please install pytables: $ conda install pytables\n' \
+                      f'Can not create data source with file type {file_type}, will fall back to csv file'
+                warnings.warn(msg, ImportWarning)
+
+                file_type = 'csv'
+            except Exception as e:
+                err = SystemError(f'{str(e)}, Failed creating data directory \'{file_loc}\' in qt root path, '
                                   f'please check your input.')
                 raise err
+            
             self.source_type = 'file'
             self.file_type = file_type
             self.file_loc = file_loc
@@ -450,9 +431,6 @@ class DataSource:
         DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
 
-        # TODO: 这里对所有读取的文件都进行筛选，需要考虑是否在read_table_data还需要筛选？
-        #  也就是说，在read_table_data级别筛选数据还是在read_file/read_database级别
-        #  筛选数据？
         file_path_name = self._get_file_path_name(file_name)
         if not self._file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
@@ -1287,16 +1265,19 @@ class DataSource:
                                  end=end)
             if df.empty:
                 return df
-            if share_like_pk is not None:
-                df = df.loc[df.index.isin(shares, level=share_like_pk)]
-            if date_like_pk is not None:
-                # 两种方法实现筛选，分别是df.query 以及 df.index.get_level_values()
-                # 第一种方法， df.query
-                # df = df.query(f"{date_like_pk} >= {start} and {date_like_pk} <= {end}")
-                # 第二种方法：df.index.get_level_values()
-                m1 = df.index.get_level_values(date_like_pk) >= start
-                m2 = df.index.get_level_values(date_like_pk) <= end
-                df = df[m1 & m2]
+            # TODO: 这里对所有读取的文件都进行筛选，需要考虑是否在read_table_data还需要筛选？
+            #  也就是说，在read_table_data级别筛选数据还是在read_file/read_database级别
+            #  筛选数据？目前看在read_file级别筛选即可，暂时注释掉这里的筛选代码，可以提高速度
+            # if share_like_pk is not None:
+            #     df = df.loc[df.index.isin(shares, level=share_like_pk)]
+            # if date_like_pk is not None:
+            #     # 两种方法实现筛选，分别是df.query 以及 df.index.get_level_values()
+            #     # 第一种方法， df.query
+            #     # df = df.query(f"{date_like_pk} >= {start} and {date_like_pk} <= {end}")
+            #     # 第二种方法：df.index.get_level_values()
+            #     m1 = df.index.get_level_values(date_like_pk) >= start
+            #     m2 = df.index.get_level_values(date_like_pk) <= end
+            #     df = df[m1 & m2]
         elif self.source_type == 'db':
             # TODO: 下面这部分代码应该都不需要，如果数据库表不存在时就新建一张表，则跟文件操作
             #  结果不一致，另外shares和start / end的判断跟前面重复了，且跟文件操作也不一样

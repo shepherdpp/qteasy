@@ -1475,8 +1475,6 @@ TABLE_SCHEMA = {
 }
 
 
-# TODO: these functions belong to Datatables, should be moved to that module
-@lru_cache(maxsize=1)
 def get_table_map() -> pd.DataFrame:  # deprecated
     """ 获取所有内置数据表的清单，to be deprecated
 

@@ -96,6 +96,10 @@ from qteasy.database import (
     # find_history_data,
 )
 
+from qteasy.datatypes import (
+    find_history_data,
+)
+
 from qteasy._arg_validators import (
     QT_CONFIG,
     ConfigDict,
