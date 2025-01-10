@@ -648,7 +648,7 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                        refresh_trade_calendar=False,
                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
-                       download_batch_interval=0, log=False) -> None:
+                       download_batch_interval=0, merge_type='update', log=False) -> None:
     """ 填充数据数据源
 
     Parameters
@@ -707,6 +707,10 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
         该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效
         如果<=0，则不暂停，立即开始下一批数据下载
+    merge_type: str, Default 'update'
+        数据写入数据源时的合并方式，支持以下选项：
+        - 'update'  : 更新数据，如果数据已存在，则更新数据
+        - 'ignore'  : 忽略数据，如果数据已存在，则丢弃下载的数据
     log: Bool, Default False
         是否记录数据下载日志
 
@@ -805,6 +809,7 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         st = time.time()
         time_elapsed = 0
         df_concat_list = []
+        # dnld_data = pd.DataFrame()
         rows_affected = 0
 
         progress_bar(0, total, comments=f'<{table}> estimating time left...')
@@ -824,16 +829,19 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                 data = res['data']
                 if not data.empty:
                     df_concat_list.append(data)
-                if not completed % chunk_size:
+                    # dnld_data = pd.concat([dnld_data, data], copy=False)
+                if completed % chunk_size == 0:
                     # 将下载的数据写入数据源
                     rows_affected += data_source.update_table_data(
                             table=table,
                             df=pd.concat(df_concat_list, copy=False),
-                            merge_type='update',
+                            # df=dnld_data,
+                            merge_type=merge_type,
                     )
                     df_concat_list = []
+                    # dnld_data = pd.DataFrame()
+                    total_written += rows_affected
 
-                total_written += rows_affected
                 time_elapsed = time.time() - st
                 time_remain = sec_to_duration(
                         (total - completed) * time_elapsed / completed,
@@ -850,11 +858,13 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
             continue
 
         if df_concat_list:
+        # if not dnld_data.empty:
             # 将下载的数据写入数据源
             rows_affected += data_source.update_table_data(
                     table=table,
                     df=pd.concat(df_concat_list, copy=False),
-                    merge_type='update',
+                    # df=dnld_data,
+                    merge_type=merge_type,
             )
             total_written += rows_affected
 
@@ -1590,8 +1600,8 @@ def reconnect_ds(data_source=None):  # deprecated
         raise TypeError(f'data source not recognized!')
 
     # reconnect twice to make sure the connection is established
-    data_source.reconnect()
-    data_source.reconnect()
+    # data_source.reconnect()
+    # data_source.reconnect()
 
 
 def check_and_prepare_live_trade_data(operator, config, datasource=None, live_prices=None):

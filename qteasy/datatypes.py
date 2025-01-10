@@ -650,15 +650,22 @@ class DataType:
                 end=ends,
                 primary_key_in_index=False,
         )
+
         columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table_name, with_primary_keys=True)
-        cols_to_keep = [start_col, end_col, column]
-        cols_to_keep.extend(primary_keys)
-        acquired_data = acquired_data[cols_to_keep]
-        # create id_index and column pairs
-        combined_data = acquired_data[id_index] + '-' + acquired_data[column].astype(str)
-        # if table_name == 'fund_manager':
-        #     import pdb; pdb.set_trace()
-        acquired_data.loc[:, column] = combined_data
+
+        if id_index != column:
+            # 此时需要将id_index和column合并为一个新的index
+            cols_to_keep = [start_col, end_col, column]
+            cols_to_keep.extend(primary_keys)
+            acquired_data = acquired_data[cols_to_keep]
+            # create id_index and column pairs
+            combined_data = acquired_data[id_index] + '-' + acquired_data[column].astype(str)
+            acquired_data.loc[:, column] = combined_data
+        else:
+            # 此时id_index就是column，直接使用，不需要合并
+            cols_to_keep = [start_col, end_col]
+            cols_to_keep.extend(primary_keys)
+            acquired_data = acquired_data[cols_to_keep]
 
         if acquired_data.empty:
             return pd.DataFrame()
@@ -1060,11 +1067,17 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'stock_company', 'column': 'main_business'}],
     ('business_scope', 'd', 'E'):                     ['公司信息 - 经营范围', 'basics',
                                                        {'table_name': 'stock_company', 'column': 'business_scope'}],
-    # ('managers_name','d','E'):	['公司高管信息 - 高管姓名','event_multi_stat',{'table_name': 'stk_managers', 'column':
-    # 'name', 'id_index': 'name', 'start_col': 'begin_date', 'end_col': 'end_date', ''}],
+    ('managers_name','d','E'):	                      ['公司高管信息 - 高管姓名','event_multi_stat',
+                                                       {'table_name': 'stk_managers',
+                                                        'column': 'name',
+                                                        'id_index': 'name',
+                                                        'start_col': 'begin_date',
+                                                        'end_col': 'end_date'}],
     ('managers_gender', 'd', 'E'):                    ['公司高管信息 - 性别', 'event_multi_stat',
-                                                       {'table_name': 'stk_managers', 'column': 'gender',
-                                                        'id_index':   'name', 'start_col': 'begin_date',
+                                                       {'table_name': 'stk_managers',
+                                                        'column': 'gender',
+                                                        'id_index':   'name',
+                                                        'start_col': 'begin_date',
                                                         'end_col':    'end_date'}],
     ('managers_lev', 'd', 'E'):                       ['公司高管信息 - 岗位类别', 'event_multi_stat',
                                                        {'table_name': 'stk_managers', 'column': 'lev',
@@ -3197,10 +3210,10 @@ DATA_TYPE_MAP = {
     ('fd_share', 'd', 'FD'):                          ['基金份额（万）', 'direct',
                                                        {'table_name': 'fund_share', 'column': 'fd_share'}],
     # TODO: 获取managers_name信息会出现错误，需要调查
-    # ('managers_name', 'd', 'FD'):                     ['基金经理姓名', 'event_multi_stat',
-    #                                                    {'table_name': 'fund_manager', 'column': 'name',
-    #                                                     'id_index':   'name', 'start_col': 'begin_date',
-    #                                                     'end_col':    'end_date'}],
+    ('managers_name', 'd', 'FD'):                     ['基金经理姓名', 'event_multi_stat',
+                                                       {'table_name': 'fund_manager', 'column': 'name',
+                                                        'id_index':   'name', 'start_col': 'begin_date',
+                                                        'end_col':    'end_date'}],
     ('managers_gender', 'd', 'FD'):                   ['基金经理 - 性别', 'event_multi_stat',
                                                        {'table_name': 'fund_manager', 'column': 'gender',
                                                         'id_index':   'name', 'start_col': 'begin_date',

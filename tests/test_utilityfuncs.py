@@ -193,7 +193,7 @@ class TestUtilityFuncs(unittest.TestCase):
     def test_list_truncate(self):
         """ test util func list_truncate()"""
         the_list = [1, 2, 3, 4, 5]
-        ls = list_truncate(the_list, 2)
+        ls = list_truncate(the_list, 2, as_list=True)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
         self.assertEqual(ls[2], [5])
@@ -201,6 +201,12 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(ValueError, list_truncate, the_list, 0)
         self.assertRaises(TypeError, list_truncate, 12, 0)
         self.assertRaises(TypeError, list_truncate, 0, the_list)
+
+        g = list_truncate(the_list, 2, as_list=False)
+        self.assertEqual(next(g), [1, 2])
+        self.assertEqual(next(g), [3, 4])
+        self.assertEqual(next(g), [5])
+        self.assertRaises(StopIteration, next, g)
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""

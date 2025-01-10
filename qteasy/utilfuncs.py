@@ -1218,8 +1218,10 @@ def date_to_month_format(date: [str, pd.Timestamp]) -> str:
     return f'{date.year}{date.month:02d}'
 
 
-def list_truncate(lst, trunc_size):
+def list_truncate(lst: list, trunc_size: int, as_list: bool = False):
     """ 将一个list切分成若干个等长的sublist，除最末一个列表以外，所有列表的元素数量都为trunc_size
+
+    如果设置as_list参数为False，则该函数返回一个generator，可以通过list()函数将其转化为列表
 
     Parameters
     ----------
@@ -1227,6 +1229,8 @@ def list_truncate(lst, trunc_size):
         需要被切分的列表
     trunc_size: int
         列表中元素数量
+    as_list: bool, default: True
+        是否返回一个列表，如果为True，则返回一个列表，否则返回一个generator
 
     Returns
     -------
@@ -1247,18 +1251,21 @@ def list_truncate(lst, trunc_size):
     if not trunc_size > 0:
         msg = f'second parameter should be an integer larger than 0, got {trunc_size}'
         raise ValueError(msg)
-    total = len(lst)
-    if total <= trunc_size:
-        return [lst]
+    if as_list:
+        total = len(lst)
+        if total <= trunc_size:
+            return [lst]
+        else:
+            sub_lists = []
+            begin = 0
+            end = trunc_size
+            while begin < total:
+                sub_lists.append(lst[begin:end])
+                begin += trunc_size
+                end += trunc_size
+            return sub_lists
     else:
-        sub_lists = []
-        begin = 0
-        end = trunc_size
-        while begin < total:
-            sub_lists.append(lst[begin:end])
-            begin += trunc_size
-            end += trunc_size
-        return sub_lists
+        return (lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size))
     # a different implementation:
     # return [lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size)]
     # or a more pythonic way:

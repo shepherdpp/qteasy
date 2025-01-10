@@ -2119,7 +2119,7 @@ class DataSource:
         return res
 
     # ==============
-    # 特殊函数，用于快速获取所有basic数据表
+    # 特殊函数，一些有用的API
     # ==============
     def get_all_basic_table_data(self, refresh_cache=False, raise_error=True):
         """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
@@ -2196,6 +2196,27 @@ class DataSource:
             raise err
         return df_s, df_i, df_f, df_ft, df_o, df_ths
 
+    def drop_empty_tables(self) -> int:
+        """ 从datasource中删除所有空表，即行数为0的表
+
+        Returns
+        -------
+        int
+            删除的表数量
+        """
+
+        dropped_count = 0
+
+        for table in self.all_tables:
+            table_info = self.get_table_info(table, print_info=False)
+            table_rows = table_info['table_rows']
+            if table_rows == 0:
+                self.drop_table_data(table)
+                dropped_count += 1
+
+        return dropped_count
+
+    # TODO: 在新的架构下，似乎不再需要这个函数，可以考虑删除
     def reconnect(self):
         """ 当数据库超时或其他原因丢失连接时，Ping数据库检查状态，
             如果可行的话，重新连接数据库
@@ -2717,3 +2738,5 @@ def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=Tru
         return columns, dtypes
     if with_remark and with_primary_keys:
         return columns, dtypes, remarks, primary_keys, pk_dtypes
+
+

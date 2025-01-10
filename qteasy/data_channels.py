@@ -17,9 +17,18 @@ import pandas as pd
 import time
 
 from functools import lru_cache
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .utilfuncs import str_to_list, progress_bar, sec_to_duration
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+)
+
+from .utilfuncs import (
+    str_to_list,
+    list_truncate,
+    progress_bar,
+    sec_to_duration,
+)
 
 """
 这个模块提供一个统一数据下载api：
@@ -190,38 +199,43 @@ def fetch_batched_table_data(
     """
 
     fetch_table_data = _get_fetch_table_func(channel)
+    # 如果当总下载量小于batch_size时，就不用暂停了
+    if len(arg_list) < download_batch_size:
+        download_batch_interval = 0
 
     completed = 0
     if not parallel:
         for kwargs in arg_list:
             completed += 1
+            df = fetch_table_data(table, **kwargs)
             if (download_batch_interval != 0) and (completed % download_batch_size == 0):
                 time.sleep(download_batch_interval)
-            df = fetch_table_data(table, **kwargs)
             # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
             yield {'kwargs': kwargs, 'data': df}
 
     else:  # parallel
         # 使用ThreadPoolExecutor循环下载数据
         with ThreadPoolExecutor(max_workers=process_count) as worker:
-            '''
-            在原来的实现中，
-            这里如果直接使用fetch_history_table_data会导致程序无法运行，原因不明，目前只能默认通过tushare接口获取数据
-            通过TABLE_MASTERS获取tushare接口名称，并通过acquire_data直接通过tushare的API获取数据
-            现在尝试
-            '''
+            # 在parallel模式下，下载线程的提交和返回是分开进行的，但这样会有一个问题，数据部分提交后，等待期间
+            # 无法返回结果，因此，需要将arg_list分段，提交完一个batch之后，返回结果，再暂停，暂停后再继续提交
             futures = {}
             submitted = 0
-            for kw in arg_list:
-                futures.update({worker.submit(fetch_table_data, table, **kw): kw})
-                submitted += 1
-                if (download_batch_interval != 0) and (submitted % download_batch_size == 0):
+            # 将arg_list分段，每次下载batch_size个数据
+            arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
+
+            for arg_sub_list in arg_list_chunks:
+                for kw in arg_sub_list:
+                    futures.update({worker.submit(fetch_table_data, table, **kw): kw})
+                    submitted += 1
+                for f in as_completed(futures):
+                    kwargs = futures[f]
+                    completed += 1
+                    # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
+                    yield {'kwargs': kwargs, 'data': f.result()}
+
+                if download_batch_interval != 0:
+                    print(f'waiting for {sec_to_duration(download_batch_interval)}')
                     time.sleep(download_batch_interval)
-            for f in as_completed(futures):
-                kwargs = futures[f]
-                completed += 1
-                # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
-                yield {'kwargs': kwargs, 'data': f.result()}
 
 
 def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_arg_filter, reversed_par_seq) -> dict:

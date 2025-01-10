@@ -162,7 +162,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
 ('employees','d','E'),
 ('main_business','d','E'),
 ('business_scope','d','E'),
-# ('managers_name','d','E'),
+('managers_name','d','E'),
 ('managers_gender','d','E'),
 ('managers_lev','d','E'),
 ('manager_title','d','E'),
@@ -1207,7 +1207,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
 ('top10_buy','d','E'),
 ('top10_sell','d','E'),
 ('fd_share','d','FD'),
-# ('managers_name','d','FD'),  TODO, 检查为什么会发生错误
+('managers_name','d','FD'),
 ('managers_gender','d','FD'),
 ('managers_birth_year','d','FD'),
 ('managers_edu','d','FD'),
