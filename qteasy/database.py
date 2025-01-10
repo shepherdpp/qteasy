@@ -31,6 +31,8 @@ from .utilfuncs import (
     pandas_freq_alias_version_conversion,
     human_file_size,
     human_units,
+    date_to_month_format,
+    date_to_quarter_format,
 )
 
 
@@ -150,7 +152,7 @@ class DataSource:
 
             except ImportError as e:
                 msg = f'{str(e)}' \
-                      f'Use pip or conda to install pymysql: $ pip install pymysql' \
+                      f'Install pymysql or DButils: \n$ pip install pymysql\n$ pip install dbutils\n' \
                       f'Can not set data source type to "db", will fall back to csv file'
 
                 warnings.warn(msg, ImportWarning)
@@ -208,7 +210,7 @@ class DataSource:
                 err = SystemError(f'{str(e)}, Failed creating data directory \'{file_loc}\' in qt root path, '
                                   f'please check your input.')
                 raise err
-            
+
             self.source_type = 'file'
             self.file_type = file_type
             self.file_loc = file_loc
@@ -430,6 +432,11 @@ class DataSource:
         -------
         DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
+
+        # TODO: 历史数据表的规模较大，如果数据存储在数据库中，读取和存储时
+        #  没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
+        #  ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
+        #  csv文件的读取效率，其他文件系统的读取还需要进一步优化
 
         file_path_name = self._get_file_path_name(file_name)
         if not self._file_exists(file_name):
@@ -1187,7 +1194,12 @@ class DataSource:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
     @lru_cache(maxsize=32)
-    def read_table_data(self, table, shares=None, start=None, end=None, primary_key_in_index=True):
+    def read_table_data(self, table, *,
+                        shares: str = None,
+                        start: str = None,
+                        end: str = None,
+                        primary_key_in_index: bool = True,
+                        ) -> pd.DataFrame:
         """ 从本地数据表中读取数据并返回DataFrame，不修改数据格式，primary_key为DataFrame的index
 
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
@@ -1196,8 +1208,8 @@ class DataSource:
         ----------
         table: str
             数据表名称
-        shares: list，
-            ts_code筛选条件，为空时给出所有记录
+        shares: str
+            ts_code筛选条件，逗号分隔字符串，为空时给出所有记录
         start: str，
             YYYYMMDD格式日期，为空时不筛选
         end: str，
@@ -1212,10 +1224,6 @@ class DataSource:
 
         """
 
-        # TODO: 历史数据表的规模较大，如果数据存储在数据库中，读取和存储时
-        #  没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
-        #  ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
-        #  csv文件的读取效率，其他文件系统的读取还需要进一步优化
         if not isinstance(table, str):
             err = TypeError(f'table name should be a string, got {type(table)} instead.')
             raise err
@@ -1223,9 +1231,8 @@ class DataSource:
             raise KeyError(f'Invalid table name: {table}.')
 
         if shares is not None:
-            assert isinstance(shares, (str, list))
-            if isinstance(shares, str):
-                shares = str_to_list(shares)
+            assert isinstance(shares, str)
+            shares = str_to_list(shares)
 
         if (start is not None) and (end is not None):
             start = regulate_date_format(start)
@@ -1241,16 +1248,34 @@ class DataSource:
                 varchar_like_dtype = [item for item in pk_dtypes if item[:7] == 'varchar'][0]
                 share_like_pk = primary_key[pk_dtypes.index(varchar_like_dtype)]
             except:
-                warnings.warn(f'can not find share-like primary key in the table {table}!\n'
-                              f'passed argument shares will be ignored!', RuntimeWarning)
+                msg = f'can not find share-like primary key in the table {table}!\n' \
+                      f'passed argument shares will be ignored!'
+                warnings.warn(msg, RuntimeWarning)
+                share_like_pk = None
+                shares = None
         # 识别Primary key中的日期型字段，并确认是否需要筛选日期型pk
-        if (start is not None) and (end is not None):
+        if (start is not None) and (end is not None) and ("month" in primary_key):
+            # case 1: 识别到了month字段，且start和end都不为空
+            date_like_pk = 'month'
+            start = date_to_month_format(start)
+            end = date_to_month_format(end)
+        elif (start is not None) and (end is not None) and ("quarter" in primary_key):
+            # case 2: 识别到了quarter字段，且start和end都不为空
+            date_like_pk = 'quarter'
+            start = date_to_quarter_format(start)
+            end = date_to_quarter_format(end)
+        elif (start is not None) and (end is not None):
+            # case 3: 未识别到quarter或者month字段，根据字段类型检查是否有date-like字段
             try:
                 date_like_dtype = [item for item in pk_dtypes if item in ['date', 'datetime']][0]
                 date_like_pk = primary_key[pk_dtypes.index(date_like_dtype)]
             except Exception as e:
-                warnings.warn(f'{e}\ncan not find date-like primary key in the table {table}!\n'
-                              f'passed start({start}) and end({end}) arguments will be ignored!', RuntimeWarning)
+                msg = f'{e}\ncan not find date-like primary key in the table {table}!\n' \
+                      f'passed start({start}) and end({end}) arguments will be ignored!'
+                warnings.warn(msg, RuntimeWarning)
+                date_like_pk = None
+                start = None
+                end = None
 
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index

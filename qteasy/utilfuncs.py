@@ -1198,6 +1198,26 @@ def weekday_name(weekday: int):
     return weekday_names[weekday]
 
 
+def date_to_quarter_format(date: [str, pd.Timestamp]) -> str:
+    """ convert a Timestamp or date like to quarter format like 2020Q3"""
+    try:
+        date = pd.to_datetime(date).floor(freq='d')
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
+    return f'{date.year}Q{date.quarter}'
+
+
+def date_to_month_format(date: [str, pd.Timestamp]) -> str:
+    """ convert a Timestamp or date like to month format like 202012"""
+    try:
+        date = pd.to_datetime(date).floor(freq='d')
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
+    return f'{date.year}{date.month:02d}'
+
+
 def list_truncate(lst, trunc_size):
     """ 将一个list切分成若干个等长的sublist，除最末一个列表以外，所有列表的元素数量都为trunc_size
 

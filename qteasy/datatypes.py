@@ -404,7 +404,13 @@ class DataType:
         return f'{self.name}({self.asset_type})@{self.freq}'
 
     # 真正的顶层数据获取API接口函数
-    def get_data_from_source(self, datasource, *, symbols=None, starts=None, ends=None, target_freq=None):
+    def get_data_from_source(
+            self, datasource, *,
+            symbols: str = None,
+            starts: str = None,
+            ends: str = None,
+            target_freq: str = None,
+    ):
         """ Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
 
         如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
@@ -413,12 +419,12 @@ class DataType:
         ----------
         datasource: DataSource
             数据类型对象
-        symbols: list
-            股票代码列表
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
         starts: str
-            开始日期
+            开始日期, YYYYMMDD格式
         ends: str
-            结束日期
+            结束日期, YYYYMMDD格式
         target_freq: str, optional
             用户要求的频率
 
@@ -427,9 +433,9 @@ class DataType:
         acquisition_type = self.acquisition_type
 
         if acquisition_type == 'basics':
-            acquired_data = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
+            acquired_data = self._get_basics(datasource, symbols=symbols)
         elif acquisition_type == 'selection':
-            acquired_data = self._get_selection(datasource, symbols=symbols, starts=starts, ends=ends)
+            acquired_data = self._get_selection(datasource, symbols=symbols)
         elif acquisition_type == 'direct':
             acquired_data = self._get_direct(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'adjustment':
@@ -473,6 +479,17 @@ class DataType:
         从table_name表中选出column列的数据并输出。
         如果给出symbols则筛选出symbols的数据，否则输出全部数据。
         start和end无效，只是为了保持接口一致性。
+
+        Parameters
+        ----------
+        datasource: DataSource
+            数据源对象
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
+
+        Returns
+        -------
+        pd.Series
         """
 
         # try to get arguments from kwargs
@@ -497,6 +514,21 @@ class DataType:
         从table_name表中筛选出sel_by=keys的数据并输出column列数据
         如果给出symbols则筛选出symbols的数据，否则输出全部数据。
         start和end无效，只是为了保持接口一致性。
+
+        Parameters
+        ----------
+        datasource: DataSource
+            数据源对象
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
+        starts: str
+            开始日期，YYYYMMDD格式
+        ends: str
+            结束日期，YYYYMMDD格式
+
+        Returns
+        -------
+        pd.Series
         """
 
         # try to get arguments from kwargs
@@ -506,8 +538,6 @@ class DataType:
         keys = self.kwargs.get('keys')
 
         if table_name is None or column is None or sel_by is None or keys is None:
-            import pdb;
-            pdb.set_trace()
             raise ValueError('table_name, column, sel_by and keys must be provided for selection data type')
 
         acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
@@ -583,12 +613,12 @@ class DataType:
 
         Parameters
         ----------
-        symbols: list
-            股票代码列表
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
         starts: str
-            开始日期
+            开始日期，YYYYMMDD格式
         ends: str
-            结束日期
+            结束日期，YYYYMMDD格式
 
         Returns
         -------
@@ -625,7 +655,10 @@ class DataType:
         cols_to_keep.extend(primary_keys)
         acquired_data = acquired_data[cols_to_keep]
         # create id_index and column pairs
-        acquired_data[column] = acquired_data[id_index] + '-' + acquired_data[column].astype(str)
+        combined_data = acquired_data[id_index] + '-' + acquired_data[column].astype(str)
+        # if table_name == 'fund_manager':
+        #     import pdb; pdb.set_trace()
+        acquired_data.loc[:, column] = combined_data
 
         if acquired_data.empty:
             return pd.DataFrame()
@@ -649,12 +682,12 @@ class DataType:
 
         Parameters
         ----------
-        symbols: list
-            股票代码列表
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
         starts: str
-            开始日期
+            开始日期，YYYYMMDD格式
         ends: str
-            结束日期
+            结束日期，YYYYMMDD格式
 
         Returns
         -------
@@ -667,7 +700,7 @@ class DataType:
             raise ValueError('start and end must be provided for event status data type')
 
         # acquire data with out time thus status can be ffilled from previous dates
-        data_series = self._get_basics(datasource, symbols=symbols, starts=None, ends=None)
+        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
 
         if data_series.empty:
             return pd.DataFrame()
@@ -688,12 +721,12 @@ class DataType:
 
         Parameters
         ----------
-        symbols: list
-            股票代码列表
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
         starts: str
-            开始日期
+            开始日期，YYYYMMDD格式
         ends: str
-            结束日期
+            结束日期，YYYYMMDD格式
 
         Returns
         -------
@@ -723,12 +756,12 @@ class DataType:
 
         Parameters
         ----------
-        symbols: list
-            股票代码列表
+        symbols: str
+            股票代码列表, 一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
         starts: str
-            开始日期
+            开始日期，YYYYMMDD格式
         ends: str
-            结束日期
+            结束日期，YYYYMMDD格式
 
         Returns
         -------
@@ -751,6 +784,7 @@ class DataType:
         weight_data.index = weight_data.index.get_level_values(1)
 
         if symbols is not None:
+            symbols = str_to_list(symbols)
             weight_data = weight_data.reindex(columns=symbols)
 
         return weight_data
@@ -760,8 +794,8 @@ class DataType:
 
         Parameters
         ----------
-        symbols: list
-            股票代码列表
+        symbols: str
+            股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'
 
         Returns
         -------
@@ -776,7 +810,7 @@ class DataType:
         category = category_data.index.to_frame()
         category.index = category[column]
 
-        category = category.reindex(index=symbols)
+        category = category.reindex(index=str_to_list(symbols))
 
         return category[comp_column]
 
@@ -3162,10 +3196,11 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'hs_top10_stock', 'column': 'sell'}],
     ('fd_share', 'd', 'FD'):                          ['基金份额（万）', 'direct',
                                                        {'table_name': 'fund_share', 'column': 'fd_share'}],
-    ('managers_name', 'd', 'FD'):                     ['基金经理姓名', 'event_multi_stat',
-                                                       {'table_name': 'fund_manager', 'column': 'name',
-                                                        'id_index':   'name', 'start_col': 'begin_date',
-                                                        'end_col':    'end_date'}],
+    # TODO: 获取managers_name信息会出现错误，需要调查
+    # ('managers_name', 'd', 'FD'):                     ['基金经理姓名', 'event_multi_stat',
+    #                                                    {'table_name': 'fund_manager', 'column': 'name',
+    #                                                     'id_index':   'name', 'start_col': 'begin_date',
+    #                                                     'end_col':    'end_date'}],
     ('managers_gender', 'd', 'FD'):                   ['基金经理 - 性别', 'event_multi_stat',
                                                        {'table_name': 'fund_manager', 'column': 'gender',
                                                         'id_index':   'name', 'start_col': 'begin_date',
