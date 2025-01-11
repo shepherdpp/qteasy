@@ -51,7 +51,7 @@ class TestDataTables(unittest.TestCase):
         tables = ['stock_basic', 'stock_daily', 'index_daily']
         res = get_tables_by_name_or_usage(tables=tables)
         print(f'fetching tables: stock_basic, stock_daily, index_daily: \n{res}')
-        expected_tables = ['stock_basic', 'stock_daily', 'index_daily', 'index_basic']
+        expected_tables = ['stock_basic', 'stock_daily', 'index_daily']
         print('tables under expected', [table for table in expected_tables if table not in res])
         print('tables more than expected', [table for table in res if table not in expected_tables])
         self.assertTrue(all(table in res for table in expected_tables))

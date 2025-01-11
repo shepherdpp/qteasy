@@ -64,7 +64,12 @@ class TestTrader(unittest.TestCase):
         # 创建测试数据源
         data_test_dir = '../qteasy/data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
+        test_ds = DataSource(
+                'file',
+                file_type='csv',
+                file_loc=data_test_dir,
+                allow_drop_table=True,
+        )
         test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results',
@@ -78,6 +83,7 @@ class TestTrader(unittest.TestCase):
         get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000004.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000005.SZ', position_type='long', data_source=test_ds)
+        import pdb; pdb.set_trace()
         update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
         update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)

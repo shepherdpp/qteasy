@@ -48,7 +48,8 @@ class TestBroker(unittest.TestCase):
                 port=QT_CONFIG['test_db_port'],
                 user=QT_CONFIG['test_db_user'],
                 password=QT_CONFIG['test_db_password'],
-                db_name=QT_CONFIG['test_db_name']
+                db_name=QT_CONFIG['test_db_name'],
+                allow_drop_table=True,
         )
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:

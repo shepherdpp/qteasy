@@ -809,8 +809,6 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         st = time.time()
         time_elapsed = 0
         df_concat_list = []
-        # dnld_data = pd.DataFrame()
-        rows_affected = 0
 
         progress_bar(0, total, comments=f'<{table}> estimating time left...')
 
@@ -829,17 +827,14 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                 data = res['data']
                 if not data.empty:
                     df_concat_list.append(data)
-                    # dnld_data = pd.concat([dnld_data, data], copy=False)
                 if completed % chunk_size == 0:
                     # 将下载的数据写入数据源
-                    rows_affected += data_source.update_table_data(
+                    rows_affected = data_source.update_table_data(
                             table=table,
                             df=pd.concat(df_concat_list, copy=False),
-                            # df=dnld_data,
                             merge_type=merge_type,
                     )
                     df_concat_list = []
-                    # dnld_data = pd.DataFrame()
                     total_written += rows_affected
 
                 time_elapsed = time.time() - st
@@ -858,12 +853,10 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
             continue
 
         if df_concat_list:
-        # if not dnld_data.empty:
             # 将下载的数据写入数据源
-            rows_affected += data_source.update_table_data(
+            rows_affected = data_source.update_table_data(
                     table=table,
                     df=pd.concat(df_concat_list, copy=False),
-                    # df=dnld_data,
                     merge_type=merge_type,
             )
             total_written += rows_affected

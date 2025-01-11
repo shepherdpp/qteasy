@@ -199,9 +199,11 @@ def fetch_batched_table_data(
     """
 
     fetch_table_data = _get_fetch_table_func(channel)
-    # 如果当总下载量小于batch_size时，就不用暂停了
-    if len(arg_list) < download_batch_size:
-        download_batch_interval = 0
+
+    # 如果当总下载量小于batch_size时，就不用暂停了(仅当arg_list是list时，如果是generator，无法判断长度，则不判断)
+    if isinstance(arg_list, list):
+        if len(arg_list) < download_batch_size:
+            download_batch_interval = 0
 
     completed = 0
     if not parallel:
@@ -234,7 +236,7 @@ def fetch_batched_table_data(
                     yield {'kwargs': kwargs, 'data': f.result()}
 
                 if download_batch_interval != 0:
-                    print(f'waiting for {sec_to_duration(download_batch_interval)}')
+                    # print(f'waiting for {sec_to_duration(download_batch_interval)}')
                     time.sleep(download_batch_interval)
 
 

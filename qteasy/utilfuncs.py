@@ -1256,24 +1256,9 @@ def list_truncate(lst: list, trunc_size: int, as_list: bool = False):
         if total <= trunc_size:
             return [lst]
         else:
-            sub_lists = []
-            begin = 0
-            end = trunc_size
-            while begin < total:
-                sub_lists.append(lst[begin:end])
-                begin += trunc_size
-                end += trunc_size
-            return sub_lists
+            return [lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size)]
     else:
         return (lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size))
-    # a different implementation:
-    # return [lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size)]
-    # or a more pythonic way:
-    # return list(map(lambda i: lst[i:i+trunc_size], range(0, len(lst), trunc_size)))
-    # or return a generator:
-    # return (lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size))
-    # or create a generator with yield from:
-    # yield from (lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size))
 
 
 def is_number_like(key: [str, int, float]) -> bool:

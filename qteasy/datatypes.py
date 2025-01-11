@@ -3700,11 +3700,12 @@ def get_history_data_from_source(
         if htype.freq == 'none' or htype.asset_type == 'none':
             raise ValueError(f'Invalid data type {htype.name}, not a history data type')
         # 从数据源获取数据
-        df = htype.get_data_from_source(datasource, shares=qt_codes, start=start, end=end)
-        if not df.empty:
-            if row_count > 0:
-                # 读取每一个ts_code的最后row_count行数据
-                df = df.groupby('ts_code').tail(row_count)
+        df = htype.get_data_from_source(datasource, symbols=qt_codes, starts=start, ends=end)
+        # import pdb; pdb.set_trace()
+        # if not df.empty:
+        #     if row_count > 0:
+        #         # 读取每一个ts_code的最后row_count行数据
+        #         df = df.groupby('ts_code').tail(row_count)
         history_data_acquired[htype.name] = df
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
@@ -3721,6 +3722,8 @@ def get_history_data_from_source(
         raise err
 
     # 最后整理数据，确保每一个htype的数据框的columns与shares相同
+    qt_codes = str_to_list(qt_codes)
+    # import pdb; pdb.set_trace()
     for htyp, df in history_data_acquired.items():
         history_data_acquired[htyp] = df.reindex(columns=qt_codes)
 

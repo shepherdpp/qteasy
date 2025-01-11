@@ -23,7 +23,7 @@ from qteasy.utilfuncs import (
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
     DataType,
-    get_tables_by_dtypes,
+    get_history_data_from_source, get_tables_by_dtypes,
 )
 
 
@@ -1612,7 +1612,7 @@ class TestDataTypes(unittest.TestCase):
                 print(f'\nempty data for {dtype} - {dtype.description}')
                 continue
 
-            # print(f'\ngot data for {dtype}: \n{data}')
+            print(f'\ngot data for {dtype}: \n{data}')
 
             # checking the datatypes and start / end dates of the data
             if acq_type in ['basics', 'category']:
@@ -1682,70 +1682,52 @@ class TestDataTypes(unittest.TestCase):
                  'index_hourly', 'index_5min', 'index_15min', 'index_30min', 'index_1min'}
         )
 
-    def test_get_history_panel_data(self):
+    def test_get_history_data(self):
         """ test getting arr, from real database """
-        ds = self.ds
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
-        htypes = 'pe, close, open, swing, strength'
-        htypes = str_to_list(htypes)
+        htype_names = 'pe,close,open,swing,strength,close:b, open:f'
+        htype_names = str_to_list(htype_names)
         start = '20210101'
         end = '20210301'
         asset_type = 'E, IDX, FD'
         freq = 'd'
-        adj = 'back'
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj=adj)
+        htypes = [DataType(name=htype) for htype in htype_names]
+        shares = list_to_str_format(shares)
+
+        dfs = get_history_data_from_source(
+                self.ds,
+                qt_codes=shares,
+                htypes=htypes,
+                start=start,
+                end=end,
+                freq=freq,
+        )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with backward price recover:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with forward price recover:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertEqual(list(dfs.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel with price:\n{dfs}')
         htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq='w',
-                                  adj='forward')
+        dfs = get_history_data_from_source(
+                self.ds,
+                qt_codes=shares,
+                htypes=htypes,
+                start=start,
+                end=end,
+                freq='w',
+        )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history data:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes='close, high',
-                                  start=None,
-                                  end=None,
-                                  row_count=20,
-                                  asset_type='E, IDX, FD',
-                                  freq='d',
-                                  adj='none')
+        dfs = get_history_data_from_source(
+                self.ds,
+                qt_codes=shares,
+                htypes='close, high',
+                start=None,
+                end=None,
+                row_count=20,
+                freq='d',
+        )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), ['close', 'high'])
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))

@@ -202,11 +202,17 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(TypeError, list_truncate, 12, 0)
         self.assertRaises(TypeError, list_truncate, 0, the_list)
 
+        ls = list_truncate(the_list, 7, as_list=True)
+        self.assertEqual(ls[0], [1, 2, 3, 4, 5])
+
         g = list_truncate(the_list, 2, as_list=False)
         self.assertEqual(next(g), [1, 2])
         self.assertEqual(next(g), [3, 4])
         self.assertEqual(next(g), [5])
         self.assertRaises(StopIteration, next, g)
+
+        g = list_truncate(the_list, 7, as_list=False)
+        self.assertEqual(next(g), [1, 2, 3, 4, 5])
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
