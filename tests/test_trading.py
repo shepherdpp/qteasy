@@ -64,12 +64,12 @@ class TestTradeRecording(unittest.TestCase):
         # test new_account with simple account info
         user_name = 'test_user'
         cash_amount = 10000.0
-        account_id = new_account(user_name, cash_amount, data_source=self.test_ds)
+        account_id = new_account(user_name=user_name, cash_amount=cash_amount, data_source=self.test_ds)
         print(f'account created, id: {account_id}')
         self.assertEqual(account_id, 1)
         # add two more accounts
-        new_account('test_user2', 20000, data_source=self.test_ds)
-        new_account('test_user3', 30000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=20000, data_source=self.test_ds)
+        new_account(user_name='test_user3', cash_amount=30000, data_source=self.test_ds)
         # test get_account
         account = get_account(2, data_source=self.test_ds)
         self.assertEqual(account['user_name'], 'test_user2')
@@ -77,7 +77,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(account['available_cash'], 20000.0)
         # test add account with negative cash amount
         with self.assertRaises(ValueError):
-            new_account('test_user4', -10000, data_source=self.test_ds)
+            new_account(user_name='test_user4', cash_amount=-10000, data_source=self.test_ds)
         # test get account with non-existing account id
         with self.assertRaises(KeyError):
             get_account(4, data_source=self.test_ds)
@@ -87,8 +87,8 @@ class TestTradeRecording(unittest.TestCase):
         if self.test_ds.table_data_exists('sys_op_live_accounts'):
             self.test_ds.drop_table_data('sys_op_live_accounts')
         # read all accounts from datasource and modify the username
-        new_account('test_user', 10000, data_source=self.test_ds)
-        new_account('test_user2', 20000, data_source=self.test_ds)
+        new_account(user_name='test_user', cash_amount=10000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=20000, data_source=self.test_ds)
         account = get_account(1, data_source=self.test_ds)
         self.assertEqual(account['user_name'], 'test_user')
         update_account(1, data_source=self.test_ds, user_name='test_user1')
@@ -125,8 +125,8 @@ class TestTradeRecording(unittest.TestCase):
         if self.test_ds.table_data_exists('sys_op_positions'):
             self.test_ds.drop_table_data('sys_op_positions')
         # create new accounts and new positions
-        new_account('test_user', 10000, data_source=self.test_ds)
-        new_account('test_user2', 20000, data_source=self.test_ds)
+        new_account(user_name='test_user', cash_amount=10000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=20000, data_source=self.test_ds)
         pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 1)
         pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
@@ -432,7 +432,7 @@ class TestTradeRecording(unittest.TestCase):
             self.test_ds.drop_table_data('sys_op_positions')
 
         # writing test accounts and positions
-        new_account('test_user', 100000, data_source=self.test_ds)
+        new_account(user_name='test_user', cash_amount=100000, data_source=self.test_ds)
         get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
@@ -653,8 +653,8 @@ class TestTradeRecording(unittest.TestCase):
             self.test_ds.drop_table_data('sys_op_positions')
 
         # writing test accounts and positions
-        new_account('test_user1', 100000, data_source=self.test_ds)
-        new_account('test_user2', 300000, data_source=self.test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=300000, data_source=self.test_ds)
         get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
@@ -850,8 +850,8 @@ class TestTradeRecording(unittest.TestCase):
         if self.test_ds.table_data_exists('sys_op_trade_orders'):
             self.test_ds.drop_table_data('sys_op_trade_orders')
         # create test accounts, positions should be created automatically with signals
-        new_account('test_user1', 100000, self.test_ds)
-        new_account('test_user2', 150000, self.test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=150000, data_source=self.test_ds)
         # create test signals with parsed signals, which include list of symbols, positions, directions, qty, and prices
         # parsed signals has 5 symbols, with only long position, and buy direction
         parsed_signals = (
@@ -1003,8 +1003,8 @@ class TestTradeRecording(unittest.TestCase):
             self.test_ds.drop_table_data('sys_op_trade_orders')
         # create test data, including two test accounts, 10 test positions, 5 for each account
         # create test accounts
-        new_account('test_user1', 100000, self.test_ds)
-        new_account('test_user2', 150000, self.test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=150000, data_source=self.test_ds)
         # create test positions
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
@@ -1435,8 +1435,8 @@ class TestTradeRecording(unittest.TestCase):
     def test_delete_account(self):
         """ test function delete_account """
         # create and add test accounts, positions, trade orders and trade results
-        new_account('test_user1', 100000, self.test_ds)
-        new_account('test_user2', 150000, self.test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
+        new_account(user_name='test_user2', cash_amount=150000, data_source=self.test_ds)
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
@@ -1733,7 +1733,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'stock_delivery_period': 0,
         }
         # create test accounts
-        new_account('test_user1', 100000, self.test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
         # create test trade signals
         # create test signals, all signals are buy signals, because the test starts with zero positions
         parsed_signals_batch_1 = (

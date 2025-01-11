@@ -473,7 +473,6 @@ class DataType:
 
         return self._symbolised(acquired_data)
 
-    # 下面获取数据的方法都放在datasource中
     def _get_basics(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.Series:
         """基本数据的获取方法：
         从table_name表中选出column列的数据并输出。
@@ -499,7 +498,7 @@ class DataType:
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
 
-        acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = datasource.read_cached_table_data(table_name, shares=symbols, start=starts, end=ends)
 
         if acquired_data.empty:
             return pd.Series()
@@ -540,7 +539,7 @@ class DataType:
         if table_name is None or column is None or sel_by is None or keys is None:
             raise ValueError('table_name, column, sel_by and keys must be provided for selection data type')
 
-        acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = datasource.read_cached_table_data(table_name, shares=symbols, start=starts, end=ends)
 
         if acquired_data.empty:
             return pd.Series()
@@ -585,10 +584,10 @@ class DataType:
             raise ValueError(
                     'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
-        acquired_data = datasource.read_table_data(table_name, shares=symbols, start=starts, end=ends)
+        acquired_data = datasource.read_cached_table_data(table_name, shares=symbols, start=starts, end=ends)
         acquired_data = acquired_data[column].unstack(level=0)
 
-        adj_factors = datasource.read_table_data(adj_table, shares=symbols, start=starts, end=ends)
+        adj_factors = datasource.read_cached_table_data(adj_table, shares=symbols, start=starts, end=ends)
         adj_factors = adj_factors[adj_column].unstack(level=0)
 
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
@@ -643,7 +642,7 @@ class DataType:
         if table_name is None or column is None:
             raise ValueError('table_name and column must be provided for basics data type')
 
-        acquired_data = datasource.read_table_data(
+        acquired_data = datasource.read_cached_table_data(
                 table_name,
                 shares=symbols,
                 start=starts,
@@ -780,7 +779,7 @@ class DataType:
         comp_column = self.kwargs.get('comp_column')
         index = self.kwargs.get('index')
 
-        weight_data = datasource.read_table_data(table_name, shares=index, start=starts, end=ends)
+        weight_data = datasource.read_cached_table_data(table_name, shares=index, start=starts, end=ends)
         if not weight_data.empty:
             weight_data = weight_data.unstack()
         else:
@@ -813,7 +812,7 @@ class DataType:
         column = self.kwargs.get('column')
         comp_column = self.kwargs.get('comp_column')
 
-        category_data = datasource.read_table_data(table_name)
+        category_data = datasource.read_cached_table_data(table_name)
         category = category_data.index.to_frame()
         category.index = category[column]
 

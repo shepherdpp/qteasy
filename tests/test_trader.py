@@ -70,20 +70,29 @@ class TestTrader(unittest.TestCase):
                 file_loc=data_test_dir,
                 allow_drop_table=True,
         )
-        test_ds.reconnect()
+        # from qteasy import QT_CONFIG, QT_DATA_SOURCE
+        # test_ds = DataSource(
+        #         'db',
+        #         host=QT_CONFIG['test_db_host'],
+        #         port=QT_CONFIG['test_db_port'],
+        #         user=QT_CONFIG['test_db_user'],
+        #         password=QT_CONFIG['test_db_password'],
+        #         db_name=QT_CONFIG['test_db_name'],
+        #         allow_drop_table=True,
+        # )
+        # test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results',
                       'stock_daily']:
             if test_ds.table_data_exists(table):
                 test_ds.drop_table_data(table)
         # 创建一个ID=1的账户
-        new_account('test_user1', 100000, test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
         # 添加初始持仓
         get_or_create_position(account_id=1, symbol='000001.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000004.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000005.SZ', position_type='long', data_source=test_ds)
-        import pdb; pdb.set_trace()
         update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
         update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)

@@ -59,7 +59,7 @@ class TestBroker(unittest.TestCase):
         # 创建一个测试账户
         user_name = 'test_user'
         cash_amount = 10000.0
-        new_account(user_name, cash_amount, data_source=self.test_ds)
+        new_account(user_name=user_name, cash_amount=cash_amount, data_source=self.test_ds)
 
         # 在测试账户中创建两个测试持仓
         get_or_create_position(1, '000001.SH', 'long', data_source=self.test_ds)

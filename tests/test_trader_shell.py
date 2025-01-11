@@ -95,7 +95,7 @@ class TestTraderShell(unittest.TestCase):
                 test_ds.drop_table_data(table)
 
         # 创建一个ID=1的账户
-        new_account('test_user1', 100000, test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
         # 添加初始持仓
         get_or_create_position(account_id=1, symbol='000001.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)

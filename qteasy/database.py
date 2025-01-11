@@ -1194,6 +1194,28 @@ class DataSource:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
     @lru_cache(maxsize=32)
+    def read_cached_table_data(
+            self,
+            table: str, *,
+            shares: str = None,
+            start: str = None,
+            end: str = None,
+            primary_key_in_index: bool = True,
+    ) -> pd.DataFrame:
+        """ 缓存数据表数据以缩短读取速度，这个函数用于加快本地提取数据时加速
+
+        在用户使用DataType对象大量读取数据时，通常需要重复从同一张数据表中以同样的参数获取数据
+        为了提升读取速度，可以将数据表的数据缓存到内存中，以减少读取时间，但在正常的数据表操作中
+        并不适合使用缓存，因为数据表通常需要实时刷新，因此本函数仅供DataType对象读取数据使用
+        """
+        return self.read_table_data(
+                table,
+                shares=shares,
+                start=start,
+                end=end,
+                primary_key_in_index=primary_key_in_index,
+        )
+
     def read_table_data(self, table, *,
                         shares: str = None,
                         start: str = None,
@@ -1280,6 +1302,7 @@ class DataSource:
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
+
             df = self._read_file(file_name=table,
                                  primary_key=primary_key,
                                  pk_dtypes=pk_dtypes,
@@ -2062,7 +2085,7 @@ class DataSource:
         df.index.name = primary_keys[0]
 
         # 插入数据
-        self.update_table_data(table, df, merge_type='update')
+        self.update_table_data(table, df, merge_type='ignore')
         # TODO: 这里为什么要用'ignore'而不是'update'? 现在改为'update'，
         #  test_database和test_trading测试都能通过，后续完整测试
         return record_id
@@ -2228,23 +2251,25 @@ class DataSource:
         """
         if self.source_type != 'db':
             return True
-        import pymysql
-        con = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.__user__,
-                password=self.__password__,
-                db=self.db_name,
-        )
-        try:
-            con.ping(reconnect=True)
-            con.ping()  # check if connection is still alive
-            return True
-        except Exception as e:
-            print(f'{e} on {self.connection_type}, please check your connection')
-            return False
-        finally:
-            con.close()
+        pass
+        # 使用连接池以后，直接创建连接的方式已经被弃用。
+        # import pymysql
+        # con = pymysql.connect(
+        #         host=self.host,
+        #         port=self.port,
+        #         user=self.__user__,
+        #         password=self.__password__,
+        #         db=self.db_name,
+        # )
+        # try:
+        #     con.ping(reconnect=True)
+        #     con.ping()  # check if connection is still alive
+        #     return True
+        # except Exception as e:
+        #     print(f'{e} on {self.connection_type}, please check your connection')
+        #     return False
+        # finally:
+        #     con.close()
 
 
 # 以下是通用dataframe操作函数

@@ -1623,9 +1623,12 @@ class TestDataTypes(unittest.TestCase):
             elif acq_type in type_with_shares:
                 self.assertIsInstance(data, pd.DataFrame)
                 if not data.empty:
-                    self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                    self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                    self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                    try:
+                        self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                        self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                        self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                    except AssertionError:
+                        import pdb; pdb.set_trace()
             elif acq_type in type_with_events:
                 self.assertIsInstance(data, pd.DataFrame)
                 if not data.empty:

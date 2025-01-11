@@ -17,7 +17,6 @@ from pandas import Timestamp
 import numpy as np
 from pymysql import connect
 
-from qteasy.utilfuncs import str_to_list
 from qteasy.trading_util import _trade_time_index
 
 from qteasy.data_channels import (
@@ -31,7 +30,6 @@ from qteasy.database import (
     set_primary_key_frame,
     get_primary_key_range,
     _resample_data,
-    freq_dither,
 )
 
 from qteasy.utilfuncs import (
