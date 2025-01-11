@@ -200,10 +200,11 @@ def fetch_batched_table_data(
 
     fetch_table_data = _get_fetch_table_func(channel)
 
-    # 如果当总下载量小于batch_size时，就不用暂停了(仅当arg_list是list时，如果是generator，无法判断长度，则不判断)
-    if isinstance(arg_list, list):
-        if len(arg_list) < download_batch_size:
-            download_batch_interval = 0
+    # 如果当总下载量小于batch_size时，就不用暂停了(为了实现truncate，必须把arg_list转化为list)
+    if not isinstance(arg_list, list):
+        arg_list = list(arg_list)
+    if len(arg_list) < download_batch_size:
+        download_batch_interval = 0
 
     completed = 0
     if not parallel:
@@ -223,7 +224,10 @@ def fetch_batched_table_data(
             futures = {}
             submitted = 0
             # 将arg_list分段，每次下载batch_size个数据
-            arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
+            if download_batch_size == 0:
+                arg_list_chunks = [arg_list]
+            else:
+                arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
 
             for arg_sub_list in arg_list_chunks:
                 for kw in arg_sub_list:

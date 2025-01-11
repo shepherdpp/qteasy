@@ -942,10 +942,10 @@ class TestHistoryPanel(unittest.TestCase):
     def test_get_history_panel(self):
         """ 测试是否能正确获取HistoryPanel"""
         print('test get history panel data')  #
-        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, wt-000300.SH',
+        hp = qt.history.get_history_panel(htypes='wt:000003.SH, close, wt:000300.SH',
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
                                           end='20210802', freq='m', asset_type='any', adj='none')
-        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
+        self.assertEqual(hp.htypes, ['wt:000003.SH', 'close', 'wt:000300.SH'])
         self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
         print(hp)
 
@@ -958,7 +958,7 @@ class TestHistoryPanel(unittest.TestCase):
         print(hp)
 
         print('test get history panel data from converting multiple frequencies')
-        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, pe, eps, revenue_ps',
+        hp = qt.history.get_history_panel(htypes='wt:000003.SH, close, pe, eps, revenue_ps',
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
                                           end='20210502', freq='w', asset_type='any', adj='none', drop_nan=True)
         self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
@@ -966,7 +966,7 @@ class TestHistoryPanel(unittest.TestCase):
         print(hp)
 
         print('test get history panel data with / without all NaN values')
-        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+        hp = qt.history.get_history_panel(htypes='open, high, low:f, close:b', shares='000002.SZ, 000001.SZ, 000300.SH',
                                           start='20210101', end='20210115', freq='d', asset_type='any', adj='none',
                                           drop_nan=False, resample_method='none', b_days_only=False)
         print(hp)

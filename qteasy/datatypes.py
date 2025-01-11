@@ -544,10 +544,20 @@ class DataType:
         if acquired_data.empty:
             return pd.Series()
 
-        if sel_by not in acquired_data.columns:
+        if sel_by in acquired_data.columns:
+            selected_data = acquired_data[acquired_data[sel_by].isin(keys)]
+        elif sel_by in acquired_data.index.names:
+            index_name_count = len(acquired_data.index.names)
+            index_pos = acquired_data.index.names.index(sel_by)
+            slicers = [slice(None)] * index_name_count
+            slicers[index_pos] = keys
+            slicers = tuple(slicers)
+            selected_data = acquired_data.loc[slicers, :]
+
+        else:
+            # raise error if sel_by is not in table data
             raise KeyError(f'sel_by {sel_by} not in table data: {acquired_data.columns}')
 
-        selected_data = acquired_data[acquired_data[sel_by].isin(keys)]
         return selected_data[column]
 
     def _get_direct(self, datasource, *, symbols, starts, ends) -> pd.DataFrame:
@@ -3060,20 +3070,27 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'financial', 'column': 'equity_yoy'}],
     ('rd_exp', 'q', 'E'):                             ['上市公司财务指标 - 研发费用', 'direct',
                                                        {'table_name': 'financial', 'column': 'rd_exp'}],
-    ('rzye', 'd', 'Any'):                             ['融资融券交易汇总 - 融资余额(元)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rzye'}],
-    ('rzmre', 'd', 'Any'):                            ['融资融券交易汇总 - 融资买入额(元)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rzmre'}],
-    ('rzche', 'd', 'Any'):                            ['融资融券交易汇总 - 融资偿还额(元)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rzche'}],
-    ('rqye', 'd', 'Any'):                             ['融资融券交易汇总 - 融券余额(元)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rqye'}],
-    ('rqmcl', 'd', 'Any'):                            ['融资融券交易汇总 - 融券卖出量(股,份,手)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rqmcl'}],
-    ('rzrqye', 'd', 'Any'):                           ['融资融券交易汇总 - 融资融券余额(元)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rzrqye'}],
-    ('rqyl', 'd', 'Any'):                             ['融资融券交易汇总 - 融券余量(股,份,手)', 'direct',
-                                                       {'table_name': 'margin', 'column': 'rqyl'}],
+    ('rzye:%', 'd', 'Any'):                           ['融资融券交易汇总 - 融资余额(元)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rzye',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+    ('rzmre:%', 'd', 'Any'):                          ['融资融券交易汇总 - 融资买入额(元)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rzmre',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+    ('rzche:%', 'd', 'Any'):                          ['融资融券交易汇总 - 融资偿还额(元)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rzche',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+    ('rqye:%', 'd', 'Any'):                           ['融资融券交易汇总 - 融券余额(元)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rqye',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+    ('rqmcl:%', 'd', 'Any'):                          ['融资融券交易汇总 - 融券卖出量(股,份,手)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rqmcl',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+    ('rzrqye:%', 'd', 'Any'):                         ['融资融券交易汇总 - 融资融券余额(元)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rzrqye',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+    ('rqyl:%', 'd', 'Any'):                           ['融资融券交易汇总 - 融券余量(股,份,手)', 'selection',
+                                                       {'table_name': 'margin', 'column': 'rqyl',
+                                                        'sel_by': 'exchange_id', 'keys': '%'}],
     ('top_list_close', 'd', 'E'):                     ['龙虎榜交易明细 - 收盘价', 'event_signal',
                                                        {'table_name': 'top_list', 'column': 'close'}],
     ('top_list_pct_change', 'd', 'E'):                ['龙虎榜交易明细 - 涨跌幅', 'event_signal',

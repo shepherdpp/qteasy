@@ -214,6 +214,15 @@ class TestUtilityFuncs(unittest.TestCase):
         g = list_truncate(the_list, 7, as_list=False)
         self.assertEqual(next(g), [1, 2, 3, 4, 5])
 
+        # test if the function works with generator, NotImplemented
+        # lst = (i for i in range(10))
+        #
+        # g = list_truncate(lst, 3, as_list=False)
+        # self.assertEqual(next(g), [0, 1, 2])
+        # self.assertEqual(next(g), [3, 4, 5])
+        # self.assertEqual(next(g), [6, 7, 8])
+        # self.assertEqual(next(g), [9])
+
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
         self.assertTrue(maybe_trade_day('20220104'))

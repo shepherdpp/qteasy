@@ -16,6 +16,7 @@ import time
 import warnings
 import numpy as np
 import pandas as pd
+import types
 
 from numba import njit
 from functools import wraps, lru_cache
@@ -1242,8 +1243,10 @@ def list_truncate(lst: list, trunc_size: int, as_list: bool = False):
     >>> [[1,2,3,4], [5,6,7,8], [9,0]]
     """
 
-    if not isinstance(lst, list):
-        msg = f'first parameter should be a list, got {type(lst)}'
+    # TODO: maybe? make this function workable for generators
+    import types
+    if not isinstance(lst, (list, types.GeneratorType)):
+        msg = f'first parameter should be a list or a generator, got {type(lst)}'
         raise TypeError(msg)
     if not isinstance(trunc_size, int):
         msg = f'second parameter should be an integer larger than 0'

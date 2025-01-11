@@ -1585,15 +1585,21 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.data_test_dir = '../qteasy/data_test/'
         QT_CONFIG['hist_dnld_retry_cnt'] = 2  # 减少重试次数，加快测试速度
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        # self.test_ds = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
         self.test_ds = DataSource(
-                'db',
-                host=QT_CONFIG['test_db_host'],
-                port=QT_CONFIG['test_db_port'],
-                user=QT_CONFIG['test_db_user'],
-                password=QT_CONFIG['test_db_password'],
-                db_name=QT_CONFIG['test_db_name']
+                'file',
+                file_type='hdf',
+                file_loc=self.data_test_dir,
+                allow_drop_table=True,
         )
+        # self.test_ds = DataSource(
+        #         'db',
+        #         host=QT_CONFIG['test_db_host'],
+        #         port=QT_CONFIG['test_db_port'],
+        #         user=QT_CONFIG['test_db_user'],
+        #         password=QT_CONFIG['test_db_password'],
+        #         db_name=QT_CONFIG['test_db_name'],
+        #         allow_drop_table=True,
+        # )
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
             if self.test_ds.table_data_exists(table):
