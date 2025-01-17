@@ -132,9 +132,9 @@ class DataSource:
 
                 self.pool = PooledDB(
                         creator=pymysql,  # 使用链接数据库的模块
-                        mincached=5,  # 初始化时，链接池中至少创建的链接，0表示不创建
-                        maxconnections=20,  # 连接池允许的最大连接数，0和None表示不限制连接数
-                        blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
+                        mincached=3,  # 初始化时，链接池中至少创建的链接，0表示不创建
+                        maxconnections=5,  # 连接池允许的最大连接数，0和None表示不限制连接数
+                        blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待并报错
                         host=host,
                         port=port,
                         user=user,
@@ -1208,6 +1208,7 @@ class DataSource:
         为了提升读取速度，可以将数据表的数据缓存到内存中，以减少读取时间，但在正常的数据表操作中
         并不适合使用缓存，因为数据表通常需要实时刷新，因此本函数仅供DataType对象读取数据使用
         """
+
         return self.read_table_data(
                 table,
                 shares=shares,
@@ -1253,8 +1254,8 @@ class DataSource:
             raise KeyError(f'Invalid table name: {table}.')
 
         if shares is not None:
-            assert isinstance(shares, str)
-            shares = str_to_list(shares)
+            if isinstance(shares, str):
+                shares = str_to_list(shares)
 
         if (start is not None) and (end is not None):
             start = regulate_date_format(start)

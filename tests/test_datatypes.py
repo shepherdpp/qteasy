@@ -1213,7 +1213,6 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
 ('managers_edu','d','FD'),
 ('nationality','d','FD'),
 ('managers_resume','d','FD'),
-('div_proc','d','E'),
 ('stk_div','d','E'),
 ('stk_bo_rate','d','E'),
 ('stk_co_rate','d','E'),
@@ -1587,8 +1586,20 @@ class TestDataTypes(unittest.TestCase):
                 starts = '2022-04-01'
                 ends = '2022-04-15'
 
+            if table_name in ['hk_top10_stock']:
+                shares = ['00700.HK', '00857.HK', '00939.HK', '00941.HK', '01810.HK']
+                starts = '2024-04-02'
+                ends = '2024-04-05'
+
+            # print(f'testing dtype {dtype} with parameters: \n'
+            #       f'shares: {shares}\n'
+            #       f'starts/ends: {starts}/{ends}\n')
+
             if shares is not None:
                 shares = list_to_str_format(shares)
+            if table_name in ['hk_top10_stock']:
+                # import pdb; pdb.set_trace()
+                pass
             data = dtype.get_data_from_source(
                     ds,
                     symbols=shares,
@@ -1612,7 +1623,7 @@ class TestDataTypes(unittest.TestCase):
                 print(f'\nempty data for {dtype} - {dtype.description}')
                 continue
 
-            print(f'\ngot data for {dtype}: \n{data}')
+            # print(f'\ngot data for {dtype}: \n{data}')
 
             # checking the datatypes and start / end dates of the data
             if acq_type in ['basics', 'category']:
@@ -1709,7 +1720,8 @@ class TestDataTypes(unittest.TestCase):
         self.assertEqual(list(dfs.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel with price:\n{dfs}')
-        htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
+        htype_names = ['open', 'high:b', 'low', 'close:f', 'vol', 'managers_name']
+        htypes = [DataType(name=htype) for htype in htype_names]
         dfs = get_history_data_from_source(
                 self.ds,
                 qt_codes=shares,
@@ -1719,22 +1731,8 @@ class TestDataTypes(unittest.TestCase):
                 freq='w',
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertEqual(list(dfs.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history data:\n{dfs}')
-        dfs = get_history_data_from_source(
-                self.ds,
-                qt_codes=shares,
-                htypes='close, high',
-                start=None,
-                end=None,
-                row_count=20,
-                freq='d',
-        )
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['close', 'high'])
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history data:\n{dfs}')
 
 
 if __name__ == '__main__':

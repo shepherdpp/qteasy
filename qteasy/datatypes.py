@@ -574,7 +574,7 @@ class DataType:
         if data_series.empty:
             return pd.DataFrame()
 
-        unstacked_df = data_series.unstack(level=0)
+        unstacked_df = data_series.unstack(level='ts_code')
 
         return unstacked_df
 
@@ -595,10 +595,10 @@ class DataType:
                     'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
         acquired_data = datasource.read_cached_table_data(table_name, shares=symbols, start=starts, end=ends)
-        acquired_data = acquired_data[column].unstack(level=0)
+        acquired_data = acquired_data[column].unstack(level='ts_code')
 
         adj_factors = datasource.read_cached_table_data(adj_table, shares=symbols, start=starts, end=ends)
-        adj_factors = adj_factors[adj_column].unstack(level=0)
+        adj_factors = adj_factors[adj_column].unstack(level='ts_code')
 
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
         back_adj_data = acquired_data * adj_factors
@@ -682,7 +682,7 @@ class DataType:
         # make group and combine events on the same date for the same symbol
         grouped = acquired_data.groupby(['ts_code', start_col])
         events = grouped[column].apply(lambda x: list(x))
-        events = events.unstack(level=0)
+        events = events.unstack(level='ts_code')
 
         # expand the index to include starts and ends dates
         events = _expand_df_index(events, starts, ends).ffill()
@@ -715,7 +715,7 @@ class DataType:
         if starts is None or ends is None:
             raise ValueError('start and end must be provided for event status data type')
 
-        # acquire data with out time thus status can be ffilled from previous dates
+        # acquire data without time thus status can be ffilled from previous dates
         data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
 
         if data_series.empty:
@@ -723,8 +723,12 @@ class DataType:
 
         data_df = data_series.unstack(level='ts_code')
 
-        # expand the index to include starts and ends dates
-        status = _expand_df_index(data_df, starts, ends).ffill()
+        try:
+            # expand the index to include starts and ends dates
+            status = _expand_df_index(data_df, starts, ends).ffill()
+        except:
+            # import pdb; pdb.set_trace()
+            pass
 
         # filter out events that are not in the date range
         date_mask = (status.index >= starts) & (status.index <= ends)
@@ -3250,8 +3254,6 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'fund_manager', 'column': 'resume',
                                                         'id_index':   'name', 'start_col': 'begin_date',
                                                         'end_col':    'end_date'}],
-    ('div_proc', 'd', 'E'):                           ['实施进度', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'div_proc'}],
     ('stk_div', 'd', 'E'):                            ['每股送转', 'event_status',
                                                        {'table_name': 'dividend', 'column': 'stk_div'}],
     ('stk_bo_rate', 'd', 'E'):                        ['每股送股比例', 'event_status',

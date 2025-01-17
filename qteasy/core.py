@@ -831,7 +831,9 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                     # 将下载的数据写入数据源
                     rows_affected = data_source.update_table_data(
                             table=table,
-                            df=pd.concat(df_concat_list, copy=False),
+                            # TODO: 测试ignore_index=True是否会导致错误，如果不会，可以提高效率
+                            # df=pd.concat(df_concat_list, copy=False, ignore_index=True),
+                            df = pd.concat(df_concat_list, copy=False),
                             merge_type=merge_type,
                     )
                     df_concat_list = []
@@ -855,7 +857,8 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         if df_concat_list:
             # 将下载的数据写入数据源
             rows_affected = data_source.update_table_data(
-                    table=table,
+                    table=table,  # TODO: 测试ignore_index=True是否会导致错误，如果不会，可以提高效率
+                    # df=pd.concat(df_concat_list, copy=False, ignore_index=True),
                     df=pd.concat(df_concat_list, copy=False),
                     merge_type=merge_type,
             )
