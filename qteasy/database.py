@@ -20,8 +20,6 @@ from functools import lru_cache
 from .datatables import (
     AVAILABLE_DATA_FILE_TYPES,
     TABLE_MASTERS,
-    TABLE_SCHEMA,
-    TABLE_MASTER_COLUMNS,
     get_table_master,
 )
 
@@ -32,6 +30,12 @@ from .utilfuncs import (
     human_units,
     date_to_month_format,
     date_to_quarter_format,
+)
+
+from .datatables import (
+    get_built_in_table_schema,
+    set_primary_key_index,
+    set_primary_key_frame,
 )
 
 

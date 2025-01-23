@@ -164,7 +164,6 @@ def trade_cal(exchange: str = 'SSE',
 
     Examples
     --------
-    >>> from qteasy.tsfuncs import trade_cal
     >>> df = trade_cal(exchange='SSE', start='20200101', end='20200131')
     >>> df
         exchange    cal_date    is_open pretrade_date
