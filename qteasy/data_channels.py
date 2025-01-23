@@ -23,6 +23,7 @@ from concurrent.futures import (
     as_completed,
 )
 
+import qteasy.datatables
 from .utilfuncs import (
     str_to_list,
     list_truncate,
@@ -130,6 +131,29 @@ def fetch_table_data_from_eastmoney(table, **kwargs):
     dnld_data = acquire_data(api_name, **kwargs)
 
     return dnld_data
+
+
+def cleaning_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
+    """ 清洗数据，确保数据data的字段和数据类型符合数据表table的定义
+
+    Parameters
+    ----------
+    data: pd.DataFrame,
+        下载的数据
+    table: str,
+        数据表名，必须是API_MAP中定义的数据表
+
+    Returns
+    -------
+    pd.DataFrame:
+        清洗后的数据
+    """
+    # 去除重复数据
+    data.drop_duplicates(inplace=True)
+
+    table_schema = qteasy.database.get_built_in_table_schema()
+
+    return data
 
 
 def _get_fetch_table_func(channel: str):

@@ -361,8 +361,9 @@ def stk_limit(ts_code: str = None,
                 end: str = None) -> pd.DataFrame:
     """ 获取个股涨跌停价格
     """
+    fields = "ts_code, trade_date, pre_close, up_limit, down_limit"
     pro = ts.pro_api()
-    res = pro.stk_limit(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.stk_limit(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, fields=fields)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stock_limit with ts_code={ts_code}, trade_date={trade_date}'
                      f'start_date={start}, end_date={end}')

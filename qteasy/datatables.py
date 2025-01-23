@@ -16,7 +16,10 @@ import pandas as pd
 
 from functools import lru_cache
 
-from .utilfuncs import str_to_list
+from .utilfuncs import (
+    str_to_list,
+    pandas_freq_alias_version_conversion,
+)
 
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
@@ -1582,6 +1585,499 @@ def get_tables_by_name_or_usage(tables: str or [str],
             )
 
     return tables_to_refill
+
+
+# 以下是通用dataframe操作函数
+def set_primary_key_index(df, primary_key, pk_dtypes):
+    """ df是一个DataFrame，primary key是df的某一列或多列的列名，将primary key所指的
+    列设置为df的行标签，设置正确的时间日期格式，并删除primary key列后返回新的df
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的DataFrame
+    primary_key: list of str
+        需要设置为行标签的列名，所有列名必须出现在df的列名中
+    pk_dtypes: list of str
+        需要设置为行标签的列的数据类型，日期数据需要小心处理
+
+    Returns
+    -------
+    None
+    """
+    if not isinstance(df, pd.DataFrame):
+        err = TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+        raise err
+    if df.empty:
+        return df
+    if not isinstance(primary_key, list):
+        err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        raise err
+    all_columns = df.columns
+    if not all(item in all_columns for item in primary_key):
+        err = KeyError(f'primary key contains invalid value: '
+                       f'{[item for item in primary_key if item not in all_columns]}')
+        raise err
+
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    set_datetime_format_frame(df, primary_key, pk_dtypes)
+
+    # 设置正确的Index或MultiIndex
+    pk_count = len(primary_key)
+    if pk_count == 1:
+        # 当primary key只包含一列时，创建single index
+        df.index = df[primary_key[0]]
+    elif pk_count > 1:
+        # 当primary key包含多列时，创建MultiIndex
+        m_index = pd.MultiIndex.from_frame(df[primary_key])
+        df.index = m_index
+    else:
+        # for other unexpected cases
+        err = ValueError(f'wrong input!')
+        raise err
+    df.drop(columns=primary_key, inplace=True)
+
+    return None
+
+
+# TODO: consider moving this function to utility functions, separated in multiple simpler functions and been used
+#  in other functions in other modules
+def _resample_data(hist_data, target_freq,
+                   method='last',
+                   b_days_only=True,
+                   trade_time_only=True,
+                   forced_start=None,
+                   forced_end=None,
+                   **kwargs):
+    """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
+    符合target_freq
+
+    Parameters
+    ----------
+    hist_data: pd.DataFrame
+        历史数据，是一个index为日期/时间的DataFrame
+    target_freq: str
+        历史数据的目标频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+    method: str
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        降频可用的methods有：
+        - 'last'/'close': 使用合并区间的最后一个值
+        - 'first'/'open': 使用合并区间的第一个值
+        - 'max'/'high': 使用合并区间的最大值作为合并值
+        - 'min'/'low': 使用合并区间的最小值作为合并值
+        - 'mean'/'average': 使用合并区间的平均值作为合并值
+        - 'sum/total': 使用合并区间的总和作为合并值
+
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        升频可用的methods有：
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'nan': 使用NaN值填充缺失数据
+        - 'zero': 使用0值填充缺失数据
+    b_days_only: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+    trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+    forced_start: str, Datetime like, 默认None
+        强制开始日期，如果为None，则使用hist_data的第一天为开始日期
+    forced_start: str, Datetime like, 默认None
+        强制结束日期，如果为None，则使用hist_data的最后一天为结束日期
+    **kwargs:
+        用于生成trade_time_index的参数，包括：
+        include_start:   日期时间序列是否包含开始日期/时间
+        include_end:     日期时间序列是否包含结束日期/时间
+        start_am:        早晨交易时段的开始时间
+        end_am:          早晨交易时段的结束时间
+        include_start_am:早晨交易时段是否包括开始时间
+        include_end_am:  早晨交易时段是否包括结束时间
+        start_pm:        下午交易时段的开始时间
+        end_pm:          下午交易时段的结束时间
+        include_start_pm 下午交易时段是否包含开始时间
+        include_end_pm   下午交易时段是否包含结束时间
+
+    Returns
+    -------
+    DataFrame:
+    一个重新设定index并填充好数据的历史数据DataFrame
+
+    Examples
+    --------
+    例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+    数据合并方法:
+    - 'last'/'close': 使用合并区间的最后一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'first'/'open': 使用合并区间的第一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'max'/'high': 使用合并区间的最大值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'min'/'low': 使用合并区间的最小值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+    - 'sum'/'total': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+    例如，填充下列数据(?表示插入的数据）
+        [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+    缺失数据的填充方法如下:
+    - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+    - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+    - 'nan': 使用NaN值填充缺失数据：
+        [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+    - 'zero': 使用0值填充缺失数据：
+        [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+    """
+
+    if not isinstance(target_freq, str):
+        err = TypeError
+        raise err
+    target_freq = target_freq.upper()
+    # 如果hist_data为空，直接返回
+    if hist_data.empty:
+        return hist_data
+    if b_days_only:
+        if target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
+    # 如果hist_data的freq与target_freq一致，也可以直接返回
+    # TODO: 这里有bug：强制start/end的情形需要排除
+    if hist_data.index.freqstr == target_freq:
+        return hist_data
+    # 如果hist_data的freq为None，可以infer freq
+    if hist_data.index.inferred_freq == target_freq:
+        return hist_data
+
+    # 新版本pandas修改了部分freq alias，为了确保向后兼容，确保freq_aliases与pandas版本匹配
+    target_freq = pandas_freq_alias_version_conversion(target_freq)
+
+    resampled = hist_data.resample(target_freq)
+    if method in ['last', 'close']:
+        resampled = resampled.last()
+    elif method in ['first', 'open']:
+        resampled = resampled.first()
+    elif method in ['max', 'high']:
+        resampled = resampled.max()
+    elif method in ['min', 'low']:
+        resampled = resampled.min()
+    elif method in ['avg', 'mean']:
+        resampled = resampled.mean()
+    elif method in ['sum', 'total']:
+        resampled = resampled.sum()
+    elif method == 'ffill':
+        resampled = resampled.ffill()
+    elif method == 'bfill':
+        resampled = resampled.bfill()
+    elif method in ['nan', 'none']:
+        resampled = resampled.first()
+    elif method == 'zero':
+        resampled = resampled.first().fillna(0)
+    else:
+        # for unexpected cases
+        err = ValueError(f'resample method {method} can not be recognized.')
+        raise err
+
+    # 完成resample频率切换后，根据设置去除非工作日或非交易时段的数据
+    # 并填充空数据
+    resampled_index = resampled.index
+    if forced_start is None:
+        start = resampled_index[0]
+    else:
+        start = pd.to_datetime(forced_start)
+    if forced_end is None:
+        end = resampled_index[-1]
+    else:
+        end = pd.to_datetime(forced_end)
+
+    # 如果要求强制转换自然日频率为工作日频率
+    # 原来的版本在resample之前就强制转换自然日到工作日，但是测试发现，pd的resample有一个bug：
+    # 这个bug会导致method为last时，最后一个工作日的数据取自周日，而不是周五
+    # 在实际测试中发现，如果将2020-01-01到2020-01-10之间的Hourly数据汇总到工作日时
+    # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
+    # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
+    # 了周五，这样可能会导致错误的结果
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将非交易日的数据去除
+    # 不过仅对freq为'D'的频率如此操作
+    if b_days_only:
+        if target_freq == 'D':
+            target_freq = 'B'
+
+    # 如果要求去掉非交易时段的数据
+    from qteasy.trading_util import _trade_time_index
+    if trade_time_only:
+        expanded_index = _trade_time_index(
+                start=start,
+                end=end,
+                freq=target_freq,
+                trade_days_only=b_days_only,
+                **kwargs
+        )
+    else:
+        expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
+    resampled = resampled.reindex(index=expanded_index)
+    # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
+    if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
+        if method == 'ffill':
+            resampled.ffill(inplace=True)
+        elif method == 'bfill':
+            resampled.bfill(inplace=True)
+        elif method == 'zero':
+            resampled.fillna(0, inplace=True)
+
+    return resampled
+
+
+# noinspection PyUnresolvedReferences
+def set_primary_key_frame(df: pd.DataFrame, primary_key: [str], pk_dtypes: [str]) -> pd.DataFrame:
+    """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
+        并重设df的index为0，1，2，3，4...
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的df
+    primary_key: list
+        primary key的名称
+    pk_dtypes: list
+        primary key的数据类型
+
+    Returns
+    -------
+    df: pd.DataFrame
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df = set_primary_key_frame(df, ['a'], ['int'])
+    >>> df
+         a  b
+    0    1  4
+    1    2  5
+    2    3  6
+    >>> set_primary_key_index(df, ['a'], ['int'])
+    >>> df
+         b
+    a
+    1    4
+    2    5
+    3    6
+    """
+
+    if not isinstance(df, pd.DataFrame):
+        err = TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+        raise err
+    if df.empty:
+        return df
+    if not isinstance(primary_key, list):
+        err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        raise err
+    if not isinstance(pk_dtypes, list):
+        err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+        raise err
+
+    all_columns = df.columns
+    if not all(item in all_columns for item in primary_key):
+        if not all(key in df.index.names for key in primary_key):
+            msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
+            raise KeyError(msg)
+
+    idx_columns = list(df.index.names)
+    pk_columns = primary_key
+
+    if idx_columns != [None]:
+        # index中有值，需要将index中的值放入DataFrame中
+        index_frame = df.index.to_frame()
+        for col in idx_columns:
+            df[col] = index_frame[col]
+
+    df.index = range(len(df))
+    # 此时primary key有可能被放到了columns的最后面，需要将primary key移动到columns的最前面：
+    columns = df.columns.to_list()
+    new_col = [col for col in columns if col not in pk_columns]
+    new_col = pk_columns + new_col
+    df = df.reindex(columns=new_col, copy=False)
+
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    set_datetime_format_frame(df, primary_key, pk_dtypes)
+
+    return df
+
+
+def set_datetime_format_frame(df, primary_key: [str], pk_dtypes: [str]) -> None:
+    """ 根据primary_key的rule为df的主键设置正确的时间日期类型
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的df
+    primary_key: list of str
+        主键列
+    pk_dtypes: list of str
+        主键数据类型，主要关注"date" 和"TimeStamp"
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df = set_primary_key_frame(df, ['a'], [int])
+    >>> df
+         a    b
+    0    1    4
+    1    2    5
+    2    3    6
+    >>> set_primary_key_index(df, ['a'], ['int'])
+    >>> df
+         b
+    a
+    1    4
+    2    5
+    3    6
+    >>> set_datetime_format_frame(df, ['a'], ['date'])
+    >>> df
+                                     b
+    a
+    1970-01-01 00:00:00.000000001    4
+    1970-01-01 00:00:00.000000002    5
+    1970-01-01 00:00:00.000000003    6
+
+    """
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date", "datetime"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    datetime_dtypes = ['date', 'datetime', 'TimeStamp']
+
+    if any(dtype in pk_dtypes for dtype in datetime_dtypes):
+        # 需要设置正确的时间日期格式：
+        # 有时候pk会包含多列，可能有多个时间日期，因此需要逐个设置
+        for pk_item, dtype in zip(primary_key, pk_dtypes):
+            if dtype in datetime_dtypes:
+                df[pk_item] = pd.to_datetime(df[pk_item])
+    return None
+
+
+def get_primary_key_range(df, primary_key: list[str], pk_dtypes: list[str]) -> dict:
+    """ 给定一个dataframe，给出这个df表的主键的范围，用于下载数据时用作传入参数
+        如果主键类型为string，则给出一个list，包含所有的元素
+        如果主键类型为date，则给出上下界
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        需要操作的df
+    primary_key: list
+        以列表形式给出的primary_key列名
+    pk_dtypes: list
+        primary_key的数据类型
+
+    Returns
+    -------
+    dict，形式为{primary_key1: [values], 'start': start_date, 'end': end_date}
+
+    # TODO: 下面的Example由Copilot生成，需要检查
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df
+            a  b
+    0    1    4
+    1    2    5
+    2    3    6
+    >>> df = set_primary_key_index(df, ['a'], ['int'])
+    >>> df
+            b
+    a
+    1    4
+    2    5
+    3    6
+    >>> get_primary_key_range(df, ['a'], ['int'])
+    {'shares': [1, 2, 3]}
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    >>> df = set_primary_key_frame(df, ['a'], ['date'])
+    >>> df
+            a  b
+    0    1    4
+    1    2    5
+    2    3    6
+    >>> df = set_primary_key_index(df, ['a'], ['date'])
+    >>> df
+            b
+    a
+    1970-01-01 00:00:00.000000001    4
+    1970-01-01 00:00:00.000000002    5
+    1970-01-01 00:00:00.000000003    6
+    >>> get_primary_key_range(df, ['a'], ['date'])
+    {'start': Timestamp('1970-01-01 00:00:00.000000001'), 'end': Timestamp('1970-01-01 00:00:00.000000003')}
+
+    """
+    if df.index.name is not None:
+        df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
+    res = {}
+    for pk, dtype in zip(primary_key, pk_dtypes):
+        if (dtype == 'str') or (dtype[:7] == 'varchar'):
+            res['shares'] = (list(set(df[pk].values)))
+        elif dtype.lower() in ['date', 'timestamp', 'datetime', 'int', 'float', 'double']:
+            res['start'] = df[pk].min()
+            res['end'] = df[pk].max()
+        else:
+            raise KeyError(f'invalid dtype: {dtype}')
+    return res
+
+
+@lru_cache(maxsize=16)
+def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=True) -> tuple:
+    """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
+
+    Parameters
+    ----------
+    table:
+        str, 表名称(注意不是表的结构名称)
+    with_remark: bool
+        为True时返回remarks，否则不返回
+    with_primary_keys: bool
+        为True时返回primary_keys以及primary_key的数据类型，否则不返回
+
+    Returns
+    -------
+    Tuple: 包含四个List，包括:
+        columns: 整张表的列名称
+        dtypes: 整张表所有列的数据类型
+        primary_keys: 主键列名称
+        pk_dtypes: 主键列的数据类型
+    """
+    if not isinstance(table, str):
+        err = TypeError(f'table name should be a string, got {type(table)} instead')
+        raise err
+    if table not in TABLE_MASTERS.keys():
+        raise KeyError(f'invalid table name')
+
+    table_schema = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('schema')]
+    schema = TABLE_SCHEMA[table_schema]
+    columns = schema['columns']
+    dtypes = schema['dtypes']
+    remarks = schema['remarks']
+    pk_loc = schema['prime_keys']
+    primary_keys = [columns[i] for i in pk_loc]
+    pk_dtypes = [dtypes[i] for i in pk_loc]
+
+    if (not with_remark) and with_primary_keys:
+        return columns, dtypes, primary_keys, pk_dtypes
+    if with_remark and (not with_primary_keys):
+        return columns, dtypes, remarks
+    if (not with_remark) and (not with_primary_keys):
+        return columns, dtypes
+    if with_remark and with_primary_keys:
+        return columns, dtypes, remarks, primary_keys, pk_dtypes
 
 
 class DataConflictWarning(Warning):
