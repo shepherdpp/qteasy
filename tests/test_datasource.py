@@ -28,14 +28,18 @@ from qteasy.database import (
     DataSource,
     set_primary_key_index,
     set_primary_key_frame,
-    get_primary_key_range,
+)
+
+from qteasy.datatables import (
     _resample_data,
+    get_primary_key_range,
 )
 
 from qteasy.utilfuncs import (
     get_main_freq_level,
     next_main_freq,
     parse_freq_string,
+    freq_dither,
 )
 
 

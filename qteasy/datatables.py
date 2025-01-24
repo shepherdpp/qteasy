@@ -473,9 +473,9 @@ TABLE_SCHEMA = {
          },
 
     'trade_calendar':  # 交易日历表
-        {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
-         'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
-         'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
+        {'columns':    ['cal_date', 'exchange', 'is_open', 'pretrade_date'],
+         'dtypes':     ['date', 'varchar(9)', 'tinyint', 'date'],
+         'remarks':    ['日期', '交易所', '是否交易', '上一交易日'],
          'prime_keys': [0, 1]
          },
 
@@ -547,7 +547,7 @@ TABLE_SCHEMA = {
                          "int", "float", "int", "float", "int", "float",
                          "int", "float", "int", "float", "int",
                          "float", "int", "float"],
-         'remarks':     ["TS代码", "交易日期", "小单买入量（手）", "小单买入金额（万元）", "小单卖出量（手）", "小单卖出金额（万元）",
+         'remarks':     ["证券代码", "交易日期", "小单买入量（手）", "小单买入金额（万元）", "小单卖出量（手）", "小单卖出金额（万元）",
                          "中单买入量（手）", "中单买入金额（万元）", "中单卖出量（手）", "中单卖出金额（万元）", "大单买入量（手）", "大单买入金额（万元）",
                          "大单卖出量（手）", "大单卖出金额（万元）", "特大单买入量（手）", "特大单买入金额（万元）", "特大单卖出量（手）",
                          "特大单卖出金额（万元）", "净流入量（手）", "净流入额（万元）"],
@@ -555,16 +555,16 @@ TABLE_SCHEMA = {
          },
 
     'stock_limit':  # New, 涨跌停价格!
-        {'columns':     ["trade_date", "ts_code", "pre_close", "up_limit", "down_limit"],
-         'dtypes':      ["date", "varchar(10)", "float", "float", "float"],
-         'remarks':     ["交易日期", "TS股票代码", "昨日收盘价", "涨停价", "跌停价"],
+        {'columns':     ["ts_code", "trade_date", "pre_close", "up_limit", "down_limit"],
+         'dtypes':      ["varchar(10)", "date", "float", "float", "float"],
+         'remarks':     ["TS股票代码", "交易日期", "昨日收盘价", "涨停价", "跌停价"],
          'prime_keys':  [0, 1]
          },
 
     'stock_suspend':  # New, 停复牌信息!
         {'columns':     ["ts_code", "trade_date", "suspend_timing", "suspend_type"],
          'dtypes':      ["varchar(10)", "date", "varchar(15)", "varchar(2)"],
-         'remarks':     ["TS代码", "停复牌日期", "日内停牌时间段", "停复牌类型：S-停牌，R-复牌"],
+         'remarks':     ["证券代码", "停复牌日期", "日内停牌时间段", "停复牌类型：S-停牌，R-复牌"],
          'prime_keys':  [0, 1]
          },
 
@@ -579,23 +579,23 @@ TABLE_SCHEMA = {
          },
 
     'hs_top10_stock':  # New, 沪深股通十大成交股!
-        {'columns':     ["trade_date", "ts_code", "name", "close", "change", "rank", "market_type", "amount",
+        {'columns':     ["ts_code", "trade_date", "name", "close", "change", "rank", "market_type", "amount",
                          "net_amount", "buy", "sell"],
-         'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "int", "varchar(3)", "float",
+         'dtypes':      ["varchar(10)", "date", "varchar(10)", "float", "float", "int", "varchar(3)", "float",
                          "float", "float", "float"],
-         'remarks':     ["交易日期", "股票代码", "股票名称", "收盘价", "涨跌额", "资金排名", "市场类型（1：沪市 3：深市）", "成交金额（元）",
+         'remarks':     ["证券代码", "交易日期", "股票名称", "收盘价", "涨跌额", "资金排名", "市场类型（1：沪市 3：深市）", "成交金额（元）",
                          "净成交金额（元）", "买入金额（元）", "卖出金额（元）"],
          'prime_keys':  [0, 1]
          },
 
     'hk_top10_stock':  # New, 港股通十大成交股!
-        {'columns':     ["trade_date", "ts_code", "name", "close", "p_change", "rank", "market_type",
+        {'columns':     ["ts_code", "trade_date", "name", "close", "p_change", "rank", "market_type",
                          "amount", "net_amount", "sh_amount", "sh_net_amount", "sh_buy", "sh_sell",
                          "sz_amount", "sz_net_amount", "sz_buy", "sz_sell"],
-         'dtypes':      ["date", "varchar(10)", "varchar(10)", "float", "float", "varchar(10)", "varchar(4)",
+         'dtypes':      ["varchar(10)", "date", "varchar(10)", "float", "float", "varchar(10)", "varchar(4)",
                          "float", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float"],
-         'remarks':     ["交易日期", "股票代码", "股票名称", "收盘价", "涨跌幅", "资金排名", "市场类型 2：港股通（沪） 4：港股通（深）",
+         'remarks':     ["证券代码", "交易日期", "股票名称", "收盘价", "涨跌幅", "资金排名", "市场类型 2：港股通（沪） 4：港股通（深）",
                          "累计成交金额（元）", "净买入金额（元）", "沪市成交金额（元）", "沪市净买入金额（元）", "沪市买入金额（元）", "沪市卖出金额",
                          "深市成交金额（元）", "深市净买入金额（元）", "深市买入金额（元）", "深市卖出金额（元）"],
          'prime_keys':  [0, 1]
@@ -753,7 +753,7 @@ TABLE_SCHEMA = {
                         'net_asset', 'total_netasset', 'adj_nav', 'update_flag'],
          'dtypes':     ['varchar(24)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
                         'float', 'varchar(2)'],
-         'remarks':    ['TS代码', '净值日期', '公告日期', '单位净值', '累计净值', '累计分红', '资产净值',
+         'remarks':    ['证券代码', '净值日期', '公告日期', '单位净值', '累计净值', '累计分红', '资产净值',
                         '合计资产净值', '复权单位净值', '更新标记'],
          'prime_keys': [0, 1]
          },
@@ -1256,31 +1256,31 @@ TABLE_SCHEMA = {
          'dtypes':      ["varchar(14)", "date", "varchar(14)", "date", "float", "float", "float",
                          "float", "float", "date", "date", "date", "date",
                          "date", "date", "float"],
-         'remarks':     ["TS代码", "分红年度", "实施进度", "预案公告日", "每股送转", "每股送股比例", "每股转增比例",
+         'remarks':     ["证券代码", "分红年度", "实施进度", "预案公告日", "每股送转", "每股送股比例", "每股转增比例",
                          "每股分红（税后）", "每股分红（税前）", "股权登记日", "除权除息日", "派息日", "红股上市日",
                          "实施公告日", "基准日", "基准股本（万）"],
          'prime_keys':  [0, 1, 2]
          },
 
     'top_list':  # New, 龙虎榜交易明细!
-        {'columns':     ["trade_date", "ts_code", "name", "close", "pct_change", "turnover_rate", "amount", "l_sell",
+        {'columns':     ["ts_code", "trade_date", "name", "close", "pct_change", "turnover_rate", "amount", "l_sell",
                          "l_buy", "l_amount", "net_amount", "net_rate", "amount_rate",
                          "float_values", "reason"],
-         'dtypes':      ["date", "varchar(14)", "varchar(10)", "float", "float", "float", "float", "float",
+         'dtypes':      ["varchar(14)", "date", "varchar(10)", "float", "float", "float", "float", "float",
                          "float", "float", "float", "float", "float",
                          "float", "text"],
-         'remarks':     ["交易日期", "TS代码", "名称", "收盘价", "涨跌幅", "换手率", "总成交额", "龙虎榜卖出额",
+         'remarks':     ["证券代码", "交易日期", "名称", "收盘价", "涨跌幅", "换手率", "总成交额", "龙虎榜卖出额",
                          "龙虎榜买入额", "龙虎榜成交额", "龙虎榜净买入额", "龙虎榜净买额占比", "龙虎榜成交额占比",
                          "当日流通市值", "上榜理由"],
          'prime_keys':  [0, 1]
          },
 
     'top_inst':  # New, 龙虎榜机构交易明细!
-        {'columns':     ["trade_date", "ts_code", "exalter", "side", "buy",
+        {'columns':     ["ts_code", "trade_date", "exalter", "side", "buy",
                          "buy_rate", "sell", "sell_rate", "net_buy", "reason"],
-         'dtypes':      ["date", "varchar(14)", "text", "varchar(2)", "float",
+         'dtypes':      ["varchar(14)", "date", "text", "varchar(2)", "float",
                          "float", "float", "float", "float", "text"],
-         'remarks':     ["交易日期", "TS代码", "营业部名称", "买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名",
+         'remarks':     ["证券代码", "交易日期", "营业部名称", "买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名",
                          "买入额（元）", "买入占总成交比例", "卖出额（元）", "卖出占总成交比例", "净成交额（元）", "上榜理由"],
          'prime_keys':  [0, 1]
          },
@@ -1298,7 +1298,7 @@ TABLE_SCHEMA = {
     'block_trade':  # New, 大宗交易!
         {'columns':     ["ts_code", "trade_date", "price", "vol", "amount", "buyer", "seller"],
          'dtypes':      ["varchar(14)", "date", "float", "float", "float", "text", "text"],
-         'remarks':     ["TS代码", "交易日历", "成交价", "成交量（万股）", "成交金额", "买方营业部", "卖方营业部"],
+         'remarks':     ["证券代码", "交易日历", "成交价", "成交量（万股）", "成交金额", "买方营业部", "卖方营业部"],
          'prime_keys':  [0, 1]
          },
 
@@ -1309,7 +1309,7 @@ TABLE_SCHEMA = {
          'dtypes':      ["varchar(14)", "date", "text", "varchar(2)", "varchar(4)", "float",
                          "float", "float", "float", "float", "float", "date",
                          "date"],
-         'remarks':     ["TS代码", "公告日期", "股东名称", "股东类型G高管P个人C公司", "类型IN增持DE减持", "变动数量",
+         'remarks':     ["证券代码", "公告日期", "股东名称", "股东类型G高管P个人C公司", "类型IN增持DE减持", "变动数量",
                          "占流通比例（%）", "变动后持股", "变动后占流通比例（%）", "平均价格", "持股总数", "增减持开始日期",
                          "增减持结束日期"],
          'prime_keys':  [0, 1]
@@ -1326,11 +1326,11 @@ TABLE_SCHEMA = {
          },
 
     'margin_detail':  # New, 融资融券交易明！
-        {'columns':     ["trade_date", "ts_code", "rzye", "rqye", "rzmre", "rqyl",
+        {'columns':     ["ts_code", "trade_date", "rzye", "rqye", "rzmre", "rqyl",
                          "rzche", "rqchl", "rqmcl", "rzrqye"],
-         'dtypes':      ["date", "varchar(14)", "float", "float", "float", "float",
+         'dtypes':      ["varchar(14)", "date", "float", "float", "float", "float",
                          "float", "float", "float", "float"],
-         'remarks':     ["交易日期", "TS股票代码", "融资余额(元)", "融券余额(元)", "融资买入额(元)", "融券余量（股）",
+         'remarks':     ["证券代码", "交易日期", "融资余额(元)", "融券余额(元)", "融资买入额(元)", "融券余量（股）",
                          "融资偿还额(元)", "融券偿还量(股)", "融券卖出量(股,份,手)", "融资融券余额(元)"],
          'prime_keys':  [0, 1]
          },
