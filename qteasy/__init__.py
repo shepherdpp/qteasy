@@ -13,6 +13,7 @@
 import os
 import sys
 import warnings
+from pathlib import Path
 
 import tushare as ts
 import numpy as np
@@ -60,8 +61,12 @@ QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
 # 准备从本地配置文件中读取预先存储的qteasy配置
 _qt_local_configs = {}
 
+QT_CONFIG_PATH = Path.home().joinpath('.qteasy')
+if not QT_CONFIG_PATH.exists():
+    QT_CONFIG_PATH.mkdir(parents=True, exist_ok=True)
+
 # 读取start up configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
-_config_lines = _read_start_up_file(os.path.join(QT_ROOT_PATH, 'qteasy.cfg'))
+_config_lines = _read_start_up_file(str(QT_CONFIG_PATH.joinpath('qteasy.cfg')))
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
 start_up_config = _parse_start_up_config_lines(config_lines=_config_lines)
