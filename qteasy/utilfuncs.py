@@ -965,7 +965,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         raise TypeError(msg)
     if QT_TRADE_CALENDAR is not None:
         try:
-            exchange_trade_cal = QT_TRADE_CALENDAR.loc[exchange]
+            exchange_trade_cal = QT_TRADE_CALENDAR.loc[(slice(None), exchange), ]
+            exchange_trade_cal.index = exchange_trade_cal.index.get_level_values(0)
         except KeyError as e:
             e.extra_info = f'Trade Calender for exchange: {exchange} is not downloaded, please refill data'
             raise e
@@ -1012,7 +1013,8 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
         raise TypeError(msg)
     if QT_TRADE_CALENDAR is not None:
         try:
-            exchange_trade_cal = QT_TRADE_CALENDAR.loc[exchange]
+            exchange_trade_cal = QT_TRADE_CALENDAR.loc[(slice(None), exchange), ]
+            exchange_trade_cal.index = exchange_trade_cal.index.get_level_values(0)
         except KeyError as e:
             msg = f'Trade Calender for exchange: {e} was not properly downloaded, please refill data'
             raise KeyError(msg)
@@ -1067,7 +1069,8 @@ def prev_market_trade_day(date, exchange='SSE'):
         e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise e
     if QT_TRADE_CALENDAR is not None:
-        exchange_trade_cal = QT_TRADE_CALENDAR.loc[exchange]
+        exchange_trade_cal = QT_TRADE_CALENDAR.loc[(slice(None), exchange), ]
+        exchange_trade_cal.index = exchange_trade_cal.index.get_level_values(0)
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
         return pd.to_datetime(pretrade_date)
     else:

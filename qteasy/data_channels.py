@@ -354,8 +354,11 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         raise ValueError('unexpected arg type:', arg_type)
 
     # build the args dict
-    if (arg_name is None) or not arg_values:
+    if (arg_name is None) and (additional_start_end.lower() != 'y'):
         kwargs = {}
+    elif (arg_name is None) and (additional_start_end.lower() == 'y'):
+        additional_args = _parse_additional_time_args(start_end_chunk_size, start_date, end_date)
+        kwargs = ({**add_arg} for add_arg in additional_args)
     elif additional_start_end.lower() != 'y':
         # only standard args
         kwargs = ({arg_name: val} for val in arg_values)
@@ -1227,19 +1230,19 @@ TUSHARE_API_MAP = {
         ['margin_detail', 'trade_date', 'trade_date', '20190910', '', '', ''],
 
     'shibor':
-        ['shibor', 'date', 'datetime', '20000101', '', '', ''],
+        ['shibor', 'none', 'none', '', '', 'Y', '365'],
 
     'libor':
-        ['libor', 'date', 'datetime', '20000101', '', '', ''],
+        ['libor', 'none', 'none', '', '', 'Y', '365'],
 
     'hibor':
-        ['hibor', 'date', 'datetime', '20000101', '', '', ''],
+        ['hibor', 'none', 'none', '', '', 'Y', '365'],
 
     'wz_index':
-        ['wz_index', 'none', 'none', '', '', '', ''],
+        ['wz_index', 'none', 'none', '', '', 'Y', '365'],
 
     'gz_index':
-        ['gz_index', 'none', 'none', '', '', '', ''],
+        ['gz_index', 'none', 'none', '', '', 'Y', '365'],
 
     'cn_gdp':
         ['cn_gdp', 'start', 'quarter', '1976Q4', '', '', ''],

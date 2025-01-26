@@ -425,6 +425,23 @@ class TestChannels(unittest.TestCase):
                           {'end': '20210110', 'start': '20210101', 'ts_code': '000006.SH'},
                           {'end': '20210110', 'start': '20210101', 'ts_code': '000007.SH'}])
 
+        table = 'shibor'  # parse ['shibor', '', '', '', '', 'Y', '365'] type of args
+        print(f'testing parsing args for table: {table}')
+        # parse the filling args and pick the first filling arg value from the range
+        args = parse_data_fetch_args(table=table,
+                                     channel='tushare',
+                                     symbols='000001.SH, 000011.SH, 000016.SH, 000300.OTHER',
+                                     start_date='20210101',
+                                     end_date='20220220',
+                                     list_arg_filter=None,
+                                     reversed_par_seq=False,
+                                     )
+        args = list(args)
+        print(f'args: {args}')
+        self.assertEqual(args,
+                         [{'start': '20210101', 'end': '20220101'},
+                          {'start': '20220101', 'end': '20220220'}])
+
     def test_fetch_batch_table(self):
         """ test function fetch batch table data"""
         print('testing fetching tables')

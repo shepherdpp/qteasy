@@ -254,6 +254,9 @@ class DataType:
         'basics',
         # 直接获取数据表中与资产有关的一个数据字段，该数据与日期无关，输出index为qt_code的Series
         # {'table_name': table, 'column': column}
+        'reference',
+        # 直接获取日期表中与资产无关的数据字段，该数据与资产无关，输出index为date的Series
+        # {'table_name': table, 'column': column}
         'selection',
         # 数据筛选型。从basics表中筛选出数据并输出，如股票代码、行业分类等。输出index为qt_code的Series
         # {'table_name': table, 'column': output_col, 'sel_by': sel_column, 'keys': keys}
@@ -268,12 +271,25 @@ class DataType:
         # 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等
         'operation',  # 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//
         'event_status',
-        # 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
+        # 事件状态型。从时间数据表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等
+        # 要求数据表的PK类型为code-date型（T4型）
+        # 输出index为datetime，column为qt_code的DataFrame
+        # {'table_name': table, 'column': column}
         'event_multi_stat',
         # 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等
+        # 数据表的PK类型必须为date-code-other类型（T5类型），其中other列被用于筛选同一时间内的不同状态
+        # 此处一般表示不同的人员姓名
+        # {'table_name': table, 'column': column, 'id_index': id, 'start_col': start, 'end_col': end}
         'event_signal',
-        # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等
+        # 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜等
+        # 要求数据表的PK类型为code-date型（T4型）
+        # 输出index为datetime，column为qt_code的DataFrame
         # {'table_name': table, 'column': output_col}
+        'selected_events',
+        # 筛选事件型数据，本质上与事件信号型数据类似，同样筛选日期数据表中的事件是否发生。
+        # 但是要求数据表的PK类型为code-date-other型（T5型），要求额外给出信息用于筛选不同other字段的值
+        # 输出index为datetime，column为qt_code的DataFrame
+        # {'table_name': table, 'column': output_col, 'sel_by': column, 'key': key}
         'composition',
         # 成份数据。从成份表中筛选出来数据并行列转换，该成分表与时间相关，如指数成分股
         # {'table_name': 'index_weight', 'column': 'weight', 'comp_column': 'index_code', 'index': '%'}],
@@ -434,6 +450,8 @@ class DataType:
 
         if acquisition_type == 'basics':
             acquired_data = self._get_basics(datasource, symbols=symbols)
+        elif acquisition_type == 'reference':
+            acquired_data = self._get_reference(datasource, symbols=None, starts=starts, ends=ends)
         elif acquisition_type == 'selection':
             acquired_data = self._get_selection(datasource, symbols=symbols)
         elif acquisition_type == 'direct':
@@ -450,6 +468,8 @@ class DataType:
             acquired_data = self._get_event_status(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'event_signal':
             acquired_data = self._get_event_signal(datasource, symbols=symbols, starts=starts, ends=ends)
+        elif acquisition_type == 'selected_events':
+            acquired_data = self._get_selected_events(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'composition':
             acquired_data = self._get_composition(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'category':
@@ -507,6 +527,17 @@ class DataType:
             raise KeyError(f'column {column} not in table data: {acquired_data.columns}')
 
         return acquired_data[column]
+
+    def _get_reference(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.Series:
+        """
+
+        :param datasource:
+        :param symbols:
+        :param starts:
+        :param ends:
+        :return:
+        """
+        return self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
 
     def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.Series:
         """筛选型的数据获取方法：
@@ -574,7 +605,7 @@ class DataType:
         if data_series.empty:
             return pd.DataFrame()
 
-        unstacked_df = data_series.unstack(level='ts_code')
+        unstacked_df = data_series.unstack(level=0)
 
         return unstacked_df
 
@@ -727,7 +758,7 @@ class DataType:
             # expand the index to include starts and ends dates
             status = _expand_df_index(data_df, starts, ends).ffill()
         except:
-            # import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
             pass
 
         # filter out events that are not in the date range
@@ -768,6 +799,43 @@ class DataType:
         # if index is a MultiIndex with multiple datetime levels, use the last level as the date index
         if isinstance(signals.index, pd.MultiIndex):
             signals.index = signals.index.get_level_values(-1)
+
+        return signals
+
+    def _get_selected_events(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        sel_by = self.kwargs.get('sel_by')
+        key = self.kwargs.get('key')
+
+        if symbols is None:
+            raise ValueError('symbols must be provided for event status data type')
+        if starts is None or ends is None:
+            raise ValueError('start and end must be provided for event status data type')
+
+        data_series = self._get_basics(datasource, symbols=symbols, starts=starts, ends=ends)
+
+        if data_series.empty:
+            return pd.DataFrame()
+
+        signals = data_series.unstack(level='ts_code')
+
+        if sel_by not in signals.index.names:
+            raise KeyError(f'the sel_by column ({sel_by}) not in index: {signals.index.names}')
+
+        try:
+            signals = signals.loc[(slice(None), key),]
+            signals.index = signals.index.get_level_values(0)
+        except:
+            return pd.DataFrame()
 
         return signals
 
@@ -1406,10 +1474,6 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'ths_index_daily', 'column': 'vol'}],
     ('ths_turnover', 'd', 'IDX'):                     ['同花顺指数日K线 - 换手率', 'direct',
                                                        {'table_name': 'ths_index_daily', 'column': 'turnover_rate'}],
-    ('ths_pe', 'd', 'IDX'):                           ['同花顺指数日K线 - 市盈率', 'direct',
-                                                       {'table_name': 'ths_index_daily', 'column': 'pe'}],
-    ('ths_pb', 'd', 'IDX'):                           ['同花顺指数日K线 - 市净率', 'direct',
-                                                       {'table_name': 'ths_index_daily', 'column': 'pb'}],
     ('ths_float_mv', 'd', 'IDX'):                     ['同花顺指数日K线 - 流通市值 （万元）', 'direct',
                                                        {'table_name': 'ths_index_daily', 'column': 'float_mv'}],
     ('ths_total_mv', 'd', 'IDX'):                     ['同花顺指数日K线 - 总市值 （万元）', 'direct',
@@ -1996,17 +2060,17 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'stock_limit', 'column': 'up_limit'}],
     ('down_limit', 'd', 'E'):                         ['跌停板 - 跌停价', 'direct',
                                                        {'table_name': 'stock_limit', 'column': 'down_limit'}],
-    ('ggt_ss', 'd', 'Any'):                           ['沪深港通资金流向 - 港股通（上海）', 'direct',
+    ('ggt_ss', 'd', 'Any'):                           ['沪深港通资金流向 - 港股通（上海）', 'reference',
                                                        {'table_name': 'hs_money_flow', 'column': 'ggt_ss'}],
-    ('ggt_sz', 'd', 'Any'):                           ['沪深港通资金流向 - 港股通（深圳）', 'direct',
+    ('ggt_sz', 'd', 'Any'):                           ['沪深港通资金流向 - 港股通（深圳）', 'reference',
                                                        {'table_name': 'hs_money_flow', 'column': 'ggt_sz'}],
-    ('hgt', 'd', 'Any'):                              ['沪深港通资金流向 - 沪股通（百万元）', 'direct',
+    ('hgt', 'd', 'Any'):                              ['沪深港通资金流向 - 沪股通（百万元）', 'reference',
                                                        {'table_name': 'hs_money_flow', 'column': 'hgt'}],
-    ('sgt', 'd', 'Any'):                              ['沪深港通资金流向 - 深股通（百万元）', 'direct',
+    ('sgt', 'd', 'Any'):                              ['沪深港通资金流向 - 深股通（百万元）', 'reference',
                                                        {'table_name': 'hs_money_flow', 'column': 'sgt'}],
-    ('north_money', 'd', 'Any'):                      ['沪深港通资金流向 - 北向资金（百万元）', 'direct',
+    ('north_money', 'd', 'Any'):                      ['沪深港通资金流向 - 北向资金（百万元）', 'reference',
                                                        {'table_name': 'hs_money_flow', 'column': 'north_money'}],
-    ('south_money', 'd', 'Any'):                      ['沪深港通资金流向 - 南向资金（百万元）', 'direct',
+    ('south_money', 'd', 'Any'):                      ['沪深港通资金流向 - 南向资金（百万元）', 'reference',
                                                        {'table_name': 'hs_money_flow', 'column': 'south_money'}],
     ('basic_eps', 'q', 'E'):                          ['上市公司利润表 - 基本每股收益', 'direct',
                                                        {'table_name': 'income', 'column': 'basic_eps'}],
@@ -3229,7 +3293,6 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'hs_top10_stock', 'column': 'sell'}],
     ('fd_share', 'd', 'FD'):                          ['基金份额（万）', 'direct',
                                                        {'table_name': 'fund_share', 'column': 'fd_share'}],
-    # TODO: 获取managers_name信息会出现错误，需要调查
     ('managers_name', 'd', 'FD'):                     ['基金经理姓名', 'event_multi_stat',
                                                        {'table_name': 'fund_manager', 'column': 'name',
                                                         'id_index':   'name', 'start_col': 'begin_date',
@@ -3254,28 +3317,69 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'fund_manager', 'column': 'resume',
                                                         'id_index':   'name', 'start_col': 'begin_date',
                                                         'end_col':    'end_date'}],
-    ('stk_div', 'd', 'E'):                            ['每股送转', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'stk_div'}],
-    ('stk_bo_rate', 'd', 'E'):                        ['每股送股比例', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'stk_bo_rate'}],
-    ('stk_co_rate', 'd', 'E'):                        ['每股转增比例', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'stk_co_rate'}],
-    ('cash_div', 'd', 'E'):                           ['每股分红（税后）', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'cash_div'}],
-    ('cash_div_tax', 'd', 'E'):                       ['每股分红（税前）', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'cash_div_tax'}],
-    ('record_date', 'd', 'E'):                        ['股权登记日', 'event_signal',
-                                                       {'table_name': 'dividend', 'column': 'record_date'}],
-    ('ex_date', 'd', 'E'):                            ['除权除息日', 'event_signal',
-                                                       {'table_name': 'dividend', 'column': 'ex_date'}],
-    ('pay_date', 'd', 'E'):                           ['派息日', 'event_signal',
-                                                       {'table_name': 'dividend', 'column': 'pay_date'}],
-    ('imp_ann_date', 'd', 'E'):                       ['实施公告日', 'event_signal',
-                                                       {'table_name': 'dividend', 'column': 'imp_ann_date'}],
-    ('base_date', 'd', 'E'):                          ['基准日', 'event_signal',
-                                                       {'table_name': 'dividend', 'column': 'base_date'}],
-    ('base_share', 'd', 'E'):                         ['基准股本（万）', 'event_status',
-                                                       {'table_name': 'dividend', 'column': 'base_share'}],
+    ('stk_div_planned', 'd', 'E'):                    ['预案-每股送转', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_div',
+                                                        'sel_by': 'div_proc', 'key': '预案'}],
+    ('stk_bo_rate_planned', 'd', 'E'):                ['预案-每股送股比例', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_bo_rate',
+                                                        'sel_by': 'div_proc', 'key': '预案'}],
+    ('stk_co_rate_planned', 'd', 'E'):                ['预案-每股转增比例', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_co_rate',
+                                                        'sel_by': 'div_proc', 'key': '预案'}],
+    ('cash_div_planned', 'd', 'E'):                   ['预案-每股分红（税后）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'cash_div',
+                                                        'sel_by': 'div_proc', 'key': '预案'}],
+    ('cash_div_tax_planned', 'd', 'E'):               ['预案-每股分红（税前）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'cash_div_tax',
+                                                        'sel_by': 'div_proc', 'key': '预案'}],
+    ('stk_div_approved', 'd', 'E'):                   ['股东大会批准-每股送转', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_div',
+                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+    ('stk_bo_rate_approved', 'd', 'E'):               ['股东大会批准-每股送股比例', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_bo_rate',
+                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+    ('stk_co_rate_approved', 'd', 'E'):               ['股东大会批准-每股转增比例', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_co_rate',
+                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+    ('cash_div_approved', 'd', 'E'):                  ['股东大会批准-每股分红（税后）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'cash_div',
+                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+    ('cash_div_tax_approved', 'd', 'E'):              ['股东大会批准-每股分红（税前）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'cash_div_tax',
+                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+    ('stk_div', 'd', 'E'):                            ['实施-每股送转', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_div',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('stk_bo_rate', 'd', 'E'):                        ['实施-每股送股比例', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_bo_rate',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('stk_co_rate', 'd', 'E'):                        ['实施-每股转增比例', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'stk_co_rate',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('cash_div', 'd', 'E'):                           ['实施-每股分红（税后）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'cash_div',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('cash_div_tax', 'd', 'E'):                       ['实施-每股分红（税前）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'cash_div_tax',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('record_date', 'd', 'E'):                        ['实施-股权登记日', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'record_date',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('ex_date', 'd', 'E'):                            ['实施-除权除息日', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'ex_date',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('pay_date', 'd', 'E'):                           ['实施-派息日', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'pay_date',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('imp_ann_date', 'd', 'E'):                       ['实施-实施公告日', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'imp_ann_date',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('base_date', 'd', 'E'):                          ['实施-基准日', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'base_date',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
+    ('base_share', 'd', 'E'):                         ['实施-基准股本（万）', 'selected_events',
+                                                       {'table_name': 'dividend', 'column': 'base_share',
+                                                        'sel_by': 'div_proc', 'key': '实施'}],
     ('exalter', 'd', 'E'):                            ['龙虎榜机构明细 - 营业部名称', 'event_signal',
                                                        {'table_name': 'top_inst', 'column': 'exalter'}],
     ('side', 'd', 'E'):                               [
@@ -3293,54 +3397,54 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'top_inst', 'column': 'net_buy'}],
     ('reason', 'd', 'E'):                             ['龙虎榜机构明细 - 上榜理由', 'event_signal',
                                                        {'table_name': 'top_inst', 'column': 'reason'}],
-    ('shibor:%', 'd', 'None'):                        ['上海银行间行业拆放利率(SHIBOR) - %', 'direct',
+    ('shibor:%', 'd', 'None'):                        ['上海银行间行业拆放利率(SHIBOR) - %', 'reference',
                                                        {'table_name': 'shibor', 'column': '%'}],
     ('libor_usd:%', 'd', 'None'):                     ['伦敦银行间行业拆放利率(LIBOR) USD - %', 'selection',
                                                        {'table_name': 'libor', 'column': '%', 'sel_by': 'curr_type',
-                                                        'keys':       ['usd']}],
+                                                        'keys':       ['USD']}],
     ('libor_eur:%', 'd', 'None'):                     ['伦敦银行间行业拆放利率(LIBOR) EUR - %', 'selection',
                                                        {'table_name': 'libor', 'column': '%', 'sel_by': 'curr_type',
-                                                        'keys':       ['eur']}],
+                                                        'keys':       ['EUR']}],
     ('libor_gbp:%', 'd', 'None'):                     ['伦敦银行间行业拆放利率(LIBOR) GBP - %', 'selection',
                                                        {'table_name': 'libor', 'column': '%', 'sel_by': 'curr_type',
-                                                        'keys':       ['gbp']}],
-    ('hibor:%', 'd', 'None'):                         ['香港银行间行业拆放利率(HIBOR) - %', 'direct',
+                                                        'keys':       ['GBP']}],
+    ('hibor:%', 'd', 'None'):                         ['香港银行间行业拆放利率(HIBOR) - %', 'reference',
                                                        {'table_name': 'hibor', 'column': '%'}],
-    ('wz_comp', 'd', 'None'):                         ['温州民间融资综合利率指数', 'direct',
+    ('wz_comp', 'd', 'None'):                         ['温州民间融资综合利率指数', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'comp_rate'}],
-    ('wz_center', 'd', 'None'):                       ['民间借贷服务中心利率', 'direct',
+    ('wz_center', 'd', 'None'):                       ['民间借贷服务中心利率', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'center_rate'}],
-    ('wz_micro', 'd', 'None'):                        ['小额贷款公司放款利率', 'direct',
+    ('wz_micro', 'd', 'None'):                        ['小额贷款公司放款利率', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'micro_rate'}],
-    ('wz_cm', 'd', 'None'):                           ['民间资本管理公司融资价格', 'direct',
+    ('wz_cm', 'd', 'None'):                           ['民间资本管理公司融资价格', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'cm_rate'}],
-    ('wz_sdb', 'd', 'None'):                          ['社会直接借贷利率', 'direct',
+    ('wz_sdb', 'd', 'None'):                          ['社会直接借贷利率', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'sdb_rate'}],
-    ('wz_om', 'd', 'None'):                           ['其他市场主体利率', 'direct',
+    ('wz_om', 'd', 'None'):                           ['其他市场主体利率', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'om_rate'}],
-    ('wz_aa', 'd', 'None'):                           ['农村互助会互助金费率', 'direct',
+    ('wz_aa', 'd', 'None'):                           ['农村互助会互助金费率', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'aa_rate'}],
-    ('wz_m1', 'd', 'None'):                           ['温州地区民间借贷分期限利率（一月期）', 'direct',
+    ('wz_m1', 'd', 'None'):                           ['温州地区民间借贷分期限利率（一月期）', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'm1_rate'}],
-    ('wz_m3', 'd', 'None'):                           ['温州地区民间借贷分期限利率（三月期）', 'direct',
+    ('wz_m3', 'd', 'None'):                           ['温州地区民间借贷分期限利率（三月期）', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'm3_rate'}],
-    ('wz_m6', 'd', 'None'):                           ['温州地区民间借贷分期限利率（六月期）', 'direct',
+    ('wz_m6', 'd', 'None'):                           ['温州地区民间借贷分期限利率（六月期）', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'm6_rate'}],
-    ('wz_m12', 'd', 'None'):                          ['温州地区民间借贷分期限利率（一年期）', 'direct',
+    ('wz_m12', 'd', 'None'):                          ['温州地区民间借贷分期限利率（一年期）', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'm12_rate'}],
-    ('wz_long', 'd', 'None'):                         ['温州地区民间借贷分期限利率（长期）', 'direct',
+    ('wz_long', 'd', 'None'):                         ['温州地区民间借贷分期限利率（长期）', 'reference',
                                                        {'table_name': 'wz_index', 'column': 'long_rate'}],
-    ('gz_d10', 'd', 'None'):                          ['小额贷市场平均利率（十天）', 'direct',
+    ('gz_d10', 'd', 'None'):                          ['小额贷市场平均利率（十天）', 'reference',
                                                        {'table_name': 'gz_index', 'column': 'd10_rate'}],
-    ('gz_m1', 'd', 'None'):                           ['小额贷市场平均利率（一月期）', 'direct',
+    ('gz_m1', 'd', 'None'):                           ['小额贷市场平均利率（一月期）', 'reference',
                                                        {'table_name': 'gz_index', 'column': 'm1_rate'}],
-    ('gz_m3', 'd', 'None'):                           ['小额贷市场平均利率（三月期）', 'direct',
+    ('gz_m3', 'd', 'None'):                           ['小额贷市场平均利率（三月期）', 'reference',
                                                        {'table_name': 'gz_index', 'column': 'm3_rate'}],
-    ('gz_m6', 'd', 'None'):                           ['小额贷市场平均利率（六月期）', 'direct',
+    ('gz_m6', 'd', 'None'):                           ['小额贷市场平均利率（六月期）', 'reference',
                                                        {'table_name': 'gz_index', 'column': 'm6_rate'}],
-    ('gz_m12', 'd', 'None'):                          ['小额贷市场平均利率（一年期）', 'direct',
+    ('gz_m12', 'd', 'None'):                          ['小额贷市场平均利率（一年期）', 'reference',
                                                        {'table_name': 'gz_index', 'column': 'm12_rate'}],
-    ('gz_long', 'd', 'None'):                         ['小额贷市场平均利率（长期）', 'direct',
+    ('gz_long', 'd', 'None'):                         ['小额贷市场平均利率（长期）', 'reference',
                                                        {'table_name': 'gz_index', 'column': 'long_rate'}],
     ('cn_gdp', 'q', 'None'):                          ['GDP累计值（亿元）', 'direct',
                                                        {'table_name': 'cn_gdp', 'column': 'gdp'}],

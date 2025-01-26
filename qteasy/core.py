@@ -827,13 +827,13 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                 data = res['data']
                 if not data.empty:
                     df_concat_list.append(data)
-                if completed % chunk_size == 0:
+                if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
                     # 将下载的数据写入数据源
+                    # print(f'concaternating df_concat_list: {len(df_concat_list)} items in it!')
                     rows_affected = data_source.update_table_data(
                             table=table,
-                            # TODO: 测试ignore_index=True是否会导致错误，如果不会，可以提高效率
-                            # df=pd.concat(df_concat_list, copy=False, ignore_index=True),
-                            df = pd.concat(df_concat_list, copy=False),
+                            df=pd.concat(df_concat_list, copy=False, ignore_index=True),
+                            # df = pd.concat(df_concat_list, copy=False),
                             merge_type=merge_type,
                     )
                     df_concat_list = []
@@ -856,10 +856,11 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
 
         if df_concat_list:
             # 将下载的数据写入数据源
+            # print(f'final: concaternating df_concat_list: {len(df_concat_list)} items in it!')
             rows_affected = data_source.update_table_data(
-                    table=table,  # TODO: 测试ignore_index=True是否会导致错误，如果不会，可以提高效率
-                    # df=pd.concat(df_concat_list, copy=False, ignore_index=True),
-                    df=pd.concat(df_concat_list, copy=False),
+                    table=table,
+                    df=pd.concat(df_concat_list, copy=False, ignore_index=True),
+                    # df=pd.concat(df_concat_list, copy=False),
                     merge_type=merge_type,
             )
             total_written += rows_affected
