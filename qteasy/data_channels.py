@@ -602,30 +602,70 @@ def _parse_quarter_args(arg_range: str, start_date: str, end_date: str, reversed
     """
     start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
 
-    start_year = start_date.year
-    start_quarter = (start_date.month - 1) // 3 + 1
-    end_year = end_date.year
-    end_quarter = (end_date.month - 1) // 3 + 1
-
     # calculate absolute quarter number
-    start_quarter = start_year * 4 + start_quarter
-    end_quarter = end_year * 4 + end_quarter
-
-    # complete list with all quarters
-    quarter_list = list(range(start_quarter, end_quarter + 1))
-
-    # convert absolute quarter number to year and quarter
-    quarter_list = [(q // 4, q % 4) for q in quarter_list]
-    # if quarter is 0, convert it to 4 and year - 1
-    quarter_list = [(y - 1, 4) if q == 0 else (y, q) for y, q in quarter_list]
+    start_quarter = _convert_date_to_absolute_quarter(start_date)
+    end_quarter = _convert_date_to_absolute_quarter(end_date)
 
     # convert year and quarter to string
-    quarter_list = [f'{y}Q{q}' for y, q in quarter_list]
+    quarter_list = list(range(start_quarter, end_quarter + 1))
+    quarter_list = [_convert_absolute_quarter_to_quarter_str(q) for q in quarter_list]
 
     if reversed_par_seq:
         return quarter_list[::-1]
 
     return quarter_list
+
+
+def _get_year_and_quarter(date) -> tuple:
+    """ convert date like 2020-01-01 to year and quarter like 2020, 1"""
+    return date.year, (date.month - 1) // 3 + 1
+
+
+def _get_year_and_month(date) -> tuple:
+    """ convert date like 2020-03-01 to year and month like 2020, 3"""
+    return date.year, date.month
+
+
+def _convert_date_to_absolute_quarter(date) -> int:
+    """ convert date like 2020-01-01 to absolute quarter number like 2020*4+1"""
+    year, quarter = _get_year_and_quarter(date)
+    return year * 4 + quarter
+
+
+def _convert_quarter_str_to_absolute_quarter(quarter:str) -> int:
+    """ converte quarter str like 2020Q1 to absolute quarter number like 2020*4+1"""
+    year, quarter = quarter.split('Q')
+    return int(year) * 4 + int(quarter)
+
+
+def _convert_date_to_absolute_month(date) -> int:
+    """ convert date like 2020-03-01 to absolute month number like 2020*12+3"""
+    year, month = _get_year_and_month(date)
+    return year * 12 + month
+
+
+def _convert_month_str_to_absolute_month(date:str) -> int:
+    """ convert month str like 202003 to absolute month like 2020*12+3"""
+    year, month = date[:4], date[4:]
+    return int(year) * 12 + int(month)
+
+
+def _convert_absolute_quarter_to_quarter_str(quarter_num) -> str:
+    """ convert absolute quarter number like 2020*4+1 to quarter like 2020Q1"""
+    year, quarter = quarter_num // 4, quarter_num % 4
+    if quarter == 0:
+        year = year - 1
+        quarter = 4
+    return f'{year}Q{quarter}'
+
+
+def _convert_absolute_month_to_month_str(month_num) -> str:
+    """ convert absolute month number like 2020*12+3 to month like 202003"""
+    year, month = month_num // 12, month_num % 12
+    if month == 0:
+        year = year - 1
+        month = 12
+    return f'{year}{month:02d}'
 
 
 def _parse_month_args(arg_range: str, start_date: str, end_date: str, reversed_par_seq: bool = False) -> list:
@@ -649,25 +689,15 @@ def _parse_month_args(arg_range: str, start_date: str, end_date: str, reversed_p
     """
     start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
 
-    start_year = start_date.year
-    start_month = start_date.month
-    end_year = end_date.year
-    end_month = end_date.month
-
     # calculate absolute month number
-    start_month = start_year * 12 + start_month
-    end_month = end_year * 12 + end_month
+    start_month = _convert_date_to_absolute_month(start_date)
+    end_month = _convert_date_to_absolute_month(end_date)
 
     # complete list with all months
     month_list = list(range(start_month, end_month + 1))
 
-    # convert absolute month number to year and month
-    month_list = [(m // 12, m % 12) for m in month_list]
-    # if month is 0, convert it to 12 and year - 1
-    month_list = [(y - 1, 12) if m == 0 else (y, m) for y, m in month_list]
-
     # convert year and month to string
-    month_list = [f'{y}{m:02d}' for y, m in month_list]
+    month_list = [_convert_absolute_month_to_month_str(month) for month in month_list]
 
     if reversed_par_seq:
         return month_list[::-1]

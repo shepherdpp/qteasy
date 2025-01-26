@@ -1313,7 +1313,6 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('cnt_yoy', 'm', 'None'),
     ('cnt_mom', 'm', 'None'),
     ('cnt_accu', 'm', 'None'),
-    ('cnt_accu', 'm', 'None'),
     ('ppi_yoy', 'm', 'None'),
     ('ppi_mp_yoy', 'm', 'None'),
     ('ppi_mp_qm_yoy', 'm', 'None'),
@@ -1634,6 +1633,9 @@ class TestDataTypes(unittest.TestCase):
             if table_name in ['gz_index']:
                 starts = '2015-01-01'
                 ends = '2015-02-20'
+            if table_name in ['cn_gdp', 'cn_cpi', 'cn_ppi', 'cn_sf', 'cn_money', 'cn_pmi']:
+                starts = '2024-01-01'
+                ends = '2024-12-31'
 
             # print(f'testing dtype {dtype} with parameters: \n'
             #       f'shares: {shares}\n'
@@ -1641,7 +1643,7 @@ class TestDataTypes(unittest.TestCase):
 
             if shares is not None:
                 shares = list_to_str_format(shares)
-            if table_name in ['hibor']:
+            if table_name in ['cn_money']:
                 # import pdb; pdb.set_trace()
                 pass
             data = dtype.get_data_from_source(
@@ -1708,7 +1710,7 @@ class TestDataTypes(unittest.TestCase):
             else:
                 self.assertIsInstance(data, pd.Series)
 
-        print(f'\n{empty_count} out of {total} empty data types:')
+        print(f'\n{empty_count} out of {total} empty data types (except those in min freq data tables):')
         emptys = pd.DataFrame({
             'type':             empty_types,
             'description':      empty_type_descs,
