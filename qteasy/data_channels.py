@@ -1245,7 +1245,14 @@ TUSHARE_API_MAP = {
         ['top_inst', 'trade_date', 'trade_date', '19901211', '', '', ''],
 
     'sw_industry_detail':
-        ['index_member_all', 'ts_code', 'table_index', 'stock_basic', '', '', ''],
+        ['index_member_all', 'l1_code', 'list',
+         '801010.SI, 801020.SI, 801030.SI, 801040.SI, 801050.SI, 801080.SI, '
+         '801110.SI, 801120.SI, 801130.SI, 801140.SI, 801150.SI, 801160.SI, '
+         '801170.SI, 801180.SI, 801200.SI, 801210.SI, 801230.SI, 801710.SI, '
+         '801720.SI, 801730.SI, 801740.SI, 801750.SI, 801760.SI, 801770.SI, '
+         '801780.SI, 801790.SI, 801880.SI, 801890.SI, 801950.SI, 801960.SI, '
+         '801970.SI, 801980.SI',
+         '', '', ''],
 
     'block_trade':
         ['block_trade', 'trade_date', 'trade_date', '20100101', '', '', ''],

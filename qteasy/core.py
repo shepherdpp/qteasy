@@ -776,10 +776,10 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
         table_list.add('trade_calendar')
     else:
         # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
-        latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max2']
+        latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max1']
         try:
             latest_calendar_date = pd.to_datetime(latest_calendar_date)
-            if pd.to_datetime('today') >= pd.to_datetime(latest_calendar_date):
+            if pd.to_datetime('today') >= latest_calendar_date:
                 table_list.add('trade_calendar')
         except:
             table_list.add('trade_calendar')
@@ -833,7 +833,6 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
                     rows_affected = data_source.update_table_data(
                             table=table,
                             df=pd.concat(df_concat_list, copy=False, ignore_index=True),
-                            # df = pd.concat(df_concat_list, copy=False),
                             merge_type=merge_type,
                     )
                     df_concat_list = []

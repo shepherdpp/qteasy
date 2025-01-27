@@ -1455,12 +1455,11 @@ class DataSource:
             raise KeyError(f'Invalid table name.')
         columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
         rows_affected = 0
+        df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
         if self.source_type == 'file':
-            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             rows_affected = self._write_file(df, file_name=table)
         elif self.source_type == 'db':
-            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             if not self._db_table_exists(table):
                 self._new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             if on_duplicate == 'ignore':

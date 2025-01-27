@@ -1286,13 +1286,16 @@ TABLE_SCHEMA = {
          },
 
     'sw_industry_detail':  # New, 申万行业分类明细(成分股)!
-        {'columns':     ["l1_code", "l1_name", "l2_code", "l2_name", "l3_code", "l3_name",
-                         "ts_code", "name", "in_date", "out_date", "is_new"],
-         'dtypes':      ["varchar(14)", "varchar(10)", "varchar(14)", "varchar(10)", "varchar(14)", "varchar(10)",
-                         "varchar(14)", "varchar(14)", "date", "date", "varchar(2)"],
-         'remarks':     ["一级行业代码", "一级行业名称", "二级行业代码", "二级行业名称", "三级行业代码", "三级行业名称",
-                         "成分股票代码", "成分股票名称", "纳入日期", "剔除日期", "是否最新Y是N否"],
-         'prime_keys':  [0, 2, 4]
+        {'columns':     ["l1_code", "l2_code", "l3_code", "ts_code",
+                         "l1_name", "l2_name", "l3_name", "name",
+                         "in_date", "out_date", "is_new"],
+         'dtypes':      ["varchar(14)", "varchar(14)", "varchar(14)", "varchar(14)",
+                         "varchar(24)", "varchar(24)", "varchar(24)", "varchar(24)",
+                         "date", "date", "varchar(2)"],
+         'remarks':     ["一级行业代码", "二级行业代码", "三级行业代码", "成分股票代码",
+                         "一级行业名称", "二级行业名称", "三级行业名称", "成分股票名称",
+                         "纳入日期", "剔除日期", "是否最新Y是N否"],
+         'prime_keys':  [0, 1, 2, 3]
          },
 
     'block_trade':  # New, 大宗交易!

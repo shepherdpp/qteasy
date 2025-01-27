@@ -2196,18 +2196,22 @@ def top_inst(trade_date: str = None,
 
 
 # New, 申万行业分类明细(成分股)!
-def index_member_all(index_code: str = None,
-                     level: str = None,
-                     parent_code: str = None,
-                     src: str = None):
+def index_member_all(l1_code: str = None,
+                     l2_code: str = None,
+                     l3_code: str = None,
+                     ts_code: str = None,):
     """ 获取申万行业分类明细(成分股)
 
     Parameters
     ---------
-    index_code: str
-        行业代码
-    level: str
-        行业级别
+    l1_code: str
+        一级行业代码
+    l2_code: str
+        二级行业代码
+    l3_code: str
+        三级行业代码
+    ts_code: str
+        股票代码
 
     Returns
     -------
@@ -2226,12 +2230,12 @@ def index_member_all(index_code: str = None,
         is_new	        str	    Y	是否最新Y是N否
     """
     pro = ts.pro_api()
-    res = pro.index_member_all(index_code=index_code,
-                               level=level,
-                               parent_code=parent_code,
-                               src=src)
-    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry_detail with index_code={index_code}, '
-                     f'level={level}, parent_code={parent_code}, src={src}')
+    res = pro.index_member_all(l1_code=l1_code,
+                               l2_code=l2_code,
+                               l3_code=l3_code,
+                               ts_code=ts_code)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry_detail with l1_code={l1_code}, '
+                     f'l2_code={l2_code}, l3_code={l3_code}, ts_code={ts_code}')
     return res
 
 
