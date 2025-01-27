@@ -563,7 +563,7 @@ TABLE_SCHEMA = {
 
     'stock_suspend':  # New, 停复牌信息!
         {'columns':     ["ts_code", "trade_date", "suspend_timing", "suspend_type"],
-         'dtypes':      ["varchar(10)", "date", "varchar(15)", "varchar(2)"],
+         'dtypes':      ["varchar(10)", "date", "varchar(40)", "varchar(2)"],
          'remarks':     ["证券代码", "停复牌日期", "日内停牌时间段", "停复牌类型：S-停牌，R-复牌"],
          'prime_keys':  [0, 1]
          },

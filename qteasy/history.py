@@ -12,6 +12,7 @@
 import pandas as pd
 import numpy as np
 
+import qteasy
 from qteasy.utilfuncs import (
     str_to_list,
     list_or_slice,
@@ -2348,6 +2349,9 @@ def get_history_panel(
     DataFrame
     """
 
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
     htype_splits = [itm.split('-') for itm in htypes]
     if shares:
@@ -2371,6 +2375,7 @@ def get_history_panel(
         zip(normal_htypes, [freq] * len(normal_htypes))
     ]
     normal_dfs = get_history_data_from_source(
+            datasource=data_source,
             htypes=normal_htypes,
             qt_codes=shares,
             start=start,
@@ -2380,6 +2385,7 @@ def get_history_panel(
     ) if normal_htypes else {}
     # 获取指数成分权重数据
     weight_dfs = get_history_data_from_source(
+            datasource=data_source,
             htypes=weight_indices,
             qt_codes=shares,
             start=start,

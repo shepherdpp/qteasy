@@ -1637,6 +1637,26 @@ class TestDataTypes(unittest.TestCase):
                 starts = '2024-01-01'
                 ends = '2024-12-31'
 
+            if table_name in ['block_trade']:
+                shares = ['000603.SZ', '000723.SZ', '000783.SZ', '000796.SZ', '000895.SZ', '002203.SZ']
+                starts = '2024-04-01'
+                ends = '2024-05-01'
+
+            if table_name == 'stock_holder_trade':
+                shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ',]
+                starts = '2024-04-01'
+                ends = '2024-05-01'
+
+            if table_name == 'margin_detail':
+                shares = ['300978.SZ', '300979.SZ', '300980.SZ', '300981.SZ', '300982.SZ', '300983.SZ', ]
+                starts = '2024-04-01'
+                ends = '2024-05-01'
+
+            if table_name == 'stock_suspend':
+                shares = ['000005.SZ', '000599.SZ', '002490.SZ', '600375.SH', '872931.BJ', '600165.SH', ]
+                starts = '2024-04-01'
+                ends = '2024-05-01'
+
             # print(f'testing dtype {dtype} with parameters: \n'
             #       f'shares: {shares}\n'
             #       f'starts/ends: {starts}/{ends}\n')
