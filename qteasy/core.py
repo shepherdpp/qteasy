@@ -34,6 +34,7 @@ from qteasy.utilfuncs import (
     _partial_lev_ratio,
     progress_bar,
     sec_to_duration,
+    TIME_FREQ_STRINGS,
 )
 
 from qteasy.visual import (
@@ -880,6 +881,8 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
 
 
 def get_history_data(htypes,
+                     *,
+                     data_source=None,
                      shares=None,
                      symbols=None,
                      start=None,
@@ -908,6 +911,8 @@ def get_history_data(htypes,
          - close-000300.SH:
             给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
             的参考数据
+    data_source: DataSource
+        需要获取历史数据的数据源
     shares: [str, list] 等同于symbols
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：

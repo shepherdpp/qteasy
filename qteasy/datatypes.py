@@ -3926,7 +3926,7 @@ def get_reference_data_from_source(
         if htype.freq == 'none':
             raise ValueError(f'Invalid data type {htype.name}, not a reference data type')
         # 从数据源获取数据
-        ser = htype.get_data_from_source(datasource, shares=qt_code, start=start, end=end)
+        ser = htype.get_data_from_source(datasource, symbols=qt_code, starts=start, ends=end, target_freq=freq)
         if isinstance(ser, pd.DataFrame):  # if htype.asset_type != 'none':
             # 此时数据本身是与证券相关的数据，需要从DataFrame中提取出对应的证券代码的数据
             ser = ser[qt_code]

@@ -38,14 +38,17 @@ class TestEntry(unittest.TestCase):
         """ test accessing and modifying start up settings"""
         print(f'test qteasy start up settings')
         config_lines = qt.start_up_settings()
+        self.assertIsNone(config_lines)
+
+        config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings: {config_lines}')
-        self.assertIsInstance(config_lines, list)
+        self.assertIsInstance(config_lines, dict)
         self.assertTrue(len(config_lines) > 0)
         self.assertIsInstance(config_lines[0], str)
 
         # test modify start up settings
         qt.update_start_up_setting(test_key='test_value')
-        config_lines = qt.start_up_settings()
+        config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings after update: {config_lines}')
         self.assertTrue('test_key = test_value' in config_lines)
 
@@ -61,7 +64,7 @@ class TestEntry(unittest.TestCase):
                                    test_key9='3.14',
                                    test_key10='3',
         )
-        config_lines = qt.start_up_settings()
+        config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings after update: {config_lines}')
         self.assertTrue('test_key = test_value' in config_lines)
         self.assertTrue('test_key2 = 123' in config_lines)

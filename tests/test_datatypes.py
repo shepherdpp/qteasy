@@ -21,9 +21,10 @@ from qteasy.utilfuncs import (
 )
 
 from qteasy.datatypes import (
-    DATA_TYPE_MAP,
     DataType,
-    get_history_data_from_source, get_tables_by_dtypes,
+    get_history_data_from_source,
+    get_reference_data_from_source,
+    get_tables_by_dtypes,
 )
 
 ALL_TYPES_TO_TEST_WITH_FULL_ID = [
@@ -1800,10 +1801,10 @@ class TestDataTypes(unittest.TestCase):
         print(f'got history panel with price:\n{dfs}')
         htype_names = ['open', 'high:b', 'low', 'close:f', 'vol', 'managers_name']
         htypes = [DataType(name=htype) for htype in htype_names]
-        dfs = get_history_data_from_source(
+        dfs = get_reference_data_from_source(
                 self.ds,
-                qt_codes=shares,
                 htypes=htypes,
+                qt_code=shares,
                 start=start,
                 end=end,
                 freq='w',
