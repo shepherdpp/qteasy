@@ -894,7 +894,7 @@ def get_history_data(htypes,
                      as_data_frame=None,
                      group_by=None,
                      **kwargs):
-    """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
+    """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应于策略
         需要的HistoryPanel数据对象
 
     Parameters

@@ -16,7 +16,13 @@ import pandas as pd
 import warnings
 from functools import lru_cache
 
-from .utilfuncs import str_to_list, _lev_ratio, _partial_lev_ratio, _wildcard_match
+from .utilfuncs import (
+    str_to_list,
+    _lev_ratio,
+    _partial_lev_ratio,
+    _wildcard_match,
+    pandas_freq_alias_version_conversion,
+)
 
 
 def define(name, freq, asset_type, description, acquisition_type, **kwargs):
@@ -234,6 +240,203 @@ def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_
     return description, acquisition_type, kwargs
 
 
+def _adjust_freq(hist_data: pd.DataFrame,
+                 target_freq: str,
+                 *,
+                 method: str = 'last',
+                 b_days_only: bool = True,
+                 trade_time_only: bool = True,
+                 forced_start: str = None,
+                 forced_end: str = None,
+                 **kwargs):
+    """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
+    符合target_freq
+
+    Parameters
+    ----------
+    hist_data: pd.DataFrame
+        历史数据，是一个index为日期/时间的DataFrame
+    target_freq: str
+        历史数据的目标频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+    method: str
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        降频可用的methods有：
+        - 'last'/'close': 使用合并区间的最后一个值
+        - 'first'/'open': 使用合并区间的第一个值
+        - 'max'/'high': 使用合并区间的最大值作为合并值
+        - 'min'/'low': 使用合并区间的最小值作为合并值
+        - 'mean'/'average': 使用合并区间的平均值作为合并值
+        - 'sum/total': 使用合并区间的总和作为合并值
+
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        升频可用的methods有：
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'nan': 使用NaN值填充缺失数据
+        - 'zero': 使用0值填充缺失数据
+    b_days_only: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+    trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+    forced_start: str, Datetime like, 默认None
+        强制开始日期，如果为None，则使用hist_data的第一天为开始日期
+    forced_start: str, Datetime like, 默认None
+        强制结束日期，如果为None，则使用hist_data的最后一天为结束日期
+    **kwargs:
+        用于生成trade_time_index的参数，包括：
+        include_start:   日期时间序列是否包含开始日期/时间
+        include_end:     日期时间序列是否包含结束日期/时间
+        start_am:        早晨交易时段的开始时间
+        end_am:          早晨交易时段的结束时间
+        include_start_am:早晨交易时段是否包括开始时间
+        include_end_am:  早晨交易时段是否包括结束时间
+        start_pm:        下午交易时段的开始时间
+        end_pm:          下午交易时段的结束时间
+        include_start_pm 下午交易时段是否包含开始时间
+        include_end_pm   下午交易时段是否包含结束时间
+
+    Returns
+    -------
+    DataFrame:
+    一个重新设定index并填充好数据的历史数据DataFrame
+
+    Examples
+    --------
+    例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+    数据合并方法:
+    - 'last'/'close': 使用合并区间的最后一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'first'/'open': 使用合并区间的第一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'max'/'high': 使用合并区间的最大值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'min'/'low': 使用合并区间的最小值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+    - 'sum'/'total': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+    例如，填充下列数据(?表示插入的数据）
+        [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+    缺失数据的填充方法如下:
+    - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+    - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+    - 'nan': 使用NaN值填充缺失数据：
+        [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+    - 'zero': 使用0值填充缺失数据：
+        [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+    """
+
+    if not isinstance(target_freq, str):
+        err = TypeError
+        raise err
+    target_freq = target_freq.upper()
+    # 如果hist_data为空，直接返回
+    if hist_data.empty:
+        return hist_data
+    if b_days_only:
+        if target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
+    # 如果hist_data的freq与target_freq一致，也可以直接返回
+    # TODO: 这里有bug：强制start/end的情形需要排除
+    if hist_data.index.freqstr == target_freq:
+        return hist_data
+    # 如果hist_data的freq为None，可以infer freq
+    if hist_data.index.inferred_freq == target_freq:
+        return hist_data
+
+    # 新版本pandas修改了部分freq alias，为了确保向后兼容，确保freq_aliases与pandas版本匹配
+    target_freq = pandas_freq_alias_version_conversion(target_freq)
+
+    resampled = hist_data.resample(target_freq)
+    if method in ['last', 'close']:
+        resampled = resampled.last()
+    elif method in ['first', 'open']:
+        resampled = resampled.first()
+    elif method in ['max', 'high']:
+        resampled = resampled.max()
+    elif method in ['min', 'low']:
+        resampled = resampled.min()
+    elif method in ['avg', 'mean']:
+        resampled = resampled.mean()
+    elif method in ['sum', 'total']:
+        resampled = resampled.sum()
+    elif method == 'ffill':
+        resampled = resampled.ffill()
+    elif method == 'bfill':
+        resampled = resampled.bfill()
+    elif method in ['nan', 'none']:
+        resampled = resampled.first()
+    elif method == 'zero':
+        resampled = resampled.first().fillna(0)
+    else:
+        # for unexpected cases
+        err = ValueError(f'resample method {method} can not be recognized.')
+        raise err
+
+    # 完成resample频率切换后，根据设置去除非工作日或非交易时段的数据
+    # 并填充空数据
+    resampled_index = resampled.index
+    if forced_start is None:
+        start = resampled_index[0]
+    else:
+        start = pd.to_datetime(forced_start)
+    if forced_end is None:
+        end = resampled_index[-1]
+    else:
+        end = pd.to_datetime(forced_end)
+
+    # 如果要求强制转换自然日频率为工作日频率
+    # 原来的版本在resample之前就强制转换自然日到工作日，但是测试发现，pd的resample有一个bug：
+    # 这个bug会导致method为last时，最后一个工作日的数据取自周日，而不是周五
+    # 在实际测试中发现，如果将2020-01-01到2020-01-10之间的Hourly数据汇总到工作日时
+    # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
+    # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
+    # 了周五，这样可能会导致错误的结果
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将非交易日的数据去除
+    # 不过仅对freq为'D'的频率如此操作
+    if b_days_only:
+        if target_freq == 'D':
+            target_freq = 'B'
+
+    # 如果要求去掉非交易时段的数据
+    from qteasy.trading_util import _trade_time_index
+    if trade_time_only:
+        expanded_index = _trade_time_index(
+                start=start,
+                end=end,
+                freq=target_freq,
+                trade_days_only=b_days_only,
+                **kwargs
+        )
+    else:
+        expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
+    resampled = resampled.reindex(index=expanded_index)
+    # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
+    if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
+        if method == 'ffill':
+            resampled.ffill(inplace=True)
+        elif method == 'bfill':
+            resampled.bfill(inplace=True)
+        elif method == 'zero':
+            resampled.fillna(0, inplace=True)
+
+    return resampled
+
+
 class DataType:
     """
     DataType class, 代表qteasy可以使用的历史数据类型。
@@ -372,7 +575,7 @@ class DataType:
         self._name_pars = None
         self._default_freq = default_freq
         self._default_asset_type = default_asset_type
-        self._all_built_in_freqs = None
+        self._all_built_in_freqs = None  # TODO: are these properties still needed?
         self._all_built_in_asset_types = None
         self._all_user_defined_freqs = None
         self._all_user_defined_asset_types = None
@@ -384,6 +587,10 @@ class DataType:
     @property
     def name(self):
         return self._name
+
+    @property
+    def id(self):
+        return f'{self._name}({self._default_asset_type})'
 
     @property
     def freq(self):
@@ -425,7 +632,6 @@ class DataType:
             symbols: str = None,
             starts: str = None,
             ends: str = None,
-            target_freq: str = None,
     ):
         """ Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
 
@@ -441,8 +647,6 @@ class DataType:
             开始日期, YYYYMMDD格式
         ends: str
             结束日期, YYYYMMDD格式
-        target_freq: str, optional
-            用户要求的频率
 
         """
 
@@ -484,9 +688,6 @@ class DataType:
 
         if acquired_data.empty:
             return acquired_data
-
-        if target_freq is not None and target_freq != self.freq:
-            acquired_data = self._adjust_freq(acquired_data, target_freq)
 
         if symbols is None:
             return self._unsymbolised(acquired_data)
@@ -932,9 +1133,8 @@ class DataType:
         """复合型的数据获取方法"""
         raise NotImplementedError
 
-    def _adjust_freq(self, acquired_data, freq) -> pd.DataFrame:
-        """调整获取的数据的频率"""
-        raise NotImplementedError
+    # TODO: consider moving this function to utility functions, separated in multiple simpler functions and been used
+    #  in other functions in other modules
 
     def _symbolised(self, acquired_data) -> pd.DataFrame:
         """将数据转换为symbolised格式"""
@@ -3808,6 +4008,7 @@ def get_history_data_from_source(
         start: str = None,
         end: str = None,
         freq: str = None,
+        combine_htype_names: bool = False,
         row_count: int = 100,
 ) -> {str: pd.DataFrame}:
     """ 根据给出的历史数据类型对象，获取相应的数据并组装成一个标准的DataFrame-Dict并返回
@@ -3830,6 +4031,25 @@ def get_history_data_from_source(
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
     end: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    combine_htype_names: bool, optional, default False
+        在输入的数据类型中可能有相同的htype_names，例如pe(IDX)@'d'与pe(E)@'d'
+        这两个htype的名称相同，只是数据类型不同。此时可以选择是否是否合并相同的htype name，
+        如果为True，则下载的数据会被合并为一个pe类型，同时包含IDX与E类型的数据
+        例如：
+        pe:         000300.SH, 000001.SZ
+        2020-01-01      22.34,     18.00
+        2020-01-01      22.35,     18.50
+
+        如果选择不合并，则pe(IDX)与pe(E)的数据会被分开罗列
+        例如：
+
+        pe(IDX):    000300.SH, 000001.SZ
+        2020-01-01      22.34,       NaN
+        2020-01-01      22.35,       NaN
+        pe(E):      000300.SH, 000001.SZ
+        2020-01-01        NaN,     18.00
+        2020-01-01        NaN,     18.50
+
     row_count: int, optional, default 100
         获取的历史数据的行数，如果指定了start和end，则忽略此参数
 
@@ -3841,20 +4061,32 @@ def get_history_data_from_source(
     """
 
     history_data_acquired = {}
+    history_data_to_be_re_freqed = {}
+
+    if not htypes:
+        raise ValueError(f'at least one DataType should be given, 0 is given!')
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
         # 检查数据类型是否属于历史数据，参考数据和基本信息数据不能通过此方法获取
         if htype.freq == 'none' or htype.asset_type == 'none':
             raise ValueError(f'Invalid data type {htype.name}, not a history data type')
-        # 从数据源获取数据
+        # 从数据源获取数据，
         df = htype.get_data_from_source(datasource, symbols=qt_codes, starts=start, ends=end)
-        # import pdb; pdb.set_trace()
-        # if not df.empty:
-        #     if row_count > 0:
-        #         # 读取每一个ts_code的最后row_count行数据
-        #         df = df.groupby('ts_code').tail(row_count)
-        history_data_acquired[htype.name] = df
+        if not combine_htype_names:
+            # 下载的数据不会按htype.name合并，而是分别按htype.id存储
+            history_data_acquired[htype.id] = df
+            history_data_to_be_re_freqed[htype.id] = True if htype.freq != freq else False
+        else:
+            # 下载的数据会按htype.name合并，如果htype.name已经有了数据，则新的数据会被concat（按列）到已有的数据中
+            original_df = history_data_acquired.get(htype.name)
+            if original_df is None:
+                history_data_acquired[htype.name] = df
+            else:
+                # import pdb; pdb.set_trace()
+                new_df = pd.concat([original_df, df], axis=1, copy=False)
+                history_data_acquired[htype.name] = new_df
+            history_data_to_be_re_freqed[htype.name] = True if htype.freq != freq else False
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(df.empty for df in history_data_acquired.values()):
@@ -3869,10 +4101,17 @@ def get_history_data_from_source(
                            f'**kwargs)')
         raise err
 
-    # 最后整理数据，确保每一个htype的数据框的columns与shares相同
+    # 整理数据，确保每一个htype的DataFrame的columns与shares相同，同时调整DataFrame的数据频率，与目标一致
     qt_codes = str_to_list(qt_codes)
-    # import pdb; pdb.set_trace()
+
     for htyp, df in history_data_acquired.items():
+        if history_data_to_be_re_freqed[htyp]:
+            # import pdb; pdb.set_trace()
+            df = _adjust_freq(
+                    hist_data=df,
+                    target_freq=freq,
+                    method='ffill',
+            )
         history_data_acquired[htyp] = df.reindex(columns=qt_codes)
 
     return history_data_acquired
@@ -3954,7 +4193,7 @@ def get_reference_data_from_source(
     return history_data_acquired
 
 
-def get_data_type(self, htype, *, symbols=None, starts=None, ends=None, target_freq=None):
+def get_data_type(htype, *, symbols=None, starts=None, ends=None, target_freq=None):
     """ DataSource类的主要获取数据的方法，根据数据类型，获取数据并输出
 
     如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
@@ -3963,7 +4202,7 @@ def get_data_type(self, htype, *, symbols=None, starts=None, ends=None, target_f
     ----------
     htype: DataType
     """
-    return htype.get_data_from_source(self, symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
+    return htype.get_data_from_source(symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
 
 
 def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):

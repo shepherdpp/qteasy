@@ -1458,6 +1458,9 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     'high:f',
     ('low:forward', None, 'E'),
     ('open', 'w', None),
+    ('pe', 'd', 'IDX'),
+    ('pe', 'd', 'E'),
+    ('pe', None, 'E'),
 ]
 
 
@@ -1497,7 +1500,9 @@ class TestDataTypes(unittest.TestCase):
             print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}:\n'
                   f'name:     {dtype.name}\n'
                   f'freq:     {dtype.freq}\n'
+                  # f'all freqs: {dtype.available_freqs}\n'
                   f'asset_type: {dtype.asset_type}\n'
+                  # f'all a_types: {dtype.available_asset_types}\n'
                   f'desc:     {dtype.description}\n'
                   f'acq_type: {dtype.acquisition_type}\n'
                   f'kwargs:   {dtype.kwargs}\n')
@@ -1777,15 +1782,27 @@ class TestDataTypes(unittest.TestCase):
 
     def test_get_history_data(self):
         """ test getting arr, from real database """
+        # test getting simple daily data with basic types without combination
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
-        htype_names = 'pe,close,open,swing,strength,close:b, open:f'
+        htype_names = 'pe,close:b,open,swing,strength'
         htype_names = str_to_list(htype_names)
         start = '20210101'
         end = '20210301'
-        asset_type = 'E, IDX, FD'
+        asset_type = ['E', 'IDX', 'FD']
         freq = 'd'
-        htypes = [DataType(name=htype) for htype in htype_names]
+        htypes = []
+        # 逐个生成htype并添加到htypes清单中
+        for at in asset_type:
+            for htype_name in htype_names:
+                try:
+                    htype = DataType(name=htype_name, freq=freq, asset_type=at)
+                    htypes.append(htype)
+                except:
+                    print(f'failed to create htype with parameters: {htype_name}, {freq}, {at}')
+                    continue
         shares = list_to_str_format(shares)
+        print(f'getting data without combination for htypes: \n{[at.__str__() for at in htypes]}')
+        htype_ids = [htype.id for htype in htypes]
 
         dfs = get_history_data_from_source(
                 self.ds,
@@ -1796,22 +1813,68 @@ class TestDataTypes(unittest.TestCase):
                 freq=freq,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with price:\n{dfs}')
-        htype_names = ['open', 'high:b', 'low', 'close:f', 'vol', 'managers_name']
-        htypes = [DataType(name=htype) for htype in htype_names]
-        dfs = get_reference_data_from_source(
+
+        print(f'got history panel:\n{dfs}')
+
+        # testing getting simple daily data with basic types with combination
+
+        print(f'getting data with combination for htypes: \n{[at.__str__() for at in htypes]}')
+        dfs = get_history_data_from_source(
                 self.ds,
                 htypes=htypes,
-                qt_code=shares,
+                qt_codes=shares,
                 start=start,
                 end=end,
-                freq='w',
+                freq=freq,
+                combine_htype_names=True,
         )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+
+        print(f'got history panel:\n{dfs}')
+
+        # testing getting re-freq hourly data with combination
+        # some of the data can be directly get from data source but others should be re-freqed
+
+        start = '20230901'
+        end = '20230910'
+        freq = 'h'
+        htype_names = ['pe', 'close', 'open', 'swing', 'strength']
+        # 逐个生成htype并添加到htypes清单中
+        h_types = [DataType(name='pe', freq='d', asset_type='E'),
+                   DataType(name='close', freq='h', asset_type='E'),
+                   DataType(name='open', freq='h', asset_type='E'),
+                   DataType(name='swing', freq='d', asset_type='E'),
+                   DataType(name='strength', freq='d', asset_type='E'),
+                   DataType(name='pe', freq='d', asset_type='IDX'),
+                   DataType(name='close', freq='h', asset_type='IDX'),
+                   DataType(name='open', freq='h', asset_type='IDX'),
+                   DataType(name='close', freq='h', asset_type='FD'),
+                   DataType(name='open', freq='h', asset_type='FD'),
+                   ]
+
+        print(f'getting re-freq data with combination for htypes: \n{[at.__str__() for at in h_types]}')
+        dfs = get_history_data_from_source(
+                self.ds,
+                htypes=h_types,
+                qt_codes=shares,
+                start=start,
+                end=end,
+                freq=freq,
+                combine_htype_names=True,
+        )
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+
+        print(f'got history panel:\n{dfs}')
+
+    def test_get_reference_data(self):
+        """ test function get_reference_data()"""
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
