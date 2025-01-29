@@ -4199,6 +4199,10 @@ def get_reference_data_from_source(
     Dict of Series: {rtype: Series[qt_code]}
     """
 
+    if not htypes:
+        err = ValueError(f'htypes should not be empty!')
+        raise err
+
     reference_data_acquired = {}
     reference_data_to_be_refreqed = {}
 
@@ -4245,7 +4249,7 @@ def get_reference_data_from_source(
         raise err
 
     for htyp, ser in reference_data_acquired.items():
-        if isinstance(ser, pd.DataFrame):
+        if isinstance(ser, pd.DataFrame) and not ser.empty:
             import pdb; pdb.set_trace()
         if reference_data_to_be_refreqed[htyp]:
             ser = _adjust_freq(

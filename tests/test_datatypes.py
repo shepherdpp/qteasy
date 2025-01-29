@@ -1965,7 +1965,7 @@ class TestDataTypes(unittest.TestCase):
 
         ser = get_reference_data_from_source(
                 self.ds,
-                htypes=htypes,
+                htypes=h_types,
                 start=start,
                 end=end,
                 freq=freq,
