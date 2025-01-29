@@ -1900,8 +1900,8 @@ class TestDataTypes(unittest.TestCase):
             except:
                 print(f'failed to create htype with parameters: {htype_name}, {freq}')
                 continue
-        print(f'getting data without combination for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_ids = [htype.id for htype in htypes]
+        print(f'getting simple reference data for htypes: \n{[at.__str__() for at in htypes]}')
+        htype_names = [htype.name for htype in htypes]
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -1911,8 +1911,68 @@ class TestDataTypes(unittest.TestCase):
                 freq=freq,
         )
         self.assertIsInstance(ser, dict)
-        self.assertEqual(list(ser.keys()), htype_ids)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in ser.values()))
+        self.assertEqual(list(ser.keys()), htype_names)
+        self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
+
+        print(f'got history panel:\n{ser}')
+
+        # test getting simple daily reference data with unsymbolized history data
+        htype_names = 'shibor:on, wz_cm, close:b-000651.SZ, close-000300.SH'
+        htype_names = str_to_list(htype_names)
+        start = '20210101'
+        end = '20210301'
+        freq = 'd'
+        asset_types = ['None', 'E', 'IDX']
+        htypes = []
+        # 逐个生成htype并添加到htypes清单中
+        for at in asset_types:
+            for htype_name in htype_names:
+                try:
+                    htype = DataType(name=htype_name, freq=freq, asset_type=at)
+                    htypes.append(htype)
+                except:
+                    print(f'failed to create htype with parameters: {htype_name}, {freq}, {at}')
+                    continue
+        print(f'getting reference data with unsymbolizer for htypes: \n{[at.__str__() for at in htypes]}')
+        htype_names = ['shibor:on', 'wz_cm', 'close:b-000651.SZ', 'close-000300.SH']
+
+        ser = get_reference_data_from_source(
+                self.ds,
+                htypes=htypes,
+                start=start,
+                end=end,
+                freq=freq,
+        )
+        self.assertIsInstance(ser, dict)
+        self.assertEqual(list(ser.keys()), htype_names)
+        self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
+
+        print(f'got history panel:\n{ser}')
+
+        # test getting simple daily reference data with unsymbolized history data
+        start = '20230601'
+        end = '20230610'
+        freq = '5min'
+        htypes = []
+        # 逐个生成htype并添加到htypes清单中
+        h_types = [DataType(name='shibor:on', freq='d', asset_type='None'),
+                   DataType(name='wz_cm', freq='d', asset_type='None'),
+                   DataType(name='close:b-000651.SZ', freq='5min', asset_type='E'),
+                   DataType(name='close-000300.SH', freq='5min', asset_type='IDX'),
+                   ]
+        print(f'getting re-freq reference data for htypes: \n{[at.__str__() for at in h_types]}')
+        htype_names = ['shibor:on', 'wz_cm', 'close:b-000651.SZ', 'close-000300.SH']
+
+        ser = get_reference_data_from_source(
+                self.ds,
+                htypes=htypes,
+                start=start,
+                end=end,
+                freq=freq,
+        )
+        self.assertIsInstance(ser, dict)
+        self.assertEqual(list(ser.keys()), htype_names)
+        self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
 
         print(f'got history panel:\n{ser}')
 

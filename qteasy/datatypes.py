@@ -584,6 +584,12 @@ class DataType:
                 built_in_tables=built_in_freqs is not None,
         )
 
+        # if default_asset_type.lower() == 'none':
+        #     default_asset_type = None
+        #
+        # if default_freq.lower() == 'none':
+        #     default_freq = None
+
         self._name = name
         self._name_pars = None
         self._default_freq = default_freq
@@ -4194,14 +4200,15 @@ def get_reference_data_from_source(
     """
 
     reference_data_acquired = {}
+    reference_data_to_be_refreqed = {}
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
         # 检查数据类型是否属于参考数据，历史数据和基本信息数据不能通过此方法获取
-        if htype.freq is None:
+        if htype.freq == 'None':
             err = ValueError(f'Invalid data type {htype.name}, not a reference data type')
             raise err
-        if (htype.asset_type is not None) and (htype.unsymbolizer is None):
+        if (htype.asset_type != 'None') and (htype.unsymbolizer is None):
             err = TypeError(f'data type is a history data but not reference data, consider using unsymbolizer'
                             f'to convert it to reference data, such as "close-000651.SZ"')
             raise err
@@ -4212,19 +4219,18 @@ def get_reference_data_from_source(
             qt_code = None
 
         # 从数据源获取数据
-        ser = htype.get_data_from_source(datasource, symbols=qt_code, starts=start, ends=end, target_freq=freq)
+        ser = htype.get_data_from_source(datasource, symbols=qt_code, starts=start, ends=end)
 
-        if isinstance(ser, pd.DataFrame):  # if htype.asset_type != 'none':
-            # 此时数据本身是与证券相关的数据，需要从DataFrame中提取出对应的证券代码的数据
-            ser = ser[qt_code]
-            ser.name = f'{qt_code} - {htype.name}'
-        else:
-            ser.name = htype.name
-        if not ser.empty:
-            if row_count > 0:
-                # 读取每一个ts_code的最后row_count行数据
-                ser = ser.tail(row_count)
-        reference_data_acquired[htype.name] = ser
+        ser.name = htype.name
+
+        already_ser = reference_data_acquired.get(htype.name)
+        if already_ser is None:
+            reference_data_acquired[htype.name] = ser
+        else:  # 如果尚未找到有意义的数据，则将新的数据赋值给reference_data_acquired
+            if already_ser.empty:
+                reference_data_acquired[htype.name] = ser
+
+        reference_data_to_be_refreqed[htype.name] = True if htype.freq != freq else False
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(ser.empty for ser in reference_data_acquired.values()):
@@ -4237,6 +4243,17 @@ def get_reference_data_from_source(
                            f'To fill datasource:             qt.refill_data_source(table=\'table_name\', '
                            f'**kwargs)')
         raise err
+
+    for htyp, ser in reference_data_acquired.items():
+        if isinstance(ser, pd.DataFrame):
+            import pdb; pdb.set_trace()
+        if reference_data_to_be_refreqed[htyp]:
+            ser = _adjust_freq(
+                    hist_data=ser,
+                    target_freq=freq,
+                    method='ffill',
+            )
+            reference_data_acquired[htyp] = ser
 
     return reference_data_acquired
 
