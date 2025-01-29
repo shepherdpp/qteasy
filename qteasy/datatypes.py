@@ -105,7 +105,9 @@ def _get_user_data_type_map() -> pd.DataFrame:
 
 
 def _parse_name_and_params(name: str) -> tuple:
-    """parse the name string into name and parameters
+    """parse the name string into name, parameters, unsymbolizer in a form:
+
+    name:params-unsymbolizer
 
     Parameters
     ----------
@@ -119,13 +121,20 @@ def _parse_name_and_params(name: str) -> tuple:
             the search_name of the data type, replacing the parameters with '%' if there are any
         params: str
             the parameters of the data type
+        unsymbolizer: str
+            the column name used to unsymbolize historical data (convert hist data to reference data)
     """
+    if '-' in name:
+        name, unsymbolizer = name.split('-')
+    else:
+        unsymbolizer = None
+
     if ':' in name:
         search_name, params = name.split(':')
         search_name = search_name + ':%'
-        return search_name, params
+        return search_name, params, unsymbolizer
     else:
-        return name, None
+        return name, None, unsymbolizer
 
 
 def _parse_built_in_type_id(name: str) -> tuple:
@@ -451,6 +460,9 @@ class DataType:
     用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。
 
     一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。
+
+    需要获取数据时，通过DataType.get_data_from_source()方法获取。
+
     """
 
     aquisition_types = [
@@ -506,7 +518,8 @@ class DataType:
         根据用户输入的名称或完整参数实例化一个DataType对象。
 
         如果用户输入完整的三合一参数，将检查该类型是否已经存在，如果存在，则生成该类型的实例，否则抛出异常。
-        如果用户仅输入名称，将尝试从DATA_TYPE_MAP中匹配相应的参数，如果找到唯一匹配，则生成该类型的实例，否则抛出异常并给出提示。
+        如果用户仅输入名称，将尝试从DATA_TYPE_MAP中匹配相应的参数，如果找到唯一匹配，则生成该类型的实例，如果找到多组匹配，
+        则使用第一个匹配的类型生成DataType对象，如果找不到匹配，则报错。
 
         用户自定义的数据类型也在上述查找匹配范围内。而用户需要通过datatypes.define()方法将自定义的数据类型添加到DATA_TYPE_MAP中。
 
@@ -535,7 +548,7 @@ class DataType:
         if not isinstance(name, str):
             raise TypeError(f'name must be a string, got {type(name)}')
 
-        search_name, name_pars = _parse_name_and_params(name)
+        search_name, name_pars, unsymbolizer = _parse_name_and_params(name)
 
         # 根据用户输入的name查找所有匹配的频率和资产类型
         built_in_freqs, built_in_asset_types = _parse_built_in_type_id(search_name)
@@ -581,6 +594,7 @@ class DataType:
         self._all_user_defined_asset_types = None
         self._description = description
         self._acquisition_type = acquisition_type
+        self._unsymbolizer = unsymbolizer
 
         self._kwargs = kwargs
 
@@ -599,6 +613,10 @@ class DataType:
     @property
     def asset_type(self):
         return self._default_asset_type
+
+    @property
+    def unsymbolizer(self):
+        return self._unsymbolizer
 
     @property
     def available_freqs(self):
@@ -657,7 +675,7 @@ class DataType:
         elif acquisition_type == 'reference':
             acquired_data = self._get_reference(datasource, symbols=None, starts=starts, ends=ends)
         elif acquisition_type == 'selection':
-            acquired_data = self._get_selection(datasource, symbols=symbols)
+            acquired_data = self._get_selection(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'direct':
             acquired_data = self._get_direct(datasource, symbols=symbols, starts=starts, ends=ends)
         elif acquisition_type == 'adjustment':
@@ -689,8 +707,8 @@ class DataType:
         if acquired_data.empty:
             return acquired_data
 
-        if symbols is None:
-            return self._unsymbolised(acquired_data)
+        if self.unsymbolizer is not None:
+            return self._unsymbolised(acquired_data, self.unsymbolizer)
 
         return self._symbolised(acquired_data)
 
@@ -767,10 +785,13 @@ class DataType:
         return acquired_data
 
     def _get_selection(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.Series:
-        """筛选型的数据获取方法：
+        """筛选型的数据获取方法，可以用于筛选基础类型数据，也可以筛选历史数据和参考数据：
         从table_name表中筛选出sel_by=keys的数据并输出column列数据
-        如果给出symbols则筛选出symbols的数据，否则输出全部数据。
-        start和end无效，只是为了保持接口一致性。
+
+        如果筛选基础类型数据：
+        可以通过给出symbols筛选出symbols的数据，否则输出全部数据。
+        如果筛选历史数据或参考数据：
+        可以通过给出starts/ends筛选出一个历史区间的数据
 
         Parameters
         ----------
@@ -811,6 +832,7 @@ class DataType:
             slicers[index_pos] = keys
             slicers = tuple(slicers)
             selected_data = acquired_data.loc[slicers, :]
+            selected_data.index = selected_data.index.droplevel(sel_by)
 
         else:
             # raise error if sel_by is not in table data
@@ -1140,9 +1162,26 @@ class DataType:
         """将数据转换为symbolised格式"""
         return acquired_data
 
-    def _unsymbolised(self, acquired_data) -> pd.Series:
-        """将数据转换为un-symbolised格式"""
-        return acquired_data
+    def _unsymbolised(self, acquired_data, column_name) -> pd.Series:
+        """将数据转换为un-symbolised格式。
+
+        symbolized数据为index为日期、column为qt_code的DataFrame，unsymbolize
+        以后输出数据为index为日期、没有column的Series
+
+        Parameters
+        ----------
+        acquired_data: pd.DataFrame
+            symbolised格式的数据, index为datetime，columns为qt_code
+        column_name: str
+            需要筛选的column的名称，column_name必须在columns中
+        """
+        if (self.freq == 'None') or (self.asset_type == 'None'):
+            err = TypeError(f'Only history data')
+
+        if column_name not in acquired_data.columns:
+            err = KeyError(f'columu name {column_name} not in columns of acquired_data: \n{acquired_data.columns}')
+            raise err
+        return acquired_data[column_name]
 
 
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'kwargs']
@@ -1150,8 +1189,12 @@ DATA_TYPE_MAP_INDEX_NAMES = ('dtype', 'freq', 'asset_type')
 DATA_TYPE_MAP = {
     ('trade_cal', 'd', 'None'):                       ['交易日历', 'direct',
                                                        {'table_name': 'trade_calendar', 'column': 'is_open'}],
-    ('pre_trade_day', 'd', 'None'):                   ['交易日历', 'direct',
-                                                       {'table_name': 'trade_calendar', 'column': 'pretrade_date'}],
+    ('pre_trade_day:%', 'd', 'None'):                 ['上一交易日', 'selection',
+                                                       {'table_name': 'trade_calendar', 'column': 'pretrade_date',
+                                                        'sel_by': 'exchange', 'keys': '%'}],
+    ('is_trade_day:%', 'd', 'None'):                  ['是否交易日-市场代码：%', 'selection',
+                                                       {'table_name': 'trade_calendar', 'column': 'is_open',
+                                                        'sel_by': 'exchange', 'keys': '%'}],
     ('stock_symbol', 'None', 'E'):                    ['股票基本信息 - 股票代码', 'basics',
                                                        {'table_name': 'stock_basic', 'column': 'symbol'}],
     ('stock_name', 'None', 'E'):                      ['股票基本信息 - 股票名称', 'basics',
@@ -1180,14 +1223,13 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'stock_basic', 'column': 'delist_date'}],
     ('is_hs', 'None', 'E'):                           ['股票基本信息 - 是否沪深港通标的', 'basics',
                                                        {'table_name': 'stock_basic', 'column': 'is_hs'}],
-    ('wt_idx:%', 'None', 'E'):                        ['股票在指数中所占权重 - %', 'composition',
+    ('wt_idx:%', 'd', 'E'):                           ['股票在指数中所占权重 - %', 'composition',
                                                        {'table_name':  'index_weight', 'column': 'weight',
                                                         'comp_column': 'index_code', 'index': '%'}],
     ('ths_category', 'None', 'E'):                    ['股票同花顺行业分类', 'category',
                                                        {'table_name':  'ths_index_weight', 'column': 'code',
                                                         'comp_column': 'ts_code'}],
-    # ('sw_category','None','E'):	['股票行业分类 - 申万','category',{'table_name': 'sw_index_weight', 'column': 'weight',
-    # 'comp_column': 'index_code', 'index': '399011.SZ'}],
+    # ('sw_l1_code','None','E'):	['股票行业分类 - 申万L1','category',{'table_name': 'sw_industry_detail', 'column': 'L1-code'}],
     ('market', 'None', 'IDX'):                        ['指数基本信息 - 市场', 'basics',
                                                        {'table_name': 'index_basic', 'column': 'market'}],
     ('publisher', 'None', 'IDX'):                     ['指数基本信息 - 发布方', 'basics',
@@ -3364,25 +3406,25 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'financial', 'column': 'equity_yoy'}],
     ('rd_exp', 'q', 'E'):                             ['上市公司财务指标 - 研发费用', 'direct',
                                                        {'table_name': 'financial', 'column': 'rd_exp'}],
-    ('rzye:%', 'd', 'Any'):                           ['融资融券交易汇总 - 融资余额(元)', 'selection',
+    ('rzye:%', 'd', 'None'):                          ['融资融券交易汇总 - 融资余额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzye',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
-    ('rzmre:%', 'd', 'Any'):                          ['融资融券交易汇总 - 融资买入额(元)', 'selection',
+    ('rzmre:%', 'd', 'None'):                         ['融资融券交易汇总 - 融资买入额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzmre',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
-    ('rzche:%', 'd', 'Any'):                          ['融资融券交易汇总 - 融资偿还额(元)', 'selection',
+    ('rzche:%', 'd', 'None'):                         ['融资融券交易汇总 - 融资偿还额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzche',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
-    ('rqye:%', 'd', 'Any'):                           ['融资融券交易汇总 - 融券余额(元)', 'selection',
+    ('rqye:%', 'd', 'None'):                          ['融资融券交易汇总 - 融券余额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rqye',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
-    ('rqmcl:%', 'd', 'Any'):                          ['融资融券交易汇总 - 融券卖出量(股,份,手)', 'selection',
+    ('rqmcl:%', 'd', 'None'):                         ['融资融券交易汇总 - 融券卖出量(股,份,手)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rqmcl',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
-    ('rzrqye:%', 'd', 'Any'):                         ['融资融券交易汇总 - 融资融券余额(元)', 'selection',
+    ('rzrqye:%', 'd', 'None'):                        ['融资融券交易汇总 - 融资融券余额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzrqye',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
-    ('rqyl:%', 'd', 'Any'):                           ['融资融券交易汇总 - 融券余量(股,份,手)', 'selection',
+    ('rqyl:%', 'd', 'None'):                          ['融资融券交易汇总 - 融券余量(股,份,手)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rqyl',
                                                         'sel_by': 'exchange_id', 'keys': '%'}],
     ('top_list_close', 'd', 'E'):                     ['龙虎榜交易明细 - 收盘价', 'event_signal',
@@ -4083,7 +4125,6 @@ def get_history_data_from_source(
             if original_df is None:
                 history_data_acquired[htype.name] = df
             else:
-                # import pdb; pdb.set_trace()
                 new_df = pd.concat([original_df, df], axis=1, copy=False)
                 history_data_acquired[htype.name] = new_df
             history_data_to_be_re_freqed[htype.name] = True if htype.freq != freq else False
@@ -4106,7 +4147,6 @@ def get_history_data_from_source(
 
     for htyp, df in history_data_acquired.items():
         if history_data_to_be_re_freqed[htyp]:
-            # import pdb; pdb.set_trace()
             df = _adjust_freq(
                     hist_data=df,
                     target_freq=freq,
@@ -4120,7 +4160,6 @@ def get_history_data_from_source(
 def get_reference_data_from_source(
         datasource,
         htypes: [DataType], *,
-        qt_code: str,
         start: str = None,
         end: str = None,
         freq: str = None,
@@ -4139,9 +4178,6 @@ def get_reference_data_from_source(
         数据源对象，用于获取参考数据
     htypes: [DataType]
         需要获取的参考数据类型，必须是合法的参考数据类型对象，可以是一个或多个
-    qt_code: str
-        合法的qt_code代码，如果需要获取的数据是与证券代码相关的，则必须给出且仅
-        给出一个证券代码，并将该代码的名称和htype一起作为index的名称返回
     freq: str, Optional
         获取的参考数据的目标频率，
         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
@@ -4157,15 +4193,27 @@ def get_reference_data_from_source(
     Dict of Series: {rtype: Series[qt_code]}
     """
 
-    history_data_acquired = {}
+    reference_data_acquired = {}
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
-        # 检查数据类型是否属于历史数据，参考数据和基本信息数据不能通过此方法获取
-        if htype.freq == 'none':
-            raise ValueError(f'Invalid data type {htype.name}, not a reference data type')
+        # 检查数据类型是否属于参考数据，历史数据和基本信息数据不能通过此方法获取
+        if htype.freq is None:
+            err = ValueError(f'Invalid data type {htype.name}, not a reference data type')
+            raise err
+        if (htype.asset_type is not None) and (htype.unsymbolizer is None):
+            err = TypeError(f'data type is a history data but not reference data, consider using unsymbolizer'
+                            f'to convert it to reference data, such as "close-000651.SZ"')
+            raise err
+
+        if htype.unsymbolizer is not None:
+            qt_code = htype.unsymbolizer
+        else:
+            qt_code = None
+
         # 从数据源获取数据
         ser = htype.get_data_from_source(datasource, symbols=qt_code, starts=start, ends=end, target_freq=freq)
+
         if isinstance(ser, pd.DataFrame):  # if htype.asset_type != 'none':
             # 此时数据本身是与证券相关的数据，需要从DataFrame中提取出对应的证券代码的数据
             ser = ser[qt_code]
@@ -4175,11 +4223,11 @@ def get_reference_data_from_source(
         if not ser.empty:
             if row_count > 0:
                 # 读取每一个ts_code的最后row_count行数据
-                df = ser.tail(row_count)
-        history_data_acquired[htype.name] = ser
+                ser = ser.tail(row_count)
+        reference_data_acquired[htype.name] = ser
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
-    if all(ser.empty for ser in history_data_acquired.values()):
+    if all(ser.empty for ser in reference_data_acquired.values()):
         err = RuntimeError(f'Empty data extracted from {datasource} with parameters:\n'
                            f'htypes: {htypes}\n'
                            f'start/end/freq: {start}/{end}/"{freq}"\n'
@@ -4190,7 +4238,7 @@ def get_reference_data_from_source(
                            f'**kwargs)')
         raise err
 
-    return history_data_acquired
+    return reference_data_acquired
 
 
 def get_data_type(htype, *, symbols=None, starts=None, ends=None, target_freq=None):

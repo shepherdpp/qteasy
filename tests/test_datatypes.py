@@ -28,8 +28,11 @@ from qteasy.datatypes import (
 )
 
 ALL_TYPES_TO_TEST_WITH_FULL_ID = [
-    ('trade_cal', 'd', 'None'),
-    ('pre_trade_day', 'd', 'None'),
+    ('is_trade_day:SSE', 'd', 'None'),
+    ('is_trade_day:SZSE', 'd', 'None'),
+    ('is_trade_day:SSE', 'd', 'None'),
+    ('pre_trade_day:SSE', 'd', 'None'),
+    ('pre_trade_day:CFFEX', 'd', 'None'),
     ('stock_symbol', 'None', 'E'),
     ('stock_name', 'None', 'E'),
     ('area', 'None', 'E'),
@@ -44,27 +47,27 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('list_date', 'None', 'E'),
     ('delist_date', 'None', 'E'),
     ('is_hs', 'None', 'E'),
-    ('wt_idx:000001.SH', 'None', 'E'),
-    ('wt_idx:000002.SH', 'None', 'E'),
-    ('wt_idx:000003.SH', 'None', 'E'),
-    ('wt_idx:000004.SH', 'None', 'E'),
-    ('wt_idx:000005.SH', 'None', 'E'),
-    ('wt_idx:000006.SH', 'None', 'E'),
-    ('wt_idx:000007.SH', 'None', 'E'),
-    ('wt_idx:000016.SH', 'None', 'E'),
-    ('wt_idx:000010.SH', 'None', 'E'),
-    ('wt_idx:000009.SH', 'None', 'E'),
-    ('wt_idx:000043.SH', 'None', 'E'),
-    ('wt_idx:000044.SH', 'None', 'E'),
-    ('wt_idx:000045.SH', 'None', 'E'),
-    ('wt_idx:000300.SH', 'None', 'E'),
-    ('wt_idx:399001.SZ', 'None', 'E'),
-    ('wt_idx:399006.SZ', 'None', 'E'),
-    ('wt_idx:399004.SZ', 'None', 'E'),
-    ('wt_idx:399009.SZ', 'None', 'E'),
-    ('wt_idx:399007.SZ', 'None', 'E'),
-    ('wt_idx:399010.SZ', 'None', 'E'),
-    ('wt_idx:399011.SZ', 'None', 'E'),
+    ('wt_idx:000001.SH', 'd', 'E'),
+    ('wt_idx:000002.SH', 'd', 'E'),
+    ('wt_idx:000003.SH', 'd', 'E'),
+    ('wt_idx:000004.SH', 'd', 'E'),
+    ('wt_idx:000005.SH', 'd', 'E'),
+    ('wt_idx:000006.SH', 'd', 'E'),
+    ('wt_idx:000007.SH', 'd', 'E'),
+    ('wt_idx:000016.SH', 'd', 'E'),
+    ('wt_idx:000010.SH', 'd', 'E'),
+    ('wt_idx:000009.SH', 'd', 'E'),
+    ('wt_idx:000043.SH', 'd', 'E'),
+    ('wt_idx:000044.SH', 'd', 'E'),
+    ('wt_idx:000045.SH', 'd', 'E'),
+    ('wt_idx:000300.SH', 'd', 'E'),
+    ('wt_idx:399001.SZ', 'd', 'E'),
+    ('wt_idx:399006.SZ', 'd', 'E'),
+    ('wt_idx:399004.SZ', 'd', 'E'),
+    ('wt_idx:399009.SZ', 'd', 'E'),
+    ('wt_idx:399007.SZ', 'd', 'E'),
+    ('wt_idx:399010.SZ', 'd', 'E'),
+    ('wt_idx:399011.SZ', 'd', 'E'),
     ('ths_category', 'None', 'E'),
     # ('sw_category','None','E'),
     ('market', 'None', 'IDX'),
@@ -204,6 +207,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('high:f', 'd', 'E'),
     ('low:f', 'd', 'E'),
     ('close:f', 'd', 'E'),
+    ('open-000651.SZ', 'd', 'E'),  # 测试历史数据+qt_code转参考数据
     ('open', 'd', 'E'),
     ('high', 'd', 'E'),
     ('low', 'd', 'E'),
@@ -354,6 +358,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('high', 'd', 'IDX'),
     ('low', 'd', 'IDX'),
     ('close', 'd', 'IDX'),
+    ('close-000300.SH', 'd', 'IDX'),  # 测试历史数据转参考数据
     ('vol', 'd', 'IDX'),
     ('amount', 'd', 'IDX'),
     ('open', 'w', 'IDX'),
@@ -378,6 +383,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('high', '5min', 'IDX'),
     ('low', '5min', 'IDX'),
     ('close', '5min', 'IDX'),
+    ('close-000300.SH', '5min', 'IDX'),  # 测试历史数据转参考数据
     ('vol', '5min', 'IDX'),
     ('amount', '5min', 'IDX'),
     ('open', '15min', 'IDX'),
@@ -1131,13 +1137,13 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('q_netprofit_qoq', 'q', 'E'),
     ('equity_yoy', 'q', 'E'),
     ('rd_exp', 'q', 'E'),
-    ('rzye:SSE', 'd', 'Any'),
-    ('rzmre:SSE', 'd', 'Any'),
-    ('rzche:SSE', 'd', 'Any'),
-    ('rqye:SSE', 'd', 'Any'),
-    ('rqmcl:SZSE', 'd', 'Any'),
-    ('rzrqye:SZSE', 'd', 'Any'),
-    ('rqyl:SZSE', 'd', 'Any'),
+    ('rzye:SSE', 'd', 'None'),
+    ('rzmre:SSE', 'd', 'None'),
+    ('rzche:SSE', 'd', 'None'),
+    ('rqye:SSE', 'd', 'None'),
+    ('rqmcl:SZSE', 'd', 'None'),
+    ('rzrqye:SZSE', 'd', 'None'),
+    ('rqyl:SZSE', 'd', 'None'),
     ('top_list_close', 'd', 'E'),
     ('top_list_pct_change', 'd', 'E'),
     ('top_list_turnover_rate', 'd', 'E'),
@@ -1461,6 +1467,10 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     ('pe', 'd', 'IDX'),
     ('pe', 'd', 'E'),
     ('pe', None, 'E'),
+    ('ths_category', 'None', 'E'),
+    ('weight_rule', 'None', 'IDX'),
+    ('is_trade_day:SSE', 'd', 'None'),
+    ('high-000300.SH', '5min', 'IDX'),
 ]
 
 
@@ -1503,6 +1513,7 @@ class TestDataTypes(unittest.TestCase):
                   # f'all freqs: {dtype.available_freqs}\n'
                   f'asset_type: {dtype.asset_type}\n'
                   # f'all a_types: {dtype.available_asset_types}\n'
+                  f'unsymbolizer: {dtype.unsymbolizer}\n'
                   f'desc:     {dtype.description}\n'
                   f'acq_type: {dtype.acquisition_type}\n'
                   f'kwargs:   {dtype.kwargs}\n')
@@ -1694,10 +1705,10 @@ class TestDataTypes(unittest.TestCase):
                 empty_types.append(k)
                 empty_type_descs.append(desc)
                 empty_type_acq_types.append(acq_type)
-                # print(f'\nempty data for {dtype} - {dtype.description}')
+                print(f'\nempty data for {dtype} - {dtype.description}')
                 continue
 
-            # print(f'\ngot data for {dtype}: \n{data}')
+            print(f'\ngot data for {dtype}: \n{data}')
 
             # checking the datatypes and start / end dates of the data
             if acq_type in ['basics', 'category']:
@@ -1705,14 +1716,14 @@ class TestDataTypes(unittest.TestCase):
                 self.assertIsInstance(data, pd.Series)
                 self.assertTrue(data.index.dtype == 'object')
                 self.assertTrue(all(share in shares for share in data.index))
-            elif acq_type in ['reference']:
+            elif (acq_type in ['reference']) or (dtype.unsymbolizer is not None):
                 self.assertIsInstance(data, pd.Series)
                 self.assertEqual(data.index.dtype, 'datetime64[ns]')
                 starts = pd.to_datetime(starts)
                 ends = pd.to_datetime(ends)
                 self.assertTrue(all(date >= starts for date in data.index))
                 self.assertTrue(all(date <= ends for date in data.index))
-            elif acq_type in type_with_shares:
+            elif (acq_type in type_with_shares) and (dtype.unsymbolizer is None):
                 self.assertIsInstance(data, pd.DataFrame)
                 if not data.empty:
                     try:
@@ -1874,7 +1885,36 @@ class TestDataTypes(unittest.TestCase):
 
     def test_get_reference_data(self):
         """ test function get_reference_data()"""
-        raise NotImplementedError
+        # test getting simple daily reference data
+        htype_names = 'shibor:on, wz_cm, is_trade_day:SSE'
+        htype_names = str_to_list(htype_names)
+        start = '20210101'
+        end = '20210301'
+        freq = 'd'
+        htypes = []
+        # 逐个生成htype并添加到htypes清单中
+        for htype_name in htype_names:
+            try:
+                htype = DataType(name=htype_name, freq=freq)
+                htypes.append(htype)
+            except:
+                print(f'failed to create htype with parameters: {htype_name}, {freq}')
+                continue
+        print(f'getting data without combination for htypes: \n{[at.__str__() for at in htypes]}')
+        htype_ids = [htype.id for htype in htypes]
+
+        ser = get_reference_data_from_source(
+                self.ds,
+                htypes=htypes,
+                start=start,
+                end=end,
+                freq=freq,
+        )
+        self.assertIsInstance(ser, dict)
+        self.assertEqual(list(ser.keys()), htype_ids)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in ser.values()))
+
+        print(f'got history panel:\n{ser}')
 
 
 if __name__ == '__main__':
