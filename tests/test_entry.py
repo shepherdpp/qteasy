@@ -51,7 +51,7 @@ class TestEntry(unittest.TestCase):
         qt.update_start_up_setting(test_key='test_value')
         config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings after update: {config_lines}')
-        self.assertTrue('test_key = test_value' in config_lines)
+        self.assertEqual(config_lines['test_key'], 'test_value')
 
         # test special values in start up settings
         qt.update_start_up_setting(test_key='test_value',
@@ -67,37 +67,37 @@ class TestEntry(unittest.TestCase):
         )
         config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings after update: {config_lines}')
-        self.assertTrue('test_key = test_value' in config_lines)
-        self.assertTrue('test_key2 = 123' in config_lines)
-        self.assertTrue('test_key3 = 0.123' in config_lines)
-        self.assertTrue('test_key4 = True' in config_lines)
-        self.assertTrue('test_key5 = False' in config_lines)
-        self.assertTrue('test_key6 = None' in config_lines)
-        self.assertTrue('test_key7 = "None"' in config_lines)
-        self.assertTrue('test_key8 = "False"' in config_lines)
-        self.assertTrue('test_key9 = "3.14"' in config_lines)
-        self.assertTrue('test_key10 = "3"' in config_lines)
+        self.assertEqual(config_lines['test_key'], 'test_value')
+        self.assertEqual(config_lines['test_key2'], 123)
+        self.assertEqual(config_lines['test_key3'], 0.123)
+        self.assertEqual(config_lines['test_key4'], True)
+        self.assertEqual(config_lines['test_key5'], False)
+        self.assertEqual(config_lines['test_key6'], None)
+        self.assertEqual(config_lines['test_key7'], 'None')
+        self.assertEqual(config_lines['test_key8'], 'False')
+        self.assertEqual(config_lines['test_key9'], '3.14')
+        self.assertEqual(config_lines['test_key10'], '3')
 
         # test remove start up settings
         qt.remove_start_up_setting('test_key')
-        config_lines = qt.start_up_settings()
+        config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings after remove: {config_lines}')
-        self.assertTrue('test_key = test_value' not in config_lines)
+        self.assertEqual(config_lines.get('test_key'), None)
 
         # remove other test keys
         qt.remove_start_up_setting('test_key2', 'test_key3', 'test_key4', 'test_key5', 'test_key6',
                                    'test_key7', 'test_key8', 'test_key9', 'test_key10')
-        config_lines = qt.start_up_settings()
+        config_lines = qt.get_start_up_settings()
         print(f'qteasy start up settings after remove: {config_lines}')
-        self.assertTrue('test_key2 = 123' not in config_lines)
-        self.assertTrue('test_key3 = 0.123' not in config_lines)
-        self.assertTrue('test_key4 = True' not in config_lines)
-        self.assertTrue('test_key5 = False' not in config_lines)
-        self.assertTrue('test_key6 = None' not in config_lines)
-        self.assertTrue('test_key7 = "None"' not in config_lines)
-        self.assertTrue('test_key8 = "False"' not in config_lines)
-        self.assertTrue('test_key9 = "3.14"' not in config_lines)
-        self.assertTrue('test_key10 = "3"' not in config_lines)
+        self.assertEqual(config_lines.get('test_key2'), None)
+        self.assertEqual(config_lines.get('test_key3'), None)
+        self.assertEqual(config_lines.get('test_key4'), None)
+        self.assertEqual(config_lines.get('test_key5'), None)
+        self.assertEqual(config_lines.get('test_key6'), None)
+        self.assertEqual(config_lines.get('test_key7'), None)
+        self.assertEqual(config_lines.get('test_key8'), None)
+        self.assertEqual(config_lines.get('test_key9'), None)
+        self.assertEqual(config_lines.get('test_key10'), None)
 
         # test updated invalid system settings
         with self.assertRaises(ValueError):

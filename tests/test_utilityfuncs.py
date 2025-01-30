@@ -167,6 +167,12 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_market_trade_day(date_seems_trade_day))
         self.assertTrue(is_market_trade_day(date_christmas))
         self.assertFalse(is_market_trade_day(date_christmas, exchange='XHKG'))
+        # test trade dates in some strange text formats:
+        self.assertTrue(is_market_trade_day('2021-04-01'))
+        self.assertTrue(is_market_trade_day(pd.to_datetime('2021-04-01 00:00:00')))
+        self.assertTrue(is_market_trade_day('2021-04-01 00:00:00'))
+        self.assertTrue(is_market_trade_day(datetime.date(2021, 4, 1)))
+        self.assertTrue(is_market_trade_day(datetime.date(2021, 4, 1), 'SSE'))
 
         # raises when date out of range
         self.assertRaises(KeyError, is_market_trade_day, date_too_early)
@@ -872,7 +878,7 @@ class TestUtilityFuncs(unittest.TestCase):
 
         self.assertRaises(TypeError, adjust_string_length, 123, 10)
         self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')
-        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, ellipsis='__')
+        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, filler='__')
         self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 0)
 
 

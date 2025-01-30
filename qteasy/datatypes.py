@@ -14,6 +14,7 @@
 
 import pandas as pd
 from functools import lru_cache
+from warnings import warn
 
 from .utilfuncs import (
     str_to_list,
@@ -72,6 +73,99 @@ def get_dtype_map(include_user_defined=False, refresh_cache=False) -> pd.DataFra
         return pd.concat([built_in_map, user_map])
 
     return built_in_map
+
+
+def infer_data_types(names, freqs, asset_types, adj=None,
+                     force_match_freq=False,
+                     force_match_asset_type=False) -> list:
+    """ 根据输入的名称、频率和资产类型推断数据类型，如果某个name找不到匹配的freq或asset_type，则根据
+    force_match_freq / force_match_asset_type的值确定如何操作：
+
+    如果force_match_freq为True，则强制性为无法匹配的names匹配一个存在的DataType
+    否则忽略找不到freq的name
+    如果force_match_asset_type为True，则强制性为无法匹配的names匹配一个存在的
+    DataType，否则忽略无法匹配asset_type的name
+
+    Parameters
+    ----------
+    names: str or [str]
+        一个包含所有需要的数据类型名称的列表，也可以以逗号分隔字符串形式给出
+    freqs: str or [str]
+        一个包含可能的freq的列表，也可以以逗号分隔字符串形式给出
+    asset_types: str or [str]
+        一个包含可能的资产类型的列表，也可以以逗号分隔字符串形式给出
+    adj: str, optinal, deprecated
+        价格调整因子，如果给出，强制性调整价格类型
+    force_match_freq: bool, optional, default False
+        是否强制匹配freq
+    force_match_asset_type: bool, optional, default False
+        是否强制匹配资产类型
+
+    Return
+    ------
+    data_types: list of DataTypes
+    """
+
+    if isinstance(names, str):
+        names = str_to_list(names)
+    if not isinstance(names, list):
+        err = TypeError(f'names should be a string of list of strings, but got {type(names)}')
+        raise err
+
+    if isinstance(freqs, str):
+        freqs = str_to_list(freqs)
+    if not isinstance(freqs, list):
+        err = TypeError(f'fress should be a string or a list of strings, but got {type(freq)}')
+        raise err
+
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    if not isinstance(asset_types, list):
+        err = TypeError(f'asset_types should be a string or a list of strings, but got {type(asset_types)}')
+        raise err
+
+    if adj is not None:
+        if not isinstance(adj, str):
+            err = TypeError(f'adj should be a string, but got {type(adj)}')
+            raise err
+        adj = adj.lower()
+        price_types = ['close', 'open', 'high', 'low']
+        if adj not in ['b', 'f', 'back', 'fw', 'forward', 'none']:
+            pass
+        elif adj in ['b', 'back']:
+            names = [f'{n}|b' if n in price_types else n for n in names]
+        elif adj in ['f', 'fw', 'forward']:
+            names = [f'{n}|f' if n in price_types else n for n in names]
+
+        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+              f'adjusted prices, such as "close|b" instead of adj="b".'
+        warn(msg, DeprecationWarning)
+
+    # TODO: 需要优化：将force_match_freq / force_match_asset_type作为DataType的__init__()参数，那么这里就可以
+    #  使用itertools.product以及列表推导式来简化代码了。
+    data_types = []
+    for n in names:
+        for f in freqs:
+            for at in asset_types:
+                try:
+                    data_types.append(DataType(name=n, freq=f, asset_type=at))
+                except ValueError:
+                    if force_match_freq:
+                        try:
+                            data_types.append(DataType(name=n, asset_type=at))
+                        except ValueError as e:
+                            err = ValueError(f'No matching data type found for {n} and asset type {at} with '
+                                             f'force_matching_freq: {e}')
+                            raise err
+                    if force_match_asset_type:
+                        try:
+                            data_types.append(DataType(name=n, freq=f))
+                        except ValueError as e:
+                            err = ValueError(f'No matching data type found for {n} and freq {f} with '
+                                             f'force_matching_asset_type: {e}')
+                            raise err
+
+    return data_types
 
 
 @lru_cache(maxsize=1)
@@ -540,7 +634,7 @@ class DataType:
         ValueError
             如果用户输入的参数不在DATA_TYPE_MAP中
             ValueError: DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.
-        ValueError
+        ValueError NotImplemented!
             如果用户输入的参数不完整，在DATA_TYPE_MAP中无法匹配到唯一的数据类型
             ValueError: Input matches multiple data types in DATA_TYPE_MAP, specify your input: {types}?.
         """
@@ -562,6 +656,8 @@ class DataType:
         elif (freq in built_in_freqs) or (freq in user_defined_freqs):
             default_freq = freq
         else:
+            import pdb;
+            pdb.set_trace()
             raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
         if (asset_type is None) and len(built_in_asset_types) > 0:
@@ -779,7 +875,7 @@ class DataType:
             acquired_data.index = new_index
 
         elif (table_name in ['cn_cpi', 'cn_ppi', 'cn_money', 'cn_sf', 'cn_pmi']) and \
-             isinstance(acquired_data.index[0], str):
+                isinstance(acquired_data.index[0], str):
             from .data_channels import _convert_month_str_to_absolute_month
             from .data_channels import _convert_absolute_month_to_month_str
             new_index = [_convert_month_str_to_absolute_month(idx) + 1 for idx in acquired_data.index]
@@ -1012,7 +1108,8 @@ class DataType:
             # expand the index to include starts and ends dates
             status = _expand_df_index(data_df, starts, ends).ffill()
         except:
-            import pdb; pdb.set_trace()
+            import pdb;
+            pdb.set_trace()
             pass
 
         # filter out events that are not in the date range
@@ -1196,10 +1293,10 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'trade_calendar', 'column': 'is_open'}],
     ('pre_trade_day|%', 'd', 'None'):                 ['上一交易日', 'selection',
                                                        {'table_name': 'trade_calendar', 'column': 'pretrade_date',
-                                                        'sel_by': 'exchange', 'keys': '%'}],
+                                                        'sel_by':     'exchange', 'keys': '%'}],
     ('is_trade_day|%', 'd', 'None'):                  ['是否交易日-市场代码：%', 'selection',
                                                        {'table_name': 'trade_calendar', 'column': 'is_open',
-                                                        'sel_by': 'exchange', 'keys': '%'}],
+                                                        'sel_by':     'exchange', 'keys': '%'}],
     ('stock_symbol', 'None', 'E'):                    ['股票基本信息 - 股票代码', 'basics',
                                                        {'table_name': 'stock_basic', 'column': 'symbol'}],
     ('stock_name', 'None', 'E'):                      ['股票基本信息 - 股票名称', 'basics',
@@ -1421,17 +1518,17 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'stock_company', 'column': 'main_business'}],
     ('business_scope', 'd', 'E'):                     ['公司信息 - 经营范围', 'basics',
                                                        {'table_name': 'stock_company', 'column': 'business_scope'}],
-    ('managers_name','d','E'):	                      ['公司高管信息 - 高管姓名','event_multi_stat',
+    ('managers_name', 'd', 'E'):                      ['公司高管信息 - 高管姓名', 'event_multi_stat',
                                                        {'table_name': 'stk_managers',
-                                                        'column': 'name',
-                                                        'id_index': 'name',
-                                                        'start_col': 'begin_date',
-                                                        'end_col': 'end_date'}],
+                                                        'column':     'name',
+                                                        'id_index':   'name',
+                                                        'start_col':  'begin_date',
+                                                        'end_col':    'end_date'}],
     ('managers_gender', 'd', 'E'):                    ['公司高管信息 - 性别', 'event_multi_stat',
                                                        {'table_name': 'stk_managers',
-                                                        'column': 'gender',
+                                                        'column':     'gender',
                                                         'id_index':   'name',
-                                                        'start_col': 'begin_date',
+                                                        'start_col':  'begin_date',
                                                         'end_col':    'end_date'}],
     ('managers_lev', 'd', 'E'):                       ['公司高管信息 - 岗位类别', 'event_multi_stat',
                                                        {'table_name': 'stk_managers', 'column': 'lev',
@@ -3413,25 +3510,25 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'financial', 'column': 'rd_exp'}],
     ('rzye|%', 'd', 'None'):                          ['融资融券交易汇总 - 融资余额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzye',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('rzmre|%', 'd', 'None'):                         ['融资融券交易汇总 - 融资买入额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzmre',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('rzche|%', 'd', 'None'):                         ['融资融券交易汇总 - 融资偿还额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzche',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('rqye|%', 'd', 'None'):                          ['融资融券交易汇总 - 融券余额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rqye',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('rqmcl|%', 'd', 'None'):                         ['融资融券交易汇总 - 融券卖出量(股,份,手)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rqmcl',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('rzrqye|%', 'd', 'None'):                        ['融资融券交易汇总 - 融资融券余额(元)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rzrqye',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('rqyl|%', 'd', 'None'):                          ['融资融券交易汇总 - 融券余量(股,份,手)', 'selection',
                                                        {'table_name': 'margin', 'column': 'rqyl',
-                                                        'sel_by': 'exchange_id', 'keys': '%'}],
+                                                        'sel_by':     'exchange_id', 'keys': '%'}],
     ('top_list_close', 'd', 'E'):                     ['龙虎榜交易明细 - 收盘价', 'event_signal',
                                                        {'table_name': 'top_list', 'column': 'close'}],
     ('top_list_pct_change', 'd', 'E'):                ['龙虎榜交易明细 - 涨跌幅', 'event_signal',
@@ -3592,67 +3689,67 @@ DATA_TYPE_MAP = {
                                                         'end_col':    'end_date'}],
     ('stk_div_planned', 'd', 'E'):                    ['预案-每股送转', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_div',
-                                                        'sel_by': 'div_proc', 'key': '预案'}],
+                                                        'sel_by':     'div_proc', 'key': '预案'}],
     ('stk_bo_rate_planned', 'd', 'E'):                ['预案-每股送股比例', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_bo_rate',
-                                                        'sel_by': 'div_proc', 'key': '预案'}],
+                                                        'sel_by':     'div_proc', 'key': '预案'}],
     ('stk_co_rate_planned', 'd', 'E'):                ['预案-每股转增比例', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_co_rate',
-                                                        'sel_by': 'div_proc', 'key': '预案'}],
+                                                        'sel_by':     'div_proc', 'key': '预案'}],
     ('cash_div_planned', 'd', 'E'):                   ['预案-每股分红（税后）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'cash_div',
-                                                        'sel_by': 'div_proc', 'key': '预案'}],
+                                                        'sel_by':     'div_proc', 'key': '预案'}],
     ('cash_div_tax_planned', 'd', 'E'):               ['预案-每股分红（税前）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'cash_div_tax',
-                                                        'sel_by': 'div_proc', 'key': '预案'}],
+                                                        'sel_by':     'div_proc', 'key': '预案'}],
     ('stk_div_approved', 'd', 'E'):                   ['股东大会批准-每股送转', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_div',
-                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+                                                        'sel_by':     'div_proc', 'key': '股东大会通过'}],
     ('stk_bo_rate_approved', 'd', 'E'):               ['股东大会批准-每股送股比例', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_bo_rate',
-                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+                                                        'sel_by':     'div_proc', 'key': '股东大会通过'}],
     ('stk_co_rate_approved', 'd', 'E'):               ['股东大会批准-每股转增比例', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_co_rate',
-                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+                                                        'sel_by':     'div_proc', 'key': '股东大会通过'}],
     ('cash_div_approved', 'd', 'E'):                  ['股东大会批准-每股分红（税后）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'cash_div',
-                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+                                                        'sel_by':     'div_proc', 'key': '股东大会通过'}],
     ('cash_div_tax_approved', 'd', 'E'):              ['股东大会批准-每股分红（税前）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'cash_div_tax',
-                                                        'sel_by': 'div_proc', 'key': '股东大会通过'}],
+                                                        'sel_by':     'div_proc', 'key': '股东大会通过'}],
     ('stk_div', 'd', 'E'):                            ['实施-每股送转', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_div',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('stk_bo_rate', 'd', 'E'):                        ['实施-每股送股比例', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_bo_rate',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('stk_co_rate', 'd', 'E'):                        ['实施-每股转增比例', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'stk_co_rate',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('cash_div', 'd', 'E'):                           ['实施-每股分红（税后）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'cash_div',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('cash_div_tax', 'd', 'E'):                       ['实施-每股分红（税前）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'cash_div_tax',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('record_date', 'd', 'E'):                        ['实施-股权登记日', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'record_date',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('ex_date', 'd', 'E'):                            ['实施-除权除息日', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'ex_date',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('pay_date', 'd', 'E'):                           ['实施-派息日', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'pay_date',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('imp_ann_date', 'd', 'E'):                       ['实施-实施公告日', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'imp_ann_date',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('base_date', 'd', 'E'):                          ['实施-基准日', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'base_date',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('base_share', 'd', 'E'):                         ['实施-基准股本（万）', 'selected_events',
                                                        {'table_name': 'dividend', 'column': 'base_share',
-                                                        'sel_by': 'div_proc', 'key': '实施'}],
+                                                        'sel_by':     'div_proc', 'key': '实施'}],
     ('exalter', 'd', 'E'):                            ['龙虎榜机构明细 - 营业部名称', 'event_signal',
                                                        {'table_name': 'top_inst', 'column': 'exalter'}],
     ('side', 'd', 'E'):                               [
@@ -3879,11 +3976,14 @@ DATA_TYPE_MAP = {
                                                        'reference', {'table_name': 'cn_pmi', 'column': 'pmi010603'}],
     ('pmi010700', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数', 'reference',
                                                        {'table_name': 'cn_pmi', 'column': 'pmi010700'}],
-    ('pmi010701', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数:企业规模/大型企业', 'reference',
+    ('pmi010701', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数:企业规模/大型企业',
+                                                       'reference',
                                                        {'table_name': 'cn_pmi', 'column': 'pmi010701'}],
-    ('pmi010702', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数:企业规模/中型企业', 'reference',
+    ('pmi010702', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数:企业规模/中型企业',
+                                                       'reference',
                                                        {'table_name': 'cn_pmi', 'column': 'pmi010702'}],
-    ('pmi010703', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数:企业规模/小型企业', 'reference',
+    ('pmi010703', 'm', 'None'):                       ['制造业PMI:构成指数/原材料库存指数:企业规模/小型企业',
+                                                       'reference',
                                                        {'table_name': 'cn_pmi', 'column': 'pmi010703'}],
     ('pmi010800', 'm', 'None'):                       ['制造业PMI:构成指数/从业人员指数', 'reference',
                                                        {'table_name': 'cn_pmi', 'column': 'pmi010800'}],
@@ -4249,7 +4349,8 @@ def get_reference_data_from_source(
 
     for htyp, ser in reference_data_acquired.items():
         if isinstance(ser, pd.DataFrame) and not ser.empty:
-            import pdb; pdb.set_trace()
+            import pdb;
+            pdb.set_trace()
         # if reference_data_to_be_refreqed[htyp]:
         #     ser = _adjust_freq(
         #             hist_data=ser,

@@ -555,7 +555,7 @@ class TestChannels(unittest.TestCase):
             self.ds,
             channel='tushare',
             tables='basics',
-            dtypes='close, vol',
+            dtypes='close, volume',
             freqs='d, m',
             asset_types='E, IDX',
             symbols='000001:000020',

@@ -1742,7 +1742,7 @@ class TestDataTypes(unittest.TestCase):
                         self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
                         self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
                     except AssertionError:
-                        import pdb;
+                        import pdb
                         pdb.set_trace()
             else:
                 self.assertIsInstance(data, pd.Series)
@@ -1975,6 +1975,10 @@ class TestDataTypes(unittest.TestCase):
         self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
 
         print(f'got history panel:\n{ser}')
+
+    def test_infer_data_types(self):
+        """ test function infer_data_types"""
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

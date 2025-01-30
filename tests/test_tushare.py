@@ -886,6 +886,7 @@ class TestTushare(unittest.TestCase):
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        import pdb; pdb.set_trace()
         self.assertEqual(set(df.ts_code.unique()), set(str_to_list(fund)))
         print(f'found in df records in {df.index.nunique()} unique trade dates\n'
               f'they are: \n{list(df.index.unique())}')

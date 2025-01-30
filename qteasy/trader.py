@@ -2165,7 +2165,6 @@ class Trader(object):
         None
         """
         if current_date is None:
-            # current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()  # 产生世界时UTC时间
             current_date = self.get_current_tz_datetime().date()  # 产生本地时间
         from qteasy.utilfuncs import is_market_trade_day
         # exchange = self._config['exchange']  # TODO: should we add exchange to config?
@@ -2493,7 +2492,6 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
     """
 
     # find out datasource availabilities, refill data source if table data not available
-    from qteasy.database import htype_to_table_col
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
     related_tables = htype_to_table_col(

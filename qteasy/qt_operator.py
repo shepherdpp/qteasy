@@ -670,10 +670,10 @@ class Operator:
         if not (item_is_int or item_is_str):
             warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} instead!')
             return
-        all_ids = self._strategy_id
+        all_ids = self.strategy_ids
         if item_is_str:
             if item not in all_ids:
-                warnings.warn(f'No such strategy with ID ({item})!')
+                warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!')
                 return
             return self._strategies[item]
         strategy_count = self.strategy_count

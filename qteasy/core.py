@@ -20,7 +20,11 @@ from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
-from qteasy.datatypes import DataType
+
+from qteasy.datatypes import (
+    DataType,
+    infer_data_types,
+)
 
 from qteasy.history import (
     get_history_panel,
@@ -1537,24 +1541,16 @@ def check_and_prepare_hist_data(oper, config, datasource):
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
 
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
-    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
-    data_type_names = oper.all_price_and_data_types
-    asset_types = config['asset_type']
-    if (run_mode > 0) and config['backtest_price_adj'].lower() != 'none':
-        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-              f'adjusted prices, such as "close|b" instead of adj="b".'
-        warn(msg, DeprecationWarning)
-        price_types = ['close', 'open', 'high', 'low']
-        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
-    if isinstance(asset_types, str):
-        asset_types = str_to_list(asset_types)
-    from itertools import product
-    data_types = [DataType(name=d, freq=f, asset_type=at)
-                  for d, f, at
-                  in product(data_type_names, oper.op_data_freq, asset_types)]
-    # TODO: 将上面的函数单独列出
-
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.all_price_and_data_types,
+            freqs=oper.op_data_freq,
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'] if run_mode > 0 else None,
+            force_match_freq=True,
+    )
     hist_op = get_history_panel(
             data_types=data_types,
             shares=config['asset_pool'],
@@ -1563,17 +1559,17 @@ def check_and_prepare_hist_data(oper, config, datasource):
             freq=oper.op_data_freq,
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()  # TODO: 当share较多时，运行速度非常慢，需要优化
+
     # 解析参考数据类型，获取参考数据
-
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
-    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
-    data_type_names = oper.op_ref_types
-    from itertools import product
-    data_types = [DataType(name=d, freq=f, asset_type=at)
-                  for d, f, at
-                  in product(data_type_names, oper.op_data_freq, ['IDX'])]
-    # TODO: 将上面的函数单独列出
-
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.op_ref_types,
+            freqs=oper.op_data_freq,
+            asset_types=['IDX'],
+            force_match_freq=True,
+    )
     hist_ref = get_history_panel(
             data_types=data_types,
             shares=None,
@@ -1589,24 +1585,16 @@ def check_and_prepare_hist_data(oper, config, datasource):
     back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
-    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
-    data_type_names = oper.all_price_and_data_types
-    asset_types = config['asset_type']
-    if config['backtest_price_adj'].lower() != 'none':
-        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-              f'adjusted prices, such as "close|b" instead of adj="b".'
-        warn(msg, DeprecationWarning)
-        price_types = ['close', 'open', 'high', 'low']
-        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
-    if isinstance(asset_types, str):
-        asset_types = str_to_list(asset_types)
-    from itertools import product
-    data_types = [DataType(name=d, freq=f, asset_type=at)
-                  for d, f, at
-                  in product(data_type_names, oper.op_data_freq, asset_types)]
-    # TODO: 将上面的函数单独列出
-
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.all_price_and_data_types,
+            freqs=oper.op_data_freq,
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'],
+            force_match_freq=True,
+    )
     hist_opti = get_history_panel(
             data_types=data_types,
             shares=config['asset_pool'],
@@ -1617,24 +1605,16 @@ def check_and_prepare_hist_data(oper, config, datasource):
     ) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
-    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
-    data_type_names = oper.op_ref_types
-    asset_types = config['asset_type']
-    if config['backtest_price_adj'].lower() != 'none':
-        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-              f'adjusted prices, such as "close|b" instead of adj="b".'
-        warn(msg, DeprecationWarning)
-        price_types = ['close', 'open', 'high', 'low']
-        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
-    if isinstance(asset_types, str):
-        asset_types = str_to_list(asset_types)
-    from itertools import product
-    data_types = [DataType(name=d, freq=f, asset_type=at)
-                  for d, f, at
-                  in product(data_type_names, oper.op_data_freq, asset_types)]
-
-    # TODO: 将上面的函数单独列出
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.op_ref_types,
+            freqs=oper.op_data_freq,
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'],
+            force_match_freq=True,
+    )
     hist_opti_ref = get_history_panel(
             data_types=data_types,
             shares=None,
@@ -1654,25 +1634,16 @@ def check_and_prepare_hist_data(oper, config, datasource):
     benchmark_start = regulate_date_format(min(all_starts))
     benchmark_end = regulate_date_format(max(all_ends))
 
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
-    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
-    data_type_names = [config['benchmark_dtype']]
-    asset_types = config['benchmark_asset_type']
-    if config['backtest_price_adj'].lower() != 'none':
-        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-              f'adjusted prices, such as "close|b" instead of adj="b".'
-        warn(msg, DeprecationWarning)
-        price_types = ['close', 'open', 'high', 'low']
-        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
-    if isinstance(asset_types, str):
-        asset_types = str_to_list(asset_types)
-    from itertools import product
-    data_types = [DataType(name=d, freq=f, asset_type=at)
-                  for d, f, at
-                  in product(data_type_names, oper.op_data_freq, asset_types)]
-
-    # TODO: 将上面的函数单独列出
-
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=config['benchmark_dtypes'],
+            freqs=oper.op_data_freq,
+            asset_types=config['benchmark_asset_type'],
+            adj=config['backtest_price_adj'],
+            force_match_freq=True,
+    )
     hist_benchmark = get_history_panel(
             data_types=data_types,
             shares=config['benchmark_asset'],
