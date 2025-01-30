@@ -1598,8 +1598,11 @@ class Operator:
         }
         data_freq_name = {
             'y': 'year',
+            'ye': 'year end',
             'q': 'quarter',
+            'qe': 'quarter end',
             'm': 'month',
+            'me': 'month end',
             'w': 'week',
             'd': 'days',
             'min': 'min',

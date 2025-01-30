@@ -1408,7 +1408,7 @@ def live_trade_accounts() -> pd.DataFrame:
 #   strategy_run_freq='m',
 #   data_freq='m',
 #   window_length=6,
-def check_and_prepare_hist_data(oper, config, datasource=None):
+def check_and_prepare_hist_data(oper, config, datasource):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     Parameters
@@ -1633,7 +1633,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     data_types = [DataType(name=d, freq=f, asset_type=at)
                   for d, f, at
                   in product(data_type_names, oper.op_data_freq, asset_types)]
-    import pdb; pdb.set_trace()
+
     # TODO: 将上面的函数单独列出
     hist_opti_ref = get_history_panel(
             data_types=data_types,
@@ -1670,7 +1670,7 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     data_types = [DataType(name=d, freq=f, asset_type=at)
                   for d, f, at
                   in product(data_type_names, oper.op_data_freq, asset_types)]
-    import pdb; pdb.set_trace()
+
     # TODO: 将上面的函数单独列出
 
     hist_benchmark = get_history_panel(
@@ -1814,7 +1814,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     return hist_op, hist_ref
 
 
-def check_and_prepare_backtest_data(operator, config, datasource=None):
+def check_and_prepare_backtest_data(operator, config, datasource):
     """ 在run_mode == 1的回测模式情况下准备相应的历史数据
 
     Returns
@@ -1835,7 +1835,7 @@ def check_and_prepare_backtest_data(operator, config, datasource=None):
     return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
 
 
-def check_and_prepare_optimize_data(operator, config, datasource=None):
+def check_and_prepare_optimize_data(operator, config, datasource):
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
 
     Parameters
@@ -2146,7 +2146,8 @@ def run(operator, **kwargs):
          test_cash_plan
          ) = check_and_prepare_optimize_data(
                 operator=operator,
-                config=config
+                config=config,
+                datasource=qteasy.QT_DATA_SOURCE,
         )
         operator.assign_hist_data(
                 hist_data=hist_opti,

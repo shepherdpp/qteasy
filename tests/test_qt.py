@@ -814,7 +814,7 @@ class TestQT(unittest.TestCase):
                     report=False,
             )
             tested_count += 1
-            progress_bar(tested_count, total_count, f'testing: {strategy}')
+            progress_bar(tested_count, total_count, comments=f'testing: {strategy}')
 
             key_results.append(
                     [strategy,

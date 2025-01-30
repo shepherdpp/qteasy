@@ -683,7 +683,7 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
             current_volume += subspace.volume
         current_round += 1
         space_count_in_round = len(spaces)
-        progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
+        progress_bar(i, total_calc_rounds, comments=f'start next round with {space_count_in_round} spaces')
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
     return pool.items, pool.perfs
