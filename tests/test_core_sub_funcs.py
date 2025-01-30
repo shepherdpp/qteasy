@@ -220,8 +220,11 @@ class TestCoreSubFuncs(unittest.TestCase):
 
     def test_get_basic_info(self):
         """ 测试获取证券基本信息"""
+        print(f'getting basic info for "000300" - found IDX 000300.SH')
         qt.get_basic_info('000300')
+        print('getting basic info for "000300.OF" - No result')
         qt.get_basic_info('000300.OF')
+        print('getting basic infor for "004040" - found ')
         qt.get_basic_info('004040')
         qt.get_basic_info('沪镍')
         qt.get_basic_info('中国移动', verbose=True)

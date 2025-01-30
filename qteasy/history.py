@@ -11,6 +11,7 @@
 
 import pandas as pd
 import numpy as np
+from pyarrow.dataset import dataset
 
 import qteasy
 from qteasy.utilfuncs import (
@@ -2313,7 +2314,7 @@ def _adjust_freq(hist_data: pd.DataFrame,
     """
 
     if not isinstance(target_freq, str):
-        err = TypeError
+        err = TypeError(f'target freq should be a string, got {target_freq}({type(target_freq)}) instead.')
         raise err
     target_freq = target_freq.upper()
     # 如果hist_data为空，直接返回
@@ -2520,6 +2521,14 @@ def get_history_panel(
     -------
     DataFrame
     """
+    if not data_types:
+        return HistoryPanel()
+
+    if data_source is None:
+        raise TypeError(f'data source should not be None!')
+
+    if freq is None:
+        raise TypeError(f'freq can not be None!')
 
     if shares:
         normal_dfs = get_history_data_from_source(

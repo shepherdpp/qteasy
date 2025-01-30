@@ -347,7 +347,7 @@ class Operator:
         return len(self.op_ref_types)
 
     @property
-    def op_data_freq(self):
+    def op_data_freq(self) -> str or [str]:
         """返回operator对象所有策略子对象所需数据的采样频率
             如果所有strategy的data_freq相同时，给出这个值，否则给出一个排序的列表
         """

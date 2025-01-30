@@ -231,6 +231,8 @@ def parse_freq_string(freq, std_freq_only=False):
         main_freq = str(min_qty) + main_freq
         qty = qty // min_qty
 
+    main_freq = pandas_freq_alias_version_conversion(main_freq)
+
     return qty, main_freq, sub_freq
 
 

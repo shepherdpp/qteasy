@@ -44,7 +44,8 @@ class TestEntry(unittest.TestCase):
         print(f'qteasy start up settings: {config_lines}')
         self.assertIsInstance(config_lines, dict)
         self.assertTrue(len(config_lines) > 0)
-        self.assertIsInstance(config_lines[0], str)
+        for k, v in config_lines.items():
+            self.assertIsInstance(k, str)
 
         # test modify start up settings
         qt.update_start_up_setting(test_key='test_value')

@@ -4199,7 +4199,7 @@ def get_reference_data_from_source(
     """
 
     if not htypes:
-        err = ValueError(f'htypes should not be empty!')
+        err = ValueError(f'data types should not be empty!')
         raise err
 
     reference_data_acquired = {}

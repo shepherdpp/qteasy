@@ -15,6 +15,7 @@ from warnings import warn
 
 import datetime
 
+import qteasy
 from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
@@ -1512,13 +1513,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
         from qteasy.utilfuncs import parse_freq_string
         duration, base_unit, _ = parse_freq_string(window_offset_freq, std_freq_only=True)
-        # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), '
-        #       f'window_offset_freq is {window_offset_freq}\n'
-        #       f'it should be converted to {duration} {base_unit}, '
-        #       f'and window_length and window_offset_freq should be \n'
-        #       f'adjusted accordingly: \n'
-        #       f'window_length: {window_length} -> {window_length * duration * 3}\n'
-        #       f'window_offset_freq: {window_offset_freq} -> {base_unit}')
         window_length *= duration * 10  # 临时处理措施，由于交易时段不连续，仅仅前推一个周期可能会导致数据不足
         window_offset_freq = base_unit
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
@@ -1533,15 +1527,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
         invest_end = config['invest_end']
         invest_start = regulate_date_format(pd.to_datetime(invest_start) - window_offset)
 
-    # debug
-    # 检查invest_start是否正确地被前溯了window_offset
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
-    #       f'than invest_start: \n'
-    #       f'current run mode: {run_mode}\n'
-    #       f'current_date = {current_datetime}\n'
-    #       f'window_offset = {window_offset}\n'
-    #       f'invest_start = {invest_start}\n'
-    #       f'invest_end = {invest_end}\n')
     # 设置优化区间和测试区间的结束日期
     opti_end = config['opti_end']
     test_end = config['test_end']
@@ -1552,25 +1537,49 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
 
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
+    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
+    data_type_names = oper.all_price_and_data_types
+    asset_types = config['asset_type']
+    if (run_mode > 0) and config['backtest_price_adj'].lower() != 'none':
+        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+              f'adjusted prices, such as "close|b" instead of adj="b".'
+        warn(msg, DeprecationWarning)
+        price_types = ['close', 'open', 'high', 'low']
+        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    from itertools import product
+    data_types = [DataType(name=d, freq=f, asset_type=at)
+                  for d, f, at
+                  in product(data_type_names, oper.op_data_freq, asset_types)]
+    # TODO: 将上面的函数单独列出
+
     hist_op = get_history_panel(
-            htypes=oper.all_price_and_data_types,
+            data_types=data_types,
             shares=config['asset_pool'],
             start=invest_start,
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'] if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()  # TODO: 当share较多时，运行速度非常慢，需要优化
     # 解析参考数据类型，获取参考数据
+
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
+    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
+    data_type_names = oper.op_ref_types
+    from itertools import product
+    data_types = [DataType(name=d, freq=f, asset_type=at)
+                  for d, f, at
+                  in product(data_type_names, oper.op_data_freq, ['IDX'])]
+    # TODO: 将上面的函数单独列出
+
     hist_ref = get_history_panel(
-            htypes=oper.op_ref_types,
+            data_types=data_types,
             shares=None,
             start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),  # TODO: 已经offset过了，为什么还要offset？
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type='IDX',
-            adj='none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
@@ -1580,26 +1589,58 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
+    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
+    data_type_names = oper.all_price_and_data_types
+    asset_types = config['asset_type']
+    if config['backtest_price_adj'].lower() != 'none':
+        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+              f'adjusted prices, such as "close|b" instead of adj="b".'
+        warn(msg, DeprecationWarning)
+        price_types = ['close', 'open', 'high', 'low']
+        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    from itertools import product
+    data_types = [DataType(name=d, freq=f, asset_type=at)
+                  for d, f, at
+                  in product(data_type_names, oper.op_data_freq, asset_types)]
+    # TODO: 将上面的函数单独列出
+
     hist_opti = get_history_panel(
-            htypes=oper.all_price_and_data_types,
+            data_types=data_types,
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
+    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
+    data_type_names = oper.op_ref_types
+    asset_types = config['asset_type']
+    if config['backtest_price_adj'].lower() != 'none':
+        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+              f'adjusted prices, such as "close|b" instead of adj="b".'
+        warn(msg, DeprecationWarning)
+        price_types = ['close', 'open', 'high', 'low']
+        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    from itertools import product
+    data_types = [DataType(name=d, freq=f, asset_type=at)
+                  for d, f, at
+                  in product(data_type_names, oper.op_data_freq, asset_types)]
+    import pdb; pdb.set_trace()
+    # TODO: 将上面的函数单独列出
     hist_opti_ref = get_history_panel(
-            htypes=oper.op_ref_types,
+            data_types=data_types,
             shares=None,
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
@@ -1613,14 +1654,31 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     benchmark_start = regulate_date_format(min(all_starts))
     benchmark_end = regulate_date_format(max(all_ends))
 
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，
+    #  为了保持兼容性，保留adj参数，这个参数将被deprecated，这里将做出提示
+    data_type_names = [config['benchmark_dtype']]
+    asset_types = config['benchmark_asset_type']
+    if config['backtest_price_adj'].lower() != 'none':
+        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+              f'adjusted prices, such as "close|b" instead of adj="b".'
+        warn(msg, DeprecationWarning)
+        price_types = ['close', 'open', 'high', 'low']
+        data_type_names = [f'{n}|{config["backtest_price_adj"]}' if n in price_types else n for n in data_type_names]
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    from itertools import product
+    data_types = [DataType(name=d, freq=f, asset_type=at)
+                  for d, f, at
+                  in product(data_type_names, oper.op_data_freq, asset_types)]
+    import pdb; pdb.set_trace()
+    # TODO: 将上面的函数单独列出
+
     hist_benchmark = get_history_panel(
-            htypes=config['benchmark_dtype'],
+            data_types=data_types,
             shares=config['benchmark_asset'],
             start=benchmark_start,
             end=benchmark_end,
             freq=oper.op_data_freq,
-            asset_type=config['benchmark_asset_type'],
-            adj=config['backtest_price_adj'],
             data_source=datasource,
     ).slice_to_dataframe(htype=config['benchmark_dtype'])
 
@@ -2042,7 +2100,8 @@ def run(operator, **kwargs):
          invest_cash_plan
          ) = check_and_prepare_backtest_data(
                 operator=operator,
-                config=config
+                config=config,
+                datasource=qteasy.QT_DATA_SOURCE,
         )
         # 在生成交易信号之前准备历史数据
         operator.assign_hist_data(

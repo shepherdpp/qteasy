@@ -3474,7 +3474,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter(0,
                          opt_tag=1,
                          strategy_run_freq='m',
-                         strategy_data_types='wt-000300.SH',
+                         strategy_data_types='wt_idx|000300.SH',
                          sort_ascending=False,
                          weighting='proportion',
                          max_sel_count=300)
