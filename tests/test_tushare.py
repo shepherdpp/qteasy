@@ -560,8 +560,8 @@ class TestTushare(unittest.TestCase):
 
     def test_index_member_all(self):
         print(f'test tushare function: index_member_all')
-        level = 'L1'
-        df = index_member_all(level=level)
+        l1_code = '801010.SI'
+        df = index_member_all(l1_code=l1_code)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)

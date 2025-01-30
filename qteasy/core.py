@@ -19,6 +19,7 @@ from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
+from qteasy.datatypes import DataType
 
 from qteasy.history import (
     get_history_panel,
@@ -880,37 +881,41 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
     return None
 
 
-def get_history_data(htypes,
+def get_history_data(htypes=None,
                      *,
+                     htype_names=None,
+                     data_types=None,
                      data_source=None,
                      shares=None,
                      symbols=None,
                      start=None,
                      end=None,
                      freq=None,
-                     rows=10,
+                     rows=None,
                      asset_type=None,
                      adj=None,
                      as_data_frame=None,
                      group_by=None,
                      **kwargs):
-    """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应于策略
+    """ 从本地data_source获取所需的数据并组装为适应于策略
         需要的HistoryPanel数据对象
+
+    需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数
+    结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略
 
     Parameters
     ----------
-    htypes: [str, list]
-        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-        如以下两种输入方式皆合法且等效：
+    htype_names: [str], str
+        需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
+        所有可能的htypes。输入方式可以为str或list：
          - str:     'open, high, low, close'
          - list:    ['open', 'high', 'low', 'close']
-        特殊htypes的处理，以下特殊htypes将被特殊处理，返回特定的数，详见示例
-         - wt-000300.SH:
-            指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
-            获取的数据的htypes同样为wt-000300.SH型
-         - close-000300.SH:
-            给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
-            的参考数据
+    htypes: [DataType], deprecated
+        需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
+        所有可能的htypes。输入方式可以为str或list：
+    data_types: [DataType],
+        需要获取的历史数据类型集合，必须是合法的数据类型对象。
+        如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes
     data_source: DataSource
         需要获取历史数据的数据源
     shares: [str, list] 等同于symbols
@@ -942,11 +947,12 @@ def get_history_data(htypes,
          - IDX: 只获取指数类型证券的数据
          - FT:  只获取期货类型证券的数据
          - FD:  只获取基金类型证券的数据
-    adj: str
-        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+    adj: str, deprecated: adj is depreated since version 1.4 and will be removed
+        Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
          - none / n: 不复权(默认值)
          - back / b: 后复权
          - forward / fw / f: 前复权
+         从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格
     as_data_frame: bool, Default: True
         True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典
     group_by: str, 默认'shares'
@@ -1028,7 +1034,7 @@ def get_history_data(htypes,
     --------
     >>> import qteasy as qt
     # 给出历史数据类型和证券代码，起止时间，可以获取该时间段内该股票的历史数据
-    >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200110')
+    >>> qt.get_history_data(htype_names='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200110')
     {'000001.SZ':
                  open   high    low  close         vol
     2019-12-25  16.45  16.56  16.24  16.30   414917.98
@@ -1045,7 +1051,7 @@ def get_history_data(htypes,
     2020-01-10  16.79  16.81  16.52  16.69   585548.45
     }
     >>> # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格
-    >>> qt.get_history_data(htypes='close', shares='000300.SH', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='close', shares='000300.SH', start='20191225', end='20200105')
     {'000300.SH':
                   close
     2019-12-25  3990.87
@@ -1057,7 +1063,7 @@ def get_history_data(htypes,
     2020-01-03  4144.96
     }
     >>> # 以及基金的净值数据
-    >>> qt.get_history_data(htypes='unit_nav, accum_nav', shares='000001.OF', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='unit_nav, accum_nav', shares='000001.OF', start='20191225', end='20200105')
     {'000001.OF':
                 unit_nav  accum_nav
     2019-12-25     1.086      3.547
@@ -1069,7 +1075,7 @@ def get_history_data(htypes,
     2020-01-03     1.127      3.588
     }
     >>> # 不光价格数据，其他类型的数据也可以同时获取：
-    >>> qt.get_history_data(htypes='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
     {'000001.SZ':
                 close       pe      pb
     2019-12-25  16.30  12.7454  1.1798
@@ -1081,7 +1087,7 @@ def get_history_data(htypes,
     2020-01-03  17.18  13.4335  1.2434
     }
     >>> # 可以同时混合获取多只股票、指数、多种数据类型的数据，如果某些数据类型缺失，会用NaN填充，注意000001.SZ是股票平安银行，000001.SH是上证指数
-    >>> qt.get_history_data(htypes='close, pe, pb, total_mv, eps', shares='000001.SZ, 000001.SH', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='close, pe, pb, total_mv, eps', shares='000001.SZ, 000001.SH', start='20191225', end='20200105')
     {'000001.SZ':
                 close       pe      pb      total_mv   eps
     2019-12-25  16.30  12.7454  1.1798  3.163165e+07   NaN
@@ -1102,7 +1108,7 @@ def get_history_data(htypes,
     2020-01-03  3083.79  14.22  1.42  4.127933e+13  NaN
     }
     >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
-    >>> qt.get_history_data(htypes='open, high, low, close', shares='000001.SZ', start='20191229', end='20200106', freq='H', adj='b', asset_type='E')
+    >>> qt.get_history_data(htype_names='open:b, high:b, low:b, close:b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
      {'000001.SZ':
                                open        high         low       close
     2019-12-30 10:00:00  1796.92174  1796.92174  1796.92174  1796.92174
@@ -1123,7 +1129,7 @@ def get_history_data(htypes,
     2020-01-03 15:00:00  1884.25694  1884.25694  1872.24835  1875.52342
     }
     >>> # 可以设置b_days_only参数来将价格填充到非交易日，形成完整的日期序列
-    >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
+    >>> qt.get_history_data(htype_names='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
     {'000001.SZ':
                   open   high    low  close         vol
      2019-12-25  16.45  16.56  16.24  16.30   414917.98
@@ -1140,13 +1146,13 @@ def get_history_data(htypes,
      2020-01-05  16.94  17.31  16.92  17.18  1116194.81
      }
     >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
-    >>> qt.get_history_data(htypes='wt-000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='wt_id:000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
-                wt-000300.SH
+                wt_idx:000300.SH
     2020-01-02        1.1714
     2020-01-03        1.1714,
     '000002.SZ':
-                wt-000300.SH
+                wt_idx:000300.SH
     2020-01-02        1.3595
     2020-01-03        1.3595
     }
@@ -1167,77 +1173,102 @@ def get_history_data(htypes,
     if isinstance(shares, list):
         if not all(isinstance(item, str) for item in shares):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
-    if isinstance(htypes, str):
-        htypes = str_to_list(htypes)
-    if isinstance(htypes, list):
-        if not all(isinstance(item, str) for item in htypes):
-            raise TypeError(f'all items in shares list should be a string, got otherwise')
 
-    if start is not None:
-        try:
-            start = pd.to_datetime(start)
-        except Exception:
-            raise Exception(f'Start date can not be converted to datetime format')
-    if end is not None:
-        try:
-            end = pd.to_datetime(end)
-        except Exception:
-            raise Exception(f'End date can not be converted to datetime format')
+    # 如果给出了data_types参数，确认结果正确后，忽略htypes/htype_names参数
+    if data_types is not None:
+        assert isinstance(data_types, list)
+        assert all(isinstance(dtype, DataType) for dtype in data_types)
+    else:
+        assert (htypes is not None) or (htype_names is not None), \
+            f'htypes and htype_names can not both be None if data_types is not given'
 
-    # if isinstance(freq, list):
-    #     freq = ','.join(freq)
-    if not isinstance(freq, str):
-        err = TypeError(f'freq should be a string, got {type(freq)} instead')
-        raise err
-    if freq.upper() not in TIME_FREQ_STRINGS:
-        err = KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
-        raise err
-    freq = freq.lower()
+        if htypes is not None:
+            msg = f'htypes parameter is deprecated, please use htype_names instead'
+            warn(msg, DeprecationWarning)
+            htype_names = htypes
 
-    if asset_type is None:
-        asset_type = 'any'
-    if not isinstance(asset_type, (str, list)):
-        err = TypeError(f'asset type should be a string, got {type(asset_type)} instead')
-        raise err
-    if isinstance(asset_type, str):
-        asset_type = str_to_list(asset_type)
-    if not all(isinstance(item, str) for item in asset_type):
-        err = KeyError(f'not all items in asset type are strings')
-        raise err
-    if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
-        err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
-        raise err
-    if any(item.upper() == 'ANY' for item in asset_type):
-        asset_type = AVAILABLE_ASSET_TYPES
-    asset_type = [item.upper() for item in asset_type]
+        if isinstance(htype_names, str):
+            htype_names = str_to_list(htype_names)
+        if isinstance(htype_names, list):
+            if not all(isinstance(item, str) for item in htype_names):
+                raise TypeError(f'all items in shares list should be a string, got otherwise')
 
-    if adj is None:
-        adj = 'none'
-    if not isinstance(adj, str):
-        err = TypeError(f'adj type should be a string, got {type(adj)} instead')
-        raise err
-    if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-        err = KeyError(f"invalid adj type ({adj}), which should be anyone of "
-                       f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
-        raise err
-    adj = adj.lower()
+        # check parameter freq
+        if freq is None:
+            freq = 'd'
+        if not isinstance(freq, str):
+            err = TypeError(f'freq should be a string, got {type(freq)} instead')
+            raise err
+        if freq.upper() not in TIME_FREQ_STRINGS:
+            err = KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+            raise err
+        freq = freq.lower()
+
+        # check parameter asset_type:
+        if asset_type is None:
+            asset_type = 'any'
+        if not isinstance(asset_type, (str, list)):
+            err = TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+            raise err
+        if isinstance(asset_type, str):
+            asset_type = str_to_list(asset_type)
+        if not all(isinstance(item, str) for item in asset_type):
+            err = KeyError(f'not all items in asset type are strings')
+            raise err
+        if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
+            err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+            raise err
+        if any(item.upper() == 'ANY' for item in asset_type):
+            asset_type = AVAILABLE_ASSET_TYPES
+        asset_type = [item.upper() for item in asset_type]
+
+        if adj is not None:
+            msg = f'parameter adj is deprecated, please add adj suffixes for htype names instead\n' \
+                  f'for example: use "close:b" for back-adjusted close prices'
+            warn(msg, DeprecationWarning)
+        else:
+            adj = 'none'
+        if not isinstance(adj, str):
+            err = TypeError(f'adj type should be a string, got {type(adj)} instead')
+            raise err
+        if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
+            err = KeyError(f"invalid adj type ({adj}), which should be anyone of "
+                           f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
+            raise err
+        adj = adj.lower()
+        PRICE_TYPES = ['open', 'close', 'high', 'low']
+        if adj.upper() in ['F', 'FORWARD', 'FW']:
+            htype_names = [f'{htype}|f' if htype in PRICE_TYPES else htype for htype in htype_names]
+        elif adj.upper() in ['B', 'BACK']:
+            htype_names = [f'{htype}|b' if htype in PRICE_TYPES else htype for htype in htype_names]
+        else:
+            htype_names = htype_names
+
+        # create data_types out of htype_names, freq, asset_types:
+        from itertools import product
+        data_types = []
+        freqs = [freq, 'None']
+        asset_type.extend(['None'])
+        for n, f, at in product(htype_names, freqs, asset_type):
+            try:
+                data_types.append(DataType(name=n, freq=f, asset_type=at))
+            except:
+                continue
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
-        ds = QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     else:
         if not isinstance(data_source, DataSource):
             err = TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
             raise err
-        ds = data_source
 
-    if htypes is None:
-        raise ValueError(f'htype should not be None')
     if symbols is not None and shares is None:
         shares = symbols
     if shares is None:
         shares = QT_CONFIG.asset_pool
 
+    # check start and end parameters
     one_year = pd.Timedelta(365, 'd')
     one_week = pd.Timedelta(7, 'd')
 
@@ -1269,15 +1300,20 @@ def get_history_data(htypes,
         if end - start <= one_week:
             raise ValueError(f'End date should be at least one week after start date')
         rows = None
+    # set start/end to be the correct datetime format
 
-    if freq is None:
-        freq = 'd'
-
-    if asset_type is None:
-        asset_type = 'any'
-
-    if adj is None:
-        adj = 'n'
+    if start is not None:
+        try:
+            start = pd.to_datetime(start)
+            start = start.strftime('%Y%m%d')
+        except Exception:
+            raise Exception(f'Start date can not be converted to datetime format')
+    if end is not None:
+        try:
+            end = pd.to_datetime(end)
+            end = end.strftime('%Y%m%d')
+        except Exception:
+            raise Exception(f'End date can not be converted to datetime format')
 
     if as_data_frame is None:
         as_data_frame = True
@@ -1288,13 +1324,23 @@ def get_history_data(htypes,
         group_by = 'shares'
     elif group_by in ['htypes', 'htype', 'h']:
         group_by = 'htypes'
-    hp = get_history_panel(htypes=htypes, shares=shares, start=start, end=end, freq=freq, asset_type=asset_type,
-                           symbols=symbols, rows=rows, adj=adj, **kwargs)
+
+    hp = get_history_panel(
+            data_types=data_types,
+            data_source=data_source,
+            shares=shares,
+            start=start,
+            end=end,
+            freq=freq,
+            rows=rows,
+            **kwargs,
+    )
 
     if as_data_frame:
         return hp.unstack(by=group_by)
     else:
         return hp
+
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数

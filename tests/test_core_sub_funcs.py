@@ -251,8 +251,8 @@ class TestCoreSubFuncs(unittest.TestCase):
                                   group_by='htypes')
         self.assertIsInstance(res, dict)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
-        self.assertEqual(list(res.keys()), ['open', 'high', 'low', 'close'])
-        first_df = res['open']
+        self.assertEqual(list(res.keys()), ['open|f', 'high|f', 'low|f', 'close|f'])
+        first_df = res['open|f']
         first_index = first_df.index
         first_columns = first_df.columns
         for df in res.values():
@@ -279,7 +279,7 @@ class TestCoreSubFuncs(unittest.TestCase):
             self.assertEqual(list(first_columns), list(df.columns))
 
         print('test function with missing parameters')
-        res = qt.get_history_data(htypes='open, high, low, close')
+        res = qt.get_history_data(htypes='open-000651.SZ, high-000006.SZ, low-000001.SZ')
         print(res)
 
         res = qt.get_history_data(htypes='open, close, vol',
