@@ -2255,22 +2255,3 @@ class DataSource:
         if self.source_type != 'db':
             return True
         pass
-        # 使用连接池以后，直接创建连接的方式已经被弃用。
-        # import pymysql
-        # con = pymysql.connect(
-        #         host=self.host,
-        #         port=self.port,
-        #         user=self.__user__,
-        #         password=self.__password__,
-        #         db=self.db_name,
-        # )
-        # try:
-        #     con.ping(reconnect=True)
-        #     con.ping()  # check if connection is still alive
-        #     return True
-        # except Exception as e:
-        #     print(f'{e} on {self.connection_type}, please check your connection')
-        #     return False
-        # finally:
-        #     con.close()
-

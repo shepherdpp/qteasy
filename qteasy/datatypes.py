@@ -13,7 +13,6 @@
 
 
 import pandas as pd
-import warnings
 from functools import lru_cache
 
 from .utilfuncs import (
@@ -4369,8 +4368,11 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
         fuzzy = True  # 给出通配符时强制fuzzy匹配
 
     data_table_map = get_dtype_map()
+    data_table_map['dtype_name'] = data_table_map.index.get_level_values(level=0)
     data_table_map['freq'] = data_table_map.index.get_level_values(level=1)
     data_table_map['asset_type'] = data_table_map.index.get_level_values(level=2)
+    data_table_map['table_name'] = data_table_map.kwargs.apply(lambda x: x['table_name'])
+    data_table_map['column'] = data_table_map.kwargs.apply(lambda x: x['column'])
 
     if freq is not None:
         if isinstance(freq, str):
@@ -4391,19 +4393,20 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     data_table_map['d_matched'] = 0  # description列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
 
     if (not fuzzy) and (not match_description):
-        data_table_map['n_matched'] = data_table_map['column'] == s
+        # match data type id
+        data_table_map['n_matched'] = data_table_map['dtype_name'] == s
         data_table_map['n_matched'] = data_table_map['n_matched'].astype('int')
     else:
         if match_description:
-            where_to_look = ['column', 'description']
+            where_to_look = ['dtype_name', 'description']
             match_how = [_lev_ratio, _partial_lev_ratio]
             result_columns = ['n_matched', 'd_matched']
         elif fuzzy:
-            where_to_look = ['column']
+            where_to_look = ['dtype_name']
             match_how = [_partial_lev_ratio]
             result_columns = ['n_matched']
         else:
-            where_to_look = ['column']
+            where_to_look = ['dtype_name']
             match_how = [_lev_ratio]
             result_columns = ['n_matched']
 
@@ -4417,7 +4420,8 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
 
     data_table_map['matched'] = data_table_map['n_matched'] + data_table_map['d_matched']
     data_table_map = data_table_map.loc[data_table_map['matched'] >= match_threshold]
-    data_table_map.drop(columns=['n_matched', 'd_matched', 'matched'], inplace=True)
+    data_table_map = data_table_map[['dtype_name', 'freq', 'asset_type', 'table_name', 'column', 'description']]
+    # data_table_map.drop(columns=['n_matched', 'd_matched', 'matched'], inplace=True)
     data_table_map.index = data_table_map.index.get_level_values(level=0)
     data_table_map.index.name = 'data_id'
     print(f'matched following history data, \n'
@@ -4425,13 +4429,17 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
           f'------------------------------------------------------------------------')
     print(
             data_table_map.to_string(
-                    columns=['freq',
+                    columns=['dtype_name',
+                             'freq',
                              'asset_type',
                              'table_name',
+                             'column',
                              'description'],
-                    header=['freq',
+                    header=['name',
+                            'freq',
                             'asset',
                             'table',
+                            'column',
                             'desc'],
             )
     )
