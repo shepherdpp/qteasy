@@ -19,7 +19,6 @@ from qteasy.utilfuncs import (
     retry,
 )
 
-
 ERRORS_TO_CHECK_ON_RETRY = Exception
 
 EXTRA_RETRY_API = [
@@ -134,6 +133,50 @@ def stock_basic(exchange: str = None):
     return res
 
 
+def hk_stock_basic(ts_code: str = None,
+                   list_status: str = None, ):
+    """ 获取港股基础信息数据，包括股票代码、名称、上市日期、退市日期等
+
+    Parameters
+    ----------
+    ts_code: str
+    list_status: str
+
+    Returns
+    -------
+    """
+
+    pro = ts.pro_api()
+    res = pro.hk_basic(ts_code=ts_code, list_status=list_status)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_basic with ts_code={ts_code}, list_status={list_status}')
+    return res
+
+
+def us_stock_basic(ts_code: str = None,
+                   classify: str = None,
+                   offset: int = None,
+                   limit: int = None, ):
+    """ 获取港股基础信息数据，包括股票代码、名称、上市日期、退市日期等
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+
+    pro = ts.pro_api()
+    res = pro.us_basic(ts_code=ts_code,
+                       classify=classify,
+                       offset=offset,
+                       limit=limit, )
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_basic with ts_code={ts_code}, classify={classify}, '
+                     f'offset={offset}, limit={limit}')
+    return res
+
+
 def trade_cal(exchange: str = 'SSE',
               start: str = None,
               end: str = None,
@@ -179,6 +222,40 @@ def trade_cal(exchange: str = 'SSE',
                         is_open=is_open)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table trade_calendar with exchange={exchange}, start_date={start}'
+                     f'end_date={end}, is_open={is_open}')
+    if is_open is None:
+        return res
+    else:
+        return list(pd.to_datetime(res.cal_date))
+
+
+def hk_trade_cal(start: str = None,
+                 end: str = None,
+                 is_open: int = None):
+    """"""
+    pro = ts.pro_api()
+    res = pro.hk_tradecal(start_date=start,
+                          end_date=end,
+                          is_open=is_open)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hk_trade_calendar with start_date={start}'
+                     f'end_date={end}, is_open={is_open}')
+    if is_open is None:
+        return res
+    else:
+        return list(pd.to_datetime(res.cal_date))
+
+
+def us_trade_cal(start: str = None,
+                 end: str = None,
+                 is_open: int = None):
+    """"""
+    pro = ts.pro_api()
+    res = pro.us_tradecal(start_date=start,
+                          end_date=end,
+                          is_open=is_open)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table us_trade_calendar with start_date={start}'
                      f'end_date={end}, is_open={is_open}')
     if is_open is None:
         return res
@@ -356,8 +433,8 @@ def moneyflow(ts_code: str = None,
 # New, 涨跌停价格!
 def stk_limit(ts_code: str = None,
               trade_date: str = None,
-                start: str = None,
-                end: str = None) -> pd.DataFrame:
+              start: str = None,
+              end: str = None) -> pd.DataFrame:
     """ 获取个股涨跌停价格
     """
     fields = "ts_code, trade_date, pre_close, up_limit, down_limit"
@@ -378,7 +455,8 @@ def suspend_d(ts_code: str = None,
     """ 获取个股停复牌信息
     """
     pro = ts.pro_api()
-    res = pro.suspend_d(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, suspend_type=suspend_type)
+    res = pro.suspend_d(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end,
+                        suspend_type=suspend_type)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stock_suspend with ts_code={ts_code}, trade_date={trade_date}'
                      f'start_date={start}, end_date={end}, suspend_type={suspend_type}')
@@ -408,10 +486,11 @@ def hsgt_top10(ts_code: str = None,
     """ 获取沪深股通十大成交股
     """
     pro = ts.pro_api()
-    res = pro.hsgt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, market_type=market_type)
+    res = pro.hsgt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end,
+                         market_type=market_type)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table hsgt_top10 with ts_code={ts_code}, trade_date={trade_date}'
-                        f'start_date={start}, end_date={end}, market_type={market_type}')
+                     f'start_date={start}, end_date={end}, market_type={market_type}')
     return res
 
 
@@ -674,6 +753,66 @@ def bak_daily(ts_code: object = None,
                         end_date=end)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table back_basic with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def hk_stock_daily(ts_code: object = None,
+                   trade_date: object = None,
+                   start: object = None,
+                   end: object = None):
+    pro = ts.pro_api()
+    res = pro.hk_daily(ts_code=ts_code,
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hk_stock_daily with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def us_stock_daily(ts_code: object = None,
+                   trade_date: object = None,
+                   start: object = None,
+                   end: object = None):
+    pro = ts.pro_api()
+    res = pro.us_daily(ts_code=ts_code,
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table us_stock_daily with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def hk_indicators(ts_code: object = None,
+                  trade_date: object = None,
+                  start: object = None,
+                  end: object = None):
+    pro = ts.pro_api()
+    res = pro.hk_daily_adj(ts_code=ts_code,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hk_indicators with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def us_indicators(ts_code: object = None,
+                  trade_date: object = None,
+                  start: object = None,
+                  end: object = None):
+    pro = ts.pro_api()
+    res = pro.us_daily_adj(ts_code=ts_code,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table us_indicators with ts_code={ts_code}, trade_date={trade_date}'
                      f'start_date={start}, end_date={end}')
     return res
 
@@ -2149,7 +2288,7 @@ def dividend(ts_code: str = None,
         base_share	    float	N	    基准股本（万）
     """
     fields = 'ts_code, ann_date, end_date, div_proc, stk_div, stk_bo_rate, stk_co_rate, cash_div, cash_div_tax,' \
-                ' record_date, ex_date, pay_date, div_listdate, imp_ann_date, base_date, base_share'
+             ' record_date, ex_date, pay_date, div_listdate, imp_ann_date, base_date, base_share'
     pro = ts.pro_api()
     res = pro.dividend(ts_code=ts_code,
                        ann_date=ann_date,
@@ -2191,7 +2330,8 @@ def top_inst(trade_date: str = None,
     pro = ts.pro_api()
     res = pro.top_inst(trade_date=trade_date,
                        ts_code=ts_code)
-    logger_core.info(f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
+    logger_core.info(
+            f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
     return res
 
 
@@ -2199,7 +2339,7 @@ def top_inst(trade_date: str = None,
 def index_member_all(l1_code: str = None,
                      l2_code: str = None,
                      l3_code: str = None,
-                     ts_code: str = None,):
+                     ts_code: str = None, ):
     """ 获取申万行业分类明细(成分股)
 
     Parameters
@@ -2687,9 +2827,9 @@ def ths_daily(ts_code: str = None,
     """
     pro = ts.pro_api()
     res = pro.ths_daily(ts_code=ts_code,
-                              trade_date=trade_date,
-                              start_date=start,
-                              end_date=end)
+                        trade_date=trade_date,
+                        start_date=start,
+                        end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_daily with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
@@ -2719,7 +2859,7 @@ def ths_member(ts_code: str = None,
     """
     pro = ts.pro_api()
     res = pro.ths_member(ts_code=ts_code,
-                               code=code)
+                         code=code)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_member with ts_code={ts_code}, code={code}')
     return res
 
@@ -2756,9 +2896,9 @@ def ci_daily(ts_code: str = None,
     """
     pro = ts.pro_api()
     res = pro.ci_daily(ts_code=ts_code,
-                             trade_date=trade_date,
-                             start_date=start,
-                             end_date=end)
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ci_daily with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
@@ -2800,9 +2940,9 @@ def sw_daily(ts_code: str = None,
     """
     pro = ts.pro_api()
     res = pro.sw_daily(ts_code=ts_code,
-                             trade_date=trade_date,
-                             start_date=start,
-                             end_date   =end)
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_daily with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
@@ -2841,9 +2981,9 @@ def index_global(ts_code: str = None,
     """
     pro = ts.pro_api()
     res = pro.index_global(ts_code=ts_code,
-                                 trade_date=trade_date,
-                                 start_date=start,
-                                 end_date=end)
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: index_global with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res

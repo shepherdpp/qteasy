@@ -27,8 +27,6 @@ import qteasy.datatables
 from .utilfuncs import (
     str_to_list,
     list_truncate,
-    progress_bar,
-    sec_to_duration,
 )
 
 """
@@ -1007,17 +1005,38 @@ TUSHARE_API_MAP_COLUMNS = [
     'allowed_code_suffix',  # 5, 从tushare获取数据时使用的api参数允许的股票代码后缀
     'allow_start_end',  # 6, 从tushare获取数据时使用的api参数是否允许start_date和end_date
     'start_end_chunk_size',  # 7, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
+    # TODO: 修改column6/column7：
+    #  将6改为"table_row_limiter”,含义是限制同时下载的数据行方法，取值包括：
+    #  -   '':   没有额外的参数用于限制下载数据的行数
+    #  -   'Y':  使用开始结束日期作为参数，限制下载数据的行数
+    #  -   'C':  使用limit/offset作为参数，直接限制下载数据的行数
+    #  将7改为“table_row_limiter_args”，含义是限制下载数据行数的参数，取值包括：
+    #  -   当table_row_limiter为''时，table_row_limiter_args为''
+    #  -   当table_row_limiter为'Y'时，table_row_limiter_args为起止日期之间的天数，如200代表最多下载200天的数据
+    #  -   当table_row_limiter为'C'时，table_row_limiter_args为limit/offset的值，如100代表每次下载100行数据
 ]
 
 TUSHARE_API_MAP = {
     'trade_calendar':
         ['trade_cal', 'exchange', 'list', 'SSE, SZSE, CFFEX, SHFE, CZCE, DCE, INE', '', '', ''],
 
+    'hk_trade_calendar':  # tsfuncs
+        ['hk_tradecal', 'none', 'none', 'none', '', 'C', '2000'],
+
+    'us_trade_calendar':  # tsfuncs
+        ['us_tradecal', 'none', 'none', 'none', '', 'C', '6000'],
+
     'stock_basic':
         ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '',],
 
+    'hk_stock_basic':  # tsfuncs
+        ['hk_stock_basic', 'none', 'none', 'none', '', '', ''],
+
+    'us_stock_basic':  # tsfuncs
+        ['us_stock_basic', 'none', 'none', 'none', '', 'C', '6000'],
+
     'stock_names':
-        ['namechange', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['namechange', 'ts_code', 'table_index', 'stock_basic', '', 'Y', '300'],
 
     'stock_company':
         ['stock_company', 'exchange', 'list', 'SSE, SZSE, BSE', '', '', ''],
@@ -1087,6 +1106,12 @@ TUSHARE_API_MAP = {
 
     'stock_monthly':
         ['monthly', 'trade_date', 'trade_date', '19901211', '', '', ''],
+
+    'hk_stock_daily':
+        ['hk_daily', 'trade_date', 'hk_trade_date', '19901211', '', '', ''],
+
+    'us_stock_daily':
+        ['us_daily', 'trade_date', 'us_trade_date', '19601211', '', '', ''],
 
     'index_1min':
         ['mins1', 'ts_code', 'table_index', 'index_basic', 'SH,SZ', 'y', '30'],
@@ -1210,6 +1235,12 @@ TUSHARE_API_MAP = {
 
     'stock_indicator2':
         ['bak_daily', 'trade_date', 'trade_date', '19990101', '', '', ''],
+
+    'hk_stock_indicator':  # tsfuncs
+        ['hk_indicators', 'trade_date', 'hk_trade_date', '19900101', '', '', ''],
+
+    'us_stock_indicator':  # tsfuncs
+        ['us_indicators', 'trade_date', 'us_trade_date', '19600101', '', '', ''],
 
     'index_indicator':
         ['index_dailybasic', 'trade_date', 'trade_date', '20040102', '', '', ''],

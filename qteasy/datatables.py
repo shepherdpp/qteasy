@@ -130,7 +130,7 @@ TABLE_MASTER_COLUMNS = [
     'table_usage',  # 3, 数据表用途
     'asset_type',  # 4, 资产类型
     'freq',  # 5, 数据频率
-    'index_column',  # 6, 数据表index column信，除了数据表的Primary Key以外需要额外创建的索引列
+    'index_column',  # 6, 数据表index column信息，除了数据表的Primary Key以外需要额外创建的索引列
     'partition_column',  # 7, 数据表分区列名
     'partitions',  # 8, 数据表分区数量
 ]
@@ -151,8 +151,20 @@ TABLE_MASTERS = {
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', '', '', ''],
 
+    'hk_trade_calendar':
+        ['foreign_trade_cal', '港股交易日历', 'cal', 'none', 'none', '', '', ''],
+
+    'us_trade_calendar':
+        ['foreign_trade_cal', '美股交易日历', 'cal', 'none', 'none', '', '', ''],
+
     'stock_basic':
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', '', '', ''],
+
+    'hk_stock_basic':
+        ['hk_stock_basic', '港股基本信息', 'basics', 'HK', 'none', '', '', ''],
+
+    'us_stock_basic':
+        ['us_stock_basic', '美股基本信息', 'basics', 'US', 'none', '', '', ''],
 
     'stock_names':  # Complete, 股票名称变更
         ['name_changes', '股票名称变更', 'events', 'E', 'none', '', '', ''],
@@ -225,6 +237,12 @@ TABLE_MASTERS = {
 
     'stock_monthly':
         ['bars', '股票月线行情', 'data', 'E', 'm', '', '', ''],
+
+    'hk_stock_daily':
+        ['hk_daily', '港股日线行情', 'date', 'HK', 'd', '', '', ''],
+
+    'us_stock_daily':
+        ['us_daily', '美股日线行情', 'date', 'US', 'd', '', '', ''],
 
     'index_1min':
         ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', '', 'ts_code', '30'],  # 30
@@ -348,6 +366,12 @@ TABLE_MASTERS = {
 
     'stock_indicator2':
         ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', '', '', ''],
+
+    'hk_stock_indicator':
+        ['hk_us_indicators', '港股技术指标', 'data', 'HK', 'd', '', '', ''],
+
+    'us_stock_indicator':
+        ['hk_us_indicators', '美股技术指标', 'data', 'US', 'd', '', '', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', '', '', ''],
@@ -479,6 +503,13 @@ TABLE_SCHEMA = {
          'prime_keys': [0, 1]
          },
 
+    'foreign_trade_cal':  # 国外股市交易日历表
+        {'columns':    ['cal_date', 'is_open', 'pretrade_date'],
+         'dtypes':     ['date', 'tinyint', 'date'],
+         'remarks':    ['日期', '是否交易', '上一交易日'],
+         'prime_keys': [0]
+         },
+
     'stock_basic':  # 股票基本信息表
         {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname',
                         'enname', 'cnspell', 'market', 'exchange', 'curr_type', 'list_status',
@@ -491,6 +522,26 @@ TABLE_SCHEMA = {
                         '上市日期', '退市日期', '是否沪深港通'],
          'prime_keys': [0]
          },
+
+    'hk_stock_basic':  # 港股基本信息表
+        {'columns':    ['ts_code', 'name', 'fullname', 'enname', 'cn_spell', 'market',
+                        'list_status', 'list_date', 'delist_date', 'trade_unit', 'isin', 'curr_type'],
+         'dtypes':     ['varchar(20)', 'varchar(40)', 'text', 'varchar(80)', 'varchar(20)', 'varchar(6)',
+                        'varchar(6)', 'datetime', 'datetime', 'float', 'varchar(16)', 'varchar(6)'],
+         'remarks':    ['股票代码', '股票简称', '公司全称', '英文名称', '拼音', '市场类别',
+                        '上市状态', '上市日期', '退市日期', '交易单位', 'ISIN代码', '货币代码'],
+         'prime_keys': [0]
+         },
+
+    'us_stock_basic':  # 美股基本信息表
+        {'columns':    ['ts_code', 'name', 'enname', 'classify',
+                        'list_date', 'delist_date'],
+         'dtypes':     ['varchar(20)', 'varchar(40)', 'varchar(80)', 'varchar(6)',
+                        'datetime', 'datetime'],
+         'remarks':    ['美股代码', '中文名称', '英文名称', '分类:ADR/GDR/EQT',
+                        '上市日期', '退市日期'],
+         'prime_keys': [0]
+        },
 
     'name_changes':  # 股票名称变更表
         {'columns':    ['ts_code', 'start_date', 'name', 'end_date', 'ann_date', 'change_reason'],
@@ -693,6 +744,31 @@ TABLE_SCHEMA = {
                         '成交额(元)'],
          'prime_keys': [0, 1]
          },
+
+    'hk_daily': # 港股日线行情表
+        {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'change', 'pct_chg', 'vol', 'amount'],
+         'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'float', 'float',
+                        'float', 'float', 'float'],
+         'remarks':    ['股票代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
+                        '涨跌幅(%)', '成交量(股)', '成交额(元)'],
+         'prime_keys': [0, 1]
+         },
+
+    'us_daily': # 美股日线行情表
+        {'columns':    ['ts_code', 'trade_date', 'close', 'open', 'high', 'low', 'pre_close', 'change',
+                        'pct_change', 'vol', 'amount', 'vwap', 'turnover_ratio', 'total_mv', 'pe', 'pb'],
+         'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'float', 'float',
+                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
+         'remarks':    ['股票代码', '交易日期', '收盘价', '开盘价', '最高价', '最低价', '昨收价', '涨跌额',
+                        '涨跌幅', '成交量', '成交额', '平均价', '换手率', '总市值', 'PE-市盈率', 'PB-市净率'],
+         'prime_key':  [0, 1]
+         },
+
+    'hk_us_indicators':
+        {'columns':    ['ts_code', 'trade_date', 'close', 'open', 'high', 'low', 'pre_close', 'change', 'pct_change', 'vol', 'amount', 'vwap', 'adj_factor', 'turnover_ratio', 'free_share', 'total_share', 'free_mv', 'total_mv', 'exchange'],
+         'dtypes':     ['str', 'str', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'None', 'float', 'float', 'float', 'float', 'None', 'None', 'float', 'float', 'str'],
+         'remarks':    ['股票代码', '交易日期', '收盘价', '开盘价', '最高价', '最低价', '昨收价', '涨跌额', '涨跌幅', '成交量', '成交额', '平均价', '复权因子', '换手率', '流通股本', '总股本', '流通市值', '总市值', '交易所代码'],
+         'prime_keys': [0, 1]},
 
     'adj_factors':  # 复权因子表
         {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
