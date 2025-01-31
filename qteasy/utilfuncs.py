@@ -173,6 +173,7 @@ def freq_dither(freq, freq_list):
 
     if len(lower_level_arg_list) > 0:
         return freq_list[lower_level_arg_list[-1]]
+
     return None
 
 
@@ -285,6 +286,8 @@ def next_main_freq(freq, direction='up'):
         elif direction == 'down':
             target_pos -= 1
         if get_main_freq_level(target_freq) != level:
+            target_freq = pandas_freq_alias_version_conversion(target_freq)
+
             return target_freq
 
 

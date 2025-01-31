@@ -1700,7 +1700,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15min')
         self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5min')
         self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
-        self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
+        self.assertEqual(freq_dither('d', ['m', 'q']), 'ME')
         self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
 
     def test_manipulating_primary_keys(self):

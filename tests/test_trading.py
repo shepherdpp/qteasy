@@ -2998,11 +2998,6 @@ class TestTradingUtilFuncs(unittest.TestCase):
             if self.test_ds.table_data_exists(table):
                 self.test_ds.drop_table_data(table)
 
-        # TODO: 此处手动添加所需要的数据，避免从网上下载导致测试失败
-        # self.test_ds.refill_local_source(
-        #         tables='stock_basic, index_basic',
-        #         parallel=False,
-        # )
         stock_basic_df = pd.DataFrame({
             'ts_code':     ['000001.SZ', '000002.SZ', '000004.SZ', '600251.SH', '000006.SZ', '000008.SZ'],
             'symbol':      ['000001', '000002', '000004', '600251', '000006', '000008'],
