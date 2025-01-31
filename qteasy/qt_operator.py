@@ -1885,7 +1885,7 @@ class Operator:
                        f'using history data that does not support the current asset types. \nFor example:'
                        f'\nIf one of the strategies requires "EPS" data, which is only available with Equities '
                        f'then the strategy will not get enough data if the investment assets are only indexes.\n'
-                       f'please check your investment asset types') 
+                       f'please check your investment asset types')
             logger_core.error(message)
             raise KeyError(message)
         # 确保op的策略都设置了参数
