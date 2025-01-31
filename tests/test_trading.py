@@ -3118,12 +3118,12 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'invest_type':   ['股票型', '股票型'],
             'type':          ['开放式', '开放式'],
         })
-        fund_basic = self.test_ds.fetch_history_table_data(
-                table='fund_basic',
-                channel='df',
-                df=fund_basic_df,
-        )
-        self.test_ds.update_table_data('fund_basic', fund_basic)
+        # fund_basic = self.test_ds.fetch_history_table_data(
+        #         table='fund_basic',
+        #         channel='df',
+        #         df=fund_basic_df,
+        # )
+        self.test_ds.update_table_data('fund_basic', fund_basic_df)
 
         print(symbol_names)
         symbol_names = get_symbol_names(

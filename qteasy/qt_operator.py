@@ -1878,9 +1878,14 @@ class Operator:
         # 确保输入的history_data有足够的htypes
         hist_data_types = hist_data.htypes
         if any(htyp not in hist_data_types for htyp in self.op_data_types):
+            import pdb; pdb.set_trace()
             missing_htypes = [htyp for htyp in self.op_data_types if htyp not in hist_data_types]
-            message = f'Some historical data types are missing ({missing_htypes}) from the history ' \
-                      f'data ({hist_data_types}), make sure history data types covers all strategies'
+            message = (f'Some historical data types are missing ({missing_htypes}) from the history '
+                       f'data ({hist_data_types}). \nThis may indicate that one of the strategies are '
+                       f'using history data that does not support the current asset types. \nFor example:'
+                       f'\nIf one of the strategies requires "EPS" data, which is only available with Equities '
+                       f'then the strategy will not get enough data if the investment assets are only indexes.\n'
+                       f'please check your investment asset types') 
             logger_core.error(message)
             raise KeyError(message)
         # 确保op的策略都设置了参数

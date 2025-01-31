@@ -132,16 +132,16 @@ def infer_data_types(names, freqs, asset_types, adj=None,
             raise err
         adj = adj.lower()
         price_types = ['close', 'open', 'high', 'low']
-        if adj not in ['b', 'f', 'back', 'fw', 'forward']:
-            pass
-        elif adj in ['b', 'back']:
+        if adj in ['b', 'back']:
             names = [f'{n}|b' if n in price_types else n for n in names]
-        elif adj in ['f', 'fw', 'forward']:
+            msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+                  f'adjusted prices, such as "close|b" instead of adj="b".'
+            warn(msg, DeprecationWarning)
+        if adj in ['f', 'fw', 'forward']:
             names = [f'{n}|f' if n in price_types else n for n in names]
-
-        msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-              f'adjusted prices, such as "close|b" instead of adj="b".'
-        warn(msg, DeprecationWarning)
+            msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
+                  f'adjusted prices, such as "close|f" instead of adj="f".'
+            warn(msg, DeprecationWarning)
 
     # TODO: 需要优化：将force_match_freq / force_match_asset_type作为DataType的__init__()参数，那么这里就可以
     #  使用itertools.product以及列表推导式来简化代码了。
@@ -4368,8 +4368,8 @@ def get_reference_data_from_source(
 
     for htyp, ser in reference_data_acquired.items():
         if isinstance(ser, pd.DataFrame) and not ser.empty:
-            import pdb
-            pdb.set_trace()
+            # import pdb
+            # pdb.set_trace()
             pass
         # if reference_data_to_be_refreqed[htyp]:
         #     ser = _adjust_freq(

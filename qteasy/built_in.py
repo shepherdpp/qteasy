@@ -3575,11 +3575,11 @@ class SelectingAvgIndicator(FactorSorter):
                                     (-np.inf, np.inf),
                                     (0, np.inf)],
                          name='FINANCE',
-                         description='GeneralStg share_pool according to financial report EPS indicator',
+                         description='GeneralStg share_pool according to financial indicator PE',
                          data_freq='d',
                          strategy_run_freq='y',
                          window_length=90,
-                         strategy_data_types='eps')
+                         strategy_data_types='pe')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is not None:

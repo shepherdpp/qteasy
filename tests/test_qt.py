@@ -806,7 +806,7 @@ class TestQT(unittest.TestCase):
             res = qt.run(
                     op,
                     mode=1,
-                    asset_pool='000300.SH, 399006.SZ',
+                    asset_pool='000300.SH, 399006.SZ',  # 两个投资标的都是指数，asset_type='IDX'
                     invest_start='20200101',
                     invest_end='20211231',
                     trade_log=False,
