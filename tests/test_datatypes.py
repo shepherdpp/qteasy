@@ -12,6 +12,8 @@
 import unittest
 
 import pandas as pd
+from numpy.ma.testutils import assert_equal
+from typing_extensions import assert_type
 
 from qteasy.database import DataSource
 from qteasy.utilfuncs import (
@@ -24,7 +26,7 @@ from qteasy.datatypes import (
     DataType,
     get_history_data_from_source,
     get_reference_data_from_source,
-    get_tables_by_dtypes,
+    get_tables_by_dtypes, infer_data_types,
 )
 
 ALL_TYPES_TO_TEST_WITH_FULL_ID = [
@@ -1978,8 +1980,154 @@ class TestDataTypes(unittest.TestCase):
 
     def test_infer_data_types(self):
         """ test function infer_data_types"""
-        names = ['']
-        raise NotImplementedError
+        # test infer data types with full parameters
+        names = ['pe', 'close', 'basic_eps']
+        freqs = ['d', 'q']
+        assert_types = ['E', 'IDX']
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=assert_types)
+        print(f'inferred datatypes with full parameters: \n{data_types}')
+        expected_data_types = [
+            DataType(name='pe', freq='d', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='basic_eps', freq='q', asset_type='E'),
+        ]
+        self.assertEqual(len(data_types), 5)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with missing freq parameters
+        missing_freqs = ['d']  # 'q' is missing for name basic_eps
+        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types)
+        print(f'Inferred data types with missing freqs: \n{data_types}')
+        expected_data_types = [
+            DataType(name='pe', freq='d', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+        ]
+        self.assertEqual(len(data_types), 4)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with missing asset type parameters
+        missing_asset_types = ['IDX']  # 'E' is missing for name basic_eps
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=missing_asset_types)
+        print(f'Inferred data types with missing asset types: \n{data_types}')
+        expected_data_types = [
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+        ]
+        self.assertEqual(len(data_types), 2)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with missing freq but force match freq
+        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types, force_match_freq=True)
+        print(f'Inferred data types with missing freqs and force match freq: \n{data_types}')
+        expected_data_types = [
+            DataType(name='pe', freq='d', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='basic_eps', freq='q', asset_type='E'),
+        ]
+        self.assertEqual(len(data_types), 5)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with missing asset_type but forced match asset type
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=missing_asset_types,
+                                      force_match_asset_type=True)
+        print(f'Inferred data types with missing asset types and forced match asset type: \n{data_types}')
+        expected_data_types = [
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='basic_eps', freq='q', asset_type='E')
+        ]
+        self.assertEqual(len(data_types), 3)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # teset infer data types with adj parameter
+        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types,
+                                      adj='back',
+                                      force_match_freq=True)
+        print(f'Inferred data types with adj = "b": \n{data_types}')
+        expected_data_types = [
+            DataType(name='pe', freq='d', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='close|b', freq='d', asset_type='E'),
+            DataType(name='basic_eps', freq='q', asset_type='E'),
+        ]
+        self.assertEqual(len(data_types), 4)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with multiple duplicated cases
+        names = ['close', 'close|b', 'pe', 'basic_eps', 'initial_pe', 'ballot', 'exp_date', 'is_trade_day|SSE']
+        freqs = ['h', 'd', 'm']
+        asset_types = ['E', 'IDX', 'FD']
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=asset_types)
+        print(f'Inferred data types with multiple duplicated cases with no forced freq: \n{data_types}')
+        expected_data_types = [
+            DataType(name='close', freq='h', asset_type='E'),
+            DataType(name='close', freq='h', asset_type='IDX'),
+            DataType(name='close', freq='h', asset_type='FD'),
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='FD'),
+            DataType(name='close', freq='m', asset_type='E'),
+            DataType(name='close', freq='m', asset_type='IDX'),
+            DataType(name='close|b', freq='h', asset_type='E'),
+            DataType(name='close|b', freq='h', asset_type='FD'),
+            DataType(name='close|b', freq='d', asset_type='E'),
+            DataType(name='close|b', freq='d', asset_type='FD'),
+            DataType(name='close|b', freq='m', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='initial_pe', freq='d', asset_type='E'),
+            DataType(name='ballot', freq='d', asset_type='E'),
+        ]
+        self.assertEqual(len(data_types), 17)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with multiple duplicated cases with forced freq and asset_type
+        names = ['close', 'close|b', 'pe', 'basic_eps', 'initial_pe', 'ballot', 'exp_date', 'is_trade_day|SSE', 'name']
+        freqs = ['h', 'd', 'm']
+        asset_types = ['E', 'IDX', 'FD']
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=asset_types,
+                                      force_match_freq=True,
+                                      force_match_asset_type=True)
+        print(f'Inferred data types with multiple duplicated cases with forced freq and asset_type: \n{data_types}')
+        expected_data_types = [
+            DataType(name='close', freq='h', asset_type='E'),
+            DataType(name='close', freq='h', asset_type='IDX'),
+            DataType(name='close', freq='h', asset_type='FD'),
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='FD'),
+            DataType(name='close', freq='m', asset_type='E'),
+            DataType(name='close', freq='m', asset_type='IDX'),
+            DataType(name='close|b', freq='h', asset_type='E'),
+            DataType(name='close|b', freq='h', asset_type='FD'),
+            DataType(name='close|b', freq='d', asset_type='E'),
+            DataType(name='close|b', freq='d', asset_type='FD'),
+            DataType(name='close|b', freq='m', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='E'),
+            DataType(name='pe', freq='d', asset_type='IDX'),
+            DataType(name='initial_pe', freq='d', asset_type='E'),
+            DataType(name='ballot', freq='d', asset_type='E'),
+            DataType(name='basic_eps', freq='q', asset_type='E'),
+            DataType(name='exp_date', freq='None', asset_type='IDX'),
+            DataType(name='is_trade_day|SSE', freq='d', asset_type='None'),
+            DataType(name='name', freq='None', asset_type='FT')
+        ]
+        self.assertEqual(len(data_types), 21)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
 
 if __name__ == '__main__':
