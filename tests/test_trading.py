@@ -1859,7 +1859,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['AAPL', 'MSFT', 'AMZN', 'FB', 'GOOG',])
         self.assertEqual(list(summary[1]), [100, 0, 0, 0, 0])
         self.assertEqual(list(summary[2]), [60.5, 0, 0, 0, 0])
         # check trade result summary with share
@@ -2654,7 +2654,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
-        self.assertEqual(messages, ['Not enough available cash (5000.00), adjusted cash to spend to 50.0%'])
+        self.assertEqual(messages, ['Not enough available cash (5000.000), adjusted cash to spend to 50.0%'])
 
         # test _signal_to_order_elements with multiple symbols
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']

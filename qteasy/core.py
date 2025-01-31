@@ -1638,7 +1638,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
-            names=config['benchmark_dtypes'],
+            names=config['benchmark_dtype'],
             freqs=oper.op_data_freq,
             asset_types=config['benchmark_asset_type'],
             adj=config['backtest_price_adj'],

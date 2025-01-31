@@ -1978,6 +1978,7 @@ class TestDataTypes(unittest.TestCase):
 
     def test_infer_data_types(self):
         """ test function infer_data_types"""
+        names = ['']
         raise NotImplementedError
 
 

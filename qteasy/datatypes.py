@@ -130,7 +130,7 @@ def infer_data_types(names, freqs, asset_types, adj=None,
             raise err
         adj = adj.lower()
         price_types = ['close', 'open', 'high', 'low']
-        if adj not in ['b', 'f', 'back', 'fw', 'forward', 'none']:
+        if adj not in ['b', 'f', 'back', 'fw', 'forward']:
             pass
         elif adj in ['b', 'back']:
             names = [f'{n}|b' if n in price_types else n for n in names]
@@ -656,8 +656,6 @@ class DataType:
         elif (freq in built_in_freqs) or (freq in user_defined_freqs):
             default_freq = freq
         else:
-            import pdb;
-            pdb.set_trace()
             raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
         if (asset_type is None) and len(built_in_asset_types) > 0:
@@ -1108,8 +1106,6 @@ class DataType:
             # expand the index to include starts and ends dates
             status = _expand_df_index(data_df, starts, ends).ffill()
         except:
-            import pdb;
-            pdb.set_trace()
             pass
 
         # filter out events that are not in the date range
@@ -4349,8 +4345,9 @@ def get_reference_data_from_source(
 
     for htyp, ser in reference_data_acquired.items():
         if isinstance(ser, pd.DataFrame) and not ser.empty:
-            import pdb;
+            import pdb
             pdb.set_trace()
+            pass
         # if reference_data_to_be_refreqed[htyp]:
         #     ser = _adjust_freq(
         #             hist_data=ser,
