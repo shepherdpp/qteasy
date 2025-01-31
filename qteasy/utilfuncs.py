@@ -23,21 +23,30 @@ from functools import wraps, lru_cache
 
 TIME_FREQ_LEVELS = {
     'Y':     10,
+    'YE':    10,
     'Q':     20,
+    'QE':    20,
     'M':     30,
+    'ME':    30,
     'W':     40,
     'D':     50,
     'H':     60,
+    'h':     60,
     '30MIN': 70,
+    '30min': 70,
     '15MIN': 80,
+    '15min': 80,
     '5MIN':  90,
+    '5min':  90,
     '1MIN':  100,
+    '1min':  100,
     'MIN':   100,
+    'min':   100,
     'T':     110,
     'TICK':  110,
 }  # TODO: 最好是将所有的frequency封装为一个类，确保字符串大小写正确，且引入复合频率的比较和处理
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
-AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
+AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT', 'HK', 'US']
 PROGRESS_BAR = {0:  '----------------------------------------', 1:  '#---------------------------------------',
                 2:  '##--------------------------------------', 3:  '###-------------------------------------',
                 4:  '####------------------------------------', 5:  '#####-----------------------------------',
@@ -998,8 +1007,7 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
             SSE:    上交所, SZSE:   深交所,
             CFFEX:  中金所, SHFE:   上期所,
             CZCE:   郑商所, DCE:    大商所,
-            INE:    上能源, IB:     银行间,
-            XHKG:   港交所
+            INE:    上能源,
 
     Returns
     -------
@@ -1009,8 +1017,7 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
 
     from qteasy import QT_TRADE_CALENDAR
 
-    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
-                                                      'DCE', 'INE', 'IB', 'XHKG']:
+    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE', 'DCE', 'INE']:
         msg = f'exchange \'{exchange}\' is not a valid input'
         raise TypeError(msg)
     if QT_TRADE_CALENDAR is not None:

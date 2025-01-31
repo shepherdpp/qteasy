@@ -19,7 +19,7 @@ from pymysql import connect
 
 from qteasy.trading_util import _trade_time_index
 
-from qteasy.datatypes import _adjust_freq
+from qteasy.history import _adjust_freq
 
 from qteasy.data_channels import (
     fetch_table_data_from_tushare,
@@ -1662,7 +1662,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(parse_freq_string('t'), (1, 'T', ''))
         self.assertEqual(parse_freq_string('min'), (1, '1min', ''))
         self.assertEqual(parse_freq_string('15min'), (1, '15min', ''))
-        self.assertEqual(parse_freq_string('15min', std_freq_only=True), (15, 'MIN', ''))
+        self.assertEqual(parse_freq_string('15min', std_freq_only=True), (15, 'min', ''))
         self.assertEqual(parse_freq_string('75min'), (5, '15min', ''))
         self.assertEqual(parse_freq_string('90min'), (3, '30min', ''))
         self.assertEqual(parse_freq_string('60min'), (2, '30min', ''))

@@ -144,7 +144,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('call_put', 'None', 'OPT'),
     ('exercise_type', 'None', 'OPT'),
     ('exercise_price', 'None', 'OPT'),
-    ('s_month', 'str', 'OPT'),
+    ('s_month', 'None', 'OPT'),
     ('maturity_date', 'None', 'OPT'),
     ('list_price', 'None', 'OPT'),
     ('list_date', 'None', 'OPT'),

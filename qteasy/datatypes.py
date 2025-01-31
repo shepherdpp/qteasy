@@ -17,6 +17,7 @@ from functools import lru_cache
 from warnings import warn
 
 from .utilfuncs import (
+    AVAILABLE_ASSET_TYPES,
     str_to_list,
     _lev_ratio,
     _partial_lev_ratio,
@@ -122,6 +123,8 @@ def infer_data_types(names, freqs, asset_types, adj=None,
     if not isinstance(asset_types, list):
         err = TypeError(f'asset_types should be a string or a list of strings, but got {type(asset_types)}')
         raise err
+    if 'any' in asset_types:
+        asset_types = AVAILABLE_ASSET_TYPES
 
     if adj is not None:
         if not isinstance(adj, str):

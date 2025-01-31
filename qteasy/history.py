@@ -116,13 +116,13 @@ class HistoryPanel():
         values: ndarray
             一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
             如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-        levels: list or tuple
+        levels: str or [str] or (str)
             HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
-        rows: list or tuple
+        rows: str or [str] or (str)
             HistoryPanel的时间日期标签。
             datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
             行标签代表每一条数据对应的历史时间戳
-        columns: list or tuple
+        columns: str or [str] or (str)
             HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
         """
 
