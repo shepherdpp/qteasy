@@ -11,9 +11,7 @@
 
 import pandas as pd
 import numpy as np
-from pyarrow.dataset import dataset
 
-import qteasy
 from qteasy.utilfuncs import (
     str_to_list,
     list_to_str_format,
@@ -26,7 +24,6 @@ from qteasy.utilfuncs import (
 )
 
 from qteasy.datatypes import (
-    DataType,
     get_history_data_from_source,
     get_reference_data_from_source,
 )
@@ -2561,10 +2558,11 @@ def get_history_panel(
     for htyp, df in all_dfs.items():
         if isinstance(df, pd.Series):
             df = pd.DataFrame(df)
+            df.columns = ['none']
             all_dfs[htyp] = df
         # find freq of the htyp:
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
-        if htype_freq.freq != freq:
+        if (not b_days_only) or (not trade_time_only) or (htype_freq.freq != freq):
             new_df = _adjust_freq(
                     df,
                     target_freq=freq,

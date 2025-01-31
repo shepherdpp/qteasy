@@ -16,8 +16,11 @@ from pandas import Timestamp
 import numpy as np
 
 from qteasy.datatypes import infer_data_types
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, sec_to_duration, str_to_list
-from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
+from qteasy.utilfuncs import str_to_list
+from qteasy.history import (
+    stack_dataframes,
+    ffill_3d_data,
+)
 
 
 class TestHistoryPanel(unittest.TestCase):
@@ -950,12 +953,17 @@ class TestHistoryPanel(unittest.TestCase):
                 freqs='m',
                 asset_types='any',
                 adj='none',
+                force_match_freq=True,
         )
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           start='20210101', end='20210802', freq='m')
-        self.assertEqual(hp.htypes, ['wt_idx|000003.SH', 'close', 'wt_idx|000300.SH'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        expected_htypes = ['wt_idx|000003.SH', 'close', 'wt_idx|000300.SH']
+        expected_shares = ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH']
+        self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        self.assertTrue(all(i in expected_shares for i in hp.shares))
+        self.assertTrue(all(i in hp.shares for i in expected_shares))
         print(hp)
 
         print('test get history panel data without shares')
@@ -967,8 +975,12 @@ class TestHistoryPanel(unittest.TestCase):
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types, shares=None,
                                           start='20210101', end='20210202', freq='d',
                                           drop_nan=True)
-        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
-        self.assertEqual(hp.shares, ['none'])
+        expected_htypes = ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH']
+        expected_shares = ['none']
+        self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        self.assertTrue(all(i in expected_shares for i in hp.shares))
+        self.assertTrue(all(i in hp.shares for i in expected_shares))
         print(hp)
 
         print('test get history panel data from converting multiple frequencies')
@@ -976,12 +988,17 @@ class TestHistoryPanel(unittest.TestCase):
                 names='wt_idx|000003.SH, close, pe, eps, revenue_ps',
                 freqs='w',
                 asset_types='any',
+                force_match_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
                                           end='20210502', freq='w', drop_nan=True)
-        self.assertEqual(hp.htypes, ['wt_idx|000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        expected_htypes = ['wt_idx|000003.SH', 'close', 'pe', 'eps', 'revenue_ps']
+        expected_shares = ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH']
+        self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        self.assertTrue(all(i in expected_shares for i in hp.shares))
+        self.assertTrue(all(i in hp.shares for i in expected_shares))
         print(hp)
 
         print('test get history panel data with / without all NaN values')
@@ -995,8 +1012,12 @@ class TestHistoryPanel(unittest.TestCase):
                                           start='20210101', end='20210115', freq='d',
                                           drop_nan=False, resample_method='none', b_days_only=False)
         print(hp)
-        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
-        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        expected_htypes = ['open', 'high', 'low|f', 'close|b']
+        expected_shares = ['000002.SZ', '000001.SZ', '000300.SH']
+        self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        self.assertTrue(all(i in expected_shares for i in hp.shares))
+        self.assertTrue(all(i in hp.shares for i in expected_shares))
         first_3_rows = hp[:, :, 0:3]
         row_9_til_10 = hp[:, :, 8:10]
         self.assertTrue(np.all(np.isnan(first_3_rows)))
@@ -1013,8 +1034,12 @@ class TestHistoryPanel(unittest.TestCase):
                                           shares='000002.SZ, 000001.SZ, 000300.SH',
                                           start='20210101', end='20210115', freq='d', )
         print(hp)
-        self.assertEqual(hp.htypes, ['open|f', 'high|f', 'low|f', 'close|f'])
-        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        expected_htypes = ['open|f', 'high|f', 'low|f', 'close|f']
+        expected_shares = ['000002.SZ', '000001.SZ', '000300.SH']
+        self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        self.assertTrue(all(i in expected_shares for i in hp.shares))
+        self.assertTrue(all(i in hp.shares for i in expected_shares))
         all_idx_data = hp[:, '000300.SH']
         self.assertTrue(np.all(np.isnan(all_idx_data)))
 

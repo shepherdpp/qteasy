@@ -991,9 +991,15 @@ class DataType:
                     'table_name_A, column_A, table_name_B and column_B must be provided for adjustment data type')
 
         acquired_data = datasource.read_cached_table_data(table_name, shares=symbols, start=starts, end=ends)
+
+        if acquired_data.empty:
+            return pd.DataFrame()
         acquired_data = acquired_data[column].unstack(level='ts_code')
 
         adj_factors = datasource.read_cached_table_data(adj_table, shares=symbols, start=starts, end=ends)
+
+        if adj_factors.empty:
+            return pd.DataFrame()
         adj_factors = adj_factors[adj_column].unstack(level='ts_code')
 
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')

@@ -3016,12 +3016,12 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'delist_date': ['22001231', '22001231', '22001231', '22001231', '22001231', '22001231'],
             'is_hs':       ['N', 'N', 'N', 'N', 'N', 'N'],
         })
-        stock_basic = self.test_ds.fetch_history_table_data(
-                table='stock_basic',
-                channel='df',
-                df=stock_basic_df,
-        )
-        self.test_ds.update_table_data('stock_basic', stock_basic)
+        # stock_basic = self.test_ds.fetch_history_table_data(
+        #         table='stock_basic',
+        #         channel='df',
+        #         df=stock_basic_df,
+        # )
+        self.test_ds.update_table_data('stock_basic', stock_basic_df)
 
         index_basic_df = pd.DataFrame({
             'ts_code':     ['000001.SH', '000002.SH', '000004.SH', '000006.SH', '000008.SH'],
@@ -3038,12 +3038,12 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'desc':        ['描述', '描述', '描述', '描述', '描述'],
             'exp_date':    ['22001231', '22001231', '22001231', '22001231', '22001231'],
         })
-        index_basic = self.test_ds.fetch_history_table_data(
-                table='index_basic',
-                channel='df',
-                df=index_basic_df,
-        )
-        self.test_ds.update_table_data('index_basic', index_basic)
+        # index_basic = self.test_ds.fetch_history_table_data(
+        #         table='index_basic',
+        #         channel='df',
+        #         df=index_basic_df,
+        # )
+        self.test_ds.update_table_data('index_basic', index_basic_df)
 
         # test get_symbol_names with only stock symbols
         print('test get_symbol_names with only stock symbols')
