@@ -1668,16 +1668,15 @@ def reconnect_ds(data_source=None):  # deprecated
     Returns
     -------
     """
+    msg = f'This function is deprecated, there\'s no need to re-connect datasource any more.'
+    warn(msg, DeprecationWarning)
+
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
         data_source = QT_DATA_SOURCE
 
     if not isinstance(data_source, DataSource):
         raise TypeError(f'data source not recognized!')
-
-    # reconnect twice to make sure the connection is established
-    # data_source.reconnect()
-    # data_source.reconnect()
 
 
 def check_and_prepare_live_trade_data(operator, config, datasource=None, live_prices=None):

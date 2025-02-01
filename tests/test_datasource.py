@@ -22,8 +22,8 @@ from qteasy.trading_util import _trade_time_index
 from qteasy.history import _adjust_freq
 
 from qteasy.data_channels import (
-    fetch_table_data_from_tushare,
-    fetch_table_data_from_eastmoney,
+    _fetch_table_data_from_tushare,
+    _fetch_table_data_from_eastmoney,
 )
 
 from qteasy.database import (
@@ -1117,7 +1117,7 @@ class TestDataSource(unittest.TestCase):
             # 下载并写入数据到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
-            df = fetch_table_data_from_tushare(table, **tables_to_test[table])
+            df = _fetch_table_data_from_tushare(table, **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table arr ({table}) from tushare for '
@@ -1139,7 +1139,7 @@ class TestDataSource(unittest.TestCase):
             # 下载数据并添加到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
-            df = fetch_table_data_from_tushare(table, **tables_to_add[table])
+            df = _fetch_table_data_from_tushare(table, **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table arr ({table}) from tushare for '
@@ -2184,7 +2184,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_fetch_realtime_price_data(self):
         """ test datasource function fetch_realtime_price_data()"""
-        res = fetch_table_data_from_eastmoney(
+        res = _fetch_table_data_from_eastmoney(
                 table='stock_5min',
                 symbols=['000001.SZ', '000002.SZ'],
         )

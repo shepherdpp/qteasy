@@ -59,7 +59,7 @@ data_channels.download_data(
 """
 
 
-def fetch_table_data_from_tushare(table, **kwargs):
+def _fetch_table_data_from_tushare(table, **kwargs):
     """使用kwargs参数，从tushare获取一次金融数据
 
     Parameters
@@ -85,7 +85,7 @@ def fetch_table_data_from_tushare(table, **kwargs):
     return dnld_data
 
 
-def fetch_table_data_from_akshare(table, **kwargs):
+def _fetch_table_data_from_akshare(table, **kwargs):
     """ 使用kwargs参数，从akshare获取一次金融数据
 
     Parameters
@@ -108,7 +108,7 @@ def fetch_table_data_from_akshare(table, **kwargs):
     return dnld_data
 
 
-def fetch_table_data_from_eastmoney(table, **kwargs):
+def _fetch_table_data_from_eastmoney(table, **kwargs):
     """ 使用kwargs参数，从东方财富网获取一次金融数据
 
     Parameters
@@ -146,7 +146,9 @@ def cleaning_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
     pd.DataFrame:
         清洗后的数据
     """
-    # 去除重复数据
+    # TODO: this function is now not utilized; Cleaning data is actually done
+    #  now in function update_table_data() in database.py, consider moving
+    #  that function here in next upgrades
     data.drop_duplicates(inplace=True)
 
     table_schema = qteasy.database.get_built_in_table_schema()
@@ -171,15 +173,18 @@ def _get_fetch_table_func(channel: str):
         数据下载函数
     """
     if channel == 'tushare':
-        return fetch_table_data_from_tushare
+        return _fetch_table_data_from_tushare
     elif channel == 'akshare':
-        return fetch_table_data_from_akshare
+        return _fetch_table_data_from_akshare
     elif channel == 'emoney':
-        return fetch_table_data_from_eastmoney
+        return _fetch_table_data_from_eastmoney
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
 
+# =====================
+# data_channel模块的主要API，分别用于从不同的渠道获取数据表数据以及实时价格数据（实时数据仅包含实时价格数据，且格式统一）
+# =====================
 def fetch_batched_table_data(
         *,
         table: str,
@@ -189,7 +194,8 @@ def fetch_batched_table_data(
         process_count: int = None,
         logger: any = None,
         download_batch_size: int = 0,
-        download_batch_interval: int = 0.) -> pd.DataFrame:
+        download_batch_interval: int = 0.,
+) -> pd.DataFrame:
     """ 一个Generator，顺序循环批量获取同一张数据表的数据，支持并行下载并逐个返回数据
 
     Parameters
@@ -264,6 +270,33 @@ def fetch_batched_table_data(
                 if download_batch_interval != 0:
                     # print(f'waiting for {sec_to_duration(download_batch_interval)}')
                     time.sleep(download_batch_interval)
+
+
+def fetch_real_time_price_data(
+        *,
+        channel,
+        shares,
+        freq,
+) -> pd.DataFrame:
+    """ 从channels
+
+    Parameters
+    ----------
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    shares: str or [str],
+        股票代码
+    freq: str,
+        数据频率
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    raise NotImplementedError
 
 
 def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_arg_filter, reversed_par_seq) -> dict:
@@ -1009,7 +1042,7 @@ TUSHARE_API_MAP_COLUMNS = [
     'allowed_code_suffix',  # 5, 从tushare获取数据时使用的api参数允许的股票代码后缀
     'allow_start_end',  # 6, 从tushare获取数据时使用的api参数是否允许start_date和end_date
     'start_end_chunk_size',  # 7, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
-    # TODO: 修改column6/column7：
+    # TODO: 修改column6/column7 for minor upgrades of version 1.4：
     #  将6改为"table_row_limiter”,含义是限制同时下载的数据行方法，取值包括：
     #  -   '':   没有额外的参数用于限制下载数据的行数
     #  -   'Y':  使用开始结束日期作为参数，限制下载数据的行数
