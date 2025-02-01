@@ -1025,9 +1025,9 @@ class Trader(object):
         同时更新self.watched_prices
         """
         if self.watch_list:
-            from qteasy.emfuncs import stock_live_kline_price
+            from qteasy.emfuncs import real_time_klines
             symbols = self.watch_list
-            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
+            live_prices = real_time_klines(symbols, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
@@ -2313,8 +2313,8 @@ class Trader(object):
     def _update_live_price(self) -> None:
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
         self.send_message(f'Acquiring live price data', debug=True)
-        from qteasy.emfuncs import stock_live_kline_price
-        real_time_data = stock_live_kline_price(symbols=self.asset_pool)
+        from qteasy.emfuncs import real_time_klines
+        real_time_data = real_time_klines(symbols=self.asset_pool)
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)

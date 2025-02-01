@@ -13,7 +13,7 @@ import unittest
 
 import pandas as pd
 
-from qteasy.emfuncs import acquire_data, get_k_history
+from qteasy.emfuncs import acquire_data, _get_k_history
 
 
 class TestEastmoney(unittest.TestCase):
@@ -23,40 +23,49 @@ class TestEastmoney(unittest.TestCase):
         pass
 
     def test_get_k_history(self):
-        """ Test get_k_history function """
+        """ Test _get_k_history function """
         code = '000651'
-        res = get_k_history(code=code, beg='20231102', klt=5)
+        res = _get_k_history(code=code, beg='20231102', klt=5)
         print(res)
-        self.assertIsInstance(res, pd.DataFrame)
-        code = '000651'
-        res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
-        print(res)
-        self.assertIsInstance(res, pd.DataFrame)
-        code = '000651.SZ'
-        res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
-        print(res)
-        self.assertIsInstance(res, pd.DataFrame)
-        code = '000001.SH'
-        res = get_k_history(code=code, beg='20231102', klt=101, verbose=True)
-        print(res)
-        self.assertIsInstance(res, pd.DataFrame)
-
-    def test_stock_live_daily_price(self):
-        """ Test stock_live_kline_price function """
-
-        code = ['000016.SZ', '000025.SZ', '000333.SZ']
-        res = acquire_data('stock_live_kline_price', symbols=code, freq='D')
-        print(f'data acquied for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
         self.assertIsInstance(res, pd.DataFrame)
         self.assertFalse(res.empty)
-        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
-        self.assertEqual(res.index.name, 'trade_time')
-        self.assertTrue(all(item in code for item in res.symbol))
-        # some items may not have real time price at the moment
-        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        code = '000651'
+        res = _get_k_history(code=code, beg='20231102', klt=101, verbose=True)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+        code = '000651.SZ'
+        res = _get_k_history(code=code, beg='20231102', klt=101, verbose=True)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+        code = '000001.SH'
+        res = _get_k_history(code=code, beg='20231102', klt=101, verbose=True)
+        print(res)
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
+
+    def test_real_time_kline_price(self):
+        """ Test real_time_klines function """
 
         code = ['000016.SZ', '000025.SZ', '000333.SZ']
-        res = acquire_data('stock_live_kline_price', symbols=code, freq='D', verbose=True)
+        res = acquire_data('real_time_klines', symbols=code, freq='D')
+        print(f'data acquied for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
+        self.assertIsInstance(res, pd.DataFrame)
+        from qteasy.utilfuncs import is_market_trade_day
+        if is_market_trade_day('today'):
+            self.assertFalse(res.empty)
+            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.index.name, 'trade_time')
+            self.assertTrue(all(item in code for item in res.symbol))
+            # some items may not have real time price at the moment
+            # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        else:
+            print(f'not a trade day, no real time k-line data acquired!')
+            self.assertTrue(res.empty)
+
+        code = ['000016.SZ', '000025.SZ', '000333.SZ']
+        res = acquire_data('real_time_klines', symbols=code, freq='D', verbose=True)
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
 
@@ -76,39 +85,57 @@ class TestEastmoney(unittest.TestCase):
                 '603215.SH', '603219.SH', '603303.SH', '603311.SH', '603355.SH', '603366.SH', '603377.SH', '603486.SH',
                 '603515.SH', '603519.SH', '603579.SH', '603657.SH', '603677.SH', '603726.SH', '603868.SH', '605108.SH',
                 '605336.SH', '605365.SH', '605555.SH', '688169.SH', '688609.SH', '688696.SH', '688793.SH']
-        res = acquire_data('stock_live_kline_price', symbols=code, freq='M')
+        res = acquire_data('real_time_klines', symbols=code, freq='M')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
-        self.assertFalse(res.empty)
-        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
-        self.assertEqual(res.index.name, 'trade_time')
-        self.assertTrue(all(item in code for item in res.symbol))
-        # some items may not have real time price at the moment
-        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        if is_market_trade_day('today'):
+            self.assertFalse(res.empty)
+            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.index.name, 'trade_time')
+            self.assertTrue(all(item in code for item in res.symbol))
+            # some items may not have real time price at the moment
+            # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        else:
+            print(f'not a trade day, no real time k-line data acquired!')
+            self.assertTrue(res.empty)
 
         print('test acquiring Index prices')
         codes = ['000001.SH', '000300.SH', '399001.SZ']
-        res = acquire_data('stock_live_kline_price', symbols=codes, freq='D')
+        res = acquire_data('real_time_klines', symbols=codes, freq='D')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
-        self.assertFalse(res.empty)
-        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
-        self.assertEqual(res.index.name, 'trade_time')
-        self.assertTrue(all(item in codes for item in res.symbol))
-        # some items may not have real time price at the moment
-        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        if is_market_trade_day('today'):
+            self.assertFalse(res.empty)
+            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.index.name, 'trade_time')
+            self.assertTrue(all(item in codes for item in res.symbol))
+            # some items may not have real time price at the moment
+            # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        else:
+            print(f'not a trade day, no real time k-line data acquired!')
+            self.assertTrue(res.empty)
 
         print('test acquiring ETF price data')
         codes = ['510050.SH', '510300.SH', '510500.SH', '510880.SH', '510900.SH', '512000.SH', '512010.SH']
-        res = acquire_data('stock_live_kline_price', symbols=codes, freq='D')
+        res = acquire_data('real_time_klines', symbols=codes, freq='D')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
-        self.assertFalse(res.empty)
-        self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
-        self.assertEqual(res.index.name, 'trade_time')
-        self.assertTrue(all(item in codes for item in res.symbol))
-        # some items may not have real time price at the moment
-        # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        if is_market_trade_day('today'):
+            self.assertFalse(res.empty)
+            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.index.name, 'trade_time')
+            self.assertTrue(all(item in codes for item in res.symbol))
+            # some items may not have real time price at the moment
+            # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+        else:
+            print(f'not a trade day, no real time k-line data acquired!')
+            self.assertTrue(res.empty)
+
+    def test_real_time_quote(self):
+        raise NotImplementedError
+
+    def test_stock_bars(self):
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

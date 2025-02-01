@@ -28,12 +28,12 @@ def acquire_data(api_name, **kwargs):
     return res
 
 
-def gen_eastmoney_code(rawcode: str) -> str:
+def _gen_eastmoney_code(rawcode: str) -> str:
     """
     生成东方财富专用的secid: 1.000001 0.399001等
 
-    沪市股票以1开头，深市及北交所股票以0开头
-    如果rawcode中未指明市场，则根据六位数的第一位判断，当第一位是6是判定未沪市，否则判定为深市
+    沪市股票/指数/ETF以1开头，深市及北交所股票/指数/ETF以0开头
+    如果rawcode中未指明市场，则根据六位数的第一位判断，当第一位是6是判定为沪市，否则判定为深市
     此时默认所有代码都为股票，即000001会被判定为0.000001(平安银行）而不是1.000001（上证指数)
     只有给出后缀时，才根据市场判定正确的secid
 
@@ -49,11 +49,11 @@ def gen_eastmoney_code(rawcode: str) -> str:
 
     Examples
     --------
-    >>> gen_eastmoney_code('000001')
+    >>> _gen_eastmoney_code('000001')
     0.000001
-    >>> gen_eastmoney_code('000001.SZ')
+    >>> _gen_eastmoney_code('000001.SZ')
     0.000001
-    >>> gen_eastmoney_code('000001.SH')
+    >>> _gen_eastmoney_code('000001.SH')
     1.000001
     """
 
@@ -72,7 +72,7 @@ def gen_eastmoney_code(rawcode: str) -> str:
             return f'1.{rawcode}'
 
 
-def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
+def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
     """ 功能获取k线数据
 
     Parameters
@@ -131,7 +131,7 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
     fields = list(EastmoneyKlines.keys())
     columns = list(EastmoneyKlines.values())
     fields2 = ",".join(fields)
-    secid = gen_eastmoney_code(code)
+    secid = _gen_eastmoney_code(code)
     params = (
         ('fields1', 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13'),
         ('fields2', fields2),
@@ -165,32 +165,8 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
     return df
 
 
-def stock_daily(symbols, start, end):
-    """ 获取股票日线数据
-    Parameters
-    ----------
-    symbols : list
-        股票代码列表
-    start : str
-        开始日期
-    end : str
-        结束日期
-    Returns
-    -------
-    DataFrame
-        包含股票日线数据
-    """
-    data = []
-    for symbol in symbols:
-        code = symbol.split('.')[0]
-        df = get_k_history(code, start, end, klt=101)
-        df['symbol'] = symbol
-        data.append(df)
-    return pd.concat(data)
-
-
-def stock_mins(symbols, start, end, freq='1min'):
-    """ 获取股票分钟线数据
+def stock_bars(symbols, start, end, freq='1min'):
+    """ 获取股票K线数据,包括月、周、日以及分钟K线
     Parameters
     ----------
     symbols : list
@@ -200,11 +176,11 @@ def stock_mins(symbols, start, end, freq='1min'):
     end : str
         结束日期
     freq : str, optional, default '1min'
-        频率，支持'1min', '5min', '15min', '30min', '60min'
+        频率，支持'1min', '5min', '15min', '30min', '60min', 'h'
     Returns
     -------
     DataFrame
-        包含股票1分钟线数据
+        包含股票分钟级K线数据
     """
     data = []
     freq_map = {
@@ -213,16 +189,20 @@ def stock_mins(symbols, start, end, freq='1min'):
         '15min': 15,
         '30min': 30,
         '60min': 60,
+        'h': 60,
+        'd': 101,
+        'w': 102,
+        'm': 103,
     }
     for symbol in symbols:
-        code = symbol.split('.')[0]
-        df = get_k_history(code, start, end, klt=1)
+        code = _gen_eastmoney_code(symbol)
+        df = _get_k_history(code, start, end, klt=freq_map.get(freq, 1))
         df['symbol'] = symbol
         data.append(df)
     return pd.concat(data)
 
 
-def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, timezone='local'):
+def real_time_klines(symbols, freq='D', verbose=False, parallel=True, timezone='local'):
     """ 获取股票当前最新日线数据，数据实时更新
     Parameters
     ----------
@@ -266,7 +246,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
     if parallel:
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {
-                executor.submit(get_k_history, code=symbol, beg=today, klt=klt, verbose=verbose): symbol
+                executor.submit(_get_k_history, code=symbol, beg=today, klt=klt, verbose=verbose): symbol
                 for symbol
                 in symbols
             }
@@ -285,7 +265,7 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
                     data.append(df.iloc[-1:, :])
     else:  # parallel == False, 不使用多进程
         for symbol in symbols:
-            df = get_k_history(symbol, beg=today, klt=klt, verbose=verbose)
+            df = _get_k_history(symbol, beg=today, klt=klt, verbose=verbose)
             if df.empty:
                 continue
             df['symbol'] = symbol
@@ -304,3 +284,9 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
         )
     data.set_index('trade_time', inplace=True)
     return data
+
+
+def real_time_quote(symbols, verbose=False, parallel=True, timezone='local') -> pd.DataFrame:
+    """ 获取股票实时盘口交易详情，包括日期时间、现价、竞买竞卖价格、成交价格、成交量、以及委买委卖1～5档数据
+    """
+

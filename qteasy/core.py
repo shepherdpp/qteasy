@@ -1750,8 +1750,8 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
 
         # 如果没有给出live_prices，则使用eastmoney的stock_live_kline_price获取当前周期的最新数据
         if live_prices is None:
-            from qteasy.emfuncs import stock_live_kline_price
-            live_kline_prices = stock_live_kline_price(
+            from qteasy.emfuncs import real_time_klines
+            live_kline_prices = real_time_klines(
                     symbols=hist_op.shares,
                     freq=operator.op_data_freq,
             )

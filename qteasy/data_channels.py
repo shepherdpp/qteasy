@@ -927,7 +927,7 @@ def get_dependent_table(table: str, channel: str) -> str:
 #         for symbol in symbols:
 #             code = symbol.split('.')[0]
 #             dnld_data = acquire_data_from_em(
-#                     api_name='get_k_history',
+#                     api_name='_get_k_history',
 #                     code=code,
 #                     beg=begin_time,
 #                     klt=table_freq_map[table_freq],
@@ -1369,8 +1369,10 @@ TUSHARE_API_MAP = {
 }
 
 TUSHARE_REALTIME_API_MAP = {
-    'real_time':  # 实时行情数据
-        ['get_realtime_quotes', 'symbols', 'list', 'none', '', 'N', '', ''],
+    'realtime_bars':  # 实时行情数据
+        ['realtime_min', 'symbols', 'list', 'none', '', 'N', '', ''],
+    'realtime_quotes':
+        ['realtime_quote', 'symbols', 'list', 'none', '', 'N', '', '']
 }
 
 """
@@ -1397,8 +1399,11 @@ AKSHARE_API_MAP = {
 }
 
 AKSHARE_REALTIME_API_MAP = {
-    'real_time':  # 实时行情数据
-        ['get_realtime_quotes', 'symbols', 'list', 'none', '', 'N', '', ''],
+    'realtime_bars':  # 实时行情数据
+        ['not_realized', 'symbols', 'list', 'none', '', 'N', '', ''],
+
+    'realtime_quoets':
+        ['not_realized', 'symbols', 'list', 'none', '', 'N', '', '']
 }
 
 EASTMONEY_API_MAP_COLUMNS = [
@@ -1410,10 +1415,21 @@ EASTMONEY_API_MAP_COLUMNS = [
 ]
 
 EASTMONEY_API_MAP = {
+    'stock_daily':
+        ['stock_bars', 'symbol', 'list', 'none'],
+
+    'stock_1min':
+        ['stock_bars', 'symbol', 'list', 'none'],
+
+    'index_daily':
+        ['stock_bars', 'symbol', 'list', 'none'],
 
 }
 
 EASTMONEY_REALTIME_API_MAP = {
-    'realtime_min':  # 实时行情数据
-        ['get_k_history', 'code', 'list', 'none', '', 'N', '', ''],
+    'realtime_bars':  # 实时行情数据
+        ['real_time_klines', 'symbols', 'list', 'none', '', 'N', '', ''],
+
+    'realtime_quoets':
+        ['real_time_quote', 'symbols', 'list', 'none', '', 'N', '', '']
 }

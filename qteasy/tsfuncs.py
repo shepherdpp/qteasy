@@ -859,7 +859,7 @@ def index_dailybasic(ts_code: object = None,
 
 
 def realtime_min(ts_code, freq):
-    """ 获取实时分钟行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
+    """ 获取实时分钟K线行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
 
     Parameters
     ----------
@@ -882,6 +882,12 @@ def realtime_min(ts_code, freq):
     res = pro.rt_min(ts_code=ts_code, freq=freq)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stk_mins with ts_code={ts_code}, freq={freq}')
+    return res
+
+
+def realtime_quote(ts_code, src):
+    """ 获取实施交易盘口行情数据，包括日期时间、现价、竞买竞卖价格、成交价格、成交量、以及委买委卖1～5档数据"""
+    res = ts.realtime_quote(ts_code=ts_code, src=src)
     return res
 
 
