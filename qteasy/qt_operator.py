@@ -1878,7 +1878,6 @@ class Operator:
         # 确保输入的history_data有足够的htypes
         hist_data_types = hist_data.htypes
         if any(htyp not in hist_data_types for htyp in self.op_data_types):
-            import pdb; pdb.set_trace()
             missing_htypes = [htyp for htyp in self.op_data_types if htyp not in hist_data_types]
             message = (f'Some historical data types are missing ({missing_htypes}) from the history '
                        f'data ({hist_data_types}). \nThis may indicate that one of the strategies are '

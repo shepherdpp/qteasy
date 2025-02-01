@@ -340,6 +340,10 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         from .datatables import TABLE_MASTERS
         freq = TABLE_MASTERS[table][4]
         arg_values = _parse_trade_date_args(arg_range, start_date, end_date, freq, 'SSE', reversed_par_seq)
+    elif arg_type == 'hk_trade_date':
+        raise NotImplementedError('hk_trade_date is not implemented')
+    elif arg_type == 'us_trade_date':
+        raise NotImplementedError('us_trade_date is not implemented')
     elif arg_type == 'quarter':
         arg_values = _parse_quarter_args(arg_range, start_date, end_date, reversed_par_seq)
     elif arg_type == 'month':

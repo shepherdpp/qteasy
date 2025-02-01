@@ -12,6 +12,7 @@
 
 import unittest
 import time
+import warnings
 
 import pandas as pd
 
@@ -94,6 +95,12 @@ class TestChannels(unittest.TestCase):
                     arg_value = '20210226'
                 elif arg_type == 'trade_date':
                     arg_value = '20210226'  # 这个交易日是特意选择的，因为它既是一个交易日，也同时是一周/一月内的最后一个交易日
+                elif arg_type == 'us_trade_date':
+                    warnings.warn('US trade date is not yet implemented, will implement later')
+                    continue
+                elif arg_type == 'hk_trade_date':
+                    warnings.warn('HK trade date is not yet implemented, will implement later')
+                    continue
                 elif arg_type == 'quarter':
                     arg_value = '2020Q4'
                 elif arg_type == 'month':

@@ -18,7 +18,6 @@ from functools import lru_cache
 
 from .utilfuncs import (
     str_to_list,
-    pandas_freq_alias_version_conversion,
 )
 
 
@@ -161,10 +160,10 @@ TABLE_MASTERS = {
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', '', '', ''],
 
     'hk_stock_basic':
-        ['hk_stock_basic', '港股基本信息', 'basics', 'HK', 'none', '', '', ''],
+        ['hk_stock_basic', '港股基本信息', 'not_implemented', 'HK', 'none', '', '', ''],
 
     'us_stock_basic':
-        ['us_stock_basic', '美股基本信息', 'basics', 'US', 'none', '', '', ''],
+        ['us_stock_basic', '美股基本信息', 'not_implemented', 'US', 'none', '', '', ''],
 
     'stock_names':  # Complete, 股票名称变更
         ['name_changes', '股票名称变更', 'events', 'E', 'none', '', '', ''],
@@ -239,10 +238,10 @@ TABLE_MASTERS = {
         ['bars', '股票月线行情', 'data', 'E', 'm', '', '', ''],
 
     'hk_stock_daily':
-        ['hk_daily', '港股日线行情', 'date', 'HK', 'd', '', '', ''],
+        ['hk_daily', '港股日线行情', 'not_implemented', 'HK', 'd', '', '', ''],
 
     'us_stock_daily':
-        ['us_daily', '美股日线行情', 'date', 'US', 'd', '', '', ''],
+        ['us_daily', '美股日线行情', 'not_implemented', 'US', 'd', '', '', ''],
 
     'index_1min':
         ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', '', 'ts_code', '30'],  # 30
@@ -368,10 +367,10 @@ TABLE_MASTERS = {
         ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', '', '', ''],
 
     'hk_stock_indicator':
-        ['hk_us_indicators', '港股技术指标', 'data', 'HK', 'd', '', '', ''],
+        ['hk_us_indicators', '港股技术指标', 'not_implemented', 'HK', 'd', '', '', ''],
 
     'us_stock_indicator':
-        ['hk_us_indicators', '美股技术指标', 'data', 'US', 'd', '', '', ''],
+        ['hk_us_indicators', '美股技术指标', 'not_implemented', 'US', 'd', '', '', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', '', '', ''],
@@ -761,7 +760,7 @@ TABLE_SCHEMA = {
                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
          'remarks':    ['股票代码', '交易日期', '收盘价', '开盘价', '最高价', '最低价', '昨收价', '涨跌额',
                         '涨跌幅', '成交量', '成交额', '平均价', '换手率', '总市值', 'PE-市盈率', 'PB-市净率'],
-         'prime_key':  [0, 1]
+         'prime_keys': [0, 1]
          },
 
     'hk_us_indicators':
