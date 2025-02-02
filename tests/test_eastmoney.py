@@ -65,7 +65,7 @@ class TestEastmoney(unittest.TestCase):
             self.assertTrue(res.empty)
 
         code = ['000016.SZ', '000025.SZ', '000333.SZ']
-        res = acquire_data('real_time_klines', symbols=code, freq='D', verbose=True)
+        res = acquire_data('real_time_klines', symbols=code, freq='D')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
 
@@ -85,7 +85,7 @@ class TestEastmoney(unittest.TestCase):
                 '603215.SH', '603219.SH', '603303.SH', '603311.SH', '603355.SH', '603366.SH', '603377.SH', '603486.SH',
                 '603515.SH', '603519.SH', '603579.SH', '603657.SH', '603677.SH', '603726.SH', '603868.SH', '605108.SH',
                 '605336.SH', '605365.SH', '605555.SH', '688169.SH', '688609.SH', '688696.SH', '688793.SH']
-        res = acquire_data('real_time_klines', symbols=code, freq='M')
+        res = acquire_data('real_time_klines', symbols=code, freq='5min')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
         if is_market_trade_day('today'):

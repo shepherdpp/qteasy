@@ -16,6 +16,8 @@
 import pandas as pd
 import time
 
+import qteasy.datatables
+
 from functools import lru_cache
 
 from concurrent.futures import (
@@ -23,11 +25,11 @@ from concurrent.futures import (
     as_completed,
 )
 
-import qteasy.datatables
 from .utilfuncs import (
     str_to_list,
     list_truncate,
 )
+
 
 """
 这个模块提供一个统一数据下载api：
@@ -59,6 +61,9 @@ data_channels.download_data(
 """
 
 
+# =====================
+# data_channel模块主要API的解析函数，根据channel解析正确的API以执行
+# =====================
 def _fetch_table_data_from_tushare(table, **kwargs):
     """使用kwargs参数，从tushare获取一次金融数据
 
@@ -131,29 +136,34 @@ def _fetch_table_data_from_eastmoney(table, **kwargs):
     return dnld_data
 
 
-def cleaning_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
-    """ 清洗数据，确保数据data的字段和数据类型符合数据表table的定义
+def _fetch_realtime_kline_from_tushare(qt_code, date, freq):
+    """ 从tushare获取实时K线数据"""
+    from .tsfuncs import acquire_data
+    api_name = TUSHARE_REALTIME_API_MAP['realtime_bars'][TUSHARE_API_MAP_COLUMNS.index('api')]
 
-    Parameters
-    ----------
-    data: pd.DataFrame,
-        下载的数据
-    table: str,
-        数据表名，必须是API_MAP中定义的数据表
+    dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
 
-    Returns
-    -------
-    pd.DataFrame:
-        清洗后的数据
-    """
-    # TODO: this function is now not utilized; Cleaning data is actually done
-    #  now in function update_table_data() in database.py, consider moving
-    #  that function here in next upgrades
-    data.drop_duplicates(inplace=True)
+    return dnld_data
 
-    table_schema = qteasy.database.get_built_in_table_schema()
 
-    return data
+def _fetch_realtime_kline_from_akshare(qt_code, date, freq):
+    """ 从akshare获取实时K线数据"""
+    from .tsfuncs import acquire_data
+    api_name = AKSHARE_REALTIME_API_MAP['realtime_bars'][AKSHARE_API_MAP_COLUMNS.index('api')]
+
+    dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
+
+    return dnld_data
+
+
+def _fetch_realtime_kline_from_eastmoney(qt_code, date, freq):
+    """ 从eastmoney获取实时K线数据"""
+    from .tsfuncs import acquire_data
+    api_name = EASTMONEY_REALTIME_API_MAP['realtime_bars'][EASTMONEY_API_MAP_COLUMNS.index('api')]
+
+    dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
+
+    return dnld_data
 
 
 def _get_fetch_table_func(channel: str):
@@ -176,8 +186,20 @@ def _get_fetch_table_func(channel: str):
         return _fetch_table_data_from_tushare
     elif channel == 'akshare':
         return _fetch_table_data_from_akshare
-    elif channel == 'emoney':
+    elif channel in ['emoney', 'eastmoney']:
         return _fetch_table_data_from_eastmoney
+    else:
+        raise NotImplementedError(f'channel {channel} is not supported')
+
+
+def _get_realtime_kline_func(channel: str):
+    """ 获取实时K线下载函数"""
+    if channel == 'tushare':
+        return _fetch_realtime_kline_from_tushare
+    elif channel == 'akshare':
+        return _fetch_realtime_kline_from_akshare
+    elif channel in ['emoney', 'eastmoney']:
+        return _fetch_realtime_kline_from_eastmoney
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
@@ -185,120 +207,6 @@ def _get_fetch_table_func(channel: str):
 # =====================
 # data_channel模块的主要API，分别用于从不同的渠道获取数据表数据以及实时价格数据（实时数据仅包含实时价格数据，且格式统一）
 # =====================
-def fetch_batched_table_data(
-        *,
-        table: str,
-        channel: str,
-        arg_list: any,
-        parallel: bool = True,
-        process_count: int = None,
-        logger: any = None,
-        download_batch_size: int = 0,
-        download_batch_interval: int = 0.,
-) -> pd.DataFrame:
-    """ 一个Generator，顺序循环批量获取同一张数据表的数据，支持并行下载并逐个返回数据
-
-    Parameters
-    ----------
-    table: str,
-        数据表名，必须是database中定义的数据表
-    channel: str,
-        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
-        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
-        - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
-    arg_list: iterable
-        用于下载数据的函数参数
-    parallel: bool, default True
-        是否并行下载数据
-    process_count: int, default None
-        并行下载数据时，使用的进程数, 默认为None，表示使用cpu_count()个进程
-    logger: logger
-        用于记录下载数据的日志
-    download_batch_size: int
-        为降低网络请求的频率，在暂停之前连续网络请求的次数，单位为次，如果设置为0，则不暂停
-    download_batch_interval: float
-        为降低网络请求的频率，连续网络请求一定次数后，暂停的时间，单位为秒
-
-    Yields
-    -------
-    dict: {'kwargs': kwargs, 'data': pd.DataFrame}
-        下载的数据，包含参数和数据
-    """
-
-    fetch_table_data = _get_fetch_table_func(channel)
-
-    # 如果当总下载量小于batch_size时，就不用暂停了(为了实现truncate，必须把arg_list转化为list)
-    if not isinstance(arg_list, list):
-        arg_list = list(arg_list)
-    if len(arg_list) < download_batch_size:
-        download_batch_interval = 0
-
-    completed = 0
-    if not parallel:
-        for kwargs in arg_list:
-            completed += 1
-            df = fetch_table_data(table, **kwargs)
-            if (download_batch_interval != 0) and (completed % download_batch_size == 0):
-                time.sleep(download_batch_interval)
-            # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
-            yield {'kwargs': kwargs, 'data': df}
-
-    else:  # parallel
-        # 使用ThreadPoolExecutor循环下载数据
-        with ThreadPoolExecutor(max_workers=process_count) as worker:
-            # 在parallel模式下，下载线程的提交和返回是分开进行的，但这样会有一个问题，数据部分提交后，等待期间
-            # 无法返回结果，因此，需要将arg_list分段，提交完一个batch之后，返回结果，再暂停，暂停后再继续提交
-            futures = {}
-            submitted = 0
-            # 将arg_list分段，每次下载batch_size个数据
-            if download_batch_size == 0:
-                arg_list_chunks = [arg_list]
-            else:
-                arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
-
-            for arg_sub_list in arg_list_chunks:
-                for kw in arg_sub_list:
-                    futures.update({worker.submit(fetch_table_data, table, **kw): kw})
-                    submitted += 1
-                for f in as_completed(futures):
-                    kwargs = futures[f]
-                    completed += 1
-                    # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
-                    yield {'kwargs': kwargs, 'data': f.result()}
-
-                if download_batch_interval != 0:
-                    # print(f'waiting for {sec_to_duration(download_batch_interval)}')
-                    time.sleep(download_batch_interval)
-
-
-def fetch_real_time_price_data(
-        *,
-        channel,
-        shares,
-        freq,
-) -> pd.DataFrame:
-    """ 从channels
-
-    Parameters
-    ----------
-    channel: str,
-        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
-        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
-        - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
-    shares: str or [str],
-        股票代码
-    freq: str,
-        数据频率
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    raise NotImplementedError
-
-
 def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_arg_filter, reversed_par_seq) -> dict:
     """ 解析数据获取API的参数，生成下载数据的参数序列
 
@@ -409,8 +317,267 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
     return kwargs
 
 
+def fetch_batched_table_data(
+        *,
+        table: str,
+        channel: str,
+        arg_list: any,
+        parallel: bool = True,
+        process_count: int = None,
+        logger: any = None,
+        download_batch_size: int = 0,
+        download_batch_interval: int = 0.,
+) -> pd.DataFrame:
+    """ 一个Generator，顺序循环批量获取同一张数据表的数据，支持并行下载并逐个返回数据
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是database中定义的数据表
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    arg_list: iterable
+        用于下载数据的函数参数
+    parallel: bool, default True
+        是否并行下载数据
+    process_count: int, default None
+        并行下载数据时，使用的进程数, 默认为None，表示使用cpu_count()个进程
+    logger: logger
+        用于记录下载数据的日志
+    download_batch_size: int
+        为降低网络请求的频率，在暂停之前连续网络请求的次数，单位为次，如果设置为0，则不暂停
+    download_batch_interval: float
+        为降低网络请求的频率，连续网络请求一定次数后，暂停的时间，单位为秒
+
+    Yields
+    -------
+    dict: {'kwargs': kwargs, 'data': pd.DataFrame}
+        下载的数据，包含参数和数据
+    """
+
+    fetch_table_data = _get_fetch_table_func(channel)
+
+    # 如果当总下载量小于batch_size时，就不用暂停了(为了实现truncate，必须把arg_list转化为list)
+    if not isinstance(arg_list, list):
+        arg_list = list(arg_list)
+    if len(arg_list) < download_batch_size:
+        download_batch_interval = 0
+
+    completed = 0
+    if not parallel:
+        for kwargs in arg_list:
+            completed += 1
+            df = fetch_table_data(table, **kwargs)
+            if (download_batch_interval != 0) and (completed % download_batch_size == 0):
+                time.sleep(download_batch_interval)
+            # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
+            yield {'kwargs': kwargs, 'data': df}
+
+    else:  # parallel
+        # 使用ThreadPoolExecutor循环下载数据
+        with ThreadPoolExecutor(max_workers=process_count) as worker:
+            # 在parallel模式下，下载线程的提交和返回是分开进行的，但这样会有一个问题，数据部分提交后，等待期间
+            # 无法返回结果，因此，需要将arg_list分段，提交完一个batch之后，返回结果，再暂停，暂停后再继续提交
+            futures = {}
+            submitted = 0
+            # 将arg_list分段，每次下载batch_size个数据
+            if download_batch_size == 0:
+                arg_list_chunks = [arg_list]
+            else:
+                arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
+
+            for arg_sub_list in arg_list_chunks:
+                for kw in arg_sub_list:
+                    futures.update({worker.submit(fetch_table_data, table, **kw): kw})
+                    submitted += 1
+                for f in as_completed(futures):
+                    kwargs = futures[f]
+                    completed += 1
+                    # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
+                    yield {'kwargs': kwargs, 'data': f.result()}
+
+                if download_batch_interval != 0:
+                    # print(f'waiting for {sec_to_duration(download_batch_interval)}')
+                    time.sleep(download_batch_interval)
+
+
+def fetch_real_time_klines(
+        *,
+        channel: str,
+        qt_codes: str or [str],
+        freq: str = 'd',
+        parallel: bool = True,
+        time_zone: str = 'local',
+        verbose: bool = True,
+        logger: any = None,
+) -> pd.DataFrame:
+    """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
+    获取的数据仅包括当天的数据，如果当天不是交易日，返回空数据框。
+
+    Parameters
+    ----------
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    qt_codes: str or [str],
+        股票代码
+    freq: str,
+        数据频率，支持以下频率：
+        - 'd': 如果
+        - 'h':
+        - '30min':
+        - '15min':
+        - '5min':
+        - '1min':
+    parallel: bool, optional, default True
+        是否并行获取数据，默认True
+    time_zone: str, optional
+        时区，默认local即系统当地时区，可以指定特定的时区以获取不同时区市场的实时价格
+    verbose: bool, optional, default False
+        如果为True，给出更多的数据，否则返回简化的数据：
+        - verbose = True: 'trade_time, symbol, name, pre_close, open, close, high, low, vol, amount'
+        - verbose = False: 'trade_time, symbol, open, close, high, low, vol, amount'
+    logger: logger
+        用于记录下载数据的日志
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+
+    fetch_realtime_kline = _get_realtime_kline_func(channel)
+
+    data = []
+    if isinstance(qt_codes, str):
+        qt_codes = str_to_list(qt_codes)
+
+    if time_zone == 'local':
+        today = pd.Timestamp.today().strftime('%Y%m%d')
+    else:
+        today = pd.Timestamp.today(tz=time_zone).strftime('%Y%m%d')
+
+    # 使用ProcessPoolExecutor, as_completed加速数据获取，当parallel=False时，不使用多进程
+    if parallel:
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {
+                executor.submit(fetch_realtime_kline, qt_code=symbol, date=today, freq=freq): symbol
+                for symbol
+                in qt_codes
+            }
+            for future in as_completed(futures):
+                try:
+                    df = future.result(timeout=2)
+                    symbol = futures[future]
+                except TimeoutError:
+                    continue
+                except Exception as exc:
+                    print(f'Encountered an exception: {exc}')
+                else:
+                    if df.empty:
+                        continue
+                    df['symbol'] = symbol
+                    data.append(df.iloc[-1:, :])
+    else:  # parallel == False, 不使用多进程
+        for symbol in qt_codes:
+            df = fetch_realtime_kline(qt_code=symbol, date=today, freq=freq)
+            if df.empty:
+                continue
+            df['symbol'] = symbol
+            data.append(df.iloc[-1:, :])
+    try:
+        data = pd.concat(data)
+    except:
+        return pd.DataFrame()  # 返回空DataFrame
+
+    data = scrub_realtime_klines(data, verbose=verbose)
+
+    return data
+
+
+def fetch_real_time_qutoes(
+        *,
+        channel: str,
+        shares: str or [str],
+        parallel: bool = True,
+        logger: any = None,
+) -> pd.DataFrame:
+    """ 从 channels 调用实时盘口API获取实时盘口数据，包括实时价格、成交数据、五档委买委卖数据等。
+
+    Parameters
+    ----------
+    channel: str,
+        数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    shares: str or [str],
+        股票代码
+    parallel: bool, optional, default True
+        是否并行获取数据，默认True
+    logger: logger
+        用于记录下载数据的日志
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    raise NotImplementedError
+
+
+def scrub_table_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
+    """ 清洗数据，确保数据data的字段和数据类型符合数据表table的定义
+
+    Parameters
+    ----------
+    data: pd.DataFrame,
+        下载的数据
+    table: str,
+        数据表名，必须是API_MAP中定义的数据表
+
+    Returns
+    -------
+    pd.DataFrame:
+        清洗后的数据
+    """
+    # TODO: this function is now not utilized; Cleaning data is actually done
+    #  now in function update_table_data() in database.py, consider moving
+    #  that function here in next upgrades
+    data.drop_duplicates(inplace=True)
+
+    table_schema = qteasy.database.get_built_in_table_schema()
+
+    return data
+
+
+def scrub_realtime_quote_data(raw_data, verbose) -> pd.DataFrame:
+    """ 清洗数据，去除不一致及错误数据，并使数据符合realtime_quote的数据格式"""
+    raise NotImplementedError
+
+
+def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
+    """ 清洗数据，去除不一致及错误的数据，并使数据符合实时K线图的数据格式"""
+
+    if verbose:
+        data = raw_data.reindex(
+                columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
+        )
+    else:
+        data = raw_data.reindex(
+                columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
+        )
+
+    data.set_index('trade_time', inplace=True)
+
+    return data
+
+
 # ======================================
-# 下面是一系列函数，针对不同的API主参数类型，生成下载数据的参数序列
+# 一系列函数数据获取原子函数，针对不同的API主参数类型，生成下载数据的参数序列
 # ======================================
 def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = None, reversed_par_seq: bool = False):
     """ 解析list类型的参数，生成下载数据的参数序列
@@ -846,103 +1013,6 @@ def get_dependent_table(table: str, channel: str) -> str:
         return 'trade_calendar'
     elif fill_type == 'table_index':
         return cur_table.arg_rng
-
-
-# def fetch_realtime_price_data(channel, qt_code, **kwargs):
-#     """ 从网络数据提供商获取实时股票价格数据
-#
-#     如果一个Channel提供了相应的实时数据获取API，这些API会被记录在MAP表中
-#     以'real_time'为key的数据列中，这些API会被调用以获取实时数据
-#
-#     Parameters
-#     ----------
-#     channel: str,
-#         数据获取渠道，金融数据API，支持以下选项:
-#         - 'eastmoney': 通过东方财富网的API获取数据
-#         - 'tushare':   从Tushare API获取金融数据，请自行申请相应权限和积分
-#         - 'other':     NotImplemented 其他金融数据API，尚未开发
-#     qt_code: str or list of str
-#         用于下载金融数据的函数参数，需要输入完整的ts_code，表示股票代码
-#
-#     Returns
-#     -------
-#     pd.DataFrame:
-#         下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
-#         columns: qt_code, trade_time, open, high, low, close, vol, amount
-#     """
-#
-#     # TODO: 将该函数移动到别的文件中如datachannels.py
-#     #  这个函数的功能与DataSource的定义不符。
-#     #  在DataSource中应该有一个API专司数据的清洗，以便任何形式的数据都
-#     #  可以在清洗后被写入特定的数据表，而数据的获取则不应该放在DataSource中
-#     #  DataSource应该被设计为专精与数据的存储接口，而不是数据获取接口
-#     #  同样的道理适用于refill_local_source()函数
-#
-#     table_freq_map = {
-#         '1min':  '1MIN',
-#         '5min':  '5MIN',
-#         '15min': '15MIN',
-#         '30min': '30MIN',
-#         'h':     '60MIN',
-#     }
-#
-#     table_freq = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('freq')]
-#     realtime_data_freq = table_freq_map[table_freq]
-#     # 从指定的channel获取数据
-#     if channel == 'tushare':
-#         # tushare 要求symbols以逗号分隔字符串形式给出
-#         if isinstance(symbols, list):
-#             symbols = ','.join(symbols)
-#         from .tsfuncs import acquire_data as acquire_data_from_ts
-#         # 通过tushare的API下载数据
-#         api_name = 'realtime_min'
-#         if symbols is None:
-#             err = ValueError(f'ts_code must be given while channel == "tushare"')
-#             raise err
-#         try:
-#             dnld_data = acquire_data_from_ts(api_name, ts_code=symbols, freq=realtime_data_freq)
-#         except Exception as e:
-#             raise Exception(f'data {table} can not be acquired from tushare\n{e}')
-#
-#         # 从下载的数据中提取出需要的列
-#         dnld_data = dnld_data[['code', 'time', 'open', 'high', 'low', 'close', 'volume', 'amount']]
-#         dnld_data = dnld_data.rename(columns={'code':   'ts_code', 'time':   'trade_time', 'volume': 'vol',
-#         })
-#
-#         return dnld_data
-#     # 通过东方财富网的API下载数据
-#     elif channel == 'eastmoney':
-#         from .emfuncs import acquire_data as acquire_data_from_em
-#         if isinstance(symbols, str):
-#             # 此时symbols应该以字符串列表的形式给出
-#             symbols = str_to_list(symbols)
-#         result_data = pd.DataFrame(
-#                 columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
-#         )
-#         table_freq_map = { '1min':  1, '5min':  5, '15min': 15, '30min': 30, 'h':     60,
-#         }
-#         current_time = pd.to_datetime('today')
-#         # begin time is freq minutes before current time
-#         begin_time = current_time.strftime('%Y%m%d')
-#         for symbol in symbols:
-#             code = symbol.split('.')[0]
-#             dnld_data = acquire_data_from_em(
-#                     api_name='_get_k_history',
-#                     code=code,
-#                     beg=begin_time,
-#                     klt=table_freq_map[table_freq],
-#                     fqt=0,  # 获取不复权数据
-#             )
-#             # 仅保留dnld_data的最后一行，并添加ts_code列，值为symbol
-#             dnld_data = dnld_data.iloc[-1:, :]
-#             dnld_data['ts_code'] = symbol
-#             # 将dnld_data合并到result_data的最后一行 # TODO: 检查是否需要ignore_index参数？此时index信息会丢失
-#
-#             result_data = pd.concat([result_data, dnld_data], axis=0, ignore_index=True)
-#
-#         return result_data
-#     else:
-#         raise NotImplementedError
 
 
 @lru_cache(maxsize=4)
@@ -1414,15 +1484,54 @@ EASTMONEY_API_MAP_COLUMNS = [
     'arg_allowed_code_suffix',  # 5, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
 ]
 
-EASTMONEY_API_MAP = {
+EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给出qt_code即可，因此index和stock共用API
     'stock_daily':
-        ['stock_bars', 'symbol', 'list', 'none'],
+        ['stock_daily', 'qt_code', 'list', 'none'],
 
     'stock_1min':
-        ['stock_bars', 'symbol', 'list', 'none'],
+        ['stock_1min', 'qt_code', 'list', 'none'],
+
+    'stock_5min':
+        ['stock_5min', 'qt_code', 'list', 'none'],
+
+    'stock_15min':
+        ['stock_15min', 'qt_code', 'list', 'none'],
+
+    'stock_30min':
+        ['stock_30min', 'qt_code', 'list', 'none'],
+
+    'stock_hourly':
+        ['stock_hourly', 'qt_code', 'list', 'none'],
+
+    'stock_weekly':
+        ['stock_weekly', 'qt_code', 'list', 'none'],
+
+    'stock_monthly':
+        ['stock_monthly', 'qt_code', 'list', 'none'],
 
     'index_daily':
-        ['stock_bars', 'symbol', 'list', 'none'],
+        ['stock_daily', 'qt_code', 'list', 'none'],
+
+    'index_1min':
+        ['stock_1min', 'qt_code', 'list', 'none'],
+
+    'index_5min':
+        ['stock_5min', 'qt_code', 'list', 'none'],
+
+    'index_15min':
+        ['stock_15min', 'qt_code', 'list', 'none'],
+
+    'index_30min':
+        ['stock_30min', 'qt_code', 'list', 'none'],
+
+    'index_hourly':
+        ['stock_hourly', 'qt_code', 'list', 'none'],
+
+    'index_weekly':
+        ['stock_weekly', 'qt_code', 'list', 'none'],
+
+    'index_monthly':
+        ['stock_monthly', 'qt_code', 'list', 'none'],
 
 }
 

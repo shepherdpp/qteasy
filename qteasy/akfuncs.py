@@ -8,14 +8,10 @@
 #   Interfaces to akshare data api.
 # ======================================
 
-import pandas as pd
-import tushare as ts
 
 from qteasy.__init__ import logger_core, QT_CONFIG
 
 from qteasy.utilfuncs import (
-    regulate_date_format,
-    list_to_str_format,
     retry,
 )
 

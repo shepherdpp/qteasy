@@ -19,6 +19,17 @@ from concurrent.futures import as_completed, ThreadPoolExecutor
 
 from qteasy.utilfuncs import str_to_list
 
+east_money_freq_map = {
+    '1min':  1,
+    '5min':  5,
+    '15min': 15,
+    '30min': 30,
+    '60min': 60,
+    'h':     60,
+    'd':     101,
+    'w':     102,
+    'm':     103,
+}
 
 # eastmoney interface function, call this function to extract data
 def acquire_data(api_name, **kwargs):
@@ -72,7 +83,8 @@ def _gen_eastmoney_code(rawcode: str) -> str:
             return f'1.{rawcode}'
 
 
-def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
+def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
+                   klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
     """ 功能获取k线数据
 
     Parameters
@@ -165,57 +177,90 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt:
     return df
 
 
-def stock_bars(symbols, start, end, freq='1min'):
-    """ 获取股票K线数据,包括月、周、日以及分钟K线
+def _stock_bars(qt_code, start, end, freq) -> pd.DataFrame:
+    """ 获取单支股票的日K线数据
     Parameters
     ----------
-    symbols : list
-        股票代码列表
-    start : str
+    qt_code: str
+        股票代码，可以是qt_code或者纯symbol
+    start: str
         开始日期
-    end : str
+    end: str
         结束日期
-    freq : str, optional, default '1min'
-        频率，支持'1min', '5min', '15min', '30min', '60min', 'h'
+    freq:
+        K线频率，可以是1min～W之间的各个频率, 如果输入不合法，默认’d'
+
     Returns
     -------
     DataFrame
-        包含股票分钟级K线数据
+        包含单支股票的K线数据，频率可选
     """
-    data = []
-    freq_map = {
-        '1min': 1,
-        '5min': 5,
-        '15min': 15,
-        '30min': 30,
-        '60min': 60,
-        'h': 60,
-        'd': 101,
-        'w': 102,
-        'm': 103,
-    }
-    for symbol in symbols:
-        code = _gen_eastmoney_code(symbol)
-        df = _get_k_history(code, start, end, klt=freq_map.get(freq, 1))
-        df['symbol'] = symbol
-        data.append(df)
-    return pd.concat(data)
+    code = _gen_eastmoney_code(qt_code)
+    klt = east_money_freq_map.get(freq, 101)
+    df = _get_k_history(code, start, end, klt=klt)
+    df['symbol'] = qt_code
+
+    return df
 
 
-def real_time_klines(symbols, freq='D', verbose=False, parallel=True, timezone='local'):
+def stock_daily(qt_code, start, end):
+    """ 获取单支股票的日K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='d')
+
+
+def stock_1min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的1分钟K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='1min')
+
+
+def stock_5min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的5分钟K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='5min')
+
+
+def stock_15min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的15分钟K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='15min')
+
+
+def stock_30min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的30分钟K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='30min')
+
+
+def stock_hourly(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的小时K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='h')
+
+
+def stock_weekly(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的周K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='w')
+
+
+def stock_monthly(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的周K线数据
+    """
+    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='m')
+
+
+def real_time_klines(qt_code, date, freq='d'):
     """ 获取股票当前最新日线数据，数据实时更新
     Parameters
     ----------
-    symbols : str or list of str
+    qt_code : str or list of str
         股票代码
+    date: Datetime like
+        需要获取的实时K线的日期，获取当天开盘到收盘/当前时间的所有K线
     freq : str
-        数据更新频率，目前仅支持日线数据
-    verbose : bool, default False
-        是否返回更多信息（名称，昨日收盘价）
-    parallel : bool, default True
-        是否使用多进程加速数据获取
-    timezone : str, default 'local'
-        时区，默认值为'local'，即本地时区, 也可以设置为'Asia/Shanghai'等以强制转换时区
+        数据频率，支持分钟到日频数据，频率最低为日频，周频/月频不支持
 
     Returns
     -------
@@ -223,6 +268,8 @@ def real_time_klines(symbols, freq='D', verbose=False, parallel=True, timezone='
         包含股票日线数据, 包含以下字段
         datetime: str, 日期
         symbol: str, 股票代码
+        name: str, 股票名称
+        pre_close: float, 昨日收盘价
         open: float, 开盘价
         close: float, 收盘价
         high: float, 最高价
@@ -230,59 +277,16 @@ def real_time_klines(symbols, freq='D', verbose=False, parallel=True, timezone='
         vol: float, 成交量
         amount: float, 成交额
     """
-    data = []
-    if isinstance(symbols, str):
-        symbols = str_to_list(symbols)
-    if timezone == 'local':
-        today = pd.Timestamp.today().strftime('%Y%m%d')
-    else:
-        today = pd.Timestamp.today(tz=timezone).strftime('%Y%m%d')
-    klt = 101  # k line type, 101 for daily
-    if freq.upper() == 'W':
-        klt = 102
-    if freq.upper() == 'M':
-        klt = 103
-    # 使用ProcessPoolExecutor, as_completed加速数据获取，当parallel=False时，不使用多进程
-    if parallel:
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {
-                executor.submit(_get_k_history, code=symbol, beg=today, klt=klt, verbose=verbose): symbol
-                for symbol
-                in symbols
-            }
-            for future in as_completed(futures):
-                try:
-                    df = future.result(timeout=2)
-                    symbol = futures[future]
-                except TimeoutError:
-                    continue
-                except Exception as exc:
-                    print(f'Encountered an exception: {exc}')
-                else:
-                    if df.empty:
-                        continue
-                    df['symbol'] = symbol
-                    data.append(df.iloc[-1:, :])
-    else:  # parallel == False, 不使用多进程
-        for symbol in symbols:
-            df = _get_k_history(symbol, beg=today, klt=klt, verbose=verbose)
-            if df.empty:
-                continue
-            df['symbol'] = symbol
-            data.append(df.iloc[-1:, :])
-    try:
-        data = pd.concat(data)
-    except:
-        return pd.DataFrame()  # 返回空DataFrame
-    if verbose:
-        data = data.reindex(
-                columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
-    else:
-        data = data.reindex(
-                columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
-    data.set_index('trade_time', inplace=True)
+    symbol = _gen_eastmoney_code(qt_code)
+
+    klt = east_money_freq_map.get(freq, 101)
+    if klt > 101:
+        raise ValueError(f'Can not get real time K line with freq: {freq}')
+
+    df = _get_k_history(symbol, beg=date, klt=klt, verbose=True)
+    df['symbol'] = symbol
+    data = df.iloc[-1:, :]
+
     return data
 
 
