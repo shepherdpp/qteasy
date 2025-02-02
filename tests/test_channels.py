@@ -19,9 +19,10 @@ import pandas as pd
 from qteasy.database import DataSource
 from qteasy.data_channels import (
     EASTMONEY_API_MAP, TUSHARE_API_MAP, AKSHARE_API_MAP,
-    _fetch_table_data_from_tushare,
+    _get_fetch_table_func,
     fetch_batched_table_data,
     fetch_real_time_klines,
+    fetch_real_time_quotes,
     _parse_list_args,
     _parse_datetime_args,
     _parse_trade_date_args,
@@ -53,6 +54,7 @@ class TestChannels(unittest.TestCase):
         """testing downloading small piece of data from tushare and store them in self.test_ds"""
 
         channels_to_test = ['tushare', 'eastmoney']
+        # channels_to_test = ['eastmoney']
 
         for channel in channels_to_test:
 
@@ -74,8 +76,6 @@ class TestChannels(unittest.TestCase):
             print('dropping tables in the test database...')
             deleted = 0
             for table in all_tables:
-                if table == 'real_time':
-                    continue
                 if self.ds.table_data_exists(table):
                     # these data can be retained for further testing
                     self.ds.drop_table_data(table)
@@ -90,8 +90,6 @@ class TestChannels(unittest.TestCase):
                 arg_name = API_MAP[table][1]
                 arg_type = API_MAP[table][2]
                 arg_range = API_MAP[table][3]
-
-                print(f'downloading data for table: {table} with api: {api_name} and arg: {arg_name}')
 
                 # parse the filling args and pick the first filling arg value from the range
                 if arg_name == 'none':
@@ -137,20 +135,32 @@ class TestChannels(unittest.TestCase):
                 else:
                     kwargs = {}
 
+                if channel == 'eastmoney':
+                    kwargs['start'] = '20241231'
+                    kwargs['end'] = '20250110'
+
+                print(f'downloading data from channel "{channel}" for "{table}" '
+                      f'with api: {api_name} and kwargs: {kwargs}')
+
                 # add retry parameters to shorten test time
                 kwargs['retry_count'] = 1
 
+                fetch_table_data_function = _get_fetch_table_func(channel=channel)
                 try:
-                    dnld_data = _fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
+                    dnld_data = fetch_table_data_function(table, **kwargs)
                     print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
                 except Exception as e:
                     print(f'error downloading data for table {table}: {e}')
-                    continue
+                    if '权限' in str(e):  # except tushare api authorization issues
+                        continue
+                    else:
+                        raise e
 
-                # clean up the data, making it ready to be written to the datasource
-                # from qteasy.database import get_built_in_table_schema, set_primary_key_frame
-                # columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
-                # ready_data = set_primary_key_frame(dnld_data, primary_keys, pk_dtypes)
+                # TODO: clean up the data, making it ready to be written to the datasource
+                #  from qteasy.database import get_built_in_table_schema, set_primary_key_frame
+                #  columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+                #  ready_data = set_primary_key_frame(dnld_data, primary_keys, pk_dtypes)
+                #  These should be done with data_channel.scrub_data() function
                 ready_data = dnld_data
 
                 # write data to datasource
@@ -635,12 +645,14 @@ class TestChannels(unittest.TestCase):
         """testing downloading real-time price data from data-channels"""
 
         # test acquiring real time data
-        channels = ['tushare', 'akshare', 'eastmoney']
+        channels = ['eastmoney', 'tushare', 'akshare',]
         for channel in channels:
             # test a few stocks
+            print(f'Test acquiring 3 stocks from channel {channel}')
             codes = ['000016.SZ', '000025.SZ', '000333.SZ']
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq='D')
-            print(f'data acquied for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
+            freq = 'd' if channel != 'tushare' else '15min'
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq)
+            print(f'data acquired from {channel} for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
             self.assertIsInstance(res, pd.DataFrame)
             from qteasy.utilfuncs import is_market_trade_day
             if is_market_trade_day('today'):
@@ -654,6 +666,7 @@ class TestChannels(unittest.TestCase):
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)
 
+            print(f'Test acquiring many prices from channel {channel}')
             code = ['000016.SZ', '000025.SZ', '000333.SZ', '000404.SZ', '000428.SZ', '000521.SZ', '000541.SZ',
                     '000550.SZ', '000572.SZ', '000625.SZ', '000651.SZ', '000721.SZ', '000753.SZ', '000757.SZ',
                     '000810.SZ', '000868.SZ', '000921.SZ', '000951.SZ', '000957.SZ', '000996.SZ', '001259.SZ',
@@ -686,9 +699,10 @@ class TestChannels(unittest.TestCase):
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)
 
-            print('test acquiring Index prices')
+            print(f'Test acquiring 3 Indexes from channel {channel}')
             codes = ['000001.SH', '000300.SH', '399001.SZ']
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq='D')
+            freq = 'd' if channel != 'tushare' else '30min'
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):
@@ -702,9 +716,10 @@ class TestChannels(unittest.TestCase):
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)
 
-            print('test acquiring ETF price data')
+            print(f'Test acquiring 3 ETF data from channel {channel}')
             codes = ['510050.SH', '510300.SH', '510500.SH', '510880.SH', '510900.SH', '512000.SH', '512010.SH']
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq='D')
+            freq = 'd' if channel != 'tushare' else 'h'
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):
@@ -720,7 +735,25 @@ class TestChannels(unittest.TestCase):
 
     def test_realtime_quotes(self):
         """ testing downloading real-time quote data from data channels"""
-        raise NotImplementedError
+        # test acquiring real time data
+        channels = ['tushare', 'eastmoney']
+        for channel in channels:
+            # test a few stocks
+            codes = ['000016.SZ', '000025.SZ', '000333.SZ']
+            res = fetch_real_time_quotes(channel=channel, shares=codes)
+            print(f'data acquied for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
+            self.assertIsInstance(res, pd.DataFrame)
+            from qteasy.utilfuncs import is_market_trade_day
+            if is_market_trade_day('today'):
+                self.assertFalse(res.empty)
+                self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+                self.assertEqual(res.index.name, 'trade_time')
+                self.assertTrue(all(item in codes for item in res.symbol))
+                # some items may not have real time price at the moment
+                # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+            else:
+                print(f'not a trade day, no real time k-line data acquired!')
+                self.assertTrue(res.empty)
 
 
 if __name__ == '__main__':

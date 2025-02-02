@@ -16,8 +16,6 @@
 import pandas as pd
 import time
 
-import qteasy.datatables
-
 from functools import lru_cache
 
 from concurrent.futures import (
@@ -83,7 +81,7 @@ def _fetch_table_data_from_tushare(table, **kwargs):
     from .tsfuncs import acquire_data
 
     # 通过tushare的API下载数据
-    api_name = TUSHARE_API_MAP[table][TUSHARE_API_MAP_COLUMNS.index('api')]
+    api_name = TUSHARE_API_MAP[table][API_MAP_COLUMNS.index('api')]
 
     dnld_data = acquire_data(api_name, **kwargs)
 
@@ -106,7 +104,7 @@ def _fetch_table_data_from_akshare(table, **kwargs):
         下载后的数据
     """
     from .akfuncs import acquire_data
-    api_name = AKSHARE_API_MAP[table][AKSHARE_API_MAP_COLUMNS.index('api')]
+    api_name = AKSHARE_API_MAP[table][API_MAP_COLUMNS.index('api')]
 
     dnld_data = acquire_data(api_name, **kwargs)
 
@@ -129,7 +127,7 @@ def _fetch_table_data_from_eastmoney(table, **kwargs):
         下载后的数据
     """
     from .emfuncs import acquire_data
-    api_name = EASTMONEY_API_MAP[table][EASTMONEY_API_MAP_COLUMNS.index('api')]
+    api_name = EASTMONEY_API_MAP[table][API_MAP_COLUMNS.index('api')]
 
     dnld_data = acquire_data(api_name, **kwargs)
 
@@ -139,17 +137,17 @@ def _fetch_table_data_from_eastmoney(table, **kwargs):
 def _fetch_realtime_kline_from_tushare(qt_code, date, freq):
     """ 从tushare获取实时K线数据"""
     from .tsfuncs import acquire_data
-    api_name = TUSHARE_REALTIME_API_MAP['realtime_bars'][TUSHARE_API_MAP_COLUMNS.index('api')]
+    api_name = TUSHARE_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
 
-    dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
+    dnld_data = acquire_data(api_name, **{'ts_code': qt_code, 'freq': freq})
 
     return dnld_data
 
 
 def _fetch_realtime_kline_from_akshare(qt_code, date, freq):
     """ 从akshare获取实时K线数据"""
-    from .tsfuncs import acquire_data
-    api_name = AKSHARE_REALTIME_API_MAP['realtime_bars'][AKSHARE_API_MAP_COLUMNS.index('api')]
+    from .akfuncs import acquire_data
+    api_name = AKSHARE_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
 
     dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
 
@@ -158,8 +156,8 @@ def _fetch_realtime_kline_from_akshare(qt_code, date, freq):
 
 def _fetch_realtime_kline_from_eastmoney(qt_code, date, freq):
     """ 从eastmoney获取实时K线数据"""
-    from .tsfuncs import acquire_data
-    api_name = EASTMONEY_REALTIME_API_MAP['realtime_bars'][EASTMONEY_API_MAP_COLUMNS.index('api')]
+    from .emfuncs import acquire_data
+    api_name = EASTMONEY_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
 
     dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
 
@@ -477,6 +475,12 @@ def fetch_real_time_klines(
                     continue
                 except Exception as exc:
                     print(f'Encountered an exception: {exc}')
+                    if '权限' in str(exc):
+                        continue
+                    elif 'not_implemented' in str(exc):
+                        continue
+                    else:
+                        raise exc
                 else:
                     if df.empty:
                         continue
@@ -544,14 +548,16 @@ def scrub_table_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
     pd.DataFrame:
         清洗后的数据
     """
-    # TODO: this function is now not utilized; Cleaning data is actually done
-    #  now in function update_table_data() in database.py, consider moving
-    #  that function here in next upgrades
-    data.drop_duplicates(inplace=True)
-
-    table_schema = qteasy.database.get_built_in_table_schema()
-
-    return data
+    # TODO: this function is now not utilized; data scrubbing is done in datasource
+    #  but later data scrubbing shoule be done here, and datasource only does basic checks
+    #  following works should be done:
+    #  1, make sure data column numbers match table schema
+    #  2, remove all NaN data rows
+    #  3, reindex data column names
+    #  4, make DataFrame index according to table prime keys and remove duplicate indexes
+    #  5, check data types, make sure all data types fit table schema
+    #  6, cut off strings that exceeds varchar limit
+    raise NotImplementedError
 
 
 def scrub_realtime_quote_data(raw_data, verbose) -> pd.DataFrame:
@@ -1035,13 +1041,13 @@ def get_api_map(channel: str) -> pd.DataFrame:
 
     if channel == 'tushare':
         API_MAP = TUSHARE_API_MAP
-        MAP_COLUMNS = TUSHARE_API_MAP_COLUMNS
+        MAP_COLUMNS = API_MAP_COLUMNS
     elif channel == 'akshare':
         API_MAP = AKSHARE_API_MAP
-        MAP_COLUMNS = AKSHARE_API_MAP_COLUMNS
+        MAP_COLUMNS = API_MAP_COLUMNS
     elif channel == 'emoney':
         API_MAP = EASTMONEY_API_MAP
-        MAP_COLUMNS = EASTMONEY_API_MAP_COLUMNS
+        MAP_COLUMNS = API_MAP_COLUMNS
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
@@ -1104,19 +1110,20 @@ TUSHARE API MAP表column的定义：
                             例如，设置该参数为100，则每个分块内的时间跨度不超过100天
 """
 
-TUSHARE_API_MAP_COLUMNS = [
-    'api',  # 1, 从tushare获取数据时使用的api名
-    'fill_arg_name',  # 2, 从tushare获取数据时使用的api参数名
-    'fill_arg_type',  # 3, 从tushare获取数据时使用的api参数类型
-    'arg_rng',  # 4, 从tushare获取数据时使用的api参数取值范围
-    'allowed_code_suffix',  # 5, 从tushare获取数据时使用的api参数允许的股票代码后缀
-    'allow_start_end',  # 6, 从tushare获取数据时使用的api参数是否允许start_date和end_date
+API_MAP_COLUMNS = [
+    'api',  # 1, 从channel获取数据时使用的api名
+    'fill_arg_name',  # 2, 获取数据时使用的api参数名
+    'fill_arg_type',  # 3, 从获取数据时使用的api参数类型
+    'arg_rng',  # 4, 获取数据时使用的api参数取值范围
+    'allowed_code_suffix',  # 5, 获取数据时使用的api参数允许的股票代码后缀
+    'allow_start_end',  # 6, 获取数据时使用的api参数需要的额外参数类型
     'start_end_chunk_size',  # 7, 从tushare获取数据时使用的api参数start_date和end_date时的分段大小
     # TODO: 修改column6/column7 for minor upgrades of version 1.4：
     #  将6改为"table_row_limiter”,含义是限制同时下载的数据行方法，取值包括：
     #  -   '':   没有额外的参数用于限制下载数据的行数
     #  -   'Y':  使用开始结束日期作为参数，限制下载数据的行数
     #  -   'C':  使用limit/offset作为参数，直接限制下载数据的行数
+    #  -   'other':  其他方法，如使用日期作为参数，但不限制下载数据的行数
     #  将7改为“table_row_limiter_args”，含义是限制下载数据行数的参数，取值包括：
     #  -   当table_row_limiter为''时，table_row_limiter_args为''
     #  -   当table_row_limiter为'Y'时，table_row_limiter_args为起止日期之间的天数，如200代表最多下载200天的数据
@@ -1127,20 +1134,20 @@ TUSHARE_API_MAP = {
     'trade_calendar':
         ['trade_cal', 'exchange', 'list', 'SSE, SZSE, CFFEX, SHFE, CZCE, DCE, INE', '', '', ''],
 
-    'hk_trade_calendar':  # tsfuncs
-        ['hk_tradecal', 'none', 'none', 'none', '', 'C', '2000'],
+    # 'hk_trade_calendar':  # tsfuncs
+    #     ['hk_tradecal', 'none', 'none', 'none', '', 'C', '2000'],
 
-    'us_trade_calendar':  # tsfuncs
-        ['us_tradecal', 'none', 'none', 'none', '', 'C', '6000'],
+    # 'us_trade_calendar':  # tsfuncs
+    #     ['us_tradecal', 'none', 'none', 'none', '', 'C', '6000'],
 
     'stock_basic':
         ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '',],
 
-    'hk_stock_basic':  # tsfuncs
-        ['hk_stock_basic', 'none', 'none', 'none', '', '', ''],
-
-    'us_stock_basic':  # tsfuncs
-        ['us_stock_basic', 'none', 'none', 'none', '', 'C', '6000'],
+    # 'hk_stock_basic':  # tsfuncs
+    #     ['hk_stock_basic', 'none', 'none', 'none', '', '', ''],
+    #
+    # 'us_stock_basic':  # tsfuncs
+    #     ['us_stock_basic', 'none', 'none', 'none', '', 'C', '6000'],
 
     'stock_names':
         ['namechange', 'ts_code', 'table_index', 'stock_basic', '', 'Y', '300'],
@@ -1440,29 +1447,10 @@ TUSHARE_API_MAP = {
 
 TUSHARE_REALTIME_API_MAP = {
     'realtime_bars':  # 实时行情数据
-        ['realtime_min', 'symbols', 'list', 'none', '', 'N', '', ''],
+        ['realtime_min', 'ts_code', 'list', 'none', '', 'N', '', ''],
     'realtime_quotes':
-        ['realtime_quote', 'symbols', 'list', 'none', '', 'N', '', '']
+        ['realtime_quote', 'ts_code', 'list', 'none', '', 'N', '', '']
 }
-
-"""
-AKSHARE API MAP表column的定义：
-1, akshare:                 对应的akshare API函数名
-
-2, ak_fill_arg_name:        从akshare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
-                            与tushare的fill_arg_name相同
-                            
-3, ak_fill_arg_type:        与tushare的fill_arg_type相同, 用于akshare API
-
-4, ak_arg_rng:              与tushare的arg_rng相同, 用于akshare API
-"""
-
-AKSHARE_API_MAP_COLUMNS = [
-    'api',  # 1, 从akshare获取数据时使用的api名
-    'fill_arg_name',  # 2, 从akshare获取数据时使用的api参数名
-    'fill_arg_type',  # 3, 从akshare获取数据时使用的api参数类型
-    'arg_rng',  # 4, 从akshare获取数据时使用的api参数取值范围
-]
 
 AKSHARE_API_MAP = {
 
@@ -1470,75 +1458,67 @@ AKSHARE_API_MAP = {
 
 AKSHARE_REALTIME_API_MAP = {
     'realtime_bars':  # 实时行情数据
-        ['not_realized', 'symbols', 'list', 'none', '', 'N', '', ''],
+        ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', ''],
 
     'realtime_quoets':
-        ['not_realized', 'symbols', 'list', 'none', '', 'N', '', '']
+        ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', '']
 }
-
-EASTMONEY_API_MAP_COLUMNS = [
-    'api',  # 1, 从东方财富网获取数据时使用的api名
-    'fill_arg_name',  # 2, 从东方财富网获取数据时使用的api参数名
-    'fill_arg_type',  # 3, 从东方财富网获取数据时使用的api参数类型
-    'arg_rng',  # 4, 从东方财富网获取数据时使用的api参数取值范围
-    'arg_allowed_code_suffix',  # 5, 从东方财富网获取数据时使用的api参数允许的股票代码后缀
-]
 
 EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给出qt_code即可，因此index和stock共用API
     'stock_daily':
-        ['stock_daily', 'qt_code', 'list', 'none'],
+        ['stock_daily', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '30'],
 
     'stock_1min':
-        ['stock_1min', 'qt_code', 'list', 'none'],
+        ['stock_1min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '1'],
 
     'stock_5min':
-        ['stock_5min', 'qt_code', 'list', 'none'],
+        ['stock_5min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
 
     'stock_15min':
-        ['stock_15min', 'qt_code', 'list', 'none'],
+        ['stock_15min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
 
     'stock_30min':
-        ['stock_30min', 'qt_code', 'list', 'none'],
+        ['stock_30min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
 
     'stock_hourly':
-        ['stock_hourly', 'qt_code', 'list', 'none'],
+        ['stock_hourly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
 
     'stock_weekly':
-        ['stock_weekly', 'qt_code', 'list', 'none'],
+        ['stock_weekly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '100'],
 
     'stock_monthly':
-        ['stock_monthly', 'qt_code', 'list', 'none'],
+        ['stock_monthly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '300'],
 
     'index_daily':
-        ['stock_daily', 'qt_code', 'list', 'none'],
+        ['stock_daily', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '30'],
 
     'index_1min':
-        ['stock_1min', 'qt_code', 'list', 'none'],
+        ['stock_1min', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '1'],
 
     'index_5min':
-        ['stock_5min', 'qt_code', 'list', 'none'],
+        ['stock_5min', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '10'],
 
     'index_15min':
-        ['stock_15min', 'qt_code', 'list', 'none'],
+        ['stock_15min', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '10'],
 
     'index_30min':
-        ['stock_30min', 'qt_code', 'list', 'none'],
+        ['stock_30min', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '10'],
 
     'index_hourly':
-        ['stock_hourly', 'qt_code', 'list', 'none'],
+        ['stock_hourly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '10'],
 
     'index_weekly':
-        ['stock_weekly', 'qt_code', 'list', 'none'],
+        ['stock_weekly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '100'],
 
     'index_monthly':
-        ['stock_monthly', 'qt_code', 'list', 'none'],
+        ['stock_monthly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '300'],
 
 }
 
 EASTMONEY_REALTIME_API_MAP = {
     'realtime_bars':  # 实时行情数据
-        ['real_time_klines', 'symbols', 'list', 'none', '', 'N', '', ''],
+        ['real_time_klines', 'qt_code', 'list', 'none', '', 'N', '', ''],
 
     'realtime_quoets':
-        ['real_time_quote', 'symbols', 'list', 'none', '', 'N', '', '']
+        ['real_time_quote', 'qt_code', 'list', 'none', '', 'N', '', '']
 }

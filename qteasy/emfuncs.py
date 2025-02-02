@@ -18,9 +18,11 @@ import requests
 from urllib.parse import urlencode
 
 from qteasy.utilfuncs import (
-    str_to_list,
+    retry,
     format_str_to_float,
 )
+
+ERRORS_TO_CHECK_ON_RETRY = Exception
 
 east_money_freq_map = {
     '1min':  1,
@@ -71,8 +73,36 @@ LIVE_QUOTE_COLS_REINDEX = ['NAME', 'TS_CODE', 'DATE', 'TIME', 'OPEN', 'PRE_CLOSE
 # eastmoney interface function, call this function to extract data
 def acquire_data(api_name, **kwargs):
     """ eastmoney接口函数，根据根据table的内容调用相应的eastmoney API下载数据，并以DataFrame的形式返回数据"""
-    func = globals()[api_name]
-    res = func(**kwargs)
+
+    if 'retry_count' in kwargs:
+        data_download_retry_count = kwargs.pop('retry_count')
+    else:
+        data_download_retry_count = 3
+
+    if 'retry_wait' in kwargs:
+        data_download_retry_wait = kwargs.pop('retry_wait')
+    else:
+        data_download_retry_wait = 0.01
+
+    if 'retry_backoff' in kwargs:
+        data_download_retry_backoff = kwargs.pop('retry_backoff')
+    else:
+        data_download_retry_backoff = 2
+
+    retry_decorator = retry(
+            exception_to_check=ERRORS_TO_CHECK_ON_RETRY,
+            mute=True,
+            tries=data_download_retry_count,
+            delay=data_download_retry_wait,
+            backoff=data_download_retry_backoff,
+    )
+    try:
+        func = globals()[api_name]
+    except KeyError:
+        raise KeyError(f'undefined API {api_name} for tushare')
+    decorated_func = retry_decorator(func)
+
+    res = decorated_func(**kwargs)
     return res
 
 
@@ -226,6 +256,9 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     if verbose:
         df['name'] = data['name']
         df['pre_close'] = data['prePrice']
+    for col in ['open', 'high', 'low', 'close', 'vol', 'amount']:
+        df[col] = df[col].apply(format_str_to_float)  # 将数据转化为float格式
+    # vol的单位为“手”，amount的单位为“元”
     return df
 
 
@@ -331,8 +364,13 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
         包含单支股票的K线数据，频率可选
     """
     klt = east_money_freq_map.get(freq, 101)
-    df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt)
-    df['symbol'] = qt_code
+    df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
+    df['ts_code'] = qt_code
+    df['change'] = df['close'] - df['pre_close']
+    df['pct_chg'] = df['change'] / df['pre_close'] * 100
+
+    df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                             'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 
     return df
 
@@ -340,49 +378,84 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
 def stock_daily(qt_code, start, end):
     """ 获取单支股票的日K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='d')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='d')
+    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
+                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+
+    return res
 
 
 def stock_1min(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的1分钟K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='1min')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='1min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
 
 
 def stock_5min(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的5分钟K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='5min')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='5min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
 
 
 def stock_15min(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的15分钟K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='15min')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='15min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
 
 
 def stock_30min(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的30分钟K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='30min')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='30min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
 
 
 def stock_hourly(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的小时K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='h')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='h')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
 
 
 def stock_weekly(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的周K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='w')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='w')
+    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
+                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+
+    return res
 
 
 def stock_monthly(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的周K线数据
     """
-    return _stock_bars(qt_code=qt_code, start=start, end=end, freq='m')
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='m')
+    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
+                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+
+    return res
 
 
 def real_time_klines(qt_code, date, freq='d'):
