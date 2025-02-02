@@ -1517,6 +1517,13 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     return code_matched
 
 
+def format_str_to_float(x):
+    try:
+        return float(x) if x != "" else 0
+    except:
+        return 0
+
+
 def human_file_size(file_size: int) -> str:
     """ 将一个整型数字转化为以GB/MB/KB/Byte为单位的文件大小字符串
 

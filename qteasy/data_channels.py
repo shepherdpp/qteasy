@@ -499,7 +499,7 @@ def fetch_real_time_klines(
     return data
 
 
-def fetch_real_time_qutoes(
+def fetch_real_time_quotes(
         *,
         channel: str,
         shares: str or [str],

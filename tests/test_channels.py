@@ -18,7 +18,7 @@ import pandas as pd
 
 from qteasy.database import DataSource
 from qteasy.data_channels import (
-    TUSHARE_API_MAP,
+    EASTMONEY_API_MAP, TUSHARE_API_MAP, AKSHARE_API_MAP,
     _fetch_table_data_from_tushare,
     fetch_batched_table_data,
     fetch_real_time_klines,
@@ -49,107 +49,114 @@ class TestChannels(unittest.TestCase):
         )
         print('test datasource created.')
 
-    def test_get_table_data_channel_tushare(self):
-        """testing downloading small piece of data and store them in self.test_ds"""
+    def test_get_table_data_from_channels(self):
+        """testing downloading small piece of data from tushare and store them in self.test_ds"""
 
-        # tables into which to download data are from TABLE_MASTERS,
-        # but in the future, tables should be from data_channels
-        all_tables = TUSHARE_API_MAP.keys()
+        channels_to_test = ['tushare', 'eastmoney']
 
-        self.assertIsInstance(self.ds, DataSource)
+        for channel in channels_to_test:
 
-        # if there already are tables existing in the datasource, drop them
-        print('dropping tables in the test database...')
-        deleted = 0
-        for table in all_tables:
-            if table == 'real_time':
-                continue
-            if self.ds.table_data_exists(table):
-                # these data can be retained for further testing
-                self.ds.drop_table_data(table)
-                deleted += 1
-                print(f'table {table} dropped.')
-        print(f'{deleted} tables dropped.')
-
-        for table in all_tables:
-            if table == 'real_time':
-                continue
-
-            # get all tables in the API mapping
-            api_name = TUSHARE_API_MAP[table][0]
-            arg_name = TUSHARE_API_MAP[table][1]
-            arg_type = TUSHARE_API_MAP[table][2]
-            arg_range = TUSHARE_API_MAP[table][3]
-
-            print(f'downloading data for table: {table} with api: {api_name} and arg: {arg_name}')
-
-            # parse the filling args and pick the first filling arg value from the range
-            if arg_name == 'none':
-                arg_name = None
-                arg_value = None
+            if channel == 'tushare':
+                all_tables = TUSHARE_API_MAP.keys()
+                API_MAP = TUSHARE_API_MAP
+            elif channel == 'eastmoney':
+                all_tables = EASTMONEY_API_MAP.keys()
+                API_MAP = EASTMONEY_API_MAP
+            elif channel == 'akshare':
+                all_tables = AKSHARE_API_MAP.keys()
+                API_MAP = AKSHARE_API_MAP
             else:
-                if arg_type == 'list':
-                    from qteasy.utilfuncs import str_to_list
-                    range_list = str_to_list(arg_range)
-                    arg_value = range_list[0]
-                elif arg_type == 'datetime':
-                    arg_value = '20210226'
-                elif arg_type == 'trade_date':
-                    arg_value = '20210226'  # 这个交易日是特意选择的，因为它既是一个交易日，也同时是一周/一月内的最后一个交易日
-                elif arg_type == 'us_trade_date':
-                    warnings.warn('US trade date is not yet implemented, will implement later')
+                raise KeyError(f'')
+
+            self.assertIsInstance(self.ds, DataSource)
+
+            # if there already are tables existing in the datasource, drop them
+            print('dropping tables in the test database...')
+            deleted = 0
+            for table in all_tables:
+                if table == 'real_time':
                     continue
-                elif arg_type == 'hk_trade_date':
-                    warnings.warn('HK trade date is not yet implemented, will implement later')
-                    continue
-                elif arg_type == 'quarter':
-                    arg_value = '2020Q4'
-                elif arg_type == 'month':
-                    arg_value = '202102'
-                elif arg_type == 'table_index' and arg_range == 'stock_basic':
-                    arg_value = '000651.SZ'
-                elif arg_type == 'table_index' and arg_range == 'index_basic':
-                    arg_value = '000001.SH'
-                elif arg_type == 'table_index' and arg_range == 'fund_basic':
-                    arg_value = '531300.SH'
-                elif arg_type == 'table_index' and arg_range == 'future_basic':
-                    arg_value = 'IF2009.CCFX'
-                elif arg_type == 'table_index' and arg_range == 'opt_basic':
-                    arg_value = '10001234.SH'
-                elif arg_type == 'table_index' and arg_range == 'ths_index_basic':
-                    arg_value = '700031.TI'
+                if self.ds.table_data_exists(table):
+                    # these data can be retained for further testing
+                    self.ds.drop_table_data(table)
+                    deleted += 1
+                    print(f'table {table} dropped.')
+            print(f'{deleted} tables dropped.')
+
+            for table in all_tables:
+
+                # get all tables in the API mapping
+                api_name = API_MAP[table][0]
+                arg_name = API_MAP[table][1]
+                arg_type = API_MAP[table][2]
+                arg_range = API_MAP[table][3]
+
+                print(f'downloading data for table: {table} with api: {api_name} and arg: {arg_name}')
+
+                # parse the filling args and pick the first filling arg value from the range
+                if arg_name == 'none':
+                    arg_name = None
+                    arg_value = None
                 else:
-                    raise ValueError('unexpected arg type:', arg_type)
+                    if arg_type == 'list':
+                        from qteasy.utilfuncs import str_to_list
+                        range_list = str_to_list(arg_range)
+                        arg_value = range_list[0]
+                    elif arg_type == 'datetime':
+                        arg_value = '20210226'
+                    elif arg_type == 'trade_date':
+                        arg_value = '20210226'  # 这个交易日是特意选择的，因为它既是一个交易日，也同时是一周/一月内的最后一个交易日
+                    elif arg_type == 'us_trade_date':
+                        warnings.warn('US trade date is not yet implemented, will implement later')
+                        continue
+                    elif arg_type == 'hk_trade_date':
+                        warnings.warn('HK trade date is not yet implemented, will implement later')
+                        continue
+                    elif arg_type == 'quarter':
+                        arg_value = '2020Q4'
+                    elif arg_type == 'month':
+                        arg_value = '202102'
+                    elif arg_type == 'table_index' and arg_range == 'stock_basic':
+                        arg_value = '000651.SZ'
+                    elif arg_type == 'table_index' and arg_range == 'index_basic':
+                        arg_value = '000001.SH'
+                    elif arg_type == 'table_index' and arg_range == 'fund_basic':
+                        arg_value = '531300.SH'
+                    elif arg_type == 'table_index' and arg_range == 'future_basic':
+                        arg_value = 'IF2009.CCFX'
+                    elif arg_type == 'table_index' and arg_range == 'opt_basic':
+                        arg_value = '10001234.SH'
+                    elif arg_type == 'table_index' and arg_range == 'ths_index_basic':
+                        arg_value = '700031.TI'
+                    else:
+                        raise ValueError('unexpected arg type:', arg_type)
 
-            # build the args dict
-            if arg_name is not None:
-                kwargs = {arg_name: arg_value}
-            else:
-                kwargs = {}
+                # build the args dict
+                if arg_name is not None:
+                    kwargs = {arg_name: arg_value}
+                else:
+                    kwargs = {}
 
-            # add retry parameters to shorten test time
-            kwargs['retry_count'] = 1
+                # add retry parameters to shorten test time
+                kwargs['retry_count'] = 1
 
-            try:
-                dnld_data = _fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
-                print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
-            except Exception as e:
-                print(f'error downloading data for table {table}: {e}')
-                continue
+                try:
+                    dnld_data = _fetch_table_data_from_tushare(table, channel='tushare', **kwargs)
+                    print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
+                except Exception as e:
+                    print(f'error downloading data for table {table}: {e}')
+                    continue
 
-            # clean up the data, making it ready to be written to the datasource
-            # from qteasy.database import get_built_in_table_schema, set_primary_key_frame
-            # columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
-            # ready_data = set_primary_key_frame(dnld_data, primary_keys, pk_dtypes)
-            ready_data = dnld_data
+                # clean up the data, making it ready to be written to the datasource
+                # from qteasy.database import get_built_in_table_schema, set_primary_key_frame
+                # columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+                # ready_data = set_primary_key_frame(dnld_data, primary_keys, pk_dtypes)
+                ready_data = dnld_data
 
-            # write data to datasource
-            self.ds.update_table_data(table, ready_data, merge_type='update')
-            data = self.ds.read_table_data(table)
-            print('data written to database:', data.head())
-
-    def test_get_table_data_channel_eastmoney(self):
-
+                # write data to datasource
+                self.ds.update_table_data(table, ready_data, merge_type='update')
+                data = self.ds.read_table_data(table)
+                print('data written to database:', data.head())
 
     def test_get_dependent_table(self):
         """ test function get_dependent_table"""

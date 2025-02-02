@@ -31,6 +31,7 @@ from qteasy.tsfuncs import (
     daily_basic,
     index_dailybasic,
     realtime_min,
+    realtime_quote,
     mins1,
     ft_mins1,
     daily,
@@ -251,7 +252,16 @@ class TestTushare(unittest.TestCase):
         freq = '5MIN'
         df = realtime_min(ts_code=shares, freq=freq)
         self.assertIsInstance(df, pd.DataFrame)
-        self.assertTrue(df.empty)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+    def test_realtime_quote(self):
+        print(f'test tushare function: realtime_quote')
+        shares = '600748.SH'
+        df = realtime_quote(ts_code=shares, src=None)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
         df.info()
         print(df.head(10))
 

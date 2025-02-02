@@ -11,13 +11,16 @@
 # functions to acquire price k-lines.
 # ======================================
 
-from urllib.parse import urlencode
+import time
+import datetime
 import pandas as pd
 import requests
+from urllib.parse import urlencode
 
-from concurrent.futures import as_completed, ThreadPoolExecutor
-
-from qteasy.utilfuncs import str_to_list
+from qteasy.utilfuncs import (
+    str_to_list,
+    format_str_to_float,
+)
 
 east_money_freq_map = {
     '1min':  1,
@@ -31,12 +34,61 @@ east_money_freq_map = {
     'm':     103,
 }
 
+dc_cookies = {
+    "qgqp_b_id": "cf8b058a05d005ca7fb2afc14957f250",
+    "st_si": "72907886672492",
+    "st_asi": "delete",
+    "HAList": "ty-1-688720-N%u827E%u68EE%2Cty-0-873122-%u4E2D%u7EBA%u6807",
+    "st_pvi": "02194384728897",
+    "st_sp": "2023-12-06%2016%3A05%3A53",
+    "st_inirUrl": "https%3A%2F%2Fquote.eastmoney.com%2Fcenter%2Fgridlist.html",
+    "st_sn": "11",
+    "st_psi": "20231206170058129-113200313000-8845421016"
+}
+
+dc_headers = {
+    "Connection": "keep-alive",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
+    "Accept": "*/*",
+    "Sec-Fetch-Site": "same-site",
+    "Sec-Fetch-Mode": "no-cors",
+    "Sec-Fetch-Dest": "script",
+    "Referer": "https://quote.eastmoney.com/kcb/688720.html",
+    "Accept-Language": "zh-CN,zh;q=0.9"
+}
+
+LIVE_QUOTE_COLS = ['NAME', 'OPEN', 'PRE_CLOSE', 'PRICE', 'HIGH', 'LOW', 'BID', 'ASK', 'VOLUME', 'AMOUNT', 'B1_V', 'B1_P',
+                   'B2_V', 'B2_P', 'B3_V', 'B3_P', 'B4_V', 'B4_P', 'B5_V', 'B5_P', 'A1_V', 'A1_P', 'A2_V', 'A2_P',
+                   'A3_V', 'A3_P', 'A4_V', 'A4_P', 'A5_V', 'A5_P', 'DATE', 'TIME', 'TS_CODE']
+
+LIVE_QUOTE_COLS_REINDEX = ['NAME', 'TS_CODE', 'DATE', 'TIME', 'OPEN', 'PRE_CLOSE', 'PRICE', 'HIGH', 'LOW', 'BID', 'ASK',
+                           'VOLUME', 'AMOUNT', 'B1_V', 'B1_P',
+                           'B2_V', 'B2_P', 'B3_V', 'B3_P', 'B4_V', 'B4_P', 'B5_V', 'B5_P', 'A1_V', 'A1_P', 'A2_V',
+                           'A2_P',
+                           'A3_V', 'A3_P', 'A4_V', 'A4_P', 'A5_V', 'A5_P']
+
+
 # eastmoney interface function, call this function to extract data
 def acquire_data(api_name, **kwargs):
     """ eastmoney接口函数，根据根据table的内容调用相应的eastmoney API下载数据，并以DataFrame的形式返回数据"""
     func = globals()[api_name]
     res = func(**kwargs)
     return res
+
+
+def _format_em_str(x):
+    return float(x / 100) if x != "-" else 0
+
+
+def _format_em_date_str(date_str):
+    return date_str.replace("-", "")
+
+
+def _timestamp_to_time(time_stamp, form_date="%Y-%m-%d %H:%M:%S"):
+    time_stamp = int(str(time_stamp)[0:10])
+    date_array = datetime.datetime.fromtimestamp(time_stamp)
+    other_style_time = date_array.strftime(form_date)
+    return str(other_style_time)
 
 
 def _gen_eastmoney_code(rawcode: str) -> str:
@@ -90,7 +142,7 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     Parameters
     ----------
     code: str
-        6 位股票代码
+        6 位股票代码或带市场标识的qt_code
     beg: str, default '16000101'
         开始日期 例如 20200101
     end: str, default '20500101'
@@ -177,7 +229,90 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     return df
 
 
-def _stock_bars(qt_code, start, end, freq) -> pd.DataFrame:
+def _get_rt_quote(code: str) -> pd.DataFrame:
+    """ codes from tushare, get real time quote data from eastmoney"""
+
+    url = "https://push2.eastmoney.com/api/qt/stock/get"
+    symbol = _gen_eastmoney_code(code)
+    # print(symbol)
+    params = {
+        "invt": "2",
+        "fltt": "1",
+        # "cb": "jQuery35108939078769986013_1701853424476",
+        "fields": "f58,f734,f107,f57,f43,f59,f169,f301,f60,f170,f152,f177,f111,f46,f44,f45,f47,f260,f48,f261,f279,f277,f278,f288,f19,f17,f531,f15,f13,f11,f20,f18,f16,f14,f12,f39,f37,f35,f33,f31,f40,f38,f36,f34,f32,f211,f212,f213,f214,f215,f210,f209,f208,f207,f206,f161,f49,f171,f50,f86,f84,f85,f168,f108,f116,f167,f164,f162,f163,f92,f71,f117,f292,f51,f52,f191,f192,f262,f294,f295,f748,f747",
+        "secid": f"0.{symbol}",
+        "ut": "fa5fd1943c7b386f172d6893dbfba10b",
+        "wbp2u": "|0|0|0|web",
+        "_": str(int(time.time() * 1000))
+    }
+
+    # print(params["secid"])
+    response = requests.get(url, headers=dc_cookies, cookies=dc_headers, params=params)
+    data_info = response.json()["data"]
+    if not data_info:
+        return pd.DataFrame()
+    name = data_info["f58"]
+    open = data_info["f46"]  # / 100
+    high = data_info["f44"]  # / 100
+    pre_close = data_info["f60"]  # / 100
+    low = data_info["f45"] # / 100
+    price = data_info["f43"]  # / 100 if data_info["f43"] != "-" else ""
+    b5_v = format_str_to_float(data_info["f12"])
+    b5_p = data_info["f11"]  # / 100 if data_info["f11"] != "-" else ""
+    b4_v = format_str_to_float(data_info["f14"])
+    b4_p = data_info["f13"]  # / 100 if data_info["f13"] != "-" else ""
+    b3_v = format_str_to_float(data_info["f16"])
+    b3_p = data_info["f15"]  # / 100 if data_info["f15"] != "-" else ""
+    b2_v = format_str_to_float(data_info["f18"])
+    b2_p = data_info["f17"]  # / 100 if data_info["f17"] != "-" else ""
+    b1_v = format_str_to_float(data_info["f20"])
+    b1_p = data_info["f19"]  # / 100 if data_info["f19"] != "-" else ""
+    a5_v = format_str_to_float(data_info["f32"])
+    a5_p = data_info["f31"]  # / 100 if data_info["f31"] != "-" else ""
+    a4_v = format_str_to_float(data_info["f34"])
+    a4_p = data_info["f33"]  # / 100 if data_info["f33"] != "-" else ""
+    a3_v = format_str_to_float(data_info["f36"])
+    a3_p = data_info["f35"]  # / 100 if data_info["f35"] != "-" else ""
+    a2_v = format_str_to_float(data_info["f38"])
+    a2_p = data_info["f37"]  # / 100 if data_info["f38"] != "-" else ""
+    a1_v = format_str_to_float(data_info["f40"])
+    a1_p = data_info["f39"]  # / 100 if data_info["f39"] != "-" else ""
+    date_time = _timestamp_to_time(data_info["f86"])
+    date = date_time[0:10]
+    times = date_time[10:]
+    volume = format_str_to_float(data_info["f47"])
+    amount = format_str_to_float(data_info["f48"])
+    bid = format_str_to_float(data_info["f19"])
+    ask = format_str_to_float(data_info["f39"])
+    code = symbol
+    data_list = [[name, open, pre_close, price, high, low, bid, ask, volume, amount,
+                  b1_v, b1_p, b2_v, b2_p, b3_v, b3_p, b4_v, b4_p, b5_v, b5_p,
+                  a1_v, a1_p, a2_v, a2_p, a3_v, a3_p, a4_v, a4_p, a5_v, a5_p, date, times, code]]
+    df = pd.DataFrame(data_list, columns=LIVE_QUOTE_COLS)
+    df["DATE"] = df["DATE"].apply(_format_em_date_str())
+    df["ASK"] = df["ASK"].apply(_format_em_str)
+    df["OPEN"] = df["OPEN"].apply(_format_em_str)
+    df["HIGH"] = df["HIGH"].apply(_format_em_str)
+    df["LOW"] = df["LOW"].apply(_format_em_str)
+    df["PRE_CLOSE"] = df["PRE_CLOSE"].apply(_format_em_str)
+    df["BID"] = df["BID"].apply(_format_em_str)
+    df["A1_P"] = df["A1_P"].apply(_format_em_str)
+    df["A2_P"] = df["A2_P"].apply(_format_em_str)
+    df["A3_P"] = df["A3_P"].apply(_format_em_str)
+    df["A4_P"] = df["A4_P"].apply(_format_em_str)
+    df["A5_P"] = df["A5_P"].apply(_format_em_str)
+    df["PRICE"] = df["PRICE"].apply(_format_em_str)
+    df["B1_P"] = df["B1_P"].apply(_format_em_str)
+    df["B2_P"] = df["B2_P"].apply(_format_em_str)
+    df["B3_P"] = df["B3_P"].apply(_format_em_str)
+    df["B4_P"] = df["B4_P"].apply(_format_em_str)
+    df["B5_P"] = df["B5_P"].apply(_format_em_str)
+    new_order = LIVE_QUOTE_COLS_REINDEX
+    df = df[new_order]
+    return df
+
+
+def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     """ 获取单支股票的日K线数据
     Parameters
     ----------
@@ -195,9 +330,8 @@ def _stock_bars(qt_code, start, end, freq) -> pd.DataFrame:
     DataFrame
         包含单支股票的K线数据，频率可选
     """
-    code = _gen_eastmoney_code(qt_code)
     klt = east_money_freq_map.get(freq, 101)
-    df = _get_k_history(code, start, end, klt=klt)
+    df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt)
     df['symbol'] = qt_code
 
     return df
@@ -252,7 +386,8 @@ def stock_monthly(qt_code, start, end) -> pd.DataFrame:
 
 
 def real_time_klines(qt_code, date, freq='d'):
-    """ 获取股票当前最新日线数据，数据实时更新
+    """ 获取股票date日最新K线数据，数据实时更新,不管K线频率如何，总是返回当天最后一根可用K线数据
+
     Parameters
     ----------
     qt_code : str or list of str
@@ -261,6 +396,7 @@ def real_time_klines(qt_code, date, freq='d'):
         需要获取的实时K线的日期，获取当天开盘到收盘/当前时间的所有K线
     freq : str
         数据频率，支持分钟到日频数据，频率最低为日频，周频/月频不支持
+        当数据频率为分钟数据时，返回当天的最后一根分钟K线数据
 
     Returns
     -------
@@ -277,20 +413,27 @@ def real_time_klines(qt_code, date, freq='d'):
         vol: float, 成交量
         amount: float, 成交额
     """
-    symbol = _gen_eastmoney_code(qt_code)
 
     klt = east_money_freq_map.get(freq, 101)
     if klt > 101:
         raise ValueError(f'Can not get real time K line with freq: {freq}')
 
-    df = _get_k_history(symbol, beg=date, klt=klt, verbose=True)
-    df['symbol'] = symbol
-    data = df.iloc[-1:, :]
+    second_day = pd.Timestamp(date) + pd.Timedelta(days=1)
+    second_day = second_day.strftime('%Y%m%d')
+
+    df = _get_k_history(qt_code, beg=date, end=second_day, klt=klt, verbose=True)
+
+    df['symbol'] = qt_code
+    df.index = pd.to_datetime(df['trade_time'])
+    df = df.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+
+    data = df.loc[pd.to_datetime(date):pd.to_datetime(second_day), :]
+    data = data.iloc[-1:, :]
 
     return data
 
 
-def real_time_quote(symbols, verbose=False, parallel=True, timezone='local') -> pd.DataFrame:
+def real_time_quote(qt_code) -> pd.DataFrame:
     """ 获取股票实时盘口交易详情，包括日期时间、现价、竞买竞卖价格、成交价格、成交量、以及委买委卖1～5档数据
     """
-
+    return _get_rt_quote(code=qt_code)

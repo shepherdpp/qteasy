@@ -858,12 +858,13 @@ def index_dailybasic(ts_code: object = None,
     return res
 
 
-def realtime_min(ts_code, freq):
+def realtime_min(ts_code, date, freq):
     """ 获取实时分钟K线行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
 
     Parameters
     ----------
     ts_code: str, 股票代码
+    date: str, 日期 格式YYYYMMDD, 不需要使用，仅为了兼容性
     freq: str, 频率，可选值为1/5/15/30/60分钟
 
     Returns
@@ -878,10 +879,16 @@ def realtime_min(ts_code, freq):
     if freq == 'H':
         freq = '60MIN'
 
+    if freq not in ['1MIN', '5MIN', '15MIN', '30MIN', 'H']:
+        raise KeyError(f'freq={freq} is not supported at the moment, must be one of 1min, 5min, 15min, 30min, h')
+
     pro = ts.pro_api()
     res = pro.rt_min(ts_code=ts_code, freq=freq)
-    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
-                     f' table stk_mins with ts_code={ts_code}, freq={freq}')
+    res.index = pd.to_datetime(res['trade_time'])
+    res = res.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+
+    res = res.iloc[-1:, :]
+
     return res
 
 
