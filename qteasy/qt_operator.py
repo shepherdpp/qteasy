@@ -673,7 +673,6 @@ class Operator:
         all_ids = self.strategy_ids
         if item_is_str:
             if item not in all_ids:
-                import pdb; pdb.set_trace()
                 warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!')
                 return
             return self._strategies[item]

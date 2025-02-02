@@ -2863,8 +2863,8 @@ def ths_member(ts_code: str = None,
     pd.DataFrame
         column          type    default description
         ts_code	        str	    Y	    指数代码
-        code	        str	    Y	    股票代码
-        name	        str	    Y	    股票名称
+        con_code	    str	    Y	    股票代码
+        con_name	    str	    Y	    股票名称
         weight	        float	N	    权重(暂无)
         in_date	        str	    N	    纳入日期(暂无)
         out_date	    str	    N	    剔除日期(暂无)
@@ -2872,7 +2872,7 @@ def ths_member(ts_code: str = None,
     """
     pro = ts.pro_api()
     res = pro.ths_member(ts_code=ts_code,
-                         code=code)
+                         con_code=code)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_member with ts_code={ts_code}, code={code}')
     return res
 

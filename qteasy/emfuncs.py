@@ -366,8 +366,9 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     klt = east_money_freq_map.get(freq, 101)
     df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
     df['ts_code'] = qt_code
-    df['change'] = df['close'] - df['pre_close']
-    df['pct_chg'] = df['change'] / df['pre_close'] * 100
+    if not df.empty:
+        df['change'] = df['close'] - df['pre_close']
+        df['pct_chg'] = df['change'] / df['pre_close'] * 100
 
     df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
                              'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
