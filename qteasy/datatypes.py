@@ -134,13 +134,13 @@ def infer_data_types(names, freqs, asset_types, adj=None,
         price_types = ['close', 'open', 'high', 'low']
         if adj in ['b', 'back']:
             names = [f'{n}|b' if n in price_types else n for n in names]
-            msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-                  f'adjusted prices, such as "close|b" instead of adj="b".'
+            msg = f'Using parameter "adj" for price adjustment is deprecated, please use data types like ' \
+                  f'"close|b" instead of "adj=\'b\'" in the future.'
             warn(msg, DeprecationWarning)
         if adj in ['f', 'fw', 'forward']:
             names = [f'{n}|f' if n in price_types else n for n in names]
-            msg = f'parameter "backtest_price_adj" is deprecated, later use adjusted price types for ' \
-                  f'adjusted prices, such as "close|f" instead of adj="f".'
+            msg = f'Using parameter "adj" for price adjustment is deprecated, please use data types like ' \
+                  f'"close|f" instead of "adj=\'f\'" in the future.'
             warn(msg, DeprecationWarning)
 
     # TODO: 需要优化：将force_match_freq / force_match_asset_type作为DataType的__init__()参数，那么这里就可以

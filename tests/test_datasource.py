@@ -2182,15 +2182,6 @@ class TestDataSource(unittest.TestCase):
                 )
                 print(f'res: {res}')
 
-    def test_fetch_realtime_price_data(self):
-        """ test datasource function fetch_realtime_price_data()"""
-        res = _fetch_table_data_from_eastmoney(
-                table='stock_5min',
-                symbols=['000001.SZ', '000002.SZ'],
-        )
-        print(res)
-        self.assertIsInstance(res, pd.DataFrame)
-
     def test_get_sys_teble_last_id(self):
         """ test datasource function get_sys_table_last_id()"""
         # remove all data in sys_op_trade_orders

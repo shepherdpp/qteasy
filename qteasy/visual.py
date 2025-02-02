@@ -23,6 +23,8 @@ import numpy as np
 
 from pandas.plotting import register_matplotlib_converters
 
+import qteasy
+from qteasy.datatypes import infer_data_types
 from qteasy.history import get_history_panel
 
 from qteasy.utilfuncs import (
@@ -545,8 +547,13 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         stock = None
     else:
         stock = matched_codes[0]
+
     if not interactive:
         pass
+
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+
     return _mpf_plot(stock_data=stock_data, stock=stock, start=start, end=end, freq=freq,
                      asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, data_source=data_source,
                      **kwargs)
@@ -766,12 +773,18 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
         else:
             htypes = 'accum_nav'
     else:
-        htypes = 'close,high,low,open,vol'
+        htypes = 'close,high,low,open,volume'
     # fullname = this_stock.fullname.values[0]
-    # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
-    data = get_history_panel(htypes=htypes, shares=stock, start=start_date, end=end_date, freq=freq,
-                             asset_type=asset_type, adj=adj, data_source=data_source,
-                             resample_method='none').slice_to_dataframe(share=stock)
+    # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据,生成历史数据类型data_types
+    data_types = infer_data_types(
+            names=htypes,
+            freqs=freq,
+            asset_types=asset_type,
+            adj=adj,
+            force_match_freq=True,
+    )
+    data = get_history_panel(data_types=data_types, shares=stock, start=start_date, end=end_date, freq=freq,
+                             data_source=data_source, resample_method='none').slice_to_dataframe(share=stock)
     # 如果读取的是nav净值，将nav改为close，并填充open/high/low三列为NaN值
     is_out_fund = False
     if 'open' not in data.columns:
