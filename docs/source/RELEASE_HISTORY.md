@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.4.0 (2025-02-05)
+- New features:
+- Bug fixes:
+
 ## 1.3.12 (2024-12-18)
 - Improved Log information and print outs in trader TUI and CLI:
   - excessive digits of amount changes are now truncated to 2 or 3 digits in trader CLI for RESULT DELIVERY
