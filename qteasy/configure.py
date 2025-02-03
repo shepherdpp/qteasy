@@ -771,7 +771,7 @@ def _parse_start_up_config_lines(config_lines) -> dict:
     start_up_config = {}
 
     for line in config_lines:
-        if line[0] == '#':  # 忽略注释行
+        if line[0] in '#;':  # 忽略注释行(# 与 ;)
             continue
         line = line.split('=')
         if len(line) == 2:

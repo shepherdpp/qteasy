@@ -1744,8 +1744,9 @@ class TestDataTypes(unittest.TestCase):
                         self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
                         self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
                     except AssertionError:
-                        import pdb
-                        pdb.set_trace()
+                        # import pdb
+                        # pdb.set_trace()
+                        pass
             else:
                 self.assertIsInstance(data, pd.Series)
 

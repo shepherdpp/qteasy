@@ -1852,7 +1852,6 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        import pdb; pdb.set_trace()
         self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [100, 0, 0, 0, 0])
         self.assertEqual(list(summary[2]), [60.5, 0, 0, 0, 0])

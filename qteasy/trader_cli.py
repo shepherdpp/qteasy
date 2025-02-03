@@ -986,7 +986,6 @@ class TraderShell(Cmd):
         elif args.set == 'off':
             self.trader.debug = False
         else:
-            import pdb; pdb.set_trace()
             print('Wrong argument, use "on" or "off" to set debug mode')
             return False
 
