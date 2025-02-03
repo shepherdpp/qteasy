@@ -565,7 +565,7 @@ def update_position(position_id, data_source=None, **position_data):
 
 
 def get_account_positions(account_id, data_source=None):
-    """ 根据account_id获取账户的所有持仓
+    """ 根据account_id获取账户的所有持仓，输出结果根据pos_id排序
 
     Parameters
     ----------
@@ -599,6 +599,7 @@ def get_account_positions(account_id, data_source=None):
     )
     if positions is None:
         return pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
+
     return positions
 
 

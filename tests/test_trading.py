@@ -127,63 +127,63 @@ class TestTradeRecording(unittest.TestCase):
         # create new accounts and new positions
         new_account(user_name='test_user', cash_amount=10000, data_source=self.test_ds)
         new_account(user_name='test_user2', cash_amount=20000, data_source=self.test_ds)
-        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 1)
-        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, 2)
-        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertIsInstance(position, dict)
         print(position)
         self.assertEqual(position['account_id'], 1)
-        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['symbol'], 'APPL')
         self.assertEqual(position['position'], 'long')
         self.assertEqual(position['qty'], 0)
-        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'short', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertIsInstance(position, dict)
         self.assertEqual(position['account_id'], 1)
-        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['symbol'], 'APPL')
         self.assertEqual(position['position'], 'short')
         self.assertEqual(position['qty'], 0)
         # add more positions to account 2
-        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
-        get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'APPL', 'short', data_source=self.test_ds)
         get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'GOOG', 'short', data_source=self.test_ds)
         # test get_or_create_position with non-existing account id
         with self.assertRaises(KeyError):
-            get_or_create_position(4, 'AAPL', 'long', data_source=self.test_ds)
+            get_or_create_position(4, 'APPL', 'long', data_source=self.test_ds)
         # test get_or_create_position with incorrect symbol type and direction type/value
         with self.assertRaises(TypeError):
             get_or_create_position(1, 123, 'long', data_source=self.test_ds)
-            get_or_create_position(1, 'AAPL', 123, data_source=self.test_ds)
+            get_or_create_position(1, 'APPL', 123, data_source=self.test_ds)
         with self.assertRaises(ValueError):
-            get_or_create_position(1, 'AAPL', 'long123', data_source=self.test_ds)
+            get_or_create_position(1, 'APPL', 'long123', data_source=self.test_ds)
 
         # test get_position_id function
-        pos_id = get_position_ids(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_position_ids(1, 'APPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, [1])
-        pos_id = get_position_ids(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_position_ids(1, 'APPL', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, [2])
         # test get_position_id with non-existing account id
-        self.assertEqual(get_position_ids(4, 'AAPL', 'long', data_source=self.test_ds), [])
+        self.assertEqual(get_position_ids(4, 'APPL', 'long', data_source=self.test_ds), [])
         # test get_position_id with incorrect symbol type and direction type/value
         self.assertEqual(get_position_ids(1, 123, 'long', data_source=self.test_ds), [])
-        self.assertEqual(get_position_ids(1, 'AAPL', 123, data_source=self.test_ds), [])
-        self.assertEqual(get_position_ids(1, 'AAPL', 'long123', data_source=self.test_ds), [])
+        self.assertEqual(get_position_ids(1, 'APPL', 123, data_source=self.test_ds), [])
+        self.assertEqual(get_position_ids(1, 'APPL', 'long123', data_source=self.test_ds), [])
 
         # test get_position_by_id function
         position = get_position_by_id(1, data_source=self.test_ds)
         self.assertIsInstance(position, dict)
         self.assertEqual(position['account_id'], 1)
-        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['symbol'], 'APPL')
         self.assertEqual(position['position'], 'long')
         self.assertEqual(position['qty'], 0)
         position = get_position_by_id(2, data_source=self.test_ds)
         self.assertIsInstance(position, dict)
         self.assertEqual(position['account_id'], 1)
-        self.assertEqual(position['symbol'], 'AAPL')
+        self.assertEqual(position['symbol'], 'APPL')
         self.assertEqual(position['position'], 'short')
         self.assertEqual(position['qty'], 0)
         # test get_position_by_id with non-existing position id
@@ -196,11 +196,11 @@ class TestTradeRecording(unittest.TestCase):
         self.assertIsInstance(positions, pd.DataFrame)
         self.assertEqual(len(positions), 2)
         self.assertEqual(positions.loc[1]['account_id'], 1)
-        self.assertEqual(positions.loc[1]['symbol'], 'AAPL')
+        self.assertEqual(positions.loc[1]['symbol'], 'APPL')
         self.assertEqual(positions.loc[1]['position'], 'long')
         self.assertEqual(positions.loc[1]['qty'], 0)
         self.assertEqual(positions.loc[2]['account_id'], 1)
-        self.assertEqual(positions.loc[2]['symbol'], 'AAPL')
+        self.assertEqual(positions.loc[2]['symbol'], 'APPL')
         self.assertEqual(positions.loc[2]['position'], 'short')
         self.assertEqual(positions.loc[2]['qty'], 0)
         position = get_account_positions(2, data_source=self.test_ds)
@@ -208,11 +208,11 @@ class TestTradeRecording(unittest.TestCase):
         self.assertIsInstance(position, pd.DataFrame)
         self.assertEqual(len(position), 4)
         self.assertEqual(position.loc[3]['account_id'], 2)
-        self.assertEqual(position.loc[3]['symbol'], 'AAPL')
+        self.assertEqual(position.loc[3]['symbol'], 'APPL')
         self.assertEqual(position.loc[3]['position'], 'long')
         self.assertEqual(position.loc[3]['qty'], 0)
         self.assertEqual(position.loc[4]['account_id'], 2)
-        self.assertEqual(position.loc[4]['symbol'], 'AAPL')
+        self.assertEqual(position.loc[4]['symbol'], 'APPL')
         self.assertEqual(position.loc[4]['position'], 'short')
         self.assertEqual(position.loc[4]['qty'], 0)
         self.assertEqual(position.loc[5]['account_id'], 2)
@@ -234,13 +234,13 @@ class TestTradeRecording(unittest.TestCase):
         # create new test accounts and new positions
         new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
         new_account(user_name='test_user2', cash_amount=100000, data_source=self.test_ds)
-        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 1)
-        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, 2)
-        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 3)
-        pos_id = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, 4)
         pos_id = get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 5)
@@ -250,11 +250,11 @@ class TestTradeRecording(unittest.TestCase):
         update_position(1, data_source=self.test_ds, qty_change=100)
         update_position(2, data_source=self.test_ds, qty_change=300)
         # check updated positions
-        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 100)
         self.assertEqual(position['available_qty'], 0)
-        pos_id = get_or_create_position(1, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'short', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 300)
         self.assertEqual(position['available_qty'], 0)
@@ -262,11 +262,11 @@ class TestTradeRecording(unittest.TestCase):
         update_position(3, data_source=self.test_ds, qty_change=200, available_qty_change=100)
         update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=300)
         # check updated positions
-        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 200)
         self.assertEqual(position['available_qty'], 100)
-        pos_id = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'short', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 300)
         self.assertEqual(position['available_qty'], 300)
@@ -274,11 +274,11 @@ class TestTradeRecording(unittest.TestCase):
         update_position(3, data_source=self.test_ds, qty_change=100, available_qty_change=-100)
         update_position(4, data_source=self.test_ds, qty_change=300, available_qty_change=100)
         # check updated positions
-        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 300)
         self.assertEqual(position['available_qty'], 0)
-        pos_id = get_or_create_position(2, 'AAPL', 'short', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'short', data_source=self.test_ds)
         position = get_position_by_id(pos_id, data_source=self.test_ds)
         self.assertEqual(position['qty'], 600)
         self.assertEqual(position['available_qty'], 400)
@@ -319,11 +319,11 @@ class TestTradeRecording(unittest.TestCase):
         # create new test accounts and new positions
         new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
         new_account(user_name='test_user2', cash_amount=100000, data_source=self.test_ds)
-        pos_id = get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 1)
         pos_id = get_or_create_position(1, 'GOOG', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, 2)
-        pos_id = get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        pos_id = get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
         self.assertEqual(pos_id, 3)
         pos_id = get_or_create_position(2, 'MSFT', 'short', data_source=self.test_ds)
         self.assertEqual(pos_id, 4)
@@ -356,7 +356,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(res[2], 100000)
 
         # test get_account_position_availabilities function
-        res = get_account_position_availabilities(account_id=1, shares=['AAPL', 'GOOG'], data_source=self.test_ds)
+        res = get_account_position_availabilities(account_id=1, shares=['APPL', 'GOOG'], data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
         self.assertEqual(len(res), 4)
         self.assertIsInstance(res[0], list)
@@ -365,10 +365,10 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(res[1].shape, (2,))
         self.assertEqual(res[2].shape, (2,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertEqual(res[0], ['AAPL', 'GOOG'])
+        self.assertEqual(res[0], ['APPL', 'GOOG'])
         self.assertTrue(np.allclose(res[1], np.array([1000, -1000])))
         self.assertTrue(np.allclose(res[2], np.array([1000, -300])))
-        res = get_account_position_availabilities(account_id=2, shares=['AAPL', 'GOOG', 'MSFT', 'AMZN'],
+        res = get_account_position_availabilities(account_id=2, shares=['APPL', 'GOOG', 'MSFT', 'AMZN'],
                                                   data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
         self.assertEqual(len(res), 4)
@@ -377,11 +377,11 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(res[1].shape, (4,))
         self.assertEqual(res[2].shape, (4,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertEqual(res[0], ['AAPL', 'GOOG', 'MSFT', 'AMZN'])
+        self.assertEqual(res[0], ['APPL', 'GOOG', 'MSFT', 'AMZN'])
         self.assertTrue(np.allclose(res[1], np.array([1000, 1000, -1000, -1000])))
         self.assertTrue(np.allclose(res[2], np.array([500, 1000, -700, -600])))
         res = get_account_position_availabilities(account_id=2,
-                                                  shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
+                                                  shares=['APPL', 'FB', 'MSFT', 'AMZN', '000001'],
                                                   data_source=self.test_ds)
         self.assertIsInstance(res, tuple)
         self.assertEqual(len(res), 4)
@@ -390,16 +390,16 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(res[1].shape, (5,))
         self.assertEqual(res[2].shape, (5,))
         print(f'get_account_position_availabilities result: {res}')
-        self.assertEqual(res[0], ['AAPL', 'FB', 'MSFT', 'AMZN', '000001'])
+        self.assertEqual(res[0], ['APPL', 'FB', 'MSFT', 'AMZN', '000001'])
         self.assertTrue(np.allclose(res[1], np.array([1000, 0, -1000, -1000, 0])))
         self.assertTrue(np.allclose(res[2], np.array([500, 0, -700, -600, 0])))
         positions = get_account_position_details(account_id=2,
-                                                 shares=['AAPL', 'FB', 'MSFT', 'AMZN', '000001'],
+                                                 shares=['APPL', 'FB', 'MSFT', 'AMZN', '000001'],
                                                  data_source=self.test_ds)
         self.assertIsInstance(positions, pd.DataFrame)
         print(f'get_account_position_details result: {positions}')
         self.assertEqual(positions.shape, (3, 5))
-        self.assertEqual(positions.columns.to_list(), ['AAPL', 'FB', 'MSFT', 'AMZN', '000001'])
+        self.assertEqual(positions.columns.to_list(), ['APPL', 'FB', 'MSFT', 'AMZN', '000001'])
         self.assertTrue(np.allclose(positions.loc['qty'], np.array([1000, 0, -1000, -1000, 0])))
         self.assertTrue(np.allclose(positions.loc['available_qty'], np.array([500, 0, -700, -600, 0])))
 
@@ -416,7 +416,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertIsInstance(positions, pd.DataFrame)
         print(f'get_account_position_details result: {positions}')
         self.assertEqual(positions.shape, (3, 4))
-        self.assertEqual(positions.columns.to_list(), ['AAPL', 'MSFT', 'GOOG', 'AMZN'])
+        self.assertEqual(positions.columns.to_list(), ['APPL', 'MSFT', 'GOOG', 'AMZN'])
         self.assertTrue(np.allclose(positions.loc['qty'], np.array([1000, -1000, 1000, -1000])))
         self.assertTrue(np.allclose(positions.loc['available_qty'], np.array([500, -700, 1000, -600])))
 
@@ -433,7 +433,7 @@ class TestTradeRecording(unittest.TestCase):
 
         # writing test accounts and positions
         new_account(user_name='test_user', cash_amount=100000, data_source=self.test_ds)
-        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
         # test recording and reading signals
@@ -578,7 +578,7 @@ class TestTradeRecording(unittest.TestCase):
         signal = read_trade_order_detail(1, data_source=self.test_ds)
         self.assertIsInstance(signal, dict)
         self.assertEqual(signal['pos_id'], 1)
-        self.assertEqual(signal['symbol'], 'AAPL')
+        self.assertEqual(signal['symbol'], 'APPL')
         self.assertEqual(signal['position'], 'long')
         self.assertEqual(signal['direction'], 'buy')
         self.assertEqual(signal['order_type'], 'market')
@@ -655,7 +655,7 @@ class TestTradeRecording(unittest.TestCase):
         # writing test accounts and positions
         new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
         new_account(user_name='test_user2', cash_amount=300000, data_source=self.test_ds)
-        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
         # test recording and reading signals
@@ -731,7 +731,7 @@ class TestTradeRecording(unittest.TestCase):
         record_trade_order(test_signal, data_source=self.test_ds)
 
         # test query all signals for a symbol and direction
-        signals = query_trade_orders(1, symbol='AAPL', position='long', data_source=self.test_ds)
+        signals = query_trade_orders(1, symbol='APPL', position='long', data_source=self.test_ds)
         print(signals)
         self.assertIsInstance(signals, pd.DataFrame)
         self.assertEqual(len(signals), 1)
@@ -811,7 +811,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(signals['status'].values[1], 'canceled')
 
         # test query signals with bad input
-        signals = query_trade_orders(1, symbol='AAPL', position='long', status='filled', data_source=self.test_ds)
+        signals = query_trade_orders(1, symbol='APPL', position='long', status='filled', data_source=self.test_ds)
         self.assertIsInstance(signals, pd.DataFrame)
         self.assertTrue(signals.empty)
         signals = query_trade_orders(1, symbol='invalid', position='long', status='filled', data_source=self.test_ds)
@@ -855,7 +855,7 @@ class TestTradeRecording(unittest.TestCase):
         # create test signals with parsed signals, which include list of symbols, positions, directions, qty, and prices
         # parsed signals has 5 symbols, with only long position, and buy direction
         parsed_signals = (
-            ['GOOG', 'FB', 'AAPL', 'AMZN', 'MSFT'],
+            ['GOOG', 'FB', 'APPL', 'AMZN', 'MSFT'],
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'buy', 'buy', 'buy', 'buy'],
             [100, 200, 300, 400, 500],
@@ -891,7 +891,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(signal_detail['status'], 'created')
         signal_detail = read_trade_order_detail(order_ids[2], data_source=self.test_ds)
         self.assertEqual(signal_detail['pos_id'], 3)
-        self.assertEqual(signal_detail['symbol'], 'AAPL')
+        self.assertEqual(signal_detail['symbol'], 'APPL')
         self.assertEqual(signal_detail['position'], 'long')
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 300)
@@ -916,12 +916,12 @@ class TestTradeRecording(unittest.TestCase):
         # create test positions for account 2, and add buy and sell signals for account 2
         get_or_create_position(2, 'GOOG', 'long', self.test_ds)  # pos_id = 6, qty = 1000
         get_or_create_position(2, 'FB', 'long', self.test_ds)  # pos_id = 7
-        get_or_create_position(2, 'AAPL', 'long', self.test_ds)  # pos_id = 8
+        get_or_create_position(2, 'APPL', 'long', self.test_ds)  # pos_id = 8
         get_or_create_position(2, 'AMZN', 'long', self.test_ds)  # pos_id = 9
         get_or_create_position(2, 'MSFT', 'long', self.test_ds)  # pos_id = 10
         get_or_create_position(2, 'GOOG', 'short', self.test_ds)  # pos_id = 11
         get_or_create_position(2, 'FB', 'short', self.test_ds)  # pos_id = 12
-        get_or_create_position(2, 'AAPL', 'short', self.test_ds)  # pos_id = 13
+        get_or_create_position(2, 'APPL', 'short', self.test_ds)  # pos_id = 13
         get_or_create_position(2, 'AMZN', 'short', self.test_ds)  # pos_id = 14
         get_or_create_position(2, 'MSFT', 'short', self.test_ds)  # pos_id = 15
         # set position qty 1000 for some positions, make sure that only
@@ -933,7 +933,7 @@ class TestTradeRecording(unittest.TestCase):
         update_position(10, self.test_ds, qty_change=1000, available_qty_change=1000)
         # create test signals for account 2, apply sell signals on positions with qty 1000
         parsed_signals = (
-            ['GOOG', 'FB', 'AAPL', 'AMZN', 'MSFT'],
+            ['GOOG', 'FB', 'APPL', 'AMZN', 'MSFT'],
             ['long', 'long', 'short', 'short', 'long'],
             ['sell', 'buy', 'buy', 'sell', 'sell'],
             [100, 200, 300, 400, 500],
@@ -968,7 +968,7 @@ class TestTradeRecording(unittest.TestCase):
         self.assertEqual(signal_detail['status'], 'created')
         signal_detail = read_trade_order_detail(order_ids[2], data_source=self.test_ds)
         self.assertEqual(signal_detail['pos_id'], 13)
-        self.assertEqual(signal_detail['symbol'], 'AAPL')
+        self.assertEqual(signal_detail['symbol'], 'APPL')
         self.assertEqual(signal_detail['position'], 'short')
         self.assertEqual(signal_detail['direction'], 'buy')
         self.assertEqual(signal_detail['qty'], 300)
@@ -1007,12 +1007,12 @@ class TestTradeRecording(unittest.TestCase):
         new_account(user_name='test_user2', cash_amount=150000, data_source=self.test_ds)
         # create test positions
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
-        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'AMZN', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'FB', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
-        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'AMZN', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'FB', 'long', data_source=self.test_ds)
@@ -1035,7 +1035,7 @@ class TestTradeRecording(unittest.TestCase):
 
         # create test signals, 10 signals in total, quantity does not exceed available amount
         parsed_signals_batch_1 = (
-            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'sell', 'sell', 'buy', 'buy'],
             [100, 100, 300, 400, 500],
@@ -1137,7 +1137,7 @@ class TestTradeRecording(unittest.TestCase):
 
         # create second batch of signals, quantity exceeds available amount
         parsed_signals_batch_2 = (
-            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'],
+            ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'],
             ['long', 'long', 'long', 'long', 'long'],
             ['sell', 'sell', 'sell', 'buy', 'buy'],
             [100, 700, 800, 900, 1000],
@@ -1438,12 +1438,12 @@ class TestTradeRecording(unittest.TestCase):
         new_account(user_name='test_user1', cash_amount=100000, data_source=self.test_ds)
         new_account(user_name='test_user2', cash_amount=150000, data_source=self.test_ds)
         get_or_create_position(1, 'GOOG', 'long', data_source=self.test_ds)
-        get_or_create_position(1, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(1, 'APPL', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'AMZN', 'long', data_source=self.test_ds)
         get_or_create_position(1, 'FB', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'GOOG', 'long', data_source=self.test_ds)
-        get_or_create_position(2, 'AAPL', 'long', data_source=self.test_ds)
+        get_or_create_position(2, 'APPL', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'MSFT', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'AMZN', 'long', data_source=self.test_ds)
         get_or_create_position(2, 'FB', 'long', data_source=self.test_ds)
@@ -1458,7 +1458,7 @@ class TestTradeRecording(unittest.TestCase):
         update_position(9, data_source=self.test_ds, qty_change=900, available_qty_change=900)
         update_position(10, data_source=self.test_ds, qty_change=1000, available_qty_change=1000)
         parsed_signals_batch_1 = (
-            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'sell', 'sell', 'buy', 'buy'],
             [100, 100, 100, 100, 100],
@@ -1478,7 +1478,7 @@ class TestTradeRecording(unittest.TestCase):
         print(f'orders_written: {order_ids}\norders_read: \n{orders_created}')
         # create trade orders for account 2
         parsed_signals_batch_2 = (
-            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'sell', 'sell', 'buy', 'buy'],
             [200, 200, 200, 200, 200],
@@ -1591,15 +1591,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 file_loc=self.data_test_dir,
                 allow_drop_table=True,
         )
-        # self.test_ds = DataSource(
-        #         'db',
-        #         host=QT_CONFIG['test_db_host'],
-        #         port=QT_CONFIG['test_db_port'],
-        #         user=QT_CONFIG['test_db_user'],
-        #         password=QT_CONFIG['test_db_password'],
-        #         db_name=QT_CONFIG['test_db_name'],
-        #         allow_drop_table=True,
-        # )
+
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
             if self.test_ds.table_data_exists(table):
@@ -1743,13 +1735,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # create test trade signals
         # create test signals, all signals are buy signals, because the test starts with zero positions
         parsed_signals_batch_1 = (
-            ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ],
+            ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
             ['buy', 'buy', 'buy', 'buy', 'buy'],
             [100, 100, 300, 400, 500],
             [60.0, 70.0, 80.0, 90.0, 30.0],
         )
-        # save first batch of signals
+        # save first batch of trade orders
         order_ids = save_parsed_trade_orders(
                 account_id=1,
                 symbols=parsed_signals_batch_1[0],
@@ -1760,6 +1752,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 data_source=self.test_ds,
         )
         self.assertEqual(order_ids, [1, 2, 3, 4, 5])
+        # 交易订单已经保存，但订单状态为“created”，尚未提交，此时订单不会生效
         # 逐个提交交易信号并打印相关余额的变化
         submit_order(1, data_source=self.test_ds)
         print(f'after submitting order 1, position data of account_id == 1: \n'
@@ -1790,25 +1783,25 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test last_trade_result_summary with no share (at this moment, there is no trade result yet, all zero values)
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB', ])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB', ])
         self.assertEqual(list(summary[1]), [0, 0, 0, 0, 0])
         self.assertEqual(list(summary[2]), [0, 0, 0, 0, 0])
 
         # test last_trade_result_summary with share
-        summary = get_last_trade_result_summary(1, shares=['GOOG', 'AAPL', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'AMZN', ])
+        summary = get_last_trade_result_summary(1, shares=['GOOG', 'APPL', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'AMZN', ])
         self.assertEqual(list(summary[1]), [0, 0, 0])
         self.assertEqual(list(summary[2]), [0, 0, 0])
-        summary = get_last_trade_result_summary(1, shares=['FB', 'AAPL', 'FB'], data_source=self.test_ds)
+        summary = get_last_trade_result_summary(1, shares=['FB', 'APPL', 'FB'], data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with shares ["FB", "GOOG", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['FB', 'AAPL', 'FB', ])
+        self.assertEqual(summary[0], ['FB', 'APPL', 'FB', ])
         self.assertEqual(list(summary[1]), [0, 0, 0])
         self.assertEqual(list(summary[2]), [0, 0, 0])
 
         # test last_trade_result_summary with share out of range
         summary = get_last_trade_result_summary(1, shares=['GOOG', 'AMZN', 'TSLA'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["AAPL", "GOOG", "TSLA"]: \n{summary}')
+        print(f'last trade result summary of account_id == 1 with shares ["APPL", "GOOG", "TSLA"]: \n{summary}')
         self.assertEqual(summary[0], ['GOOG', 'AMZN', 'TSLA', ])
         self.assertEqual(list(summary[1]), [0, 0, 0])
         self.assertEqual(list(summary[2]), [0, 0, 0])
@@ -1859,13 +1852,14 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'MSFT', 'AMZN', 'FB', 'GOOG',])
+        import pdb; pdb.set_trace()
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [100, 0, 0, 0, 0])
         self.assertEqual(list(summary[2]), [60.5, 0, 0, 0, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, 100, 0])
         self.assertEqual(list(summary[2]), [0, 60.5, 0])
 
@@ -1914,19 +1908,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [100, 0, 0, 0, 0])
         self.assertEqual(list(summary[2]), [60.5, 0, 0, 0, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, 100, 0])
         self.assertEqual(list(summary[2]), [0, 60.5, 0])
         # check trade result summary with share that out of range
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN', 'FB'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN', 'FB'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [0, 100, 0, 0])
         self.assertEqual(list(summary[2]), [0, 60.5, 0, 0])
 
@@ -1975,19 +1969,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [100, 0, 100, 0, 0])
         self.assertEqual(list(summary[2]), [60.5, 0, 81, 0, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, 100, 0])
         self.assertEqual(list(summary[2]), [0, 60.5, 0])
         # check trade result summary with share that out of range
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'MSFT', 'FB'])
         self.assertEqual(list(summary[1]), [0, 100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 60.5, 81, 0])
 
@@ -2036,25 +2030,25 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [100, 0, 100, 400, 0])
         self.assertEqual(list(summary[2]), [60.5, 0, 81, 89.5, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, 100, 400])
         self.assertEqual(list(summary[2]), [0, 60.5, 89.5])
         # check trade result summary with share that out of range
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'MSFT', 'FB'])
         self.assertEqual(list(summary[1]), [0, 100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 60.5, 81, 0])
 
         # create more test orders, with sell orders
         parsed_signals_batch_1 = (
-            ['AAPL', 'GOOG', 'MSFT', 'AMZN', 'FB', ],
+            ['APPL', 'GOOG', 'MSFT', 'AMZN', 'FB', ],
             ['long', 'long', 'long', 'long', 'long'],
             ['sell', 'sell', 'sell', 'sell', 'sell'],
             [100, 100, 300, 400, 500],
@@ -2123,19 +2117,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [-100, 0, 100, 400, 0])
         self.assertEqual(list(summary[2]), [90, 0, 81, 89.5, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, -100, 400])
         self.assertEqual(list(summary[2]), [0, 90, 89.5])
         # check trade result summary with share that out of range
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'MSFT', 'FB'])
         self.assertEqual(list(summary[1]), [0, -100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
@@ -2184,19 +2178,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # check trade result summary with no share
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [-100, 0, 100, -300, 0])
         self.assertEqual(list(summary[2]), [90, 0, 81, 140, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, -100, -300])
         self.assertEqual(list(summary[2]), [0, 90, 140])
         # check trade result summary with share that out of range
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'MSFT', 'FB'])
         self.assertEqual(list(summary[1]), [0, -100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 
@@ -2267,19 +2261,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # in the summary, filled amount will be total amount in order, and price will be average filled price
         summary = get_last_trade_result_summary(1, data_source=self.test_ds)
         print(f'last trade result summary of account_id == 1 with no shares: \n{summary}')
-        self.assertEqual(summary[0], ['GOOG', 'AAPL', 'MSFT', 'AMZN', 'FB'])
+        self.assertEqual(summary[0], ['GOOG', 'APPL', 'MSFT', 'AMZN', 'FB'])
         self.assertEqual(list(summary[1]), [-100, 0, 100, -399, 0])
         self.assertEqual(list(summary[2]), [90, 0, 81, 165.5, 0])
         # check trade result summary with share
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "AMZN"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'AMZN'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'AMZN'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "AMZN"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'AMZN'])
         self.assertEqual(list(summary[1]), [0, -100, -399])
         self.assertEqual(list(summary[2]), [0, 90, 165.5])
         # check trade result summary with share that out of range
-        summary = get_last_trade_result_summary(1, shares=['AAPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
-        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "AAPL", "MSFT", "FB"]: \n{summary}')
-        self.assertEqual(summary[0], ['AAPL', 'GOOG', 'MSFT', 'FB'])
+        summary = get_last_trade_result_summary(1, shares=['APPL', 'GOOG', 'MSFT', 'FB'], data_source=self.test_ds)
+        print(f'last trade result summary of account_id == 1 with shares ["GOOG", "APPL", "MSFT", "FB"]: \n{summary}')
+        self.assertEqual(summary[0], ['APPL', 'GOOG', 'MSFT', 'FB'])
         self.assertEqual(list(summary[1]), [0, -100, 100, 0])
         self.assertEqual(list(summary[2]), [0, 90, 81, 0])
 

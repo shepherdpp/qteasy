@@ -1236,6 +1236,7 @@ def calculate_cost_change(prev_qty, prev_unit_cost, qty_change, price, transacti
 
 def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     """ 获取指定账户的最近的交易结果汇总，获取的结果为ndarray，按照shares的顺序排列
+    如果shares为None，则结果按照order_id排序
 
     结果包含最近一次成交量（正数表示买入，负数表示卖出）以及最近一次成交价格，如果最近没有成交，
     则返回值为0/0
@@ -1335,6 +1336,7 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
 
     amounts_changed = np.array(list(last_filled_qty.values()), dtype='float')
     trade_prices = np.array(list(last_filled_price.values()), dtype='float')
+
     return shares, amounts_changed, trade_prices
 
 

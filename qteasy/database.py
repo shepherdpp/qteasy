@@ -1896,7 +1896,7 @@ class DataSource:
         for k, v in kwargs.items():
             res_df = res_df.loc[res_df[k] == v]
 
-        return res_df
+        return res_df.sort_index()
 
     def read_sys_table_record(self, table, *, record_id: int, **kwargs) -> dict:
         """ 读取系统操作表的数据，根据指定的id读取数据，返回一个dict
