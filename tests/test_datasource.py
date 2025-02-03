@@ -17,13 +17,31 @@ from pandas import Timestamp
 import numpy as np
 from pymysql import connect
 
-from qteasy.utilfuncs import str_to_list
 from qteasy.trading_util import _trade_time_index
 
-from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col
-from qteasy.database import _resample_data, freq_dither
-from qteasy.utilfuncs import get_main_freq_level, next_main_freq, parse_freq_string
+from qteasy.history import _adjust_freq
+
+from qteasy.data_channels import (
+    _fetch_table_data_from_tushare,
+    _fetch_table_data_from_eastmoney,
+)
+
+from qteasy.database import (
+    DataSource,
+    set_primary_key_index,
+    set_primary_key_frame,
+)
+
+from qteasy.datatables import (
+    get_primary_key_range,
+)
+
+from qteasy.utilfuncs import (
+    get_main_freq_level,
+    next_main_freq,
+    parse_freq_string,
+    freq_dither,
+)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -46,14 +64,18 @@ class TestDataSource(unittest.TestCase):
                 port=QT_CONFIG['test_db_port'],
                 user=QT_CONFIG['test_db_user'],
                 password=QT_CONFIG['test_db_password'],
-                db_name=QT_CONFIG['test_db_name']
+                db_name=QT_CONFIG['test_db_name'],
+                allow_drop_table=True,
         )
         print(f'created test data source: {self.ds_db}')
-        self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir)
+        self.ds_csv = DataSource('file', file_type='csv', file_loc=self.data_test_dir,
+                                 allow_drop_table=True)
         print(f'created test data source: {self.ds_csv}')
-        self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir)
+        self.ds_hdf = DataSource('file', file_type='hdf', file_loc=self.data_test_dir,
+                                 allow_drop_table=True)
         print(f'created test data source: {self.ds_hdf}')
-        self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir)
+        self.ds_fth = DataSource('file', file_type='fth', file_loc=self.data_test_dir,
+                                 allow_drop_table=True)
         print(f'created test data source: {self.ds_fth}')
 
         print('preparing test data...')
@@ -238,31 +260,31 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_fth.file_path, os.path.join(self.qt_root_path, 'data_test/'))
 
     def test_file_manipulates(self):
-        """ test DataSource method file_exists and drop_file"""
+        """ test DataSource method file_exists and _drop_file"""
         print(f'returning True while source type is database')
-        self.assertRaises(RuntimeError, self.ds_db.file_exists, 'basic_eps.dat')
+        self.assertRaises(RuntimeError, self.ds_db._file_exists, 'basic_eps.dat')
 
         print(f'test file that existed')
         f_name = self.ds_csv.file_path + 'test_file.csv'
         with open(f_name, 'w') as f:
             f.write('a test csv file')
-        self.assertTrue(self.ds_csv.file_exists('test_file'))
-        self.ds_csv.drop_file('test_file')
-        self.assertFalse(self.ds_csv.file_exists('test_file'))
+        self.assertTrue(self.ds_csv._file_exists('test_file'))
+        self.ds_csv._drop_file('test_file')
+        self.assertFalse(self.ds_csv._file_exists('test_file'))
 
         f_name = self.ds_hdf.file_path + 'test_file.hdf'
         with open(f_name, 'w') as f:
             f.write('a test csv file')
-        self.assertTrue(self.ds_hdf.file_exists('test_file'))
-        self.ds_hdf.drop_file('test_file')
-        self.assertFalse(self.ds_hdf.file_exists('test_file'))
+        self.assertTrue(self.ds_hdf._file_exists('test_file'))
+        self.ds_hdf._drop_file('test_file')
+        self.assertFalse(self.ds_hdf._file_exists('test_file'))
 
         f_name = self.ds_fth.file_path + 'test_file.fth'
         with open(f_name, 'w') as f:
             f.write('a test csv file')
-        self.assertTrue(self.ds_fth.file_exists('test_file'))
-        self.ds_fth.drop_file('test_file')
-        self.assertFalse(self.ds_fth.file_exists('test_file'))
+        self.assertTrue(self.ds_fth._file_exists('test_file'))
+        self.ds_fth._drop_file('test_file')
+        self.assertFalse(self.ds_fth._file_exists('test_file'))
 
         print(f'test file that does not exist')
         # 事先删除可能存在于磁盘上的文件，并判断是否存在
@@ -282,21 +304,21 @@ class TestDataSource(unittest.TestCase):
             os.remove(f_name)
         except Exception:
             pass
-        self.assertFalse(self.ds_csv.file_exists('file_that_does_not_exist'))
-        self.assertFalse(self.ds_hdf.file_exists('file_that_does_not_exist'))
-        self.assertFalse(self.ds_fth.file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_csv._file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_hdf._file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_fth._file_exists('file_that_does_not_exist'))
 
     def test_db_table_operates(self):
         """ test all database operation functions"""
-        self.ds_db.drop_db_table('new_test_table')
-        self.assertFalse(self.ds_db.db_table_exists('new_test_table'))
+        self.ds_db._drop_db_table('new_test_table')
+        self.assertFalse(self.ds_db._db_table_exists('new_test_table'))
 
         print(f'test function creating new table')
-        self.ds_db.new_db_table('new_test_table',
-                                ['ts_code', 'trade_date', 'col1', 'col2'],
-                                ['varchar(9)', 'varchar(9)', 'int', 'int'],
-                                ['ts_code', 'trade_date'])
-        self.ds_db.db_table_exists('new_test_table')
+        self.ds_db._new_db_table('new_test_table',
+                                 ['ts_code', 'trade_date', 'col1', 'col2'],
+                                 ['varchar(9)', 'varchar(9)', 'int', 'int'],
+                                 ['ts_code', 'trade_date'])
+        self.ds_db._db_table_exists('new_test_table')
 
         con = connect(
                 host=self.ds_db.host,
@@ -320,20 +342,20 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(test_columns.keys()), ['ts_code', 'trade_date', 'col1', 'col2'])
         self.assertEqual(list(test_columns.values()), ['varchar', 'varchar', 'int', 'int'])
 
-        self.ds_db.drop_db_table('new_test_table')
+        self.ds_db._drop_db_table('new_test_table')
 
     def test_write_and_read_file(self):
-        """ test DataSource method write_file and read_file"""
+        """ test DataSource method write_file and _read_file"""
         print(f'write and read a MultiIndex dataframe to all types of local sources')
         df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         set_primary_key_index(df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         print(f'following dataframe with multiple index will be written to disk in all formats:\n'
               f'{df}')
-        self.ds_csv.write_file(df, 'test_csv_file')
-        self.assertTrue(self.ds_csv.file_exists('test_csv_file'))
-        loaded_df = self.ds_csv.read_file('test_csv_file',
-                                          primary_key=['ts_code', 'trade_date'],
-                                          pk_dtypes=['str', 'TimeStamp'])
+        self.ds_csv._write_file(df, 'test_csv_file')
+        self.assertTrue(self.ds_csv._file_exists('test_csv_file'))
+        loaded_df = self.ds_csv._read_file('test_csv_file',
+                                           primary_key=['ts_code', 'trade_date'],
+                                           pk_dtypes=['str', 'TimeStamp'])
         target_index = df.index.values
         loaded_index = loaded_df.index.values
         target_values = np.array(df.values)
@@ -345,11 +367,11 @@ class TestDataSource(unittest.TestCase):
         self.assertTrue(np.allclose(target_values, loaded_values))
         self.assertEqual(list(df.columns), list(loaded_df.columns))
 
-        self.ds_hdf.write_file(df, 'test_hdf_file')
-        self.assertTrue(self.ds_hdf.file_exists('test_hdf_file'))
-        loaded_df = self.ds_hdf.read_file('test_hdf_file',
-                                          primary_key=['ts_code', 'trade_date'],
-                                          pk_dtypes=['str', 'TimeStamp'])
+        self.ds_hdf._write_file(df, 'test_hdf_file')
+        self.assertTrue(self.ds_hdf._file_exists('test_hdf_file'))
+        loaded_df = self.ds_hdf._read_file('test_hdf_file',
+                                           primary_key=['ts_code', 'trade_date'],
+                                           pk_dtypes=['str', 'TimeStamp'])
         target_index = df.index.values
         loaded_index = loaded_df.index.values
         target_values = np.array(df.values)
@@ -361,11 +383,11 @@ class TestDataSource(unittest.TestCase):
         self.assertTrue(np.allclose(target_values, loaded_values))
         self.assertEqual(list(df.columns), list(loaded_df.columns))
 
-        self.ds_fth.write_file(df, 'test_fth_file')
-        self.assertTrue(self.ds_fth.file_exists('test_fth_file'))
-        loaded_df = self.ds_fth.read_file('test_fth_file',
-                                          primary_key=['ts_code', 'trade_date'],
-                                          pk_dtypes=['str', 'TimeStamp'])
+        self.ds_fth._write_file(df, 'test_fth_file')
+        self.assertTrue(self.ds_fth._file_exists('test_fth_file'))
+        loaded_df = self.ds_fth._read_file('test_fth_file',
+                                           primary_key=['ts_code', 'trade_date'],
+                                           pk_dtypes=['str', 'TimeStamp'])
         target_index = df.index.values
         loaded_index = loaded_df.index.values
         target_values = np.array(df.values)
@@ -383,11 +405,11 @@ class TestDataSource(unittest.TestCase):
         set_primary_key_index(df2, primary_key=['ts_code'], pk_dtypes=['str'])
         print(f'following dataframe with multiple index will be written to disk in all formats:\n'
               f'{df2}')
-        self.ds_csv.write_file(df2, 'test_csv_file2')
-        self.assertTrue(self.ds_csv.file_exists('test_csv_file2'))
-        loaded_df = self.ds_csv.read_file('test_csv_file2',
-                                          primary_key=['ts_code'],
-                                          pk_dtypes=['str'])
+        self.ds_csv._write_file(df2, 'test_csv_file2')
+        self.assertTrue(self.ds_csv._file_exists('test_csv_file2'))
+        loaded_df = self.ds_csv._read_file('test_csv_file2',
+                                           primary_key=['ts_code'],
+                                           pk_dtypes=['str'])
         target_index = df2.index.values
         loaded_index = loaded_df.index.values
         target_values = np.array(df2.values)
@@ -402,11 +424,11 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(target_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
-        self.ds_hdf.write_file(df2, 'test_hdf_file2')
-        self.assertTrue(self.ds_hdf.file_exists('test_hdf_file2'))
-        loaded_df = self.ds_hdf.read_file('test_hdf_file2',
-                                          primary_key=['ts_code'],
-                                          pk_dtypes=['str'])
+        self.ds_hdf._write_file(df2, 'test_hdf_file2')
+        self.assertTrue(self.ds_hdf._file_exists('test_hdf_file2'))
+        loaded_df = self.ds_hdf._read_file('test_hdf_file2',
+                                           primary_key=['ts_code'],
+                                           pk_dtypes=['str'])
         target_index = df2.index.values
         loaded_index = loaded_df.index.values
         target_values = np.array(df2.values)
@@ -421,11 +443,11 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(target_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
-        self.ds_fth.write_file(df2, 'test_fth_file2')
-        self.assertTrue(self.ds_fth.file_exists('test_fth_file2'))
-        loaded_df = self.ds_fth.read_file('test_fth_file2',
-                                          primary_key=['ts_code'],
-                                          pk_dtypes=['str'])
+        self.ds_fth._write_file(df2, 'test_fth_file2')
+        self.assertTrue(self.ds_fth._file_exists('test_fth_file2'))
+        loaded_df = self.ds_fth._read_file('test_fth_file2',
+                                           primary_key=['ts_code'],
+                                           pk_dtypes=['str'])
         target_index = df2.index.values
         loaded_index = loaded_df.index.values
         target_values = np.array(df2.values)
@@ -441,102 +463,102 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
         print(f'Test getting file table coverages')
-        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'ts_code',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=False)
+        cov = self.ds_csv._get_file_table_coverage('test_csv_file', 'ts_code',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
-        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'ts_code',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=False)
+        cov = self.ds_hdf._get_file_table_coverage('test_hdf_file', 'ts_code',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
-        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'ts_code',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=False)
+        cov = self.ds_fth._get_file_table_coverage('test_fth_file', 'ts_code',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
 
-        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'trade_date',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=False)
+        cov = self.ds_csv._get_file_table_coverage('test_csv_file', 'trade_date',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
-        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'trade_date',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=False)
+        cov = self.ds_hdf._get_file_table_coverage('test_hdf_file', 'trade_date',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
-        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'trade_date',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=False)
+        cov = self.ds_fth._get_file_table_coverage('test_fth_file', 'trade_date',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
 
         print(f'Test getting file table coverages with only min max and count')
-        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'ts_code',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=True)
+        cov = self.ds_csv._get_file_table_coverage('test_csv_file', 'ts_code',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=True)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000005.SZ", 5])
-        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'ts_code',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=True)
+        cov = self.ds_hdf._get_file_table_coverage('test_hdf_file', 'ts_code',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=True)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000005.SZ", 5])
-        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'ts_code',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=True)
+        cov = self.ds_fth._get_file_table_coverage('test_fth_file', 'ts_code',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=True)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000005.SZ", 5])
 
-        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'trade_date',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=True)
+        cov = self.ds_csv._get_file_table_coverage('test_csv_file', 'trade_date',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=True)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113', 2])
-        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'trade_date',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=True)
+        cov = self.ds_hdf._get_file_table_coverage('test_hdf_file', 'trade_date',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=True)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113', 2])
-        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'trade_date',
-                                                  primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'],
-                                                  min_max_only=True)
+        cov = self.ds_fth._get_file_table_coverage('test_fth_file', 'trade_date',
+                                                   primary_key=['ts_code', 'trade_date'],
+                                                   pk_dtypes=['str', 'TimeStamp'],
+                                                   min_max_only=True)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
@@ -551,12 +573,12 @@ class TestDataSource(unittest.TestCase):
             set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
             print(f'following dataframe with multiple index will be written to {ds}:\n'
                   f'{df_res}')
-            ds.write_file(df_res, 'test_csv_file_chunk')
-            self.assertTrue(ds.file_exists('test_csv_file_chunk'))
+            ds._write_file(df_res, 'test_csv_file_chunk')
+            self.assertTrue(ds._file_exists('test_csv_file_chunk'))
             shares = ['000001.SZ', '000003.SZ']
             start = '20211112'
             end = '20211113'
-            loaded_df = ds.read_file(
+            loaded_df = ds._read_file(
                     'test_csv_file_chunk',
                     primary_key=['ts_code', 'trade_date'],
                     pk_dtypes=['varchar', 'date'],
@@ -595,12 +617,12 @@ class TestDataSource(unittest.TestCase):
             set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
             print(f'following dataframe will be written to {ds} in all formats:\n'
                   f'{df_res}')
-            ds.write_file(df_res, 'test_csv_file_chunk')
-            self.assertTrue(ds.file_exists('test_csv_file_chunk'))
+            ds._write_file(df_res, 'test_csv_file_chunk')
+            self.assertTrue(ds._file_exists('test_csv_file_chunk'))
             shares = ['000001.SZ', '000003.SZ']
             start = '20211112'
             end = '20211113'
-            loaded_df = ds.read_file(
+            loaded_df = ds._read_file(
                     file_name='test_csv_file_chunk',
                     primary_key=['ts_code', 'trade_date'],
                     pk_dtypes=['varchar', 'date'],
@@ -632,12 +654,12 @@ class TestDataSource(unittest.TestCase):
             set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
             print(f'following dataframe will be written to {ds} in all formats:\n'
                   f'{df_res}')
-            ds.write_file(df_res, 'test_csv_file_chunk')
-            self.assertTrue(ds.file_exists('test_csv_file_chunk'))
+            ds._write_file(df_res, 'test_csv_file_chunk')
+            self.assertTrue(ds._file_exists('test_csv_file_chunk'))
             shares = ['000001.SZ', '000003.SZ']
             start = '20211112'
             end = '20211113'
-            loaded_df = ds.read_file(
+            loaded_df = ds._read_file(
                     'test_csv_file_chunk',
                     primary_key=['ts_code', 'trade_date'],
                     pk_dtypes=['varchar', 'date'],
@@ -685,18 +707,18 @@ class TestDataSource(unittest.TestCase):
             set_primary_key_index(test_sys_df, primary_key=['account_id'], pk_dtypes=['int'])
 
             # 删除测试路径中已经存在的数据文件
-            ds.drop_file(table_name)
+            ds._drop_file(table_name)
 
-            self.assertFalse(ds.file_exists(table_name))
+            self.assertFalse(ds._file_exists(table_name))
             # 写入数据到csv, fth, hdf文件
-            ds.write_file(test_sys_df, table_name)
+            ds._write_file(test_sys_df, table_name)
 
-            self.assertTrue(ds.file_exists(table_name))
+            self.assertTrue(ds._file_exists(table_name))
 
             # 删除csv, fth, hdf文件中的部分数据
-            res = ds.delete_file_records(table_name, 'account_id', [2, 4])
+            res = ds._delete_file_records(table_name, 'account_id', [2, 4])
 
-            loaded_df = ds.read_file(table_name, primary_key=['account_id'], pk_dtypes=['int'])
+            loaded_df = ds._read_file(table_name, primary_key=['account_id'], pk_dtypes=['int'])
             # set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
 
             self.assertEqual(res, 2)
@@ -720,14 +742,14 @@ class TestDataSource(unittest.TestCase):
 
         print('deleting records that are not in the file and with wrong primary key')
         for ds in [self.ds_csv, self.ds_fth, self.ds_hdf]:
-            res = ds.delete_file_records(table_name, primary_key='account_id', record_ids=[2, 4])
+            res = ds._delete_file_records(table_name, primary_key='account_id', record_ids=[2, 4])
             self.assertEqual(res, 0)
 
             with self.assertRaises(TypeError):
-                ds.delete_file_records(table_name, primary_key='account_id', record_ids='1,2,3')
+                ds._delete_file_records(table_name, primary_key='account_id', record_ids='1,2,3')
 
     def test_write_and_read_database(self):
-        """ test DataSource method read_database and write_database"""
+        """ test DataSource method _read_database and _write_database"""
         print(f'write and read a MultiIndex dataframe to database')
         df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         print(f'following dataframe with multiple index will be written to local database:\n'
@@ -748,12 +770,12 @@ class TestDataSource(unittest.TestCase):
         con.commit()
         con.close()
         # 为确保update顺利进行，建立新表并设置primary_key
-        self.ds_db.write_database(df, table_name)
-        loaded_df = self.ds_db.read_database(table_name)
+        self.ds_db._write_database(df, table_name, ['ts_code', 'trade_date'])
+        loaded_df = self.ds_db._read_database(table_name)
         saved_index = df.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df.values)
-        loaded_values = np.array(loaded_df.values)
+        saved_values = np.array(df.sort_values(['trade_date']).values)
+        loaded_values = np.array(loaded_df.sort_values(['trade_date']).values)
         print(f'retrieve whole arr table from database\n'
               f'df retrieved from database is\n'
               f'{loaded_df}\n')
@@ -765,12 +787,12 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(table_name,
-                                             share_like_pk='ts_code',
-                                             shares=["000001.SZ", "000003.SZ"],
-                                             date_like_pk='trade_date',
-                                             start='20211112',
-                                             end='20211112')
+        loaded_df = self.ds_db._read_database(table_name,
+                                              share_like_pk='ts_code',
+                                              shares=["000001.SZ", "000003.SZ"],
+                                              date_like_pk='trade_date',
+                                              start='20211112',
+                                              end='20211112')
         print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ"]\n'
               f'start/end = 20211112/20211112\n'
@@ -804,8 +826,8 @@ class TestDataSource(unittest.TestCase):
         con.commit()
         con.close()
 
-        self.ds_db.write_database(self.df2, table_name)
-        loaded_df = self.ds_db.read_database(table_name)
+        self.ds_db._write_database(self.df2, table_name, ['ts_code'])
+        loaded_df = self.ds_db._read_database(table_name)
         saved_index = self.df2.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(self.df2.values)
@@ -820,9 +842,9 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(table_name,
-                                             share_like_pk='ts_code',
-                                             shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
+        loaded_df = self.ds_db._read_database(table_name,
+                                              share_like_pk='ts_code',
+                                              shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
         print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"]\n'
               f'df retrieved from saved csv file is\n'
@@ -840,14 +862,14 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
         print(f'Test getting database table coverages')
-        cov = self.ds_db.get_db_table_coverage(table_name, 'ts_code')
+        cov = self.ds_db._get_db_table_coverage(table_name, 'ts_code')
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ",
                           "000006.SZ", "000007.SZ", "000008.SZ", "000009.SZ", "000010.SZ"])
 
-        cov = self.ds_db.get_db_table_coverage('test_db_table', 'trade_date')
+        cov = self.ds_db._get_db_table_coverage('test_db_table', 'trade_date')
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
@@ -882,15 +904,15 @@ class TestDataSource(unittest.TestCase):
                 }
         )
 
-        self.ds_db.write_database(test_sys_df, table_name)
-        loaded_df = self.ds_db.read_database(table_name)
+        self.ds_db._write_database(test_sys_df, table_name, ['account_id'])
+        loaded_df = self.ds_db._read_database(table_name)
         set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
         print(f'df retrieved from database is\n'
               f'{loaded_df}\n')
 
         print(f'delete records from database table')
-        res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])
-        loaded_df = self.ds_db.read_database(table_name)
+        res = self.ds_db._delete_database_records(table_name, 'account_id', [2, 4])
+        loaded_df = self.ds_db._read_database(table_name)
         set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
         print(f'df retrieved from database after deleting records is\n'
               f'{loaded_df}\n')
@@ -915,8 +937,8 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(loaded_df.loc[5, 'total_invest'], 5000)
 
         print('delete records that are not found in the database table')
-        res = self.ds_db.delete_database_records(table_name, 'account_id', [2, 4])
-        loaded_df = self.ds_db.read_database(table_name)
+        res = self.ds_db._delete_database_records(table_name, 'account_id', [2, 4])
+        loaded_df = self.ds_db._read_database(table_name)
         set_primary_key_index(loaded_df, primary_key=['account_id'], pk_dtypes=['int'])
         print(f'df retrieved from database after deleting records is\n'
               f'{loaded_df}\n')
@@ -928,12 +950,12 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(loaded_df.index[2], 5)
 
         print('wrong parameters are given')
-        self.assertRaises(RuntimeError, self.ds_db.delete_database_records, table_name, 'wrong_key', [1])
-        self.assertRaises(TypeError, self.ds_db.delete_database_records, table_name, 'account_id', 1)
-        self.assertRaises(RuntimeError, self.ds_db.delete_database_records, table_name, 'account_id', '1, 2')
+        self.assertRaises(RuntimeError, self.ds_db._delete_database_records, table_name, 'wrong_key', [1])
+        self.assertRaises(TypeError, self.ds_db._delete_database_records, table_name, 'account_id', 1)
+        self.assertRaises(RuntimeError, self.ds_db._delete_database_records, table_name, 'account_id', '1, 2')
 
     def test_update_database(self):
-        """ test the function update_database()"""
+        """ test the function _update_database()"""
         print(f'update a database table with new arr on same primary key')
         df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         df_add = set_primary_key_frame(self.df_add, primary_key=['ts_code', 'trade_date'],
@@ -948,13 +970,13 @@ class TestDataSource(unittest.TestCase):
         # 删除数据库中的临时表
         self.ds_db.drop_table_data(table_name)
         # 为确保update顺利进行，建立新表并设置primary_key
-        self.ds_db.new_db_table(table_name,
-                                columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
-                                dtypes=['varchar(9)', 'date', 'float', 'float', 'float', 'float'],
-                                primary_key=['ts_code', 'trade_date'])
-        self.ds_db.write_database(df, table_name)
-        self.ds_db.update_database(df_add, table_name, ['ts_code', 'trade_date'])
-        loaded_df = self.ds_db.read_database(table_name)
+        self.ds_db._new_db_table(table_name,
+                                 columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
+                                 dtypes=['varchar(9)', 'date', 'float', 'float', 'float', 'float'],
+                                 primary_key=['ts_code', 'trade_date'])
+        self.ds_db._write_database(df, table_name, ['ts_code', 'trade_date'])
+        self.ds_db._update_database(df_add, table_name, ['ts_code', 'trade_date'])
+        loaded_df = self.ds_db._read_database(table_name)
         saved_index = df_res.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(df_res.values)
@@ -1021,7 +1043,7 @@ class TestDataSource(unittest.TestCase):
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
-            df = data_source.fetch_history_table_data(test_table, 'df', df=self.built_in_add_df)
+            df = self.built_in_add_df
             data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
             print(f'df read from arr source after updating with merge type IGNORE:\n'
@@ -1038,8 +1060,7 @@ class TestDataSource(unittest.TestCase):
             data_source.write_table_data(self.built_in_df, test_table)
         # 测试写入新增数据并设置合并类型为"update"
         for data_source in all_data_sources:
-            df = data_source.fetch_history_table_data(test_table, 'df', df=self.built_in_add_df)
-            data_source.update_table_data(test_table, df, 'update')
+            data_source.update_table_data(test_table, df=self.built_in_add_df, merge_type='update')
             df = data_source.read_table_data(test_table)
             print(f'df read from arr source after updating with merge type UPDATE:\n'
                   f'{data_source.source_type}-{data_source.connection_type}\n{df}')
@@ -1096,7 +1117,7 @@ class TestDataSource(unittest.TestCase):
             # 下载并写入数据到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
-            df = self.ds_csv.fetch_history_table_data(table, 'tushare', **tables_to_test[table])
+            df = _fetch_table_data_from_tushare(table, **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table arr ({table}) from tushare for '
@@ -1118,7 +1139,7 @@ class TestDataSource(unittest.TestCase):
             # 下载数据并添加到表中
             print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
-            df = self.ds_hdf.fetch_history_table_data(table, 'tushare', **tables_to_add[table])
+            df = _fetch_table_data_from_tushare(table, **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table arr ({table}) from tushare for '
@@ -1240,87 +1261,6 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(df.index[0], 3)
                 self.assertEqual(df.index[1], 5)
 
-    def test_get_history_panel_data(self):
-        """ test getting arr, from real database """
-        ds = qt.QT_DATA_SOURCE
-        shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
-        htypes = 'pe, close, open, swing, strength'
-        htypes = str_to_list(htypes)
-        start = '20210101'
-        end = '20210301'
-        asset_type = 'E, IDX, FD'
-        freq = 'd'
-        adj = 'back'
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj=adj)
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with backward price recover:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with forward price recover:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with price:\n{dfs}')
-        htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq='w',
-                                  adj='forward')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htypes)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history data:\n{dfs}')
-        dfs = ds.get_history_data(shares=shares,
-                                  htypes='close, high',
-                                  start=None,
-                                  end=None,
-                                  row_count=20,
-                                  asset_type='E, IDX, FD',
-                                  freq='d',
-                                  adj='none')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['close', 'high'])
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history data:\n{dfs}')
-
-    def test_get_index_weights(self):
-        """ test get_index_weights() function"""
-        ds = qt.QT_DATA_SOURCE
-        dfs = ds.get_index_weights('000300.SH,000002.SZ',
-                                   start='20200101',
-                                   end='20200102',
-                                   shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH')
-        self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['wt-000300.SH', 'wt-000002.SZ'])
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(dfs)
-
     def test_get_table_info(self):
         """ 获取打印数据表的基本信息"""
         ds = qt.QT_DATA_SOURCE
@@ -1352,125 +1292,6 @@ class TestDataSource(unittest.TestCase):
             print(ov[['pk1', 'min1', 'max1']])
             print(ov[['pk2', 'min2', 'max2']])
 
-    def test_get_related_tables(self):
-        """根据数据名称查找相关数据表及数据列名称"""
-        # 精确查找数据表及数据列
-        tbls = htype_to_table_col(htypes='close', freq='d')
-        print("by: htype_to_table_col(htypes='close', freq='d')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close']}
-        )
-        tbls = htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')
-        print("by: htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'income': ['invest_income']}
-        )
-        # 精确查找多个数据表及数据列
-        tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')
-        print("by: htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close', 'open']}
-        )
-        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')
-        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'index_weekly': ['open'],
-                 'stock_daily':  ['close']}
-        )
-        tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
-        print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stk_managers': ['name'],
-                 'stock_daily':  ['close']}
-        )
-        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
-        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'index_daily':  ['close', 'open'],
-                 'index_weekly': ['close', 'open'],
-                 'stock_daily':  ['close', 'open'],
-                 'stock_weekly': ['close', 'open']}
-        )
-        # 部分无法精确匹配时，只输出可以匹配的部分
-        tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
-        print("by: htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'index_daily':  ['close'],
-                 'index_weekly': ['close'],
-                 'stock_daily':  ['close'],
-                 'stock_weekly': ['close']}
-        )
-        tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')
-        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close']}
-        )
-        # 全部无法精确匹配时，不报错，输出空集合
-        tbls = htype_to_table_col(htypes='clese, opan', freq='d, t', asset_type='E, IDX', method='exact')
-        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {}
-        )
-        # 当soft_freq为True时，匹配查找相应的可等分freq
-        tbls = htype_to_table_col(htypes='close, open', freq='2d',
-                                  asset_type='E, IDX', method='exact', soft_freq=True)
-        print(f"by: htype_to_table_col(htypes='close, open', freq='2d, 2d', "
-              f"asset_type='E, IDX', method='exact', soft_freq=True)")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_daily': ['close'],
-                 'index_daily': ['open']}
-        )
-
-        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min',
-                                  asset_type='E, IDX', method='permute', soft_freq=True)
-        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
-              f"asset_type='E, IDX', method='permute', soft_freq=True)")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_weekly':    ['close'],
-                 'index_weekly':    ['close'],
-                 'stock_15min':     ['close'],
-                 'index_15min':     ['close'],
-                 'stock_indicator': ['pe'],
-                 'index_indicator': ['pe'],
-                 'income':          ['invest_income']
-                 }
-        )
-
-        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun',
-                                  asset_type='E, IDX', method='exact', soft_freq=True)
-        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
-              f"asset_type='E, IDX', method='exact', soft_freq=True)")
-        print(f'found table: {tbls}')
-        self.assertEqual(
-                tbls,
-                {'stock_weekly':    ['close'],
-                 'index_indicator': ['pe'],
-                 'income':          ['invest_income']
-                 }
-        )
-
     def test_freq_resample(self):
         """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（频率到日频以下时，仅保留交易时段）"""
         print(f'build test data')
@@ -1492,8 +1313,8 @@ class TestDataSource(unittest.TestCase):
         print(f'hourly data:\n{hourly_data.head(25)}')
         print(f'hourly data tt:\n{hourly_data_tt.head(25)}')
         print(f'verify that resampled from hourly data and hourly tt data are the same')
-        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill', b_days_only=False)
-        resampled_tt = _resample_data(hourly_data_tt, target_freq='15min', method='ffill', b_days_only=False)
+        resampled = _adjust_freq(hourly_data, target_freq='15min', method='ffill', b_days_only=False)
+        resampled_tt = _adjust_freq(hourly_data_tt, target_freq='15min', method='ffill', b_days_only=False)
         self.assertTrue(np.allclose(resampled, resampled_tt))
         print('checks resample hourly data to 15 min')
         print(f'resampled data:\n{resampled.head(25)}')
@@ -1511,10 +1332,10 @@ class TestDataSource(unittest.TestCase):
                     self.assertTrue(np.allclose(res, target))
 
         print('checks resample hourly data to 2d')
-        resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
-        resampled_2 = _resample_data(hourly_data, target_freq='2d', method='bfill')
-        resampled_3 = _resample_data(hourly_data, target_freq='2d', method='nan')
-        resampled_4 = _resample_data(hourly_data, target_freq='2d', method='zero')
+        resampled_1 = _adjust_freq(hourly_data, target_freq='2d', method='ffill')
+        resampled_2 = _adjust_freq(hourly_data, target_freq='2d', method='bfill')
+        resampled_3 = _adjust_freq(hourly_data, target_freq='2d', method='nan')
+        resampled_4 = _adjust_freq(hourly_data, target_freq='2d', method='zero')
         print(resampled_1)
         print(resampled_2)
         print(resampled_3)
@@ -1525,8 +1346,8 @@ class TestDataSource(unittest.TestCase):
         self.assertTrue(np.allclose(resampled_1, resampled_4))
 
         print('check sample hourly data to d with proper methods, with none business days')
-        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False)
-        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean', b_days_only=False)
+        resampled_1 = _adjust_freq(hourly_data, target_freq='d', method='last', b_days_only=False)
+        resampled_2 = _adjust_freq(hourly_data, target_freq='d', method='mean', b_days_only=False)
         print(resampled_1)
         sampled_rows = [23, 47, 71, 95, 119, 143, 167, 191, 215]
         for pos in range(len(sampled_rows)):
@@ -1547,8 +1368,8 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('check sample hourly data to d with proper methods, without none business days')
-        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
-        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
+        resampled_1 = _adjust_freq(hourly_data, target_freq='d', method='last')
+        resampled_2 = _adjust_freq(hourly_data, target_freq='d', method='mean')
         print(resampled_1)
         print(hourly_data.to_string())
         # 被选出的交易日：
@@ -1576,9 +1397,9 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample daily data to 30min data')
-        daily_data = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
+        daily_data = _adjust_freq(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
         print(daily_data)
-        resampled = _resample_data(daily_data, target_freq='30min', method='ffill', b_days_only=False)
+        resampled = _adjust_freq(daily_data, target_freq='30min', method='ffill', b_days_only=False)
         print(resampled)
         # TODO: last day data missing when resampling daily data to sub-daily data
         #   this is to be improved
@@ -1592,7 +1413,7 @@ class TestDataSource(unittest.TestCase):
         print(f'test resample, below daily freq')
         print(weekly_data)
         print('resample weekly data to daily ffill')
-        resampled = _resample_data(weekly_data, target_freq='d', method='ffill', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='d', method='ffill', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 7), (7, 14), (14, 21), (21, 28), (28, 35), (35, 42),
                         (42, 49), (49, 56), (56, 63), (63, 70), (70, 77), (77, 84)]
@@ -1603,7 +1424,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to daily bfill')
-        resampled = _resample_data(weekly_data, target_freq='d', method='bfill', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='d', method='bfill', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1), (1, 8), (8, 15), (15, 22), (22, 29), (29, 36),
                         (36, 43), (43, 50), (50, 57), (57, 64), (64, 71), (71, 78), (78, 84)]
@@ -1614,7 +1435,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to daily none')
-        resampled = _resample_data(weekly_data, target_freq='d', method='nan', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='d', method='nan', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
         for pos in range(len(resampled)):
@@ -1627,7 +1448,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(all(np.isnan(item) for item in res))
 
         print('resample weekly data to daily zero')
-        resampled = _resample_data(weekly_data, target_freq='d', method='zero', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='d', method='zero', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
         for pos in range(len(resampled)):
@@ -1640,7 +1461,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(all(item == 0. for item in res))
 
         print('resample weekly data to bi-weekly sunday last with none business days')
-        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10]
         for pos in range(len(sampled_rows)):
@@ -1649,7 +1470,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to bi-weekly sunday last without none business days')
-        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10]
         for pos in range(len(sampled_rows)):
@@ -1658,7 +1479,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Friday last')
-        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10, 12]
         for pos in range(len(sampled_rows)):
@@ -1667,7 +1488,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Friday last without none business days')
-        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10, 12]
         for pos in range(len(sampled_rows)):
@@ -1676,7 +1497,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Wednesday first')
-        resampled = _resample_data(weekly_data, target_freq='2w-Wed', method='first', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='2w-Wed', method='first', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 1, 3, 5, 7, 9]
         for pos in range(len(sampled_rows)):
@@ -1685,7 +1506,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly sum')
-        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='m', method='sum', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -1694,7 +1515,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly sum without none business days')
-        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='m', method='sum', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -1703,7 +1524,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly max')
-        resampled = _resample_data(weekly_data, target_freq='m', method='high', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='m', method='high', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -1712,7 +1533,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly avg')
-        resampled = _resample_data(weekly_data, target_freq='m', method='mean', b_days_only=False)
+        resampled = _adjust_freq(weekly_data, target_freq='m', method='mean', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -1839,13 +1660,13 @@ class TestDataSource(unittest.TestCase):
         """ 测试频率操作函数"""
         print('test parse_freq_string function')
         self.assertEqual(parse_freq_string('t'), (1, 'T', ''))
-        self.assertEqual(parse_freq_string('min'), (1, '1MIN', ''))
-        self.assertEqual(parse_freq_string('15min'), (1, '15MIN', ''))
-        self.assertEqual(parse_freq_string('15min', std_freq_only=True), (15, 'MIN', ''))
-        self.assertEqual(parse_freq_string('75min'), (5, '15MIN', ''))
-        self.assertEqual(parse_freq_string('90min'), (3, '30MIN', ''))
-        self.assertEqual(parse_freq_string('60min'), (2, '30MIN', ''))
-        self.assertEqual(parse_freq_string('H'), (1, 'H', ''))
+        self.assertEqual(parse_freq_string('min'), (1, '1min', ''))
+        self.assertEqual(parse_freq_string('15min'), (1, '15min', ''))
+        self.assertEqual(parse_freq_string('15min', std_freq_only=True), (15, 'min', ''))
+        self.assertEqual(parse_freq_string('75min'), (5, '15min', ''))
+        self.assertEqual(parse_freq_string('90min'), (3, '30min', ''))
+        self.assertEqual(parse_freq_string('60min'), (2, '30min', ''))
+        self.assertEqual(parse_freq_string('H'), (1, 'h', ''))
         self.assertEqual(parse_freq_string('14d'), (14, 'D', ''))
         self.assertEqual(parse_freq_string('2w-Fri'), (2, 'W', 'FRI'))
         self.assertEqual(parse_freq_string('w'), (1, 'W', ''))
@@ -1858,14 +1679,14 @@ class TestDataSource(unittest.TestCase):
         self.assertIsNone(get_main_freq_level('wrong_input'), None)
 
         print('test next_main_freq function')
-        self.assertEqual(next_main_freq('5min', 'up'), '1MIN')
+        self.assertEqual(next_main_freq('5min', 'up'), '1min')
         self.assertEqual(next_main_freq('w', 'up'), 'D')
         self.assertEqual(next_main_freq('m', 'up'), 'W')
-        self.assertEqual(next_main_freq('w', 'down'), 'M')
-        self.assertEqual(next_main_freq('m', 'down'), 'Q')
+        self.assertEqual(next_main_freq('w', 'down'), 'ME')
+        self.assertEqual(next_main_freq('m', 'down'), 'QE')
         self.assertEqual(next_main_freq('d', 'down'), 'W')
-        self.assertEqual(next_main_freq('15min', 'down'), '30MIN')
-        self.assertEqual(next_main_freq('30min', 'down'), 'H')
+        self.assertEqual(next_main_freq('15min', 'down'), '30min')
+        self.assertEqual(next_main_freq('30min', 'down'), 'h')
 
         print('test freq_dither function')
         self.assertEqual(freq_dither('d', ['15min', 'd', 'w', 'm']), 'D')
@@ -1873,13 +1694,13 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('w', ['15min', 'd', 'w', 'm']), 'W')
         self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'w', 'm']), 'W')
         self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'm']), 'D')
-        self.assertEqual(freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm']), '15MIN')
-        self.assertEqual(freq_dither('40min', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
-        self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30MIN')
-        self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15MIN')
-        self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
+        self.assertEqual(freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm']), '15min')
+        self.assertEqual(freq_dither('40min', ['5min', '15min', '30min', 'd', 'w', 'm']), '5min')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30min')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15min')
+        self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5min')
         self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
-        self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
+        self.assertEqual(freq_dither('d', ['m', 'q']), 'ME')
         self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
 
     def test_manipulating_primary_keys(self):
@@ -2360,16 +2181,6 @@ class TestDataSource(unittest.TestCase):
                         position='long',
                 )
                 print(f'res: {res}')
-
-    def test_fetch_realtime_price_data(self):
-        """ test datasource function fetch_realtime_price_data()"""
-        res = self.ds_csv.fetch_realtime_price_data(
-                table='stock_5min',
-                channel='eastmoney',
-                symbols=['000001.SZ', '000002.SZ'],
-        )
-        print(res)
-        self.assertIsInstance(res, pd.DataFrame)
 
     def test_get_sys_teble_last_id(self):
         """ test datasource function get_sys_table_last_id()"""

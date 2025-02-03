@@ -16,34 +16,42 @@ import time
 import warnings
 import numpy as np
 import pandas as pd
+import types
 
 from numba import njit
 from functools import wraps, lru_cache
 
-import qteasy
-
 TIME_FREQ_LEVELS = {
-    'Y':      10,
-    'Q':      20,
-    'M':      30,
-    'W':      40,
-    'D':      50,
-    'H':      60,
-    '30MIN':  70,
-    '15MIN':  80,
-    '5MIN':   90,
-    '1MIN':   100,
-    'MIN':    100,
-    'T':      110,
-    'TICK':   110,
+    'Y':     10,
+    'YE':    10,
+    'Q':     20,
+    'QE':    20,
+    'M':     30,
+    'ME':    30,
+    'W':     40,
+    'D':     50,
+    'H':     60,
+    'h':     60,
+    '30MIN': 70,
+    '30min': 70,
+    '15MIN': 80,
+    '15min': 80,
+    '5MIN':  90,
+    '5min':  90,
+    '1MIN':  100,
+    '1min':  100,
+    'MIN':   100,
+    'min':   100,
+    'T':     110,
+    'TICK':  110,
 }  # TODO: 最好是将所有的frequency封装为一个类，确保字符串大小写正确，且引入复合频率的比较和处理
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
-AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
-PROGRESS_BAR = {0:  '----------------------------------------', 1: '#---------------------------------------',
-                2:  '##--------------------------------------', 3: '###-------------------------------------',
-                4:  '####------------------------------------', 5: '#####-----------------------------------',
-                6:  '######----------------------------------', 7: '#######---------------------------------',
-                8:  '########--------------------------------', 9: '#########-------------------------------',
+AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']  # TODO: add 'HK', 'US' to available_asset_types
+PROGRESS_BAR = {0:  '----------------------------------------', 1:  '#---------------------------------------',
+                2:  '##--------------------------------------', 3:  '###-------------------------------------',
+                4:  '####------------------------------------', 5:  '#####-----------------------------------',
+                6:  '######----------------------------------', 7:  '#######---------------------------------',
+                8:  '########--------------------------------', 9:  '#########-------------------------------',
                 10: '##########------------------------------', 11: '###########-----------------------------',
                 12: '############----------------------------', 13: '#############---------------------------',
                 14: '##############--------------------------', 15: '###############-------------------------',
@@ -165,6 +173,7 @@ def freq_dither(freq, freq_list):
 
     if len(lower_level_arg_list) > 0:
         return freq_list[lower_level_arg_list[-1]]
+
     return None
 
 
@@ -232,14 +241,22 @@ def parse_freq_string(freq, std_freq_only=False):
         main_freq = str(min_qty) + main_freq
         qty = qty // min_qty
 
+    main_freq = pandas_freq_alias_version_conversion(main_freq)
+
     return qty, main_freq, sub_freq
 
 
-def get_main_freq_level(freq):
+def get_main_freq_level(freq) -> int or None:
     """ 确定并返回freqency的级别
 
-    :param freq:
-    :return:
+    Parameters
+    ----------
+    freq: str
+        频率字符串
+
+    Returns
+    -------
+    int: 频率级别
     """
     qty, main_freq, sub_freq = parse_freq_string(freq)
     if main_freq in TIME_FREQ_STRINGS:
@@ -269,6 +286,8 @@ def next_main_freq(freq, direction='up'):
         elif direction == 'down':
             target_pos -= 1
         if get_main_freq_level(target_freq) != level:
+            target_freq = pandas_freq_alias_version_conversion(target_freq)
+
             return target_freq
 
 
@@ -300,9 +319,9 @@ def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError,]
+                    exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError, ]
                     error_str = str(e)
-                    if ('没有访问该接口的权限' in error_str) or ('api init error' in error_str):
+                    if ('没有访问该接口的权限' in error_str) or ('权限' in error_str) or ('最多访问该接口' in error_str):
                         raise e
                     if e.__class__ in exception_to_escape:
                         raise e
@@ -425,9 +444,6 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
     '~ 1D'
     """
 
-    # TODO: 此函数在estimation=True时，输出结果不准确，需要修正，例如，86399秒应该输出为1天，
-    #  而不是23小时
-    # TODO: 修正函数输出值的错，在estimation=True时，输出结果不正确）
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
@@ -457,10 +473,10 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
             return f'~{days:.0f}D' if hours == 0 else f'~{days:.0f}D{hours:.0f}H'
         else:
             return f'about {days:.0f} day' \
-                    if hours == 0 \
-                    else f'about {days:.0f} day {hours:.0f} hour' \
-                    if days == 1 \
-                    else f'about {days:.0f} days {hours:.0f} hours'
+                if hours == 0 \
+                else f'about {days:.0f} day {hours:.0f} hour' \
+                if days == 1 \
+                else f'about {days:.0f} days {hours:.0f} hours'
     else:  # estimation:
         seconds = int(milliseconds / 1000)
         milliseconds = milliseconds - seconds * 1000
@@ -761,7 +777,7 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = ''):
+def progress_bar(prog: int, total: int = 100, *, comments: str = '', column_width: int = -1, cut_off_pos: float = 0.8):
     """根据输入的数字生成进度条字符串并刷新
 
     Parameters
@@ -772,17 +788,32 @@ def progress_bar(prog: int, total: int = 100, comments: str = ''):
         总体进度，默认为100
     comments: str, optional
         需要显示在进度条中的文字信息
+    column_width: int, optional, default: -1
+        进度条的宽度，如果为-1则自动获取终端的宽度, 默认为-1
+        如果为0，则宽度不限制，输入其他整数则限制进度条的宽度
+    cut_off_pos: float, optional, default: 0.8
+        进度条的截断位置，当进度条长度超过column_width时，进度条将被从cut_off_pos位置截断，只显示前后部分
     """
-    column_width, _ = shutil.get_terminal_size()
+    if column_width == -1:
+        column_width, _ = shutil.get_terminal_size()
+    if column_width < 20:
+        column_width = 20
 
-    if total > 0:
-        if prog > total:
-            prog = total
-        progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                       f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
-        progress_str = adjust_string_length(progress_str, column_width)
-        sys.stdout.write(progress_str)
-        sys.stdout.flush()
+    if cut_off_pos > 1:
+        cut_off_pos = 1
+
+    if total <= 0:
+        return
+
+    if prog > total:
+        prog = total
+
+    progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
+                   f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+    if column_width > 0:
+        progress_str = adjust_string_length(progress_str, column_width, cut_off=cut_off_pos)
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
 
 
 def get_current_timezone_datetime(time_zone='local'):
@@ -931,6 +962,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     >>> is_market_trade_day('2019-01-01')
     False
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     try:
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as ex:
@@ -943,9 +977,10 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
                                                       'DCE', 'INE', 'IB', 'XHKG']:
         msg = f'exchange \'{exchange}\' is not a valid input'
         raise TypeError(msg)
-    if qteasy.QT_TRADE_CALENDAR is not None:
+    if QT_TRADE_CALENDAR is not None:
         try:
-            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+            exchange_trade_cal = QT_TRADE_CALENDAR.loc[(slice(None), exchange), ]
+            exchange_trade_cal.index = exchange_trade_cal.index.get_level_values(0)
         except KeyError as e:
             e.extra_info = f'Trade Calender for exchange: {exchange} is not downloaded, please refill data'
             raise e
@@ -957,9 +992,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         return is_open == 1
     else:
         msg = 'Trade Calendar is not available,  will use maybe_trade_day instead to check trade day\n' \
-                'Trade Calendar can be downloaded to DataSource, Use:\n' \
-                'qteasy.refill_data_source(tables="basics")\n' \
-                'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+              'Trade Calendar can be downloaded to DataSource, Use:\n' \
+              'qteasy.refill_data_source(tables="basics")\n' \
+              'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
         warnings.warn(msg, RuntimeWarning)
         return maybe_trade_day(_date)
 
@@ -975,29 +1010,31 @@ def last_known_market_trade_day(exchange: str = 'SSE'):
             SSE:    上交所, SZSE:   深交所,
             CFFEX:  中金所, SHFE:   上期所,
             CZCE:   郑商所, DCE:    大商所,
-            INE:    上能源, IB:     银行间,
-            XHKG:   港交所
+            INE:    上能源,
 
     Returns
     -------
     datetime-like
         最后一个已知交易日的日期
     """
-    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE',
-                                                      'DCE', 'INE', 'IB', 'XHKG']:
+
+    from qteasy import QT_TRADE_CALENDAR
+
+    if not isinstance(exchange, str) and exchange in ['SSE', 'SZSE', 'CFFEX', 'SHFE', 'CZCE', 'DCE', 'INE']:
         msg = f'exchange \'{exchange}\' is not a valid input'
         raise TypeError(msg)
-    if qteasy.QT_TRADE_CALENDAR is not None:
+    if QT_TRADE_CALENDAR is not None:
         try:
-            exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+            exchange_trade_cal = QT_TRADE_CALENDAR.loc[(slice(None), exchange), ]
+            exchange_trade_cal.index = exchange_trade_cal.index.get_level_values(0)
         except KeyError as e:
             msg = f'Trade Calender for exchange: {e} was not properly downloaded, please refill data'
             raise KeyError(msg)
         return exchange_trade_cal[exchange_trade_cal.is_open == 1].index.max()
     else:
         msg = 'Trade Calendar is not available, please download basic data into DataSource, Use:\n' \
-               'qteasy.refill_data_source(tables="basics")\n' \
-               'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+              'qteasy.refill_data_source(tables="basics")\n' \
+              'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
         raise RuntimeError(msg)
 
 
@@ -1035,19 +1072,23 @@ def prev_market_trade_day(date, exchange='SSE'):
     --------
     is_market_trade_day()
     """
+
+    from qteasy import QT_TRADE_CALENDAR
+
     try:
         _date = pd.to_datetime(date).floor(freq='d')
     except Exception as e:
         e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise e
-    if qteasy.QT_TRADE_CALENDAR is not None:
-        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+    if QT_TRADE_CALENDAR is not None:
+        exchange_trade_cal = QT_TRADE_CALENDAR.loc[(slice(None), exchange), ]
+        exchange_trade_cal.index = exchange_trade_cal.index.get_level_values(0)
         pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
         return pd.to_datetime(pretrade_date)
     else:
         msg = 'Trade Calendar is not available, please download basic data into DataSource, Use:\n' \
-                'qteasy.refill_data_source(tables="basics")\n' \
-                'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
+              'qteasy.refill_data_source(tables="basics")\n' \
+              'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
         raise RuntimeError(msg)
 
 
@@ -1173,8 +1214,30 @@ def weekday_name(weekday: int):
     return weekday_names[weekday]
 
 
-def list_truncate(lst, trunc_size):
+def date_to_quarter_format(date: [str, pd.Timestamp]) -> str:
+    """ convert a Timestamp or date like to quarter format like 2020Q3"""
+    try:
+        date = pd.to_datetime(date).floor(freq='d')
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
+    return f'{date.year}Q{date.quarter}'
+
+
+def date_to_month_format(date: [str, pd.Timestamp]) -> str:
+    """ convert a Timestamp or date like to month format like 202012"""
+    try:
+        date = pd.to_datetime(date).floor(freq='d')
+    except Exception as e:
+        e.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise e
+    return f'{date.year}{date.month:02d}'
+
+
+def list_truncate(lst: list, trunc_size: int, as_list: bool = False):
     """ 将一个list切分成若干个等长的sublist，除最末一个列表以外，所有列表的元素数量都为trunc_size
+
+    如果设置as_list参数为False，则该函数返回一个generator，可以通过list()函数将其转化为列表
 
     Parameters
     ----------
@@ -1182,6 +1245,8 @@ def list_truncate(lst, trunc_size):
         需要被切分的列表
     trunc_size: int
         列表中元素数量
+    as_list: bool, default: True
+        是否返回一个列表，如果为True，则返回一个列表，否则返回一个generator
 
     Returns
     -------
@@ -1193,8 +1258,10 @@ def list_truncate(lst, trunc_size):
     >>> [[1,2,3,4], [5,6,7,8], [9,0]]
     """
 
-    if not isinstance(lst, list):
-        msg = f'first parameter should be a list, got {type(lst)}'
+    # TODO: maybe? make this function workable for generators
+    import types
+    if not isinstance(lst, (list, types.GeneratorType)):
+        msg = f'first parameter should be a list or a generator, got {type(lst)}'
         raise TypeError(msg)
     if not isinstance(trunc_size, int):
         msg = f'second parameter should be an integer larger than 0'
@@ -1202,26 +1269,14 @@ def list_truncate(lst, trunc_size):
     if not trunc_size > 0:
         msg = f'second parameter should be an integer larger than 0, got {trunc_size}'
         raise ValueError(msg)
-    total = len(lst)
-    if total <= trunc_size:
-        return [lst]
+    if as_list:
+        total = len(lst)
+        if total <= trunc_size:
+            return [lst]
+        else:
+            return [lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size)]
     else:
-        sub_lists = []
-        begin = 0
-        end = trunc_size
-        while begin < total:
-            sub_lists.append(lst[begin:end])
-            begin += trunc_size
-            end += trunc_size
-        return sub_lists
-    # a different implementation:
-    # return [lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size)]
-    # or a more pythonic way:
-    # return list(map(lambda i: lst[i:i+trunc_size], range(0, len(lst), trunc_size)))
-    # or return a generator:
-    # return (lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size))
-    # or create a generator with yield from:
-    # yield from (lst[i:i+trunc_size] for i in range(0, len(lst), trunc_size))
+        return (lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size))
 
 
 def is_number_like(key: [str, int, float]) -> bool:
@@ -1394,7 +1449,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data(raise_error=False)
+    df_s, df_i, df_f, df_ft, df_o, df_ths = ds.get_all_basic_table_data(raise_error=False)
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     if asset_types is None:
@@ -1460,6 +1515,13 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     code_matched.update({'count': count})
     code_matched = {k: v for k, v in code_matched.items() if v != {}}
     return code_matched
+
+
+def format_str_to_float(x):
+    try:
+        return float(x) if x != "" else 0
+    except:
+        return 0
 
 
 def human_file_size(file_size: int) -> str:
@@ -1936,11 +1998,16 @@ def truncate_string(s, n, padder='.') -> str:  # to be deprecated
     'h..'
     """
     warnings.warn('truncate_string will be deprecated, use adjust_string_length instead', DeprecationWarning)
-    return adjust_string_length(s, n, ellipsis=padder)
+    return adjust_string_length(s, n, filler=padder)
 
 
 def adjust_string_length(s, n, *,
-                         ellipsis='.', padder=' ', hans_aware=False, padding='right', format_tags=False) -> str:
+                         filler: str = '.',
+                         padder: str = ' ',
+                         cut_off: float = 0.7,
+                         hans_aware: bool = False,
+                         padding: str = 'right',
+                         format_tags: bool = False) -> str:
     """ 调整字符串为指定长度，如果字符串过长则将其截短，并在末尾添加省略号提示，
         如果字符串过短则在末尾添加空格补齐长度
 
@@ -1954,10 +2021,12 @@ def adjust_string_length(s, n, *,
         字符串
     n: int
         需要保留的长度
-    ellipsis: str, Default: '.'
+    filler: str, Default: '.'
         填充在截短的字符串后用于表示省略号的字符，默认为'.'
     padder: str, Default: ' '
         填充在字符串末尾补充长度的字符，默认为空格
+    cut_off: float, Default: 0.7
+        截断字符串的比例，如果字符串长度超过n，则截断的比例，默认为0.7
     hans_aware: bool, Default: False
         是否考虑汉字的长度，如果为True，则汉字的长度为2，否则为1
     padding: str, Default: 'right'
@@ -1975,7 +2044,7 @@ def adjust_string_length(s, n, *,
     'hell...d'
     >>> adjust_string_length('hello world',15,padder='*')
     'hello world****'
-    >>> adjust_string_length('hello world',9,ellipsis='_')
+    >>> adjust_string_length('hello world',9,filler='_')
     'hell___ld'
     >>> adjust_string_length('中文字符占据2个位置',9,hans_aware=False)
     '中文字符...位置'
@@ -1991,7 +2060,7 @@ def adjust_string_length(s, n, *,
         format_tags = []
         format_tags_positions = []
 
-    cut_off_proportion = 0.7
+    cut_off_proportion = cut_off
 
     if not isinstance(s, str):
         msg = f'the first argument should be a string, got {type(s)} instead'
@@ -1999,11 +2068,11 @@ def adjust_string_length(s, n, *,
     if not isinstance(n, int):
         msg = f'the second argument should be an integer, got {type(n)} instead'
         raise TypeError(msg)
-    if not isinstance(ellipsis, str):
-        msg = f'the padder should be a character, got {type(ellipsis)} instead'
+    if not isinstance(filler, str):
+        msg = f'the padder should be a character, got {type(filler)} instead'
         raise TypeError(msg)
-    if not len(ellipsis) == 1:
-        msg = f'the padder should be a single character, got {len(ellipsis)} characters'
+    if not len(filler) == 1:
+        msg = f'the padder should be a single character, got {len(filler)} characters'
         raise ValueError(msg)
     if not isinstance(padder, str):
         msg = f'the padder should be a character, got {type(padder)} instead'
@@ -2050,7 +2119,7 @@ def adjust_string_length(s, n, *,
             front_part.append(char)
             if front_print_width - front_length == 2:
                 front_part.pop()  # 如果刚好多增加了一个中文字符，则需要将最后一个字符去掉
-                front_print_width -=2
+                front_print_width -= 2
                 break
             if front_print_width - front_length >= 0:
                 break
@@ -2062,7 +2131,7 @@ def adjust_string_length(s, n, *,
     if (n >= 5) and (remainder_length == 0):
         remainder_length = 1  # there must be a character in the remainder part if n >= 5
     if remainder_length > 0:
-        for char in s[::-1]:  # build up ellipsis part of the string
+        for char in s[::-1]:  # build up filler part of the string
             if hans_aware and ('\u4e00' <= char <= '\u9fff'):
                 remainder_print_width += 2
             else:
@@ -2076,7 +2145,7 @@ def adjust_string_length(s, n, *,
         # 此时前面的字符数和后面的字符数加上省略号的字符数比n多，需要将省略号的字符数减少
         elipsis_count -= front_print_width + remainder_print_width + elipsis_count - n
 
-    combined_string = ''.join(front_part) + ellipsis * elipsis_count + ''.join(remainder_part[::-1])
+    combined_string = ''.join(front_part) + filler * elipsis_count + ''.join(remainder_part[::-1])
     if format_tags:
         cut_off_position = len(front_part) + elipsis_count
         removed_count = len(s) - len(combined_string)
@@ -2215,11 +2284,11 @@ def pandas_freq_alias_version_conversion(freq) -> str:
         return freq
     # freq aliases like '5MIN' should also be converted to '5min'
     freq_alias_map = {
-        'M':    'ME',
-        'Q':    'QE',
-        'Y':    'YE',
-        'H':    'h',
-        'MIN':  'min',
+        'M':   'ME',
+        'Q':   'QE',
+        'Y':   'YE',
+        'H':   'h',
+        'MIN': 'min',
     }
     mapped_freq = freq_alias_map.get(freq, freq)
 

@@ -24,7 +24,7 @@ TIMEZONE = 'Asia/Shanghai'
 # TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
 #  避免交易信号从不同的数据源中获取，导致交易信号的不一致性 ?? 这是不是最好的做法？？
 # 9 foundational functions for account and position management
-def new_account(user_name, cash_amount, data_source=None, **account_data) -> int:
+def new_account(*, user_name, cash_amount, data_source=None, **account_data) -> int:
     """ 创建一个新的账户
 
     Parameters
@@ -458,8 +458,6 @@ def get_or_create_position(account_id: int, symbol: str, position_type: str, dat
         raise TypeError(f'position_type must be a str, got {type(position_type)} instead')
     if position_type not in ('long', 'short'):
         raise ValueError(f'position_type must be "long" or "short", got {position_type} instead')
-    # debug
-    # print(f'[DEBUG]account_id: {account_id}, symbol: {symbol}, position_type: {position_type}')
     position = data_source.read_sys_table_data(
             table='sys_op_positions',
             **{
@@ -567,7 +565,7 @@ def update_position(position_id, data_source=None, **position_data):
 
 
 def get_account_positions(account_id, data_source=None):
-    """ 根据account_id获取账户的所有持仓
+    """ 根据account_id获取账户的所有持仓，输出结果根据pos_id排序
 
     Parameters
     ----------
@@ -601,6 +599,7 @@ def get_account_positions(account_id, data_source=None):
     )
     if positions is None:
         return pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
+
     return positions
 
 

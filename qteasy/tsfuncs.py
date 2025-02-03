@@ -11,10 +11,13 @@
 import pandas as pd
 import tushare as ts
 
-from qteasy import logger_core, QT_CONFIG
-from .utilfuncs import regulate_date_format, list_to_str_format
-from .utilfuncs import retry
+from qteasy.__init__ import logger_core, QT_CONFIG
 
+from qteasy.utilfuncs import (
+    regulate_date_format,
+    list_to_str_format,
+    retry,
+)
 
 ERRORS_TO_CHECK_ON_RETRY = Exception
 
@@ -33,10 +36,39 @@ EXTRA_RETRY_API = [
 
 # tsfuncs interface function, call this function to extract data
 def acquire_data(api_name, **kwargs):
-    """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
-    data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
-    data_download_retry_wait = QT_CONFIG.hist_dnld_retry_wait
-    data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
+    """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据
+
+    Parameters
+    ----------
+    api_name: str
+        tushare API的函数名
+    **kwargs:
+        tushare API的参数
+        除此之外，还可以传入以下参数：
+        retry_count: int, optional, should be greater than 0 and smaller than 10
+            重试次数
+        retry_wait: float, optional, should be in [0, 1]
+            重试等待时间, 单位秒
+        retry_backoff: float, optional, should be in [1, 3]
+            重试等待时间的指数增长因子
+    """
+
+    if 'retry_count' in kwargs:
+        data_download_retry_count = kwargs.pop('retry_count')
+    else:
+        data_download_retry_count = QT_CONFIG.hist_dnld_retry_cnt
+
+    if 'retry_wait' in kwargs:
+        data_download_retry_wait = kwargs.pop('retry_wait')
+    else:
+        data_download_retry_wait = QT_CONFIG.hist_dnld_retry_wait
+
+    if 'retry_backoff' in kwargs:
+        data_download_retry_backoff = kwargs.pop('retry_backoff')
+    else:
+        data_download_retry_backoff = QT_CONFIG.hist_dnld_backoff
+
+    # make sure that the retry parameters are set to a reasonable value
 
     if api_name in EXTRA_RETRY_API:
         data_download_retry_count += 3
@@ -49,7 +81,10 @@ def acquire_data(api_name, **kwargs):
             backoff=data_download_retry_backoff,
             logger=logger_core,
     )
-    func = globals()[api_name]
+    try:
+        func = globals()[api_name]
+    except KeyError:
+        raise KeyError(f'undefined API {api_name} for tushare')
     decorated_func = retry_decorator(func)
     res = decorated_func(**kwargs)
     return res
@@ -98,11 +133,54 @@ def stock_basic(exchange: str = None):
     return res
 
 
+def hk_stock_basic(ts_code: str = None,
+                   list_status: str = None, ):
+    """ 获取港股基础信息数据，包括股票代码、名称、上市日期、退市日期等
 
-def trade_calendar(exchange: str = 'SSE',
-                   start: str = None,
-                   end: str = None,
-                   is_open: int = None):
+    Parameters
+    ----------
+    ts_code: str
+    list_status: str
+
+    Returns
+    -------
+    """
+
+    pro = ts.pro_api()
+    res = pro.hk_basic(ts_code=ts_code, list_status=list_status)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_basic with ts_code={ts_code}, list_status={list_status}')
+    return res
+
+
+def us_stock_basic(ts_code: str = None,
+                   classify: str = None,
+                   offset: int = None,
+                   limit: int = None, ):
+    """ 获取港股基础信息数据，包括股票代码、名称、上市日期、退市日期等
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+
+    pro = ts.pro_api()
+    res = pro.us_basic(ts_code=ts_code,
+                       classify=classify,
+                       offset=offset,
+                       limit=limit, )
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_basic with ts_code={ts_code}, classify={classify}, '
+                     f'offset={offset}, limit={limit}')
+    return res
+
+
+def trade_cal(exchange: str = 'SSE',
+              start: str = None,
+              end: str = None,
+              is_open: int = None):
     """ 获取各大交易所交易日历数据,默认提取的是上交所
         如果不指定is_open，则返回包含所有日期以及is_open代码的DataFrame
         如果指定is_open == 0 或者 1， 则返回相应的日期列表
@@ -126,24 +204,68 @@ def trade_calendar(exchange: str = 'SSE',
         cal_date        str     日历日期
         is_open         str     是否交易 0休市 1交易
         pretrade_date   str     默认不显示，  上一个交易日
+
+    Examples
+    --------
+    >>> df = trade_cal(exchange='SSE', start='20200101', end='20200131')
+    >>> df
+        exchange    cal_date    is_open pretrade_date
+    0   SSE         20200101    0       20191231
+    1   SSE         20200102    1       20200101
+    2   SSE         20200103    1       20200102
+    ...
     """
     pro = ts.pro_api()
-    trade_cal = pro.trade_cal(exchange=exchange,
-                              start_date=start,
-                              end_date=end,
-                              is_open=is_open)
-    logger_core.info(f'downloaded {len(trade_cal)} rows of data from tushare'
+    res = pro.trade_cal(exchange=exchange,
+                        start_date=start,
+                        end_date=end,
+                        is_open=is_open)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table trade_calendar with exchange={exchange}, start_date={start}'
                      f'end_date={end}, is_open={is_open}')
     if is_open is None:
-        return trade_cal
+        return res
     else:
-        return list(pd.to_datetime(trade_cal.cal_date))
+        return list(pd.to_datetime(res.cal_date))
 
 
-def name_change(ts_code: str = None,
-                start: str = None,
-                end: str = None):
+def hk_trade_cal(start: str = None,
+                 end: str = None,
+                 is_open: int = None):
+    """"""
+    pro = ts.pro_api()
+    res = pro.hk_tradecal(start_date=start,
+                          end_date=end,
+                          is_open=is_open)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hk_trade_calendar with start_date={start}'
+                     f'end_date={end}, is_open={is_open}')
+    if is_open is None:
+        return res
+    else:
+        return list(pd.to_datetime(res.cal_date))
+
+
+def us_trade_cal(start: str = None,
+                 end: str = None,
+                 is_open: int = None):
+    """"""
+    pro = ts.pro_api()
+    res = pro.us_tradecal(start_date=start,
+                          end_date=end,
+                          is_open=is_open)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table us_trade_calendar with start_date={start}'
+                     f'end_date={end}, is_open={is_open}')
+    if is_open is None:
+        return res
+    else:
+        return list(pd.to_datetime(res.cal_date))
+
+
+def namechange(ts_code: str = None,
+               start: str = None,
+               end: str = None):
     """ 历史名称变更记录
 
     Parameters
@@ -168,9 +290,9 @@ def name_change(ts_code: str = None,
 
     Examples
     --------
-    >>> pro = ts.pro_api()
-    >>> df = pro.namechange(ts_code='600848.SH',
-                            fields='ts_code,name,start_date,end_date,change_reason')
+    >>> from qteasy.tsfuncs import namechange
+    >>> df = namechange(ts_code='600848.SH',
+                        fields='ts_code,name,start_date,end_date,change_reason')
     >>> df
                 ts_code     name      start_date   end_date      change_reason
         0       600848.SH   上海临港   20151118      None           改名
@@ -190,7 +312,6 @@ def name_change(ts_code: str = None,
                      f' table name_change with ts_code={ts_code}, start_date={start}'
                      f'end_date={end}, fields={fields}')
     return res
-
 
 
 def new_share(start: str = None,
@@ -261,6 +382,132 @@ def new_share(start: str = None,
                      f'end_date={end}')
     return res
 
+
+# New, 个股资金流向!
+def moneyflow(ts_code: str = None,
+              trade_date: str = None,
+              start: str = None,
+              end: str = None) -> pd.DataFrame:
+    """ 获取个股资金流向数据
+
+    Parameters
+    ----------
+    ts_code: str, 股票代码
+    trade_date: str, 交易日期
+    start: 记录开始日期
+    end: 记录结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default     description
+        ts_code	        str	    Y	        TS代码
+        trade_date	    str	    Y	        交易日期
+        buy_sm_vol	    int	    Y	        小单买入量（手）
+        buy_sm_amount	float	Y	        小单买入金额（万元）
+        sell_sm_vol	    int	    Y	        小单卖出量（手）
+        sell_sm_amount	float	Y	        小单卖出金额（万元）
+        buy_md_vol	    int	    Y	        中单买入量（手）
+        buy_md_amount	float	Y	        中单买入金额（万元）
+        sell_md_vol	    int	    Y	        中单卖出量（手）
+        sell_md_amount	float	Y	        中单卖出金额（万元）
+        buy_lg_vol	    int	    Y	        大单买入量（手）
+        buy_lg_amount	float	Y	        大单买入金额（万元）
+        sell_lg_vol	    int	    Y	        大单卖出量（手）
+        sell_lg_amount	float	Y	        大单卖出金额（万元）
+        buy_elg_vol	    int	    Y	        特大单买入量（手）
+        buy_elg_amount	float	Y	        特大单买入金额（万元）
+        sell_elg_vol	int	    Y	        特大单卖出量（手）
+        sell_elg_amount	float	Y	        特大单卖出金额（万元）
+        net_mf_vol	    int	    Y	        净流入量（手）
+        net_mf_amount	float	Y	        净流入额（万元）
+    """
+    pro = ts.pro_api()
+    res = pro.moneyflow(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table money_flow with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+# New, 涨跌停价格!
+def stk_limit(ts_code: str = None,
+              trade_date: str = None,
+              start: str = None,
+              end: str = None) -> pd.DataFrame:
+    """ 获取个股涨跌停价格
+    """
+    fields = "ts_code, trade_date, pre_close, up_limit, down_limit"
+    pro = ts.pro_api()
+    res = pro.stk_limit(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, fields=fields)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_limit with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+# New, 停复牌信息!
+def suspend_d(ts_code: str = None,
+              trade_date: str = None,
+              start: str = None,
+              end: str = None,
+              suspend_type: str = None) -> pd.DataFrame:
+    """ 获取个股停复牌信息
+    """
+    pro = ts.pro_api()
+    res = pro.suspend_d(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end,
+                        suspend_type=suspend_type)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_suspend with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}, suspend_type={suspend_type}')
+    return res
+
+
+# New, 沪深股通资金流向!
+def moneyflow_hsgt(trade_date: str = None,
+                   start: str = None,
+                   end: str = None) -> pd.DataFrame:
+    """ 获取沪深股通资金流向数据
+    """
+    pro = ts.pro_api()
+    res = pro.moneyflow_hsgt(trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table moneyflow_hsgt with trade_date={trade_date}, start_date={start}'
+                     f'end_date={end}')
+    return res
+
+
+# New, 沪深股通十大成交股!
+def hsgt_top10(ts_code: str = None,
+               trade_date: str = None,
+               start: str = None,
+               end: str = None,
+               market_type: str = None) -> pd.DataFrame:
+    """ 获取沪深股通十大成交股
+    """
+    pro = ts.pro_api()
+    res = pro.hsgt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end,
+                         market_type=market_type)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hsgt_top10 with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}, market_type={market_type}')
+    return res
+
+
+# New, 港股通十大成交股!
+def ggt_top10(ts_code: str = None,
+              trade_date: str = None,
+              start: str = None,
+              end: str = None,
+              market_type: str = None) -> pd.DataFrame:
+    """ 获取港股通十大成交股
+    """
+    pro = ts.pro_api()
+    res = pro.ggt_top10(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end, market_type=market_type)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table ggt_top10 with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}, market_type={market_type}')
+    return res
 
 
 def stock_company(ts_code: str = None,
@@ -385,8 +632,8 @@ def daily_basic(ts_code: object = None,
                 trade_date: object = None,
                 start: object = None,
                 end: object = None) -> pd.DataFrame:
-    """ 获取个股行情 (日线)
-    TODO: 以下字段需要进一步确认
+    """ 获取个股每日技术指标
+
     Parameters
     ----------
     ts_code: str, 股票代码
@@ -419,7 +666,8 @@ def daily_basic(ts_code: object = None,
 
     Examples
     --------
-    >>> pro.daily_basic(ts_code='000001.SZ', trade_date='20180713')
+    >>> from qteasy.tsfuncs import daily_basic
+    >>> daily_basic(ts_code='000001.SZ', trade_date='20180713')
         ts_code  trade_date  close  turnover_rate  ...  free_share  total_mv      circ_mv
     0    000001.SZ    20180713  11.01         0.0000  ...     165.000  1845.000  1845.000000
     1    000001.SZ    20180712  11.01         0.0000  ...     165.000  1845.000  1845.000000
@@ -443,10 +691,10 @@ def daily_basic(ts_code: object = None,
     return res
 
 
-def daily_basic2(ts_code: object = None,
-                 trade_date: object = None,
-                 start: object = None,
-                 end: object = None) -> pd.DataFrame:
+def bak_daily(ts_code: object = None,
+              trade_date: object = None,
+              start: object = None,
+              end: object = None) -> pd.DataFrame:
     """ 获取个股行情
 
     Parameters
@@ -460,28 +708,42 @@ def daily_basic2(ts_code: object = None,
     -------
     pd.DataFrame
         column          type    default     description
-        ts_code	        str	    Y	        TS股票代码
+        ts_code	        str	    Y	        股票代码
         trade_date	    str	    Y	        交易日期
-        close	        float	Y	        当日收盘价
-        turnover_rate	float	Y	        换手率
-        turnover_rate_f	float	Y	        换手率(自由流通股)
-        volume_ratio	float	Y	        量比
-        pe	            float	Y	        市盈率
-        pe_ttm	        float	Y	        市盈率TTM
-        pb	            float	Y	        市净率
-        ps	            float	Y	        市销率
-        ps_ttm	        float	Y	        市销率TTM
-        dv_ratio	    float	Y	        股息率(%)，如果是指数，则为股息率
-        dv_ttm	        float	Y	        股息率TTM(%)，如果是指数，则为股息率TTM
-        total_share	    float	Y	        总股本 （万）
-        float_share	    float	Y	        流通股本 （万）
-        free_share	    float	Y	        自由流通股本 （万）
-        total_mv	    float	Y	        总市值 （万元）
-        circ_mv	        float	Y	        流通市值（万元）
+        name	        str	    Y	        股票名称
+        pct_change	    float	Y	        涨跌幅
+        close	        float	Y	        收盘价
+        change	        float	Y	        涨跌额
+        open	        float	Y	        开盘价
+        high	        float	Y	        最高价
+        low	            float	Y	        最低价
+        pre_close	    float	Y	        昨收价
+        vol_ratio	    float	Y	        量比
+        turn_over	    float	Y	        换手率
+        swing	        float	Y	        振幅
+        vol	            float	Y	        成交量
+        amount	        float	Y	        成交额
+        selling	        float	Y	        内盘（主动卖，手）
+        buying	        float	Y	        外盘（主动买， 手）
+        total_share	    float	Y	        总股本(亿)
+        float_share	    float	Y	        流通股本(亿)
+        pe	            float	Y	        市盈(动)
+        industry	    str	    Y	        所属行业
+        area	        str	    Y	        所属地域
+        float_mv	    float	Y	        流通市值
+        total_mv	    float	Y	        总市值
+        avg_price	    float	Y	        平均价
+        strength	    float	Y	        强弱度(%)
+        activity	    float	Y	        活跃度(%)
+        avg_turnover	float	Y	        笔换手
+        attack	        float	Y	        攻击波(%)
+        interval_3	    float	Y	        近3月涨幅
+        interval_6	    float	Y	        近6月涨幅
 
     Examples
     --------
-    >>> pro.daily_basic2(ts_code='000001.SZ', trade_date='20180713')
+    >>> from qteasy.tsfuncs import bak_daily
+    >>> bak_daily(ts_code='000001.SZ', trade_date='20180713')
 
     """
     pro = ts.pro_api()
@@ -495,11 +757,70 @@ def daily_basic2(ts_code: object = None,
     return res
 
 
+def hk_stock_daily(ts_code: object = None,
+                   trade_date: object = None,
+                   start: object = None,
+                   end: object = None):
+    pro = ts.pro_api()
+    res = pro.hk_daily(ts_code=ts_code,
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hk_stock_daily with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
 
-def index_daily_basic(ts_code: object = None,
-                      trade_date: object = None,
-                      start: object = None,
-                      end: object = None) -> pd.DataFrame:
+
+def us_stock_daily(ts_code: object = None,
+                   trade_date: object = None,
+                   start: object = None,
+                   end: object = None):
+    pro = ts.pro_api()
+    res = pro.us_daily(ts_code=ts_code,
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table us_stock_daily with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def hk_indicators(ts_code: object = None,
+                  trade_date: object = None,
+                  start: object = None,
+                  end: object = None):
+    pro = ts.pro_api()
+    res = pro.hk_daily_adj(ts_code=ts_code,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table hk_indicators with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def us_indicators(ts_code: object = None,
+                  trade_date: object = None,
+                  start: object = None,
+                  end: object = None):
+    pro = ts.pro_api()
+    res = pro.us_daily_adj(ts_code=ts_code,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table us_indicators with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def index_dailybasic(ts_code: object = None,
+                     trade_date: object = None,
+                     start: object = None,
+                     end: object = None) -> pd.DataFrame:
     """ 获取指数行情
 
     Parameters
@@ -513,25 +834,32 @@ def index_daily_basic(ts_code: object = None,
     -------
     pd.DataFrame
         column          type    default     description
-        ts_code	        str	    Y	        TS股票代码
+        ts_code	        str	    Y	        TS代码
         trade_date	    str	    Y	        交易日期
-        close	        float	Y	        当日收盘价
+        total_mv	    float	Y	        当日总市值（元）
+        float_mv	    float	Y	        当日流通市值（元）
+        total_share	    float	Y	        当日总股本（股）
+        float_share	    float	Y	        当日流通股本（股）
+        free_share	    float	Y	        当日自由流通股本（股）
         turnover_rate	float	Y	        换手率
-        turnover_rate_f	float	Y	        换手率(自由流通股)
-        """
+        turnover_rate_f	float	Y	        换手率(基于自由流通股本)
+        pe	            float	Y	        市盈率
+        pe_ttm	        float	Y	        市盈率TTM
+        pb	            float	Y	        市净率
+    """
     pro = ts.pro_api()
     res = pro.index_dailybasic(ts_code=ts_code,
                                trade_date=trade_date,
                                start_date=start,
                                end_date=end)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
-                     f' table index_daily_basic with ts_code={ts_code}, trade_date={trade_date}'
+                     f' table index_dailybasic with ts_code={ts_code}, trade_date={trade_date}'
                      f'start_date={start}, end_date={end}')
     return res
 
 
 def realtime_min(ts_code, freq):
-    """ 获取实时分钟行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
+    """ 获取实时分钟K线行情，freq可选值为1/5/15/30/60分钟，如果没有权限，会Raise Error
 
     Parameters
     ----------
@@ -547,15 +875,27 @@ def realtime_min(ts_code, freq):
     KeyError: 如果freq不合法，会Raise KeyError
     """
     freq = freq.upper()
-    if freq == 'H':
-        freq = '60MIN'
+    if freq == '60MIN':
+        freq = 'H'
+
+    if freq not in ['1MIN', '5MIN', '15MIN', '30MIN', 'H']:
+        raise KeyError(f'freq={freq} is not supported from tushare at the moment, '
+                       f'must be one of 1min, 5min, 15min, 30min, h')
 
     pro = ts.pro_api()
     res = pro.rt_min(ts_code=ts_code, freq=freq)
-    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
-                     f' table stk_mins with ts_code={ts_code}, freq={freq}')
+    res.index = pd.to_datetime(res['trade_time'])
+    res = res.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+
+    res = res.iloc[-1:, :]
+
     return res
 
+
+def realtime_quote(ts_code, src):
+    """ 获取实施交易盘口行情数据，包括日期时间、现价、竞买竞卖价格、成交价格、成交量、以及委买委卖1～5档数据"""
+    res = ts.realtime_quote(ts_code=ts_code, src=src)
+    return res
 
 
 def mins1(ts_code,
@@ -570,7 +910,6 @@ def mins1(ts_code,
     return res
 
 
-
 def mins5(ts_code,
           start=None,
           end=None):
@@ -583,7 +922,6 @@ def mins5(ts_code,
     return res
 
 
-
 def mins15(ts_code,
            start=None,
            end=None):
@@ -594,7 +932,6 @@ def mins15(ts_code,
                      f' table stk_mins with ts_code={ts_code}, freq="15min"'
                      f'start_date={start}, end_date={end}')
     return res
-
 
 
 def mins30(ts_code,
@@ -610,7 +947,6 @@ def mins30(ts_code,
     return res
 
 
-
 def mins60(ts_code,
            start=None,
            end=None):
@@ -621,7 +957,6 @@ def mins60(ts_code,
                      f' table stk_mins with ts_code={ts_code}, freq="60min"'
                      f'start_date={start}, end_date={end}')
     return res
-
 
 
 def ft_mins1(ts_code,
@@ -636,7 +971,6 @@ def ft_mins1(ts_code,
     return res
 
 
-
 def ft_mins5(ts_code,
              start=None,
              end=None):
@@ -647,7 +981,6 @@ def ft_mins5(ts_code,
                      f' table future_mins with ts_code={ts_code}, freq="5min"'
                      f'start_date={start}, end_date={end}')
     return res
-
 
 
 def ft_mins15(ts_code,
@@ -662,7 +995,6 @@ def ft_mins15(ts_code,
     return res
 
 
-
 def ft_mins30(ts_code,
               start=None,
               end=None):
@@ -675,7 +1007,6 @@ def ft_mins30(ts_code,
     return res
 
 
-
 def ft_mins60(ts_code,
               start=None,
               end=None):
@@ -686,7 +1017,6 @@ def ft_mins60(ts_code,
                      f' table future_mins with ts_code={ts_code}, freq="60min"'
                      f'start_date={start}, end_date={end}')
     return res
-
 
 
 def daily(ts_code=None,
@@ -710,7 +1040,6 @@ def daily(ts_code=None,
     return res
 
 
-
 def weekly(ts_code=None,
            trade_date=None,
            start=None,
@@ -730,7 +1059,6 @@ def weekly(ts_code=None,
     logger_core.info(f'Downloaded {len(res)} rows from tushare: weekly with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
-
 
 
 def monthly(ts_code=None,
@@ -775,7 +1103,6 @@ def index_daily(ts_code=None,
     return res
 
 
-
 def index_weekly(ts_code=None,
                  trade_date=None,
                  start=None,
@@ -795,7 +1122,6 @@ def index_weekly(ts_code=None,
     logger_core.info(f'Downloaded {len(res)} rows from tushare: index_weekly with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
-
 
 
 def index_monthly(ts_code=None,
@@ -819,7 +1145,6 @@ def index_monthly(ts_code=None,
     return res
 
 
-
 def fund_daily(ts_code=None,
                trade_date=None,
                start=None,
@@ -839,7 +1164,6 @@ def fund_daily(ts_code=None,
     logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_daily with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
-
 
 
 def adj_factors(ts_code=None,
@@ -863,7 +1187,6 @@ def adj_factors(ts_code=None,
     return res
 
 
-
 def fund_adj(ts_code=None,
              trade_date=None,
              start=None,
@@ -885,7 +1208,6 @@ def fund_adj(ts_code=None,
     return res
 
 
-
 def fund_share(ts_code=None,
                trade_date=None,
                start=None,
@@ -905,7 +1227,6 @@ def fund_share(ts_code=None,
     logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_share with ts_code={ts_code}, '
                      f'trade_date={trade_date}, start_date={start}, end_date={end}')
     return res
-
 
 
 def fund_manager(ts_code=None,
@@ -1086,7 +1407,6 @@ def income(ts_code: str,
                      f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
                      f'report_type={report_type}, comp_type={comp_type}')
     return res
-
 
 
 def balance(ts_code: str,
@@ -1531,7 +1851,6 @@ def cashflow(ts_code: str,
     return res
 
 
-
 def indicators(ts_code: str,
                rpt_date: str = None,
                start: str = None,
@@ -1789,7 +2108,6 @@ def indicators(ts_code: str,
     return res
 
 
-
 def forecast(ts_code: str = None,
              ann_date: str = None,
              start: str = None,
@@ -1854,7 +2172,6 @@ def forecast(ts_code: str = None,
                      f'ann_date={ann_date}, start_date={start}, end_date={end}, period={period}, '
                      f'type={type}')
     return res
-
 
 
 def express(ts_code: str = None,
@@ -1938,6 +2255,322 @@ def express(ts_code: str = None,
                           fields=fields)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: express with ts_code={ts_code}, '
                      f'ann_date={ann_date}, start_date={start}, end_date={end}, period={period}')
+    return res
+
+
+# 'dividend':  # New, 分红送股!
+def dividend(ts_code: str = None,
+             ann_date: str = None,
+             record_date: str = None,
+             ex_date: str = None,
+             imp_ann_date: str = None):
+    """ 获取分红送股数据
+
+    Parameters
+    ----------
+    ts_code: str
+        股票代码
+    ann_date: str
+        公告日期
+    record_date: str
+        股权登记日期
+    ex_date: str
+        除权除息日
+    imp_ann_date: str
+        实施公告日
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS代码
+        end_date	    str	    Y	    分红年度
+        ann_date	    str	    Y	    预案公告日
+        div_proc	    str	    Y	    实施进度
+        stk_div	        float	Y	    每股送转
+        stk_bo_rate	    float	Y	    每股送股比例
+        stk_co_rate	    float	Y	    每股转增比例
+        cash_div	    float	Y	    每股分红（税后）
+        cash_div_tax	float	Y	    每股分红（税前）
+        record_date	    str	    Y	    股权登记日
+        ex_date	        str	    Y	    除权除息日
+        pay_date	    str	    Y	    派息日
+        div_listdate	str	    Y	    红股上市日
+        imp_ann_date	str	    Y	    实施公告日
+        base_date	    str	    N	    基准日
+        base_share	    float	N	    基准股本（万）
+    """
+    fields = 'ts_code, ann_date, end_date, div_proc, stk_div, stk_bo_rate, stk_co_rate, cash_div, cash_div_tax,' \
+             ' record_date, ex_date, pay_date, div_listdate, imp_ann_date, base_date, base_share'
+    pro = ts.pro_api()
+    res = pro.dividend(ts_code=ts_code,
+                       ann_date=ann_date,
+                       record_date=record_date,
+                       ex_date=ex_date,
+                       imp_ann_date=imp_ann_date)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: dividend with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, record_date={record_date}, ex_date={ex_date}, imp_ann_date={imp_ann_date}')
+    return res
+
+
+# 'top_inst':  # New, 龙虎榜机构交易明细!
+def top_inst(trade_date: str = None,
+             ts_code: str = None):
+    """ 龙虎榜机构交易明细，2005年至今全部历史数据，单次获取数量不超过10000
+
+    Parameters
+    ----------
+    trade_date: str
+        交易日期
+    ts_code: str
+        股票代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        trade_date	    str	    Y	    交易日期
+        ts_code	        str	    Y	    TS代码
+        exalter	        str	    Y	    营业部名称
+        side	        str	    Y	    买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名
+        buy	            float	Y	    买入额（元）
+        buy_rate	    float	Y	    买入占总成交比例
+        sell	        float	Y	    卖出额（元）
+        sell_rate	    float	Y	    卖出占总成交比例
+        net_buy	        float	Y	    净成交额（元）
+        reason	        str	    Y	    上榜理由
+    """
+    pro = ts.pro_api()
+    res = pro.top_inst(trade_date=trade_date,
+                       ts_code=ts_code)
+    logger_core.info(
+            f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
+    return res
+
+
+# New, 申万行业分类明细(成分股)!
+def index_member_all(l1_code: str = None,
+                     l2_code: str = None,
+                     l3_code: str = None,
+                     ts_code: str = None, ):
+    """ 获取申万行业分类明细(成分股)
+
+    Parameters
+    ---------
+    l1_code: str
+        一级行业代码
+    l2_code: str
+        二级行业代码
+    l3_code: str
+        三级行业代码
+    ts_code: str
+        股票代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        l1_code	        str	    Y	一级行业代码
+        l1_name	        str	    Y	一级行业名称
+        l2_code	        str	    Y	二级行业代码
+        l2_name	        str	    Y	二级行业名称
+        l3_code	        str	    Y	三级行业代码
+        l3_name	        str	    Y	三级行业名称
+        ts_code	        str	    Y	成分股票代码
+        name	        str	    Y	成分股票名称
+        in_date	        str	    Y	纳入日期
+        out_date	    str	    Y	剔除日期
+        is_new	        str	    Y	是否最新Y是N否
+    """
+    pro = ts.pro_api()
+    res = pro.index_member_all(l1_code=l1_code,
+                               l2_code=l2_code,
+                               l3_code=l3_code,
+                               ts_code=ts_code)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry_detail with l1_code={l1_code}, '
+                     f'l2_code={l2_code}, l3_code={l3_code}, ts_code={ts_code}')
+    return res
+
+
+# 'block_trade':  # New, 大宗交易!
+def block_trade(ts_code: str = None,
+                trade_date: str = None,
+                start: str = None,
+                end: str = None):
+    """ 获取大宗交易数据
+
+    Parameters
+    ----------
+    ts_code: str
+        股票代码
+    trade_date: str
+        交易日期
+    start: str
+        开始日期
+    end: str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS代码
+        trade_date	    str	    Y	    交易日历
+        price	        float	Y	    成交价
+        vol	            float	Y	    成交量（万股）
+        amount	        float	Y	    成交金额
+        buyer	        str	    Y	    买方营业部
+        seller	        str	    Y	    卖方营业部
+    """
+    pro = ts.pro_api()
+    res = pro.block_trade(ts_code=ts_code,
+                          trade_date=trade_date,
+                          start_date=start,
+                          end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: block_trade with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
+
+
+# New, 股东交易（股东增减持）!
+def stk_holdertrade(ts_code: str = None,
+                    ann_date: str = None,
+                    start: str = None,
+                    end: str = None,
+                    trade_type: str = None,
+                    holder_type: str = None):
+    """ 获取股东交易（股东增减持）数据
+
+    Parameters
+    ----------
+    ts_code: str
+        股票代码
+    ann_date: str
+        公告日期
+    start: str
+        开始日期
+    end: str
+        结束日期
+    trade_type: str
+        交易类型
+    holder_type: str
+        股东类型
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS代码
+        ann_date	    str     Y	    公告日期
+        holder_name	    str     Y	    股东名称
+        holder_type	    str     Y	    股东类型G高管P个人C公司
+        in_de	        str     Y	    类型IN增持DE减持
+        change_vol	    float	Y	    变动数量
+        change_ratio	float	Y	    占流通比例（%）
+        after_share	    float	Y	    变动后持股
+        after_ratio	    float	Y	    变动后占流通比例（%）
+        avg_price	    float	Y	    平均价格
+        total_share	    float	Y	    持股总数
+        begin_date	    str	    N	    增减持开始日期
+        close_date	    str	    N	    增减持结束日期
+
+    """
+    pro = ts.pro_api()
+    res = pro.stk_holdertrade(ts_code=ts_code,
+                              ann_date=ann_date,
+                              start_date=start,
+                              end_date=end,
+                              trade_type=trade_type,
+                              holder_type=holder_type)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: stk_holdertrade with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, start_date={start}, end_date={end}, trade_type={trade_type}, '
+                     f'holder_type={holder_type}')
+    return res
+
+
+# 'margin':  # New, 融资融券交易概况!
+def margin(trade_date: str = None,
+           exchange_id: str = None,
+           start: str = None,
+           end: str = None):
+    """ 获取融资融券交易概况
+
+    Parameters
+    ----------
+    trade_date: str
+        交易日期
+    exchange_id: str
+        交易所代码
+    start: str
+        开始日期
+    end: str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    description
+        trade_date	    str	    交易日期
+        exchange_id	    str	    交易所代码（SSE上交所SZSE深交所BSE北交所）
+        rzye	        float	融资余额(元)
+        rzmre	        float	融资买入额(元)
+        rzche	        float	融资偿还额(元)
+        rqye	        float	融券余额(元)
+        rqmcl	        float	融券卖出量(股,份,手)
+        rzrqye	        float	融资融券余额(元)
+        rqyl	        float	融券余量(股,份,手)
+    """
+    pro = ts.pro_api()
+    res = pro.margin(trade_date=trade_date,
+                     exchange_id=exchange_id,
+                     start_date=start,
+                     end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: margin with trade_date={trade_date}, '
+                     f'exchange_id={exchange_id}, start_date={start}, end_date={end}')
+    return res
+
+
+# 'margin_detail':  # New, 融资融券交易明！
+def margin_detail(trade_date: str = None,
+                  ts_code: str = None,
+                  start: str = None,
+                  end: str = None):
+    """ 获取融资融券交易明细
+
+    Parameters
+    ----------
+    trade_date: str
+        交易日期
+    ts_code: str
+        股票代码
+    start: str
+        开始日期
+    end: str
+        结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    description
+        trade_date	    str	    交易日期
+        ts_code	        str	    TS股票代码
+        name	        str	    股票名称 （20190910后有数据）
+        rzye	        float	融资余额(元)
+        rqye	        float	融券余额(元)
+        rzmre	        float	融资买入额(元)
+        rqyl	        float	融券余量（股）
+        rzche	        float	融资偿还额(元)
+        rqchl	        float	融券偿还量(股)
+        rqmcl	        float	融券卖出量(股,份,手)
+        rzrqye	        float	融资融券余额(元)
+    """
+    pro = ts.pro_api()
+    res = pro.margin_detail(trade_date=trade_date,
+                            ts_code=ts_code,
+                            start_date=start,
+                            end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: margin_detail with trade_date={trade_date}, '
+                     f'ts_code={ts_code}, start_date={start}, end_date={end}')
     return res
 
 
@@ -2080,6 +2713,35 @@ def index_basic(ts_code: str = None,
     return res
 
 
+# 'ths_index_basic':  # New, 同花顺概念和指数基本信息
+def ths_index(ts_code: str = None,
+              exchange: str = None,
+              idx_type: str = None) -> pd.DataFrame:
+    """ 获取同花顺概念和指数基本信息"""
+    pro = ts.pro_api()
+    res = pro.ths_index(ts_code=ts_code,
+                        exchange=exchange,
+                        type=idx_type)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_index with ts_code={ts_code}, '
+                     f'exchange={exchange}, type={type}')
+    return res
+
+
+# 'sw_industry_basic':  # New, 申万行业分类
+def index_classify(index_code: str = None,
+                   level: str = None,
+                   parent_code: str = None,
+                   src: str = None) -> pd.DataFrame:
+    """ 获取申万行业分类"""
+    pro = ts.pro_api()
+    res = pro.index_classify(index_code=index_code,
+                             level=level,
+                             parent_code=parent_code,
+                             src=src)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_industry with index_code={index_code}, '
+                     f'level={level}, parent_code={parent_code}, src={src}')
+    return res
+
 
 def index_indicators(trade_date: str = None,
                      ts_code: str = None,
@@ -2142,6 +2804,202 @@ def index_indicators(trade_date: str = None,
                      f'trade_date={trade_date}, start_date={start}, end_date={end}, fields={fields}')
     return res
 
+
+# 'ths_index_daily':  # New, 同花顺行业指数日线行情!
+def ths_daily(ts_code: str = None,
+              trade_date: str = None,
+              start: str = None,
+              end: str = None) -> pd.DataFrame:
+    """ 获取同花顺行业指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS指数代码
+        trade_date	    str	    Y	    交易日
+        close	        float	Y	    收盘点位
+        open	        float	Y	    开盘点位
+        high	        float	Y	    最高点位
+        low	            float	Y	    最低点位
+        pre_close	    float	Y	    昨日收盘点
+        avg_price	    float	Y	    平均价
+        change	        float	Y	    涨跌点位
+        pct_change	    float	Y	    涨跌幅
+        vol	            float	Y	    成交量
+        turnover_rate	float	Y	    换手率
+        total_mv	    float	N	    总市值
+        float_mv	    float	N	    流通市值
+    """
+    pro = ts.pro_api()
+    res = pro.ths_daily(ts_code=ts_code,
+                        trade_date=trade_date,
+                        start_date=start,
+                        end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
+
+
+# 'ths_index_weight':  # New, 同花顺行业指数成分股权重!
+def ths_member(ts_code: str = None,
+               code: str = None) -> pd.DataFrame:
+    """ 获取同花顺行业指数成分股权重
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    code: str, 指数代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    指数代码
+        con_code	    str	    Y	    股票代码
+        con_name	    str	    Y	    股票名称
+        weight	        float	N	    权重(暂无)
+        in_date	        str	    N	    纳入日期(暂无)
+        out_date	    str	    N	    剔除日期(暂无)
+        is_new	        str	    N	    是否最新Y是N否
+    """
+    pro = ts.pro_api()
+    res = pro.ths_member(ts_code=ts_code,
+                         con_code=code)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ths_member with ts_code={ts_code}, code={code}')
+    return res
+
+
+# 'ci_index_daily':  # New, 中信指数日线行情!
+def ci_daily(ts_code: str = None,
+             trade_date: str = None,
+             start: str = None,
+             end: str = None) -> pd.DataFrame:
+    """ 获取中信指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    指数代码
+        trade_date	    str	    Y	    交易日期
+        open	        float	Y	    开盘点位
+        low	            float	Y	    最低点位
+        high	        float	Y	    最高点位
+        close	        float	Y	    收盘点位
+        pre_close	    float	Y	    昨日收盘点位
+        change	        float	Y	    涨跌点位
+        pct_change	    float	Y	    涨跌幅
+        vol	            float	Y	    成交量（万股）
+        amount	        float	Y	    成交额（万元）
+    """
+    pro = ts.pro_api()
+    res = pro.ci_daily(ts_code=ts_code,
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: ci_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
+
+
+# 'sw_index_daily':  # New, 申万指数日线行情!
+def sw_daily(ts_code: str = None,
+             trade_date: str = None,
+             start: str = None,
+             end: str = None) -> pd.DataFrame:
+    """ 获取申万指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    指数代码
+        trade_date	    str	    Y	    交易日期
+        name	        str	    Y	    指数名称
+        open	        float	Y	    开盘点位
+        low	            float	Y	    最低点位
+        high	        float	Y	    最高点位
+        close	        float	Y	    收盘点位
+        change	        float	Y	    涨跌点位
+        pct_change	    float	Y	    涨跌幅
+        vol	            float	Y	    成交量（万股）
+        amount	        float	Y	    成交额（万元）
+        pe	            float	Y	    市盈率
+        pb	            float	Y	    市净率
+        float_mv	    float	Y	    流通市值（万元）
+        total_mv	    float	Y	    总市值（万元）
+    """
+    pro = ts.pro_api()
+    res = pro.sw_daily(ts_code=ts_code,
+                       trade_date=trade_date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: sw_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
+
+
+# New, 全球指数日线行情!
+def index_global(ts_code: str = None,
+                 trade_date: str = None,
+                 start: str = None,
+                 end: str = None) -> pd.DataFrame:
+    """ 获取全球指数日线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    TS指数代码
+        trade_date	    str	    Y	    交易日
+        open	        float	Y	    开盘点位
+        close	        float	Y	    收盘点位
+        high	        float	Y	    最高点位
+        low	            float	Y	    最低点位
+        pre_close	    float	Y	    昨日收盘点
+        change	        float	Y	    涨跌点位
+        pct_chg	        float	Y	    涨跌幅
+        swing	        float	Y	    振幅
+        vol	            float	Y	    成交量 （大部分无此项数据）
+        amount	        float	N	    成交额 （大部分无此项数据）
+    """
+    pro = ts.pro_api()
+    res = pro.index_global(ts_code=ts_code,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_global with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
 def composite(index: str = None,
@@ -2258,7 +3116,6 @@ def fund_basic(market: str = None,
     return res
 
 
-
 def fund_net_value(ts_code: str = None,
                    nav_date: str = None,
                    market: str = None) -> pd.DataFrame:
@@ -2364,6 +3221,37 @@ def future_basic(exchange: str = None,
                      f'fut_type={future_type}, fields={fields}')
     return res
 
+
+# New, 期货合约映射表!
+def fut_mapping(ts_code: str = None,
+                trade_date: str = None,
+                start: str = None,
+                end: str = None) -> pd.DataFrame:
+    """ 获取期货合约映射表
+
+    Parameters
+    ----------
+    ts_code: str, 合约代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+
+    Returns
+    -------
+    pd.DataFrame
+        column          type    default description
+        ts_code	        str	    Y	    连续合约代码
+        trade_date	    str	    Y	    起始日期
+        mapping_ts_code	str	    Y	    期货合约代码
+    """
+    pro = ts.pro_api()
+    res = pro.fut_mapping(ts_code=ts_code,
+                          trade_date=trade_date,
+                          start_date=start,
+                          end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_mapping with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
 def options_basic(exchange: str = None,
@@ -2483,6 +3371,106 @@ def future_daily(trade_date: str = None,
     return res
 
 
+# 'future_weekly':  # New, 期货周线行情!
+def fut_weekly(ts_code: str = None,
+               trade_date: str = None,
+               start: str = None,
+               end: str = None,
+               exchange: str = None) -> pd.DataFrame:
+    """ 获取期货周线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+    exchange: str, 交易所代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column      type    default description
+        ts_code	    str	    Y	    期货代码
+        trade_date	str	    Y	    交易日期
+        freq	    str	    Y	    频率(周week,月month)
+        open	    float	Y	    (周/月)开盘价
+        high	    float	Y	    (周/月)最高价
+        low	        float	Y	    (周/月)最低价
+        close	    float	Y	    (周/月)收盘价
+        pre_close	float	Y	    前一(周/月)收盘价
+        settle	    float	Y	    (周/月)结算价
+        pre_settle	float	Y	    前一(周/月)结算价
+        vol	        float	Y	    (周/月)成交量(手)
+        amount	    float	Y	    (周/月)成交金额(万元)
+        oi	        float	Y	    (周/月)持仓量(手)
+        oi_chg	    float	Y	    (周/月)持仓量变化
+        exchange	str	    Y	    交易所
+        change1	    float	Y	    (周/月)涨跌1 收盘价-昨结算价
+        change2	    float	Y	    (周/月)涨跌2 结算价-昨结算价
+    """
+    pro = ts.pro_api()
+    res = pro.fut_weekly_monthly(ts_code=ts_code,
+                                 trade_date=trade_date,
+                                 start_date=start,
+                                 end_date=end,
+                                 freq='week',
+                                 exchange=exchange)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_weekly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}, exchange={exchange}')
+    return res
+
+
+# 'future_monthly':  # New, 期货月线行情!
+def fut_monthly(ts_code: str = None,
+                trade_date: str = None,
+                start: str = None,
+                end: str = None,
+                exchange: str = None) -> pd.DataFrame:
+    """ 获取期货周线行情
+
+    Parameters
+    ----------
+    ts_code: str, TS代码
+    trade_date: str, 交易日期
+    start: str, 开始日期
+    end: str, 结束日期
+    exchange: str, 交易所代码
+
+    Returns
+    -------
+    pd.DataFrame
+        column      type    default description
+        ts_code	    str	    Y	    期货代码
+        trade_date	str	    Y	    交易日期
+        freq	    str	    Y	    频率(周week,月month)
+        open	    float	Y	    (周/月)开盘价
+        high	    float	Y	    (周/月)最高价
+        low	        float	Y	    (周/月)最低价
+        close	    float	Y	    (周/月)收盘价
+        pre_close	float	Y	    前一(周/月)收盘价
+        settle	    float	Y	    (周/月)结算价
+        pre_settle	float	Y	    前一(周/月)结算价
+        vol	        float	Y	    (周/月)成交量(手)
+        amount	    float	Y	    (周/月)成交金额(万元)
+        oi	        float	Y	    (周/月)持仓量(手)
+        oi_chg	    float	Y	    (周/月)持仓量变化
+        exchange	str	    Y	    交易所
+        change1	    float	Y	    (周/月)涨跌1 收盘价-昨结算价
+        change2	    float	Y	    (周/月)涨跌2 结算价-昨结算价
+    """
+    pro = ts.pro_api()
+    res = pro.fut_weekly_monthly(ts_code=ts_code,
+                                 trade_date=trade_date,
+                                 start_date=start,
+                                 end_date=end,
+                                 freq='month',
+                                 exchange=exchange)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fut_monthly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}, exchange={exchange}')
+    return res
+
+
 def options_daily(trade_date: str = None,
                   option: str = None,
                   exchange: str = None,
@@ -2549,7 +3537,6 @@ def options_daily(trade_date: str = None,
                      f'trade_date={trade_date}, ts_code={option}, exchange={exchange}, start_date={start}, '
                      f'end_date={end}, fields={fields}')
     return res
-
 
 
 def shibor(date=None, start=None, end=None):
@@ -2726,4 +3713,91 @@ def libor(date=None, start=None, end=None, currency=None):
                     currency=currency)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: libor with date={date}, '
                      f'start_date={start}, end_date={end}, currency={currency}')
+    return res
+
+
+def wz_index(date=None, start=None, end=None):
+    """ 获取温州民间借贷利率指数"""
+    pro = ts.pro_api()
+    res = pro.wz_index(date=date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: wz_index with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def gz_index(date=None, start=None, end=None):
+    """ 获取广州民间借贷利率指数"""
+    pro = ts.pro_api()
+    res = pro.gz_index(date=date,
+                       start_date=start,
+                       end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: gz_index with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+def cn_gdp(quarter=None, start=None, end=None):
+    """ 获取中国国内生产总值"""
+    fields = 'quarter,gdp,gdp_yoy,pi,pi_yoy,si,si_yoy,ti,ti_yoy'
+    pro = ts.pro_api()
+    res = pro.cn_gdp(q=quarter, start_q=start, end_q=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_gdp with quarter={quarter}')
+    return res
+
+
+def cn_cpi(month=None, start=None, end=None):
+    """ 获取中国居民消费价格指数"""
+    fields = "month, nt_val, nt_yoy, nt_mom, nt_accu, town_val, town_yoy, " \
+             "town_mom, town_accu, cnt_val, cnt_yoy, cnt_mom, cnt_accu"
+    pro = ts.pro_api()
+    res = pro.cn_cpi(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_cpi with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_ppi(month=None, start=None, end=None):
+    """ 获取中国工业品出厂价格指数"""
+    fields = "month, ppi_yoy, ppi_mp_yoy, ppi_mp_qm_yoy, ppi_mp_rm_yoy, ppi_mp_p_yoy, ppi_cg_yoy, ppi_cg_f_yoy, " \
+             "ppi_cg_c_yoy, ppi_cg_adu_yoy, ppi_cg_dcg_yoy, ppi_mom, ppi_mp_mom, ppi_mp_qm_mom, ppi_mp_rm_mom, " \
+             "ppi_mp_p_mom, ppi_cg_mom, ppi_cg_f_mom, ppi_cg_c_mom, ppi_cg_adu_mom, ppi_cg_dcg_mom, ppi_accu, " \
+             "ppi_mp_accu, ppi_mp_qm_accu, ppi_mp_rm_accu, ppi_mp_p_accu, ppi_cg_accu, ppi_cg_f_accu, ppi_cg_c_accu, " \
+             "ppi_cg_adu_accu, ppi_cg_dcg_accu"
+    pro = ts.pro_api()
+    res = pro.cn_ppi(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_ppi with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_money(month=None, start=None, end=None):
+    """ 获取中国货币供应量"""
+    fields = "month, m0, m0_yoy, m0_mom, m1, m1_yoy, m1_mom, m2, m2_yoy, m2_mom"
+    pro = ts.pro_api()
+    res = pro.cn_m(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_money_supply with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_sf(month=None, start=None, end=None):
+    """ 获取中国社会融资规模"""
+    fields = "month, inc_month, inc_cumval, stk_endval"
+    pro = ts.pro_api()
+    res = pro.sf_month(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_social_fin with start_m={start}, end_m={end}')
+    return res
+
+
+def cn_pmi(month=None, start=None, end=None):
+    """ 获取中国采购经理指数"""
+    fields = "month, pmi010000, pmi010100, pmi010200, pmi010300, pmi010400, pmi010401, pmi010402, pmi010403, " \
+             "pmi010500, pmi010501, pmi010502, pmi010503, pmi010600, pmi010601, pmi010602, pmi010603, pmi010700, " \
+             "pmi010701, pmi010702, pmi010703, pmi010800, pmi010801, pmi010802, pmi010803, pmi010900, pmi011000, " \
+             "pmi011100, pmi011200, pmi011300, pmi011400, pmi011500, pmi011600, pmi011700, pmi011800, pmi011900, " \
+             "pmi012000, pmi020100, pmi020101, pmi020102, pmi020200, pmi020201, pmi020202, pmi020300, pmi020301, " \
+             "pmi020302, pmi020400, pmi020401, pmi020402, pmi020500, pmi020501, pmi020502, pmi020600, pmi020601, " \
+             "pmi020602, pmi020700, pmi020800, pmi020900, pmi021000, pmi030000"
+    pro = ts.pro_api()
+    res = pro.cn_pmi(m=month, start_m=start, end_m=end, fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cn_pmi with start_m={start}, end_m={end}')
     return res

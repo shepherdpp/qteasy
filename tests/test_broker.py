@@ -48,7 +48,8 @@ class TestBroker(unittest.TestCase):
                 port=QT_CONFIG['test_db_port'],
                 user=QT_CONFIG['test_db_user'],
                 password=QT_CONFIG['test_db_password'],
-                db_name=QT_CONFIG['test_db_name']
+                db_name=QT_CONFIG['test_db_name'],
+                allow_drop_table=True,
         )
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_orders']:
@@ -58,7 +59,7 @@ class TestBroker(unittest.TestCase):
         # 创建一个测试账户
         user_name = 'test_user'
         cash_amount = 10000.0
-        new_account(user_name, cash_amount, data_source=self.test_ds)
+        new_account(user_name=user_name, cash_amount=cash_amount, data_source=self.test_ds)
 
         # 在测试账户中创建两个测试持仓
         get_or_create_position(1, '000001.SH', 'long', data_source=self.test_ds)

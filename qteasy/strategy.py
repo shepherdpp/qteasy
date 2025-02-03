@@ -14,8 +14,10 @@ import pandas as pd
 from abc import abstractmethod, ABCMeta
 import warnings
 
-from .utilfuncs import str_to_list
-from .utilfuncs import TIME_FREQ_STRINGS
+from qteasy.utilfuncs import (
+    TIME_FREQ_STRINGS,
+    str_to_list,
+)
 
 
 class BaseStrategy:

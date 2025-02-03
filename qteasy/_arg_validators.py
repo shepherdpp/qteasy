@@ -964,7 +964,7 @@ def _valid_qt_kwargs():
              'text':      '策略参数优化后输出的最优参数数量，取值范围为大于0的整数'},
 
         'ZH_font_name_MAC':  # v1.3.10新增
-            {'Default':   'pingfang HK',
+            {'Default':   'pingfang HK',   # Use 'Songti SC' if 'pingfang HK' is not available,
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
              'text':      'Mac OS系统下的中文字体名称，用于绘图时显示中文'},

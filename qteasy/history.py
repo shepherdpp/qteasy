@@ -6,15 +6,27 @@
 # Created:  2020-02-16
 # Desc:
 #   HistoryPanel Class, and more history
-#   data manipulating functions.
+# data manipulating functions.
 # ======================================
 
 import pandas as pd
 import numpy as np
 
-import qteasy
-from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, ffill_3d_data
-from .utilfuncs import fill_nan_data, fill_inf_data
+from qteasy.utilfuncs import (
+    str_to_list,
+    list_to_str_format,
+    list_or_slice,
+    labels_to_dict,
+    ffill_3d_data,
+    fill_nan_data,
+    fill_inf_data,
+    pandas_freq_alias_version_conversion,
+)
+
+from qteasy.datatypes import (
+    get_history_data_from_source,
+    get_reference_data_from_source,
+)
 
 
 class HistoryPanel():
@@ -101,13 +113,13 @@ class HistoryPanel():
         values: ndarray
             一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
             如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-        levels: list or tuple
+        levels: str or [str] or (str)
             HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
-        rows: list or tuple
+        rows: str or [str] or (str)
             HistoryPanel的时间日期标签。
             datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
             行标签代表每一条数据对应的历史时间戳
-        columns: list or tuple
+        columns: str or [str] or (str)
             HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
         """
 
@@ -379,10 +391,10 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
-        ...                          levels=['000001', '000002', '000003'],
-        ...                          rows=pd.date_range('2015-01-05', periods=10),
-        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   rows=pd.date_range('2015-01-05', periods=10),
+        ...                   columns=['open', 'high', 'low', 'close', 'volume'])
         >>> hp
                 share 0, label: 000001
                     open  high  low  close  volume
@@ -592,7 +604,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -648,7 +660,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -694,7 +706,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -726,7 +738,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -784,7 +796,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -811,7 +823,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
+        >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
         ...                          levels=['000001', '000002', '000003'],
         ...                          rows=pd.date_range('2015-01-05', periods=10),
         ...                          columns=['open', 'high', 'low', 'close', 'volume'])
@@ -983,12 +995,12 @@ class HistoryPanel():
         Examples
         --------
         # 如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
-        >>> hp1 = qteasy.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
+        >>> hp1 = HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
         ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
         ...                           levels=['000200', '000300'],
         ...                           rows=pd.date_range('2020-01-01', periods=5),
         ...                           columns=['close', 'open', 'high'])
-        >>> hp2 = qteasy.HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
+        >>> hp2 = HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
         ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
         ...                           levels=['000400', '000500'],
         ...                           rows=pd.date_range('2020-01-01', periods=5),
@@ -1249,7 +1261,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
         ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
         ...                          levels=['000300', '000001'],
         ...                          rows=['2020-01-01', '2020-01-02'],
@@ -1305,7 +1317,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
         ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
         ...                          levels=['000300', '000001'],
         ...                          rows=['2020-01-01', '2020-01-02'],
@@ -1350,7 +1362,7 @@ class HistoryPanel():
 
         Examples
         --------
-        >>> hp = qteasy.HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
         ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
         ...                          levels=['000300', '000001'],
         ...                          rows=['2020-01-01', '2020-01-02'],
@@ -1580,7 +1592,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -1634,7 +1646,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -1688,7 +1700,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -1747,7 +1759,7 @@ class HistoryPanel():
         ...                   [12.3, 12.5, 1020040], [12.6, 13.2, 1020050], [12.9, 13.0, 1020060]],
         ...                  [[2.3, 2.5, 20010], [2.6, 2.8, 20020], [2.9, 3.0, 20030],
         ...                   [2.3, 2.5, 20040], [2.6, 2.8, 20050], [2.9, 3.0, 20060]]])
-        >>> hp = qteasy.HistoryPanel(values=data,
+        >>> hp = HistoryPanel(values=data,
         ...                          levels=['000300', '000001'],
         ...                          rows=pd.date_range('2020-01-01', periods=6),
         ...                          columns=['close', 'open', 'vol'])
@@ -2200,20 +2212,214 @@ def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, h
                             fill_value=fill_value)
 
 
+def _adjust_freq(hist_data: pd.DataFrame,
+                 target_freq: str,
+                 *,
+                 method: str = 'last',
+                 b_days_only: bool = True,
+                 trade_time_only: bool = True,
+                 forced_start: str = None,
+                 forced_end: str = None,
+                 **kwargs):
+    """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
+    符合target_freq
+
+    Parameters
+    ----------
+    hist_data: pd.DataFrame
+        历史数据，是一个index为日期/时间的DataFrame
+    target_freq: str
+        历史数据的目标频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+    method: str
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        降频可用的methods有：
+        - 'last'/'close': 使用合并区间的最后一个值
+        - 'first'/'open': 使用合并区间的第一个值
+        - 'max'/'high': 使用合并区间的最大值作为合并值
+        - 'min'/'low': 使用合并区间的最小值作为合并值
+        - 'mean'/'average': 使用合并区间的平均值作为合并值
+        - 'sum/total': 使用合并区间的总和作为合并值
+
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        升频可用的methods有：
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN
+        - 'nan': 使用NaN值填充缺失数据
+        - 'zero': 使用0值填充缺失数据
+    b_days_only: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+    trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+    forced_start: str, Datetime like, 默认None
+        强制开始日期，如果为None，则使用hist_data的第一天为开始日期
+    forced_start: str, Datetime like, 默认None
+        强制结束日期，如果为None，则使用hist_data的最后一天为结束日期
+    **kwargs:
+        用于生成trade_time_index的参数，包括：
+        include_start:   日期时间序列是否包含开始日期/时间
+        include_end:     日期时间序列是否包含结束日期/时间
+        start_am:        早晨交易时段的开始时间
+        end_am:          早晨交易时段的结束时间
+        include_start_am:早晨交易时段是否包括开始时间
+        include_end_am:  早晨交易时段是否包括结束时间
+        start_pm:        下午交易时段的开始时间
+        end_pm:          下午交易时段的结束时间
+        include_start_pm 下午交易时段是否包含开始时间
+        include_end_pm   下午交易时段是否包含结束时间
+
+    Returns
+    -------
+    DataFrame:
+    一个重新设定index并填充好数据的历史数据DataFrame
+
+    Examples
+    --------
+    例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+    数据合并方法:
+    - 'last'/'close': 使用合并区间的最后一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'first'/'open': 使用合并区间的第一个值。如：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'max'/'high': 使用合并区间的最大值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+    - 'min'/'low': 使用合并区间的最小值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+    - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+    - 'sum'/'total': 使用合并区间的平均值作为合并值：
+        [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+    例如，填充下列数据(?表示插入的数据）
+        [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+    缺失数据的填充方法如下:
+    - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+    - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+        [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+    - 'nan': 使用NaN值填充缺失数据：
+        [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+    - 'zero': 使用0值填充缺失数据：
+        [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+    """
+
+    if not isinstance(target_freq, str):
+        err = TypeError(f'target freq should be a string, got {target_freq}({type(target_freq)}) instead.')
+        raise err
+    target_freq = target_freq.upper()
+    # 如果hist_data为空，直接返回
+    if hist_data.empty:
+        return hist_data
+    if b_days_only:
+        if target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
+    # 如果hist_data的freq与target_freq一致，也可以直接返回
+    # TODO: 这里有bug：强制start/end的情形需要排除
+    if hist_data.index.freqstr == target_freq:
+        return hist_data
+    # 如果hist_data的freq为None，可以infer freq
+    if hist_data.index.inferred_freq == target_freq:
+        return hist_data
+
+    # 新版本pandas修改了部分freq alias，为了确保向后兼容，确保freq_aliases与pandas版本匹配
+    target_freq = pandas_freq_alias_version_conversion(target_freq)
+
+    resampled = hist_data.resample(target_freq)
+    if method in ['last', 'close']:
+        resampled = resampled.last()
+    elif method in ['first', 'open']:
+        resampled = resampled.first()
+    elif method in ['max', 'high']:
+        resampled = resampled.max()
+    elif method in ['min', 'low']:
+        resampled = resampled.min()
+    elif method in ['avg', 'mean']:
+        resampled = resampled.mean()
+    elif method in ['sum', 'total']:
+        resampled = resampled.sum()
+    elif method == 'ffill':
+        resampled = resampled.ffill()
+    elif method == 'bfill':
+        resampled = resampled.bfill()
+    elif method in ['nan', 'none']:
+        resampled = resampled.first()
+    elif method == 'zero':
+        resampled = resampled.first().fillna(0)
+    else:
+        # for unexpected cases
+        err = ValueError(f'resample method {method} can not be recognized.')
+        raise err
+
+    # 完成resample频率切换后，根据设置去除非工作日或非交易时段的数据
+    # 并填充空数据
+    resampled_index = resampled.index
+    if forced_start is None:
+        start = resampled_index[0]
+    else:
+        start = pd.to_datetime(forced_start)
+    if forced_end is None:
+        end = resampled_index[-1]
+    else:
+        end = pd.to_datetime(forced_end)
+
+    # 如果要求强制转换自然日频率为工作日频率
+    # 原来的版本在resample之前就强制转换自然日到工作日，但是测试发现，pd的resample有一个bug：
+    # 这个bug会导致method为last时，最后一个工作日的数据取自周日，而不是周五
+    # 在实际测试中发现，如果将2020-01-01到2020-01-10之间的Hourly数据汇总到工作日时
+    # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
+    # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
+    # 了周五，这样可能会导致错误的结果
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将非交易日的数据去除
+    # 不过仅对freq为'D'的频率如此操作
+    if b_days_only:
+        if target_freq == 'D':
+            target_freq = 'B'
+
+    # 如果要求去掉非交易时段的数据
+    from qteasy.trading_util import _trade_time_index
+    if trade_time_only:
+        expanded_index = _trade_time_index(
+                start=start,
+                end=end,
+                freq=target_freq,
+                trade_days_only=b_days_only,
+                **kwargs
+        )
+    else:
+        expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
+    resampled = resampled.reindex(index=expanded_index)
+    # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
+    if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
+        if method == 'ffill':
+            resampled.ffill(inplace=True)
+        elif method == 'bfill':
+            resampled.bfill(inplace=True)
+        elif method == 'zero':
+            resampled.fillna(0, inplace=True)
+
+    return resampled
+
+
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
 def get_history_panel(
-        htypes,
+        data_types,
+        data_source,
         shares=None,
-        symbols=None,
         freq=None,
         start=None,
         end=None,
         rows=None,
-        asset_type: str = None,
-        adj: str = None,
-        data_source=None,
         drop_nan=True,
         resample_method='ffill',
         b_days_only=True,
@@ -2225,26 +2431,16 @@ def get_history_panel(
 
     Parameters
     ----------
-    htypes: str or list of str
-
-        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-        如以下两种输入方式皆合法且等效：
-         - str:     'open, high, low, close'
-         - list:    ['open', 'high', 'low', 'close']
-        特殊htypes的处理：
-        以下特殊htypes将被特殊处理"
-         - wt-000300.SH:
-            指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
-            获取的数据的htypes同样为wt-000300.SH型
-         - close-000300.SH:
-            给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
-            的参考数据
+    data_types: [DataType]
+        需要获取的历史数据类型集合，必须是合法的DataType数据类型对象，
+    data_source: DataSource
+        数据源对象，用于获取数据
     shares: [str, list]
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    symbols: [str, list]
+    symbols: [str, list] 等同于shares
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：
         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
@@ -2260,21 +2456,10 @@ def get_history_panel(
     rows: int
         获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
         如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
-    asset_type: str, list, optional, default "any"
-        限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
-        逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-         - any: 可以获取任意资产类型的证券数据(默认值)
-         - E:   只获取股票类型证券的数据
-         - IDX: 只获取指数类型证券的数据
-         - FT:  只获取期货类型证券的数据
-         - FD:  只获取基金类型证券的数据
-    adj: str, optional, default "none"
-        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-         - none / n: 不复权(默认值)
-         - back / b: 后复权
-         - forward / fw / f: 前复权
     drop_nan: bool
         是否保留全NaN的行
+    as_data_frame: bool, default True
+        是否以DataFrame形式输出数据，如果设置为False，输出数据为HistoryPanel对象
     resample_method: str
         如果数据需要升频或降频时，调整频率的方法
         调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
@@ -2328,175 +2513,58 @@ def get_history_panel(
         end_pm:          下午交易时段的结束时间
         include_start_pm 下午交易时段是否包含开始时间
         include_end_pm   下午交易时段是否包含结束时间
-    data_source: DataSource Object
-
-        数据源对象，用于获取数据
 
     Returns
     -------
     DataFrame
     """
-    # 检查数据合法性：
-    # TODO: 应该考虑将这部分内容移到core.get_history_data()函数中去
-    from qteasy.utilfuncs import TIME_FREQ_STRINGS, AVAILABLE_ASSET_TYPES
-    if shares is None:
-        shares = ''
-
-    if not isinstance(shares, (str, list)):
-        raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
-    if not isinstance(htypes, (str, list)):
-        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
-
-    if isinstance(shares, str):
-        shares = str_to_list(shares)
-    if isinstance(shares, list):
-        if not all(isinstance(item, str) for item in shares):
-            raise TypeError(f'all items in shares list should be a string, got otherwise')
-    if isinstance(htypes, str):
-        htypes = str_to_list(htypes)
-    if isinstance(htypes, list):
-        if not all(isinstance(item, str) for item in htypes):
-            raise TypeError(f'all items in shares list should be a string, got otherwise')
-
-    if start is not None:
-        try:
-            start = pd.to_datetime(start)
-        except Exception:
-            raise Exception(f'Start date can not be converted to datetime format')
-    if end is not None:
-        try:
-            end = pd.to_datetime(end)
-        except Exception:
-            raise Exception(f'End date can not be converted to datetime format')
-
-    # if isinstance(freq, list):
-    #     freq = ','.join(freq)
-    if not isinstance(freq, str):
-        err = TypeError(f'freq should be a string, got {type(freq)} instead')
-        raise err
-    if freq.upper() not in TIME_FREQ_STRINGS:
-        err = KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
-        raise err
-    freq = freq.lower()
-
-    if asset_type is None:
-        asset_type = 'any'
-    if not isinstance(asset_type, (str, list)):
-        err = TypeError(f'asset type should be a string, got {type(asset_type)} instead')
-        raise err
-    if isinstance(asset_type, str):
-        asset_type = str_to_list(asset_type)
-    if not all(isinstance(item, str) for item in asset_type):
-        err = KeyError(f'not all items in asset type are strings')
-        raise err
-    if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
-        err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
-        raise err
-    if any(item.upper() == 'ANY' for item in asset_type):
-        asset_type = AVAILABLE_ASSET_TYPES
-    asset_type = [item.upper() for item in asset_type]
-
-    if adj is None:
-        adj = 'none'
-    if not isinstance(adj, str):
-        err = TypeError(f'adj type should be a string, got {type(adj)} instead')
-        raise err
-    if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-        err = KeyError(f"invalid adj type ({adj}), which should be anyone of "
-                       f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
-        raise err
-    adj = adj.lower()
+    if not data_types:
+        return HistoryPanel()
 
     if data_source is None:
-        from qteasy import QT_DATA_SOURCE
-        ds = QT_DATA_SOURCE
-    else:
-        if not isinstance(data_source, qteasy.DataSource):
-            err = TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
-            raise err
-        ds = data_source
+        raise TypeError(f'data source should not be None!')
 
-    # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
-    htype_splits = [itm.split('-') for itm in htypes]
+    if freq is None:
+        raise TypeError(f'freq can not be None!')
+
     if shares:
-        # shares不为空时，生成各个shares的历史数据HistoryPanel
-        normal_htypes = [itm[0] for itm in htype_splits if len(itm) == 1]
-        weight_indices = [itm[1] for itm in htype_splits if (len(itm) > 1) and (itm[0] == 'wt')]
-        htype_code_pairs = {}
-        pure_ref_htypes = []
+        normal_dfs = get_history_data_from_source(
+                datasource=data_source,
+                htypes=data_types,
+                qt_codes=list_to_str_format(shares),
+                start=start,
+                end=end,
+                freq=freq,
+                row_count=rows,
+                combine_htype_names=True,
+        )
+        all_dfs = normal_dfs
     else:
-        # shares为空时，生成不属于任何shares的参考历史数据：
-        normal_htypes = []
-        weight_indices = []
-        htype_code_pairs = {itm[0]: itm[1] for itm in htype_splits if len(itm) > 1}
-        pure_ref_htypes = [itm[0] for itm in htype_splits if len(itm) == 1]
-    # 获取常规类型的历史数据如量价数据和指标数据
-    normal_dfs = ds.get_history_data(
-            shares=shares,
-            htypes=normal_htypes,
-            start=start,
-            end=end,
-            freq=freq,
-            row_count=rows,
-            asset_type=asset_type,
-            adj=adj
-    ) if normal_htypes else {}
-    # 获取指数成分权重数据
-    weight_dfs = ds.get_index_weights(
-            index=weight_indices,
-            start=start,
-            end=end,
-            shares=shares
-    ) if weight_indices else {}
-    # 获取无share数据
-    reference_dfs = ds.get_history_data(
-            shares=list(htype_code_pairs.values()),
-            htypes=list(htype_code_pairs.keys()),
-            start=start,
-            end=end,
-            freq=freq,
-            row_count=rows,
-            asset_type=asset_type,
-            adj=adj
-    ) if htype_code_pairs else {}
-    pure_ref_dfs = ds.get_history_data(
-            shares=None,
-            htypes=pure_ref_htypes,
-            start=start,
-            end=end,
-            freq=freq,
-            asset_type=asset_type,
-            adj=adj
-    ) if pure_ref_htypes else {}
-    if shares:
-        # 合并两个hp，合并前整理字典的keys，使之与htypes的顺序一致，否则产生的historyPanel
-        # 的htypes顺序与输入不一致
-        if weight_dfs != {}:
-            normal_dfs.update(weight_dfs)
-        all_dfs = {htyp: normal_dfs[htyp] for htyp in htypes}
-    else:
-        # 处理reference_data
-        new_reference_dfs = {}
-        if reference_dfs:
-            for htyp, df in reference_dfs.items():
-                code = htype_code_pairs[htyp]
-                code_type_pair = htyp + '-' + code
-                df = df.reindex(columns=[code])
-                df.columns = ['none']
-                new_reference_dfs[code_type_pair] = df
-        if pure_ref_dfs:
-            new_reference_dfs.update(pure_ref_dfs)
-        all_dfs = {htyp: new_reference_dfs[htyp] for htyp in htypes}
+        # 获取无share数据
+        reference_dfs = get_reference_data_from_source(
+                datasource=data_source,
+                htypes=data_types,
+                start=start,
+                end=end,
+                freq=freq,
+                row_count=rows,
+        )
+        all_dfs = reference_dfs
 
     # 处理所有的df，根据设定执行以下几个步骤：
     #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
     #  2，检查整行NaN值的情况，根据设定去掉或保留这些行
-    #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
-    for htyp in htypes:
-        if resample_method is not None:
-            from .database import _resample_data
-            all_dfs[htyp] = _resample_data(
-                    all_dfs[htyp],
+    #  3，如果df是一个Series，则将其转化为DataFrame
+    for htyp, df in all_dfs.items():
+        if isinstance(df, pd.Series):
+            df = pd.DataFrame(df)
+            df.columns = ['none']
+            all_dfs[htyp] = df
+        # find freq of the htyp:
+        htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
+        if (not b_days_only) or (not trade_time_only) or (htype_freq.freq != freq):
+            new_df = _adjust_freq(
+                    df,
                     target_freq=freq,
                     method=resample_method,
                     forced_start=start,
@@ -2505,11 +2573,10 @@ def get_history_panel(
                     trade_time_only=trade_time_only,
                     **kwargs
             )
+            all_dfs[htyp] = new_df
         if drop_nan:
-            all_dfs[htyp] = all_dfs[htyp].dropna(how='all')
+            all_dfs[htyp] = df.dropna(how='all')
 
-    if shares:
-        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
-    else:
-        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes)
+    result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=all_dfs.keys(), shares=shares)
+
     return result_hp

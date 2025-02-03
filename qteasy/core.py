@@ -10,22 +10,55 @@
 
 import pandas as pd
 import numpy as np
+import time
 from warnings import warn
 
 import datetime
 
 import qteasy
-from .history import get_history_panel, HistoryPanel
-from .utilfuncs import str_to_list, regulate_date_format, match_ts_code
-from .utilfuncs import next_market_trade_day
-from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
-from .finance import CashPlan
-from .qt_operator import Operator
-from .visual import _plot_loop_result, _loop_report_str, _print_test_result
-from .visual import _plot_test_result
-from ._arg_validators import QT_CONFIG, ConfigDict
-from .configure import configure
-from .optimization import _evaluate_all_parameters, _evaluate_one_parameter
+from qteasy.finance import CashPlan
+from qteasy.configure import configure
+from qteasy.qt_operator import Operator
+from qteasy.database import DataSource
+
+from qteasy.datatypes import (
+    DataType,
+    infer_data_types,
+)
+
+from qteasy.history import (
+    get_history_panel,
+    HistoryPanel,
+)
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    regulate_date_format,
+    match_ts_code,
+    next_market_trade_day,
+    AVAILABLE_ASSET_TYPES,
+    _partial_lev_ratio,
+    progress_bar,
+    sec_to_duration,
+    TIME_FREQ_STRINGS,
+)
+
+from qteasy.visual import (
+    _plot_loop_result,
+    _loop_report_str,
+    _print_test_result,
+    _plot_test_result,
+)
+
+from qteasy._arg_validators import (
+    QT_CONFIG,
+    ConfigDict,
+)
+
+from qteasy.optimization import (
+    _evaluate_all_parameters,
+    _evaluate_one_parameter,
+)
 
 
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
@@ -74,6 +107,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     601229.SH  上海银行   上海       银行     主板 2016-11-16      SSE
     601328.SH  交通银行   上海       银行     主板 2007-05-15      SSE
     """
+    from qteasy import QT_DATA_SOURCE
     try:
         date = pd.to_datetime(date)
     except:
@@ -84,7 +118,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
-    ds = qteasy.QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     # ts_code是dataframe的index
     share_basics = ds.read_table_data('stock_basic')
     if not share_basics.empty:
@@ -319,10 +353,11 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     list_date    2004-05-14
     -------------------------------------------
     """
+    from qteasy import QT_DATA_SOURCE
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
-    ds = qteasy.QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
+    ds = QT_DATA_SOURCE
+    df_s, df_i, df_f, df_ft, df_o, df_ths = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     matched_count = matched_codes['count']
@@ -433,7 +468,7 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
                           verbose=verbose)
 
 
-def get_table_info(table_name, data_source=None, verbose=True):
+def get_table_info(table_name, data_source=None, verbose=True) -> dict:
     """ 获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容
         以及数据列的名称、数据类型及说明
 
@@ -448,19 +483,21 @@ def get_table_info(table_name, data_source=None, verbose=True):
 
     Returns
     -------
-    一个tuple，包含数据表的结构化信息：
-        (table name:    str, 数据表名称
-         table_exists:  bool，数据表是否存在
-         table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
-         table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
-         primary_key1:  str，数据表第一个主键名称
-         pk_count1:     int，数据表第一个主键记录数量
-         pk_min1:       obj，数据表主键1起始记录
-         pk_max1:       obj，数据表主键2最终记录
-         primary_key2:  str，数据表第二个主键名称
-         pk_count2:     int，数据表第二个主键记录
-         pk_min2:       obj，数据表主键2起始记录
-         pk_max2:       obj，数据表主键2最终记录)
+    一个dict，包含数据表的结构化信息：
+        {
+            table name:    数据表名称
+            table_exists:  bool，数据表是否存在
+            table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+            table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
+            primary_key1:  str，数据表第一个主键名称
+            pk_count1:     int，数据表第一个主键记录数量
+            pk_min1:       obj，数据表主键1起始记录
+            pk_max1:       obj，数据表主键2最终记录
+            primary_key2:  str，数据表第二个主键名称
+            pk_count2:     int，数据表第二个主键记录
+            pk_min2:       obj，数据表主键2起始记录
+            pk_max2:       obj，数据表主键2最终记录
+        }
 
     Examples
     --------
@@ -490,14 +527,15 @@ def get_table_info(table_name, data_source=None, verbose=True):
     13  delist_date         date    退市日期
     14        is_hs   varchar(2)  是否沪深港通
     """
+    from qteasy import QT_DATA_SOURCE
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
-    if not isinstance(data_source, qteasy.DataSource):
+        data_source = QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data_source should be a DataSource, got {type(data_source)} instead.')
     return data_source.get_table_info(table=table_name, verbose=verbose)
 
 
-def get_table_overview(data_source=None, tables=None, include_sys_tables=False) -> None:
+def get_table_overview(data_source=None, tables=None, include_sys_tables=False) -> pd.DataFrame:
     """ 显示默认数据源或指定数据源的数据总览
 
     Parameters
@@ -511,7 +549,7 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False) 
 
     Returns
     -------
-    None
+    pd.DataFrame
 
     Notes
     -----
@@ -520,14 +558,15 @@ def get_table_overview(data_source=None, tables=None, include_sys_tables=False) 
 
     from .database import DataSource
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
 
-    data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
+    return data_source.overview(tables=tables, include_sys_tables=include_sys_tables)
 
 
-def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -> None:
+def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -> pd.DataFrame:
     """ 显示数据源的数据总览，等同于get_table_overview()
 
     获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等
@@ -543,7 +582,8 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
 
     Returns
     -------
-    None
+    pd.DataFrame
+    返回一个包含数据表的overview信息的DataFrame
 
     Examples
     --------
@@ -611,79 +651,75 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
     return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
-def refill_data_source(*, data_source=None, **kwargs) -> None:
+def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None, asset_types=None,
+                       refresh_trade_calendar=False,
+                       symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
+                       parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
+                       download_batch_interval=0, merge_type='update', log=False) -> None:
     """ 填充数据数据源
 
     Parameters
     ----------
     data_source: DataSource, Default None
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
-    **kwargs:
-     tables: str or list of str, default: None
-         需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
-         例如，下面两种方式都合法且相同：
-             table='stock_indicator, stock_daily, income, stock_adj_factor'
-             table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']
-         除了直接给出表名称以外，还可以通过表类型指明多个表，可以同时输入多个类型的表：
-             - 'all'     : 所有的表
-             - 'cal'     : 交易日历表
-             - 'basics'  : 所有的基础信息表
-             - 'adj'     : 所有的复权因子表
-             - 'data'    : 所有的历史数据表
-             - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
-             - 'report'  : 财务报表
-             - 'comp'    : 指数成分表
-     dtypes: str or list of str, default: None
-         通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
-         如果给出了tables，则dtypes参数会被忽略
-     freqs: str, default: None
-         通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
-         如果tables != all时，给出freq会排除掉freq与之不符的数据表
-     asset_types: Str of List of Str, default: None
-         通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
-         如果tables != all时，给出asset_type会排除掉与之不符的数据表
-     start_date: DateTime Like, default: None
-         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-     end_date: DateTime Like, default: None
-         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
-     list_arg_filter: str or list of str, default: None  **注意，不是所有情况下该参数都有效**
-         限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
-         参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
-         如果filter_arg为None，则下载所有数据。
-         例如，下载stock_basic表数据时，下载以下输入均为合法输入：
-         - 'SZSE'
-             仅下载深圳交易所的股票数据
-         - ['SSE', 'SZSE']
-         - 'SSE, SZSE'
-             上面两种写法等效，下载上海和深圳交易所的股票数据
-     symbols: str or list of str, default: None  **注意，不是所有情况下该参数都有效**
-         限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
-         可以多种形式确定范围，以下输入均为合法输入：
-         - '000001'
-             没有指定asset_types时，000001.SZ, 000001.SH ... 等所有代码都会被选中下载
-             如果指定asset_types，只有符合类型的证券数据会被下载
-         - '000001, 000002, 000003'
-         - ['000001', '000002', '000003']
-             两种写法等效，列表中列举出的证券数据会被下载
-         - '000001:000300'
-             从'000001'开始到'000300'之间的所有证券数据都会被下载
-     merge_type: str, default: 'ignore'
-         数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
-         - 'ignore' 默认值，不下载重复的数据
-         - 'update' 下载并更新本地数据的重复部分
-     reversed_par_seq: Bool, default: False
-         是否逆序参数下载数据， 默认False
-         - True:  逆序参数下载数据
-         - False: 顺序参数下载数据
-     parallel: Bool, default: True
-         是否启用多线程下载数据，默认True
-         - True:  启用多线程下载数据
-         - False: 禁用多线程下载
-     process_count: int, default: None
-         启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
-     chunk_size: int, default: 100
-         保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
-         再批量保存到本地，chunk_size即批量，默认值100
+    channel: str,
+        数据获取渠道，金融数据API，支持以下选项:
+        - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
+        - 'akshare'     : 从AKshare API获取金融数据
+        - 'emoney'      : 从东方财富网获取金融数据
+    tables: str or list of str, default: None
+        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+    dtypes: str or list of str, default: None
+        需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型
+    freqs: str or list of str, default: None
+        需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率
+    asset_types: str or list of str, default: None
+        需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型
+    refresh_trade_calendar: Bool, Default False
+        是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
+    start_date: str YYYYMMDD
+        限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+    end_date: str YYYYMMDD
+        限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+    list_arg_filter: str or list of str, default: None  **注意，不是所有情况下filter_arg参数都有效**
+        限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
+        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
+        如果filter_arg为None，则下载所有数据。
+        例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+        - 'SZSE'
+            仅下载深圳交易所的股票数据
+        - ['SSE', 'SZSE']
+        - 'SSE, SZSE'
+            上面两种写法等效，下载上海和深圳交易所的股票数据
+    symbols: str or list of str, default: None
+        用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载
+    reversed_par_seq: Bool, Default False
+        是否逆序参数下载数据， 默认False
+        - True:  逆序参数下载数据
+        - False: 顺序参数下载数据
+    parallel: Bool, Default True
+        是否启用多线程下载数据
+        - True:  启用多线程下载数据
+        - False: 禁用多线程下载
+    process_count: int
+        启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+    chunk_size: int
+        保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
+        再批量保存到本地，chunk_size即批量，默认值100
+    download_batch_size: int, default 0
+        为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
+        该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效
+        如果为0，则不暂停，一次性下载所有数据
+    download_batch_interval: int, default 0
+        为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载
+        该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效
+        如果<=0，则不暂停，立即开始下一批数据下载
+    merge_type: str, Default 'update'
+        数据写入数据源时的合并方式，支持以下选项：
+        - 'update'  : 更新数据，如果数据已存在，则更新数据
+        - 'ignore'  : 忽略数据，如果数据已存在，则丢弃下载的数据
+    log: Bool, Default False
+        是否记录数据下载日志
 
     Returns
     -------
@@ -695,55 +731,198 @@ def refill_data_source(*, data_source=None, **kwargs) -> None:
     >>> qt.refill_data_source(tables='stock_basic')
 
     """
+
+    # 0, 输入数据检查
+
     from .database import DataSource
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
     print(f'Filling data source {data_source} ...')
-    hist_dnld_delay = None
-    hist_dnld_delay_evy = None
-    if 'download_batch_size' not in kwargs:
-        hist_dnld_delay = QT_CONFIG.hist_dnld_delay
-    if 'download_batch_interval' not in kwargs:
-        hist_dnld_delay_evy = QT_CONFIG.hist_dnld_delay_evy
 
-    data_source.refill_local_source(
-            download_batch_size=hist_dnld_delay_evy,
-            download_batch_interval=hist_dnld_delay,
-            **kwargs,
+    if download_batch_interval is None:
+        download_batch_interval = QT_CONFIG.hist_dnld_delay
+    if download_batch_size is None:
+        download_batch_size = QT_CONFIG.hist_dnld_delay_evy
+
+    # 1, 解析需要下载的数据表清单
+    if isinstance(tables, str):
+        tables = str_to_list(tables)
+    if isinstance(dtypes, str):
+        dtypes = str_to_list(dtypes)
+    if isinstance(freqs, str):
+        freqs = str_to_list(freqs)
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+
+    from .datatables import get_tables_by_name_or_usage
+    from .data_channels import get_dependent_table
+    from .datatypes import get_tables_by_dtypes
+    table_list = get_tables_by_name_or_usage(
+            tables=tables,
     )
 
+    if dtypes or freqs or asset_types:
+        table_list.update(get_tables_by_dtypes(
+                dtypes=dtypes,
+                freqs=freqs,
+                asset_types=asset_types,
+        ))
 
-def get_history_data(htypes,
+    dependent_tables = set()
+    for table in table_list:
+        dependent_table = get_dependent_table(table, channel=channel)
+        if dependent_table is None:
+            continue
+        dependent_tables.add(dependent_table)
+    table_list.update(dependent_tables)
+
+    if refresh_trade_calendar:
+        table_list.add('trade_calendar')
+    else:
+        # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
+        latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max1']
+        try:
+            latest_calendar_date = pd.to_datetime(latest_calendar_date)
+            if pd.to_datetime('today') >= latest_calendar_date:
+                table_list.add('trade_calendar')
+        except:
+            table_list.add('trade_calendar')
+
+    if parallel:
+        print(f'into {len(table_list)} tables (parallely): {table_list}')
+    else:
+        print(f'into {len(table_list)} tables (sequentially): {table_list}')
+
+    # 2, 循环下载数据表
+    from .data_channels import parse_data_fetch_args, fetch_batched_table_data
+    for table in table_list:
+        # 2.1, 解析下载数据的参数
+        arg_list = list(parse_data_fetch_args(
+                table=table,
+                channel=channel,
+                symbols=symbols,
+                start_date=start_date,
+                end_date=end_date,
+                list_arg_filter=list_arg_filter,
+                reversed_par_seq=reversed_par_seq,
+        ))
+        # 2.2, 批量下载数据
+        completed = 0
+        total = len(arg_list)
+        total_written = 0
+        st = time.time()
+        time_elapsed = 0
+        df_concat_list = []
+
+        progress_bar(0, total, comments=f'<{table}> estimating time left...')
+
+        try:
+            for res in fetch_batched_table_data(
+                    table=table,
+                    channel=channel,
+                    arg_list=arg_list,
+                    parallel=parallel,
+                    process_count=process_count,
+                    download_batch_size=download_batch_size,
+                    download_batch_interval=download_batch_interval,
+            ):
+                completed += 1
+                kwargs = res['kwargs']
+                data = res['data']
+                if not data.empty:
+                    df_concat_list.append(data)
+                if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
+                    # 将下载的数据写入数据源
+                    # print(f'concaternating df_concat_list: {len(df_concat_list)} items in it!')
+                    rows_affected = data_source.update_table_data(
+                            table=table,
+                            df=pd.concat(df_concat_list, copy=False, ignore_index=True),
+                            merge_type=merge_type,
+                    )
+                    df_concat_list = []
+                    total_written += rows_affected
+
+                time_elapsed = time.time() - st
+                time_remain = sec_to_duration(
+                        (total - completed) * time_elapsed / completed,
+                        estimation=True,
+                        short_form=False
+                )
+                progress_bar(completed, total,
+                             comments=f'<{table}:{kwargs}{time_remain}>',
+                             column_width=120,
+                             cut_off_pos=1.0,
+                             )
+        except Exception as e:
+            print(f'Error occurred when downloading data for table {table}: {e}')
+            continue
+
+        if df_concat_list:
+            # 将下载的数据写入数据源
+            # print(f'final: concaternating df_concat_list: {len(df_concat_list)} items in it!')
+            rows_affected = data_source.update_table_data(
+                    table=table,
+                    df=pd.concat(df_concat_list, copy=False, ignore_index=True),
+                    # df=pd.concat(df_concat_list, copy=False),
+                    merge_type=merge_type,
+            )
+            total_written += rows_affected
+
+        strftime_elapsed = sec_to_duration(
+                time_elapsed,
+                estimation=True,
+                short_form=True
+        )
+
+        progress_bar(total, total,
+                     comments=f'<{table}> {total_written} wrtn in {strftime_elapsed}\n',
+                     column_width=120,
+                     cut_off_pos=1.0,
+                     )
+
+    return None
+
+
+def get_history_data(htypes=None,
+                     *,
+                     htype_names=None,
+                     data_types=None,
+                     data_source=None,
                      shares=None,
                      symbols=None,
                      start=None,
                      end=None,
                      freq=None,
-                     rows=10,
+                     rows=None,
                      asset_type=None,
                      adj=None,
                      as_data_frame=None,
                      group_by=None,
                      **kwargs):
-    """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
+    """ 从本地data_source获取所需的数据并组装为适应于策略
         需要的HistoryPanel数据对象
+
+    需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数
+    结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略
 
     Parameters
     ----------
-    htypes: [str, list]
-        需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-        如以下两种输入方式皆合法且等效：
+    htype_names: [str], str
+        需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
+        所有可能的htypes。输入方式可以为str或list：
          - str:     'open, high, low, close'
          - list:    ['open', 'high', 'low', 'close']
-        特殊htypes的处理，以下特殊htypes将被特殊处理，返回特定的数，详见示例
-         - wt-000300.SH:
-            指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
-            获取的数据的htypes同样为wt-000300.SH型
-         - close-000300.SH:
-            给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
-            的参考数据
+    htypes: [DataType], deprecated
+        需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
+        所有可能的htypes。输入方式可以为str或list：
+    data_types: [DataType],
+        需要获取的历史数据类型集合，必须是合法的数据类型对象。
+        如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes
+    data_source: DataSource
+        需要获取历史数据的数据源
     shares: [str, list] 等同于symbols
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：
@@ -773,11 +952,12 @@ def get_history_data(htypes,
          - IDX: 只获取指数类型证券的数据
          - FT:  只获取期货类型证券的数据
          - FD:  只获取基金类型证券的数据
-    adj: str
-        对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+    adj: str, deprecated: adj is depreated since version 1.4 and will be removed
+        Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
          - none / n: 不复权(默认值)
          - back / b: 后复权
          - forward / fw / f: 前复权
+         从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格
     as_data_frame: bool, Default: True
         True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典
     group_by: str, 默认'shares'
@@ -859,7 +1039,7 @@ def get_history_data(htypes,
     --------
     >>> import qteasy as qt
     # 给出历史数据类型和证券代码，起止时间，可以获取该时间段内该股票的历史数据
-    >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200110')
+    >>> qt.get_history_data(htype_names='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200110')
     {'000001.SZ':
                  open   high    low  close         vol
     2019-12-25  16.45  16.56  16.24  16.30   414917.98
@@ -876,7 +1056,7 @@ def get_history_data(htypes,
     2020-01-10  16.79  16.81  16.52  16.69   585548.45
     }
     >>> # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格
-    >>> qt.get_history_data(htypes='close', shares='000300.SH', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='close', shares='000300.SH', start='20191225', end='20200105')
     {'000300.SH':
                   close
     2019-12-25  3990.87
@@ -888,7 +1068,7 @@ def get_history_data(htypes,
     2020-01-03  4144.96
     }
     >>> # 以及基金的净值数据
-    >>> qt.get_history_data(htypes='unit_nav, accum_nav', shares='000001.OF', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='unit_nav, accum_nav', shares='000001.OF', start='20191225', end='20200105')
     {'000001.OF':
                 unit_nav  accum_nav
     2019-12-25     1.086      3.547
@@ -900,7 +1080,7 @@ def get_history_data(htypes,
     2020-01-03     1.127      3.588
     }
     >>> # 不光价格数据，其他类型的数据也可以同时获取：
-    >>> qt.get_history_data(htypes='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
     {'000001.SZ':
                 close       pe      pb
     2019-12-25  16.30  12.7454  1.1798
@@ -912,7 +1092,7 @@ def get_history_data(htypes,
     2020-01-03  17.18  13.4335  1.2434
     }
     >>> # 可以同时混合获取多只股票、指数、多种数据类型的数据，如果某些数据类型缺失，会用NaN填充，注意000001.SZ是股票平安银行，000001.SH是上证指数
-    >>> qt.get_history_data(htypes='close, pe, pb, total_mv, eps', shares='000001.SZ, 000001.SH', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='close, pe, pb, total_mv, eps', shares='000001.SZ, 000001.SH', start='20191225', end='20200105')
     {'000001.SZ':
                 close       pe      pb      total_mv   eps
     2019-12-25  16.30  12.7454  1.1798  3.163165e+07   NaN
@@ -933,7 +1113,7 @@ def get_history_data(htypes,
     2020-01-03  3083.79  14.22  1.42  4.127933e+13  NaN
     }
     >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
-    >>> qt.get_history_data(htypes='open, high, low, close', shares='000001.SZ', start='20191229', end='20200106', freq='H', adj='b', asset_type='E')
+    >>> qt.get_history_data(htype_names='open:b, high:b, low:b, close:b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
      {'000001.SZ':
                                open        high         low       close
     2019-12-30 10:00:00  1796.92174  1796.92174  1796.92174  1796.92174
@@ -954,7 +1134,7 @@ def get_history_data(htypes,
     2020-01-03 15:00:00  1884.25694  1884.25694  1872.24835  1875.52342
     }
     >>> # 可以设置b_days_only参数来将价格填充到非交易日，形成完整的日期序列
-    >>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
+    >>> qt.get_history_data(htype_names='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
     {'000001.SZ':
                   open   high    low  close         vol
      2019-12-25  16.45  16.56  16.24  16.30   414917.98
@@ -971,26 +1151,129 @@ def get_history_data(htypes,
      2020-01-05  16.94  17.31  16.92  17.18  1116194.81
      }
     >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
-    >>> qt.get_history_data(htypes='wt-000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='wt_id:000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
-                wt-000300.SH
+                wt_idx:000300.SH
     2020-01-02        1.1714
     2020-01-03        1.1714,
     '000002.SZ':
-                wt-000300.SH
+                wt_idx:000300.SH
     2020-01-02        1.3595
     2020-01-03        1.3595
     }
 
     """
 
-    if htypes is None:
-        raise ValueError(f'htype should not be None')
+    # 检查数据合法性：
+    if shares is None:
+        shares = ''
+
+    if not isinstance(shares, (str, list)):
+        raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+    if not isinstance(htypes, (str, list)):
+        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
+    if isinstance(shares, list):
+        if not all(isinstance(item, str) for item in shares):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
+
+    # 如果给出了data_types参数，确认结果正确后，忽略htypes/htype_names参数
+    if data_types is not None:
+        assert isinstance(data_types, list)
+        assert all(isinstance(dtype, DataType) for dtype in data_types)
+    else:
+        assert (htypes is not None) or (htype_names is not None), \
+            f'htypes and htype_names can not both be None if data_types is not given'
+
+        if htypes is not None:
+            msg = f'htypes parameter is deprecated, please use htype_names instead'
+            warn(msg, DeprecationWarning)
+            htype_names = htypes
+
+        if isinstance(htype_names, str):
+            htype_names = str_to_list(htype_names)
+        if isinstance(htype_names, list):
+            if not all(isinstance(item, str) for item in htype_names):
+                raise TypeError(f'all items in shares list should be a string, got otherwise')
+
+        # check parameter freq
+        if freq is None:
+            freq = 'd'
+        if not isinstance(freq, str):
+            err = TypeError(f'freq should be a string, got {type(freq)} instead')
+            raise err
+        if freq.upper() not in TIME_FREQ_STRINGS:
+            err = KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+            raise err
+        freq = freq.lower()
+
+        # check parameter asset_type:
+        if asset_type is None:
+            asset_type = 'any'
+        if not isinstance(asset_type, (str, list)):
+            err = TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+            raise err
+        if isinstance(asset_type, str):
+            asset_type = str_to_list(asset_type)
+        if not all(isinstance(item, str) for item in asset_type):
+            err = KeyError(f'not all items in asset type are strings')
+            raise err
+        if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
+            err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+            raise err
+        if any(item.upper() == 'ANY' for item in asset_type):
+            asset_type = AVAILABLE_ASSET_TYPES
+        asset_type = [item.upper() for item in asset_type]
+
+        if adj is not None:
+            msg = f'parameter adj is deprecated, please add adj suffixes for htype names instead\n' \
+                  f'for example: use "close:b" for back-adjusted close prices'
+            warn(msg, DeprecationWarning)
+        else:
+            adj = 'none'
+        if not isinstance(adj, str):
+            err = TypeError(f'adj type should be a string, got {type(adj)} instead')
+            raise err
+        if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
+            err = KeyError(f"invalid adj type ({adj}), which should be anyone of "
+                           f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
+            raise err
+        adj = adj.lower()
+        PRICE_TYPES = ['open', 'close', 'high', 'low']
+        if adj.upper() in ['F', 'FORWARD', 'FW']:
+            htype_names = [f'{htype}|f' if htype in PRICE_TYPES else htype for htype in htype_names]
+        elif adj.upper() in ['B', 'BACK']:
+            htype_names = [f'{htype}|b' if htype in PRICE_TYPES else htype for htype in htype_names]
+        else:
+            htype_names = htype_names
+
+        # create data_types out of htype_names, freq, asset_types:
+        from itertools import product
+        data_types = []
+        freqs = [freq, 'None']
+        asset_type.extend(['None'])
+        for n, f, at in product(htype_names, freqs, asset_type):
+            try:
+                data_types.append(DataType(name=n, freq=f, asset_type=at))
+            except:
+                continue
+
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
+    else:
+        if not isinstance(data_source, DataSource):
+            err = TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
+            raise err
+
     if symbols is not None and shares is None:
         shares = symbols
     if shares is None:
-        shares = qteasy.QT_CONFIG.asset_pool
+        shares = QT_CONFIG.asset_pool
 
+    # check start and end parameters
     one_year = pd.Timedelta(365, 'd')
     one_week = pd.Timedelta(7, 'd')
 
@@ -1022,15 +1305,20 @@ def get_history_data(htypes,
         if end - start <= one_week:
             raise ValueError(f'End date should be at least one week after start date')
         rows = None
+    # set start/end to be the correct datetime format
 
-    if freq is None:
-        freq = 'd'
-
-    if asset_type is None:
-        asset_type = 'any'
-
-    if adj is None:
-        adj = 'n'
+    if start is not None:
+        try:
+            start = pd.to_datetime(start)
+            start = start.strftime('%Y%m%d')
+        except Exception:
+            raise Exception(f'Start date can not be converted to datetime format')
+    if end is not None:
+        try:
+            end = pd.to_datetime(end)
+            end = end.strftime('%Y%m%d')
+        except Exception:
+            raise Exception(f'End date can not be converted to datetime format')
 
     if as_data_frame is None:
         as_data_frame = True
@@ -1041,8 +1329,17 @@ def get_history_data(htypes,
         group_by = 'shares'
     elif group_by in ['htypes', 'htype', 'h']:
         group_by = 'htypes'
-    hp = get_history_panel(htypes=htypes, shares=shares, start=start, end=end, freq=freq, asset_type=asset_type,
-                           symbols=symbols, rows=rows, adj=adj, **kwargs)
+
+    hp = get_history_panel(
+            data_types=data_types,
+            data_source=data_source,
+            shares=shares,
+            start=start,
+            end=end,
+            freq=freq,
+            rows=rows,
+            **kwargs,
+    )
 
     if as_data_frame:
         return hp.unstack(by=group_by)
@@ -1105,8 +1402,9 @@ def live_trade_accounts() -> pd.DataFrame:
     all_accounts: pd.DataFrame
         包含所有实盘交易账户信息的DataFrame
     """
+    from qteasy import QT_DATA_SOURCE
     from qteasy.trade_recording import get_all_accounts
-    return get_all_accounts(qteasy.QT_DATA_SOURCE)
+    return get_all_accounts(QT_DATA_SOURCE)
 
 
 # TODO: Bug检查：
@@ -1114,7 +1412,7 @@ def live_trade_accounts() -> pd.DataFrame:
 #   strategy_run_freq='m',
 #   data_freq='m',
 #   window_length=6,
-def check_and_prepare_hist_data(oper, config, datasource=None):
+def check_and_prepare_hist_data(oper, config, datasource):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     Parameters
@@ -1168,9 +1466,9 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
         invest_start = regulate_date_format(invest_cash_plan.first_day)
         if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
             warn(
-                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                f' date will be used!',
-                RuntimeWarning)
+                    f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
+                    f' date will be used!',
+                    RuntimeWarning)
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config['opti_cash_dates'] is None:
@@ -1219,13 +1517,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
         from qteasy.utilfuncs import parse_freq_string
         duration, base_unit, _ = parse_freq_string(window_offset_freq, std_freq_only=True)
-        # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), '
-        #       f'window_offset_freq is {window_offset_freq}\n'
-        #       f'it should be converted to {duration} {base_unit}, '
-        #       f'and window_length and window_offset_freq should be \n'
-        #       f'adjusted accordingly: \n'
-        #       f'window_length: {window_length} -> {window_length * duration * 3}\n'
-        #       f'window_offset_freq: {window_offset_freq} -> {base_unit}')
         window_length *= duration * 10  # 临时处理措施，由于交易时段不连续，仅仅前推一个周期可能会导致数据不足
         window_offset_freq = base_unit
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
@@ -1240,15 +1531,6 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
         invest_end = config['invest_end']
         invest_start = regulate_date_format(pd.to_datetime(invest_start) - window_offset)
 
-    # debug
-    # 检查invest_start是否正确地被前溯了window_offset
-    # print(f'[DEBUG]: in core.py function check_and_prepare_hist_data(), extracting data from window_length earlier '
-    #       f'than invest_start: \n'
-    #       f'current run mode: {run_mode}\n'
-    #       f'current_date = {current_datetime}\n'
-    #       f'window_offset = {window_offset}\n'
-    #       f'invest_start = {invest_start}\n'
-    #       f'invest_end = {invest_end}\n')
     # 设置优化区间和测试区间的结束日期
     opti_end = config['opti_end']
     test_end = config['test_end']
@@ -1259,25 +1541,41 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
 
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.all_price_and_data_types,
+            freqs=oper.op_data_freq,
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'] if run_mode > 0 else None,
+            force_match_freq=True,
+    )
     hist_op = get_history_panel(
-            htypes=oper.all_price_and_data_types,
+            data_types=data_types,
             shares=config['asset_pool'],
             start=invest_start,
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'] if run_mode > 0 else 'none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()  # TODO: 当share较多时，运行速度非常慢，需要优化
+
     # 解析参考数据类型，获取参考数据
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.op_ref_types,
+            freqs=oper.op_data_freq,
+            asset_types=['IDX'],
+            force_match_freq=True,
+    )
     hist_ref = get_history_panel(
-            htypes=oper.op_ref_types,
+            data_types=data_types,
             shares=None,
             start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),  # TODO: 已经offset过了，为什么还要offset？
             end=invest_end,
             freq=oper.op_data_freq,
-            asset_type='IDX',
-            adj='none',
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
@@ -1287,26 +1585,42 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.all_price_and_data_types,
+            freqs=oper.op_data_freq,
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'],
+            force_match_freq=True,
+    )
     hist_opti = get_history_panel(
-            htypes=oper.all_price_and_data_types,
+            data_types=data_types,
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=oper.op_ref_types,
+            freqs=oper.op_data_freq,
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'],
+            force_match_freq=True,
+    )
     hist_opti_ref = get_history_panel(
-            htypes=oper.op_ref_types,
+            data_types=data_types,
             shares=None,
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
-            asset_type=config['asset_type'],
-            adj=config['backtest_price_adj'],
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
@@ -1320,14 +1634,22 @@ def check_and_prepare_hist_data(oper, config, datasource=None):
     benchmark_start = regulate_date_format(min(all_starts))
     benchmark_end = regulate_date_format(max(all_ends))
 
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=config['benchmark_dtype'],
+            freqs=oper.op_data_freq,
+            asset_types=config['benchmark_asset_type'],
+            adj=config['backtest_price_adj'],
+            force_match_freq=True,
+    )
     hist_benchmark = get_history_panel(
-            htypes=config['benchmark_dtype'],
+            data_types=data_types,
             shares=config['benchmark_asset'],
             start=benchmark_start,
             end=benchmark_end,
             freq=oper.op_data_freq,
-            asset_type=config['benchmark_asset_type'],
-            adj=config['backtest_price_adj'],
             data_source=datasource,
     ).slice_to_dataframe(htype=config['benchmark_dtype'])
 
@@ -1346,15 +1668,15 @@ def reconnect_ds(data_source=None):  # deprecated
     Returns
     -------
     """
+    msg = f'This function is deprecated, there\'s no need to re-connect datasource any more.'
+    warn(msg, DeprecationWarning)
+
     if data_source is None:
-        data_source = qteasy.QT_DATA_SOURCE
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
 
-    if not isinstance(data_source, qteasy.DataSource):
+    if not isinstance(data_source, DataSource):
         raise TypeError(f'data source not recognized!')
-
-    # reconnect twice to make sure the connection is established
-    data_source.reconnect()
-    data_source.reconnect()
 
 
 def check_and_prepare_live_trade_data(operator, config, datasource=None, live_prices=None):
@@ -1428,9 +1750,10 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
 
         # 如果没有给出live_prices，则使用eastmoney的stock_live_kline_price获取当前周期的最新数据
         if live_prices is None:
-            from qteasy.emfuncs import stock_live_kline_price
-            live_kline_prices = stock_live_kline_price(
-                    symbols=hist_op.shares,
+            from qteasy.data_channels import fetch_real_time_klines
+            live_kline_prices = fetch_real_time_klines(
+                    channel='eastmoney',
+                    qt_codes=hist_op.shares,
                     freq=operator.op_data_freq,
             )
             live_kline_prices.set_index('symbol', inplace=True)
@@ -1462,7 +1785,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     return hist_op, hist_ref
 
 
-def check_and_prepare_backtest_data(operator, config, datasource=None):
+def check_and_prepare_backtest_data(operator, config, datasource):
     """ 在run_mode == 1的回测模式情况下准备相应的历史数据
 
     Returns
@@ -1483,7 +1806,7 @@ def check_and_prepare_backtest_data(operator, config, datasource=None):
     return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
 
 
-def check_and_prepare_optimize_data(operator, config, datasource=None):
+def check_and_prepare_optimize_data(operator, config, datasource):
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
 
     Parameters
@@ -1748,7 +2071,8 @@ def run(operator, **kwargs):
          invest_cash_plan
          ) = check_and_prepare_backtest_data(
                 operator=operator,
-                config=config
+                config=config,
+                datasource=qteasy.QT_DATA_SOURCE,
         )
         # 在生成交易信号之前准备历史数据
         operator.assign_hist_data(
@@ -1793,7 +2117,8 @@ def run(operator, **kwargs):
          test_cash_plan
          ) = check_and_prepare_optimize_data(
                 operator=operator,
-                config=config
+                config=config,
+                datasource=qteasy.QT_DATA_SOURCE,
         )
         operator.assign_hist_data(
                 hist_data=hist_opti,

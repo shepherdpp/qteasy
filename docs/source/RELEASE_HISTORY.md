@@ -1,5 +1,18 @@
 # RELEASE HISTORY
 
+## 1.4.0 (2025-02-05)
+- New features:
+  - A new DataType class has been introduced, making it much easier and more flexible to utilize historical data stored in local datasources
+  - Now datatypes can be defined with parameters followed by a "|" in its name, like "close|b" represents "back adjusted close price".
+  - A new data_channel module has been defined for qteasy, allowing users to download data from different online sources
+  - More data tables are defined to store more types of financial historical data.
+  - Enhanced real-time price data acquisition APIs, allowing real-time data been downloaded from different sources
+  - More introduction to above new features can be found in qteasy documents.
+- Deprecated
+  - The old way of extracting adjusted price data with parameter "adj" is deprecated, although still supported, now adjusted prices can be acquired with datatypes with parameter like "close|b" or "open|f"
+  - The old way of getting composition data, "wt_000300.SH" is deprecated and replaced by datatype with parameter: "wt_idx|%" where % is any index code
+  - More introductions to the new datatypes can be found in qteasy documents.
+
 ## 1.3.12 (2024-12-18)
 - Improved Log information and print outs in trader TUI and CLI:
   - excessive digits of amount changes are now truncated to 2 or 3 digits in trader CLI for RESULT DELIVERY

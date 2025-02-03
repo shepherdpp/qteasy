@@ -22,20 +22,50 @@ import pandas as pd
 from queue import Queue
 from rich.text import Text
 
-import qteasy
-from qteasy import ConfigDict, DataSource, Operator
+from qteasy.__init__ import __version__ as qteasy_version
+from qteasy.configure import ConfigDict, QT_CONFIG
+from qteasy.database import DataSource
+from qteasy.qt_operator import Operator
 from qteasy.broker import Broker
 from qteasy.core import check_and_prepare_live_trade_data
-from qteasy.trade_recording import get_account, get_account_position_availabilities, get_account_position_details
-from qteasy.trade_recording import get_account_cash_availabilities, query_trade_orders, record_trade_order
-from qteasy.trade_recording import get_or_create_position, new_account, update_position
-from qteasy.trading_util import cancel_order, create_daily_task_schedule, get_position_by_id
-from qteasy.trading_util import get_last_trade_result_summary, get_symbol_names, process_account_delivery
-from qteasy.trading_util import parse_trade_signal, process_trade_result, submit_order, deliver_trade_result
-from qteasy.trading_util import calculate_cost_change
-from qteasy.trading_util import break_point_file_path_name, sys_log_file_path_name, trade_log_file_path_name
-from qteasy.utilfuncs import TIME_FREQ_LEVELS, adjust_string_length, parse_freq_string, str_to_list
-from qteasy.utilfuncs import get_current_timezone_datetime
+
+from qteasy.trade_recording import (
+    get_account,
+    get_account_position_availabilities,
+    get_account_position_details,
+    get_account_cash_availabilities,
+    query_trade_orders,
+    record_trade_order,
+    get_or_create_position,
+    new_account,
+    update_position,
+)
+
+from qteasy.trading_util import (
+    cancel_order,
+    create_daily_task_schedule,
+    get_position_by_id,
+    get_last_trade_result_summary,
+    get_symbol_names,
+    process_account_delivery,
+    parse_trade_signal,
+    process_trade_result,
+    submit_order,
+    deliver_trade_result,
+    calculate_cost_change,
+    break_point_file_path_name,
+    sys_log_file_path_name,
+    trade_log_file_path_name,
+)
+
+from qteasy.utilfuncs import (
+    TIME_FREQ_LEVELS,
+    adjust_string_length,
+    parse_freq_string,
+    str_to_list,
+    get_current_timezone_datetime,
+)
+
 
 UNIT_TO_TABLE = {
     'h':     'stock_hourly',
@@ -150,7 +180,7 @@ class Trader(object):
         self._broker = broker
         self._operator = operator
         self._config = ConfigDict()
-        self._config.update(qteasy.QT_CONFIG.copy())
+        self._config.update(QT_CONFIG.copy())
         self._config.update(config)
         self._datasource = datasource
         asset_pool = self._config['asset_pool']
@@ -539,9 +569,8 @@ class Trader(object):
 
         if system:
             # System Info
-            py_v = sys.version_info
-            trader_info_dict['python'] = f'{py_v.major}.{py_v.minor}.{py_v.micro}'
-            trader_info_dict['qteasy'] = qteasy.__version__
+            trader_info_dict['python'] = sys.version
+            trader_info_dict['qteasy'] = qteasy_version
             import tushare
             trader_info_dict['tushare'] = tushare.__version__
             try:
@@ -996,9 +1025,9 @@ class Trader(object):
         同时更新self.watched_prices
         """
         if self.watch_list:
-            from qteasy.emfuncs import stock_live_kline_price
+            from qteasy.emfuncs import real_time_klines
             symbols = self.watch_list
-            live_prices = stock_live_kline_price(symbols, freq='D', verbose=True, parallel=False)
+            live_prices = real_time_klines(symbols, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
@@ -1421,7 +1450,7 @@ class Trader(object):
         self.write_trade_log_file(**trade_log)
         # 发送system log信息
         self.send_message(f'<RESULT DELIVERED {order_id}>: <{account_name}-{self.account_id}> available cash:'
-                          f'[{color_tag}]¥{prev_amount:.2f}->¥{updated_amount:.2f}[/{color_tag}]')
+                          f'[{color_tag}]¥{prev_amount:.3f}->¥{updated_amount:.3f}[/{color_tag}]')
 
     def log_qty_delivery(self, delivery_result) -> None:
         """ 根据股票持仓交割记录，生成详细的trade_log和system_log
@@ -2136,7 +2165,6 @@ class Trader(object):
         None
         """
         if current_date is None:
-            # current_date = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).date()  # 产生世界时UTC时间
             current_date = self.get_current_tz_datetime().date()  # 产生本地时间
         from qteasy.utilfuncs import is_market_trade_day
         # exchange = self._config['exchange']  # TODO: should we add exchange to config?
@@ -2285,8 +2313,8 @@ class Trader(object):
     def _update_live_price(self) -> None:
         """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
         self.send_message(f'Acquiring live price data', debug=True)
-        from qteasy.emfuncs import stock_live_kline_price
-        real_time_data = stock_live_kline_price(symbols=self.asset_pool)
+        from qteasy.emfuncs import real_time_klines
+        real_time_data = real_time_klines(symbols=self.asset_pool)
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)
@@ -2464,7 +2492,6 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
     """
 
     # find out datasource availabilities, refill data source if table data not available
-    from qteasy.database import htype_to_table_col
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
     related_tables = htype_to_table_col(

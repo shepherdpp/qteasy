@@ -49,7 +49,12 @@ class TestTraderShell(unittest.TestCase):
         # 创建测试数据源
         data_test_dir = '../qteasy/data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
+        test_ds = DataSource(
+                'file',
+                file_type='csv',
+                file_loc=data_test_dir,
+                allow_drop_table=True,
+        )
 
         # 创建一个操作员
         operator = Operator(strategies=['macd', 'dma'], op_type='step')
@@ -90,7 +95,7 @@ class TestTraderShell(unittest.TestCase):
                 test_ds.drop_table_data(table)
 
         # 创建一个ID=1的账户
-        new_account('test_user1', 100000, test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
         # 添加初始持仓
         get_or_create_position(account_id=1, symbol='000001.SZ', position_type='long', data_source=test_ds)
         get_or_create_position(account_id=1, symbol='000002.SZ', position_type='long', data_source=test_ds)

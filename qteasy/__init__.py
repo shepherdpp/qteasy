@@ -20,36 +20,102 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from argparse import Namespace
 
-from .utilfuncs import is_float_like, is_integer_like
-from .configure import set_config, get_configurations, get_config, view_config_files, get_start_up_settings
-from .configure import configuration, save_config, load_config, reset_config, _parse_start_up_config_lines
-from .configure import _read_start_up_file, start_up_settings, update_start_up_setting, remove_start_up_setting
-from .core import run, info, is_ready, configure
-from .core import get_basic_info, get_stock_info, get_data_overview, refill_data_source
-from .core import get_history_data, filter_stock_codes, filter_stocks
-from .core import reconnect_ds, get_table_info, get_table_overview, live_trade_accounts
-from .history import HistoryPanel
-from .history import dataframe_to_hp, stack_dataframes
-from .qt_operator import Operator
-from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from .built_in import built_ins, built_in_list, built_in_strategies, get_built_in_strategy, built_in_doc
-from .visual import candle
-from .finance import CashPlan, set_cost, update_cost
-from .database import DataSource, find_history_data
-from ._arg_validators import QT_CONFIG, ConfigDict
-from .trade_recording import delete_account
+from qteasy.trade_recording import delete_account
+from qteasy.qt_operator import Operator
+from qteasy.visual import candle
+
+from qteasy.core import (
+    run,
+    info,
+    is_ready,
+    configure,
+    get_basic_info,
+    get_stock_info,
+    get_data_overview,
+    refill_data_source,
+    get_history_data,
+    filter_stock_codes,
+    filter_stocks,
+    reconnect_ds,
+    get_table_info,
+    get_table_overview,
+    live_trade_accounts,
+)
+
+from qteasy.utilfuncs import (
+    is_float_like,
+    is_integer_like,
+)
+from qteasy.configure import (
+    set_config,
+    get_configurations,
+    get_config,
+    view_config_files,
+    get_start_up_settings,
+    configuration,
+    save_config,
+    load_config,
+    reset_config,
+    _parse_start_up_config_lines,
+    start_up_settings,
+    update_start_up_setting,
+    remove_start_up_setting,
+    _read_start_up_file,
+)
+
+from qteasy.history import (
+    HistoryPanel,
+    dataframe_to_hp,
+    stack_dataframes,
+)
+
+from qteasy.strategy import (
+    BaseStrategy,
+    RuleIterator,
+    GeneralStg,
+    FactorSorter,
+)
+
+from qteasy.built_in import (
+    built_ins,
+    built_in_list,
+    built_in_strategies,
+    get_built_in_strategy,
+    built_in_doc,
+)
+
+
+from qteasy.finance import (
+    CashPlan,
+    set_cost,
+    update_cost,
+)
+
+from qteasy.database import (
+    DataSource,
+    # find_history_data,
+)
+
+from qteasy.datatypes import (
+    find_history_data,
+)
+
+from qteasy._arg_validators import (
+    QT_CONFIG,
+    ConfigDict,
+)
 
 
 # qteasy版本信息
-__version__ = '1.3.12'
+__version__ = '1.4.0'
 version_info = Namespace(
         major=1,
-        minor=3,
-        patch=12,
-        short=(1, 3),
-        full=(1, 3, 12),
-        string='1.3.12',
-        tuple=('1', '3', '12'),
+        minor=4,
+        patch=0,
+        short=(1, 4),
+        full=(1, 4, 0),
+        string='1.4.0',
+        tuple=('1', '4', '0'),
         releaselevel='beta',
 )
 

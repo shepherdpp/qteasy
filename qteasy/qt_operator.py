@@ -14,14 +14,26 @@ import warnings
 import numpy as np
 import pandas as pd
 
-import qteasy
-from .finance import CashPlan
-from .history import HistoryPanel
-from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .utilfuncs import AVAILABLE_SIGNAL_TYPES, AVAILABLE_OP_TYPES, pandas_freq_alias_version_conversion
-from .strategy import BaseStrategy
-from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
-from .blender import blender_parser
+from qteasy.finance import CashPlan
+from qteasy.history import HistoryPanel
+from qteasy.strategy import BaseStrategy
+from qteasy.blender import blender_parser
+
+from qteasy.utilfuncs import (
+    AVAILABLE_SIGNAL_TYPES,
+    AVAILABLE_OP_TYPES,
+    pandas_freq_alias_version_conversion,
+    str_to_list,
+    ffill_2d_data,
+    fill_nan_data,
+    rolling_window,
+)
+
+from qteasy.built_in import (
+    available_built_in_strategies,
+    BUILT_IN_STRATEGIES,
+    get_built_in_strategy,
+)
 
 
 class Operator:
@@ -335,7 +347,7 @@ class Operator:
         return len(self.op_ref_types)
 
     @property
-    def op_data_freq(self):
+    def op_data_freq(self) -> str or [str]:
         """返回operator对象所有策略子对象所需数据的采样频率
             如果所有strategy的data_freq相同时，给出这个值，否则给出一个排序的列表
         """
@@ -658,10 +670,10 @@ class Operator:
         if not (item_is_int or item_is_str):
             warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} instead!')
             return
-        all_ids = self._strategy_id
+        all_ids = self.strategy_ids
         if item_is_str:
             if item not in all_ids:
-                warnings.warn(f'No such strategy with ID ({item})!')
+                warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!')
                 return
             return self._strategies[item]
         strategy_count = self.strategy_count
@@ -824,7 +836,7 @@ class Operator:
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
             stg_id = stg.lower()
-            strategy = qteasy.get_built_in_strategy(stg)
+            strategy = get_built_in_strategy(stg)
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, BaseStrategy):
             if stg in available_built_in_strategies:
@@ -1586,8 +1598,11 @@ class Operator:
         }
         data_freq_name = {
             'y': 'year',
+            'ye': 'year end',
             'q': 'quarter',
+            'qe': 'quarter end',
             'm': 'month',
+            'me': 'month end',
             'w': 'week',
             'd': 'days',
             'min': 'min',
@@ -1864,8 +1879,12 @@ class Operator:
         hist_data_types = hist_data.htypes
         if any(htyp not in hist_data_types for htyp in self.op_data_types):
             missing_htypes = [htyp for htyp in self.op_data_types if htyp not in hist_data_types]
-            message = f'Some historical data types are missing ({missing_htypes}) from the history ' \
-                      f'data ({hist_data_types}), make sure history data types covers all strategies'
+            message = (f'Some historical data types are missing ({missing_htypes}) from the history '
+                       f'data ({hist_data_types}). \nThis may indicate that one of the strategies are '
+                       f'using history data that does not support the current asset types. \nFor example:'
+                       f'\nIf one of the strategies requires "EPS" data, which is only available with Equities '
+                       f'then the strategy will not get enough data if the investment assets are only indexes.\n'
+                       f'please check your investment asset types')
             logger_core.error(message)
             raise KeyError(message)
         # 确保op的策略都设置了参数

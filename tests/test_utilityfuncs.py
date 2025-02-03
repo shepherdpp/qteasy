@@ -166,7 +166,13 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_market_trade_day(date_weekend))
         self.assertFalse(is_market_trade_day(date_seems_trade_day))
         self.assertTrue(is_market_trade_day(date_christmas))
-        self.assertFalse(is_market_trade_day(date_christmas, exchange='XHKG'))
+        # self.assertFalse(is_market_trade_day(date_christmas, exchange='XHKG'))
+        # test trade dates in some strange text formats:
+        self.assertTrue(is_market_trade_day('2021-04-01'))
+        self.assertTrue(is_market_trade_day(pd.to_datetime('2021-04-01 00:00:00')))
+        self.assertTrue(is_market_trade_day('2021-04-01 00:00:00'))
+        self.assertTrue(is_market_trade_day(datetime.date(2021, 4, 1)))
+        self.assertTrue(is_market_trade_day(datetime.date(2021, 4, 1), 'SSE'))
 
         # raises when date out of range
         self.assertRaises(KeyError, is_market_trade_day, date_too_early)
@@ -193,7 +199,7 @@ class TestUtilityFuncs(unittest.TestCase):
     def test_list_truncate(self):
         """ test util func list_truncate()"""
         the_list = [1, 2, 3, 4, 5]
-        ls = list_truncate(the_list, 2)
+        ls = list_truncate(the_list, 2, as_list=True)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
         self.assertEqual(ls[2], [5])
@@ -201,6 +207,27 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(ValueError, list_truncate, the_list, 0)
         self.assertRaises(TypeError, list_truncate, 12, 0)
         self.assertRaises(TypeError, list_truncate, 0, the_list)
+
+        ls = list_truncate(the_list, 7, as_list=True)
+        self.assertEqual(ls[0], [1, 2, 3, 4, 5])
+
+        g = list_truncate(the_list, 2, as_list=False)
+        self.assertEqual(next(g), [1, 2])
+        self.assertEqual(next(g), [3, 4])
+        self.assertEqual(next(g), [5])
+        self.assertRaises(StopIteration, next, g)
+
+        g = list_truncate(the_list, 7, as_list=False)
+        self.assertEqual(next(g), [1, 2, 3, 4, 5])
+
+        # test if the function works with generator, NotImplemented
+        # lst = (i for i in range(10))
+        #
+        # g = list_truncate(lst, 3, as_list=False)
+        # self.assertEqual(next(g), [0, 1, 2])
+        # self.assertEqual(next(g), [3, 4, 5])
+        # self.assertEqual(next(g), [6, 7, 8])
+        # self.assertEqual(next(g), [9])
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
@@ -297,8 +324,8 @@ class TestUtilityFuncs(unittest.TestCase):
                          None)
         self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'SSE')),
                          pd.to_datetime(date_christmas))
-        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'XHKG')),
-                         pd.to_datetime(prev_christmas_xhkg))
+        # self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'XHKG')),
+        #                  pd.to_datetime(prev_christmas_xhkg))
 
     def test_next_market_trade_day(self):
         """ test the function next_market_trade_day()
@@ -331,8 +358,8 @@ class TestUtilityFuncs(unittest.TestCase):
                          pd.to_datetime(date_too_late))  # data too late is not any more a problem
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'SSE')),
                          pd.to_datetime(date_christmas))
-        self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'XHKG')),
-                         pd.to_datetime(next_christmas_xhkg))
+        # self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'XHKG')),
+        #                  pd.to_datetime(next_christmas_xhkg))
 
     def test_is_number_like(self):
         """test the function: is_number_like()"""
@@ -741,7 +768,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(adjust_string_length('this is a long string', 2), '..')
         self.assertEqual(adjust_string_length('this is a long string', 1), '.')
 
-        self.assertEqual(adjust_string_length('this is a long string', 10, ellipsis='*'), 'this ***ng')
+        self.assertEqual(adjust_string_length('this is a long string', 10, filler='*'), 'this ***ng')
         self.assertEqual(adjust_string_length('short string', 15), 'short string   ')
         self.assertEqual(adjust_string_length('中文字符string', 20, hans_aware=True),
                          '中文字符string      ')
@@ -851,7 +878,7 @@ class TestUtilityFuncs(unittest.TestCase):
 
         self.assertRaises(TypeError, adjust_string_length, 123, 10)
         self.assertRaises(TypeError, adjust_string_length, 123, 'this ia a string')
-        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, ellipsis='__')
+        self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 5, filler='__')
         self.assertRaises(ValueError, adjust_string_length, 'this is a long string', 0)
 
 

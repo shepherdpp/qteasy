@@ -15,15 +15,28 @@ import os
 import pandas as pd
 import numpy as np
 
-from qteasy import logger_core as logger, Operator, QT_CONFIG
-
+from qteasy.__init__ import logger_core as logger
+from qteasy.qt_operator import Operator
+from qteasy.configure import QT_CONFIG
 from qteasy.utilfuncs import str_to_list
 
-from qteasy.trade_recording import read_trade_order, get_position_by_id, get_account, update_trade_order
-from qteasy.trade_recording import read_trade_order_detail, read_trade_results_by_delivery_status, write_trade_result
-from qteasy.trade_recording import read_trade_results_by_order_id, get_account_cash_availabilities
-from qteasy.trade_recording import update_account_balance, update_position, update_trade_result
-from qteasy.trade_recording import query_trade_orders, get_account_positions
+from qteasy.trade_recording import (
+    read_trade_order,
+    get_position_by_id,
+    get_account,
+    update_trade_order,
+    read_trade_order_detail,
+    read_trade_results_by_delivery_status,
+    write_trade_result,
+    read_trade_results_by_order_id,
+    get_account_cash_availabilities,
+    update_account_balance,
+    update_position,
+    update_trade_result,
+    query_trade_orders,
+    get_account_positions,
+)
+
 
 # TODO: read TIMEZONE from qt config arguments
 TIMEZONE = 'Asia/Shanghai'
@@ -1223,6 +1236,7 @@ def calculate_cost_change(prev_qty, prev_unit_cost, qty_change, price, transacti
 
 def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     """ 获取指定账户的最近的交易结果汇总，获取的结果为ndarray，按照shares的顺序排列
+    如果shares为None，则结果按照order_id排序
 
     结果包含最近一次成交量（正数表示买入，负数表示卖出）以及最近一次成交价格，如果最近没有成交，
     则返回值为0/0
@@ -1322,6 +1336,7 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
 
     amounts_changed = np.array(list(last_filled_qty.values()), dtype='float')
     trade_prices = np.array(list(last_filled_price.values()), dtype='float')
+
     return shares, amounts_changed, trade_prices
 
 
@@ -1556,7 +1571,7 @@ def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: boo
             raise ValueError(f'invalid asset_types: {asset_types}, must be one of '
                              f'["stock", "index", "fund", "future", "option"]')
 
-    df_s, df_i, df_f, df_ft, df_o = datasource.get_all_basic_table_data(
+    df_s, df_i, df_f, df_ft, df_o, df_ths = datasource.get_all_basic_table_data(
             raise_error=False,
             refresh_cache=refresh,
     )

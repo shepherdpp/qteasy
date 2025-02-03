@@ -19,7 +19,7 @@ import numpy as np
 import time
 
 from qteasy import QT_CONFIG
-from .utilfuncs import get_current_timezone_datetime
+from qteasy.utilfuncs import get_current_timezone_datetime
 
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
@@ -592,8 +592,8 @@ class SimulatorBroker(Broker):
 
             # 获取当前实时价格
             retry = 10  # 重试次数为10次（秒）
-            from .emfuncs import stock_live_kline_price
-            live_prices = stock_live_kline_price(symbol, freq='D', verbose=True, parallel=False)
+            from .emfuncs import real_time_klines
+            live_prices = real_time_klines(symbol, freq='D', verbose=True, parallel=False)
             if not live_prices.empty:
                 live_prices['close'] = live_prices['close'].astype('float')
                 change = (live_prices['close'] / live_prices['pre_close'] - 1).iloc[-1]

@@ -11,29 +11,122 @@
 # functions to acquire price k-lines.
 # ======================================
 
-from urllib.parse import urlencode
+import time
+import datetime
 import pandas as pd
 import requests
+from urllib.parse import urlencode
 
-from concurrent.futures import as_completed, ThreadPoolExecutor
+from qteasy.utilfuncs import (
+    retry,
+    format_str_to_float,
+)
 
-from .utilfuncs import str_to_list
+ERRORS_TO_CHECK_ON_RETRY = Exception
+
+east_money_freq_map = {
+    '1min':  1,
+    '5min':  5,
+    '15min': 15,
+    '30min': 30,
+    '60min': 60,
+    'h':     60,
+    'd':     101,
+    'w':     102,
+    'm':     103,
+}
+
+dc_cookies = {
+    "qgqp_b_id": "cf8b058a05d005ca7fb2afc14957f250",
+    "st_si": "72907886672492",
+    "st_asi": "delete",
+    "HAList": "ty-1-688720-N%u827E%u68EE%2Cty-0-873122-%u4E2D%u7EBA%u6807",
+    "st_pvi": "02194384728897",
+    "st_sp": "2023-12-06%2016%3A05%3A53",
+    "st_inirUrl": "https%3A%2F%2Fquote.eastmoney.com%2Fcenter%2Fgridlist.html",
+    "st_sn": "11",
+    "st_psi": "20231206170058129-113200313000-8845421016"
+}
+
+dc_headers = {
+    "Connection": "keep-alive",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
+    "Accept": "*/*",
+    "Sec-Fetch-Site": "same-site",
+    "Sec-Fetch-Mode": "no-cors",
+    "Sec-Fetch-Dest": "script",
+    "Referer": "https://quote.eastmoney.com/kcb/688720.html",
+    "Accept-Language": "zh-CN,zh;q=0.9"
+}
+
+LIVE_QUOTE_COLS = ['NAME', 'OPEN', 'PRE_CLOSE', 'PRICE', 'HIGH', 'LOW', 'BID', 'ASK', 'VOLUME', 'AMOUNT', 'B1_V', 'B1_P',
+                   'B2_V', 'B2_P', 'B3_V', 'B3_P', 'B4_V', 'B4_P', 'B5_V', 'B5_P', 'A1_V', 'A1_P', 'A2_V', 'A2_P',
+                   'A3_V', 'A3_P', 'A4_V', 'A4_P', 'A5_V', 'A5_P', 'DATE', 'TIME', 'TS_CODE']
+
+LIVE_QUOTE_COLS_REINDEX = ['NAME', 'TS_CODE', 'DATE', 'TIME', 'OPEN', 'PRE_CLOSE', 'PRICE', 'HIGH', 'LOW', 'BID', 'ASK',
+                           'VOLUME', 'AMOUNT', 'B1_V', 'B1_P',
+                           'B2_V', 'B2_P', 'B3_V', 'B3_P', 'B4_V', 'B4_P', 'B5_V', 'B5_P', 'A1_V', 'A1_P', 'A2_V',
+                           'A2_P',
+                           'A3_V', 'A3_P', 'A4_V', 'A4_P', 'A5_V', 'A5_P']
 
 
 # eastmoney interface function, call this function to extract data
 def acquire_data(api_name, **kwargs):
     """ eastmoney接口函数，根据根据table的内容调用相应的eastmoney API下载数据，并以DataFrame的形式返回数据"""
-    func = globals()[api_name]
-    res = func(**kwargs)
+
+    if 'retry_count' in kwargs:
+        data_download_retry_count = kwargs.pop('retry_count')
+    else:
+        data_download_retry_count = 3
+
+    if 'retry_wait' in kwargs:
+        data_download_retry_wait = kwargs.pop('retry_wait')
+    else:
+        data_download_retry_wait = 0.01
+
+    if 'retry_backoff' in kwargs:
+        data_download_retry_backoff = kwargs.pop('retry_backoff')
+    else:
+        data_download_retry_backoff = 2
+
+    retry_decorator = retry(
+            exception_to_check=ERRORS_TO_CHECK_ON_RETRY,
+            mute=True,
+            tries=data_download_retry_count,
+            delay=data_download_retry_wait,
+            backoff=data_download_retry_backoff,
+    )
+    try:
+        func = globals()[api_name]
+    except KeyError:
+        raise KeyError(f'undefined API {api_name} for tushare')
+    decorated_func = retry_decorator(func)
+
+    res = decorated_func(**kwargs)
     return res
 
 
-def gen_eastmoney_code(rawcode: str) -> str:
+def _format_em_str(x):
+    return float(x / 100) if x != "-" else 0
+
+
+def _format_em_date_str(date_str):
+    return date_str.replace("-", "")
+
+
+def _timestamp_to_time(time_stamp, form_date="%Y-%m-%d %H:%M:%S"):
+    time_stamp = int(str(time_stamp)[0:10])
+    date_array = datetime.datetime.fromtimestamp(time_stamp)
+    other_style_time = date_array.strftime(form_date)
+    return str(other_style_time)
+
+
+def _gen_eastmoney_code(rawcode: str) -> str:
     """
     生成东方财富专用的secid: 1.000001 0.399001等
 
-    沪市股票以1开头，深市及北交所股票以0开头
-    如果rawcode中未指明市场，则根据六位数的第一位判断，当第一位是6是判定未沪市，否则判定为深市
+    沪市股票/指数/ETF以1开头，深市及北交所股票/指数/ETF以0开头
+    如果rawcode中未指明市场，则根据六位数的第一位判断，当第一位是6是判定为沪市，否则判定为深市
     此时默认所有代码都为股票，即000001会被判定为0.000001(平安银行）而不是1.000001（上证指数)
     只有给出后缀时，才根据市场判定正确的secid
 
@@ -49,11 +142,11 @@ def gen_eastmoney_code(rawcode: str) -> str:
 
     Examples
     --------
-    >>> gen_eastmoney_code('000001')
+    >>> _gen_eastmoney_code('000001')
     0.000001
-    >>> gen_eastmoney_code('000001.SZ')
+    >>> _gen_eastmoney_code('000001.SZ')
     0.000001
-    >>> gen_eastmoney_code('000001.SH')
+    >>> _gen_eastmoney_code('000001.SH')
     1.000001
     """
 
@@ -72,13 +165,14 @@ def gen_eastmoney_code(rawcode: str) -> str:
             return f'1.{rawcode}'
 
 
-def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
+def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
+                   klt: int = 1, fqt: int = 1, verbose=False) -> pd.DataFrame:
     """ 功能获取k线数据
 
     Parameters
     ----------
     code: str
-        6 位股票代码
+        6 位股票代码或带市场标识的qt_code
     beg: str, default '16000101'
         开始日期 例如 20200101
     end: str, default '20500101'
@@ -131,7 +225,7 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
     fields = list(EastmoneyKlines.keys())
     columns = list(EastmoneyKlines.values())
     fields2 = ",".join(fields)
-    secid = gen_eastmoney_code(code)
+    secid = _gen_eastmoney_code(code)
     params = (
         ('fields1', 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13'),
         ('fields2', fields2),
@@ -162,80 +256,221 @@ def get_k_history(code: str, beg: str = '16000101', end: str = '20500101', klt: 
     if verbose:
         df['name'] = data['name']
         df['pre_close'] = data['prePrice']
+    for col in ['open', 'high', 'low', 'close', 'vol', 'amount']:
+        df[col] = df[col].apply(format_str_to_float)  # 将数据转化为float格式
+    # vol的单位为“手”，amount的单位为“元”
     return df
 
 
-def stock_daily(symbols, start, end):
-    """ 获取股票日线数据
-    Parameters
-    ----------
-    symbols : list
-        股票代码列表
-    start : str
-        开始日期
-    end : str
-        结束日期
-    Returns
-    -------
-    DataFrame
-        包含股票日线数据
-    """
-    data = []
-    for symbol in symbols:
-        code = symbol.split('.')[0]
-        df = get_k_history(code, start, end, klt=101)
-        df['symbol'] = symbol
-        data.append(df)
-    return pd.concat(data)
+def _get_rt_quote(code: str) -> pd.DataFrame:
+    """ codes from tushare, get real time quote data from eastmoney"""
 
-
-def stock_mins(symbols, start, end, freq='1min'):
-    """ 获取股票分钟线数据
-    Parameters
-    ----------
-    symbols : list
-        股票代码列表
-    start : str
-        开始日期
-    end : str
-        结束日期
-    freq : str, optional, default '1min'
-        频率，支持'1min', '5min', '15min', '30min', '60min'
-    Returns
-    -------
-    DataFrame
-        包含股票1分钟线数据
-    """
-    data = []
-    freq_map = {
-        '1min': 1,
-        '5min': 5,
-        '15min': 15,
-        '30min': 30,
-        '60min': 60,
+    url = "https://push2.eastmoney.com/api/qt/stock/get"
+    symbol = _gen_eastmoney_code(code)
+    # print(symbol)
+    params = {
+        "invt": "2",
+        "fltt": "1",
+        # "cb": "jQuery35108939078769986013_1701853424476",
+        "fields": "f58,f734,f107,f57,f43,f59,f169,f301,f60,f170,f152,f177,f111,f46,f44,f45,f47,f260,f48,f261,f279,f277,f278,f288,f19,f17,f531,f15,f13,f11,f20,f18,f16,f14,f12,f39,f37,f35,f33,f31,f40,f38,f36,f34,f32,f211,f212,f213,f214,f215,f210,f209,f208,f207,f206,f161,f49,f171,f50,f86,f84,f85,f168,f108,f116,f167,f164,f162,f163,f92,f71,f117,f292,f51,f52,f191,f192,f262,f294,f295,f748,f747",
+        "secid": f"0.{symbol}",
+        "ut": "fa5fd1943c7b386f172d6893dbfba10b",
+        "wbp2u": "|0|0|0|web",
+        "_": str(int(time.time() * 1000))
     }
-    for symbol in symbols:
-        code = symbol.split('.')[0]
-        df = get_k_history(code, start, end, klt=1)
-        df['symbol'] = symbol
-        data.append(df)
-    return pd.concat(data)
+
+    # print(params["secid"])
+    response = requests.get(url, headers=dc_cookies, cookies=dc_headers, params=params)
+    data_info = response.json()["data"]
+    if not data_info:
+        return pd.DataFrame()
+    name = data_info["f58"]
+    open = data_info["f46"]  # / 100
+    high = data_info["f44"]  # / 100
+    pre_close = data_info["f60"]  # / 100
+    low = data_info["f45"] # / 100
+    price = data_info["f43"]  # / 100 if data_info["f43"] != "-" else ""
+    b5_v = format_str_to_float(data_info["f12"])
+    b5_p = data_info["f11"]  # / 100 if data_info["f11"] != "-" else ""
+    b4_v = format_str_to_float(data_info["f14"])
+    b4_p = data_info["f13"]  # / 100 if data_info["f13"] != "-" else ""
+    b3_v = format_str_to_float(data_info["f16"])
+    b3_p = data_info["f15"]  # / 100 if data_info["f15"] != "-" else ""
+    b2_v = format_str_to_float(data_info["f18"])
+    b2_p = data_info["f17"]  # / 100 if data_info["f17"] != "-" else ""
+    b1_v = format_str_to_float(data_info["f20"])
+    b1_p = data_info["f19"]  # / 100 if data_info["f19"] != "-" else ""
+    a5_v = format_str_to_float(data_info["f32"])
+    a5_p = data_info["f31"]  # / 100 if data_info["f31"] != "-" else ""
+    a4_v = format_str_to_float(data_info["f34"])
+    a4_p = data_info["f33"]  # / 100 if data_info["f33"] != "-" else ""
+    a3_v = format_str_to_float(data_info["f36"])
+    a3_p = data_info["f35"]  # / 100 if data_info["f35"] != "-" else ""
+    a2_v = format_str_to_float(data_info["f38"])
+    a2_p = data_info["f37"]  # / 100 if data_info["f38"] != "-" else ""
+    a1_v = format_str_to_float(data_info["f40"])
+    a1_p = data_info["f39"]  # / 100 if data_info["f39"] != "-" else ""
+    date_time = _timestamp_to_time(data_info["f86"])
+    date = date_time[0:10]
+    times = date_time[10:]
+    volume = format_str_to_float(data_info["f47"])
+    amount = format_str_to_float(data_info["f48"])
+    bid = format_str_to_float(data_info["f19"])
+    ask = format_str_to_float(data_info["f39"])
+    code = symbol
+    data_list = [[name, open, pre_close, price, high, low, bid, ask, volume, amount,
+                  b1_v, b1_p, b2_v, b2_p, b3_v, b3_p, b4_v, b4_p, b5_v, b5_p,
+                  a1_v, a1_p, a2_v, a2_p, a3_v, a3_p, a4_v, a4_p, a5_v, a5_p, date, times, code]]
+    df = pd.DataFrame(data_list, columns=LIVE_QUOTE_COLS)
+    df["DATE"] = df["DATE"].apply(_format_em_date_str())
+    df["ASK"] = df["ASK"].apply(_format_em_str)
+    df["OPEN"] = df["OPEN"].apply(_format_em_str)
+    df["HIGH"] = df["HIGH"].apply(_format_em_str)
+    df["LOW"] = df["LOW"].apply(_format_em_str)
+    df["PRE_CLOSE"] = df["PRE_CLOSE"].apply(_format_em_str)
+    df["BID"] = df["BID"].apply(_format_em_str)
+    df["A1_P"] = df["A1_P"].apply(_format_em_str)
+    df["A2_P"] = df["A2_P"].apply(_format_em_str)
+    df["A3_P"] = df["A3_P"].apply(_format_em_str)
+    df["A4_P"] = df["A4_P"].apply(_format_em_str)
+    df["A5_P"] = df["A5_P"].apply(_format_em_str)
+    df["PRICE"] = df["PRICE"].apply(_format_em_str)
+    df["B1_P"] = df["B1_P"].apply(_format_em_str)
+    df["B2_P"] = df["B2_P"].apply(_format_em_str)
+    df["B3_P"] = df["B3_P"].apply(_format_em_str)
+    df["B4_P"] = df["B4_P"].apply(_format_em_str)
+    df["B5_P"] = df["B5_P"].apply(_format_em_str)
+    new_order = LIVE_QUOTE_COLS_REINDEX
+    df = df[new_order]
+    return df
 
 
-def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, timezone='local'):
-    """ 获取股票当前最新日线数据，数据实时更新
+def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
+    """ 获取单支股票的日K线数据
     Parameters
     ----------
-    symbols : str or list of str
+    qt_code: str
+        股票代码，可以是qt_code或者纯symbol
+    start: str
+        开始日期
+    end: str
+        结束日期
+    freq:
+        K线频率，可以是1min～W之间的各个频率, 如果输入不合法，默认’d'
+
+    Returns
+    -------
+    DataFrame
+        包含单支股票的K线数据，频率可选
+    """
+    klt = east_money_freq_map.get(freq, 101)
+    df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
+    df['ts_code'] = qt_code
+    if not df.empty:
+        df['change'] = df['close'] - df['pre_close']
+        df['pct_chg'] = df['change'] / df['pre_close'] * 100
+
+    df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                             'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+
+    return df
+
+
+def stock_daily(qt_code, start, end):
+    """ 获取单支股票的日K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='d')
+    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
+                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+
+    return res
+
+
+def stock_1min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的1分钟K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='1min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
+
+
+def stock_5min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的5分钟K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='5min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
+
+
+def stock_15min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的15分钟K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='15min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
+
+
+def stock_30min(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的30分钟K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='30min')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
+
+
+def stock_hourly(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的小时K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='h')
+    res = res.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
+                               'vol', 'amount'])
+    res['vol'] = res['vol'] * 100  # 东方财富的vol单位是手，转换为股
+    return res
+
+
+def stock_weekly(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的周K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='w')
+    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
+                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+
+    return res
+
+
+def stock_monthly(qt_code, start, end) -> pd.DataFrame:
+    """ 获取单支股票的周K线数据
+    """
+    res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='m')
+    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
+                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+
+    return res
+
+
+def real_time_klines(qt_code, date, freq='d'):
+    """ 获取股票date日最新K线数据，数据实时更新,不管K线频率如何，总是返回当天最后一根可用K线数据
+
+    Parameters
+    ----------
+    qt_code : str or list of str
         股票代码
+    date: Datetime like
+        需要获取的实时K线的日期，获取当天开盘到收盘/当前时间的所有K线
     freq : str
-        数据更新频率，目前仅支持日线数据
-    verbose : bool, default False
-        是否返回更多信息（名称，昨日收盘价）
-    parallel : bool, default True
-        是否使用多进程加速数据获取
-    timezone : str, default 'local'
-        时区，默认值为'local'，即本地时区, 也可以设置为'Asia/Shanghai'等以强制转换时区
+        数据频率，支持分钟到日频数据，频率最低为日频，周频/月频不支持
+        当数据频率为分钟数据时，返回当天的最后一根分钟K线数据
 
     Returns
     -------
@@ -243,6 +478,8 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
         包含股票日线数据, 包含以下字段
         datetime: str, 日期
         symbol: str, 股票代码
+        name: str, 股票名称
+        pre_close: float, 昨日收盘价
         open: float, 开盘价
         close: float, 收盘价
         high: float, 最高价
@@ -250,57 +487,27 @@ def stock_live_kline_price(symbols, freq='D', verbose=False, parallel=True, time
         vol: float, 成交量
         amount: float, 成交额
     """
-    data = []
-    if isinstance(symbols, str):
-        symbols = str_to_list(symbols)
-    if timezone == 'local':
-        today = pd.Timestamp.today().strftime('%Y%m%d')
-    else:
-        today = pd.Timestamp.today(tz=timezone).strftime('%Y%m%d')
-    klt = 101  # k line type, 101 for daily
-    if freq.upper() == 'W':
-        klt = 102
-    if freq.upper() == 'M':
-        klt = 103
-    # 使用ProcessPoolExecutor, as_completed加速数据获取，当parallel=False时，不使用多进程
-    if parallel:
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {
-                executor.submit(get_k_history, code=symbol, beg=today, klt=klt, verbose=verbose): symbol
-                for symbol
-                in symbols
-            }
-            for future in as_completed(futures):
-                try:
-                    df = future.result(timeout=2)
-                    symbol = futures[future]
-                except TimeoutError:
-                    continue
-                except Exception as exc:
-                    print(f'Encountered an exception: {exc}')
-                else:
-                    if df.empty:
-                        continue
-                    df['symbol'] = symbol
-                    data.append(df.iloc[-1:, :])
-    else:  # parallel == False, 不使用多进程
-        for symbol in symbols:
-            df = get_k_history(symbol, beg=today, klt=klt, verbose=verbose)
-            if df.empty:
-                continue
-            df['symbol'] = symbol
-            data.append(df.iloc[-1:, :])
-    try:
-        data = pd.concat(data)
-    except:
-        return pd.DataFrame()  # 返回空DataFrame
-    if verbose:
-        data = data.reindex(
-                columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
-    else:
-        data = data.reindex(
-                columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
-    data.set_index('trade_time', inplace=True)
+
+    klt = east_money_freq_map.get(freq, 101)
+    if klt > 101:
+        raise ValueError(f'Can not get real time K line with freq: {freq}')
+
+    second_day = pd.Timestamp(date) + pd.Timedelta(days=1)
+    second_day = second_day.strftime('%Y%m%d')
+
+    df = _get_k_history(qt_code, beg=date, end=second_day, klt=klt, verbose=True)
+
+    df['symbol'] = qt_code
+    df.index = pd.to_datetime(df['trade_time'])
+    df = df.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+
+    data = df.loc[pd.to_datetime(date):pd.to_datetime(second_day), :]
+    data = data.iloc[-1:, :]
+
     return data
+
+
+def real_time_quote(qt_code) -> pd.DataFrame:
+    """ 获取股票实时盘口交易详情，包括日期时间、现价、竞买竞卖价格、成交价格、成交量、以及委买委卖1～5档数据
+    """
+    return _get_rt_quote(code=qt_code)
