@@ -651,14 +651,15 @@ class TestChannels(unittest.TestCase):
             print(f'Test acquiring 3 stocks from channel {channel}')
             codes = ['000016.SZ', '000025.SZ', '000333.SZ']
             freq = 'd' if channel != 'tushare' else '15min'
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq)
-            print(f'data acquired from {channel} for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: {res}')
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=False)
+            print(f'data acquired from {channel} for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: \n{res}')
             self.assertIsInstance(res, pd.DataFrame)
             from qteasy.utilfuncs import is_market_trade_day
             if is_market_trade_day('today'):
                 self.assertFalse(res.empty)
                 self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
                 self.assertEqual(res.index.name, 'trade_time')
+                self.assertIsInstance(res.index[0], pd.Timestamp)
                 self.assertTrue(all(item in codes for item in res.symbol))
                 # some items may not have real time price at the moment
                 # self.assertTrue(all(item in res.symbol.to_list() for item in code))

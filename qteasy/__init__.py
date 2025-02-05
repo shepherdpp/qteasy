@@ -48,6 +48,7 @@ from qteasy.utilfuncs import (
 )
 from qteasy.configure import (
     set_config,
+    configure,
     get_configurations,
     get_config,
     view_config_files,
@@ -140,13 +141,13 @@ try:
     ts.set_token(TUSHARE_TOKEN)
 except Exception as e:
     msg = f'Failed Loading tushare_token, configure it in qteasy.cfg:\n' \
-            f'tushare_token = your_token\n' \
-            f'for more information, check qteasy tutorial: ' \
-            f'https://qteasy.readthedocs.io/zh/latest/tutorials/1-get-started.html'
+          f'tushare_token = your_token\n' \
+          f'for more information, check qteasy tutorial: ' \
+          f'https://qteasy.readthedocs.io/zh/latest/tutorials/1-get-started.html'
     warnings.warn(msg)
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
-configure(only_built_in_keys=False, **_qt_local_configs)
+set_config(only_built_in_keys=False, **_qt_local_configs)
 
 # 连接默认的本地数据源
 QT_DATA_SOURCE = DataSource(

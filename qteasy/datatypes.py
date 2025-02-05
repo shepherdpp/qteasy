@@ -806,9 +806,10 @@ class DataType:
         adj_factors = adj_factors[adj_column].unstack(level='ts_code')
 
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
+
         back_adj_data = acquired_data * adj_factors
 
-        if adj_type == 'backward':
+        if adj_type in ['backward', 'b', 'bk']:
             return back_adj_data
 
         fwd_adj_data = back_adj_data / adj_factors.iloc[-1]
