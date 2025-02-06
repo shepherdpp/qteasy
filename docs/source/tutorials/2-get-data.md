@@ -48,7 +48,7 @@ pip install ipython
 
 如上一篇教程介绍，刚刚初始化的`qteasy`是无法调用任何历史数据的，所有历史数据都必须首先下载到本地，保存到一个称为`Datasource`的数据仓库之后，才能完成后续所有需要数据的工作，例如调用历史数据，进行策略的回测和优化等等。
 
-qteasy需要使用的数据种类很多，所有的数据都是保存在一些预定义的数据表中，`Datasource`就是一系列数据表的集合。其中最基础的数据表包括：
+`qteasy`需要使用的数据种类很多，所有的数据都是保存在一些预定义的数据表中，`Datasource`就是一系列数据表的集合。其中最基础的数据表包括：
 
 - `trade_calendar` - 交易日历数据，包括不同交易所的开市、闭市日期计划，每年底更新下一年的交易日历
 - `stock_basics` - 股票基础信息，包括沪深股市所有股票的基本信息，包括代码、名称、全称、上市日期、分类等等基础信息
@@ -56,7 +56,7 @@ qteasy需要使用的数据种类很多，所有的数据都是保存在一些�
 
 在配置好`tushare_token`以后，第一次导入`qteasy`时，如果系统未找到交易日历数据，会显示信息提示交易日历无法读取。
 
-关于DataSource数据源对象的更多信息，请参见[DataSource Reference]()
+关于`DataSource`数据源对象的更多信息，请参见[DataSource Reference]()
 
 ```python
 import qteasy as qt
@@ -67,7 +67,7 @@ UserWarning: trade calendar is not loaded, some utility functions may not work p
 "qt.refill_data_source(tables='trade_calendar')"
   warnings.warn(f'trade calendar is not loaded, some utility functions may not work '
 ```
-qteasy提供了一个函数get_table_overview()来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。
+`qteasy`提供了一个函数`get_table_overview()`来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。
 
 ```python
 import qteasy as qt
@@ -90,7 +90,7 @@ Index: []
 如果本地数据源中没有数据，将会显示上面的内容。此时需要下载数据到本地数据源。
 ### 下载交易日历和基础数据
 
-我们可以调用`refill_data_source`函数下载交易日历和基础数据。这个函数是`qteasy`的标准数据下载接口函数，所有的历史数据类型均可以通过此接口下载。这个函数的基本参数是tables，传入数据表的名称即可下载相应的数据到本地存储了。使用`refill_data_source`下载交易数据时，`qteasy`会自动进行数据清洗，排除重复数据，去除错误数据，发生错误自动重试，并将下载的数据合并到本地数据表中。目前`qteasy`仅支持通过`tushare`下载金融数据，未来还会增加其他的金融数据接口，丰富用户选择。
+我们可以调用`refill_data_source`函数下载交易日历和基础数据。这个函数是`qteasy`的标准数据下载接口函数，所有的历史数据类型均可以通过此接口下载。这个函数的基本参数是`tables`，传入数据表的名称即可下载相应的数据到本地存储了。使用`refill_data_source`下载交易数据时，`qteasy`会自动进行数据清洗，排除重复数据，去除错误数据，发生错误自动重试，并将下载的数据合并到本地数据表中。目前`qteasy`仅支持通过`tushare`下载金融数据，未来还会增加其他的金融数据接口，丰富用户选择。
 
 要下载前面提到的交易日历、股票和指数的基本信息，只需要运行下面的代码：
 
@@ -197,7 +197,7 @@ qt.refill_data_source(tables='index_daily', symbols='000001, 000300', start_date
 ### 从本地获取股价数据
 当股价数据保存在本地之后，就可以随时提取出来使用了。
 
-我们可以使用`qt.get_history_data()`函数来获取股票的量价数据。这个函数时`qteasy`的一个通用接口，可以用来获取各种类型的数据。在函数的参数中指定数据的类型（通过数据类型ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`"open, high, low, close, vol"`以获取开盘价、最高价、最低价、收盘价和交易量：
+我们可以使用`qt.get_history_data()`函数来获取股票的量价数据。这个函数是`qteasy`的一个通用接口，可以用来获取各种类型的数据。在函数的参数中指定数据的类型（通过数据类型ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`"open, high, low, close, vol"`以获取开盘价、最高价、最低价、收盘价和交易量：
 
 ```python
 qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20230101', end='20230201')
