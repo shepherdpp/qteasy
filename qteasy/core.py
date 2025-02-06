@@ -656,19 +656,21 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
                        download_batch_interval=0, merge_type='update', log=False) -> None:
-    """ 填充数据数据源
+    """ 从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中
 
     Parameters
     ----------
+    tables: str or list of str,
+        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+        可以给出数据表名称，如 'stock_daily, stock_weekly'
+        也可以给出数据表的用途，如 'data, basic'
     data_source: DataSource, Default None
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
-    channel: str,
+    channel: str, optional, Default 'tushare'
         数据获取渠道，金融数据API，支持以下选项:
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
-    tables: str or list of str, default: None
-        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+        - 'eastmoney'   : 从东方财富网获取金融数据
     dtypes: str or list of str, default: None
         需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型
     freqs: str or list of str, default: None

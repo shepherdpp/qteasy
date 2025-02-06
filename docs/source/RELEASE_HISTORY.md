@@ -1,5 +1,13 @@
 # RELEASE HISTORY
 
+## 1.4.1 (2025-02-06)
+- Fixed bugs:
+  - sometimes the back-adjusted prices are not properly get from data source
+  - sometimes data types with parameters will not set correct parameter into the kwargs, and will cause problem
+  - sometimes the realtime kline data will have no valid trade time in index
+- Improvement:
+  - Improved function refill_data_source, made parameters "channel"
+
 ## 1.4.0 (2025-02-05)
 - New features:
   - A new DataType class has been introduced, making it much easier and more flexible to utilize historical data stored in local datasources

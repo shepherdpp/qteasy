@@ -173,7 +173,7 @@ def _get_fetch_table_func(channel: str):
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
 
     Returns
     -------
@@ -220,7 +220,7 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     start_date: str, optional
         数据下载的开始日期
     end_date: str, optional
@@ -336,7 +336,7 @@ def fetch_batched_table_data(
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     arg_list: iterable
         用于下载数据的函数参数
     parallel: bool, default True
@@ -421,7 +421,7 @@ def fetch_real_time_klines(
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     qt_codes: str or [str],
         股票代码
     freq: str,
@@ -518,7 +518,7 @@ def fetch_real_time_quotes(
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     shares: str or [str],
         股票代码
     parallel: bool, optional, default True
@@ -1017,7 +1017,7 @@ def get_dependent_table(table: str, channel: str) -> str:
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
 
     Returns
     -------
@@ -1045,7 +1045,7 @@ def get_api_map(channel: str) -> pd.DataFrame:
         数据获取渠道，金融数据API，支持以下选项:
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
 
     Returns
     -------
@@ -1059,7 +1059,7 @@ def get_api_map(channel: str) -> pd.DataFrame:
     elif channel == 'akshare':
         API_MAP = AKSHARE_API_MAP
         MAP_COLUMNS = API_MAP_COLUMNS
-    elif channel == 'emoney':
+    elif channel == 'eastmoney':
         API_MAP = EASTMONEY_API_MAP
         MAP_COLUMNS = API_MAP_COLUMNS
     else:
