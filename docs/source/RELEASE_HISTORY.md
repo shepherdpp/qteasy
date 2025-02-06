@@ -6,7 +6,7 @@
   - sometimes data types with parameters will not set correct parameter into the kwargs, and will cause problem
   - sometimes the realtime kline data will have no valid trade time in index
 - Improvement:
-  - Improved function refill_data_source, made parameters "channel"
+  - Improved function refill_data_source, made parameters "channel" and "data_source" optional and provided type and validity check
 
 ## 1.4.0 (2025-02-05)
 - New features:
