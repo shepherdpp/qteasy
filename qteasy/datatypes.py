@@ -810,7 +810,7 @@ class DataType:
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
 
         back_adj_data = acquired_data * adj_factors
-        import pdb; pdb.set_trace()
+
         if adj_type in ['backward', 'b', 'bk']:
             return back_adj_data.round(2)
 

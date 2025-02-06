@@ -686,7 +686,7 @@ class TestChannels(unittest.TestCase):
                     '603311.SH', '603355.SH', '603366.SH', '603377.SH', '603486.SH', '603515.SH', '603519.SH',
                     '603579.SH', '603657.SH', '603677.SH', '603726.SH', '603868.SH', '605108.SH', '605336.SH',
                     '605365.SH', '605555.SH', '688169.SH', '688609.SH', '688696.SH', '688793.SH', '000801.SZ',]
-            res = fetch_real_time_klines(channel=channel, qt_codes=code, freq='5min')
+            res = fetch_real_time_klines(channel=channel, qt_codes=code, freq='5min', verbose=False)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):
@@ -703,12 +703,14 @@ class TestChannels(unittest.TestCase):
             print(f'Test acquiring 3 Indexes from channel {channel}')
             codes = ['000001.SH', '000300.SH', '399001.SZ']
             freq = 'd' if channel != 'tushare' else '30min'
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq)
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=True)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):
                 self.assertFalse(res.empty)
-                self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+                self.assertEqual(res.columns.to_list(),
+                                 ['symbol', 'name', 'pre_close', 'open', 'close',
+                                  'high', 'low', 'vol', 'amount'])
                 self.assertEqual(res.index.name, 'trade_time')
                 self.assertTrue(all(item in codes for item in res.symbol))
                 # some items may not have real time price at the moment
@@ -720,7 +722,7 @@ class TestChannels(unittest.TestCase):
             print(f'Test acquiring 3 ETF data from channel {channel}')
             codes = ['510050.SH', '510300.SH', '510500.SH', '510880.SH', '510900.SH', '512000.SH', '512010.SH']
             freq = 'd' if channel != 'tushare' else 'h'
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq)
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=False)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):

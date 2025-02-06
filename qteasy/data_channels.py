@@ -568,16 +568,30 @@ def scrub_realtime_quote_data(raw_data, verbose) -> pd.DataFrame:
 def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
     """ 清洗数据，去除不一致及错误的数据，并使数据符合实时K线图的数据格式"""
 
-    if verbose:
-        data = raw_data.reindex(
-                columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
+    if "trade_time" in raw_data.columns:
+        if verbose:
+            data = raw_data.reindex(
+                    columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        else:
+            data = raw_data.reindex(
+                    columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        # set index
+        data.trade_time = pd.to_datetime(data.index)
+        data.set_index('trade_time', inplace=True)
     else:
-        data = raw_data.reindex(
-                columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
-
-    data.set_index('trade_time', inplace=True)
+        if verbose:
+            data = raw_data.reindex(
+                    columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        else:
+            data = raw_data.reindex(
+                    columns=['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        # set index
+        data.index = pd.to_datetime(data.index)
+        data.index.name = 'trade_time'
 
     return data
 
