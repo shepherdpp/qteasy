@@ -651,7 +651,7 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
     return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
-def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None, asset_types=None,
+def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, freqs=None, asset_types=None,
                        refresh_trade_calendar=False,
                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
@@ -760,6 +760,22 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
     from .datatables import get_tables_by_name_or_usage
     from .data_channels import get_dependent_table
     from .datatypes import get_tables_by_dtypes
+
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        err = TypeError(f'data source should be an instance of DataSource, got {type(data_source)} instead.')
+        raise err
+
+    if channel is None:
+        channel = 'tushare'
+    if not isinstance(channel, str):
+        err = TypeError(f'channel should be a str, got {type(channel)} instead')
+        raise err
+    if channel not in ['tushare', 'akshare', 'eastmoney']:
+        err = ValueError(f'channel should be one of "tushare", "akshare", and "eastmoney", got {channel} instead.')
+        raise err
+
     table_list = get_tables_by_name_or_usage(
             tables=tables,
     )
