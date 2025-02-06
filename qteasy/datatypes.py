@@ -334,6 +334,8 @@ def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_
 
     description, acquisition_type, kwargs = data_map[key]
 
+    kwargs=kwargs.copy()  # 因为dict是immutable变量，如果直接引用，会导致同样的dtype引用同一个kwargs对象
+
     # 如果name_par不为空，解析name_par并加入description或者kwargs中
     if name_par is not None:
         # 解析description中的参数
@@ -808,12 +810,12 @@ class DataType:
         adj_factors = adj_factors.reindex(acquired_data.index, method='ffill')
 
         back_adj_data = acquired_data * adj_factors
-
+        import pdb; pdb.set_trace()
         if adj_type in ['backward', 'b', 'bk']:
-            return back_adj_data
+            return back_adj_data.round(2)
 
         fwd_adj_data = back_adj_data / adj_factors.iloc[-1]
-        return fwd_adj_data
+        return fwd_adj_data.round(2)
 
     def _get_operation(self, datasource, *, symbols=None, starts=None, ends=None) -> pd.DataFrame:
         """数据操作型的数据获取方法"""
