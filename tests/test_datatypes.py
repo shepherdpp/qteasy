@@ -1526,6 +1526,18 @@ class TestDataTypes(unittest.TestCase):
             if asset_type is not None:
                 self.assertEqual(dtype.asset_type, asset_type)
 
+        # test special case that was found fault:
+        d1 = DataType(name='close|b')
+        d2 = DataType(name='close|f')
+
+        print(f'dtype 1: {d1}, and dtype 2: {d2}')
+        self.assertEqual(d1.name, 'close|b')
+        self.assertEqual(d2.name, 'close|f')
+        d1_adj = d1.kwargs.get('adj_type')
+        d2_adj = d2.kwargs.get('adj_type')
+        self.assertEqual(d1_adj, 'b')
+        self.assertEqual(d2_adj, 'f')
+
     def test_all_types_with_full_id(self):
         ds = self.ds
         total = len(ALL_TYPES_TO_TEST_WITH_FULL_ID)

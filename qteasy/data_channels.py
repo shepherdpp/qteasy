@@ -173,7 +173,7 @@ def _get_fetch_table_func(channel: str):
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
 
     Returns
     -------
@@ -220,7 +220,7 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     start_date: str, optional
         数据下载的开始日期
     end_date: str, optional
@@ -336,7 +336,7 @@ def fetch_batched_table_data(
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     arg_list: iterable
         用于下载数据的函数参数
     parallel: bool, default True
@@ -421,7 +421,7 @@ def fetch_real_time_klines(
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     qt_codes: str or [str],
         股票代码
     freq: str,
@@ -518,7 +518,7 @@ def fetch_real_time_quotes(
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
     shares: str or [str],
         股票代码
     parallel: bool, optional, default True
@@ -568,16 +568,30 @@ def scrub_realtime_quote_data(raw_data, verbose) -> pd.DataFrame:
 def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
     """ 清洗数据，去除不一致及错误的数据，并使数据符合实时K线图的数据格式"""
 
-    if verbose:
-        data = raw_data.reindex(
-                columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
+    if "trade_time" in raw_data.columns:
+        if verbose:
+            data = raw_data.reindex(
+                    columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        else:
+            data = raw_data.reindex(
+                    columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        # set index
+        data.trade_time = pd.to_datetime(data.index)
+        data.set_index('trade_time', inplace=True)
     else:
-        data = raw_data.reindex(
-                columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        )
-
-    data.set_index('trade_time', inplace=True)
+        if verbose:
+            data = raw_data.reindex(
+                    columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        else:
+            data = raw_data.reindex(
+                    columns=['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
+            )
+        # set index
+        data.index = pd.to_datetime(data.index)
+        data.index.name = 'trade_time'
 
     return data
 
@@ -1003,7 +1017,7 @@ def get_dependent_table(table: str, channel: str) -> str:
         数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项：
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
 
     Returns
     -------
@@ -1031,7 +1045,7 @@ def get_api_map(channel: str) -> pd.DataFrame:
         数据获取渠道，金融数据API，支持以下选项:
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
+        - 'eastmoney'   : 从东方财富网获取金融数据
 
     Returns
     -------
@@ -1045,7 +1059,7 @@ def get_api_map(channel: str) -> pd.DataFrame:
     elif channel == 'akshare':
         API_MAP = AKSHARE_API_MAP
         MAP_COLUMNS = API_MAP_COLUMNS
-    elif channel == 'emoney':
+    elif channel == 'eastmoney':
         API_MAP = EASTMONEY_API_MAP
         MAP_COLUMNS = API_MAP_COLUMNS
     else:

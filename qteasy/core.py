@@ -651,24 +651,26 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
     return get_table_overview(data_source=data_source, tables=tables, include_sys_tables=include_sys_tables)
 
 
-def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None, asset_types=None,
+def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, freqs=None, asset_types=None,
                        refresh_trade_calendar=False,
                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
                        download_batch_interval=0, merge_type='update', log=False) -> None:
-    """ 填充数据数据源
+    """ 从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中
 
     Parameters
     ----------
+    tables: str or list of str,
+        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+        可以给出数据表名称，如 'stock_daily, stock_weekly'
+        也可以给出数据表的用途，如 'data, basic'
     data_source: DataSource, Default None
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
-    channel: str,
+    channel: str, optional, Default 'tushare'
         数据获取渠道，金融数据API，支持以下选项:
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
-        - 'emoney'      : 从东方财富网获取金融数据
-    tables: str or list of str, default: None
-        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
+        - 'eastmoney'   : 从东方财富网获取金融数据
     dtypes: str or list of str, default: None
         需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型
     freqs: str or list of str, default: None
@@ -760,6 +762,22 @@ def refill_data_source(data_source, *, channel, tables, dtypes=None, freqs=None,
     from .datatables import get_tables_by_name_or_usage
     from .data_channels import get_dependent_table
     from .datatypes import get_tables_by_dtypes
+
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        err = TypeError(f'data source should be an instance of DataSource, got {type(data_source)} instead.')
+        raise err
+
+    if channel is None:
+        channel = 'tushare'
+    if not isinstance(channel, str):
+        err = TypeError(f'channel should be a str, got {type(channel)} instead')
+        raise err
+    if channel not in ['tushare', 'akshare', 'eastmoney']:
+        err = ValueError(f'channel should be one of "tushare", "akshare", and "eastmoney", got {channel} instead.')
+        raise err
+
     table_list = get_tables_by_name_or_usage(
             tables=tables,
     )
