@@ -538,7 +538,7 @@ class TestChannels(unittest.TestCase):
         print(f'{deleted} tables dropped.')
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='dividend',
             symbols='000001:000020',
@@ -552,7 +552,7 @@ class TestChannels(unittest.TestCase):
             print(f'data written to database for table {table}:\n{data.head()}')
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='stock_daily, index_daily',
             symbols='000001:000020',
@@ -566,7 +566,7 @@ class TestChannels(unittest.TestCase):
             print(f'data written to database for table {table}:\n{data.head()}')
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='cn_cpi, index_daily, ths_index_daily',
             symbols='000001:000020',
@@ -580,7 +580,7 @@ class TestChannels(unittest.TestCase):
             print(f'data written to database for table {table}:\n{data.head()}')
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='basics',
             dtypes='close, volume',
@@ -599,7 +599,7 @@ class TestChannels(unittest.TestCase):
         # 为节省时间，后面的测试可以不做
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='events, report, reference',
             symbols='000001:000020',
@@ -614,7 +614,7 @@ class TestChannels(unittest.TestCase):
             print(f'data written to database for table {table}:\n{data.head()}')
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='data, adj',
             symbols='000001:000020',
@@ -628,7 +628,7 @@ class TestChannels(unittest.TestCase):
             print(f'data written to database for table {table}:\n{data.head()}')
 
         refill_data_source(
-            self.ds,
+            data_source=self.ds,
             channel='tushare',
             tables='mins',
             symbols='000001:000020',
@@ -702,7 +702,7 @@ class TestChannels(unittest.TestCase):
 
             print(f'Test acquiring 3 Indexes from channel {channel}')
             codes = ['000001.SH', '000300.SH', '399001.SZ']
-            freq = 'd' if channel != 'tushare' else '30min'
+            freq = '30min'
             res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=True)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
@@ -721,7 +721,7 @@ class TestChannels(unittest.TestCase):
 
             print(f'Test acquiring 3 ETF data from channel {channel}')
             codes = ['510050.SH', '510300.SH', '510500.SH', '510880.SH', '510900.SH', '512000.SH', '512010.SH']
-            freq = 'd' if channel != 'tushare' else 'h'
+            freq = 'h'
             res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=False)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
