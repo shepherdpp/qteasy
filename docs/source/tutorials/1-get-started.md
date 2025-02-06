@@ -203,6 +203,48 @@ print(qt.__version__)
 
 用户可以将一些关键配置信息存放在`qteasy.cfg`文件中，这样`qteasy`在导入时会自动读取这些配置信息。
 
+### 访问`QTEASY`初始配置文件的两种方法
+
+为了方便用户编辑qteasy的初始配置文件，qteasy提供了两种方法：
+
+#### 使用qteasy.update_start_up_setting()方法
+
+`qteasy`提供了一系列的内置函数，方便用户在启动后显示和修改启动配置信息。
+
+要查看当前的启动配置，使用函数`qteasy.start_up_settings()`打印当前的启动配置信息：
+
+```python
+>>> import qteasy as qt
+>>> qt.start_up_settings()
+Start up settings:
+--------------------
+```
+
+第一次启动`qteasy`时启动配置文件为空，此时打印出的信息为空。
+
+要修改或更新启动配置文件，直接调用函数`qteasy.update_start_up_setting(**kwargs)`,传入的参数将被写入启动配置文件：
+```python
+>>> import qteasy as qt
+>>> qt.start_up_settings()
+Start up settings:
+--------------------
+>>> qt.update_start_up_setting(tushare_token='你的tushare token', local_data_source='database', local_db_host='localhost', local_db_port=3306, local_db_user='user_name', local_db_password='pass_word', local_db_name='qt_db')
+Start up settings updated successfully! The settings will be effective next time you start qteasy.
+>>> qt.start_up_settings()
+Start up settings:
+--------------------
+tushare_token = 你的tushare token
+local_data_source = database
+local_db_host = localhost
+local_db_user = user_name
+local_db_password = pass_word
+local_db_name = qt_db
+local_db_port = 3306
+```
+如果上述信息有错，可以随时修改，关闭IDE后重新`import qteasy`即可生效
+
+#### 直接访问qteasy.cfg文件
+
 用户可以在资源管理器、访达或者终端中找到`qteasy`的根目录，然后打开`qteasy.cfg`文件，修改其中的内容。
 > 在qteasy中可以通过`qt.QT_ROOT_PATH`查看qteasy的根目录
 > ```python

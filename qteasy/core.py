@@ -223,12 +223,14 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     Parameters
     ----------
     code_or_name:
-        证券代码或名称，
-        如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
-        如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
-        如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
+        证券代码或名称：
+
+        - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
+        - 如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        - 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
     asset_types: 默认None
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
+
         - E     股票
         - IDX   指数
         - FD    基金
@@ -240,6 +242,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         如果为True，打印匹配到的结果
     verbose: bool, default False
         当匹配到的证券太多时（多于五个），是否显示完整的信息
+
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
 
@@ -247,6 +250,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     -------
     dict
         当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
+
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
@@ -431,6 +435,7 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
         如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
     asset_types:
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
+
         - E     股票
         - IDX   指数
         - FD    基金
@@ -442,13 +447,15 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
         如果为True，打印匹配到的结果
     verbose: bool
         当匹配到的证券太多时（多于五个），是否显示完整的信息
+
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
 
     Returns
     -------
     dict
-        当仅找到一个匹配是，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
+        当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
+
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
@@ -668,9 +675,12 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE
     channel: str, optional, Default 'tushare'
         数据获取渠道，金融数据API，支持以下选项:
+
         - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分
         - 'akshare'     : 从AKshare API获取金融数据
         - 'eastmoney'   : 从东方财富网获取金融数据
+    tables: str or list of str, default: None
+        数据表名，必须是database中定义的数据表，用于指定需要下载的数据表
     dtypes: str or list of str, default: None
         需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型
     freqs: str or list of str, default: None
@@ -685,9 +695,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
     list_arg_filter: str or list of str, default: None  **注意，不是所有情况下filter_arg参数都有效**
         限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
-        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。
-        如果filter_arg为None，则下载所有数据。
+        参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。
         例如，下载stock_basic表数据时，下载以下输入均为合法输入：
+
         - 'SZSE'
             仅下载深圳交易所的股票数据
         - ['SSE', 'SZSE']
