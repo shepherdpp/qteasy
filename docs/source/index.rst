@@ -34,7 +34,7 @@ Introduction
 3. 交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息
 
 What Can You Do with ``QTEASY`` ?
------------------------------
+------------------------------------
 
 获取并管理金融历史数据
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +129,9 @@ What Can You Do with ``QTEASY`` ?
 
    api/api_reference.rst
    api/history_data.rst
+   api/data_source.rst
    api/history_data_types.rst
+   api/data_types.rst
    api/built_in_strategies.rst
    api/Strategies.rst
    api/use_qteasy.rst
