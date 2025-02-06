@@ -95,7 +95,9 @@ pip install pymysql
 
 ### 创建`tushare`账号并获取API token (可选)
 
-`qteasy`目前主要依赖`tushare`来获取金融数据，系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
+`qteasy`可以从多个不同的网络金融数据提供商获取金融数据，将他们清洗、整理、一致化以后保存在本地数据库中。
+尽管qteasy在不断地增加金融数据获取渠道，不过目前仍然主要依赖`tushare`。系统内建了比较完整的API与`tushare`接口。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。
+部分高频金融数据可以通过`akshare`或者东方财富网获取，未来的版本更新中会进一步增加通过其他网络渠道获取的数据。
 
 ![png](img/tushare-3.png)
 
@@ -205,9 +207,9 @@ print(qt.__version__)
 
 ### 访问`QTEASY`初始配置文件的两种方法
 
-为了方便用户编辑qteasy的初始配置文件，qteasy提供了两种方法：
+为了方便用户编辑`qteasy`的初始配置文件，`qteasy`提供了两种方法：
 
-#### 使用qteasy.update_start_up_setting()方法
+#### 使用`qteasy.update_start_up_setting()`方法
 
 `qteasy`提供了一系列的内置函数，方便用户在启动后显示和修改启动配置信息。
 
@@ -243,7 +245,7 @@ local_db_port = 3306
 ```
 如果上述信息有错，可以随时修改，关闭IDE后重新`import qteasy`即可生效
 
-#### 直接访问qteasy.cfg文件
+#### 直接访问`qteasy.cfg`文件
 
 用户可以在资源管理器、访达或者终端中找到`qteasy`的根目录，然后打开`qteasy.cfg`文件，修改其中的内容。
 > 在qteasy中可以通过`qt.QT_ROOT_PATH`查看qteasy的根目录
@@ -271,9 +273,9 @@ local_data_source = database
 
 ### 配置`tushare`的API token
 
-注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare` token，将无法正常使用`tushare`的数据服务。
+注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare token`，将无法正常使用`tushare`的数据服务。
 
-如果您按照教程前一节的内容创建了`tushare`账号并获取了token，可以将token写入`qteasy.cfg`文件中，这样在导入`qteasy`时就会自动读取这个token。
+如果您按照教程前一节的内容创建了`tushare`账号并获取了`token`，可以将token写入`qteasy.cfg`文件中，这样在导入`qteasy`时就会自动读取这个`token`。
 
 在`qteasy.cfg`文件中添加以下内容：
 
@@ -287,7 +289,7 @@ tushare_token = 你的tushare token
 
 如果您按照教程前一节的内容创建了`mysql`数据库，可以将数据库的配置信息写入`qteasy.cfg`文件中，这样`qteasy`就会连接到您指定的数据库，将金融数据存储到数据库中。
 
-在`qteasy.cfg`文件中添加以下内容：
+在`qteasy.cfg`文件中添加以下内容，
 
 ```
 local_data_source = database
@@ -297,6 +299,14 @@ local_db_user = <你的数据库用户名>
 local_db_password = <你的数据库连接密码>
 local_db_name = <保存金融数据的数据库名，如qt_database>
 ```
+
+或者使用`qteasy.update_start_up_setting()`：
+
+```python
+>>> import qteasy as qt
+>>> qt.update_start_up_setting(local_data_source=database, local_db_host='你的数据库主机名，如localhost', local_db_port='你的数据库端口，如3306', local_db_user='你的数据库用户名', local_db_password='你的数据库连接密码', local_db_name='保存金融数据的数据库名，如qt_database')
+```
+
 如果不做上述配置，`qteasy`会使用默认的csv文件作为本地数据源。
 
 > 请注意，在文件中给出配置信息的时候，请不要加`<`和`>`，否则，这些字符也会被认为是`token`或者数据库名的一部份。从而导致连接数据库失败。
@@ -332,7 +342,7 @@ local_db_name = <保存金融数据的数据库名，如qt_database>
 首先，我们需要下载一些金融数据，交易策略的回测、优化、评价等所有功能都需要用到金融数据。
 在这里，我们可以先下载一些股票数据，以便后续的教程中使用。
 
-`qt.refill_data_source`是一个通用的数据下载函数，只要你的tushare积分足够，可以下载股票、期货、指数、基金等金融数据，也可以下载宏观经济、财务报表、财务指标、公司基本信息等非交易数据。使用这个函数，您可以批量下载数据到本地，保存前会进行数据去重和清洗、确保不会重复保存，另外，使用多线程并行下载，提供下载进度条，特别适合一次性下载大量历史数据保存到本地，也适合定期运行，定期补充增量数据，例如每月或每周补充下载本月或本周的所有数据。
+`qt.refill_data_source`是一个通用的数据下载函数，只要你的`tushare`积分足够，可以下载股票、期货、指数、基金等金融数据，也可以下载宏观经济、财务报表、财务指标、公司基本信息等非交易数据。使用这个函数，您可以批量下载数据到本地，保存前会进行数据去重和清洗、确保不会重复保存，另外，使用多线程并行下载，提供下载进度条，特别适合一次性下载大量历史数据保存到本地，也适合定期运行，定期补充增量数据，例如每月或每周补充下载本月或本周的所有数据。
 
 ```python
 import qteasy as qt
