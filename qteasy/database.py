@@ -158,7 +158,7 @@ class DataSource:
                       f'Install pymysql or DButils: \n$ pip install pymysql\n$ pip install dbutils\n' \
                       f'Can not set data source type to "db", will fall back to csv file'
 
-                warnings.warn(msg, ImportWarning)
+                warnings.warn(msg, RuntimeWarning)
                 source_type = 'file'
                 file_type = 'csv'
 
@@ -206,7 +206,7 @@ class DataSource:
                 msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
                       f'\'hdf\'. Please install pytables: $ conda install pytables\n' \
                       f'Can not create data source with file type {file_type}, will fall back to csv file'
-                warnings.warn(msg, ImportWarning)
+                warnings.warn(msg, RuntimeWarning)
 
                 file_type = 'csv'
             except Exception as e:

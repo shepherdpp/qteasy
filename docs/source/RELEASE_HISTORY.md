@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.4.2 (2025-02-07)
+- Added dbutil as mandatory dependency, and moved pymysql also as mandatory, removed optional dependencies as database
+- Fixed a bug: warnings showing missing of some dependencies are not properly displayed.
+
 ## 1.4.1 (2025-02-06)
 - Fixed bugs:
   - sometimes the back-adjusted prices are not properly get from data source

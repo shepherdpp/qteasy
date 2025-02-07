@@ -36,9 +36,10 @@ try:
 
     TA_LIB_AVAILABLE = True
 except ImportError as e:
-    warnings.warn(f'TA-lib should be installed to use all TA functions, visit '
-                  f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information',
-                  ImportWarning)
+    msg = (f'TA-lib is not installed, some built-in strategies are not available. '
+           f'Install TA-lib to utilize full functionalities, please visit '
+           f'https://qteasy.readthedocs.io/zh/latest/faq.html to get more information')
+    warnings.warn(msg, RuntimeWarning)
     TA_LIB_AVAILABLE = False
     pass
 

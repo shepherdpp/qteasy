@@ -18,7 +18,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qteasy"
-version = "1.4.1"
+version = "1.4.2"
 authors = [
   {name="jackie PENG", email="jackie.pengzhao@gmail.com" },
 ]
@@ -35,6 +35,8 @@ dependencies = [
     "numpy>=1.18.1",
     "numba>=0.47.0",
     "tushare>=1.2.89",
+    "pymysql >= 1.0.0",
+    "dbutils >= 3.0.0",
     "mplfinance",
     "rich>=10.0.0",
     "textual",
@@ -68,7 +70,6 @@ Issues = "https://github.com/shepherdpp/qteasy/issues"
 
 [project.optional-dependencies]
 talib = ["ta-lib"]
-database = ["pymysql >= 1.0.0"]
 feather = ["pyarrow >= 3"]
 dev = [
     "ta-lib",
