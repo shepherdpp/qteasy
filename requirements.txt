@@ -11,6 +11,8 @@ pandas
 numpy
 numba
 tushare
+pymysql
+dbutils
 mplfinance
 rich
 
