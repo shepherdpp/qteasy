@@ -1847,7 +1847,7 @@ def set_datetime_format_frame(df, primary_key: [str], pk_dtypes: [str]) -> None:
     return None
 
 
-def get_primary_key_range(df, primary_key: list[str], pk_dtypes: list[str]) -> dict:
+def get_primary_key_range(df, primary_key: [str], pk_dtypes: [str]) -> dict:
     """ 给定一个dataframe，给出这个df表的主键的范围，用于下载数据时用作传入参数
         如果主键类型为string，则给出一个list，包含所有的元素
         如果主键类型为date，则给出上下界
@@ -1856,9 +1856,9 @@ def get_primary_key_range(df, primary_key: list[str], pk_dtypes: list[str]) -> d
     ----------
     df: pd.DataFrame
         需要操作的df
-    primary_key: list
+    primary_key: list of str
         以列表形式给出的primary_key列名
-    pk_dtypes: list
+    pk_dtypes: list of str
         primary_key的数据类型
 
     Returns
