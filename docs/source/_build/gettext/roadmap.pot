@@ -1,0 +1,305 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-07 16:36+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../roadmap.rst:2
+msgid "开发路线图"
+msgstr ""
+
+#: ../../roadmap.rst:4
+msgid "开发 ``qteasy`` 的目标是为了给量化交易从业者提供一套简单易用、效率高、完全本地化运行的量化交易工具包。"
+msgstr ""
+
+#: ../../roadmap.rst:6
+msgid "以下开发路线图罗列了计划中 ``qteasy`` 拥有的功能，有些功能还在不断地开发完善中，我们将在未来的版本不断更新。"
+msgstr ""
+
+#: ../../roadmap.rst:10
+msgid "金融数据"
+msgstr ""
+
+#: ../../roadmap.rst:12
+msgid "✅ 提供标准数据表，从数据提供商获取数据，清洗后存入本地数据源:"
+msgstr ""
+
+#: ../../roadmap.rst:14
+msgid "✅ 获取上市公司基本面数据、财务报表数据"
+msgstr ""
+
+#: ../../roadmap.rst:15
+msgid "✅ 获取股票、指数、基金日线价格数据及复权因子"
+msgstr ""
+
+#: ../../roadmap.rst:16
+msgid "✅ 获取股票、指数、基金分钟线价格数据"
+msgstr ""
+
+#: ../../roadmap.rst:17
+msgid "✅ 获取股票、指数、基金实时价格数据"
+msgstr ""
+
+#: ../../roadmap.rst:18
+msgid "✅ 获取股票、指数、基金的财务指标数据"
+msgstr ""
+
+#: ../../roadmap.rst:19
+msgid "✅ 获取宏观经济数据"
+msgstr ""
+
+#: ../../roadmap.rst:20
+msgid "✅ 获取期货价格数据"
+msgstr ""
+
+#: ../../roadmap.rst:21
+msgid "✅ 获取期权价格数据"
+msgstr ""
+
+#: ../../roadmap.rst:22
+msgid "⬜ 获取外汇数据"
+msgstr ""
+
+#: ../../roadmap.rst:23
+msgid "⬜ 获取港股、美股价格数据"
+msgstr ""
+
+#: ../../roadmap.rst:24
+msgid "⬜ 获取数字货币数据"
+msgstr ""
+
+#: ../../roadmap.rst:26
+msgid "⬜ 支持多种数据存储格式，如 ``csv``、``hdf5``、``mysql`` 等"
+msgstr ""
+
+#: ../../roadmap.rst:28
+msgid "✅ 支持 ``csv`` 格式"
+msgstr ""
+
+#: ../../roadmap.rst:29
+msgid "✅ 支持 ``hdf5`` 格式"
+msgstr ""
+
+#: ../../roadmap.rst:30
+msgid "✅ 支持 ``feather`` 格式"
+msgstr ""
+
+#: ../../roadmap.rst:31
+msgid "✅ 支持 ``mysql`` 数据库"
+msgstr ""
+
+#: ../../roadmap.rst:32
+msgid "⬜ 从多个不同的数据提供商获取数据，统一格式后存入本地数据源"
+msgstr ""
+
+#: ../../roadmap.rst:33
+msgid "✅ 从tushare获取历史数据和实时数据"
+msgstr ""
+
+#: ../../roadmap.rst:34
+msgid "✅ 从东方财经  ``eastmoney`` 获取历史数据和实时数据"
+msgstr ""
+
+#: ../../roadmap.rst:35
+msgid "⬜ 从 ``akshare`` 获取数据"
+msgstr ""
+
+#: ../../roadmap.rst:36
+msgid "⬜ 从 ``baostock`` 获取数据"
+msgstr ""
+
+#: ../../roadmap.rst:37
+msgid "⬜ 从 ``joinquant`` 获取数据"
+msgstr ""
+
+#: ../../roadmap.rst:38
+msgid "✅ 从本地数据源获取数据，以 ``DataFrame`` 或 ``HistoryPanel`` 的形式返回"
+msgstr ""
+
+#: ../../roadmap.rst:39
+msgid "✅ 本地存储K线数据直接输出为K线图，支持平移缩放"
+msgstr ""
+
+#: ../../roadmap.rst:40
+msgid "⬜ 本地存储财务数据直接输出为财务报表"
+msgstr ""
+
+#: ../../roadmap.rst:41
+msgid "⬜ 本地存储宏观经济数据直接输出为宏观经济图表"
+msgstr ""
+
+#: ../../roadmap.rst:42
+msgid "⬜ 允许用户自定义数据类型，添加到数据源，按自定义数据获取方式获取数据"
+msgstr ""
+
+#: ../../roadmap.rst:43
+msgid "⬜ 提供数据统计分析功能，如均值、标准差、相关系数、协方差等，整合到 ``HistoryPanel`` 类中"
+msgstr ""
+
+#: ../../roadmap.rst:47
+msgid "交易策略"
+msgstr ""
+
+#: ../../roadmap.rst:49
+msgid "✅ 提供多种内置交易策略，通过策略ID调用"
+msgstr ""
+
+#: ../../roadmap.rst:50
+msgid "✅ 所有交易策略均实现参数化调用，用户通过参数控制策略的行为；允许用户定义交易策略时定义可调参数，通过可调参数影响策略的运行表现"
+msgstr ""
+
+#: ../../roadmap.rst:51
+msgid "✅ 用户可以在一个策略中订阅多种历史数据，但所有数据的频率和时间周期必须相同"
+msgstr ""
+
+#: ../../roadmap.rst:52
+msgid "⬜ 用户可以在一个策略中订阅多种历史数据，且允许历史数据有不同的时间周期和时间频率"
+msgstr ""
+
+#: ../../roadmap.rst:53
+msgid "✅ 提供交易策略的基类，用户可以继承基类，实现自己的交易策略，实现的交易策略可以直接用于回测、实盘运行和参数优化"
+msgstr ""
+
+#: ../../roadmap.rst:54
+msgid "✅ 提供交易策略的回测功能，用户可以通过回测功能测试自己的交易策略，获取回测报告，以图表形式查看回测结果"
+msgstr ""
+
+#: ../../roadmap.rst:55
+msgid "✅ 提供多种回测指标，如年化收益率、最大回撤、夏普比率、信息比率、胜率、盈亏比等"
+msgstr ""
+
+#: ../../roadmap.rst:56
+msgid "✅ 提供交易策略优化调参功能，用户可以通过该功能自动寻找最优参数组合，并以图表形式查看优化结果"
+msgstr ""
+
+#: ../../roadmap.rst:57
+msgid "⬜ 提供多种策略优化算法，如网格搜索、遗传算法、模拟退火，以及机器学习算法"
+msgstr ""
+
+#: ../../roadmap.rst:58
+msgid "✅ 网格搜索"
+msgstr ""
+
+#: ../../roadmap.rst:59
+msgid "✅ 蒙特卡洛搜索算法"
+msgstr ""
+
+#: ../../roadmap.rst:60
+msgid "⬜ 遗传算法"
+msgstr ""
+
+#: ../../roadmap.rst:61
+msgid "⬜ 模拟退火"
+msgstr ""
+
+#: ../../roadmap.rst:62
+msgid "⬜ 机器学习算法"
+msgstr ""
+
+#: ../../roadmap.rst:63
+msgid "⬜ 允许用户在定义策略时引用特殊数据类型："
+msgstr ""
+
+#: ../../roadmap.rst:64
+msgid "⬜ 时、分、日期、星期、月份、季度、年份等时间数据"
+msgstr ""
+
+#: ../../roadmap.rst:65
+msgid "✅ 历史成交数据，包括成交量、成交额等"
+msgstr ""
+
+#: ../../roadmap.rst:66
+msgid "⬜ 当前持仓数据，包括持仓量、持仓成本等"
+msgstr ""
+
+#: ../../roadmap.rst:67
+msgid "⬜ 允许用户在定义策略时添加自定义数据类型"
+msgstr ""
+
+#: ../../roadmap.rst:70
+msgid "实盘运行"
+msgstr ""
+
+#: ../../roadmap.rst:72
+msgid "✅ 提供模拟实盘运行功能，使用实时数据运行交易策略，模拟交易所处理交易指令,生成模拟交易结果，记录交易结果并模拟跟踪交易策略的运行表现，跟踪交易策略的资金曲线、持股变动和收益情况"
+msgstr ""
+
+#: ../../roadmap.rst:73
+msgid "✅ 提供多种模拟交易所的参数选项，允许用户自定义交易所的参数，设置不同的交易费率、滑点、交易时间等参数"
+msgstr ""
+
+#: ../../roadmap.rst:74
+msgid "✅ 允许用户自定义创建不同的交易账户，自定义初始资金等参数，随时切换不同的交易账户进行不同的模拟交易"
+msgstr ""
+
+#: ../../roadmap.rst:75
+msgid "✅ 提供完整交易指令的记录功能，将交易指令、交易结果、资金、持股变动和收益等情况记录在log文件中"
+msgstr ""
+
+#: ../../roadmap.rst:76
+msgid "✅ 实盘运行过程生成system_log文件，将交易过程记录在system_log中"
+msgstr ""
+
+#: ../../roadmap.rst:77
+msgid "✅ 实盘运行过程生成trade_log文件，将交易指令、交易结果、资金、持股变动和收益等情况记录在trade_log中"
+msgstr ""
+
+#: ../../roadmap.rst:78
+msgid "⬜ 提供交易参数配置文件，将交易参数保存在配置文件中，重新开始交易时可以直接加载配置文件读取交易参数"
+msgstr ""
+
+#: ../../roadmap.rst:79
+msgid "⬜ 提供交易记录文件和配置文件的清空和重置功能，允许用户清空交易记录文件，重新开始交易"
+msgstr ""
+
+#: ../../roadmap.rst:80
+msgid "✅ 提供命令行CLI工具，方便用户输入交易指令，查看交易结果、资金曲线、持股变动和收益情况"
+msgstr ""
+
+#: ../../roadmap.rst:81
+msgid "✅ CLI工具提供dashboard模式，显示当前所有交易状态和实时交易结果"
+msgstr ""
+
+#: ../../roadmap.rst:82
+msgid "✅ CLI工具提供交易指令输入模式，允许用户输入交易指令，或者查看和修改关键配置信息"
+msgstr ""
+
+#: ../../roadmap.rst:83
+msgid "✅ 提供命令行图形化工具TUI，方便用户查看交易指令、交易结果、资金曲线、持股变动和收益情况"
+msgstr ""
+
+#: ../../roadmap.rst:84
+msgid "✅ TUI工具提供可视化的图形界面，显示当前所有交易状态和实时交易结果"
+msgstr ""
+
+#: ../../roadmap.rst:85
+msgid "⬜ TUI工具提供可视化命令输入接口，允许用户输入交易指令，或者查看和修改关键配置信息"
+msgstr ""
+
+#: ../../roadmap.rst:86
+msgid "⬜ 提供实盘交易接口，实际连接交易所，自动传达交易指令至交易所，获取交易结果，记录交易结果并实盘跟踪交易策略的运行表现，跟踪交易策略的资金曲线、持股变动和收益情况"
+msgstr ""
+
+#: ../../roadmap.rst:87
+msgid "⬜ 提供多种实盘交易接口，如证券交易所、期货交易所、数字货币交易所等"
+msgstr ""
+
+#: ../../roadmap.rst:88
+msgid "✅ 提供模拟交易或实盘交易的图形化用户界面"
+msgstr ""
+
+#: ../../roadmap.rst:89
+msgid "⬜ 产生交易信号后通过邮件/微信等方式发送通知"
+msgstr ""
