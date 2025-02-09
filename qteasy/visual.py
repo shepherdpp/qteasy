@@ -167,7 +167,9 @@ class InterCandle:
         elif system == 'Linux':
             zh_font_name = QT_CONFIG['ZH_font_name_LINUX']
         else:
-            warnings.warn(f'Unknown system type: {system}, Chinese contents might not be displayed correctly.')
+            warnings.warn(f'Unknown system type: {system}, Chinese contents might not be displayed correctly.',
+                          RuntimeWarning,
+                          stacklevel=2)
             zh_font_name = 'Arial'
 
         self.title_font = {'fontname': zh_font_name,
@@ -870,7 +872,8 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
         data['bb-u'], data['bb-m'], data['bb-l'] = bbands(close, *bb_par)
     except Exception as e:
         import warnings
-        warnings.warn(f'Failed to calculate indicators RSI and BBANDS, TA-lib is needed, please install TA-lib!. {e}')
+        msg = f'Failed to calculate indicators RSI and BBANDS, TA-lib is needed, please install TA-lib!. {e}'
+        warnings.warn(msg, RuntimeWarning, stacklevel=3)
         data['rsi'] = np.nan
         data['bb-u'] = np.nan
 

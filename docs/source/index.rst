@@ -81,21 +81,16 @@ What Can You Do with ``QTEASY`` ?
     :align: center
 
 
-
 .. toctree::
-   :caption: GETTING STARTED 快速入门
+   :caption: ``qteasy``快速入门
    :maxdepth: 1
    :glob:
 
    getting_started
-   help
-   roadmap.rst
-   CONTRIBUTING
-   CODE_OF_CONDUCT
 
 
 .. toctree::
-   :caption: TUTORIALS 使用教程
+   :caption: ``qteasy``使用教程
    :numbered: 2
    :maxdepth: 1
    :glob:
@@ -104,16 +99,60 @@ What Can You Do with ``QTEASY`` ?
 
 
 .. toctree::
-    :caption: REFERENCES 参考文档
+    :caption: 下载并管理金融历史数据
     :numbered: 2
     :maxdepth: 1
     :glob:
 
-    references/*
+    references/1-history_data_overview.md
+    references/2-gethistory_data.md
+    references/2-historical_data_types.md
 
 
 .. toctree::
-    :caption: EXAMPLES 自定义策略示例
+    :caption: 创建交易策略
+    :numbered: 2
+    :maxdepth: 1
+    :glob:
+
+    references/1-strategy-overview.md
+    references/1_builg_in_results.md
+    references/4-built-in-strategy-blender.md
+
+
+.. toctree::
+    :caption: 回测并评价交易策略
+    :numbered: 2
+    :maxdepth: 1
+    :glob:
+
+    references/1-backtest-overview.md
+    references/3-back-test-strategy.md
+
+
+.. toctree::
+    :caption: 优化交易策略
+    :numbered: 2
+    :maxdepth: 1
+    :glob:
+
+    references/1-optimization-overview.md
+    references/5-optimize-strategy.md
+
+
+.. toctree::
+    :caption: 模拟实盘运行交易策略
+    :numbered: 2
+    :maxdepth: 1
+    :glob:
+
+    references/1-simulation-overview.md
+    references/5-simulate-operation-in-CLI.md
+    references/6-simulate-operation-in-TUI.md
+
+
+.. toctree::
+    :caption: 自定义策略示例
     :numbered: 2
     :maxdepth: 1
     :glob:
@@ -122,7 +161,7 @@ What Can You Do with ``QTEASY`` ?
 
 
 .. toctree::
-   :caption: API REFERENCE 参考
+   :caption: API参考
    :numbered: 1
    :maxdepth: 1
    :glob:
@@ -138,25 +177,22 @@ What Can You Do with ``QTEASY`` ?
 
 
 .. toctree::
-   :caption: RELEASE HISTORY 发行版本历史
-   :maxdepth: 1
-   :glob:
-
-   RELEASE_HISTORY
-
-
-.. toctree::
    :caption: LICENSE
 
    LICENSE
 
 
 .. toctree::
-   :caption: ABOUT 关于
+   :caption: ABOUT 关于qteasy
    :maxdepth: 1
    :glob:
 
    about
+   help
+   roadmap.rst
+   CONTRIBUTING
+   CODE_OF_CONDUCT
+   RELEASE_HISTORY
 
 .. toctree::
    :caption: FAQ 常见问题
