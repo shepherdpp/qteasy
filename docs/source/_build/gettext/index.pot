@@ -1,0 +1,161 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-07 16:36+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../index.rst:85
+msgid "GETTING STARTED 快速入门"
+msgstr ""
+
+#: ../../index.rst:97
+msgid "TUTORIALS 使用教程"
+msgstr ""
+
+#: ../../index.rst:106
+msgid "REFERENCES 参考文档"
+msgstr ""
+
+#: ../../index.rst:115
+msgid "EXAMPLES 自定义策略示例"
+msgstr ""
+
+#: ../../index.rst:124
+msgid "API REFERENCE 参考"
+msgstr ""
+
+#: ../../index.rst:140
+msgid "RELEASE HISTORY 发行版本历史"
+msgstr ""
+
+#: ../../index.rst:148
+msgid "LICENSE"
+msgstr ""
+
+#: ../../index.rst:154
+msgid "ABOUT 关于"
+msgstr ""
+
+#: ../../index.rst:161
+msgid "FAQ 常见问题"
+msgstr ""
+
+#: ../../index.rst:7
+msgid "欢迎使用 ``QTEASY`` 文档!"
+msgstr ""
+
+#: ../../index.rst:15
+msgid "目前 ``qteays`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
+msgstr ""
+
+#: ../../index.rst:21
+msgid "Author: **Jackie PENG**"
+msgstr ""
+
+#: ../../index.rst:22
+msgid "email: *jackie_pengzhao@163.com*"
+msgstr ""
+
+#: ../../index.rst:23
+msgid "Created: 2019, July, 16"
+msgstr ""
+
+#: ../../index.rst:24
+msgid "Latest Version: `1.4.1`"
+msgstr ""
+
+#: ../../index.rst:25
+msgid "License: BSD 3-Clause"
+msgstr ""
+
+#: ../../index.rst:28
+msgid "Introduction"
+msgstr ""
+
+#: ../../index.rst:30
+msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
+msgstr ""
+
+#: ../../index.rst:32
+msgid "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 ``Tushare`` 、 ``EastMoney`` 等"
+msgstr ""
+
+#: ../../index.rst:33
+msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
+msgstr ""
+
+#: ../../index.rst:34
+msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
+msgstr ""
+
+#: ../../index.rst:37
+msgid "What Can You Do with ``QTEASY`` ?"
+msgstr ""
+
+#: ../../index.rst:40
+msgid "获取并管理金融历史数据"
+msgstr ""
+
+#: ../../index.rst:42
+msgid "获取、清洗、本地存储大量金融历史数据"
+msgstr ""
+
+#: ../../index.rst:43
+msgid "检索、处理、调用本地数据"
+msgstr ""
+
+#: ../../index.rst:49
+msgid "本地金融数据可视化"
+msgstr ""
+
+#: ../../index.rst:53
+msgid "创建交易策略，模拟自动化交易"
+msgstr ""
+
+#: ../../index.rst:55
+msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
+msgstr ""
+
+#: ../../index.rst:56
+msgid "获取实时市场数据，运行策略模拟自动化交易"
+msgstr ""
+
+#: ../../index.rst:57
+msgid "跟踪记录交易日志、股票持仓、账户资金变化等信息"
+msgstr ""
+
+#: ../../index.rst:58
+msgid "通过多种用户界面查看并控制交易程序"
+msgstr ""
+
+#: ../../index.rst:59
+msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
+msgstr ""
+
+#: ../../index.rst:73
+msgid "回测、评价、优化交易策略"
+msgstr ""
+
+#: ../../index.rst:75
+msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
+msgstr ""
+
+#: ../../index.rst:76
+msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
+msgstr ""
+
+#: ../../index.rst:77
+msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
+msgstr ""
