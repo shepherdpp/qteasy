@@ -26,6 +26,7 @@ from concurrent.futures import (
 from .utilfuncs import (
     str_to_list,
     list_truncate,
+    list_to_str_format,
 )
 
 
@@ -263,6 +264,9 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
     allowed_code_suffix = API_MAP[table][4]
     additional_start_end = API_MAP[table][5]
     start_end_chunk_size = API_MAP[table][6]
+
+    if isinstance(symbols, list):
+        symbols = list_to_str_format(symbols)
 
     # parse the filling args and pick the first filling arg value from the range
 

@@ -14,53 +14,52 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../'))
 
-import numpy as np
-import qteasy as qt
-
-
-class GridTrade(qt.RuleIterator):
-    """网格交易策略"""
-
-    def realize(self, h, **kwargs):
-
-        # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
-        grid_size, trade_batch, base_grid = self.pars
-
-        # 读取最新价格
-        price = h[-1, 0]  # 最近一个K线周期的close价格
-        # print(f'[DEBUG] got latest price: {price}, base_grid: {base_grid}, grid_size: {grid_size}\n')
-        # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
-        if base_grid <= 0.01:
-            # 基准网格尚未设置，此时为首次运行，首次买入2000股并设置基准网格为当前价格（精确到0.1元）
-            result = 20000
-            base_grid = np.round(price / 0.1) * 0.1
-            # print(f'[DEBUG] first run, buy 2000 shares at {price} and set base_grid to {base_grid}\n')
-        elif price - base_grid > grid_size:
-            # 触及卖出网格线，产生卖出信号
-            result = - trade_batch  # 交易信号等于交易数量，必须使用VS信号类型
-            # 重新计算基准网格
-            base_grid += grid_size
-            # print(f'[DEBUG] sell {trade_batch} shares at {price} and set base_grid to {base_grid}\n')
-        elif base_grid - price > grid_size:
-            # 触及买入网格线，产生买入信号
-            result = trade_batch + 10.
-            # 重新计算基准网格
-            base_grid -= grid_size
-            # print(f'[DEBUG] buy {trade_batch} shares at {price} and set base_grid to {base_grid}\n')
-        else:
-            result = 0.
-
-        # 使用新的基准网格更新交易参数
-        if not np.isnan(base_grid):
-            base_grid = np.round(base_grid, 2)
-        self.pars = (grid_size, trade_batch, base_grid)
-
-        return result
-
 
 if __name__ == '__main__':
     from qteasy import Operator
     from qteasy.utilfuncs import get_qt_argparser
+    import numpy as np
+    import qteasy as qt
+
+
+    class GridTrade(qt.RuleIterator):
+        """网格交易策略"""
+
+        def realize(self, h, **kwargs):
+
+            # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
+            grid_size, trade_batch, base_grid = self.pars
+
+            # 读取最新价格
+            price = h[-1, 0]  # 最近一个K线周期的close价格
+            # print(f'[DEBUG] got latest price: {price}, base_grid: {base_grid}, grid_size: {grid_size}\n')
+            # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
+            if base_grid <= 0.01:
+                # 基准网格尚未设置，此时为首次运行，首次买入2000股并设置基准网格为当前价格（精确到0.1元）
+                result = 20000
+                base_grid = np.round(price / 0.1) * 0.1
+                # print(f'[DEBUG] first run, buy 2000 shares at {price} and set base_grid to {base_grid}\n')
+            elif price - base_grid > grid_size:
+                # 触及卖出网格线，产生卖出信号
+                result = - trade_batch  # 交易信号等于交易数量，必须使用VS信号类型
+                # 重新计算基准网格
+                base_grid += grid_size
+                # print(f'[DEBUG] sell {trade_batch} shares at {price} and set base_grid to {base_grid}\n')
+            elif base_grid - price > grid_size:
+                # 触及买入网格线，产生买入信号
+                result = trade_batch + 10.
+                # 重新计算基准网格
+                base_grid -= grid_size
+                # print(f'[DEBUG] buy {trade_batch} shares at {price} and set base_grid to {base_grid}\n')
+            else:
+                result = 0.
+
+            # 使用新的基准网格更新交易参数
+            if not np.isnan(base_grid):
+                base_grid = np.round(base_grid, 2)
+            self.pars = (grid_size, trade_batch, base_grid)
+
+            return result
 
     parser = get_qt_argparser()
     args = parser.parse_args()
