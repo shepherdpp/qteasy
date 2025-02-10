@@ -82,7 +82,7 @@ What Can You Do with ``QTEASY`` ?
 
 
 .. toctree::
-   :caption: ``qteasy``快速入门
+   :caption: ``qteasy`` 快速入门
    :maxdepth: 1
    :glob:
 
@@ -90,7 +90,7 @@ What Can You Do with ``QTEASY`` ?
 
 
 .. toctree::
-   :caption: ``qteasy``使用教程
+   :caption: ``qteasy`` 使用教程
    :numbered: 2
    :maxdepth: 1
    :glob:
@@ -183,7 +183,7 @@ What Can You Do with ``QTEASY`` ?
 
 
 .. toctree::
-   :caption: ABOUT 关于qteasy
+   :caption: ABOUT 关于 ``qteasy``
    :maxdepth: 1
    :glob:
 
