@@ -1033,9 +1033,13 @@ class Trader(object):
         同时更新self.watched_prices
         """
         if self.watch_list:
-            from qteasy.emfuncs import real_time_klines
             symbols = self.watch_list
-            live_prices = real_time_klines(symbols, freq='D', verbose=True, parallel=False)
+            live_prices = fetch_real_time_klines(
+                    channel=self.live_price_channel,
+                    qt_codes=symbols,
+                    freq='D',
+                    verbose=True,
+            )
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
