@@ -689,7 +689,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型
     refresh_trade_calendar: Bool, Default False
         是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
-    refill_dependent_tables: Bool, Default True
+    refill_dependent_tables: Bool, Default True, New in v1.4.3
         是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功
     start_date: str YYYYMMDD
         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
@@ -821,9 +821,8 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         except:
             refresh_trade_calendar = True
 
-    # 这里需要确保依赖表位于下载清单的前面，否则当依赖表不存在时，会导致下载失败
+    # 整理下载表的顺序，这里需要确保依赖表位于下载清单的前面，否则当依赖表不存在时，会导致下载失败
     download_table_list = []
-    import pdb; pdb.set_trace()
     if refresh_trade_calendar and ('trade_calendar' not in table_list):
         # 因为trade_calendar也有可能通过依赖表添加
         download_table_list.append('trade_calendar')
@@ -876,7 +875,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                     df_concat_list.append(data)
                 if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
                     # 将下载的数据写入数据源
-                    # print(f'concaternating df_concat_list: {len(df_concat_list)} items in it!')
                     rows_affected = data_source.update_table_data(
                             table=table,
                             df=pd.concat(df_concat_list, copy=False, ignore_index=True),

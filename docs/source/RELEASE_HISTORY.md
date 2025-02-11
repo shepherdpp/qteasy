@@ -2,6 +2,7 @@
 
 ## 1.4.3 (2025-02-11)
 - Fixed a bug: Trader might fail to acqurie live prices from correct channel and may fail to save the prices to datasource due to channel updates
+- Improved `refill_data_source()`: added an optional parameter: `refill_dependent_tabes: bool = True`, to give user control if dependent tables are downloaded
 
 ## 1.4.2 (2025-02-07)
 - Added dbutil as mandatory dependency, and moved pymysql also as mandatory, removed optional dependencies as database
