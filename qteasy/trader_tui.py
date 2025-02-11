@@ -52,7 +52,6 @@ from textual.widgets import (
 from qteasy.utilfuncs import sec_to_duration
 
 
-
 class SysLog(RichLog):
     """A widget to display system logs."""
 
@@ -661,7 +660,7 @@ class TraderApp(App):
         """Refresh the order table."""
         if not self.refresh_ui:
             return
-        orders = self.query_one("#orders")
+        orders = self.query_one(OrderTable)
         orders.clear()
         order_list = self.trader.history_orders(with_trade_results=True)
         if order_list.empty:
@@ -692,7 +691,7 @@ class TraderApp(App):
         """Refresh the watch list."""
         if not self.refresh_ui:
             return
-        watches = self.query_one('#watches')
+        watches = self.query_one(WatchTable)
         watched_prices = self.trader.update_watched_prices()
         watched_prices = watched_prices.reindex(columns=watches.df_columns)
         watches.clear()
@@ -722,7 +721,7 @@ class TraderApp(App):
         """Refresh the trade log table."""
         if not self.refresh_ui:
             return
-        trade_log = self.query_one("#tradelog")
+        trade_log = self.query_one(TradeLogTable)
         t_log = self.trader.read_trade_log()
         trade_log.clear()
 
@@ -760,8 +759,8 @@ class TraderApp(App):
         if not self.refresh_ui:
             return
 
-        info = self.query_one('#info')
-        system = self.query_one('#system')
+        info = self.query_one(InfoPanel)
+        system = self.query_one(SysLog)
 
         account = trader_info['Account ID']
         user_name = trader_info['User Name']
@@ -1020,3 +1019,4 @@ class TraderApp(App):
 
         self.refresh_ui = False
         self.push_screen(QuitScreen(), confirm_exit)
+

@@ -334,7 +334,7 @@ class Operator:
         return len(self.op_data_types)
 
     @property
-    def op_ref_types(self):
+    def op_ref_types(self) -> list:
         """返回operator对象所有策略子对象所需历史参考数据类型reference_types的集合"""
         ref_types = [typ for item in self.strategies for typ in item.ref_types]
         ref_types = list(set(ref_types))
@@ -342,7 +342,7 @@ class Operator:
         return ref_types
 
     @property
-    def op_ref_type_count(self):
+    def op_ref_type_count(self) -> int:
         """ 返回operator对象生成交易清单所需的历史数据类型数量"""
         return len(self.op_ref_types)
 

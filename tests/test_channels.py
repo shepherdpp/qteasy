@@ -657,12 +657,12 @@ class TestChannels(unittest.TestCase):
             from qteasy.utilfuncs import is_market_trade_day
             if is_market_trade_day('today'):
                 self.assertFalse(res.empty)
-                self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+                self.assertEqual(res.columns.to_list(), ['ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount'])
                 self.assertEqual(res.index.name, 'trade_time')
                 self.assertIsInstance(res.index[0], pd.Timestamp)
-                self.assertTrue(all(item in codes for item in res.symbol))
+                self.assertTrue(all(item in codes for item in res.ts_code))
                 # some items may not have real time price at the moment
-                # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+                # self.assertTrue(all(item in res.ts_code.to_list() for item in code))
             else:
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)
@@ -691,11 +691,11 @@ class TestChannels(unittest.TestCase):
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):
                 self.assertFalse(res.empty)
-                self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+                self.assertEqual(res.columns.to_list(), ['ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount'])
                 self.assertEqual(res.index.name, 'trade_time')
-                self.assertTrue(all(item in code for item in res.symbol))
+                self.assertTrue(all(item in code for item in res.ts_code))
                 # some items may not have real time price at the moment
-                # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+                # self.assertTrue(all(item in res.ts_code.to_list() for item in code))
             else:
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)
@@ -709,12 +709,12 @@ class TestChannels(unittest.TestCase):
             if is_market_trade_day('today'):
                 self.assertFalse(res.empty)
                 self.assertEqual(res.columns.to_list(),
-                                 ['symbol', 'name', 'pre_close', 'open', 'close',
+                                 ['ts_code', 'name', 'pre_close', 'open', 'close',
                                   'high', 'low', 'vol', 'amount'])
                 self.assertEqual(res.index.name, 'trade_time')
-                self.assertTrue(all(item in codes for item in res.symbol))
+                self.assertTrue(all(item in codes for item in res.ts_code))
                 # some items may not have real time price at the moment
-                # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+                # self.assertTrue(all(item in res.ts_code.to_list() for item in code))
             else:
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)
@@ -727,11 +727,11 @@ class TestChannels(unittest.TestCase):
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):
                 self.assertFalse(res.empty)
-                self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+                self.assertEqual(res.columns.to_list(), ['ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount'])
                 self.assertEqual(res.index.name, 'trade_time')
-                self.assertTrue(all(item in codes for item in res.symbol))
+                self.assertTrue(all(item in codes for item in res.ts_code))
                 # some items may not have real time price at the moment
-                # self.assertTrue(all(item in res.symbol.to_list() for item in code))
+                # self.assertTrue(all(item in res.ts_code.to_list() for item in code))
             else:
                 print(f'not a trade day, no real time k-line data acquired!')
                 self.assertTrue(res.empty)

@@ -22,14 +22,20 @@ import pandas as pd
 from queue import Queue
 from rich.text import Text
 
-from qteasy.__init__ import __version__ as qteasy_version
-from qteasy.configure import ConfigDict, QT_CONFIG
-from qteasy.database import DataSource
-from qteasy.qt_operator import Operator
-from qteasy.broker import Broker
-from qteasy.core import check_and_prepare_live_trade_data
+from .__init__ import __version__ as qteasy_version
+from .configure import ConfigDict, QT_CONFIG
+from .database import DataSource
+from .datatypes import get_tables_by_dtypes
+from .qt_operator import Operator
+from .broker import Broker
+from .data_channels import fetch_real_time_klines
+from .core import (
+    check_and_prepare_live_trade_data,
+    get_history_data,
+    refill_data_source,
+)
 
-from qteasy.trade_recording import (
+from .trade_recording import (
     get_account,
     get_account_position_availabilities,
     get_account_position_details,
@@ -41,7 +47,7 @@ from qteasy.trade_recording import (
     update_position,
 )
 
-from qteasy.trading_util import (
+from .trading_util import (
     cancel_order,
     create_daily_task_schedule,
     get_position_by_id,
@@ -58,7 +64,7 @@ from qteasy.trading_util import (
     trade_log_file_path_name,
 )
 
-from qteasy.utilfuncs import (
+from .utilfuncs import (
     TIME_FREQ_LEVELS,
     adjust_string_length,
     parse_freq_string,
@@ -313,14 +319,16 @@ class Trader(object):
         # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
         if self.live_price is None:
             today = self.get_current_tz_datetime()
+            start_date = (today - pd.Timedelta(days=7)).strftime('%Y%m%d')
+            end_date = today.strftime('%Y%m%d')
             try:
-                current_prices = self._datasource.get_history_data(
+                current_prices = get_history_data(
                         shares=positions.index.tolist(),
                         htypes='close',
                         asset_type='E',
                         freq=self.operator.op_data_freq,
-                        start=today - pd.Timedelta(days=7),
-                        end=today,
+                        start=start_date,
+                        end=end_date,
                 )['close'].iloc[-1]
             except Exception as e:
                 self.send_message(f'Error in getting current prices: {e}', debug=True)
@@ -1025,9 +1033,13 @@ class Trader(object):
         同时更新self.watched_prices
         """
         if self.watch_list:
-            from qteasy.emfuncs import real_time_klines
             symbols = self.watch_list
-            live_prices = real_time_klines(symbols, freq='D', verbose=True, parallel=False)
+            live_prices = fetch_real_time_klines(
+                    channel=self.live_price_channel,
+                    qt_codes=symbols,
+                    freq='D',
+                    verbose=True,
+            )
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
@@ -1720,26 +1732,27 @@ class Trader(object):
         self.send_message(f'getting live price data for strategy run...', debug=True)
         # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
-        if (unit.lower() in ['min', '5min', '10min', '15min', '30min', 'h']) and self.is_trade_day:
+        if (unit.lower() in ['min', '5min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据
             table_to_update = UNIT_TO_TABLE[unit.lower()]
-            real_time_data = self._datasource.fetch_realtime_price_data(
-                    table=table_to_update,
-                    channel=config['live_price_acquire_channel'],
-                    symbols=self.asset_pool,
+            real_time_data = fetch_real_time_klines(
+                    freq=unit.lower(),
+                    channel=self.live_price_channel,
+                    qt_codes=self.asset_pool,
+                    verbose=False,
             )
-
             # 将real_time_data写入DataSource
-            # 在real_time_data中数据的trade_time列中增加日期并写入DataSource，但是只在交易日这么做，否则会出现日期错误
-            real_time_data['trade_time'] = real_time_data['trade_time'].apply(
-                    lambda x: pd.to_datetime(x)
-            )
+            self.send_message(message=f'got real time data from channel {self.live_price_freq}:\n'
+                                      f'{real_time_data}\n'
+                                      f'writing data to datasource: {self.datasource}...', debug=True)
             # 将实时数据写入数据库 (仅在交易日这么做)
             rows_written = self._datasource.update_table_data(
                     table=table_to_update,
                     df=real_time_data,
                     merge_type='update',
             )
+            self.send_message(message=f'{rows_written} rows real-time price data written to'
+                                      f'data source: {self.datasource}', debug=True)
 
         # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的历史数据
         else:
@@ -2069,8 +2082,9 @@ class Trader(object):
         else:
             err = ValueError(f'invalid freq: {freq}')
             raise err
-        self._datasource.refill_local_source(
+        refill_data_source(
                 tables=tables,
+                channel='tushare',
                 start_date=start_date,
                 end_date=end_date,
                 merge_type='update',
@@ -2311,15 +2325,19 @@ class Trader(object):
         self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}', debug=True)
 
     def _update_live_price(self) -> None:
-        """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
+        """获取实时数据，并将实时数据更新到self.live_price中并更新到datasource中，此函数可能出现Timeout或运行失败"""
         self.send_message(f'Acquiring live price data', debug=True)
-        from qteasy.emfuncs import real_time_klines
-        real_time_data = real_time_klines(symbols=self.asset_pool)
+        real_time_data = fetch_real_time_klines(
+                qt_codes=self.asset_pool,
+                channel=self.live_price_channel,
+                freq=self.operator.op_data_freq,
+                verbose=False,
+        )
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)
             return
-        real_time_data.set_index('symbol', inplace=True)
+        real_time_data.set_index('ts_code', inplace=True)
         # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data
         self.send_message(f'acquired live price data, live prices updated!', debug=True)
@@ -2494,11 +2512,13 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
     # find out datasource availabilities, refill data source if table data not available
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
-    related_tables = htype_to_table_col(
-            htypes=op_data_types,
-            freq=op_data_freq,
-            asset_type=config['asset_type'],
-
+    asset_types = config['asset_type']
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    related_tables = get_tables_by_dtypes(
+            dtypes=op_data_types,
+            freqs=[op_data_freq],
+            asset_types=asset_types,
     )
     related_tables = [table for table in related_tables]
     if len(related_tables) == 0:
@@ -2530,7 +2550,9 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
         start_date = last_available_date
         end_date = trader.get_current_tz_datetime()
 
-        datasource.refill_local_source(
+        refill_data_source(
+                data_source=datasource,
+                channel='tushare',
                 tables=related_tables,
                 dtypes=op_data_types,
                 freqs=op_data_freq,
@@ -2540,6 +2562,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
                 symbols=symbol_list,
                 parallel=True,
                 refresh_trade_calendar=False,
+                refill_dependent_tables=False,
         )
 
     return None

@@ -459,14 +459,14 @@ def stock_monthly(qt_code, start, end) -> pd.DataFrame:
     return res
 
 
-def real_time_klines(qt_code, date, freq='d'):
+def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.DataFrame:
     """ 获取股票date日最新K线数据，数据实时更新,不管K线频率如何，总是返回当天最后一根可用K线数据
 
     Parameters
     ----------
-    qt_code : str or list of str
-        股票代码
-    date: Datetime like
+    qt_code : str
+        一支股票的代码
+    date: Datetime like, optional, default: 'today'
         需要获取的实时K线的日期，获取当天开盘到收盘/当前时间的所有K线
     freq : str
         数据频率，支持分钟到日频数据，频率最低为日频，周频/月频不支持

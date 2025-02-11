@@ -1766,11 +1766,12 @@ def set_primary_key_frame(df: pd.DataFrame, primary_key: [str], pk_dtypes: [str]
         err = TypeError(f'primary key should be a list, got {type(primary_key)} instead')
         raise err
 
-    all_columns = df.columns
+    all_columns = df.columns.to_list()
+    all_columns.extend(df.index.names)
+    # 检查primary_key是否能在dataframe的所有column或者index中找到
     if not all(item in all_columns for item in primary_key):
-        if not all(key in df.index.names for key in primary_key):
-            msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
-            raise KeyError(msg)
+        msg = f'primary key contains invalid value: {[item for item in primary_key if item not in all_columns]}'
+        raise KeyError(msg)
 
     idx_columns = list(df.index.names)
     pk_columns = primary_key

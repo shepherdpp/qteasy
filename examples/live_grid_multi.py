@@ -15,58 +15,60 @@ import numpy as np
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../'))
-import qteasy as qt
-from qteasy import Operator
-
-
-class MultiGridTrade(qt.GeneralStg):
-    """网格交易策略, 同时监控多只股票并进行网格交易"""
-
-    def realize(self, h, r=None, t=None, pars=None):
-
-        # 此时传入的pars参数为dict对象，dict的key与监控的股票一一对应，value为参数，需分别处理
-        pars_dict = self.pars
-        if not isinstance(pars_dict, dict):
-            raise TypeError(f'self.pars should be a dict, got {type(self.pars)} instead.')
-        # 检查参数的个数必须与输入的历史数据价格的层数相同，因为每一层代表一只股票，股票数量必须与参数的数量相同
-        if len(pars_dict) != h.shape[0]:
-            raise ValueError(f'number of stocks ({h.shape[0]}) does not equal to number of parameters ({len(pars_dict)})')
-
-        trade_signals = np.zeros(shape=(len(pars_dict), ))  # 交易信号为一个数组，对应每种股票的交易信号
-        for i, symbol, pars in zip(range(len(pars_dict)), pars_dict.keys(), pars_dict.values()):
-            # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
-            grid_size, trade_batch, base_grid = pars
-            # 读取最新价格
-            price = h[i, -1, 0]  # 最近一个K线周期的close价格
-
-            # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
-            if base_grid <= 0.01:
-                # 基准网格尚未设置，此时为首次运行，首次买入价值200000元的股票并设置基准网格为当前价格（精确到0.1元）
-                trade_signals[i] = np.round(200000 / price, -2)  # 圆整到100股整数
-                base_grid = np.round(price / 0.1) * 0.1
-            elif price - base_grid > grid_size:
-                # 触及卖出网格线，产生卖出信号
-                trade_signals[i] = - trade_batch  # 交易信号等于交易数量，必须使用VS信号类型
-                # 重新计算基准网格
-                base_grid += grid_size
-            elif base_grid - price > grid_size:
-                # 触及买入网格线，产生买入信号
-                trade_signals[i] = trade_batch
-                # 重新计算基准网格
-                base_grid -= grid_size
-            else:
-                trade_signals[i] = 0.
-
-            # 使用新的基准网格更新交易参数
-            if not np.isnan(base_grid):
-                base_grid = np.round(base_grid, 2)
-            self.pars[symbol] = (grid_size, trade_batch, base_grid)
-
-        return trade_signals
 
 
 if __name__ == '__main__':
     from qteasy.utilfuncs import get_qt_argparser
+
+    import qteasy as qt
+    from qteasy import Operator
+
+
+    class MultiGridTrade(qt.GeneralStg):
+        """网格交易策略, 同时监控多只股票并进行网格交易"""
+
+        def realize(self, h, r=None, t=None, pars=None):
+
+            # 此时传入的pars参数为dict对象，dict的key与监控的股票一一对应，value为参数，需分别处理
+            pars_dict = self.pars
+            if not isinstance(pars_dict, dict):
+                raise TypeError(f'self.pars should be a dict, got {type(self.pars)} instead.')
+            # 检查参数的个数必须与输入的历史数据价格的层数相同，因为每一层代表一只股票，股票数量必须与参数的数量相同
+            if len(pars_dict) != h.shape[0]:
+                raise ValueError(
+                    f'number of stocks ({h.shape[0]}) does not equal to number of parameters ({len(pars_dict)})')
+
+            trade_signals = np.zeros(shape=(len(pars_dict),))  # 交易信号为一个数组，对应每种股票的交易信号
+            for i, symbol, pars in zip(range(len(pars_dict)), pars_dict.keys(), pars_dict.values()):
+                # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
+                grid_size, trade_batch, base_grid = pars
+                # 读取最新价格
+                price = h[i, -1, 0]  # 最近一个K线周期的close价格
+
+                # 计算当前价格与当前网格的偏离程度，判断是否产生交易信号
+                if base_grid <= 0.01:
+                    # 基准网格尚未设置，此时为首次运行，首次买入价值200000元的股票并设置基准网格为当前价格（精确到0.1元）
+                    trade_signals[i] = np.round(200000 / price, -2)  # 圆整到100股整数
+                    base_grid = np.round(price / 0.1) * 0.1
+                elif price - base_grid > grid_size:
+                    # 触及卖出网格线，产生卖出信号
+                    trade_signals[i] = - trade_batch  # 交易信号等于交易数量，必须使用VS信号类型
+                    # 重新计算基准网格
+                    base_grid += grid_size
+                elif base_grid - price > grid_size:
+                    # 触及买入网格线，产生买入信号
+                    trade_signals[i] = trade_batch
+                    # 重新计算基准网格
+                    base_grid -= grid_size
+                else:
+                    trade_signals[i] = 0.
+
+                # 使用新的基准网格更新交易参数
+                if not np.isnan(base_grid):
+                    base_grid = np.round(base_grid, 2)
+                self.pars[symbol] = (grid_size, trade_batch, base_grid)
+
+            return trade_signals
 
     parser = get_qt_argparser()
     args = parser.parse_args()
