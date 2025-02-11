@@ -317,7 +317,6 @@ class Trader(object):
         positions = self.account_positions
 
         # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
-        import pdb; pdb.set_trace()
         if self.live_price is None:
             today = self.get_current_tz_datetime()
             start_date = (today - pd.Timedelta(days=7)).strftime('%Y%m%d')
