@@ -1739,19 +1739,20 @@ class Trader(object):
                     freq=unit.lower(),
                     channel=self.live_price_channel,
                     qt_codes=self.asset_pool,
+                    verbose=False,
             )
-
             # 将real_time_data写入DataSource
-            # 在real_time_data中数据的trade_time列中增加日期并写入DataSource，但是只在交易日这么做，否则会出现日期错误
-            real_time_data['trade_time'] = real_time_data['trade_time'].apply(
-                    lambda x: pd.to_datetime(x)
-            )
+            self.send_message(message=f'got real time data from channel {self.live_price_freq}:\n'
+                                      f'{real_time_data}\n'
+                                      f'writing data to datasource: {self.datasource}...', debug=True)
             # 将实时数据写入数据库 (仅在交易日这么做)
             rows_written = self._datasource.update_table_data(
                     table=table_to_update,
                     df=real_time_data,
                     merge_type='update',
             )
+            self.send_message(message=f'{rows_written} rows real-time price data written to'
+                                      f'data source: {self.datasource}', debug=True)
 
         # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的历史数据
         else:
@@ -2324,10 +2325,14 @@ class Trader(object):
         self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}', debug=True)
 
     def _update_live_price(self) -> None:
-        """获取实时数据，并将实时数据更新到self.live_price中，此函数可能出现Timeout或运行失败"""
+        """获取实时数据，并将实时数据更新到self.live_price中并更新到datasource中，此函数可能出现Timeout或运行失败"""
         self.send_message(f'Acquiring live price data', debug=True)
-        from qteasy.emfuncs import real_time_klines
-        real_time_data = real_time_klines(qt_code=self.asset_pool, )
+        real_time_data = fetch_real_time_klines(
+                qt_codes=self.asset_pool,
+                channel=self.live_price_channel,
+                freq=self.live_price_freq,
+                verbose=False,
+        )
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)

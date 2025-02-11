@@ -1019,3 +1019,4 @@ class TraderApp(App):
 
         self.refresh_ui = False
         self.push_screen(QuitScreen(), confirm_exit)
+

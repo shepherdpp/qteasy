@@ -13,6 +13,8 @@ import unittest
 import qteasy as qt
 import numpy as np
 
+from qteasy import QT_CONFIG
+
 
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
     """ 根据mv_target和bp_target计算市值加权收益率
@@ -216,7 +218,15 @@ class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
     def setUp(self):
-        pass
+        from qteasy import DataSource, QT_CONFIG
+        self.test_ds = DataSource(
+                source_type='db',
+                host=QT_CONFIG['test_db_host'],
+                port=QT_CONFIG['test_db_port'],
+                user=QT_CONFIG['test_db_user'],
+                password=QT_CONFIG['test_db_password'],
+                db_name=QT_CONFIG['test_db_name']
+        )
 
     def test_multi_factors(self):
         """ test strategy MultiFactors"""
@@ -317,6 +327,18 @@ class FastExperiments(unittest.TestCase):
                                    asset_type='E, FD')
         print(f'adjusted data: \n{data}')
         self.assertTrue(True)
+
+    def test_fetch_and_save(self):
+        """ test fetch and save data"""
+        from qteasy.data_channels import fetch_real_time_klines
+        from qteasy.datatables import set_primary_key_frame, set_primary_key_index
+
+        data = fetch_real_time_klines(freq='15min', channel='eastmoney', qt_codes='000651.SZ')
+        print(data)
+        df = data.copy()
+        df = set_primary_key_frame(df, ['trade_time'], ['datetime'])
+        set_primary_key_index(df, ['trade_time'], ['datetime'])
+        self.test_ds.update_table_data('stock_5min', df=data, merge_type='update')
 
 
 if __name__ == '__main__':

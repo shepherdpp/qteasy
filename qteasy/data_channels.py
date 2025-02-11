@@ -574,30 +574,23 @@ def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
 
     if "trade_time" in raw_data.columns:
         if verbose:
-            data = raw_data.reindex(
-                    columns=['trade_time', 'symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-            )
+            raw_data.columns=['trade_time', 'ts_code', 'name', 'pre_close', 'open', 'close',
+                              'high', 'low', 'vol', 'amount']
         else:
-            data = raw_data.reindex(
-                    columns=['trade_time', 'symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
-            )
+            raw_data.columns=['trade_time', 'ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount']
         # set index
-        data.trade_time = pd.to_datetime(data.index)
-        data.set_index('trade_time', inplace=True)
+        raw_data.trade_time = pd.to_datetime(raw_data.index)
+        raw_data.set_index('trade_time', inplace=True)
     else:
         if verbose:
-            data = raw_data.reindex(
-                    columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-            )
+            raw_data.columns=['ts_code', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
         else:
-            data = raw_data.reindex(
-                    columns=['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount']
-            )
+            raw_data.columns=['ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount']
         # set index
-        data.index = pd.to_datetime(data.index)
-        data.index.name = 'trade_time'
+        raw_data.index = pd.to_datetime(raw_data.index)
+        raw_data.index.name = 'trade_time'
 
-    return data
+    return raw_data
 
 
 # ======================================
