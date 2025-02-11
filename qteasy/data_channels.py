@@ -29,7 +29,6 @@ from .utilfuncs import (
     list_to_str_format,
 )
 
-
 """
 这个模块提供一个统一数据下载api：
 data_channels.download_data(
@@ -312,7 +311,7 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         additional_args = _parse_additional_time_args(start_end_chunk_size, start_date, end_date)
         import itertools
         kwargs = ({arg_name: val, **add_arg} for val, add_arg in
-                              itertools.product(arg_values, additional_args))
+                  itertools.product(arg_values, additional_args))
     else:
         raise ValueError('unexpected additional_start_end:', additional_start_end)
 
@@ -488,14 +487,14 @@ def fetch_real_time_klines(
                 else:
                     if df.empty:
                         continue
-                    df['symbol'] = symbol
+                    df['ts_code'] = symbol
                     data.append(df.iloc[-1:, :])
     else:  # parallel == False, 不使用多进程
         for symbol in qt_codes:
             df = fetch_realtime_kline(qt_code=symbol, date=today, freq=freq)
             if df.empty:
                 continue
-            df['symbol'] = symbol
+            df['ts_code'] = symbol
             data.append(df.iloc[-1:, :])
     try:
         data = pd.concat(data)
@@ -572,25 +571,26 @@ def scrub_realtime_quote_data(raw_data, verbose) -> pd.DataFrame:
 def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
     """ 清洗数据，去除不一致及错误的数据，并使数据符合实时K线图的数据格式"""
 
-    if "trade_time" in raw_data.columns:
-        if verbose:
-            raw_data.columns=['trade_time', 'ts_code', 'name', 'pre_close', 'open', 'close',
-                              'high', 'low', 'vol', 'amount']
-        else:
-            raw_data.columns=['trade_time', 'ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        # set index
-        raw_data.trade_time = pd.to_datetime(raw_data.index)
-        raw_data.set_index('trade_time', inplace=True)
-    else:
-        if verbose:
-            raw_data.columns=['ts_code', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        else:
-            raw_data.columns=['ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount']
-        # set index
-        raw_data.index = pd.to_datetime(raw_data.index)
-        raw_data.index.name = 'trade_time'
+    if "trade_time" not in raw_data.columns:
+        # trade_time 在 index 中，将它移到frame中
+        assert raw_data.index.name == 'trade_time', AssertionError('trade_time should be in index')
+        raw_data['trade_time'] = raw_data.index
+    # 重新整理数据列名称
+    if verbose:
+        target_columns = ['trade_time', 'ts_code', 'name', 'pre_close', 'open', 'close',
+                          'high', 'low', 'vol', 'amount']
 
-    return raw_data
+    else:
+
+        target_columns = ['trade_time', 'ts_code', 'open', 'close', 'high', 'low', 'vol', 'amount']
+
+    data = raw_data.reindex(
+            columns=target_columns
+    )
+    # set index
+    data.set_index('trade_time', inplace=True)
+
+    return data
 
 
 # ======================================
@@ -644,7 +644,7 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = No
             # reverse the lower and upper index if lower is larger than upper
             list_idx_lower, list_idx_upper = list_idx_upper, list_idx_lower
         # 确认上下限的位置
-        return (item for item in arg_range[list_idx_lower:list_idx_upper+1])
+        return (item for item in arg_range[list_idx_lower:list_idx_upper + 1])
 
     return (item for item in arg_range if item in list_arg_filter)
 
@@ -851,7 +851,7 @@ def _convert_date_to_absolute_quarter(date) -> int:
     return year * 4 + quarter
 
 
-def _convert_quarter_str_to_absolute_quarter(quarter:str) -> int:
+def _convert_quarter_str_to_absolute_quarter(quarter: str) -> int:
     """ converte quarter str like 2020Q1 to absolute quarter number like 2020*4+1"""
     year, quarter = quarter.split('Q')
     return int(year) * 4 + int(quarter)
@@ -863,7 +863,7 @@ def _convert_date_to_absolute_month(date) -> int:
     return year * 12 + month
 
 
-def _convert_month_str_to_absolute_month(date:str) -> int:
+def _convert_month_str_to_absolute_month(date: str) -> int:
     """ convert month str like 202003 to absolute month like 2020*12+3"""
     year, month = date[:4], date[4:]
     return int(year) * 12 + int(month)
@@ -1152,7 +1152,7 @@ TUSHARE_API_MAP = {
     #     ['us_tradecal', 'none', 'none', 'none', '', 'C', '6000'],
 
     'stock_basic':
-        ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '',],
+        ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', '', ],
 
     # 'hk_stock_basic':  # tsfuncs
     #     ['hk_stock_basic', 'none', 'none', 'none', '', '', ''],

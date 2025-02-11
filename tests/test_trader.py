@@ -1154,6 +1154,17 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')
 
+    def test_get_update_live_prices(self):
+        """ test update live prices"""
+        self.ts._update_live_price()
+        print(f'updated live price, as following: {self.ts.live_price}')
+        df = self.ts.live_price
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        symbols_acquired = df.index.tolist()
+        symbols_expected = ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ']
+        self.assertTrue(all(item in symbols_expected for item in symbols_acquired))
+
     def test_strategy_run_and_process_result(self):
         """Test strategy run and process result"""
         ts = self.ts

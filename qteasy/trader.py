@@ -317,6 +317,7 @@ class Trader(object):
         positions = self.account_positions
 
         # 获取每个symbol的最新价格，在交易日从self.live_price中获取，非交易日从datasource中获取，或者使用全nan填充，
+        import pdb; pdb.set_trace()
         if self.live_price is None:
             today = self.get_current_tz_datetime()
             start_date = (today - pd.Timedelta(days=7)).strftime('%Y%m%d')
@@ -2330,14 +2331,14 @@ class Trader(object):
         real_time_data = fetch_real_time_klines(
                 qt_codes=self.asset_pool,
                 channel=self.live_price_channel,
-                freq=self.live_price_freq,
+                freq=self.operator.op_data_freq,
                 verbose=False,
         )
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)
             return
-        real_time_data.set_index('symbol', inplace=True)
+        real_time_data.set_index('ts_code', inplace=True)
         # 将real_time_data 赋值给self.live_price
         self.live_price = real_time_data
         self.send_message(f'acquired live price data, live prices updated!', debug=True)
