@@ -10,7 +10,7 @@ sphinxcontrib-napoleon==0.7
 sphinx_markdown_checkbox==0.1.0
 pycmarkgfm==1.2.1
 tushare==1.2.89
-pymysql==1.0.0
+pymysql==1.1.1
 dbutils==3.1.0
 numba==0.56.4
 numpy==1.21.5
