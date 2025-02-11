@@ -2562,6 +2562,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
                 symbols=symbol_list,
                 parallel=True,
                 refresh_trade_calendar=False,
+                refill_dependent_tables=False,
         )
 
     return None
