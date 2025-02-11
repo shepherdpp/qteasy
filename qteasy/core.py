@@ -659,7 +659,7 @@ def get_data_overview(data_source=None, tables=None, include_sys_tables=False) -
 
 
 def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, freqs=None, asset_types=None,
-                       refresh_trade_calendar=False,
+                       refresh_trade_calendar=False, refill_dependent_tables=True,
                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
                        download_batch_interval=0, merge_type='update', log=False) -> None:
@@ -689,6 +689,8 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型
     refresh_trade_calendar: Bool, Default False
         是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据
+    refill_dependent_tables: Bool, Default True
+        是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功
     start_date: str YYYYMMDD
         限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
     end_date: str YYYYMMDD
@@ -791,33 +793,43 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
     table_list = get_tables_by_name_or_usage(
             tables=tables,
     )
-
+    # 根据数据类型查找相应的数据表名称
     if dtypes or freqs or asset_types:
         table_list.update(get_tables_by_dtypes(
                 dtypes=dtypes,
                 freqs=freqs,
                 asset_types=asset_types,
         ))
-
+    # 下载部分数据表需要依赖其他表（通常是基础数据）的数据，这些依赖表的数据也需要下载，否则可能无法正确生成参数
     dependent_tables = set()
-    for table in table_list:
-        dependent_table = get_dependent_table(table, channel=channel)
-        if dependent_table is None:
-            continue
-        dependent_tables.add(dependent_table)
-    table_list.update(dependent_tables)
+    if refill_dependent_tables:
+        for table in table_list:
+            dependent_table = get_dependent_table(table, channel=channel)
+            if dependent_table is None:
+                continue
+            dependent_tables.add(dependent_table)
+        table_list.update(dependent_tables)
 
-    if refresh_trade_calendar:
-        table_list.add('trade_calendar')
-    else:
+    # 如果trade_calendar数据不足时，需要强制添加该表
+    if not refresh_trade_calendar:
         # 检查trade_calendar中是否已有数据，且最新日期是否足以覆盖今天，如果没有数据或数据不足，也需要添加该表
         latest_calendar_date = data_source.get_table_info('trade_calendar', print_info=False)['pk_max1']
         try:
             latest_calendar_date = pd.to_datetime(latest_calendar_date)
             if pd.to_datetime('today') >= latest_calendar_date:
-                table_list.add('trade_calendar')
+                refresh_trade_calendar = True
         except:
-            table_list.add('trade_calendar')
+            refresh_trade_calendar = True
+
+    # 这里需要确保依赖表位于下载清单的前面，否则当依赖表不存在时，会导致下载失败
+    download_table_list = []
+    import pdb; pdb.set_trace()
+    if refresh_trade_calendar and ('trade_calendar' not in table_list):
+        # 因为trade_calendar也有可能通过依赖表添加
+        download_table_list.append('trade_calendar')
+    if dependent_tables:
+        download_table_list.extend([item for item in table_list if item in dependent_tables])
+    download_table_list.extend([item for item in table_list if item not in dependent_tables])
 
     if parallel:
         print(f'into {len(table_list)} tables (parallely): {table_list}')
