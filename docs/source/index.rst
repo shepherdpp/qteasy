@@ -104,9 +104,9 @@ What Can You Do with ``QTEASY`` ?
     :maxdepth: 1
     :glob:
 
-    references/1-history_data_overview.md
-    references/2-gethistory_data.md
-    references/2-historical_data_types.md
+    manage_data/overview.md
+    manage_data/refill_datasource.md
+    manage_data/use_local_data.md
 
 
 .. toctree::
