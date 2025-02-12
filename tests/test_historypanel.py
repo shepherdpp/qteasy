@@ -1023,7 +1023,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.all(np.isnan(first_3_rows)))
         self.assertTrue(np.all(np.isnan(row_9_til_10)))
 
-        print('test getting history panel with row_counts')
+        print('test getting history panel with row_counts and only end')
 
         data_types = infer_data_types(
                 names='open, high, close|b, pe',
@@ -1033,7 +1033,7 @@ class TestHistoryPanel(unittest.TestCase):
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000002.SZ, 000001.SZ, 000300.SH',
-                                          start='20210101', end='20210115', freq='h',
+                                          end='20210115', freq='h',
                                           rows=20, )
         print(hp)
         expected_htypes = ['open', 'high', 'close|b', 'pe']
@@ -1045,6 +1045,52 @@ class TestHistoryPanel(unittest.TestCase):
         all_idx_data = hp[:, '000300.SH']
         self.assertTrue(np.all(np.isnan(all_idx_data)))
         self.assertEqual(len(hp), 20)
+
+        print('test getting history panel with row_counts and only start')
+
+        data_types = infer_data_types(
+                names='open, high, close|b, pe',
+                freqs='h',
+                asset_types='E',
+                force_match_freq=True,
+        )
+        hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
+                                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210115', freq='h',
+                                          rows=20, )
+        print(hp)
+        expected_htypes = ['open', 'high', 'close|b', 'pe']
+        expected_shares = ['000002.SZ', '000001.SZ', '000300.SH']
+        self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        self.assertTrue(all(i in expected_shares for i in hp.shares))
+        self.assertTrue(all(i in hp.shares for i in expected_shares))
+        all_idx_data = hp[:, '000300.SH']
+        self.assertTrue(np.all(np.isnan(all_idx_data)))
+        self.assertEqual(len(hp), 20)
+
+        print('test getting history panel with row_counts and no start nor end')
+
+        # data_types = infer_data_types(
+        #         names='open, high, close|b, pe',
+        #         freqs='h',
+        #         asset_types='E',
+        #         force_match_freq=True,
+        # )
+        # import pdb; pdb.set_trace()
+        # hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
+        #                                   shares='000002.SZ, 000001.SZ, 000300.SH',
+        #                                   freq='h', rows=20, )
+        # print(hp)
+        # expected_htypes = ['open', 'high', 'close|b', 'pe']
+        # expected_shares = ['000002.SZ', '000001.SZ', '000300.SH']
+        # self.assertTrue(all(i in expected_htypes for i in hp.htypes))
+        # self.assertTrue(all(i in hp.htypes for i in expected_htypes))
+        # self.assertTrue(all(i in expected_shares for i in hp.shares))
+        # self.assertTrue(all(i in hp.shares for i in expected_shares))
+        # all_idx_data = hp[:, '000300.SH']
+        # self.assertTrue(np.all(np.isnan(all_idx_data)))
+        # self.assertEqual(len(hp), 20)
 
         print('test get history panel data')
         data_types = infer_data_types(

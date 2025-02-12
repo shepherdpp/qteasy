@@ -1758,6 +1758,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
             shares=config['asset_pool'],
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
+            end='today',
             data_source=datasource,
     )
 
@@ -1777,6 +1778,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
             shares=None,
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
+            end='today',
             data_source=datasource,
     )
     if any(
