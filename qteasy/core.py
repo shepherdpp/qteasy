@@ -884,8 +884,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                     total_written += rows_affected
 
                 time_elapsed = time.time() - st
+                time_remain = abs((total - completed) * time_elapsed / completed)
                 time_remain = sec_to_duration(
-                        (total - completed) * time_elapsed / completed,
+                        time_remain,
                         estimation=True,
                         short_form=False
                 )
@@ -902,11 +903,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
 
         if df_concat_list:
             # 将下载的数据写入数据源
-            # print(f'final: concaternating df_concat_list: {len(df_concat_list)} items in it!')
             rows_affected = data_source.update_table_data(
                     table=table,
                     df=pd.concat(df_concat_list, copy=False, ignore_index=True),
-                    # df=pd.concat(df_concat_list, copy=False),
                     merge_type=merge_type,
             )
             total_written += rows_affected
