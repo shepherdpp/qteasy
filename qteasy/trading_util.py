@@ -1438,7 +1438,7 @@ def _trade_time_index(start=None,
                 end=end,
                 periods=periods,
                 freq=freq,
-                closed=closed,
+                closed=closed,  # closed parameter is deprecated since version 1.4.0
         )
     else:
         # noinspection PyTypeChecker
@@ -1447,7 +1447,6 @@ def _trade_time_index(start=None,
                 end=end,
                 periods=periods,
                 freq=freq,
-                # closed=closed,  # closed parameter is deprecated since version 1.4.0
                 inclusive=closed,  # inclusive is added inplace of closed since 1.4.0
         )
 
@@ -1466,9 +1465,6 @@ def _trade_time_index(start=None,
             date = pd.to_datetime(time_index[0].date())
             trade_cal.iloc[0] = calendar.loc[date]
 
-        # Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or
-        # obj.bfill() instead.
-        # trade_cal = trade_cal.fillna(method='ffill')
         trade_cal = trade_cal.ffill()
         time_index = trade_cal.loc[trade_cal == 1].index
 
@@ -1495,22 +1491,42 @@ def _trade_time_index(start=None,
         year:       A-DEC/...
         由于周、季、年三种情况存在复合字符串，因此需要split
     '''
+
     if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:] in ['min']):
+        # 在这里还有一处细节需要处理：当freq=‘h'的时候，生成的时间是整点如：
+        # 09:00:00 / 10:00:00 / 11:00:00
+        # 然而，如果start_am或者start_pm不是整点而是半点时，如start_am=09:30:00，
+        # 那么实际上应该生成的时间点均需要延后半小时，变成：
+        # 09:30:00 / 10:30:00 / 11:30:00
+        # 因此，需要根据start_am和start_pm的时间，将上午/下午的time_index分别延后一定
+        # 时间再处理
+        time_index_am = time_index.copy()
+        time_index_pm = time_index.copy()
+        start_am_min = pd.to_datetime(start_am).minute
+        start_pm_min = pd.to_datetime(start_pm).minute
+        if (freq_str[-1:].lower() in ['h']) and (start_am_min > 0):
+            time_index_am = time_index_am + pd.Timedelta(minutes=start_am_min)
+        if (freq_str[-1:].lower() in ['h']) and (start_pm_min > 0):
+            time_index_pm = time_index_pm + pd.Timedelta(minutes=start_pm_min)
+
         # freq_str for min in pandas 2.0 is 'T', in pandas 2.2 is 'MIN'
-        idx_am = time_index.indexer_between_time(
+        idx_am = time_index_am.indexer_between_time(
                 start_time=start_am,
                 end_time=end_am,
                 include_start=include_start_am,
                 include_end=include_end_am,
         )
-        idx_pm = time_index.indexer_between_time(
+        idx_pm = time_index_pm.indexer_between_time(
                 start_time=start_pm,
                 end_time=end_pm,
                 include_start=include_start_pm,
                 include_end=include_end_pm,
         )
-        idxer = np.union1d(idx_am, idx_pm)
-        return time_index[idxer]
+        time_index_am_pm = np.union1d(
+                time_index_am[idx_am],
+                time_index_pm[idx_pm],
+        )
+        return pd.to_datetime(time_index_am_pm)
     else:
         return time_index
 

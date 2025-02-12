@@ -2440,11 +2440,6 @@ def get_history_panel(
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    symbols: [str, list] 等同于shares
-        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-        如以下两种输入方式皆合法且等效：
-        - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-        - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
     freq: str
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
@@ -2458,8 +2453,6 @@ def get_history_panel(
         如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
     drop_nan: bool
         是否保留全NaN的行
-    as_data_frame: bool, default True
-        是否以DataFrame形式输出数据，如果设置为False，输出数据为HistoryPanel对象
     resample_method: str
         如果数据需要升频或降频时，调整频率的方法
         调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
@@ -2559,7 +2552,6 @@ def get_history_panel(
         if isinstance(df, pd.Series):
             df = pd.DataFrame(df)
             df.columns = ['none']
-            all_dfs[htyp] = df
         # find freq of the htyp:
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (htype_freq.freq != freq):
@@ -2573,9 +2565,14 @@ def get_history_panel(
                     trade_time_only=trade_time_only,
                     **kwargs
             )
-            all_dfs[htyp] = new_df
+            df = new_df
+        if rows is not None:
+            assert isinstance(rows, int)
+            assert rows > 0
+            df = df.tail(rows)
         if drop_nan:
-            all_dfs[htyp] = df.dropna(how='all')
+            df = df.dropna(how='all')
+        all_dfs[htyp] = df
 
     result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=all_dfs.keys(), shares=shares)
 

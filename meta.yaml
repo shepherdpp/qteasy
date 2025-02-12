@@ -1,9 +1,9 @@
 package:
   name: "qteasy"
-  version: "1.4.3"
+  version: "1.4.4"
 
 source:
-  git_rev: v1.4.3
+  git_rev: v1.4.4
   git_url: https://github.com/shepherdpp/qteasy
 
 requirements:
@@ -18,7 +18,7 @@ requirements:
     - numpy>=1.18.1
     - numba>=0.47.0
     - tushare>=1.2.89
-    - pymysql>=1.0.0
+    - pymysql>=1.1.1
     - dbutils>=3.0.0
     - mplfinance
     - rich>=10.0.0

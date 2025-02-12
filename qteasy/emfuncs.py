@@ -14,6 +14,7 @@
 import time
 import datetime
 import pandas as pd
+import numpy as np
 import requests
 from urllib.parse import urlencode
 
@@ -207,6 +208,7 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     """
 
     EastmoneyKlines = {
+        # 'f50': 'unknown',
         'f51': 'trade_time',
         'f52': 'open',
         'f53': 'close',
@@ -214,6 +216,10 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
         'f55': 'low',
         'f56': 'vol',
         'f57': 'amount',
+        'f58': 'range',
+        'f59': 'pct_chg',
+        'f60': 'change',
+        'f61': 'turnover',
     }
     EastmoneyHeaders = {
 
@@ -255,9 +261,11 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     df = pd.DataFrame(rows, columns=columns)
     if verbose:
         df['name'] = data['name']
-        df['pre_close'] = data['prePrice']
-    for col in ['open', 'high', 'low', 'close', 'vol', 'amount']:
+        df['pre_close'] = np.NaN
+    for col in ['open', 'high', 'low', 'close', 'vol', 'amount', 'change', 'pct_chg', 'range', 'turnover']:
         df[col] = df[col].apply(format_str_to_float)  # 将数据转化为float格式
+    if klt >= 101:
+        df['pre_close'] = df.close - df.change  # k线的昨收价是收盘价减去涨跌额，但仅限于日频或更低的K线
     # vol的单位为“手”，amount的单位为“元”
     return df
 
@@ -366,10 +374,9 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     klt = east_money_freq_map.get(freq, 101)
     df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
     df['ts_code'] = qt_code
+    # 重新计算pct_chg，因为原始数据的精度不够四位小数
     if not df.empty:
-        df['change'] = df['close'] - df['pre_close']
-        df['pct_chg'] = df['change'] / df['pre_close'] * 100
-
+        df['pct_chg'] = np.round((df['close'] - df['pre_close']) / df['pre_close'] * 100, 4)
     df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
                              'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 
@@ -382,7 +389,7 @@ def stock_daily(qt_code, start, end):
     res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='d')
     res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
                     'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+    res['amount'] = np.round(res['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
 
     return res
 
@@ -443,7 +450,7 @@ def stock_weekly(qt_code, start, end) -> pd.DataFrame:
     res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='w')
     res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
                     'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+    res['amount'] = np.round(res['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
 
     return res
 
@@ -454,7 +461,7 @@ def stock_monthly(qt_code, start, end) -> pd.DataFrame:
     res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='m')
     res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
                     'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-    res['amount'] = res['amount'] / 1000  # 东方财富的amount单位是元，转换为千元
+    res['amount'] = np.round(res['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
 
     return res
 

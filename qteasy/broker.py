@@ -592,8 +592,9 @@ class SimulatorBroker(Broker):
 
             # 获取当前实时价格
             retry = 10  # 重试次数为10次（秒）
-            from .emfuncs import real_time_klines
-            live_prices = real_time_klines(symbol, freq='D', verbose=True, parallel=False)
+            from .data_channels import fetch_real_time_klines
+            live_prices = fetch_real_time_klines(qt_codes=symbol, channel='eastmoney',
+                                                 freq='D', verbose=True, parallel=True)
             if not live_prices.empty:
                 live_prices['close'] = live_prices['close'].astype('float')
                 change = (live_prices['close'] / live_prices['pre_close'] - 1).iloc[-1]

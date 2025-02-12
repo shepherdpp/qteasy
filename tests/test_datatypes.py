@@ -12,8 +12,6 @@
 import unittest
 
 import pandas as pd
-from numpy.ma.testutils import assert_equal
-from typing_extensions import assert_type
 
 from qteasy.database import DataSource
 from qteasy.utilfuncs import (
@@ -1898,6 +1896,25 @@ class TestDataTypes(unittest.TestCase):
 
         print(f'got history panel:\n{dfs}')
 
+        print(f'getting data with only row_count parameter without starts or ends')
+        htype_ids = [htype.id for htype in h_types]
+
+        dfs = get_history_data_from_source(
+                self.ds,
+                qt_codes=shares,
+                htypes=h_types,
+                start='20210203',
+                row_count=20,
+                freq=freq,
+                combine_htype_names=True,
+        )
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel: \n{dfs}')
+        for df in dfs:
+            self.assertLessEqual(len(df), 20)
+
     def test_get_reference_data(self):
         """ test function get_reference_data()"""
         # test getting simple daily reference data
@@ -1990,6 +2007,23 @@ class TestDataTypes(unittest.TestCase):
         self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
 
         print(f'got history panel:\n{ser}')
+
+        print(f'{"=" * 80}\ngetting data with only row_count parameter without starts and ends')
+        htype_names = [htype.name for htype in h_types]
+
+        dfs = get_reference_data_from_source(
+                self.ds,
+                htypes=h_types,
+                end=end,
+                row_count=20,
+                freq=freq,
+        )
+        print(f'got reference data: \n{dfs}')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertTrue(all(isinstance(item, pd.Series) for item in dfs.values() if not item.empty))
+        for df in dfs:
+            self.assertLessEqual(len(df), 20)
 
     def test_infer_data_types(self):
         """ test function infer_data_types"""

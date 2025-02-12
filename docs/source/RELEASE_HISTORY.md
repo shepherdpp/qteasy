@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.4.4 (2025-02-12)
+- Fixed bugs: 
+  - Simulator broker and Trader module in live trade mode might fail to fetch real time price data in some cases
+  - Sometimes the historical data extracted from datasource are not re-indexed to exactly matching the stock market open time.
+  - Corrected the data formats and errors donwloaded from channel 'eastmoney', improved error handling and stability
+
 ## 1.4.3 (2025-02-11)
 - Fixed a bug: Trader might fail to acqurie live prices from correct channel and may fail to save the prices to datasource due to channel updates
 - Improved `refill_data_source()`: added an optional parameter: `refill_dependent_tabes: bool = True`, to give user control if dependent tables are downloaded

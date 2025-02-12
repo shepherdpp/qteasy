@@ -12,6 +12,7 @@
 import unittest
 
 import pandas as pd
+import numpy as np
 
 from qteasy.emfuncs import (
     stock_daily,
@@ -34,10 +35,12 @@ class TestEastmoney(unittest.TestCase):
         """ Test _get_k_history function """
         code = '000651'
         date = (pd.to_datetime('today') - pd.Timedelta(days=3)).strftime('%Y%m%d')  # 最多只能获取过去10个交易日的5分钟K线
-        res = _stock_bars(qt_code=code, start=date, freq='5min')
+        end = pd.to_datetime('today').strftime('%Y%m%d')
+        res = _stock_bars(qt_code=code, start=date, end=end, freq='5min')
         print(res)
+
         self.assertIsInstance(res, pd.DataFrame)
-        if is_market_trade_day(date):
+        if is_market_trade_day(end):
             self.assertFalse(res.empty)
         else:
             self.assertTrue(res.empty)
@@ -46,6 +49,8 @@ class TestEastmoney(unittest.TestCase):
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
         self.assertFalse(res.empty)
+        self.assertTrue(np.all(res.close == res.pre_close + res.change))
+        self.assertTrue(np.all(np.abs(res.pct_chg - (res.change / res.pre_close) * 100) < 0.01))
         code = '000651.SZ'
         res = stock_weekly(qt_code=code, start='20231102', end='20240301')
         print(res)

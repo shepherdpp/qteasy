@@ -446,7 +446,7 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
 
     assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
     t = float(t)
-    assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
+    assert t >= 0, f'ValueError, t should be greater than 0, got minus number ({t})'
 
     milliseconds = t * 1000
 
