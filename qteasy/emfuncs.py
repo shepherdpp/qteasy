@@ -375,7 +375,8 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
     df['ts_code'] = qt_code
     # 重新计算pct_chg，因为原始数据的精度不够四位小数
-    df['pct_chg'] = np.round((df['close'] - df['pre_close']) / df['pre_close'] * 100, 4)
+    if not df.empty:
+        df['pct_chg'] = np.round((df['close'] - df['pre_close']) / df['pre_close'] * 100, 4)
     df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
                              'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 

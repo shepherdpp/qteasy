@@ -896,6 +896,8 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                              )
         except Exception as e:
             print(f'Error occurred when downloading data for table {table}: {e}')
+            # import traceback
+            # traceback.print_exc()
             continue
 
         if df_concat_list:
