@@ -261,7 +261,6 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     df = pd.DataFrame(rows, columns=columns)
     if verbose:
         df['name'] = data['name']
-        # df['pre_close'] = data['prePrice']  # prePrice指的是当天的昨收价，因此不能用于填充K线昨收
         df['pre_close'] = np.NaN
     for col in ['open', 'high', 'low', 'close', 'vol', 'amount', 'change', 'pct_chg', 'range', 'turnover']:
         df[col] = df[col].apply(format_str_to_float)  # 将数据转化为float格式
@@ -375,7 +374,8 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     klt = east_money_freq_map.get(freq, 101)
     df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
     df['ts_code'] = qt_code
-
+    # 重新计算pct_chg，因为原始数据的精度不够四位小数
+    df['pct_chg'] = np.round((df['close'] - df['pre_close']) / df['pre_close'] * 100, 4)
     df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
                              'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 
