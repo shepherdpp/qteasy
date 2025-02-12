@@ -15,6 +15,7 @@
 import pandas as pd
 from functools import lru_cache
 from warnings import warn
+from math import ceil
 
 from .utilfuncs import (
     AVAILABLE_ASSET_TYPES,
@@ -97,9 +98,9 @@ def infer_data_types(names, freqs, asset_types, adj=None,
     adj: str, optinal, deprecated
         价格调整因子，如果给出，强制性调整价格类型
     force_match_freq: bool, optional, default False
-        是否强制匹配freq
+        是否强制匹配freq，如果为True，则为某些无法找到匹配freq的数据类型强制匹配一个合法的freq
     force_match_asset_type: bool, optional, default False
-        是否强制匹配资产类型
+        是否强制匹配资产类型，如果为True，则为某些无法找到匹配的资产类型的数据类型强制匹配一个合法的资产类型
 
     Return
     ------
@@ -3986,7 +3987,7 @@ def get_history_data_from_source(
         end: str = None,
         freq: str = None,
         combine_htype_names: bool = False,
-        row_count: int = 100,
+        row_count: int = None,
 ) -> {str: pd.DataFrame}:
     """ 根据给出的历史数据类型对象，获取相应的数据并组装成一个标准的DataFrame-Dict并返回
     如果给出qt_codes/start/end参数，则返回符合要求的数据范围，或者返回最近的row_count行数据
@@ -4029,6 +4030,7 @@ def get_history_data_from_source(
 
     row_count: int, optional, default 100
         获取的历史数据的行数，如果指定了start和end，则忽略此参数
+        否则返回最近的row_count行数据
 
     Returns
     -------
@@ -4039,6 +4041,34 @@ def get_history_data_from_source(
 
     history_data_acquired = {}
     history_data_to_be_re_freqed = {}
+    row_count_adj_factors = {
+        '1min':  240,
+        '5min':  48,
+        '15min': 16,
+        '30min': 8,
+        'h':     4,
+        'w':     0.14,
+        'm':     0.03,
+    }
+
+    if (start is not None) and (end is not None):
+        row_count = None
+
+    if row_count is not None:
+        adjusted_row_count = ceil(row_count / row_count_adj_factors.get(freq, 1)) + 1
+    else:
+        adjusted_row_count = None
+
+    if all(param is None for param in (start, end, row_count)):
+        raise ValueError(f'parameter "start", "end", "row_count" can not be all None, '
+                         f'you should provide at least two of them')
+
+    if start is None:
+        # end should be given in this case
+        start = pd.to_datetime(end) - pd.Timedelta(days=adjusted_row_count)
+    if end is None:
+        # start and row_count should be given in this case
+        end = pd.to_datetime(start) + pd.Timedelta(days=adjusted_row_count)
 
     if not htypes:
         raise ValueError(f'at least one DataType should be given, 0 is given!')
@@ -4081,13 +4111,10 @@ def get_history_data_from_source(
     qt_codes = str_to_list(qt_codes)
 
     for htyp, df in history_data_acquired.items():
-        # if history_data_to_be_re_freqed[htyp]:
-        #     df = _adjust_freq(
-        #             hist_data=df,
-        #             target_freq=freq,
-        #             method='ffill',
-        #     )
-        history_data_acquired[htyp] = df.reindex(columns=qt_codes)
+        df = df.reindex(columns=qt_codes)
+        if row_count:
+            df = df.tail(row_count)
+        history_data_acquired[htyp] = df
 
     return history_data_acquired
 
@@ -4127,6 +4154,35 @@ def get_reference_data_from_source(
     -------
     Dict of Series: {rtype: Series[qt_code]}
     """
+
+    row_count_adj_factors = {
+        '1min':  240,
+        '5min':  48,
+        '15min': 16,
+        '30min': 8,
+        'h':     4,
+        'w':     0.14,
+        'm':     0.03,
+    }
+
+    if (start is not None) and (end is not None):
+        row_count = None
+
+    if row_count is not None:
+        adjusted_row_count = ceil(row_count / row_count_adj_factors.get(freq, 1)) + 1
+    else:
+        adjusted_row_count = None
+
+    if all(param is None for param in (start, end, row_count)):
+        raise ValueError(f'parameter "start", "end", "row_count" can not be all None, '
+                         f'you should provide at least two of them')
+
+    if start is None:
+        # end should be given in this case
+        start = pd.to_datetime(end) - pd.Timedelta(days=adjusted_row_count)
+    if end is None:
+        # start and row_count should be given in this case
+        end = pd.to_datetime(start) + pd.Timedelta(days=adjusted_row_count)
 
     if not htypes:
         err = ValueError(f'data types should not be empty!')
@@ -4182,13 +4238,6 @@ def get_reference_data_from_source(
             # import pdb
             # pdb.set_trace()
             pass
-        # if reference_data_to_be_refreqed[htyp]:
-        #     ser = _adjust_freq(
-        #             hist_data=ser,
-        #             target_freq=freq,
-        #             method='ffill',
-        #     )
-        #     reference_data_acquired[htyp] = ser
 
     return reference_data_acquired
 

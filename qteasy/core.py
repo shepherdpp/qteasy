@@ -1743,24 +1743,40 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     if run_mode != 0:
         raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=operator.all_price_and_data_types,
+            freqs=operator.op_data_freq,
+            asset_types=config['asset_type'],
+            adj='none',
+            force_match_freq=True,
+    )
     hist_op = get_history_panel(
-            htypes=operator.all_price_and_data_types,
+            data_types=data_types,
             shares=config['asset_pool'],
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
-            asset_type=config['asset_type'],
-            adj='none',
             data_source=datasource,
-    )  # TODO: this function get_history_panel() is extremely slow, need to be optimized
+    )
 
     # 解析参考数据类型，获取参考数据
+    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+    #  而取消实时创建DataType对象
+    data_types = infer_data_types(
+            names=operator.op_ref_types,
+            freqs=operator.op_data_freq,
+            asset_types=config['asset_type'],
+            adj='none',
+            force_match_freq=True,
+    )
     hist_ref = get_history_panel(
-            htypes=operator.op_ref_types,
+            data_types=data_types,
             shares=None,
             rows=operator.max_window_length,
             freq=operator.op_data_freq,
-            asset_type=config['asset_type'],
-            adj='none',
             data_source=datasource,
     )
     if any(
@@ -1786,7 +1802,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
         if not hist_ref.is_empty:
             extended_ref_values[:, 0, :] = hist_ref.values[:, -1, :]
 
-        # 如果没有给出live_prices，则使用eastmoney的stock_live_kline_price获取当前周期的最新数据
+        # 如果没有给出live_prices，则获取当前周期的最新数据
         if live_prices is None:
             from qteasy.data_channels import fetch_real_time_klines
             live_kline_prices = fetch_real_time_klines(
@@ -1794,7 +1810,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
                     qt_codes=hist_op.shares,
                     freq=operator.op_data_freq,
             )
-            live_kline_prices.set_index('symbol', inplace=True)
+            live_kline_prices.set_index('ts_code', inplace=True)
         else:
             live_kline_prices = live_prices
         # 将live_kline_prices中的数据填充到extended_op_values和extended_ref_values中

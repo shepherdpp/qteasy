@@ -1594,7 +1594,33 @@ class TestDataSource(unittest.TestCase):
                               )
                          )
 
+        print('create datetime index with freq "h" with default trade time without non_trading days')
+        indexer = _trade_time_index('20200101', '20200103', freq='h', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "h" not including start am')
+        indexer = _trade_time_index('20200101', '20200103', freq='h',
+                                    include_start_am=False,
+                                    trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 10:30:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
         print('create datetime index with freq "w" and check if all dates are Sundays (default)')
+
         indexer = _trade_time_index('20200101', '20200201', freq='w', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
@@ -1630,10 +1656,10 @@ class TestDataSource(unittest.TestCase):
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 8)
         self.assertEqual(list(indexer),
-                         list(pd.to_datetime(['2020-01-01 09:47:45.306122448',
-                                              '2020-01-01 10:17:08.571428571',
-                                              '2020-01-01 10:46:31.836734693',
-                                              '2020-01-01 11:15:55.102040816',
+                         list(pd.to_datetime(['2020-01-01 09:48:22.040816326',
+                                              '2020-01-01 10:17:45.306122448',
+                                              '2020-01-01 10:47:08.571428571',
+                                              '2020-01-01 11:16:31.836734693',
                                               '2020-01-01 13:13:28.163265306',
                                               '2020-01-01 13:42:51.428571428',
                                               '2020-01-01 14:12:14.693877551',

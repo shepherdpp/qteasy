@@ -1043,7 +1043,7 @@ class Trader(object):
             if not live_prices.empty:
                 live_prices.close = live_prices.close.astype(float)
                 live_prices['change'] = live_prices['close'] / live_prices['pre_close'] - 1
-                live_prices.set_index('symbol', inplace=True)
+                live_prices.set_index('ts_code', inplace=True)
                 # remove duplicated indices if any
                 live_prices = live_prices[~live_prices.index.duplicated(keep='first')]
 
