@@ -887,8 +887,6 @@ def realtime_min(ts_code, freq):
     res.index = pd.to_datetime(res['trade_time'])
     res = res.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 
-    res = res.iloc[-1:, :]
-
     return res
 
 

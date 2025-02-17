@@ -592,6 +592,7 @@ class SimulatorBroker(Broker):
 
             # 获取当前实时价格
             retry = 10  # 重试次数为10次（秒）
+            # TODO: 这里应该使用fetch_realtime_quotes， 而不是fetch_real_time_klines来获取最新价格
             from .data_channels import fetch_real_time_klines
             live_prices = fetch_real_time_klines(qt_codes=symbol, channel='eastmoney',
                                                  freq='D', verbose=True, parallel=True)

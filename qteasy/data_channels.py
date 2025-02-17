@@ -413,6 +413,7 @@ def fetch_real_time_klines(
         parallel: bool = True,
         time_zone: str = 'local',
         verbose: bool = True,
+        matured_kline_only = True,
         logger: any = None,
 ) -> pd.DataFrame:
     """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
@@ -443,6 +444,9 @@ def fetch_real_time_klines(
         如果为True，给出更多的数据，否则返回简化的数据：
         - verbose = True: 'trade_time, symbol, name, pre_close, open, close, high, low, vol, amount'
         - verbose = False: 'trade_time, symbol, open, close, high, low, vol, amount'
+    matured_kline_only: bool, default True
+        是否只返回已经成熟的(也就是完整的上一个)K线数据，如果为True，则只返回已经成熟的K线数据，即已经完整的K线数据
+        如果为False，则返回最新的K线数据，哪怕这根K线数据并未完整
     logger: logger
         用于记录下载数据的日志
 
@@ -488,14 +492,16 @@ def fetch_real_time_klines(
                     if df.empty:
                         continue
                     df['ts_code'] = symbol
-                    data.append(df.iloc[-1:, :])
+                    k_line = df.iloc[-2:-1, :] if matured_kline_only else df.iloc[-1:, :]
+                    data.append(k_line)
     else:  # parallel == False, 不使用多进程
         for symbol in qt_codes:
             df = fetch_realtime_kline(qt_code=symbol, date=today, freq=freq)
             if df.empty:
                 continue
             df['ts_code'] = symbol
-            data.append(df.iloc[-1:, :])
+            k_line = df.iloc[-2:-1, :] if matured_kline_only else df.iloc[-1:, :]
+            data.append(k_line)
     try:
         data = pd.concat(data)
     except:

@@ -383,6 +383,7 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     return df
 
 
+# 以下是不同频率K线对外接口，接口数据符合datasource的数据格式，可用于股票E、指数IDX、基金FD的K线获取
 def stock_daily(qt_code, start, end):
     """ 获取单支股票的日K线数据
     """
@@ -466,6 +467,12 @@ def stock_monthly(qt_code, start, end) -> pd.DataFrame:
     return res
 
 
+# TODO: 这个函数是用于以前的trader/broker的接口，为了确保兼容性，仍然保留，但未来应该调整为使用新的接口
+#  这个函数最大的问题是，它返回的最后一根K线数据往往是不完整的，例如在交易时间内，返回的当天最后一根日K线数据
+#  只能体现截止到当前时间的价格和交易量。例如
+#  2025年2月17日交易日，假如在早上十一点获取当天的日K线，将得到当天的正确开盘价，但是最高价、最低价和收盘价都
+#  仅仅是当天截止11点的最新价格，而不是当天的最终价格。而且交易量和交易额数据也不完整。
+#  如果将此数据存入数据库，将会导致数据不准确，因此在使用此函数时，需要注意这个问题。
 def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.DataFrame:
     """ 获取股票date日最新K线数据，数据实时更新,不管K线频率如何，总是返回当天最后一根可用K线数据
 
@@ -495,21 +502,18 @@ def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.D
         amount: float, 成交额
     """
 
-    klt = east_money_freq_map.get(freq, 101)
-    if klt > 101:
-        raise ValueError(f'Can not get real time K line with freq: {freq}')
-
+    date = pd.to_datetime(date).strftime('%Y%m%d')
     second_day = pd.Timestamp(date) + pd.Timedelta(days=1)
     second_day = second_day.strftime('%Y%m%d')
 
-    df = _get_k_history(qt_code, beg=date, end=second_day, klt=klt, verbose=True)
+    df = _stock_bars(qt_code, start=date, end=second_day, freq=freq)
 
     df['symbol'] = qt_code
     df.index = pd.to_datetime(df['trade_time'])
     df = df.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 
     data = df.loc[pd.to_datetime(date):pd.to_datetime(second_day), :]
-    data = data.iloc[-1:, :]
+    # data = data.iloc[-1:, :]
 
     return data
 

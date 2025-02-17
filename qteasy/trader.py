@@ -1733,19 +1733,22 @@ class Trader(object):
         # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
         duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '15min', '30min', 'h']) and self.is_trade_day:
-            # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时数据
+            # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时价格
+            # TODO: 实时价格不应该使用fetch_realtime_price_data方法，而应该使用fetch_realtime_quote方法
             table_to_update = UNIT_TO_TABLE[unit.lower()]
+            # 这里不能将实时数据直接写入数据库，因为最新K线的数据可能尚不完整，只有上一个K线数据才是完整的
             real_time_data = fetch_real_time_klines(
                     freq=unit.lower(),
                     channel=self.live_price_channel,
                     qt_codes=self.asset_pool,
                     verbose=False,
+                    matured_kline_only=False,  # 这里确保只获取成熟的K线数据
             )
             # 将real_time_data写入DataSource
             self.send_message(message=f'got real time data from channel {self.live_price_freq}:\n'
                                       f'{real_time_data}\n'
                                       f'writing data to datasource: {self.datasource}...', debug=True)
-            # 将实时数据写入数据库 (仅在交易日这么做)
+
             rows_written = self._datasource.update_table_data(
                     table=table_to_update,
                     df=real_time_data,
