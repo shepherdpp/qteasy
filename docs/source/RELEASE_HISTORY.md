@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 1.4.5 (2025-02-18)
+- Fixed a bug that may cause incorrect k-line data being stored in the datasource when running in live trade mode
+
 ## 1.4.4 (2025-02-12)
 - Fixed bugs: 
   - Simulator broker and Trader module in live trade mode might fail to fetch real time price data in some cases
