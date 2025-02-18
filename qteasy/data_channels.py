@@ -1007,7 +1007,7 @@ def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
     return start_date, end_date
 
 
-def get_dependent_table(table: str, channel: str) -> str:
+def get_dependent_table(table: str, channel: str) -> str or None:
     """ 获取数据表的依赖表. 依赖表是指在获取某个数据表之前，需要先获取的数据表
 
     依赖表主要包括在api_map中定义的fill_arg_type为'table_index'的数据表，如stock_basic表
@@ -1026,9 +1026,16 @@ def get_dependent_table(table: str, channel: str) -> str:
     -------
     str:
         数据表的依赖表名称
+
+    Notes
+    -----
+    如果数据表不存在或者无法找到依赖表，则返回None
     """
 
     api_map = get_api_map(channel=channel)
+
+    if table not in api_map.index:
+        return None
 
     cur_table = api_map.loc[table]
     fill_type = cur_table.fill_arg_type
