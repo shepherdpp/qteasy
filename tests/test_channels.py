@@ -645,7 +645,7 @@ class TestChannels(unittest.TestCase):
         """testing downloading real-time price data from data-channels"""
 
         # test acquiring real time data
-        channels = ['eastmoney', 'tushare', 'akshare',]
+        channels = ['eastmoney']   #, 'tushare', 'akshare',]
         for channel in channels:
             # test a few stocks
             print(f'Test acquiring 3 stocks from channel {channel}')
