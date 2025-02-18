@@ -131,7 +131,8 @@ class TestEastmoney(unittest.TestCase):
         self.assertIsInstance(res, pd.DataFrame)
         if is_market_trade_day(date):
             self.assertFalse(res.empty)
-            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.columns.to_list(), ['symbol', 'name', 'pre_close', 'open', 'close',
+                                                     'high', 'low', 'vol', 'amount'])
             self.assertEqual(res.index.name, 'trade_time')
             self.assertTrue(all(item in codes for item in res.symbol))
             # some items may not have real time price at the moment

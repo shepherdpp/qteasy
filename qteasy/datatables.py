@@ -298,7 +298,13 @@ TABLE_MASTERS = {
         ['min_bars', '场内基金60分钟K线行情', 'mins', 'FD', 'h', '', 'ts_code', '5'],
 
     'fund_daily':
-        ['bars', '场内基金每日行情', 'data', 'FD', 'd', '', '', ''],
+        ['bars', '场内基金每日K线行情', 'data', 'FD', 'd', '', '', ''],
+
+    'fund_weekly':
+        ['bars', '场内基金周K线行情', 'data', 'FD', 'w', '', '', ''],
+
+    'fund_monthly':
+        ['bars', '场内基金月K线行情', 'data', 'FD', 'm', '', '', ''],
 
     'fund_nav':
         ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', '', '', ''],

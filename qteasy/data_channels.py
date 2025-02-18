@@ -413,6 +413,7 @@ def fetch_real_time_klines(
         parallel: bool = True,
         time_zone: str = 'local',
         verbose: bool = True,
+        matured_kline_only: bool = False,
         logger: any = None,
 ) -> pd.DataFrame:
     """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
@@ -443,6 +444,9 @@ def fetch_real_time_klines(
         如果为True，给出更多的数据，否则返回简化的数据：
         - verbose = True: 'trade_time, symbol, name, pre_close, open, close, high, low, vol, amount'
         - verbose = False: 'trade_time, symbol, open, close, high, low, vol, amount'
+    matured_kline_only: bool, default False
+        是否只返回已经成熟的(也就是完整的上一个)K线数据，如果为True，则只返回已经成熟的K线数据，即已经完整的上一根K线数据
+        如果为False，则返回最新的K线数据，哪怕这根K线数据并未完整
     logger: logger
         用于记录下载数据的日志
 
@@ -488,14 +492,16 @@ def fetch_real_time_klines(
                     if df.empty:
                         continue
                     df['ts_code'] = symbol
-                    data.append(df.iloc[-1:, :])
+                    k_line = df.iloc[-2:-1, :] if matured_kline_only else df.iloc[-1:, :]
+                    data.append(k_line)
     else:  # parallel == False, 不使用多进程
         for symbol in qt_codes:
             df = fetch_realtime_kline(qt_code=symbol, date=today, freq=freq)
             if df.empty:
                 continue
             df['ts_code'] = symbol
-            data.append(df.iloc[-1:, :])
+            k_line = df.iloc[-2:-1, :] if matured_kline_only else df.iloc[-1:, :]
+            data.append(k_line)
     try:
         data = pd.concat(data)
     except:
@@ -573,7 +579,7 @@ def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
 
     if "trade_time" not in raw_data.columns:
         # trade_time 在 index 中，将它移到frame中
-        assert raw_data.index.name == 'trade_time', AssertionError('trade_time should be in index')
+        assert raw_data.index.name in ['trade_time', 'trade_date'], AssertionError('trade_time should be in index')
         raw_data['trade_time'] = raw_data.index
     # 重新整理数据列名称
     if verbose:
@@ -1523,6 +1529,30 @@ EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给
 
     'index_monthly':
         ['stock_monthly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '300'],
+
+    'fund_daily':
+        ['stock_daily', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '30'],
+
+    'fund_1min':
+        ['stock_1min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '1'],
+
+    'fund_5min':
+        ['stock_5min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_15min':
+        ['stock_15min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_30min':
+        ['stock_30min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_hourly':
+        ['stock_hourly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_weekly':
+        ['stock_weekly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '100'],
+
+    'fund_monthly':
+        ['stock_monthly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '300'],
 
 }
 
