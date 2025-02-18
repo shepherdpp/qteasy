@@ -514,7 +514,7 @@ def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.D
     df = _stock_bars(qt_code, start=prev_day, end=second_day, freq=freq)
 
     df['symbol'] = qt_code
-    if freq in ['1min', '5min', '15min', '30min', '60min']:
+    if freq in ['1min', '5min', '15min', '30min', '60min', 'h']:
         df.index = pd.to_datetime(df['trade_time'])
     else:
         df.index = pd.to_datetime(df['trade_date'])
