@@ -579,7 +579,7 @@ def scrub_realtime_klines(raw_data, verbose) -> pd.DataFrame:
 
     if "trade_time" not in raw_data.columns:
         # trade_time 在 index 中，将它移到frame中
-        assert raw_data.index.name == 'trade_time', AssertionError('trade_time should be in index')
+        assert raw_data.index.name in ['trade_time', 'trade_date'], AssertionError('trade_time should be in index')
         raw_data['trade_time'] = raw_data.index
     # 重新整理数据列名称
     if verbose:

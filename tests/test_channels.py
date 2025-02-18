@@ -651,7 +651,7 @@ class TestChannels(unittest.TestCase):
             print(f'Test acquiring 3 stocks from channel {channel}')
             codes = ['000016.SZ', '000025.SZ', '000333.SZ']
             freq = 'd' if channel != 'tushare' else '15min'
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=False)
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=False, parallel=False)
             print(f'data acquired from {channel} for codes [\'000016.SZ\', \'000025.SZ\', \'000333.SZ\']: \n{res}')
             self.assertIsInstance(res, pd.DataFrame)
             from qteasy.utilfuncs import is_market_trade_day
@@ -703,7 +703,7 @@ class TestChannels(unittest.TestCase):
             print(f'Test acquiring 3 Indexes from channel {channel}')
             codes = ['000001.SH', '000300.SH', '399001.SZ']
             freq = '30min'
-            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=True)
+            res = fetch_real_time_klines(channel=channel, qt_codes=codes, freq=freq, verbose=True, parallel=False)
             print(res)
             self.assertIsInstance(res, pd.DataFrame)
             if is_market_trade_day('today'):

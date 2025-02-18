@@ -38,29 +38,30 @@ east_money_freq_map = {
 }
 
 dc_cookies = {
-    "qgqp_b_id": "cf8b058a05d005ca7fb2afc14957f250",
-    "st_si": "72907886672492",
-    "st_asi": "delete",
-    "HAList": "ty-1-688720-N%u827E%u68EE%2Cty-0-873122-%u4E2D%u7EBA%u6807",
-    "st_pvi": "02194384728897",
-    "st_sp": "2023-12-06%2016%3A05%3A53",
+    "qgqp_b_id":  "cf8b058a05d005ca7fb2afc14957f250",
+    "st_si":      "72907886672492",
+    "st_asi":     "delete",
+    "HAList":     "ty-1-688720-N%u827E%u68EE%2Cty-0-873122-%u4E2D%u7EBA%u6807",
+    "st_pvi":     "02194384728897",
+    "st_sp":      "2023-12-06%2016%3A05%3A53",
     "st_inirUrl": "https%3A%2F%2Fquote.eastmoney.com%2Fcenter%2Fgridlist.html",
-    "st_sn": "11",
-    "st_psi": "20231206170058129-113200313000-8845421016"
+    "st_sn":      "11",
+    "st_psi":     "20231206170058129-113200313000-8845421016"
 }
 
 dc_headers = {
-    "Connection": "keep-alive",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
-    "Accept": "*/*",
-    "Sec-Fetch-Site": "same-site",
-    "Sec-Fetch-Mode": "no-cors",
-    "Sec-Fetch-Dest": "script",
-    "Referer": "https://quote.eastmoney.com/kcb/688720.html",
+    "Connection":      "keep-alive",
+    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
+    "Accept":          "*/*",
+    "Sec-Fetch-Site":  "same-site",
+    "Sec-Fetch-Mode":  "no-cors",
+    "Sec-Fetch-Dest":  "script",
+    "Referer":         "https://quote.eastmoney.com/kcb/688720.html",
     "Accept-Language": "zh-CN,zh;q=0.9"
 }
 
-LIVE_QUOTE_COLS = ['NAME', 'OPEN', 'PRE_CLOSE', 'PRICE', 'HIGH', 'LOW', 'BID', 'ASK', 'VOLUME', 'AMOUNT', 'B1_V', 'B1_P',
+LIVE_QUOTE_COLS = ['NAME', 'OPEN', 'PRE_CLOSE', 'PRICE', 'HIGH', 'LOW', 'BID', 'ASK', 'VOLUME', 'AMOUNT', 'B1_V',
+                   'B1_P',
                    'B2_V', 'B2_P', 'B3_V', 'B3_P', 'B4_V', 'B4_P', 'B5_V', 'B5_P', 'A1_V', 'A1_P', 'A2_V', 'A2_P',
                    'A3_V', 'A3_P', 'A4_V', 'A4_P', 'A5_V', 'A5_P', 'DATE', 'TIME', 'TS_CODE']
 
@@ -277,14 +278,14 @@ def _get_rt_quote(code: str) -> pd.DataFrame:
     symbol = _gen_eastmoney_code(code)
     # print(symbol)
     params = {
-        "invt": "2",
-        "fltt": "1",
+        "invt":   "2",
+        "fltt":   "1",
         # "cb": "jQuery35108939078769986013_1701853424476",
         "fields": "f58,f734,f107,f57,f43,f59,f169,f301,f60,f170,f152,f177,f111,f46,f44,f45,f47,f260,f48,f261,f279,f277,f278,f288,f19,f17,f531,f15,f13,f11,f20,f18,f16,f14,f12,f39,f37,f35,f33,f31,f40,f38,f36,f34,f32,f211,f212,f213,f214,f215,f210,f209,f208,f207,f206,f161,f49,f171,f50,f86,f84,f85,f168,f108,f116,f167,f164,f162,f163,f92,f71,f117,f292,f51,f52,f191,f192,f262,f294,f295,f748,f747",
-        "secid": f"0.{symbol}",
-        "ut": "fa5fd1943c7b386f172d6893dbfba10b",
-        "wbp2u": "|0|0|0|web",
-        "_": str(int(time.time() * 1000))
+        "secid":  f"0.{symbol}",
+        "ut":     "fa5fd1943c7b386f172d6893dbfba10b",
+        "wbp2u":  "|0|0|0|web",
+        "_":      str(int(time.time() * 1000))
     }
 
     # print(params["secid"])
@@ -296,7 +297,7 @@ def _get_rt_quote(code: str) -> pd.DataFrame:
     open = data_info["f46"]  # / 100
     high = data_info["f44"]  # / 100
     pre_close = data_info["f60"]  # / 100
-    low = data_info["f45"] # / 100
+    low = data_info["f45"]  # / 100
     price = data_info["f43"]  # / 100 if data_info["f43"] != "-" else ""
     b5_v = format_str_to_float(data_info["f12"])
     b5_p = data_info["f11"]  # / 100 if data_info["f11"] != "-" else ""
@@ -377,12 +378,11 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     # 重新计算pct_chg，因为原始数据的精度不够四位小数
     if not df.empty:
         df['pct_chg'] = np.round((df['close'] - df['pre_close']) / df['pre_close'] * 100, 4)
-    if freq in ['1min', '5min', '15min', '30min', '60min']:
-        df = df.reindex(columns=['ts_code', 'name', 'trade_time', 'open', 'high', 'low', 'close',
-                                 'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-    else:
-        df = df.reindex(columns=['ts_code', 'name', 'trade_date', 'open', 'high', 'low', 'close',
-                                 'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    df = df.reindex(columns=['ts_code', 'name', 'trade_time', 'open', 'high', 'low', 'close',
+                             'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    if klt >= 101:
+        df.columns = ['ts_code', 'name', 'trade_date', 'open', 'high', 'low', 'close',
+                      'pre_close', 'change', 'pct_chg', 'vol', 'amount']
     return df
 
 
@@ -514,7 +514,10 @@ def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.D
     df = _stock_bars(qt_code, start=prev_day, end=second_day, freq=freq)
 
     df['symbol'] = qt_code
-    df.index = pd.to_datetime(df['trade_time'])
+    if freq in ['1min', '5min', '15min', '30min', '60min']:
+        df.index = pd.to_datetime(df['trade_time'])
+    else:
+        df.index = pd.to_datetime(df['trade_date'])
     df = df.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 
     data = df.loc[pd.to_datetime(prev_day):pd.to_datetime(second_day), :]
