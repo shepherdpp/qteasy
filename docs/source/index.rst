@@ -104,9 +104,7 @@ What Can You Do with ``QTEASY`` ?
     :maxdepth: 1
     :glob:
 
-    manage_data/overview.md
-    manage_data/refill_datasource.md
-    manage_data/use_local_data.md
+    manage_data/*
 
 
 .. toctree::
