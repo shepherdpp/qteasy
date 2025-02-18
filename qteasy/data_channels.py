@@ -413,7 +413,7 @@ def fetch_real_time_klines(
         parallel: bool = True,
         time_zone: str = 'local',
         verbose: bool = True,
-        matured_kline_only = True,
+        matured_kline_only: bool = False,
         logger: any = None,
 ) -> pd.DataFrame:
     """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
@@ -444,8 +444,8 @@ def fetch_real_time_klines(
         如果为True，给出更多的数据，否则返回简化的数据：
         - verbose = True: 'trade_time, symbol, name, pre_close, open, close, high, low, vol, amount'
         - verbose = False: 'trade_time, symbol, open, close, high, low, vol, amount'
-    matured_kline_only: bool, default True
-        是否只返回已经成熟的(也就是完整的上一个)K线数据，如果为True，则只返回已经成熟的K线数据，即已经完整的K线数据
+    matured_kline_only: bool, default False
+        是否只返回已经成熟的(也就是完整的上一个)K线数据，如果为True，则只返回已经成熟的K线数据，即已经完整的上一根K线数据
         如果为False，则返回最新的K线数据，哪怕这根K线数据并未完整
     logger: logger
         用于记录下载数据的日志
@@ -1529,6 +1529,30 @@ EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给
 
     'index_monthly':
         ['stock_monthly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '300'],
+
+    'fund_daily':
+        ['stock_daily', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '30'],
+
+    'fund_1min':
+        ['stock_1min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '1'],
+
+    'fund_5min':
+        ['stock_5min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_15min':
+        ['stock_15min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_30min':
+        ['stock_30min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_hourly':
+        ['stock_hourly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '10'],
+
+    'fund_weekly':
+        ['stock_weekly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '100'],
+
+    'fund_monthly':
+        ['stock_monthly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '300'],
 
 }
 

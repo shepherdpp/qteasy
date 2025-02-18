@@ -2,6 +2,7 @@
 
 ## 1.4.5 (2025-02-18)
 - Fixed a bug that may cause incorrect k-line data being stored in the datasource when running in live trade mode
+- Added apis to get minute level and daily candle bar price data for funds from channel 'eastmoney'
 
 ## 1.4.4 (2025-02-12)
 - Fixed bugs: 

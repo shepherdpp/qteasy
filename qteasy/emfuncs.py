@@ -19,7 +19,7 @@ import requests
 from urllib.parse import urlencode
 
 from qteasy.utilfuncs import (
-    retry,
+    prev_market_trade_day, retry,
     format_str_to_float,
 )
 
@@ -377,9 +377,12 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     # 重新计算pct_chg，因为原始数据的精度不够四位小数
     if not df.empty:
         df['pct_chg'] = np.round((df['close'] - df['pre_close']) / df['pre_close'] * 100, 4)
-    df = df.reindex(columns=['ts_code', 'trade_time', 'open', 'high', 'low', 'close',
-                             'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-
+    if freq in ['1min', '5min', '15min', '30min', '60min']:
+        df = df.reindex(columns=['ts_code', 'name', 'trade_time', 'open', 'high', 'low', 'close',
+                                 'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
+    else:
+        df = df.reindex(columns=['ts_code', 'name', 'trade_date', 'open', 'high', 'low', 'close',
+                                 'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
     return df
 
 
@@ -388,9 +391,9 @@ def stock_daily(qt_code, start, end):
     """ 获取单支股票的日K线数据
     """
     res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='d')
-    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
-                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
     res['amount'] = np.round(res['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
+    res = res.reindex(columns=['ts_code', 'name', 'trade_date', 'open', 'high', 'low', 'close',
+                               'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 
     return res
 
@@ -449,9 +452,9 @@ def stock_weekly(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的周K线数据
     """
     res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='w')
-    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
-                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
     res['amount'] = np.round(res['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
+    res = res.reindex(columns=['ts_code', 'name', 'trade_date', 'open', 'high', 'low', 'close',
+                               'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 
     return res
 
@@ -460,9 +463,9 @@ def stock_monthly(qt_code, start, end) -> pd.DataFrame:
     """ 获取单支股票的周K线数据
     """
     res = _stock_bars(qt_code=qt_code, start=start, end=end, freq='m')
-    res.columns = (['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
-                    'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
     res['amount'] = np.round(res['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
+    res = res.reindex(columns=['ts_code', 'name', 'trade_date', 'open', 'high', 'low', 'close',
+                               'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
 
     return res
 
@@ -505,15 +508,16 @@ def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.D
     date = pd.to_datetime(date).strftime('%Y%m%d')
     second_day = pd.Timestamp(date) + pd.Timedelta(days=1)
     second_day = second_day.strftime('%Y%m%d')
+    # 为了确保当freq=d时也能返回昨天的数据，需要从上一个交易日开始获取数据
+    prev_day = prev_market_trade_day(date).strftime('%Y%m%d')
 
-    df = _stock_bars(qt_code, start=date, end=second_day, freq=freq)
+    df = _stock_bars(qt_code, start=prev_day, end=second_day, freq=freq)
 
     df['symbol'] = qt_code
     df.index = pd.to_datetime(df['trade_time'])
     df = df.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 
-    data = df.loc[pd.to_datetime(date):pd.to_datetime(second_day), :]
-    # data = data.iloc[-1:, :]
+    data = df.loc[pd.to_datetime(prev_day):pd.to_datetime(second_day), :]
 
     return data
 

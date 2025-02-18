@@ -1745,8 +1745,8 @@ class Trader(object):
                     matured_kline_only=False,  # 这里确保只获取成熟的K线数据
             )
             # 将real_time_data写入DataSource
-            self.send_message(message=f'got real time data from channel {self.live_price_freq}:\n'
-                                      f'{real_time_data}\n'
+            self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
+                                      f'{real_time_data.to_string()}\n'
                                       f'writing data to datasource: {self.datasource}...', debug=True)
 
             rows_written = self._datasource.update_table_data(
@@ -2328,7 +2328,9 @@ class Trader(object):
         self.send_message(f'adjusted daily schedule: {self.task_daily_schedule}', debug=True)
 
     def _update_live_price(self) -> None:
-        """获取实时数据，并将实时数据更新到self.live_price中并更新到datasource中，此函数可能出现Timeout或运行失败"""
+        """获取实时数据，并将实时数据更新到self.live_price中
+
+        注：此函数并不将读取的数据写入datasource，且可能出现Timeout或运行失败"""
         self.send_message(f'Acquiring live price data', debug=True)
         real_time_data = fetch_real_time_klines(
                 qt_codes=self.asset_pool,

@@ -128,6 +128,9 @@ def create_daily_task_schedule(operator, config=None):
             include_start_pm=False,
             include_end_pm=True,
     ).strftime('%H:%M:%S').tolist()
+    # TODO: update_live_price()任务现在并不将价格写入数据库，而是直接更新内存中的价格
+    #  数据库数据的写入实际上是在strategy_run()任务中进行的，同时trader会自动定期隐式执行
+    #  update_live_price()任务，因此这里的update_live_price()任务可以不添加？
     # 将实时价格的更新时间添加到任务日程，生成价格更新日程，因为价格更新的任务优先级更低，因此每个任务都推迟5秒执行
     for t in run_time_index:
         t = (pd.to_datetime(t) + pd.Timedelta(seconds=5)).strftime('%H:%M:%S')
