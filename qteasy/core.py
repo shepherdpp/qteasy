@@ -854,7 +854,10 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         ))
 
         if not arg_list:  # 意味着该数据表无法从该渠道下载
-            progress_bar(0, 1, comments=f'<{table}> cannot be downloaded from channel: {channel}!')
+            progress_bar(0, 1, comments=f'<{table}> can\'t be fetched from channel:{channel}!\n',
+                         column_width=120,
+                         cut_off_pos=1.0,
+                         )
             continue
 
         # 2.2, 批量下载数据

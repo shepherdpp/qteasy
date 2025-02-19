@@ -1487,7 +1487,7 @@ AKSHARE_REALTIME_API_MAP = {
     'realtime_bars':  # 实时行情数据
         ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', ''],
 
-    'realtime_quoets':
+    'realtime_quotes':
         ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', '']
 }
 
@@ -1567,9 +1567,9 @@ EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给
 }
 
 EASTMONEY_REALTIME_API_MAP = {
-    'realtime_bars':  # 实时行情数据
+    'realtime_bars':  # 实时K线行情数据
         ['real_time_klines', 'qt_code', 'list', 'none', '', 'N', '', ''],
 
-    'realtime_quoets':
+    'realtime_quotes':  # 实时报价数据
         ['real_time_quote', 'qt_code', 'list', 'none', '', 'N', '', '']
 }
