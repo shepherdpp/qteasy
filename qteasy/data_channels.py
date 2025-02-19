@@ -386,7 +386,6 @@ def fetch_batched_table_data(
             # 在parallel模式下，下载线程的提交和返回是分开进行的，为了实现分批下载，必须分批提交，提交一批
             # 数据后，等待结果返回，再提交下一批，因此，需要将arg_list分段，提交完一个batch之后，返回结果，
             # 再暂停，暂停后再继续提交
-            futures = {}
             submitted = 0
             # 将arg_list分段，每次下载batch_size个数据
             if download_batch_size == 0:
@@ -395,13 +394,13 @@ def fetch_batched_table_data(
                 arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
 
             for arg_sub_list in arg_list_chunks:
+                futures = {}
                 for kw in arg_sub_list:
                     futures.update({worker.submit(fetch_table_data, table, **kw): kw})
                     submitted += 1
                 for f in as_completed(futures):
                     kwargs = futures[f]
                     completed += 1
-                    # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
                     yield {'kwargs': kwargs, 'data': f.result()}
 
                 if download_batch_interval != 0:
