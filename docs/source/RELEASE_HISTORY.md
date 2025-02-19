@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 1.4.6 (2025-02-19)
+- Improved function `qt.refill_data_source()`, now it will skip the tables that are not available from current channel and provide a warning message
+- Fixed a bug that will sometimes result in duplicated data being refilled from channels while running `qt.refill_data_source()`
+
 ## 1.4.5 (2025-02-18)
 - Fixed a bug that may cause incorrect k-line data being stored in the datasource when running in live trade mode
 - Added APIs to get minute level and daily candle bar price data for funds from channel 'eastmoney'
