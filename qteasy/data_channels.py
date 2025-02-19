@@ -383,8 +383,9 @@ def fetch_batched_table_data(
     else:  # parallel
         # 使用ThreadPoolExecutor循环下载数据
         with ThreadPoolExecutor(max_workers=process_count) as worker:
-            # 在parallel模式下，下载线程的提交和返回是分开进行的，但这样会有一个问题，数据部分提交后，等待期间
-            # 无法返回结果，因此，需要将arg_list分段，提交完一个batch之后，返回结果，再暂停，暂停后再继续提交
+            # 在parallel模式下，下载线程的提交和返回是分开进行的，为了实现分批下载，必须分批提交，提交一批
+            # 数据后，等待结果返回，再提交下一批，因此，需要将arg_list分段，提交完一个batch之后，返回结果，
+            # 再暂停，暂停后再继续提交
             futures = {}
             submitted = 0
             # 将arg_list分段，每次下载batch_size个数据
@@ -404,7 +405,6 @@ def fetch_batched_table_data(
                     yield {'kwargs': kwargs, 'data': f.result()}
 
                 if download_batch_interval != 0:
-                    # print(f'waiting for {sec_to_duration(download_batch_interval)}')
                     time.sleep(download_batch_interval)
 
 

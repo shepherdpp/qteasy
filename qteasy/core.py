@@ -831,12 +831,16 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
     download_table_list.extend([item for item in table_list if item not in dependent_tables])
 
     if parallel:
-        print(f'into {len(table_list)} tables (parallely): {table_list}')
+        print(f'into {len(table_list)} table(s) (parallely): {table_list}')
     else:
-        print(f'into {len(table_list)} tables (sequentially): {table_list}')
+        print(f'into {len(table_list)} table(s) (sequentially): {table_list}')
 
     # 2, 循环下载数据表
     from .data_channels import parse_data_fetch_args, fetch_batched_table_data
+
+    table_filled = 0
+    total_rows_written = 0
+
     for table in table_list:
         # 2.1, 解析下载数据的参数
         arg_list = list(parse_data_fetch_args(
@@ -848,6 +852,11 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                 list_arg_filter=list_arg_filter,
                 reversed_par_seq=reversed_par_seq,
         ))
+
+        if not arg_list:  # 意味着该数据表无法从该渠道下载
+            progress_bar(0, 1, comments=f'<{table}> cannot be downloaded from channel: {channel}!')
+            continue
+
         # 2.2, 批量下载数据
         completed = 0
         total = len(arg_list)
@@ -921,6 +930,10 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                      column_width=120,
                      cut_off_pos=1.0,
                      )
+        table_filled += 1
+        total_rows_written += total_written
+
+    print(f'\nData refill completed! {total_rows_written} rows written into {table_filled}/{len(table_list)} table(s)!')
 
     return None
 
