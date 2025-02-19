@@ -256,6 +256,9 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
+    if table not in API_MAP:
+        return {}
+
     # get all tables in the API mapping
     arg_name = API_MAP[table][1]
     arg_type = API_MAP[table][2]
