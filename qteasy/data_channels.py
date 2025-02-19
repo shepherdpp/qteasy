@@ -256,6 +256,9 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
+    if table not in API_MAP:
+        return {}
+
     # get all tables in the API mapping
     arg_name = API_MAP[table][1]
     arg_type = API_MAP[table][2]
@@ -380,9 +383,9 @@ def fetch_batched_table_data(
     else:  # parallel
         # 使用ThreadPoolExecutor循环下载数据
         with ThreadPoolExecutor(max_workers=process_count) as worker:
-            # 在parallel模式下，下载线程的提交和返回是分开进行的，但这样会有一个问题，数据部分提交后，等待期间
-            # 无法返回结果，因此，需要将arg_list分段，提交完一个batch之后，返回结果，再暂停，暂停后再继续提交
-            futures = {}
+            # 在parallel模式下，下载线程的提交和返回是分开进行的，为了实现分批下载，必须分批提交，提交一批
+            # 数据后，等待结果返回，再提交下一批，因此，需要将arg_list分段，提交完一个batch之后，返回结果，
+            # 再暂停，暂停后再继续提交
             submitted = 0
             # 将arg_list分段，每次下载batch_size个数据
             if download_batch_size == 0:
@@ -391,17 +394,16 @@ def fetch_batched_table_data(
                 arg_list_chunks = list_truncate(arg_list, download_batch_size, as_list=False)
 
             for arg_sub_list in arg_list_chunks:
+                futures = {}
                 for kw in arg_sub_list:
                     futures.update({worker.submit(fetch_table_data, table, **kw): kw})
                     submitted += 1
                 for f in as_completed(futures):
                     kwargs = futures[f]
                     completed += 1
-                    # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
                     yield {'kwargs': kwargs, 'data': f.result()}
 
                 if download_batch_interval != 0:
-                    # print(f'waiting for {sec_to_duration(download_batch_interval)}')
                     time.sleep(download_batch_interval)
 
 
@@ -1007,7 +1009,7 @@ def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
     return start_date, end_date
 
 
-def get_dependent_table(table: str, channel: str) -> str:
+def get_dependent_table(table: str, channel: str) -> str or None:
     """ 获取数据表的依赖表. 依赖表是指在获取某个数据表之前，需要先获取的数据表
 
     依赖表主要包括在api_map中定义的fill_arg_type为'table_index'的数据表，如stock_basic表
@@ -1026,9 +1028,16 @@ def get_dependent_table(table: str, channel: str) -> str:
     -------
     str:
         数据表的依赖表名称
+
+    Notes
+    -----
+    如果数据表不存在或者无法找到依赖表，则返回None
     """
 
     api_map = get_api_map(channel=channel)
+
+    if table not in api_map.index:
+        return None
 
     cur_table = api_map.loc[table]
     fill_type = cur_table.fill_arg_type
@@ -1477,7 +1486,7 @@ AKSHARE_REALTIME_API_MAP = {
     'realtime_bars':  # 实时行情数据
         ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', ''],
 
-    'realtime_quoets':
+    'realtime_quotes':
         ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', '']
 }
 
@@ -1557,9 +1566,9 @@ EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给
 }
 
 EASTMONEY_REALTIME_API_MAP = {
-    'realtime_bars':  # 实时行情数据
+    'realtime_bars':  # 实时K线行情数据
         ['real_time_klines', 'qt_code', 'list', 'none', '', 'N', '', ''],
 
-    'realtime_quoets':
+    'realtime_quotes':  # 实时报价数据
         ['real_time_quote', 'qt_code', 'list', 'none', '', 'N', '', '']
 }
