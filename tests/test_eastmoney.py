@@ -73,10 +73,10 @@ class TestEastmoney(unittest.TestCase):
         from qteasy.utilfuncs import is_market_trade_day
         if is_market_trade_day(date):
             self.assertFalse(res.empty)
-            self.assertEqual(len(res), 1)
+            self.assertEqual(len(res), 2)
             self.assertEqual(res.columns.to_list(),
                              ['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
-            self.assertEqual(res.index.name, 'trade_time')
+            self.assertEqual(res.index.name, 'trade_date')
             self.assertTrue(all(item in code for item in res.symbol))
             # some items may not have real time price at the moment
             # self.assertTrue(all(item in res.symbol.to_list() for item in code))
@@ -97,7 +97,8 @@ class TestEastmoney(unittest.TestCase):
         self.assertIsInstance(res, pd.DataFrame)
         if is_market_trade_day(date):
             self.assertFalse(res.empty)
-            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.columns.to_list(), ['symbol', 'name', 'pre_close', 'open', 'close',
+                                                     'high', 'low', 'vol', 'amount'])
             self.assertEqual(res.index.name, 'trade_time')
             self.assertTrue(all(item in code for item in res.symbol))
             # some items may not have real time price at the moment
@@ -108,13 +109,14 @@ class TestEastmoney(unittest.TestCase):
 
         print('test acquiring Index prices')
         codes = '399001.SZ'
-        date = (pd.to_datetime('today') - pd.Timedelta(days=1)).strftime('%Y%m%d')  # 最多只能获取过去1个交易日的1分钟K线
+        date = (pd.to_datetime('today')).strftime('%Y%m%d')  # 最多只能今天交易日的1分钟K线
         res = real_time_klines(qt_code=codes, date=date, freq='1min')
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
         if is_market_trade_day(date):
             self.assertFalse(res.empty)
-            self.assertEqual(res.columns.to_list(), ['symbol', 'open', 'close', 'high', 'low', 'vol', 'amount'])
+            self.assertEqual(res.columns.to_list(), ['symbol', 'name', 'pre_close', 'open', 'close',
+                                                     'high', 'low', 'vol', 'amount'])
             self.assertEqual(res.index.name, 'trade_time')
             self.assertTrue(all(item in codes for item in res.symbol))
             # some items may not have real time price at the moment

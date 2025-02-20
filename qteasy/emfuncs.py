@@ -516,8 +516,11 @@ def real_time_klines(qt_code: str, date: str = 'today', freq: str = 'd') -> pd.D
     df['symbol'] = qt_code
     if freq in ['1min', '5min', '15min', '30min', '60min', 'h']:
         df.index = pd.to_datetime(df['trade_time'])
+        df['vol'] = df['vol'] * 100  # 东方财富的vol单位是手，转换为股
     else:
         df.index = pd.to_datetime(df['trade_date'])
+        df['amount'] = np.round(df['amount'] / 1000, 3)  # 东方财富的amount单位是元，转换为千元，保留3位小数
+
     df = df.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 
     data = df.loc[pd.to_datetime(prev_day):pd.to_datetime(second_day), :]
