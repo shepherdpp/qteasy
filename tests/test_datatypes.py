@@ -1260,7 +1260,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('libor_usd|2m', 'd', 'None'),
     ('libor_usd|3m', 'd', 'None'),
     ('libor_usd|6m', 'd', 'None'),
-    ('libor_usd|1y', 'd', 'None'),
+    ('libor_usd|12m', 'd', 'None'),
     # ('libor_eur|on', 'd', 'None'),
     # ('libor_eur|1w', 'd', 'None'),
     # ('libor_eur|1m', 'd', 'None'),
@@ -1281,7 +1281,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('hibor|2m', 'd', 'None'),
     ('hibor|3m', 'd', 'None'),
     ('hibor|6m', 'd', 'None'),
-    ('hibor|1y', 'd', 'None'),
+    ('hibor|12m', 'd', 'None'),
     ('wz_comp', 'd', 'None'),
     ('wz_center', 'd', 'None'),
     ('wz_micro', 'd', 'None'),
@@ -2127,17 +2127,20 @@ class TestDataTypes(unittest.TestCase):
             DataType(name='close', freq='d', asset_type='FD'),
             DataType(name='close', freq='m', asset_type='E'),
             DataType(name='close', freq='m', asset_type='IDX'),
+            DataType(name='close', freq='m', asset_type='FD'),
             DataType(name='close|b', freq='h', asset_type='E'),
             DataType(name='close|b', freq='h', asset_type='FD'),
             DataType(name='close|b', freq='d', asset_type='E'),
             DataType(name='close|b', freq='d', asset_type='FD'),
             DataType(name='close|b', freq='m', asset_type='E'),
+            DataType(name='close|b', freq='m', asset_type='FD'),
             DataType(name='pe', freq='d', asset_type='E'),
             DataType(name='pe', freq='d', asset_type='IDX'),
             DataType(name='initial_pe', freq='d', asset_type='E'),
             DataType(name='ballot', freq='d', asset_type='E'),
         ]
-        self.assertEqual(len(data_types), 17)
+
+        self.assertEqual(len(data_types), 19)
         self.assertTrue(all(dt in expected_data_types for dt in data_types))
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
@@ -2158,11 +2161,13 @@ class TestDataTypes(unittest.TestCase):
             DataType(name='close', freq='d', asset_type='FD'),
             DataType(name='close', freq='m', asset_type='E'),
             DataType(name='close', freq='m', asset_type='IDX'),
+            DataType(name='close', freq='m', asset_type='FD'),
             DataType(name='close|b', freq='h', asset_type='E'),
             DataType(name='close|b', freq='h', asset_type='FD'),
             DataType(name='close|b', freq='d', asset_type='E'),
             DataType(name='close|b', freq='d', asset_type='FD'),
             DataType(name='close|b', freq='m', asset_type='E'),
+            DataType(name='close|b', freq='m', asset_type='FD'),
             DataType(name='pe', freq='d', asset_type='E'),
             DataType(name='pe', freq='d', asset_type='IDX'),
             DataType(name='initial_pe', freq='d', asset_type='E'),
@@ -2172,7 +2177,7 @@ class TestDataTypes(unittest.TestCase):
             DataType(name='is_trade_day|SSE', freq='d', asset_type='None'),
             DataType(name='name', freq='None', asset_type='FT')
         ]
-        self.assertEqual(len(data_types), 21)
+        self.assertEqual(len(data_types), 23)
         self.assertTrue(all(dt in expected_data_types for dt in data_types))
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
