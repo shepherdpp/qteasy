@@ -1635,7 +1635,7 @@ class Trader(object):
 
             config = break_point.get('config', None)
             if config:
-                self._config = config
+                self._config.update(config)
                 self.send_message('Loaded configurations from break point!')
         else:
             self.send_message('No break point found, will using default configurations...')
@@ -2068,29 +2068,36 @@ class Trader(object):
         self.run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
-    def _refill(self, tables, freq) -> None:
-        """ 补充数据库内的历史数据 """
+    def _refill(self, tables: str, duration:int = 1) -> None:
+        """ 补充数据库内的历史数据
+        通过tables指定需要更新的数据表名称
+
+        Parameters
+        ----------
+        tables: str
+            需要更新的数据表名称, 可以是单个表名，也可以是多个表名，用逗号分隔
+        duration: str
+            更新数据的周期，单位为天
+
+        Returns
+        -------
+        None
+        """
         self.send_message('running task: refill, this task will be done only during sleeping', debug=True)
-        # 更新数据源中的数据，不同频率的数据表可以不同时机更新，每次更新时仅更新当天或最近一个freq的数据
-        # 例如，freq为H或min的数据，更新当天的数据，freq为W的数据，更新最近一周
-        # 在arg中必须给出freq以及tables两个参数，tables参数直接传入refill_local_source函数
-        # freq被用于计算start_date和end_date
+
         end_date = self.get_current_tz_datetime().date()
-        if freq == 'D':
-            start_date = end_date
-        elif freq == 'W':
-            start_date = end_date - pd.Timedelta(days=7)
-        elif freq == 'M':
-            start_date = end_date - pd.Timedelta(days=30)
-        else:
-            err = ValueError(f'invalid freq: {freq}')
-            raise err
+        start_date = end_date - pd.Timedelta(days=duration)
+        channel = self.config['live_trade_data_refill_channel']
+
         refill_data_source(
                 tables=tables,
-                channel='tushare',
+                channel=channel,
                 start_date=start_date,
                 end_date=end_date,
-                merge_type='update',
+                refill_dependent_tables=False,
+                data_source=self.datasource,
+                refresh_trade_calendar=False,
+                parallel=True,
         )
 
     # ================ task operations =================
@@ -2267,13 +2274,15 @@ class Trader(object):
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         self.send_message('initializing agenda...', debug=True)
         # 如果不是交易日，直接返回
-        if not self.is_trade_day:
-            self.send_message('not a trade day, no need to initialize agenda', debug=True)
-            return
+        # TODO: 不判断交易日，将交易日判断放到create_daily_task_schedule中进行
+        # if not self.is_trade_day:
+        #     self.send_message('not a trade day, no need to initialize agenda', debug=True)
+        #     return
         if self.task_daily_schedule:
             # 如果任务日程非空列表，直接返回
             self.send_message('task agenda is not empty, no need to initialize agenda', debug=True)
             return
+
         self.task_daily_schedule = create_daily_task_schedule(
                 self.operator,
                 self._config
