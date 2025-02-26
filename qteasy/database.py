@@ -257,7 +257,7 @@ class DataSource:
     def all_basic_tables(self) -> list:
         """ 获取所有基础数据表的清单"""
         tables = get_table_master()
-        return tables[tables['table_usage'] == 'basic'].index.to_list()
+        return tables[tables['table_usage'] == 'basics'].index.to_list()
 
     @property
     def allow_drop_table(self) -> bool:
