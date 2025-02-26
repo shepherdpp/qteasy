@@ -922,6 +922,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
             )
             total_written += rows_affected
 
+        time_elapsed = time.time() - st
         strftime_elapsed = sec_to_duration(
                 time_elapsed,
                 estimation=True,
