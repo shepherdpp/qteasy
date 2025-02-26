@@ -298,6 +298,8 @@ class Space:
         Examples
         --------
         >>> s = Space(['x', 'y'], ['int', 'float'])
+        >>> ('x', 'int') in s
+        True
 
         """
         assert isinstance(item, (list, tuple, Space)), \
@@ -345,6 +347,9 @@ class Space:
         Examples
         --------
         >>> p = (1, 2, 3)
+        >>> s = Space([(0, 5), (1, 3), (1, 5)])
+        >>> s.from_point(p, 1)
+        <(0, 5),(1, 3),(1, 5)>
 
         """
         assert point in self, f'ValueError, point {point} is not in space!'
