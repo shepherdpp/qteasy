@@ -2124,6 +2124,7 @@ def run(operator, **kwargs):
             msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
                   f'please set asset_type="E" with: qt.configure(asset_type="E")'
             raise ValueError(msg)
+
         start_trader_ui(
                 operator=operator,
                 account_id=config['live_trade_account_id'],

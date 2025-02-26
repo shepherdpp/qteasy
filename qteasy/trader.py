@@ -432,6 +432,9 @@ class Trader(object):
         )
         schedule.set_index(keys='datetime', inplace=True)
 
+        if schedule.empty:
+            return 'No tasks scheduled for today'
+
         schedule_string = schedule.to_string()
         if rich_form:
             schedule_string = schedule_string.replace('[', '<')
@@ -1236,9 +1239,10 @@ class Trader(object):
         break_point_file_name: str
             断点文件路径
         """
+        # TODO: 不用保存完整的config，只需要保存部分跟交易有关的信息即可
+        #  在启动交易时导入的断点会覆盖start_up_settings中的参数
         break_point_data = dict()
         break_point_data['operator'] = self.operator
-        # break_point_data['broker'] = self.broker
         break_point_data['config'] = self.config
 
         from .utilfuncs import write_binary_file
@@ -2471,6 +2475,7 @@ def start_trader_ui(
 
     from qteasy.broker import get_broker
     broker = get_broker(broker_type, broker_params)
+
     trader = Trader(
             account_id=account_id,
             operator=operator,

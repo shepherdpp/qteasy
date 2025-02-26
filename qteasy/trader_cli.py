@@ -2088,7 +2088,8 @@ class TraderShell(Cmd):
             return False
 
         print(f'Execution Schedule:')
-        self.trader.get_schedule_string()
+        schedule_string = self.trader.get_schedule_string()
+        print(f'{schedule_string}')
 
     def do_run(self, arg):
         """usage: run [STRATEGY [STRATEGY ...]] [-h]
