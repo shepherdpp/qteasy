@@ -23,7 +23,6 @@ if __name__ == '__main__':
     import qteasy as qt
     from qteasy import Operator
 
-
     class MultiGridTrade(qt.GeneralStg):
         """网格交易策略, 同时监控多只股票并进行网格交易"""
 
@@ -94,6 +93,8 @@ if __name__ == '__main__':
         delete_account(account_id=args.account, data_source=datasource, keep_account_id=True)
 
     op = Operator(alpha, signal_type='VS', op_type='step')
+
+    print('in live_grid_multi:', "config['live_trade_daily_refill_tables'] = 'stock_1min...fund_hourly'")
     qt.configure(
             mode=0,
             time_zone='Asia/Shanghai',
@@ -110,6 +111,10 @@ if __name__ == '__main__':
             live_trade_broker_type='simulator',
             live_trade_ui_type=args.ui,
             watched_price_refresh_interval=5,
+            live_trade_daily_refill_tables='stock_1min, stock_5min, stock_15min, stock_30min, stock_hourly, '
+                                           'index_1min, index_5min, index_15min, index_30min, index_hourly, '
+                                           'fund_1min, fund_5min, fund_15min, fund_30min, fund_hourly',
+            live_trade_weekly_refill_tables='stock_daily, index_daily, fund_daily',
     )
 
     op.run()

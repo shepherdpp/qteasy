@@ -922,6 +922,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
             )
             total_written += rows_affected
 
+        time_elapsed = time.time() - st
         strftime_elapsed = sec_to_duration(
                 time_elapsed,
                 estimation=True,
@@ -2124,6 +2125,7 @@ def run(operator, **kwargs):
             msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
                   f'please set asset_type="E" with: qt.configure(asset_type="E")'
             raise ValueError(msg)
+
         start_trader_ui(
                 operator=operator,
                 account_id=config['live_trade_account_id'],
