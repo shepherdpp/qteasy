@@ -206,13 +206,13 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     monthly_refill_tables = config['live_trade_monthly_refill_tables']
 
     if daily_refill_tables and is_trade_day:
-        task_agenda.append((data_source_refilling_time, 'refill', (daily_refill_tables, 1)))
+        task_agenda.append((data_source_refilling_time, 'refill', daily_refill_tables, 1))
 
     if today.weekday() == 0 and weekly_refill_tables:
-        task_agenda.append((data_source_refilling_time, 'refill', (weekly_refill_tables, 7)))
+        task_agenda.append((data_source_refilling_time, 'refill', weekly_refill_tables, 7))
 
     if today.day == 1 and monthly_refill_tables:
-        task_agenda.append((data_source_refilling_time, 'refill', (monthly_refill_tables, 31)))
+        task_agenda.append((data_source_refilling_time, 'refill', monthly_refill_tables, 31))
 
     # 对任务日程进行排序 （其实排序并不一定需要）
     task_agenda.sort(key=lambda x: x[0])

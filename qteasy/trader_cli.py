@@ -374,8 +374,8 @@ class TraderShell(Cmd):
                            usage='schedule [-h]'),
         'run':        dict(prog='', description='Run strategies manually',
                            usage='run [STRATEGY [STRATEGY ...]] [-h] '
-                                 '[--task {none,stop,sleep,pause,process_result,'
-                                 'pre_open,open_market,close_market,acquire_live_price}] '
+                                 '[--task {process_result,pre_open,open_market,'
+                                 'close_market,post_close,refill}] '
                                  '[--args [ARGS [ARGS ...]]]'),
     }
 
@@ -587,9 +587,8 @@ class TraderShell(Cmd):
                         'help':   'strategies to run'},
                        {'action':  'store',
                         'default': '',
-                        'choices': ['none', 'stop', 'sleep', 'pause', 'resume',
-                                    'run_strategy', 'process_result', 'pre_open',
-                                    'open_market', 'close_market', 'acquire_live_price'],
+                        'choices': ['process_result', 'pre_open',
+                                    'open_market', 'close_market', 'post_close', 'refill'],
                         'help':    'task to run'},
                        {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                         'nargs':  '*',
@@ -2093,8 +2092,7 @@ class TraderShell(Cmd):
 
     def do_run(self, arg):
         """usage: run [STRATEGY [STRATEGY ...]] [-h]
-                [--task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,
-                acquire_live_price}]
+                [--task {process_result,pre_open,post_close,refill}]
                 [--args [ARGS [ARGS ...]]]
 
         Run strategies manually
@@ -2104,9 +2102,8 @@ class TraderShell(Cmd):
 
         optional arguments:
           -h, --help            show this help message and exit
-          --task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,
-          acquire_live_price}, -t {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,
-          close_market,acquire_live_price}
+          --task {process_result,pre_open,post_close,refill},
+          -t {process_result,pre_open,post_close,refill}
                                 task to run
           --args [ARGS [ARGS ...]], -a [ARGS [ARGS ...]]
                                 arguments for the task to run
@@ -2164,7 +2161,7 @@ class TraderShell(Cmd):
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
-            if task not in ['stop', 'sleep', 'pause', 'process_result', 'pre_open']:
+            if task not in ['process_result', 'pre_open', 'post_close', 'refill']:
                 print(f'Invalid task name: {task}, please input a valid task name.')
                 return False
             try:

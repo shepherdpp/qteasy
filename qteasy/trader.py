@@ -2072,7 +2072,7 @@ class Trader(object):
         self.run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
-    def _refill(self, tables: str, duration:int = 1) -> None:
+    def _refill(self, tables: str, duration: int = 1) -> None:
         """ 补充数据库内的历史数据
         通过tables指定需要更新的数据表名称
 
@@ -2088,6 +2088,14 @@ class Trader(object):
         None
         """
         self.send_message('running task: refill, this task will be done only during sleeping', debug=True)
+
+        try:
+            duration = int(duration)
+        except Exception as e:
+            self.send_message(f'Error occurred when trying to convert duration to integer: {e}'
+                              f'Invalid duration: {duration}, will use default duration=1',
+                              debug=True)
+            duration = 1
 
         end_date = self.get_current_tz_datetime().date()
         start_date = end_date - pd.Timedelta(days=duration)

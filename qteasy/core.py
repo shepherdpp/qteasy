@@ -865,7 +865,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         total = len(arg_list)
         total_written = 0
         st = time.time()
-        time_elapsed = 0
         df_concat_list = []
 
         progress_bar(0, total, comments=f'<{table}> estimating time left...')
@@ -903,7 +902,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         short_form=False
                 )
                 progress_bar(completed, total,
-                             comments=f'<{table}>time left:{time_remain}',
+                             comments=f'<{table}> time left: {time_remain}',
                              column_width=120,
                              cut_off_pos=1.0,
                              )
@@ -926,7 +925,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         strftime_elapsed = sec_to_duration(
                 time_elapsed,
                 estimation=True,
-                short_form=True
+                short_form=False,
         )
 
         progress_bar(total, total,
