@@ -144,7 +144,7 @@ class DataSource:
                         password=password,
                         database=db_name,
                 )
-                self.connection_type = f'db:mysql://{host}@{port}/{db_name}'
+                self.connection_type = f'mysql://{host}@{port}/{db_name}'
                 self.host = host
                 self.port = port
                 self.db_name = db_name
@@ -289,7 +289,20 @@ class DataSource:
         Returns
         -------
         """
-        raise NotImplementedError
+        if self.source_type == 'file':
+            print(f'DataSource Info: \n'
+                  f'{"=" * 40}\n'
+                  f'{"Source Type":<20}: {self.source_type}\n'
+                  f'{"File Type":<20}: {self.file_type}\n'
+                  f'{"File Location":<20}: {self.file_loc}\n')
+        elif self.source_type == 'db':
+            print(f'DataSource Info: \n'
+                  f'{"=" * 40}\n'
+                  f'{"Source Type":<20}: {self.source_type}\n'
+                  f'{"Host":<20}: {self.host}\n'
+                  f'{"Port":<20}: {self.port}\n'
+                  f'{"User":<20}: {self.__user__}\n'
+                  f'{"Database":<20}: {self.db_name}\n')
 
     def overview(self, tables=None, print_out=True, include_sys_tables=False) -> pd.DataFrame:
         """ 以表格形式列出所有数据表的当前数据状态

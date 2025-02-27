@@ -24,23 +24,23 @@ class TestSpace(unittest.TestCase):
         """
         # first group of inputs, output Space with two discr axis from [0,10]
         print('testing space objects\n')
-        # pars_list = [[(0, 10), (0, 10)],
-        #              [[0, 10], [0, 10]]]
-        #
-        # types_list = ['int',
-        #               ['int', 'int']]
-        #
-        # input_pars = itertools.product(pars_list, types_list)
-        # for p in input_pars:
-        #     # print(p)
-        #     s = qt.Space(*p)
-        #     b = s.boes
-        #     t = s.types
-        #     # print(s, t)
-        #     self.assertIsInstance(s, qt.Space)
-        #     self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-        #     self.assertEqual(t, ['int', 'int'], 'types incorrect')
-        #
+        pars_list = [[(0, 10), (0, 10)],
+                     [[0, 10], [0, 10]]]
+
+        types_list = ['int',
+                      ['int', 'int']]
+
+        input_pars = itertools.product(pars_list, types_list)
+        for p in input_pars:
+            print(p)
+            s = Space(*p)
+            b = s.boes
+            t = s.types
+            print(s, t)
+            self.assertIsInstance(s, Space)
+            self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
+            self.assertEqual(t, ['int', 'int'], 'types incorrect')
+
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
 
@@ -117,6 +117,31 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.shape, (3, 3, 3))
         self.assertEqual(s.count, 27)
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
+
+        print('testing space_around_centre')
+        pars_list = [(0, 10), (0, 10)]
+        s = Space(pars=pars_list, par_types=None)
+        centre = (5, 5)
+        distance = 2
+        s2 = space_around_centre(s, centre, distance)
+        self.assertEqual(s2.types, ['int', 'int'])
+        self.assertEqual(s2.dim, 2)
+        self.assertEqual(s2.size, (5, 5))
+        self.assertEqual(s2.shape, (5, 5))
+        self.assertEqual(s2.count, 25)
+        self.assertEqual(s2.boes, [(3, 7), (3, 7)])
+
+        pars_space = [(0., 10.), (0, 10), (0., 10.)]
+        s = Space(pars=pars_space, par_types=None)
+        centre = (5, 5, 5)
+        distance = 2
+        s2 = space_around_centre(s, centre, distance)
+        self.assertEqual(s2.types, ['float', 'int', 'float'])
+        self.assertEqual(s2.dim, 3)
+        self.assertEqual(s2.size, (4.0, 5, 4.0))
+        self.assertEqual(s2.shape, (np.inf, 5, np.inf))
+        self.assertEqual(s2.count, np.inf)
+        self.assertEqual(s2.boes, [(3, 7), (3, 7), (3, 7)])
 
     def test_extract(self):
         """
