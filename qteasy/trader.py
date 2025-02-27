@@ -2187,7 +2187,51 @@ class Trader(object):
         *args: tuple
             任务参数
         """
-        raise NotImplementedError
+
+        available_tasks = {
+            'pre_open':           self._pre_open,
+            'open_market':        self._market_open,
+            'close_market':       self._market_close,
+            'post_close':         self._post_close,
+            'run_strategy':       self._run_strategy,
+            'process_result':     self._process_result,
+            'acquire_live_price': self._update_live_price,
+            'change_date':        self._change_date,
+            'start':              self._start,
+            'stop':               self._stop,
+            'sleep':              self._sleep,
+            'wakeup':             self._wakeup,
+            'pause':              self._pause,
+            'resume':             self._resume,
+            'refill':             self._refill,
+        }
+
+        if task is None:
+            return
+        if not isinstance(task, str):
+            err = ValueError(f'task must be a string, got {type(task)} instead.')
+            raise err
+
+        if task not in available_tasks.keys():
+            err = ValueError(f'Invalid task name: {task}')
+            raise err
+
+        task_func = available_tasks[task]
+
+        async_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
+
+        if task not in async_tasks:
+            err = ValueError(f'Invalid task name: {task}, only the following tasks can be run asynchronously: '
+                             f'{async_tasks}')
+            raise err
+
+        from threading import Thread
+        if args:
+            t = Thread(target=task_func, args=args, daemon=True)
+        else:
+            t = Thread(target=task_func, daemon=True)
+        self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
+        t.start()
 
     # =============== internal methods =================
 

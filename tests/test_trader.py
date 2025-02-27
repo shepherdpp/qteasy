@@ -1180,7 +1180,7 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         # run task refill data
-        ts.run_task('refill', 'stock_1min', 1)
+        ts.run_task('refill', 'stock_daily', 1, 'tushare')
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
