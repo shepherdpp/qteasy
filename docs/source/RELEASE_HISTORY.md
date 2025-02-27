@@ -1,5 +1,13 @@
 # RELEASE HISTORY
 
+## 1.4.7 (2025-02-26)
+New features:
+- Added configuration settings: `live_trade_daily_refill_tables`, `live_trade_weekly_refill_tables`, `live_trade_monthly_refill_tables`, to allow users to set up tables to be refilled in live trade mode
+Fixed bugs:
+- Sometimes the configure settings might be overwritten unexpectedly in trading mode
+- `DataSource.all_basic_tables` will not return correct tables in some cases
+- CLI command `schedule` fails to print out current scheduled tasks in trader shell
+
 ## 1.4.6 (2025-02-19)
 - Improved function `qt.refill_data_source()`, now it will skip the tables that are not available from current channel and provide a warning message
 - Fixed a bug that will sometimes result in duplicated data being refilled from channels while running `qt.refill_data_source()`

@@ -189,6 +189,15 @@ def _valid_qt_kwargs():
                           'tushare  - 通过tushare获取实时价格(需要自行开通权限)\n'
                           'akshare  - Not Implemented: 从akshare获取实时价格'},
 
+        'live_trade_data_refill_channel':
+            {'Default':   'eastmoney',
+             'Validator': lambda value: isinstance(value, str) and value in ['eastmoney', 'tushare', 'akshare'],
+             'level':     4,
+             'text':      '实盘交易时每天完成自动数据抓取的数据表的网络渠道:\n'
+                          'eastmoney - 通过东方财富网获取数据表\n'
+                          'tushare  - 通过tushare获取数据表\n'
+                          'akshare  - Not Implemented: 从akshare获取数据表'},
+
         'live_price_acquire_freq':
             {'Default':   '15MIN',
              'Validator': lambda value: isinstance(value, str) and value.upper() in
@@ -200,6 +209,39 @@ def _valid_qt_kwargs():
                           '15MIN  - 每15分钟获取一次数据\n'
                           '5MIN   - 每5分钟获取一次数据\n'
                           '1MIN   - 每1分钟获取一次数据'},
+
+        'live_trade_daily_refill_tables':
+            {'Default':   '',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      '实盘交易时每天完成自动数据抓取的数据表名称或类型，\n'
+                          '每交易日收盘后将自动更新这些数据表，更新的范围为当前工作日的数据\n'
+                          '可以给出数据表的名称，如果需要更新多个数据表，可以用逗号分隔，例如：\n'
+                          '"stock_daily, index_daily"，如果不需要自动更新数据表，可以留空\n'
+                          '也可以给出数据表的用途，以下载所有相同用途的数据表，例如：\n'
+                          '"events"，这样会下载所有事件数据表'},
+
+        'live_trade_weekly_refill_tables':
+            {'Default':   '',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      '实盘交易时每周末完成自动数据抓取的数据表名称或类型，\n'
+                          '每周末将自动更新这些数据表，更新的范围为本周的数据，即从本周一到周日\n'
+                          '可以给出数据表的名称，如果需要更新多个数据表，可以用逗号分隔，例如：\n'
+                          '"stock_daily, index_daily"，如果不需要自动更新数据表，可以留空\n'
+                          '也可以给出数据表的用途，以下载所有相同用途的数据表，例如：\n'
+                          '"events"，这样会下载所有事件数据表'},
+
+        'live_trade_monthly_refill_tables':
+            {'Default':   '',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      '实盘交易时每月底完成自动数据抓取的数据表名称或类型，\n'
+                          '每月底将自动更新这些数据表，更新的范围为本月的数据，即从本月1日到31日\n'
+                          '可以给出数据表的名称，如果需要更新多个数据表，可以用逗号分隔，例如：\n'
+                          '"stock_daily, index_daily"，如果不需要自动更新数据表，可以留空\n'
+                          '也可以给出数据表的用途，以下载所有相同用途的数据表，例如：\n'
+                          '"events"，这样会下载所有事件数据表'},
 
         'watched_price_refresh_interval':
             {'Default':   5,

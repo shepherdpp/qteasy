@@ -60,6 +60,9 @@ class TestTrader(unittest.TestCase):
             'allow_sell_short':     False,
             'invest_start':         '2018-01-01',
             'opti_start':           '2018-01-01',
+            'live_trade_daily_refill_tables':    'stock_1min',
+            'live_trade_weekly_refill_tables':   'stock_15min',
+            'live_trade_monthly_refill_tables':  'stock_daily',
         }
         # 创建测试数据源
         data_test_dir = '../qteasy/data_test/'
@@ -149,7 +152,7 @@ class TestTrader(unittest.TestCase):
                 account_id=1,
                 operator=operator,
                 broker=broker,
-                config=config,
+                config=config.copy(),
                 datasource=test_ds,
                 debug=False,
         )
@@ -1176,6 +1179,12 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
+        # run task refill data
+        ts.run_task('refill', 'stock_1min', 1)
+        time.sleep(self.stoppage)
+        self.assertEqual(ts.status, 'sleeping')
+        self.assertEqual(ts.broker.status, 'init')
+
         ts._stop()
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'stopped')
