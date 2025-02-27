@@ -2072,7 +2072,7 @@ class Trader(object):
         self.run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
-    def _refill(self, tables: str, duration: int = 1) -> None:
+    def _refill(self, tables: str, duration: int = 1, channel=None) -> None:
         """ 补充数据库内的历史数据
         通过tables指定需要更新的数据表名称
 
@@ -2099,7 +2099,10 @@ class Trader(object):
 
         end_date = self.get_current_tz_datetime().date()
         start_date = end_date - pd.Timedelta(days=duration)
-        channel = self.config['live_trade_data_refill_channel']
+        if channel is None:
+            channel = self.config['live_trade_data_refill_channel']
+        else:
+            channel = channel
 
         refill_data_source(
                 tables=tables,
