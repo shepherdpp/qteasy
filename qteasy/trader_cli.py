@@ -2220,7 +2220,7 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', strategies, run_in_main_thread=True)
+                self.trader.run_task('run_strategy', *strategies, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')

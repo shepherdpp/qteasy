@@ -414,7 +414,7 @@ class Trader(object):
         return self._config[key]
 
     def get_schedule_string(self, rich_form=True) -> str:
-        """ 返回当前的任务日程字符串
+        """ 返回当前的任务日程，以DataFrame.to_string()的形式返回
 
         Parameters
         ----------
@@ -492,7 +492,7 @@ class Trader(object):
                         continue
                     try:
                         if args:
-                            self.run_task(task_name, args)
+                            self.run_task(task_name, *args)
                         else:
                             self.run_task(task_name)
                     except Exception as e:
@@ -1692,7 +1692,7 @@ class Trader(object):
         msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
         self.send_message(message=msg)
 
-    def _run_strategy(self, strategy_ids=None) -> int:
+    def _run_strategy(self, *strategy_ids) -> int:
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
@@ -1712,7 +1712,6 @@ class Trader(object):
             提交的交易订单数量
         """
 
-        # TODO: 这里应该可以允许用户输入blender，从而灵活地测试不同交易策略的组合和混合方式
         self.send_message(f'running task run strategy: {strategy_ids}', debug=True)
         operator = self._operator
         signal_type = operator.signal_type
@@ -1777,7 +1776,7 @@ class Trader(object):
                 hist_data=hist_op,
                 reference_data=hist_ref,
                 live_mode=True,
-                live_running_stgs=strategy_ids
+                live_running_stgs=list(strategy_ids)
         )
 
         # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
@@ -2118,7 +2117,6 @@ class Trader(object):
     # ================ task operations =================
     def run_task(self, task, *args, run_in_main_thread=False) -> None:
         """ 运行任务
-        TODO: 增加run_async_task()函数以异步方式执行任务，此函数仅保留同步执行任务的功能
 
         Parameters
         ----------
@@ -2343,8 +2341,9 @@ class Trader(object):
             return
 
         self.task_daily_schedule = create_daily_task_schedule(
-                self.operator,
-                self._config
+                operator=self.operator,
+                config=self._config,
+                is_trade_day=self.is_trade_day,
         )
         self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}',
                           debug=True)

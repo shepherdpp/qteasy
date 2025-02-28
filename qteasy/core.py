@@ -755,7 +755,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
     print(f'Filling data source {data_source} ...')
-
     if download_batch_interval is None:
         download_batch_interval = QT_CONFIG.hist_dnld_delay
     if download_batch_size is None:
