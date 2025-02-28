@@ -173,7 +173,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/data_test/')
         self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/data_test/')
         self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/data_test/')
-        self.assertEqual(self.ds_db.__str__(), f'db:mysql://{host}@{port}/test_db')
+        self.assertEqual(self.ds_db.__str__(), f'mysql://{host}@{port}/test_db')
 
         self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'data_test/')")
         self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'data_test/')")
@@ -241,7 +241,7 @@ class TestDataSource(unittest.TestCase):
         host = self.ds_db.host
         port = self.ds_db.port
         self.assertIsInstance(self.ds_db, DataSource)
-        self.assertEqual(self.ds_db.connection_type, f'db:mysql://{host}@{port}/test_db')
+        self.assertEqual(self.ds_db.connection_type, f'mysql://{host}@{port}/test_db')
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)

@@ -1,5 +1,12 @@
 # RELEASE HISTORY
 
+## 1.4.8 (2025-03-01)
+New features:
+- Added a new CLI command in trader CLI: `refill`, to manually refill datasource tables in trader CLI
+- Allowed users to manually refill datasource table with trader CLI command `run` with parameter `--task refill`
+Bug fixes:
+- Fixed a bug that will lead to failure of automatic datasource refilling in trader
+
 ## 1.4.7 (2025-02-26)
 New features:
 - Added configuration settings: `live_trade_daily_refill_tables`, `live_trade_weekly_refill_tables`, `live_trade_monthly_refill_tables`, to allow users to set up tables to be refilled in live trade mode
@@ -20,14 +27,14 @@ Fixed bugs:
 - Fixed bugs: 
   - Simulator broker and Trader module in live trade mode might fail to fetch real time price data in some cases
   - Sometimes the historical data extracted from datasource are not re-indexed to exactly matching the stock market open time.
-  - Corrected the data formats and errors donwloaded from channel 'eastmoney', improved error handling and stability
+  - Corrected the data formats and errors downloaded from channel `eastmoney`, improved error handling and stability
 
 ## 1.4.3 (2025-02-11)
-- Fixed a bug: Trader might fail to acqurie live prices from correct channel and may fail to save the prices to datasource due to channel updates
+- Fixed a bug: Trader might fail to acquire live prices from correct channel and may fail to save the prices to datasource due to channel updates
 - Improved `refill_data_source()`: added an optional parameter: `refill_dependent_tabes: bool = True`, to give user control if dependent tables are downloaded
 
 ## 1.4.2 (2025-02-07)
-- Added dbutil as mandatory dependency, and moved pymysql also as mandatory, removed optional dependencies as database
+- Added `dbutil` as mandatory dependency, and moved `pymysql` also as mandatory, removed optional dependencies as database
 - Fixed a bug: warnings showing missing of some dependencies are not properly displayed.
 
 ## 1.4.1 (2025-02-06)

@@ -31,6 +31,7 @@ from qteasy.trading_util import get_symbol_names
 from qteasy.utilfuncs import (
     adjust_string_length,
     sec_to_duration,
+    list_to_str_format,
 )
 
 
@@ -372,10 +373,13 @@ class TraderShell(Cmd):
                                  '[--timing TIMING]'),
         'schedule':   dict(prog='', description='Show trade agenda',
                            usage='schedule [-h]'),
+        'refill':     dict(prog='', description='Refill data to datasource',
+                           usage='usage: refill TABLE [TABLE ...] [-h] '
+                                 '[--coverage -c COVERAGE] [--channel -ch CHANNEL]'),
         'run':        dict(prog='', description='Run strategies manually',
                            usage='run [STRATEGY [STRATEGY ...]] [-h] '
-                                 '[--task {none,stop,sleep,pause,process_result,'
-                                 'pre_open,open_market,close_market,acquire_live_price}] '
+                                 '[--task {process_result,pre_open,open_market,'
+                                 'close_market,post_close,refill}] '
                                  '[--args [ARGS [ARGS ...]]]'),
     }
 
@@ -431,6 +435,9 @@ class TraderShell(Cmd):
                        ('--blender', '-b'),
                        ('--timing', '-t')],
         'schedule':   [],
+        'refill':     [('tables',),
+                       ('--coverage', '-c'),
+                       ('--channel', '-ch')],
         'run':        [('strategy',),
                        ('--task', '-t'),
                        ('--args', '-a')],
@@ -582,14 +589,24 @@ class TraderShell(Cmd):
                         'default': '',
                         'help':    'The strategy run timing of the strategies whose blender is set'}],
         'schedule':   [],
+        'refill':     [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
+                        'nargs':  '+',  # nargs='+' will require at least one argument
+                        'help':   'table to refill data for'},
+                       {'action':  'store',
+                        'default': 1,
+                        'type':    int,
+                        'help':    'days of data to cover'},
+                       {'action':  'store',
+                        'default': 'eastmoney',
+                        'choices': ['eastmoney', 'tushare', 'akshare'],
+                        'help':    'channel to fetch data from'}],
         'run':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                         'nargs':  '*',
                         'help':   'strategies to run'},
                        {'action':  'store',
                         'default': '',
-                        'choices': ['none', 'stop', 'sleep', 'pause', 'resume',
-                                    'run_strategy', 'process_result', 'pre_open',
-                                    'open_market', 'close_market', 'acquire_live_price'],
+                        'choices': ['process_result', 'pre_open',
+                                    'open_market', 'close_market', 'post_close', 'refill'],
                         'help':    'task to run'},
                        {'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                         'nargs':  '*',
@@ -2091,22 +2108,71 @@ class TraderShell(Cmd):
         schedule_string = self.trader.get_schedule_string()
         print(f'{schedule_string}')
 
+    def do_refill(self, arg):
+        """ usage: refill TABLE [TABLE ...] [-h]
+                 [--coverage -c COVERAGE] [--channel -ch CHANNEL]
+
+        Manual refill data tables in the datasource, multiple tables can be refilled at the same time.
+
+        positional arguments:
+          table                 tables to refill
+
+        optional arguments:
+            -h, --help            show this help message and exit
+            --coverage COVERAGE, -c COVERAGE
+                                    coverage of days to refill, default to 1
+            --channel CHANNEL, -ch CHANNEL{eastmoney, tushare, akshare}
+                                    data source to refill, default to eastmoney
+
+        Examples:
+        ---------
+        to refill table "stock_basic":
+        (QTEASY): refill stock_basic
+        to refill tables "stock_daily" and "stock_hourly" covering 3 days:
+        (QTEASY): refill stock_daily stock_hourly -c 3
+        to refill table "stock_daily" using tushare:
+        (QTEASY): refill stock_daily -ch tushare
+        """
+
+        args = self.parse_args('refill', arg)
+        if not args:
+            return False
+
+        tables = [table for table_list in args.tables for table in table_list] if args.tables else []
+        coverage = args.coverage
+        channel = args.channel
+
+        if not tables:
+            print('Please input a valid table name to refill.')
+            return False
+
+        if coverage < 0:
+            print('Coverage must be a positive integer, please check your input.')
+            return False
+
+        if channel not in ['eastmoney', 'tushare', 'akshare']:
+            print(f'Invalid data source: {channel}, please input a valid data source.')
+            return False
+
+        # make tables back to comma-separated string
+        tables = list_to_str_format(tables)
+        self.trader.run_task('refill', tables, coverage, channel)
+        return False
+
     def do_run(self, arg):
         """usage: run [STRATEGY [STRATEGY ...]] [-h]
-                [--task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,
-                acquire_live_price}]
+                [--task {process_result,pre_open,post_close,refill}]
                 [--args [ARGS [ARGS ...]]]
 
-        Run strategies manually
+        Run strategies or tasks manually. If run refill task, only one table can be refilled at a time.
 
         positional arguments:
           strategy              strategies to run
 
         optional arguments:
           -h, --help            show this help message and exit
-          --task {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,close_market,
-          acquire_live_price}, -t {none,stop,sleep,pause,run_strategy,process_result,pre_open,open_market,
-          close_market,acquire_live_price}
+          --task {process_result,pre_open,post_close,refill},
+          -t {process_result,pre_open,post_close,refill}
                                 task to run
           --args [ARGS [ARGS ...]], -a [ARGS [ARGS ...]]
                                 arguments for the task to run
@@ -2154,7 +2220,7 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', strategies, run_in_main_thread=True)
+                self.trader.run_task('run_strategy', *strategies, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
@@ -2164,7 +2230,7 @@ class TraderShell(Cmd):
             self.trader.status = current_trader_status
             self.trader.broker.status = current_broker_status
         else:  # run tasks
-            if task not in ['stop', 'sleep', 'pause', 'process_result', 'pre_open']:
+            if task not in ['process_result', 'pre_open', 'post_close', 'refill']:
                 print(f'Invalid task name: {task}, please input a valid task name.')
                 return False
             try:

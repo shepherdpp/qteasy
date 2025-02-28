@@ -414,7 +414,7 @@ class Trader(object):
         return self._config[key]
 
     def get_schedule_string(self, rich_form=True) -> str:
-        """ 返回当前的任务日程字符串
+        """ 返回当前的任务日程，以DataFrame.to_string()的形式返回
 
         Parameters
         ----------
@@ -492,7 +492,7 @@ class Trader(object):
                         continue
                     try:
                         if args:
-                            self.run_task(task_name, args)
+                            self.run_task(task_name, *args)
                         else:
                             self.run_task(task_name)
                     except Exception as e:
@@ -735,13 +735,12 @@ class Trader(object):
 
     def add_task(self, task, kwargs=None) -> None:
         """ 添加任务到任务队列
-        TODO: 应该允许用户添加AsyncTask到任务队列，以便以异步方式执行任务
 
         Parameters
         ----------
         task: str
             任务名称
-        **kwargs: dict
+        kwargs: dict
             任务参数
         """
         if not isinstance(task, str):
@@ -752,7 +751,7 @@ class Trader(object):
             raise err
 
         if kwargs:
-            task = (task, kwargs)
+            task = (task, (kwargs, ))
         self.send_message(f'adding task: {task}', debug=True)
         self._add_task_to_queue(task)
 
@@ -1692,7 +1691,7 @@ class Trader(object):
         msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
         self.send_message(message=msg)
 
-    def _run_strategy(self, strategy_ids=None) -> int:
+    def _run_strategy(self, *strategy_ids) -> int:
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
@@ -1712,7 +1711,6 @@ class Trader(object):
             提交的交易订单数量
         """
 
-        # TODO: 这里应该可以允许用户输入blender，从而灵活地测试不同交易策略的组合和混合方式
         self.send_message(f'running task run strategy: {strategy_ids}', debug=True)
         operator = self._operator
         signal_type = operator.signal_type
@@ -1777,7 +1775,7 @@ class Trader(object):
                 hist_data=hist_op,
                 reference_data=hist_ref,
                 live_mode=True,
-                live_running_stgs=strategy_ids
+                live_running_stgs=list(strategy_ids)
         )
 
         # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
@@ -2072,7 +2070,7 @@ class Trader(object):
         self.run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
-    def _refill(self, tables: str, duration:int = 1) -> None:
+    def _refill(self, tables: str, duration: int = 1, channel=None) -> None:
         """ 补充数据库内的历史数据
         通过tables指定需要更新的数据表名称
 
@@ -2089,9 +2087,20 @@ class Trader(object):
         """
         self.send_message('running task: refill, this task will be done only during sleeping', debug=True)
 
+        try:
+            duration = int(duration)
+        except Exception as e:
+            self.send_message(f'Error occurred when trying to convert duration to integer: {e}'
+                              f'Invalid duration: {duration}, will use default duration=1',
+                              debug=True)
+            duration = 1
+
         end_date = self.get_current_tz_datetime().date()
         start_date = end_date - pd.Timedelta(days=duration)
-        channel = self.config['live_trade_data_refill_channel']
+        if channel is None:
+            channel = self.config['live_trade_data_refill_channel']
+        else:
+            channel = channel
 
         refill_data_source(
                 tables=tables,
@@ -2107,7 +2116,6 @@ class Trader(object):
     # ================ task operations =================
     def run_task(self, task, *args, run_in_main_thread=False) -> None:
         """ 运行任务
-        TODO: 增加run_async_task()函数以异步方式执行任务，此函数仅保留同步执行任务的功能
 
         Parameters
         ----------
@@ -2176,7 +2184,51 @@ class Trader(object):
         *args: tuple
             任务参数
         """
-        raise NotImplementedError
+
+        available_tasks = {
+            'pre_open':           self._pre_open,
+            'open_market':        self._market_open,
+            'close_market':       self._market_close,
+            'post_close':         self._post_close,
+            'run_strategy':       self._run_strategy,
+            'process_result':     self._process_result,
+            'acquire_live_price': self._update_live_price,
+            'change_date':        self._change_date,
+            'start':              self._start,
+            'stop':               self._stop,
+            'sleep':              self._sleep,
+            'wakeup':             self._wakeup,
+            'pause':              self._pause,
+            'resume':             self._resume,
+            'refill':             self._refill,
+        }
+
+        if task is None:
+            return
+        if not isinstance(task, str):
+            err = ValueError(f'task must be a string, got {type(task)} instead.')
+            raise err
+
+        if task not in available_tasks.keys():
+            err = ValueError(f'Invalid task name: {task}')
+            raise err
+
+        task_func = available_tasks[task]
+
+        async_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
+
+        if task not in async_tasks:
+            err = ValueError(f'Invalid task name: {task}, only the following tasks can be run asynchronously: '
+                             f'{async_tasks}')
+            raise err
+
+        from threading import Thread
+        if args:
+            t = Thread(target=task_func, args=args, daemon=True)
+        else:
+            t = Thread(target=task_func, daemon=True)
+        self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
+        t.start()
 
     # =============== internal methods =================
 
@@ -2288,8 +2340,9 @@ class Trader(object):
             return
 
         self.task_daily_schedule = create_daily_task_schedule(
-                self.operator,
-                self._config
+                operator=self.operator,
+                config=self._config,
+                is_trade_day=self.is_trade_day,
         )
         self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}',
                           debug=True)

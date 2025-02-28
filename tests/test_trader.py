@@ -60,7 +60,7 @@ class TestTrader(unittest.TestCase):
             'allow_sell_short':     False,
             'invest_start':         '2018-01-01',
             'opti_start':           '2018-01-01',
-            'live_trade_daily_refill_tables':    'stock_1min',
+            'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
             'live_trade_weekly_refill_tables':   'stock_15min',
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
@@ -1175,12 +1175,16 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts.run_task('run_strategy', ['macd', 'dma'])
+        ts.run_task('run_strategy', *['macd', 'dma'])
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         # run task refill data
-        ts.run_task('refill', 'stock_1min', 1)
+        ts.run_task('refill', *('stock_daily', 1, 'tushare'))
+        time.sleep(self.stoppage)
+        self.assertEqual(ts.status, 'sleeping')
+        self.assertEqual(ts.broker.status, 'init')
+        ts.run_task('refill', *('index_daily', 1))
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
@@ -1218,12 +1222,12 @@ class TestTrader(unittest.TestCase):
         ts._initialize_schedule(sim_time)
         ts._add_task_from_schedule(sim_time)
 
-        print('\n========generated task agenda in a non-trade day========\n')
+        print('\n========generated task schedule in a non-trade day========\n')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         print(f'is_trade_day: {ts.is_trade_day}')
-        print(f'task daily agenda: {ts.task_daily_schedule}')
-        self.assertEqual(ts.status, 'sleeping')
+        print(f'task daily schedule: {ts.task_daily_schedule}')
+        self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'init')
         self.assertEqual(ts.is_trade_day, ts.is_trade_day)
         self.assertEqual(ts.task_daily_schedule, [])
@@ -1239,18 +1243,18 @@ class TestTrader(unittest.TestCase):
         target_agenda = [
             ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
-            ('09:31:00', 'run_strategy', ['macd']),
+            ('09:31:00', 'run_strategy', ['macd', 'dma']),
             ('09:45:05', 'acquire_live_price'),
-            ('10:00:00', 'run_strategy', ['macd', 'dma']),
+            ('10:00:00', 'run_strategy', ['macd']),
             ('10:00:05', 'acquire_live_price'),
             ('10:15:05', 'acquire_live_price'),
-            ('10:30:00', 'run_strategy', ['macd']),
+            ('10:30:00', 'run_strategy', ['macd', 'dma']),
             ('10:30:05', 'acquire_live_price'),
             ('10:45:05', 'acquire_live_price'),
-            ('11:00:00', 'run_strategy', ['macd', 'dma']),
+            ('11:00:00', 'run_strategy', ['macd']),
             ('11:00:05', 'acquire_live_price'),
             ('11:15:05', 'acquire_live_price'),
-            ('11:30:00', 'run_strategy', ['macd']),
+            ('11:30:00', 'run_strategy', ['macd', 'dma']),
             ('11:30:05', 'acquire_live_price'),
             ('11:35:00', 'close_market'),
             ('12:55:00', 'open_market'),
@@ -1272,8 +1276,12 @@ class TestTrader(unittest.TestCase):
             ('15:30:00', 'close_market'),
             ('15:30:05', 'acquire_live_price'),
             ('15:45:00', 'post_close'),
+            ('16:00:00', 'refill', ('stock_1min', 1)),
         ]
         self.assertEqual(ts.task_daily_schedule, target_agenda)
+        schedule_string = ts.get_schedule_string()
+        print(schedule_string)
+        self.assertEqual(schedule_string[-20:], 'ill  (stock_1min, 1)')
         # re_initialize_agenda at 10:35:27
         sim_time = dt.time(10, 35, 27)
         ts.task_daily_schedule = []
@@ -1284,10 +1292,10 @@ class TestTrader(unittest.TestCase):
             ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
             ('10:45:05', 'acquire_live_price'),
-            ('11:00:00', 'run_strategy', ['macd', 'dma']),
+            ('11:00:00', 'run_strategy', ['macd']),
             ('11:00:05', 'acquire_live_price'),
             ('11:15:05', 'acquire_live_price'),
-            ('11:30:00', 'run_strategy', ['macd']),
+            ('11:30:00', 'run_strategy', ['macd', 'dma']),
             ('11:30:05', 'acquire_live_price'),
             ('11:35:00', 'close_market'),
             ('12:55:00', 'open_market'),
@@ -1309,6 +1317,7 @@ class TestTrader(unittest.TestCase):
             ('15:30:00', 'close_market'),
             ('15:30:05', 'acquire_live_price'),
             ('15:45:00', 'post_close'),
+            ('16:00:00', 'refill', ('stock_1min', 1))
         ]
         self.assertEqual(ts.task_daily_schedule, target_agenda)
         ts.task_queue.empty()  # clear task queue
@@ -1343,6 +1352,7 @@ class TestTrader(unittest.TestCase):
             (current_time + dt.timedelta(minutes=14)).time(),  # should run task run_strategy macd
             (current_time + dt.timedelta(minutes=15)).time(),  # should run task close_market
             (current_time + dt.timedelta(minutes=16)).time(),  # should run task post_close
+            (current_time + dt.timedelta(minutes=17)).time(),  # should run task refill
         ]
         time.sleep(1)  # wait 1 second to avoid the trader generating agenda again
         ts.task_daily_schedule = [
@@ -1353,6 +1363,7 @@ class TestTrader(unittest.TestCase):
             (test_sim_times[4].strftime('%H:%M:%S'), 'run_strategy', ['macd']),
             (test_sim_times[5].strftime('%H:%M:%S'), 'close_market'),
             (test_sim_times[6].strftime('%H:%M:%S'), 'post_close'),
+            (test_sim_times[7].strftime('%H:%M:%S'), 'refill', ('index_1min', 1)),
         ]
         print(f'task agenda manually created: {ts.task_daily_schedule}')
         target_agenda_tasks = [
@@ -1363,6 +1374,7 @@ class TestTrader(unittest.TestCase):
             ('run_strategy', ['macd']),
             ('close_market', ),
             ('post_close', ),
+            ('refill', ('index_1min', 1)),
         ]
         # check all tasks are in the agenda
         for task, agenda_task in zip(target_agenda_tasks, ts.task_daily_schedule):
@@ -1371,9 +1383,15 @@ class TestTrader(unittest.TestCase):
         for sim_time in test_sim_times:
             print(f'\n=========simulating time: {sim_time}=========\n')
             print(f'\n=========current task agenda: {ts.task_daily_schedule[0]}=========\n')
+            task_name = ts.task_daily_schedule[0][1]
             ts._add_task_from_schedule(sim_time)
-            # waite 1 second for orders to be generated
-            time.sleep(2)
+            # waite 2 second for tasks to be executed
+            if task_name == 'refill':
+                # current running refill task will take 200 seconds
+                print('running task refill...')
+                time.sleep(200)
+            else:
+                time.sleep(2)
             print(f'current trader status: {ts.status}')
             print(f'current broker status: {ts.broker.status}')
             print(f'current cash and positions: \n{ts.account_positions}, \n{ts.account_cash}')

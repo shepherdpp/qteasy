@@ -973,7 +973,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertIsNone(tss.do_run('dma'))
         self.assertIsNone(tss.do_run('macd'))
         self.assertIsNone(tss.do_run('dma macd'))
-        self.assertIsNone(tss.do_run('--task pause'))
+        self.assertIsNone(tss.do_run('--task pre_open'))
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_run('-h'))
