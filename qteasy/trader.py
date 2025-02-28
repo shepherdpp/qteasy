@@ -735,13 +735,12 @@ class Trader(object):
 
     def add_task(self, task, kwargs=None) -> None:
         """ 添加任务到任务队列
-        TODO: 应该允许用户添加AsyncTask到任务队列，以便以异步方式执行任务
 
         Parameters
         ----------
         task: str
             任务名称
-        **kwargs: dict
+        kwargs: dict
             任务参数
         """
         if not isinstance(task, str):
@@ -752,7 +751,7 @@ class Trader(object):
             raise err
 
         if kwargs:
-            task = (task, kwargs)
+            task = (task, (kwargs, ))
         self.send_message(f'adding task: {task}', debug=True)
         self._add_task_to_queue(task)
 

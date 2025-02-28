@@ -60,7 +60,7 @@ class TestTrader(unittest.TestCase):
             'allow_sell_short':     False,
             'invest_start':         '2018-01-01',
             'opti_start':           '2018-01-01',
-            'live_trade_daily_refill_tables':    'stock_1min',
+            'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
             'live_trade_weekly_refill_tables':   'stock_15min',
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
@@ -1281,6 +1281,7 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.task_daily_schedule, target_agenda)
         schedule_string = ts.get_schedule_string()
         print(schedule_string)
+        self.assertEqual(schedule_string[-20:], 'ill  (stock_1min, 1)')
         # re_initialize_agenda at 10:35:27
         sim_time = dt.time(10, 35, 27)
         ts.task_daily_schedule = []

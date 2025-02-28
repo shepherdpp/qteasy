@@ -1,6 +1,6 @@
 # RELEASE HISTORY
 
-## 1.4.8 (2025-02-28)
+## 1.4.8 (2025-03-01)
 New features:
 - Added a new CLI command in trader CLI: `refill`, to manually refill datasource tables in trader CLI
 - Allowed users to manually refill datasource table with trader CLI command `run` with parameter `--task refill`

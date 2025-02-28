@@ -1633,7 +1633,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[22], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[23], ('15:30:05', 'acquire_live_price'))
         self.assertEqual(agenda[24], ('15:45:00', 'post_close'))
-        self.assertEqual(agenda[25], ('16:00:00', 'refill', 'stock_1min', 1))
+        self.assertEqual(agenda[25], ('16:00:00', 'refill', ('stock_1min', 1)))
 
         # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
         op = qt.Operator(strategies='macd')
@@ -1648,7 +1648,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'exchange':                          'SSE',
             'strategy_open_close_timing_offset': 1,
             'live_price_acquire_freq':           '15min',
-            'live_trade_daily_refill_tables':    'stock_1min',
+            'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
             'live_trade_weekly_refill_tables':   'stock_15min',
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
@@ -1670,6 +1670,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[27], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[28], ('15:30:05', 'acquire_live_price'))
         self.assertEqual(agenda[29], ('15:45:00', 'post_close'))
+        self.assertEqual(agenda[30], ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)))
 
         # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
         op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
@@ -1719,7 +1720,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[18], ('15:29:00', 'run_strategy', ['rsi']))
         self.assertEqual(agenda[19], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[20], ('15:45:00', 'post_close'))
-        self.assertEqual(agenda[21], ('16:00:00', 'refill', 'stock_1min', 1))
+        self.assertEqual(agenda[21], ('16:00:00', 'refill', ('stock_1min', 1)))
 
     def test_process_trade_orders(self):
         """ test full process of trading:
