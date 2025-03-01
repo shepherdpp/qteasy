@@ -15,11 +15,7 @@ $ pip install qteasy
 
 `qteasy`所有必要的依赖包都可以在`pip`安装的同时安装好，但某些特殊情况下，您需要在安装时指定可选依赖包，以便在安装`qteasy`时同时安装，或者手动安装依赖包：
 
-- **`pymysql`**, 用于连接`MySQL`数据库,将本地数据存储到`MySQL`数据库（`qteasy`默认使用`csv`文件作为本地数据源，但数据量大时推荐使用`mysql`数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
-`pymysql`可以在安装`qteasy`时自动安装，也可以手动安装：
-    ```bash
-    $ pip install 'qteasy[database]'  # 安装qteasy时自动安装pymysql
-    $ pip install pymysql  # 手动安装pymysql
+- **`pymysql`**, 从`v1.4`开始，`pymysql`以及`db-utils`已经成为`qteasy`的默认依赖包，无需额外安装
     ```
 - **`pyarrow`**, 用于操作`feather`文件，将本地数据存储为`feather`文件，`pyarrow`可以在安装`qteasy`时自动安装，也可以手动安装：
     ```bash
@@ -49,7 +45,7 @@ print(qt.__version__)
 
 为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
 
-`qteasy`可以通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请API Token，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
+`qteasy`可以通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请`API Token`，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
 
 因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置。在`QT_ROOT_PATH/qteasy/`路径下打开配置文件`qteasy.cfg`，可以看到下面内容：
 
@@ -438,8 +434,8 @@ qt.run(
         live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
 )
 ```
-如果您希望通过命令行方式在Terminal中启动qteasy并直接开始实盘交易，您可以创建一个脚本文件，并在Terminal中通过命令行启动交易。
-qteasy提供了几个实盘交易脚本文件的示例，您可以在`qteasy`的安装目录下的`examples`文件夹中找到这些脚本文件，并使用下面的命令启动实盘交易：
+如果您希望通过命令行方式在Terminal中启动`qteasy`并直接开始实盘交易，您可以创建一个脚本文件，并在Terminal中通过命令行启动交易。
+`qteasy`提供了几个实盘交易脚本文件的示例，您可以在`qteasy`的安装目录下的`examples`文件夹中找到这些脚本文件，并使用下面的命令启动实盘交易：
 
 ```bash
 (base) $ cd qteasy/examples
@@ -458,4 +454,4 @@ qteasy提供了几个实盘交易脚本文件的示例，您可以在`qteasy`的
 ![png](examples/img/trader_app_light_theme.png) 
 ![png](examples/img/trader_app_2.png) 
 
-上面两种方式都可以在实盘运行时使用，根据qteasy的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
+上面两种方式都可以在实盘运行时使用，根据`qteasy`的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)
