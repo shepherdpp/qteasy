@@ -107,12 +107,7 @@ $ pip install qteasy
 
 `qteasy`所有必要的依赖包都可以在`pip`安装的同时安装好，但某些特殊情况下，您需要在安装时指定可选依赖包，以便在安装`qteasy`时同时安装，或者手动安装依赖包：
 
-- **`pymysql`**, 用于连接`MySQL`数据库,将本地数据存储到`MySQL`数据库（`qteasy`默认使用`csv`文件作为本地数据源，但数据量大时推荐使用`mysql`数据库，详情参见[qteasy使用教程](https://qteasy.readthedocs.io)）
-`pymysql`可以在安装`qteasy`时自动安装，也可以手动安装：
-    ```bash
-    $ pip install 'qteasy[database]'  # 安装qteasy时自动安装pymysql
-    $ pip install pymysql  # 手动安装pymysql
-    ```
+- **`pymysql`**, 用于连接`MySQL`数据库,将本地数据存储到`MySQL`数据库 从1.4版本开始，`pymysql`和`db-utils`已经是qtesay的默认依赖包，不需要手动安装
 - **`pyarrow`**, 用于操作`feather`文件，将本地数据存储为`feather`文件，`pyarrow`可以在安装`qteasy`时自动安装，也可以手动安装：
     ```bash
     $ pip install 'qteasy[feather]'  # 安装qteasy时自动安装pyarrow

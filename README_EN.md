@@ -111,11 +111,7 @@ $ pip install qteasy
 
 All necessary dependencies of `qteasy` can be installed automatically when installing `qteasy` with `pip`, but in some special cases, you may need to specify optional dependencies when installing `qteasy` to install them at the same time, or install them manually:
 
-- **`pymysql`**, used to connect to `MySQL` database, store local data to `MySQL` database (qteasy uses `csv` files as default local data source, but it is recommended to use `MySQL` database when the data volume is large, see [qteasy tutorial](https://qteasy.readthedocs.io) for details), `pymysql` can be installed automatically when installing `qteasy`, or manually installed:
-    ```bash
-    $ pip install 'qteasy[database]'  # Install pymysql automatically together with qteasy
-    $ pip install pymysql  # Manually install pymysql
-    ```
+- **`pymysql`**, used to connect to `MySQL` database, `pymysql` and `db-utils` are now default dependencies of `qteasy` and will be installed automatically since version v1.4
 - **`pyarrow`**, used to operate `feather` files, store local data to `feather` files, `pyarrow` can be installed automatically when installing `qteasy`, or manually installed:
     ```bash
     $ pip install 'qteasy[feather]'  # Install pyarrow automatically together with qteasy
