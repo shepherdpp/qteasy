@@ -144,7 +144,7 @@ except Exception as e:
           f'tushare_token = your_token\n' \
           f'for more information, check qteasy tutorial: ' \
           f'https://qteasy.readthedocs.io/zh/latest/tutorials/1-get-started.html'
-    warnings.warn(msg)
+    warnings.warn(msg, stacklevel=2)
 
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
 set_config(only_built_in_keys=False, **_qt_local_configs)
@@ -169,7 +169,7 @@ else:
     QT_TRADE_CALENDAR = None
     msg = 'trade calendar is not loaded, some utility functions may not work properly, ' \
             'to download trade calendar, run \n"qt.refill_data_source(tables=\'trade_calendar\')"'
-    warnings.warn(msg)
+    warnings.warn(msg, stacklevel=2)
 
 # 设置qteasy运行过程中忽略某些numpy计算错误报警
 np.seterr(divide='ignore', invalid='ignore')

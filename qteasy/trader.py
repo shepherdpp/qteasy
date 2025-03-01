@@ -562,7 +562,8 @@ class Trader(object):
 
         if verbose:
             import warnings
-            warnings.warn('verbose argument is deprecated, use detail instead', DeprecationWarning)
+            warnings.warn('verbose argument is deprecated, use detail instead',
+                          DeprecationWarning, stacklevel=2)
 
         position_info = self.account_position_info
         total_market_value = position_info['market_value'].sum()

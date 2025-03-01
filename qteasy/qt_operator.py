@@ -358,7 +358,8 @@ class Operator:
             return ''
         if len(d_freq) == 1:
             return d_freq[0]
-        warnings.warn(f'there are multiple history data frequency required by strategies', RuntimeWarning)
+        warnings.warn(f'there are multiple history data frequency required by strategies',
+        RuntimeWarning, stacklevel=2)
         raise ValueError(f'In current version, the data freq of all strategies should be the same, got {d_freq}')
         # return d_freq
 
@@ -466,7 +467,7 @@ class Operator:
         int, operator对象中所有子策略的不同回测价格类型的数量
         """
         warnings.warn("bt_price_type_count will be deprecated in future versions. "
-                      "Use strategy_timing_count instead", DeprecationWarning)
+                      "Use strategy_timing_count instead", DeprecationWarning, stacklevel=2)
         return len(self.strategy_timings)
 
     @property
@@ -673,7 +674,8 @@ class Operator:
         all_ids = self.strategy_ids
         if item_is_str:
             if item not in all_ids:
-                warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!')
+                warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!',
+                              RuntimeWarning, stacklevel=2)
                 return
             return self._strategies[item]
         strategy_count = self.strategy_count
@@ -786,7 +788,7 @@ class Operator:
         for stg in strategies:
             if not isinstance(stg, (str, BaseStrategy, type)):
                 warnings.warn(f'WrongType! some of the items in strategies '
-                              f'can not be added - got {stg}', RuntimeWarning)
+                              f'can not be added - got {stg}', RuntimeWarning, stacklevel=2)
             self.add_strategy(stg)
 
     def add_strategy(self, stg, **kwargs):
@@ -922,7 +924,7 @@ class Operator:
             返回一个list，包含operator对象中的strategy对象
         """
         warnings.warn('get_strategies_by_price_type is deprecated, '
-                      'use get_strategies_by_run_timing instead', DeprecationWarning)
+                      'use get_strategies_by_run_timing instead', DeprecationWarning, stacklevel=2)
         if price_type is None:
             return self.strategies
         else:
@@ -959,7 +961,7 @@ class Operator:
             返回一个list，包含operator对象运行所需的历史数据
         """
         warnings.warn('get_op_history_data_by_price_type is deprecated, '
-                        'use get_op_history_data_by_run_timing instead', DeprecationWarning)
+                        'use get_op_history_data_by_run_timing instead', DeprecationWarning, stacklevel=2)
         if get_rolling_window:
             all_hist_data = self._op_hist_data_rolling_windows
         else:
@@ -1012,7 +1014,7 @@ class Operator:
             返回一个list，包含operator对象运行所需的历史参考数据
         """
         warnings.warn('get_op_ref_data_by_price_type is deprecated, '
-                        'use get_op_ref_data_by_run_timing instead', DeprecationWarning)
+                        'use get_op_ref_data_by_run_timing instead', DeprecationWarning, stacklevel=2)
         if get_rolling_window:
             all_ref_data = self._op_ref_data_rolling_windows
         else:
@@ -1063,7 +1065,7 @@ class Operator:
             返回一个list，包含operator中的strategy对象所需的交易信号采样点序列
         """
         warnings.warn('get_op_sample_indices_by_price_type is deprecated, '
-                        'use get_op_sample_indices_by_run_timing instead', DeprecationWarning)
+                        'use get_op_sample_indices_by_run_timing instead', DeprecationWarning, stacklevel=2)
         all_sample_indices = self._op_sample_indices
         if price_type is None:
             return list(all_sample_indices.values())
@@ -1104,7 +1106,7 @@ class Operator:
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
         warnings.warn('get_strategy_count_by_price_type is deprecated, '
-                        'use get_strategy_count_by_run_timing instead', DeprecationWarning)
+                        'use get_strategy_count_by_run_timing instead', DeprecationWarning, stacklevel=2)
         return len(self.get_strategies_by_run_timing(price_type))
 
     def get_strategy_count_by_run_timing(self, timing=None):
@@ -1118,7 +1120,7 @@ class Operator:
         在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         warnings.warn('get_strategy_names_by_price_type is deprecated, '
-                        'use get_strategy_names_by_run_timing instead', DeprecationWarning)
+                        'use get_strategy_names_by_run_timing instead', DeprecationWarning, stacklevel=2)
         return [stg.name for stg in self.get_strategies_by_run_timing(price_type)]
 
     def get_strategy_names_by_run_timing(self, timing=None):
@@ -1132,7 +1134,7 @@ class Operator:
         """返回operator对象中所有交易策略对象的ID, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         warnings.warn('get_strategy_id_by_price_type is deprecated, '
-                        'use get_strategy_id_by_run_timing instead', DeprecationWarning)
+                        'use get_strategy_id_by_run_timing instead', DeprecationWarning, stacklevel=2)
         all_ids = self._strategy_id
         if price_type is None:
             return all_ids
@@ -1416,7 +1418,7 @@ class Operator:
                       f'Given run timing \'{run_timing}\' is not valid in current Operator, \n' \
                       f'no blender will be created! current valid run timings are: \n' \
                       f'{self.strategy_timings}'
-                warnings.warn(msg)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 return
             if isinstance(blender, str):
                 try:

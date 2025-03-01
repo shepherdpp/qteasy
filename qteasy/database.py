@@ -158,7 +158,7 @@ class DataSource:
                       f'Install pymysql or DButils: \n$ pip install pymysql\n$ pip install dbutils\n' \
                       f'Can not set data source type to "db", will fall back to csv file'
 
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 source_type = 'file'
                 file_type = 'csv'
 
@@ -166,7 +166,7 @@ class DataSource:
                 msg = f'Failed setting up mysql connection: {str(e)}\n' \
                       f'Can not set data source type to "db", will fall back to csv file'
 
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 source_type = 'file'
                 file_type = 'csv'
 
@@ -174,7 +174,7 @@ class DataSource:
                 msg = f'Mysql connection failed: {str(e)}\n' \
                       f'Can not set data source type to "db", will fall back to csv file'
 
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 source_type = 'file'
                 file_type = 'csv'
 
@@ -206,7 +206,7 @@ class DataSource:
                 msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
                       f'\'hdf\'. Please install pytables: $ conda install pytables\n' \
                       f'Can not create data source with file type {file_type}, will fall back to csv file'
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
                 file_type = 'csv'
             except Exception as e:
@@ -1289,7 +1289,7 @@ class DataSource:
             except:
                 msg = f'can not find share-like primary key in the table {table}!\n' \
                       f'passed argument shares will be ignored!'
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 share_like_pk = None
                 shares = None
         # 识别Primary key中的日期型字段，并确认是否需要筛选日期型pk
@@ -1311,7 +1311,7 @@ class DataSource:
             except Exception as e:
                 msg = f'{e}\ncan not find date-like primary key in the table {table}!\n' \
                       f'passed start({start}) and end({end}) arguments will be ignored!'
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 date_like_pk = None
                 start = None
                 end = None
