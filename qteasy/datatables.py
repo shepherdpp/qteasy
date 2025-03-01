@@ -550,7 +550,7 @@ TABLE_SCHEMA = {
 
     'name_changes':  # 股票名称变更表
         {'columns':    ['ts_code', 'start_date', 'name', 'end_date', 'ann_date', 'change_reason'],
-         'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'date', 'date', 'varchar(10)'],
+         'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'date', 'date', 'text'],
          'remarks':    ['证券代码', '开始日期', '证券名称', '结束日期', '公告日期', '变更原因'],
          'prime_keys': [0, 1]
          },
