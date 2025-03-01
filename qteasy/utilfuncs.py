@@ -995,7 +995,7 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
               'Trade Calendar can be downloaded to DataSource, Use:\n' \
               'qteasy.refill_data_source(tables="basics")\n' \
               'see more details in qteasy docs: https://qteasy.readthedocs.io/zh/latest/'
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
         return maybe_trade_day(_date)
 
 
@@ -1997,7 +1997,8 @@ def truncate_string(s, n, padder='.') -> str:  # to be deprecated
     >>> truncate_string('hello world', 3)
     'h..'
     """
-    warnings.warn('truncate_string will be deprecated, use adjust_string_length instead', DeprecationWarning)
+    warnings.warn('truncate_string will be deprecated, use adjust_string_length instead',
+                  DeprecationWarning, stacklevel=2)
     return adjust_string_length(s, n, filler=padder)
 
 

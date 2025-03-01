@@ -2211,7 +2211,7 @@ def run(operator, **kwargs):
             msg = f'Performance Warning: the optimization algorithm 2-incremental is much slower than ' \
                   f'expected when numpy version is higher than 1.21 in parallel computing mode, ' \
                   f'the parallel computing is disabled to avoid performance degradation.'
-            warnings.warn(msg, RuntimeWarning)
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
         # 开始优化
         optimal_pars, perfs = optimization_methods[how](
