@@ -73,3 +73,6 @@ docs/source/img/logo-vertical-light.png
 /docs/LOGOs
 .coverage
 qteasy/qteasy_backup.cfg
+/docs/_build/html
+/docs/_build
+/docs/_build/gettext

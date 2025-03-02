@@ -1,0 +1,3285 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-02 22:00+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../references/1-build-in-results.md:1
+msgid "内置交易策略回测结果"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:3
+msgid "测试内置的择时策略和选股策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:5
+msgid "回测参数"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:7
+msgid "每种策略进行一次回测，回测区间苁1996年到2021年，测试使用默认策略参数，测试参数如下："
+msgstr ""
+
+#: ../../references/1-build-in-results.md:9
+msgid "回测区间起止日期：1996-04-13 —— 2021-04-13，持续25年"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:10
+msgid "测试投资标的： “000001.SH”上证指数"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:11
+msgid "业绩参考标准： “000001.SH”上证指数"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:19
+msgid "均线类策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:23
+msgid "Crossline交叉线策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:169
+msgid "![png](../tutorials/img/output_3_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:169
+#: ../../references/1-build-in-results.md:232
+#: ../../references/1-build-in-results.md:295
+#: ../../references/1-build-in-results.md:358
+#: ../../references/1-build-in-results.md:424
+#: ../../references/1-build-in-results.md:491
+#: ../../references/1-build-in-results.md:553
+#: ../../references/1-build-in-results.md:637
+#: ../../references/1-build-in-results.md:700
+#: ../../references/1-build-in-results.md:763
+#: ../../references/1-build-in-results.md:826
+#: ../../references/1-build-in-results.md:889
+#: ../../references/1-build-in-results.md:952
+#: ../../references/1-build-in-results.md:1015
+#: ../../references/1-build-in-results.md:1078
+#: ../../references/1-build-in-results.md:1141
+#: ../../references/1-build-in-results.md:1205
+#: ../../references/1-build-in-results.md:1268
+#: ../../references/1-build-in-results.md:1333
+#: ../../references/1-build-in-results.md:1396
+#: ../../references/1-build-in-results.md:1459
+#: ../../references/1-build-in-results.md:1522
+#: ../../references/1-build-in-results.md:1585
+#: ../../references/1-build-in-results.md:1648
+#: ../../references/1-build-in-results.md:1711
+#: ../../references/1-build-in-results.md:1774
+#: ../../references/1-build-in-results.md:1837
+#: ../../references/1-build-in-results.md:1901
+#: ../../references/1-build-in-results.md:1966
+#: ../../references/1-build-in-results.md:2029
+#: ../../references/1-build-in-results.md:2093
+#: ../../references/1-build-in-results.md:2156
+#: ../../references/1-build-in-results.md:2219
+#: ../../references/1-build-in-results.md:2282
+#: ../../references/1-build-in-results.md:2345
+#: ../../references/1-build-in-results.md:2408
+#: ../../references/1-build-in-results.md:2471
+#: ../../references/1-build-in-results.md:2534
+#: ../../references/1-build-in-results.md:2597
+#: ../../references/2-get-history-data.md:958
+#: ../../references/2-get-history-data.md:970
+#: ../../references/2-get-history-data.md:982
+#: ../../references/2-get-history-data.md:1001
+#: ../../references/2-get-history-data.md:1004
+#: ../../references/2-get-history-data.md:1007
+#: ../../references/2-get-history-data.md:1010
+#: ../../references/2-get-history-data.md:1013
+#: ../../references/2-get-history-data.md:1016
+#: ../../references/2-get-history-data.md:1019
+#: ../../references/2-get-history-data.md:1022
+#: ../../references/2-get-history-data.md:1025
+#: ../../references/2-get-history-data.md:1028
+#: ../../references/2-get-history-data.md:1031
+#: ../../references/3-back-test-strategy.md:554
+#: ../../references/3-back-test-strategy.md:745
+#: ../../references/3-back-test-strategy.md:810
+#: ../../references/4-build-in-strategy-blender.md:467
+#: ../../references/4-build-in-strategy-blender.md:525
+#: ../../references/4-build-in-strategy-blender.md:578
+msgid "png"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:172
+msgid "MACD策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:232
+msgid "![png](../tutorials/img/output_4_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:235
+msgid "DMA策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:295
+msgid "![png](../tutorials/img/output_5_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:298
+msgid "TRIX 策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:358
+msgid "![png](../tutorials/img/output_6_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:362
+msgid "K线模式识别策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:364
+msgid "CDL 策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:424
+msgid "![png](../tutorials/img/output_7_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:427
+msgid "动量类策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:429
+msgid "Bollinger Band策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:491
+msgid "![png](../tutorials/img/output_8_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:493
+msgid "S-BBAND 策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:553
+msgid "![png](../tutorials/img/output_9_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:556
+msgid "SAREXT 策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:632
+msgid "单均线交叉类测路"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:634
+msgid "DEMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:637
+msgid "![png](../tutorials/img/output_11_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:700
+msgid "![png](../tutorials/img/output_12_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:703
+msgid "EMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:763
+msgid "![png](../tutorials/img/output_13_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:766
+msgid "HT_TRENDLINE 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:826
+msgid "![png](../tutorials/img/output_14_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:829
+msgid "KAMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:889
+msgid "![png](../tutorials/img/output_15_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:892
+msgid "MAMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:952
+msgid "![png](../tutorials/img/output_16_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:955
+msgid "FAMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1015
+msgid "![png](../tutorials/img/output_17_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1018
+msgid "T3 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1078
+msgid "![png](../tutorials/img/output_18_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1081
+msgid "TEMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1141
+msgid "![png](../tutorials/img/output_19_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1143
+msgid "TRIMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1205
+msgid "![png](../tutorials/img/output_20_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1207
+msgid "WMA 单均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1268
+msgid "![png](../tutorials/img/output_21_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1271
+msgid "双均线交叉交易策略类"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1273
+msgid "SMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1333
+msgid "![png](../tutorials/img/output_22_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1335
+msgid "DEMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1396
+msgid "![png](../tutorials/img/output_23_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1398
+msgid "EMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1459
+msgid "![png](../tutorials/img/output_24_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1461
+msgid "KAMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1522
+msgid "![png](../tutorials/img/output_25_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1525
+msgid "MAMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1585
+msgid "![png](../tutorials/img/output_26_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1587
+msgid "FAMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1648
+msgid "![png](../tutorials/img/output_27_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1651
+msgid "T3 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1711
+msgid "![png](../tutorials/img/output_28_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1713
+msgid "TEMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1774
+msgid "![png](../tutorials/img/output_29_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1776
+msgid "TRIMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1837
+msgid "![png](../tutorials/img/output_30_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1840
+msgid "WMA 双均线交叉策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1901
+msgid "![png](../tutorials/img/output_31_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1904
+msgid "均线斜率回归策略类"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1906
+msgid "SMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1966
+msgid "![png](../tutorials/img/output_32_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:1969
+msgid "DEMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2029
+msgid "![png](../tutorials/img/output_33_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2031
+msgid "EMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2093
+msgid "![png](../tutorials/img/output_34_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2095
+msgid "HT_TRENDLINE 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2156
+msgid "![png](../tutorials/img/output_35_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2159
+msgid "KAMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2219
+msgid "![png](../tutorials/img/output_36_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2222
+msgid "MAMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2282
+msgid "![png](../tutorials/img/output_37_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2284
+msgid "FAMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2345
+msgid "![png](../tutorials/img/output_38_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2348
+msgid "T3 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2408
+msgid "![png](../tutorials/img/output_39_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2411
+msgid "TEMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2471
+msgid "![png](../tutorials/img/output_40_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2474
+msgid "TRIMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2534
+msgid "![png](../tutorials/img/output_41_3.png)"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2537
+msgid "WMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../references/1-build-in-results.md:2597
+msgid "![png](../tutorials/img/output_42_3.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1
+msgid "金融数据下载及管理"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:3
+msgid "本示例展示了如何使用qteasy模块下载、管理及提取本地存储的金融数据 QTEASY提供了一套比较完善的金融数据下载及管理工具，可以通过tushare服务器下载相当广泛的金融数据，将数据存储在本地，并在需要的时候自动从本地提取数据用于策略的回测或策略运行。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:6
+msgid "本地数据源对象`DataSource`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:8
+msgid "在`qteasy`中定义了一个`DataSource`对象，这个对象定义了一个本地金融数据源，并提供了一系列内置的本地金融数据表和数据类型，用户可以直接通过各种数据类型的ID来直接读取相应的金融数据（前提是这些金融数据已经从网上下载并保存到了本地数据源中）。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:10
+msgid "大量常用的金融数据，例如'close' 'pe'都是预先定义并内置在`qteasy`中的，这些数据涵盖了相当广泛的范围，包括："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:12
+msgid "量价数据，如开盘价open、收盘价close、最高价high，交易量vol等等"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:13
+msgid "财务指标数据，如市盈率pe，市净率pb"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:14
+msgid "财务报表数据，如ebidta、ebit等等"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:15
+msgid "公司基本信息数据，如管理层姓名、公司行业信息"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:17
+msgid "上面的数据都是以“数据表”的形式内置并定义在系统中的，如果需要使用这些数据，必须首先下载数据至本地。`DataSource`对象定义了数据存储的方式和位置。`qteasy`定义了一个默认的数据源对象`QT_DATA_SOURCE`，在不特殊指明的情况下，`qteasy`所操作及使用的数据都在这个数据源中。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:19
+msgid "`DataSource`对象可以将数据保存为文件格式（csv、fth等），也可以将数据保存在mysql数据库中，鉴于金融数据的体量，建议将数据保存在数据库中。数据存储方式及存储位置可以在`qteasy`的`configuration`中设置。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:22
+msgid "DataSource的两种数据源类型"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:24
+msgid "`qt.DataSource(source_type, file_type='fth', file_loc='qteasy/data/', host='localhost', port=3306, user=None, password=None, db='qt_db')`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:26
+msgid "对于一个`DataSource`对象，用户可以选择将数据存储为不同的形式，也叫数据源。`DataSource`目前支持两种不同的数据源："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:27
+msgid "db: 数据库，数据存储在mysql/Maria DB数据库中，通过建立数据库连接来访问"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:28
+msgid "file: 文件，数据以文件的形式存储在指定的文件夹中，支持csv、hdf5以及feather三种文件格式"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:30
+msgid "鉴于金融数据的数据量较大（例如，所有股票的日K线历史数据有超过一千万行数据，分钟级K线的数据量更加庞大），推荐使用`mysql`数据库来存储数据，如果使用本地文件存储数据，数据交换的效率将会很低。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:32
+msgid "使用下面的参数建立一个连接到本地数据库的DataSource对象："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:40
+msgid "可以通过connection_type属性了解DataSource对象的连接性质"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:54
+msgid "使用下面的参数可以建立一个使用本地文件夹的`DataSource`对象"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:71
+msgid "使用`qt.configuration`可以查看当前的配置变量，使用`qt.QT_DATA_SOURCE`可以查看当前数据源的类型和参数"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:86
+msgid "历史数据类型"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:88
+msgid "qteasy可以管理多种不同的数据类型，自动下载这些类型的数据并储存在本地，供交易策略调用。每一种数据都有一个内置的数据id（data_id），根据这个data_id，用户可以查看、读取、下载相应的数据。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:90
+msgid "`qt.find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85,)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:91
+msgid "`qt.find_history_data()`可以查找qteasy内置的所有数据类型，列出数据的id，资产类型和频率，以及数据的详细说明。 使用`qt.get_history_data()`并将找到的数据id作为参数传入，则可以直接查看已经下载的历史数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:99
+msgid "输出如下："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:142
+msgid "检查本地数据源的数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:143
+msgid "使用`qt.get_table_overview()`可以查看当前数据源中已经下载的数据量 当数据量较大时，需要花费几分钟时间分析所有的数据，并打印本地数据源中数据表的数据量、占用磁盘空间以及数据范围"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:146
+msgid "本地数据存储在若干张数据表中，也可以通过`qt.get_table_info()`来获取某一张数据表的详细信息 包括数据表的主键类型和取值范围以外，还包括各数据列的名称、含义和数据类型"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:149
+msgid "`qt.get_table_info(table_name, data_source=None, verbose=True)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:151
+msgid "获取一张数据表的信息，包括数据量（数据行数），占用磁盘空间大小、数据主键的名称及数据范围 如果设置`verbose=True`，还可以查看数据表中的数据列完整信息，包括列名、数据类型和说明"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:154
+msgid "`qt.get_table_overview(data_source=None)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:156
+msgid "统计数据源中所有数据表的数据量并打印总览"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:159
+msgid "使用`qt.get_table_info()`可以获取一张数据表的信息："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:188
+msgid "使用`qt.get_table_overview()`可以检查并显示DataSource中保存的所有本地数据的总览"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:240
+msgid "获取历史数据，并将数据保存在DataSource中"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:241
+msgid "如果`DataSource`中没有数据，那么`qteasy`将很难发挥所长，因此，首先需要将数据保存到`DataSource`中 `DataSource`类提供了`_fetch_table_data_from_tushare()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。 使用`DataSource`对象获取、更新数据的方法包括："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:245
+msgid "`DataSource._fetch_table_data_from_tushare(table, channel, df=None, f_name=None, **kwargs)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:246
+msgid "从外部数据源获取数据，调整清洗数据以使它与数据源中的数据表匹配"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:248
+msgid "数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:249
+msgid "'df'      : 通过参数传递一个df，该df的columns必须与table的定义相同"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:250
+msgid "'csv'     : 通过本地csv文件导入数据，此时必须给出f_name参数"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:251
+msgid "'excel'   : 通过一个Excel文件导入数据，此时必须给出f_name参数"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:252
+msgid "'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:253
+msgid "'other'   : 其他金融数据API，尚未开发"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:255
+msgid "`DataSource.update_table_data()`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:256
+msgid "检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:258
+msgid "检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:259
+msgid "如果datasource type是\"db\"，删除下载数据中与本地数据重复的部分，仅保留新增数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:260
+msgid "如果datasource type是\"file\"，将下载的数据与本地数据合并并去重"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:263
+msgid "`DataSource.read_table_data()`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:265
+msgid "通过本地文件获取数据，并保存到DataSource中："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:267
+msgid "下面的示例代码将存储在`DataFrame`中的数据保存在`DataSource`中"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:276
+msgid "通过tushare获取数据，并保存到DataSource中："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:277
+msgid "`tushare`是一个网络金融数据API，提供了大量的金融数据，不过某些数据需要积分才能获取，请自行申请`tushare`账号并获取相应积分 `tushare`的说明文档在这里：https://tushare.pro/document/2"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:280
+msgid "连接到`tushare`获取数据的时候，只需要指定数据表的名称即可，`DataSource`会自行调用相应的`tushare API`下载数据："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:288
+msgid "连接`tushare`下载数据并保存到本地数据源"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:290
+msgid "`qteasy`提供了`tushare`数据接口，在获取相应`tushare`权限后，可以直接从`tushare`批量下载金融数据，并将数据更新到本地数据源中 例如，下面的命令将2022年3月起到9月之间的所有股票日K线数据下载到本地： 在下载数据前检察`stock_daily`表的信息："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:294
+msgid "`qt.refill_data_source(data_source, *args, **kwargs)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:296
+msgid "连接到`tushare`下载所需的数据并保存到相应的数据表，给出需要下载的数据表名称，通过`start_date`和`end_date`限定数据的范围，同时可以通过`freq`、`asset_type`等指定不同的数据类型，即可下载表格数据并保存到合适的位置。 重复的数据会被忽略或覆盖已有的数据。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:300
+msgid "`qt.refill_data_source()`的`tables`参数指定需要补充的数据表； 除了直接给出表名称以外，还可以通过表类型同时下载多个数据表的数据："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:303
+msgid "`cal`     : 交易日历表，各个交易所的交易日历"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:304
+msgid "`basics`  : 所有的基础信息表，包括股票、基金、指数、期货、期权的基本信息表"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:305
+msgid "`adj`     : 所有的复权因子表，包括股票、基金的复权因子，用于生成复权价格"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:306
+msgid "`data`    : 所有的历史数据表，包括股票、基金、指数、期货、期权的日K线数据以及周、月K线数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:307
+msgid "`events`  : 所有的历史事件表，包括股票更名、更换基金经理、基金份额变动等数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:308
+msgid "`report`  : 财务报表，包括财务指标、三大财务报表、财务快报、月报、季报以及年报"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:309
+msgid "`comp`    : 指数成分表，包括各个指数的成份股及其百分比"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:310
+msgid "`all`     : 所有的数据表，以上所有数据表，由于数据量大，建议分批下载"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:313
+msgid "数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:317
+msgid "例如，通过检查发现，`stock_daily`表中的数据不够完整，最新的数据仅更新到2022年3月22日，数据共有1210万行："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:333
+msgid "此时使用`qt.refill_data_source()`函数，批量获取2022年3月以后一直到10月底的`stock_daily`数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:341
+msgid "数据下载过程中会通过进度条显示下载进度，同时显示下载读取的数据量和总耗时。由于数据需要分批下载，下载大量的数据可能非常耗时。默认情况下 qteasy会通过多线程并行下载提高速度，但下载频率过快可能会导致tushare权限问题。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:348
+msgid "下载完成后重新检查`stock_daily`的数据：可以发现数据已经增加到1280万行，增加了70万行数据，数据覆盖的日期也达到了2022年10月31日。"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:366
+msgid "本地数据的获取和可视化"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:368
+msgid "只要本地数据源中有了数据，就可以非常容易地获取这些数据，如果是量价数据，还可以非常容易地可视化（打印为K线图或价格曲线图）"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:370
+msgid "股票或资产的基本信息数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:372
+msgid "`qt.get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:374
+msgid "获取一个股票或证券的基本信息，`code_or_name`可以是股票的代码，或者股票名称，默认情况下系统会进行全剧匹配查找匹配的证券，如`‘000001’`会匹配到多种不同的证券，所有匹配的证券都会被列出，除非在`asset_type`中指定一种或几种证券类型。 如果设置`match_full_name=True`，则会通过股票或基金的全名来模糊匹配证券"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:378
+msgid "`qt.get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:380
+msgid "`get_basic_info()`的别称"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:382
+msgid "筛选股票代码"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:384
+msgid "`qt.filter_stocks(date: str = 'today', **kwargs)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:386
+msgid "根据发行日期、地区、行业、规模、指数成份等多种可用的信息筛选出一部分股票，打印出股票的信息"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:388
+msgid "`qt.filter_stock_codes(date: str = 'today', **kwargs)`"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:390
+msgid "根据发行日期、地区、行业、规模、指数成份等多种可用的信息筛选出一部分股票，返回股票的完整代码"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:392
+msgid "提取金融历史数据"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:394
+msgid "**`qt.get_history_data(htypes, shares=None, start=None, end=None, freq=None, asset_type=None, adj=None, as_data_frame=True, group_by=None, **kwargs)`**"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:396
+msgid "这个函数从默认`QT_DATA_SOURCE`中提取数据，根据输入的数据类型、股票代码、日期范围以及频率等参数，输出多个`DataFrame`或`HistoryPanel`对象 这些`DataFrame`保存在一个dict中，这个dict的键为股票代码或数据类型，值为按股票代码或数据类型分组的数据框"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:399
+msgid "量价数据的可视化"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:401
+msgid "**`qt.candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle', interactive=True, data_source=None, **kwargs）`**"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:403
+msgid "这个函数从本地数据源中提取股票的价格数据，并生成一张完整的动态高级K线图"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:406
+msgid "示例："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:408
+msgid "查找证券的基本信息"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:410
+msgid "使用`qt.get_basic_info()`获取证券的基本信息 在`DataSource`中准备好相关的金融数据后，还可以方便地查找证券的信息，通过证券代码（六位数字）或证券的名称搜索证券，并打印出详细信息。 使用证券名称搜索时，支持模糊查找或使用通配符："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:414
+msgid "例如，通过六位代码获取证券信息："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:434
+msgid "也可以直接通过证券名称来查找证券，模糊查找匹配多个证券，例如："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:477
+msgid "通过证券名称匹配证券时，支持通过通配符查找："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:497
+msgid "默认情况下，并不会查找证券的全名，如果有必要，可以匹配全名，例如:"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:504
+#: ../../references/2-get-history-data.md:517
+#: ../../references/2-get-history-data.md:909
+msgid "结果如下："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:532
+msgid "`qt.filter_stocks`被用来根据某些标准筛选股票，例如："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:878
+msgid "生成的结果是一个`dict`，默认情况下以股票代码为`key`，`value`是一个包含所有需要类型的历史数据的`DataFrame`："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:898
+msgid "如果需要同时读取多个股票的多种数据，也可以实现。而且可以设置不同的数据频率"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:947
+msgid "保存到本地的股票量价数据可以直接以K线图的形式显示出来，下面是一些示例："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:949
+msgid "历史价格数据的可视化"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:950
+msgid "`qteasy`支持使用动态K线图展示数据，此时不需要从`DataSource`中读取数据，直接使用`qt.candle()`函数即可实现："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:958
+msgid "![png](../tutorials/img/output_20_2.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:962
+msgid "`qt.candle()`函数支持传入K线图的开始日期、结束日期、K线频率、复权方式以显示不同区间和频率的K线图，也支持传入移动均线的时长和macd的不同参数显示不同的均线，例如，传入下面的参数显示一段时间内的60分钟K线图，且使用后复权价格:"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:970
+msgid "![png](../tutorials/img/output_22_2.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:974
+msgid "`qt.candle()`函数还支持通过股票名称显示K线图，如果输入是股票名称，会自动模糊查找，并且支持通配符。例如："
+msgstr ""
+
+#: ../../references/2-get-history-data.md:982
+msgid "![png](../tutorials/img/output_24_2.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:984
+msgid "下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1001
+msgid "![png](../tutorials/img/output_18_1.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1004
+msgid "![png](../tutorials/img/output_18_2.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1007
+msgid "![png](../tutorials/img/output_18_3_copy.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1010
+msgid "![png](../tutorials/img/output_18_4.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1013
+msgid "![png](../tutorials/img/output_18_5.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1016
+msgid "![png](../tutorials/img/output_18_6.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1019
+msgid "![png](../tutorials/img/output_18_7.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1022
+msgid "![png](../tutorials/img/output_18_8.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1025
+msgid "![png](../tutorials/img/output_18_9.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1028
+msgid "![png](../tutorials/img/output_18_10.png)"
+msgstr ""
+
+#: ../../references/2-get-history-data.md:1031
+msgid "![png](../tutorials/img/output_18_11.png)"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:1
+msgid "qteasy中的数据类型"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:3
+msgid "数据类型是qteasy的一个核心概念，它代表一个交易策略中所使用的信息，例如历史交易数据、宏观经济数据等。 信息并不等同于数据，在过去的版本中，qteasy将数据类型直接定义为DataSource数据表中的数据列， 但这样的定义方式并不妥当：因为信息与数据是不同的。原因包括："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:7
+msgid "某些数据本身并没有足够的意义，需要与其他数据结合才能产生足够的信息"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:8
+msgid "有些数据包含多重信息，可以从不同的角度取提取，因此尽管很多情况下数据本身就包含了足够的信息"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:9
+msgid "信息的定义也是动态的，同样的数据经过不同的方式可以有不同的解读"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:11
+msgid "因此，将信息与数据等同起来是草率的，因为从逻辑上来说，数据仅仅是信息的载体而不是信息本身。"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:13
+msgid "在qteasy新的定义中，数据类型就是我们希望从庞杂的数据中提取的各种信息，有些信息可以直接从数据表中读取，例如："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:15
+msgid "股票的开盘价，可以直接从股票价格表中读取"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:17
+msgid "但是有些数据必须通过不同表中不同的数据通过组合来读取，例如："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:19
+msgid "股票的复权价格，必须读取股票的价格，然后读取股票价格复权因子，并通过计算得到"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:21
+msgid "有些时候从同一列数据中可以读取出不同的信息，例如："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:23
+msgid "昨收价格和每日涨幅是不同的信息，但都可以从同一个股票价格表中提取"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:25
+msgid "因此，qteasy将数据类型重新进行了定义，并将其定义为我们需要的信息，提供简单易用的API，方便用户从数据表中 快速提取所需信息，同时，允许用户创建自定义数据类型，以方便地提取自己感兴趣的信息。 另外，数据类型提供的API还将允许用户很容易地将提取的信息生成为图表、进行对比、比较以及统计分析"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:29
+msgid "数据类型的定义应该通过一个类来实现，因而用户自定义可以较容易实现。同时，qteasy应该提供相当完善的内置数据类型以减少用户自定义工作量，且覆盖尽可能多的数据表确保下载的数据能够物尽其用。"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:31
+msgid "从逻辑上讲，一个数据类型的定义需要包含以下关键要素："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:33
+msgid "数据来源：该信息来自于那些数据表中的哪些数据字段？"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:34
+msgid "数据获取方式：如何提取该信息？"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:38
+msgid "鉴于大量的内置数据类型需要被定义，那么这些数据类型的定义必须是简单地，参数化的，所幸数据类型类并不也不会太复杂，应该容易实现参数化定义。"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:40
+msgid "用法和输出 首先是数据类型的用法和输出，看起来应统一为两个API："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:43
+msgid "API1: data_type.get(start, end, frequency):获取该类型与个股无关的，区间内的单频数据，输出为类似Series 的数据"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:46
+msgid "API2: data_type.get(shares, start, end, frequency): 获取该类型与给定个股有关的区间内单频数据"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:50
+msgid "也许还有第三个API： data_type.get(shares, start, end, frequency, **kwargs)"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:53
+msgid "以上API应该完全统一，不管是内置还是自定义类型都可返回相同格式的数据"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:55
+msgid "数据类型的类型 其次应该研究的是数据类型的类型，有多少种不同类型的数据类型？当然，这里的类型取决于从数据表中获取数据的方式和产出，如股价数据和成份数据的获取方式就不同，前者直接用数据标签从表中读取，而后者需从表中筛选后再通过行列变换得到。当然，还有可能更多的方式，如通过多表查询如复权价格或多数据计算得到。 这里只是说，明显不同的数据类型都有各自的特点，一个类就必须分别处理。"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:59
+msgid "如果不考虑多数据计算类的数据类型的话（因为多数据计算可以在策略中实现，但双数据计算型的特殊型：复权价格又应含在内），数据类型的类型也许有下面几种："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:61
+msgid "以下属性被称为数据的获取类型（acquisition_type）这些类型的数据可以输出symbolised或者un-symbolised数据，且 这些数据都支持输出时间段数据(Periods)以及时间戳数据(TimeStamp)："
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:64
+msgid "在指定数据类型时，这种数据类型可以支持的输出类型是在数据类型定义中就确定了的，无法更改"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:65
+msgid "'basics', 基本数据型。这些数据与时间无关，原则上不属于历史数据，仅作为信息调用。   这种类型的数据只需要一个表名和列名作为kwargs读取参数"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:67
+msgid "'direct', 直读数据型。也就是根据区间频段直接从数据表内直接读取的数据，如价格或指标   这种类型的数据类型只需要从一个表名和列名中读取数据即可，因此读取参数只有一个表名和列名"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:69
+msgid "'adjustment', 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格   这种类型的数据需要从两张表中读取数据，因此读取参数有两个表名和列名"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:71
+msgid "'relations' 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:72
+msgid "'operation' 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:73
+msgid "'event_status', 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:74
+msgid "'event_multi_stat', 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:75
+msgid "'event_signal' 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:76
+msgid "'composition' 成份查询型。从成份表中筛选出来数据并行列转换 另外还应该有一些特殊类型，由特殊的过程实现"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:78
+msgid "'compound' 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:80
+msgid "Output Type"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:82
+msgid "'symbolised'   以时间段为单位的symbolised数据，这种数据结构类似一个DataFrame，行为时间段，列为股票代码"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:84
+msgid "'un-symbolised'   以时间段为单位的un-symbolised数据，这种数据结构类似于一个Series，行为时间段，只包含单列数据"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:87
+msgid "数据类型类的定义 类型的定义为了简单，应该是参数化的，只要参数定了，读取方式和读取目标表就确定了"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:90
+msgid "类的唯一一个可被外部调用的方法只有一个，这个方法根据不同的读取方式调用不同的方法，从目标表中读取数据，并清洗后输出。"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:92
+msgid "甚至，不同的数据特点都可以定义在类型中，如open可以在最新的cycle中使用，而close则不可以"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:94
+msgid "为了可扩展性，类中也可以定义一个空白函数，用于特殊情况下由用户重写后自定义数据读取方式"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:96
+msgid "qteasy内置数据类型有非常多，为了方便这些类的创建，这里创建一个数据类型映射表，将所有的数据类型与其关键参数映射起来， 这样就可以通过一个简单的函数调用来创建一个数据类型类了。"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:99
+msgid "1, DATA_TYPE_MAP:"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:101
+msgid "DATA_TYPE_MAP:          定义数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到                         每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:104
+msgid "Data table mapping中各列的含义如下： htype_name(key):            数据类型名称（主键）"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:107
+msgid "freq(key):                  数据的可用频率（主键）                             min - 分钟数据                             d - 日数据                             w - 周数据                             m - 月数据                             q - 季度数据"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:114
+msgid "asset_type(key):            数据对应的金融资产类型:                             E - 股票                             IDX - 指数                             FT - 期货                             FD - 基金                             OPT - 期权                             THS - 同花顺指数                             SW - 申万行业指数"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:123
+msgid "description:                历史数据的详细描述，可以用于列搜索"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:125
+msgid "acquisition_type:           数据的获取方式"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:127
+msgid "table_name:                 历史数据所在的表的名称"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:129
+msgid "column:                     历史数据在表中的列名称"
+msgstr ""
+
+#: ../../references/2-historical_data_types.md:132
+msgid "\"\"\""
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:1
+msgid "创建交易策略并评价回测结果"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:3
+msgid "`qteasy`中的所有交易策略都是通过`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时 管理多个不同的交易策略，哪怕这些交易策略有不同的运行时机和运行频率，或者不同的用途，例如一个策略用于选股、另一个策略用于大盘择时，再一个策 略用于风险控制，用户可以非常灵活地添加或修改`Operator`对象中的策略。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:7
+msgid "将策略交给`Operator`后，只要设置好交易的资产类别，资产池的大小，设定好每个策略的运行时机和频率后，`Operator`对象就会在合适的时间启动相应的 交易策略，生成策略信号，并将所有的策略信号混合(`blend`)后解析成为交易信号。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:10
+msgid "关于`Operator`对象的更多介绍，请参见`qteasy`文档"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:12
+msgid "`queasy`提供了两种方式创建交易策略："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:14
+msgid "*使用内置交易策略组合*："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:15
+msgid "`qteasy`提供多种内置交易策略可供用户使用，不需要手工创建。通过引用内置策略的名称（关于所有内置策略的介绍，请参 见详细文档）用户可以快速建立策略，还可以通过多个简单的策略混合成较为复杂的复合策略。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:17
+msgid "*通过策略类自行创建策略*："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:18
+msgid "当用户的策略非常复杂时，可以通过`qteasy.Strategy`类来自定义一个策略。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:21
+msgid "创建交易策略，并且使用历史数据回溯测试交易策略的交易结果，并对交易结果进行评价是qteasy的核心功能之一。 qteasy通过一个交易员对象（Operator）汇总一系列的交易策略，并且通过qt.run()函数在一段设定好的历史时间段内模拟交易策略的运行，生成交易信号，使用历史价格进行模拟交易，生成交易结果，计算评价指标，并以可视化形式输出为图表。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:24
+msgid "本章节以一个最常见的基金择时投资策略为例子，演示了以下内容："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:25
+msgid "创建一个简单的dma择时投资策略，创建一个交易员对象使用这个策略，演示如何修改、添加策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:26
+msgid "通过`qt.configure()`设置相关的环境变量，使用过去10年的沪深300指数历史数据，回测策略表现"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:27
+msgid "通过对过去10年左右的沪深300指数历史数据，对策略进行参数寻优，最终演示寻优后的结果"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:29
+msgid "首先我们导入qteasy模块 为了在线打印图表，使用`matplotlib inline`设置图表打印模式为在线打印"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:33
+msgid "创建Strategy对象和Operator对象"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:34
+msgid "qteasy中的每一个交易策略都被定义为交易策略（Strategy）对象。每个交易对象包含了一系列的交易规则，这些规则包括三个方面："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:35
+msgid "**策略运行规则**，包括策略运行的频率，所使用的历史数据类型，历史数据窗口长度，定义了策略如何运行以及如何使用历史数据"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:36
+msgid "**信号生成规则**，交易信号的生成规则，即如何根据相关历史数据生成何种交易信号，这是交易策略的核心"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:37
+msgid "**交易信号类型**，交易信号的不同类型决定了模拟交易模块如何处理交易信号"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:39
+msgid "在qteasy中，交易策略是由交易员对象（Operator）执行的，同一时间只能有一个Operator对象在运行，但是同一个交易员可以同时执行一个或多个交易策略，这些交易策略可以针对同一个投资组合进行交易，用户可以定义特定的“混合”方法，把多个简单交易策略混合成为一个复杂交易策略运行。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:41
+msgid "创建Strategy对象"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:43
+msgid "创建Strategy对象的最简单方法是使用qt.built_in模块, 也可以在创建Operator对象的时候同时创建。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:69
+msgid "从上面的输出可以看到这个交易策略的基本信息。除了名称、描述以外，比较重要的信息包括："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:71
+msgid "**策略参数 Strategy Parameter**。策略参数是策略运行过程中所需的外部参数，根据策略规则的不同，策略使用的参数也不同，这些参数对策略的运行过程产生影响，不同的参数会影响策略的输出。例如，在双均线则时策略中，长均线的计算周期和短均线的计算周期就是两个策略参数。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:72
+msgid "**参数类型/范围 Parameter Types / Range**: 不同的策略参数会极大地影响一个策略的最终结果，设置好参数的取值范围和类型之后，qteasy可以通过不同方法在参数空间内搜索最佳参数，使策略的性能达到最佳。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:73
+msgid "**策略数据频率和运行频率 Data Frequcney / Sample Frequency**。策略运行的频率以及所需数据的频率，例如每周执行一次，每月执行一次或每分钟执行一次等等，一般来说数据频率与执行频率相关"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:74
+msgid "**数据类型 Data Types**：运行策略所需要读取的历史数据类型。对DMA策略来说，仅需要收盘价即可。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:76
+msgid "也要查看所有的内置策略，可以使用qt.built_ins()函数，如果不给出函数的参数，则会显示所有内置策略的列表，如果给出参数，则会显示指定内置策略的详细信息。 例如："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:82
+msgid "得到："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:106
+msgid "更多关于内置策略的函数包括："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:108
+msgid "`qt.built_ins(stg_id=None)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:109
+msgid "如果stg_id=None，显示所有内置策略的列表，否则显示指定内置策略的详细信息"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:110
+#: ../../references/4-build-in-strategy-blender.md:10
+msgid "`qt.built_in_list(stg_id=None)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:111
+#: ../../references/3-back-test-strategy.md:113
+msgid "如果stg_id=None，返回所有内置策略的列表，否则返回指定内置策略的详细信息"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:112
+msgid "`qt.built_in_strategies(stg_id=None)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:114
+msgid "`qt.get_built_in_strategy(stg_id)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:115
+msgid "根据给出的内置策略ID，返回内置策略对象"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:117
+msgid "创建Operator对象"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:119
+msgid "使用`qt.Operator()`可以创建`Operator`对象。 创建一个Operator对象后，所有的交易策略都由交易员对象来负责运行。创建交易员对象时可以指定交易信号的处理方式以及交易运行的方式："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:122
+msgid "`qt.Operator(strategies=None, signal_type=None, op_type=None)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:124
+msgid "`strategies`: 交易员对象中的交易策略，可以是一个或多个交易策略，也可以是一个交易策略的列表。如果不指定交易策略，则创建一个空的交易员对象，交易策略可以事后添加或删除。一旦添加了交易策略，交易员对象会为每一个交易策略赋予一个唯一的ID，这个ID可以用来引用这个交易策略。同时，交易员对象会根据策略的运行频率和运行时机，自动为每一个交易策略分配一个运行时机，只有在运行时机到来时，交易员对象才会执行这个交易策略，生成交易信号。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:125
+msgid "`signal_type`: 交易信号的类型，可以是`'pt'`，`'ps'`或者`'vs'`，默认`'pt'`，分别代表目标持仓比例信号，百分比交易信号和数量交易信号。不同的交易信号类型决定了交易员对象如何处理交易信号，以及交易员对象如何将多个交易策略的交易信号混合成为一个交易信号。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:126
+msgid "`op_type`: 交易员对象的运行模式，可以是`'batch'`或者`'realtime'`，默认`'batch'`，分别代表批量运行模式和实时运行模式。在批量运行模式下，交易员对象会在回测或者优化模式下，预先生成交易信号，再批量进行模拟交易，运行速度较快。在实时运行模式下，交易员对象会生成交易信号立即模拟交易，产生模拟交易结果后，再进行下一次交易信号生成，适用于实盘交易运行模式，或特殊情况下的回测模式。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:128
+msgid "对于qteasy来说，交易策略的交易信号和股票/基金的交易订单是两个不同的概念。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:130
+msgid "所有的交易策略都是基于历史数据生成的交易信号，而交易员对象则根据交易信号生成交易订单，然后模拟交易员的交易行为，最终生成交易结果。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:133
+msgid "策略的三种信号类型"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:135
+msgid "在qteasy中，交易信号是一个浮点数，同一个交易信号可以代表不同的含义，从而被交易员对象解读为不同的交易订单。交易信号的含义由交易员对象的信号类型决定，交易员对象的信号类型可以是`'pt'`，`'ps'`或者`'vs'`，分别代表目标持仓比例信号，百分比交易信号和数量交易信号。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:137
+msgid "交易信号的类型包括三类："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:138
+msgid "**PT**: 此时交易信号代表目标持仓比例，也就是说持有的股票的价值占总资产的比例，例如当前总资产为100万元时，0.2代表控制当前某股票或基金的持有数量，使其市值为100万元的20%也就是20万元。在这种情况下，买入或卖出股票的数量取决于当前持有的股票的数量，如果当前持有的股票数量为0，则买入20万元的股票，如果当前持有的股票价值为30万元，则需要卖出10万元。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:139
+msgid "**PS**: 此时交易信号直接代表买卖比例，在这种情况下，买入或卖出股票的数量与当前持有的股票的数量无关，只与总资产有关。如果总资产为100万元时，0.2代表买入20万元的股票。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:140
+msgid "**VS**: 此时交易信号直接代表买卖数量，在这种情况下，买入或卖出股票的数量与总资产或持股数量无关。2000代表买入2000股的股票。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:142
+msgid "不仅如此，如果根据交易员操作的账户类型不同（如股票账户或期货账户），生成的交易订单也会不同。具体的说明如下表："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:279
+msgid "交易信号的混合"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:281
+msgid "尽管同一个Operator对象同时只能生成一种类型的信号，但由于Operator对象能容纳无限多个不同的交易策略，因而Operator对象 也能产生无限多组同类型的交易策略。为了节省交易回测时的计算开销，避免冲突的交易信号或重复的交易信号占用计算资源，同时也 为了增加交易信号的灵活度，应该将所有交易信号首先混合成一组，再送入回测程序进行回测。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:285
+msgid "不过，在一个Operator对象中，不同策略生成的交易信号可能运行的交易价格是不同的，例如，某些策略生成开盘价交易信号，而另一 些策略生成的是收盘价交易策略，那么不同的交易价格信号当然不应该混合。但除此之外，只要是交易价格相同的信号，都应该全部混合。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:288
+msgid "交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个ndarray的 函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:291
+msgid "交易信号的混合基于一系列事先定义的运算和函数，这些函数或运算都被称为\"原子函数\"或\"算子\"，用户利用这些\"算子\"来操作 Operator对象生成的交易信号，并将多个交易信号组变换成一个唯一的交易信号组，同时保持其形状不变，数字有意义。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:294
+msgid "交易信号的混合是由一个混合表达式`blender`来确定的，例如`s0 and (s1 + s2) * avg(s3, s4)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:296
+#: ../../references/4-build-in-strategy-blender.md:312
+msgid "`blender`表达式中支持的函数如下："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "元素"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "示例"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "说明"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "策略序号"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`s1`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以s开头，数字结尾的字符串，数字为`Operator`中的策略的序号，代表这个策略生成的交易信号"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "数字"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`-1.35`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "任何合法的数字，参与表达式运算的数字"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "运算符"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`+`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "包括`'+-*/^'`等四则运算符"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "逻辑运算符"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`and`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "支持`'&"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "函数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`sum()`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "支持的函数参见后表"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "括号"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`()`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:0
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "组合运算"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:307
+msgid "关于更多的混合表达式的例子，请参见`qteasy` [Tutorial 04 - 使用内置交易策略](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2004%20-%20使用内置交易策略.md)"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:323
+msgid "交易员对象是一个策略容器，在一个Operator对象中可以添加任意多个交易策略，同时，在Operator对象中，可以管理交易策略的混合方式(blender)，交易信号的处理方式以及交易运行的方式。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:325
+msgid "常用的Operator属性及方法如下："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:327
+msgid "获取Operator对象的基本信息"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:329
+msgid "`op.info()`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:330
+msgid "打印Operator对象的重要信息"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:332
+msgid "`op.strategies`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:333
+msgid "获取Operator对象中所有交易策略的清单"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:335
+msgid "`op.strategy_ids`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:336
+msgid "获取Operator对象中所有交易策略的ID"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:338
+msgid "`op.strategy_count`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:339
+msgid "获取Operator对象中交易策略的数量"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:341
+msgid "`op.signal_type`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:342
+msgid "Operator对象的信号类型，代表交易信号的含义及处理方式："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:343
+msgid "**'pt': 目标持仓比例信号**，在这个模式下，交易员关注一个投资组合中各个成份股票的持仓比例，通过适时的买入和买出，维持各个成份股的持仓比例在一个目标值上；"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:344
+msgid "**'ps': 百分比交易信号**，在这个模式下，交易员关注定时产生的比例交易信号，根据交易信号按比例买入或买出股票"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:345
+msgid "**'vs': 数量交易信号**，在这个模式下，交易员关注定时产生的交易信号，按照交易信号买入或买出一定数量的股票"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:347
+msgid "`op.op_type`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:348
+msgid "Operator对象的运行模式："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:349
+msgid "'batch': 批量运行模式，在回测模式或优化模式下，预先生成交易清单，再批量进行模拟交易，运行速度较快"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:350
+msgid "'realtime': 实时运行模式，生成交易信号立即模拟交易，产生模拟交易结果后，再进行下一次交易信号生成，适用于实时运行模式，或特殊情况下的回测模式"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:352
+msgid "获取交易策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:354
+msgid "`op.get_stg(stg_id)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:355
+msgid "通过策略ID获取策略对象，下面的方法效果相同，且可以通过数字序号来获取策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:361
+msgid "添加或修改交易策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:363
+msgid "`op.add_strategy(stg, **kwargs)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:364
+msgid "添加一个策略到Operator，添加策略的同时可以同时设置策略参数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:366
+msgid "`op.add_strategies(strategies)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:367
+msgid "批量添加一系列策略到Operator，添加的同时不能同时设置策略参数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:369
+msgid "`op.remove_strategy(id_or_pos=None)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:370
+msgid "从Operator中删除一个策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:372
+msgid "`op.clear_strategies()`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:373
+msgid "清除Operator中的所有交易策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:375
+msgid "设置策略参数或Operator参数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:377
+msgid "`op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, strategy_run_freq=None, window_length=None, data_types=None, strategy_run_timing=None, **kwargs)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:378
+msgid "指定一个交易策略的ID，设置这个交易策略的策略参数或其他属性"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:380
+msgid "`op.set_blender(price_type=None, blender=None)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:381
+msgid "设置交易策略的混合方式。当Operator中有多个交易策略时，每个交易策略分别运行生成多组交易信号，再按照用户定义的规则混合后输出一组交易信号，用于交易"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:383
+msgid "我们可以用下面的代码将刚创建的DMA策略加入到Operator中去，并设置必要的策略参数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:385
+msgid "所有的参数设置都可以使用`operator.set_parameter`方法，可以同时传入多个参数 通过设置策略的`opt_tag`可以控制策略是否参与优化，而`par_range`参数定义了策略优化时需要用到的参数空间 在此时我们并不知道对于过去15年的沪深300指数来说，最优的DMA择时参数是什么，因此可以输入几个随机的参数，进行一次回测，看看结果如何"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:430
+msgid "配置qteasy的回测参数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:432
+msgid "Operator对象创建好并添加策略后就可以开始进行回测了"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:434
+msgid "qteasy提供了丰富的环境参数以控制回测的具体过程 所有的环境参数变量值都可以通过`qt.Configuration()`查看，并通过`qt.Configure()`来设置。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:437
+msgid "`qt.configuration()`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:438
+msgid "查看qteasy运行环境变量"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:440
+msgid "`qt.configure()`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:441
+msgid "设置qteasy运行环境变量"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:443
+msgid "与回测相关的主要环境变量参数包括："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:445
+msgid "回测交易的目标股票/指数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:446
+msgid "回测交易的起止时间段"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:447
+msgid "回测交易的初始投资金额"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:448
+msgid "回测交易的交易费用和交易规则"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:449
+msgid "交易结果评价的基准指数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:451
+msgid "以上所有回测交易参数都可以通过`qt.configure()`设置:"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:469
+msgid "启动qteasy并开始运行Operator"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:471
+msgid "`qt.run(operator, **config)`"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:472
+msgid "开始运行Operator，根据运行的mode，qteasy会进入到不同的运行模式，输出不同的结果："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:474
+msgid "**mode 0 实时模式**：读取最近的（实时）数据，生成当前最新的交易信号。再此模式下，可以设置qteasy定期执行，定期读取最新数据，定期生成实时交易信号"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:475
+msgid "**mode 1 回测模式**：读取过去一段时间内的历史数据，使用该数据生成交易信号并模拟交易，输出模拟交易的结果"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:476
+msgid "**mode 2 优化模式**：读取过去一段时间内的历史数据，通过反复运行同一套交易策略但使用不同的参数组合，搜索在这段时间内表现最佳的策略参数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:478
+msgid "只要运行`qteasy.run(operator, **config)`就可以开始运行Operator了，其中`**config`是测试环境参数，在qt.run()中以参数形式传入的环境变量仅仅在本次运行中有效，但是在qt.configure()中设置的环境变量将一直有效，直到下次改变为止"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:481
+msgid "回测最终资产为19万元，年化收益率只有4.83%，夏普率只有0.0783，收益率低于同期沪深300指数"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:488
+msgid "运行qteasy后，系统会自动读取历史数据，进行回测，完成结果评价并打印回测报告。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:490
+msgid "回测报告会包含以下信息："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:492
+msgid "回测计算耗时"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:493
+msgid "回测区间开始日期及结束日期、持续时间等信息"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:494
+msgid "交易统计信息：如买入次数、卖出次数，满仓比例，空仓比例、总交易费用等"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:495
+msgid "收益信息：初始投资额，最终资产额，总收益率，年化收益率，基准总收益率，基准年化收益率，收益率的峰度和偏度"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:496
+msgid "投资组合评价指标：Alpha，Beta、夏普率、信息比率、波动率以及最大回撤"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:540
+msgid "除了回测报告以外，一张可视化图表也会被打印出来，显示整个回测过程的详细信息。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:542
+msgid "在这张信息图中，会显示以下信息："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:544
+msgid "整个回测历史的收益率曲线图（同时显示持仓区间、卖卖点、基准收益率曲线和最大回撤区间）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:545
+msgid "对数比例收益率曲线和基准收益率对比图"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:546
+msgid "每日收益变动图"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:547
+msgid "滚动夏普率和alpha率变动图（投资组合盈利能力评价）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:548
+msgid "滚动波动率（Volatility）和Beta率变动图（投资组合风险评价）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:549
+msgid "历史回撤分析图（潜水图）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:550
+msgid "月度、年度收益率热力图和条形图"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:551
+msgid "月度收益率统计频率直方图"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:554
+msgid "![png](../tutorials/img/output_12_2.png)"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:556
+msgid "在`qteasy`模拟的交易过程中，可以设置丰富的参数，例如："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:558
+msgid "投入资金的数量、日期、或者设置分批多次投入资金；"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:559
+msgid "买入和卖出交易的费用、包括佣金费率、最低费用、固定费用、以及滑点。各种费率都可以针对买入和卖出分别设定"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:560
+msgid "买入和卖出交易的交割时间，也就是T+N日交割制度"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:561
+msgid "买入和卖出交易的最小批量，例如是否允许分数份额交易、还是必须整数份额、甚至整百份交易"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:563
+msgid "最终打印的回测结果是考虑上述所有交易参数之后的最终结果，因此可以看到总交易成本。详细的交易参数设置请参见详细文档。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:565
+msgid "另外，`qteasy`还给给出了关于策略表现的几个指标： 如alpha和beta分别是0.067和1.002，而夏普率为0.041。最大回撤发生在2009年8月3日到2014年7月10日，回撤了35.0%，且到了2014年12月16日才翻盘。"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:568
+msgid "在上面的回测结果中我们给出了参数`visual=False`，如果令`visual=True`，就能得到可视化的回测结果，以图表的形式给出，并提供可视化信息："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:570
+msgid "投资策略的历史资金曲线"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:571
+msgid "参考数据（沪深300指数）的历史曲线"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:572
+msgid "买点和卖点（在参考数据上以红色、绿色箭头显示）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:573
+msgid "持仓区间（绿色表示持仓）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:574
+msgid "投资策略的评价指标（alpha、sharp等）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:575
+msgid "历史回撤分析（显示五次最大的回撤）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:576
+msgid "历史收益率热力图、山积图等图表"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:579
+msgid "`qteasy`提供了丰富的策略回测选项，例如："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:581
+msgid "回测开始结束日期"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:582
+msgid "回测结果评价指标"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:583
+msgid "回测时是否允许持有负数仓位（用于模拟期货交易卖空行为，也可以使用专门的期货交易模拟算法）"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:585
+msgid "更多的选项请参见详细文档"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:587
+msgid "单择时策略的优化"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:588
+msgid "显然，没有经过优化的参数无法得到理想的回测结果，因此我们需要进行一次优化"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:590
+msgid "通过设置context对象的各个参数，我们可以设置优化方式并控制优化过程： 以下参数的含义分别如下："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:593
+msgid "优化方法设置为1，使用蒙特卡洛优化，对于较大的参数空间有较好的寻优能力"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:594
+msgid "输出结果数量设置为30"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:595
+msgid "优化过程迭代次数为1000次"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:596
+msgid "parallel参数设置为True会使用多核处理器的所有核心进行并行计算节省时间"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:598
+msgid "最后开始优化，使用`perfs_dma`和`pars_dma`两个变量来存储优化结果 优化过程中会显示进度条，结束后会显示优化结果"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:745
+msgid "![png](../tutorials/img/output_14_2.png)"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:753
+msgid "优化结束后，可以看到三十组最佳参数，其中最差的一组也能实现最终资产6万元以上。我们可以手动选取其中最佳的参数，再进行一次回测："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:755
+msgid "能发现终值从上次回测的1.9万暴涨至12.4万，年化收益18.9%，夏普率也上升到了0.833"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:764
+msgid "输出回测结果如下："
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:810
+msgid "![png](../tutorials/img/output_16_2.png)"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:812
+msgid "创建一个自定义策略"
+msgstr ""
+
+#: ../../references/3-back-test-strategy.md:814
+msgid "使用qteasy不仅可以使用内置策略，也可以创建自定义策略。下面有一个简单的例子，定义了一个简单的轮动交易策略"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:1
+msgid "内置交易策略"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:3
+msgid "qteasy提供了70多种内置交易策略，用户可以很容易地直接使用这些交易策略，同时，qteasy提供了一套交易策略组合机制，用户可以将多个简单的交易策略组合成一个比较复杂的交易策略，策略的组合方式是可以灵活设定的。将多个简单交易策略组合成一个复杂的策略后，同样可以使用策略优化工具搜索整个复杂策略的最佳参数。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:5
+msgid "在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:8
+msgid "`qt.get_built_in_strategy(id)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:12
+msgid "上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。 如果给出stg_id，则打印出指定的交易策略的详细信息。例如："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:19
+msgid "打印如下信息："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:45
+msgid "在qteasy中，可以直接使用策略的ID获取内置交易策略"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:47
+msgid "除了使用qt.get_built_in_strategy()获取交易策略以外，在创建Operator对象的时候，将内置交易策略的ID作为参数传入，也可以直接创建交易策略。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:129
+msgid "目前qteasy支持的内置交易策略如下："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ID"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "策略名称"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "crossline"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingCrossline`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "crossline择时策略类，利用长短均线的交叉确定多空状态<br />1，当短均线位于长均线上方，且距离大于l\\*m%时，设置仓位目标为1<br />2，当短均线位于长均线下方，且距离大于l\\*m%时，设置仓位目标为-1<br />3，当长短均线之间的距离不大于l\\*m%时，设置仓位目标为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "macd"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingMACD`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br />2，当MACD值小于0时，设置仓位目标为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingDMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "trix"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingTRIX`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断:<br />计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：<br />1， TRIX位于MATRIX上方时，设置仓位目标为1<br />2， TRIX位于MATRIX下方时，设置仓位目标位-1"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "cdl"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingCDL`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "CDL择时策略，在K线图中找到符合要求的cdldoji模式<br />搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算 等效cdldoji匹配数量，以匹配数量为交易信号。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "bband"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "TimingBBand"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "布林带线交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，在价格上穿或下穿布林带线上下轨时产生交易信号。布林带线的均线类型不可选<br />1，当价格上穿上轨时，产生全仓买入信号<br />2，当价格下穿下轨时，产生全仓卖出信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "s-bband"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "SoftBBand"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "布林带线渐进交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，交易信号不是一次性产生的，而是逐步渐进买入和卖出。计算BBAND，检查价格是否超过BBAND的上轨或下轨：<br />1，当价格大于上轨后，每天产生10%的比例买入交易信号<br />2，当价格低于下轨后，每天产生33%的比例卖出交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sarext"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingSAREXT`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ssma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSSMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sdema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSDEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——DEMA均线(双重指数平滑移动平均线)：根据股价与DEMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sht"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSHT`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——HT(希尔伯特变换瞬时趋势线)：根据股价与HT线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "skama"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSKAMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——KAMA均线(考夫曼自适应移动均线)：根据股价与KAMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "smama"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSMAMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——MAMA均线(MESA自适应移动平均线)：根据股价与MAMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "st3"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRST3`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "stema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSTEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——TEMA均线(三重指数平滑移动平均线)：根据股价与TEMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "strima"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSTRIMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——TRIMA均线(三重指数平滑移动平均线)：根据股价与TRIMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "swma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SCRSWMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "单均线交叉策略——WMA均线(加权移动平均线)：根据股价与WMA均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dsma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSSMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于SMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ddema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSDEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于DEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于EMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dkama"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSKAMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于KAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dmama"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSMAMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于MAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dt3"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRST3`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于T3均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dtema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSTEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于TEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dtrima"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSTRIMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于TRIMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dwma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DCRSWMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于WMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slsma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPSMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——SMA均线(简单移动平均线)：<br />基于SMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sldema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPDEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——DEMA均线(双重指数平滑移动平均线)：<br />基于DEMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——EMA均线(指数平滑移动平均线)：<br />基于EMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slht"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPHT`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——HT均线(希尔伯特变换——瞬时趋势线线)：<br />基于HT计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slkama"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPKAMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——KAMA均线(考夫曼自适应移动平均线)：<br />基于KAMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slmama"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPMAMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——MAMA均线(MESA自适应移动平均线)：<br />基于MAMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slt3"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPT3`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——T3均线(三重指数平滑移动平均线)：<br />基于T3计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sltema"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPTEMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——TEMA均线(三重指数平滑移动平均线)：<br />基于TEMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sltrima"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPTRIMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——TRIMA均线(三重指数平滑移动平均线)：<br />基于TRIMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "slwma"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SLPWMA`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均线斜率交易策略——WMA均线(加权移动平均线)：<br />基于WMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "adx"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`ADX`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ADX指标（平均定向运动指数）选股策略：<br />基于ADX指标判断当前趋势的强度，从而根据趋势强度产生交易信号<br />1, 当ADX大于25时，判断趋势向上，设定持仓比例为1<br />2, 当ADX介于20到25之间时，判断为中性趋势，设定持仓比例为0<br />3, 当ADX小于20时，判断趋势向下，设定持仓比例为-1"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "apo"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`APO`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "APO指标（绝对价格震荡指标）选股策略：<br />基于APO指标判断当前股价变动的牛熊趋势，从而根据趋势产生交易信号<br />1, 当APO大于0时，判断为牛市趋势，设定持仓比例为1<br />2, 当ADX小于0时，判断为熊市趋势，设定持仓比例为-1"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "aroon"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`AROON`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "AROON指标选股策略：<br />通过计算AROON指标趋势的强弱程度输出强多/空头和弱多/空头<br />1, 当UP在DOWN的上方时，输出弱多头<br />2, 当UP位于DOWN下方时，输出弱空头<br />3, 当UP大于70且DOWN小于30时，输出强多头<br />4, 当UP小于30且DOWN大于70时，输出强空头"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "aroonosc"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`AROONOSC`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "AROON Oscillator (AROON震荡指标) 选股策略：<br />当AROONOSC大于0时表示价格趋势向上，反之趋势向下，绝对值大于50时表示强烈的趋势<br />1, 当AROONOSC大于0时，输出弱多头<br />2, 当AROONOSC小于0时，输出弱空头<br />3, 当AROONOSC大于50时，输出强多头<br /> 4, 当AROONOSC小于-50时，输出强空头"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "cci"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`CCI`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "CCI (Commodity Channel Index商品渠道指数) 选股策略：<br />CCI商品渠道指数被用来判断当前股价位于超卖还是超买区间，本策略使用这个指标生成投资仓位目标<br />1, 当CCI大于0时，输出弱多头<br />2, 当CCI小于0时，输出弱空头<br />3, 当CCI大于50时，输出强多头<br />4, 当CCI小于-50时，输出强空头"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "cmo"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`CMO`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "CMO (Chande Momentum Oscillator 钱德动量振荡器) 选股策略：<br />CMO 是一个在-100到100之间波动的动量指标，它被用来判断当前股价位于超卖还是超买区间，本策略使用这个指标生成投资仓位目标<br />1, 当CMO大于0时，输出弱多头<br />2, 当CMO小于0时，输出弱空头<br />3, 当CMO大于50时，输出强多头<br />4, 当CMO小于-50时，输出强空头"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "macdext"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`MACDEXT`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "MACDEXT (Extendec MACD 扩展MACD指数) 选股策略：<br />本策略使用MACD指标生成持仓目标，但是与标准的MACD不同，MACDEXT的快、慢、及信号均线的类型均可选<br />1, 当hist>0时输出多头<br />2, 当hist<0时输出空头"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "mfi"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`MFI`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "MFI (Money Flow Index 货币流向指数) 交易策略：<br />MFI指数用于判断股价属于超买还是超卖状态，本策略使用MFI指标生成交易信号<br />1, 当MFI>20时，持续不断产生10%买入交易信号<br />2, 当MFI>80时，持续不断产生30%卖出交易信号，持续卖出持仓股票"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "di"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DI`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "DI (Directory Indicator 方向指标) 交易策略：<br />DI 指标包含负方向指标与正方向指标，它们分别表示价格上行和下行的趋势强度，本策略使用±DI指标生成交易信号<br />1, 当+DI > -DI时，设置持仓目标为1<br /> 2, 当+DI < -DI时，设置持仓目标为-1"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "dm"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`DM`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "DM (Directional Movement 方向运动指标) 交易策略：<br />DM 指标包含负方向运动指标(Negative Directional Movement)与正方向运动指标(Positive Directional Movement)，它们分别表示价格上行和下行的趋势，本策略使用±DM指标生成交易信号<br />1, 当+DM > -DM时，设置持仓目标为1<br />2, 当+DM < -DM时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "mom"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`MOM`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "MOM (momentum indicator 动量指标) 交易策略：<br />MOM 指标可以用于识别价格的上行或下行趋势的强度，当前价格高于N日前价格时，MOM为正，反之为负。<br />1, 当MOM > 0时，设置持仓目标为1<br />2, 当MOM < 0时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ppo"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`PPO`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "PO (Percentage Price Oscillator 百分比价格振荡器) 交易策略：<br />PPO 指标表示快慢两根移动均线之间的百分比差值，用于判断价格的变化趋势。长短均线的计算周期和均线类型均为策略参数。<br />1, 当PPO > 0时，设置持仓目标为1<br />2, 当PPO < 0时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "rsi"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`RSI`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "RSI (Relative Strength Index 相对强度指数) 交易策略：<br />RSI 指标度量最近价格变化的幅度，从而判断目前股票属于超卖还是超买状态<br />1, 当RSI > ulim时，设置持仓目标为1<br />2, 当RSI < llim时，设置持仓目标为-1<br />3, 其余情况设置持仓目标为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "stoch"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`STOCH`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "STOCH (Stochastic Indicator 随机指数) 交易策略：<br />STOCH 指标度量价格变化的动量，并且动量的大小判断价格趋势，并生成比例买卖交易信号。<br />1, 当k > 80时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当k < 20时，产生逐步买入信号，每周期买入总投资额的10%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "stochf"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`STOCHF`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "STOCHF (Stochastic Fast Indicator 快速随机指标) 交易策略：<br /> STOCHF 指标度量价格变化的动量，与STOCH策略类似，使用快速随机指标判断价格趋势，并生成比例买卖交易信号。<br />1, 当k > 80时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当k < 20时，产生逐步买入信号，每周期买入总投资额的10%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "stochrsi"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`STOCHRSI`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "STOCHRSI (Stochastic Relative Strength Index 随机相对强弱指标) 交易策略：<br />STOCHRSI 指标度量价格变化的动量，该指标在0～1之间波动，表示相对的价格趋势强弱程度，并生成比例买卖交易信号<br />1, 当k > 0.8时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当k < 0.2时，产生逐步买入信号，每周期买入总投资额的10%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ultosc"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`ULTOSC`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ULTOSC (Ultimate Oscillator Indicator 终极振荡器指标) 交易策略：<br />ULTOSC 指标通过三个不同的时间跨度计算价格动量，并根据多种不同动量之间的偏离值生成交易信号。<br />1, 当ULTOSC > u时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当ULTOSC < l时，产生逐步买入信号，每周期买入总投资额的10%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "willr"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`WILLR`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "WILLR (William's %R 威廉姆斯百分比) 交易策略：<br />WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号<br />1, 当WILLR > -l时，产生逐步卖出信号，每周期卖出持有份额的30%<br />2, 当WILLR < -u时，产生逐步买入信号，每周期买入总投资额的10%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "signal_none"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SignalNone`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "空交易信号策略：不生成任何交易信号的策略"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sellrate"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SellRate`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "变化率卖出信号策略：当价格的变化率超过阈值时，产生卖出信号<br />1，当change > 0，且day日涨幅大于change时，产生-1卖出信号<br />2，当change < 0，且day日跌幅大于change时，产生-1卖出信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "buyrate"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`BuyRate`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "变化率买入信号策略：当价格的变化率超过阈值时，产生买入信号<br />1，当change > 0，且day日涨幅大于change时，产生1买入信号<br />2，当change < 0，且day日跌幅大于change时，产生1买入信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "long"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingLong`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "简单择时策略，整个历史周期上固定保持多头全仓状态"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "short"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingShort`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "简单择时策略，整个历史周期上固定保持空头全仓状态"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "zero"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`TimingZero`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "简单择时策略，整个历史周期上固定保持空仓状态"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "all"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingAll`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "保持历史股票池中的所有股票都被选中，投资比例平均分配"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "select_none"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingNone`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "保持历史股票池中的所有股票都不被选中，投资仓位为0"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "random"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingRandom`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "在每个历史分段中，按照指定的比例（p<1时）随机抽取若干股票，或随机抽取指定数量（p>=1）的股票进入投资组合，投资比例平均分配"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "finance"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingAvgIndicator`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以股票过去一段时间内的财务指标的平均值作为选股因子选股，基础选股策略：以股票的历史指标的平均值作为选股因子，因子排序参数可以作为策略参数传入，改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ndaylast"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingNDayLast`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以股票N天前的价格或数据指标作为选股因子选股"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ndayavg"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingNDayAvg`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以股票过去N天的价格或数据指标的平均值作为选股因子选股"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ndayrate"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingNDayRateChange`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以股票过去N天的价格或数据指标的变动比例作为选股因子选股"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ndaychg"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingNDayChange`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以股票过去N天的价格或数据指标的变动值作为选股因子选股"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ndayvol"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`SelectingNDayVolatility`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "根据股票以前N天的股价波动率作为选股因子"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:206
+msgid "如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的Doc-string："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:208
+msgid "例如："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:213
+msgid "可以看到"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:242
+msgid "在ipython等交互式python环境中，也可以使用?来显示内置交易策略的详细信息，例如："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:248
+msgid "可以看到："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:293
+msgid "多重策略以及策略组合"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:295
+msgid "在qteasy中，一个Operator交易员对象可以同时运行多个交易策略。这些交易策略在运行的时候，都会分别提取各自所需的历史数据，独立生成不同的交易信号，这些交易信号会被组合成一组交易信号，统一执行。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:297
+msgid "利用这种特性，用户可以在一个交易员对象中同时运行多个各有侧重的交易策略，例如，一个交易策略监控个股的股价，根据股价产生择信号，第二个交易策略专门负责监控大盘走势，通过大盘走势决定整体仓位。第三个交易策略专门负责止盈止损，在特定时刻止损。最终的交易信号以第一个交易策略为主，但受到第二个策略的节制，必要时会被第三个策略完全控制。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:299
+msgid "或者，用户也可以很容易地制定出一个“委员会”策略，在一个综合性策略中由多个策略独立地做出交易决策，最终的交易信号由所有子策略组成的”委员会“投票决定，投票的方式可以是简单多数、绝对多数、加权投票结果等等。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:301
+msgid "上述交易策略组合中，每一个独立的交易策略都很简单，很容易定义，而将他们组合起来，又能发挥更大的作用。同时每一个子策略都是独立的，可以自由组合出复杂的综合性交易策略。这样可以避免不断地重复开发策略，只需要对子策略重新排列组合，重新定义组合方式，就可以快速地搭建一系列的复杂综合性交易策略。相信这样能够极大地提高交易策略的搭建效率，缩短周期。时间就是金钱。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:303
+msgid "不过，在一个Operator对象中，不同策略生成的交易信号可能运行的交易价格是不同的，例如，某些策略生成开盘价交易信号，而另一些策略生成的是收盘价交易策略，那么不同的交易价格信号当然不应该混合。但除此之外，只要是交易价格相同的信号，都应该全部混合。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:305
+msgid "交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个ndarray的函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:306
+msgid "定义策略组合方式`blender`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:308
+msgid "`qteasy`中的组合策略是由`blender`实现的。在一个`Operator`中，如果策略的数量多于1个，就必须定义一个`blender`。如果没有明确定义`blender`，而策略的数量超过1个时，`qteasy`会在运行`Operator`的时候创建一个默认的`blender`，但是为了让多重策略正确运行，用户需要自行定义`blender`。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:310
+msgid "`blender expression`是用户自行定义的一个组合表达式，用户使用这个表达式确定不同交易策略的组合方式。这个组合表达式使用四则运算符、逻辑运算符、函数等符号规定策略信号是如何组合的。`blender`表达式中可以包括以下元素："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:324
+msgid "`blender`示例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:326
+msgid "当一个`Operator`对象中有三个交易策略时（其序号分别为0/1/2），按照以下方式定义的`blender`都是合法可用的，同时使用`Operator.set_blender()`来设置`blender`："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:328
+msgid "使用四则运算符定义blender表达式"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:330
+msgid "`'s0 + s1 + s2'`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:332
+msgid "此时三个交易策略生成的交易信号会被加起来，成为最终的交易信号，如果策略0的结果为买入10%，策略1结果为买入10%，策略2结果为买入30%，则最终的结果为买入50%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:334
+msgid "使用逻辑运算符定义blender表达式："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:336
+msgid "`'s0 and s1 and s2'`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:338
+msgid "表示只有当交易策略1、2、3都出现交易信号的时候，才会最终形成交易信号。如策略1的结果为买入，策略2结果为买入，而策略3没有交易信号，则最终的结果为没有交易信号。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:340
+msgid "blender表达式中还可以包含括号和一些函数："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:342
+msgid "`'max(s0, s1) + s2'`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:344
+msgid "表示策略1、2的结果中最大值与策略3的结果相加，成为最终交易信号。如果策略1的结果为买入10%，策略2结果为买入20%，策略3结果为买入30%，最终的结果为买入50%"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:346
+msgid "blender 表达式中每个策略可以出现不止一次，也可以出现纯数字："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:348
+msgid "`'(0.5 * s0 + 1.0 * s1 + 1.5 * s2) / 3 * min(s0, s1, s2)'`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:350
+msgid "上面的blender表达式表示：首先计算三个策略信号的加权平均（权重分别为0.5、1.0、1.5），然后再乘以三个信号的最小值"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:352
+msgid "blender 表达式中函数的操作参数在函数名中定义："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:354
+msgid "`'clip_-0.5_0.5(s0 + s1 + s2) + pos_2_0.2(s0, s1, s2)'`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:356
+msgid "上面的blender表达式定义了两种不同的函数操作，分别得到结果后相加得到最终结果。第一个函数是范围剪切，将三组策略信号相加后，剪切掉小于-0.5的信号值以及大于0.5的信号值，得到计算结果；第二个函数是仓位判断函数，统计三组信号中持仓大于0.2的时间段，将其定义为“多头”，然后再统计每一个时间段三个策略中持多头建议的数量，如果超过两个策略持多头建议，则输出满仓多头，否则输出空仓。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:358
+msgid "blender表达式中支持的函数如下："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "表达式"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "abs"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`abs(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "绝对值函数<br />计算所有交易信号的绝对值<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "avg"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`avg(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "平均值函数<br />计算所有交易信号的平均值<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "avgpos"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`avgpos_N_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "平均值累计函数<br />当交易信号为持仓目标信号时，统计同一时间产生非空仓信号（输出信号绝对值>T）的个数，当空头/多头信号的数量大于N时，输出所有空头/多头信号的平均值，否则输出0.<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "ceil"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`ceil(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "向上取整函数<br />交易信号向上取整<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "clip"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`clip_U_L(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "范围剪切函数<br />剪切超过范围的信号值，剪切上下范围在函数名中定义<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "combo"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`combo(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "组合值函数<br />输出所有交易信号加总的值<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "committee"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`cmt_N_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "委员会函数（等同于累计持仓函数））<br />当交易信号为持仓目标信号时，统计同一时间产生非空仓信号（输出信号绝对值>T）的个数数，当多头/空头信号的数量大于N时，输出-1/1，否则输出0.<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "exp"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`exp(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "exp函数<br />计算e的信号次幂<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "floor"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`floor(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "向下取整函数<br />交易信号向下取整<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "log"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`log(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "对数函数<br />计算以e为底的对数值<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "log10"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`log10(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "以10为底的对数函数<br />计算以10为底的对数值<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "max"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`max(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "最大值函数<br />计算所有交易信号的最大值<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "min"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`min(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "最小值函数<br />计算所有交易信号的最小值<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "pos"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`pos_N_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "累计持仓函数<br />当交易信号为持仓目标信号时，统计同一时间产生非空仓信号（输出信号绝对值>T）的个数数，当多头/空头信号的数量大于N时，输出-1/1，否则输出0.<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "position"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`position_N_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "pow"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`pow(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "幂函数<br />计算第一个交易信号的第二个信号次幂即sig0^sig1<br />输入信号的数量只能为两个"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "power"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`power(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sqrt"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`sqrt(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "平方根函数<br />交易信号的平方根<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "str"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`str_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "强度累计函数<br />将所有交易信号加总，当信号强度超过T时，输出1，否则输出0<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "strength"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`strength_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "sum"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`sum(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "unify"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`unify(signal)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "均一化函数<br />均一化交易信号，等比缩放同一行的交易信号使每一行的总和为1<br />只能输入一个交易信号"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "vote"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "`vote_N_T(*signals)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:0
+msgid "委员会投票函数（等同于累计持仓函数）<br />当交易信号为持仓目标信号时，统计同一时间产生非空仓信号（输出信号绝对值>T）的个数数，当多头/空头信号的数量大于N时，输出-1/1，否则输出0.<br />输入信号的数量不限"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:387
+msgid "以下方法可以被用来设置或获取策略的blender"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:389
+msgid "`operator.set_blender(blender=None, price_type=None)`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:390
+msgid "设置blender，直接传入一个表达式，这个表达式会被自动解析后用于组合交易策略。"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:393
+msgid "`operator.view_blender()`"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:394
+msgid "查看blender"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:396
+msgid "blender使用示例"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:398
+msgid "下面使用一个例子来演示blender的工作方式："
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:467
+msgid "![png](img/output_10_1.png)"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:525
+msgid "![png](img/output_11_1.png)"
+msgstr ""
+
+#: ../../references/4-build-in-strategy-blender.md:578
+msgid "![png](img/output_12_1_2.png)"
+msgstr ""
