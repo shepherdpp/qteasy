@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: qteasy 1.4.1\n"
+"Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-07 16:36+0800\n"
+"POT-Creation-Date: 2025-03-02 22:00+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,39 +16,51 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../index.rst:85
-msgid "GETTING STARTED 快速入门"
+#: ../../index.rst:84
+msgid "``qteasy`` 快速入门"
 msgstr ""
 
-#: ../../index.rst:97
-msgid "TUTORIALS 使用教程"
+#: ../../index.rst:92
+msgid "``qteasy`` 使用教程"
 msgstr ""
 
-#: ../../index.rst:106
-msgid "REFERENCES 参考文档"
+#: ../../index.rst:101
+msgid "下载并管理金融历史数据"
 msgstr ""
 
-#: ../../index.rst:115
-msgid "EXAMPLES 自定义策略示例"
+#: ../../index.rst:110
+msgid "创建交易策略"
 msgstr ""
 
-#: ../../index.rst:124
-msgid "API REFERENCE 参考"
+#: ../../index.rst:120
+msgid "回测并评价交易策略"
 msgstr ""
 
-#: ../../index.rst:140
-msgid "RELEASE HISTORY 发行版本历史"
+#: ../../index.rst:131
+msgid "优化交易策略"
 msgstr ""
 
-#: ../../index.rst:148
-msgid "LICENSE"
+#: ../../index.rst:141
+msgid "模拟实盘运行交易策略"
 msgstr ""
 
-#: ../../index.rst:154
-msgid "ABOUT 关于"
+#: ../../index.rst:152
+msgid "自定义策略示例"
 msgstr ""
 
 #: ../../index.rst:161
+msgid "API参考"
+msgstr ""
+
+#: ../../index.rst:177
+msgid "LICENSE"
+msgstr ""
+
+#: ../../index.rst:183
+msgid "ABOUT 关于 ``qteasy``"
+msgstr ""
+
+#: ../../index.rst:195
 msgid "FAQ 常见问题"
 msgstr ""
 
@@ -73,7 +85,7 @@ msgid "Created: 2019, July, 16"
 msgstr ""
 
 #: ../../index.rst:24
-msgid "Latest Version: `1.4.1`"
+msgid "Latest Version: `1.4.8`"
 msgstr ""
 
 #: ../../index.rst:25
@@ -81,7 +93,7 @@ msgid "License: BSD 3-Clause"
 msgstr ""
 
 #: ../../index.rst:28
-msgid "Introduction"
+msgid "简介"
 msgstr ""
 
 #: ../../index.rst:30
@@ -101,7 +113,7 @@ msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记�
 msgstr ""
 
 #: ../../index.rst:37
-msgid "What Can You Do with ``QTEASY`` ?"
+msgid "``QTEASY`` 能做什么?"
 msgstr ""
 
 #: ../../index.rst:40
