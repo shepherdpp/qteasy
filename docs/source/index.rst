@@ -24,7 +24,7 @@
 - Latest Version: `1.4.8`
 - License: BSD 3-Clause
 
-Introduction
+简介
 ------------
 
 ``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下：
@@ -33,7 +33,7 @@ Introduction
 2. 投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优
 3. 交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息
 
-What Can You Do with ``QTEASY`` ?
+``QTEASY`` 能做什么?
 ------------------------------------
 
 获取并管理金融历史数据
@@ -114,8 +114,7 @@ What Can You Do with ``QTEASY`` ?
     :glob:
 
     references/1-strategy-overview.md
-    references/1_builg_in_results.md
-    references/4-built-in-strategy-blender.md
+    manage_strategies/*
 
 
 .. toctree::
@@ -126,6 +125,7 @@ What Can You Do with ``QTEASY`` ?
 
     references/1-backtest-overview.md
     references/3-back-test-strategy.md
+    back_testing/*
 
 
 .. toctree::

@@ -1,6 +1,6 @@
 # FAQ
 
-## TABLE OF CONTENTS 问题目录
+## 问题目录
 
 - [如何搭建不同python版本的安装环境](如何搭建不同python版本的安装环境)
 - [使用国内的pip镜像源](使用国内的pip镜像源)
